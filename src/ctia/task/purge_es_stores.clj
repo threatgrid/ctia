@@ -16,8 +16,8 @@
                               es-svc/es-store-service]
                    :config config})))
 
-(defn delete-store-indexes [stores]
-  (doseq [store-impls (vals @stores)
+(s/defn delete-store-indexes [stores :- {s/Keyword s/Any}]
+  (doseq [store-impls (vals stores)
           {:keys [state]} store-impls]
 
     (log/infof "deleting index %s" (:index state))
@@ -29,9 +29,9 @@
   (log/info "purging all ES Stores data")
   (try
     (let [app (setup)
-          store-svc (app/get-service app :StoreService)]
-      (delete-store-indexes (store-svc/get-stores
-                              store-svc))
+          store-svc (app/get-service app :StoreService)
+          deref-stores (partial store-svc/deref-stores store-svc)]
+      (delete-store-indexes (deref-stores))
       (log/info "done")
       (System/exit 0))
     (finally

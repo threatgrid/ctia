@@ -130,11 +130,11 @@
 
 (defn rollover-post-bulk
   "post data in 2 parts with rollover, randomly update son entities"
-  [store-svc]
+  [deref-stores]
   (let [bulk-res-1 (post-bulk (fixt/bundle (/ fixtures-nb 2) false))
-        _ (rollover-stores @(store-svc/get-stores store-svc))
+        _ (rollover-stores (deref-stores))
         bulk-res-2 (post-bulk (fixt/bundle (/ fixtures-nb 2) false))
-        _ (rollover-stores @(store-svc/get-stores store-svc))]
+        _ (rollover-stores (deref-stores))]
     (random-updates bulk-res-1 (/ updates-nb 2))
     (random-updates bulk-res-2 (/ updates-nb 2))))
 
@@ -200,9 +200,10 @@
   (testing "migration with rollover and multiple indices for source stores"
     (let [app (helpers/get-current-app)
           store-svc (app/get-service app :StoreService)
+          deref-stores (partial store-svc/deref-stores store-svc)
           store-types [:malware :tool :incident]
           get-in-config (helpers/current-get-in-config-fn app)]
-      (rollover-post-bulk store-svc)
+      (rollover-post-bulk deref-stores)
       ;; insert malformed documents
       (doseq [store-type store-types]
         (es-index/get (es-conn get-in-config)
@@ -510,6 +511,7 @@
   (testing "migration with malformed documents in store"
     (let [app (helpers/get-current-app)
           store-svc (app/get-service app :StoreService)
+          deref-stores (partial store-svc/deref-stores store-svc)
           get-in-config (helpers/current-get-in-config-fn app)
 
           store-types [:malware :tool :incident]
@@ -519,7 +521,7 @@
                    :am "a"
                    :bad "document"}]
       ;; insert proper documents
-      (rollover-post-bulk store-svc)
+      (rollover-post-bulk deref-stores)
       ;; insert malformed documents
       (doseq [store-type store-types]
         (es-doc/create-doc (es-conn get-in-config)
@@ -568,9 +570,10 @@
                                       "user")
   (let [app (helpers/get-current-app)
         store-svc (app/get-service app :StoreService)
+        deref-stores (partial store-svc/deref-stores store-svc)
         get-in-config (helpers/current-get-in-config-fn app)]
     ;; insert proper documents
-    (rollover-post-bulk store-svc)
+    (rollover-post-bulk deref-stores)
     (testing "migrate ES Stores test setup"
       (testing "simulate migrate es indexes shall not create any document"
         (sut/migrate-store-indexes {:migration-id "test-1"

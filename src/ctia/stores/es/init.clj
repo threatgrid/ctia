@@ -4,7 +4,7 @@
    [ctia.properties :as p]
    [clojure.set :refer [difference]]
    [ctia.stores.es.mapping :refer [store-settings]]
-   [ctia.stores.es.schemas :refer [ESConnState]]
+   [ctia.stores.es.schemas :refer [ESConnServices ESConnState]]
    [clj-momo.lib.es
     [conn :refer [connect]]
     [index :as es-index]]
@@ -36,7 +36,7 @@
          replicas 1
          refresh_interval "1s"}
     :as props} :- StoreProperties
-   get-in-config]
+   services :- ESConnServices]
   (let [write-index (str indexname
                          (when aliased "-write"))
         settings {:refresh_interval refresh_interval
@@ -50,7 +50,7 @@
               (when aliased
                 {:aliases {indexname {}}}))
      :conn (connect props)
-     :services {:ConfigService {:get-in-config get-in-config}}}))
+     :services services}))
 
 (s/defn update-settings!
   "read store properties of given stores and update indices settings."
@@ -109,9 +109,9 @@
   "initiate an ES Store connection,
    put the index template, return an ESConnState"
   [properties :- StoreProperties
-   get-in-config]
+   services :- ESConnServices]
   (let [{:keys [conn index props config] :as conn-state}
-        (init-store-conn properties get-in-config)
+        (init-store-conn properties services)
         existing-indices (get-existing-indices conn index)]
     (when (seq existing-indices)
       (update-mapping! conn index config)
@@ -139,22 +139,24 @@
     (get-in-config [:ctia :store :es :default] {})
     (get-in-config [:ctia :store :es store-kw] {})))
 
-(defn- make-factory
+(s/defn ^:private make-factory
   "Return a store instance factory. Most of the ES stores are
   initialized in a common way, so this is used to remove boiler-plate
   code."
-  [store-constructor get-in-config]
+  [store-constructor
+   {{:keys [get-in-config]} :ConfigService
+    :as services} :- ESConnServices]
   (fn store-factory [store-kw]
     (-> (get-store-properties store-kw get-in-config)
-        (init-es-conn! get-in-config)
+        (init-es-conn! services)
         store-constructor)))
 
-(defn ^:private factories [get-in-config]
+(s/defn ^:private factories [services :- ESConnServices]
   (apply merge {}
          (map (fn [[_ {:keys [entity es-store]}]]
-                {entity (make-factory es-store get-in-config)})
+                {entity (make-factory es-store services)})
               entities)))
 
-(defn init-store! [store-kw get-in-config]
-  (when-let [factory (get (factories get-in-config) store-kw)]
+(s/defn init-store! [store-kw services :- ESConnServices]
+  (when-let [factory (get (factories services) store-kw)]
     (factory store-kw)))

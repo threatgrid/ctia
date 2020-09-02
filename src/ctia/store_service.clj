@@ -5,7 +5,8 @@
             [schema.core :as s]))
 
 (defprotocol StoreService
-  (get-stores [this] "Returns the atom of stores")
+  (stores-atom [this] "Returns the atom of stores")
+  (deref-stores [this] "Dereferences stores atom without timeout.")
   (write-store [this store write-fn])
   (read-store [this store read-fn]))
 
@@ -16,7 +17,8 @@
   []
   (init [this context] (core/init context))
 
-  (get-stores [this] (core/get-stores (service-context this)))
+  (stores-atom [this] (core/stores-atom (service-context this)))
+  (deref-stores [this] (core/deref-stores (service-context this)))
   (write-store [this store write-fn]
                (core/write-store (service-context this)
                                  store write-fn))

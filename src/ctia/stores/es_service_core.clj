@@ -14,7 +14,7 @@
 
 (defn- build-store [store-kw get-in-config store-type]
   (case store-type
-    "es" (es-init/init-store! store-kw get-in-config)))
+    "es" (es-init/init-store! store-kw {:ConfigService {:get-in-config get-in-config}})))
 
 (defn- init-store-service! [stores get-in-config]
   (reset! stores

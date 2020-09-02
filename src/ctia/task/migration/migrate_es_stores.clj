@@ -14,6 +14,7 @@
             [ctia.stores.es
              [crud :refer [coerce-to-fn]]
              [store :refer [StoreMap]]]
+            [ctia.store-service :as store-svc]
             [ctia.task.migration.migrations :refer [available-migrations]]
             [ctia.task.migration.store :as mst]
             [puppetlabs.trapperkeeper.app :as app]
@@ -55,10 +56,10 @@
    store-keys :- [s/Keyword]
    batch-size :- s/Int
    confirm? :- s/Bool
-   store-svc]
+   services :- mst/MigrationStoreServices]
   (loop [search_after nil]
     (let [{:keys [data paging]} (mst/fetch-deletes store-keys created batch-size search_after
-                                                   store-svc)
+                                                   services)
           {new-search-after :sort next :next} paging]
       (doseq [[entity-type entities] data]
         (log/infof "Handling %s deleted %s during migration"
@@ -146,8 +147,7 @@
            list-coerce
            migration-es-conn
            confirm?]} :- BatchParams
-   store-svc
-   get-in-config]
+   services :- mst/MigrationStoreServices]
   (let [migrated (transduce migrations conj documents)
         {:keys [data errors]} (list-coerce migrated)
         new-migrated-count (+ migrated-count (count data))]
@@ -158,16 +158,15 @@
                     (pr-str entity))]
         (log/error message)))
     (when confirm?
-      (when (seq data) (mst/store-batch target-store data get-in-config))
-      (mst/rollover target-store batch-size new-migrated-count get-in-config)
+      (when (seq data) (mst/store-batch target-store data services))
+      (mst/rollover target-store batch-size new-migrated-count services)
       (mst/update-migration-store migration-id
                                   entity-type
                                   (cond-> {:target {:migrated new-migrated-count}}
                                     search_after (assoc :source
                                                         {:search_after search_after}))
                                   migration-es-conn
-                                  store-svc
-                                  get-in-config))
+                                  services))
     (log/infof "%s - migrated: %s documents"
                (name entity-type)
                new-migrated-count)
@@ -180,22 +179,21 @@
            buffer-size]
     :as migration-params} :- BatchParams
    query :- ESQuery
-   store-svc
-   get-in-config]
+   services :- mst/MigrationStoreServices]
   (log/infof "%s - handling sliced query %s"
              (name entity-type)
              (pr-str query))
   (let [read-params (assoc migration-params :query query)
         data-queue (seque buffer-size
                           (read-source read-params))
-        new-migrated-count (reduce #(write-target %1 %2 store-svc get-in-config)
+        new-migrated-count (reduce #(write-target %1 %2 services)
                                    migrated-count
                                    data-queue)]
     (assoc migration-params
            :migrated-count
            new-migrated-count)))
 
-(defn migrate-store
+(s/defn migrate-store
   "migrate a single store"
   [migration-state
    entity-type
@@ -203,8 +201,7 @@
    batch-size
    buffer-size
    confirm?
-   store-svc
-   get-in-config]
+   services :- mst/MigrationStoreServices]
   (log/infof "migrating store: %s" entity-type)
   (let [{stores :stores migration-id :id} migration-state
         {:keys [source target started]} (get stores entity-type)
@@ -235,9 +232,8 @@
       (mst/update-migration-store migration-id
                                   entity-type
                                   {:started (time/now)}
-                                  store-svc
-                                  get-in-config))
-    (->> (reduce #(migrate-query %1 %2 store-svc get-in-config)
+                                  services))
+    (->> (reduce #(migrate-query %1 %2 services)
                  base-params
                  queries)
          :migrated-count
@@ -249,8 +245,7 @@
                                source-store
                                target-store
                                @mst/migration-es-conn
-                               store-svc
-                               get-in-config))))
+                               services))))
 
 (s/defschema MigrationParams
   {:migration-id s/Str
@@ -272,11 +267,10 @@
            buffer-size
            confirm?
            restart?]} :- MigrationParams
-   store-svc
-   get-in-config]
+   services :- mst/MigrationStoreServices]
   (let [migration-state (if restart?
-                          (mst/get-migration migration-id @mst/migration-es-conn store-svc get-in-config)
-                          (mst/init-migration migration-id prefix store-keys confirm? store-svc get-in-config))
+                          (mst/get-migration migration-id @mst/migration-es-conn services)
+                          (mst/init-migration migration-id prefix store-keys confirm? services))
         migrations (compose-migrations migrations)
         batch-size (or batch-size default-batch-size)]
     (log/infof "migrating stores: %s" store-keys)
@@ -288,9 +282,8 @@
                      batch-size
                      buffer-size
                      confirm?
-                     store-svc
-                     get-in-config))
-    (handle-deletes migration-state store-keys batch-size confirm? store-svc)))
+                     services))
+    (handle-deletes migration-state store-keys batch-size confirm? services)))
 
 (defn exit [error?]
   (if error?
@@ -328,14 +321,17 @@
     (let [_ (log/info "starting CTIA Stores...")
           app (init/start-ctia!)
           config-svc (app/get-service app :ConfigService)
-          get-in-config #(apply tk-config/get-in-config config-svc %&)
+          get-in-config (partial tk-config/get-in-config config-svc)
           store-svc (app/get-service app :StoreService)
-          _ (mst/setup! store-svc get-in-config)]
+          deref-stores (partial store-svc/deref-stores store-svc)
+          services {:ConfigService {:get-in-config get-in-config}
+                    :StoreService {:deref-stores deref-stores}}
+          _ (mst/setup! services)]
       (doto (prepare-params
               (get-in-config [:ctia :migration]))
         (->> pr-str (log/info "migration started"))
         (check-migration-params get-in-config)
-        (migrate-store-indexes store-svc get-in-config))
+        (migrate-store-indexes services))
       (log/info "migration complete")
       (exit false))
     (catch AssertionError e

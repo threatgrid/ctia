@@ -495,7 +495,8 @@
 
      (let [app (helpers/get-current-app)
            store-svc (app/get-service app :StoreService)
-           {:keys [index conn]} (-> @(store-svc/get-stores store-svc) :tool first :state)
+           deref-stores (partial store-svc/deref-stores store-svc)
+           {:keys [index conn]} (-> (deref-stores) :tool first :state)
        ;; close tool index to produce ES errors on that store
            _ (es-index/close! conn index)
            tools (->> [(mk-new-tool 1)

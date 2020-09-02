@@ -7,8 +7,8 @@
 (tk/defservice es-store-service
   ESStoreService
   [[:ConfigService get-in-config]
-   [:StoreService get-stores]]
+   [:StoreService stores-atom]]
   (start [this context]
          (core/start context
-                     (get-stores)
+                     (stores-atom)
                      get-in-config)))

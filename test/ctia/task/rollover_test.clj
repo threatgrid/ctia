@@ -64,16 +64,17 @@
                                                        {:code :unhappy}))))]
     (let [app (helpers/get-current-app)
           get-in-config (helpers/current-get-in-config-fn app)
+          services {:ConfigService {:get-in-config get-in-config}}
           ok-state (init/init-store-conn {:entity "sighting"
                                           :indexname "ok_index"
                                           :rollover {:max_docs 3}
                                           :aliased true}
-                                         get-in-config)
+                                         services)
           ko-state (init/init-store-conn {:entity "sighting"
                                           :indexname "bbaaaaadddd_index"
                                           :rollover {:max_docs 2}
                                           :aliased true}
-                                         get-in-config)
+                                         services)
           stores {:ok-type-1 [{:state ok-state}]
                   :ok-type-2 [{:state ok-state}]
                   :ok-type-3 [{:state ok-state}]

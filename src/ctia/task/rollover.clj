@@ -49,8 +49,9 @@
                                           es-svc/es-store-service]
                                :config config}))
           store-svc (app/get-service app :StoreService)
+          deref-stores (partial store-svc/deref-stores store-svc)
           {:keys [nb-errors]
-           :as res} (rollover-stores @(store-svc/get-stores store-svc))]
+           :as res} (rollover-stores (deref-stores))]
       (log/info "completed rollover task: " res)
       (if (< 0 nb-errors)
         (do

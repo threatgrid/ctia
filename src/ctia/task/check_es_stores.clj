@@ -118,7 +118,7 @@
   "check all new es store indexes"
   [app batch-size]
   (let [store-svc (app/get-service app :StoreService)
-        current-stores @(store-svc/get-stores store-svc)
+        current-stores (store-svc/deref-stores store-svc)
         batch-size (or batch-size default-batch-size)]
     (log/infof "checking stores: %s" (keys current-stores))
     (log/infof "set batch size: %s" batch-size)

@@ -18,7 +18,7 @@
              :refer
              [get-store-properties init-es-conn! init-store-conn StoreProperties]]
             [ctia.stores.es.mapping :as em]
-            [ctia.stores.es.schemas :refer [ESConnState]]
+            [ctia.stores.es.schemas :refer [ESConnServices ESConnState]]
             [ctia.stores.es.store :as es-store :refer [StoreMap]]
             [ctia.task.rollover :refer [rollover-store]]
             [ctim.domain.id :refer [long-id->id]]
@@ -30,6 +30,18 @@
 (def es-max-retry 3)
 ;;FIXME refactor to local argument
 (defonce migration-es-conn (atom nil))
+
+(s/defschema MigrationStoreServices
+  {:ConfigService {:get-in-config (s/=>* s/Any
+                                         [(s/named s/Any 'path)]
+                                         [(s/named s/Any 'path)
+                                          (s/named s/Any 'default)])}
+   :StoreService {:deref-stores (s/=> s/Any)}})
+
+(s/defn MigrationStoreServices->ESConnServices
+  :- ESConnServices
+  [{{:keys [get-in-config]} :ConfigService} :- MigrationStoreServices]
+  {:ConfigService {:get-in-config get-in-config}})
 
 (def token-mapping
   (dissoc em/token :fielddata))
@@ -48,25 +60,24 @@
                    :started em/ts
                    :completed em/ts}}})
 
-(def ^:private migration-mapping
-  (memoize
-    (fn [store-svc]
-      {"migration"
-       {:dynamic false
-        :properties
-        {:id em/token
-         :timestamp em/ts
-         :stores {:type "object"
-                  :properties (->> (map store-mapping @(store-svc/get-stores store-svc))
-                                   (into {}))}}}})))
+(s/defn migration-mapping [{{:keys [deref-stores]} :StoreService} :- MigrationStoreServices]
+  {"migration"
+   {:dynamic false
+    :properties
+    {:id em/token
+     :timestamp em/ts
+     :stores {:type "object"
+              :properties (->> (map store-mapping (deref-stores))
+                               (into {}))}}}})
 
-(defn migration-store-properties [store-svc get-in-config]
+(s/defn migration-store-properties [{{:keys [get-in-config]} :ConfigService
+                                     :as services} :- MigrationStoreServices]
   (into (get-store-properties :migration get-in-config)
         {:shards 1
          :replicas 1
          :refresh true
          :aliased false
-         :mappings (migration-mapping store-svc)}))
+         :mappings (migration-mapping services)}))
 
 (s/defschema SourceState
   {:index s/Str
@@ -134,10 +145,9 @@
 (s/defn store-migration
   [migration :- MigrationSchema
    conn :- ESConn
-   store-svc
-   get-in-config]
+   services :- MigrationStoreServices]
   (let [prepared (wo-storemaps migration)
-        {:keys [indexname entity]} (migration-store-properties store-svc get-in-config)]
+        {:keys [indexname entity]} (migration-store-properties services)]
     (retry es-max-retry
            es-doc/index-doc
            conn
@@ -182,17 +192,18 @@
 (s/defn store-map->es-conn-state :- ESConnState
   "Transforms a store map in ES lib conn state"
   [conn-state :- StoreMap
-   get-in-config]
+   services :- MigrationStoreServices]
   (-> conn-state 
       (set/rename-keys {:indexname :index})
       (dissoc :mapping :type :settings)
-      (assoc :services {:ConfigService {:get-in-config get-in-config}})))
+      (assoc :services (MigrationStoreServices->ESConnServices
+                         services))))
 
-(defn bulk-metas
+(s/defn bulk-metas
   "prepare bulk data for document ids"
-  [{:keys [mapping] :as store-map} ids get-in-config]
+  [{:keys [mapping] :as store-map} ids services :- MigrationStoreServices]
   (when (seq ids)
-    (-> (store-map->es-conn-state store-map get-in-config)
+    (-> (store-map->es-conn-state store-map services)
         (crud/get-docs-with-indices (keyword mapping) ids {})
         (->> (map (fn [{:keys [_id] :as hit}]
                     {_id (select-keys hit [:_id :_index :_type])}))
@@ -205,7 +216,7 @@
                 modified
                 (not= created modified))))
 
-(defn prepare-docs
+(s/defn prepare-docs
   "Generates the _index, _id and _type meta data for bulk ops.
   By default we set :_index as write-index for all documents.
   In the case of aliased target, write-index is set to the write alias.
@@ -218,7 +229,7 @@
     {:keys [aliased write-index]} :props
     :as store-map}
    docs
-   get-in-config]
+   services :- MigrationStoreServices]
   (let [with-metas (map #(assoc %
                                 :_id (:id %)
                                 :_index write-index
@@ -227,23 +238,23 @@
         {modified true not-modified false} (group-by #(search-real-index? aliased %)
                                                      with-metas)
         modified-by-ids (fmap first (group-by :id modified))
-        bulk-metas-res (bulk-metas store-map (map :id modified) get-in-config)
+        bulk-metas-res (bulk-metas store-map (map :id modified) services)
         prepared-modified (->> bulk-metas-res
                                (merge-with into modified-by-ids)
                                vals)]
     (concat prepared-modified not-modified)))
 
-(defn store-batch
+(s/defn store-batch
   "store a batch of documents using a bulk operation"
   [{:keys [conn mapping] :as store-map}
    batch
-   get-in-config]
+   services :- MigrationStoreServices]
   (log/debugf "%s - storing %s records"
               mapping
               (count batch))
   (retry es-max-retry
          es-doc/bulk-create-doc conn
-         (prepare-docs store-map batch get-in-config)
+         (prepare-docs store-map batch services)
          "false"
          bulk-max-size))
 
@@ -274,13 +285,13 @@ Rollover requires refresh so we cannot just call ES with condition since refresh
     :as store-map} :- StoreMap
    batch-size :- s/Int
    migrated-count :- s/Int
-   get-in-config]
+   services :- MigrationStoreServices]
   (when (rollover? aliased max_docs batch-size migrated-count)
     (log/info (format "%s - refreshing index %s"
                       mapping
                       write-index))
     (es-index/refresh! conn write-index)
-    (rollover-store (store-map->es-conn-state store-map get-in-config))))
+    (rollover-store (store-map->es-conn-state store-map services))))
 
 (s/defn missing-query :- ESQuery
   "implement missing filter through a must_not exists bool query
@@ -432,10 +443,11 @@ Rollover requires refresh so we cannot just call ES with condition since refresh
    since :- s/Inst
    batch-size :- s/Int
    search_after :- (s/maybe [s/Any])
-   store-svc]
+   {{:keys [deref-stores]} :StoreService
+    :as _services_} :- MigrationStoreServices]
   ;; TODO migrate events with mapping enabling to filter on record-type and entity.type
   (let [query {:range {:timestamp {:gte since}}}
-        event-store (store->map (:event @(store-svc/get-stores store-svc)))
+        event-store (store->map (:event (deref-stores)))
         filter-events (fn [{:keys [event_type entity]}]
                         (and (= event_type "record-deleted")
                              (contains? (set entity-types)
@@ -518,19 +530,21 @@ Rollover requires refresh so we cannot just call ES with condition since refresh
 
 (s/defn init-storemap :- StoreMap
   [props :- StoreProperties
-   get-in-config]
-  (-> (init-store-conn props get-in-config)
+   services :- MigrationStoreServices]
+  (-> (init-store-conn props (MigrationStoreServices->ESConnServices
+                               services))
       (es-store/store-state->map conn-overrides)))
 
-(defn get-target-store
-  [prefix store-key get-in-config]
+(s/defn get-target-store
+  [prefix store-key {{:keys [get-in-config]} :ConfigService
+                     :as services} :- MigrationStoreServices]
   (init-storemap (target-store-properties prefix store-key get-in-config)
-                 get-in-config))
+                 services))
 
-(defn get-target-stores
-  [prefix store-keys get-in-config]
+(s/defn get-target-stores
+  [prefix store-keys services :- MigrationStoreServices]
   (->> (map (fn [k]
-              {k (get-target-store prefix k get-in-config)})
+              {k (get-target-store prefix k services)})
             store-keys)
        (into {})))
 
@@ -541,11 +555,11 @@ when confirm? is true, it stores this state and creates the target indices."
    prefix :- s/Str
    store-keys :- [s/Keyword]
    confirm? :- s/Bool
-   store-svc
-   get-in-config]
-  (let [source-stores (stores->maps (select-keys @(store-svc/get-stores store-svc) store-keys))
-        target-stores (get-target-stores prefix store-keys get-in-config)
-        migration-properties (migration-store-properties store-svc get-in-config)
+   {{:keys [deref-stores]} :StoreService
+    :as services} :- MigrationStoreServices]
+  (let [source-stores (stores->maps (select-keys (deref-stores) store-keys))
+        target-stores (get-target-stores prefix store-keys services)
+        migration-properties (migration-store-properties services)
         now (time/internal-now)
         migration-stores (->> source-stores
                               (map (fn [[k v]]
@@ -555,9 +569,11 @@ when confirm? is true, it stores this state and creates the target indices."
                    :prefix prefix
                    :created now
                    :stores migration-stores}
-        es-conn-state (init-es-conn! migration-properties get-in-config)]
+        es-conn-state (init-es-conn! migration-properties
+                                     (MigrationStoreServices->ESConnServices
+                                       services))]
     (when confirm?
-      (store-migration migration (:conn es-conn-state) store-svc get-in-config)
+      (store-migration migration (:conn es-conn-state) services)
       (doseq [[_ target-store] target-stores]
         (create-target-store! target-store)))
     migration))
@@ -566,10 +582,10 @@ when confirm? is true, it stores this state and creates the target indices."
   [entity-type :- s/Keyword
    prefix :- s/Str
    raw-store :- MigratedStore
-   store-svc
-   get-in-config]
-  (let [source-store (store->map (get @(store-svc/get-stores store-svc) entity-type))
-        target-store (get-target-store prefix entity-type get-in-config)]
+   {{:keys [deref-stores]} :StoreService
+    :as services} :- MigrationStoreServices]
+  (let [source-store (store->map (get (deref-stores) entity-type))
+        target-store (get-target-store prefix entity-type services)]
     (-> (assoc-in raw-store [:source :store] source-store)
         (assoc-in [:target :store] target-store))))
 
@@ -583,10 +599,9 @@ when confirm? is true, it stores this state and creates the target indices."
    updates source size"
   [stores :- {s/Keyword MigratedStore}
    prefix :- s/Str
-   store-svc
-   get-in-config]
+   services :- MigrationStoreServices]
   (->> (map (fn [[store-key raw]]
-              {store-key (-> (with-store-map store-key prefix raw store-svc get-in-config)
+              {store-key (-> (with-store-map store-key prefix raw services)
                              update-source-size)})
             stores)
        (into {})))
@@ -596,9 +611,8 @@ when confirm? is true, it stores this state and creates the target indices."
    and add necessary store data for migration (indices, connections, etc.)"
   [migration-id :- s/Str
    es-conn :- ESConn
-   store-svc
-   get-in-config]
-  (let [{:keys [indexname entity]} (migration-store-properties store-svc get-in-config)
+   services :- MigrationStoreServices]
+  (let [{:keys [indexname entity]} (migration-store-properties services)
         {:keys [prefix] :as migration-raw} (retry es-max-retry
                                                   es-doc/get-doc
                                                   es-conn
@@ -611,30 +625,27 @@ when confirm? is true, it stores this state and creates the target indices."
       (log/errorf "migration not found: %s" migration-id)
       (throw (ex-info "migration not found" {:id migration-id})))
     (-> (coerce migration-raw)
-        (update :stores enrich-stores prefix store-svc get-in-config)
-        (store-migration es-conn store-svc get-in-config))))
+        (update :stores enrich-stores prefix services)
+        (store-migration es-conn services))))
 
 (s/defn update-migration-store
   ([migration-id :- s/Str
     store-key :- s/Keyword
     migrated-doc :- PartialMigratedStore
-    store-svc
-    get-in-config]
+    services :- MigrationStoreServices]
    (update-migration-store migration-id
                            store-key
                            migrated-doc
                            (-> migration-es-conn deref (doto (assert "This atom is unset. Maybe some setup hasn't been performed?")))
-                           store-svc
-                           get-in-config))
+                           services))
   
   ([migration-id :- s/Str
     store-key :- s/Keyword
     migrated-doc :- PartialMigratedStore
     es-conn :- ESConn
-    store-svc
-    get-in-config]
+    services :- MigrationStoreServices]
    (let [partial-doc {:stores {store-key migrated-doc}}
-         {:keys [indexname entity]} (migration-store-properties store-svc get-in-config)]
+         {:keys [indexname entity]} (migration-store-properties services)]
      (retry es-max-retry
             es-doc/update-doc
             es-conn
@@ -653,8 +664,7 @@ when confirm? is true, it stores this state and creates the target indices."
    source-store :- StoreMap
    target-store :- StoreMap
    es-conn :- ESConn
-   store-svc
-   get-in-config]
+   services :- MigrationStoreServices]
   (log/infof "%s - update index settings" (:type source-store))
   (retry es-max-retry
          es-index/update-settings!
@@ -667,13 +677,13 @@ when confirm? is true, it stores this state and creates the target indices."
                           store-key
                           {:completed (time/internal-now)}
                           es-conn
-                          store-svc
-                          get-in-config))
+                          services))
 
-(defn setup!
+(s/defn setup!
   "setup store service"
-  [store-svc get-in-config]
+  [services :- MigrationStoreServices]
   (reset! migration-es-conn
-          (-> (migration-store-properties store-svc get-in-config)
-              (init-store-conn get-in-config)
+          (-> (migration-store-properties services)
+              (init-store-conn (MigrationStoreServices->ESConnServices
+                                 services))
               :conn)))

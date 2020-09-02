@@ -214,6 +214,7 @@
                                          "user")
      (let [app (helpers/get-current-app)
            store-svc (app/get-service app :StoreService)
+           deref-stores (partial store-svc/deref-stores store-svc)
            indicators [(mk-indicator 0)
                        (mk-indicator 1)]
            sightings [(mk-sighting 0)
@@ -369,7 +370,7 @@
                        (map :result (:results bundle-result-update)))
                "All existing entities are not updated")))
        (testing "Partial results with errors"
-         (let [indicator-store-state (-> @(store-svc/get-stores store-svc) :indicator first :state)
+         (let [indicator-store-state (-> (deref-stores) :indicator first :state)
                indexname (:index indicator-store-state)
                ;; close indicator index to produce ES errors on that store
                _ (es-index/close! (:conn indicator-store-state) indexname)

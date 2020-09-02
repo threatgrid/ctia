@@ -12,9 +12,11 @@
             [clojure.walk :as walk]
             [ctia.stores.es
              [init :as es-init]
-             [store :as es-store]]
+             [store :as es-store]
+             [schemas :refer [ESConnServices]]]
             [ctia.test-helpers.core :as h]
-            [puppetlabs.trapperkeeper.app :as app]))
+            [puppetlabs.trapperkeeper.app :as app]
+            [schema.core :as s]))
 
 (defn refresh-indices [entity get-in-config]
   (let [{:keys [host port]}
@@ -25,38 +27,41 @@
   ([restore-conn?]
    (let [app (h/get-current-app)
          store-svc (app/get-service app :StoreService)
+         deref-stores (partial store-svc/deref-stores store-svc)
          get-in-config (h/current-get-in-config-fn app)]
      (delete-store-indexes
        restore-conn?
-       store-svc
+       deref-stores
        get-in-config)))
-  ([restore-conn? store-svc get-in-config]
-   (doseq [store-impls (vals @(store-svc/get-stores
-                                store-svc))
+  ([restore-conn? deref-stores get-in-config]
+   (doseq [store-impls (vals (deref-stores))
            {:keys [state]} store-impls]
      (es-store/delete-state-indexes state)
      (when restore-conn?
        (es-init/init-es-conn!
          (es-init/get-store-properties (get-in state [:props :entity])
                                        get-in-config)
-         get-in-config)))))
+         {:ConfigService {:get-in-config get-in-config}})))))
 
 (defn fixture-delete-store-indexes
   "walk through all the es stores delete each store indexes"
   [t]
   (let [app (h/get-current-app)
         store-svc (app/get-service app :StoreService)
+        deref-stores (partial store-svc/deref-stores store-svc)
         get-in-config (h/current-get-in-config-fn app)]
     (try
-      (delete-store-indexes true store-svc get-in-config)
+      (delete-store-indexes true deref-stores get-in-config)
       (t)
       (finally
-        (delete-store-indexes false store-svc get-in-config)))))
+        (delete-store-indexes false deref-stores get-in-config)))))
 
-(defn purge-index [entity get-in-config]
+(s/defn purge-index [entity
+                     {{:keys [get-in-config]} :ConfigService
+                      :as services} :- ESConnServices]
   (let [{:keys [conn index]} (es-init/init-store-conn
                               (es-init/get-store-properties entity get-in-config)
-                              get-in-config)]
+                              services)]
     (when conn
       (es-index/delete! conn (str index "*")))))
 
@@ -64,13 +69,14 @@
   "walk through all producers and delete their index"
   [t]
   (let [app (h/get-current-app)
-        get-in-config (h/current-get-in-config-fn app)]
-    (purge-index :event get-in-config)
+        get-in-config (h/current-get-in-config-fn app)
+        services {:ConfigService {:get-in-config get-in-config}}]
+    (purge-index :event services)
     (t)
-    (purge-index :event get-in-config)))
+    (purge-index :event services)))
 
-(defn purge-indexes [store-svc get-in-config]
-  (doseq [entity (keys @(store-svc/get-stores store-svc))]
+(defn purge-indexes [deref-stores get-in-config]
+  (doseq [entity (keys (deref-stores))]
     (purge-index entity get-in-config)))
 
 (defn fixture-purge-indexes
@@ -78,11 +84,12 @@
   [t]
   (let [app (h/get-current-app)
         store-svc (app/get-service app :StoreService)
+        deref-stores (partial store-svc/deref-stores store-svc)
         get-in-config (h/current-get-in-config-fn app)]
     (try
-      (purge-indexes store-svc get-in-config)
+      (purge-indexes deref-stores get-in-config)
       (t)
-      (finally (purge-indexes store-svc get-in-config)))))
+      (finally (purge-indexes deref-stores get-in-config)))))
 
 (defn fixture-properties:es-store [t]
   ;; Note: These properties may be overwritten by ENV variables
