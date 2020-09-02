@@ -108,9 +108,9 @@
   (e/init!)
 
   ;; metrics reporters init
-  (riemann/init!)
-  (jmx/init!)
-  (console/init!)
+  (riemann/init! p/get-in-global-properties)
+  (jmx/init! p/get-in-global-properties)
+  (console/init! p/get-in-global-properties)
 
   ;; register event file logging only when enabled
   (when (p/get-in-global-properties [:ctia :events :log])

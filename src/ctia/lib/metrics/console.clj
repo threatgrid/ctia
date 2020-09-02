@@ -2,8 +2,8 @@
   (:require [clj-momo.lib.metrics.console :as console]
             [ctia.properties :as p]))
 
-(defn init! []
+(defn init! [get-in-config]
   (let [{:keys [enabled interval]}
-        (p/get-in-global-properties [:ctia :metrics :console])]
+        (get-in-config [:ctia :metrics :console])]
     (when enabled
       (console/start interval))))
