@@ -119,19 +119,18 @@
      (if-let [updated
               (flows/patch-flow
                :services services
-               :get-fn (fn [_]
-                         (read-store :asset-mapping
-                                     ctia.store/read-record
-                                     id
-                                     identity-map
-                                     {}))
+               :get-fn (fn [_] (read-store :asset-mapping
+                                           ctia.store/read-record
+                                           id
+                                           identity-map
+                                           {}))
                :realize-fn realize-asset-mapping
                :update-fn #(write-store :asset-mapping
-                                       ctia.store/update-record
-                                       (:id %)
-                                       (assoc-in % [:valid_time :end_time] (time/internal-now))
-                                       identity-map
-                                       {})
+                                        ctia.store/update-record
+                                        (:id %)
+                                        (assoc-in % [:valid_time :end_time] (time/internal-now))
+                                        identity-map
+                                        {})
                :long-id-fn #(entities/with-long-id % get-in-config)
                :entity-type :asset-mapping
                :entity-id id
