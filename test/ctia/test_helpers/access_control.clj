@@ -224,7 +224,9 @@
   (with-redefs [cdac/max-record-visibility-everyone?
                 (constantly false)]
     (testing "Green Max Record Visibility set to `Group`"
-      (is (false? (cdac/max-record-visibility-everyone?)))
+      (is (false? (cdac/max-record-visibility-everyone?
+                    ;; dummy get-in-config, since this is a tautological test
+                    (constantly nil))))
 
       (let [player-1-entity-post
             (post (format "ctia/%s" entity)

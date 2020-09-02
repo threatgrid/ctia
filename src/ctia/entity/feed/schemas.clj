@@ -115,4 +115,4 @@
              :tlp
              (:tlp new-object
                    (:tlp prev-object
-                         (properties-default-tlp)))}))))
+                         (properties-default-tlp p/get-in-global-properties)))}))))

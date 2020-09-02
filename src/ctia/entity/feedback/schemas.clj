@@ -1,7 +1,6 @@
 (ns ctia.entity.feedback.schemas
   (:require [clj-momo.lib.time :as time]
             [ctia.domain
-             [access-control :refer [properties-default-tlp]]
              [entities :refer [default-realize-fn]]]
             [ctia.schemas
              [utils :as csu]
