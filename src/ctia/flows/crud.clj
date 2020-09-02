@@ -8,7 +8,6 @@
             [clojure.tools.logging :as log]
             [ctia
              [auth :as auth]
-             [properties :as p]
              [store :as store]]
             [ctia.domain
              [access-control :refer [allowed-tlp? allowed-tlps]]

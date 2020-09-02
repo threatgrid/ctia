@@ -957,35 +957,36 @@
   (helpers/with-config-transformer*
     #(assoc-in % [:ctia :access-control] {:default-tlp "amber"
                                           :min-tlp "amber"})
-    #(fixtures
-       (fn []
-         (testing "TLP Settings Enforcement"
-           (let [;; verify the with-config-transformer* call above--it's possible
-                 ;; a fixture could override it since we call it first
-                 get-in-config (helpers/current-get-in-config-fn)
-                 _ (assert (= (get-in-config [:ctia :access-control])
-                              {:default-tlp "amber"
-                               :min-tlp "amber"})
-                           (get-in-config [:ctia :access-control]))
-                 
-                 {status-default-tlp :status
-                  body-default-tlp :parsed-body}
-                 (post (format "ctia/%s" entity)
-                       :body (dissoc new-entity :tlp)
-                       :headers {"Authorization" "player-1-token"})
-                 {status-disallowed-tlp :status
-                  body-disallowed-tlp :parsed-body}
-                 (post (format "ctia/%s" entity)
-                       :body (assoc new-entity :tlp "white")
-                       :headers {"Authorization" "player-1-token"})]
+    (fn []
+      (fixtures
+        (fn []
+          (testing "TLP Settings Enforcement"
+            (let [;; verify the with-config-transformer* call above--it's possible
+                  ;; a fixture could override it since we call it first
+                  get-in-config (helpers/current-get-in-config-fn)
+                  _ (assert (= (get-in-config [:ctia :access-control])
+                               {:default-tlp "amber"
+                                :min-tlp "amber"})
+                            (get-in-config [:ctia :access-control]))
 
-             (is (= 201 status-default-tlp))
-             (is (= "amber" (:tlp body-default-tlp)))
+                  {status-default-tlp :status
+                   body-default-tlp :parsed-body}
+                  (post (format "ctia/%s" entity)
+                        :body (dissoc new-entity :tlp)
+                        :headers {"Authorization" "player-1-token"})
+                  {status-disallowed-tlp :status
+                   body-disallowed-tlp :parsed-body}
+                  (post (format "ctia/%s" entity)
+                        :body (assoc new-entity :tlp "white")
+                        :headers {"Authorization" "player-1-token"})]
+
+              (is (= 201 status-default-tlp))
+              (is (= "amber" (:tlp body-default-tlp)))
 
 
-             (is (= 400 status-disallowed-tlp))
-             (is (= "Invalid document TLP white, allowed TLPs are: amber,red"
-                    (:message body-disallowed-tlp)))))))))
+              (is (= 400 status-disallowed-tlp))
+              (is (= "Invalid document TLP white, allowed TLPs are: amber,red"
+                     (:message body-disallowed-tlp))))))))))
 
 ;; the body of this function must change the current TK config
 ;; via test-access-control-tlp-settings. This is only possible by starting a new app.
@@ -1029,29 +1030,30 @@
                          (setup!)
                          (f)))))
         
-        test-default-config #(do (test-access-control-entity-tlp-green
-                                   {:entity entity
-                                    :new-entity new-entity
-                                    :can-update? can-update?
-                                    :can-delete? can-delete?})
+        test-default-config (fn []
+                              (test-access-control-entity-tlp-green
+                                {:entity entity
+                                 :new-entity new-entity
+                                 :can-update? can-update?
+                                 :can-delete? can-delete?})
 
-                                 (test-access-control-entity-tlp-green-max-record-visibility-group
-                                   {:entity entity
-                                    :new-entity new-entity
-                                    :can-update? can-update?
-                                    :can-delete? can-delete?})
+                              (test-access-control-entity-tlp-green-max-record-visibility-group
+                                {:entity entity
+                                 :new-entity new-entity
+                                 :can-update? can-update?
+                                 :can-delete? can-delete?})
 
-                                 (test-access-control-entity-tlp-amber
-                                   {:entity entity
-                                    :new-entity new-entity
-                                    :can-update? can-update?
-                                    :can-delete? can-delete?})
+                              (test-access-control-entity-tlp-amber
+                                {:entity entity
+                                 :new-entity new-entity
+                                 :can-update? can-update?
+                                 :can-delete? can-delete?})
 
-                                 (test-access-control-entity-tlp-red
-                                   {:entity entity
-                                    :new-entity new-entity
-                                    :can-update? can-update?
-                                    :can-delete? can-delete?}))]
+                              (test-access-control-entity-tlp-red
+                                {:entity entity
+                                 :new-entity new-entity
+                                 :can-update? can-update?
+                                 :can-delete? can-delete?}))]
     ;; we don't need to change TK config here, so we can call
     ;; the fixtures immediately.
     (fixtures test-default-config)

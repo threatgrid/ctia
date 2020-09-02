@@ -84,59 +84,59 @@
 
 (deftest allow-read?-tlp-white-test
   (testing "white TLP should allow document read to everyone"
-   (let [get-in-config (helpers/build-get-in-config-fn)
-         allow-read? #(sut/allow-read? %1 %2 get-in-config)]
-    (test-matching-user "white" allow-read? true?)
-    (test-matching-group "white" allow-read? true?)
-    (test-user-group-mismatch "white" allow-read? true?)
-    (test-no-group "white" allow-read? true?)
-    (test-authorized_users-mismatch "white" allow-read? true?)
-    (test-authorized_groups-mismatch "white" allow-read? true?)
-    (test-authorized_users-match "white" allow-read? true?)
-    (test-authorized_groups-match "white" allow-read? true?)
-    (test-authorized-anonymous "white" allow-read? true?))))
+    (let [get-in-config (helpers/build-get-in-config-fn)
+          allow-read? #(sut/allow-read? %1 %2 get-in-config)]
+      (test-matching-user "white" allow-read? true?)
+      (test-matching-group "white" allow-read? true?)
+      (test-user-group-mismatch "white" allow-read? true?)
+      (test-no-group "white" allow-read? true?)
+      (test-authorized_users-mismatch "white" allow-read? true?)
+      (test-authorized_groups-mismatch "white" allow-read? true?)
+      (test-authorized_users-match "white" allow-read? true?)
+      (test-authorized_groups-match "white" allow-read? true?)
+      (test-authorized-anonymous "white" allow-read? true?))))
 
 (deftest allow-read?-tlp-green-test
   (testing "green TLPs should allow document read to everyone"
-   (let [get-in-config (helpers/build-get-in-config-fn)
-         allow-read? #(sut/allow-read? %1 %2 get-in-config)]
-    (test-matching-user "green" allow-read? true?)
-    (test-matching-group "green" allow-read? true?)
-    (test-no-group "green" allow-read? true?)
-    (test-user-group-mismatch "green" allow-read? true?)
-    (test-authorized_users-mismatch "green" allow-read? true?)
-    (test-authorized_groups-mismatch "green" allow-read? true?)
-    (test-authorized_users-match "green" allow-read? true?)
-    (test-authorized_groups-match "green" allow-read? true?)
-    (test-authorized-anonymous "green" allow-read? true?))))
+    (let [get-in-config (helpers/build-get-in-config-fn)
+          allow-read? #(sut/allow-read? %1 %2 get-in-config)]
+      (test-matching-user "green" allow-read? true?)
+      (test-matching-group "green" allow-read? true?)
+      (test-no-group "green" allow-read? true?)
+      (test-user-group-mismatch "green" allow-read? true?)
+      (test-authorized_users-mismatch "green" allow-read? true?)
+      (test-authorized_groups-mismatch "green" allow-read? true?)
+      (test-authorized_users-match "green" allow-read? true?)
+      (test-authorized_groups-match "green" allow-read? true?)
+      (test-authorized-anonymous "green" allow-read? true?))))
 
 (deftest allow-read?-tlp-amber-test
   (testing "amber TLPs should allow document read to same group"
-   (let [get-in-config (helpers/build-get-in-config-fn)
-         allow-read? #(sut/allow-read? %1 %2 get-in-config)]
-    (test-matching-user "amber" allow-read? true?)
-    (test-matching-group "amber" allow-read? true?)
-    (test-no-group "amber" allow-read? false?)
-    (test-user-group-mismatch "amber" allow-read? false?)
-    (test-authorized_users-mismatch "amber" allow-read? false?)
-    (test-authorized_groups-mismatch "amber" allow-read? false?)
-    (test-authorized_users-match "amber" allow-read? true?)
-    (test-authorized_groups-match "amber" allow-read? true?)
-    (test-authorized-anonymous "amber" allow-read? true?))))
+    (let [get-in-config (helpers/build-get-in-config-fn)
+          allow-read? #(sut/allow-read? %1 %2 get-in-config)]
+      (test-matching-user "amber" allow-read? true?)
+      (test-matching-group "amber" allow-read? true?)
+      (test-no-group "amber" allow-read? false?)
+      (test-user-group-mismatch "amber" allow-read? false?)
+      (test-authorized_users-mismatch "amber" allow-read? false?)
+      (test-authorized_groups-mismatch "amber" allow-read? false?)
+      (test-authorized_users-match "amber" allow-read? true?)
+      (test-authorized_groups-match "amber" allow-read? true?)
+      (test-authorized-anonymous "amber" allow-read? true?))))
 
 (deftest allow-read?-tlp-red-test
   (testing "red TLPs should allow document read to owner only"
-   (let [get-in-config (helpers/build-get-in-config-fn)
-         allow-read? #(sut/allow-read? %1 %2 get-in-config)]
-    (test-matching-user "red" allow-read? true?)
-    (test-matching-group "red" allow-read? false?)
-    (test-no-group "red" allow-read? false?)
-    (test-user-group-mismatch "red" allow-read? false?)
-    (test-authorized_users-mismatch "red" allow-read? false?)
-    (test-authorized_groups-mismatch "red" allow-read? false?)
-    (test-authorized_users-match "red" allow-read? true?)
-    (test-authorized_groups-match "red" allow-read? true?)
-    (test-authorized-anonymous "red" allow-read? true?))))
+    (let [get-in-config (helpers/build-get-in-config-fn)
+          allow-read? #(sut/allow-read? %1 %2 get-in-config)]
+      (test-matching-user "red" allow-read? true?)
+      (test-matching-group "red" allow-read? false?)
+      (test-no-group "red" allow-read? false?)
+      (test-user-group-mismatch "red" allow-read? false?)
+      (test-authorized_users-mismatch "red" allow-read? false?)
+      (test-authorized_groups-mismatch "red" allow-read? false?)
+      (test-authorized_users-match "red" allow-read? true?)
+      (test-authorized_groups-match "red" allow-read? true?)
+      (test-authorized-anonymous "red" allow-read? true?))))
 
 
 ;; ---- Max record visibility group
@@ -150,59 +150,59 @@
 
 (deftest allow-read?-tlp-white-max-record-visibility-group-test
   (with-max-record-visibility-group
-   (fn [get-in-config]
-    (let [allow-read? #(sut/allow-read? %1 %2 get-in-config)]
-     (testing "white TLP should disallow document read to everyone"
-       (test-matching-user "white" allow-read? true?)
-       (test-matching-group "white" allow-read? true?)
-       (test-user-group-mismatch "white" allow-read? false?)
-       (test-no-group "white" allow-read? false?)
-       (test-authorized_users-mismatch "white" allow-read? false?)
-       (test-authorized_groups-mismatch "white" allow-read? false?)
-       (test-authorized_users-match "white" allow-read? true?)
-       (test-authorized_groups-match "white" allow-read? true?))))))
+    (fn [get-in-config]
+      (let [allow-read? #(sut/allow-read? %1 %2 get-in-config)]
+        (testing "white TLP should disallow document read to everyone"
+          (test-matching-user "white" allow-read? true?)
+          (test-matching-group "white" allow-read? true?)
+          (test-user-group-mismatch "white" allow-read? false?)
+          (test-no-group "white" allow-read? false?)
+          (test-authorized_users-mismatch "white" allow-read? false?)
+          (test-authorized_groups-mismatch "white" allow-read? false?)
+          (test-authorized_users-match "white" allow-read? true?)
+          (test-authorized_groups-match "white" allow-read? true?))))))
 
 (deftest allow-read?-tlp-green-max-record-visibility-group-test
   (with-max-record-visibility-group
-   (fn [get-in-config]
-    (let [allow-read? #(sut/allow-read? %1 %2 get-in-config)]
-     (testing "green TLPs should disallow document read to everyone"
-       (test-matching-user "green" allow-read? true?)
-       (test-matching-group "green" allow-read? true?)
-       (test-no-group "green" allow-read? false?)
-       (test-user-group-mismatch "green" allow-read? false?)
-       (test-authorized_users-mismatch "green" allow-read? false?)
-       (test-authorized_groups-mismatch "green" allow-read? false?)
-       (test-authorized_users-match "green" allow-read? true?)
-       (test-authorized_groups-match "green" allow-read? true?))))))
+    (fn [get-in-config]
+      (let [allow-read? #(sut/allow-read? %1 %2 get-in-config)]
+        (testing "green TLPs should disallow document read to everyone"
+          (test-matching-user "green" allow-read? true?)
+          (test-matching-group "green" allow-read? true?)
+          (test-no-group "green" allow-read? false?)
+          (test-user-group-mismatch "green" allow-read? false?)
+          (test-authorized_users-mismatch "green" allow-read? false?)
+          (test-authorized_groups-mismatch "green" allow-read? false?)
+          (test-authorized_users-match "green" allow-read? true?)
+          (test-authorized_groups-match "green" allow-read? true?))))))
 
 (deftest allow-read?-tlp-amber-max-record-visibility-group-test
   (with-max-record-visibility-group
-   (fn [get-in-config]
-    (let [allow-read? #(sut/allow-read? %1 %2 get-in-config)]
-     (testing "amber TLPs should allow document read to same group"
-       (test-matching-user "amber" allow-read? true?)
-       (test-matching-group "amber" allow-read? true?)
-       (test-no-group "amber" allow-read? false?)
-       (test-user-group-mismatch "amber" allow-read? false?)
-       (test-authorized_users-mismatch "amber" allow-read? false?)
-       (test-authorized_groups-mismatch "amber" allow-read? false?)
-       (test-authorized_users-match "amber" allow-read? true?)
-       (test-authorized_groups-match "amber" allow-read? true?))))))
+    (fn [get-in-config]
+      (let [allow-read? #(sut/allow-read? %1 %2 get-in-config)]
+        (testing "amber TLPs should allow document read to same group"
+          (test-matching-user "amber" allow-read? true?)
+          (test-matching-group "amber" allow-read? true?)
+          (test-no-group "amber" allow-read? false?)
+          (test-user-group-mismatch "amber" allow-read? false?)
+          (test-authorized_users-mismatch "amber" allow-read? false?)
+          (test-authorized_groups-mismatch "amber" allow-read? false?)
+          (test-authorized_users-match "amber" allow-read? true?)
+          (test-authorized_groups-match "amber" allow-read? true?))))))
 
 (deftest allow-read?-tlp-red-max-record-visibility-group-test
   (with-max-record-visibility-group
-   (fn [get-in-config]
-    (let [allow-read? #(sut/allow-read? %1 %2 get-in-config)]
-     (testing "red TLPs should allow document read to owner only"
-       (test-matching-user "red" allow-read? true?)
-       (test-matching-group "red" allow-read? false?)
-       (test-no-group "red" allow-read? false?)
-       (test-user-group-mismatch "red" allow-read? false?)
-       (test-authorized_users-mismatch "red" allow-read? false?)
-       (test-authorized_groups-mismatch "red" allow-read? false?)
-       (test-authorized_users-match "red" allow-read? true?)
-       (test-authorized_groups-match "red" allow-read? true?))))))
+    (fn [get-in-config]
+      (let [allow-read? #(sut/allow-read? %1 %2 get-in-config)]
+        (testing "red TLPs should allow document read to owner only"
+          (test-matching-user "red" allow-read? true?)
+          (test-matching-group "red" allow-read? false?)
+          (test-no-group "red" allow-read? false?)
+          (test-user-group-mismatch "red" allow-read? false?)
+          (test-authorized_users-mismatch "red" allow-read? false?)
+          (test-authorized_groups-mismatch "red" allow-read? false?)
+          (test-authorized_users-match "red" allow-read? true?)
+          (test-authorized_groups-match "red" allow-read? true?))))))
 
 
 ;; -- Write tests
