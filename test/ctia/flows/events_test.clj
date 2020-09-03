@@ -25,7 +25,7 @@
 
   (testing "Events are published to es"
     (let [app (test-helpers/get-current-app)
-          read-store (-> (helpers/get-service-map app :StoreService)
+          read-store (-> (test-helpers/get-service-map app :StoreService)
                          :read-store
                          store-svc/store-service-fn->varargs)
           {{judgement-1-long-id :id
