@@ -15,12 +15,8 @@
   (test-for-each-store
    (fn []
     (let [app (helpers/get-current-app)
-          store-svc (app/get-service app :StoreService)
-          [write-store read-store] (mapv (comp store-svc/store-service-fn->varargs
-                                               #(fn [store f]
-                                                  (% store-svc store f)))
-                                         [store-svc/write-store
-                                          store-svc/read-store])]
+          {:keys [read-store write-store]} (-> (helpers/get-service-map app :StoreService)
+                                               store-svc/lift-store-service-fns)]
      (testing "Reading not-found identity returns nil"
 
        (write-store :identity

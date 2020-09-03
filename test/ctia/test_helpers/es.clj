@@ -7,8 +7,7 @@
              [index :as es-index]]
             [clojure.java.io :as io]
             [ctia
-             [store :as store]
-             [store-service :as store-svc]]
+             [store :as store]]
             [clojure.walk :as walk]
             [ctia.stores.es
              [init :as es-init]
@@ -40,9 +39,8 @@
 (defn delete-store-indexes
   ([restore-conn?]
    (let [app (h/get-current-app)
-         store-svc (app/get-service app :StoreService)
-         deref-stores (partial store-svc/deref-stores store-svc)
-         get-in-config (h/current-get-in-config-fn app)]
+         {:keys [get-in-config]} (h/get-service-map app :ConfigService)
+         {:keys [deref-stores]} (h/get-service-map app :StoreService)]
      (delete-store-indexes
        restore-conn?
        deref-stores
@@ -61,9 +59,8 @@
   "walk through all the es stores delete each store indexes"
   [t]
   (let [app (h/get-current-app)
-        store-svc (app/get-service app :StoreService)
-        deref-stores (partial store-svc/deref-stores store-svc)
-        get-in-config (h/current-get-in-config-fn app)]
+        {:keys [get-in-config]} (h/get-service-map app :ConfigService)
+        {:keys [deref-stores]} (h/get-service-map app :StoreService)]
     (try
       (delete-store-indexes true deref-stores get-in-config)
       (t)
@@ -98,9 +95,8 @@
   "walk through all producers and delete their index"
   [t]
   (let [app (h/get-current-app)
-        store-svc (app/get-service app :StoreService)
-        deref-stores (partial store-svc/deref-stores store-svc)
-        get-in-config (h/current-get-in-config-fn app)]
+        {:keys [get-in-config]} (h/get-service-map app :ConfigService)
+        {:keys [deref-stores]} (h/get-service-map app :StoreService)]
     (try
       (purge-indexes deref-stores get-in-config)
       (t)

@@ -26,8 +26,14 @@
             [flanders
              [spec :as fs]
              [utils :as fu]]
-            [puppetlabs.trapperkeeper.app :as app]
-            [puppetlabs.trapperkeeper.config :as tk-config]))
+            [puppetlabs.trapperkeeper.app :as app]))
+
+(defn get-service-map [app svc-kw]
+  {:pre [(keyword? svc-kw)]}
+  (let [graph (app/service-graph app)
+        m (svc-kw graph)]
+    (assert (map? m) (str "No service " svc-kw ", found " (keys graph)))
+    m))
 
 (def ^:dynamic ^:private *current-app*)
 (def ^:dynamic ^:private *props-transformers* [])
@@ -220,9 +226,10 @@
 (defn current-get-in-config-fn
   ([] (current-get-in-config-fn (get-current-app)))
   ([app]
-   (let [ConfigService (app/get-service app :ConfigService)
-         get-in-config #(apply tk-config/get-in-config ConfigService %&)]
-     get-in-config)))
+   {:post [%]}
+   (-> app
+       (helpers/get-service-map :ConfigService)
+       :get-in-config)))
 
 (defn fixture-ctia
   ([t] (fixture-ctia t true))
@@ -272,9 +279,8 @@
 (defn set-capabilities!
   [login groups role caps]
   (let [app (get-current-app)
-        store-svc (app/get-service app :StoreService)
-        write-store (-> #(store-svc/write-store store-svc %1 %2)
-                        store-svc/store-service-fn->varargs)]
+        {:keys [write-store]} (-> (get-service-map app :StoreService)
+                                  store-svc/lift-store-service-fns)]
     (write-store :identity store/create-identity {:login login
                                                       :groups groups
                                                       :role role
@@ -427,10 +433,3 @@
       (f)
       (reset! uuid-counter
               uuid-counter-start))))
-
-(defn get-service-map [app svc-kw]
-  {:pre [(keyword? svc-kw)]}
-  (let [graph (app/service-graph app)
-        m (svc-kw graph)]
-    (assert (map? m) (str "No service " svc-kw ", found " (keys graph)))
-    m))

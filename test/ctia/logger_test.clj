@@ -1,6 +1,5 @@
 (ns ctia.logger-test
-  (:require [ctia.events :as events-svc]
-            [ctia.test-helpers
+  (:require [ctia.test-helpers
              [core :as test-helpers]
              [es :as es-helpers]]
             [ctia.entity.event.obj-to-event :as o2e]
@@ -18,7 +17,7 @@
 
 (deftest test-logged
   (let [app (test-helpers/get-current-app)
-        events-svc (app/get-service app :EventsService)
+        {:keys [send-event]} (test-helpers/get-service-map app :EventsService)
         
         sb (StringBuilder.)
         patched-log (fn [logger
@@ -28,26 +27,22 @@
                       (.append sb message)
                       (.append sb "\n"))]
     (with-redefs [log/log* patched-log]
-      (events-svc/send-event
-        events-svc
-        (o2e/to-create-event
-          {:owner "tester"
-           :groups ["foo"]
-           :id "test-1"
-           :type :test
-           :tlp "green"
-           :data 1}
-          "test-1"))
-      (events-svc/send-event
-        events-svc
-        (o2e/to-create-event
-          {:owner "tester"
-           :groups ["foo"]
-           :id "test-2"
-           :type :test
-           :tlp "green"
-           :data 2}
-          "test-2"))
+      (send-event (o2e/to-create-event
+                    {:owner "tester"
+                     :groups ["foo"]
+                     :id "test-1"
+                     :type :test
+                     :tlp "green"
+                     :data 1}
+                    "test-1"))
+      (send-event (o2e/to-create-event
+                    {:owner "tester"
+                     :groups ["foo"]
+                     :id "test-2"
+                     :type :test
+                     :tlp "green"
+                     :data 2}
+                    "test-2"))
       (Thread/sleep 100)   ;; wait until the go loop is done
       (let [scrubbed (-> (str sb)
                          (str/replace #"#inst \"[^\"]*\"" "#inst \"\"")

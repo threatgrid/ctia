@@ -63,7 +63,7 @@
 
 (defn fixture-clean-migration [t]
  (let [app (helpers/get-current-app)
-       get-in-config (helpers/current-get-in-config-fn app)]
+       {:keys [get-in-config]} (helpers/get-service-map app :ConfigService)]
   (t)
   (es-index/delete! (es-conn get-in-config) "v0.0.0*")
   (es-index/delete! (es-conn get-in-config)
@@ -156,14 +156,14 @@
                                (assoc-in [:malware 0 :state :props :indexname]
                                          "v1.2.0_ctia_malware"))
         (let [app (helpers/get-current-app)
-              get-in-config (helpers/current-get-in-config-fn app)]
+              {:keys [get-in-config]} (helpers/get-service-map app :ConfigService)]
           (is (thrown? AssertionError
                        (sut/check-migration-params migration-params
                                                    get-in-config))
               "source and target store must be different")))
       (with-each-fixtures identity
         (let [app (helpers/get-current-app)
-              get-in-config (helpers/current-get-in-config-fn app)]
+              {:keys [get-in-config]} (helpers/get-service-map app :ConfigService)]
           (is (thrown? ExceptionInfo
                        (sut/check-migration-params (update migration-params
                                                            :migrations
@@ -173,7 +173,7 @@
     (testing "properly configured migration"
       (with-each-fixtures identity
         (let [app (helpers/get-current-app)
-              get-in-config (helpers/current-get-in-config-fn app)]
+              {:keys [get-in-config]} (helpers/get-service-map app :ConfigService)]
           (is (sut/check-migration-params migration-params
                                           get-in-config)))))))
 
@@ -207,9 +207,8 @@
                                       "user")
   (testing "migration with rollover and multiple indices for source stores"
     (let [app (helpers/get-current-app)
-          store-svc (app/get-service app :StoreService)
-          deref-stores (partial store-svc/deref-stores store-svc)
-          get-in-config (helpers/current-get-in-config-fn app)
+          {:keys [get-in-config]} (helpers/get-service-map app :ConfigService)
+          {:keys [deref-stores]} (helpers/get-service-map app :StoreService)
           services (app->MigrationStoreServices app)
 
           store-types [:malware :tool :incident]]
@@ -252,7 +251,8 @@
  (with-each-fixtures identity
   (with-open [rdr (io/reader "./test/data/indices/sample-relationships-1000.json")]
     (let [app (helpers/get-current-app)
-          get-in-config (helpers/current-get-in-config-fn app)
+          {:keys [get-in-config]} (helpers/get-service-map app :ConfigService)
+
           storemap {:conn (es-conn get-in-config)
                     :indexname "ctia_relationship"
                     :mapping "relationship"
@@ -343,7 +343,7 @@
  (with-each-fixtures identity
   (with-open [rdr (io/reader "./test/data/indices/sample-relationships-1000.json")]
     (let [app (helpers/get-current-app)
-          get-in-config (helpers/current-get-in-config-fn app)
+          {:keys [get-in-config]} (helpers/get-service-map app :ConfigService)
           services (app->MigrationStoreServices app)
 
           prefix "0.0.1"
@@ -441,7 +441,7 @@
  (with-each-fixtures identity
   (with-open [rdr (io/reader "./test/data/indices/sample-relationships-1000.json")]
     (let [app (helpers/get-current-app)
-          get-in-config (helpers/current-get-in-config-fn app)
+          {:keys [get-in-config]} (helpers/get-service-map app :ConfigService)
           services (app->MigrationStoreServices app)
 
           {wo-modified true
@@ -515,9 +515,8 @@
                                       "user")
   (testing "migration with malformed documents in store"
     (let [app (helpers/get-current-app)
-          store-svc (app/get-service app :StoreService)
-          deref-stores (partial store-svc/deref-stores store-svc)
-          get-in-config (helpers/current-get-in-config-fn app)
+          {:keys [get-in-config]} (helpers/get-service-map app :ConfigService)
+          {:keys [deref-stores]} (helpers/get-service-map app :StoreService)
           services (app->MigrationStoreServices app)
 
           store-types [:malware :tool :incident]
@@ -574,9 +573,8 @@
                                       "foogroup"
                                       "user")
   (let [app (helpers/get-current-app)
-        store-svc (app/get-service app :StoreService)
-        deref-stores (partial store-svc/deref-stores store-svc)
-        get-in-config (helpers/current-get-in-config-fn app)
+        {:keys [get-in-config]} (helpers/get-service-map app :ConfigService)
+        {:keys [deref-stores]} (helpers/get-service-map app :StoreService)
         services (app->MigrationStoreServices app)]
     ;; insert proper documents
     (rollover-post-bulk deref-stores)
@@ -601,9 +599,8 @@
                                        {})))))))
   (testing "migrate es indexes"
     (let [app (helpers/get-current-app)
-          store-svc (app/get-service app :StoreService)
-          deref-stores (partial store-svc/deref-stores store-svc)
-          get-in-config (helpers/current-get-in-config-fn app)
+          {:keys [get-in-config]} (helpers/get-service-map app :ConfigService)
+          {:keys [deref-stores]} (helpers/get-service-map app :StoreService)
           services (app->MigrationStoreServices app)
 
           logger (atom [])]
@@ -850,7 +847,7 @@
     (post-bulk bundle))
   (doseq [batch-size [1000 3000 6000 10000]]
     (let [app (helpers/get-current-app)
-          get-in-config (helpers/current-get-in-config-fn app)
+          {:keys [get-in-config]} (helpers/get-service-map app :ConfigService)
           services (app->MigrationStoreServices app)
 
           total-docs (* (count @example-types) 20000)

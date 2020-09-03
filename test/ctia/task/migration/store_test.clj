@@ -557,9 +557,8 @@
 (deftest prepare-docs-test
   ;; insert elements in different indices, modify some and check that we retrieve the right one
   (let [app (helpers/get-current-app)
-        store-svc (app/get-service app :StoreService)
-        get-in-config (helpers/current-get-in-config-fn app)
-        deref-stores (partial store-svc/deref-stores store-svc)
+        {:keys [get-in-config]} (helpers/get-service-map app :ConfigService)
+        {:keys [deref-stores]} (helpers/get-service-map app :StoreService)
         services (app->MigrationStoreServices app)
 
         sighting-store-map {:conn (es-conn get-in-config)

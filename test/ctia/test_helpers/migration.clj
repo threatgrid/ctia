@@ -8,8 +8,7 @@
 (s/defn app->MigrationStoreServices
   :- MigrationStoreServices
   [app]
-  (let [store-svc (app/get-service app :StoreService)
-        deref-stores (partial store-svc/deref-stores store-svc)
-        get-in-config (helpers/current-get-in-config-fn app)]
-    {:ConfigService {:get-in-config get-in-config}
-     :StoreService {:deref-stores deref-stores}}))
+  {:ConfigService (-> (helpers/get-service-map app :ConfigService)
+                      (select-keys [:get-in-config]))
+   :StoreService (-> (helpers/get-service-map app :StoreService)
+                     (select-keys [:deref-stores]))})

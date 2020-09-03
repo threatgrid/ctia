@@ -26,9 +26,8 @@
     (is (= {:status 200 :body "test"}
            (let [handler (fn [request] {:status 200 :body (or (:body request)
                                                               "empty body")})
-                 auth-service (app/get-service app :IAuth)
-                 _ (assert auth-service)
+                 {:keys [identity-for-token]} (helpers/get-service-map app :IAuth)
+                 _ (assert identity-for-token)
                  request {:body "test"}]
-             ((sut/testable-wrap-authentication handler
-                                                #(identity-for-token auth-service %))
+             ((sut/testable-wrap-authentication handler identity-for-token)
               request))))))
