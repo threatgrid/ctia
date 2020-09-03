@@ -1,6 +1,7 @@
 (ns ctia.stores.es.init-test
   (:require [ctia.stores.es.init :as sut]
             [ctia.test-helpers.core :as helpers]
+            [ctia.test-helpers.es :refer [->ESConnServices]]
             [clj-http.client :as http]
             [ctia.stores.es.mapping :as m]
             [clj-momo.lib.es
@@ -33,8 +34,7 @@
 
 (deftest init-store-conn-test
   (testing "init store conn should return a proper conn state with unaliased conf"
-    (let [get-in-config (helpers/build-get-in-config-fn)
-          services {:ConfigService {:get-in-config get-in-config}}
+    (let [services (->ESConnServices)
           {:keys [index props config conn]}
           (sut/init-store-conn props-not-aliased services)]
       (is (= index indexname))
@@ -47,8 +47,7 @@
       (is (= {} (select-keys (:mappings config) [:a :b])))))
 
   (testing "init store conn should return a proper conn state with aliased conf"
-    (let [get-in-config (helpers/build-get-in-config-fn)
-          services {:ConfigService {:get-in-config get-in-config}}
+    (let [services (->ESConnServices)
           {:keys [index props config conn]}
           (sut/init-store-conn props-aliased services)]
       (is (= index indexname))
@@ -62,8 +61,7 @@
       (is (= {} (select-keys (:mappings config) [:a :b]))))))
 
 (deftest update-settings!-test
-  (let [get-in-config (helpers/build-get-in-config-fn)
-        services {:ConfigService {:get-in-config get-in-config}}
+  (let [services (->ESConnServices)
         indexname "ctia_malware"
         initial-props {:entity :malware
                        :indexname indexname
@@ -147,8 +145,7 @@
 (deftest init-es-conn!-test
   (index/delete! es-conn (str indexname "*"))
   (testing "init-es-conn! should return a proper conn state with unaliased conf, but not create any index"
-    (let [get-in-config (helpers/build-get-in-config-fn)
-          services {:ConfigService {:get-in-config get-in-config}}
+    (let [services (->ESConnServices)
           {:keys [index props config conn]}
           (sut/init-es-conn! props-not-aliased services)
           existing-index (index/get es-conn (str indexname "*"))]
@@ -163,8 +160,7 @@
       (is (= {} (select-keys (:mappings config) [:a :b])))))
 
   (testing "update mapping should allow adding fields or identical mapping"
-    (let [get-in-config (helpers/build-get-in-config-fn)
-          services {:ConfigService {:get-in-config get-in-config}}
+    (let [services (->ESConnServices)
           sucessful? (atom true)
           fake-exit (fn [] (reset! sucessful? false))
           test-fn (fn [msg expected-successful? field field-mapping]
@@ -194,8 +190,7 @@
 
   (testing "init-es-conn! should return a proper conn state with aliased conf, and create an initial aliased index"
     (index/delete! es-conn (str indexname "*"))
-    (let [get-in-config (helpers/build-get-in-config-fn)
-          services {:ConfigService {:get-in-config get-in-config}}
+    (let [services (->ESConnServices)
           {:keys [index props config conn]}
           (sut/init-es-conn! props-aliased services)
           existing-index (index/get es-conn (str indexname "*"))
@@ -223,8 +218,7 @@
     (index/create! es-conn
                    indexname
                    {:settings m/store-settings})
-    (let [get-in-config (helpers/build-get-in-config-fn)
-          services {:ConfigService {:get-in-config get-in-config}}
+    (let [services (->ESConnServices)
           {:keys [index props config conn]}
           (sut/init-es-conn! props-aliased services)
           existing-index (index/get es-conn (str indexname "*"))

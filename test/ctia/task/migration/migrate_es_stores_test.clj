@@ -24,17 +24,20 @@
                             prefixed-index
                             init-migration
                             get-migration
-                            fetch-batch]]]
+                            fetch-batch
+                            MigrationStoreServices]]]
             [ctia.test-helpers
              [fixtures :as fixt]
              [auth :refer [all-capabilities]]
              [core :as helpers :refer [put delete post-bulk with-atom-logger]]
              [es :as es-helpers]
-             [fake-whoami-service :as whoami-helpers]]
+             [fake-whoami-service :as whoami-helpers]
+             [migration :refer [app->MigrationStoreServices]]]
             [ctia.stores.es.store :refer [store->map]]
             [ctia.store-service :as store-svc]
             [puppetlabs.trapperkeeper.app :as app]
-            [puppetlabs.kitchensink.testutils :as ks])
+            [puppetlabs.kitchensink.testutils :as ks]
+            [schema.core :as s])
   (:import (java.text SimpleDateFormat)
            (java.util Date)
            (java.lang AssertionError)
@@ -42,9 +45,8 @@
 
 (defn fixture-setup! [f]
   (let [app (helpers/get-current-app)
-        store-svc (app/get-service app :StoreService)
-        get-in-config (helpers/current-get-in-config-fn app)]
-    (setup! store-svc get-in-config)
+        services (app->MigrationStoreServices app)]
+    (setup! services)
     (f)))
 
 (use-fixtures :once
@@ -153,21 +155,27 @@
                                          "v1.2.0_ctia_investigation")
                                (assoc-in [:malware 0 :state :props :indexname]
                                          "v1.2.0_ctia_malware"))
-        (is (thrown? AssertionError
-                     (sut/check-migration-params migration-params
-                                                 (helpers/current-get-in-config-fn)))
-            "source and target store must be different"))
+        (let [app (helpers/get-current-app)
+              get-in-config (helpers/current-get-in-config-fn app)]
+          (is (thrown? AssertionError
+                       (sut/check-migration-params migration-params
+                                                   get-in-config))
+              "source and target store must be different")))
       (with-each-fixtures identity
-        (is (thrown? ExceptionInfo
-                     (sut/check-migration-params (update migration-params
-                                                             :migrations
-                                                             conj
-                                                             :bad-migration-id)
-                                                 (helpers/current-get-in-config-fn)))))
+        (let [app (helpers/get-current-app)
+              get-in-config (helpers/current-get-in-config-fn app)]
+          (is (thrown? ExceptionInfo
+                       (sut/check-migration-params (update migration-params
+                                                           :migrations
+                                                           conj
+                                                           :bad-migration-id)
+                                                   get-in-config))))))
     (testing "properly configured migration"
       (with-each-fixtures identity
-        (is (sut/check-migration-params migration-params
-                                        (helpers/current-get-in-config-fn))))))))
+        (let [app (helpers/get-current-app)
+              get-in-config (helpers/current-get-in-config-fn app)]
+          (is (sut/check-migration-params migration-params
+                                          get-in-config)))))))
 
 (deftest prepare-params-test
   (let [migration-props {:buffer-size 3,
@@ -201,8 +209,10 @@
     (let [app (helpers/get-current-app)
           store-svc (app/get-service app :StoreService)
           deref-stores (partial store-svc/deref-stores store-svc)
-          store-types [:malware :tool :incident]
-          get-in-config (helpers/current-get-in-config-fn app)]
+          get-in-config (helpers/current-get-in-config-fn app)
+          services (app->MigrationStoreServices app)
+
+          store-types [:malware :tool :incident]]
       (rollover-post-bulk deref-stores)
       ;; insert malformed documents
       (doseq [store-type store-types]
@@ -216,8 +226,7 @@
                                   :buffer-size  3
                                   :confirm?     true
                                   :restart?     false}
-                                 store-svc
-                                 get-in-config)
+                                 services)
 
       (let [migration-state (es-doc/get-doc (es-conn get-in-config)
                                             (migration-index get-in-config)
@@ -334,8 +343,9 @@
  (with-each-fixtures identity
   (with-open [rdr (io/reader "./test/data/indices/sample-relationships-1000.json")]
     (let [app (helpers/get-current-app)
-          store-svc (app/get-service app :StoreService)
           get-in-config (helpers/current-get-in-config-fn app)
+          services (app->MigrationStoreServices app)
+
           prefix "0.0.1"
           indexname "v0.0.1_ctia_relationship"
           storemap {:conn (es-conn get-in-config)
@@ -367,8 +377,7 @@
                                     prefix
                                     [:relationship]
                                     true
-                                    store-svc
-                                    get-in-config)
+                                    services)
                     (let [test-docs (take total docs)
                           search_after [(rand-int total)]
                           batch-params  (-> (into base-params
@@ -377,13 +386,11 @@
                                                    :search_after search_after))
                           nb-migrated (sut/write-target migrated-count
                                                         batch-params
-                                                        store-svc
-                                                        get-in-config)
+                                                        services)
                           {target-state :target
                            source-state :source} (-> (get-migration migration-id
                                                                     (es-conn get-in-config)
-                                                                    store-svc
-                                                                    get-in-config)
+                                                                    services)
                                                      :stores
                                                      :relationship)
                           _ (es-index/refresh! (es-conn get-in-config))
@@ -434,8 +441,8 @@
  (with-each-fixtures identity
   (with-open [rdr (io/reader "./test/data/indices/sample-relationships-1000.json")]
     (let [app (helpers/get-current-app)
-          store-svc (app/get-service app :StoreService)
           get-in-config (helpers/current-get-in-config-fn app)
+          services (app->MigrationStoreServices app)
 
           {wo-modified true
            w-modified false} (->> (line-seq rdr)
@@ -455,8 +462,7 @@
                                           :buffer-size  3
                                           :confirm?     true
                                           :restart?     false}
-                                         store-svc
-                                         get-in-config))
+                                         services))
           migration-state-1 (es-doc/get-doc (es-conn get-in-config)
                                             (migration-index get-in-config)
                                             "migration"
@@ -476,8 +482,7 @@
                                           :buffer-size  3
                                           :confirm?     true
                                           :restart?     true}
-                                         store-svc
-                                         get-in-config))
+                                         services))
           target-count-2 (es-doc/count-docs (es-conn get-in-config)
                                             "v0.0.0_ctia_relationship"
                                             "relationship"
@@ -513,6 +518,7 @@
           store-svc (app/get-service app :StoreService)
           deref-stores (partial store-svc/deref-stores store-svc)
           get-in-config (helpers/current-get-in-config-fn app)
+          services (app->MigrationStoreServices app)
 
           store-types [:malware :tool :incident]
           logger (atom [])
@@ -538,8 +544,7 @@
                                     :buffer-size  3
                                     :confirm?     true
                                     :restart?     false}
-                                   store-svc
-                                   get-in-config))
+                                   services))
       (let [messages (set @logger)
             migration-state (es-doc/get-doc (es-conn get-in-config)
                                             (migration-index get-in-config)
@@ -571,7 +576,8 @@
   (let [app (helpers/get-current-app)
         store-svc (app/get-service app :StoreService)
         deref-stores (partial store-svc/deref-stores store-svc)
-        get-in-config (helpers/current-get-in-config-fn app)]
+        get-in-config (helpers/current-get-in-config-fn app)
+        services (app->MigrationStoreServices app)]
     ;; insert proper documents
     (rollover-post-bulk deref-stores)
     (testing "migrate ES Stores test setup"
@@ -579,15 +585,14 @@
         (sut/migrate-store-indexes {:migration-id "test-1"
                                     :prefix       "0.0.0"
                                     :migrations   [:0.4.16]
-                                    :store-keys   (keys @(store-svc/get-stores store-svc))
+                                    :store-keys   (keys (deref-stores))
                                     :batch-size   10
                                     :buffer-size  3
                                     :confirm?     false
                                     :restart?     false}
-                                   store-svc
-                                   get-in-config)
+                                   services)
 
-        (doseq [store (vals @(store-svc/get-stores store-svc))]
+        (doseq [store (vals (deref-stores))]
           (is (not (index-exists? store "0.0.0"))))
         (is (nil? (seq (es-doc/get-doc (es-conn get-in-config)
                                        (get-in (es-props get-in-config) [:migration :indexname])
@@ -597,26 +602,28 @@
   (testing "migrate es indexes"
     (let [app (helpers/get-current-app)
           store-svc (app/get-service app :StoreService)
+          deref-stores (partial store-svc/deref-stores store-svc)
           get-in-config (helpers/current-get-in-config-fn app)
+          services (app->MigrationStoreServices app)
+
           logger (atom [])]
       (with-atom-logger logger
         (sut/migrate-store-indexes {:migration-id "test-2"
                                     :prefix       "0.0.0"
                                     :migrations   [:__test]
-                                    :store-keys   (keys @(store-svc/get-stores store-svc))
+                                    :store-keys   (keys (deref-stores))
                                     :batch-size   10
                                     :buffer-size  3
                                     :confirm?     true
                                     :restart?     false}
-                                   store-svc
-                                   get-in-config))
+                                   services))
       (testing "shall generate a proper migration state"
         (let [migration-state (es-doc/get-doc (es-conn get-in-config)
                                               (migration-index get-in-config)
                                               "migration"
                                               "test-2"
                                               {})]
-          (is (= (set (keys @(store-svc/get-stores store-svc)))
+          (is (= (set (keys (deref-stores)))
                  (set (keys (:stores migration-state)))))
           (doseq [[entity-type migrated-store] (:stores migration-state)]
             (let [{:keys [source target started completed]} migrated-store
@@ -803,15 +810,14 @@
           (sut/migrate-store-indexes {:migration-id "test-2"
                                       :prefix       "0.0.0"
                                       :migrations   [:__test]
-                                      :store-keys   (keys @(store-svc/get-stores store-svc))
+                                      :store-keys   (keys (deref-stores))
                                       ;; small batch to check proper delete paging
                                       :batch-size   2
                                       :buffer-size  1
                                       :confirm?     true
                                       :restart?     true}
-                                     store-svc
-                                     get-in-config)
-          (let [migration-state (get-migration "test-2" (es-conn get-in-config) store-svc get-in-config)
+                                     services)
+          (let [migration-state (get-migration "test-2" (es-conn get-in-config) services)
                 malware-migration (get-in migration-state [:stores :malware])
                 sighting-migration (get-in migration-state [:stores :sighting])
                 malware-target-store (get-in malware-migration [:target :store])
@@ -843,7 +849,11 @@
   (doseq [bundle (repeatedly 20 #(fixt/bundle 1000 maximal?))]
     (post-bulk bundle))
   (doseq [batch-size [1000 3000 6000 10000]]
-    (let [total-docs (* (count @example-types) 20000)
+    (let [app (helpers/get-current-app)
+          get-in-config (helpers/current-get-in-config-fn app)
+          services (app->MigrationStoreServices app)
+
+          total-docs (* (count @example-types) 20000)
           _ (println (format "===== migrating %s documents with batch size %s"
                              total-docs
                              batch-size))
@@ -858,13 +868,12 @@
                                         :buffer-size  3
                                         :confirm?     true
                                         :restart?     false}
-                                       store-svc
-                                       (helpers/current-get-in-config-fn))
+                                       services)
           end (System/currentTimeMillis)
           total (/ (- end start) 1000)
           doc-per-sec (/ total-docs total)
-          migration-state (es-doc/get-doc (es-conn (helpers/current-get-in-config-fn))
-                                          (migration-index (helpers/current-get-in-config-fn))
+          migration-state (es-doc/get-doc (es-conn get-in-config)
+                                          (migration-index get-in-config)
                                           "migration"
                                           migration-id
                                           {})]
@@ -874,8 +883,8 @@
         (is (= 20000
                (get-in state [:source :total])
                (get-in state [:target :migrated]))))
-      (es-index/delete! (es-conn (helpers/current-get-in-config-fn)) (format "v%s*" prefix))
-      (es-doc/delete-doc (es-conn (helpers/current-get-in-config-fn)) "migration" migration-id "true")))
+      (es-index/delete! (es-conn get-in-config) (format "v%s*" prefix))
+      (es-doc/delete-doc (es-conn get-in-config) "migration" migration-id "true")))
   (es-index/delete! (es-conn (helpers/current-get-in-config-fn)) "ctia_*"))
 
 ;;(deftest ^:integration minimal-load-test

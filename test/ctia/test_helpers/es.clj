@@ -213,3 +213,10 @@
                         (:docs.count entry))}))
          (into {})
          walk/keywordize-keys)))
+
+(s/defn ->ESConnServices
+  :- ESConnServices
+  "Create a ESConnServices map without an app"
+  []
+  (let [get-in-config (h/build-get-in-config-fn)]
+    {:ConfigService {:get-in-config get-in-config}}))
