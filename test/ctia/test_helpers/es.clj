@@ -14,7 +14,6 @@
              [store :as es-store]
              [schemas :refer [ESConnServices]]]
             [ctia.test-helpers.core :as h]
-            [puppetlabs.trapperkeeper.app :as app]
             [schema.core :as s]))
 
 (s/defn app->ESConnServices

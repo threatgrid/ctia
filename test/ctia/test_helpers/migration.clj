@@ -2,7 +2,6 @@
   (:require [ctia.task.migration.store :refer [MigrationStoreServices]]
             [ctia.test-helpers.core :as helpers]
             [ctia.store-service :as store-svc]
-            [puppetlabs.trapperkeeper.app :as app]
             [schema.core :as s]))
 
 (s/defn app->MigrationStoreServices

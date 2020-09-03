@@ -12,7 +12,6 @@
    [ctia.test-helpers
     [core :as helpers]
     [es :as es-helpers]]
-   [puppetlabs.trapperkeeper.app :as app]
    [schema.test :as st]))
 
 (use-fixtures :once st/validate-schemas)

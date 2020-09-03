@@ -35,8 +35,6 @@
              [migration :refer [app->MigrationStoreServices]]]
             [ctia.stores.es.store :refer [store->map]]
             [ctia.store-service :as store-svc]
-            [puppetlabs.trapperkeeper.app :as app]
-            [puppetlabs.kitchensink.testutils :as ks]
             [schema.core :as s])
   (:import (java.text SimpleDateFormat)
            (java.util Date)
