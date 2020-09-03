@@ -228,7 +228,7 @@
   ([app]
    {:post [%]}
    (-> app
-       (helpers/get-service-map :ConfigService)
+       (get-service-map :ConfigService)
        :get-in-config)))
 
 (defn fixture-ctia
