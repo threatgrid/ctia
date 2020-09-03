@@ -116,9 +116,8 @@
 
 (defn check-store-indexes
   "check all new es store indexes"
-  [app batch-size]
-  (let [store-svc (app/get-service app :StoreService)
-        current-stores (store-svc/deref-stores store-svc)
+  [batch-size deref-stores]
+  (let [current-stores (deref-stores)
         batch-size (or batch-size default-batch-size)]
     (log/infof "checking stores: %s" (keys current-stores))
     (log/infof "set batch size: %s" batch-size)
@@ -134,8 +133,10 @@
   (assert batch-size "Please specify a batch size")
   (log/info "checking all ES Stores")
   (try
-    (let [app (setup)]
-      (when-let [errors (seq (check-store-indexes app batch-size))]
+    (let [app (setup)
+          store-svc (app/get-service app :StoreService)
+          deref-stores (partial store-svc/deref-stores store-svc)]
+      (when-let [errors (seq (check-store-indexes batch-size deref-stores))]
         (log/errorf "Schema errors found during check: %s"
                     (pr-str errors))
         (exit true))

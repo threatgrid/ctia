@@ -83,7 +83,7 @@
   "walk through all producers and delete their index"
   [t]
   (let [app (h/get-current-app)
-        services (app->ESConnServices)]
+        services (app->ESConnServices app)]
     (purge-index :event services)
     (try
       (t)
