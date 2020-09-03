@@ -21,7 +21,7 @@
 (s/defn app->ESConnServices
   :- ESConnServices
   "Create a ESConnServices map with an app"
-  [ann]
+  [app]
   (let [get-in-config (h/current-get-in-config-fn app)]
     {:ConfigService {:get-in-config get-in-config}}))
 
