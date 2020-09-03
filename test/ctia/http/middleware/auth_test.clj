@@ -2,6 +2,7 @@
   (:require [ctia.http.middleware.auth :as sut]
             [ctia.auth :refer [identity-for-token]]
             [ctia.auth.allow-all :as auth-svc]
+            [ctia.test-helpers.core :as helpers]
             [clojure.test :as t :refer [deftest is]]
             [puppetlabs.trapperkeeper.testutils.bootstrap :refer [with-app-with-config]]))
 
