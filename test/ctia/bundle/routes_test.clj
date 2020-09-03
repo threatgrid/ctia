@@ -19,8 +19,7 @@
              [store :refer [test-for-each-store]]]
             [ctim.domain.id :as id]
             [ctia.auth :as auth :refer [IIdentity]]
-            [ctim.examples.bundles :refer [bundle-maximal]]
-            [puppetlabs.trapperkeeper.app :as app]))
+            [ctim.examples.bundles :refer [bundle-maximal]]))
 
 (defn fixture-properties [t]
   (helpers/with-properties ["ctia.http.bulk.max-size" 1000

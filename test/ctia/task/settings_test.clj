@@ -35,7 +35,9 @@
 
 (deftest update-stores!-test
   ;;init all stores
-  (let [get-in-config (h/current-get-in-config-fn)
+  (let [app (helpers/get-current-app)
+        {:keys [get-in-config]} (helpers/get-service-map app :ConfigService)
+
         initial-indicator-props (init/get-store-properties :indicator get-in-config)
         _ (sut/update-stores! [:relationship :malware] get-in-config)
         es-props (get-in-config [:ctia :store :es])

@@ -5,8 +5,7 @@
             [ctia.store-service :as store-svc]
             [ctia.test-helpers
              [core :as helpers]
-             [store :refer [test-for-each-store]]]
-            [puppetlabs.trapperkeeper.app :as app]))
+             [store :refer [test-for-each-store]]]))
 
 (use-fixtures :once (join-fixtures [mth/fixture-schema-validation
                                     helpers/fixture-properties:clean]))

@@ -22,7 +22,9 @@
 (def examples (fixt/bundle 100 false))
 
 (deftest rollover-aliased-test
-  (let [get-in-config (helpers/current-get-in-config-fn)
+  (let [app (helpers/get-current-app)
+        {:keys [get-in-config]} (helpers/get-service-map app :ConfigService)
+
         props-not-aliased {:entity :malware
                            :indexname "ctia_malware"
                            :host "localhost"
@@ -63,8 +65,9 @@
                                        (throw (ex-info "that's baaaaaaaddd"
                                                        {:code :unhappy}))))]
     (let [app (helpers/get-current-app)
-          get-in-config (helpers/current-get-in-config-fn app)
-          services {:ConfigService {:get-in-config get-in-config}}
+          services {:ConfigService (-> (helpers/get-service-map app :ConfigService)
+                                       (select-keys [:get-in-config]))}
+
           ok-state (init/init-store-conn {:entity "sighting"
                                           :indexname "ok_index"
                                           :rollover {:max_docs 3}

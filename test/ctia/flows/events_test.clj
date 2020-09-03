@@ -9,8 +9,7 @@
             [ctia.test-helpers
              [core :as test-helpers :refer [deftest-for-each-fixture post]]
              [es :as es-helpers]]
-            [ctim.domain.id :as id]
-            [puppetlabs.trapperkeeper.app :as app]))
+            [ctim.domain.id :as id]))
 
 (use-fixtures :once mth/fixture-schema-validation)
 

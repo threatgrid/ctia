@@ -5,8 +5,7 @@
             [ctia.test-helpers
              [core :as helpers]
              [es :as es-helpers]]
-            [clojure.test :as t]
-            [puppetlabs.trapperkeeper.app :as app]))
+            [clojure.test :as t]))
 
 (t/use-fixtures :each (t/join-fixtures [mth/fixture-schema-validation
                                         helpers/fixture-properties:clean

@@ -6,8 +6,7 @@
             [clojure.test :as t :refer :all]
             [schema.test :as st]
             [clojure.tools.logging :as log]
-            [clojure.string :as str]
-            [puppetlabs.trapperkeeper.app :as app]))
+            [clojure.string :as str]))
 
 (use-fixtures :once st/validate-schemas)
 (use-fixtures :each (join-fixtures [test-helpers/fixture-properties:clean

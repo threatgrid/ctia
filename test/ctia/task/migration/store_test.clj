@@ -18,8 +18,7 @@
             [ctia.test-helpers.fake-whoami-service :as whoami-helpers]
             [ctia.test-helpers.fixtures :as fixt]
             [ctia.test-helpers.migration :refer [app->MigrationStoreServices]]
-            [ctim.domain.id :refer [long-id->id]]
-            [puppetlabs.trapperkeeper.app :as app]))
+            [ctim.domain.id :refer [long-id->id]]))
 
 (deftest prefixed-index-test
   (is (= "v0.4.2_ctia_actor"
@@ -271,7 +270,7 @@
 (deftest rollover-test
   (with-open [rdr (io/reader "./test/data/indices/sample-relationships-1000.json")]
     (let [app (helpers/get-current-app)
-          get-in-config (helpers/current-get-in-config-fn app)
+          {:keys [get-in-config]} (helpers/get-service-map app :ConfigService)
           services (app->MigrationStoreServices app)
 
           storename "ctia_relationship"
@@ -351,7 +350,8 @@
 
 (deftest sliced-queries-test
   (let [app (helpers/get-current-app)
-        get-in-config (helpers/current-get-in-config-fn app)
+        {:keys [get-in-config]} (helpers/get-service-map app :ConfigService)
+
         storemap {:conn (es-conn get-in-config)
                   :indexname "ctia_relationship"
                   :mapping "relationship"
@@ -503,9 +503,8 @@
 (deftest bulk-metas-test
   ;; insert elements in different indices and check that we retrieve the right one
   (let [app (helpers/get-current-app)
-        store-svc (app/get-service app :StoreService)
-        get-in-config (helpers/current-get-in-config-fn app)
-        deref-stores (partial store-svc/deref-stores store-svc)
+        {:keys [get-in-config]} (helpers/get-service-map app :ConfigService)
+        {:keys [deref-stores]} (helpers/get-service-map app :StoreService)
         services (app->MigrationStoreServices app)
 
         sighting-store-map {:conn (es-conn get-in-config)
@@ -628,7 +627,7 @@
 
 (deftest store-batch-store-size-test
   (let [app (helpers/get-current-app)
-        get-in-config (helpers/current-get-in-config-fn app)
+        {:keys [get-in-config]} (helpers/get-service-map app :ConfigService)
         services (app->MigrationStoreServices app)
 
         indexname "test_index"
@@ -662,7 +661,7 @@
 (deftest query-fetch-batch-test
   (testing "query-fetch-batch should property fetch and sort events on timestamp"
     (let [app (helpers/get-current-app)
-          get-in-config (helpers/current-get-in-config-fn app)
+          {:keys [get-in-config]} (helpers/get-service-map app :ConfigService)
           services (app->MigrationStoreServices app)
 
           indexname "test_event"
@@ -741,7 +740,7 @@
 
   (testing "query-fetch-batch should properly sort entities on modified field"
     (let [app (helpers/get-current-app)
-          get-in-config (helpers/current-get-in-config-fn app)
+          {:keys [get-in-config]} (helpers/get-service-map app :ConfigService)
           services (app->MigrationStoreServices app)
 
           indexname "test_index"
@@ -799,7 +798,7 @@
                                       "user")
   (post-bulk examples)
   (let [app (helpers/get-current-app)
-        get-in-config (helpers/current-get-in-config-fn app)
+        {:keys [get-in-config]} (helpers/get-service-map app :ConfigService)
         services (app->MigrationStoreServices app)
 
         _ (es-index/refresh! (es-conn get-in-config)) ;; ensure indices refresh
@@ -860,7 +859,7 @@
   (post-bulk examples)
   (testing "init-migration should properly create new migration state from selected types."
     (let [app (helpers/get-current-app)
-          get-in-config (helpers/current-get-in-config-fn app)
+          {:keys [get-in-config]} (helpers/get-service-map app :ConfigService)
           services (app->MigrationStoreServices app)
 
           _ (es-index/refresh! (es-conn get-in-config)) ; ensure indices refresh

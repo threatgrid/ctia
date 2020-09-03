@@ -3,7 +3,6 @@
    [ctia.encryption.default :as sut]
    [ctia.test-helpers.core :as helpers]
    [clojure.test :as t :refer [deftest testing is]]
-   [puppetlabs.trapperkeeper.app :as app]
    [puppetlabs.trapperkeeper.testutils.bootstrap :refer [with-app-with-config]]))
 
 (deftest encryption-default-record-test

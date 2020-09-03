@@ -3,7 +3,6 @@
             [ctia.auth :refer [identity-for-token]]
             [ctia.auth.allow-all :as auth-svc]
             [clojure.test :as t :refer [deftest is]]
-            [puppetlabs.trapperkeeper.app :as app]
             [puppetlabs.trapperkeeper.testutils.bootstrap :refer [with-app-with-config]]))
 
 (deftest add-id-to-request-test
