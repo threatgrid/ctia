@@ -125,9 +125,8 @@
         sut/incident-fields)))))
 
 (deftest test-incident-routes-access-control
-  (test-for-each-store
-   (fn []
-     (access-control-test "incident"
-                          new-incident-minimal
-                          true
-                          true))))
+  (access-control-test "incident"
+                       new-incident-minimal
+                       true
+                       true
+                       test-for-each-store))

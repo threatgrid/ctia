@@ -11,6 +11,7 @@
               allow-read?
               allow-write?]]
             [ctia.lib.pagination :refer [list-response-schema]]
+            [ctia.properties :as p]
             [ctia.schemas.search-agg :refer [SearchQuery
                                              HistogramQuery
                                              TopnQuery
@@ -186,15 +187,15 @@ It returns the documents with full hits meta data including the real index in wh
                                              (make-es-read-params params))
                          :_source
                          coerce!)]
-        (if (allow-read? doc ident)
+        (if (allow-read? doc ident p/get-in-global-properties)
           doc
           (throw (ex-info "You are not allowed to read this document"
                           {:type :access-control-error})))))))
 
 (defn access-control-filter-list
   "Given an ident, keep only documents it is allowed to read"
-  [docs ident]
-  (filter #(allow-read? % ident) docs))
+  [docs ident get-in-config]
+  (filter #(allow-read? % ident get-in-config) docs))
 
 (defn handle-delete
   "Generate an ES delete handler using some mapping and schema"
@@ -291,7 +292,7 @@ It returns the documents with full hits meta data including the real index in wh
        params]
       (let [filter-val (cond-> (q/prepare-terms all-of)
                          (restricted-read? ident)
-                         (conj (find-restriction-query-part ident)))
+                         (conj (find-restriction-query-part ident p/get-in-global-properties)))
 
             query_string  {:query_string {:query query}}
             bool-params (cond-> {:filter filter-val}
@@ -309,7 +310,8 @@ It returns the documents with full hits meta data including the real index in wh
                                       make-es-read-params)))
           (restricted-read? ident) (update :data
                                            access-control-filter-list
-                                           ident))))))
+                                           ident
+                                           p/get-in-global-properties))))))
 
 
 (s/defn make-search-query
@@ -325,7 +327,7 @@ It returns the documents with full hits meta data including the real index in wh
                          q/prepare-terms)]
     {:bool
      {:filter
-      (cond-> [(find-restriction-query-part ident)]
+      (cond-> [(find-restriction-query-part ident p/get-in-global-properties)]
         (seq filter-map) (into filter-terms)
         (seq date-range) (conj date-range-query)
         (seq query-string) (conj es-query-string))}}))
@@ -353,7 +355,8 @@ It returns the documents with full hits meta data including the real index in wh
                                       make-es-read-params)))
           (restricted-read? ident) (update :data
                                            access-control-filter-list
-                                           ident))))))
+                                           ident
+                                           p/get-in-global-properties))))))
 
 (defn handle-query-string-count
   "Generate an ES count handler using some mapping and schema"

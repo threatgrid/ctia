@@ -7,7 +7,7 @@
                              PagingParams
                              SourcableEntityFilterParams
                              wait_for->refresh]]
-             [crud :refer [entity-crud-routes]]]
+             [crud :refer [services->entity-crud-routes]]]
             [ctia.schemas
              [utils :as csu]
              [core :refer [APIHandlerServices Bundle def-acl-schema def-stored-schema]]
@@ -128,8 +128,9 @@
     :delete-casebook
     :search-casebook})
 
-(s/defn casebook-operation-routes [{{:keys [read-store write-store]} :StoreService
-                                    :as _services_} :- APIHandlerServices]
+(s/defn casebook-operation-routes [{{:keys [get-in-config]} :ConfigService
+                                    {:keys [read-store write-store]} :StoreService
+                                    :as services} :- APIHandlerServices]
   (routes
    (PATCH "/:id" []
           :return Casebook
@@ -141,6 +142,7 @@
           :auth-identity identity
           :identity-map identity-map
           (if-let [res (flows/patch-flow
+                        :services services
                         :get-fn #(read-store :casebook
                                              read-record
                                              %
@@ -153,7 +155,7 @@
                                                  %
                                                  identity-map
                                                  (wait_for->refresh wait_for))
-                        :long-id-fn with-long-id
+                        :long-id-fn #(with-long-id % get-in-config)
                         :entity-type :casebook
                         :entity-id id
                         :identity identity
@@ -174,6 +176,7 @@
                   :auth-identity identity
                   :identity-map identity-map
                   (if-let [res (flows/patch-flow
+                                :services services
                                 :get-fn #(read-store :casebook
                                                      read-record
                                                      %
@@ -186,7 +189,7 @@
                                                          %
                                                          identity-map
                                                          (wait_for->refresh wait_for))
-                                :long-id-fn with-long-id
+                                :long-id-fn #(with-long-id % get-in-config)
                                 :entity-type :casebook
                                 :entity-id id
                                 :identity identity
@@ -208,6 +211,7 @@
                   :auth-identity identity
                   :identity-map identity-map
                   (if-let [res (flows/patch-flow
+                                :services services
                                 :get-fn #(read-store :casebook
                                                      read-record
                                                      %
@@ -220,7 +224,7 @@
                                                          %
                                                          identity-map
                                                          (wait_for->refresh wait_for))
-                                :long-id-fn with-long-id
+                                :long-id-fn #(with-long-id % get-in-config)
                                 :entity-type :casebook
                                 :entity-id id
                                 :identity identity
@@ -242,6 +246,7 @@
                   :auth-identity identity
                   :identity-map identity-map
                   (if-let [res (flows/patch-flow
+                                :services services
                                 :get-fn #(read-store :casebook
                                                      read-record
                                                      %
@@ -254,7 +259,7 @@
                                                          %
                                                          identity-map
                                                          (wait_for->refresh wait_for))
-                                :long-id-fn with-long-id
+                                :long-id-fn #(with-long-id % get-in-config)
                                 :entity-type :casebook
                                 :entity-id id
                                 :identity identity
@@ -306,7 +311,8 @@
 (s/defn casebook-routes [services :- APIHandlerServices]
   (routes
    (casebook-operation-routes services)
-   (entity-crud-routes
+   (services->entity-crud-routes
+    services
     {:api-tags ["Casebook"]
      :entity :casebook
      :new-schema NewCasebook
@@ -345,5 +351,5 @@
    :realize-fn realize-casebook
    :es-store ->CasebookStore
    :es-mapping casebook-mapping
-   :routes-from-services casebook-routes
+   :services->routes casebook-routes
    :capabilities capabilities})

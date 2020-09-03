@@ -60,7 +60,7 @@
 
 (s/defschema StorePropertiesSchema
   "All entity store properties for every implementation"
-  (let [configurable-stores (map name (keys @store/stores))
+  (let [configurable-stores (map name (keys store/empty-stores))
         store-names (conj configurable-stores "default")]
     (st/optional-keys
      (reduce merge {}
@@ -216,8 +216,15 @@
                       "ctia.migration.confirm?" s/Bool
                       "ctia.migration.restart?" s/Bool
 
+                      "ctia.store.asset" s/Str
+                      "ctia.store.asset-properties" s/Str
+                      "ctia.store.asset-mapping" s/Str
                       "ctia.store.bulk-refresh" Refresh
                       "ctia.store.bundle-refresh" Refresh
+
+                      "ctia.store.es.asset.indexname" s/Str
+                      "ctia.store.es.asset-properties.indexname" s/Str
+                      "ctia.store.es.asset-mapping.indexname" s/Str
 
                       "ctia.store.es.event.slicing.granularity"
                       (s/enum :minute :hour :day :week :month :year)})
@@ -231,11 +238,11 @@
                              ;; TOP-LEVEL STATE!!
                              (global-properties-atom)))
 
-(defn get-http-show []
-  (get-in-global-properties [:ctia :http :show]))
+(defn get-http-show [get-in-config]
+  (get-in-config [:ctia :http :show]))
 
-(defn get-http-swagger []
-  (get-in-global-properties [:ctia :http :swagger]))
+(defn get-http-swagger [get-in-config]
+  (get-in-config [:ctia :http :swagger]))
 
-(defn get-access-control []
-  (get-in-global-properties [:ctia :access-control]))
+(defn get-access-control [get-in-config]
+  (get-in-config [:ctia :access-control]))

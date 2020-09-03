@@ -1,12 +1,9 @@
 (ns ctia.flows.hooks.event-hooks
   (:require
    [clojure.tools.logging :as log]
-   [ctia.events :as events]
    [ctia.flows.hook-protocol :refer [Hook]]
    [ctia.lib.redis :as lr]
    [ctia.lib.kafka :as lk]
-   [ctia.properties :as p]
-   [ctia.shutdown :as shutdown]
    [ctia.entity.event.schemas :refer [CreateEventType
                                       DeleteEventType]]
    [redismq.core :as rmq]
@@ -46,14 +43,14 @@
         (log/error e "Unable to push an event to Redis")))
     event))
 
-(defn redis-event-publisher []
+(defn redis-event-publisher [get-in-config]
   (let [{:keys [channel-name] :as redis-config}
-        (p/get-in-global-properties [:ctia :hook :redis])]
+        (get-in-config [:ctia :hook :redis])]
     (->RedisEventPublisher (lr/server-connection redis-config)
                            channel-name)))
 
-(defn kafka-event-publisher []
-  (let [kafka-props (p/get-in-global-properties [:ctia :hook :kafka])]
+(defn kafka-event-publisher [get-in-config]
+  (let [kafka-props (get-in-config [:ctia :hook :kafka])]
 
     (log/warn "Ensure Kafka topic creation")
     (try
@@ -78,32 +75,18 @@
         (log/error e "Unable to push an event to Redis")))
     event))
 
-(defn redismq-publisher []
+(defn redismq-publisher [get-in-config]
   (let [{:keys [queue-name host port timeout-ms max-depth enabled
                 password ssl]
          :as config
          :or {queue-name "ctim-event-queue"
               host "localhost"
               port 6379}}
-        (p/get-in-global-properties [:ctia :hook :redismq])
+        (get-in-config [:ctia :hook :redismq])
         conn-spec (lr/redis-conf->conn-spec config)]
     (->RedisMQPublisher (rmq/make-queue queue-name
                                         conn-spec
                                         {:max-depth max-depth}))))
-
-(defrecord ChannelEventPublisher []
-  Hook
-  (init [_]
-    (assert (some? @events/central-channel)
-            "Events central-channel was not setup"))
-  (destroy [_]
-    :nothing)
-  (handle [_ event _]
-    (try
-      (events/send-event event)
-      (catch Exception e
-        (log/error e "Unable to push an event to Redis")))
-    event))
 
 (defn- judgement?
   [{{t :type} :entity :as _event_}]
@@ -118,14 +101,15 @@
   (= type DeleteEventType))
 
 (s/defn register-hooks :- {s/Keyword [(s/protocol Hook)]}
-  [hooks-m :- {s/Keyword [(s/protocol Hook)]}]
+  [hooks-m :- {s/Keyword [(s/protocol Hook)]}
+   get-in-config]
   (let [{{redis? :enabled} :redis
          {redismq? :enabled} :redismq
          {kafka? :enabled} :kafka}
-        (p/get-in-global-properties [:ctia :hook])
+        (get-in-config [:ctia :hook])
         all-event-hooks
         (cond-> {}
-          redis?   (assoc :redis (redis-event-publisher))
-          redismq? (assoc :redismq (redismq-publisher))
-          kafka?   (assoc :kafka (kafka-event-publisher)))]
+          redis?   (assoc :redis (redis-event-publisher get-in-config))
+          redismq? (assoc :redismq (redismq-publisher get-in-config))
+          kafka?   (assoc :kafka (kafka-event-publisher get-in-config)))]
     (update hooks-m :event concat (vals all-event-hooks))))

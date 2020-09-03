@@ -4,6 +4,7 @@
             [ctia.entity.entities :refer [entities]]
             [ctia.entity.feed :refer [feed-view-routes]]
             [ctia.entity.relationship :refer [incident-link-route]]
+            [ctia.schemas.core :refer [APIHandlerServices]]
             [compojure.api
              [core :refer [middleware]]
              [routes :as api-routes]
@@ -73,13 +74,9 @@
   {:pre [entity
          (map? services-map)]
    :post [%]}
-  (let [{:keys [routes routes-from-services]} entity
-        _ (assert (or routes routes-from-services))
-        _ (when (and routes routes-from-services)
-            (throw (AssertionError. (str "Bad routes definition: duplicate :routes/:routes-from-services "
-                                         entity))))]
-    (or routes
-        (routes-from-services services-map))))
+  (let [{:keys [services->routes]} entity]
+    (assert services->routes (str "Missing :services->routes for " (:entity entity)))
+    (services->routes services-map)))
 
 (defmacro entity-routes
   [entities services-map]
@@ -119,20 +116,21 @@
    {:name "Feedback"            :description "Feedback operations"}
    {:name "GraphQL"             :description "GraphQL operations"}
    {:name "Incident"            :description "Incident operations"}
-   {:name "Indicator",          :description "Indicator operations"}
-   {:name "Judgement",          :description "Judgement operations"}
-   {:name "Malware",            :description "Malware operations"}
-   {:name "Relationship",       :description "Relationship operations"}
-   {:name "Properties",         :description "Properties operations"}
-   {:name "Casebook",           :description "Casebook operations"}
-   {:name "Sighting",           :description "Sighting operations"}
-   {:name "Identity Assertion", :description "Identity Assertion operations"}
-   {:name "Bulk",               :description "Bulk operations"}
-   {:name "Metrics",            :description "Performance Statistics"}
-   {:name "Tool",               :description "Tool operations"}
-   {:name "Verdict",            :description "Verdict operations"}
-   {:name "Status",             :description "Status Information"}
-   {:name "Version",            :description "Version Information"}])
+   {:name "Indicator"           :description "Indicator operations"}
+   {:name "Judgement"           :description "Judgement operations"}
+   {:name "Malware"             :description "Malware operations"}
+   {:name "Relationship"        :description "Relationship operations"}
+   {:name "Properties"          :description "Properties operations"}
+   {:name "Casebook"            :description "Casebook operations"}
+   {:name "Sighting"            :description "Sighting operations"}
+   {:name "Identity Assertion"  :description "Identity Assertion operations"}
+   {:name "Bulk"                :description "Bulk operations"}
+   {:name "Metrics"             :description "Performance Statistics"}
+   {:name "Target Record"       :description "Target Record operations"}
+   {:name "Tool"                :description "Tool operations"}
+   {:name "Verdict"             :description "Verdict operations"}
+   {:name "Status"              :description "Status Information"}
+   {:name "Version"             :description "Version Information"}])
 
 (defn apply-oauth2-swagger-conf
   [swagger-base-conf
@@ -170,7 +168,7 @@
 (s/defn api-handler [{{:keys [get-in-config]} :ConfigService
                       :as services} :- APIHandlerServices]
   (let [{:keys [oauth2]}
-        (get-http-swagger)]
+        (get-http-swagger get-in-config)]
     (api {:exceptions {:handlers exception-handlers}
           :swagger
           (cond-> {:ui "/"
@@ -204,7 +202,7 @@
                       ;; always last
                       (metrics/wrap-metrics "ctia" api-routes/get-routes)]
            documentation-routes
-           (graphql-ui-routes)
+           (graphql-ui-routes services)
            (context
                "/ctia" []
              (context "/feed" []
@@ -228,6 +226,6 @@
                (observable-routes services)
                metrics-routes
                (properties-routes services)
-               graphql-routes)))
+               (graphql-routes services))))
          (undocumented
           (rt/not-found (ok (unk/err-html)))))))

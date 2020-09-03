@@ -2,6 +2,6 @@
   (:require [clj-momo.lib.metrics.jmx :as jmx]
             [ctia.properties :as p]))
 
-(defn init! []
-  (when (p/get-in-global-properties [:ctia :metrics :jmx :enabled])
+(defn init! [get-in-config]
+  (when (get-in-config [:ctia :metrics :jmx :enabled])
     (jmx/start)))

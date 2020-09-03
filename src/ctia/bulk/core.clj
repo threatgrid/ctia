@@ -70,10 +70,11 @@
     :as services} :- APIHandlerServices]
   (when (seq new-entities)
     (update (flows/create-flow
+             :services services
              :entity-type entity-type
              :realize-fn (-> entities entity-type :realize-fn)
              :store-fn (create-fn entity-type auth-identity params services)
-             :long-id-fn with-long-id
+             :long-id-fn #(with-long-id % get-in-config)
              :enveloped-result? true
              :identity auth-identity
              :entities new-entities
@@ -92,13 +93,13 @@
 (s/defn read-entities
   "Retrieve many entities of the same type provided their ids and common type"
   [ids entity-type auth-identity
-   services :- ReadEntitiesServices]
+   {{:keys [get-in-config]} :ConfigService
+    :as services} :- ReadEntitiesServices]
   (let [read-entity (read-fn entity-type auth-identity {} services)]
     (map (fn [id]
            (try
-             (if-let [entity (read-entity id)]
-               (with-long-id entity)
-               nil)
+             (some-> (read-entity id)
+                     (with-long-id get-in-config))
              (catch Exception e
                (do (log/error (pr-str e))
                    nil)))) ids)))
@@ -108,7 +109,7 @@
 
   ~~~~.clojure
   (gen-bulk-from-fn f {k [v1 ... vn]} args)
-  ===> {k (map #(apply f % (singular k) args) [v1 ... vn])}
+  => {k (map #(apply f % (singular k) args) [v1 ... vn])}
   ~~~~
   "
   [func bulk & args]

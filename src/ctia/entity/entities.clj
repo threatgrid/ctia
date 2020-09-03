@@ -8,6 +8,7 @@
     [asset :refer [asset-entity]]
     [asset-mapping :refer [asset-mapping-entity]]
     [asset-properties :refer [asset-properties-entity]]
+    [target-record :refer [target-record-entity]]
     [feedback :refer [feedback-entity]]
     [weakness :refer [weakness-entity]]
     [vulnerability :refer [vulnerability-entity]]
@@ -53,6 +54,7 @@
    :malware            malware-entity
    :relationship       relationship-entity
    :sighting           sighting-entity
+   :target-record      target-record-entity
    :tool               tool-entity
    :vulnerability      vulnerability-entity
    :weakness           weakness-entity})

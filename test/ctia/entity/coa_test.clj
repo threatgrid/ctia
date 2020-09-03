@@ -58,12 +58,11 @@
         sut/coa-fields)))))
 
 (deftest test-coa-routes-access-control
-  (test-for-each-store
-   (fn []
-     (access-control-test "coa"
-                          new-coa-minimal
-                          true
-                          true))))
+  (access-control-test "coa"
+                       new-coa-minimal
+                       true
+                       true
+                       test-for-each-store))
 
 (deftest test-coa-metric-routes
   ((:es-store store-fixtures)

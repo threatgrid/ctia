@@ -14,7 +14,7 @@
     :refer [Event PartialEvent PartialEventList EventBucket]]
    [ctia.http.routes
     [common :refer [BaseEntityFilterParams PagingParams]]
-    [crud :refer [entity-crud-routes]]]
+    [crud :refer [services->entity-crud-routes]]]
    [ctia.lib.pagination :refer [list-response-schema]]
    [ctia.schemas.core :refer [APIHandlerServices]]
    [ctia.schemas.sorting :as sorting]
@@ -118,7 +118,7 @@
         buckets (reduce #(timeline-append %1 %2 get-in-config) [] events)]
     (reverse (sort-by :from buckets))))
 
-(defn fetch-related-events [_id identity-map q]
+(s/defn fetch-related-events [_id identity-map q services :- APIHandlerServices]
   (let [filters {:entity.id _id
                  :entity.source_ref _id
                  :entity.target_ref _id}]
@@ -126,11 +126,12 @@
                             list-events
                             {:one-of filters}
                             identity-map
-                            q)
+                            q
+                            services)
             ent/un-store-all)))
 
 (s/defn event-history-routes [{{:keys [get-in-config]} :ConfigService
-                               :as _services_} :- APIHandlerServices]
+                               :as services} :- APIHandlerServices]
   (routes
    (GET "/history/:entity_id" []
         :return [EventBucket]
@@ -142,14 +143,16 @@
         :identity-map identity-map
         (let [res (fetch-related-events entity_id
                                         identity-map
-                                        (into q {:sort_by :timestamp :sort_order :desc}))
+                                        (into q {:sort_by :timestamp :sort_order :desc})
+                                        services)
               timeline (bucketize-events res get-in-config)]
           (ok timeline)))))
 
 (s/defn event-routes [services :- APIHandlerServices]
   (routes
    (event-history-routes services)
-   (entity-crud-routes
+   (services->entity-crud-routes
+    services
     {:tags ["Event"]
      :entity :event
      :entity-schema Event
@@ -181,4 +184,4 @@
    :plural :events
    :es-store ->EventStore
    :es-mapping event-mapping
-   :routes-from-services event-routes})
+   :services->routes event-routes})

@@ -129,13 +129,13 @@
 ;; based on riemann-reporter.core/wrap-request-metrics
 (defn wrap-request-logs
   "Middleware to log all incoming connections to Riemann"
-  [handler metric-description]
+  [handler metric-description get-in-config]
   (let [_ (assert (and (string? metric-description)
                        (seq metric-description))
                   (pr-str metric-description))
         _ (log/info "Riemann request logging initialization")
         send-event-fn 
-        (let [config (p/get-in-global-properties [:ctia :log :riemann])
+        (let [config (get-in-config [:ctia :log :riemann])
               client (-> (select-keys config
                                       [:host :port :interval-in-ms])
                          riemann/tcp-client

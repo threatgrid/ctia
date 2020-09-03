@@ -14,9 +14,9 @@
 (s/defschema APIHandlerServices
   "Maps of services available to routes"
   {:ConfigService {:get-config (s/=> s/Any s/Any)
-                   :get-in-config (s/=> s/Any
-                                        [s/Any]
-                                        [s/Any s/Any])}
+                   :get-in-config (s/=>* s/Any
+                                         [s/Any]
+                                         [s/Any s/Any])}
    :HooksService {:apply-hooks (s/pred ifn?) ;;keyword varargs
                   :apply-event-hooks (s/=> s/Any s/Any)}
    :StoreService {:read-store (s/pred ifn?) ;;varags
@@ -53,9 +53,7 @@
    (st/optional-keys
     {:new-schema (s/protocol s/Schema)
      :route-context s/Str
-     ;; at most one of :routes and :routes-from-services allowed.
-     :routes s/Any
-     :routes-from-services DelayedRoutes
+     :services->routes DelayedRoutes
      :tags [s/Str]
      :capabilities #{s/Keyword}
      :no-bulk? s/Bool

@@ -3,6 +3,7 @@
   (:require [clojure.tools.logging :as log]
             [ctia.flows.hooks.event-hooks :as event-hooks]
             [ctia.flows.hook-protocol :as prot]
+            [ctia.properties :as p]
             [ctia.shutdown :as shutdown]))
 
 (defn- doc-list [& s]
@@ -24,7 +25,7 @@
 (defn reset-hooks! []
   (reset! hooks
           (-> empty-hooks
-              event-hooks/register-hooks)))
+              (event-hooks/register-hooks p/get-in-global-properties))))
 
 (defn add-hook!
   "Add a `Hook` for the hook `hook-type`"

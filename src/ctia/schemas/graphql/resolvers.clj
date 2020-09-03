@@ -3,6 +3,7 @@
             [ctia.domain.entities
              :refer
              [page-with-long-id un-store un-store-page with-long-id]]
+            [ctia.properties :as p]
             [ctia.schemas.core :as ctia-schemas]
             [ctia.schemas.graphql.pagination :as pagination]
             [ctia.store :refer :all]
@@ -51,7 +52,7 @@
                    args
                    (:ident context)
                    field-selection
-                   page-with-long-id)))
+                   #(page-with-long-id % p/get-in-global-properties))))
 
 (s/defn entity-by-id
   [entity-type-kw :- s/Keyword
@@ -67,7 +68,7 @@
                       id
                       ident
                       {:fields (concat default-fields field-selection)})
-          with-long-id
+          (with-long-id p/get-in-global-properties)
           un-store))
 
 (defn entity-by-id-resolver
@@ -114,7 +115,7 @@
                         observable
                         (:ident context)
                         params)
-            page-with-long-id
+            (page-with-long-id p/get-in-global-properties)
             un-store
             (pagination/result->connection-response paging-params))))
 
@@ -134,7 +135,7 @@
                         [observable]
                         (:ident context)
                         params)
-            page-with-long-id
+            (page-with-long-id p/get-in-global-properties)
             un-store
             (pagination/result->connection-response paging-params))))
 
@@ -152,4 +153,4 @@
                    args
                    (:ident context)
                    (concat field-selection [:target_ref :source_ref])
-                   page-with-long-id)))
+                   #(page-with-long-id % p/get-in-global-properties))))

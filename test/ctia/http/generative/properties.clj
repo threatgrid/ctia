@@ -9,7 +9,7 @@
             [ctia.properties :refer [get-http-show]]
             [ctia.schemas.core] ;; for spec side-effects
             [ctia.test-helpers.core
-             :refer [post get]]
+             :as helpers :refer [post get]]
             [ctim.domain.id :as id]
             [ctim.schemas
              [actor :refer [NewActor]]
@@ -29,6 +29,7 @@
              [sighting :refer [NewSighting]]
              [identity-assertion :refer [NewIdentityAssertion]]
              [tool :refer [NewTool]]
+             [target-record :refer [NewTargetRecord]]
              [vulnerability :refer [NewVulnerability]]
              [weakness :refer [NewWeakness]]]
             [flanders
@@ -38,7 +39,8 @@
 (defn api-for-route [model-type entity-gen]
   (for-all
     [new-entity entity-gen]
-    (let [{post-status :status
+    (let [get-in-config (helpers/current-get-in-config-fn)
+          {post-status :status
            {id :id
             type :type
             :as post-entity} :parsed-body}
@@ -50,7 +52,7 @@
                         post-entity)))
 
       (let [url-id
-            (-> (id/->id type id (get-http-show))
+            (-> (id/->id type id (get-http-show get-in-config))
                 :short-id
                 encode)
 
@@ -86,6 +88,7 @@
          [NewRelationship "max-new-relationship"]
          [NewSighting "max-new-sighting"]
          [NewIdentityAssertion "max-new-identity-assertion"]
+         [NewTargetRecord "max-new-target-record"]
          [NewTool "max-new-tool"]
          [NewVulnerability "max-new-vulnerability"]
          [NewWeakness "max-new-weakness"]
@@ -112,6 +115,8 @@
 
 (def api-for-asset-properties-routes
   (api-for-route 'asset-properties (spec-gen "max-new-asset-properties")))
+(def api-for-target-record-routes
+  (api-for-route 'target-record (spec-gen "max-new-target-record")))
 
 (def api-for-attack-pattern-routes
   (api-for-route 'attack-pattern

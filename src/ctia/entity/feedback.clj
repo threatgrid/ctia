@@ -4,7 +4,7 @@
             [ctia.entity.feedback.schemas :as fs]
             [ctia.http.routes
              [common :refer [paginated-ok PagingParams]]
-             [crud :refer [entity-crud-routes]]]
+             [crud :refer [services->entity-crud-routes]]]
             [ctia.schemas.core :refer [APIHandlerServices]]
             [ctia.schemas.sorting :as sorting]
             [ctia.store :refer [list-records]]
@@ -53,7 +53,8 @@
      JudgementFieldsParam
      {(s/optional-key :sort_by) feedback-sort-fields})))
 
-(s/defn feedback-by-entity-route [{{:keys [read-store]} :StoreService
+(s/defn feedback-by-entity-route [{{:keys [get-in-config]} :ConfigService
+                                   {:keys [read-store]} :StoreService
                                    :as _services_} :- APIHandlerServices]
   (GET "/" []
        :return fs/PartialFeedbackList
@@ -67,7 +68,7 @@
                        {:all-of (select-keys params [:entity_id])}
                        identity-map
                        (dissoc params :entity_id))
-           page-with-long-id
+           (page-with-long-id get-in-config)
            un-store-page
            paginated-ok)))
 
@@ -79,7 +80,8 @@
 (s/defn feedback-routes [services :- APIHandlerServices]
   (routes
    (feedback-by-entity-route services)
-   (entity-crud-routes
+   (services->entity-crud-routes
+    services
     {:entity :feedback
      :new-schema fs/NewFeedback
      :entity-schema fs/Feedback
@@ -113,5 +115,5 @@
    :realize-fn fs/realize-feedback
    :es-store ->FeedbackStore
    :es-mapping feedback-mapping
-   :routes-from-services feedback-routes
+   :services->routes feedback-routes
    :capabilities capabilities})

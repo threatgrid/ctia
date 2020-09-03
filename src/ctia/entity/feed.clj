@@ -138,9 +138,10 @@
             (map #(decrypt-feed % services) feeds))))
 
 (s/defn fetch-feed [id s
-                    {{:keys [decrypt]} :IEncryption
+                    {{:keys [get-in-config]} :ConfigService
+                     {:keys [decrypt]} :IEncryption
                      {:keys [read-store]} :StoreService
-                     :as _services_} :- APIHandlerServices]
+                     :as services} :- APIHandlerServices]
   (if-let [{:keys [indicator_id
                    secret
                    output
@@ -170,7 +171,8 @@
                             list-records
                             {:all-of {:target_ref indicator_id}}
                             feed-identity
-                            {:fields [:source_ref]})
+                            {:fields [:source_ref]}
+                            services)
                            (keep :source_ref)
                            (map #(read-store :judgement
                                              read-record
@@ -178,7 +180,7 @@
                                              feed-identity
                                              {}))
                            (remove nil?)
-                           (map with-long-id))]
+                           (map #(with-long-id % get-in-config)))]
               (cond-> {}
                 (= :observables output)
                 (assoc
@@ -233,9 +235,9 @@
          :unauthorized (unauthorized "wrong secret")
          (ok (dissoc feed :output)))))))
 
-(s/defn feed-routes [{{:keys [read-store write-store]} :StoreService
-                      :as services}
-                     :- APIHandlerServices]
+(s/defn feed-routes [{{:keys [get-in-config]} :ConfigService
+                      {:keys [read-store write-store]} :StoreService
+                      :as services} :- APIHandlerServices]
   (routes
    (POST "/" []
      :return Feed
@@ -246,6 +248,7 @@
      :auth-identity identity
      :identity-map identity-map
      (-> (flows/create-flow
+          :services services
           :entity-type :feed
           :realize-fn realize-feed
           :store-fn #(write-store :feed
@@ -253,7 +256,7 @@
                                   %
                                   identity-map
                                   (wait_for->refresh wait_for))
-          :long-id-fn with-long-id
+          :long-id-fn #(with-long-id % get-in-config)
           :entity-type :feed
           :identity identity
           :entities [new-entity]
@@ -273,6 +276,7 @@
      :identity-map identity-map
      (if-let [updated-rec
               (-> (flows/update-flow
+                   :services services
                    :get-fn #(read-store :feed
                                         read-record
                                         %
@@ -285,7 +289,7 @@
                                             %
                                             identity-map
                                             (wait_for->refresh wait_for))
-                   :long-id-fn with-long-id
+                   :long-id-fn #(with-long-id % get-in-config)
                    :entity-type :feed
                    :entity-id id
                    :identity identity
@@ -309,7 +313,7 @@
                      {:all-of {:external_ids external_id}}
                      identity-map
                      q)
-         page-with-long-id
+         (page-with-long-id get-in-config)
          un-store-page
          (decrypt-feed-page services)
          paginated-ok))
@@ -327,7 +331,7 @@
           (search-query :created params)
           identity-map
           (select-keys params search-options))
-         page-with-long-id
+         (page-with-long-id get-in-config)
          un-store-page
          (decrypt-feed-page services)
          paginated-ok))
@@ -359,7 +363,7 @@
                               identity-map
                               params)]
        (-> rec
-           with-long-id
+           (with-long-id get-in-config)
            un-store
            (decrypt-feed services)
            ok)
@@ -374,6 +378,7 @@
      :auth-identity identity
      :identity-map identity-map
      (if (flows/delete-flow
+          :services services
           :get-fn #(read-store :feed
                                read-record
                                %
@@ -385,7 +390,7 @@
                                    identity-map
                                    (wait_for->refresh wait_for))
           :entity-type :feed
-          :long-id-fn with-long-id
+          :long-id-fn #(with-long-id % get-in-config)
           :entity-id id
           :identity identity)
        (no-content)
@@ -413,5 +418,5 @@
    :realize-fn realize-feed
    :es-store ->FeedStore
    :es-mapping feed-mapping
-   :routes-from-services feed-routes
+   :services->routes feed-routes
    :capabilities capabilities})

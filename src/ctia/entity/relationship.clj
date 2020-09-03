@@ -88,8 +88,9 @@
           incident-link-source-types)
     IncidentLinkRequestOptional))
 
-(s/defn incident-link-route [{{:keys [read-store write-store]} :StoreService
-                              :as _services_} :- APIHandlerServices]
+(s/defn incident-link-route [{{:keys [get-in-config]} :ConfigService
+                              {:keys [read-store write-store]} :StoreService
+                              :as services} :- APIHandlerServices]
   (POST "/:id/link" []
         :return rs/Relationship
         :body [link-req IncidentLinkRequest
@@ -144,7 +145,7 @@
                                    source-short-id
                                    identity-map
                                    {}))
-              target-ref (short-id->long-id id)]
+              target-ref (short-id->long-id id get-in-config)]
           (cond
             (or (not incident)
                 (not target-ref))
@@ -166,6 +167,7 @@
                    :tlp tlp}
                   stored-relationship
                   (-> (flows/create-flow
+                       :services services
                        :entity-type :relationship
                        :realize-fn rs/realize-relationship
                        :store-fn #(write-store :relationship
@@ -173,7 +175,7 @@
                                                %
                                                identity-map
                                                {})
-                       :long-id-fn with-long-id
+                       :long-id-fn #(with-long-id % get-in-config)
                        :entity-type :relationship
                        :identity identity
                        :entities [new-relationship]
@@ -234,5 +236,5 @@
    :realize-fn rs/realize-relationship
    :es-store ->RelationshipStore
    :es-mapping relationship-mapping
-   :routes relationship-routes
+   :services->routes relationship-routes
    :capabilities capabilities})

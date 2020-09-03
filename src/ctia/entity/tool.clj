@@ -109,5 +109,5 @@
    :realize-fn ts/realize-tool
    :es-store ->ToolStore
    :es-mapping tool-mapping
-   :routes tool-routes
+   :services->routes tool-routes
    :capabilities capabilities})

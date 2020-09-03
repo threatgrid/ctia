@@ -1,11 +1,11 @@
 (ns ctia.entity.judgement.es-store
   (:require [clj-momo.lib.es.document :refer [search-docs]]
             [clj-momo.lib.time :as time]
-            [ctia.store :refer :all]
             [ctia.domain.access-control :refer [allow-write?]]
             [ctia.entity.judgement.schemas
              :refer
              [PartialStoredJudgement StoredJudgement]]
+            [ctia.properties :as p]
             [ctia.schemas.core :refer [Verdict]]
             [ctia.store :refer [IJudgementStore IQueryStringSearchableStore IStore]]
             [ctia.stores.es
@@ -53,11 +53,11 @@
 (def handle-aggregate (crud/handle-aggregate :judgement))
 
 (defn list-active-by-observable
-  [state observable ident]
+  [state observable ident get-in-config]
   (let [now-str (time/format-date-time (time/timestamp))
         composed-query
         (assoc-in
-         (find-restriction-query-part ident)
+         (find-restriction-query-part ident get-in-config)
          [:bool :must]
          (active-judgements-by-observable-query
           observable
@@ -97,7 +97,7 @@
 (s/defn handle-calculate-verdict :- (s/maybe Verdict)
   [state observable ident]
 
-  (some-> (list-active-by-observable state observable ident)
+  (some-> (list-active-by-observable state observable ident p/get-in-global-properties)
           first
           make-verdict))
 

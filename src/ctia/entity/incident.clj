@@ -12,7 +12,7 @@
                       PagingParams
                       SourcableEntityFilterParams
                       wait_for->refresh]]
-             [crud :refer [entity-crud-routes]]]
+             [crud :refer [services->entity-crud-routes]]]
             [ctia.schemas
              [core :refer [APIHandlerServices def-acl-schema def-stored-schema]]
              [sorting
@@ -91,8 +91,9 @@
     (cond-> {:status status}
       verb (assoc :incident_time {verb t}))))
 
-(s/defn incident-additional-routes [{{:keys [read-store write-store]} :StoreService
-                                     :as _services_} :- APIHandlerServices]
+(s/defn incident-additional-routes [{{:keys [get-in-config]} :ConfigService
+                                     {:keys [read-store write-store]} :StoreService
+                                     :as services} :- APIHandlerServices]
   (routes
    (POST "/:id/status" []
          :return Incident
@@ -108,6 +109,7 @@
            (if-let [updated
                     (un-store
                      (flows/patch-flow
+                      :services services
                       :get-fn #(read-store :incident
                                            read-record
                                            %
@@ -120,7 +122,7 @@
                                                %
                                                identity-map
                                                (wait_for->refresh wait_for))
-                      :long-id-fn with-long-id
+                      :long-id-fn #(with-long-id % get-in-config)
                       :entity-type :incident
                       :entity-id id
                       :identity identity
@@ -213,7 +215,8 @@
 (s/defn incident-routes [services :- APIHandlerServices]
   (routes
    (incident-additional-routes services)
-   (entity-crud-routes
+   (services->entity-crud-routes
+    services
     {:entity :incident
      :new-schema NewIncident
      :entity-schema Incident
@@ -284,5 +287,5 @@
    :realize-fn realize-incident
    :es-store ->IncidentStore
    :es-mapping incident-mapping
-   :routes-from-services incident-routes
+   :services->routes incident-routes
    :capabilities capabilities})
