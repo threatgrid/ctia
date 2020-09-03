@@ -56,10 +56,11 @@
    & rest-args]
  (s/fn :- (with-error StoredRelationship)
   [rt-opt]
-  (let [e (assoc (apply (MaybeDelayedRealizeFn->RealizeFn relationship-default-realize rt-opt)
-                        new-entity id tempids rest-args)
-                 :source_ref (get tempids source_ref source_ref)
-                 :target_ref (get tempids target_ref target_ref))]
+  (let [e (-> relationship-default-realize 
+              (MaybeDelayedRealizeFn->RealizeFn rt-opt)
+              (apply new-entity id tempids rest-args)
+              (assoc :source_ref (get tempids source_ref source_ref)
+                     :target_ref (get tempids target_ref target_ref)))]
     (if (or (string/starts-with? (:source_ref e) "transient:")
             (string/starts-with? (:target_ref e) "transient:"))
       {:id id
