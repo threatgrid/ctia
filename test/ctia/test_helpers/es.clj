@@ -18,6 +18,13 @@
             [puppetlabs.trapperkeeper.app :as app]
             [schema.core :as s]))
 
+(s/defn ->ESConnServices
+  :- ESConnServices
+  "Create a ESConnServices map without an app"
+  []
+  (let [get-in-config (h/build-get-in-config-fn)]
+    {:ConfigService {:get-in-config get-in-config}}))
+
 (defn refresh-indices [entity get-in-config]
   (let [{:keys [host port]}
         (es-init/get-store-properties entity get-in-config)]
@@ -69,11 +76,12 @@
   "walk through all producers and delete their index"
   [t]
   (let [app (h/get-current-app)
-        get-in-config (h/current-get-in-config-fn app)
-        services {:ConfigService {:get-in-config get-in-config}}]
+        services (->ESConnServices)]
     (purge-index :event services)
-    (t)
-    (purge-index :event services)))
+    (try
+      (t)
+      (finally
+        (purge-index :event services)))))
 
 (defn purge-indexes [deref-stores get-in-config]
   (doseq [entity (keys (deref-stores))]
@@ -213,10 +221,3 @@
                         (:docs.count entry))}))
          (into {})
          walk/keywordize-keys)))
-
-(s/defn ->ESConnServices
-  :- ESConnServices
-  "Create a ESConnServices map without an app"
-  []
-  (let [get-in-config (h/build-get-in-config-fn)]
-    {:ConfigService {:get-in-config get-in-config}}))
