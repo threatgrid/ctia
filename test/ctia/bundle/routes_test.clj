@@ -924,9 +924,9 @@
 
 (deftest bundle-tlp-test
  (with-tlp-property-setting "amber"
- (fn []
-  (test-for-each-store
-   (fn []
+  (fn []
+   (test-for-each-store
+    (fn []
      (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
      (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
                                          "foouser"
@@ -1010,4 +1010,4 @@
          (is (= 201 (:status incident-post-res)))
          (is (= 201 (:status link-res)))
          (is (= 200 (:status bundle-get-res)))
-         (is seq (-> bundle-get-res :parsed-body :casebooks)))))))
+         (is (seq (-> bundle-get-res :parsed-body :casebooks))))))))
