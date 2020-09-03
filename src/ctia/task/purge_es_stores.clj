@@ -3,6 +3,8 @@
             [ctia
              [init :refer [start-ctia!*]]
              [properties :as p]]
+            [ctia.store-service :as store-svc]
+            [ctia.stores.es-service :as es-svc]
             [ctia.stores.es.store :refer [delete-state-indexes]]
             [puppetlabs.trapperkeeper.app :as app]))
 
@@ -16,8 +18,10 @@
                               es-svc/es-store-service]
                    :config config})))
 
-(s/defn delete-store-indexes [stores :- {s/Keyword s/Any}]
-  (doseq [store-impls (vals stores)
+(s/defn delete-store-indexes [deref-stores]
+  (doseq [:let [stores (deref-stores)
+                _ (assert (map? stores))]
+          store-impls (vals stores)
           {:keys [state]} store-impls]
 
     (log/infof "deleting index %s" (:index state))
@@ -29,9 +33,8 @@
   (log/info "purging all ES Stores data")
   (try
     (let [app (setup)
-          store-svc (app/get-service app :StoreService)
-          deref-stores (partial store-svc/deref-stores store-svc)]
-      (delete-store-indexes (deref-stores))
+          {:keys [deref-stores]} (:StoreService (app/service-graph app))]
+      (delete-store-indexes deref-stores)
       (log/info "done")
       (System/exit 0))
     (finally

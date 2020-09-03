@@ -8,7 +8,6 @@
             [clj-momo.lib.schema :as mls]
             [clj-momo.properties :as mp]
             [ctia.store :as store]
-            [ctia.store-service-core :as store-svc-core]
             [schema-tools.core :as st]
             [schema.core :as s]
             [ctia.schemas.core
