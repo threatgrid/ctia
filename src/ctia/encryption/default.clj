@@ -5,7 +5,6 @@
    [ctia.encryption :refer [IEncryption]]
    [lock-key.core :refer [decrypt-from-base64
                           encrypt-as-base64]]
-   [ctia.properties :as p]
    [ctia.tk :as tk]
    [puppetlabs.trapperkeeper.services :refer [service-context]]))
 

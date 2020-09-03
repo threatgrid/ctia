@@ -12,7 +12,6 @@
             [ctia.lib.collection :refer [fmap]]
             [ctia.store-service :as store-svc]
             [ctia.stores.es-service :as es-svc]
-            [ctia.properties :as p]
             [ctia.stores.es.crud :as crud]
             [ctia.stores.es.init
              :refer
@@ -22,7 +21,6 @@
             [ctia.stores.es.store :as es-store :refer [StoreMap]]
             [ctia.task.rollover :refer [rollover-store]]
             [ctim.domain.id :refer [long-id->id]]
-            [puppetlabs.trapperkeeper.app :as app]
             [schema-tools.core :as st]
             [schema.core :as s]))
 
@@ -161,7 +159,7 @@
   (let [version-trimmed (string/replace index #"^v[^_]*_" "")]
     (format "v%s_%s" prefix version-trimmed)))
 
-(defonce conn-overrides {:cm (conn/make-connection-manager {:timeout timeout})})
+(def conn-overrides {:cm (conn/make-connection-manager {:timeout timeout})})
 
 (defn store->map
   [store-record]
