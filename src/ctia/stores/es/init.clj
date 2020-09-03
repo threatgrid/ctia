@@ -16,9 +16,11 @@
 (s/defschema StoreProperties
   {:entity s/Keyword
    :indexname s/Str
-   :shards s/Num
-   :replicas s/Num
+   (s/optional-key :shards) s/Num
+   (s/optional-key :replicas) s/Num
    (s/optional-key :write-suffix) s/Str
+   (s/optional-key :refresh_interval) s/Str
+   (s/optional-key :aliased) s/Any
    s/Keyword s/Any})
 
 (def store-mappings

@@ -4,6 +4,7 @@
             [ctia.flows.crud :refer [gen-random-uuid]]
             [clj-momo.lib.es.index :as es-index]
             [clj-momo.lib.es.conn :as es-conn]
+            [clj-momo.test-helpers.core :as mth]
             [ctia.stores.es.query :refer [find-restriction-query-part]]
             [ctia.stores.es.crud :as sut]
             [ctia.stores.es.init :as init]
@@ -76,6 +77,8 @@
                                                        "title.whole:ASC,"
                                                        "schema_version:DESC")))
 
+(use-fixtures :once mth/fixture-schema-validation)
+
 (use-fixtures :each
   (join-fixtures [es-helpers/fixture-properties:es-store
                   helpers/fixture-ctia
@@ -109,8 +112,10 @@
                         :refresh "true"})
 
 (deftest crud-aliased-test
-  (let [get-in-config (helpers/current-get-in-config-fn)
-        state-aliased (init/init-es-conn! props-aliased get-in-config)
+  (let [app (helpers/get-current-app)
+        services (es-helpers/app->ESConnServices app)
+
+        state-aliased (init/init-es-conn! props-aliased services)
         count-index #(count (es-index/get (:conn state-aliased)
                                           (str (:index state-aliased) "*")))
         base-sighting {:title "a sighting text title"
@@ -179,8 +184,10 @@
                             {}))))))
 
 (deftest crud-unaliased-test
-  (let [get-in-config (helpers/current-get-in-config-fn)
-        state-not-aliased (init/init-es-conn! props-not-aliased get-in-config)]
+  (let [app (helpers/get-current-app)
+        services (es-helpers/app->ESConnServices app)
+
+        state-not-aliased (init/init-es-conn! props-not-aliased services)]
     (testing "crud operation should properly handle not aliased states"
       (create-fn state-not-aliased
                  (map #(assoc base-sighting
@@ -204,8 +211,10 @@
                             {}))))))
 
 (deftest make-search-query-test
-  (let [get-in-config (helpers/current-get-in-config-fn)
-        es-conn-state (-> (init/init-es-conn! props-not-aliased get-in-config)
+  (let [app (helpers/get-current-app)
+        services (es-helpers/app->ESConnServices app)
+
+        es-conn-state (-> (init/init-es-conn! props-not-aliased services)
                           (update :props assoc :default_operator "AND"))
         simple-access-ctrl-query {:terms {"groups" (:groups ident)}}]
     (with-redefs [find-restriction-query-part (constantly simple-access-ctrl-query)]
@@ -319,8 +328,10 @@
 
 (deftest handle-query-string-search-count-test
   (testing "handle search and count shall properly apply query and params"
-    (let [get-in-config (helpers/current-get-in-config-fn)
-          es-conn-state (-> (init/init-es-conn! props-not-aliased get-in-config)
+    (let [app (helpers/get-current-app)
+          services (es-helpers/app->ESConnServices app)
+
+          es-conn-state (-> (init/init-es-conn! props-not-aliased services)
                             (update :props assoc :default_operator "AND"))
           _ (create-fn es-conn-state
                        search-metrics-entities
@@ -375,8 +386,10 @@
 
 (deftest handle-aggregate-test
   (testing "handle-aggregate"
-    (let [get-in-config (helpers/current-get-in-config-fn)
-          es-conn-state (-> (init/init-es-conn! props-not-aliased get-in-config)
+    (let [app (helpers/get-current-app)
+          services (es-helpers/app->ESConnServices app)
+
+          es-conn-state (-> (init/init-es-conn! props-not-aliased services)
                             (update :props assoc :default_operator "AND"))
           _ (create-fn es-conn-state
                        search-metrics-entities

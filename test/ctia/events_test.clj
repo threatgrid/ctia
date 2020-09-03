@@ -24,42 +24,33 @@
 (deftest test-send-event
   "Tests the basic action of sending an event"
   (let [app (helpers/get-current-app)
-        events-svc (app/get-service app :EventsService)
+        {:keys [send-event]} (helpers/get-service-map app :EventsService)
 
         {b :chan-buf c :chan m :mult :as ec} (la/new-channel)
         output (chan)]
     (try
       (tap m output)
-      (events-svc/send-event
-        events-svc
-        ec
-        (o2e/to-create-event
-          {:owner "tester"
-           :id "test-1"
-           :tlp "white"
-           :type :test
-           :data 1}
-          "test-1"))
-      (events-svc/send-event
-        events-svc
-        ec
-        (o2e/to-create-event
-          {:owner "tester"
-           :id "test-2"
-           :tlp "white"
-           :type :test
-           :data 2}
-          "test-2"))
-      (events-svc/send-event
-        events-svc
-        ec
-        (o2e/to-create-event
-          {:owner "tester"
-           :id "test-3"
-           :tlp "white"
-           :type :test
-           :data 3}
-          "test-3"))
+      (send-event ec (o2e/to-create-event
+                        {:owner "tester"
+                         :id "test-1"
+                         :tlp "white"
+                         :type :test
+                         :data 1}
+                        "test-1"))
+      (send-event ec (o2e/to-create-event
+                        {:owner "tester"
+                         :id "test-2"
+                         :tlp "white"
+                         :type :test
+                         :data 2}
+                        "test-2"))
+      (send-event ec (o2e/to-create-event
+                        {:owner "tester"
+                         :id "test-3"
+                         :tlp "white"
+                         :type :test
+                         :data 3}
+                        "test-3"))
       (is (= 1 (-> (<!! output) :entity :data)))
       (is (= 2 (-> (<!! output) :entity :data)))
       (is (= 3 (-> (<!! output) :entity :data)))
@@ -69,29 +60,26 @@
 (deftest test-central-events
   "Tests the basic action of sending an event to the central channel"
   (let [app (helpers/get-current-app)
-        events-svc (app/get-service app :EventsService)
-        {b :chan-buf c :chan m :mult} (events-svc/central-channel
-                                        events-svc)
+        {:keys [central-channel
+                send-event]} (helpers/get-service-map app :EventsService)
+
+        {b :chan-buf c :chan m :mult} (central-channel)
         output (chan)]
     (tap m output)
-    (events-svc/send-event
-      events-svc
-      (o2e/to-create-event
-        {:owner "tester"
-         :id "test-1"
-         :tlp "white"
-         :type :test
-         :data 1}
-        "test-1"))
-    (events-svc/send-event
-      events-svc
-      (o2e/to-create-event
-        {:owner "teseter"
-         :id "test-2"
-         :tlp "white"
-         :type :test
-         :data 2}
-        "test-2"))
+    (send-event (o2e/to-create-event
+                   {:owner "tester"
+                    :id "test-1"
+                    :tlp "white"
+                    :type :test
+                    :data 1}
+                   "test-1"))
+    (send-event (o2e/to-create-event
+                   {:owner "teseter"
+                    :id "test-2"
+                    :tlp "white"
+                    :type :test
+                    :data 2}
+                   "test-2"))
     (is (= 1 (-> (<!! output) :entity :data)))
     (is (= 2 (-> (<!! output) :entity :data)))
     (is (nil? (poll! output)))))

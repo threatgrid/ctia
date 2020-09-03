@@ -427,3 +427,10 @@
       (f)
       (reset! uuid-counter
               uuid-counter-start))))
+
+(defn get-service-map [app svc-kw]
+  {:pre [(keyword? svc-kw)]}
+  (let [graph (app/service-graph app)
+        m (svc-kw graph)]
+    (assert (map? m) (str "No service " svc-kw ", found " (keys graph)))
+    m))

@@ -213,8 +213,8 @@
                                          "foogroup"
                                          "user")
      (let [app (helpers/get-current-app)
-           store-svc (app/get-service app :StoreService)
-           deref-stores (partial store-svc/deref-stores store-svc)
+           {:keys [deref-stores]} (helpers/get-service-map app :StoreService)
+
            indicators [(mk-indicator 0)
                        (mk-indicator 1)]
            sightings [(mk-sighting 0)
@@ -450,8 +450,8 @@
                                          "foogroup"
                                          "user")
      (let [app (helpers/get-current-app)
-           store-svc (app/get-service app :StoreService)
-           read-store (-> (partial store-svc/read-store store-svc)
+           read-store (-> (helpers/get-service-map app :StoreService)
+                          :read-store
                           store-svc/store-service-fn->varargs)
 
            duplicated-indicators (->> (mk-indicator 0)
