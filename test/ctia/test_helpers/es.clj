@@ -18,6 +18,13 @@
             [puppetlabs.trapperkeeper.app :as app]
             [schema.core :as s]))
 
+(s/defn app->ESConnServices
+  :- ESConnServices
+  "Create a ESConnServices map with an app"
+  [ann]
+  (let [get-in-config (h/current-get-in-config-fn app)]
+    {:ConfigService {:get-in-config get-in-config}}))
+
 (s/defn ->ESConnServices
   :- ESConnServices
   "Create a ESConnServices map without an app"
@@ -76,7 +83,7 @@
   "walk through all producers and delete their index"
   [t]
   (let [app (h/get-current-app)
-        services (->ESConnServices)]
+        services (app->ESConnServices)]
     (purge-index :event services)
     (try
       (t)
