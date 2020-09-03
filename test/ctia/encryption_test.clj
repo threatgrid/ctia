@@ -16,7 +16,7 @@
 (deftest test-encryption-fns
   (testing "encryption shortcuts"
     (let [app (test-helpers/get-current-app)
-          {:keys [decrypt encrypt]} (helpers/get-service-map app :IEncryption)
+          {:keys [decrypt encrypt]} (test-helpers/get-service-map app :IEncryption)
 
           plain "foo"
           enc (encrypt plain)
