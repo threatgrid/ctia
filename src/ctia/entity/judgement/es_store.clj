@@ -5,6 +5,7 @@
             [ctia.entity.judgement.schemas
              :refer
              [PartialStoredJudgement StoredJudgement]]
+            [ctia.properties :as p]
             [ctia.schemas.core :refer [Verdict]]
             [ctia.store :refer [IJudgementStore IQueryStringSearchableStore IStore]]
             [ctia.stores.es

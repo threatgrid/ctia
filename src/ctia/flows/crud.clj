@@ -109,10 +109,10 @@
   [{:keys [tlp] :as entity}]
   (cond
     (not (seq tlp)) entity
-    (not (allowed-tlp? tlp))
+    (not (allowed-tlp? tlp p/get-in-global-properties))
     {:msg (format "Invalid document TLP %s, allowed TLPs are: %s"
                   tlp
-                  (str/join "," (allowed-tlps)))
+                  (str/join "," (allowed-tlps p/get-in-global-properties)))
      :error "Entity Access Control validation Error"
      :type :invalid-tlp-error
      :entity entity}

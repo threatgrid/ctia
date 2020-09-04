@@ -10,6 +10,7 @@
               allow-read?
               allow-write?]]
             [ctia.lib.pagination :refer [list-response-schema]]
+            [ctia.properties :as p]
             [ctia.schemas.search-agg :refer [SearchQuery
                                              HistogramQuery
                                              TopnQuery

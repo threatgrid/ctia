@@ -68,12 +68,11 @@
         ts/tool-fields)))))
 
 (deftest test-tool-routes-access-control
-  (test-for-each-store
-   (fn []
-     (access-control-test "tool"
-                          new-tool-minimal
-                          true
-                          true))))
+  (access-control-test "tool"
+                       new-tool-minimal
+                       true
+                       true
+                       test-for-each-store))
 
 (deftest test-tool-metric-routes
   ((:es-store store-fixtures)

@@ -1,7 +1,7 @@
 (ns ctia.domain.entities
   (:require [clj-momo.lib.time :as time]
             [ctia.domain.access-control :refer [properties-default-tlp]]
-            [ctia.properties :refer [get-http-show]]
+            [ctia.properties :as p :refer [get-http-show]]
             [ctia.schemas.core :as ctia-schemas :refer [TempIDs]]
             [ctim.domain.id :as id]
             [ctim.schemas.common :refer [ctim-schema-version]]
@@ -54,7 +54,7 @@
                :modified now
                :timestamp (or (:timestamp new-object) now)
                :tlp (:tlp new-object
-                          (:tlp prev-object (properties-default-tlp)))}
+                          (:tlp prev-object (properties-default-tlp p/get-in-global-properties)))}
               (when (contains-key? Model :valid_time)
                 (make-valid-time (:valid_time prev-object)
                                  (:valid_time new-object)
