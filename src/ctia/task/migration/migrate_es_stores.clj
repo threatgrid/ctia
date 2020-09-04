@@ -1,23 +1,20 @@
 (ns ctia.task.migration.migrate-es-stores
-  (:require [clojure.string :as string]
-            [clojure.tools.logging :as log]
-
-            [schema-tools.core :as st]
-            [schema.core :as s]
+  (:require [clj-momo.lib.es.schemas :refer [ESConn ESQuery]]
             [clj-momo.lib.time :as time]
-            [clj-momo.lib.es.schemas :refer [ESConn ESQuery]]
-
-            [ctia.store :refer [stores]]
+            [clojure.pprint :as pp]
+            [clojure.string :as string]
+            [clojure.tools.cli :refer [parse-opts]]
+            [clojure.tools.logging :as log]
             [ctia.entity.entities :refer [entities]]
             [ctia.entity.sighting.schemas :refer [StoredSighting]]
             [ctia.properties :as p]
-            [ctia.stores.es
-             [crud :refer [coerce-to-fn]]
-             [store :refer [StoreMap]]]
+            [ctia.stores.es.crud :refer [coerce-to-fn]]
+            [ctia.stores.es.store :refer [StoreMap]]
             [ctia.task.migration.migrations :refer [available-migrations]]
-            [ctia.task.migration.store :as mst])
-  (:import [java.util UUID]
-           [java.lang AssertionError]))
+            [ctia.task.migration.store :as mst]
+            [schema-tools.core :as st]
+            [schema.core :as s])
+  (:import java.lang.AssertionError))
 
 (def default-batch-size 100)
 (def default-buffer-size 3)
@@ -244,7 +241,6 @@
 (s/defn migrate-store-indexes
   "migrate the selected es store indexes"
   [{:keys [migration-id
-           prefix
            migrations
            store-keys
            batch-size
@@ -297,12 +293,13 @@
         (update :store-keys string-to-coll))))
 
 (s/defn run-migration
-  []
+  [options]
   (log/info "migrating all ES Stores")
   (try
     (mst/setup!)
-    (doto (prepare-params
-           (p/get-in-global-properties [:ctia :migration]))
+    (doto (-> (p/get-in-global-properties [:ctia :migration])
+              (into options)
+              prepare-params)
       (->> pr-str (log/info "migration started"))
       check-migration-params
       migrate-store-indexes)
@@ -314,5 +311,23 @@
       (exit true)))
   (exit false))
 
+(def cli-options
+  ;; An option with a required argument
+  [["-c" "--confirm" "really do the migration?"]
+   ["-r" "--restart" "restart ongoing migration?"]
+   ["-h" "--help"]])
+
 (defn -main [& args]
-  (run-migration ))
+  (let [{:keys [options errors summary]} (parse-opts args cli-options)
+        {:keys [restart confirm]} options]
+    (when errors
+      (binding  [*out* *err*]
+        (println (string/join "\n" errors))
+        (println summary))
+      (System/exit 1))
+    (when (:help options)
+      (println summary)
+      (System/exit 0))
+    (pp/pprint options)
+    (run-migration {:confirm? confirm
+                    :restart? restart})))

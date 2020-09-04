@@ -213,8 +213,6 @@
                       "ctia.migration.store-keys" s/Str
                       "ctia.migration.batch-size" s/Int
                       "ctia.migration.buffer-size" s/Int
-                      "ctia.migration.confirm?" s/Bool
-                      "ctia.migration.restart?" s/Bool
 
                       "ctia.store.asset" s/Str
                       "ctia.store.asset-properties" s/Str

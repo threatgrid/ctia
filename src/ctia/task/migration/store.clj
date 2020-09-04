@@ -8,7 +8,7 @@
             [clj-momo.lib.es.schemas :refer [ESConn ESConnState ESQuery Refresh]]
             [clojure.string :as string]
             [clojure.tools.logging :as log]
-            [ctia.init :refer [init-store-service! log-properties]]
+            [ctia.init :refer [log-properties]]
             [ctia.lib.collection :refer [fmap]]
             [ctia.properties :as p]
             [ctia.store :as store]
