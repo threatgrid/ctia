@@ -53,7 +53,7 @@
       (helpers/fixture-with-fixed-time
        fixed-now
        (fn []
-         (let [response (helpers/patch
+         (let [response (helpers/post
                          (str "ctia/asset-mapping/expire/" short-id)
                          :headers {"Authorization" "45c1f5e3f05d0"})]
            (is (= 200 (:status response)) "PATCH asset-mapping/expire succeeds")

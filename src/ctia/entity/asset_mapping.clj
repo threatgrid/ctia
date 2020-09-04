@@ -1,6 +1,6 @@
 (ns ctia.entity.asset-mapping
   (:require [clj-momo.lib.clj-time.core :as time]
-            [compojure.api.sweet :refer [PATCH routes]]
+            [compojure.api.sweet :refer [POST routes]]
             [ctia.domain.entities :as entities]
             [ctia.flows.crud :as flows]
             [ctia.http.routes.common :as routes.common]
@@ -109,7 +109,7 @@
                             {:keys [read-store write-store]} :StoreService
                             :as                              services} :- APIHandlerServices]
   (routes
-   (PATCH "/expire/:id" []
+   (POST "/expire/:id" []
      :return         AssetMapping
      :path-params    [id :- s/Str]
      :summary        "Expire Asset Mapping's valid-time property"
