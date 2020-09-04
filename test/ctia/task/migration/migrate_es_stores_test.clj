@@ -388,9 +388,7 @@
                                                         batch-params
                                                         services)
                           {target-state :target
-                           source-state :source} (-> (get-migration migration-id
-                                                                    (es-conn get-in-config)
-                                                                    services)
+                           source-state :source} (-> (get-migration migration-id @es-conn services)
                                                      :stores
                                                      :relationship)
                           _ (es-index/refresh! @es-conn)
