@@ -48,7 +48,7 @@
     (pp/pprint options)
     (p/init!)
     (init/log-properties)
-    (init/init-store-service! store/stores p/get-in-global-properties)
+    (init/init-store-service!)
     (->> (:stores options)
          (select-keys @store/stores)
          update-mapping-stores!)

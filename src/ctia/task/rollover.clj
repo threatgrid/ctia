@@ -43,7 +43,7 @@
 (defn -main [& _args]
   (p/init!)
   (log-properties)
-  (init-store-service! stores p/get-in-global-properties)
+  (init-store-service!)
   (let [{:keys [nb-errors]
          :as res} (rollover-stores @stores)]
     (log/info "completed rollover task: " res)

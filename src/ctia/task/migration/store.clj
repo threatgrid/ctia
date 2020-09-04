@@ -9,7 +9,7 @@
             [clojure.set :as set]
             [clojure.string :as string]
             [clojure.tools.logging :as log]
-            [ctia.init :refer [log-properties]]
+            [ctia.init :refer [init-store-service! log-properties]]
             [ctia.lib.collection :refer [fmap]]
             [ctia.properties :refer [init!]]
             [ctia.store :refer [stores]]
@@ -27,7 +27,6 @@
 
 (def timeout (* 5 60000))
 (def es-max-retry 3)
-;;FIXME refactor to local argument
 (defonce migration-es-conn (atom nil))
 
 (s/defschema MigrationStoreServices
@@ -59,7 +58,8 @@
                    :started em/ts
                    :completed em/ts}}})
 
-(s/defn migration-mapping [{{:keys [deref-stores]} :StoreService} :- MigrationStoreServices]
+(s/defn migration-mapping
+  [{{:keys [deref-stores]} :StoreService} :- MigrationStoreServices]
   {"migration"
    {:dynamic false
     :properties
@@ -681,6 +681,13 @@ when confirm? is true, it stores this state and creates the target indices."
 (s/defn setup!
   "setup store service"
   [services :- MigrationStoreServices]
+  ;; TODO will be rolled into trapperkeeper bootstrap
+  ;; START global services setup
+  (log/info "starting CTIA Stores...")
+  (init!)
+  (log-properties)
+  (init-store-service!)
+  ;; END global services setup
   (reset! migration-es-conn
           (-> (migration-store-properties services)
               (init-store-conn (MigrationStoreServices->ESConnServices

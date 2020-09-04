@@ -60,21 +60,22 @@
                       {:message "Unknown service"
                        :requested-service type})))))
 
-(defn- get-store-types [store-kw get-in-config]
-  (or (some-> (get-in-config [:ctia :store store-kw])
+(defn- get-store-types [store-kw]
+  (or (some-> (p/get-in-global-properties [:ctia :store store-kw])
               (str/split #","))
       []))
 
-(defn- build-store [store-kw get-in-config store-type]
+(defn- build-store [store-kw store-type]
   (case store-type
-    "es" (es-init/init-store! store-kw {:ConfigService {:get-in-config get-in-config}})))
+    "es" (es-init/init-store! store-kw
+                              {:ConfigService {:get-in-config p/get-in-global-properties}})))
 
-(defn init-store-service! [stores get-in-config]
-  (reset! stores
+(defn init-store-service! []
+  (reset! store/stores
           (->> (keys store/empty-stores)
                (map (fn [store-kw]
-                      [store-kw (keep (partial build-store store-kw get-in-config)
-                                      (get-store-types store-kw get-in-config))]))
+                      [store-kw (keep (partial build-store store-kw)
+                                      (get-store-types store-kw))]))
                (into {})
                (merge-with into store/empty-stores))))
 
@@ -118,7 +119,7 @@
 
   (init-encryption-service!)
   (init-auth-service!)
-  (init-store-service! store/stores p/get-in-global-properties)
+  (init-store-service!)
 
   ;; hooks init
   (h/init!)
