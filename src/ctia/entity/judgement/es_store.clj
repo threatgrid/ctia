@@ -97,8 +97,6 @@
 (s/defn handle-calculate-verdict :- (s/maybe Verdict)
   [{{{:keys [get-in-config]} :ConfigService} :services :as state}
     observable ident]
-  (assert get-in-config)
-
   (some-> (list-active-by-observable state observable ident get-in-config)
           first
           make-verdict))
