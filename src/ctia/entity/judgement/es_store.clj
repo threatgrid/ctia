@@ -11,7 +11,8 @@
             [ctia.stores.es
              [crud :as crud]
              [mapping :as em]
-             [query :refer [active-judgements-by-observable-query find-restriction-query-part]]]
+             [query :refer [active-judgements-by-observable-query find-restriction-query-part]]
+             [schemas :refer [ESConnState]]]
             [ctim.schemas.common :refer [disposition-map]]
             [ring.swagger.coerce :as sc]
             [schema
@@ -95,8 +96,10 @@
    :valid_time (:valid_time judgement)})
 
 (s/defn handle-calculate-verdict :- (s/maybe Verdict)
-  [{{{:keys [get-in-config]} :ConfigService} :services :as state}
-    observable ident]
+  [{{{:keys [get-in-config]} :ConfigService} :services
+    :as state} :- ESConnState
+    observable
+    ident]
   (some-> (list-active-by-observable state observable ident get-in-config)
           first
           make-verdict))
