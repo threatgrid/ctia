@@ -179,10 +179,14 @@
         "format-range-buckets should properly format raw buckets per month")))
 
 (deftest wo-storemaps-test
-  (let [fake-migration (sut/init-migration "migration-id-1"
+  (let [app (helpers/get-current-app)
+        services (app->MigrationStoreServices app)
+
+        fake-migration (sut/init-migration "migration-id-1"
                                            "0.0.0"
                                            [:tool :sighting :malware]
-                                           false)
+                                           false
+                                           services)
         wo-stores (sut/wo-storemaps fake-migration)]
     (is (nil? (get-in wo-stores [:source :store])))
     (is (nil? (get-in wo-stores [:target :store])))))
@@ -222,8 +226,11 @@
                                       :modified "04-29-2019"}))))
 
 (deftest get-target-stores-test
-  (let [{:keys [tool malware]}
-        (sut/get-target-stores "0.0.0" [:tool :malware])]
+  (let [app (helpers/get-current-app)
+        services (app->MigrationStoreServices app)
+
+        {:keys [tool malware]}
+        (sut/get-target-stores "0.0.0" [:tool :malware] services)]
     (is (= "v0.0.0_ctia_malware" (:indexname malware)))
     (is (= "v0.0.0_ctia_tool" (:indexname tool)))
     (is (= "v0.0.0_ctia_malware-write" (get-in malware [:props :write-index])))
@@ -902,11 +909,11 @@
       (check-state real-migration-from-init
                    migration-id-2
                    "init-migration with confirmation shall return a propr migration state")
-      (check-state (sut/get-migration migration-id-2 es-conn)
+      (check-state (sut/get-migration migration-id-2 es-conn services)
                    migration-id-2
                    "init-migration shall store confirmed migration, and get-migration should be properly retrieved from store")
       (is (thrown? clojure.lang.ExceptionInfo
-                   (sut/get-migration migration-id-1 es-conn))
+                   (sut/get-migration migration-id-1 es-conn services))
           "migration-id-1 was not confirmed it should not exist and thus get-migration must raise a proper exception")
       (testing "stored document shall not contains object stores in source and target"
         (let [{:keys [stores]} (es-doc/get-doc es-conn
