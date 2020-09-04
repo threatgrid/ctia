@@ -76,8 +76,10 @@
   so the TK config can be transformed before helpers/fixture-ctia
   starts the app."
   [config-transformer body-fn]
-  (let [fixtures (join-fixtures [helpers/fixture-ctia
-                                 fixture-setup! ;; Note: goes after fixture-ctia
+  (let [fixtures (join-fixtures [;; TODO move to after fixture-ctia. currently not
+                                 ;; possible because fixture-setup! calls `p/init!`
+                                 fixture-setup!
+                                 helpers/fixture-ctia
                                  es-helpers/fixture-delete-store-indexes
                                  fixture-clean-migration])]
     (helpers/with-config-transformer*
@@ -157,6 +159,10 @@
                                          "v1.2.0_ctia_malware"))
         (let [app (helpers/get-current-app)
               {:keys [get-in-config]} (helpers/get-service-map app :ConfigService)]
+          (let [v (get-in-config [:ctia :store :es :investigation :indexname])]
+            (assert (= v "v1.2.0_ctia_investigation") v))
+          (let [v (get-in-config [:malware 0 :state :props :indexname])]
+            (assert (= v "v1.2.0_ctia_malware") v))
           (is (thrown? AssertionError
                        (sut/check-migration-params migration-params
                                                    get-in-config))
