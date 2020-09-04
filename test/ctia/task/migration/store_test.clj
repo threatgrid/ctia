@@ -17,6 +17,7 @@
             [ctia.test-helpers.es :as es-helpers]
             [ctia.test-helpers.fake-whoami-service :as whoami-helpers]
             [ctia.test-helpers.fixtures :as fixt]
+            [ctia.test-helpers.migration :refer [app->MigrationStoreServices]]
             [ctim.domain.id :refer [long-id->id]]))
 
 (deftest prefixed-index-test
@@ -256,7 +257,11 @@
 
 (deftest rollover-test
   (with-open [rdr (io/reader "./test/data/indices/sample-relationships-1000.json")]
-    (let [storename "ctia_relationship"
+    (let [app (helpers/get-current-app)
+          {:keys [get-in-config]} (helpers/get-service-map app :ConfigService)
+          services (app->MigrationStoreServices app)
+
+          storename "ctia_relationship"
           write-alias (str storename "-write")
           max-docs 40
           batch-size 4
@@ -289,7 +294,8 @@
                           res (when rollover?
                                 (sut/rollover storemap
                                               batch-size
-                                              (+ nb migrated-count)))
+                                              (+ nb migrated-count)
+                                              services))
                           cat-after (es-helpers/get-cat-indices
                                      "localhost"
                                      9200)
@@ -330,7 +336,10 @@
             "All the indices should be smaller than max-docs + batch-size")))))
 
 (deftest sliced-queries-test
-  (let [storemap {:conn es-conn
+  (let [app (helpers/get-current-app)
+        {:keys [get-in-config]} (helpers/get-service-map app :ConfigService)
+
+        storemap {:conn es-conn
                   :indexname "ctia_relationship"
                   :mapping "relationship"
                   :props {:write-index "ctia_relationship"}
@@ -480,7 +489,12 @@
 
 (deftest bulk-metas-test
   ;; insert elements in different indices and check that we retrieve the right one
-  (let [sighting-store-map {:conn es-conn
+  (let [app (helpers/get-current-app)
+        {:keys [get-in-config]} (helpers/get-service-map app :ConfigService)
+        {:keys [deref-stores]} (helpers/get-service-map app :StoreService)
+        services (app->MigrationStoreServices app)
+
+        sighting-store-map {:conn es-conn
                             :indexname "ctia_sighting"
                             :props {:write-index "ctia_sighting"}
                             :mapping "sighting"
@@ -488,7 +502,7 @@
                             :settings {}
                             :config {}}
         post-bulk-res-1 (post-bulk examples)
-        {:keys [nb-errors]} (rollover-stores @stores)
+        {:keys [nb-errors]} (rollover-stores (deref-stores))
         _ (is (= 0 nb-errors))
         post-bulk-res-2 (post-bulk examples)
         malware-ids (->> (:malwares post-bulk-res-1)
@@ -509,9 +523,9 @@
                                                  keys
                                                  sort
                                                  (map name))
-        bulk-metas-malware-res (sut/bulk-metas sighting-store-map malware-ids)
-        bulk-metas-sighting-res-1 (sut/bulk-metas sighting-store-map sighting-ids-1)
-        bulk-metas-sighting-res-2 (sut/bulk-metas sighting-store-map sighting-ids-2)]
+        bulk-metas-malware-res (sut/bulk-metas sighting-store-map malware-ids services)
+        bulk-metas-sighting-res-1 (sut/bulk-metas sighting-store-map sighting-ids-1 services)
+        bulk-metas-sighting-res-2 (sut/bulk-metas sighting-store-map sighting-ids-2 services)]
     (testing "bulk-metas should property return _id, _type, _index from a document id"
       (doseq [[_id metas] bulk-metas-malware-res]
         (is (= _id (:_id metas)))
@@ -528,7 +542,12 @@
 
 (deftest prepare-docs-test
   ;; insert elements in different indices, modify some and check that we retrieve the right one
-  (let [sighting-store-map {:conn es-conn
+  (let [app (helpers/get-current-app)
+        {:keys [get-in-config]} (helpers/get-service-map app :ConfigService)
+        {:keys [deref-stores]} (helpers/get-service-map app :StoreService)
+        services (app->MigrationStoreServices app)
+
+        sighting-store-map {:conn es-conn
                             :indexname "ctia_sighting"
                             :props {:write-index "ctia_sighting-write"
                                     :aliased true}
@@ -537,7 +556,7 @@
                             :settings {}
                             :config {}}
         post-bulk-res-1 (post-bulk examples)
-        {:keys [nb-errors]} (rollover-stores @stores)
+        {:keys [nb-errors]} (rollover-stores (deref-stores))
         _ (is (= 0 nb-errors))
         post-bulk-res-2 (post-bulk examples)
         _ (es-index/refresh! es-conn)
@@ -582,7 +601,7 @@
                                               {})
                              sighting-ids-2)
         sighting-docs (concat sighting-docs-1 sighting-docs-2)
-        prepared-docs (sut/prepare-docs sighting-store-map sighting-docs)]
+        prepared-docs (sut/prepare-docs sighting-store-map sighting-docs services)]
     (testing "prepare-docs should set proper _id, _type, _index for modified and unmodified documents"
       (is (= (sort (concat [sighting-index-1 sighting-index-2]
                            (repeat 4 "ctia_sighting-write")))
@@ -594,7 +613,11 @@
 
 
 (deftest store-batch-store-size-test
-  (let [indexname "test_index"
+  (let [app (helpers/get-current-app)
+        {:keys [get-in-config]} (helpers/get-service-map app :ConfigService)
+        services (app->MigrationStoreServices app)
+
+        indexname "test_index"
         store {:conn es-conn
                :indexname indexname
                :props {:write-index indexname}
@@ -610,11 +633,11 @@
                                       :value %)
                            (range nb-docs-2))]
     (testing "store-batch and store-size"
-      (sut/store-batch store sample-docs-1)
+      (sut/store-batch store sample-docs-1 services)
       (is (= 0 (sut/store-size store))
           "store-batch shall not refresh the index")
       (es-index/refresh! es-conn indexname)
-      (sut/store-batch store sample-docs-2)
+      (sut/store-batch store sample-docs-2 services)
       (is (= nb-docs-1 (sut/store-size store))
           "store-size shall return the number of first batch docs")
       (es-index/refresh! es-conn indexname)
@@ -624,7 +647,11 @@
 
 (deftest query-fetch-batch-test
   (testing "query-fetch-batch should property fetch and sort events on timestamp"
-    (let [indexname "test_event"
+    (let [app (helpers/get-current-app)
+          {:keys [get-in-config]} (helpers/get-service-map app :ConfigService)
+          services (app->MigrationStoreServices app)
+
+          indexname "test_event"
           event-store {:conn es-conn
                        :indexname indexname
                        :props {:write-index indexname}
@@ -649,8 +676,8 @@
                                                          :batch em/integer-type
                                                          :timestamp em/integer-type
                                                          :modified em/integer-type}}}})
-      (sut/store-batch event-store event-batch-1)
-      (sut/store-batch event-store event-batch-2)
+      (sut/store-batch event-store event-batch-1 services)
+      (sut/store-batch event-store event-batch-2 services)
       (es-index/refresh! es-conn indexname)
       (let [{fetched-no-query :data} (sut/fetch-batch event-store 80 0 nil nil)
             {fetched-batch-1 :data} (sut/query-fetch-batch {:term {:batch 1}}
@@ -699,7 +726,11 @@
             "desc sort was not properly applied"))))
 
   (testing "query-fetch-batch should properly sort entities on modified field"
-    (let [indexname "test_index"
+    (let [app (helpers/get-current-app)
+          {:keys [get-in-config]} (helpers/get-service-map app :ConfigService)
+          services (app->MigrationStoreServices app)
+
+          indexname "test_index"
           tool-store {:conn es-conn
                       :indexname indexname
                       :props {:write-index indexname}
@@ -753,8 +784,12 @@
                                       "foogroup"
                                       "user")
   (post-bulk examples)
-  (es-index/refresh! es-conn) ;; ensure indices refresh
-  (let [[sighting1 sighting2] (:parsed-body (helpers/get "ctia/sighting/search"
+  (let [app (helpers/get-current-app)
+        {:keys [get-in-config]} (helpers/get-service-map app :ConfigService)
+        services (app->MigrationStoreServices app)
+
+        _ (es-index/refresh! es-conn) ;; ensure indices refresh
+        [sighting1 sighting2] (:parsed-body (helpers/get "ctia/sighting/search"
                                                          :query-params {:limit 2 :query "*"}
                                                          :headers {"Authorization" "45c1f5e3f05d0"}))
         [tool1 tool2 tool3] (:parsed-body (helpers/get "ctia/tool/search"
@@ -783,11 +818,12 @@
                   :headers {"Authorization" "45c1f5e3f05d0"})
         _ (delete (format "ctia/tool/%s" malware1-id)
                   :headers {"Authorization" "45c1f5e3f05d0"})
-        {data1 :data paging1 :paging} (sut/fetch-deletes [:sighting :tool] since 3 nil)
+        {data1 :data paging1 :paging} (sut/fetch-deletes [:sighting :tool] since 3 nil services)
         {data2 :data paging2 :paging} (sut/fetch-deletes [:sighting :tool]
                                                          since
                                                          2
-                                                         (:sort paging1))]
+                                                         (:sort paging1)
+                                                         services)]
     (is (nil? (:next paging2)))
     (is (= #{(:id tool1) (:id tool2)} (->> (:tool data1)
                                            (map :id)
@@ -808,20 +844,26 @@
 
 (deftest init-get-migration-test
   (post-bulk examples)
-  (es-index/refresh! es-conn) ; ensure indices refresh
   (testing "init-migration should properly create new migration state from selected types."
-    (let [prefix "0.0.0"
+    (let [app (helpers/get-current-app)
+          {:keys [get-in-config]} (helpers/get-service-map app :ConfigService)
+          services (app->MigrationStoreServices app)
+
+          _ (es-index/refresh! es-conn) ; ensure indices refresh
+          prefix "0.0.0"
           entity-types [:tool :malware :relationship]
           migration-id-1 "migration-1"
           migration-id-2 "migration-2"
           fake-migration (sut/init-migration migration-id-1
                                              prefix
                                              entity-types
-                                             false)
+                                             false
+                                             services)
           real-migration-from-init (sut/init-migration migration-id-2
                                                        prefix
                                                        entity-types
-                                                       true)
+                                                       true
+                                                       services)
           check-state (fn [{:keys [id stores]} migration-id message]
                         (testing message
                           (is (= id migration-id))
