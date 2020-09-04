@@ -1,10 +1,10 @@
 (ns ctia.task.rollover
   (:require [clj-momo.lib.es.index :as es-index]
-            [clj-momo.lib.es.schemas :refer [ESConnState]]
             [clojure.tools.logging :as log]
             [ctia.init :refer [init-store-service! log-properties]]
             [ctia.properties :as p]
             [ctia.store :refer [stores]]
+            [ctia.stores.es.schemas :refer [ESConnState]]
             [schema.core :as s])
   (:import clojure.lang.ExceptionInfo))
 
@@ -43,7 +43,7 @@
 (defn -main [& _args]
   (p/init!)
   (log-properties)
-  (init-store-service!)
+  (init-store-service! stores p/get-in-global-properties)
   (let [{:keys [nb-errors]
          :as res} (rollover-stores @stores)]
     (log/info "completed rollover task: " res)

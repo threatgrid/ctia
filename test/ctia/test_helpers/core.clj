@@ -25,6 +25,22 @@
              [spec :as fs]
              [utils :as fu]]))
 
+(defn get-service-map [app svc-kw]
+  {:pre [(keyword? svc-kw)]}
+  ;; stub implementation until trapperkeeper bootstrap
+  (assert (= ::global-app app)
+          "app must be the result of get-current-app")
+  (case svc-kw
+    :ConfigService {:get-config p/get-global-properties
+                    :get-in-config p/get-in-global-properties}
+    :StoreService {:stores-atom (fn [] store/stores)
+                   :deref-stores (fn [] @store/stores)
+                   :read-store store/read-store
+                   :write-store store/write-store}
+    (throw (ex-info (str "No service: " svc-kw)
+                    {:app app
+                     :service svc-kw}))))
+
 (def fixture-property
   (mth/build-fixture-property-fn PropertiesSchema))
 
@@ -146,6 +162,11 @@
 (defn build-get-in-config-fn []
   ;; stub implementation until trapperkeeper bootstrap
   p/get-in-global-properties)
+
+(defn get-current-app []
+  {:post [%]}
+  ;; stub implementation until trapperkeeper bootstrap
+  ::global-app)
 
 (defn current-get-in-config-fn []
   ;; stub implementation until trapperkeeper bootstrap

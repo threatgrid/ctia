@@ -4,7 +4,7 @@
    [ctia.entity.event.schemas
     :refer [Event PartialEvent]]
    [ctia.stores.es.crud :as crud]
-   [clj-momo.lib.es.schemas :refer [ESConnState]]))
+   [ctia.stores.es.schemas :refer [ESConnState]]))
 
 (def ^:private handle-create-fn
   (crud/handle-create :event Event))

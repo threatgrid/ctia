@@ -5,7 +5,7 @@
             [clojure.string :as str]))
 
 (defn find-restriction-query-part
-  [{:keys [login groups]}]
+  [{:keys [login groups]} _get-in-config_]
   ;; TODO do we really want to discard case on that?
   (let [login (str/lower-case login)
         groups (map str/lower-case groups)]

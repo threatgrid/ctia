@@ -1,5 +1,7 @@
 (ns ctia.stores.es.init-test
   (:require [ctia.stores.es.init :as sut]
+            [ctia.test-helpers.core :as helpers]
+            [ctia.test-helpers.es :refer [->ESConnServices]]
             [clj-http.client :as http]
             [ctia.stores.es.mapping :as m]
             [clj-momo.lib.es
@@ -32,8 +34,9 @@
 
 (deftest init-store-conn-test
   (testing "init store conn should return a proper conn state with unaliased conf"
-    (let [{:keys [index props config conn]}
-          (sut/init-store-conn props-not-aliased)]
+    (let [services (->ESConnServices)
+          {:keys [index props config conn]}
+          (sut/init-store-conn props-not-aliased services)]
       (is (= index indexname))
       (is (= (:write-index props) indexname))
       (is (= "http://localhost:9200" (:uri conn)))
@@ -44,8 +47,9 @@
       (is (= {} (select-keys (:mappings config) [:a :b])))))
 
   (testing "init store conn should return a proper conn state with aliased conf"
-    (let [{:keys [index props config conn]}
-          (sut/init-store-conn props-aliased)]
+    (let [services (->ESConnServices)
+          {:keys [index props config conn]}
+          (sut/init-store-conn props-aliased services)]
       (is (= index indexname))
       (is (= (:write-index props) write-alias))
       (is (= "http://localhost:9200" (:uri conn)))
@@ -57,7 +61,8 @@
       (is (= {} (select-keys (:mappings config) [:a :b]))))))
 
 (deftest update-settings!-test
-  (let [indexname "ctia_malware"
+  (let [services (->ESConnServices)
+        indexname "ctia_malware"
         initial-props {:entity :malware
                        :indexname indexname
                        :host "localhost"
@@ -67,12 +72,12 @@
                        :replicas 2
                        :refresh_interval "1s"}
         ;; create index
-        {:keys [conn]} (sut/init-es-conn! initial-props)
+        {:keys [conn]} (sut/init-es-conn! initial-props services)
         new-props (assoc initial-props
                          :shards 4
                          :replicas 1
                          :refresh_interval "2s")
-        _ (sut/update-settings! (sut/init-store-conn new-props))
+        _ (sut/update-settings! (sut/init-store-conn new-props services))
         {:keys [refresh_interval
                 number_of_shards
                 number_of_replicas]} (-> (index/get conn indexname)
@@ -140,8 +145,9 @@
 (deftest init-es-conn!-test
   (index/delete! es-conn (str indexname "*"))
   (testing "init-es-conn! should return a proper conn state with unaliased conf, but not create any index"
-    (let [{:keys [index props config conn]}
-          (sut/init-es-conn! props-not-aliased)
+    (let [services (->ESConnServices)
+          {:keys [index props config conn]}
+          (sut/init-es-conn! props-not-aliased services)
           existing-index (index/get es-conn (str indexname "*"))]
       (is (empty? existing-index))
       (is (= index indexname))
@@ -154,11 +160,12 @@
       (is (= {} (select-keys (:mappings config) [:a :b])))))
 
   (testing "update mapping should allow adding fields or identical mapping"
-    (let [sucessful? (atom true)
+    (let [services (->ESConnServices)
+          sucessful? (atom true)
           fake-exit (fn [] (reset! sucessful? false))
           test-fn (fn [msg expected-successful? field field-mapping]
                     ;; init and create aliased indices
-                    (sut/init-es-conn! props-aliased)
+                    (sut/init-es-conn! props-aliased services)
                     (with-redefs [sut/system-exit-error fake-exit
                                   ;; redef mappings
                                   sut/store-mappings
@@ -167,7 +174,7 @@
                                                     field-mapping))]
                       (testing msg
                         ;; init again to trigger mapping update
-                        (sut/init-es-conn! props-aliased)
+                        (sut/init-es-conn! props-aliased services)
                         ;; check state
                         (is (= expected-successful? @sucessful?)))
                       ;; reset state
@@ -183,8 +190,9 @@
 
   (testing "init-es-conn! should return a proper conn state with aliased conf, and create an initial aliased index"
     (index/delete! es-conn (str indexname "*"))
-    (let [{:keys [index props config conn]}
-          (sut/init-es-conn! props-aliased)
+    (let [services (->ESConnServices)
+          {:keys [index props config conn]}
+          (sut/init-es-conn! props-aliased services)
           existing-index (index/get es-conn (str indexname "*"))
           created-aliases (->> existing-index
                                vals
@@ -210,8 +218,9 @@
     (index/create! es-conn
                    indexname
                    {:settings m/store-settings})
-    (let [{:keys [index props config conn]}
-          (sut/init-es-conn! props-aliased)
+    (let [services (->ESConnServices)
+          {:keys [index props config conn]}
+          (sut/init-es-conn! props-aliased services)
           existing-index (index/get es-conn (str indexname "*"))
           created-aliases (->> existing-index
                                vals

@@ -11,52 +11,95 @@
             [clojure.walk :as walk]
             [ctia.stores.es
              [init :as es-init]
-             [store :as es-store]]
-            [ctia.test-helpers.core :as h]))
+             [store :as es-store]
+             [schemas :refer [ESConnServices]]]
+            [ctia.test-helpers.core :as h]
+            [schema.core :as s]))
 
-(defn refresh-indices [entity]
+(s/defn app->ESConnServices
+  :- ESConnServices
+  "Create a ESConnServices map with an app"
+  [app]
+  (let [get-in-config (h/current-get-in-config-fn app)]
+    {:ConfigService {:get-in-config get-in-config}}))
+
+(s/defn ->ESConnServices
+  :- ESConnServices
+  "Create a ESConnServices map without an app"
+  []
+  (let [get-in-config (h/build-get-in-config-fn)]
+    {:ConfigService {:get-in-config get-in-config}}))
+
+(defn refresh-indices [entity get-in-config]
   (let [{:keys [host port]}
-        (es-init/get-store-properties entity)]
+        (es-init/get-store-properties entity get-in-config)]
     (http/post (format "http://%s:%s/_refresh" host port))))
 
-(defn delete-store-indexes [restore-conn?]
-  (doseq [store-impls (vals @store/stores)
-          {:keys [state]} store-impls]
-    (es-store/delete-state-indexes state)
-    (when restore-conn?
-      (es-init/init-es-conn!
-       (es-init/get-store-properties (get-in state [:props :entity]))))))
+(defn delete-store-indexes
+  ([restore-conn?]
+   (let [app (h/get-current-app)
+         {:keys [get-in-config]} (h/get-service-map app :ConfigService)
+         {:keys [deref-stores]} (h/get-service-map app :StoreService)]
+     (delete-store-indexes
+       restore-conn?
+       deref-stores
+       get-in-config)))
+  ([restore-conn? deref-stores get-in-config]
+   (doseq [store-impls (vals (deref-stores))
+           {:keys [state]} store-impls]
+     (es-store/delete-state-indexes state)
+     (when restore-conn?
+       (es-init/init-es-conn!
+         (es-init/get-store-properties (get-in state [:props :entity])
+                                       get-in-config)
+         {:ConfigService {:get-in-config get-in-config}})))))
 
 (defn fixture-delete-store-indexes
   "walk through all the es stores delete each store indexes"
   [t]
-  (delete-store-indexes true)
-  (t)
-  (delete-store-indexes false))
+  (let [app (h/get-current-app)
+        {:keys [get-in-config]} (h/get-service-map app :ConfigService)
+        {:keys [deref-stores]} (h/get-service-map app :StoreService)]
+    (try
+      (delete-store-indexes true deref-stores get-in-config)
+      (t)
+      (finally
+        (delete-store-indexes false deref-stores get-in-config)))))
 
-(defn purge-index [entity]
+(s/defn purge-index [entity
+                     {{:keys [get-in-config]} :ConfigService
+                      :as services} :- ESConnServices]
   (let [{:keys [conn index]} (es-init/init-store-conn
-                              (es-init/get-store-properties entity))]
+                              (es-init/get-store-properties entity get-in-config)
+                              services)]
     (when conn
       (es-index/delete! conn (str index "*")))))
 
 (defn fixture-purge-event-indexes
   "walk through all producers and delete their index"
   [t]
-  (purge-index :event)
-  (t)
-  (purge-index :event))
+  (let [app (h/get-current-app)
+        services (app->ESConnServices app)]
+    (purge-index :event services)
+    (try
+      (t)
+      (finally
+        (purge-index :event services)))))
 
-(defn purge-indexes []
-  (doseq [entity (keys @store/stores)]
-    (purge-index entity)))
+(defn purge-indexes [deref-stores get-in-config]
+  (doseq [entity (keys (deref-stores))]
+    (purge-index entity get-in-config)))
 
 (defn fixture-purge-indexes
   "walk through all producers and delete their index"
   [t]
-  (purge-indexes)
-  (t)
-  (purge-indexes))
+  (let [app (h/get-current-app)
+        {:keys [get-in-config]} (h/get-service-map app :ConfigService)
+        {:keys [deref-stores]} (h/get-service-map app :StoreService)]
+    (try
+      (purge-indexes deref-stores get-in-config)
+      (t)
+      (finally (purge-indexes deref-stores get-in-config)))))
 
 (defn fixture-properties:es-store [t]
   ;; Note: These properties may be overwritten by ENV variables
@@ -139,33 +182,6 @@
                       "ctia.hook.es.slicing.strategy" "aliased-index"
                       "ctia.hook.es.slicing.granularity" "week"]
     (t)))
-
-(defn- url-for-type [t]
-  (assert (keyword? t) "Type must be a keyword")
-  (let [{:keys [indexname host port]}
-        (-> @ctia.store/stores
-            t
-            first
-            :state
-            :props)]
-    (assert (seq host) "Missing host")
-    (assert (integer? port) "Missing port")
-    (assert (seq indexname) "Missing index-name")
-    (str "http://" host ":" port "/" indexname "/" (name t) "/")))
-
-(defn post-to-es [obj]
-  (let [{:keys [status]}
-        (http/post
-         (url-for-type (-> obj :type keyword))
-         {:as :json
-          :content-type :json
-          :throw-exceptions false
-          :body (json/generate-string obj)})]
-    (when (not= 201 status)
-      (throw (AssertionError. "POST to ES failed")))))
-
-(defn post-all-to-es [objects]
-  (run! post-to-es objects))
 
 (defn str->doc
   [str-doc]
