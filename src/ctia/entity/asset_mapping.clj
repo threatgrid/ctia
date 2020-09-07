@@ -1,15 +1,20 @@
 (ns ctia.entity.asset-mapping
-  (:require [ctia.domain.entities :refer [default-realize-fn]]
-            [ctia.schemas.core :refer [def-acl-schema def-stored-schema]]
-            [ctia.schemas.utils :as csu]
+  (:require [clj-momo.lib.clj-time.core :as time]
+            [compojure.api.sweet :refer [POST routes]]
+            [ctia.domain.entities :as entities]
+            [ctia.flows.crud :as flows]
+            [ctia.http.routes.common :as routes.common]
+            [ctia.http.routes.crud :refer [services->entity-crud-routes]]
+            [ctia.schemas.core :refer [def-acl-schema def-stored-schema APIHandlerServices]]
             [ctia.schemas.sorting :as sorting]
+            [ctia.schemas.utils :as csu]
+            [ctia.store]
             [ctia.stores.es.mapping :as em]
             [ctia.stores.es.store :refer [def-es-store]]
             [ctim.schemas.asset-mapping :as asset-mapping-schema]
-            [schema-tools.core :as st]
-            [ctia.http.routes.crud :refer [entity-crud-routes]]
-            [ctia.http.routes.common :as routes.common]
             [flanders.utils :as fu]
+            [ring.util.http-response :as http-response]
+            [schema-tools.core :as st]
             [schema.core :as s]))
 
 (def-acl-schema AssetMapping
@@ -29,11 +34,14 @@
 
 (def-stored-schema StoredAssetMapping AssetMapping)
 
+(s/defschema PartialNewAssetMapping
+  (csu/optional-keys-schema NewAssetMapping))
+
 (s/defschema PartialStoredAssetMapping
   (csu/optional-keys-schema StoredAssetMapping))
 
 (def realize-asset-mapping
-  (default-realize-fn "asset-mapping" NewAssetMapping StoredAssetMapping))
+  (entities/default-realize-fn "asset-mapping" NewAssetMapping StoredAssetMapping))
 
 (def asset-mapping-mapping
   {"asset-mapping"
@@ -97,29 +105,67 @@
    :valid_time.start_time
    :valid_time.end_time])
 
-(def asset-mapping-routes
-  (entity-crud-routes
-   {:entity                   :asset-mapping
-    :new-schema               NewAssetMapping
-    :entity-schema            AssetMapping
-    :get-schema               PartialAssetMapping
-    :get-params               AssetMappingGetParams
-    :list-schema              PartialAssetMappingList
-    :search-schema            PartialAssetMappingList
-    :external-id-q-params     AssetMappingByExternalIdQueryParams
-    :search-q-params          AssetMappingSearchParams
-    :new-spec                 :new-asset-mapping/map
-    :realize-fn               realize-asset-mapping
-    :get-capabilities         :read-asset-mapping
-    :post-capabilities        :create-asset-mapping
-    :put-capabilities         :create-asset-mapping
-    :delete-capabilities      :delete-asset-mapping
-    :search-capabilities      :search-asset-mapping
-    :external-id-capabilities :read-asset-mapping
-    :can-aggregate?           true
-    :histogram-fields         asset-mapping-histogram-fields
-    :enumerable-fields        asset-mapping-enumerable-fields
-    }))
+(s/defn additional-routes [{{:keys [get-in-config]}          :ConfigService
+                            {:keys [read-store write-store]} :StoreService
+                            :as                              services} :- APIHandlerServices]
+  (routes
+   (POST "/expire/:id" []
+     :return         AssetMapping
+     :path-params    [id :- s/Str]
+     :summary        "Expire Asset Mapping's valid-time property"
+     :capabilities   :create-asset-mapping
+     :auth-identity  identity
+     :identity-map   identity-map
+     (if-let [updated
+              (flows/patch-flow
+               :services services
+               :get-fn (fn [_] (read-store :asset-mapping
+                                           ctia.store/read-record
+                                           id
+                                           identity-map
+                                           {}))
+               :realize-fn realize-asset-mapping
+               :update-fn #(write-store :asset-mapping
+                                        ctia.store/update-record
+                                        (:id %)
+                                        (assoc-in % [:valid_time :end_time] (time/internal-now))
+                                        identity-map
+                                        {})
+               :long-id-fn #(entities/with-long-id % get-in-config)
+               :entity-type :asset-mapping
+               :entity-id id
+               :identity identity
+               :patch-operation :replace
+               :partial-entity {}
+               :spec :new-asset-mapping/map)]
+       (http-response/ok (entities/un-store updated))
+       (http-response/not-found {:error "asset-mapping not found"})))))
+
+(s/defn asset-mapping-routes [services :- APIHandlerServices]
+  (routes
+   (additional-routes services)
+   (services->entity-crud-routes
+    services
+    {:entity                   :asset-mapping
+     :new-schema               NewAssetMapping
+     :entity-schema            AssetMapping
+     :get-schema               PartialAssetMapping
+     :get-params               AssetMappingGetParams
+     :list-schema              PartialAssetMappingList
+     :search-schema            PartialAssetMappingList
+     :external-id-q-params     AssetMappingByExternalIdQueryParams
+     :search-q-params          AssetMappingSearchParams
+     :new-spec                 :new-asset-mapping/map
+     :realize-fn               realize-asset-mapping
+     :get-capabilities         :read-asset-mapping
+     :post-capabilities        :create-asset-mapping
+     :put-capabilities         :create-asset-mapping
+     :delete-capabilities      :delete-asset-mapping
+     :search-capabilities      :search-asset-mapping
+     :external-id-capabilities :read-asset-mapping
+     :can-aggregate?           true
+     :histogram-fields         asset-mapping-histogram-fields
+     :enumerable-fields        asset-mapping-enumerable-fields})))
 
 (def capabilities
   #{:create-asset-mapping
@@ -143,5 +189,4 @@
    :es-store              ->AssetMappingStore
    :es-mapping            asset-mapping-mapping
    :services->routes      asset-mapping-routes
-   :capabilities          capabilities
-   })
+   :capabilities          capabilities})
