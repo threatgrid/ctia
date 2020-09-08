@@ -134,11 +134,11 @@
 
 (defn rollover-post-bulk
   "post data in 2 parts with rollover, randomly update son entities"
-  [deref-stores]
+  [all-stores]
   (let [bulk-res-1 (post-bulk (fixt/bundle (/ fixtures-nb 2) false))
-        _ (rollover-stores (deref-stores))
+        _ (rollover-stores (all-stores))
         bulk-res-2 (post-bulk (fixt/bundle (/ fixtures-nb 2) false))
-        _ (rollover-stores (deref-stores))]
+        _ (rollover-stores (all-stores))]
     (random-updates bulk-res-1 (/ updates-nb 2))
     (random-updates bulk-res-2 (/ updates-nb 2))))
 
@@ -214,11 +214,11 @@
   (testing "migration with rollover and multiple indices for source stores"
     (let [app (helpers/get-current-app)
           {:keys [get-in-config]} (helpers/get-service-map app :ConfigService)
-          {:keys [deref-stores]} (helpers/get-service-map app :StoreService)
+          {:keys [all-stores]} (helpers/get-service-map app :StoreService)
           services (app->MigrationStoreServices app)
 
           store-types [:malware :tool :incident]]
-      (rollover-post-bulk deref-stores)
+      (rollover-post-bulk all-stores)
       ;; insert malformed documents
       (doseq [store-type store-types]
         (es-index/get @es-conn
@@ -520,7 +520,7 @@
   (testing "migration with malformed documents in store"
     (let [app (helpers/get-current-app)
           {:keys [get-in-config]} (helpers/get-service-map app :ConfigService)
-          {:keys [deref-stores]} (helpers/get-service-map app :StoreService)
+          {:keys [all-stores]} (helpers/get-service-map app :StoreService)
           services (app->MigrationStoreServices app)
 
           store-types [:malware :tool :incident]
@@ -530,7 +530,7 @@
                    :am "a"
                    :bad "document"}]
       ;; insert proper documents
-      (rollover-post-bulk deref-stores)
+      (rollover-post-bulk all-stores)
       ;; insert malformed documents
       (doseq [store-type store-types]
         (es-doc/create-doc @es-conn
@@ -578,23 +578,23 @@
                                       "user")
   (let [app (helpers/get-current-app)
         {:keys [get-in-config]} (helpers/get-service-map app :ConfigService)
-        {:keys [deref-stores]} (helpers/get-service-map app :StoreService)
+        {:keys [all-stores]} (helpers/get-service-map app :StoreService)
         services (app->MigrationStoreServices app)]
     ;; insert proper documents
-    (rollover-post-bulk deref-stores)
+    (rollover-post-bulk all-stores)
     (testing "migrate ES Stores test setup"
       (testing "simulate migrate es indexes shall not create any document"
         (sut/migrate-store-indexes {:migration-id "test-1"
                                     :prefix       "0.0.0"
                                     :migrations   [:0.4.16]
-                                    :store-keys   (keys (deref-stores))
+                                    :store-keys   (keys (all-stores))
                                     :batch-size   10
                                     :buffer-size  3
                                     :confirm?     false
                                     :restart?     false}
                                    services)
 
-        (doseq [store (vals (deref-stores))]
+        (doseq [store (vals (all-stores))]
           (is (not (index-exists? store "0.0.0"))))
         (is (nil? (seq (es-doc/get-doc @es-conn
                                        (get-in (es-props) [:migration :indexname])
@@ -604,7 +604,7 @@
   (testing "migrate es indexes"
     (let [app (helpers/get-current-app)
           {:keys [get-in-config]} (helpers/get-service-map app :ConfigService)
-          {:keys [deref-stores]} (helpers/get-service-map app :StoreService)
+          {:keys [all-stores]} (helpers/get-service-map app :StoreService)
           services (app->MigrationStoreServices app)
 
           logger (atom [])]
@@ -612,7 +612,7 @@
         (sut/migrate-store-indexes {:migration-id "test-2"
                                     :prefix       "0.0.0"
                                     :migrations   [:__test]
-                                    :store-keys   (keys (deref-stores))
+                                    :store-keys   (keys (all-stores))
                                     :batch-size   10
                                     :buffer-size  3
                                     :confirm?     true
@@ -624,7 +624,7 @@
                                               "migration"
                                               "test-2"
                                               {})]
-          (is (= (set (keys (deref-stores)))
+          (is (= (set (keys (all-stores)))
                  (set (keys (:stores migration-state)))))
           (doseq [[entity-type migrated-store] (:stores migration-state)]
             (let [{:keys [source target started completed]} migrated-store
@@ -811,7 +811,7 @@
           (sut/migrate-store-indexes {:migration-id "test-2"
                                       :prefix       "0.0.0"
                                       :migrations   [:__test]
-                                      :store-keys   (keys (deref-stores))
+                                      :store-keys   (keys (all-stores))
                                       ;; small batch to check proper delete paging
                                       :batch-size   2
                                       :buffer-size  1

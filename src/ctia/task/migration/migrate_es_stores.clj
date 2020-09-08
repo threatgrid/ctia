@@ -319,7 +319,7 @@
     (let [_ (log/info "starting CTIA Stores...")
           get-in-config p/get-in-global-properties
           services {:ConfigService {:get-in-config get-in-config}
-                    :StoreService {:deref-stores (fn [] @store/stores)}}
+                    :StoreService {:all-stores (fn [] @store/stores)}}
           _ (mst/setup! services)]
       (doto (prepare-params
               (get-in-config [:ctia :migration]))
