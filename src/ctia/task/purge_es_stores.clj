@@ -4,7 +4,6 @@
              [init :refer [start-ctia!*]]
              [properties :as p]]
             [ctia.store-service :as store-svc]
-            [ctia.stores.es-service :as es-svc]
             [ctia.stores.es.store :refer [delete-state-indexes]]
             [puppetlabs.trapperkeeper.app :as app]))
 
@@ -14,8 +13,7 @@
   []
   (log/info "starting CTIA Stores...")
   (let [config (p/build-init-config)]
-    (start-ctia!* {:services [store-svc/store-service
-                              es-svc/es-store-service]
+    (start-ctia!* {:services [store-svc/store-service]
                    :config config})))
 
 (s/defn delete-store-indexes [deref-stores]

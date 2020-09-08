@@ -14,8 +14,11 @@
   "A service to manage an atom that is the central
   storage area for all stores."
   StoreService
-  []
+  [[:ConfigService get-in-config]]
   (init [this context] (core/init context))
+  (start [this context]
+         (core/start context
+                     get-in-config))
 
   (stores-atom [this] (core/stores-atom (service-context this)))
   (deref-stores [this] (core/deref-stores (service-context this)))

@@ -4,7 +4,6 @@
             [ctia.init :refer [start-ctia!*]]
             [ctia.store-service :as store-svc]
             [ctia.stores.es.schemas :refer [ESConnState]]
-            [ctia.stores.es-service :as es-svc]
             [ctia.properties :as p]
             [puppetlabs.trapperkeeper.app :as app]
             [schema.core :as s])
@@ -45,8 +44,7 @@
 (defn -main [& _args]
   (try
     (let [app (let [config (p/build-init-config)]
-                (start-ctia!* {:services [store-svc/store-service
-                                          es-svc/es-store-service]
+                (start-ctia!* {:services [store-svc/store-service]
                                :config config}))
           store-svc (app/get-service app :StoreService)
           deref-stores (partial store-svc/deref-stores store-svc)

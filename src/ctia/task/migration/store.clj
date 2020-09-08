@@ -11,7 +11,6 @@
             [clojure.tools.logging :as log]
             [ctia.lib.collection :refer [fmap]]
             [ctia.store-service :as store-svc]
-            [ctia.stores.es-service :as es-svc]
             [ctia.stores.es.crud :as crud]
             [ctia.stores.es.init
              :refer

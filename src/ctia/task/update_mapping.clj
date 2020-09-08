@@ -10,7 +10,6 @@
             [ctia.properties :as p]
             [ctia.store :as store :refer [empty-stores]]
             [ctia.store-service :as store-svc]
-            [ctia.stores.es-service :as es-svc]
             [ctia.stores.es.init :as es-init]
             [puppetlabs.trapperkeeper.app :as app]
             [schema.core :as s])
@@ -51,8 +50,7 @@
         (System/exit 0))
       (pp/pprint options)
       (let [app (let [config (p/build-init-config)]
-                  (init/start-ctia!* {:services [store-svc/store-service
-                                                 es-svc/es-store-service]
+                  (init/start-ctia!* {:services [store-svc/store-service]
                                       :config config}))
             store-svc (app/get-service app :StoreService)
             deref-stores (partial store-svc/deref-stores store-svc)]

@@ -12,7 +12,6 @@
     [store-service :as store-svc]
     [init :refer [start-ctia!*]]
     [properties :as p]]
-   [ctia.stores.es-service :as es-svc]
    [ctia.entity.entities :refer [entities]]
    [ctia.entity.sighting.schemas :refer [StoredSighting]]
    [ctia.stores.es.crud :refer [coerce-to-fn]]
@@ -42,8 +41,7 @@
   []
   (log/info "starting CTIA Stores...")
   (let [config (p/build-init-config)]
-    (start-ctia!* {:services [store-svc/store-service
-                              es-svc/es-store-service]
+    (start-ctia!* {:services [store-svc/store-service]
                    :config config})))
 
 (defn fetch-batch
