@@ -60,11 +60,13 @@
 
 (defn target-store-properties
   [prefix store-key]
-  (cond-> (es.init/get-store-properties store-key)
-    prefix (update :indexname
-                   #(prefixed-index % prefix))
-    :else (-> (into (p/get-in-global-properties [:ctia :migration :store :es :default]))
-              (into (p/get-in-global-properties [:ctia :migration :store :es store-key])))))
+  (let [migration-default-es-props (dissoc (p/get-in-global-properties [:ctia :migration :store :es :default])
+                                        :indexname)]
+    (cond-> (es.init/get-store-properties store-key)
+      prefix (update :indexname
+                     #(prefixed-index % prefix))
+      :always (-> (into migration-default-es-props)
+                  (into (p/get-in-global-properties [:ctia :migration :store :es store-key]))))))
 
 (defn store-mapping
   [k]

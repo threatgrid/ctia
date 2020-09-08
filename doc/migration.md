@@ -1,6 +1,6 @@
- There is a dedicated task to migrate data from prior versions of CTIA. 
- This task will run through all configured stores, transform and copy data to new Elasticsearch indices. This is possible to migrate these data in another cluster.
- A migration state will be stored in a configured state to enable restart.
+There is a dedicated task to migrate data from prior versions of CTIA. 
+This task will run through all configured stores, transform and copy data to new Elasticsearch indices. This is possible to migrate these data in another cluster.
+A migration state will be stored in a configured state to enable restart.
 
 # :warning: Prepare Migration :warning:
  - As the migration task copies indexes, make sure you have enough disk space before launching it.

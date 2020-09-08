@@ -889,3 +889,85 @@
           (doseq [store stores]
             (is (nil? (get-in store [:source :store])))
             (is (nil? (get-in store [:target :store])))))))))
+
+(deftest target-store-properties-test
+  (let [default-es-props {:host "localhost"
+                          :port 9200
+                          :transport "http"
+                          :indexname "ctia_default"
+                          :replicas 1
+                          :refresh_interval "1s"
+                          :default_operator "AND"
+                          :shards 5
+                          :refresh false
+                          :rollover {:max_docs 10000000}
+                          :aliased true}
+
+
+        source-custom-props {:indexname "source-indexname"
+                             :shards 4}
+
+        migration-cluster-props {:host "es7.iroh.site"
+                                 :port 443
+                                 :transport "https"}
+
+        target-store-props {:indexname "custom-target-indexname"
+                            :shards 4
+                            :refresh_interval "10s"}
+        base-es-props {:ctia {:store {:es {:default default-es-props}}}}
+        with-source-props (assoc-in base-es-props
+                                    [:ctia :store :es :sighting]
+                                    source-custom-props)
+        with-migration-cluster-props (assoc-in with-source-props
+                                               [:ctia :migration :store :es :default]
+                                               migration-cluster-props)]
+
+    (testing "simple migration properties that preserves ES source properties and simply adds a prefix to newly created index"
+      (with-redefs [p/global-properties-atom #(atom with-source-props)]
+        (is (= (assoc (into default-es-props source-custom-props)
+                      :indexname "v0.0.1_source-indexname"
+                      :entity :sighting)
+               (sut/target-store-properties "0.0.1" :sighting)))))
+
+    (testing "migration properties that redefines cluster properties and adds a prefix to source indexname"
+      (with-redefs [p/global-properties-atom #(atom with-migration-cluster-props)]
+        (is (= (assoc (merge default-es-props
+                             source-custom-props
+                             migration-cluster-props)
+                      :indexname "v0.0.1_source-indexname"
+                      :entity :sighting)
+               (sut/target-store-properties "0.0.1" :sighting)))))
+
+    (testing "migration properties that redefines cluster properties and preserves source indexname (cluster migration only)"
+      (with-redefs [p/global-properties-atom #(atom with-migration-cluster-props)]
+        (is (= (assoc (merge default-es-props
+                             source-custom-props
+                             migration-cluster-props)
+                      :indexname "source-indexname"
+                      :entity :sighting)
+               (sut/target-store-properties nil :sighting)))))
+
+    (testing "migration properties that redefines cluster properties and target properties except the target indexname, in which case it also adds the prefix"
+      (with-redefs [p/global-properties-atom #(->> (dissoc target-store-props :indexname)
+                                                   (assoc-in with-migration-cluster-props
+                                                             [:ctia :migration :store :es :sighting])
+                                                   atom)]
+        (is (= (assoc (merge default-es-props
+                             source-custom-props
+                             migration-cluster-props
+                             target-store-props)
+                      :indexname "v0.0.1_source-indexname"
+                      :entity :sighting)
+               (sut/target-store-properties "0.0.1" :sighting)))))
+
+    (testing "migration properties that redefines cluster properties but uses a custom target indexname"
+      (with-redefs [p/global-properties-atom #(atom (assoc-in with-migration-cluster-props
+                                                              [:ctia :migration :store :es :sighting]
+                                                              target-store-props))]
+         (is (= (assoc (merge default-es-props
+                             source-custom-props
+                             migration-cluster-props
+                             target-store-props)
+                      :indexname "custom-target-indexname"
+                      :entity :sighting)
+               (sut/target-store-properties "0.0.1" :sighting)))))))
