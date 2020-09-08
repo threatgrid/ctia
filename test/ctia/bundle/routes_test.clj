@@ -212,7 +212,7 @@
                                          "foogroup"
                                          "user")
      (let [app (helpers/get-current-app)
-           {:keys [deref-stores]} (helpers/get-service-map app :StoreService)
+           {:keys [all-stores]} (helpers/get-service-map app :StoreService)
 
            indicators [(mk-indicator 0)
                        (mk-indicator 1)]
@@ -369,7 +369,7 @@
                        (map :result (:results bundle-result-update)))
                "All existing entities are not updated")))
        (testing "Partial results with errors"
-         (let [indicator-store-state (-> (deref-stores) :indicator first :state)
+         (let [indicator-store-state (-> (all-stores) :indicator first :state)
                indexname (:index indicator-store-state)
                ;; close indicator index to produce ES errors on that store
                _ (es-index/close! (:conn indicator-store-state) indexname)

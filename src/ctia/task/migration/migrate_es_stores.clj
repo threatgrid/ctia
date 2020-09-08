@@ -323,9 +323,9 @@
           config-svc (app/get-service app :ConfigService)
           get-in-config (partial tk-config/get-in-config config-svc)
           store-svc (app/get-service app :StoreService)
-          deref-stores (partial store-svc/deref-stores store-svc)
+          all-stores (partial store-svc/all-stores store-svc)
           services {:ConfigService {:get-in-config get-in-config}
-                    :StoreService {:deref-stores deref-stores}}
+                    :StoreService {:all-stores all-stores}}
           _ (mst/setup! services)]
       (doto (prepare-params
               (get-in-config [:ctia :migration]))

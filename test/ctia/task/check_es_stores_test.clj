@@ -81,7 +81,7 @@
 (deftest test-check-store-indexes
   (let [app (helpers/get-current-app)
         {:keys [get-in-config]} (helpers/get-service-map app :ConfigService)
-        {:keys [deref-stores]} (helpers/get-service-map app :StoreService)
+        {:keys [all-stores]} (helpers/get-service-map app :StoreService)
 
         _ (helpers/set-capabilities! "foouser"
                                      ["foogroup"]
@@ -99,7 +99,7 @@
       (testing "check ES indexes"
         (let [logger (atom [])]
           (with-atom-logger logger
-            (doall (sut/check-store-indexes 100 deref-stores)))
+            (doall (sut/check-store-indexes 100 all-stores)))
           (testing "shall produce valid logs"
             (let [messages (set @logger)]
               (is (contains? messages "set batch size: 100"))

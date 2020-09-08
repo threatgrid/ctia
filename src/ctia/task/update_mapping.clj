@@ -24,7 +24,7 @@
          es-init/update-mapping!]))
 
 (defn update-mapping-stores!
-  "Takes a map the same shape as returned by ctia.store-service/deref-stores
+  "Takes a map the same shape as returned by ctia.store-service/all-stores
   and updates the _mapping of every index contained in it."
   [stores-map]
   (doseq [[_ stores] stores-map
@@ -53,9 +53,9 @@
                   (init/start-ctia!* {:services [store-svc/store-service]
                                       :config config}))
             store-svc (app/get-service app :StoreService)
-            deref-stores (partial store-svc/deref-stores store-svc)]
+            all-stores (partial store-svc/all-stores store-svc)]
         (->> (:stores options)
-             (select-keys (deref-stores))
+             (select-keys (all-stores))
              update-mapping-stores!)
         (log/info "Completed update-mapping task")
         (System/exit 0)))

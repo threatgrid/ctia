@@ -504,7 +504,7 @@
   ;; insert elements in different indices and check that we retrieve the right one
   (let [app (helpers/get-current-app)
         {:keys [get-in-config]} (helpers/get-service-map app :ConfigService)
-        {:keys [deref-stores]} (helpers/get-service-map app :StoreService)
+        {:keys [all-stores]} (helpers/get-service-map app :StoreService)
         services (app->MigrationStoreServices app)
 
         sighting-store-map {:conn (es-conn get-in-config)
@@ -515,7 +515,7 @@
                             :settings {}
                             :config {}}
         post-bulk-res-1 (post-bulk examples)
-        {:keys [nb-errors]} (rollover-stores (deref-stores))
+        {:keys [nb-errors]} (rollover-stores (all-stores))
         _ (is (= 0 nb-errors))
         post-bulk-res-2 (post-bulk examples)
         malware-ids (->> (:malwares post-bulk-res-1)
@@ -557,7 +557,7 @@
   ;; insert elements in different indices, modify some and check that we retrieve the right one
   (let [app (helpers/get-current-app)
         {:keys [get-in-config]} (helpers/get-service-map app :ConfigService)
-        {:keys [deref-stores]} (helpers/get-service-map app :StoreService)
+        {:keys [all-stores]} (helpers/get-service-map app :StoreService)
         services (app->MigrationStoreServices app)
 
         sighting-store-map {:conn (es-conn get-in-config)
@@ -569,7 +569,7 @@
                             :settings {}
                             :config {}}
         post-bulk-res-1 (post-bulk examples)
-        {:keys [nb-errors]} (rollover-stores (deref-stores))
+        {:keys [nb-errors]} (rollover-stores (all-stores))
         _ (is (= 0 nb-errors))
         post-bulk-res-2 (post-bulk examples)
         _ (es-index/refresh! (es-conn get-in-config))

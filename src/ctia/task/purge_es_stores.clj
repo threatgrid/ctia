@@ -16,8 +16,8 @@
     (start-ctia!* {:services [store-svc/store-service]
                    :config config})))
 
-(s/defn delete-store-indexes [deref-stores]
-  (doseq [:let [stores (deref-stores)
+(s/defn delete-store-indexes [all-stores]
+  (doseq [:let [stores (all-stores)
                 _ (assert (map? stores))]
           store-impls (vals stores)
           {:keys [state]} store-impls]
@@ -31,8 +31,8 @@
   (log/info "purging all ES Stores data")
   (try
     (let [app (setup)
-          {:keys [deref-stores]} (:StoreService (app/service-graph app))]
-      (delete-store-indexes deref-stores)
+          {:keys [all-stores]} (:StoreService (app/service-graph app))]
+      (delete-store-indexes all-stores)
       (log/info "done")
       (System/exit 0))
     (finally

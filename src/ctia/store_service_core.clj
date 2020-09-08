@@ -8,20 +8,16 @@
   (assoc context
          :stores-atom (atom empty-stores)))
 
-(defn stores-atom [{:keys [stores-atom]}]
-  {:post [(instance? clojure.lang.IAtom2 %)]}
-  stores-atom)
-
-(defn deref-stores [{:keys [stores-atom]}]
+(defn all-stores [{:keys [stores-atom]}]
   @stores-atom)
 
 (defn write-store [ctx store write-fn]
   {:pre [(keyword? store)]}
-  (first (doall (map write-fn (store (deref-stores ctx))))))
+  (first (doall (map write-fn (store (all-stores ctx))))))
 
 (defn read-store [ctx store read-fn]
   {:pre [(keyword? store)]}
-  (let [stores (deref-stores ctx)
+  (let [stores (all-stores ctx)
         [s :as ss] (get stores store)
         _ (assert (seq ss)
                   (str "No stores in " store ", only: " (-> stores keys sort vec)))

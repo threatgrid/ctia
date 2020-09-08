@@ -494,9 +494,9 @@
                                          "user")
 
      (let [app (helpers/get-current-app)
-           {:keys [deref-stores]} (helpers/get-service-map app :StoreService)
+           {:keys [all-stores]} (helpers/get-service-map app :StoreService)
 
-           {:keys [index conn]} (-> (deref-stores) :tool first :state)
+           {:keys [index conn]} (-> (all-stores) :tool first :state)
        ;; close tool index to produce ES errors on that store
            _ (es-index/close! conn index)
            tools (->> [(mk-new-tool 1)

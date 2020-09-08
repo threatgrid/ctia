@@ -39,13 +39,13 @@
   ([restore-conn?]
    (let [app (h/get-current-app)
          {:keys [get-in-config]} (h/get-service-map app :ConfigService)
-         {:keys [deref-stores]} (h/get-service-map app :StoreService)]
+         {:keys [all-stores]} (h/get-service-map app :StoreService)]
      (delete-store-indexes
        restore-conn?
-       deref-stores
+       all-stores
        get-in-config)))
-  ([restore-conn? deref-stores get-in-config]
-   (doseq [store-impls (vals (deref-stores))
+  ([restore-conn? all-stores get-in-config]
+   (doseq [store-impls (vals (all-stores))
            {:keys [state]} store-impls]
      (es-store/delete-state-indexes state)
      (when restore-conn?
@@ -59,12 +59,12 @@
   [t]
   (let [app (h/get-current-app)
         {:keys [get-in-config]} (h/get-service-map app :ConfigService)
-        {:keys [deref-stores]} (h/get-service-map app :StoreService)]
+        {:keys [all-stores]} (h/get-service-map app :StoreService)]
     (try
-      (delete-store-indexes true deref-stores get-in-config)
+      (delete-store-indexes true all-stores get-in-config)
       (t)
       (finally
-        (delete-store-indexes false deref-stores get-in-config)))))
+        (delete-store-indexes false all-stores get-in-config)))))
 
 (s/defn purge-index [entity
                      {{:keys [get-in-config]} :ConfigService
@@ -86,8 +86,8 @@
       (finally
         (purge-index :event services)))))
 
-(defn purge-indexes [deref-stores get-in-config]
-  (doseq [entity (keys (deref-stores))]
+(defn purge-indexes [all-stores get-in-config]
+  (doseq [entity (keys (all-stores))]
     (purge-index entity get-in-config)))
 
 (defn fixture-purge-indexes
@@ -95,11 +95,11 @@
   [t]
   (let [app (h/get-current-app)
         {:keys [get-in-config]} (h/get-service-map app :ConfigService)
-        {:keys [deref-stores]} (h/get-service-map app :StoreService)]
+        {:keys [all-stores]} (h/get-service-map app :StoreService)]
     (try
-      (purge-indexes deref-stores get-in-config)
+      (purge-indexes all-stores get-in-config)
       (t)
-      (finally (purge-indexes deref-stores get-in-config)))))
+      (finally (purge-indexes all-stores get-in-config)))))
 
 (defn fixture-properties:es-store [t]
   ;; Note: These properties may be overwritten by ENV variables
