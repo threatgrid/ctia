@@ -35,8 +35,7 @@
   (case svc-kw
     :ConfigService {:get-config p/get-global-properties
                     :get-in-config p/get-in-global-properties}
-    :StoreService {:stores-atom (fn [] store/stores)
-                   :all-stores (fn [] @store/stores)
+    :StoreService {:all-stores (fn [] @store/stores)
                    :read-store store/read-store
                    :write-store store/write-store}
     (throw (ex-info (str "No service: " svc-kw)
