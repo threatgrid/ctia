@@ -2,8 +2,6 @@
   (:require [clojure.string :as string]
             [clojure.tools.logging :as log]
             [clj-http.client :as http]
-            [ctia
-             [properties :as p]]
             [ctia.auth.jwt :as auth-jwt]
             [ctia.http.handler :as handler]
             [ctia.http.middleware.auth :as auth]
