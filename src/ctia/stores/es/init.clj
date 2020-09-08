@@ -13,14 +13,16 @@
    [schema-tools.core :as st]))
 
 (s/defschema StoreProperties
-  {:entity s/Keyword
-   :indexname s/Str
-   (s/optional-key :shards) s/Num
-   (s/optional-key :replicas) s/Num
-   (s/optional-key :write-suffix) s/Str
-   (s/optional-key :refresh_interval) s/Str
-   (s/optional-key :aliased) s/Any
-   s/Keyword s/Any})
+  (st/merge
+    {:entity s/Keyword
+     :indexname s/Str
+     s/Keyword s/Any}
+    (st/optional-keys
+      {:shards s/Num
+       :replicas s/Num
+       :write-suffix s/Str
+       :refresh_interval s/Str
+       :aliased s/Any})))
 
 (def store-mappings
   (apply merge {}
