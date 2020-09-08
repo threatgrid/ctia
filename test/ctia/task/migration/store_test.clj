@@ -771,8 +771,8 @@
                         {:settings {:refresh_interval -1}
                          :mappings {:malware {:properties mappings}
                                     :tool {:properties mappings}}})
-      (sut/store-batch tool-store tool-batch)
-      (sut/store-batch malware-store malware-batch)
+      (sut/store-batch tool-store tool-batch services)
+      (sut/store-batch malware-store malware-batch services)
       (es-index/refresh! es-conn indexname)
       (let [{fetched-tool-asc :data} (sut/fetch-batch tool-store 80 0 "asc" nil)
             {fetched-tool-desc :data} (sut/fetch-batch tool-store 80 0 "desc" nil)

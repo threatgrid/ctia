@@ -55,9 +55,10 @@
   This function builds up a `reduce` to functionally step through a sequence of
   of stores, rollovers, and update-mapping-stores! calls, and test intermediate states.
   "
-  [aliased?]
+  [aliased? app]
   {:pre [(boolean? aliased?)]}
-  (let [; set up connection
+  (let [services (es-helpers/app->ESConnServices app)
+        ; set up connection
         store-properties (cond-> {:entity :incident
                                   :indexname "ctia_incident"
                                   :host "localhost"
@@ -69,8 +70,9 @@
         index-names (cond-> ["ctia_incident"]
                       aliased? (conj "ctia_incident-write"))
 
-        ; minimal store (same shape as @ctia.store/stores)
-        [conn stores] (let [{:keys [conn] :as state} (init/init-es-conn! store-properties)]
+        ; minimal store (same shape as `(all-stores)`)
+        [conn stores] (let [{:keys [conn] :as state} (init/init-es-conn! store-properties
+                                                                         services)]
                         [conn {:incident [((:es-store incident/incident-entity)
                                            state)]}])
 
@@ -121,5 +123,7 @@
         _ (reduce testing-fn stores testing-plan)]))
 
 ; separated to take advantage of fixtures
-(deftest update-mapping-stores!-aliased-test   (update-mapping-stores!-test-helper true))
-(deftest update-mapping-stores!-unaliased-test (update-mapping-stores!-test-helper false))
+(deftest update-mapping-stores!-aliased-test   (update-mapping-stores!-test-helper true
+                                                                                   (helpers/get-current-app)))
+(deftest update-mapping-stores!-unaliased-test (update-mapping-stores!-test-helper false
+                                                                                   (helpers/get-current-app)))
