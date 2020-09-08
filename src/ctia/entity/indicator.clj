@@ -126,7 +126,7 @@
    (st/optional-keys
     {:query s/Str
      :indicator_type s/Str
-     :tags s/Int
+     :tags s/Str
      :kill_chain_phases s/Str
      :producer s/Str
      :specification s/Str

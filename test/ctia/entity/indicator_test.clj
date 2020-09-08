@@ -1,8 +1,9 @@
 (ns ctia.entity.indicator-test
   (:require [clj-momo.test-helpers.core :as mth]
-            [clojure.test :refer [deftest join-fixtures use-fixtures]]
+            [clojure.test :refer [deftest is testing are join-fixtures use-fixtures]]
             [ctia.auth.capabilities :as caps]
             [ctia.entity.indicator :as sut]
+            [ctia.properties :as p]
             [ctia.test-helpers
              [access-control :refer [access-control-test]]
              [core :as helpers]
@@ -20,6 +21,38 @@
 
 (use-fixtures :each whoami-helpers/fixture-reset-state)
 
+
+(defn search-tests [_ indicator-sample]
+  (testing "GET /ctia/indicator/search"
+    ;; only when ES store
+    (when (= "es" (p/get-in-global-properties [:ctia :store :indicator]))
+      (are [query check-fn expected desc]
+          (testing desc
+
+            (let [response (helpers/get
+                            "ctia/indicator/search"
+                            :query-params query
+                            :headers {"Authorization" "45c1f5e3f05d0"})]
+
+              (is (= 200 (:status response)))
+              (is (= (check-fn expected)))
+            true))
+
+        {:tags "foo"}
+        #(-> % :parsed-body first :tags)
+        (:tags indicator-sample)
+        "Searching indicators by tag `foo` should match example"
+
+        {:tags "bar"}
+        #(-> % :parsed-body first :tags)
+        (:tags indicator-sample)
+        "Searching indicators by tag `bar` should match example"
+
+        {:tags "unmatched"}
+        #(:parsed-body %)
+        []
+        "Searching indicators by missing tags value should not match any document"))))
+
 (deftest test-indicator-crud-routes
   (test-for-each-store
    (fn []
@@ -31,6 +64,7 @@
      (entity-crud-test
       {:entity "indicator"
        :example new-indicator-maximal
+       :additional-tests search-tests
        :headers {:Authorization "45c1f5e3f05d0"}}))))
 
 (deftest test-indicator-routes-access-control
