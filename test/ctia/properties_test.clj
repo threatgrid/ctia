@@ -1,6 +1,6 @@
 (ns ctia.properties-test
   (:require [ctia.properties :as sut]
-            [clojure.test :refer [deftest is]]
+            [clojure.test :refer [deftest is testing]]
             [clj-momo.lib.es.schemas :refer [Refresh]]
             [schema.core :as s]))
 
