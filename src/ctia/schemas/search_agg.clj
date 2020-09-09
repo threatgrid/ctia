@@ -6,22 +6,15 @@
   "Date range query, includes lowerfrom and excludes to"
   {s/Keyword
    (st/optional-keys
-    {:gte (s/conditional
-            string? s/Str
-            :else s/Inst)
-     :lt (s/conditional
-           string? s/Str
-           :else s/Inst)})})
+    {:gte s/Inst
+     :lt s/Inst})})
 
 (s/defschema SearchQuery
   "components of a search query:
    - query-string: free text search, with lucene syntax enabled"
   (st/optional-keys
    {:query-string s/Str
-    :filter-map {(s/conditional
-                   string? s/Str
-                   :else s/Keyword)
-                 s/Any}
+    :filter-map {s/Keyword s/Any}
     :date-range DateRange}))
 
 (s/defschema AggType

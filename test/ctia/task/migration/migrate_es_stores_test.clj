@@ -41,11 +41,17 @@
            (java.lang AssertionError)
            (clojure.lang ExceptionInfo)))
 
-(defn fixture-setup! [f]
+(def setup nil)
+
+(defn fixture-setup [t]
   (let [app (helpers/get-current-app)
         services (app->MigrationStoreServices app)]
-    (setup! services)
-    (f)))
+    (when-not setup
+      ;; ugly, but must be done in order to prevent an indefinitely blocking call (which can affect code reloading, or re-running this ns's tests)
+      (alter-var-root #'setup (fn [_]
+                                (setup! services) ;; init migration conn and properties
+                              :done))))
+  (t))
 
 (use-fixtures :once
   (join-fixtures [mth/fixture-schema-validation
@@ -78,8 +84,8 @@
   starts the app."
   [config-transformer body-fn]
   (let [fixtures (join-fixtures [;; TODO move to after fixture-ctia. currently not
-                                 ;; possible because fixture-setup! calls `p/init!`
-                                 fixture-setup!
+                                 ;; possible because fixture-setup calls `p/init!`
+                                 fixture-setup
                                  helpers/fixture-ctia
                                  es-helpers/fixture-delete-store-indexes
                                  fixture-clean-migration])]

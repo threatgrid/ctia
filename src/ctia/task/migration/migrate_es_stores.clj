@@ -58,8 +58,7 @@
                                                      store-keys
                                                      created
                                                      batch-size
-                                                     search_after
-                                                     services)
+                                                     search_after)
             {new-search-after :sort next :next} paging]
         (doseq [[entity-type entities] data]
           (log/infof "Handling %s deleted %s during migration"

@@ -60,13 +60,12 @@
   {:ConfigService {:get-in-config (s/=>* s/Any
                                          [(s/named [s/Any] 'path)]
                                          [(s/named [s/Any] 'path)
-                                          (s/named [s/Any] 'default)])}
-   :StoreService {:all-stores (s/=> s/Any)}})
+                                          (s/named [s/Any] 'default)])}})
 
 (s/defn MigrationStoreServices->ESConnServices
   :- ESConnServices
-  [{{:keys [get-in-config]} :ConfigService} :- MigrationStoreServices]
-  {:ConfigService {:get-in-config get-in-config}})
+  [services :- MigrationStoreServices]
+  services)
 
 (defn prefixed-index [index prefix]
   (let [version-trimmed (string/replace index #"^v[^_]*_" "")]
@@ -76,10 +75,10 @@
   [prefix store-key get-in-config]
   (let [migration-default-es-props (-> (get-in-config [:ctia :migration :store :es :default])
                                        (dissoc :indexname))]
-    (cond-> (es.init/get-store-properties store-key)
+    (cond-> (es.init/get-store-properties store-key get-in-config)
       prefix (update :indexname
                      #(prefixed-index % prefix))
-      :always (-> migration-default-es-props
+      :always (-> (into migration-default-es-props)
                   (into (get-in-config [:ctia :migration :store :es store-key]))))))
 
 (defn store-mapping
@@ -455,8 +454,7 @@ Rollover requires refresh so we cannot just call ES with condition since refresh
    entity-types :- [s/Keyword]
    since :- s/Inst
    batch-size :- s/Int
-   search_after :- (s/maybe [s/Any])
-   {{:keys [all-stores]} :StoreService} :- MigrationStoreServices]
+   search_after :- (s/maybe [s/Any])]
   ;; TODO migrate events with mapping enabling to filter on record-type and entity.type
   (let [query {:range {:timestamp {:gte since}}}
         filter-events (fn [{:keys [event_type entity]}]
@@ -544,8 +542,8 @@ Rollover requires refresh so we cannot just call ES with condition since refresh
 (s/defn get-target-store
   [prefix store-key {{:keys [get-in-config]} :ConfigService
                      :as services} :- MigrationStoreServices]
-  (init-storemap (target-store-properties prefix store-key get-in-config)
-                 services))
+  (-> (target-store-properties prefix store-key get-in-config)
+      (init-storemap services)))
 
 (s/defn get-target-stores
   [prefix store-keys services :- MigrationStoreServices]
@@ -554,14 +552,19 @@ Rollover requires refresh so we cannot just call ES with condition since refresh
             store-keys)
        (into {})))
 
-(defn get-source-store
-  [store-key]
-  (init-storemap (es.init/get-store-properties store-key)))
+(s/defn get-source-store
+  [store-key
+   {{:keys [get-in-config]} :ConfigService
+    :as services} :- MigrationStoreServices]
+  (-> store-key
+      (es.init/get-store-properties get-in-config)
+      (init-storemap services)))
 
-(defn get-source-stores
-  [store-keys]
+(s/defn get-source-stores
+  [store-keys
+   services :- MigrationStoreServices]
   (->> (map (fn [k]
-              {k (get-source-store k)})
+              {k (get-source-store k services)})
             store-keys)
        (into {})))
 
@@ -572,9 +575,8 @@ when confirm? is true, it stores this state and creates the target indices."
            prefix
            store-keys
            confirm?]} :- MigrationParams
-   {{:keys [all-stores]} :StoreService
-    :as services} :- MigrationStoreServices]
-  (let [source-stores (get-source-stores store-keys)
+   services :- MigrationStoreServices]
+  (let [source-stores (get-source-stores store-keys services)
         target-stores (get-target-stores prefix store-keys services)
         migration-properties (migration-store-properties services)
         now (time/internal-now)
@@ -599,9 +601,9 @@ when confirm? is true, it stores this state and creates the target indices."
   [entity-type :- s/Keyword
    prefix :- s/Str
    raw-store :- MigratedStore
-   services :- MigrationStoreServices]
+   {{:keys [get-in-config]} :ConfigService :as services} :- MigrationStoreServices]
   (let [source-store  (-> entity-type
-                          es.init/get-store-properties
+                          (es.init/get-store-properties get-in-config)
                           (init-storemap services))
         target-store (get-target-store prefix entity-type services)]
     (-> (assoc-in raw-store [:source :store] source-store)
