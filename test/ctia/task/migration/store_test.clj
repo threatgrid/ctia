@@ -182,10 +182,14 @@
   (let [app (helpers/get-current-app)
         services (app->MigrationStoreServices app)
 
-        fake-migration (sut/init-migration "migration-id-1"
-                                           "0.0.0"
-                                           [:tool :sighting :malware]
-                                           false
+        fake-migration (sut/init-migration {:migration-id "migration-id-1"
+                                            :prefix "0.0.0"
+                                            :store-keys [:tool :sighting :malware]
+                                            :confirm? false
+                                            :migrations [:identity]
+                                            :batch-size 1000
+                                            :buffer-size 3
+                                            :restart? false}
                                            services)
         wo-stores (sut/wo-storemaps fake-migration)]
     (is (nil? (get-in wo-stores [:source :store])))
@@ -825,8 +829,15 @@
                   :headers {"Authorization" "45c1f5e3f05d0"})
         _ (delete (format "ctia/tool/%s" malware1-id)
                   :headers {"Authorization" "45c1f5e3f05d0"})
-        {data1 :data paging1 :paging} (sut/fetch-deletes [:sighting :tool] since 3 nil services)
-        {data2 :data paging2 :paging} (sut/fetch-deletes [:sighting :tool]
+        event-store (sut/get-source-store :event)
+        {data1 :data paging1 :paging} (sut/fetch-deletes event-store
+                                                         [:sighting :tool]
+                                                         since
+                                                         3
+                                                         nil
+                                                         services)
+        {data2 :data paging2 :paging} (sut/fetch-deletes event-store
+                                                         [:sighting :tool]
                                                          since
                                                          2
                                                          (:sort paging1)
@@ -861,15 +872,19 @@
           entity-types [:tool :malware :relationship]
           migration-id-1 "migration-1"
           migration-id-2 "migration-2"
-          fake-migration (sut/init-migration migration-id-1
-                                             prefix
-                                             entity-types
-                                             false
+          base-migration-params {:prefix prefix
+                                 :migrations [:identity]
+                                 :store-keys entity-types
+                                 :batch-size 1000
+                                 :buffer-size 3
+                                 :restart? false}
+          fake-migration (sut/init-migration (assoc base-migration-params
+                                                    :migration-id migration-id-1
+                                                    :confirm? false)
                                              services)
-          real-migration-from-init (sut/init-migration migration-id-2
-                                                       prefix
-                                                       entity-types
-                                                       true
+          real-migration-from-init (sut/init-migration (assoc base-migration-params
+                                                              :migration-id migration-id-2
+                                                              :confirm? true)
                                                        services)
           check-state (fn [{:keys [id stores]} migration-id message]
                         (testing message
@@ -924,3 +939,85 @@
           (doseq [store stores]
             (is (nil? (get-in store [:source :store])))
             (is (nil? (get-in store [:target :store])))))))))
+
+(deftest target-store-properties-test
+  (let [default-es-props {:host "localhost"
+                          :port 9200
+                          :transport "http"
+                          :indexname "ctia_default"
+                          :replicas 1
+                          :refresh_interval "1s"
+                          :default_operator "AND"
+                          :shards 5
+                          :refresh false
+                          :rollover {:max_docs 10000000}
+                          :aliased true}
+
+
+        source-custom-props {:indexname "source-indexname"
+                             :shards 4}
+
+        migration-cluster-props {:host "es7.iroh.site"
+                                 :port 443
+                                 :transport "https"}
+
+        target-store-props {:indexname "custom-target-indexname"
+                            :shards 4
+                            :refresh_interval "10s"}
+        base-es-props {:ctia {:store {:es {:default default-es-props}}}}
+        with-source-props (assoc-in base-es-props
+                                    [:ctia :store :es :sighting]
+                                    source-custom-props)
+        with-migration-cluster-props (assoc-in with-source-props
+                                               [:ctia :migration :store :es :default]
+                                               migration-cluster-props)]
+
+    (testing "Target store properties generated from only source properties and a migration prefix reuse source properties and add the migration prefix to indexname property."
+      (with-redefs [p/global-properties-atom #(atom with-source-props)]
+        (is (= (assoc (into default-es-props source-custom-props)
+                      :indexname "v0.0.1_source-indexname"
+                      :entity :sighting)
+               (sut/target-store-properties "0.0.1" :sighting)))))
+
+    (testing "Target store properties use the migration cluster properties when defined, and the prefix migration properties when the target indexname is not specified."
+      (with-redefs [p/global-properties-atom #(atom with-migration-cluster-props)]
+        (is (= (assoc (merge default-es-props
+                             source-custom-props
+                             migration-cluster-props)
+                      :indexname "v0.0.1_source-indexname"
+                      :entity :sighting)
+               (sut/target-store-properties "0.0.1" :sighting)))))
+
+    (testing "Target store properties reuse source indexname when neither the prefix nor the target indexname are provided."
+      (with-redefs [p/global-properties-atom #(atom with-migration-cluster-props)]
+        (is (= (assoc (merge default-es-props
+                             source-custom-props
+                             migration-cluster-props)
+                      :indexname "source-indexname"
+                      :entity :sighting)
+               (sut/target-store-properties nil :sighting)))))
+
+    (testing "Target store properties prioritize target ES properties, then migration default ES properties."
+      (with-redefs [p/global-properties-atom #(->> (dissoc target-store-props :indexname)
+                                                   (assoc-in with-migration-cluster-props
+                                                             [:ctia :migration :store :es :sighting])
+                                                   atom)]
+        (is (= (assoc (merge default-es-props
+                             source-custom-props
+                             migration-cluster-props
+                             target-store-props)
+                      :indexname "v0.0.1_source-indexname"
+                      :entity :sighting)
+               (sut/target-store-properties "0.0.1" :sighting)))))
+
+    (testing "Target store properties ignore prefix when a target indexname is defined in properties."
+      (with-redefs [p/global-properties-atom #(atom (assoc-in with-migration-cluster-props
+                                                              [:ctia :migration :store :es :sighting]
+                                                              target-store-props))]
+         (is (= (assoc (merge default-es-props
+                             source-custom-props
+                             migration-cluster-props
+                             target-store-props)
+                      :indexname "custom-target-indexname"
+                      :entity :sighting)
+               (sut/target-store-properties "0.0.1" :sighting)))))))

@@ -2,6 +2,7 @@
   (:require [clojure.java.io :as io]
             [clojure.set :as set]
             [clojure.string :as str]
+            [clojure.data :refer [diff]]
             [clojure
              [test :refer [deftest is join-fixtures testing use-fixtures]]
              [walk :refer [keywordize-keys]]]
@@ -64,7 +65,7 @@
 
 ;; This a is a `defn` to prevent side-effects at compile time
 (defn migration-index []
-  (get-in (es-props) [:migration :indexname]))
+  (p/get-in-global-properties [:ctia :migration :store :es :migration :indexname]))
 
 (defn fixture-clean-migration [t]
   (t)
@@ -232,7 +233,6 @@
                                   :confirm?     true
                                   :restart?     false}
                                  services)
-
       (let [migration-state (es-doc/get-doc @es-conn
                                             (migration-index)
                                             "migration"
@@ -365,7 +365,6 @@
           migration-id "migration-1"
           docs (map (comp :_source es-helpers/str->doc)
                     (line-seq rdr))
-
           base-params {:target-store storemap
                        :entity-type :relationship
                        :list-coerce list-coerce
@@ -379,10 +378,14 @@
                        msg
                        {:keys [confirm?]
                         :as override-params}]
-                    (init-migration migration-id
-                                    prefix
-                                    [:relationship]
-                                    true
+                    (init-migration {:migration-id migration-id
+                                     :prefix prefix
+                                     :store-keys [:relationship]
+                                     :confirm? true
+                                     :migrations [:__test]
+                                     :batch-size 1000
+                                     :buffer-size 3
+                                     :restart? false}
                                     services)
                     (let [test-docs (take total docs)
                           search_after [(rand-int total)]
@@ -597,7 +600,7 @@
         (doseq [store (vals (all-stores))]
           (is (not (index-exists? store "0.0.0"))))
         (is (nil? (seq (es-doc/get-doc @es-conn
-                                       (get-in (es-props) [:migration :indexname])
+                                       (migration-index)
                                        "migration"
                                        "test-1"
                                        {})))))))
@@ -724,11 +727,15 @@
                    keywordize-keys)
               _ (es-index/refresh! @es-conn)
               formatted-cat-indices (es-helpers/get-cat-indices (:host default)
-                                                                (:port default))]
-          (is (= expected-indices
-                 (select-keys formatted-cat-indices
-                              (keys expected-indices))))
-
+                                                                (:port default))
+              result-indices (select-keys formatted-cat-indices
+                                          (keys expected-indices))]
+          (is (= expected-indices result-indices)
+              (let [[only-expected only-result _]
+                    (diff expected-indices result-indices)]
+                   (format "only in expected ==> %s\nonly in result ==> %s"
+                           only-expected
+                           only-result)))
           (doseq [[index _]
                   expected-indices]
             (let [docs (->> (es-doc/search-docs @es-conn (name index) nil nil nil {})

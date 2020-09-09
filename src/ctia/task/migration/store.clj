@@ -5,35 +5,62 @@
             [clj-momo.lib.es.document :as es-doc]
             [clj-momo.lib.es.index :as es-index]
             [clj-momo.lib.es.query :as es-query]
-            [clj-momo.lib.es.schemas :refer [ESConn ESQuery]]
+            [clj-momo.lib.es.schemas :refer [ESConn ESQuery Refresh]]
             [clojure.set :as set]
             [clojure.string :as string]
             [clojure.tools.logging :as log]
-            [ctia.init :refer [init-store-service! log-properties]]
+            [ctia.init :refer [log-properties]]
             [ctia.lib.collection :refer [fmap]]
-            [ctia.properties :refer [init!]]
-            [ctia.store :refer [stores]]
+            [ctia.properties :as p]
+            [ctia.store :as store]
             [ctia.stores.es.crud :as crud]
-            [ctia.stores.es.init
-             :refer
-             [get-store-properties init-es-conn! init-store-conn StoreProperties]]
+            [ctia.stores.es.init :as es.init]
             [ctia.stores.es.mapping :as em]
             [ctia.stores.es.schemas :refer [ESConnServices ESConnState]]
             [ctia.stores.es.store :as es-store :refer [StoreMap]]
             [ctia.task.rollover :refer [rollover-store]]
+            [ctia.task.migration.migrations :refer [available-migrations]]
             [ctim.domain.id :refer [long-id->id]]
             [schema-tools.core :as st]
             [schema.core :as s]))
 
+(s/defschema ESStoreProperties
+  (st/optional-keys
+   {:host s/Str
+    :port s/Int
+    :transport s/Keyword
+    :indexname s/Str
+    :refresh Refresh
+    :refresh_interval  s/Str
+    :replicas s/Num
+    :shards s/Num
+    :rollover (st/optional-keys
+               {:max_docs s/Num
+                :max_age s/Str})
+    :aliased  s/Bool
+    :default_operator (s/enum "OR" "AND")
+    :timeout s/Num}))
+
+(s/defschema MigrationParams
+  {:migration-id s/Str
+   :prefix s/Str
+   :migrations [(apply s/enum (keys available-migrations))]
+   :store-keys [s/Keyword]
+   :batch-size s/Int
+   :buffer-size s/Int
+   :confirm? (s/maybe s/Bool)
+   :restart? (s/maybe s/Bool)
+   (s/optional-key :store) {:es {s/Keyword ESStoreProperties}}})
+
 (def timeout (* 5 60000))
 (def es-max-retry 3)
-(defonce migration-es-conn (atom nil))
+(def migration-es-conn (atom nil))
 
 (s/defschema MigrationStoreServices
   {:ConfigService {:get-in-config (s/=>* s/Any
-                                         [(s/named s/Any 'path)]
-                                         [(s/named s/Any 'path)
-                                          (s/named s/Any 'default)])}
+                                         [(s/named [s/Any] 'path)]
+                                         [(s/named [s/Any] 'path)
+                                          (s/named [s/Any] 'default)])}
    :StoreService {:all-stores (s/=> s/Any)}})
 
 (s/defn MigrationStoreServices->ESConnServices
@@ -41,11 +68,22 @@
   [{{:keys [get-in-config]} :ConfigService} :- MigrationStoreServices]
   {:ConfigService {:get-in-config get-in-config}})
 
-(def token-mapping
-  (dissoc em/token :fielddata))
+(defn prefixed-index [index prefix]
+  (let [version-trimmed (string/replace index #"^v[^_]*_" "")]
+    (format "v%s_%s" prefix version-trimmed)))
+
+(defn target-store-properties
+  [prefix store-key get-in-config]
+  (let [migration-default-es-props (-> (get-in-config [:ctia :migration :store :es :default])
+                                       (dissoc :indexname))]
+    (cond-> (es.init/get-store-properties store-key)
+      prefix (update :indexname
+                     #(prefixed-index % prefix))
+      :always (-> migration-default-es-props
+                  (into (get-in-config [:ctia :migration :store :es store-key]))))))
 
 (defn store-mapping
-  [[k]]
+  [k]
   {k {:type "object"
       :properties {:source {:type "object"
                             :properties
@@ -58,25 +96,24 @@
                    :started em/ts
                    :completed em/ts}}})
 
-(s/defn migration-mapping
-  [{{:keys [all-stores]} :StoreService} :- MigrationStoreServices]
+(def migration-mapping
   {"migration"
    {:dynamic false
     :properties
     {:id em/token
      :timestamp em/ts
      :stores {:type "object"
-              :properties (->> (map store-mapping (all-stores))
+              :properties (->> (keys store/empty-stores)
+                               (map store-mapping)
                                (into {}))}}}})
 
-(s/defn migration-store-properties [{{:keys [get-in-config]} :ConfigService
-                                     :as services} :- MigrationStoreServices]
-  (into (get-store-properties :migration get-in-config)
+(s/defn migration-store-properties [{{:keys [get-in-config]} :ConfigService} :- MigrationStoreServices]
+  (into (target-store-properties nil :migration get-in-config)
         {:shards 1
          :replicas 1
          :refresh true
          :aliased false
-         :mappings (migration-mapping services)}))
+         :mappings migration-mapping}))
 
 (s/defschema SourceState
   {:index s/Str
@@ -156,35 +193,11 @@
            "true"))
   migration)
 
-(defn prefixed-index [index prefix]
-  (let [version-trimmed (string/replace index #"^v[^_]*_" "")]
-    (format "v%s_%s" prefix version-trimmed)))
-
 (def conn-overrides {:cm (conn/make-connection-manager {:timeout timeout})})
 
 (defn store->map
   [store-record]
   (es-store/store->map store-record conn-overrides))
-
-(defn stores->maps
-  "transform store records to maps"
-  [stores]
-  (into {}
-        (map (fn [[store-key store-record]]
-               {store-key (store->map store-record)})
-             stores)))
-
-(defn source-store-map->target-store-map
-  "transform a source store map into a target map,
-  essentially updating indexname"
-  [store prefix]
-  (let [prefixer #(prefixed-index % prefix)
-        aliases (->> (get-in store [:config :aliases])
-                     (map (fn [[k v]] {(prefixer k) v}))
-                     (into {}))]
-    (-> (assoc-in store [:config :aliases] aliases)
-        (update-in [:props :write-index] prefixer)
-        (update :indexname prefixer))))
 
 (def bulk-max-size (* 5 1024 1024)) ;; 5Mo
 
@@ -438,15 +451,14 @@ Rollover requires refresh so we cannot just call ES with condition since refresh
 
 (s/defn fetch-deletes :- (s/maybe {s/Any s/Any})
   "retrieves delete events for given entity types and since given date"
-  [entity-types :- [s/Keyword]
+  [event-store :- StoreMap
+   entity-types :- [s/Keyword]
    since :- s/Inst
    batch-size :- s/Int
    search_after :- (s/maybe [s/Any])
-   {{:keys [all-stores]} :StoreService
-    :as _services_} :- MigrationStoreServices]
+   {{:keys [all-stores]} :StoreService} :- MigrationStoreServices]
   ;; TODO migrate events with mapping enabling to filter on record-type and entity.type
   (let [query {:range {:timestamp {:gte since}}}
-        event-store (store->map (:event (all-stores)))
         filter-events (fn [{:keys [event_type entity]}]
                         (and (= event_type "record-deleted")
                              (contains? (set entity-types)
@@ -521,17 +533,12 @@ Rollover requires refresh so we cannot just call ES with condition since refresh
     (retry es-max-retry es-index/create-template! conn indexname index-config)
     (retry es-max-retry es-index/create! conn (format "<%s-{now/d}-000001>" indexname) index-config)))
 
-(defn target-store-properties
-  [prefix store-key get-in-config]
-  (-> (get-store-properties store-key get-in-config)
-      (update :indexname
-              #(prefixed-index % prefix))))
-
 (s/defn init-storemap :- StoreMap
-  [props :- StoreProperties
+  [props :- es.init/StoreProperties
    services :- MigrationStoreServices]
-  (-> (init-store-conn props (MigrationStoreServices->ESConnServices
-                               services))
+  (-> props
+      (es.init/init-store-conn (MigrationStoreServices->ESConnServices
+                                 services))
       (es-store/store-state->map conn-overrides)))
 
 (s/defn get-target-store
@@ -547,16 +554,27 @@ Rollover requires refresh so we cannot just call ES with condition since refresh
             store-keys)
        (into {})))
 
+(defn get-source-store
+  [store-key]
+  (init-storemap (es.init/get-store-properties store-key)))
+
+(defn get-source-stores
+  [store-keys]
+  (->> (map (fn [k]
+              {k (get-source-store k)})
+            store-keys)
+       (into {})))
+
 (s/defn init-migration :- MigrationSchema
   "init the migration state, for each store it provides necessary data on source and target stores (indexname, type, source size, search_after).
 when confirm? is true, it stores this state and creates the target indices."
-  [migration-id :- s/Str
-   prefix :- s/Str
-   store-keys :- [s/Keyword]
-   confirm? :- s/Bool
+  [{:keys [migration-id
+           prefix
+           store-keys
+           confirm?]} :- MigrationParams
    {{:keys [all-stores]} :StoreService
     :as services} :- MigrationStoreServices]
-  (let [source-stores (stores->maps (select-keys (all-stores) store-keys))
+  (let [source-stores (get-source-stores store-keys)
         target-stores (get-target-stores prefix store-keys services)
         migration-properties (migration-store-properties services)
         now (time/internal-now)
@@ -568,9 +586,9 @@ when confirm? is true, it stores this state and creates the target indices."
                    :prefix prefix
                    :created now
                    :stores migration-stores}
-        es-conn-state (init-es-conn! migration-properties
-                                     (MigrationStoreServices->ESConnServices
-                                       services))]
+        es-conn-state (-> migration-properties
+                          (es.init/init-es-conn! (MigrationStoreServices->ESConnServices
+                                                   services)))]
     (when confirm?
       (store-migration migration (:conn es-conn-state) services)
       (doseq [[_ target-store] target-stores]
@@ -581,9 +599,10 @@ when confirm? is true, it stores this state and creates the target indices."
   [entity-type :- s/Keyword
    prefix :- s/Str
    raw-store :- MigratedStore
-   {{:keys [all-stores]} :StoreService
-    :as services} :- MigrationStoreServices]
-  (let [source-store (store->map (get (all-stores) entity-type))
+   services :- MigrationStoreServices]
+  (let [source-store  (-> entity-type
+                          es.init/get-store-properties
+                          (init-storemap services))
         target-store (get-target-store prefix entity-type services)]
     (-> (assoc-in raw-store [:source :store] source-store)
         (assoc-in [:target :store] target-store))))
@@ -637,7 +656,6 @@ when confirm? is true, it stores this state and creates the target indices."
                            migrated-doc
                            (-> migration-es-conn deref (doto (assert "This atom is unset. Maybe some setup hasn't been performed?")))
                            services))
-  
   ([migration-id :- s/Str
     store-key :- s/Keyword
     migrated-doc :- PartialMigratedStore
@@ -684,12 +702,11 @@ when confirm? is true, it stores this state and creates the target indices."
   ;; TODO will be rolled into trapperkeeper bootstrap
   ;; START global services setup
   (log/info "starting CTIA Stores...")
-  (init!)
+  (p/init!)
   (log-properties)
-  (init-store-service!)
   ;; END global services setup
   (reset! migration-es-conn
           (-> (migration-store-properties services)
-              (init-store-conn (MigrationStoreServices->ESConnServices
-                                 services))
+              (es.init/init-store-conn (MigrationStoreServices->ESConnServices
+                                         services))
               :conn)))
