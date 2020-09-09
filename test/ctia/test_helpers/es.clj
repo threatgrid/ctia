@@ -60,8 +60,8 @@
   (let [app (h/get-current-app)
         {:keys [get-in-config]} (h/get-service-map app :ConfigService)
         {:keys [all-stores]} (h/get-service-map app :StoreService)]
+    (delete-store-indexes true all-stores get-in-config)
     (try
-      (delete-store-indexes true all-stores get-in-config)
       (t)
       (finally
         (delete-store-indexes false all-stores get-in-config)))))
@@ -96,8 +96,8 @@
   (let [app (h/get-current-app)
         {:keys [get-in-config]} (h/get-service-map app :ConfigService)
         {:keys [all-stores]} (h/get-service-map app :StoreService)]
+    (purge-indexes all-stores get-in-config)
     (try
-      (purge-indexes all-stores get-in-config)
       (t)
       (finally (purge-indexes all-stores get-in-config)))))
 
