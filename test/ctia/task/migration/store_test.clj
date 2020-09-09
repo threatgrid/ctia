@@ -922,14 +922,14 @@
                                                [:ctia :migration :store :es :default]
                                                migration-cluster-props)]
 
-    (testing "simple migration properties that preserves ES source properties and simply adds a prefix to newly created index"
+    (testing "Target store properties generated from only source properties and a migration prefix reuse source properties and add the migration prefix to indexname property."
       (with-redefs [p/global-properties-atom #(atom with-source-props)]
         (is (= (assoc (into default-es-props source-custom-props)
                       :indexname "v0.0.1_source-indexname"
                       :entity :sighting)
                (sut/target-store-properties "0.0.1" :sighting)))))
 
-    (testing "migration properties that redefines cluster properties and adds a prefix to source indexname"
+    (testing "Target store properties use the migration cluster properties when defined, and the prefix migration properties when the target indexname is not specified."
       (with-redefs [p/global-properties-atom #(atom with-migration-cluster-props)]
         (is (= (assoc (merge default-es-props
                              source-custom-props
@@ -938,7 +938,7 @@
                       :entity :sighting)
                (sut/target-store-properties "0.0.1" :sighting)))))
 
-    (testing "migration properties that redefines cluster properties and preserves source indexname (cluster migration only)"
+    (testing "Target store properties reuse source indexname when neither the prefix nor the target indexname are provided."
       (with-redefs [p/global-properties-atom #(atom with-migration-cluster-props)]
         (is (= (assoc (merge default-es-props
                              source-custom-props
@@ -947,7 +947,7 @@
                       :entity :sighting)
                (sut/target-store-properties nil :sighting)))))
 
-    (testing "migration properties that redefines cluster properties and target properties except the target indexname, in which case it also adds the prefix"
+    (testing "Target store properties prioritize target ES properties, then migration default ES properties."
       (with-redefs [p/global-properties-atom #(->> (dissoc target-store-props :indexname)
                                                    (assoc-in with-migration-cluster-props
                                                              [:ctia :migration :store :es :sighting])
@@ -960,7 +960,7 @@
                       :entity :sighting)
                (sut/target-store-properties "0.0.1" :sighting)))))
 
-    (testing "migration properties that redefines cluster properties but uses a custom target indexname"
+    (testing "Target store properties ignore prefix when a target indexname is defined in properties."
       (with-redefs [p/global-properties-atom #(atom (assoc-in with-migration-cluster-props
                                                               [:ctia :migration :store :es :sighting]
                                                               target-store-props))]
