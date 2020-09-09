@@ -1,5 +1,5 @@
 There is a dedicated task to migrate data from prior versions of CTIA. 
-This task will run through all configured stores, transform and copy data to new Elasticsearch indices. This is possible to migrate these data in another cluster.
+This task will run through all configured stores, transform and copy data to new Elasticsearch indices. It is possible to migrate data between clusters.
 A migration state will be stored in a configured state to enable restart.
 
 # :warning: Prepare Migration :warning:
@@ -46,7 +46,7 @@ ctia.migration.store.es.sighting.indexname=v1.2.0_ctia_sighting
 ctia.migration.store.es.sighting.rollover.max_docs=100000000
 ```
 
-When a parameter is not specified for target store neither in it's ES configuration nor in the default migration ES configuration, the source parameters are reused.
+When a parameter is not specified for target store neither in its ES configuration nor in the default migration ES configuration, the source parameters are reused.
 
 Below is an example of simple migration properties to migrates `tool` and `sighting` stores into a new indices in the same cluster, preserving existing indices properties and adding a new index prefix. This is equivalent to the `identity` migration that we use to only modify mappings:
 ```

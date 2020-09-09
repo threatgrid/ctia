@@ -2,6 +2,7 @@
   (:require [clojure.java.io :as io]
             [clojure.set :as set]
             [clojure.string :as str]
+            [clojure.data :refer [diff]]
             [clojure
              [test :refer [deftest is join-fixtures testing use-fixtures]]
              [walk :refer [keywordize-keys]]]
@@ -661,7 +662,7 @@
                                           (keys expected-indices))]
           (is (= expected-indices result-indices)
               (let [[only-expected only-result _]
-                    (clojure.data/diff expected-indices result-indices)]
+                    (diff expected-indices result-indices)]
                    (format "only in expected ==> %s\nonly in result ==> %s"
                            only-expected
                            only-result)))
