@@ -60,7 +60,7 @@
   {:ConfigService {:get-in-config (s/=>* s/Any
                                          [(s/named [s/Any] 'path)]
                                          [(s/named [s/Any] 'path)
-                                          (s/named [s/Any] 'default)])}})
+                                          (s/named s/Any 'default)])}})
 
 (s/defn MigrationStoreServices->ESConnServices
   :- ESConnServices
