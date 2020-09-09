@@ -964,7 +964,7 @@
         (is (= (assoc (into default-es-props source-custom-props)
                       :indexname "v0.0.1_source-indexname"
                       :entity :sighting)
-               (sut/target-store-properties "0.0.1" :sighting)))))
+               (sut/target-store-properties "0.0.1" :sighting p/get-in-global-properties)))))
 
     (testing "Target store properties use the migration cluster properties when defined, and the prefix migration properties when the target indexname is not specified."
       (with-redefs [p/global-properties-atom #(atom with-migration-cluster-props)]
@@ -973,7 +973,7 @@
                              migration-cluster-props)
                       :indexname "v0.0.1_source-indexname"
                       :entity :sighting)
-               (sut/target-store-properties "0.0.1" :sighting)))))
+               (sut/target-store-properties "0.0.1" :sighting p/get-in-global-properties)))))
 
     (testing "Target store properties reuse source indexname when neither the prefix nor the target indexname are provided."
       (with-redefs [p/global-properties-atom #(atom with-migration-cluster-props)]
@@ -982,7 +982,7 @@
                              migration-cluster-props)
                       :indexname "source-indexname"
                       :entity :sighting)
-               (sut/target-store-properties nil :sighting)))))
+               (sut/target-store-properties nil :sighting p/get-in-global-properties)))))
 
     (testing "Target store properties prioritize target ES properties, then migration default ES properties."
       (with-redefs [p/global-properties-atom #(->> (dissoc target-store-props :indexname)
@@ -995,7 +995,7 @@
                              target-store-props)
                       :indexname "v0.0.1_source-indexname"
                       :entity :sighting)
-               (sut/target-store-properties "0.0.1" :sighting)))))
+               (sut/target-store-properties "0.0.1" :sighting p/get-in-global-properties)))))
 
     (testing "Target store properties ignore prefix when a target indexname is defined in properties."
       (with-redefs [p/global-properties-atom #(atom (assoc-in with-migration-cluster-props
@@ -1007,4 +1007,4 @@
                              target-store-props)
                       :indexname "custom-target-indexname"
                       :entity :sighting)
-               (sut/target-store-properties "0.0.1" :sighting)))))))
+               (sut/target-store-properties "0.0.1" :sighting p/get-in-global-properties)))))))
