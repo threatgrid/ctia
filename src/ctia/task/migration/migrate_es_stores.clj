@@ -13,7 +13,6 @@
             [ctia.stores.es.store :refer [StoreMap]]
             [ctia.task.migration.migrations :refer [available-migrations]]
             [ctia.task.migration.store :as mst]
-            [puppetlabs.trapperkeeper.app :as app]
             [schema-tools.core :as st]
             [schema.core :as s])
   (:import java.lang.AssertionError))
@@ -308,9 +307,7 @@
   [options]
   (log/info "migrating all ES Stores")
   (try
-    (let [_ (log/info "starting CTIA Stores...")
-          app (init/start-ctia!)
-          {{:keys [get-in-config]} :ConfigService} (app/service-graph app)
+    (let [get-in-config (partial get-in (p/build-init-config))
           services {:ConfigService {:get-in-config get-in-config}}
           _ (mst/setup! services)]
       (doto (-> (get-in-config [:ctia :migration])
