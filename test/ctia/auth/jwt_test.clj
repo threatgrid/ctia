@@ -10,7 +10,7 @@
 ;; note: refactor into tests if this namespace uses any fixtures
 (def get-in-config
   (let [config (build-transformed-init-config)]
-    #(apply get-in config %&)))
+    (partial get-in config)))
 
 (deftest wrap-jwt-to-ctia-auth-test
   (let [handler (fn [r]
