@@ -27,6 +27,21 @@
 
 (def ^:dynamic ^:private *config-transformers* [])
 
+(defn get-service-map [app svc-kw]
+  {:pre [(keyword? svc-kw)]}
+  ;; stub implementation until trapperkeeper bootstrap
+  (assert (= ::global-app app)
+          "app must be the result of get-current-app")
+  (case svc-kw
+    :ConfigService {:get-config p/get-global-properties
+                    :get-in-config p/get-in-global-properties}
+    :StoreService {:all-stores (fn [] @store/stores)
+                   :read-store store/read-store
+                   :write-store store/write-store}
+    (throw (ex-info (str "No service: " svc-kw)
+                    {:app app
+                     :service svc-kw}))))
+
 (def fixture-property
   (mth/build-fixture-property-fn PropertiesSchema))
 
@@ -156,9 +171,19 @@
   ;; stub implementation until trapperkeeper bootstrap
   p/get-in-global-properties)
 
-(defn current-get-in-config-fn []
+(defn get-current-app []
+  {:post [%]}
   ;; stub implementation until trapperkeeper bootstrap
-  p/get-in-global-properties)
+  ::global-app)
+
+(defn current-get-in-config-fn
+  ([]
+   ;; stub implementation until trapperkeeper bootstrap
+   p/get-in-global-properties)
+  ([app]
+   ;; stub implementation until trapperkeeper bootstrap
+   (assert (= ::global-app app))
+   p/get-in-global-properties))
 
 (defn fixture-ctia
   ([t] (fixture-ctia t true))

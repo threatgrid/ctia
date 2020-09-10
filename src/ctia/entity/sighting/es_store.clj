@@ -1,6 +1,5 @@
 (ns ctia.entity.sighting.es-store
-  (:require [clj-momo.lib.es.schemas :refer [ESConnState]]
-            [ctia.entity.sighting.schemas
+  (:require [ctia.entity.sighting.schemas
              :refer
              [PartialStoredSighting StoredSighting]]
             [ctia.lib.pagination :refer [list-response-schema]]
@@ -8,7 +7,8 @@
             [ctia.store :refer [IQueryStringSearchableStore ISightingStore IStore]]
             [ctia.stores.es
              [crud :as crud]
-             [mapping :as em]]
+             [mapping :as em]
+             [schemas :refer [ESConnState]]]
             [schema-tools.core :as st]
             [schema.core :as s]))
 

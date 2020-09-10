@@ -1,8 +1,7 @@
 (ns ctia.stores.es.crud
   (:require [clj-momo.lib.es
              [document :as d]
-             [query :as q]
-             [schemas :refer [ESConnState]]]
+             [query :as q]]
             [clojure.string :as string]
             [ctia.domain.access-control
              :refer
@@ -18,6 +17,7 @@
                                              CardinalityQuery
                                              AggQuery]]
             [ctia.stores.es.query :refer [find-restriction-query-part]]
+            [ctia.stores.es.schemas :refer [ESConnState]]
             [ring.swagger.coerce :as sc]
             [schema
              [coerce :as c]
@@ -177,7 +177,10 @@ It returns the documents with full hits meta data including the real index in wh
   [mapping Model]
   (let [coerce! (coerce-to-fn (s/maybe Model))]
     (s/fn :- (s/maybe Model)
-      [state :- ESConnState
+      [{{{:keys [get-in-config]} :ConfigService}
+        :services
+        :as state}
+       :- ESConnState
        id :- s/Str
        ident
        params]
@@ -187,7 +190,7 @@ It returns the documents with full hits meta data including the real index in wh
                                              (make-es-read-params params))
                          :_source
                          coerce!)]
-        (if (allow-read? doc ident p/get-in-global-properties)
+        (if (allow-read? doc ident get-in-config)
           doc
           (throw (ex-info "You are not allowed to read this document"
                           {:type :access-control-error})))))))
@@ -285,14 +288,15 @@ It returns the documents with full hits meta data including the real index in wh
   (let [response-schema (list-response-schema Model)
         coerce! (coerce-to-fn response-schema)]
     (s/fn :- response-schema
-      [state :- ESConnState
+      [{{{:keys [get-in-config]} :ConfigService}
+        :services :as state} :- ESConnState
        {:keys [all-of one-of query]
         :or {all-of {} one-of {}}} :- FilterSchema
        ident
        params]
       (let [filter-val (cond-> (q/prepare-terms all-of)
                          (restricted-read? ident)
-                         (conj (find-restriction-query-part ident p/get-in-global-properties)))
+                         (conj (find-restriction-query-part ident get-in-config)))
 
             query_string  {:query_string {:query query}}
             bool-params (cond-> {:filter filter-val}
@@ -311,11 +315,12 @@ It returns the documents with full hits meta data including the real index in wh
           (restricted-read? ident) (update :data
                                            access-control-filter-list
                                            ident
-                                           p/get-in-global-properties))))))
+                                           get-in-config))))))
 
 
 (s/defn make-search-query
-  [{{:keys [default_operator]} :props} :- ESConnState
+  [{{:keys [default_operator]} :props
+    {{:keys [get-in-config]} :ConfigService} :services} :- ESConnState
    {:keys [query-string filter-map date-range]} :- SearchQuery
    ident]
   (let [es-query-string {:query_string (into {:query query-string}
@@ -327,7 +332,7 @@ It returns the documents with full hits meta data including the real index in wh
                          q/prepare-terms)]
     {:bool
      {:filter
-      (cond-> [(find-restriction-query-part ident p/get-in-global-properties)]
+      (cond-> [(find-restriction-query-part ident get-in-config)]
         (seq filter-map) (into filter-terms)
         (seq date-range) (conj date-range-query)
         (seq query-string) (conj es-query-string))}}))
@@ -340,6 +345,8 @@ It returns the documents with full hits meta data including the real index in wh
     (s/fn :- response-schema
       [{conn :conn
         index :index
+        {{:keys [get-in-config]} :ConfigService}
+        :services
         :as es-conn-state} :- ESConnState
        {:keys [filter-map] :as search-query} :- SearchQuery
        ident
@@ -356,7 +363,7 @@ It returns the documents with full hits meta data including the real index in wh
           (restricted-read? ident) (update :data
                                            access-control-filter-list
                                            ident
-                                           p/get-in-global-properties))))))
+                                           get-in-config))))))
 
 (defn handle-query-string-count
   "Generate an ES count handler using some mapping and schema"

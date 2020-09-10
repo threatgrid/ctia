@@ -4,20 +4,25 @@
    [ctia.properties :as p]
    [clojure.set :refer [difference]]
    [ctia.stores.es.mapping :refer [store-settings]]
+   [ctia.stores.es.schemas :refer [ESConnServices ESConnState]]
    [clj-momo.lib.es
     [conn :refer [connect]]
-    [index :as es-index]
-    [schemas :refer [ESConnState]]]
+    [index :as es-index]]
    [ctia.entity.entities :refer [entities]]
-   [schema.core :as s]))
+   [schema.core :as s]
+   [schema-tools.core :as st]))
 
 (s/defschema StoreProperties
-  {:entity s/Keyword
-   :indexname s/Str
-   :shards s/Num
-   :replicas s/Num
-   (s/optional-key :write-suffix) s/Str
-   s/Keyword s/Any})
+  (st/merge
+    {:entity s/Keyword
+     :indexname s/Str
+     s/Keyword s/Any}
+    (st/optional-keys
+      {:shards s/Num
+       :replicas s/Num
+       :write-suffix s/Str
+       :refresh_interval s/Str
+       :aliased s/Any})))
 
 (def store-mappings
   (apply merge {}
@@ -33,7 +38,8 @@
          shards 1
          replicas 1
          refresh_interval "1s"}
-    :as props} :- StoreProperties]
+    :as props} :- StoreProperties
+   services :- ESConnServices]
   (let [write-index (str indexname
                          (when aliased "-write"))
         settings {:refresh_interval refresh_interval
@@ -46,7 +52,8 @@
                :mappings (get store-mappings entity mappings)}
               (when aliased
                 {:aliases {indexname {}}}))
-     :conn (connect props)}))
+     :conn (connect props)
+     :services services}))
 
 (s/defn update-settings!
   "read store properties of given stores and update indices settings."
@@ -104,9 +111,10 @@
 (s/defn init-es-conn! :- ESConnState
   "initiate an ES Store connection,
    put the index template, return an ESConnState"
-  [properties :- StoreProperties]
+  [properties :- StoreProperties
+   services :- ESConnServices]
   (let [{:keys [conn index props config] :as conn-state}
-        (init-store-conn properties)
+        (init-store-conn properties services)
         existing-indices (get-existing-indices conn index)]
     (when (seq existing-indices)
       (update-mapping! conn index config)
@@ -127,28 +135,31 @@
 
 (s/defn get-store-properties :- StoreProperties
   "Lookup the merged store properties map"
-  [store-kw :- s/Keyword]
+  [store-kw :- s/Keyword
+   get-in-config]
   (merge
     {:entity store-kw}
-    (p/get-in-global-properties [:ctia :store :es :default] {})
-    (p/get-in-global-properties [:ctia :store :es store-kw] {})))
+    (get-in-config [:ctia :store :es :default] {})
+    (get-in-config [:ctia :store :es store-kw] {})))
 
-(defn- make-factory
+(s/defn ^:private make-factory
   "Return a store instance factory. Most of the ES stores are
   initialized in a common way, so this is used to remove boiler-plate
   code."
-  [store-constructor]
+  [store-constructor
+   {{:keys [get-in-config]} :ConfigService
+    :as services} :- ESConnServices]
   (fn store-factory [store-kw]
-    (-> (get-store-properties store-kw)
-        init-es-conn!
+    (-> (get-store-properties store-kw get-in-config)
+        (init-es-conn! services)
         store-constructor)))
 
-(def ^:private factories
+(s/defn ^:private factories [services :- ESConnServices]
   (apply merge {}
          (map (fn [[_ {:keys [entity es-store]}]]
-                {entity (make-factory es-store)})
+                {entity (make-factory es-store services)})
               entities)))
 
-(defn init-store! [store-kw]
-  (when-let [factory (get factories store-kw)]
+(s/defn init-store! [store-kw services :- ESConnServices]
+  (when-let [factory (get (factories services) store-kw)]
     (factory store-kw)))

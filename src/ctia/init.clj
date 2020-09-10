@@ -67,7 +67,8 @@
 
 (defn- build-store [store-kw store-type]
   (case store-type
-    "es" (es-init/init-store! store-kw)))
+    "es" (es-init/init-store! store-kw
+                              {:ConfigService {:get-in-config p/get-in-global-properties}})))
 
 (defn init-store-service! []
   (reset! store/stores

@@ -10,15 +10,16 @@
              [schemas :refer [ESConnState]]]
             [ctia.stores.es.init :refer [init-es-conn! get-store-properties]]
             [ctia
-             [init :refer [init-store-service! log-properties]]
+             [init :refer [log-properties]]
              [properties :as p]
              [store :refer [empty-stores]]]))
 
 (defn update-stores!
-  [store-keys]
+  [store-keys get-in-config]
   (doseq [kw store-keys]
     (log/infof "updating settings for store: %s" (name kw))
-    (init-es-conn! (get-store-properties kw))))
+    (init-es-conn! (get-store-properties kw get-in-config)
+                   get-in-config)))
 
 (def cli-options
   [["-h" "--help"]
@@ -39,4 +40,5 @@
     (pp/pprint options)
     (p/init!)
     (log-properties)
-    (update-stores! (:stores options))))
+    (update-stores! (:stores options)
+                    p/get-in-global-properties)))
