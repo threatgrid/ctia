@@ -23,13 +23,13 @@
 
 (deftest rollover-aliased-test
   (let [app (helpers/get-current-app)
-        {:keys [get-in-config]} (helpers/get-service-map app :ConfigService)
+        services (es-helpers/app->ESConnServices app)
 
         props-not-aliased {:entity :malware
                            :indexname "ctia_malware"
                            :host "localhost"
                            :port 9200}
-        state-not-aliased (init/init-es-conn! props-not-aliased get-in-config)
+        state-not-aliased (init/init-es-conn! props-not-aliased services)
         rollover-not-aliased (sut/rollover-store state-not-aliased)
         props-aliased {:entity :sighting
                        :indexname "ctia_sighting"
@@ -38,7 +38,7 @@
                        :aliased true
                        :rollover {:max_docs 3}
                        :refresh "true"}
-        state-aliased (init/init-es-conn! props-aliased get-in-config)
+        state-aliased (init/init-es-conn! props-aliased services)
         rollover-aliased (sut/rollover-store state-aliased)
 
         count-index #(count (es-index/get (:conn state-aliased)
@@ -65,8 +65,7 @@
                                        (throw (ex-info "that's baaaaaaaddd"
                                                        {:code :unhappy}))))]
     (let [app (helpers/get-current-app)
-          services {:ConfigService (-> (helpers/get-service-map app :ConfigService)
-                                       (select-keys [:get-in-config]))}
+          services (es-helpers/app->ESConnServices app)
 
           ok-state (init/init-store-conn {:entity "sighting"
                                           :indexname "ok_index"

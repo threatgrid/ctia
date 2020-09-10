@@ -37,8 +37,8 @@
   (vec (map name caps)))
 
 (s/defn handle-create :- Identity
-[{:keys [conn props]} :- ESConnState
- new-identity :- Identity]
+  [{:keys [conn props]} :- ESConnState
+   new-identity :- Identity]
   (let [id (:login new-identity)
         realized (assoc new-identity :id id)
         transformed (update-in realized [:capabilities]

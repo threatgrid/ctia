@@ -5,6 +5,7 @@
             [clj-momo.lib.es.index :as es-index]
             [clj-momo.lib.es.conn :as es-conn]
             [clj-momo.test-helpers.core :as mth]
+            [clojure.instant :as inst]
             [ctia.stores.es.query :refer [find-restriction-query-part]]
             [ctia.stores.es.crud :as sut]
             [ctia.stores.es.init :as init]
@@ -222,11 +223,11 @@
             es-query-string-AND {:query_string {:query query-string
                                                 :default_operator "AND"}}
             es-query-string-no-op {:query_string {:query query-string}}
-            date-range {:created {:gte "2020-04-01T00:00:00.000Z"
-                                  :lt "2020-05-01T00:00:00.000Z"}}
+            date-range {:created {:gte #inst "2020-04-01T00:00:00.000Z"
+                                  :lt #inst "2020-05-01T00:00:00.000Z"}}
             es-date-range {:range date-range}
-            filter-map {"disposition" 2
-                        "observable.type" "domain"}
+            filter-map {:disposition 2
+                        :observable.type "domain"}
             es-terms [{:terms {"disposition" (list 2)}}
                       {:terms {"observable.type" (list "domain")}}]]
         (is (= {:bool {:filter [simple-access-ctrl-query]}}
@@ -289,7 +290,7 @@
          (sut/make-aggregation {:agg-type :cardinality
                                 :aggregate-on "observable.value"}))))
 
-(defn generete-sightings
+(defn generate-sightings
   [nb confidence title timestamp]
   (repeatedly nb
               #(assoc base-sighting
@@ -303,19 +304,19 @@
 (def title1 "this is title1 sighting")
 (def title2 "this is title2 sighting")
 
-(def high-t1-title1 (generete-sightings 60
+(def high-t1-title1 (generate-sightings 60
                                         "High"
                                         title1
                                         timestamp-1))
-(def high-t2-title2 (generete-sightings 20
+(def high-t2-title2 (generate-sightings 20
                                         "High"
                                         title2
                                         timestamp-2))
-(def medium-t1-title1 (generete-sightings 10
+(def medium-t1-title1 (generate-sightings 10
                                           "Medium"
                                           title1
                                           timestamp-1))
-(def low-t2-title2 (generete-sightings 5
+(def low-t2-title2 (generate-sightings 5
                                        "Low"
                                        title2
                                        timestamp-2))
@@ -338,8 +339,8 @@
                        ident
                        {:refresh "true"})
           query-string "title1"
-          date-range {:created {:gte timestamp-1
-                                :lt timestamp-2}}
+          date-range {:created {:gte (inst/read-instant-date timestamp-1)
+                                :lt (inst/read-instant-date timestamp-2)}}
           filter-map {:confidence "High"}
           search-helper (fn [q params]
                           (search-fn es-conn-state q ident params))

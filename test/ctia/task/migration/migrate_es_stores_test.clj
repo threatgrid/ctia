@@ -2,6 +2,7 @@
   (:require [clojure.java.io :as io]
             [clojure.set :as set]
             [clojure.string :as str]
+            [clojure.data :refer [diff]]
             [clojure
              [test :refer [deftest is join-fixtures testing use-fixtures]]
              [walk :refer [keywordize-keys]]]
@@ -34,7 +35,6 @@
              [fake-whoami-service :as whoami-helpers]
              [migration :refer [app->MigrationStoreServices]]]
             [ctia.stores.es.store :refer [store->map]]
-            [ctia.store-service :as store-svc]
             [schema.core :as s])
   (:import (java.text SimpleDateFormat)
            (java.util Date)
@@ -62,10 +62,12 @@
 (defn fixture-clean-migration [t]
  (let [app (helpers/get-current-app)
        {:keys [get-in-config]} (helpers/get-service-map app :ConfigService)]
-  (t)
-  (es-index/delete! (es-conn get-in-config) "v0.0.0*")
-  (es-index/delete! (es-conn get-in-config)
-                    (str (migration-index get-in-config) "*"))))
+  (try
+    (t)
+    (finally
+      (doto (es-conn get-in-config)
+        (es-index/delete! "v0.0.0*")
+        (es-index/delete! (str (migration-index get-in-config) "*")))))))
 
 (defn with-each-fixtures*
   "Wrap this function around each deftest instead of use-fixtures
@@ -74,7 +76,7 @@
   conditionally change fixtures on a deftest-granularity."
   [config-transformer body-fn]
   (let [fixtures (join-fixtures [helpers/fixture-ctia
-                                 fixture-setup! ;; Note: goes after fixture-ctia
+                                 fixture-setup! ;; Note: goes _after_ fixture-ctia
                                  es-helpers/fixture-delete-store-indexes
                                  fixture-clean-migration])]
     (helpers/with-config-transformer*
@@ -155,6 +157,10 @@
                                          "v1.2.0_ctia_malware"))
         (let [app (helpers/get-current-app)
               {:keys [get-in-config]} (helpers/get-service-map app :ConfigService)]
+          (let [v (get-in-config [:ctia :store :es :investigation :indexname])]
+            (assert (= v "v1.2.0_ctia_investigation") v))
+          (let [v (get-in-config [:malware 0 :state :props :indexname])]
+            (assert (= v "v1.2.0_ctia_malware") v))
           (is (thrown? AssertionError
                        (sut/check-migration-params migration-params
                                                    get-in-config))
@@ -224,7 +230,6 @@
                                   :confirm?     true
                                   :restart?     false}
                                  services)
-
       (let [migration-state (es-doc/get-doc (es-conn get-in-config)
                                             (migration-index get-in-config)
                                             "migration"
@@ -357,7 +362,6 @@
           migration-id "migration-1"
           docs (map (comp :_source es-helpers/str->doc)
                     (line-seq rdr))
-
           base-params {:target-store storemap
                        :entity-type :relationship
                        :list-coerce list-coerce
@@ -371,10 +375,14 @@
                        msg
                        {:keys [confirm?]
                         :as override-params}]
-                    (init-migration migration-id
-                                    prefix
-                                    [:relationship]
-                                    true
+                    (init-migration {:migration-id migration-id
+                                     :prefix prefix
+                                     :store-keys [:relationship]
+                                     :confirm? true
+                                     :migrations [:__test]
+                                     :batch-size 1000
+                                     :buffer-size 3
+                                     :restart? false}
                                     services)
                     (let [test-docs (take total docs)
                           search_after [(rand-int total)]
@@ -591,7 +599,7 @@
         (doseq [store (vals (all-stores))]
           (is (not (index-exists? store "0.0.0"))))
         (is (nil? (seq (es-doc/get-doc (es-conn get-in-config)
-                                       (get-in (es-props get-in-config) [:migration :indexname])
+                                       (migration-index get-in-config)
                                        "migration"
                                        "test-1"
                                        {})))))))
@@ -718,11 +726,15 @@
                    keywordize-keys)
               _ (es-index/refresh! (es-conn get-in-config))
               formatted-cat-indices (es-helpers/get-cat-indices (:host default)
-                                                                (:port default))]
-          (is (= expected-indices
-                 (select-keys formatted-cat-indices
-                              (keys expected-indices))))
-
+                                                                (:port default))
+              result-indices (select-keys formatted-cat-indices
+                                          (keys expected-indices))]
+          (is (= expected-indices result-indices)
+              (let [[only-expected only-result _]
+                    (diff expected-indices result-indices)]
+                   (format "only in expected ==> %s\nonly in result ==> %s"
+                           only-expected
+                           only-result)))
           (doseq [[index _]
                   expected-indices]
             (let [docs (->> (es-doc/search-docs (es-conn get-in-config) (name index) nil nil nil {})
@@ -839,7 +851,7 @@
                 "deleted document must not be in target stores"))))))))
 
 (defn load-test-fn
-  [maximal? store-svc]
+  [maximal?]
   ;; insert 20000 docs per entity-type
   (doseq [bundle (repeatedly 20 #(fixt/bundle 1000 maximal?))]
     (post-bulk bundle))

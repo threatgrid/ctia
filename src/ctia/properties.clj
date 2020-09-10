@@ -21,21 +21,21 @@
 (defn default-store-properties [store]
   {(str "ctia.store." store) s/Str})
 
-(defn es-store-impl-properties [store]
-  {(str "ctia.store.es." store ".host") s/Str
-   (str "ctia.store.es." store ".port") s/Int
-   (str "ctia.store.es." store ".transport") s/Keyword
-   (str "ctia.store.es." store ".clustername") s/Str
-   (str "ctia.store.es." store ".indexname") s/Str
-   (str "ctia.store.es." store ".refresh") Refresh
-   (str "ctia.store.es." store ".refresh_interval")  s/Str
-   (str "ctia.store.es." store ".replicas") s/Num
-   (str "ctia.store.es." store ".shards") s/Num
-   (str "ctia.store.es." store ".rollover.max_docs") s/Num
-   (str "ctia.store.es." store ".rollover.max_age") s/Str
-   (str "ctia.store.es." store ".aliased")  s/Bool
-   (str "ctia.store.es." store ".default_operator") (s/enum "OR" "AND")
-   (str "ctia.store.es." store ".timeout") s/Num})
+(defn es-store-impl-properties [prefix store]
+  {(str prefix store ".host") s/Str
+   (str prefix store ".port") s/Int
+   (str prefix store ".transport") s/Keyword
+   (str prefix store ".clustername") s/Str
+   (str prefix store ".indexname") s/Str
+   (str prefix store ".refresh") Refresh
+   (str prefix store ".refresh_interval")  s/Str
+   (str prefix store ".replicas") s/Num
+   (str prefix store ".shards") s/Num
+   (str prefix store ".rollover.max_docs") s/Num
+   (str prefix store ".rollover.max_age") s/Str
+   (str prefix store ".aliased")  s/Bool
+   (str prefix store ".default_operator") (s/enum "OR" "AND")
+   (str prefix store ".timeout") s/Num})
 
 (s/defschema StorePropertiesSchema
   "All entity store properties for every implementation"
@@ -44,7 +44,8 @@
     (st/optional-keys
      (reduce merge {}
              (map (fn [s] (merge (default-store-properties s)
-                                 (es-store-impl-properties s)))
+                                 (es-store-impl-properties "ctia.store.es." s)
+                                 (es-store-impl-properties "ctia.migration.store.es." s)))
                   store-names)))))
 
 (s/defschema PropertiesSchema
@@ -55,6 +56,7 @@
    with the properties file."
   (st/merge
    StorePropertiesSchema
+   (st/optional-keys (es-store-impl-properties "ctia.migration.store.es." "migration"))
    (st/required-keys {"ctia.auth.type" s/Keyword})
 
    (st/optional-keys {"ctia.auth.threatgrid.cache" s/Bool
@@ -190,8 +192,6 @@
                       "ctia.migration.store-keys" s/Str
                       "ctia.migration.batch-size" s/Int
                       "ctia.migration.buffer-size" s/Int
-                      "ctia.migration.confirm?" s/Bool
-                      "ctia.migration.restart?" s/Bool
 
                       "ctia.store.asset" s/Str
                       "ctia.store.asset-properties" s/Str
@@ -202,7 +202,7 @@
                       "ctia.store.es.asset.indexname" s/Str
                       "ctia.store.es.asset-properties.indexname" s/Str
                       "ctia.store.es.asset-mapping.indexname" s/Str
-                      "ctia.store.es.migration.indexname" s/Str
+
                       "ctia.store.es.event.slicing.granularity"
                       (s/enum :minute :hour :day :week :month :year)})
    (st/optional-keys {"ctia.versions.config" s/Str})))

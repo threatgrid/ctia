@@ -60,8 +60,8 @@
   (let [app (h/get-current-app)
         {:keys [get-in-config]} (h/get-service-map app :ConfigService)
         {:keys [all-stores]} (h/get-service-map app :StoreService)]
+    (delete-store-indexes true all-stores get-in-config)
     (try
-      (delete-store-indexes true all-stores get-in-config)
       (t)
       (finally
         (delete-store-indexes false all-stores get-in-config)))))
@@ -96,8 +96,8 @@
   (let [app (h/get-current-app)
         {:keys [get-in-config]} (h/get-service-map app :ConfigService)
         {:keys [all-stores]} (h/get-service-map app :StoreService)]
+    (purge-indexes all-stores get-in-config)
     (try
-      (purge-indexes all-stores get-in-config)
       (t)
       (finally (purge-indexes all-stores get-in-config)))))
 
@@ -112,13 +112,12 @@
                       "ctia.store.es.default.default_operator" "AND"
                       "ctia.store.es.default.aliased" true
                       "ctia.store.es.default.rollover.max_docs" 50
-                      "ctia.store.es.event.rollover.max_docs" 1000
+
                       "ctia.store.es.actor.indexname" "ctia_actor"
                       "ctia.store.es.actor.default_operator" "OR"
                       "ctia.store.es.asset.indexname" "ctia_assets"
                       "ctia.store.es.asset-mapping.indexname" "ctia_asset_mapping"
                       "ctia.store.es.asset-properties.indexname" "ctia_asset_properties"
-                      "ctia.store.es.migration.indexname" "ctia_migration"
                       "ctia.store.es.attack-pattern.indexname" "ctia_attack_pattern"
                       "ctia.store.es.campaign.indexname" "ctia_campaign"
                       "ctia.store.es.coa.indexname" "ctia_coa"
@@ -139,6 +138,7 @@
                       "ctia.store.es.tool.indexname" "ctia_tool"
                       "ctia.store.es.vulnerability.indexname" "ctia_vulnerability"
                       "ctia.store.es.weakness.indexname" "ctia_weakness"
+
                       "ctia.store.actor" "es"
                       "ctia.store.asset" "es"
                       "ctia.store.asset-mapping" "es"
@@ -164,7 +164,11 @@
                       "ctia.store.tool" "es"
                       "ctia.store.vulnerability" "es"
                       "ctia.store.weakness" "es"
-                      "ctia.store.bulk-refresh" "true"]
+                      "ctia.store.bulk-refresh" "true"
+
+                      "ctia.migration.store.es.migration.indexname" "ctia_migration"
+                      "ctia.migration.store.es.default.rollover.max_docs" 50
+                      "ctia.migration.store.es.event.rollover.max_docs" 1000]
     (t)))
 
 (defn fixture-properties:es-hook [t]

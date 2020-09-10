@@ -8,8 +8,6 @@
             [clojure.java.io :as io]
             [clojure.string :as str]
             [clojure.test :refer [deftest is join-fixtures testing use-fixtures]]
-            [ctia.properties :as p]
-            [ctia.store-service :as store-svc]
             [ctia.stores.es.mapping :as em]
             [ctia.task.migration.store :as sut]
             [ctia.task.rollover :refer [rollover-stores]]
@@ -18,7 +16,8 @@
             [ctia.test-helpers.fake-whoami-service :as whoami-helpers]
             [ctia.test-helpers.fixtures :as fixt]
             [ctia.test-helpers.migration :refer [app->MigrationStoreServices]]
-            [ctim.domain.id :refer [long-id->id]]))
+            [ctim.domain.id :refer [long-id->id]])
+  (:import [java.util UUID]))
 
 (deftest prefixed-index-test
   (is (= "v0.4.2_ctia_actor"
@@ -182,10 +181,14 @@
   (let [app (helpers/get-current-app)
         services (app->MigrationStoreServices app)
 
-        fake-migration (sut/init-migration "migration-id-1"
-                                           "0.0.0"
-                                           [:tool :sighting :malware]
-                                           false
+        fake-migration (sut/init-migration {:migration-id "migration-id-1"
+                                            :prefix "0.0.0"
+                                            :store-keys [:tool :sighting :malware]
+                                            :confirm? false
+                                            :migrations [:identity]
+                                            :batch-size 1000
+                                            :buffer-size 3
+                                            :restart? false}
                                            services)
         wo-stores (sut/wo-storemaps fake-migration)]
     (is (nil? (get-in wo-stores [:source :store])))
@@ -254,10 +257,12 @@
   (get-in (es-props get-in-config) [:migration :indexname]))
 
 (defn fixture-clean-migration [t]
-  (t)
-  (es-index/delete! (es-conn (helpers/current-get-in-config-fn)) "v0.0.0*")
-  (es-index/delete! (es-conn (helpers/current-get-in-config-fn))
-                    (str (migration-index (helpers/current-get-in-config-fn)) "*")))
+  (try
+    (t)
+    (finally
+      (doto (es-conn (helpers/current-get-in-config-fn))
+        (es-index/delete! "v0.0.0*")
+        (es-index/delete! (str (migration-index (helpers/current-get-in-config-fn)) "*"))))))
 
 (use-fixtures :each
   (join-fixtures [helpers/fixture-ctia
@@ -326,18 +331,18 @@
                         true (assoc :source-docs (drop nb source-docs))
                         rollover? (assoc :current-index-size 0)
                         (not rollover?) (update :current-index-size + nb))))]
+      ;; TODO try/finally
       (es-index/delete! (es-conn get-in-config) (str "*" storename "*"))
       (es-index/create! (es-conn get-in-config)
                         (format "<%s-000001>" storename)
                         {:settings {:refresh_interval -1}
                          :aliases {write-alias {}}})
       (testing "rollover should refresh write index and trigger rollover when index size is strictly bigger than max-docs"
-        ;; FIXME this doall does nothing
-        (doall (reduce test-fn
-                       {:source-docs docs-all
-                        :migrated-count 0
-                        :current-index-size 0}
-                       batch-sizes))
+        (reduce test-fn
+                {:source-docs docs-all
+                 :migrated-count 0
+                 :current-index-size 0}
+                batch-sizes)
 
         (is (every? #(<= % (+ max-docs batch-size))
                     (->> (es-helpers/get-cat-indices
@@ -637,11 +642,11 @@
                :mapping "test_mapping"}
         nb-docs-1 10
         nb-docs-2 20
-        sample-docs-1 (map #(hash-map :id (str (java.util.UUID/randomUUID))
+        sample-docs-1 (map #(hash-map :id (str (UUID/randomUUID))
                                       :batch 1
                                       :value %)
                            (range nb-docs-1))
-        sample-docs-2 (map #(hash-map :id (str (java.util.UUID/randomUUID))
+        sample-docs-2 (map #(hash-map :id (str (UUID/randomUUID))
                                       :batch 2
                                       :value %)
                            (range nb-docs-2))]
@@ -656,6 +661,7 @@
       (es-index/refresh! (es-conn get-in-config) indexname)
       (is (= (+ nb-docs-1 nb-docs-2) (sut/store-size store))
           "store size shall return the proper number of documents after second refresh")
+      ;; TODO try/finally
       (es-index/delete! (es-conn get-in-config) indexname))))
 
 (deftest query-fetch-batch-test
@@ -672,12 +678,12 @@
                        :type "event"
                        :settings {}
                        :config {}}
-          event-batch-1 (map #(hash-map :id (str (java.util.UUID/randomUUID))
+          event-batch-1 (map #(hash-map :id (str (UUID/randomUUID))
                                         :batch 1
                                         :timestamp %
                                         :modified (rand-int 50))
                              (range 50))
-          event-batch-2 (map #(hash-map :id (str (java.util.UUID/randomUUID))
+          event-batch-2 (map #(hash-map :id (str (UUID/randomUUID))
                                         :batch 2
                                         :timestamp %
                                         :modified (rand-int 50))
@@ -789,6 +795,7 @@
         (is (apply < (map :modified (concat fetched-malware-asc))))
         (is (apply > (map :modified (concat fetched-malware-desc)))))))
 
+  ;; TODO try/finally
   (es-index/delete! (es-conn (helpers/current-get-in-config-fn)) "test_*"))
 
 (deftest fetch-deletes-test
@@ -831,8 +838,14 @@
                   :headers {"Authorization" "45c1f5e3f05d0"})
         _ (delete (format "ctia/tool/%s" malware1-id)
                   :headers {"Authorization" "45c1f5e3f05d0"})
-        {data1 :data paging1 :paging} (sut/fetch-deletes [:sighting :tool] since 3 nil services)
-        {data2 :data paging2 :paging} (sut/fetch-deletes [:sighting :tool]
+        event-store (sut/get-source-store :event services)
+        {data1 :data paging1 :paging} (sut/fetch-deletes event-store
+                                                         [:sighting :tool]
+                                                         since
+                                                         3
+                                                         nil)
+        {data2 :data paging2 :paging} (sut/fetch-deletes event-store
+                                                         [:sighting :tool]
                                                          since
                                                          2
                                                          (:sort paging1)
@@ -867,15 +880,19 @@
           entity-types [:tool :malware :relationship]
           migration-id-1 "migration-1"
           migration-id-2 "migration-2"
-          fake-migration (sut/init-migration migration-id-1
-                                             prefix
-                                             entity-types
-                                             false
+          base-migration-params {:prefix prefix
+                                 :migrations [:identity]
+                                 :store-keys entity-types
+                                 :batch-size 1000
+                                 :buffer-size 3
+                                 :restart? false}
+          fake-migration (sut/init-migration (assoc base-migration-params
+                                                    :migration-id migration-id-1
+                                                    :confirm? false)
                                              services)
-          real-migration-from-init (sut/init-migration migration-id-2
-                                                       prefix
-                                                       entity-types
-                                                       true
+          real-migration-from-init (sut/init-migration (assoc base-migration-params
+                                                              :migration-id migration-id-2
+                                                              :confirm? true)
                                                        services)
           check-state (fn [{:keys [id stores]} migration-id message]
                         (testing message
@@ -930,3 +947,86 @@
           (doseq [store stores]
             (is (nil? (get-in store [:source :store])))
             (is (nil? (get-in store [:target :store])))))))))
+
+(deftest target-store-properties-test
+  (let [default-es-props {:host "localhost"
+                          :port 9200
+                          :transport "http"
+                          :indexname "ctia_default"
+                          :replicas 1
+                          :refresh_interval "1s"
+                          :default_operator "AND"
+                          :shards 5
+                          :refresh false
+                          :rollover {:max_docs 10000000}
+                          :aliased true}
+
+
+        source-custom-props {:indexname "source-indexname"
+                             :shards 4}
+
+        migration-cluster-props {:host "es7.iroh.site"
+                                 :port 443
+                                 :transport "https"}
+
+        target-store-props {:indexname "custom-target-indexname"
+                            :shards 4
+                            :refresh_interval "10s"}
+        base-es-props {:ctia {:store {:es {:default default-es-props}}}}
+        with-source-props (assoc-in base-es-props
+                                    [:ctia :store :es :sighting]
+                                    source-custom-props)
+        with-migration-cluster-props (assoc-in with-source-props
+                                               [:ctia :migration :store :es :default]
+                                               migration-cluster-props)]
+
+    (testing "Target store properties generated from only source properties and a migration prefix reuse source properties and add the migration prefix to indexname property."
+      (let [get-in-config (partial get-in with-source-props)]
+        (is (= (assoc (into default-es-props source-custom-props)
+                      :indexname "v0.0.1_source-indexname"
+                      :entity :sighting)
+               (sut/target-store-properties "0.0.1" :sighting get-in-config)))))
+
+    (testing "Target store properties use the migration cluster properties when defined, and the prefix migration properties when the target indexname is not specified."
+      (let [get-in-config (partial get-in with-migration-cluster-props)]
+        (is (= (assoc (merge default-es-props
+                             source-custom-props
+                             migration-cluster-props)
+                      :indexname "v0.0.1_source-indexname"
+                      :entity :sighting)
+               (sut/target-store-properties "0.0.1" :sighting get-in-config)))))
+
+    (testing "Target store properties reuse source indexname when neither the prefix nor the target indexname are provided."
+      (let [get-in-config (partial get-in with-migration-cluster-props)]
+        (is (= (assoc (merge default-es-props
+                             source-custom-props
+                             migration-cluster-props)
+                      :indexname "source-indexname"
+                      :entity :sighting)
+               (sut/target-store-properties nil :sighting get-in-config)))))
+
+    (testing "Target store properties prioritize target ES properties, then migration default ES properties."
+      (let [get-in-config (partial get-in
+                                   (-> with-migration-cluster-props
+                                       (assoc-in [:ctia :migration :store :es :sighting]
+                                                 (dissoc target-store-props :indexname))))]
+        (is (= (assoc (merge default-es-props
+                             source-custom-props
+                             migration-cluster-props
+                             target-store-props)
+                      :indexname "v0.0.1_source-indexname"
+                      :entity :sighting)
+               (sut/target-store-properties "0.0.1" :sighting get-in-config)))))
+
+    (testing "Target store properties ignore prefix when a target indexname is defined in properties."
+      (let [get-in-config (partial get-in
+                                   (assoc-in with-migration-cluster-props
+                                             [:ctia :migration :store :es :sighting]
+                                             target-store-props))]
+         (is (= (assoc (merge default-es-props
+                             source-custom-props
+                             migration-cluster-props
+                             target-store-props)
+                      :indexname "custom-target-indexname"
+                      :entity :sighting)
+               (sut/target-store-properties "0.0.1" :sighting get-in-config)))))))

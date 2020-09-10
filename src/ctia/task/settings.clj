@@ -39,6 +39,6 @@
     (pp/pprint options)
     (let [get-in-config (let [config (p/build-init-config)]
                           (log-properties config)
-                          #(apply get-in config %&))]
+                          (partial get-in config))]
       (update-stores! (:stores options)
                       get-in-config))))

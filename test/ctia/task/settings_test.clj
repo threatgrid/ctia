@@ -34,7 +34,6 @@
       (get-in [:settings :index setting])))
 
 (deftest update-stores!-test
-  ;;init all stores
   (let [app (h/get-current-app)
         {:keys [get-in-config]} (h/get-service-map app :ConfigService)
 
@@ -62,9 +61,11 @@
              (get-setting malware-template :refresh_interval))))
 
     (testing "stores that are not passed to update-stores! should not have their settings updated"
-      (is (= (:refresh_interval initial-indicator-props)
+      (is (= "12s"
+             (:refresh_interval initial-indicator-props)
              (get-setting indicator-index :refresh_interval)
              (get-setting indicator-template :refresh_interval)))
-      (is (= (str (:replicas initial-indicator-props))
+      (is (= "1"
+             (str (:replicas initial-indicator-props))
              (get-setting indicator-index :number_of_replicas)
              (get-setting indicator-template :number_of_replicas))))))
