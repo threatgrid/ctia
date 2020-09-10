@@ -8,8 +8,6 @@
             [clojure.java.io :as io]
             [clojure.string :as str]
             [clojure.test :refer [deftest is join-fixtures testing use-fixtures]]
-            [ctia.properties :as p]
-            [ctia.store :refer [stores]]
             [ctia.stores.es.mapping :as em]
             [ctia.task.migration.store :as sut]
             [ctia.task.rollover :refer [rollover-stores]]
@@ -18,7 +16,8 @@
             [ctia.test-helpers.fake-whoami-service :as whoami-helpers]
             [ctia.test-helpers.fixtures :as fixt]
             [ctia.test-helpers.migration :refer [app->MigrationStoreServices]]
-            [ctim.domain.id :refer [long-id->id]]))
+            [ctim.domain.id :refer [long-id->id]])
+  (:import [java.util UUID]))
 
 (deftest prefixed-index-test
   (is (= "v0.4.2_ctia_actor"
@@ -248,15 +247,24 @@
                   helpers/fixture-properties:clean
                   es-helpers/fixture-properties:es-store]))
 
-(p/init!)
-(def es-props (p/get-in-global-properties [:ctia :store :es]))
-(def es-conn (connect (:default es-props)))
-(def migration-index (get-in es-props [:migration :indexname]))
+(defn es-props [get-in-config]
+  (get-in-config [:ctia :store :es]))
+
+(defn es-conn [get-in-config]
+  (connect (:default (es-props get-in-config))))
+
+(defn migration-index [get-in-config]
+  (get-in (es-props get-in-config) [:migration :indexname]))
 
 (defn fixture-clean-migration [t]
-  (t)
-  (es-index/delete! es-conn "v0.0.0*")
-  (es-index/delete! es-conn (str migration-index "*")))
+  (let [app (helpers/get-current-app)
+        {:keys [get-in-config]} (helpers/get-service-map app :ConfigService)]
+    (try
+      (t)
+      (finally
+        (doto (es-conn get-in-config)
+          (es-index/delete! "v0.0.0*")
+          (es-index/delete! (str (migration-index get-in-config) "*")))))))
 
 (use-fixtures :each
   (join-fixtures [helpers/fixture-ctia
@@ -269,13 +277,14 @@
 (deftest rollover-test
   (with-open [rdr (io/reader "./test/data/indices/sample-relationships-1000.json")]
     (let [app (helpers/get-current-app)
+          {:keys [get-in-config]} (helpers/get-service-map app :ConfigService)
           services (app->MigrationStoreServices app)
 
           storename "ctia_relationship"
           write-alias (str storename "-write")
           max-docs 40
           batch-size 4
-          storemap {:conn es-conn
+          storemap {:conn (es-conn get-in-config)
                     :indexname storename
                     :mapping "relationship"
                     :props {:aliased true
@@ -298,7 +307,7 @@
                                       "localhost"
                                       9200)
                           indices-before (set (keys cat-before))
-                          _ (es-helpers/load-bulk es-conn
+                          _ (es-helpers/load-bulk (es-conn get-in-config)
                                                   (take nb source-docs)
                                                   "false")
                           res (when rollover?
@@ -324,17 +333,17 @@
                         true (assoc :source-docs (drop nb source-docs))
                         rollover? (assoc :current-index-size 0)
                         (not rollover?) (update :current-index-size + nb))))]
-      (es-index/delete! es-conn (str "*" storename "*"))
-      (es-index/create! es-conn
+      (es-index/delete! (es-conn get-in-config) (str "*" storename "*"))
+      (es-index/create! (es-conn get-in-config)
                         (format "<%s-000001>" storename)
                         {:settings {:refresh_interval -1}
                          :aliases {write-alias {}}})
       (testing "rollover should refresh write index and trigger rollover when index size is strictly bigger than max-docs"
-        (doall (reduce test-fn
-                       {:source-docs docs-all
-                        :migrated-count 0
-                        :current-index-size 0}
-                       batch-sizes))
+        (reduce test-fn
+                {:source-docs docs-all
+                 :migrated-count 0
+                 :current-index-size 0}
+                batch-sizes)
 
         (is (every? #(<= % (+ max-docs batch-size))
                     (->> (es-helpers/get-cat-indices
@@ -346,14 +355,17 @@
             "All the indices should be smaller than max-docs + batch-size")))))
 
 (deftest sliced-queries-test
-  (let [storemap {:conn es-conn
+  (let [app (helpers/get-current-app)
+        {:keys [get-in-config]} (helpers/get-service-map app :ConfigService)
+
+        storemap {:conn (es-conn get-in-config)
                   :indexname "ctia_relationship"
                   :mapping "relationship"
                   :props {:write-index "ctia_relationship"}
                   :type "relationship"
                   :settings {}
                   :config {}}
-        _ (es-helpers/load-file-bulk es-conn "./test/data/indices/sample-relationships-1000.json")
+        _ (es-helpers/load-file-bulk (es-conn get-in-config) "./test/data/indices/sample-relationships-1000.json")
         expected-queries [missing-modified-query
                           {:bool
                            {:filter
@@ -497,10 +509,11 @@
 (deftest bulk-metas-test
   ;; insert elements in different indices and check that we retrieve the right one
   (let [app (helpers/get-current-app)
+        {:keys [get-in-config]} (helpers/get-service-map app :ConfigService)
         {:keys [all-stores]} (helpers/get-service-map app :StoreService)
         services (app->MigrationStoreServices app)
 
-        sighting-store-map {:conn es-conn
+        sighting-store-map {:conn (es-conn get-in-config)
                             :indexname "ctia_sighting"
                             :props {:write-index "ctia_sighting"}
                             :mapping "sighting"
@@ -520,12 +533,12 @@
         sighting-ids-2 (->> (:sightings post-bulk-res-2)
                             (map #(-> % long-id->id :short-id))
                             (take 10))
-        _ (es-index/refresh! es-conn)
-        [malware-index-1 _] (->> (es-index/get es-conn "ctia_malware*")
+        _ (es-index/refresh! (es-conn get-in-config))
+        [malware-index-1 _] (->> (es-index/get (es-conn get-in-config) "ctia_malware*")
                                  keys
                                  sort
                                  (map name))
-        [sighting-index-1 sighting-index-2] (->> (es-index/get es-conn "ctia_sighting*")
+        [sighting-index-1 sighting-index-2] (->> (es-index/get (es-conn get-in-config) "ctia_sighting*")
                                                  keys
                                                  sort
                                                  (map name))
@@ -549,10 +562,11 @@
 (deftest prepare-docs-test
   ;; insert elements in different indices, modify some and check that we retrieve the right one
   (let [app (helpers/get-current-app)
+        {:keys [get-in-config]} (helpers/get-service-map app :ConfigService)
         {:keys [all-stores]} (helpers/get-service-map app :StoreService)
         services (app->MigrationStoreServices app)
 
-        sighting-store-map {:conn es-conn
+        sighting-store-map {:conn (es-conn get-in-config)
                             :indexname "ctia_sighting"
                             :props {:write-index "ctia_sighting-write"
                                     :aliased true}
@@ -564,7 +578,7 @@
         {:keys [nb-errors]} (rollover-stores (all-stores))
         _ (is (= 0 nb-errors))
         post-bulk-res-2 (post-bulk examples)
-        _ (es-index/refresh! es-conn)
+        _ (es-index/refresh! (es-conn get-in-config))
 
         sighting-ids-1 (->> (:sightings post-bulk-res-1)
                             (map #(-> % long-id->id :short-id))
@@ -587,19 +601,19 @@
                           (assoc :description "UPDATED"))
                 :headers {"Authorization" "45c1f5e3f05d0"})
 
-        _ (es-index/refresh! es-conn)
-        [sighting-index-1 sighting-index-2] (->> (es-index/get es-conn "ctia_sighting*")
+        _ (es-index/refresh! (es-conn get-in-config))
+        [sighting-index-1 sighting-index-2] (->> (es-index/get (es-conn get-in-config) "ctia_sighting*")
                                                  keys
                                                  sort
                                                  (map name))
 
-        sighting-docs-1 (map #(es-doc/get-doc es-conn
+        sighting-docs-1 (map #(es-doc/get-doc (es-conn get-in-config)
                                               sighting-index-1
                                               "sighting"
                                               %
                                               {})
                              sighting-ids-1)
-        sighting-docs-2 (map #(es-doc/get-doc es-conn
+        sighting-docs-2 (map #(es-doc/get-doc (es-conn get-in-config)
                                               sighting-index-2
                                               "sighting"
                                               %
@@ -619,20 +633,21 @@
 
 (deftest store-batch-store-size-test
   (let [app (helpers/get-current-app)
+        {:keys [get-in-config]} (helpers/get-service-map app :ConfigService)
         services (app->MigrationStoreServices app)
 
         indexname "test_index"
-        store {:conn es-conn
+        store {:conn (es-conn get-in-config)
                :indexname indexname
                :props {:write-index indexname}
                :mapping "test_mapping"}
         nb-docs-1 10
         nb-docs-2 20
-        sample-docs-1 (map #(hash-map :id (str (java.util.UUID/randomUUID))
+        sample-docs-1 (map #(hash-map :id (str (UUID/randomUUID))
                                       :batch 1
                                       :value %)
                            (range nb-docs-1))
-        sample-docs-2 (map #(hash-map :id (str (java.util.UUID/randomUUID))
+        sample-docs-2 (map #(hash-map :id (str (UUID/randomUUID))
                                       :batch 2
                                       :value %)
                            (range nb-docs-2))]
@@ -640,39 +655,40 @@
       (sut/store-batch store sample-docs-1 services)
       (is (= 0 (sut/store-size store))
           "store-batch shall not refresh the index")
-      (es-index/refresh! es-conn indexname)
+      (es-index/refresh! (es-conn get-in-config) indexname)
       (sut/store-batch store sample-docs-2 services)
       (is (= nb-docs-1 (sut/store-size store))
           "store-size shall return the number of first batch docs")
-      (es-index/refresh! es-conn indexname)
+      (es-index/refresh! (es-conn get-in-config) indexname)
       (is (= (+ nb-docs-1 nb-docs-2) (sut/store-size store))
           "store size shall return the proper number of documents after second refresh")
-      (es-index/delete! es-conn indexname))))
+      (es-index/delete! (es-conn get-in-config) indexname))))
 
 (deftest query-fetch-batch-test
   (testing "query-fetch-batch should property fetch and sort events on timestamp"
     (let [app (helpers/get-current-app)
+          {:keys [get-in-config]} (helpers/get-service-map app :ConfigService)
           services (app->MigrationStoreServices app)
 
           indexname "test_event"
-          event-store {:conn es-conn
+          event-store {:conn (es-conn get-in-config)
                        :indexname indexname
                        :props {:write-index indexname}
                        :mapping "event"
                        :type "event"
                        :settings {}
                        :config {}}
-          event-batch-1 (map #(hash-map :id (str (java.util.UUID/randomUUID))
+          event-batch-1 (map #(hash-map :id (str (UUID/randomUUID))
                                         :batch 1
                                         :timestamp %
                                         :modified (rand-int 50))
                              (range 50))
-          event-batch-2 (map #(hash-map :id (str (java.util.UUID/randomUUID))
+          event-batch-2 (map #(hash-map :id (str (UUID/randomUUID))
                                         :batch 2
                                         :timestamp %
                                         :modified (rand-int 50))
                              (range 50 90))]
-      (es-index/create! es-conn
+      (es-index/create! (es-conn get-in-config)
                         indexname
                         {:settings {:refresh_interval -1}
                          :mappings {:event {:properties {:id {:type "keyword"}
@@ -681,7 +697,7 @@
                                                          :modified em/integer-type}}}})
       (sut/store-batch event-store event-batch-1 services)
       (sut/store-batch event-store event-batch-2 services)
-      (es-index/refresh! es-conn indexname)
+      (es-index/refresh! (es-conn get-in-config) indexname)
       (let [{fetched-no-query :data} (sut/fetch-batch event-store 80 0 nil nil)
             {fetched-batch-1 :data} (sut/query-fetch-batch {:term {:batch 1}}
                                                            event-store
@@ -730,10 +746,11 @@
 
   (testing "query-fetch-batch should properly sort entities on modified field"
     (let [app (helpers/get-current-app)
+          {:keys [get-in-config]} (helpers/get-service-map app :ConfigService)
           services (app->MigrationStoreServices app)
 
           indexname "test_index"
-          tool-store {:conn es-conn
+          tool-store {:conn (es-conn get-in-config)
                       :indexname indexname
                       :props {:write-index indexname}
                       :mapping "tool"
@@ -745,7 +762,7 @@
                                      :modified %
                                      :created %)
                           (range 100))
-          malware-store {:conn es-conn
+          malware-store {:conn (es-conn get-in-config)
                          :indexname indexname
                          :mapping "malware"
                          :props {:write-index indexname}
@@ -761,14 +778,14 @@
                     :timestamp em/integer-type
                     :created em/integer-type
                     :modified em/integer-type}]
-      (es-index/create! es-conn
+      (es-index/create! (es-conn get-in-config)
                         indexname
                         {:settings {:refresh_interval -1}
                          :mappings {:malware {:properties mappings}
                                     :tool {:properties mappings}}})
       (sut/store-batch tool-store tool-batch services)
       (sut/store-batch malware-store malware-batch services)
-      (es-index/refresh! es-conn indexname)
+      (es-index/refresh! (es-conn get-in-config) indexname)
       (let [{fetched-tool-asc :data} (sut/fetch-batch tool-store 80 0 "asc" nil)
             {fetched-tool-desc :data} (sut/fetch-batch tool-store 80 0 "desc" nil)
             {fetched-malware-asc :data} (sut/fetch-batch malware-store 80 0 "asc" nil)
@@ -778,7 +795,7 @@
         (is (apply < (map :modified (concat fetched-malware-asc))))
         (is (apply > (map :modified (concat fetched-malware-desc)))))))
 
-  (es-index/delete! es-conn "test_*"))
+  (es-index/delete! (es-conn (helpers/current-get-in-config-fn)) "test_*"))
 
 (deftest fetch-deletes-test
   (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
@@ -787,9 +804,10 @@
                                       "user")
   (post-bulk examples)
   (let [app (helpers/get-current-app)
+        {:keys [get-in-config]} (helpers/get-service-map app :ConfigService)
         services (app->MigrationStoreServices app)
 
-        _ (es-index/refresh! es-conn) ;; ensure indices refresh
+        _ (es-index/refresh! (es-conn get-in-config)) ;; ensure indices refresh
         [sighting1 sighting2] (:parsed-body (helpers/get "ctia/sighting/search"
                                                          :query-params {:limit 2 :query "*"}
                                                          :headers {"Authorization" "45c1f5e3f05d0"}))
@@ -807,7 +825,7 @@
         malware1-id (-> malware1 :id long-id->id :short-id)
         _ (delete (format "ctia/sighting/%s" sighting1-id)
                   :headers {"Authorization" "45c1f5e3f05d0"})
-        _ (es-index/refresh! es-conn)
+        _ (es-index/refresh! (es-conn get-in-config))
         since (time/internal-now)
         _ (delete (format "ctia/sighting/%s" sighting2-id)
                   :headers {"Authorization" "45c1f5e3f05d0"})
@@ -852,9 +870,10 @@
   (post-bulk examples)
   (testing "init-migration should properly create new migration state from selected types."
     (let [app (helpers/get-current-app)
+          {:keys [get-in-config]} (helpers/get-service-map app :ConfigService)
           services (app->MigrationStoreServices app)
 
-          _ (es-index/refresh! es-conn) ; ensure indices refresh
+          _ (es-index/refresh! (es-conn get-in-config)) ; ensure indices refresh
           prefix "0.0.0"
           entity-types [:tool :malware :relationship]
           migration-id-1 "migration-1"
@@ -880,7 +899,7 @@
                                  (set entity-types)))
                           (doseq [entity-type entity-types]
                             (let [{:keys [source target started completed]} (get stores entity-type)
-                                  created-indices (es-index/get es-conn (str (:index target) "*"))]
+                                  created-indices (es-index/get (es-conn get-in-config) (str (:index target) "*"))]
                               (is (= "-1"  (-> (vals created-indices)
                                                first
                                                :settings
@@ -911,14 +930,14 @@
       (check-state real-migration-from-init
                    migration-id-2
                    "init-migration with confirmation shall return a propr migration state")
-      (check-state (sut/get-migration migration-id-2 es-conn services)
+      (check-state (sut/get-migration migration-id-2 (es-conn get-in-config) services)
                    migration-id-2
                    "init-migration shall store confirmed migration, and get-migration should be properly retrieved from store")
       (is (thrown? clojure.lang.ExceptionInfo
-                   (sut/get-migration migration-id-1 es-conn services))
+                   (sut/get-migration migration-id-1 (es-conn get-in-config) services))
           "migration-id-1 was not confirmed it should not exist and thus get-migration must raise a proper exception")
       (testing "stored document shall not contains object stores in source and target"
-        (let [{:keys [stores]} (es-doc/get-doc es-conn
+        (let [{:keys [stores]} (es-doc/get-doc (es-conn get-in-config)
                                                "ctia_migration"
                                                "migration"
                                                migration-id-2
@@ -960,51 +979,52 @@
                                                migration-cluster-props)]
 
     (testing "Target store properties generated from only source properties and a migration prefix reuse source properties and add the migration prefix to indexname property."
-      (with-redefs [p/global-properties-atom #(atom with-source-props)]
+      (let [get-in-config (partial get-in with-source-props)]
         (is (= (assoc (into default-es-props source-custom-props)
                       :indexname "v0.0.1_source-indexname"
                       :entity :sighting)
-               (sut/target-store-properties "0.0.1" :sighting p/get-in-global-properties)))))
+               (sut/target-store-properties "0.0.1" :sighting get-in-config)))))
 
     (testing "Target store properties use the migration cluster properties when defined, and the prefix migration properties when the target indexname is not specified."
-      (with-redefs [p/global-properties-atom #(atom with-migration-cluster-props)]
+      (let [get-in-config (partial get-in with-migration-cluster-props)]
         (is (= (assoc (merge default-es-props
                              source-custom-props
                              migration-cluster-props)
                       :indexname "v0.0.1_source-indexname"
                       :entity :sighting)
-               (sut/target-store-properties "0.0.1" :sighting p/get-in-global-properties)))))
+               (sut/target-store-properties "0.0.1" :sighting get-in-config)))))
 
     (testing "Target store properties reuse source indexname when neither the prefix nor the target indexname are provided."
-      (with-redefs [p/global-properties-atom #(atom with-migration-cluster-props)]
+      (let [get-in-config (partial get-in with-migration-cluster-props)]
         (is (= (assoc (merge default-es-props
                              source-custom-props
                              migration-cluster-props)
                       :indexname "source-indexname"
                       :entity :sighting)
-               (sut/target-store-properties nil :sighting p/get-in-global-properties)))))
+               (sut/target-store-properties nil :sighting get-in-config)))))
 
     (testing "Target store properties prioritize target ES properties, then migration default ES properties."
-      (with-redefs [p/global-properties-atom #(->> (dissoc target-store-props :indexname)
-                                                   (assoc-in with-migration-cluster-props
-                                                             [:ctia :migration :store :es :sighting])
-                                                   atom)]
+      (let [get-in-config (partial get-in
+                                   (-> with-migration-cluster-props
+                                       (assoc-in [:ctia :migration :store :es :sighting]
+                                                 (dissoc target-store-props :indexname))))]
         (is (= (assoc (merge default-es-props
                              source-custom-props
                              migration-cluster-props
                              target-store-props)
                       :indexname "v0.0.1_source-indexname"
                       :entity :sighting)
-               (sut/target-store-properties "0.0.1" :sighting p/get-in-global-properties)))))
+               (sut/target-store-properties "0.0.1" :sighting get-in-config)))))
 
     (testing "Target store properties ignore prefix when a target indexname is defined in properties."
-      (with-redefs [p/global-properties-atom #(atom (assoc-in with-migration-cluster-props
-                                                              [:ctia :migration :store :es :sighting]
-                                                              target-store-props))]
+      (let [get-in-config (partial get-in
+                                   (assoc-in with-migration-cluster-props
+                                             [:ctia :migration :store :es :sighting]
+                                             target-store-props))]
          (is (= (assoc (merge default-es-props
                              source-custom-props
                              migration-cluster-props
                              target-store-props)
                       :indexname "custom-target-indexname"
                       :entity :sighting)
-               (sut/target-store-properties "0.0.1" :sighting p/get-in-global-properties)))))))
+               (sut/target-store-properties "0.0.1" :sighting get-in-config)))))))
