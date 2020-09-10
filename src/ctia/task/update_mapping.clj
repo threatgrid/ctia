@@ -2,13 +2,13 @@
   "Updates the _mapping on an ES index."
   (:require [clj-momo.lib.es.index :as es-index]
             [clj-momo.lib.es.schemas :as es-schema]
+            [clojure.tools.cli :refer [parse-opts]]
             [clojure.pprint :as pp]
             [clojure.string :as str]
-            [clojure.tools.cli :refer [parse-opts]]
             [clojure.tools.logging :as log]
             [ctia.init :as init]
             [ctia.properties :as p]
-            [ctia.store :as store :refer [empty-stores]]
+            [ctia.store :as store]
             [ctia.store-service :as store-svc]
             [ctia.stores.es.init :as es-init]
             [puppetlabs.trapperkeeper.app :as app]
@@ -34,7 +34,7 @@
 (def cli-options
   [["-h" "--help"]
    ["-s" "--stores STORES" "comma separated list of store names"
-    :default (set (keys empty-stores))
+    :default (set (keys store/empty-stores))
     :parse-fn #(map keyword (str/split % #","))]])
 
 (defn -main [& args]
@@ -52,8 +52,7 @@
       (let [app (let [config (p/build-init-config)]
                   (init/start-ctia!* {:services [store-svc/store-service]
                                       :config config}))
-            store-svc (app/get-service app :StoreService)
-            all-stores (partial store-svc/all-stores store-svc)]
+            {{:keys [all-stores]} :StoreService} (app/service-graph app)]
         (->> (:stores options)
              (select-keys (all-stores))
              update-mapping-stores!)
