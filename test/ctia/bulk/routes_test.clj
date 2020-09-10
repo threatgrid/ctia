@@ -11,9 +11,7 @@
              [string :as str]
              [test :refer [deftest is join-fixtures testing use-fixtures]]]
             [clj-http.fake :refer [with-global-fake-routes]]
-            [ctia
-             [properties :as p :refer [get-http-show]]
-             [store-service :as store-svc]]
+            [ctia.properties :refer [get-http-show]]
             [ctia.bulk.core
              :refer
              [bulk-size gen-bulk-from-fn get-bulk-max-size]]
