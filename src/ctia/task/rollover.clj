@@ -46,8 +46,7 @@
     (let [app (let [config (p/build-init-config)]
                 (start-ctia!* {:services [store-svc/store-service]
                                :config config}))
-          store-svc (app/get-service app :StoreService)
-          all-stores (partial store-svc/all-stores store-svc)
+          {{:keys [all-stores]} :StoreService} (app/service-graph app)
           {:keys [nb-errors]
            :as res} (rollover-stores (all-stores))]
       (log/info "completed rollover task: " res)
