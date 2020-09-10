@@ -31,7 +31,7 @@
   (log/info "purging all ES Stores data")
   (try
     (let [app (setup)
-          {:keys [all-stores]} (:StoreService (app/service-graph app))]
+          {{:keys [all-stores]} :StoreService} (app/service-graph app)]
       (delete-store-indexes all-stores)
       (log/info "done")
       (System/exit 0))
