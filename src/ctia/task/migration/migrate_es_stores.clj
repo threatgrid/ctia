@@ -8,7 +8,6 @@
             [ctia.entity.entities :refer [entities]]
             [ctia.entity.sighting.schemas :refer [StoredSighting]]
             [ctia.properties :as p]
-            [ctia.store :as store]
             [ctia.stores.es.crud :refer [coerce-to-fn]]
             [ctia.stores.es.store :refer [StoreMap]]
             [ctia.task.migration.migrations :refer [available-migrations]]
@@ -310,8 +309,7 @@
     (let [_ (log/info "starting CTIA Stores...")
           ;; start global services
           get-in-config p/get-in-global-properties
-          services {:ConfigService {:get-in-config get-in-config}
-                    :StoreService {:all-stores (fn [] @store/stores)}}
+          services {:ConfigService {:get-in-config get-in-config}}
           ;; end global services
           _ (mst/setup! services)]
       (doto (-> (get-in-config [:ctia :migration])

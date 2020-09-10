@@ -49,7 +49,7 @@
     (when-not setup
       ;; ugly, but must be done in order to prevent an indefinitely blocking call (which can affect code reloading, or re-running this ns's tests)
       (alter-var-root #'setup (fn [_]
-                                (setup! services) ;; init migration conn and properties
+                                (setup! services) ;; init migration properties
                               :done))))
   (t))
 
