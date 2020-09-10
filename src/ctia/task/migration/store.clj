@@ -94,7 +94,7 @@
                    :started em/ts
                    :completed em/ts}}})
 
-(s/defn migration-mapping [{{:keys [all-stores]} :StoreService} :- MigrationStoreServices]
+(def migration-mapping
   {"migration"
    {:dynamic false
     :properties
@@ -105,14 +105,13 @@
                                (map store-mapping)
                                (into {}))}}}})
 
-(s/defn migration-store-properties [{{:keys [get-in-config]} :ConfigService
-                                     :as services} :- MigrationStoreServices]
+(s/defn migration-store-properties [{{:keys [get-in-config]} :ConfigService} :- MigrationStoreServices]
   (into (target-store-properties nil :migration get-in-config)
         {:shards 1
          :replicas 1
          :refresh true
          :aliased false
-         :mappings (migration-mapping services)}))
+         :mappings migration-mapping}))
 
 (s/defschema SourceState
   {:index s/Str
@@ -454,9 +453,7 @@ Rollover requires refresh so we cannot just call ES with condition since refresh
    entity-types :- [s/Keyword]
    since :- s/Inst
    batch-size :- s/Int
-   search_after :- (s/maybe [s/Any])
-   {{:keys [all-stores]} :StoreService
-    :as _services_} :- MigrationStoreServices]
+   search_after :- (s/maybe [s/Any])]
   ;; TODO migrate events with mapping enabling to filter on record-type and entity.type
   (let [query {:range {:timestamp {:gte since}}}
         filter-events (fn [{:keys [event_type entity]}]

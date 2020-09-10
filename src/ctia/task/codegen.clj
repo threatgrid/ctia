@@ -5,8 +5,7 @@
             [ctia
              [init :refer [start-ctia!]]
              [properties :as p]]
-            [puppetlabs.trapperkeeper.app :as app]
-            [puppetlabs.trapperkeeper.config :as tk-config]))
+            [puppetlabs.trapperkeeper.app :as app]))
 
 ;; swagger codegen package
 (def codegen-version "2.2.3")
@@ -106,8 +105,7 @@
   [output-dir]
   (try
     (let [app (setup)
-          config-svc (app/get-service app :ConfigService)
-          get-in-config #(apply tk-config/get-in-config config-svc %&)]
+          {{:keys [get-in-config]} :ConfigService} (app/service-graph app)]
       (doseq [[lang props] langs]
         (generate-language lang props output-dir get-in-config))
 
