@@ -9,9 +9,9 @@
    [clojure.string :as string]
    [clojure.tools.logging :as log]
    [ctia
-    [store-service :as store-svc]
     [init :refer [start-ctia!*]]
-    [properties :as p]]
+    [properties :as p]
+    [store-service :as store-svc]]
    [ctia.entity.entities :refer [entities]]
    [ctia.entity.sighting.schemas :refer [StoredSighting]]
    [ctia.stores.es.crud :refer [coerce-to-fn]]
