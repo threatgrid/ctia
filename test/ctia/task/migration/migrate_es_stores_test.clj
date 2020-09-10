@@ -56,18 +56,22 @@
 
 (defn es-props [get-in-config]
   (get-in-config [:ctia :store :es]))
-(defn es-conn [get-in-config] (connect (:default (es-props get-in-config))))
-(defn migration-index [get-in-config] (get-in (es-props get-in-config) [:migration :indexname]))
+
+(defn es-conn [get-in-config]
+  (connect (:default (es-props get-in-config))))
+
+(defn migration-index [get-in-config]
+  (get-in-config [:ctia :migration :store :es :migration :indexname]))
 
 (defn fixture-clean-migration [t]
- (let [app (helpers/get-current-app)
-       {:keys [get-in-config]} (helpers/get-service-map app :ConfigService)]
-  (try
-    (t)
-    (finally
-      (doto (es-conn get-in-config)
-        (es-index/delete! "v0.0.0*")
-        (es-index/delete! (str (migration-index get-in-config) "*")))))))
+  (let [app (helpers/get-current-app)
+        {:keys [get-in-config]} (helpers/get-service-map app :ConfigService)]
+    (try
+      (t)
+      (finally
+        (doto (es-conn get-in-config)
+          (es-index/delete! "v0.0.0*")
+          (es-index/delete! (str (migration-index get-in-config) "*")))))))
 
 (defn with-each-fixtures*
   "Wrap this function around each deftest instead of use-fixtures
