@@ -848,8 +848,7 @@
                                                          [:sighting :tool]
                                                          since
                                                          2
-                                                         (:sort paging1)
-                                                         services)]
+                                                         (:sort paging1))]
     (is (nil? (:next paging2)))
     (is (= #{(:id tool1) (:id tool2)} (->> (:tool data1)
                                            (map :id)
