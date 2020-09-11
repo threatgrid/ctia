@@ -38,7 +38,9 @@
     :ConfigService {:get-config p/get-global-properties
                     :get-in-config p/get-in-global-properties}
     :EventsService {:send-event events/send-event
-                    :central-channel (fn [] events/central-channel)
+                    :central-channel (fn []
+                                       {:post [%]}
+                                       @events/central-channel)
                     :register-listener events/register-listener}
     :IEncryption {:decrypt encryption/decrypt-str
                   :encrypt encryption/encrypt-str}
