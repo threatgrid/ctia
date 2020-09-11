@@ -257,12 +257,14 @@
   (get-in (es-props get-in-config) [:migration :indexname]))
 
 (defn fixture-clean-migration [t]
-  (try
-    (t)
-    (finally
-      (doto (es-conn (helpers/current-get-in-config-fn))
-        (es-index/delete! "v0.0.0*")
-        (es-index/delete! (str (migration-index (helpers/current-get-in-config-fn)) "*"))))))
+  (let [app (helpers/get-current-app)
+        {:keys [get-in-config]} (helpers/get-service-map app :ConfigService)]
+    (try
+      (t)
+      (finally
+        (doto (es-conn get-in-config)
+          (es-index/delete! "v0.0.0*")
+          (es-index/delete! (str (migration-index get-in-config) "*")))))))
 
 (use-fixtures :each
   (join-fixtures [helpers/fixture-ctia
