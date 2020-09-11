@@ -37,12 +37,12 @@
                                            ;; to prevent `are` from double-failing
                                            true)
 
-        "*"
+        (str "properties.name:\"" (-> asset-properties-sample :properties first :name) "\"")
         (fn [r] (-> r :parsed-body first :properties first :name))
         (-> asset-properties-sample :properties first :name)
         "Properties name match"
 
-        "*"
+        (str "properties.value:\"" (-> asset-properties-sample :properties first :value) "\"")
         (fn [r] (-> r :parsed-body first :properties first :value))
         (-> asset-properties-sample :properties first :value)
         "Properties value match"
