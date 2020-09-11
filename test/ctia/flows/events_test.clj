@@ -5,6 +5,7 @@
              [test :refer [is join-fixtures testing use-fixtures]]]
             [ctia.domain.entities :refer [schema-version]]
             [ctia.store :as store]
+            [ctia.store-service :as store-svc]
             [ctia.test-helpers
              [core :as test-helpers :refer [deftest-for-each-fixture post]]
              [es :as es-helpers]]
@@ -17,13 +18,17 @@
   {:es-simple-index (join-fixtures [test-helpers/fixture-properties:clean
                                     es-helpers/fixture-properties:es-store
                                     test-helpers/fixture-properties:events-enabled
-                                    test-helpers/fixture-ctia
                                     test-helpers/fixture-allow-all-auth
+                                    test-helpers/fixture-ctia
                                     es-helpers/fixture-purge-event-indexes
                                     es-helpers/fixture-delete-store-indexes])}
 
   (testing "Events are published to es"
-    (let [{{judgement-1-long-id :id
+    (let [app (test-helpers/get-current-app)
+          read-store (-> (test-helpers/get-service-map app :StoreService)
+                         :read-store
+                         store-svc/store-service-fn->varargs)
+          {{judgement-1-long-id :id
             :as judgement-1} :parsed-body
            judgement-1-status :status}
           (post "ctia/judgement"
@@ -78,7 +83,7 @@
       (is (= 201 judgement-2-status))
       (is (= 201 judgement-3-status))
 
-      (let [events (:data (store/read-store :event
+      (let [events (:data (read-store :event
                                             store/list-events
                                             {:all-of {:owner "Unknown"}}
                                             {:login "Unknown"

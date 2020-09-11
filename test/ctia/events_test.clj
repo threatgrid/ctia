@@ -7,7 +7,6 @@
                          join-fixtures]]
    [clojure.core.async :refer [<!! chan poll! tap]]
    [ctia.entity.event.obj-to-event :as o2e]
-   [ctia.events :as e]
    [ctia.lib.async :as la]
    [ctia.test-helpers
     [core :as helpers]
@@ -22,25 +21,28 @@
 
 (deftest test-send-event
   "Tests the basic action of sending an event"
-  (let [{b :chan-buf c :chan m :mult :as ec} (la/new-channel)
+  (let [app (helpers/get-current-app)
+        {:keys [send-event]} (helpers/get-service-map app :EventsService)
+
+        {b :chan-buf c :chan m :mult :as ec} (la/new-channel)
         output (chan)]
     (try
       (tap m output)
-      (e/send-event ec (o2e/to-create-event
+      (send-event ec (o2e/to-create-event
                         {:owner "tester"
                          :id "test-1"
                          :tlp "white"
                          :type :test
                          :data 1}
                         "test-1"))
-      (e/send-event ec (o2e/to-create-event
+      (send-event ec (o2e/to-create-event
                         {:owner "tester"
                          :id "test-2"
                          :tlp "white"
                          :type :test
                          :data 2}
                         "test-2"))
-      (e/send-event ec (o2e/to-create-event
+      (send-event ec (o2e/to-create-event
                         {:owner "tester"
                          :id "test-3"
                          :tlp "white"
@@ -55,17 +57,21 @@
 
 (deftest test-central-events
   "Tests the basic action of sending an event to the central channel"
-  (let [{b :chan-buf c :chan m :mult} @e/central-channel
+  (let [app (helpers/get-current-app)
+        {:keys [central-channel
+                send-event]} (helpers/get-service-map app :EventsService)
+
+        {b :chan-buf c :chan m :mult} (central-channel)
         output (chan)]
     (tap m output)
-    (e/send-event (o2e/to-create-event
+    (send-event (o2e/to-create-event
                    {:owner "tester"
                     :id "test-1"
                     :tlp "white"
                     :type :test
                     :data 1}
                    "test-1"))
-    (e/send-event (o2e/to-create-event
+    (send-event (o2e/to-create-event
                    {:owner "teseter"
                     :id "test-2"
                     :tlp "white"

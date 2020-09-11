@@ -37,12 +37,12 @@
   (join-fixtures [mth/fixture-schema-validation
                   helpers/fixture-properties:clean
                   es-helpers/fixture-properties:es-store
-                  helpers/fixture-ctia
-                  whoami-helpers/fixture-server
-                  es-helpers/fixture-delete-store-indexes]))
+                  whoami-helpers/fixture-server]))
 
 (use-fixtures :each
-  whoami-helpers/fixture-reset-state)
+  (join-fixtures [whoami-helpers/fixture-reset-state
+                  helpers/fixture-ctia
+                  es-helpers/fixture-delete-store-indexes]))
 
 (def fixtures-nb 100)
 
@@ -78,15 +78,19 @@
    :weaknesses       (n-doc weakness-minimal fixtures-nb)})
 
 (deftest test-check-store-indexes
-  (helpers/set-capabilities! "foouser"
-                             ["foogroup"]
-                             "user"
-                             all-capabilities)
-  (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
-                                      "foouser"
-                                      "foogroup"
-                                      "user")
-  (let [store-config (p/get-in-global-properties [:ctia :store :es :default])]
+  (let [app (helpers/get-current-app)
+        {:keys [get-in-config]} (helpers/get-service-map app :ConfigService)
+        {:keys [all-stores]} (helpers/get-service-map app :StoreService)
+
+        _ (helpers/set-capabilities! "foouser"
+                                     ["foogroup"]
+                                     "user"
+                                     all-capabilities)
+        _ (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
+                                              "foouser"
+                                              "foogroup"
+                                              "user")
+        store-config (get-in-config [:ctia :store :es :default])]
     (post-bulk examples)
     (refresh-all-indices (:host store-config)
                          (:port store-config))
@@ -94,7 +98,7 @@
       (testing "check ES indexes"
         (let [logger (atom [])]
           (with-atom-logger logger
-            (doall (sut/check-store-indexes 100)))
+            (doall (sut/check-store-indexes 100 all-stores)))
           (testing "shall produce valid logs"
             (let [messages (set @logger)]
               (is (contains? messages "set batch size: 100"))
