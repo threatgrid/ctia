@@ -1,5 +1,6 @@
 (ns ctia.entity.asset-properties-test
-  (:require [clj-momo.test-helpers.core :as mth]
+  (:require [clj-momo.lib.clj-time.coerce :as tc]
+            [clj-momo.test-helpers.core :as mth]
             [clojure.test :refer [deftest is are join-fixtures testing use-fixtures]]
             [ctia.entity.asset-properties :as asset-properties]
             [ctia.test-helpers.aggregate :as aggregate]
@@ -20,7 +21,7 @@
 
 (use-fixtures :each whoami-helpers/fixture-reset-state)
 
-(defn additional-tests [_ asset-properties-sample]
+(defn additional-tests [{:keys [short-id]} asset-properties-sample]
   (testing "GET /ctia/asset-properties/search"
    (let [app (helpers/get-current-app)
          {:keys [get-in-config]} (helpers/get-service-map app :ConfigService)]
@@ -49,7 +50,19 @@
         (str "asset_ref:\"" (:asset-ref asset-properties-sample) "\"")
         #(-> % :parsed-body first :asset-ref)
         (:asset-ref asset-properties-sample)
-        "Searching Asset Properties by asset-ref")))))
+        "Searching Asset Properties by asset-ref")))
+
+  (testing "Expire 'valid-time' field"
+    (let [fixed-now (-> "2020-12-31" tc/from-string tc/to-date)]
+      (helpers/fixture-with-fixed-time
+       fixed-now
+       (fn []
+         (let [response (helpers/post
+                         (str "ctia/asset-properties/expire/" short-id)
+                         :headers {"Authorization" "45c1f5e3f05d0"})]
+           (is (= 200 (:status response)) "POST asset-properties/expire succeeds")
+           (is (= fixed-now (-> response :parsed-body :valid_time :end_time))
+               ":valid_time properly reset"))))))))
 
 (deftest asset-properties-routes-test
   (store/test-for-each-store
