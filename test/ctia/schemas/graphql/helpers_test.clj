@@ -1,5 +1,6 @@
 (ns ctia.schemas.graphql.helpers-test
-  (:require [ctia.schemas.graphql.helpers :as sut]
+  (:require [ctia.schemas.core :refer [resolve-with-rt-opt]]
+            [ctia.schemas.graphql.helpers :as sut]
             [clj-momo.test-helpers.core :as mth]
             [clojure.test :as t :refer [deftest is testing use-fixtures]])
   (:import [graphql.schema GraphQLType]
@@ -26,7 +27,7 @@
                                "Description 1"
                                []
                                {})
-                             (sut/resolve-with-rt-opt rt-opt))]
+                             (resolve-with-rt-opt rt-opt))]
       (is (identical?
             (new-object-fn)
             (new-object-fn))))))
@@ -40,7 +41,7 @@
                          "EnumTestEnum"
                          "Description 1"
                          ["V1" "v2" "V3"])
-                       (sut/resolve-with-rt-opt rt-opt))]
+                       (resolve-with-rt-opt rt-opt))]
       (is (identical?
             (enum-fn)
             (enum-fn))))))
@@ -57,7 +58,7 @@
                             (throw (ex-info "stub" {})))
                           [(sut/new-ref "NewUnionTestRefA")
                            (sut/new-ref "NewUnionTestRefB")])
-                        (sut/resolve-with-rt-opt rt-opt))]
+                        (resolve-with-rt-opt rt-opt))]
       (is (identical?
             (union-fn)
             (union-fn))))))
@@ -81,7 +82,7 @@
                               type-name
                               "Description 1"
                               ["V1" "v2" "V3"])
-                            (sut/resolve-with-rt-opt rt-opt))))
+                            (resolve-with-rt-opt rt-opt))))
           timeout-ms 10000
           registry (sut/create-named-type-registry)
           thread-count 5

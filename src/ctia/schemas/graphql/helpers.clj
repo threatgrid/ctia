@@ -1,6 +1,15 @@
 (ns ctia.schemas.graphql.helpers
   (:require [clojure
              [walk :as walk :refer [stringify-keys]]]
+            [ctia.schemas.core :refer [AnyMaybeDelayedGraphQLTypeResolver
+                                       AnyMaybeDelayedGraphQLValue
+                                       GraphQLRuntimeOptions
+                                       GraphQLValue
+                                       MaybeDelayedGraphQLValue
+                                       RealizeFnServices
+                                       delayed-graphql-value?
+                                       resolve-with-rt-opt
+                                       resolved-graphql-value?]]
             [schema.core :as s]
             [schema-tools.core :as st]
             [clojure.tools.logging :as log])
@@ -31,70 +40,6 @@
             GraphQLUnionType
             TypeResolver]))
 
-(s/defn delayed-graphql-value?
-  "A flat predicate deciding if the argument is delayed."
-  [v #_#_:- AnyMaybeDelayedGraphQLValue]
-  (fn? v))
-
-(s/defn resolved-graphql-value?
-  "A flat predicate deciding if the argument is not delayed."
-  [v #_#_:- AnyMaybeDelayedGraphQLValue]
-  (not (delayed-graphql-value? v)))
-
-(s/defschema GraphQLValue
-  (s/pred
-    resolved-graphql-value?))
-
-(s/defschema GraphQLRuntimeOptions
-  "A map of options to resolve a DelayedGraphQLValue."
-  {:services {s/Keyword {s/Keyword (s/pred ifn?)}}
-   ;; TODO
-   #_{:ConfigService {:get-in-config (s/pred ifn?)}
-              :GraphQLService {;; not a real service method, mostly internal to GraphQLService
-                               :get-or-update-named-type-registry (s/pred ifn?)}
-              :StoreService {:read-store (s/pred ifn?)}}})
-
-(s/defn DelayedGraphQLValue
-  :- (s/protocol s/Schema)
-  [a :- (s/protocol s/Schema)]
-  "A 1-argument function that returns values ready for use by the GraphQL API.
-  Must implement clojure.lang.Fn.
-  
-  a must be a subtype of GraphQLValue."
-  (let [a (s/constrained a resolved-graphql-value?)]
-    (s/constrained
-      (s/=> a
-            GraphQLRuntimeOptions)
-      delayed-graphql-value?)))
-
-(s/defn MaybeDelayedGraphQLValue
-  :- (s/protocol s/Schema)
-  [a :- (s/protocol s/Schema)]
-  "Returns a schema representing
-  a must be a subtype of GraphQLValue."
-  (let [a (s/constrained a resolved-graphql-value?)]
-    (s/if delayed-graphql-value?
-      (DelayedGraphQLValue a)
-      a)))
-
-(s/defschema AnyMaybeDelayedGraphQLValue
-  (MaybeDelayedGraphQLValue GraphQLValue))
-
-(s/defn MaybeDelayedGraphQLTypeResolver
-  :- (s/protocol s/Schema)
-  [a :- (s/protocol s/Schema)]
-  "Returns a schema representing type resolvers
-  that might return delayed GraphQL values."
-  (let [a (s/constrained a resolved-graphql-value?)]
-    (s/=> (MaybeDelayedGraphQLValue a)
-          (s/named s/Any 'context)
-          (s/named s/Any 'args)
-          (s/named s/Any 'field-selection)
-          (s/named s/Any 'source))))
-
-(s/defschema AnyMaybeDelayedGraphQLTypeResolver
-  (MaybeDelayedGraphQLTypeResolver GraphQLValue))
-
 (s/defschema MaybeDelayedGraphQLFields
   {s/Keyword
    {:type AnyMaybeDelayedGraphQLValue
@@ -102,14 +47,6 @@
     (s/optional-key :resolve) AnyMaybeDelayedGraphQLTypeResolver
     (s/optional-key :description) s/Any
     (s/optional-key :default-value) s/Any}})
-
-(s/defn resolve-with-rt-opt :- GraphQLValue
-  "Resolve a MaybeDelayedGraphQLValue value, if needed, using given runtime options."
-  [maybe-fn :- AnyMaybeDelayedGraphQLValue
-   rt-opt :- GraphQLRuntimeOptions]
-  (if (delayed-graphql-value? maybe-fn)
-    (maybe-fn rt-opt)
-    maybe-fn))
 
 (s/defschema NamedTypeRegistry
   "Type registry to ensure named GraphQL named types are created exactly once.

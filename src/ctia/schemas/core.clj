@@ -38,38 +38,37 @@
    :created java.util.Date
    (s/optional-key :modified) java.util.Date})
 
-;; TODO merge this with ctia.schemas.graphql.helpers
-#_
 (s/defschema RealizeFnServices
   "Maps of service functions available for realize-fns"
-  {:ConfigService {:get-in-config (s/=>* s/Any
-                                         [s/Any]
-                                         [s/Any s/Any])}
-   :StoreService {:read-store (s/pred ifn?)} ;;varags
-   :GraphQLService {:get-or-update-named-type-registry (s/=> s/Any
-                                                             (s/named s/Str
-                                                                      'name)
-                                                             (s/named (s/=> s/Any s/Any)
-                                                                      'f))}})
+  {s/Keyword {s/Keyword (s/pred ifn?)}})
 
-;; TODO merge this with ctia.schemas.graphql.helpers
-#_
-(s/def GraphQLRuntimeOptions
+(s/defschema GraphQLRuntimeOptions
   "A map of options to resolve a DelayedGraphQLValue"
   {:services RealizeFnServices})
 
-(defn MaybeDelayedRealizeFnResult
+(defn delayed-graphql-value?
+  "A flat predicate deciding if the argument is delayed."
+  [v]
+  (fn? v))
+
+(defn resolved-graphql-value?
+  "A flat predicate deciding if the argument is not delayed."
+  [v]
+  (not (delayed-graphql-value? v)))
+
+(s/defn MaybeDelayedRealizeFnResult
+  :- (s/protocol s/Schema)
   "The return value of a realize-fn either implements clojure.lang.Fn,
   thus it expects a map of service maps, otherwise it is considered
   'resolved'."
-  [a]
-  (s/if fn?
-    ;; delayed
-    (s/=> a {s/Keyword {s/Keyword (s/pred fn?)}})
-    ;; resolved
+  [a :- (s/protocol s/Schema)]
+  (s/if delayed-graphql-value?
+    (s/=> a RealizeFnServices)
     a))
 
-(defn RealizeFnReturning [return]
+(s/defn RealizeFnReturning
+  :- (s/protocol s/Schema)
+  [return :- (s/protocol s/Schema)]
   (s/=>* return
          [s/Any  ;; new-object
           s/Any  ;; id
@@ -89,20 +88,72 @@
 (s/defschema RealizeFn
   (RealizeFnReturning (s/pred map?)))
 
+(s/defschema GraphQLValue
+  (s/pred
+    resolved-graphql-value?))
+
+(s/defn DelayedGraphQLValue
+  :- (s/protocol s/Schema)
+  [a :- (s/protocol s/Schema)]
+  "A 1-argument function that returns values ready for use by the GraphQL API.
+  Must implement clojure.lang.Fn.
+  
+  a must be a subtype of GraphQLValue."
+  (let [a (s/constrained a resolved-graphql-value?)]
+    (s/constrained
+      (s/=> a
+            GraphQLRuntimeOptions)
+      delayed-graphql-value?)))
+
+(s/defn MaybeDelayedGraphQLValue
+  :- (s/protocol s/Schema)
+  [a :- (s/protocol s/Schema)]
+  "Returns a schema representing
+  a must be a subtype of GraphQLValue."
+  (let [a (s/constrained a resolved-graphql-value?)]
+    (s/if delayed-graphql-value?
+      (DelayedGraphQLValue a)
+      a)))
+
+(s/defschema AnyMaybeDelayedGraphQLValue
+  (MaybeDelayedGraphQLValue GraphQLValue))
+
+(s/defn MaybeDelayedGraphQLTypeResolver
+  :- (s/protocol s/Schema)
+  [a :- (s/protocol s/Schema)]
+  "Returns a schema representing type resolvers
+  that might return delayed GraphQL values."
+  (let [a (s/constrained a resolved-graphql-value?)]
+    (s/=> (MaybeDelayedGraphQLValue a)
+          (s/named s/Any 'context)
+          (s/named s/Any 'args)
+          (s/named s/Any 'field-selection)
+          (s/named s/Any 'source))))
+
+(s/defschema AnyMaybeDelayedGraphQLTypeResolver
+  (MaybeDelayedGraphQLTypeResolver GraphQLValue))
+
+(s/defn resolve-with-rt-opt :- GraphQLValue
+  "Resolve a MaybeDelayedGraphQLValue value, if needed, using given runtime options."
+  [maybe-fn :- AnyMaybeDelayedGraphQLValue
+   rt-opt :- GraphQLRuntimeOptions]
+  (assert (or (fn? maybe-fn)
+              (instance? graphql.schema.GraphQLType maybe-fn))
+          maybe-fn)
+  ;; TODO if the above assertion succeeds, we can probably use ifn? here.
+  (if (delayed-graphql-value? maybe-fn)
+    (maybe-fn rt-opt)
+    maybe-fn))
+
 (s/defn MaybeDelayedRealizeFn->RealizeFn
   :- RealizeFn
   [realize-fn :- MaybeDelayedRealizeFn
-   rt-opt #_:- #_GraphQLRuntimeOptions]
+   rt-opt :- GraphQLRuntimeOptions]
   (fn [& args]
-    (let [maybe-delayed (apply realize-fn args)]
-      (assert (or (fn? maybe-delayed)
-                  (instance? graphql.schema.GraphQLType maybe-delayed))
-              maybe-delayed)
-      ;; TODO if the above assertion succeeds, we can probably use ifn? here.
-      ;; TODO merge with ctia.schemas.graphql.helpers/resolve-with-rt-opt
-      (if (fn? maybe-delayed)
-        (maybe-delayed rt-opt)
-        maybe-delayed))))
+    (-> realize-fn
+        (apply args)
+        (resolve-with-rt-opt
+          rt-opt))))
 
 (s/defschema Entity
   (st/merge

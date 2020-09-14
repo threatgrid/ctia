@@ -1,6 +1,7 @@
 (ns ctia.graphql-service-core
   (:require [puppetlabs.trapperkeeper.core :as tk]
             [ctia.graphql.schemas :as schemas]
+            [ctia.schemas.core :refer [resolve-with-rt-opt]]
             [ctia.schemas.graphql.helpers :as helpers])
   (:import [graphql GraphQL]))
 
@@ -16,7 +17,7 @@
            :type-registry type-registry
            :graphql
            (-> schemas/graphql
-               (helpers/resolve-with-rt-opt
+               (resolve-with-rt-opt
                  {:services
                   (assoc-in services [:GraphQLService :get-or-update-named-type-registry]
                             #(helpers/get-or-update-named-type-registry type-registry %1 %2))})))))

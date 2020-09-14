@@ -3,12 +3,13 @@
             [ctia.domain.entities
              :refer
              [page-with-long-id un-store un-store-page with-long-id]]
-            [ctia.schemas.core :as ctia-schemas]
-            [ctia.schemas.graphql.helpers :refer [MaybeDelayedGraphQLTypeResolver
-                                                  MaybeDelayedGraphQLValue
-                                                  GraphQLValue
-                                                  GraphQLRuntimeOptions]]
+            [ctia.schemas.core :as ctia-schemas
+             :refer [GraphQLRuntimeOptions
+                     GraphQLValue
+                     MaybeDelayedGraphQLTypeResolver
+                     MaybeDelayedGraphQLValue]]
             [ctia.schemas.graphql.pagination :as pagination]
+            ;; TODO remove
             [ctia.store :refer :all]
             [schema.core :as s]))
 
@@ -28,7 +29,8 @@
    ident
    field-selection
    with-long-id-fn
-   {{{:keys [read-store]} :StoreService} :services :as _rt-opt_} :- GraphQLRuntimeOptions]
+   {{{:keys [read-store]} :StoreService}
+    :services :as _rt-opt_} :- GraphQLRuntimeOptions]
   (let [paging-params (pagination/connection-params->paging-params args)
         params (cond-> (select-keys paging-params [:limit :offset :sort_by])
                  field-selection (assoc :fields
@@ -69,22 +71,22 @@
    id :- s/Str
    ident
    field-selection :- (s/maybe [s/Keyword])]
- (s/fn :- GraphQLValue
-  [{{{:keys [get-in-config]} :ConfigService
-     {:keys [read-store]} :StoreService}
-    :services
-    :as _rt-opt_} :- GraphQLRuntimeOptions]
-  (log/debugf "Retrieve %s (id:%s, fields:%s)"
-              entity-type-kw
-              id
-              field-selection)
-  (some-> (read-store entity-type-kw
-                      read-fn
-                      id
-                      ident
-                      {:fields (concat default-fields field-selection)})
-          (with-long-id get-in-config)
-          un-store)))
+  (s/fn :- GraphQLValue
+    [{{{:keys [get-in-config]} :ConfigService
+       {:keys [read-store]} :StoreService}
+      :services
+      :as _rt-opt_} :- GraphQLRuntimeOptions]
+    (log/debugf "Retrieve %s (id:%s, fields:%s)"
+                entity-type-kw
+                id
+                field-selection)
+    (some-> (read-store entity-type-kw
+                        read-fn
+                        id
+                        ident
+                        {:fields (concat default-fields field-selection)})
+            (with-long-id get-in-config)
+            un-store)))
 
 (s/defn entity-by-id-resolver :- (MaybeDelayedGraphQLTypeResolver s/Any)
   [entity-type-kw]
