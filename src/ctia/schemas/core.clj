@@ -137,10 +137,6 @@
   "Resolve a MaybeDelayedGraphQLValue value, if needed, using given runtime options."
   [maybe-fn :- AnyMaybeDelayedGraphQLValue
    rt-opt :- GraphQLRuntimeOptions]
-  (assert (or (fn? maybe-fn)
-              (instance? graphql.schema.GraphQLType maybe-fn))
-          maybe-fn)
-  ;; TODO if the above assertion succeeds, we can probably use ifn? here.
   (if (delayed-graphql-value? maybe-fn)
     (maybe-fn rt-opt)
     maybe-fn))
