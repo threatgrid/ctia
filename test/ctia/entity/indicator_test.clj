@@ -3,7 +3,6 @@
             [clojure.test :refer [deftest is testing are join-fixtures use-fixtures]]
             [ctia.auth.capabilities :as caps]
             [ctia.entity.indicator :as sut]
-            [ctia.properties :as p]
             [ctia.test-helpers
              [access-control :refer [access-control-test]]
              [core :as helpers]
@@ -24,8 +23,10 @@
 
 (defn search-tests [_ indicator-sample]
   (testing "GET /ctia/indicator/search"
+   (let [app (helpers/get-current-app)
+         {:keys [get-in-config]} (helpers/get-service-map app :ConfigService)]
     ;; only when ES store
-    (when (= "es" (p/get-in-global-properties [:ctia :store :indicator]))
+    (when (= "es" (get-in-config [:ctia :store :indicator]))
       (are [query check-fn expected desc]
           (testing desc
 
@@ -51,7 +52,7 @@
         {:tags "unmatched"}
         #(:parsed-body %)
         []
-        "Searching indicators by missing tags value should not match any document"))))
+        "Searching indicators by missing tags value should not match any document")))))
 
 (deftest test-indicator-crud-routes
   (test-for-each-store

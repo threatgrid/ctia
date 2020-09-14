@@ -69,7 +69,11 @@
            (fixture-with-fixed-time
             (time/timestamp "2042-01-01")
             (fn []
-              (let [{incident :parsed-body
+              (let [app (helpers/get-current-app)
+                    {:keys [get-in-config]} (helpers/get-service-map app :ConfigService)
+
+                    port (get-in-config [:ctia :http :port])
+                    {incident :parsed-body
                      incident-status :status}
                     (post (str "ctia/incident")
                           :body (assoc new-incident-minimal
@@ -211,13 +215,15 @@
                               :incident_time {:opened "2042-01-01T00:00:00.000Z"},
                               :status "Open",
                               :id
-                              "http://localhost:3001/ctia/incident/incident-00000000-0000-0000-0000-111111111112",
+                              (format "http://localhost:%s/ctia/incident/incident-00000000-0000-0000-0000-111111111112"
+                                      port),
                               :tlp "amber",
                               :groups ["group1"],
                               :confidence "High",
                               :owner "user1"},
                              :id
-                             "http://localhost:3001/ctia/event/event-00000000-0000-0000-0000-111111111113",
+                             (format "http://localhost:%s/ctia/event/event-00000000-0000-0000-0000-111111111113"
+                                     port),
                              :type "event",
                              :event_type :record-created}
                             {:owner "user1",
@@ -234,13 +240,15 @@
                               :incident_time {:opened "2042-01-01T00:00:00.000Z"},
                               :status "Open",
                               :id
-                              "http://localhost:3001/ctia/incident/incident-00000000-0000-0000-0000-111111111112",
+                              (format "http://localhost:%s/ctia/incident/incident-00000000-0000-0000-0000-111111111112"
+                                      port),
                               :tlp "amber",
                               :groups ["group1"],
                               :confidence "High",
                               :owner "user1"},
                              :id
-                             "http://localhost:3001/ctia/event/event-00000000-0000-0000-0000-111111111116",
+                             (format "http://localhost:%s/ctia/event/event-00000000-0000-0000-0000-111111111116"
+                                     port),
                              :type "event",
                              :event_type :record-updated,
                              :fields
@@ -261,21 +269,25 @@
                              :entity
                              {:schema_version ctim-schema-version,
                               :target_ref
-                              "http://localhost:3001/ctia/incident/incident-00000000-0000-0000-0000-111111111112",
+                              (format "http://localhost:%s/ctia/incident/incident-00000000-0000-0000-0000-111111111112"
+                                      port),
                               :type "relationship",
                               :created "2042-01-01T00:00:00.000Z",
                               :modified "2042-01-01T00:00:00.000Z",
                               :timestamp "2042-01-01T00:00:00.000Z",
                               :source_ref
-                              "http://localhost:3001/ctia/casebook/casebook-00000000-0000-0000-0000-111111111117",
+                              (format "http://localhost:%s/ctia/casebook/casebook-00000000-0000-0000-0000-111111111117"
+                                      port),
                               :id
-                              "http://localhost:3001/ctia/relationship/relationship-00000000-0000-0000-0000-111111111119",
+                              (format "http://localhost:%s/ctia/relationship/relationship-00000000-0000-0000-0000-111111111119"
+                                      port),
                               :tlp "amber",
                               :groups ["group1"],
                               :owner "user1",
                               :relationship_type "related-to"},
                              :id
-                             "http://localhost:3001/ctia/event/event-00000000-0000-0000-0000-111111111120",
+                             (format "http://localhost:%s/ctia/event/event-00000000-0000-0000-0000-111111111120"
+                                     port),
                              :type "event",
                              :event_type :record-created}
                             {:owner "user1",
@@ -292,13 +304,15 @@
                               :incident_time {:opened "2042-01-01T00:00:00.000Z"},
                               :status "Open",
                               :id
-                              "http://localhost:3001/ctia/incident/incident-00000000-0000-0000-0000-111111111112",
+                              (format "http://localhost:%s/ctia/incident/incident-00000000-0000-0000-0000-111111111112"
+                                      port),
                               :tlp "amber",
                               :groups ["group1"],
                               :confidence "High",
                               :owner "user1"},
                              :id
-                             "http://localhost:3001/ctia/event/event-00000000-0000-0000-0000-111111111121",
+                             (format "http://localhost:%s/ctia/event/event-00000000-0000-0000-0000-111111111121"
+                                     port),
                              :type "event",
                              :event_type :record-deleted}]
                            results)))))))))))))

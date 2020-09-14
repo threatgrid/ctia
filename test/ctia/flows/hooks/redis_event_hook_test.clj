@@ -18,15 +18,18 @@
                                     es-helpers/fixture-properties:es-store
                                     test-helpers/fixture-properties:redis-hook
                                     test-helpers/fixture-properties:events-enabled
-                                    test-helpers/fixture-ctia
-                                    test-helpers/fixture-allow-all-auth]))
+                                    test-helpers/fixture-allow-all-auth
+                                    test-helpers/fixture-ctia]))
 
 (deftest ^:integration test-events-pubsub
   (testing "Events are published to redis"
-    (let [results (atom [])
+    (let [app (test-helpers/get-current-app)
+          {:keys [get-in-config]} (test-helpers/get-service-map app :ConfigService)
+          
+          results (atom [])
           finish-signal (CountDownLatch. 3)
           {:keys [channel-name] :as redis-config}
-          (p/get-in-global-properties [:ctia :hook :redis])
+          (get-in-config [:ctia :hook :redis])
           listener (lr/subscribe-to-messages (lr/server-connection redis-config)
                                              channel-name
                                              (fn test-events-pubsub-fn [ev]

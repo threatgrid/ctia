@@ -18,6 +18,8 @@
              [shutdown :as shutdown]
              [store :as store]]
             [ctia.auth.allow-all :as aa]
+            [ctia.encryption :as encryption]
+            [ctia.events :as events]
             [ctia.flows.crud :as crud]
             [ctim.domain.id :as id]
             [ctim.generators.common :as cgc]
@@ -35,9 +37,20 @@
   (case svc-kw
     :ConfigService {:get-config p/get-global-properties
                     :get-in-config p/get-in-global-properties}
+    :EventsService {:send-event events/send-event
+                    :central-channel (fn []
+                                       {:post [%]}
+                                       @events/central-channel)
+                    :register-listener events/register-listener}
+    :IEncryption {:decrypt encryption/decrypt-str
+                  :encrypt encryption/encrypt-str}
     :StoreService {:all-stores (fn [] @store/stores)
-                   :read-store store/read-store
-                   :write-store store/write-store}
+                   ;; no varargs to simulate eventual protocol method
+                   :read-store (fn [store read-fn]
+                                 (store/read-store store read-fn))
+                   ;; no varargs to simulate eventual protocol method
+                   :write-store (fn [store write-fn]
+                                  (store/write-store store write-fn))}
     (throw (ex-info (str "No service: " svc-kw)
                     {:app app
                      :service svc-kw}))))

@@ -1,13 +1,14 @@
 (ns ctia.auth.jwt-test
   (:require [ctia.auth.jwt :as sut]
             [ctia.auth.capabilities :as caps]
-            [ctia.properties :as p]
+            [ctia.test-helpers.core :as helpers]
             [clojure.test :as t :refer [deftest is]]
             [clojure.set :as set])
   (:import [ctia.auth.jwt JWTIdentity]))
 
+;; note: refactor into tests if this namespace uses any fixtures
 (def get-in-config
-  p/get-in-global-properties)
+  (helpers/build-get-in-config-fn))
 
 (deftest wrap-jwt-to-ctia-auth-test
   (let [handler (fn [r]

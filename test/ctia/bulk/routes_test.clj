@@ -11,9 +11,7 @@
              [string :as str]
              [test :refer [deftest is join-fixtures testing use-fixtures]]]
             [clj-http.fake :refer [with-global-fake-routes]]
-            [ctia
-             [properties :as p :refer [get-http-show]]
-             [store :refer [stores]]]
+            [ctia.properties :refer [get-http-show]]
             [ctia.bulk.core
              :refer
              [bulk-size gen-bulk-from-fn get-bulk-max-size]]
@@ -204,7 +202,9 @@
                                          "foogroup"
                                          "user")
      (testing "POST /ctia/bulk with wait_for"
-       (let [get-in-config (helpers/current-get-in-config-fn)
+       (let [app (helpers/get-current-app)
+             {:keys [get-in-config]} (helpers/get-service-map app :ConfigService)
+
              default-es-refresh (->> (get-in-config
                                        [:ctia :store :es :default :refresh])
                                      (str "refresh="))
@@ -261,7 +261,9 @@
                                          "foogroup"
                                          "user")
      (testing "POST /ctia/bulk"
-       (let [get-in-config (helpers/current-get-in-config-fn)
+       (let [app (helpers/get-current-app)
+             {:keys [get-in-config]} (helpers/get-service-map app :ConfigService)
+
              nb 7
              indicators (map mk-new-indicator (range nb))
              judgements (map mk-new-judgement (range nb))
@@ -335,7 +337,8 @@
 (deftest bulk-max-size-post-test
   (test-for-each-store
    (fn []
-    (let [get-in-config (helpers/current-get-in-config-fn)]
+    (let [app (helpers/get-current-app)
+          {:keys [get-in-config]} (helpers/get-service-map app :ConfigService)]
      (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
      (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
                                          "foouser"
@@ -491,7 +494,10 @@
                                          "foogroup"
                                          "user")
 
-     (let [{:keys [index conn]} (-> @stores :tool first :state)
+     (let [app (helpers/get-current-app)
+           {:keys [all-stores]} (helpers/get-service-map app :StoreService)
+
+           {:keys [index conn]} (-> (all-stores) :tool first :state)
        ;; close tool index to produce ES errors on that store
            _ (es-index/close! conn index)
            tools (->> [(mk-new-tool 1)

@@ -160,7 +160,8 @@
          patch-tests? false
          search-tests? true}
     :as params}]
- (let [get-in-config (helpers/current-get-in-config-fn)]
+ (let [app (helpers/get-current-app)
+       get-in-config (helpers/current-get-in-config-fn app)]
   (testing (str "POST /ctia/" entity)
     (let [new-record (dissoc example :id)
           {post-status :status
