@@ -21,6 +21,8 @@
             [ctia.encryption :as encryption]
             [ctia.events :as events]
             [ctia.flows.crud :as crud]
+            [ctia.flows.hooks :as hooks]
+            [ctia.flows.hooks-service :as hooks-svc]
             [ctim.domain.id :as id]
             [ctim.generators.common :as cgc]
             [flanders
@@ -37,6 +39,16 @@
   (case svc-kw
     :ConfigService {:get-config p/get-global-properties
                     :get-in-config p/get-in-global-properties}
+    :HooksService {:add-hook! hooks/add-hook!
+                   :add-hooks! hooks/add-hooks!
+                   ;; takes map and flattens to kw args, since protocol method
+                   ;; cannot have varargs
+                   :apply-hooks (fn [hook-options]
+                                  (apply hooks/apply-hooks (apply concat hook-options)))
+                   :apply-event-hooks hooks/apply-event-hooks
+                   :init-hooks! hooks/init-hooks!
+                   :shutdown! hooks/shutdown!
+                   :reset-hooks! hooks/reset-hooks!}
     :EventsService {:send-event events/send-event
                     :central-channel (fn []
                                        {:post [%]}
