@@ -37,10 +37,7 @@
                                   'f))]
   {:pre [store-svc-fn]}
   (fn [store f & args]
-    (store-svc-fn store #(do
-                           (when-not %
-                             (prn [store f % args]))
-                           (apply f % args)))))
+    (store-svc-fn store #(apply f % args))))
 
 (defn lift-store-service-fns
   "Given a map of StoreService services (via defservice), lift

@@ -165,8 +165,8 @@
          "ctia.auth.type" "threatgrid"]
         (t))
       (finally
-        (stop-server @fake-whoami-service)))
-    (reset! fake-whoami-service nil)))
+        (stop-server @fake-whoami-service)
+        (reset! fake-whoami-service nil)))))
 
 (defn fixture-reset-state
   "May be used inside of fixture-server, eg fixture :once

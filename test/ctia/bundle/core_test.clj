@@ -53,7 +53,8 @@
 (deftest with-existing-entity-test
   (testing "with-existing-entity"
     (let [app (h/get-current-app)
-          get-in-config (h/current-get-in-config-fn app)
+          {:keys [get-in-config]} (h/get-service-map app :ConfigService)
+
           indicator-id-1 (make-id "indicator")
           indicator-id-2 (make-id "indicator")
           indicator-id-3 (make-id "indicator")

@@ -23,7 +23,7 @@
 (defn additional-tests [_ asset-properties-sample]
   (testing "GET /ctia/asset-properties/search"
    (let [app (helpers/get-current-app)
-         get-in-config (helpers/current-get-in-config-fn app)]
+         {:keys [get-in-config]} (helpers/get-service-map app :ConfigService)]
     ;; only when ES store
     (when (= "es" (get-in-config [:ctia :store :asset-properties]))
       (are [term check-fn expected desc] (let [response (helpers/get

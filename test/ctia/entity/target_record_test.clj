@@ -22,7 +22,8 @@
 
 (defn additional-tests [_ target-record-sample]
   (testing "GET /ctia/target-record/search"
-   (let [get-in-config (helpers/current-get-in-config-fn)]
+   (let [app (helpers/get-current-app)
+         {:keys [get-in-config]} (helpers/get-service-map app :ConfigService)]
     ;; only when ES store
     (when (= "es" (get-in-config [:ctia :store :target-record]))
       (let [{[target] :targets} target-record-sample

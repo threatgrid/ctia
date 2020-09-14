@@ -203,7 +203,9 @@
                                          "foogroup"
                                          "user")
      (testing "POST /ctia/bulk with wait_for"
-       (let [get-in-config (helpers/current-get-in-config-fn)
+       (let [app (helpers/get-current-app)
+             {:keys [get-in-config]} (helpers/get-service-map app :ConfigService)
+
              default-es-refresh (->> (get-in-config
                                        [:ctia :store :es :default :refresh])
                                      (str "refresh="))
@@ -261,7 +263,8 @@
                                          "user")
      (testing "POST /ctia/bulk"
        (let [app (helpers/get-current-app)
-             get-in-config (helpers/current-get-in-config-fn app)
+             {:keys [get-in-config]} (helpers/get-service-map app :ConfigService)
+
              nb 7
              indicators (map mk-new-indicator (range nb))
              judgements (map mk-new-judgement (range nb))
@@ -335,7 +338,8 @@
 (deftest bulk-max-size-post-test
   (test-for-each-store
    (fn []
-    (let [get-in-config (helpers/current-get-in-config-fn)]
+    (let [app (helpers/get-current-app)
+          {:keys [get-in-config]} (helpers/get-service-map app :ConfigService)]
      (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
      (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
                                          "foouser"

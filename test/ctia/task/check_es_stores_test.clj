@@ -42,7 +42,6 @@
 (use-fixtures :each
   (join-fixtures [whoami-helpers/fixture-reset-state
                   helpers/fixture-ctia
-                  ;; must go after helpers/fixture-ctia
                   es-helpers/fixture-delete-store-indexes]))
 
 (def fixtures-nb 100)

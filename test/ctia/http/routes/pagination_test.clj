@@ -21,7 +21,9 @@
   "generate an observable and many records of all listable entities"
   (test-for-each-store
    (fn []
-     (let [get-in-config (helpers/current-get-in-config-fn)
+     (let [app (helpers/get-current-app)
+           {:keys [get-in-config]} (helpers/get-service-map app :ConfigService)
+
            http-show (get-in-config [:ctia :http :show])
            observable {:type "ip"
                        :value "1.2.3.4"}

@@ -23,7 +23,9 @@
 
 (deftest ^:integration test-events-pubsub
   (testing "Events are published to redis"
-    (let [get-in-config (test-helpers/current-get-in-config-fn)
+    (let [app (test-helpers/get-current-app)
+          {:keys [get-in-config]} (test-helpers/get-service-map app :ConfigService)
+          
           results (atom [])
           finish-signal (CountDownLatch. 3)
           {:keys [channel-name] :as redis-config}

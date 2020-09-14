@@ -27,7 +27,9 @@
 
 (deftest ^:integration test-events-topic
   (testing "Events are published to kafka topic"
-    (let [get-in-config (test-helpers/current-get-in-config-fn)
+    (let [app (test-helpers/get-current-app)
+          {:keys [get-in-config]} (test-helpers/get-service-map app :ConfigService)
+
           results (atom [])
           finish-signal (CountDownLatch. 3)
           rebalance-signal (CountDownLatch. 1)

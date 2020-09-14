@@ -24,7 +24,9 @@
                                          "foogroup"
                                          "user")
 
-     (let [get-in-config (helpers/current-get-in-config-fn)
+     (let [app (helpers/get-current-app)
+           {:keys [get-in-config]} (helpers/get-service-map app :ConfigService)
+
            http-show (get-in-config [:ctia :http :show])
            judgement-1-id (make-id :judgement)
            judgement-2-id (make-id :judgement)

@@ -48,8 +48,10 @@
 
 (defn additional-tests [judgement-id _]
   (testing "GET /ctia/judgement/search"
+   (let [app (helpers/get-current-app)
+         {:keys [get-in-config]} (helpers/get-service-map app :ConfigService)]
     ;; only when ES store
-    (when (= "es" ((helpers/current-get-in-config-fn) [:ctia :store :indicator]))
+    (when (= "es" (get-in-config [:ctia :store :indicator]))
       (let [term "observable.value:\"1.2.3.4\""
             response (get (str "ctia/judgement/search")
                           :headers {"Authorization" "45c1f5e3f05d0"}
@@ -106,7 +108,7 @@
                                          "tlp" "green"})]
         (is (= 200 (:status response)))
         (is (= 1  (count (:parsed-body response)))
-            "filters are applied, and match properly"))))
+            "filters are applied, and match properly")))))
 
   (testing "GET /ctia/judgement/:id authentication failures"
     (testing "no Authorization"

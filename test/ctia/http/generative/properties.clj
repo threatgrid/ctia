@@ -40,7 +40,8 @@
   (for-all
     [new-entity entity-gen]
     (let [app (helpers/get-current-app)
-          get-in-config (helpers/current-get-in-config-fn app)
+          {:keys [get-in-config]} (helpers/get-service-map app :ConfigService)
+
           {post-status :status
            {id :id
             type :type
