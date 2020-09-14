@@ -22,8 +22,7 @@
              [fake-whoami-service :as whoami-helpers]
              [store :refer [test-for-each-store store-fixtures]]]
             [ctim.domain.id :as id]
-            [ctim.examples.incidents :refer [new-incident-maximal]]
-            [puppetlabs.trapperkeeper.app :as app]))
+            [ctim.examples.incidents :refer [new-incident-maximal]]))
 
 (defn fixture-properties:small-max-bulk-size [t]
   ;; Note: These properties may be overwritten by ENV variables
