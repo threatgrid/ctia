@@ -230,36 +230,40 @@
              (.stop server))
            nil)))
 
+;; temporary, represents the :services context entry
+;; in a future trapperkeeper service
+(defn ctia-http-server-service-global-services []
+  {:ConfigService {:get-config #'p/get-global-properties
+                   :get-in-config #'p/get-in-global-properties}
+   :HooksService {:apply-hooks (requiring-resolve
+                                 'ctia.flows.hooks/apply-hooks)
+                  :apply-event-hooks (requiring-resolve
+                                       'ctia.flows.hooks/apply-event-hooks)}
+   :StoreService {:read-store (requiring-resolve
+                                'ctia.store/read-store)
+                  :write-store (requiring-resolve
+                                 'ctia.store/write-store)}
+   :IAuth {:identity-for-token
+           (fn [token]
+             ((requiring-resolve 'ctia.auth/identity-for-token)
+              (-> (requiring-resolve 'ctia.auth/auth-service)
+                  deref  ;; var
+                  deref) ;;atom
+              token))}
+   :GraphQLService {:get-graphql
+                    (fn []
+                      @(requiring-resolve
+                         'ctia.graphql.schemas/graphql))}
+   :IEncryption {:decrypt (requiring-resolve
+                            'ctia.encryption/decrypt-str)
+                 :encrypt (requiring-resolve
+                            'ctia.encryption/encrypt-str)}})
+
 (defn start! [& {:keys [join?]
                  :or {join? true}}]
   (let [http-config (p/get-in-global-properties [:ctia :http])
         server-instance (new-jetty-instance http-config
-                                            ;; temporary ugliness until we bootstrap trapperkeeper
-                                            {:ConfigService {:get-config #'p/get-global-properties
-                                                             :get-in-config #'p/get-in-global-properties}
-                                             :HooksService {:apply-hooks (requiring-resolve
-                                                                           'ctia.flows.hooks/apply-hooks)
-                                                            :apply-event-hooks (requiring-resolve
-                                                                                 'ctia.flows.hooks/apply-event-hooks)}
-                                             :StoreService {:read-store (requiring-resolve
-                                                                          'ctia.store/read-store)
-                                                            :write-store (requiring-resolve
-                                                                           'ctia.store/write-store)}
-                                             :IAuth {:identity-for-token
-                                                     (fn [token]
-                                                       ((requiring-resolve 'ctia.auth/identity-for-token)
-                                                        (-> (requiring-resolve 'ctia.auth/auth-service)
-                                                            deref  ;; var
-                                                            deref) ;;atom
-                                                        token))}
-                                             :GraphQLService {:get-graphql
-                                                              (fn []
-                                                                @(requiring-resolve
-                                                                   'ctia.graphql.schemas/graphql))}
-                                             :IEncryption {:decrypt (requiring-resolve
-                                                                      'ctia.encryption/decrypt-str)
-                                                           :encrypt (requiring-resolve
-                                                                      'ctia.encryption/encrypt-str)}})]
+                                            (ctia-http-server-service-global-services))]
     (reset! server server-instance)
     (shutdown/register-hook! :http.server stop!)
     (if join?

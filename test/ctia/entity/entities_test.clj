@@ -2,10 +2,13 @@
   (:require [ctia.entity.entities :as sut]
             [ctia.schemas.core :refer [MaybeDelayedRealizeFn->RealizeFn]]
             [ctia.test-helpers.core :as test-helpers]
-            [ctia.http.server-service :as server-svc]
+            [ctia.http.server :refer [ctia-http-server-service-global-services]]
             [clojure.test :as t :refer [deftest is use-fixtures join-fixtures]]
             [clojure.spec.alpha :refer [gen]]
             [clojure.spec.gen.alpha :refer [generate]]))
+
+(use-fixtures :each (join-fixtures [test-helpers/fixture-properties:clean
+                                    test-helpers/fixture-ctia-fast]))
 
 (defn gen-sample-entity
   [{:keys [new-spec]}]
@@ -14,7 +17,7 @@
     {}))
 
 (deftest entity-realize-fn-test
-  (let [realize-fn-services (assert nil "TODO")
+  (let [realize-fn-services (ctia-http-server-service-global-services)
         properties [:id :type :owner :groups :schema_version
                     :created :modified :timestamp :tlp]
         ;; properties to dissoc to get a valid entity when
