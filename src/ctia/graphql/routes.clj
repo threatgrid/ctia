@@ -24,7 +24,7 @@
                :endpoint "/ctia/graphql"
                :jwtLocalStorageKey jwt-storage-key}))))
 
-(s/defn graphql-routes [_services_ :- APIHandlerServices]
+(s/defn graphql-routes [services :- APIHandlerServices]
  (routes
   (POST "/graphql" []
         :tags ["GraphQL"]
@@ -82,7 +82,7 @@
                      (pr-str body)
                      " variables: " (pr-str variables))
           (let [{:keys [errors data] :as result}
-                (gql/execute query operationName variables request-context)
+                (gql/execute query operationName variables request-context services)
                 str-errors (map str errors)]
             (log/debug "Graphql result:" result)
             (cond

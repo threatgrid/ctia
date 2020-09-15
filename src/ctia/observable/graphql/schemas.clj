@@ -5,6 +5,9 @@
    [ctia.domain.entities :as ctia-entities]
    [ctia.entity.judgement :as judgement]
    [ctia.entity.sighting.graphql-schemas :as sighting]
+   [ctia.schemas.core :refer [AnyMaybeDelayedGraphQLValue
+                              GraphQLRuntimeOptions
+                              GraphQLValue]]
    [ctia.schemas.graphql
     [flanders :as f]
     [helpers :as g]
@@ -12,7 +15,6 @@
     [resolvers :as resolvers]]
    [ctia.store :refer :all]
    [ctia.verdict.graphql.schemas :as verdict]
-   [ctia.properties :as p]
    [ctim.schemas.common :as ctim-common-schema]
    [flanders.utils :as fu]))
 
@@ -20,7 +22,10 @@
   [{observable-type :type
     observable-value :value}
    ident
-   get-in-config]
+   {{{:keys [get-in-config]} :ConfigService
+     {:keys [read-store]} :StoreService}
+    :services
+    :as _rt-opt_}]
   (some-> (read-store :judgement
                       calculate-verdict
                       {:type observable-type :value observable-value}
@@ -29,10 +34,13 @@
 
 (def observable-fields
   {:verdict {:type verdict/VerdictType
-             :resolve (fn [context _ _ src]
-                        (observable-verdict (select-keys src [:type :value])
-                                            (:ident context)
-                                            p/get-in-global-properties))}
+             :resolve (s/fn :- AnyMaybeDelayedGraphQLValue
+                        [context _ _ src]
+                        (s/fn :- GraphQLValue
+                          [rt-opt :- GraphQLRuntimeOptions]
+                          (observable-verdict (select-keys src [:type :value])
+                                              (:ident context)
+                                              rt-opt)))}
    :judgements {:type judgement/JudgementConnectionType
                 :args (into pagination/connection-arguments
                             judgement/judgement-order-arg)

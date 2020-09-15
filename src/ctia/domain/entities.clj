@@ -1,8 +1,12 @@
 (ns ctia.domain.entities
   (:require [clj-momo.lib.time :as time]
             [ctia.domain.access-control :refer [properties-default-tlp]]
-            [ctia.properties :as p :refer [get-http-show]]
-            [ctia.schemas.core :as ctia-schemas :refer [TempIDs]]
+            [ctia.properties :refer [get-http-show]]
+            [ctia.schemas.core :as ctia-schemas
+             :refer [GraphQLRuntimeOptions
+                     MaybeDelayedRealizeFn
+                     MaybeDelayedRealizeFnResult
+                     TempIDs]]
             [ctim.domain.id :as id]
             [ctim.schemas.common :refer [ctim-schema-version]]
             [schema.core :as s]))
@@ -29,8 +33,14 @@
                     (:end_time prev-valid-time)
                     time/default-expire-date)}})
 
-(defn default-realize-fn [type-name Model StoredModel]
-  (s/fn default-realize :- StoredModel
+(s/defn default-realize-fn
+  ;; commented since StoredModel is a value argument.
+  ;; checking is propagated to the body via s/fn
+  #_#_:- (MaybeDelayedRealizeFn StoredModel)
+  [type-name
+   Model :- (s/protocol s/Schema)
+   StoredModel  :- (s/protocol s/Schema)]
+  (s/fn default-realize :- (MaybeDelayedRealizeFnResult StoredModel)
     ([new-object :- Model
       id :- s/Str
       tempids :- (s/maybe TempIDs)
@@ -43,6 +53,10 @@
       owner :- s/Str
       groups :- [s/Str]
       prev-object :- (s/maybe StoredModel)]
+    (s/fn :- StoredModel
+     [{{{:keys [get-in-config]} :ConfigService}
+       :services
+       :as _rt-opt_} :- GraphQLRuntimeOptions]
      (let [now (time/now)]
        (merge new-object
               {:id id
@@ -54,11 +68,11 @@
                :modified now
                :timestamp (or (:timestamp new-object) now)
                :tlp (:tlp new-object
-                          (:tlp prev-object (properties-default-tlp p/get-in-global-properties)))}
+                          (:tlp prev-object (properties-default-tlp get-in-config)))}
               (when (contains-key? Model :valid_time)
                 (make-valid-time (:valid_time prev-object)
                                  (:valid_time new-object)
-                                 now)))))))
+                                 now))))))))
 
 (defn short-id->long-id [id get-in-config]
   (id/short-id->long-id id #(get-http-show get-in-config)))

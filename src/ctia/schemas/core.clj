@@ -38,6 +38,119 @@
    :created java.util.Date
    (s/optional-key :modified) java.util.Date})
 
+(s/defschema RealizeFnServices
+  "Maps of service functions available for realize-fns"
+  {s/Keyword {s/Keyword (s/pred ifn?)}})
+
+(s/defschema GraphQLRuntimeOptions
+  "A map of options to resolve a DelayedGraphQLValue"
+  {:services RealizeFnServices})
+
+(defn delayed-graphql-value?
+  "A flat predicate deciding if the argument is delayed."
+  [v]
+  (fn? v))
+
+(defn resolved-graphql-value?
+  "A flat predicate deciding if the argument is not delayed."
+  [v]
+  (not (delayed-graphql-value? v)))
+
+(s/defn MaybeDelayedRealizeFnResult
+  :- (s/protocol s/Schema)
+  "The return value of a realize-fn either implements clojure.lang.Fn,
+  thus it expects a map of service maps, otherwise it is considered
+  'resolved'."
+  [a :- (s/protocol s/Schema)]
+  (s/if delayed-graphql-value?
+    (s/=> a RealizeFnServices)
+    a))
+
+(s/defn RealizeFnReturning
+  :- (s/protocol s/Schema)
+  [return :- (s/protocol s/Schema)]
+  (s/=>* return
+         [s/Any  ;; new-object
+          s/Any  ;; id
+          s/Any  ;; tempids
+          s/Any  ;; owner
+          s/Any] ;; groups
+         [s/Any  ;; new-object
+          s/Any  ;; id
+          s/Any  ;; tempids
+          s/Any  ;; owner
+          s/Any  ;; groups
+          s/Any])) ;; prev-object
+
+(s/defschema MaybeDelayedRealizeFn
+  (RealizeFnReturning (MaybeDelayedRealizeFnResult (s/pred map?))))
+
+(s/defschema RealizeFn
+  (RealizeFnReturning (s/pred map?)))
+
+(s/defschema GraphQLValue
+  (s/pred
+    resolved-graphql-value?))
+
+(s/defn DelayedGraphQLValue
+  :- (s/protocol s/Schema)
+  [a :- (s/protocol s/Schema)]
+  "A 1-argument function that returns values ready for use by the GraphQL API.
+  Must implement clojure.lang.Fn.
+  
+  a must be a subtype of GraphQLValue."
+  (let [a (s/constrained a resolved-graphql-value?)]
+    (s/constrained
+      (s/=> a
+            GraphQLRuntimeOptions)
+      delayed-graphql-value?)))
+
+(s/defn MaybeDelayedGraphQLValue
+  :- (s/protocol s/Schema)
+  [a :- (s/protocol s/Schema)]
+  "Returns a schema representing
+  a must be a subtype of GraphQLValue."
+  (let [a (s/constrained a resolved-graphql-value?)]
+    (s/if delayed-graphql-value?
+      (DelayedGraphQLValue a)
+      a)))
+
+(s/defschema AnyMaybeDelayedGraphQLValue
+  (MaybeDelayedGraphQLValue GraphQLValue))
+
+(s/defn MaybeDelayedGraphQLTypeResolver
+  :- (s/protocol s/Schema)
+  [a :- (s/protocol s/Schema)]
+  "Returns a schema representing type resolvers
+  that might return delayed GraphQL values."
+  (let [a (s/constrained a resolved-graphql-value?)]
+    (s/=> (MaybeDelayedGraphQLValue a)
+          (s/named s/Any 'context)
+          (s/named s/Any 'args)
+          (s/named s/Any 'field-selection)
+          (s/named s/Any 'source))))
+
+(s/defschema AnyMaybeDelayedGraphQLTypeResolver
+  (MaybeDelayedGraphQLTypeResolver GraphQLValue))
+
+(s/defn resolve-with-rt-opt :- GraphQLValue
+  "Resolve a MaybeDelayedGraphQLValue value, if needed, using given runtime options."
+  [maybe-fn :- AnyMaybeDelayedGraphQLValue
+   rt-opt :- GraphQLRuntimeOptions]
+  (if (delayed-graphql-value? maybe-fn)
+    (maybe-fn rt-opt)
+    maybe-fn))
+
+(s/defn MaybeDelayedRealizeFn->RealizeFn
+  :- RealizeFn
+  [realize-fn :- MaybeDelayedRealizeFn
+   rt-opt :- GraphQLRuntimeOptions]
+  (fn [& args]
+    (-> realize-fn
+        (apply args)
+        (resolve-with-rt-opt
+          rt-opt))))
+
 (s/defschema Entity
   (st/merge
    {:entity s/Keyword
@@ -58,7 +171,7 @@
      :capabilities #{s/Keyword}
      :no-bulk? s/Bool
      :no-api? s/Bool
-     :realize-fn s/Any})))
+     :realize-fn MaybeDelayedRealizeFn})))
 
 (s/defschema OpenCTIMSchemaVersion
   {(s/optional-key :schema_version) s/Str})
