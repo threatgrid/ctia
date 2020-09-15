@@ -16,7 +16,8 @@
    [ctia.store :refer :all]
    [ctia.verdict.graphql.schemas :as verdict]
    [ctim.schemas.common :as ctim-common-schema]
-   [flanders.utils :as fu]))
+   [flanders.utils :as fu]
+   [schema.core :as s]))
 
 (defn observable-verdict
   [{observable-type :type
