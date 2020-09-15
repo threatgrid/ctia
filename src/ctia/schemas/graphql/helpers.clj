@@ -82,7 +82,7 @@
   (atom {}))
 
 ;; TODO move to Trapperkeeper service
-(s/def ^:private default-named-type-registry
+(s/def default-named-type-registry
   :- NamedTypeRegistry
   (create-named-type-registry))
 

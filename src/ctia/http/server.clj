@@ -9,7 +9,8 @@
             [ctia.http.handler :as handler]
             [ctia.http.middleware.auth :as auth]
             [ctia.lib.riemann :as rie]
-            [ctia.schemas.core :refer [APIHandlerServices]]
+            [ctia.schemas.core :refer [APIHandlerServices
+                                       resolve-with-rt-opt]]
             [ring-jwt-middleware.core :as rjwt]
             [ring.adapter.jetty :as jetty]
             [ring.middleware
@@ -230,6 +231,7 @@
              (.stop server))
            nil)))
 
+;; FIXME replace ASAP!
 ;; temporary, represents the :services context entry
 ;; in a future trapperkeeper service
 (defn ctia-http-server-service-global-services []
@@ -252,8 +254,21 @@
               token))}
    :GraphQLService {:get-graphql
                     (fn []
-                      @(requiring-resolve
-                         'ctia.graphql.schemas/graphql))}
+                      {:post [(instance? graphql.GraphQL %)]}
+                      (let [;; this is really gross, will make more sense once it's
+                            ;; in defservice form.
+                            services (-> (ctia-http-server-service-global-services)
+                                         (assoc-in
+                                           [:GraphQLService :get-or-update-named-type-registry]
+                                           (partial
+                                             (requiring-resolve
+                                               'ctia.schemas.graphql.helpers/get-or-update-named-type-registry )
+                                             @(requiring-resolve
+                                                'ctia.schemas.graphql.helpers/default-named-type-registry))))]
+                        (-> @(requiring-resolve
+                               'ctia.graphql.schemas/graphql)
+                            (resolve-with-rt-opt
+                              {:services services}))))}
    :IEncryption {:decrypt (requiring-resolve
                             'ctia.encryption/decrypt-str)
                  :encrypt (requiring-resolve

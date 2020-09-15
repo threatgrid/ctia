@@ -9,7 +9,11 @@
                      MaybeDelayedGraphQLTypeResolver
                      MaybeDelayedGraphQLValue]]
             [ctia.schemas.graphql.pagination :as pagination]
-            [ctia.store :refer :all]
+            [ctia.store :refer [list-judgements-by-observable
+                                list-records
+                                list-sightings-by-observables
+                                query-string-search
+                                read-fn]]
             [schema.core :as s]))
 
 ;; Default fields that must always be retrieved
