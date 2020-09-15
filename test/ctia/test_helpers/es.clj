@@ -139,7 +139,7 @@
                       "ctia.store.es.vulnerability.indexname" "ctia_vulnerability"
                       "ctia.store.es.weakness.indexname" "ctia_weakness"
 
-                      "ctia.store.actor" "es"
+                      "ctia.store.actor" "es7"
                       "ctia.store.asset" "es"
                       "ctia.store.asset-mapping" "es"
                       "ctia.store.asset-properties" "es"

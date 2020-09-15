@@ -25,7 +25,7 @@
   `(defrecord ~store-name [~(symbol "state")]
      IStore
      (~(symbol "read-record") [_# id# ident# params#]
-      ((crud/handle-read ~entity ~partial-stored-schema)
+      ((crud/handle-read ~partial-stored-schema)
        ~(symbol "state")  id# ident# params#))
      (~(symbol "create-record") [_# new-actors# ident# params#]
       ((crud/handle-create ~entity ~stored-schema)
@@ -37,14 +37,14 @@
       ((crud/handle-delete ~entity ~stored-schema)
        ~(symbol "state") id# ident# params#))
      (~(symbol "list-records") [_# filter-map# ident# params#]
-      ((crud/handle-find ~entity ~partial-stored-schema)
+      ((crud/handle-find ~partial-stored-schema)
        ~(symbol "state") filter-map# ident# params#))
      IQueryStringSearchableStore
      (~(symbol "query-string-search") [_# search-query# ident# params#]
       ((crud/handle-query-string-search ~entity ~partial-stored-schema)
        ~(symbol "state") search-query# ident# params#))
      (~(symbol "query-string-count") [_# search-query# ident#]
-      ((crud/handle-query-string-count ~entity)
+      ((crud/handle-query-string-count)
        ~(symbol "state") search-query# ident#))
      (~(symbol "aggregate") [_# search-query# agg-query# ident#]
       ((crud/handle-aggregate ~entity)

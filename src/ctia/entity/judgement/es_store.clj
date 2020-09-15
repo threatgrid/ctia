@@ -45,11 +45,11 @@
 
 (def handle-create (crud/handle-create :judgement StoredJudgement))
 (def handle-update (crud/handle-update :judgement StoredJudgement))
-(def handle-read (crud/handle-read :judgement PartialStoredJudgement))
+(def handle-read (crud/handle-read PartialStoredJudgement))
 (def handle-delete (crud/handle-delete :judgement PartialStoredJudgement))
-(def handle-list (crud/handle-find :judgement PartialStoredJudgement))
+(def handle-list (crud/handle-find PartialStoredJudgement))
 (def handle-query-string-search (crud/handle-query-string-search :judgement PartialStoredJudgement))
-(def handle-query-string-count (crud/handle-query-string-count :judgement))
+(def handle-query-string-count (crud/handle-query-string-count))
 (def handle-aggregate (crud/handle-aggregate :judgement))
 
 (defn list-active-by-observable

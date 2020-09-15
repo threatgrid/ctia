@@ -55,7 +55,7 @@
 (s/defn handle-read :- (s/maybe Identity)
   [state :- ESConnState
    login :- s/Str]
-  (some-> (crud/get-doc-with-index state :identity login {})
+  (some-> (crud/get-doc-with-index state login {})
           :_source
           (update-in [:capabilities] capabilities->capabilities-set)
           (dissoc :id)))
@@ -64,7 +64,7 @@
   [state :- ESConnState
    login :- s/Str]
   (when-let [{index :_index}
-             (crud/get-doc-with-index state :identity login {})]
+             (crud/get-doc-with-index state login {})]
     (delete-doc (:conn state)
                 index
                 mapping

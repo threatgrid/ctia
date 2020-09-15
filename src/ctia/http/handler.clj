@@ -94,6 +94,8 @@
   {:compojure.api.exception/request-parsing ex/request-parsing-handler
    :compojure.api.exception/request-validation ex/request-validation-handler
    :compojure.api.exception/response-validation ex/response-validation-handler
+   ;; switch this value for switch to ES7
+   ;;:ductile.conn/es-query-parsing-error ex/es-query-parsing-error-handler
    :clj-momo.lib.es.conn/es-query-parsing-error ex/es-query-parsing-error-handler
    :access-control-error ex/access-control-error-handler
    :invalid-tlp-error ex/invalid-tlp-error-handler

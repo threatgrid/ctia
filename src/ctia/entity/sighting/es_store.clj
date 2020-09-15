@@ -51,11 +51,11 @@
 (def es-coerce! (crud/coerce-to-fn [(s/maybe ESPartialStoredSighting)]))
 
 (def create-fn (crud/handle-create :sighting ESStoredSighting))
-(def read-fn (crud/handle-read :sighting ESPartialStoredSighting))
+(def read-fn (crud/handle-read ESPartialStoredSighting))
 (def update-fn (crud/handle-update :sighting ESStoredSighting))
-(def list-fn (crud/handle-find :sighting ESPartialStoredSighting))
+(def list-fn (crud/handle-find ESPartialStoredSighting))
 (def handle-query-string-search (crud/handle-query-string-search :sighting ESPartialStoredSighting))
-(def handle-query-string-count (crud/handle-query-string-count :sighting))
+(def handle-query-string-count (crud/handle-query-string-count))
 (def handle-aggregate (crud/handle-aggregate :sighting))
 
 (s/defn observable->observable-hash :- s/Str

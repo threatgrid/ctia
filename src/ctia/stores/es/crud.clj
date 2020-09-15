@@ -1,5 +1,6 @@
 (ns ctia.stores.es.crud
-  (:require [clj-momo.lib.es
+  (:require [ductile.document :as d7]
+            [clj-momo.lib.es
              [document :as d]
              [query :as q]]
             [clojure.string :as string]
@@ -97,13 +98,11 @@
  documents from an alias that points to multiple indices.
 It returns the documents with full hits meta data including the real index in which is stored the document."
   [{:keys [conn index]} :- ESConnState
-   mapping :- s/Keyword
    ids :- [s/Str]
    params]
   (let [ids-query (q/ids (map ensure-document-id ids))
-        res (d/query conn
+        res (d7/query conn
                      index
-                     (name mapping)
                      ids-query
                      (assoc (make-es-read-params params)
                             :full-hits?
@@ -114,10 +113,9 @@ It returns the documents with full hits meta data including the real index in wh
   "Retrieves a document from a search \"ids\" query. It is used to perform a get query on an alias that points to multiple indices.
  It returns the document with full hits meta data including the real index in which is stored the document."
   [conn-state :- ESConnState
-   mapping :- s/Keyword
    _id :- s/Str
    params]
-  (first (get-docs-with-indices conn-state mapping [_id] params)))
+  (first (get-docs-with-indices conn-state [_id] params)))
 
 (defn handle-create
   "Generate an ES create handler using some mapping and schema"
@@ -157,7 +155,7 @@ It returns the documents with full hits meta data including the real index in wh
        ident
        {:keys [refresh]}]
       (when-let [{index :_index current-doc :_source}
-                 (get-doc-with-index state mapping id {})]
+                 (get-doc-with-index state id {})]
         (if (allow-write? current-doc ident)
           (coerce! (d/index-doc (:conn state)
                                 index
@@ -173,7 +171,7 @@ It returns the documents with full hits meta data including the real index in wh
 
 (defn handle-read
   "Generate an ES read handler using some mapping and schema"
-  [mapping Model]
+  [Model]
   (let [coerce! (coerce-to-fn (s/maybe Model))]
     (s/fn :- (s/maybe Model)
       [{{{:keys [get-in-config]} :ConfigService}
@@ -184,7 +182,6 @@ It returns the documents with full hits meta data including the real index in wh
        ident
        params]
       (when-let [doc (-> (get-doc-with-index state
-                                             mapping
                                              id
                                              (make-es-read-params params))
                          :_source
@@ -208,7 +205,7 @@ It returns the documents with full hits meta data including the real index in wh
      ident
      {:keys [refresh]}]
     (when-let [{index :_index doc :_source}
-               (get-doc-with-index state mapping id {})]
+               (get-doc-with-index state id {})]
       (if (allow-write? doc ident)
         (d/delete-doc (:conn state)
                       index
@@ -283,7 +280,7 @@ It returns the documents with full hits meta data including the real index in wh
 
 (defn handle-find
   "Generate an ES find/list handler using some mapping and schema"
-  [mapping Model]
+  [Model]
   (let [response-schema (list-response-schema Model)
         coerce! (coerce-to-fn response-schema)]
     (s/fn :- response-schema
@@ -303,9 +300,8 @@ It returns the documents with full hits meta data including the real index in wh
                                         {:should (q/prepare-terms one-of)
                                          :minimum_should_match 1})
                           query (update :filter conj query_string))]
-        (cond-> (coerce! (d/query (:conn state)
+        (cond-> (coerce! (d7/query (:conn state)
                                   (:index state)
-                                  (name mapping)
                                   (q/bool bool-params)
                                   (-> params
                                       rename-sort-fields
@@ -366,7 +362,7 @@ It returns the documents with full hits meta data including the real index in wh
 
 (defn handle-query-string-count
   "Generate an ES count handler using some mapping and schema"
-  [mapping]
+  []
   (s/fn :- s/Int
     [{conn :conn
       index :index
@@ -374,10 +370,9 @@ It returns the documents with full hits meta data including the real index in wh
      {:keys [filter-map] :as search-query} :- SearchQuery
      ident]
     (let [query (make-search-query es-conn-state search-query ident)]
-      (d/count-docs conn
-                    index
-                    (name mapping)
-                    query))))
+      (d7/count-docs conn
+                     index
+                     query))))
 
 (s/defn make-histogram
   [{:keys [aggregate-on granularity timezone]

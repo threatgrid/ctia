@@ -87,10 +87,10 @@
 
 (def create-fn (sut/handle-create :sighting s/Any))
 (def update-fn (sut/handle-update :sighting s/Any))
-(def read-fn (sut/handle-read :sighting s/Any))
+(def read-fn (sut/handle-read s/Any))
 (def delete-fn (sut/handle-delete :sighting s/Any))
-(def search-fn (sut/handle-query-string-search :sighting s/Any))
-(def count-fn (sut/handle-query-string-count :sighting))
+(def search-fn (sut/handle-query-string-search s/Any))
+(def count-fn (sut/handle-query-string-count))
 (def aggregate-fn (sut/handle-aggregate :sighting))
 
 (def ident {:login "johndoe"
