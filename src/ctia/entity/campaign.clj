@@ -1,6 +1,5 @@
 (ns ctia.entity.campaign
   (:require [ctia.domain.entities :refer [default-realize-fn]]
-            [ctia.store :refer :all]
             [ctia.http.routes
              [common :refer [BaseEntityFilterParams PagingParams SourcableEntityFilterParams]]
              [crud :refer [entity-crud-routes]]]

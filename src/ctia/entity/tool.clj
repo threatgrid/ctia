@@ -4,7 +4,6 @@
             [ctia.http.routes
              [common :refer [BaseEntityFilterParams PagingParams SourcableEntityFilterParams]]
              [crud :refer [entity-crud-routes]]]
-            [ctia.store :refer :all]
             [ctia.stores.es
              [mapping :as em]
              [store :refer [def-es-store]]]

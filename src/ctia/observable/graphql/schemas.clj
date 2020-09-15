@@ -1,7 +1,6 @@
 (ns ctia.observable.graphql.schemas
   (:refer-clojure :exclude [update list read])
   (:require
-   [ctia.store :refer :all]
    [ctia.domain.entities :as ctia-entities]
    [ctia.entity.judgement :as judgement]
    [ctia.entity.sighting.graphql-schemas :as sighting]
@@ -13,20 +12,20 @@
     [helpers :as g]
     [pagination :as pagination]
     [resolvers :as resolvers]]
-   [ctia.store :refer :all]
+   [ctia.store :refer [calculate-verdict]]
    [ctia.verdict.graphql.schemas :as verdict]
    [ctim.schemas.common :as ctim-common-schema]
    [flanders.utils :as fu]
    [schema.core :as s]))
 
-(defn observable-verdict
+(s/defn observable-verdict
   [{observable-type :type
     observable-value :value}
    ident
    {{{:keys [get-in-config]} :ConfigService
      {:keys [read-store]} :StoreService}
     :services
-    :as _rt-opt_}]
+    :as _rt-opt_} :- GraphQLRuntimeOptions]
   (some-> (read-store :judgement
                       calculate-verdict
                       {:type observable-type :value observable-value}
