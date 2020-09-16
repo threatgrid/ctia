@@ -1,5 +1,5 @@
 (ns ctia.stores.es.schemas
-  (:require [clj-momo.lib.es.schemas] ;; no alias to avoid ESConnState clashes
+  (:require [ductile.schemas] ;; no alias to avoid ESConnState clashes
             [schema.core :as s]
             [schema-tools.core :as st]))
 
@@ -10,7 +10,7 @@
                                           (s/named s/Any 'default)])}})
 
 (s/defschema ESConnState
-  (st/merge 
+  (st/merge
     ;; disallows services
-    clj-momo.lib.es.schemas/ESConnState
+    ductile.schemas/ESConnState
     {:services ESConnServices}))

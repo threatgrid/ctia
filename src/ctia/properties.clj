@@ -4,7 +4,7 @@
             alternative properties file on the classpath or by\n
             setting system properties."}
     ctia.properties
-  (:require [clj-momo.lib.es.schemas :refer [Refresh]]
+  (:require [ductile.schemas :refer [Refresh]]
             [clj-momo.lib.schema :as mls]
             [clj-momo.properties :as mp]
             [ctia.store :as store]

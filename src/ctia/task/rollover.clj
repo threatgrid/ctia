@@ -1,11 +1,11 @@
 (ns ctia.task.rollover
-  (:require [clj-momo.lib.es.index :as es-index]
-            [clojure.tools.logging :as log]
+  (:require [clojure.tools.logging :as log]
             [ctia.init :refer [start-ctia!*]]
             [ctia.store-service :as store-svc]
             [ctia.stores.es.schemas :refer [ESConnState]]
             [ctia.properties :as p]
             [puppetlabs.trapperkeeper.app :as app]
+            ductile.index
             [schema.core :as s])
   (:import clojure.lang.ExceptionInfo))
 
@@ -16,7 +16,7 @@
      conditions :rollover} :props} :- ESConnState]
   (when (and aliased (seq conditions))
     (let [{rolledover? :rolled_over :as response}
-          (es-index/rollover! conn write-index conditions)]
+          (ductile.index/rollover! conn write-index conditions)]
       (when rolledover?
         (log/info "rolled over: " (pr-str response)))
       response)))

@@ -14,7 +14,7 @@
    [ctia.entity.judgement.schemas :refer [PartialJudgementList]]
    [ctia.entity.sighting.schemas :refer [PartialSightingList]]
    [ctia.http.routes.common :refer [paginated-ok PagingParams]]
-   [clj-momo.lib.es.pagination :as pag]
+   [ductile.pagination :as pag]
    [ctia.schemas.core :refer [APIHandlerServices ObservableTypeIdentifier Reference Verdict]]
    [ctim.domain.id :as id]
    [ring.swagger.schema :refer [describe]]

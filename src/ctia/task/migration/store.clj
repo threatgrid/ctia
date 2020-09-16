@@ -1,11 +1,13 @@
 (ns ctia.task.migration.store
   (:require [clj-momo.lib.clj-time.coerce :as time-coerce]
             [clj-momo.lib.clj-time.core :as time]
-            [clj-momo.lib.es.conn :as conn]
+            [ductile.conn :as conn]
+            [ductile.document :as ductile.doc]
+            [ductile.index :as ductile.index]
+            [ductile.query :as ductile.query]
+            [ductile.schemas :refer [ESConn ESQuery Refresh]]
             [clj-momo.lib.es.document :as es-doc]
             [clj-momo.lib.es.index :as es-index]
-            [clj-momo.lib.es.query :as es-query]
-            [clj-momo.lib.es.schemas :refer [ESConn ESQuery Refresh]]
             [clojure.set :as set]
             [clojure.string :as string]
             [clojure.tools.logging :as log]
@@ -162,7 +164,7 @@
 
 (defn store-size
   [{:keys [conn indexname mapping]}]
-  (or (retry es-max-retry es-doc/count-docs conn indexname mapping)
+  (or (retry es-max-retry ductile.doc/count-docs conn indexname)
       0))
 
 (defn init-migration-store
@@ -220,7 +222,7 @@
   [{:keys [mapping] :as store-map} ids services :- MigrationStoreServices]
   (when (seq ids)
     (-> (store-map->es-conn-state store-map services)
-        (crud/get-docs-with-indices (keyword mapping) ids {})
+        (crud/get-docs-with-indices ids {})
         (->> (map (fn [{:keys [_id] :as hit}]
                     {_id (select-keys hit [:_id :_index :_type])}))
              (into {})))))
@@ -306,7 +308,7 @@ Rollover requires refresh so we cannot just call ES with condition since refresh
     (log/info (format "%s - refreshing index %s"
                       mapping
                       write-index))
-    (es-index/refresh! conn write-index)
+    (ductile.index/refresh! conn write-index)
     (rollover-store (store-map->es-conn-state store-map services))))
 
 (s/defn missing-query :- ESQuery
@@ -399,10 +401,9 @@ Rollover requires refresh so we cannot just call ES with condition since refresh
                  {:field agg-field
                   :interval interval}}}
         res (retry es-max-retry
-                   es-doc/query
+                   ductile.doc/query
                    conn
                    indexname
-                   mapping
                    query
                    aggs-q
                    {:limit 0})
@@ -437,10 +438,9 @@ Rollover requires refresh so we cannot just call ES with condition since refresh
          (when search_after
            {:search_after search_after}))]
     (retry es-max-retry
-           es-doc/query
+           ductile.doc/query
            conn
            indexname
-           mapping
            query
            params)))
 
@@ -484,17 +484,16 @@ Rollover requires refresh so we cannot just call ES with condition since refresh
     entity-type :type} :- StoreMap
    ids :- [s/Str]]
   (when (seq ids)
-    (es-index/refresh! conn indexname)
+    (ductile.index/refresh! conn indexname)
     (doseq [ids (->> (map (comp :short-id long-id->id) ids)
                      (partition-all 1000))]
       (retry es-max-retry
-             es-doc/delete-by-query
+             ductile.doc/delete-by-query
              conn
              [indexname]
-             (name entity-type)
-             (es-query/ids ids)
-             true
-             "true"))))
+             (ductile.query/ids ids)
+             {:refresh "true"
+              :wait_for_completion true}))))
 
 (defn target-index-config
   "Generates the configuration of an index while migrating"
@@ -518,23 +517,23 @@ Rollover requires refresh so we cannot just call ES with condition since refresh
 (defn purge-store
   [entity-type conn storename]
   (log/infof "%s - purging store: %s" entity-type storename)
-  (let [indexnames (-> (es-index/get conn storename)
+  (let [indexnames (-> (ductile.index/get conn storename)
                     keys)]
     (doseq [indexname indexnames]
       (log/infof "%s - deleting index: %s" entity-type (name indexname))
-      (es-index/delete! conn (name indexname)))))
+      (ductile.index/delete! conn (name indexname)))))
 
 (defn create-target-store!
   "create the target store, pushing its template"
   [{:keys [conn indexname config props] entity-type :type}]
-  (when (retry es-max-retry es-index/index-exists? conn indexname)
+  (when (retry es-max-retry ductile.index/index-exists? conn indexname)
     (log/warnf "tried to create target store %s, but it already exists. Recreating it." indexname))
   (let [index-config (target-index-config indexname config props)]
     (log/infof "%s - creating index template: %s" entity-type indexname)
     (purge-store entity-type conn indexname)
     (log/infof "%s - creating store: %s" entity-type indexname)
     (retry es-max-retry es-index/create-template! conn indexname index-config)
-    (retry es-max-retry es-index/create! conn (format "<%s-{now/d}-000001>" indexname) index-config)))
+    (retry es-max-retry ductile.index/create! conn (format "<%s-{now/d}-000001>" indexname) index-config)))
 
 (s/defn init-storemap :- StoreMap
   [props :- es.init/StoreProperties
@@ -691,12 +690,12 @@ when confirm? is true, it stores this state and creates the target indices."
    services :- MigrationStoreServices]
   (log/infof "%s - update index settings" (:type source-store))
   (retry es-max-retry
-         es-index/update-settings!
+         ductile.index/update-settings!
          (:conn target-store)
          (:indexname target-store)
          (revert-optimizations-settings (get-in target-store [:config :settings])))
   (log/infof "%s - trigger refresh" (:type source-store))
-  (retry es-max-retry es-index/refresh! (:conn target-store) (:indexname target-store))
+  (retry es-max-retry ductile.index/refresh! (:conn target-store) (:indexname target-store))
   (update-migration-store migration-id
                           store-key
                           {:completed (time/internal-now)}

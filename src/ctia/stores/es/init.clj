@@ -5,8 +5,10 @@
    [clojure.set :refer [difference]]
    [ctia.stores.es.mapping :refer [store-settings]]
    [ctia.stores.es.schemas :refer [ESConnServices ESConnState]]
-   [clj-momo.lib.es
+   [ductile
     [conn :refer [connect]]
+    [index]]
+   [clj-momo.lib.es
     [index :as es-index]]
    [ctia.entity.entities :refer [entities]]
    [schema.core :as s]
@@ -94,7 +96,7 @@
 (defn get-existing-indices
   [conn index]
   ;; retrieve existing indices using wildcard to identify ambiguous index names
-  (let [existing (-> (es-index/get conn (str index "*"))
+  (let [existing (-> (ductile.index/get conn (str index "*"))
                      keys
                      set)
         index-pattern (re-pattern (str index "(-\\d{4}.\\d{2}.\\d{2}.*)?"))
@@ -123,9 +125,9 @@
     (when (and (:aliased props)
                (empty? existing-indices))
       ;;https://github.com/elastic/elasticsearch/pull/34499
-      (es-index/create! conn
-                        (format "<%s-{now/d}-000001>" index)
-                        (update config :aliases assoc (:write-index props) {})))
+      (ductile.index/create! conn
+                             (format "<%s-{now/d}-000001>" index)
+                             (update config :aliases assoc (:write-index props) {})))
     (if (and (:aliased props)
              (contains? existing-indices (keyword index)))
       (do (log/error "an existing unaliased store was configured as aliased. Switching from unaliased to aliased indices requires a migration."

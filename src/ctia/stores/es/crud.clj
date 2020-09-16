@@ -1,5 +1,5 @@
 (ns ctia.stores.es.crud
-  (:require [ductile.document :as d7]
+  (:require [ductile.document :as ductile.doc]
             [clj-momo.lib.es
              [document :as d]
              [query :as q]]
@@ -101,12 +101,12 @@ It returns the documents with full hits meta data including the real index in wh
    ids :- [s/Str]
    params]
   (let [ids-query (q/ids (map ensure-document-id ids))
-        res (d7/query conn
-                     index
-                     ids-query
-                     (assoc (make-es-read-params params)
-                            :full-hits?
-                            true))]
+        res (ductile.doc/query conn
+                               index
+                               ids-query
+                               (assoc (make-es-read-params params)
+                                      :full-hits?
+                                      true))]
     (:data res)))
 
 (s/defn get-doc-with-index
@@ -300,13 +300,13 @@ It returns the documents with full hits meta data including the real index in wh
                                         {:should (q/prepare-terms one-of)
                                          :minimum_should_match 1})
                           query (update :filter conj query_string))]
-        (cond-> (coerce! (d7/query (:conn state)
-                                  (:index state)
-                                  (q/bool bool-params)
-                                  (-> params
-                                      rename-sort-fields
-                                      with-default-sort-field
-                                      make-es-read-params)))
+        (cond-> (coerce! (ductile.doc/query (:conn state)
+                                            (:index state)
+                                            (q/bool bool-params)
+                                            (-> params
+                                                rename-sort-fields
+                                                with-default-sort-field
+                                                make-es-read-params)))
           (restricted-read? ident) (update :data
                                            access-control-filter-list
                                            ident
@@ -334,7 +334,7 @@ It returns the documents with full hits meta data including the real index in wh
 
 (defn handle-query-string-search
   "Generate an ES query handler using some mapping and schema"
-  [mapping Model]
+  [Model]
   (let [response-schema (list-response-schema Model)
         coerce! (coerce-to-fn response-schema)]
     (s/fn :- response-schema
@@ -347,9 +347,9 @@ It returns the documents with full hits meta data including the real index in wh
        ident
        params]
       (let [query (make-search-query es-conn-state search-query ident)]
-        (cond-> (coerce! (d/query conn
+        (cond-> (coerce! (ductile.doc/query conn
                                   index
-                                  (name mapping)
+                                  ;;(name mapping)
                                   query
                                   (-> params
                                       rename-sort-fields
@@ -360,19 +360,17 @@ It returns the documents with full hits meta data including the real index in wh
                                            ident
                                            get-in-config))))))
 
-(defn handle-query-string-count
-  "Generate an ES count handler using some mapping and schema"
-  []
-  (s/fn :- s/Int
-    [{conn :conn
-      index :index
-      :as es-conn-state} :- ESConnState
-     {:keys [filter-map] :as search-query} :- SearchQuery
-     ident]
-    (let [query (make-search-query es-conn-state search-query ident)]
-      (d7/count-docs conn
-                     index
-                     query))))
+(s/defn handle-query-string-count :- s/Int
+  "ES count handler using some mapping and schema"
+  [{conn :conn
+    index :index
+    :as es-conn-state} :- ESConnState
+   {:keys [filter-map] :as search-query} :- SearchQuery
+   ident]
+  (let [query (make-search-query es-conn-state search-query ident)]
+    (ductile.doc/count-docs conn
+                            index
+                            query)))
 
 (s/defn make-histogram
   [{:keys [aggregate-on granularity timezone]
@@ -399,10 +397,10 @@ It returns the documents with full hits meta data including the real index in wh
   [{:keys [agg-type] :as agg-query} :- AggQuery]
   (let [agg-fn
         (case agg-type
-              :topn make-topn
-              :cardinality make-cardinality
-              :histogram make-histogram
-              (throw (ex-info "invalid aggregation type" agg-type)))]
+          :topn make-topn
+          :cardinality make-cardinality
+          :histogram make-histogram
+          (throw (ex-info "invalid aggregation type" agg-type)))]
     {:metric (agg-fn agg-query)}))
 
 (defn format-agg-result
@@ -417,21 +415,18 @@ It returns the documents with full hits meta data including the real index in wh
                                 :value (:doc_count %))
                     buckets)))
 
-(defn handle-aggregate
+(s/defn handle-aggregate
   "Generate an ES aggregation handler using some mapping and schema"
-  [mapping]
-  (s/fn :- s/Any
-    [{:keys [conn index] :as es-conn-state} :- ESConnState
-     {:keys [filter-map] :as search-query} :- SearchQuery
-     {:keys [agg-type] :as agg-query} :- AggQuery
-     ident]
-    (let [query (make-search-query es-conn-state search-query ident)
-          agg (make-aggregation agg-query)
-          es-res (d/query conn
-                          index
-                          (name mapping)
-                          query
-                          agg
-                          {:limit 0})]
-      (format-agg-result agg-type
-                         (get-in es-res [:aggs :metric])))))
+  [{:keys [conn index] :as es-conn-state} :- ESConnState
+   {:keys [filter-map] :as search-query} :- SearchQuery
+   {:keys [agg-type] :as agg-query} :- AggQuery
+   ident]
+  (let [query (make-search-query es-conn-state search-query ident)
+        agg (make-aggregation agg-query)
+        es-res (ductile.doc/query conn
+                                  index
+                                  query
+                                  agg
+                                  {:limit 0})]
+    (format-agg-result agg-type
+                       (get-in es-res [:aggs :metric]))))

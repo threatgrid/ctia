@@ -54,9 +54,9 @@
 (def read-fn (crud/handle-read ESPartialStoredSighting))
 (def update-fn (crud/handle-update :sighting ESStoredSighting))
 (def list-fn (crud/handle-find ESPartialStoredSighting))
-(def handle-query-string-search (crud/handle-query-string-search :sighting ESPartialStoredSighting))
-(def handle-query-string-count (crud/handle-query-string-count))
-(def handle-aggregate (crud/handle-aggregate :sighting))
+(def handle-query-string-search (crud/handle-query-string-search ESPartialStoredSighting))
+(def handle-query-string-count crud/handle-query-string-count)
+(def handle-aggregate crud/handle-aggregate)
 
 (s/defn observable->observable-hash :- s/Str
   "transform an observable to a hash of the form type:value"

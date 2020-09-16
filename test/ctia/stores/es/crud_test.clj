@@ -90,8 +90,8 @@
 (def read-fn (sut/handle-read s/Any))
 (def delete-fn (sut/handle-delete :sighting s/Any))
 (def search-fn (sut/handle-query-string-search s/Any))
-(def count-fn (sut/handle-query-string-count))
-(def aggregate-fn (sut/handle-aggregate :sighting))
+(def count-fn sut/handle-query-string-count)
+(def aggregate-fn sut/handle-aggregate)
 
 (def ident {:login "johndoe"
             :groups ["group1"]})

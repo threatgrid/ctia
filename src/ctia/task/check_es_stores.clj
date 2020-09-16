@@ -2,10 +2,9 @@
   (:require
    [ctia.stores.es.store
     :refer [store->map]]
-   [clj-momo.lib.es
+   [ductile
     [conn :as conn]
-    [document :as es-doc]
-    [index :as es-index]]
+    [document :as es-doc]]
    [clojure.string :as string]
    [clojure.tools.logging :as log]
    [ctia
