@@ -58,8 +58,10 @@
    [rt-opt :- GraphQLRuntimeOptions]
    (try
      (let [disposition (determine-disposition-id new-judgement)
-           disposition-name (get disposition-map disposition)]
-       ((MaybeDelayedRealizeFn->RealizeFn judgement-default-realize rt-opt)
+           disposition-name (get disposition-map disposition)
+           judgement-default-realize (-> judgement-default-realize
+                                         (MaybeDelayedRealizeFn->RealizeFn rt-opt))]
+       (judgement-default-realize
         (assoc new-judgement
                :disposition disposition
                :disposition_name disposition-name)

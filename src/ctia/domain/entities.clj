@@ -34,7 +34,7 @@
                     time/default-expire-date)}})
 
 (s/defn default-realize-fn
-  ;; commented since StoredModel is a value argument.
+  ;; commented since StoredModel is a parameter and not in scope here,
   ;; checking is propagated to the body via s/fn
   #_#_:- (MaybeDelayedRealizeFn StoredModel)
   [type-name
