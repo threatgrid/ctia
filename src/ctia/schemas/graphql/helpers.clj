@@ -288,20 +288,20 @@
   :- GraphQLArgument
   [^String arg-name
    arg-type :- AnyMaybeDelayedGraphQLValue
-   ^String arg-description
+   arg-description :- (s/maybe s/Str)
    arg-default-value
    rt-opt :- GraphQLRuntimeOptions]
   (let [builder
         (-> (GraphQLArgument/newArgument)
             (.name arg-name)
             (.type (-> arg-type (resolve-with-rt-opt rt-opt)))
-            (.description (or arg-description "")))]
+            (.description (or ^String arg-description "")))]
     (when (some? arg-default-value)
       (.defaultValue builder arg-default-value))
     (.build builder)))
 
-(s/defn ^GraphQLFieldDefinition$Builder
-  add-args
+(s/defn add-args
+  :- GraphQLFieldDefinition$Builder
   [^GraphQLFieldDefinition$Builder field
    args
    rt-opt :- GraphQLRuntimeOptions]
