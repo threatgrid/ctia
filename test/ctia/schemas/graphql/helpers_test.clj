@@ -1,8 +1,10 @@
 (ns ctia.schemas.graphql.helpers-test
-  (:require [ctia.schemas.core :refer [resolve-with-rt-opt]]
+  (:require [ctia.schemas.core :refer [GraphQLRuntimeOptions
+                                       resolve-with-rt-opt]]
             [ctia.schemas.graphql.helpers :as sut]
             [clj-momo.test-helpers.core :as mth]
-            [clojure.test :as t :refer [deftest is testing use-fixtures]])
+            [clojure.test :as t :refer [deftest is testing use-fixtures]]
+            [schema.core :as s])
   (:import [graphql.schema GraphQLType]
            [java.util.concurrent CountDownLatch TimeUnit]))
 
@@ -10,9 +12,16 @@
 
 ;; TODO when global graphql schema is stubbable, add parallel tests to new-object-test etc
 
-(defn dummy-rt-opt []
+;; TODO replace with real services using TK
+(s/defn dummy-rt-opt
+  :- GraphQLRuntimeOptions
+  []
   {:services
-   {:GraphQLService
+   {:ConfigService {:get-in-config (fn [& args] (assert nil))}
+    :StoreService {:read-store (fn [& args] (assert nil))}
+    :IEncryption {:encrypt (fn [& args] (assert nil))
+                  :decrypt (fn [& args] (assert nil))}
+    :GraphQLNamedTypeRegistryService
     {:get-or-update-named-type-registry
      (let [registry (atom {})]
        #(sut/get-or-update-named-type-registry registry %1 %2))}}})

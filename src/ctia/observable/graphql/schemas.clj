@@ -24,8 +24,7 @@
    ident
    {{{:keys [get-in-config]} :ConfigService
      {:keys [read-store]} :StoreService}
-    :services
-    :as _rt-opt_} :- GraphQLRuntimeOptions]
+    :services} :- GraphQLRuntimeOptions]
   (some-> (read-store :judgement
                       calculate-verdict
                       {:type observable-type :value observable-value}

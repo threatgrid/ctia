@@ -134,3 +134,33 @@
 (def deep-remove-nils
   "Remove nil values from a deep nested map recursively"
   (partial deep-filter some?))
+
+(defn select-keys-in
+  "Slice a nested map using select-keys at the leaves.
+  
+  (select-keys-in
+    {:a {:b 1 :c 2}
+     :d {:e 3 :f 4}}
+    [:a [:b]]
+    [:d [:e]])
+  ;=> {:a {:b 1}
+  ;    :d {:e 3}}
+  "
+  [m & paths]
+  {:pre [(map? m)]}
+  (reduce (fn [out path]
+            {:pre [(vector? path)]}
+            (let [prefix (pop path)
+                  _ (assert (seq prefix))
+                  _ (assert (every? keyword? prefix) prefix)
+                  keys (peek path)
+                  _ (assert (vector? keys) (pr-str keys))]
+              (-> out
+                  (update-in prefix
+                             (fn [old]
+                               (assert (nil? old) (str "Repeated prefix " prefix))
+                               (-> m
+                                   (get-in prefix)
+                                   (select-keys keys)))))))
+          {}
+          paths))

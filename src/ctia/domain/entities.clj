@@ -54,9 +54,7 @@
       groups :- [s/Str]
       prev-object :- (s/maybe StoredModel)]
     (s/fn :- StoredModel
-     [{{{:keys [get-in-config]} :ConfigService}
-       :services
-       :as _rt-opt_} :- GraphQLRuntimeOptions]
+     [{{{:keys [get-in-config]} :ConfigService} :services} :- GraphQLRuntimeOptions]
      (let [now (time/now)]
        (merge new-object
               {:id id

@@ -137,8 +137,8 @@
    created, the corresponding object is retrieved instead."
   [enum-name :- String description values]
   (s/fn :- GraphQLEnumType
-    [{{{:keys [get-or-update-named-type-registry]} :GraphQLService} :services
-      :as _rt-opt_} :- GraphQLRuntimeOptions]
+    [{{{:keys [get-or-update-named-type-registry]} :GraphQLNamedTypeRegistryService}
+      :services} :- GraphQLRuntimeOptions]
     (get-or-update-named-type-registry
       enum-name
       #(let [builder (-> (GraphQLEnumType/newEnum)
@@ -361,7 +361,8 @@
    description :- s/Str
    fields :- MaybeDelayedGraphQLFields]
   (s/fn :- GraphQLInputObjectType
-    [{{{:keys [get-or-update-named-type-registry]} :GraphQLService} :services
+    [{{{:keys [get-or-update-named-type-registry]} :GraphQLNamedTypeRegistryService}
+      :services
       :as rt-opt} :- GraphQLRuntimeOptions]
     (get-or-update-named-type-registry
       object-name
@@ -424,7 +425,7 @@
    interfaces
    fields :- MaybeDelayedGraphQLFields]
   (s/fn :- GraphQLObjectType
-    [{{{:keys [get-or-update-named-type-registry]} :GraphQLService} :services
+    [{{{:keys [get-or-update-named-type-registry]} :GraphQLNamedTypeRegistryService} :services
       :as rt-opt} :- GraphQLRuntimeOptions]
     (get-or-update-named-type-registry
       object-name
@@ -461,7 +462,7 @@
    type-resolver-fn
    types]
   (s/fn :- GraphQLUnionType
-    [{{{:keys [get-or-update-named-type-registry]} :GraphQLService} :services
+    [{{{:keys [get-or-update-named-type-registry]} :GraphQLNamedTypeRegistryService} :services
       :as rt-opt} :- GraphQLRuntimeOptions]
     (get-or-update-named-type-registry
       union-name

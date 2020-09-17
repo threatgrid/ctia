@@ -10,6 +10,7 @@
             [ctia.http.middleware.auth :as auth]
             [ctia.lib.riemann :as rie]
             [ctia.schemas.core :refer [APIHandlerServices
+                                       RealizeFnServices
                                        resolve-with-rt-opt]]
             [ring-jwt-middleware.core :as rjwt]
             [ring.adapter.jetty :as jetty]
@@ -231,10 +232,30 @@
              (.stop server))
            nil)))
 
-;; FIXME replace ASAP!
-;; temporary, represents the :services context entry
-;; in a future trapperkeeper service
-(defn ctia-http-server-service-global-services []
+;; temporary, will be replaced by GraphQLService defservice
+(s/defn realize-fn-global-services
+  :- RealizeFnServices
+  []
+  {:ConfigService {:get-in-config #'p/get-in-global-properties}
+   :StoreService {:read-store
+                  (requiring-resolve
+                    'ctia.store/read-store)}
+   :GraphQLNamedTypeRegistryService
+   {:get-or-update-named-type-registry
+    (partial
+      (requiring-resolve
+        'ctia.schemas.graphql.helpers/get-or-update-named-type-registry)
+      @(requiring-resolve
+         'ctia.schemas.graphql.helpers/default-named-type-registry))}
+   :IEncryption {:decrypt (requiring-resolve
+                            'ctia.encryption/decrypt-str)
+                 :encrypt (requiring-resolve
+                            'ctia.encryption/encrypt-str)}})
+
+;; temporary, will be replaced by defservice
+(s/defn ctia-http-server-service-global-services
+  :- APIHandlerServices
+  []
   {:ConfigService {:get-config #'p/get-global-properties
                    :get-in-config #'p/get-in-global-properties}
    :HooksService {:apply-hooks (requiring-resolve
@@ -246,33 +267,25 @@
                   :write-store (requiring-resolve
                                  'ctia.store/write-store)}
    :IAuth {:identity-for-token
-           (fn [token]
-             ((requiring-resolve 'ctia.auth/identity-for-token)
-              (-> (requiring-resolve 'ctia.auth/auth-service)
-                  deref  ;; var
-                  deref) ;;atom
-              token))}
+           (let [identity-for-token @(requiring-resolve 'ctia.auth/identity-for-token)
+                 auth-service @(requiring-resolve 'ctia.auth/auth-service)]
+             (fn [token]
+               (identity-for-token
+                 @auth-service
+                 token)))}
    :GraphQLService {:get-graphql
-                    (fn []
-                      {:post [(instance? graphql.GraphQL %)]}
-                      (let [;; this is really gross, will make more sense once it's
-                            ;; in defservice form.
-                            services (-> (ctia-http-server-service-global-services)
-                                         (assoc-in
-                                           [:GraphQLService :get-or-update-named-type-registry]
-                                           (partial
-                                             (requiring-resolve
-                                               'ctia.schemas.graphql.helpers/get-or-update-named-type-registry )
-                                             @(requiring-resolve
-                                                'ctia.schemas.graphql.helpers/default-named-type-registry))))]
-                        (-> @(requiring-resolve
-                               'ctia.graphql.schemas/graphql)
-                            (resolve-with-rt-opt
-                              {:services services}))))}
+                    (let [graphql (-> @(requiring-resolve
+                                         'ctia.graphql.schemas/graphql)
+                                      (resolve-with-rt-opt
+                                        {:services (realize-fn-global-services)}))]
+                      (fn []
+                        {:post [(instance? graphql.GraphQL %)]}
+                        graphql))}
    :IEncryption {:decrypt (requiring-resolve
                             'ctia.encryption/decrypt-str)
                  :encrypt (requiring-resolve
                             'ctia.encryption/encrypt-str)}})
+
 
 (defn start! [& {:keys [join?]
                  :or {join? true}}]

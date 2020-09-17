@@ -2,7 +2,7 @@
   (:require [ctia.entity.entities :as sut]
             [ctia.schemas.core :refer [MaybeDelayedRealizeFn->RealizeFn]]
             [ctia.test-helpers.core :as test-helpers]
-            [ctia.http.server :refer [ctia-http-server-service-global-services]]
+            [ctia.http.server :refer [realize-fn-global-services]]
             [clojure.test :as t :refer [deftest is use-fixtures join-fixtures]]
             [clojure.spec.alpha :refer [gen]]
             [clojure.spec.gen.alpha :refer [generate]]))
@@ -17,7 +17,7 @@
     {}))
 
 (deftest entity-realize-fn-test
-  (let [realize-fn-services (ctia-http-server-service-global-services)
+  (let [realize-fn-services (realize-fn-global-services)
         properties [:id :type :owner :groups :schema_version
                     :created :modified :timestamp :tlp]
         ;; properties to dissoc to get a valid entity when

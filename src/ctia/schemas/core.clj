@@ -1,5 +1,6 @@
 (ns ctia.schemas.core
-  (:require [ctia.schemas.utils :as csutils]
+  (:require [ctia.lib.utils :refer [select-keys-in]]
+            [ctia.schemas.utils :as csutils]
             [ctim.schemas
              [bundle :as bundle]
              [common :as cos]
@@ -15,14 +16,18 @@
   "Maps of services available to routes"
   {:ConfigService {:get-config (s/=> s/Any s/Any)
                    :get-in-config (s/=>* s/Any
-                                         [s/Any]
-                                         [s/Any s/Any])}
+                                         [[s/Any]]
+                                         [[s/Any] s/Any])}
    :HooksService {:apply-hooks (s/pred ifn?) ;;keyword varargs
                   :apply-event-hooks (s/=> s/Any s/Any)}
    :StoreService {:read-store (s/pred ifn?) ;;varags
                   :write-store (s/pred ifn?)} ;;varags
    :IAuth {:identity-for-token (s/=> s/Any s/Any)}
-   :GraphQLService {:get-graphql (s/=> s/Any)}
+   :GraphQLService {:get-graphql (s/=> graphql.GraphQL)}
+   :GraphQLNamedTypeRegistryService {:get-or-update-named-type-registry
+                                     (s/=> graphql.schema.GraphQLType
+                                           s/Str
+                                           (s/=> graphql.schema.GraphQLType))}
    :IEncryption {:encrypt (s/=> s/Any s/Any)
                  :decrypt (s/=> s/Any s/Any)}})
 
@@ -40,7 +45,28 @@
 
 (s/defschema RealizeFnServices
   "Maps of service functions available for realize-fns"
-  {s/Keyword {s/Keyword (s/pred ifn?)}})
+  {:ConfigService {:get-in-config (s/=>* s/Any
+                                         [[s/Any]]
+                                         [[s/Any] s/Any])}
+   :StoreService {:read-store (s/pred ifn?)} ;;varags
+   :GraphQLNamedTypeRegistryService
+   {:get-or-update-named-type-registry
+    (s/=> graphql.schema.GraphQLType
+          s/Str
+          (s/=> graphql.schema.GraphQLType))}
+   :IEncryption {:encrypt (s/=> s/Any s/Any)
+                 :decrypt (s/=> s/Any s/Any)}})
+
+
+(s/defn APIHandlerServices->RealizeFnServices
+  :- RealizeFnServices
+  [services :- APIHandlerServices]
+  (select-keys-in
+    services
+    [:ConfigService [:get-in-config]]
+    [:StoreService [:read-store]]
+    [:GraphQLNamedTypeRegistryService [:get-or-update-named-type-registry]]
+    [:IEncryption [:decrypt :encrypt]]))
 
 (s/defschema GraphQLRuntimeOptions
   "A map of options to resolve a DelayedGraphQLValue"
@@ -61,10 +87,15 @@
   "The return value of a realize-fn either implements clojure.lang.Fn,
   thus it expects a map of service maps, otherwise it is considered
   'resolved'."
-  [a :- (s/protocol s/Schema)]
-  (s/if delayed-graphql-value?
-    (s/=> a RealizeFnServices)
-    a))
+  ([result :- (s/protocol s/Schema)]
+   (MaybeDelayedRealizeFnResult
+     result
+     GraphQLRuntimeOptions))
+  ([result :- (s/protocol s/Schema)
+    rt-opt :- (s/protocol s/Schema)]
+   (s/if delayed-graphql-value?
+     (s/=> result rt-opt)
+     result)))
 
 (s/defn RealizeFnReturning
   :- (s/protocol s/Schema)

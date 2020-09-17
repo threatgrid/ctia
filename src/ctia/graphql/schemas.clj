@@ -39,7 +39,8 @@
     :refer [VulnerabilityConnectionType VulnerabilityType]]
    [ctia.entity.weakness :as weakness
     :refer [WeaknessConnectionType WeaknessType]]
-   [ctia.schemas.core :refer [MaybeDelayedGraphQLValue]]
+   [ctia.schemas.core :refer [APIHandlerServices
+                              MaybeDelayedGraphQLValue]]
    [schema.core :as s])
   (:import [graphql GraphQL Scalars]
            [graphql.schema
@@ -164,14 +165,9 @@
 (s/def graphql :- (MaybeDelayedGraphQLValue GraphQL)
   (g/new-graphql schema))
 
-(s/defschema GraphQLSchemaServices
-  {:GraphQLService {:get-graphql (s/=> GraphQL)
-                    s/Keyword (s/pred ifn?)}
-   s/Keyword (s/pred ifn?)})
-
 (s/defn execute [query
                  operation-name
                  variables
                  context
-                 {{:keys [get-graphql]} :GraphQLService} :- GraphQLSchemaServices]
+                 {{:keys [get-graphql]} :GraphQLService} :- APIHandlerServices]
   (g/execute (get-graphql) query operation-name variables context))
