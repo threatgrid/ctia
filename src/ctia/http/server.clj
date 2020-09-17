@@ -281,6 +281,13 @@
                       (fn []
                         {:post [(instance? graphql.GraphQL %)]}
                         graphql))}
+   :GraphQLNamedTypeRegistryService
+   {:get-or-update-named-type-registry
+    (partial
+      (requiring-resolve
+        'ctia.schemas.graphql.helpers/get-or-update-named-type-registry)
+      @(requiring-resolve
+         'ctia.schemas.graphql.helpers/default-named-type-registry))}
    :IEncryption {:decrypt (requiring-resolve
                             'ctia.encryption/decrypt-str)
                  :encrypt (requiring-resolve

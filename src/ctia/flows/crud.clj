@@ -13,6 +13,7 @@
              [access-control :refer [allowed-tlp? allowed-tlps]]
              [entities :refer [un-store]]]
             [ctia.schemas.core :refer [APIHandlerServices
+                                       APIHandlerServices->RealizeFnServices
                                        MaybeDelayedRealizeFn
                                        MaybeDelayedRealizeFn->RealizeFn
                                        TempIDs]]
@@ -158,7 +159,8 @@
         groups (auth/groups identity)
         realize-fn (MaybeDelayedRealizeFn->RealizeFn
                      realize-fn
-                     {:services services})]
+                     {:services (APIHandlerServices->RealizeFnServices
+                                  services)})]
     (assoc fm
            :entities
            (doall

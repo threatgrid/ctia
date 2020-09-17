@@ -57,7 +57,6 @@
    :IEncryption {:encrypt (s/=> s/Any s/Any)
                  :decrypt (s/=> s/Any s/Any)}})
 
-
 (s/defn APIHandlerServices->RealizeFnServices
   :- RealizeFnServices
   [services :- APIHandlerServices]
