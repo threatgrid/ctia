@@ -153,12 +153,11 @@
            flow-type
            identity
            tempids
-           prev-entity
-           realize-fn] :as fm} :- FlowMap]
+           prev-entity] :as fm} :- FlowMap]
   (let [login (auth/login identity)
         groups (auth/groups identity)
         realize-fn (MaybeDelayedRealizeFn->RealizeFn
-                     realize-fn
+                     (:realize-fn fm)
                      {:services (APIHandlerServices->RealizeFnServices
                                   services)})]
     (assoc fm

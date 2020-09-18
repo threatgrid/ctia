@@ -3,6 +3,7 @@
             [ctia.domain.entities
              :refer
              [page-with-long-id un-store un-store-page with-long-id]]
+            [ctia.graphql.delayed :as delayed]
             [ctia.schemas.core :as ctia-schemas
              :refer [GraphQLRuntimeOptions
                      GraphQLValue
@@ -55,8 +56,8 @@
   [entity-type-kw]
   (s/fn :- (MaybeDelayedGraphQLValue s/Any)
     [context args field-selection src]
-    (s/fn [{{{:keys [get-in-config]} :ConfigService} :services
-            :as rt-opt} :- GraphQLRuntimeOptions]
+    (delayed/fn [{{{:keys [get-in-config]} :ConfigService} :services
+                  :as rt-opt} :- GraphQLRuntimeOptions]
       (search-entity entity-type-kw
                      (:query args)
                      {}
@@ -71,7 +72,7 @@
    id :- s/Str
    ident
    field-selection :- (s/maybe [s/Keyword])]
-  (s/fn :- GraphQLValue
+  (delayed/fn :- GraphQLValue
     [{{{:keys [get-in-config]} :ConfigService
        {:keys [read-store]} :StoreService}
       :services} :- GraphQLRuntimeOptions]
@@ -102,7 +103,7 @@
    context :- {s/Keyword s/Any}
    args :- {s/Keyword s/Any}
    field-selection :- (s/maybe [s/Keyword])]
- (s/fn :- GraphQLValue
+ (delayed/fn :- GraphQLValue
   [{{{:keys [read-store]} :StoreService} :services} :- GraphQLRuntimeOptions]
   (let [paging-params (pagination/connection-params->paging-params args)
         params (cond-> (select-keys paging-params [:limit :offset :sort_by])
@@ -124,7 +125,7 @@
    context :- {s/Keyword s/Any}
    args :- {s/Keyword s/Any}
    field-selection :- (s/maybe [s/Keyword])]
- (s/fn :- pagination/Connection
+ (delayed/fn :- pagination/Connection
   [{{{:keys [get-in-config]} :ConfigService
      {:keys [read-store]} :StoreService}
     :services} :- GraphQLRuntimeOptions]
@@ -148,7 +149,7 @@
    context :- {s/Keyword s/Any}
    args :- {s/Keyword s/Any}
    field-selection :- (s/maybe [s/Keyword])]
- (s/fn :- pagination/Connection
+ (delayed/fn :- pagination/Connection
   [{{{:keys [get-in-config]} :ConfigService
      {:keys [read-store]} :StoreService}
     :services} :- GraphQLRuntimeOptions]
@@ -169,7 +170,7 @@
 
 (s/defn search-relationships :- (MaybeDelayedGraphQLValue GraphQLValue)
   [context args field-selection src]
-  (s/fn :- GraphQLValue
+  (delayed/fn :- GraphQLValue
     [{{{:keys [get-in-config]} :ConfigService} :services
       :as rt-opt} :- GraphQLRuntimeOptions]
     (let [{:keys [query relationship_type target_type]} args

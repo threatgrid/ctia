@@ -2,13 +2,14 @@
   (:require [clj-momo.lib.time :as time]
             [ctia.domain
              [entities :refer [default-realize-fn]]]
+            [ctia.graphql.delayed :as delayed]
             [ctia.schemas
              [utils :as csu]
              [core :refer [def-acl-schema
                            def-stored-schema
                            GraphQLRuntimeOptions
                            MaybeDelayedRealizeFn->RealizeFn
-                           MaybeDelayedRealizeFnResult
+                           RealizeFnResult
                            TempIDs]]
              [sorting :as sorting]]
             [ctim.schemas.sighting :as ss]
@@ -39,7 +40,7 @@
 (def sighting-default-realize
   (default-realize-fn "sighting" NewSighting StoredSighting))
 
-(s/defn realize-sighting :- (MaybeDelayedRealizeFnResult StoredSighting)
+(s/defn realize-sighting :- (RealizeFnResult StoredSighting)
   ([new-sighting id tempids owner groups]
    (realize-sighting new-sighting id tempids owner groups nil))
   ([new-sighting :- NewSighting
@@ -48,7 +49,7 @@
     owner :- s/Str
     groups :- [s/Str]
     prev-sighting :- (s/maybe StoredSighting)]
-  (s/fn :- StoredSighting
+  (delayed/fn :- StoredSighting
    [rt-opt :- GraphQLRuntimeOptions]
    ((MaybeDelayedRealizeFn->RealizeFn sighting-default-realize rt-opt)
     (assoc new-sighting

@@ -135,32 +135,39 @@
   "Remove nil values from a deep nested map recursively"
   (partial deep-filter some?))
 
-(defn select-keys-in
-  "Slice a nested map using select-keys at the leaves.
+(defn service-subgraph
+  "Returns a subgraph of a Trapperkeeper service graph, omitting
+  any missing entries.
   
-  (select-keys-in
-    {:a {:b 1 :c 2}
-     :d {:e 3 :f 4}}
-    [:a [:b]]
-    [:d [:e]])
-  ;=> {:a {:b 1}
-  ;    :d {:e 3}}
+  (select-services
+    {:ConfigService {:get-in-config <...>
+                     :get-config <...>}
+     :FooService {:f1 <...>
+                  :f2 <...>}
+     :BarService {:b1 <...>}}
+    :ConfigService [:get-config]
+    :FooService [:f2 :f3]
+    :MissingService [:m1])
+  ;=> {:ConfigService {:get-config <...>}
+  ;    :FooService {:f2 <...>}}
   "
-  [m & paths]
-  {:pre [(map? m)]}
-  (reduce (fn [out path]
-            {:pre [(vector? path)]}
-            (let [prefix (pop path)
-                  _ (assert (seq prefix))
-                  _ (assert (every? keyword? prefix) prefix)
-                  keys (peek path)
-                  _ (assert (vector? keys) (pr-str keys))]
-              (-> out
-                  (update-in prefix
-                             (fn [old]
-                               (assert (nil? old) (str "Repeated prefix " prefix))
-                               (-> m
-                                   (get-in prefix)
-                                   (select-keys keys)))))))
+  [graph & selectors]
+  {:pre [(map? graph)]}
+  (reduce (fn [out [service-kw fn-kws :as sel]]
+            (assert (keyword? service-kw)
+                    (pr-str service-kw))
+            (assert (every? keyword? fn-kws)
+                    (pr-str fn-kws))
+            (assert (= 2 (count sel))
+                    (str "Uneven number of selectors: "
+                         (count selectors)))
+            (let [service-fns (some-> (get graph service-kw)
+                                      (select-keys fn-kws))]
+              (cond-> out
+                service-fns
+                (update service-kw
+                        (fn [old]
+                          (assert (nil? old) (str "Repeated key " service-kw))
+                          service-fns)))))
           {}
-          paths))
+          (partition 2 selectors)))

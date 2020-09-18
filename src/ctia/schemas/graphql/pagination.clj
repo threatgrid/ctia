@@ -2,6 +2,7 @@
   (:require [base64-clj.core :as b64]
             [clojure.string :as str]
             [clojure.tools.logging :as log]
+            [ctia.graphql.delayed :as delayed]
             [ctia.schemas.core :refer [GraphQLRuntimeOptions
                                        MaybeDelayedGraphQLValue
                                        resolve-with-rt-opt]]
@@ -40,7 +41,7 @@
 
 (s/defn new-connection :- (MaybeDelayedGraphQLValue s/Any)
   [^GraphQLType node-type]
- (s/fn [rt-opt :- GraphQLRuntimeOptions]
+ (delayed/fn [rt-opt :- GraphQLRuntimeOptions]
   (let [^GraphQLType node-type (-> node-type
                                    (resolve-with-rt-opt rt-opt))
         type-name (str/capitalize (.getName node-type))

@@ -22,19 +22,22 @@
                     :created :modified :timestamp :tlp]
         ;; properties to dissoc to get a valid entity when
         ;; using the spec generator
-        to-dissoc [:disposition]]
-    (doseq [[_ {:keys [realize-fn] :as entity}] sut/entities]
-      (when-some [realize-fn (some-> realize-fn 
-                                     (MaybeDelayedRealizeFn->RealizeFn
-                                       {:services realize-fn-services}))]
-        (let [realized-entity
-              (-> (apply dissoc
-                         (gen-sample-entity entity)
-                         (concat properties to-dissoc))
-                  (realize-fn "http://host/id" {} "owner" []))]
-          (doseq [property properties]
-            (is (contains? realized-entity property)
-                (format "The realized entity %s should contain the property %s"
-                        (:entity entity)
-                        property))))))))
+        to-dissoc [:disposition]
+        entities-with-realize-fn (filter :realize-fn sut/entities)]
+    (assert (seq entities-with-realize-fn)
+            "There should really be a :realize-fn somewhere!")
+    (doseq [[_ entity] entities-with-realize-fn
+            :let [realize-fn (-> (:realize-fn entity)
+                                 (MaybeDelayedRealizeFn->RealizeFn
+                                   {:services realize-fn-services}))
+                  realized-entity
+                  (-> (apply dissoc
+                             (gen-sample-entity entity)
+                             (concat properties to-dissoc))
+                      (realize-fn "http://host/id" {} "owner" []))]
+            property properties]
+      (is (contains? realized-entity property)
+          (format "The realized entity %s should contain the property %s"
+                  (:entity entity)
+                  property)))))
 

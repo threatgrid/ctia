@@ -2,13 +2,14 @@
   (:require [clj-momo.lib.time :as time]
             [ctia.domain
              [entities :refer [default-realize-fn]]]
+            [ctia.graphql.delayed :as delayed]
             [ctia.schemas
              [utils :as csu]
              [core :refer [def-acl-schema
                            def-stored-schema
                            GraphQLRuntimeOptions
                            TempIDs
-                           MaybeDelayedRealizeFnResult
+                           RealizeFnResult
                            MaybeDelayedRealizeFn->RealizeFn]]
              [sorting :as sorting]]
             [ctim.schemas
@@ -45,7 +46,7 @@
 (def judgement-default-realize
   (default-realize-fn "judgement" NewJudgement StoredJudgement))
 
-(s/defn realize-judgement :- (MaybeDelayedRealizeFnResult (with-error StoredJudgement))
+(s/defn realize-judgement :- (RealizeFnResult (with-error StoredJudgement))
   ([new-judgement id tempids owner groups]
    (realize-judgement new-judgement id tempids owner groups nil))
   ([new-judgement :- NewJudgement
@@ -54,7 +55,7 @@
     owner :- s/Str
     groups :- [s/Str]
     prev-judgement :- (s/maybe StoredJudgement)]
-  (s/fn :- (with-error StoredJudgement)
+  (delayed/fn :- (with-error StoredJudgement)
    [rt-opt :- GraphQLRuntimeOptions]
    (try
      (let [disposition (determine-disposition-id new-judgement)

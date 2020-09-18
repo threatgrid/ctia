@@ -38,41 +38,41 @@
            (sut/safe-pprint map-with-creds)))))
 
 
-(deftest select-keys-in-test
-  (is (= (sut/select-keys-in {})
+(deftest service-subgraph-test
+  (is (= (sut/service-subgraph {:a {:b 1}})
          {}))
-  (is (= (sut/select-keys-in
+  (is (= (sut/service-subgraph
            {:a {:b 1 :c 2}
             :d {:e 3 :f 4}}
-           [:a [:b]])
+           :a [:b])
          {:a {:b 1}}))
-  (is (= (sut/select-keys-in
+  (is (= (sut/service-subgraph
            {:a {:b 1 :c 2}
             :d {:e 3 :f 4}}
-           [:a [:b]]
-           [:d [:e]])
+           :a [:b]
+           :d [:e])
          {:a {:b 1}
           :d {:e 3}}))
-  (testing "throws on empty prefix"
+  (testing "throws on uneven args"
     (is (thrown?
           AssertionError
-          (sut/select-keys-in
+          (sut/service-subgraph
             {}
-            [[:b]]))))
-  (testing "throws on repeated prefixes"
+            :b))))
+  (testing "throws on repeated service keys"
     (are [m]
          ;; Note: implicit `is`
          (thrown?
-           AssertionError
-           (sut/select-keys-in
-             {}
-             [:a [:b]]
-             [:a [:b]]))
+               AssertionError
+               (sut/service-subgraph
+                 {}
+                 :a [:b]
+                 :a [:b]))
          {}
          {:a {:b 1}}))
   (testing "throws on bad keys vector"
     (is (thrown?
           AssertionError
-          (sut/select-keys-in
+          (sut/service-subgraph
             {}
             [:a :b])))))

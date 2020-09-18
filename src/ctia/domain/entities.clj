@@ -5,9 +5,10 @@
             [ctia.schemas.core :as ctia-schemas
              :refer [GraphQLRuntimeOptions
                      MaybeDelayedRealizeFn
-                     MaybeDelayedRealizeFnResult
+                     RealizeFnResult
                      TempIDs]]
             [ctim.domain.id :as id]
+            [ctia.graphql.delayed :as delayed]
             [ctim.schemas.common :refer [ctim-schema-version]]
             [schema.core :as s]))
 
@@ -40,7 +41,7 @@
   [type-name
    Model :- (s/protocol s/Schema)
    StoredModel  :- (s/protocol s/Schema)]
-  (s/fn default-realize :- (MaybeDelayedRealizeFnResult StoredModel)
+  (s/fn default-realize :- (RealizeFnResult StoredModel)
     ([new-object :- Model
       id :- s/Str
       tempids :- (s/maybe TempIDs)
@@ -53,7 +54,7 @@
       owner :- s/Str
       groups :- [s/Str]
       prev-object :- (s/maybe StoredModel)]
-    (s/fn :- StoredModel
+    (delayed/fn :- StoredModel
      [{{{:keys [get-in-config]} :ConfigService} :services} :- GraphQLRuntimeOptions]
      (let [now (time/now)]
        (merge new-object

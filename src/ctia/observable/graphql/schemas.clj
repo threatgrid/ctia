@@ -4,6 +4,7 @@
    [ctia.domain.entities :as ctia-entities]
    [ctia.entity.judgement :as judgement]
    [ctia.entity.sighting.graphql-schemas :as sighting]
+   [ctia.graphql.delayed :as delayed]
    [ctia.schemas.core :refer [AnyMaybeDelayedGraphQLValue
                               GraphQLRuntimeOptions
                               GraphQLValue]]
@@ -35,7 +36,7 @@
   {:verdict {:type verdict/VerdictType
              :resolve (s/fn :- AnyMaybeDelayedGraphQLValue
                         [context _ _ src]
-                        (s/fn :- GraphQLValue
+                        (delayed/fn :- GraphQLValue
                           [rt-opt :- GraphQLRuntimeOptions]
                           (observable-verdict (select-keys src [:type :value])
                                               (:ident context)

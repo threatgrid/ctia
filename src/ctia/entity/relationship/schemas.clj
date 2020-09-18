@@ -5,12 +5,13 @@
    [flanders.utils :as fu]
    [ctim.schemas.relationship :as rels]
    [schema.core :as s]
+   [ctia.graphql.delayed :as delayed]
    [ctia.schemas
     [utils :as csu]
     [core :refer [def-acl-schema
                   def-stored-schema
                   GraphQLRuntimeOptions
-                  MaybeDelayedRealizeFnResult
+                  RealizeFnResult
                   MaybeDelayedRealizeFn->RealizeFn]]
     [sorting :as sorting]]
    [ctia.flows.schemas :refer [with-error]]
@@ -48,14 +49,14 @@
            :target_ref]))
 
 (s/defn realize-relationship
-  :- (MaybeDelayedRealizeFnResult (with-error StoredRelationship))
+  :- (RealizeFnResult (with-error StoredRelationship))
   [{:keys [source_ref
            target_ref]
     :as new-entity}
    id
    tempids
    & rest-args]
- (s/fn :- (with-error StoredRelationship)
+ (delayed/fn :- (with-error StoredRelationship)
   [rt-opt :- GraphQLRuntimeOptions]
   (let [e (-> relationship-default-realize 
               (MaybeDelayedRealizeFn->RealizeFn rt-opt)
