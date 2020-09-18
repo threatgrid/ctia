@@ -15,7 +15,7 @@
             [ctia.schemas.core :refer [APIHandlerServices
                                        APIHandlerServices->RealizeFnServices
                                        MaybeDelayedRealizeFn
-                                       MaybeDelayedRealizeFn->RealizeFn
+                                       lift-realize-fn-with-context
                                        TempIDs]]
             [ctim.domain.id :as id]
             [ctia.lib.collection :as coll]
@@ -156,7 +156,7 @@
            prev-entity] :as fm} :- FlowMap]
   (let [login (auth/login identity)
         groups (auth/groups identity)
-        realize-fn (MaybeDelayedRealizeFn->RealizeFn
+        realize-fn (lift-realize-fn-with-context
                      (:realize-fn fm)
                      {:services (APIHandlerServices->RealizeFnServices
                                   services)})]

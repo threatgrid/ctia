@@ -90,9 +90,10 @@
   that expects a map of service maps, otherwise it is considered
   'resolved'."
   [result :- (s/protocol s/Schema)]
-  (s/if delayed/delayed-graphql-value?
-    (DelayedGraphQLValue result)
-    result))
+  (let [a (s/constrained a delayed/resolved-graphql-value?)]
+    (s/if delayed/delayed-graphql-value?
+      (DelayedGraphQLValue a)
+      a)))
 
 (s/defn RealizeFnReturning
   :- (s/protocol s/Schema)
@@ -120,18 +121,8 @@
   (s/pred
     delayed/resolved-graphql-value?))
 
-(s/defn MaybeDelayedGraphQLValue
-  :- (s/protocol s/Schema)
-  [a :- (s/protocol s/Schema)]
-  "Returns a schema representing
-  a must be a subtype of GraphQLValue."
-  (let [a (s/constrained a delayed/resolved-graphql-value?)]
-    (s/if delayed/delayed-graphql-value?
-      (DelayedGraphQLValue a)
-      a)))
-
 (s/defn resolve-with-rt-opt
-  "Resolve a MaybeDelayedGraphQLValue value, if needed, using given runtime options."
+  "Resolve a RealizeFnResult value, if needed, using given runtime options."
   [graphql-val :- s/Any
    rt-opt :- GraphQLRuntimeOptions]
   {:post [(delayed/resolved-graphql-value? %)]}
@@ -140,25 +131,25 @@
      rt-opt)
     graphql-val))
 
-(s/defschema AnyMaybeDelayedGraphQLValue
-  (MaybeDelayedGraphQLValue GraphQLValue))
+(s/defschema AnyRealizeFnResult
+  (RealizeFnResult GraphQLValue))
 
-(s/defn MaybeDelayedGraphQLTypeResolver
+(s/defn GraphQLTypeResolver
   :- (s/protocol s/Schema)
   [a :- (s/protocol s/Schema)]
   "Returns a schema representing type resolvers
   that might return delayed GraphQL values."
   (let [a (s/constrained a delayed/resolved-graphql-value?)]
-    (s/=> (MaybeDelayedGraphQLValue a)
+    (s/=> (RealizeFnResult a)
           (s/named s/Any 'context)
           (s/named s/Any 'args)
           (s/named s/Any 'field-selection)
           (s/named s/Any 'source))))
 
-(s/defschema AnyMaybeDelayedGraphQLTypeResolver
-  (MaybeDelayedGraphQLTypeResolver GraphQLValue))
+(s/defschema AnyGraphQLTypeResolver
+  (GraphQLTypeResolver GraphQLValue))
 
-(s/defn MaybeDelayedRealizeFn->RealizeFn
+(s/defn lift-realize-fn-with-context
   :- RealizeFn
   [realize-fn :- MaybeDelayedRealizeFn
    rt-opt :- GraphQLRuntimeOptions]

@@ -12,7 +12,7 @@
                   def-stored-schema
                   GraphQLRuntimeOptions
                   RealizeFnResult
-                  MaybeDelayedRealizeFn->RealizeFn]]
+                  lift-realize-fn-with-context]]
     [sorting :as sorting]]
    [ctia.flows.schemas :refer [with-error]]
    [clojure.string :as string]))
@@ -59,7 +59,7 @@
  (delayed/fn :- (with-error StoredRelationship)
   [rt-opt :- GraphQLRuntimeOptions]
   (let [e (-> relationship-default-realize 
-              (MaybeDelayedRealizeFn->RealizeFn rt-opt)
+              (lift-realize-fn-with-context rt-opt)
               (apply new-entity id tempids rest-args)
               (assoc :source_ref (get tempids source_ref source_ref)
                      :target_ref (get tempids target_ref target_ref)))]

@@ -8,7 +8,7 @@
              [core :refer [def-acl-schema
                            def-stored-schema
                            GraphQLRuntimeOptions
-                           MaybeDelayedRealizeFn->RealizeFn
+                           lift-realize-fn-with-context
                            RealizeFnResult
                            TempIDs]]
              [sorting :as sorting]]
@@ -51,7 +51,7 @@
     prev-sighting :- (s/maybe StoredSighting)]
   (delayed/fn :- StoredSighting
    [rt-opt :- GraphQLRuntimeOptions]
-   ((MaybeDelayedRealizeFn->RealizeFn sighting-default-realize rt-opt)
+   ((lift-realize-fn-with-context sighting-default-realize rt-opt)
     (assoc new-sighting
            :count (:count new-sighting
                           (:count prev-sighting 1))

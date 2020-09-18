@@ -1,6 +1,6 @@
 (ns ctia.entity.entities-test
   (:require [ctia.entity.entities :as sut]
-            [ctia.schemas.core :refer [MaybeDelayedRealizeFn->RealizeFn]]
+            [ctia.schemas.core :refer [lift-realize-fn-with-context]]
             [ctia.test-helpers.core :as test-helpers]
             [ctia.http.server :refer [realize-fn-global-services]]
             [clojure.test :as t :refer [deftest is use-fixtures join-fixtures]]
@@ -28,7 +28,7 @@
             "There should really be a :realize-fn somewhere!")
     (doseq [[_ entity] entities-with-realize-fn
             :let [realize-fn (-> (:realize-fn entity)
-                                 (MaybeDelayedRealizeFn->RealizeFn
+                                 (lift-realize-fn-with-context
                                    {:services realize-fn-services}))
                   realized-entity
                   (-> (apply dissoc

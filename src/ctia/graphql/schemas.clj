@@ -40,7 +40,7 @@
    [ctia.entity.weakness :as weakness
     :refer [WeaknessConnectionType WeaknessType]]
    [ctia.schemas.core :refer [APIHandlerServices
-                              MaybeDelayedGraphQLValue]]
+                              RealizeFnResult]]
    [schema.core :as s])
   (:import [graphql GraphQL Scalars]
            [graphql.schema
@@ -62,7 +62,7 @@
 (def search-by-id-args
   {:id {:type (g/non-null Scalars/GraphQLString)}})
 
-(s/def QueryType :- (MaybeDelayedGraphQLValue GraphQLObjectType)
+(s/def QueryType :- (RealizeFnResult GraphQLObjectType)
   (g/new-object
    "Root"
    ""
@@ -160,9 +160,9 @@
                               p/connection-arguments)
                  :resolve (res/search-entity-resolver :weakness)}}))
 
-(s/def schema :- (MaybeDelayedGraphQLValue GraphQLSchema)
+(s/def schema :- (RealizeFnResult GraphQLSchema)
   (g/new-schema QueryType))
-(s/def graphql :- (MaybeDelayedGraphQLValue GraphQL)
+(s/def graphql :- (RealizeFnResult GraphQL)
   (g/new-graphql schema))
 
 (s/defn execute [query

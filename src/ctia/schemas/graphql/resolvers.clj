@@ -7,7 +7,7 @@
             [ctia.schemas.core :as ctia-schemas
              :refer [GraphQLRuntimeOptions
                      GraphQLValue
-                     MaybeDelayedGraphQLTypeResolver
+                     AnyGraphQLTypeResolver
                      MaybeDelayedGraphQLValue]]
             [ctia.schemas.graphql.pagination :as pagination]
             [ctia.store :refer [list-judgements-by-observable
@@ -52,7 +52,7 @@
             un-store-page
             (pagination/result->connection-response paging-params))))
 
-(s/defn search-entity-resolver :- (MaybeDelayedGraphQLTypeResolver s/Any)
+(s/defn search-entity-resolver :- AnyGraphQLTypeResolver
   [entity-type-kw]
   (s/fn :- (MaybeDelayedGraphQLValue s/Any)
     [context args field-selection src]
@@ -88,7 +88,7 @@
             (with-long-id get-in-config)
             un-store)))
 
-(s/defn entity-by-id-resolver :- (MaybeDelayedGraphQLTypeResolver s/Any)
+(s/defn entity-by-id-resolver :- AnyGraphQLTypeResolver
   [entity-type-kw]
   (fn [context args field-selection _]
     (entity-by-id entity-type-kw

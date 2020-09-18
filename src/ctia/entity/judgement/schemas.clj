@@ -10,7 +10,7 @@
                            GraphQLRuntimeOptions
                            TempIDs
                            RealizeFnResult
-                           MaybeDelayedRealizeFn->RealizeFn]]
+                           lift-realize-fn-with-context]]
              [sorting :as sorting]]
             [ctim.schemas
              [common :refer [determine-disposition-id disposition-map]]
@@ -61,7 +61,7 @@
      (let [disposition (determine-disposition-id new-judgement)
            disposition-name (get disposition-map disposition)
            judgement-default-realize (-> judgement-default-realize
-                                         (MaybeDelayedRealizeFn->RealizeFn rt-opt))]
+                                         (lift-realize-fn-with-context rt-opt))]
        (judgement-default-realize
         (assoc new-judgement
                :disposition disposition
