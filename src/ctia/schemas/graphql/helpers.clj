@@ -2,7 +2,7 @@
   (:require [clojure
              [walk :as walk :refer [stringify-keys]]]
             [ctia.graphql.delayed :as delayed]
-            [ctia.schemas.core :refer [AnyMaybeDelayedGraphQLTypeResolver
+            [ctia.schemas.core :refer [AnyGraphQLTypeResolver
                                        AnyRealizeFnResult
                                        GraphQLRuntimeOptions
                                        GraphQLValue
@@ -39,11 +39,11 @@
             GraphQLUnionType
             TypeResolver]))
 
-(s/defschema MaybeDelayedGraphQLFields
+(s/defschema GraphQLFields
   {s/Keyword
    {:type AnyRealizeFnResult
     (s/optional-key :args) s/Any
-    (s/optional-key :resolve) AnyMaybeDelayedGraphQLTypeResolver
+    (s/optional-key :resolve) AnyGraphQLTypeResolver
     (s/optional-key :description) s/Any
     (s/optional-key :default-value) s/Any}})
 
@@ -256,7 +256,7 @@
 (s/defn fn->data-fetcher :- DataFetcher
   "Converts a function that takes 4 parameters (context, args, field-selection, source)
   to a GraphQL DataFetcher"
-  [f :- AnyMaybeDelayedGraphQLTypeResolver
+  [f :- AnyGraphQLTypeResolver
    rt-opt :- GraphQLRuntimeOptions]
   (reify DataFetcher
     (get [_ env]
@@ -273,7 +273,7 @@
         (debug "data-fetcher result:" result)
         result))))
 
-(s/defn map-resolver :- AnyMaybeDelayedGraphQLTypeResolver
+(s/defn map-resolver :- AnyGraphQLTypeResolver
   ([k] (map-resolver k identity))
   ([k f]
    (fn [_ _ _ value]
@@ -339,7 +339,7 @@
 (s/defn ^:private add-input-fields
   :- GraphQLInputObjectType$Builder
   [^GraphQLInputObjectType$Builder builder
-   fields :- MaybeDelayedGraphQLFields
+   fields :- GraphQLFields
    rt-opt :- GraphQLRuntimeOptions]
   (doseq [[k {field-type :type
               field-description :description
@@ -358,7 +358,7 @@
    created, the corresponding object is retrieved instead."
   [object-name :- s/Str
    description :- s/Str
-   fields :- MaybeDelayedGraphQLFields]
+   fields :- GraphQLFields]
   (delayed/fn :- GraphQLInputObjectType
     [{{{:keys [get-or-update-named-type-registry]} :GraphQLNamedTypeRegistryService}
       :services
@@ -395,7 +395,7 @@
 (s/defn ^:private add-fields
   :- GraphQLObjectType$Builder
   [builder :- GraphQLObjectType$Builder
-   fields :- MaybeDelayedGraphQLFields
+   fields :- GraphQLFields
    rt-opt :- GraphQLRuntimeOptions]
   (doseq [[k {field-type :type
               field-description :description
@@ -422,7 +422,7 @@
   [object-name :- s/Str
    description :- s/Str
    interfaces
-   fields :- MaybeDelayedGraphQLFields]
+   fields :- GraphQLFields]
   (delayed/fn :- GraphQLObjectType
     [{{{:keys [get-or-update-named-type-registry]} :GraphQLNamedTypeRegistryService} :services
       :as rt-opt} :- GraphQLRuntimeOptions]
