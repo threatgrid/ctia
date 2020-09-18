@@ -153,14 +153,14 @@
   "
   [graph & selectors]
   {:pre [(map? graph)]}
-  (reduce (fn [out [service-kw fn-kws :as sel]]
+  (assert (even? (count selectors))
+          (str "Uneven number of selectors: "
+               (count selectors)))
+  (reduce (fn [out [service-kw fn-kws]]
             (assert (keyword? service-kw)
                     (pr-str service-kw))
             (assert (every? keyword? fn-kws)
                     (pr-str fn-kws))
-            (assert (= 2 (count sel))
-                    (str "Uneven number of selectors: "
-                         (count selectors)))
             (let [service-fns (some-> (get graph service-kw)
                                       (select-keys fn-kws))]
               (cond-> out
