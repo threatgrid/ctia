@@ -9,6 +9,7 @@
   "Same syntax as schema.core/fn, but returns
   an opaque value that returns true for [[delayed-graphql-value?]]
   and can be unwrapped [[unwrap]]."
+  {:style/indent 0}
   [& body]
   `(DelayedGraphQLWrapper.
      (s/fn ~@body)))
