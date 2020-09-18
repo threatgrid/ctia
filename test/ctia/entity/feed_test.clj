@@ -1,5 +1,6 @@
 (ns ctia.entity.feed-test
   (:require
+   [ctia.entity.feed :as sut]
    [clojure.string :as string]
    [clj-momo.test-helpers.core :as mth]
    [clj-http.client :as client]
@@ -43,172 +44,88 @@
    :feed_type "indicator"
    :output :judgements})
 
+(def indicator
+  {:description
+   "A lookup table for IPs (IPv4 and IPv6) that are considered suspicious by security analysts",
+   :tags ["Suspicious IPs"],
+   :valid_time
+   {:start_time "2019-05-03T21:48:25.801Z",
+    :end_time "2020-06-03T21:48:25.801Z"},
+   :producer "Talos",
+   :schema_version "1.0.11",
+   :type "indicator",
+   :source "Feed Indicator Example",
+   :external_ids
+   ["ctia-feed-indicator-test"],
+   :short_description
+   "Custom Suspicious IP Watchlist",
+   :title "Custom Suspicious IP Watchlist",
+   :indicator_type ["IP Watchlist"],
+   :source_uri
+   "https://github.com/threatgrid/ctim/blob/master/src/doc/tutorials/modeling-threat-intel-ctim.md",
+   :id
+   "transient:esa-indicator-ec95b042572a11894fffe553555c44f5c88c9199aad23a925bb959daa501338e",
+   :severity "High",
+   :tlp "amber",
+   :confidence "High"})
+
+(def judgements
+  (map #(let [transient-id (format "transient:esa-judgement-%03d" %)
+              ip (format "187.75.16.%d" %)]
+          {:id transient-id
+           :observable
+           {:type "ip" :value ip},
+           :valid_time
+           {:start_time "2019-03-01T19:22:45.531Z",
+            :end_time "2019-03-31T19:22:45.531Z"},
+           :schema_version "1.0.11",
+           :type "judgement",
+           :source "Feed Indicator Example",
+           :external_ids
+           ["ctia-feed-indicator-test"],
+           :disposition 2,
+           :source_uri
+           "https://github.com/threatgrid/ctim/blob/master/src/doc/tutorials/modeling-threat-intel-ctim.md",
+           :disposition_name "Malicious",
+           :priority 95,
+           :severity "High",
+           :tlp "amber",
+           :timestamp "2019-03-01T19:22:45.531Z",
+           :confidence "High"})
+       (range 100)))
+
+(def relationships
+  (map #(let [suffix (string/replace % #"transient:esa-judgement-" "")
+              transient-id (str "transient:esa-relationship-" suffix)]
+          {:id transient-id
+           :source_ref %
+           :schema_version "1.0.11",
+           :target_ref
+           "transient:esa-indicator-ec95b042572a11894fffe553555c44f5c88c9199aad23a925bb959daa501338e",
+           :type "relationship",
+           :external_ids
+           ["ctia-feed-indicator-test"],
+           :short_description
+           "Judgement is part of indicator - 'Custom Malicious IP Watchlist'",
+           :title "judgement/indicator relationship",
+           :external_references [],
+           :tlp "amber",
+           :timestamp "2019-05-08T18:03:32.785Z",
+           :relationship_type "element-of"})
+       (map :id judgements)))
+
+
 (def blocklist-bundle
   {:type "bundle",
    :source "Feed Indicator Example",
    :source_uri
    "https://github.com/threatgrid/ctim/blob/master/src/doc/tutorials/modeling-threat-intel-ctim.md",
-   :indicators
-   [{:description
-     "A lookup table for IPs (IPv4 and IPv6) that are considered suspicious by security analysts",
-     :tags ["Suspicious IPs"],
-     :valid_time
-     {:start_time "2019-05-03T21:48:25.801Z",
-      :end_time "2020-06-03T21:48:25.801Z"},
-     :producer "Talos",
-     :schema_version "1.0.11",
-     :type "indicator",
-     :source "Feed Indicator Example",
-     :external_ids
-     ["ctia-feed-indicator-test"],
-     :short_description
-     "Custom Suspicious IP Watchlist",
-     :title "Custom Suspicious IP Watchlist",
-     :indicator_type ["IP Watchlist"],
-     :source_uri
-     "https://github.com/threatgrid/ctim/blob/master/src/doc/tutorials/modeling-threat-intel-ctim.md",
-     :id
-     "transient:esa-indicator-ec95b042572a11894fffe553555c44f5c88c9199aad23a925bb959daa501338e",
-     :severity "High",
-     :tlp "amber",
-     :confidence "High"}],
-   :judgements
-   [{:valid_time
-     {:start_time "2019-03-01T19:22:45.531Z",
-      :end_time "2019-03-31T19:22:45.531Z"},
-     :schema_version "1.0.11",
-     :observable
-     {:type "ip", :value "187.75.16.77"},
-     :type "judgement",
-     :source "Feed Indicator Example",
-     :external_ids
-     ["ctia-feed-indicator-test"],
-     :disposition 2,
-     :source_uri
-     "https://github.com/threatgrid/ctim/blob/master/src/doc/tutorials/modeling-threat-intel-ctim.md",
-     :disposition_name "Malicious",
-     :priority 95,
-     :id
-     "transient:esa-judgement-4340e8cc49ff428e21ad1467de4b40246eb0e3b8da96caa2f71f9fe54123d400",
-     :severity "High",
-     :tlp "amber",
-     :timestamp "2019-03-01T19:22:45.531Z",
-     :confidence "High"}
-    {:valid_time
-     {:start_time "2019-03-01T19:22:45.531Z",
-      :end_time "2019-03-31T19:22:45.531Z"},
-     :schema_version "1.0.11",
-     :observable
-     {:type "ip", :value "187.75.16.76"},
-     :type "judgement",
-     :source "Feed Indicator Example",
-     :external_ids
-     ["ctia-feed-indicator-test"],
-     :disposition 2,
-     :source_uri
-     "https://github.com/threatgrid/ctim/blob/master/src/doc/tutorials/modeling-threat-intel-ctim.md",
-     :disposition_name "Malicious",
-     :priority 95,
-     :id
-     "transient:esa-judgement-4340e8cc49ff428e21ad1467de4b40246eb0e3b8da96caa2f71f9fe54123d499",
-     :severity "High",
-     :tlp "amber",
-     :timestamp "2019-03-01T19:22:45.531Z",
-     :confidence "High"}
-    {:valid_time
-     {:start_time "2019-03-01T19:22:45.531Z",
-      :end_time "2019-03-31T19:22:45.531Z"},
-     :schema_version "1.0.11",
-     :observable
-     {:type "ip", :value "187.75.16.75"},
-     :type "judgement",
-     :source "Feed Indicator Example",
-     :external_ids
-     ["ctia-feed-indicator-test"],
-     :disposition 2,
-     :source_uri
-     "https://github.com/threatgrid/ctim/blob/master/src/doc/tutorials/modeling-threat-intel-ctim.md",
-     :disposition_name "Malicious",
-     :priority 95,
-     :id
-     "transient:esa-judgement-4340e8cc49ff428e21ad1467de4b40246eb0e3b8da96caa2f71f9fe54123d498",
-     :severity "High",
-     :tlp "amber",
-     :timestamp "2019-03-01T19:22:45.531Z",
-     :confidence "High"}
-    {:valid_time
-     {:start_time "2019-03-01T19:22:45.531Z",
-      :end_time "2019-03-31T19:22:45.531Z"},
-     :schema_version "1.0.11",
-     :observable
-     {:type "ip", :value "187.75.16.75"},
-     :type "judgement",
-     :source "Feed Indicator Example",
-     :external_ids
-     ["ctia-feed-indicator-test"],
-     :disposition 3,
-     :source_uri
-     "https://github.com/threatgrid/ctim/blob/master/src/doc/tutorials/modeling-threat-intel-ctim.md",
-     :disposition_name "Suspicious",
-     :priority 95,
-     :id
-     "transient:esa-judgement-4340e8cc49ff428e21ad1467de4b40246eb0e3b8da96caa2f71f9fe54123d500",
-     :severity "High",
-     :tlp "amber",
-     :timestamp "2019-03-01T19:22:45.531Z",
-     :confidence "High"}],
-   :relationships
-   [{:schema_version "1.0.11",
-     :target_ref
-     "transient:esa-indicator-ec95b042572a11894fffe553555c44f5c88c9199aad23a925bb959daa501338e",
-     :type "relationship",
-     :external_ids
-     ["ctia-feed-indicator-test"],
-     :short_description
-     "Judgement is part of indicator - 'Custom Malicious IP Watchlist'",
-     :title "judgement/indicator relationship",
-     :external_references [],
-     :source_ref
-     "transient:esa-judgement-4340e8cc49ff428e21ad1467de4b40246eb0e3b8da96caa2f71f9fe54123d500",
-     :id
-     "transient:esa-relationship-3c056c6ef8ace5057980b57f3eb07b916c84d94f7d1a340f41aba7630c459a5e",
-     :tlp "amber",
-     :timestamp "2019-05-08T18:03:32.785Z",
-     :relationship_type "element-of"}
-    {:schema_version "1.0.11",
-     :target_ref
-     "transient:esa-indicator-ec95b042572a11894fffe553555c44f5c88c9199aad23a925bb959daa501338e",
-     :type "relationship",
-     :external_ids
-     ["ctia-feed-indicator-test"],
-     :short_description
-     "Judgement is part of indicator - 'Custom Malicious IP Watchlist'",
-     :title "judgement/indicator relationship",
-     :external_references [],
-     :source_ref
-     "transient:esa-judgement-4340e8cc49ff428e21ad1467de4b40246eb0e3b8da96caa2f71f9fe54123d400",
-     :id
-     "transient:esa-relationship-3c056c6ef8ace5057980b57f3eb07b916c84d94f7d1a340f41aba7630c459a5d",
-     :tlp "amber",
-     :timestamp "2019-05-08T18:03:32.785Z",
-     :relationship_type "element-of"}
-    {:schema_version "1.0.11",
-     :target_ref
-     "transient:esa-indicator-ec95b042572a11894fffe553555c44f5c88c9199aad23a925bb959daa501338e",
-     :type "relationship",
-     :external_ids
-     ["ctia-feed-indicator-test"],
-     :short_description
-     "Judgement is part of indicator - 'Custom Suspicious IP Watchlist'",
-     :title "judgement/indicator relationship",
-     :external_references [],
-     :source_ref
-     "transient:esa-judgement-4340e8cc49ff428e21ad1467de4b40246eb0e3b8da96caa2f71f9fe54123d499",
-     :id
-     "transient:esa-relationship-4c056c6ef8ace5057980b57f3eb07b916c84d94f7d1a340f41aba7630c459a6d",
-     :tlp "amber",
-     :timestamp "2019-05-08T18:03:32.785Z",
-     :relationship_type "element-of"}]})
+   :indicators [indicator],
+   :judgements (let [duplicated-observable-value (-> judgements
+                                                     first
+                                                     (assoc :id "transient:esa-judgement-4340e8cc49ff428e21ad1467de4b40246eb0e3b8da96caa2f71f9fe54123d500"))]
+                 (conj judgements duplicated-observable-value ))
+   :relationships relationships})
 
 (use-fixtures :once
   (join-fixtures [mth/fixture-schema-validation
@@ -232,7 +149,9 @@
           response-body-txt-wrong-secret (:body response-txt-wrong-secret)]
 
       (is (= 200 (:status response-txt)))
-      (is (= "187.75.16.75\n187.75.16.76\n187.75.16.77"
+      (is (= (->> (map #(-> % :observable :value) judgements)
+                  sort
+                  (string/join "\n"))
              response-body-txt))
 
       (is (= 401 (:status response-txt-wrong-secret)))
@@ -252,16 +171,19 @@
                          :feed_view_url)))
 
           (let [feed-view-url (:feed_view_url updated-feed)
-                response (client/get feed-view-url
-                                     {:as :json})
+                response  (with-redefs [sut/fetch-limit 3] ;; < nb shards (5) < |judgements|
+                            (client/get feed-view-url
+                                        {:as :json}))
                 response-body (:body response)]
 
             (is (= 200 (:status response)))
+            (is (= (count judgements)
+                   (count (:judgements response-body))))
             (is (= (set (map :observable
-                             (:judgements blocklist-bundle)))
+                             judgements))
                    (set (map :observable
                              (:judgements response-body)))))
-            ;;teardown
+            ;;Teardown
             (is (= 200
                    (:status
                     (helpers/put (str "ctia/feed/" (:short-id feed-id))

@@ -103,7 +103,7 @@
 
 (defn fixture-properties:es-store [t]
   ;; Note: These properties may be overwritten by ENV variables
-  (h/with-properties ["ctia.store.es.default.shards" 1
+  (h/with-properties ["ctia.store.es.default.shards" 5
                       "ctia.store.es.default.replicas" 1
                       "ctia.store.es.default.refresh" "true"
                       "ctia.store.es.default.refresh_interval" "1s"
