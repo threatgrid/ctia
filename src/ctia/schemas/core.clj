@@ -89,7 +89,7 @@
   "The return value of a realize-fn either is an opaque function
   that expects a map of service maps, otherwise it is considered
   'resolved'."
-  [result :- (s/protocol s/Schema)]
+  [a :- (s/protocol s/Schema)]
   (let [a (s/constrained a delayed/resolved-graphql-value?)]
     (s/if delayed/delayed-graphql-value?
       (DelayedGraphQLValue a)
