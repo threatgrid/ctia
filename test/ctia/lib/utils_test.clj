@@ -59,20 +59,10 @@
           (sut/service-subgraph
             {}
             :b))))
-  (testing "throws on repeated service keys"
-    (are [m]
-         ;; Note: implicit `is`
-         (thrown?
-               AssertionError
-               (sut/service-subgraph
-                 {}
-                 :a [:b]
-                 :a [:b]))
-         {}
-         {:a {:b 1}}))
-  (testing "throws on bad keys vector"
+  (testing "throws when selections clobber"
     (is (thrown?
           AssertionError
           (sut/service-subgraph
-            {}
-            [:a :b])))))
+            {:a {:b 1}}
+            :a [:b]
+            :a [:b])))))
