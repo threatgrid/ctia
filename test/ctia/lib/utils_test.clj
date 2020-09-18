@@ -54,14 +54,23 @@
          {:a {:b 1}
           :d {:e 3}}))
   (testing "throws on uneven args"
-    (is (thrown?
+    (is (thrown-with-msg?
           AssertionError
+          #"Uneven number of selectors"
           (sut/service-subgraph
             {}
-            :b))))
+            :b)))
+    (is (thrown-with-msg?
+          AssertionError
+          #"Uneven number of selectors"
+          (sut/service-subgraph
+            {}
+            :b [:c]
+            :d))))
   (testing "throws when selections clobber"
     (is (thrown?
           AssertionError
+          #"Repeated key :a"
           (sut/service-subgraph
             {:a {:b 1}}
             :a [:b]
