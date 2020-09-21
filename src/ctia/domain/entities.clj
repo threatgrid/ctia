@@ -3,7 +3,7 @@
             [ctia.domain.access-control :refer [properties-default-tlp]]
             [ctia.properties :refer [get-http-show]]
             [ctia.schemas.core :as ctia-schemas
-             :refer [GraphQLRuntimeOptions
+             :refer [GraphQLRuntimeContext
                      MaybeDelayedRealizeFn
                      RealizeFnResult
                      TempIDs]]
@@ -55,7 +55,7 @@
       groups :- [s/Str]
       prev-object :- (s/maybe StoredModel)]
     (delayed/fn :- StoredModel
-     [{{{:keys [get-in-config]} :ConfigService} :services} :- GraphQLRuntimeOptions]
+     [{{{:keys [get-in-config]} :ConfigService} :services} :- GraphQLRuntimeContext]
      (let [now (time/now)]
        (merge new-object
               {:id id

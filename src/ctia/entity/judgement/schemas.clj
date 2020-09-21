@@ -7,7 +7,7 @@
              [utils :as csu]
              [core :refer [def-acl-schema
                            def-stored-schema
-                           GraphQLRuntimeOptions
+                           GraphQLRuntimeContext
                            TempIDs
                            RealizeFnResult
                            lift-realize-fn-with-context]]
@@ -56,12 +56,12 @@
     groups :- [s/Str]
     prev-judgement :- (s/maybe StoredJudgement)]
   (delayed/fn :- (with-error StoredJudgement)
-   [rt-opt :- GraphQLRuntimeOptions]
+   [rt-ctx :- GraphQLRuntimeContext]
    (try
      (let [disposition (determine-disposition-id new-judgement)
            disposition-name (get disposition-map disposition)
            judgement-default-realize (-> judgement-default-realize
-                                         (lift-realize-fn-with-context rt-opt))]
+                                         (lift-realize-fn-with-context rt-ctx))]
        (judgement-default-realize
         (assoc new-judgement
                :disposition disposition

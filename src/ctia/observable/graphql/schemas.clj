@@ -6,7 +6,7 @@
    [ctia.entity.sighting.graphql-schemas :as sighting]
    [ctia.graphql.delayed :as delayed]
    [ctia.schemas.core :refer [AnyRealizeFnResult
-                              GraphQLRuntimeOptions
+                              GraphQLRuntimeContext
                               GraphQLValue]]
    [ctia.schemas.graphql
     [flanders :as f]
@@ -25,7 +25,7 @@
    ident
    {{{:keys [get-in-config]} :ConfigService
      {:keys [read-store]} :StoreService}
-    :services} :- GraphQLRuntimeOptions]
+    :services} :- GraphQLRuntimeContext]
   (some-> (read-store :judgement
                       calculate-verdict
                       {:type observable-type :value observable-value}
@@ -37,10 +37,10 @@
              :resolve (s/fn :- AnyRealizeFnResult
                         [context _ _ src]
                         (delayed/fn :- GraphQLValue
-                          [rt-opt :- GraphQLRuntimeOptions]
+                          [rt-ctx :- GraphQLRuntimeContext]
                           (observable-verdict (select-keys src [:type :value])
                                               (:ident context)
-                                              rt-opt)))}
+                                              rt-ctx)))}
    :judgements {:type judgement/JudgementConnectionType
                 :args (into pagination/connection-arguments
                             judgement/judgement-order-arg)

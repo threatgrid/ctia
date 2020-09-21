@@ -11,7 +11,7 @@
             [ctia.lib.riemann :as rie]
             [ctia.schemas.core :refer [APIHandlerServices
                                        RealizeFnServices
-                                       resolve-with-rt-opt]]
+                                       resolve-with-rt-ctx]]
             [ring-jwt-middleware.core :as rjwt]
             [ring.adapter.jetty :as jetty]
             [ring.middleware
@@ -276,7 +276,7 @@
    :GraphQLService {:get-graphql
                     (let [graphql (-> @(requiring-resolve
                                          'ctia.graphql.schemas/graphql)
-                                      (resolve-with-rt-opt
+                                      (resolve-with-rt-ctx
                                         {:services (realize-fn-global-services)}))]
                       (fn []
                         {:post [(instance? graphql.GraphQL %)]}

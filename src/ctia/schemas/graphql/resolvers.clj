@@ -5,10 +5,10 @@
              [page-with-long-id un-store un-store-page with-long-id]]
             [ctia.graphql.delayed :as delayed]
             [ctia.schemas.core :as ctia-schemas
-             :refer [GraphQLRuntimeOptions
+             :refer [GraphQLRuntimeContext
                      GraphQLValue
                      AnyGraphQLTypeResolver
-                     MaybeDelayedGraphQLValue]]
+                     RealizeFnResult]]
             [ctia.schemas.graphql.pagination :as pagination]
             [ctia.store :refer [list-judgements-by-observable
                                 list-records
@@ -33,7 +33,7 @@
    ident
    field-selection
    with-long-id-fn
-   {{{:keys [read-store]} :StoreService} :services} :- GraphQLRuntimeOptions]
+   {{{:keys [read-store]} :StoreService} :services} :- GraphQLRuntimeContext]
   (let [paging-params (pagination/connection-params->paging-params args)
         params (cond-> (select-keys paging-params [:limit :offset :sort_by])
                  field-selection (assoc :fields
@@ -54,10 +54,10 @@
 
 (s/defn search-entity-resolver :- AnyGraphQLTypeResolver
   [entity-type-kw]
-  (s/fn :- (MaybeDelayedGraphQLValue s/Any)
+  (s/fn :- (RealizeFnResult s/Any)
     [context args field-selection src]
     (delayed/fn [{{{:keys [get-in-config]} :ConfigService} :services
-                  :as rt-opt} :- GraphQLRuntimeOptions]
+                  :as rt-ctx} :- GraphQLRuntimeContext]
       (search-entity entity-type-kw
                      (:query args)
                      {}
@@ -65,9 +65,9 @@
                      (:ident context)
                      field-selection
                      #(page-with-long-id % get-in-config)
-                     rt-opt))))
+                     rt-ctx))))
 
-(s/defn entity-by-id :- (MaybeDelayedGraphQLValue GraphQLValue)
+(s/defn entity-by-id :- (RealizeFnResult GraphQLValue)
   [entity-type-kw :- s/Keyword
    id :- s/Str
    ident
@@ -75,7 +75,7 @@
   (delayed/fn :- GraphQLValue
     [{{{:keys [get-in-config]} :ConfigService
        {:keys [read-store]} :StoreService}
-      :services} :- GraphQLRuntimeOptions]
+      :services} :- GraphQLRuntimeContext]
     (log/debugf "Retrieve %s (id:%s, fields:%s)"
                 entity-type-kw
                 id
@@ -98,13 +98,13 @@
 
 ;;---- Feedback
 
-(s/defn search-feedbacks-by-entity-id :- (MaybeDelayedGraphQLValue GraphQLValue)
+(s/defn search-feedbacks-by-entity-id :- (RealizeFnResult GraphQLValue)
   [entity-id :- s/Str
    context :- {s/Keyword s/Any}
    args :- {s/Keyword s/Any}
    field-selection :- (s/maybe [s/Keyword])]
  (delayed/fn :- GraphQLValue
-  [{{{:keys [read-store]} :StoreService} :services} :- GraphQLRuntimeOptions]
+  [{{{:keys [read-store]} :StoreService} :services} :- GraphQLRuntimeContext]
   (let [paging-params (pagination/connection-params->paging-params args)
         params (cond-> (select-keys paging-params [:limit :offset :sort_by])
                  field-selection (assoc :fields
@@ -120,7 +120,7 @@
 
 ;;---- Judgement
 
-(s/defn search-judgements-by-observable :- (MaybeDelayedGraphQLValue pagination/Connection)
+(s/defn search-judgements-by-observable :- (RealizeFnResult pagination/Connection)
   [observable :- ctia-schemas/Observable
    context :- {s/Keyword s/Any}
    args :- {s/Keyword s/Any}
@@ -128,7 +128,7 @@
  (delayed/fn :- pagination/Connection
   [{{{:keys [get-in-config]} :ConfigService
      {:keys [read-store]} :StoreService}
-    :services} :- GraphQLRuntimeOptions]
+    :services} :- GraphQLRuntimeContext]
   (let [paging-params (pagination/connection-params->paging-params args)
         params (cond-> (select-keys paging-params [:limit :offset :sort_by])
                  field-selection (assoc :fields
@@ -144,7 +144,7 @@
 
 ;;---- Sighting
 
-(s/defn search-sightings-by-observable :- (MaybeDelayedGraphQLValue pagination/Connection)
+(s/defn search-sightings-by-observable :- (RealizeFnResult pagination/Connection)
   [observable :- ctia-schemas/Observable
    context :- {s/Keyword s/Any}
    args :- {s/Keyword s/Any}
@@ -152,7 +152,7 @@
  (delayed/fn :- pagination/Connection
   [{{{:keys [get-in-config]} :ConfigService
      {:keys [read-store]} :StoreService}
-    :services} :- GraphQLRuntimeOptions]
+    :services} :- GraphQLRuntimeContext]
   (let [paging-params (pagination/connection-params->paging-params args)
         params (cond-> (select-keys paging-params [:limit :offset :sort_by])
                  field-selection (assoc :fields
@@ -168,11 +168,11 @@
 
 ;;---- Relationship
 
-(s/defn search-relationships :- (MaybeDelayedGraphQLValue GraphQLValue)
+(s/defn search-relationships :- (RealizeFnResult GraphQLValue)
   [context args field-selection src]
   (delayed/fn :- GraphQLValue
     [{{{:keys [get-in-config]} :ConfigService} :services
-      :as rt-opt} :- GraphQLRuntimeOptions]
+      :as rt-ctx} :- GraphQLRuntimeContext]
     (let [{:keys [query relationship_type target_type]} args
           filtermap {:relationship_type relationship_type
                      :target_type target_type
@@ -184,4 +184,4 @@
                      (:ident context)
                      (concat field-selection [:target_ref :source_ref])
                      #(page-with-long-id % get-in-config)
-                     rt-opt))))
+                     rt-ctx))))

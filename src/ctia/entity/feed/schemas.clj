@@ -11,7 +11,7 @@
    [ctia.schemas
     [core :as ctia-schemas :refer [def-acl-schema
                                    def-stored-schema
-                                   GraphQLRuntimeOptions
+                                   GraphQLRuntimeContext
                                    RealizeFnResult
                                    TempIDs]]
     [utils :as csu]]
@@ -89,7 +89,7 @@
   (delayed/fn :- StoredFeed
    [{{{:keys [get-in-config]} :ConfigService
       {:keys [encrypt decrypt]} :IEncryption}
-     :services} :- GraphQLRuntimeOptions]
+     :services} :- GraphQLRuntimeContext]
    (let [long-id (short-id->long-id id get-in-config)
          plain-secret (if-let [prev-secret (:secret prev-object)]
                         (decrypt prev-secret)

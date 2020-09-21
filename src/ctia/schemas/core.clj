@@ -68,7 +68,7 @@
     :GraphQLNamedTypeRegistryService [:get-or-update-named-type-registry]
     :IEncryption [:decrypt :encrypt]))
 
-(s/defschema GraphQLRuntimeOptions
+(s/defschema GraphQLRuntimeContext
   "A context map to resolve a DelayedGraphQLValue"
   {:services RealizeFnServices})
 
@@ -76,10 +76,10 @@
   :- (s/protocol s/Schema)
   [a :- (s/protocol s/Schema)]
   "An opaque wrapper for a 1-argument function that take a
-  [[GraphQLRuntimeOptions]] and returns a value
+  [[GraphQLRuntimeContext]] and returns a value
   conforming to `a` (which itself must conform to [[delayed/resolved-graphql-value?]]).
   
-  Use [[resolve-with-rt-opt]] to call the opaque function.
+  Use [[resolve-with-rt-ctx]] to call the opaque function.
   
   Note: does not check `a`, it is currently for documentation only."
   (s/pred delayed/delayed-graphql-value?))
@@ -121,14 +121,14 @@
   (s/pred
     delayed/resolved-graphql-value?))
 
-(s/defn resolve-with-rt-opt
+(s/defn resolve-with-rt-ctx
   "Resolve a RealizeFnResult value, if needed, using given runtime options."
   [graphql-val :- s/Any
-   rt-opt :- GraphQLRuntimeOptions]
+   rt-ctx :- GraphQLRuntimeContext]
   {:post [(delayed/resolved-graphql-value? %)]}
   (if (delayed/delayed-graphql-value? graphql-val)
     ((delayed/unwrap graphql-val)
-     rt-opt)
+     rt-ctx)
     graphql-val))
 
 (s/defschema AnyRealizeFnResult
@@ -152,12 +152,12 @@
 (s/defn lift-realize-fn-with-context
   :- RealizeFn
   [realize-fn :- MaybeDelayedRealizeFn
-   rt-opt :- GraphQLRuntimeOptions]
+   rt-ctx :- GraphQLRuntimeContext]
   (fn [& args]
     (-> realize-fn
         (apply args)
-        (resolve-with-rt-opt
-          rt-opt))))
+        (resolve-with-rt-ctx
+          rt-ctx))))
 
 (s/defschema Entity
   (st/merge

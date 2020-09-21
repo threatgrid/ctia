@@ -7,7 +7,7 @@
              [utils :as csu]
              [core :refer [def-acl-schema
                            def-stored-schema
-                           GraphQLRuntimeOptions
+                           GraphQLRuntimeContext
                            lift-realize-fn-with-context
                            RealizeFnResult
                            TempIDs]]
@@ -50,8 +50,8 @@
     groups :- [s/Str]
     prev-sighting :- (s/maybe StoredSighting)]
   (delayed/fn :- StoredSighting
-   [rt-opt :- GraphQLRuntimeOptions]
-   ((lift-realize-fn-with-context sighting-default-realize rt-opt)
+   [rt-ctx :- GraphQLRuntimeContext]
+   ((lift-realize-fn-with-context sighting-default-realize rt-ctx)
     (assoc new-sighting
            :count (:count new-sighting
                           (:count prev-sighting 1))

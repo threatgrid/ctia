@@ -4,8 +4,8 @@
             [clojure.tools.logging :as log]
             [ctia.graphql.delayed :as delayed]
             [ctia.schemas.core :refer [GraphQLRuntimeOptions
-                                       MaybeDelayedGraphQLValue
-                                       resolve-with-rt-opt]]
+                                       RealizeFnResult
+                                       resolve-with-rt-ctx]]
             [ctia.schemas.graphql.helpers :as g]
             [schema-tools.core :as st]
             [schema.core :as s]
@@ -39,11 +39,11 @@
    {:node {:type node-type}
     :cursor {:type (g/non-null Scalars/GraphQLString)}}))
 
-(s/defn new-connection :- (MaybeDelayedGraphQLValue s/Any)
+(s/defn new-connection :- (RealizeFnResult s/Any)
   [^GraphQLType node-type]
- (delayed/fn [rt-opt :- GraphQLRuntimeOptions]
+ (delayed/fn [rt-ctx :- GraphQLRuntimeOptions]
   (let [^GraphQLType node-type (-> node-type
-                                   (resolve-with-rt-opt rt-opt))
+                                   (resolve-with-rt-ctx rt-ctx))
         type-name (str/capitalize (.getName node-type))
         connection-name (str type-name
                              "Connection")
@@ -59,7 +59,7 @@
       :edges {:type (g/list-type (new-edge node-type
                                            edge-name))}
       :nodes {:type (g/list-type node-type)}})
-    (resolve-with-rt-opt rt-opt)))))
+    (resolve-with-rt-ctx rt-ctx)))))
 
 ;;------- Limit/Offset with opaque cursor
 ;; See : https://github.com/darthtrevino/relay-cursor-paging/blob/master/src/getPagingParameters.ts

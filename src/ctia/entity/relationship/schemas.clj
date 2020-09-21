@@ -10,7 +10,7 @@
     [utils :as csu]
     [core :refer [def-acl-schema
                   def-stored-schema
-                  GraphQLRuntimeOptions
+                  GraphQLRuntimeContext
                   RealizeFnResult
                   lift-realize-fn-with-context]]
     [sorting :as sorting]]
@@ -57,9 +57,9 @@
    tempids
    & rest-args]
  (delayed/fn :- (with-error StoredRelationship)
-  [rt-opt :- GraphQLRuntimeOptions]
+  [rt-ctx :- GraphQLRuntimeContext]
   (let [e (-> relationship-default-realize 
-              (lift-realize-fn-with-context rt-opt)
+              (lift-realize-fn-with-context rt-ctx)
               (apply new-entity id tempids rest-args)
               (assoc :source_ref (get tempids source_ref source_ref)
                      :target_ref (get tempids target_ref target_ref)))]
