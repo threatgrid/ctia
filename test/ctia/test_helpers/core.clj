@@ -194,7 +194,11 @@
 
 (defn build-get-in-config-fn []
   ;; stub implementation until trapperkeeper bootstrap
-  p/get-in-global-properties)
+  (partial
+    get-in
+    (reduce #(%2 %1)
+            (p/get-global-properties)
+            *config-transformers*)))
 
 (defn get-current-app []
   {:post [%]}
