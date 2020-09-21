@@ -1,11 +1,14 @@
 (ns ctia.entity.entities-test
-  (:require [ctia.entity.entities :as sut]
+  (:require [clj-momo.test-helpers.core :as mth]
+            [ctia.entity.entities :as sut]
             [ctia.schemas.core :refer [lift-realize-fn-with-context]]
             [ctia.test-helpers.core :as test-helpers]
             [ctia.http.server :refer [realize-fn-global-services]]
             [clojure.test :as t :refer [deftest is use-fixtures join-fixtures]]
             [clojure.spec.alpha :refer [gen]]
             [clojure.spec.gen.alpha :refer [generate]]))
+
+(use-fixtures :once mth/fixture-schema-validation)
 
 (use-fixtures :each (join-fixtures [test-helpers/fixture-properties:clean
                                     test-helpers/fixture-ctia-fast]))

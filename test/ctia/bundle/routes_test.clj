@@ -10,7 +10,7 @@
              [test :as t :refer [deftest is join-fixtures testing use-fixtures]]]
             [ctia.bulk.core :as bulk]
             [ctia.bundle.core :as core]
-            [ctia.store :as store :refer [stores]]
+            [ctia.store-service :as store-svc]
             [ctia.properties :as p]
             [ctia.auth.capabilities :refer [all-capabilities]]
             [ctia.test-helpers
@@ -211,7 +211,10 @@
                                          "foouser"
                                          "foogroup"
                                          "user")
-     (let [indicators [(mk-indicator 0)
+     (let [app (helpers/get-current-app)
+           {:keys [all-stores]} (helpers/get-service-map app :StoreService)
+
+           indicators [(mk-indicator 0)
                        (mk-indicator 1)]
            sightings [(mk-sighting 0)
                       (mk-sighting 1)]
@@ -366,7 +369,7 @@
                        (map :result (:results bundle-result-update)))
                "All existing entities are not updated")))
        (testing "Partial results with errors"
-         (let [indicator-store-state (-> @stores :indicator first :state)
+         (let [indicator-store-state (-> (all-stores) :indicator first :state)
                indexname (:index indicator-store-state)
                ;; close indicator index to produce ES errors on that store
                _ (es-index/close! (:conn indicator-store-state) indexname)
@@ -445,7 +448,11 @@
                                          "foouser"
                                          "foogroup"
                                          "user")
-     (let [read-store store/read-store
+     (let [app (helpers/get-current-app)
+           read-store (-> (helpers/get-service-map app :StoreService)
+                          :read-store
+                          store-svc/store-service-fn->varargs)
+
            duplicated-indicators (->> (mk-indicator 0)
                                       (repeat (* 10 core/find-by-external-ids-limit))
                                       (map #(assoc % :id (id/make-transient-id nil))))
@@ -908,17 +915,17 @@
            (is (= bundle-incident-target-get bundle-incident-target-post))))))))
 
 (defn with-tlp-property-setting [tlp f]
-  (with-redefs [p/global-properties-atom
-                (let [new-props (-> (p/get-global-properties)
-                                    (assoc-in [:ctia :access-control :min-tlp] tlp)
-                                    (assoc-in [:ctia :access-control :default-tlp] tlp)
-                                    atom)]
-                  (fn [] new-props))]
-    (f)))
+  (helpers/with-config-transformer*
+    #(-> %
+         (assoc-in [:ctia :access-control :min-tlp] tlp)
+         (assoc-in [:ctia :access-control :default-tlp] tlp))
+    f))
 
 (deftest bundle-tlp-test
-  (test-for-each-store
-   (fn []
+ (with-tlp-property-setting "amber"
+  (fn []
+   (test-for-each-store
+    (fn []
      (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
      (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
                                          "foouser"
@@ -930,14 +937,14 @@
              new-bundle
              {:type "bundle"
               :source "source"
-              :sightings #{sighting}}]
+              :sightings #{sighting}}
 
-         (with-tlp-property-setting "amber"
-           #(let [res (post "ctia/bundle/import"
-                            :body new-bundle
-                            :headers {"Authorization" "45c1f5e3f05d0"})]
-              (is (= "Entity Access Control validation Error" (-> (:parsed-body res) :results first :error)))
-              (is (= 200 (:status res))))))))))
+             res (post "ctia/bundle/import"
+                       :body new-bundle
+                       :headers {"Authorization" "45c1f5e3f05d0"})]
+         (is (= "Entity Access Control validation Error" (-> (:parsed-body res) :results first :error))
+             res)
+         (is (= 200 (:status res))))))))))
 
 (deftest bundle-acl-fields-test
   (test-for-each-store
@@ -1002,4 +1009,4 @@
          (is (= 201 (:status incident-post-res)))
          (is (= 201 (:status link-res)))
          (is (= 200 (:status bundle-get-res)))
-         (is seq (-> bundle-get-res :parsed-body :casebooks)))))))
+         (is (seq (-> bundle-get-res :parsed-body :casebooks))))))))
