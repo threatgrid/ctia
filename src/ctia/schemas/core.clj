@@ -75,7 +75,7 @@
 (s/defn DelayedGraphQLValue
   :- (s/protocol s/Schema)
   [a :- (s/protocol s/Schema)]
-  "An opaque wrapper for a 1-argument function that take a
+  "An opaque wrapper for a 1-argument function that takes a
   [[GraphQLRuntimeContext]] and returns a value
   conforming to `a` (which itself must conform to [[delayed/resolved-graphql-value?]]).
   
