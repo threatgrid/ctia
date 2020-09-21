@@ -15,7 +15,7 @@
              [field-selection :refer [field-selection-tests]]
              [http :refer [doc-id->rel-url]]
              [pagination :refer [pagination-test]]
-             [store :refer [test-for-each-store store-fixtures]]]
+             [store :refer [test-for-each-store]]]
             [ctim.domain.id :refer [long-id->id]]
             [ctim.examples
              [casebooks :refer [new-casebook-minimal]]
@@ -322,10 +322,7 @@
                       (read-string response)))))))))))
 
 (deftest test-relationship-metric-routes
-  ((:es-store store-fixtures)
-   (fn []
-     (establish-admin!)
-     (test-metric-routes (into sut/relationship-entity
-                               {:entity-minimal new-relationship-minimal
-                                :enumerable-fields sut/relationship-enumerable-fields
-                                :date-fields sut/relationship-histogram-fields})))))
+  (test-metric-routes (into sut/relationship-entity
+                            {:entity-minimal new-relationship-minimal
+                             :enumerable-fields sut/relationship-enumerable-fields
+                             :date-fields sut/relationship-histogram-fields})))

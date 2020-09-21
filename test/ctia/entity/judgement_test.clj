@@ -22,7 +22,7 @@
              [field-selection :refer [field-selection-tests]]
              [http :refer [doc-id->rel-url]]
              [pagination :refer [pagination-test]]
-             [store :refer [test-for-each-store store-fixtures]]]
+             [store :refer [test-for-each-store]]]
             [ctim.examples.judgements :as ex]))
 
 (use-fixtures :once (join-fixtures [mth/fixture-schema-validation
@@ -164,14 +164,10 @@
        :headers {:Authorization "45c1f5e3f05d0"}}))))
 
 (deftest test-judgement-metric-routes
-  ((:es-store store-fixtures)
-   (fn []
-     (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
-     (whoami-helpers/set-whoami-response "45c1f5e3f05d0" "foouser" "foogroup" "user")
-     (test-metric-routes (into sut/judgement-entity
-                               {:entity-minimal ex/new-judgement-minimal
-                                :enumerable-fields judgement-enumerable-fields
-                                :date-fields judgement-histogram-fields})))))
+  (test-metric-routes (into sut/judgement-entity
+                            {:entity-minimal ex/new-judgement-minimal
+                             :enumerable-fields judgement-enumerable-fields
+                             :date-fields judgement-histogram-fields})))
 
 (deftest test-judgement-routes-for-dispositon-determination
   (test-for-each-store

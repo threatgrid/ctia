@@ -95,13 +95,9 @@
         target-record/target-record-fields)))))
 
 (deftest target-record-metric-routes-test
-  ((:es-store store/store-fixtures)
-   (fn []
-     (helpers/set-capabilities! "foouser" ["foogroup"] "user" auth/all-capabilities)
-     (whoami-helpers/set-whoami-response "45c1f5e3f05d0" "foouser" "Administrators" "user")
-     (aggregate/test-metric-routes
-      (into target-record/target-record-entity
-            {:plural            :target_records
-             :entity-minimal    new-target-record-minimal
-             :enumerable-fields target-record/target-record-enumerable-fields
-             :date-fields       target-record/target-record-histogram-fields})))))
+  (aggregate/test-metric-routes
+   (into target-record/target-record-entity
+         {:plural            :target_records
+          :entity-minimal    new-target-record-minimal
+          :enumerable-fields target-record/target-record-enumerable-fields
+          :date-fields       target-record/target-record-histogram-fields})))

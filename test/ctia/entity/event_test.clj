@@ -455,17 +455,17 @@
                         q (uri/uri-encode
                             (format "entity.id:\"%s\"" initial-id))
                         results (map :fields
-                                     (:parsed-body (get (str "ctia/event/search?query=" q)
+                                     (:parsed-body (get (str "ctia/event/search?sort_by=timestamp&query=" q)
                                                         :content-type :json
                                                         :headers {"Authorization" "user1"})))]
-                    (is (= '[nil
-                             [{:field :assignees
-                               :action "added"
-                               :change {:after ["1"]}}]
-                             [{:field :assignees
-                               :action "modified"
-                               :change {:before ["1"], :after ["1" "2"]}}]
-                             [{:field :assignees
-                               :action "deleted"
-                               :change {:before ["1" "2"]}}]]
+                    (is (= [nil
+                            [{:field :assignees
+                              :action "added"
+                              :change {:after ["1"]}}]
+                            [{:field :assignees
+                              :action "modified"
+                              :change {:before ["1"], :after ["1" "2"]}}]
+                            [{:field :assignees
+                              :action "deleted"
+                              :change {:before ["1" "2"]}}]]
                            results)))))))))))))

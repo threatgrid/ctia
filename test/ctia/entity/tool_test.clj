@@ -13,7 +13,7 @@
              [field-selection :refer [field-selection-tests]]
              [http :refer [doc-id->rel-url]]
              [pagination :refer [pagination-test]]
-             [store :refer [test-for-each-store store-fixtures]]]
+             [store :refer [test-for-each-store]]]
             [ctim.examples.tools :refer [new-tool-maximal
                                          new-tool-minimal]]
             [ctia.entity.tool.schemas :as ts]))
@@ -75,11 +75,7 @@
                        test-for-each-store))
 
 (deftest test-tool-metric-routes
-  ((:es-store store-fixtures)
-   (fn []
-     (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
-     (whoami-helpers/set-whoami-response "45c1f5e3f05d0" "foouser" "Administrators" "user")
-     (test-metric-routes (into sut/tool-entity
-                               {:entity-minimal new-tool-minimal
-                                :enumerable-fields sut/tool-enumerable-fields
-                                :date-fields sut/tool-histogram-fields})))))
+  (test-metric-routes (into sut/tool-entity
+                            {:entity-minimal new-tool-minimal
+                             :enumerable-fields sut/tool-enumerable-fields
+                             :date-fields sut/tool-histogram-fields})))

@@ -171,7 +171,7 @@
                          :feed_view_url)))
 
           (let [feed-view-url (:feed_view_url updated-feed)
-                response  (with-redefs [sut/fetch-limit 3] ;; < nb shards (5) < |judgements|
+                response  (with-redefs [sut/fetch-limit 19] ;; < |judgements| and not a multipe of nb shards (5).
                             (client/get feed-view-url
                                         {:as :json}))
                 response-body (:body response)]
@@ -183,7 +183,7 @@
                              judgements))
                    (set (map :observable
                              (:judgements response-body)))))
-            ;;Teardown
+            ;;teardown
             (is (= 200
                    (:status
                     (helpers/put (str "ctia/feed/" (:short-id feed-id))

@@ -4,7 +4,11 @@
             [clj-momo.lib.clj-time.coerce :as tc]
             [clj-momo.lib.clj-time.format :as tf]
             [clj-momo.lib.map :refer [deep-merge-with]]
-            [ctia.test-helpers.core :as hc]
+            [ctia.test-helpers
+             [auth :refer [all-capabilities]]
+             [fake-whoami-service :as helpers.whoami]
+             [core :as helpers.core]
+             [store :refer [store-fixtures]]]
             [clojure.string :as string]
             [clojure.pprint :refer [pprint]]
             [schema-generators.generators :as g]
@@ -20,7 +24,7 @@
   (let [metric-uri (format "ctia/%s/metric/%s"
                            (name entity)
                            (name agg-type))]
-    (-> (hc/get metric-uri
+    (-> (helpers.core/get metric-uri
                 :accept :json
                 :headers {"Authorization" "45c1f5e3f05d0"}
                 :query-params (into search-params agg-params))
@@ -223,7 +227,7 @@
           fields))
 
 (def string-generator
-  (->> (gen/sample gen/string-alphanumeric 20)
+  (->> (gen/sample gen/string-alphanumeric 10)
        (map string/lower-case)
        gen/elements))
 
@@ -251,15 +255,23 @@
            plural
            enumerable-fields
            date-fields] :as metric-params}]
-  (let [docs (generate-n-entity metric-params 100)]
-    (with-redefs [;; ensure from coercion in proper one year range
-                  now (-> (tc/from-string "2020-12-31")
-                          tc/to-date
-                          constantly)]
-      (hc/post-bulk {plural docs})
-      (doseq [field enumerable-fields]
-        (test-cardinality docs entity field)
-        (test-topn docs entity field 3))
-      (doseq [field date-fields]
-        (test-histogram docs entity field :day)
-        (test-histogram docs entity field :month)))))
+  ;; enforce 1 shard to avoid ES terms approximation used by topn which is not simulated here by the manual aggregation here.
+  ;; see ES details: https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-bucket-terms-aggregation.html#search-aggregations-bucket-terms-aggregation-approximate-counts
+  (helpers.core/with-config-transformer*
+    #(assoc-in % [:ctia :store :es :default :shards] 1)
+    #((:es-store store-fixtures)
+      (fn []
+        (helpers.core/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
+        (helpers.whoami/set-whoami-response "45c1f5e3f05d0" "foouser" "foogroup" "user")
+        (let [docs (generate-n-entity metric-params 100)]
+          (with-redefs [;; ensure from coercion in proper one year range
+                        now (-> (tc/from-string "2020-12-31")
+                                tc/to-date
+                                constantly)]
+            (helpers.core/post-bulk {plural docs})
+            (doseq [field enumerable-fields]
+              (test-cardinality docs entity field)
+              (test-topn docs entity field 3))
+            (doseq [field date-fields]
+              (test-histogram docs entity field :day)
+              (test-histogram docs entity field :month))))))))

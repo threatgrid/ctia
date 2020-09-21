@@ -16,7 +16,7 @@
              [field-selection :refer [field-selection-tests]]
              [http :refer [doc-id->rel-url]]
              [pagination :refer [pagination-test]]
-             [store :refer [test-for-each-store store-fixtures]]]
+             [store :refer [test-for-each-store]]]
             [ctim.examples.incidents
              :refer
              [new-incident-maximal new-incident-minimal]]))
@@ -91,14 +91,10 @@
        (entity-crud-test parameters)))))
 
 (deftest test-incident-metric-routes
-  ((:es-store store-fixtures)
-   (fn []
-     (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
-     (whoami-helpers/set-whoami-response "45c1f5e3f05d0" "foouser" "foogroup" "user")
-     (test-metric-routes (into sut/incident-entity
-                               {:entity-minimal new-incident-minimal
-                                :enumerable-fields sut/incident-enumerable-fields
-                                :date-fields sut/incident-histogram-fields})))))
+  (test-metric-routes (into sut/incident-entity
+                            {:entity-minimal new-incident-minimal
+                             :enumerable-fields sut/incident-enumerable-fields
+                             :date-fields sut/incident-histogram-fields})))
 
 (deftest test-incident-pagination-field-selection
   (test-for-each-store
