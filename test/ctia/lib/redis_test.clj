@@ -34,7 +34,8 @@
 
 (deftest ^:integration test-redis-pubsub-works
   (testing "That we can connect to redis and do pub/sub"
-    (let [get-in-config (test-helpers/current-get-in-config-fn)
+    (let [app (test-helpers/get-current-app)
+          {:keys [get-in-config]} (test-helpers/get-service-map app :ConfigService)
           redis-config (get-in-config [:ctia :hook :redis])
           server-connection (lr/server-connection redis-config)
           event-channel-name (str (gensym "events"))
