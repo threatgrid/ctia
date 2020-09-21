@@ -1,5 +1,7 @@
 (ns ctia.schemas.core
-  (:require [ctia.schemas.utils :as csutils]
+  (:require [ctia.lib.utils :refer [service-subgraph]]
+            [ctia.graphql.delayed :as delayed]
+            [ctia.schemas.utils :as csutils]
             [ctim.schemas
              [bundle :as bundle]
              [common :as cos]
@@ -15,14 +17,18 @@
   "Maps of services available to routes"
   {:ConfigService {:get-config (s/=> s/Any s/Any)
                    :get-in-config (s/=>* s/Any
-                                         [s/Any]
-                                         [s/Any s/Any])}
+                                         [[s/Any]]
+                                         [[s/Any] s/Any])}
    :HooksService {:apply-hooks (s/pred ifn?) ;;keyword varargs
                   :apply-event-hooks (s/=> s/Any s/Any)}
    :StoreService {:read-store (s/pred ifn?) ;;varags
                   :write-store (s/pred ifn?)} ;;varags
    :IAuth {:identity-for-token (s/=> s/Any s/Any)}
-   :GraphQLService {:get-graphql (s/=> s/Any)}
+   :GraphQLService {:get-graphql (s/=> graphql.GraphQL)}
+   :GraphQLNamedTypeRegistryService {:get-or-update-named-type-registry
+                                     (s/=> graphql.schema.GraphQLType
+                                           s/Str
+                                           (s/=> graphql.schema.GraphQLType))}
    :IEncryption {:encrypt (s/=> s/Any s/Any)
                  :decrypt (s/=> s/Any s/Any)}})
 
@@ -37,6 +43,121 @@
    :groups [s/Str]
    :created java.util.Date
    (s/optional-key :modified) java.util.Date})
+
+(s/defschema RealizeFnServices
+  "Maps of service functions available for realize-fns"
+  {:ConfigService {:get-in-config (s/=>* s/Any
+                                         [[s/Any]]
+                                         [[s/Any] s/Any])}
+   :StoreService {:read-store (s/pred ifn?)} ;;varags
+   :GraphQLNamedTypeRegistryService
+   {:get-or-update-named-type-registry
+    (s/=> graphql.schema.GraphQLType
+          s/Str
+          (s/=> graphql.schema.GraphQLType))}
+   :IEncryption {:encrypt (s/=> s/Any s/Any)
+                 :decrypt (s/=> s/Any s/Any)}})
+
+(s/defn APIHandlerServices->RealizeFnServices
+  :- RealizeFnServices
+  [services :- APIHandlerServices]
+  (service-subgraph
+    services
+    :ConfigService [:get-in-config]
+    :StoreService [:read-store]
+    :GraphQLNamedTypeRegistryService [:get-or-update-named-type-registry]
+    :IEncryption [:decrypt :encrypt]))
+
+(s/defschema GraphQLRuntimeContext
+  "A context map to resolve a DelayedGraphQLValue"
+  {:services RealizeFnServices})
+
+(s/defn DelayedGraphQLValue
+  :- (s/protocol s/Schema)
+  [a :- (s/protocol s/Schema)]
+  "An opaque wrapper for a 1-argument function that takes a
+  [[GraphQLRuntimeContext]] and returns a value
+  conforming to `a` (which itself must conform to [[delayed/resolved-graphql-value?]]).
+  
+  Use [[resolve-with-rt-ctx]] to call the opaque function.
+  
+  Note: does not check `a`, it is currently for documentation only."
+  (s/pred delayed/delayed-graphql-value?))
+
+(s/defn RealizeFnResult
+  :- (s/protocol s/Schema)
+  "The return value of a realize-fn either is an opaque function
+  that expects a map of service maps, otherwise it is considered
+  'resolved'."
+  [a :- (s/protocol s/Schema)]
+  (let [a (s/constrained a delayed/resolved-graphql-value?)]
+    (s/if delayed/delayed-graphql-value?
+      (DelayedGraphQLValue a)
+      a)))
+
+(s/defn RealizeFnReturning
+  :- (s/protocol s/Schema)
+  [return :- (s/protocol s/Schema)]
+  (s/=>* return
+         [s/Any  ;; new-object
+          s/Any  ;; id
+          s/Any  ;; tempids
+          s/Any  ;; owner
+          s/Any] ;; groups
+         [s/Any  ;; new-object
+          s/Any  ;; id
+          s/Any  ;; tempids
+          s/Any  ;; owner
+          s/Any  ;; groups
+          s/Any])) ;; prev-object
+
+(s/defschema GraphQLValue
+  (s/pred
+    delayed/resolved-graphql-value?))
+
+(s/defschema ResolvedRealizeFn
+  (RealizeFnReturning GraphQLValue))
+
+(s/defschema AnyRealizeFnResult
+  (RealizeFnResult GraphQLValue))
+
+(s/defschema RealizeFn
+  (RealizeFnReturning AnyRealizeFnResult))
+
+(s/defn resolve-with-rt-ctx
+  "Resolve a RealizeFnResult value, if needed, using given runtime options."
+  [graphql-val :- s/Any
+   rt-ctx :- GraphQLRuntimeContext]
+  {:post [(delayed/resolved-graphql-value? %)]}
+  (if (delayed/delayed-graphql-value? graphql-val)
+    ((delayed/unwrap graphql-val)
+     rt-ctx)
+    graphql-val))
+
+(s/defn GraphQLTypeResolver
+  :- (s/protocol s/Schema)
+  [a :- (s/protocol s/Schema)]
+  "Returns a schema representing type resolvers
+  that might return delayed GraphQL values."
+  (let [a (s/constrained a delayed/resolved-graphql-value?)]
+    (s/=> (RealizeFnResult a)
+          (s/named s/Any 'context)
+          (s/named s/Any 'args)
+          (s/named s/Any 'field-selection)
+          (s/named s/Any 'source))))
+
+(s/defschema AnyGraphQLTypeResolver
+  (GraphQLTypeResolver GraphQLValue))
+
+(s/defn lift-realize-fn-with-context
+  :- ResolvedRealizeFn
+  [realize-fn :- RealizeFn
+   rt-ctx :- GraphQLRuntimeContext]
+  (fn [& args]
+    (-> realize-fn
+        (apply args)
+        (resolve-with-rt-ctx
+          rt-ctx))))
 
 (s/defschema Entity
   (st/merge
@@ -58,7 +179,7 @@
      :capabilities #{s/Keyword}
      :no-bulk? s/Bool
      :no-api? s/Bool
-     :realize-fn s/Any})))
+     :realize-fn RealizeFn})))
 
 (s/defschema OpenCTIMSchemaVersion
   {(s/optional-key :schema_version) s/Str})

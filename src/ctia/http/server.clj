@@ -9,7 +9,9 @@
             [ctia.http.handler :as handler]
             [ctia.http.middleware.auth :as auth]
             [ctia.lib.riemann :as rie]
-            [ctia.schemas.core :refer [APIHandlerServices]]
+            [ctia.schemas.core :refer [APIHandlerServices
+                                       RealizeFnServices
+                                       resolve-with-rt-ctx]]
             [ring-jwt-middleware.core :as rjwt]
             [ring.adapter.jetty :as jetty]
             [ring.middleware
@@ -230,36 +232,73 @@
              (.stop server))
            nil)))
 
+;; temporary, will be replaced by GraphQLService defservice
+(s/defn realize-fn-global-services
+  :- RealizeFnServices
+  []
+  {:ConfigService {:get-in-config #'p/get-in-global-properties}
+   :StoreService {:read-store
+                  (requiring-resolve
+                    'ctia.store/read-store)}
+   :GraphQLNamedTypeRegistryService
+   {:get-or-update-named-type-registry
+    (partial
+      (requiring-resolve
+        'ctia.schemas.graphql.helpers/get-or-update-named-type-registry)
+      @(requiring-resolve
+         'ctia.schemas.graphql.helpers/default-named-type-registry))}
+   :IEncryption {:decrypt (requiring-resolve
+                            'ctia.encryption/decrypt-str)
+                 :encrypt (requiring-resolve
+                            'ctia.encryption/encrypt-str)}})
+
+;; temporary, will be replaced by defservice
+(s/defn ctia-http-server-service-global-services
+  :- APIHandlerServices
+  []
+  {:ConfigService {:get-config #'p/get-global-properties
+                   :get-in-config #'p/get-in-global-properties}
+   :HooksService {:apply-hooks (requiring-resolve
+                                 'ctia.flows.hooks/apply-hooks)
+                  :apply-event-hooks (requiring-resolve
+                                       'ctia.flows.hooks/apply-event-hooks)}
+   :StoreService {:read-store (requiring-resolve
+                                'ctia.store/read-store)
+                  :write-store (requiring-resolve
+                                 'ctia.store/write-store)}
+   :IAuth {:identity-for-token
+           (let [identity-for-token @(requiring-resolve 'ctia.auth/identity-for-token)
+                 auth-service @(requiring-resolve 'ctia.auth/auth-service)]
+             (fn [token]
+               (identity-for-token
+                 @auth-service
+                 token)))}
+   :GraphQLService {:get-graphql
+                    (let [graphql (-> @(requiring-resolve
+                                         'ctia.graphql.schemas/graphql)
+                                      (resolve-with-rt-ctx
+                                        {:services (realize-fn-global-services)}))]
+                      (fn []
+                        {:post [(instance? graphql.GraphQL %)]}
+                        graphql))}
+   :GraphQLNamedTypeRegistryService
+   {:get-or-update-named-type-registry
+    (partial
+      (requiring-resolve
+        'ctia.schemas.graphql.helpers/get-or-update-named-type-registry)
+      @(requiring-resolve
+         'ctia.schemas.graphql.helpers/default-named-type-registry))}
+   :IEncryption {:decrypt (requiring-resolve
+                            'ctia.encryption/decrypt-str)
+                 :encrypt (requiring-resolve
+                            'ctia.encryption/encrypt-str)}})
+
+
 (defn start! [& {:keys [join?]
                  :or {join? true}}]
   (let [http-config (p/get-in-global-properties [:ctia :http])
         server-instance (new-jetty-instance http-config
-                                            ;; temporary ugliness until we bootstrap trapperkeeper
-                                            {:ConfigService {:get-config #'p/get-global-properties
-                                                             :get-in-config #'p/get-in-global-properties}
-                                             :HooksService {:apply-hooks (requiring-resolve
-                                                                           'ctia.flows.hooks/apply-hooks)
-                                                            :apply-event-hooks (requiring-resolve
-                                                                                 'ctia.flows.hooks/apply-event-hooks)}
-                                             :StoreService {:read-store (requiring-resolve
-                                                                          'ctia.store/read-store)
-                                                            :write-store (requiring-resolve
-                                                                           'ctia.store/write-store)}
-                                             :IAuth {:identity-for-token
-                                                     (fn [token]
-                                                       ((requiring-resolve 'ctia.auth/identity-for-token)
-                                                        (-> (requiring-resolve 'ctia.auth/auth-service)
-                                                            deref  ;; var
-                                                            deref) ;;atom
-                                                        token))}
-                                             :GraphQLService {:get-graphql
-                                                              (fn []
-                                                                @(requiring-resolve
-                                                                   'ctia.graphql.schemas/graphql))}
-                                             :IEncryption {:decrypt (requiring-resolve
-                                                                      'ctia.encryption/decrypt-str)
-                                                           :encrypt (requiring-resolve
-                                                                      'ctia.encryption/encrypt-str)}})]
+                                            (ctia-http-server-service-global-services))]
     (reset! server server-instance)
     (shutdown/register-hook! :http.server stop!)
     (if join?

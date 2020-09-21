@@ -1,7 +1,7 @@
 (ns ctia.lib.utils-test
   (:require [ctia.lib.utils :as sut]
             [clojure.pprint :as pp]
-            [clojure.test :as t :refer [deftest is testing]]))
+            [clojure.test :as t :refer [are deftest is testing]]))
 
 (def map-with-creds
   {:ctia
@@ -38,4 +38,40 @@
            (sut/safe-pprint map-with-creds)))))
 
 
-
+(deftest service-subgraph-test
+  (is (= (sut/service-subgraph {:a {:b 1}})
+         {}))
+  (is (= (sut/service-subgraph
+           {:a {:b 1 :c 2}
+            :d {:e 3 :f 4}}
+           :a [:b])
+         {:a {:b 1}}))
+  (is (= (sut/service-subgraph
+           {:a {:b 1 :c 2}
+            :d {:e 3 :f 4}}
+           :a [:b]
+           :d [:e])
+         {:a {:b 1}
+          :d {:e 3}}))
+  (testing "throws on uneven args"
+    (is (thrown-with-msg?
+          AssertionError
+          #"Uneven number of selectors"
+          (sut/service-subgraph
+            {}
+            :b)))
+    (is (thrown-with-msg?
+          AssertionError
+          #"Uneven number of selectors"
+          (sut/service-subgraph
+            {}
+            :b [:c]
+            :d))))
+  (testing "throws when selections clobber"
+    (is (thrown?
+          AssertionError
+          #"Repeated key :a"
+          (sut/service-subgraph
+            {:a {:b 1}}
+            :a [:b]
+            :a [:b])))))

@@ -1,26 +1,31 @@
 (ns ctia.observable.graphql.schemas
   (:refer-clojure :exclude [update list read])
   (:require
-   [ctia.store :refer :all]
    [ctia.domain.entities :as ctia-entities]
    [ctia.entity.judgement :as judgement]
    [ctia.entity.sighting.graphql-schemas :as sighting]
+   [ctia.graphql.delayed :as delayed]
+   [ctia.schemas.core :refer [AnyRealizeFnResult
+                              GraphQLRuntimeContext
+                              GraphQLValue]]
    [ctia.schemas.graphql
     [flanders :as f]
     [helpers :as g]
     [pagination :as pagination]
     [resolvers :as resolvers]]
-   [ctia.store :refer :all]
+   [ctia.store :refer [calculate-verdict]]
    [ctia.verdict.graphql.schemas :as verdict]
-   [ctia.properties :as p]
    [ctim.schemas.common :as ctim-common-schema]
-   [flanders.utils :as fu]))
+   [flanders.utils :as fu]
+   [schema.core :as s]))
 
-(defn observable-verdict
+(s/defn observable-verdict
   [{observable-type :type
     observable-value :value}
    ident
-   get-in-config]
+   {{{:keys [get-in-config]} :ConfigService
+     {:keys [read-store]} :StoreService}
+    :services} :- GraphQLRuntimeContext]
   (some-> (read-store :judgement
                       calculate-verdict
                       {:type observable-type :value observable-value}
@@ -29,10 +34,13 @@
 
 (def observable-fields
   {:verdict {:type verdict/VerdictType
-             :resolve (fn [context _ _ src]
-                        (observable-verdict (select-keys src [:type :value])
-                                            (:ident context)
-                                            p/get-in-global-properties))}
+             :resolve (s/fn :- AnyRealizeFnResult
+                        [context _ _ src]
+                        (delayed/fn :- GraphQLValue
+                          [rt-ctx :- GraphQLRuntimeContext]
+                          (observable-verdict (select-keys src [:type :value])
+                                              (:ident context)
+                                              rt-ctx)))}
    :judgements {:type judgement/JudgementConnectionType
                 :args (into pagination/connection-arguments
                             judgement/judgement-order-arg)

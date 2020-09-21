@@ -8,12 +8,15 @@
             [clojure.tools.logging :as log]
             [ctia
              [auth :as auth]
-             [properties :as p]
              [store :as store]]
             [ctia.domain
              [access-control :refer [allowed-tlp? allowed-tlps]]
              [entities :refer [un-store]]]
-            [ctia.schemas.core :refer [APIHandlerServices TempIDs]]
+            [ctia.schemas.core :refer [APIHandlerServices
+                                       APIHandlerServices->RealizeFnServices
+                                       RealizeFn
+                                       lift-realize-fn-with-context
+                                       TempIDs]]
             [ctim.domain.id :as id]
             [ctia.lib.collection :as coll]
             [ctia.entity.event.obj-to-event
@@ -22,7 +25,8 @@
               to-delete-event
               to-update-event]]
             [ring.util.http-response :as http-response]
-            [schema.core :as s])
+            [schema.core :as s]
+            [schema-tools.core :as st])
   (:import java.util.UUID))
 
 (s/defschema FlowMap
@@ -37,7 +41,7 @@
    (s/optional-key :prev-entity) (s/maybe {s/Keyword s/Any})
    (s/optional-key :partial-entity) (s/maybe {s/Keyword s/Any})
    (s/optional-key :patch-operation) (s/enum :add :remove :replace)
-   (s/optional-key :realize-fn) (s/pred fn?)
+   (s/optional-key :realize-fn) RealizeFn
    (s/optional-key :results) [s/Bool]
    (s/optional-key :spec) (s/maybe s/Keyword)
    (s/optional-key :tempids) (s/maybe TempIDs)
@@ -106,25 +110,27 @@
     entity))
 
 (defn tlp-check
-  [{:keys [tlp] :as entity}]
+  [{:keys [tlp] :as entity} get-in-config]
   (cond
     (not (seq tlp)) entity
-    (not (allowed-tlp? tlp p/get-in-global-properties))
+    (not (allowed-tlp? tlp get-in-config))
     {:msg (format "Invalid document TLP %s, allowed TLPs are: %s"
                   tlp
-                  (str/join "," (allowed-tlps p/get-in-global-properties)))
+                  (str/join "," (allowed-tlps get-in-config)))
      :error "Entity Access Control validation Error"
      :type :invalid-tlp-error
      :entity entity}
     :else entity))
 
 (s/defn ^:private validate-entities :- FlowMap
-  [{:keys [spec entities] :as fm} :- FlowMap]
+  [{{{:keys [get-in-config]} :ConfigService
+     :as services} :services
+    :keys [spec entities] :as fm} :- FlowMap]
   (assoc fm :entities
          (map (fn [entity]
                 (-> entity
                      (check-spec spec)
-                     tlp-check)) entities)))
+                     (tlp-check get-in-config))) entities)))
 
 (s/defn ^:private create-ids-from-transient :- FlowMap
   "Creates IDs for entities identified by transient IDs that have not
@@ -141,15 +147,19 @@
     (update fm :tempids (fnil into {}) newtempids)))
 
 (s/defn ^:private realize-entities :- FlowMap
-  [{{{:keys [get-in-config]} :ConfigService} :services
+  [{{{:keys [get-in-config]} :ConfigService
+     :as services} :services
     :keys [entities
            flow-type
            identity
            tempids
-           prev-entity
-           realize-fn] :as fm} :- FlowMap]
+           prev-entity] :as fm} :- FlowMap]
   (let [login (auth/login identity)
-        groups (auth/groups identity)]
+        groups (auth/groups identity)
+        realize-fn (lift-realize-fn-with-context
+                     (:realize-fn fm)
+                     {:services (APIHandlerServices->RealizeFnServices
+                                  services)})]
     (assoc fm
            :entities
            (doall

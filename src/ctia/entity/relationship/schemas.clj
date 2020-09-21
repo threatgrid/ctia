@@ -5,10 +5,14 @@
    [flanders.utils :as fu]
    [ctim.schemas.relationship :as rels]
    [schema.core :as s]
+   [ctia.graphql.delayed :as delayed]
    [ctia.schemas
     [utils :as csu]
     [core :refer [def-acl-schema
-                  def-stored-schema]]
+                  def-stored-schema
+                  GraphQLRuntimeContext
+                  RealizeFnResult
+                  lift-realize-fn-with-context]]
     [sorting :as sorting]]
    [ctia.flows.schemas :refer [with-error]]
    [clojure.string :as string]))
@@ -45,16 +49,20 @@
            :target_ref]))
 
 (s/defn realize-relationship
-  :- (with-error StoredRelationship)
+  :- (RealizeFnResult (with-error StoredRelationship))
   [{:keys [source_ref
            target_ref]
     :as new-entity}
    id
    tempids
    & rest-args]
-  (let [e (assoc (apply relationship-default-realize new-entity id tempids rest-args)
-                 :source_ref (get tempids source_ref source_ref)
-                 :target_ref (get tempids target_ref target_ref))]
+ (delayed/fn :- (with-error StoredRelationship)
+  [rt-ctx :- GraphQLRuntimeContext]
+  (let [e (-> relationship-default-realize 
+              (lift-realize-fn-with-context rt-ctx)
+              (apply new-entity id tempids rest-args)
+              (assoc :source_ref (get tempids source_ref source_ref)
+                     :target_ref (get tempids target_ref target_ref)))]
     (if (or (string/starts-with? (:source_ref e) "transient:")
             (string/starts-with? (:target_ref e) "transient:"))
       {:id id
@@ -63,4 +71,4 @@
                    "(The source or target entity is probably not "
                    "provided in the bundle)")
        :type :realize-entity-error}
-      e)))
+      e))))
