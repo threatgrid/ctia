@@ -13,8 +13,9 @@
              [access-control :refer [allowed-tlp? allowed-tlps]]
              [entities :refer [un-store]]]
             [ctia.schemas.core :refer [APIHandlerServices
-                                       MaybeDelayedRealizeFn
-                                       MaybeDelayedRealizeFn->RealizeFn
+                                       APIHandlerServices->RealizeFnServices
+                                       RealizeFn
+                                       lift-realize-fn-with-context
                                        TempIDs]]
             [ctim.domain.id :as id]
             [ctia.lib.collection :as coll]
@@ -40,7 +41,7 @@
    (s/optional-key :prev-entity) (s/maybe {s/Keyword s/Any})
    (s/optional-key :partial-entity) (s/maybe {s/Keyword s/Any})
    (s/optional-key :patch-operation) (s/enum :add :remove :replace)
-   (s/optional-key :realize-fn) MaybeDelayedRealizeFn
+   (s/optional-key :realize-fn) RealizeFn
    (s/optional-key :results) [s/Bool]
    (s/optional-key :spec) (s/maybe s/Keyword)
    (s/optional-key :tempids) (s/maybe TempIDs)
@@ -152,13 +153,13 @@
            flow-type
            identity
            tempids
-           prev-entity
-           realize-fn] :as fm} :- FlowMap]
+           prev-entity] :as fm} :- FlowMap]
   (let [login (auth/login identity)
         groups (auth/groups identity)
-        realize-fn (MaybeDelayedRealizeFn->RealizeFn
-                     realize-fn
-                     {:services services})]
+        realize-fn (lift-realize-fn-with-context
+                     (:realize-fn fm)
+                     {:services (APIHandlerServices->RealizeFnServices
+                                  services)})]
     (assoc fm
            :entities
            (doall

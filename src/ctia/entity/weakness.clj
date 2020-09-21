@@ -4,7 +4,6 @@
    [ctia.entity.feedback.graphql-schemas :as feedback]
    [ctia.entity.relationship.graphql-schemas :as relationship]
    [ctia.entity.weakness.mapping :refer [weakness-mapping]]
-   [ctia.store :refer :all]
    [ctia.domain.entities :refer [default-realize-fn]]
    [ctia.schemas.graphql
     [sorting :as graphql-sorting]

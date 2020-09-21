@@ -27,6 +27,7 @@
     [threatgrid :as threatgrid]]
    [ctia.version :as version]
    [ctia.graphql-service :as graphql-svc]
+   [ctia.graphql-named-type-registry-service :as graphql-registry-svc]
    [ctia.flows.hooks-service :as hooks-svc]
    [ctia.http.server-service :as http-server-svc]
    [ctia.stores.es.init :as es-init]
@@ -71,7 +72,8 @@
        store-svc/store-service
        http-server-svc/ctia-http-server-service
        hooks-svc/hooks-service
-       graphql-svc/graphql-service]
+       graphql-svc/graphql-service
+       graphql-registry-svc/graphql-named-type-registry-service]
       ;; register event file logging only when enabled
       (when (get-in config [:ctia :events :log])
         [event-logging/event-logging-service]))))

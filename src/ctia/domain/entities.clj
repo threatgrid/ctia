@@ -3,8 +3,12 @@
             [ctia.domain.access-control :refer [properties-default-tlp]]
             [ctia.properties :refer [get-http-show]]
             [ctia.schemas.core :as ctia-schemas
-             :refer [TempIDs MaybeDelayedRealizeFn MaybeDelayedRealizeFnResult]]
+             :refer [GraphQLRuntimeContext
+                     RealizeFn
+                     RealizeFnResult
+                     TempIDs]]
             [ctim.domain.id :as id]
+            [ctia.graphql.delayed :as delayed]
             [ctim.schemas.common :refer [ctim-schema-version]]
             [schema.core :as s]))
 
@@ -30,9 +34,14 @@
                     (:end_time prev-valid-time)
                     time/default-expire-date)}})
 
-(s/defn default-realize-fn [type-name Model StoredModel]
-  #_#_:- (MaybeDelayedRealizeFn StoredModel)
-  (s/fn default-realize :- (MaybeDelayedRealizeFnResult StoredModel)
+(s/defn default-realize-fn
+  ;; commented since StoredModel is a parameter and not in scope here,
+  ;; checking is propagated to the body via s/fn
+  #_#_:- (RealizeFn StoredModel)
+  [type-name
+   Model :- (s/protocol s/Schema)
+   StoredModel  :- (s/protocol s/Schema)]
+  (s/fn default-realize :- (RealizeFnResult StoredModel)
     ([new-object :- Model
       id :- s/Str
       tempids :- (s/maybe TempIDs)
@@ -45,10 +54,8 @@
       owner :- s/Str
       groups :- [s/Str]
       prev-object :- (s/maybe StoredModel)]
-    (s/fn :- StoredModel
-     [{{{:keys [get-in-config]} :ConfigService}
-       :services
-       :as _rt-opt_}]
+    (delayed/fn :- StoredModel
+     [{{{:keys [get-in-config]} :ConfigService} :services} :- GraphQLRuntimeContext]
      (let [now (time/now)]
        (merge new-object
               {:id id

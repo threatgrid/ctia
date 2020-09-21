@@ -14,6 +14,7 @@
    StoreService
    IAuth
    GraphQLService
+   GraphQLNamedTypeRegistryService
    IEncryption
    ConfigService]
   (start [this context] (core/start context
@@ -31,5 +32,6 @@
                                                        store-svc/lift-store-service-fns)
                                      :IAuth IAuth
                                      :GraphQLService GraphQLService
+                                     :GraphQLNamedTypeRegistryService GraphQLNamedTypeRegistryService
                                      :IEncryption IEncryption}))
   (stop [this context] (core/stop context)))

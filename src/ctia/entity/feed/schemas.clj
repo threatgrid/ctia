@@ -7,8 +7,13 @@
     [entities
      :refer [schema-version
              short-id->long-id]]]
+   [ctia.graphql.delayed :as delayed]
    [ctia.schemas
-    [core :as ctia-schemas :refer [def-acl-schema def-stored-schema TempIDs MaybeDelayedRealizeFnResult]]
+    [core :as ctia-schemas :refer [def-acl-schema
+                                   def-stored-schema
+                                   GraphQLRuntimeContext
+                                   RealizeFnResult
+                                   TempIDs]]
     [utils :as csu]]
    [ctim.schemas.common :as csc]
    [flanders
@@ -68,7 +73,7 @@
 
 (s/defschema PartialFeedList [PartialFeed])
 
-(s/defn realize-feed :- (MaybeDelayedRealizeFnResult StoredFeed)
+(s/defn realize-feed :- (RealizeFnResult StoredFeed)
   ([new-object :- NewFeed
     id :- s/Str
     tempids :- (s/maybe TempIDs)
@@ -81,10 +86,10 @@
     owner :- s/Str
     groups :- [s/Str]
     prev-object :- (s/maybe StoredFeed)]
-  (s/fn :- StoredFeed
+  (delayed/fn :- StoredFeed
    [{{{:keys [get-in-config]} :ConfigService
       {:keys [encrypt decrypt]} :IEncryption}
-     :services}]
+     :services} :- GraphQLRuntimeContext]
    (let [long-id (short-id->long-id id get-in-config)
          plain-secret (if-let [prev-secret (:secret prev-object)]
                         (decrypt prev-secret)

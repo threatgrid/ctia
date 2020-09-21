@@ -39,8 +39,13 @@
     :refer [VulnerabilityConnectionType VulnerabilityType]]
    [ctia.entity.weakness :as weakness
     :refer [WeaknessConnectionType WeaknessType]]
+   [ctia.schemas.core :refer [APIHandlerServices
+                              RealizeFnResult]]
    [schema.core :as s])
-  (:import graphql.Scalars))
+  (:import [graphql GraphQL Scalars]
+           [graphql.schema
+            GraphQLObjectType
+            GraphQLSchema]))
 
 ;; TODO
 ;; Sorting : https://github.com/graphql/graphql-relay-js/issues/20
@@ -57,7 +62,7 @@
 (def search-by-id-args
   {:id {:type (g/non-null Scalars/GraphQLString)}})
 
-(def QueryType
+(s/def QueryType :- (RealizeFnResult GraphQLObjectType)
   (g/new-object
    "Root"
    ""
@@ -155,8 +160,14 @@
                               p/connection-arguments)
                  :resolve (res/search-entity-resolver :weakness)}}))
 
-(def schema (g/new-schema QueryType))
-(def graphql (g/new-graphql schema))
+(s/def schema :- (RealizeFnResult GraphQLSchema)
+  (g/new-schema QueryType))
+(s/def graphql :- (RealizeFnResult GraphQL)
+  (g/new-graphql schema))
 
-(defn execute [query operation-name variables context {{:keys [get-graphql]} :GraphQLService :as services}]
+(s/defn execute [query
+                 operation-name
+                 variables
+                 context
+                 {{:keys [get-graphql]} :GraphQLService} :- APIHandlerServices]
   (g/execute (get-graphql) query operation-name variables context))

@@ -7,7 +7,6 @@
              [utils :as csu]
              [core :refer [def-acl-schema def-stored-schema]]
              [sorting :as sorting]]
-            [ctia.store :refer :all]
             [ctia.stores.es
              [mapping :as em]
              [store :refer [def-es-store]]]

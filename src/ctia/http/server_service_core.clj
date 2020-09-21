@@ -1,9 +1,13 @@
 (ns ctia.http.server-service-core
   (:require [ctia.http.server :refer [new-jetty-instance]]
-            [clojure.tools.logging :as log])
+            [ctia.schemas.core :refer [APIHandlerServices]]
+            [clojure.tools.logging :as log]
+            [schema.core :as s])
   (:import [org.eclipse.jetty.server Server]))
 
-(defn start [context {:keys [port] :as http-config} services]
+(s/defn start [context
+               {:keys [port] :as http-config}
+               services :- APIHandlerServices]
   (log/info (str "Starting HTTP server on port " port))
   (assoc context
          :services services

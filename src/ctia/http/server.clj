@@ -6,7 +6,9 @@
             [ctia.http.handler :as handler]
             [ctia.http.middleware.auth :as auth]
             [ctia.lib.riemann :as rie]
-            [ctia.schemas.core :refer [APIHandlerServices]]
+            [ctia.schemas.core :refer [APIHandlerServices
+                                       RealizeFnServices
+                                       resolve-with-rt-ctx]]
             [ring-jwt-middleware.core :as rjwt]
             [ring.adapter.jetty :as jetty]
             [ring.middleware

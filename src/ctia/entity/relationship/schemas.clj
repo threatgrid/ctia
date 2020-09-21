@@ -5,12 +5,14 @@
    [flanders.utils :as fu]
    [ctim.schemas.relationship :as rels]
    [schema.core :as s]
+   [ctia.graphql.delayed :as delayed]
    [ctia.schemas
     [utils :as csu]
     [core :refer [def-acl-schema
                   def-stored-schema
-                  MaybeDelayedRealizeFnResult
-                  MaybeDelayedRealizeFn->RealizeFn]]
+                  GraphQLRuntimeContext
+                  RealizeFnResult
+                  lift-realize-fn-with-context]]
     [sorting :as sorting]]
    [ctia.flows.schemas :refer [with-error]]
    [clojure.string :as string]))
@@ -47,17 +49,17 @@
            :target_ref]))
 
 (s/defn realize-relationship
-  :- (MaybeDelayedRealizeFnResult (with-error StoredRelationship))
+  :- (RealizeFnResult (with-error StoredRelationship))
   [{:keys [source_ref
            target_ref]
     :as new-entity}
    id
    tempids
    & rest-args]
- (s/fn :- (with-error StoredRelationship)
-  [rt-opt]
+ (delayed/fn :- (with-error StoredRelationship)
+  [rt-ctx :- GraphQLRuntimeContext]
   (let [e (-> relationship-default-realize 
-              (MaybeDelayedRealizeFn->RealizeFn rt-opt)
+              (lift-realize-fn-with-context rt-ctx)
               (apply new-entity id tempids rest-args)
               (assoc :source_ref (get tempids source_ref source_ref)
                      :target_ref (get tempids target_ref target_ref)))]
