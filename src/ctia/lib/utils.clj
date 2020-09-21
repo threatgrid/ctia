@@ -156,7 +156,7 @@
   (reduce (fn [out [service-kw & [fn-kws :as is-even]]]
             ;; the last partition of a `(partition-all 2)` may
             ;; be of length 1. this check is equivalent to
-            ;; asserting (event? (count selectors)) but avoids some extra sequence
+            ;; asserting `(even? (count selectors))` but avoids some extra sequence
             ;; traversals.
             (assert is-even
                     (str "Uneven number of selectors: "
