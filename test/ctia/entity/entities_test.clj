@@ -12,9 +12,6 @@
 (use-fixtures :each (join-fixtures [test-helpers/fixture-properties:clean
                                     test-helpers/fixture-ctia-fast]))
 
-(use-fixtures :each (join-fixtures [test-helpers/fixture-properties:clean
-                                    test-helpers/fixture-ctia-fast]))
-
 (defn gen-sample-entity
   [{:keys [new-spec]}]
   (if new-spec
