@@ -14,7 +14,7 @@
              [entities :refer [un-store]]]
             [ctia.schemas.core :refer [APIHandlerServices
                                        APIHandlerServices->RealizeFnServices
-                                       MaybeDelayedRealizeFn
+                                       RealizeFn
                                        lift-realize-fn-with-context
                                        TempIDs]]
             [ctim.domain.id :as id]
@@ -41,7 +41,7 @@
    (s/optional-key :prev-entity) (s/maybe {s/Keyword s/Any})
    (s/optional-key :partial-entity) (s/maybe {s/Keyword s/Any})
    (s/optional-key :patch-operation) (s/enum :add :remove :replace)
-   (s/optional-key :realize-fn) MaybeDelayedRealizeFn
+   (s/optional-key :realize-fn) RealizeFn
    (s/optional-key :results) [s/Bool]
    (s/optional-key :spec) (s/maybe s/Keyword)
    (s/optional-key :tempids) (s/maybe TempIDs)

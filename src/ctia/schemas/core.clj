@@ -111,15 +111,18 @@
           s/Any  ;; groups
           s/Any])) ;; prev-object
 
-(s/defschema MaybeDelayedRealizeFn
-  (RealizeFnReturning (RealizeFnResult (s/pred map?))))
-
-(s/defschema RealizeFn
-  (RealizeFnReturning (s/pred map?)))
-
 (s/defschema GraphQLValue
   (s/pred
     delayed/resolved-graphql-value?))
+
+(s/defschema ResolvedRealizeFn
+  (RealizeFnReturning GraphQLValue))
+
+(s/defschema AnyRealizeFnResult
+  (RealizeFnResult GraphQLValue))
+
+(s/defschema RealizeFn
+  (RealizeFnReturning AnyRealizeFnResult))
 
 (s/defn resolve-with-rt-ctx
   "Resolve a RealizeFnResult value, if needed, using given runtime options."
@@ -130,9 +133,6 @@
     ((delayed/unwrap graphql-val)
      rt-ctx)
     graphql-val))
-
-(s/defschema AnyRealizeFnResult
-  (RealizeFnResult GraphQLValue))
 
 (s/defn GraphQLTypeResolver
   :- (s/protocol s/Schema)
@@ -150,8 +150,8 @@
   (GraphQLTypeResolver GraphQLValue))
 
 (s/defn lift-realize-fn-with-context
-  :- RealizeFn
-  [realize-fn :- MaybeDelayedRealizeFn
+  :- ResolvedRealizeFn
+  [realize-fn :- RealizeFn
    rt-ctx :- GraphQLRuntimeContext]
   (fn [& args]
     (-> realize-fn
@@ -179,7 +179,7 @@
      :capabilities #{s/Keyword}
      :no-bulk? s/Bool
      :no-api? s/Bool
-     :realize-fn MaybeDelayedRealizeFn})))
+     :realize-fn RealizeFn})))
 
 (s/defschema OpenCTIMSchemaVersion
   {(s/optional-key :schema_version) s/Str})

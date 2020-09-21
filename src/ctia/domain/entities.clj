@@ -4,7 +4,7 @@
             [ctia.properties :refer [get-http-show]]
             [ctia.schemas.core :as ctia-schemas
              :refer [GraphQLRuntimeContext
-                     MaybeDelayedRealizeFn
+                     RealizeFn
                      RealizeFnResult
                      TempIDs]]
             [ctim.domain.id :as id]
@@ -37,7 +37,7 @@
 (s/defn default-realize-fn
   ;; commented since StoredModel is a parameter and not in scope here,
   ;; checking is propagated to the body via s/fn
-  #_#_:- (MaybeDelayedRealizeFn StoredModel)
+  #_#_:- (RealizeFn StoredModel)
   [type-name
    Model :- (s/protocol s/Schema)
    StoredModel  :- (s/protocol s/Schema)]

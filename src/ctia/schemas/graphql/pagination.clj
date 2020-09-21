@@ -3,7 +3,7 @@
             [clojure.string :as str]
             [clojure.tools.logging :as log]
             [ctia.graphql.delayed :as delayed]
-            [ctia.schemas.core :refer [GraphQLRuntimeOptions
+            [ctia.schemas.core :refer [GraphQLRuntimeContext
                                        RealizeFnResult
                                        resolve-with-rt-ctx]]
             [ctia.schemas.graphql.helpers :as g]
@@ -41,7 +41,7 @@
 
 (s/defn new-connection :- (RealizeFnResult s/Any)
   [^GraphQLType node-type]
- (delayed/fn [rt-ctx :- GraphQLRuntimeOptions]
+ (delayed/fn [rt-ctx :- GraphQLRuntimeContext]
   (let [^GraphQLType node-type (-> node-type
                                    (resolve-with-rt-ctx rt-ctx))
         type-name (str/capitalize (.getName node-type))
