@@ -142,11 +142,10 @@
 ;; ---- Max record visibility group
 
 (defn with-max-record-visibility-group [f]
-  (swap! (p/global-properties-atom)
-         assoc-in [:ctia :access-control :max-record-visibility] "group")
-  (f (helpers/build-get-in-config-fn))
-  (swap! (p/global-properties-atom)
-         assoc-in [:ctia :access-control :max-record-visibility] "everyone"))
+  (helpers/with-config-transformer*
+    #(assoc-in % [:ctia :access-control :max-record-visibility] "group")
+    ;; instead of booting a TK app just for get-in-config, we build it manually instead
+    #(f (helpers/build-get-in-config-fn))))
 
 
 (deftest allow-read?-tlp-white-max-record-visibility-group-test
