@@ -146,7 +146,8 @@
         ;;       so `stop` for our services should be idempotent
         {{:keys [request-shutdown
                  wait-for-shutdown]} :ShutdownService} (app/service-graph app)
-        _ (shutdown/register-hook! ::tk-app #(do (request-shutdown)
+        _ (shutdown/register-hook! ::tk-app #(do (reset! auth/auth-service nil)
+                                                 (request-shutdown)
                                                  (wait-for-shutdown)))
         ;; Start HTTP server
         ;; Note: temporarily starting server here because it depends on IAuth service

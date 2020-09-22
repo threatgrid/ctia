@@ -12,8 +12,7 @@
    [ctia
     [auth :as auth]
     [properties :as p]
-    [store :as store]
-    [store-service :as store-svc]]
+    [store :as store]]
    [puppetlabs.trapperkeeper.core :as tk]
    [puppetlabs.trapperkeeper.services :refer [service-context]]))
 
