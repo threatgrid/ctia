@@ -4,7 +4,7 @@
             [ctia.auth
              :refer [IIdentity IAuth]
              :as auth]
-            [ctia.tk :as tk]))
+            [puppetlabs.trapperkeeper.core :as tk]))
 
 (defrecord Identity []
   IIdentity

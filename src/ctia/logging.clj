@@ -1,6 +1,6 @@
 (ns ctia.logging
   (:require [ctia.logging-core :as core]
-            [ctia.tk :as tk]))
+            [puppetlabs.trapperkeeper.core :as tk]))
 
 (defprotocol EventLoggingService)
 

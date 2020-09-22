@@ -6,7 +6,7 @@
             [clojure.core.async :as a :refer [go-loop alt! chan tap]]
             [schema.core :as s :refer [=>]]
             [schema-tools.core :as st]
-            [ctia.tk :as tk]
+            [puppetlabs.trapperkeeper.core :as tk]
             [puppetlabs.trapperkeeper.services :refer [service-context]])
   (:import [clojure.core.async.impl.protocols Channel]
            [java.util Map]))

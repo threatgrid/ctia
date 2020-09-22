@@ -1,6 +1,6 @@
 (ns ctia.graphql-named-type-registry-service
   (:require [ctia.graphql-named-type-registry-service-core :as core]
-            [ctia.tk :as tk]
+            [puppetlabs.trapperkeeper.core :as tk]
             [puppetlabs.trapperkeeper.services :refer [service-context]]))
 
 (defprotocol GraphQLNamedTypeRegistryService

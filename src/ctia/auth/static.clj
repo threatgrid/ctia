@@ -5,7 +5,7 @@
              [string :as str]]
             [ctia.auth :as auth :refer [IAuth IIdentity]]
             [ctia.auth.capabilities :refer [all-capabilities]]
-            [ctia.tk :as tk]
+            [puppetlabs.trapperkeeper.core :as tk]
             [puppetlabs.trapperkeeper.services :refer [service-context]]))
 
 (def ^:private write-capabilities

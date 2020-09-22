@@ -3,7 +3,7 @@
             [ctia.properties :as p]
             [ctia.flows.hooks-service :as hooks-svc]
             [ctia.store-service :as store-svc]
-            [ctia.tk :as tk]
+            [puppetlabs.trapperkeeper.core :as tk]
             [puppetlabs.trapperkeeper.services :refer [service-context]]))
 
 (defprotocol CTIAHTTPServerService)
