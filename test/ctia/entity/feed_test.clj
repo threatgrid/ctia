@@ -8,6 +8,7 @@
    [clojure.test :refer [deftest testing is join-fixtures use-fixtures]]
    [ctia.entity.feed
     :refer [sort-restricted-feed-fields]]
+   [ctia.stores.es.crud :as es.crud]
    [ctia.test-helpers
     [access-control :refer [access-control-test]]
     [auth :refer [all-capabilities]]
@@ -146,12 +147,13 @@
                       {:throw-exceptions false
                        :headers {"Authorization" "45c1f5e3f05d0"}})
           response-body-txt (:body response-txt)
-          response-body-txt-wrong-secret (:body response-txt-wrong-secret)]
-
+          response-body-txt-wrong-secret (:body response-txt-wrong-secret)
+          expected-body (->> (map #(-> % :observable :value) judgements)
+                             sort
+                             (string/join "\n"))]
+      (assert (not (string/blank? expected-body)))
       (is (= 200 (:status response-txt)))
-      (is (= (->> (map #(-> % :observable :value) judgements)
-                  sort
-                  (string/join "\n"))
+      (is (= expected-body
              response-body-txt))
 
       (is (= 401 (:status response-txt-wrong-secret)))
@@ -171,18 +173,28 @@
                          :feed_view_url)))
 
           (let [feed-view-url (:feed_view_url updated-feed)
-                response  (with-redefs [sut/fetch-limit 19] ;; < |judgements| and not a multipe of nb shards (5).
-                            (client/get feed-view-url
-                                        {:as :json}))
-                response-body (:body response)]
+                valid-response  (with-redefs [sut/fetch-limit 19] ;; < |judgements| and not a multipe of nb shards (5).
+                                  (client/get feed-view-url
+                                              {:as :json}))
+                valid-response-body (:body valid-response)]
 
-            (is (= 200 (:status response)))
+            (is (= 200 (:status valid-response)))
             (is (= (count judgements)
-                   (count (:judgements response-body))))
+                   (count (:judgements valid-response-body))))
             (is (= (set (map :observable
                              judgements))
                    (set (map :observable
-                             (:judgements response-body)))))
+                             (:judgements valid-response-body)))))
+            (testing "using \"_doc\" as default sort by value makes this test fail."
+              (with-redefs [sut/fetch-limit 19
+                            es.crud/default-sort-field "_doc"] ;; _doc is unique per shard, but not per index
+                (is (< (-> (client/get feed-view-url
+                                       {:as :json})
+                           :body
+                           :judgements
+                           count)
+                       (count judgements)))))
+
             ;;teardown
             (is (= 200
                    (:status
