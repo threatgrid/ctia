@@ -6,12 +6,10 @@
    [clj-momo.properties :as mp]
    [clojure.string :as str]
    [clojure.tools.logging :as log]
-   #_
    [ctia.lib.metrics
-    #_[riemann :as riemann] ;; never enabled
-    #_[jmx :as jmx] ;; never enabled
-    #_[console :as console] ;; never enabled
-    ]
+    [riemann :as riemann]
+    [jmx :as jmx]
+    [console :as console]]
    [ctia.lib.utils :as utils]
    [ctia
     [auth :as auth]
@@ -73,7 +71,10 @@
        http-server-svc/ctia-http-server-service
        hooks-svc/hooks-service
        graphql-svc/graphql-service
-       graphql-registry-svc/graphql-named-type-registry-service]
+       graphql-registry-svc/graphql-named-type-registry-service
+       riemann/riemann-metrics-service
+       jmx/jmx-metrics-service
+       console/console-metrics-service]
       ;; register event file logging only when enabled
       (when (get-in config [:ctia :events :log])
         [event-logging/event-logging-service]))))
@@ -85,12 +86,6 @@
   (let [_ (validate-entities)
         _ (log-properties config)
         app (tk/boot-services-with-config services config)]
-    ;; TODO port to TK or delete (currently unused). get-in-config is a placeholder for the
-    ;; moment for ConfigService's get-in-config.
-    ;; metrics reporters init
-    ;(riemann/init! get-in-config)
-    ;(jmx/init! get-in-config)
-    ;(console/init! get-in-config)
     app))
 
 (defn start-ctia!
