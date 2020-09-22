@@ -21,10 +21,7 @@
 
 (defn additional-tests [asset-id asset-sample]
   (testing "GET /ctia/asset/search"
-   (let [app (helpers/get-current-app)
-         get-in-config (helpers/current-get-in-config-fn app)]
-    ;; only when ES store
-    (when (= "es" (get-in-config [:ctia :store :asset]))
+    (do
       (are [term check-fn expected desc] (let [response (helpers/get (str "ctia/asset/search")
                                                                      :query-params {"query" term}
                                                                      :headers {"Authorization" "45c1f5e3f05d0"})]
@@ -34,7 +31,7 @@
         "asset_type:\"device\""
         #(-> % :parsed-body first :asset_type)
         (-> asset-sample :asset_type)
-        "Searching by an Asset type works")))))
+        "Searching by an Asset type works"))))
 
 (deftest asset-routes-test
   (store/test-for-each-store
