@@ -75,9 +75,8 @@
 
 (defn with-each-fixtures*
   "Wrap this function around each deftest instead of use-fixtures
-  so the TK config can be modified before helpers/fixture-ctia
-  starts the app. We're force to do this since there is no way to
-  conditionally change fixtures on a deftest-granularity."
+  so the TK config can be transformed before helpers/fixture-ctia
+  starts the app."
   [config-transformer body-fn]
   (let [fixtures (join-fixtures [helpers/fixture-ctia
                                  fixture-setup! ;; Note: goes _after_ fixture-ctia
@@ -100,12 +99,11 @@
 
 (def fixtures-nb 100)
 (def updates-nb 50)
-(def minimal-examples (delay (fixt/bundle fixtures-nb false)))
+(def minimal-examples (fixt/bundle fixtures-nb false))
 (def example-types
-  (delay
-    (->> (vals @minimal-examples)
-         (map #(-> % first :type keyword))
-         set)))
+  (->> (vals minimal-examples)
+       (map #(-> % first :type keyword))
+       set))
 
 (defn update-entity
   [{entity-type :type
@@ -639,8 +637,8 @@
                     (= :identity entity-type) 1
                     (= :event entity-type) (+ updates-nb
                                               (* fixtures-nb
-                                                 (count @minimal-examples)))
-                    (contains? @example-types (keyword entity-type)) fixtures-nb
+                                                 (count minimal-examples)))
+                    (contains? example-types (keyword entity-type)) fixtures-nb
                     :else 0)]
               (is (= source-size (:total source))
                   (str "source size match for " (:index source)))
@@ -801,7 +799,7 @@
               sighting0-id (:id es-sighting0)
               sighting1-id (:id es-sighting1)
               sighting-ids (map :id sightings)
-              updated-sighting-body (-> (:sightings @minimal-examples)
+              updated-sighting-body (-> (:sightings minimal-examples)
                                         first
                                         (dissoc :id)
                                         (assoc :description "UPDATED"))]
@@ -874,7 +872,7 @@
           _ (sut/migrate-store-indexes {:migration-id migration-id
                                         :prefix       prefix
                                         :migrations   [:__test]
-                                        :store-keys   (into [] @example-types)
+                                        :store-keys   (into [] example-types)
                                         :batch-size   batch-size
                                         :buffer-size  3
                                         :confirm?     true

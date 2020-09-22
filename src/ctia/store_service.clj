@@ -10,8 +10,7 @@
   (read-store [this store read-fn]))
 
 (tk/defservice store-service
-  "A service to manage an atom that is the central
-  storage area for all stores."
+  "A service to manage the central storage area for all stores."
   StoreService
   [[:ConfigService get-in-config]]
   (init [this context] (core/init context))
