@@ -1,10 +1,9 @@
 (ns ctia.main
-  (:gen-class)
-  (:require
-   [ctia.init :refer [log-properties start-ctia!]]))
+  (:gen-class))
 
 (defn -main
   "Application entry point"
   [& args]
-  (start-ctia! :join? true
-               :silent? false))
+  (let [app ((requiring-resolve 'ctia.init/start-ctia!))]
+    ;; join with TK thread
+    ((requiring-resolve 'puppetlabs.trapperkeeper.core/run-app) app)))

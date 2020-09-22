@@ -269,6 +269,7 @@
    :IAuth {:identity-for-token
            (let [identity-for-token @(requiring-resolve 'ctia.auth/identity-for-token)
                  auth-service @(requiring-resolve 'ctia.auth/auth-service)]
+             (assert auth-service "IAuth service not initialized!")
              (fn [token]
                (identity-for-token
                  @auth-service

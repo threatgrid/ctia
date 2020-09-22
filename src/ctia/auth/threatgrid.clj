@@ -12,7 +12,12 @@
    [ctia
     [auth :as auth]
     [properties :as p]
-    [store :as store]]))
+    [store :as store]
+    [store-service :as store-svc]]
+   [puppetlabs.trapperkeeper.core :as tk]
+   [puppetlabs.trapperkeeper.services :refer [service-context]]))
+
+(declare make-auth-service)
 
 (def cache-ttl-ms (* 1000 60 5))
 
@@ -51,10 +56,20 @@
 (defn lookup-stored-identity [login read-store]
   (read-store :identity store/read-identity login))
 
-(defrecord ThreatgridAuthService [whoami-fn
-                                  lookup-stored-identity-fn]
+(tk/defservice threatgrid-auth-service
   auth/IAuth
-  (identity-for-token [_ token]
+  [[:ConfigService get-in-config]
+   ;; TODO
+   #_[:StoreService read-store]]
+  (init [this context]
+        (let [read-store (-> store/read-store ;;TODO replace with local
+                             store-svc/store-service-fn->varargs)
+              lookup-stored-identity #(lookup-stored-identity % read-store)]
+          (into context
+                (make-auth-service get-in-config lookup-stored-identity))))
+
+  (identity-for-token [this token]
+   (let [{:keys [whoami-fn lookup-stored-identity-fn]} (service-context this)]
     (or (when-let [{{:strs [role
                             login
                             organization_id]} "data"}
@@ -68,11 +83,12 @@
                                 :capabilities (->> (str/lower-case role)
                                                    keyword
                                                    (get default-capabilities))}))))
-        auth/denied-identity-singleton)))
+        auth/denied-identity-singleton))))
 
 (defn make-auth-service [get-in-config lookup-stored-identity]
   (let [{:keys [whoami-url cache]} (get-in-config [:ctia :auth :threatgrid])
         whoami-fn (make-whoami-fn whoami-url)]
-    (->ThreatgridAuthService
+    {:whoami-fn
      (if cache (memo whoami-fn) whoami-fn)
-     (if cache (memo lookup-stored-identity) lookup-stored-identity))))
+     :lookup-stored-identity-fn
+     (if cache (memo lookup-stored-identity) lookup-stored-identity)}))

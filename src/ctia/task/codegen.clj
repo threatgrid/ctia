@@ -59,7 +59,7 @@
   "start CTIA and download swagger-codegen if needed"
   []
   (println "starting CTIA...")
-  (start-ctia! :join? false)
+  (start-ctia!)
   (when-not (.exists (io/file local-jar-uri))
     (println "downloading swagger-codegen" codegen-version "...")
     (exec-command "curl" "-o" local-jar-uri jar-uri)))

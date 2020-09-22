@@ -227,7 +227,7 @@
                        "ctia.http.port" http-port
                        "ctia.http.show.port" http-port]
        (try
-         (init/start-ctia! :join? false)
+         (init/start-ctia!)
          ;; TODO temporary implementation of with-config-transformer*
          ;;      before we integrate trapperkeeper. must go after
          ;;      `start-ctia!` because it calls `ctia.properties/init!`
