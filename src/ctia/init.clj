@@ -64,7 +64,10 @@
                (into {})
                (merge-with into store/empty-stores))))
 
-(defn log-properties [config]
+(defn log-properties
+ ;; 0-arity for backwards compatibility only
+ ([] (p/get-global-properties))
+ ([config]
   (log/debug (with-out-str
                (do (newline)
                    (utils/safe-pprint
@@ -73,7 +76,7 @@
 
   (log/info (with-out-str
               (do (newline)
-                  (utils/safe-pprint config)))))
+                  (utils/safe-pprint config))))))
 
 (defn default-services
   "Returns the default collection of CTIA services based on provided properties."
