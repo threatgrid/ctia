@@ -138,21 +138,20 @@
         ;; temporary hack for global IAuth service
         _ (reset! auth/auth-service (app/get-service app :IAuth))
 
+        ;; temporary shutdown hook for tests
+        ;; Note: this will trigger double-shutdown of Trapperkeeper services on System/exit,
+        ;;       so `stop` for our services should be idempotent
         {{:keys [request-shutdown
                  wait-for-shutdown]} :ShutdownService} (app/service-graph app)
-        _
+        _ (shutdown/register-hook! ::tk-app #(do (request-shutdown)
+                                                 (wait-for-shutdown)))
         ;; Start HTTP server
         ;; Note: temporarily starting server here because it depends on IAuth service
         ;;       which is started by trapperkeeper above. eventually all
         ;;       initialization will be managed by trapperkeeper
-        (let [{http-port :port
-               enabled? :enabled} (p/get-in-global-properties [:ctia :http])]
-          (when enabled?
-            (log/info (str "Starting HTTP server on port " http-port))
-            (http-server/start! :join? false)))]
-    ;; temporary shutdown hook for tests
-    ;; Note: this will trigger double-shutdown of Trapperkeeper services on System/exit,
-    ;;       so `stop` for our services should be idempotent
-    (shutdown/register-hook! ::tk-app #(do (request-shutdown)
-                                           (wait-for-shutdown)))
+        _ (let [{http-port :port
+                 enabled? :enabled} (p/get-in-global-properties [:ctia :http])]
+            (when enabled?
+              (log/info (str "Starting HTTP server on port " http-port))
+              (http-server/start! :join? false)))]
     app))
