@@ -59,11 +59,10 @@
 (tk/defservice threatgrid-auth-service
   auth/IAuth
   [[:ConfigService get-in-config]
-   ;; TODO
+   ;; TODO replace global store service
    #_[:StoreService read-store]]
   (init [this context]
-        (let [read-store (-> store/read-store ;;TODO replace with local
-                             store-svc/store-service-fn->varargs)
+        (let [read-store store/read-store ;;TODO replace with local
               lookup-stored-identity #(lookup-stored-identity % read-store)]
           (into context
                 (make-auth-service get-in-config lookup-stored-identity))))
