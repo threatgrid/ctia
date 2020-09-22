@@ -36,12 +36,7 @@
 
 (defn additional-tests [identity-assertion-id _]
   (testing "GET /ctia/identity-assertion/search"
-  ;; only when ES store
-   (let [app (helpers/get-current-app)
-         {:keys [get-in-config]} (helpers/get-service-map
-                                   app
-                                   :ConfigService)]
-    (when (= "es" (get-in-config [:ctia :store :identity-assertion]))
+    (do
       (let [term "identity.observables.value:\"1.2.3.4\""
             response (get (str "ctia/identity-assertion/search")
                           :query-params {"query" term}
@@ -65,7 +60,7 @@
                           :query-params {"query" term
                                          "assertions.name" "cisco:ctr:device:id"}
                           :headers {"Authorization" "45c1f5e3f05d0"})]
-        (is (= 200 (:status response)) "Search by Assertion term works"))))))
+        (is (= 200 (:status response)) "Search by Assertion term works")))))
 
 (deftest test-identity-assertion-routes
   (test-for-each-store
