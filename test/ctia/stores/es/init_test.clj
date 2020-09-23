@@ -4,7 +4,7 @@
             [ctia.test-helpers.es :refer [->ESConnServices]]
             [clj-http.client :as http]
             [ctia.stores.es.mapping :as m]
-            [clj-momo.lib.es
+            [ductile
              [index :as index]
              [conn :as conn]]
             [clojure.test :refer [deftest testing is]]))

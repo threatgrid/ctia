@@ -2,9 +2,8 @@
   "ES test helpers"
   (:require [cheshire.core :as json]
             [clj-http.client :as http]
-            [clj-momo.lib.es
-             [document :as es-doc]
-             [index :as es-index]]
+            [ductile.index :as es-index]
+            [clj-momo.lib.es.document :as es-doc]
             [clojure.java.io :as io]
             [ctia
              [store :as store]]
@@ -139,7 +138,7 @@
                       "ctia.store.es.vulnerability.indexname" "ctia_vulnerability"
                       "ctia.store.es.weakness.indexname" "ctia_weakness"
 
-                      "ctia.store.actor" "es7"
+                      "ctia.store.actor" "es"
                       "ctia.store.asset" "es"
                       "ctia.store.asset-mapping" "es"
                       "ctia.store.asset-properties" "es"

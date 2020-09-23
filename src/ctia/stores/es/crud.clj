@@ -1,8 +1,9 @@
 (ns ctia.stores.es.crud
-  (:require [ductile.document :as ductile.doc]
-            [clj-momo.lib.es
-             [document :as d]
+  (:require [ductile
+             [document :as ductile.doc]
              [query :as q]]
+            [clj-momo.lib.es
+             [document :as d]]
             [clojure.string :as string]
             [ctia.domain.access-control
              :refer
@@ -349,7 +350,6 @@ It returns the documents with full hits meta data including the real index in wh
       (let [query (make-search-query es-conn-state search-query ident)]
         (cond-> (coerce! (ductile.doc/query conn
                                   index
-                                  ;;(name mapping)
                                   query
                                   (-> params
                                       rename-sort-fields

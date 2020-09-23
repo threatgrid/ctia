@@ -1,8 +1,9 @@
 (ns ctia.task.migration.store-test
   (:require [clj-momo.lib.clj-time.coerce :as time-coerce]
             [clj-momo.lib.clj-time.core :as time]
-            [ductile.conn :refer [connect]]
-            [ductile.index :as ductile.index]
+            [ductile
+             [conn :refer [connect]]
+             [index :as ductile.index]]
             [clj-momo.lib.es.document :as es-doc]
             [clj-momo.test-helpers.core :as mth]
             [clojure.java.io :as io]

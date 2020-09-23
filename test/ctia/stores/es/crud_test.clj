@@ -1,19 +1,18 @@
 (ns ctia.stores.es.crud-test
-  (:require [clojure.test :as t :refer [is are testing deftest use-fixtures join-fixtures]]
-            [schema.core :as s]
-            [ctia.flows.crud :refer [gen-random-uuid]]
-            [clj-momo.lib.es.index :as es-index]
-            [clj-momo.lib.es.conn :as es-conn]
-            [clj-momo.test-helpers.core :as mth]
+  (:require [clj-momo.test-helpers.core :as mth]
             [clojure.instant :as inst]
-            [ctia.stores.es.query :refer [find-restriction-query-part]]
+            [clojure.test :as t
+             :refer
+             [are deftest is join-fixtures testing use-fixtures]]
+            [ctia.flows.crud :refer [gen-random-uuid]]
             [ctia.stores.es.crud :as sut]
             [ctia.stores.es.init :as init]
+            [ctia.stores.es.query :refer [find-restriction-query-part]]
             [ctia.task.rollover :refer [rollover-store]]
-            [ctim.examples.sightings :refer [sighting-minimal]]
-            [ctia.test-helpers
-             [core :as helpers]
-             [es :as es-helpers]]))
+            [ctia.test-helpers.core :as helpers]
+            [ctia.test-helpers.es :as es-helpers]
+            [ductile.index :as es-index]
+            [schema.core :as s]))
 
 (deftest ensure-document-id-in-map-test
   (is (= {:id "actor-677796fd-b5d2-46e3-b57d-4879bcca1ce7"}
