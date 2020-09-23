@@ -137,6 +137,8 @@
           (fn [feeds]
             (map #(decrypt-feed % services) feeds))))
 
+(def fetch-limit 200)
+
 (s/defn fetch-feed [id s
                     {{:keys [get-in-config]} :ConfigService
                      {:keys [decrypt]} :IEncryption
@@ -171,7 +173,8 @@
                             list-records
                             {:all-of {:target_ref indicator_id}}
                             feed-identity
-                            {:fields [:source_ref]}
+                            {:fields [:source_ref]
+                             :limit fetch-limit}
                             services)
                            (keep :source_ref)
                            (map #(read-store :judgement

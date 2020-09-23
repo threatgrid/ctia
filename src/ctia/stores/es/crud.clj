@@ -222,7 +222,7 @@ It returns the documents with full hits meta data including the real index in wh
         (throw (ex-info "You are not allowed to delete this document"
                         {:type :access-control-error}))))))
 
-(def default-sort-field :_doc)
+(def default-sort-field "_doc,id")
 
 (defn with-default-sort-field
   [params]

@@ -95,14 +95,10 @@
         {"Authorization" "45c1f5e3f05d0"}
         asset-properties/asset-properties-fields)))))
 
-(deftest asset-metric-routes-test
-  ((:es-store store/store-fixtures)
-   (fn []
-     (helpers/set-capabilities! "foouser" ["foogroup"] "user" auth/all-capabilities)
-     (whoami-helpers/set-whoami-response "45c1f5e3f05d0" "foouser" "Administrators" "user")
-     (aggregate/test-metric-routes
-      (into asset-properties/asset-properties-entity
-            {:plural            :asset_properties
-             :entity-minimal    new-asset-properties-minimal
-             :enumerable-fields asset-properties/asset-properties-enumerable-fields
-             :date-fields       asset-properties/asset-properties-histogram-fields})))))
+(deftest asset-properties-metric-routes-test
+  (aggregate/test-metric-routes
+   (into asset-properties/asset-properties-entity
+         {:plural            :asset_properties
+          :entity-minimal    new-asset-properties-minimal
+          :enumerable-fields asset-properties/asset-properties-enumerable-fields
+          :date-fields       asset-properties/asset-properties-histogram-fields})))

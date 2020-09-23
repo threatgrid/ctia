@@ -75,13 +75,9 @@
         asset/asset-fields)))))
 
 (deftest asset-metric-routes-test
-  ((:es-store store/store-fixtures)
-   (fn []
-     (helpers/set-capabilities! "foouser" ["foogroup"] "user" auth/all-capabilities)
-     (whoami-helpers/set-whoami-response "45c1f5e3f05d0" "foouser" "Administrators" "user")
-     (aggregate/test-metric-routes
-      (into asset/asset-entity
-            {:plural            :assets
-             :entity-minimal    new-asset-minimal
-             :enumerable-fields asset/asset-enumerable-fields
-             :date-fields       asset/asset-histogram-fields})))))
+  (aggregate/test-metric-routes
+   (into asset/asset-entity
+         {:plural            :assets
+          :entity-minimal    new-asset-minimal
+          :enumerable-fields asset/asset-enumerable-fields
+          :date-fields       asset/asset-histogram-fields})))
