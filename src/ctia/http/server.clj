@@ -267,7 +267,7 @@
 (s/defn ctia-http-server-service-global-services
   :- APIHandlerServices
   [config]
-  {:ConfigService {:get-config (constantly config)
+  {:ConfigService {:get-config (fn [] config)
                    :get-in-config (partial get-in config)}
    :HooksService {:apply-hooks (requiring-resolve
                                  'ctia.flows.hooks/apply-hooks)

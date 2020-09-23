@@ -41,8 +41,8 @@
           stores))
 
 (defn -main [& _args]
-  (let [config (p/build-init-config)
-        _ (log-properties config)
+  (let [config (doto (p/build-init-config)
+                 log-properties)
         _ (init-store-service! (partial get-in config))
         {:keys [nb-errors]
          :as res} (rollover-stores @stores)]

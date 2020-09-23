@@ -23,9 +23,9 @@
   (init [this context]
     (log/info "Loading Encryption Key")
     (let [secret (encryption-key (get-in-config [:ctia :encryption]))]
-      (into context
-              {:encrypt-fn #(encrypt-as-base64 % secret)
-               :decrypt-fn #(decrypt-from-base64 % secret)})))
+      (assoc context
+             :encrypt-fn #(encrypt-as-base64 % secret)
+             :decrypt-fn #(decrypt-from-base64 % secret))))
   (decrypt [this src]
     (let [{:keys [decrypt-fn]} (service-context this)]
       (decrypt-fn src)))
