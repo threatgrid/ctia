@@ -96,15 +96,16 @@
 (defn start-ctia!
   "Does the heavy lifting for ctia.main (ie entry point that isn't a class).
   Returns the Trapperkeeper app."
-  []
+ ([]
+  ;; properties init
+  (p/init!)
+  (start-ctia! (p/get-global-properties)))
+ ([config]
   (log/info "starting CTIA version: "
             (version/current-version))
 
   ;; shutdown hook
   (shutdown/init!)
-
-  ;; properties init
-  (p/init!)
 
   ;; events init
   (e/init!)
@@ -123,8 +124,7 @@
   ;; hooks init
   (h/init!)
 
-  (let [config (p/get-global-properties)
-        services (default-services config)
+  (let [services (default-services config)
         app (start-ctia!* {:config config
                            :services services})
 
@@ -150,4 +150,4 @@
             (when enabled?
               (log/info (str "Starting HTTP server on port " http-port))
               (http-server/start! :join? false)))]
-    app))
+    app)))

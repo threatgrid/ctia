@@ -202,6 +202,7 @@
 (defn build-get-in-config-fn []
   (assert (not (thread-bound? #'*current-app*)) "Building custom config while app bound!")
   ;; stub implementation until full trapperkeeper bootstrap
+  (p/init!)
   (partial
     get-in
     (reduce #(%2 %1)
@@ -245,13 +246,14 @@
              ;;      `start-ctia!` because it calls `ctia.properties/init!`
              ;;      to update global properties with System properties,
              ;;      and we want to update the config _after_ that step.
+             _ (p/init!)
              config (swap! (p/global-properties-atom)
                            (fn [init-config]
                              (reduce #(%2 %1)
                                      init-config
                                      *config-transformers*)))
              
-             app (init/start-ctia!)]
+             app (init/start-ctia! config)]
          (try
            (bind-current-app* app t)
            (finally
