@@ -55,7 +55,7 @@
                                               app/service-graph
                                               :ConfigService
                                               :get-in-config
-                                              (assert "missing get-in-config")))}
+                                              (doto (assert "missing get-in-config"))))}
     :EventsService {:send-event events/send-event
                     :central-channel (fn []
                                        {:post [%]}
