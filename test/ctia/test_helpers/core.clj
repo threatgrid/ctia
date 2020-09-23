@@ -51,7 +51,8 @@
                    :shutdown! hooks/shutdown!
                    :reset-hooks! (partial hooks/reset-hooks!
                                           (-> app
-                                              (app/service-graph :ConfigService)
+                                              app/service-graph
+                                              :ConfigService
                                               :get-in-config
                                               (assert "missing get-in-config")))}
     :EventsService {:send-event events/send-event
