@@ -49,8 +49,7 @@
                (into {})
                (merge-with into store/empty-stores))))
 
-(defn log-properties
-  [config]
+(defn log-properties [config]
   (log/debug (with-out-str
                (do (newline)
                    (utils/safe-pprint

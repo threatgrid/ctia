@@ -132,7 +132,9 @@
   (log/info "checking all ES Stores")
   (try
     (setup)
-    (when-let [errors (seq (check-store-indexes batch-size))]
+    (when-let [errors (seq (check-store-indexes batch-size
+                                                (fn _all-stores []
+                                                  @stores)))]
       (log/errorf "Schema errors found during check: %s"
                   (pr-str errors))
       (exit true))
