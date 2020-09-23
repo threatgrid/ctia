@@ -9,7 +9,6 @@
             [ctia.init :as init]
             [ctia.properties :as p]
             [ctia.store :as store]
-            [ctia.store-service :as store-svc]
             [ctia.stores.es.init :as es-init]
             [puppetlabs.trapperkeeper.app :as app]
             [schema.core :as s])
@@ -49,10 +48,9 @@
         (println summary)
         (System/exit 0))
       (pp/pprint options)
-      (let [app (let [config (p/build-init-config)]
-                  (init/start-ctia!* {:services [store-svc/store-service]
-                                      :config config}))
-            {{:keys [all-stores]} :StoreService} (app/service-graph app)]
+      (let [config (p/build-init-config)
+            app (init/start-ctia! config)
+            all-stores (fn [] @store/stores)]
         (->> (:stores options)
              (select-keys (all-stores))
              update-mapping-stores!)

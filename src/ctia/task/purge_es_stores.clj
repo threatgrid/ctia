@@ -1,7 +1,7 @@
 (ns ctia.task.purge-es-stores
   (:require [clojure.tools.logging :as log]
             [ctia
-             [init :refer [start-ctia!*]]
+             [init :refer [start-ctia!]]
              [properties :as p]]
             [ctia.store-service :as store-svc]
             [ctia.stores.es.store :refer [delete-state-indexes]]
@@ -13,8 +13,7 @@
   []
   (log/info "starting CTIA Stores...")
   (let [config (p/build-init-config)]
-    (start-ctia!* {:services [store-svc/store-service]
-                   :config config})))
+    (start-ctia! config)))
 
 (s/defn delete-store-indexes [all-stores]
   (doseq [:let [stores (all-stores)

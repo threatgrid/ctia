@@ -11,7 +11,7 @@
    [ctia
     [init :refer [start-ctia!*]]
     [properties :as p]
-    [store-service :as store-svc]]
+    [store :refer [stores]]]
    [ctia.entity.entities :refer [entities]]
    [ctia.entity.sighting.schemas :refer [StoredSighting]]
    [ctia.stores.es.crud :refer [coerce-to-fn]]
@@ -41,8 +41,7 @@
   []
   (log/info "starting CTIA Stores...")
   (let [config (p/build-init-config)]
-    (start-ctia!* {:services [store-svc/store-service]
-                   :config config})))
+    (start-ctia! config)))
 
 (defn fetch-batch
   "fetch a batch of documents from an es index"
@@ -132,8 +131,7 @@
   (log/info "checking all ES Stores")
   (try
     (let [app (setup)
-          store-svc (app/get-service app :StoreService)
-          all-stores (partial store-svc/all-stores store-svc)]
+          all-stores (fn [] @store/stores)]
       (when-let [errors (seq (check-store-indexes batch-size all-stores))]
         (log/errorf "Schema errors found during check: %s"
                     (pr-str errors))
