@@ -9,7 +9,7 @@
    [clojure.string :as string]
    [clojure.tools.logging :as log]
    [ctia
-    [init :refer [start-ctia!*]]
+    [init :refer [init-store-service! log-properties]]
     [properties :as p]
     [store :refer [stores]]]
    [ctia.entity.entities :refer [entities]]
@@ -35,13 +35,14 @@
     (do (log/warnf "missing schema definition for: %s" type)
         s/Any)))
 
-(defn ^:private setup
+(defn setup
   "init properties, start CTIA and its store service.
   returns trapperkeeper app"
   []
   (log/info "starting CTIA Stores...")
   (let [config (p/build-init-config)]
-    (start-ctia! config)))
+    (log-properties config)
+    (init-store-service! (partial get-in config))))
 
 (defn fetch-batch
   "fetch a batch of documents from an es index"
@@ -125,19 +126,17 @@
     (System/exit -1)
     (System/exit 0)))
 
-(defn ^:private run-check
+(defn run-check
   [batch-size]
   (assert batch-size "Please specify a batch size")
   (log/info "checking all ES Stores")
   (try
-    (let [app (setup)
-          all-stores (fn [] @store/stores)]
-      (when-let [errors (seq (check-store-indexes batch-size all-stores))]
-        (log/errorf "Schema errors found during check: %s"
-                    (pr-str errors))
-        (exit true))
-      (log/info "check complete")
-      (exit false))
+    (setup)
+    (when-let [errors (seq (check-store-indexes batch-size))]
+      (log/errorf "Schema errors found during check: %s"
+                  (pr-str errors))
+      (exit true))
+    (log/info "check complete")
     (catch Exception e
       (log/error e "Unexpected error during store checks")
       (exit true))

@@ -7,4 +7,5 @@
   :- MigrationStoreServices
   [app]
   {:ConfigService (-> (helpers/get-service-map app :ConfigService)
-                      (select-keys [:get-in-config]))})
+                      (select-keys [:get-config
+                                    :get-in-config]))})

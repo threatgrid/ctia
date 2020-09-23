@@ -16,7 +16,8 @@
              [init :as init]
              [properties :as p :refer [PropertiesSchema]]
              [shutdown :as shutdown]
-             [store :as store]]
+             [store :as store]
+             [store-service :as store-svc]]
             [ctia.auth.allow-all :as aa]
             [ctia.encryption :as encryption]
             [ctia.events :as events]
@@ -204,26 +205,25 @@
                   log/*logger-factory* lf]
       (f))))
 
+(defn build-transformed-init-config []
+  (reduce #(%2 %1)
+          (p/build-init-config)
+          *config-transformers*))
+
 (defn build-get-in-config-fn []
   (assert (not (thread-bound? #'*current-app*)) "Building custom config while app bound!")
-  ;; stub implementation until full trapperkeeper bootstrap
-  (partial
-    get-in
-    (reduce #(%2 %1)
-            (p/build-init-config)
-            *config-transformers*)))
+  (partial get-in (build-transformed-init-config)))
 
 (defn bind-current-app* [app f]
-  (let [_ (assert (not (thread-bound? #'*current-app*)) "Rebound app!")
-        _ (assert app)]
-    (binding [*current-app* app]
-      (f))))
+  (assert (not (thread-bound? #'*current-app*)) "Rebound app!")
+  (assert app)
+  (binding [*current-app* app]
+    (f)))
 
 (defn get-current-app []
   {:post [%]}
   (assert (thread-bound? #'*current-app*) "App not bound!")
-  (let [app *current-app*]
-    app))
+  *current-app*)
 
 (defn current-get-in-config-fn
   ([] (current-get-in-config-fn (get-current-app)))
@@ -245,10 +245,7 @@
      (with-properties ["ctia.http.enabled" enable-http?
                        "ctia.http.port" http-port
                        "ctia.http.show.port" http-port]
-       (let [config (build-get-in-config-fn)
-             app (init/start-ctia!*
-                   {:services (init/default-services config)
-                    :config config})]
+       (let [app (init/start-ctia! (build-transformed-init-config))]
          (try
            (bind-current-app* app t)
            (finally
@@ -282,10 +279,13 @@
 
 (defn set-capabilities!
   [login groups role caps]
-  (store/write-store :identity store/create-identity {:login login
+  (let [app (get-current-app)
+        {:keys [write-store]} (-> (get-service-map app :StoreService)
+                                  store-svc/lift-store-service-fns)]
+    (write-store :identity store/create-identity {:login login
                                                       :groups groups
                                                       :role role
-                                                      :capabilities caps}))
+                                                      :capabilities caps})))
 
 (defmacro deftest-for-each-fixture [test-name fixture-map & body]
   `(do

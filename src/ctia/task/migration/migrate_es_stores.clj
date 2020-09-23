@@ -306,8 +306,10 @@
   [options]
   (log/info "migrating all ES Stores")
   (try
-    (let [get-in-config (partial get-in (p/build-init-config))
-          services {:ConfigService {:get-in-config get-in-config}}
+    (let [config (p/build-init-config)
+          get-in-config (partial get-in config)
+          services {:ConfigService {:get-config (fn [] config)
+                                    :get-in-config get-in-config}}
           _ (mst/setup! services)]
       (doto (-> (get-in-config [:ctia :migration])
                 (into options)
