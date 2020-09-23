@@ -30,29 +30,27 @@
    [puppetlabs.trapperkeeper.core :as tk]
    [puppetlabs.trapperkeeper.app :as app]))
 
-(defn- get-store-types [store-kw]
-  (or (some-> (p/get-in-global-properties [:ctia :store store-kw])
+(defn- get-store-types [store-kw get-in-config]
+  (or (some-> (get-in-config [:ctia :store store-kw])
               (str/split #","))
       []))
 
-(defn- build-store [store-kw store-type]
+(defn- build-store [store-kw get-in-config store-type]
   (case store-type
     "es" (es-init/init-store! store-kw
-                              {:ConfigService {:get-in-config p/get-in-global-properties}})))
+                              {:ConfigService {:get-in-config get-in-config}})))
 
-(defn init-store-service! []
+(defn init-store-service! [get-in-config]
   (reset! store/stores
           (->> (keys store/empty-stores)
                (map (fn [store-kw]
-                      [store-kw (keep (partial build-store store-kw)
-                                      (get-store-types store-kw))]))
+                      [store-kw (keep (partial build-store store-kw get-in-config)
+                                      (get-store-types store-kw get-in-config))]))
                (into {})
                (merge-with into store/empty-stores))))
 
 (defn log-properties
- ;; 0-arity for backwards compatibility only
- ([] (p/get-global-properties))
- ([config]
+  [config]
   (log/debug (with-out-str
                (do (newline)
                    (utils/safe-pprint
@@ -61,7 +59,7 @@
 
   (log/info (with-out-str
               (do (newline)
-                  (utils/safe-pprint config))))))
+                  (utils/safe-pprint config)))))
 
 (defn default-services
   "Returns the default collection of CTIA services based on provided properties."
@@ -96,10 +94,7 @@
 (defn start-ctia!
   "Does the heavy lifting for ctia.main (ie entry point that isn't a class).
   Returns the Trapperkeeper app."
- ([]
-  ;; properties init
-  (p/init!)
-  (start-ctia! (p/get-global-properties)))
+ ([] (start-ctia! (p/build-init-config)))
  ([config]
   (log/info "starting CTIA version: "
             (version/current-version))
@@ -111,18 +106,18 @@
   (e/init!)
 
   ;; metrics reporters init
-  (riemann/init! p/get-in-global-properties)
-  (jmx/init! p/get-in-global-properties)
-  (console/init! p/get-in-global-properties)
+  (riemann/init! (partial get-in config))
+  (jmx/init! (partial get-in config))
+  (console/init! (partial get-in config))
 
   ;; register event file logging only when enabled
-  (when (p/get-in-global-properties [:ctia :events :log])
+  (when (get-in config [:ctia :events :log])
     (event-logging/init!))
 
-  (init-store-service!)
+  (init-store-service! (partial get-in config))
 
   ;; hooks init
-  (h/init!)
+  (h/init! (partial get-in config))
 
   (let [services (default-services config)
         app (start-ctia!* {:config config
@@ -146,8 +141,8 @@
         ;;       which are started by trapperkeeper above. eventually all
         ;;       initialization will be managed by trapperkeeper
         _ (let [{http-port :port
-                 enabled? :enabled} (p/get-in-global-properties [:ctia :http])]
+                 enabled? :enabled} (get-in config [:ctia :http])]
             (when enabled?
               (log/info (str "Starting HTTP server on port " http-port))
-              (http-server/start! :join? false)))]
+              (http-server/start! config)))]
     app)))

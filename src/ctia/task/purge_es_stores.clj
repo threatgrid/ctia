@@ -12,7 +12,7 @@
   (log/info "starting CTIA Stores...")
   (p/init!)
   (log-properties)
-  (init-store-service!))
+  (init-store-service! p/get-in-global-properties))
 
 (defn delete-store-indexes []
   (doseq [store-impls (vals @stores)

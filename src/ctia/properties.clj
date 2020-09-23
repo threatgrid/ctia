@@ -18,27 +18,6 @@
   ["ctia-default.properties"
    "ctia.properties"])
 
-;; should ONLY be used directly by `global-properties-atom`!
-(defonce ^:private global-properties
-  (atom {}))
-
-;; Usages of this function represent barriers to using
-;; TK ConfigService's `get-in-config` in the future.
-;; Prefer `get-in-global-properties` whenever possible.
-(defn global-properties-atom []
-  global-properties)
-
-;; Follows TK ConfigService's `get-config` for future migration.
-(defn get-global-properties []
-  @(global-properties-atom))
-
-;; Follows TK ConfigService's `get-in-config` for future migration.
-(defn get-in-global-properties
-  ([path]
-   (get-in-global-properties path nil))
-  ([path default]
-   (get-in (get-global-properties) path default)))
-
 (defn default-store-properties [store]
   {(str "ctia.store." store) s/Str})
 
@@ -231,10 +210,19 @@
 (def configurable-properties
   (mls/keys PropertiesSchema))
 
-(def init! (mp/build-init-fn files
-                             PropertiesSchema
-                             ;; TOP-LEVEL STATE!!
-                             (global-properties-atom)))
+(defn build-init-config
+  "Returns a (nested keyword) config map from (merged left-to-right):
+
+  1. [[files]] merged left-to-right
+  2. JVM Properties for keys of [[PropertiesSchema]]
+  3. Environment variables for keys of [[PropertiesSchema]]"
+  []
+  {:post [(map? %)]}
+  (let [a (atom nil)]
+    ((mp/build-init-fn files
+                       PropertiesSchema
+                       a))
+    @a))
 
 (defn get-http-show [get-in-config]
   (get-in-config [:ctia :http :show]))

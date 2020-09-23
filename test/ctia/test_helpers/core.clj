@@ -49,7 +49,11 @@
                    :apply-event-hooks hooks/apply-event-hooks
                    :init-hooks! hooks/init-hooks!
                    :shutdown! hooks/shutdown!
-                   :reset-hooks! hooks/reset-hooks!}
+                   :reset-hooks! (partial hooks/reset-hooks!
+                                          (-> app
+                                              (app/service-map :ConfigService)
+                                              :get-in-config
+                                              (assert "missing get-in-config")))}
     :EventsService {:send-event events/send-event
                     :central-channel (fn []
                                        {:post [%]}

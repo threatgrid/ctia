@@ -306,11 +306,8 @@
   [options]
   (log/info "migrating all ES Stores")
   (try
-    (let [_ (log/info "starting CTIA Stores...")
-          ;; start global services
-          get-in-config p/get-in-global-properties
+    (let [get-in-config (partial get-in (p/build-init-config))
           services {:ConfigService {:get-in-config get-in-config}}
-          ;; end global services
           _ (mst/setup! services)]
       (doto (-> (get-in-config [:ctia :migration])
                 (into options)

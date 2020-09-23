@@ -6,8 +6,7 @@
             [clojure.tools.logging :as log]
             [schema.core :as s]
             [clj-momo.lib.es
-             [index :as es-index]
-             [schemas :refer [ESConnState]]]
+             [index :as es-index]]
             [ctia.stores.es.init :refer [init-es-conn! get-store-properties]]
             [ctia
              [init :refer [log-properties]]
@@ -38,7 +37,8 @@
       (println summary)
       (System/exit 0))
     (pp/pprint options)
-    (p/init!)
-    (log-properties)
-    (update-stores! (:stores options)
-                    p/get-in-global-properties)))
+    (let [get-in-config (let [config (p/build-init-config)]
+                          (log-properties config)
+                          (partial get-in config))]
+      (update-stores! (:stores options)
+                      get-in-config))))
