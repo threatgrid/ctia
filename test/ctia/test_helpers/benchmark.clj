@@ -16,7 +16,7 @@
                                            "ctia.http.port" http-port
                                            "ctia.http.bulk.max-size" 100000
                                            "ctia.http.show.port" http-port]
-                   (start-ctia! :join? false)))))
+                   (start-ctia!)))))
     http-port))
 
 

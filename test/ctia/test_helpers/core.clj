@@ -27,45 +27,57 @@
             [ctim.generators.common :as cgc]
             [flanders
              [spec :as fs]
-             [utils :as fu]]))
+             [utils :as fu]]
+            [puppetlabs.trapperkeeper.app :as app]))
 
 (def ^:dynamic ^:private *config-transformers* [])
 
 (defn get-service-map [app svc-kw]
-  {:pre [(keyword? svc-kw)]}
-  ;; stub implementation until trapperkeeper bootstrap
-  (assert (= ::global-app app)
-          "app must be the result of get-current-app")
-  (case svc-kw
-    :ConfigService {:get-config p/get-global-properties
-                    :get-in-config p/get-in-global-properties}
-    :HooksService {:add-hook! hooks/add-hook!
-                   :add-hooks! hooks/add-hooks!
-                   ;; takes map and flattens to kw args, since protocol method
-                   ;; cannot have varargs
-                   :apply-hooks (fn [hook-options]
-                                  (apply hooks/apply-hooks (apply concat hook-options)))
-                   :apply-event-hooks hooks/apply-event-hooks
-                   :init-hooks! hooks/init-hooks!
-                   :shutdown! hooks/shutdown!
-                   :reset-hooks! hooks/reset-hooks!}
-    :EventsService {:send-event events/send-event
-                    :central-channel (fn []
-                                       {:post [%]}
-                                       @events/central-channel)
-                    :register-listener events/register-listener}
-    :IEncryption {:decrypt encryption/decrypt-str
-                  :encrypt encryption/encrypt-str}
-    :StoreService {:all-stores (fn [] @store/stores)
-                   ;; no varargs to simulate eventual protocol method
-                   :read-store (fn [store read-fn]
-                                 (store/read-store store read-fn))
-                   ;; no varargs to simulate eventual protocol method
-                   :write-store (fn [store write-fn]
-                                  (store/write-store store write-fn))}
-    (throw (ex-info (str "No service: " svc-kw)
-                    {:app app
-                     :service svc-kw}))))
+  {:pre [(keyword? svc-kw)]
+   :post [(map? %)]}
+  (case app
+    ::global-app
+    ;; fake global app
+    ;; stub implementation full trapperkeeper bootstrap
+    (case svc-kw
+      :ConfigService {:get-config p/get-global-properties
+                      :get-in-config p/get-in-global-properties}
+      :HooksService {:add-hook! hooks/add-hook!
+                     :add-hooks! hooks/add-hooks!
+                     ;; takes map and flattens to kw args, since protocol method
+                     ;; cannot have varargs
+                     :apply-hooks (fn [hook-options]
+                                    (apply hooks/apply-hooks (apply concat hook-options)))
+                     :apply-event-hooks hooks/apply-event-hooks
+                     :init-hooks! hooks/init-hooks!
+                     :shutdown! hooks/shutdown!
+                     :reset-hooks! hooks/reset-hooks!}
+      :EventsService {:send-event events/send-event
+                      :central-channel (fn []
+                                         {:post [%]}
+                                         @events/central-channel)
+                      :register-listener events/register-listener}
+      :IEncryption {:decrypt encryption/decrypt-str
+                    :encrypt encryption/encrypt-str}
+      :StoreService {:all-stores (fn [] @store/stores)
+                     ;; no varargs to simulate eventual protocol method
+                     :read-store (fn [store read-fn]
+                                   (store/read-store store read-fn))
+                     ;; no varargs to simulate eventual protocol method
+                     :write-store (fn [store write-fn]
+                                    (store/write-store store write-fn))}
+      (throw (ex-info (str "No service: " svc-kw)
+                      {:app app
+                       :service svc-kw})))
+    ;; real TK app
+    (let [service-map (-> app
+                          app/service-graph
+                          svc-kw)
+          _ (when-not (map? service-map)
+              (throw (ex-info (str "No service: " svc-kw)
+                              {:app app
+                               :service svc-kw})))]
+      service-map)))
 
 (def fixture-property
   (mth/build-fixture-property-fn PropertiesSchema))
@@ -227,7 +239,7 @@
                        "ctia.http.port" http-port
                        "ctia.http.show.port" http-port]
        (try
-         (init/start-ctia! :join? false)
+         (init/start-ctia!)
          ;; TODO temporary implementation of with-config-transformer*
          ;;      before we integrate trapperkeeper. must go after
          ;;      `start-ctia!` because it calls `ctia.properties/init!`

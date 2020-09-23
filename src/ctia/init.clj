@@ -26,24 +26,9 @@
    [ctia.http.server :as http-server]
    [ctia.shutdown :as shutdown]
    [ctia.stores.es
-    [init :as es-init]]))
-
-(defn init-auth-service! []
-  (let [;; these will be replaced by trapperkeeper services in the future.
-        ;; start temporary global services
-        get-in-config p/get-in-global-properties
-        read-store store/read-store
-        ;; end temporary global services
-        {auth-service-type :type :as auth} (p/get-in-global-properties [:ctia :auth])]
-    (case auth-service-type
-      :allow-all (reset! auth/auth-service (allow-all/->AuthService))
-      :threatgrid (reset! auth/auth-service (threatgrid/make-auth-service
-                                              get-in-config
-                                              #(threatgrid/lookup-stored-identity % read-store)))
-      :static (reset! auth/auth-service (static-auth/->AuthService auth))
-      (throw (ex-info "Auth service not configured"
-                      {:message "Unknown service"
-                       :requested-service auth-service-type})))))
+    [init :as es-init]]
+   [puppetlabs.trapperkeeper.core :as tk]
+   [puppetlabs.trapperkeeper.app :as app]))
 
 (defn init-encryption-service! []
   (let [{:keys [type] :as encryption-properties}
@@ -79,7 +64,10 @@
                (into {})
                (merge-with into store/empty-stores))))
 
-(defn log-properties []
+(defn log-properties
+ ;; 0-arity for backwards compatibility only
+ ([] (p/get-global-properties))
+ ([config]
   (log/debug (with-out-str
                (do (newline)
                    (utils/safe-pprint
@@ -88,11 +76,34 @@
 
   (log/info (with-out-str
               (do (newline)
-                  (utils/safe-pprint (p/get-global-properties))))))
-(defn start-ctia!
-  "Does the heavy lifting for ctia.main (ie entry point that isn't a class)"
-  [& {:keys [join?]}]
+                  (utils/safe-pprint config))))))
 
+(defn default-services
+  "Returns the default collection of CTIA services based on provided properties."
+  [config]
+  (let [{auth-service-type :type} (get-in config [:ctia :auth])
+        auth-svc (case auth-service-type
+                   :allow-all allow-all/allow-all-auth-service
+                   :threatgrid threatgrid/threatgrid-auth-service
+                   :static static-auth/static-auth-service
+                   (throw (ex-info "Auth service not configured"
+                                   {:message "Unknown service"
+                                    :requested-service auth-service-type})))]
+    [auth-svc]))
+
+
+(defn start-ctia!*
+  "Lower-level Trapperkeeper booting function for
+  custom services and config."
+  [{:keys [services config]}]
+  (validate-entities)
+  (log-properties config)
+  (tk/boot-services-with-config services config))
+
+(defn start-ctia!
+  "Does the heavy lifting for ctia.main (ie entry point that isn't a class).
+  Returns the Trapperkeeper app."
+  []
   (log/info "starting CTIA version: "
             (version/current-version))
 
@@ -101,9 +112,6 @@
 
   ;; properties init
   (p/init!)
-
-  (log-properties)
-  (validate-entities)
 
   ;; events init
   (e/init!)
@@ -118,15 +126,34 @@
     (event-logging/init!))
 
   (init-encryption-service!)
-  (init-auth-service!)
   (init-store-service!)
 
   ;; hooks init
   (h/init!)
 
-  ;; Start HTTP server
-  (let [{http-port :port
-         enabled? :enabled} (p/get-in-global-properties [:ctia :http])]
-    (when enabled?
-      (log/info (str "Starting HTTP server on port " http-port))
-      (http-server/start! :join? join?))))
+  (let [config (p/get-global-properties)
+        services (default-services config)
+        app (start-ctia!* {:config config
+                           :services services})
+
+        ;; temporary hack for global IAuth service
+        _ (reset! auth/auth-service (app/get-service app :IAuth))
+
+        ;; temporary shutdown hook for tests
+        ;; Note: this will trigger double-shutdown of Trapperkeeper services on System/exit,
+        ;;       so `stop` for our services should be idempotent
+        {{:keys [request-shutdown
+                 wait-for-shutdown]} :ShutdownService} (app/service-graph app)
+        _ (shutdown/register-hook! ::tk-app #(do (reset! auth/auth-service nil)
+                                                 (request-shutdown)
+                                                 (wait-for-shutdown)))
+        ;; Start HTTP server
+        ;; Note: temporarily starting server here because it depends on IAuth service
+        ;;       which is started by trapperkeeper above. eventually all
+        ;;       initialization will be managed by trapperkeeper
+        _ (let [{http-port :port
+                 enabled? :enabled} (p/get-in-global-properties [:ctia :http])]
+            (when enabled?
+              (log/info (str "Starting HTTP server on port " http-port))
+              (http-server/start! :join? false)))]
+    app))

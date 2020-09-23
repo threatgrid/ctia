@@ -7,6 +7,7 @@
 (def schema-generators-version "0.1.3")
 (def test-check-version "1.0.0")
 (def test-chuck-version "0.2.10")
+(def trapperkeeper-version "3.1.0")
 
 ;; On avoiding dependency overrides:
 ;; - :pedantic? should be set to :abort; Use "lein deps :tree" to resolve
@@ -32,6 +33,7 @@
   :jvm-opts ["-Djava.awt.headless=true"
              "-Dlog.console.threshold=INFO"
              "-server"]
+  :exclusions [org.slf4j/log4j-over-slf4j] ;; remove from trapperkeeper jars
   ;; use `lein pom; mvn dependency:tree -Dverbose -Dexcludes=org.clojure:clojure`
   ;; to inspect conflicts.
 
@@ -43,6 +45,11 @@
                  [org.clojure/tools.logging "1.1.0"]
                  [org.clojure/tools.cli "1.0.194"]
                  [pandect "0.6.1"]
+
+                 ;; Trapperkeeper
+                 [puppetlabs/trapperkeeper ~trapperkeeper-version]
+                 [puppetlabs/kitchensink ~trapperkeeper-version]
+                 [prismatic/plumbing "0.5.5"] ;; upgrade puppetlabs/trapperkeeper
 
                  ;; Schemas
                  [prismatic/schema "1.1.12"]
@@ -75,6 +82,7 @@
                  ;; clients
                  [clj-http "3.10.1"]
                  [com.taoensso/carmine "2.19.1" #_"2.20.0-RC1"]
+                 [cheshire ~cheshire-version] ;; upgrade threatgrid/ring-jwt-middleware, puppetlabs/kitchensink (+ a dozen others)
 
                  ;; Metrics
                  [metrics-clojure ~metrics-clojure-version]
@@ -139,7 +147,10 @@
                                          "git" "symbolic-ref" "--short" "HEAD")))})}]
 
   :global-vars {*warn-on-reflection* true}
-  :profiles {:dev {:dependencies [[cheshire ~cheshire-version]
+  :profiles {:dev {:dependencies [[puppetlabs/trapperkeeper ~trapperkeeper-version
+                                   :classifier "test"]
+                                  [puppetlabs/kitchensink ~trapperkeeper-version
+                                   :classifier "test"]
                                   [org.clojure/test.check ~test-check-version]
                                   [com.gfredericks/test.chuck ~test-chuck-version]
                                   [clj-http-fake ~clj-http-fake-version]
@@ -154,8 +165,7 @@
                               "-Dcom.sun.management.jmxremote.local.only=false"
                               "-Dcom.sun.management.jmxremote.authenticate=false"
                               "-Dcom.sun.management.jmxremote.ssl=false"]}
-             :bench {:dependencies [[cheshire ~cheshire-version]
-                                    [perforate ~perforate-version]
+             :bench {:dependencies [[perforate ~perforate-version]
                                     [criterium "0.4.5"]
                                     [org.clojure/test.check ~test-check-version]
                                     [com.gfredericks/test.chuck ~test-chuck-version]
@@ -166,8 +176,7 @@
                        :uberjar-name "ctia.jar"
                        :uberjar-exclusions [#"ctia\.properties"]}
              :test {:jvm-opts ["-Dlog.console.threshold=WARN"]
-                    :dependencies [[cheshire ~cheshire-version]
-                                   [clj-http-fake ~clj-http-fake-version]
+                    :dependencies [[clj-http-fake ~clj-http-fake-version]
                                    [com.gfredericks/test.chuck ~test-chuck-version]
                                    [org.clojure/test.check ~test-check-version]
                                    [prismatic/schema-generators ~schema-generators-version]]
