@@ -46,15 +46,15 @@
 (defn default-services
   "Returns the default collection of CTIA services based on provided properties."
   [config]
-  (let [auth-svc
-        (let [{auth-service-type :type :as auth} (get-in config [:ctia :auth])]
-          (case auth-service-type
-            :allow-all allow-all/allow-all-auth-service
-            :threatgrid threatgrid/threatgrid-auth-service
-            :static static-auth/static-auth-service
-            (throw (ex-info "Auth service not configured"
-                            {:message "Unknown service"
-                             :requested-service auth-service-type}))))
+  (let [{auth-service-type :type} (get-in config [:ctia :auth])
+        auth-svc
+        (case auth-service-type
+          :allow-all allow-all/allow-all-auth-service
+          :threatgrid threatgrid/threatgrid-auth-service
+          :static static-auth/static-auth-service
+          (throw (ex-info "Auth service not configured"
+                          {:message "Unknown service"
+                           :requested-service auth-service-type})))
         encryption-svc
         (let [{:keys [type] :as encryption-properties}
               (get-in config [:ctia :encryption])]
@@ -83,10 +83,9 @@
   "Lower-level Trapperkeeper booting function for
   custom services and config."
   [{:keys [services config]}]
-  (let [_ (validate-entities)
-        _ (log-properties config)
-        app (tk/boot-services-with-config services config)]
-    app))
+  (validate-entities)
+  (log-properties config)
+  (tk/boot-services-with-config services config))
 
 (defn start-ctia!
   "Does the heavy lifting for ctia.main (ie entry point that isn't a class).

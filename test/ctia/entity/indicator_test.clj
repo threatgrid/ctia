@@ -9,7 +9,7 @@
              [crud :refer [entity-crud-test]]
              [aggregate :refer [test-metric-routes]]
              [fake-whoami-service :as whoami-helpers]
-             [store :refer [test-for-each-store store-fixtures]]]
+             [store :refer [test-for-each-store]]]
             [ctim.examples.indicators
              :refer
              [new-indicator-maximal new-indicator-minimal]]))
@@ -76,12 +76,8 @@
                        test-for-each-store))
 
 (deftest test-indicator-metric-routes
-  ((:es-store store-fixtures)
-   (fn []
-     (helpers/set-capabilities! "foouser" ["foogroup"] "user" caps/all-capabilities)
-     (whoami-helpers/set-whoami-response "45c1f5e3f05d0" "foouser" "Administrators" "user")
-     (test-metric-routes (into sut/indicator-entity
-                               {:entity-minimal new-indicator-minimal
-                                :enumerable-fields sut/indicator-enumerable-fields
-                                :date-fields sut/indicator-histogram-fields})))))
+  (test-metric-routes (into sut/indicator-entity
+                            {:entity-minimal new-indicator-minimal
+                             :enumerable-fields sut/indicator-enumerable-fields
+                             :date-fields sut/indicator-histogram-fields})))
 

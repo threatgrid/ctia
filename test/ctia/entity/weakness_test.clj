@@ -12,7 +12,7 @@
              [field-selection :refer [field-selection-tests]]
              [http :refer [doc-id->rel-url]]
              [pagination :refer [pagination-test]]
-             [store :refer [test-for-each-store store-fixtures]]]
+             [store :refer [test-for-each-store]]]
             [ctim.examples.weaknesses :refer [new-weakness-maximal new-weakness-minimal]]))
 
 (use-fixtures :once
@@ -72,11 +72,7 @@
                        test-for-each-store))
 
 (deftest test-weakness-metric-routes
-  ((:es-store store-fixtures)
-   (fn []
-     (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
-     (whoami-helpers/set-whoami-response "45c1f5e3f05d0" "foouser" "Administrators" "user")
-     (test-metric-routes (into sut/weakness-entity
-                               {:entity-minimal new-weakness-minimal
-                                :enumerable-fields sut/weakness-enumerable-fields
-                                :date-fields sut/weakness-histogram-fields})))))
+  (test-metric-routes (into sut/weakness-entity
+                            {:entity-minimal new-weakness-minimal
+                             :enumerable-fields sut/weakness-enumerable-fields
+                             :date-fields sut/weakness-histogram-fields})))

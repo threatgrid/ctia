@@ -12,7 +12,7 @@
              [field-selection :refer [field-selection-tests]]
              [http :refer [doc-id->rel-url]]
              [pagination :refer [pagination-test]]
-             [store :refer [test-for-each-store store-fixtures]]]
+             [store :refer [test-for-each-store]]]
             [ctim.examples.campaigns :as ex :refer [new-campaign-maximal new-campaign-minimal]]))
 
 (use-fixtures :once (join-fixtures [mth/fixture-schema-validation
@@ -67,11 +67,7 @@
                        test-for-each-store))
 
 (deftest test-campaign-metric-routes
-  ((:es-store store-fixtures)
-   (fn []
-     (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
-     (whoami-helpers/set-whoami-response "45c1f5e3f05d0" "foouser" "Administrators" "user")
-     (test-metric-routes (into sut/campaign-entity
-                               {:entity-minimal new-campaign-minimal
-                                :enumerable-fields sut/campaign-enumerable-fields
-                                :date-fields sut/campaign-histogram-fields})))))
+  (test-metric-routes (into sut/campaign-entity
+                            {:entity-minimal new-campaign-minimal
+                             :enumerable-fields sut/campaign-enumerable-fields
+                             :date-fields sut/campaign-histogram-fields})))

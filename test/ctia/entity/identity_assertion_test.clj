@@ -14,7 +14,7 @@
              [http :refer [api-key doc-id->rel-url]]
              [pagination :refer [pagination-test]]
              [core :as helpers :refer [get]]
-             [store :refer [test-for-each-store store-fixtures]]]
+             [store :refer [test-for-each-store]]]
             [ctim.examples.identity-assertions
              :refer
              [new-identity-assertion-maximal new-identity-assertion-minimal]]))
@@ -108,12 +108,8 @@
         sut/identity-assertion-fields)))))
 
 (deftest test-identity-assertion-metric-routes
-  ((:es-store store-fixtures)
-   (fn []
-     (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
-     (whoami-helpers/set-whoami-response "45c1f5e3f05d0" "foouser" "Administrators" "user")
-     (test-metric-routes (into sut/identity-assertion-entity
-                               {:plural :identity_assertions
-                                :entity-minimal new-identity-assertion-minimal
-                                :enumerable-fields sut/identity-assertion-enumerable-fields
-                                :date-fields sut/identity-assertion-histogram-fields})))))
+  (test-metric-routes (into sut/identity-assertion-entity
+                            {:plural :identity_assertions
+                             :entity-minimal new-identity-assertion-minimal
+                             :enumerable-fields sut/identity-assertion-enumerable-fields
+                             :date-fields sut/identity-assertion-histogram-fields})))
