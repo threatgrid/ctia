@@ -30,21 +30,6 @@
    [puppetlabs.trapperkeeper.core :as tk]
    [puppetlabs.trapperkeeper.app :as app]))
 
-(defn init-encryption-service! []
-  (let [{:keys [type] :as encryption-properties}
-        (p/get-in-global-properties [:ctia :encryption])]
-
-    (case type
-      :default (do (reset! encryption/encryption-service
-                           (encryption-default/map->EncryptionService
-                            {:state (atom nil)}))
-                   (encryption/init
-                    @encryption/encryption-service
-                    encryption-properties))
-      (throw (ex-info "Encryption service not configured"
-                      {:message "Unknown service"
-                       :requested-service type})))))
-
 (defn- get-store-types [store-kw]
   (or (some-> (p/get-in-global-properties [:ctia :store store-kw])
               (str/split #","))
@@ -88,8 +73,16 @@
                    :static static-auth/static-auth-service
                    (throw (ex-info "Auth service not configured"
                                    {:message "Unknown service"
-                                    :requested-service auth-service-type})))]
-    [auth-svc]))
+                                    :requested-service auth-service-type})))
+
+        {encryption-service-type :type} (get-in config [:ctia :encryption])
+        encryption-svc (case encryption-service-type
+                         :default encryption-default/default-encryption-service
+                         (throw (ex-info "Encryption service not configured"
+                                         {:message "Unknown service"
+                                          :requested-service encryption-service-type})))]
+    [auth-svc
+     encryption-svc]))
 
 
 (defn start-ctia!*
@@ -125,7 +118,6 @@
   (when (p/get-in-global-properties [:ctia :events :log])
     (event-logging/init!))
 
-  (init-encryption-service!)
   (init-store-service!)
 
   ;; hooks init
@@ -136,8 +128,9 @@
         app (start-ctia!* {:config config
                            :services services})
 
-        ;; temporary hack for global IAuth service
+        ;; temporary hack for global services
         _ (reset! auth/auth-service (app/get-service app :IAuth))
+        _ (reset! encryption/encryption-service (app/get-service app :IEncryption))
 
         ;; temporary shutdown hook for tests
         ;; Note: this will trigger double-shutdown of Trapperkeeper services on System/exit,
@@ -145,11 +138,12 @@
         {{:keys [request-shutdown
                  wait-for-shutdown]} :ShutdownService} (app/service-graph app)
         _ (shutdown/register-hook! ::tk-app #(do (reset! auth/auth-service nil)
+                                                 (reset! encryption/encryption-service nil)
                                                  (request-shutdown)
                                                  (wait-for-shutdown)))
         ;; Start HTTP server
-        ;; Note: temporarily starting server here because it depends on IAuth service
-        ;;       which is started by trapperkeeper above. eventually all
+        ;; Note: temporarily starting server here because it depends on IAuth+IEncryption services
+        ;;       which are started by trapperkeeper above. eventually all
         ;;       initialization will be managed by trapperkeeper
         _ (let [{http-port :port
                  enabled? :enabled} (p/get-in-global-properties [:ctia :http])]

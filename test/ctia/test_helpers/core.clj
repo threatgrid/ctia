@@ -30,45 +30,38 @@
              [utils :as fu]]
             [puppetlabs.trapperkeeper.app :as app]))
 
+(def ^:dynamic ^:private *current-app*)
 (def ^:dynamic ^:private *config-transformers* [])
 
 (defn get-service-map [app svc-kw]
   {:pre [(keyword? svc-kw)]
    :post [(map? %)]}
-  (case app
-    ::global-app
-    ;; fake global app
-    ;; stub implementation full trapperkeeper bootstrap
-    (case svc-kw
-      :ConfigService {:get-config p/get-global-properties
-                      :get-in-config p/get-in-global-properties}
-      :HooksService {:add-hook! hooks/add-hook!
-                     :add-hooks! hooks/add-hooks!
-                     ;; takes map and flattens to kw args, since protocol method
-                     ;; cannot have varargs
-                     :apply-hooks (fn [hook-options]
-                                    (apply hooks/apply-hooks (apply concat hook-options)))
-                     :apply-event-hooks hooks/apply-event-hooks
-                     :init-hooks! hooks/init-hooks!
-                     :shutdown! hooks/shutdown!
-                     :reset-hooks! hooks/reset-hooks!}
-      :EventsService {:send-event events/send-event
-                      :central-channel (fn []
-                                         {:post [%]}
-                                         @events/central-channel)
-                      :register-listener events/register-listener}
-      :IEncryption {:decrypt encryption/decrypt-str
-                    :encrypt encryption/encrypt-str}
-      :StoreService {:all-stores (fn [] @store/stores)
-                     ;; no varargs to simulate eventual protocol method
-                     :read-store (fn [store read-fn]
-                                   (store/read-store store read-fn))
-                     ;; no varargs to simulate eventual protocol method
-                     :write-store (fn [store write-fn]
-                                    (store/write-store store write-fn))}
-      (throw (ex-info (str "No service: " svc-kw)
-                      {:app app
-                       :service svc-kw})))
+  ;; temporary sanity check
+  (assert (not= app ::global-app))
+  ;; override with global services, otherwise use TK app
+  (case svc-kw
+    :HooksService {:add-hook! hooks/add-hook!
+                   :add-hooks! hooks/add-hooks!
+                   ;; takes map and flattens to kw args, since protocol method
+                   ;; cannot have varargs
+                   :apply-hooks (fn [hook-options]
+                                  (apply hooks/apply-hooks (apply concat hook-options)))
+                   :apply-event-hooks hooks/apply-event-hooks
+                   :init-hooks! hooks/init-hooks!
+                   :shutdown! hooks/shutdown!
+                   :reset-hooks! hooks/reset-hooks!}
+    :EventsService {:send-event events/send-event
+                    :central-channel (fn []
+                                       {:post [%]}
+                                       @events/central-channel)
+                    :register-listener events/register-listener}
+    :StoreService {:all-stores (fn [] @store/stores)
+                   ;; no varargs to simulate eventual protocol method
+                   :read-store (fn [store read-fn]
+                                 (store/read-store store read-fn))
+                   ;; no varargs to simulate eventual protocol method
+                   :write-store (fn [store write-fn]
+                                  (store/write-store store write-fn))}
     ;; real TK app
     (let [service-map (-> app
                           app/service-graph
@@ -86,6 +79,8 @@
   "For use in a test fixture to dynamically transform a Trapperkeeper
   config before creating an app."
   [tf body-fn]
+  (assert (not (thread-bound? #'*current-app*))
+          "Cannot transform config after TK app has started!")
   (binding [*config-transformers* (conj *config-transformers* tf)]
     (body-fn)))
 
@@ -205,26 +200,33 @@
       (f))))
 
 (defn build-get-in-config-fn []
-  ;; stub implementation until trapperkeeper bootstrap
+  (assert (not (thread-bound? #'*current-app*)) "Building custom config while app bound!")
+  ;; stub implementation until full trapperkeeper bootstrap
   (partial
     get-in
     (reduce #(%2 %1)
             (p/get-global-properties)
             *config-transformers*)))
 
+(defn bind-current-app* [app f]
+  (let [_ (assert (not (thread-bound? #'*current-app*)) "Rebound app!")
+        _ (assert app)]
+    (binding [*current-app* app]
+      (f))))
+
 (defn get-current-app []
   {:post [%]}
-  ;; stub implementation until trapperkeeper bootstrap
-  ::global-app)
+  (assert (thread-bound? #'*current-app*) "App not bound!")
+  (let [app *current-app*]
+    app))
 
 (defn current-get-in-config-fn
-  ([]
-   ;; stub implementation until trapperkeeper bootstrap
-   p/get-in-global-properties)
+  ([] (current-get-in-config-fn (get-current-app)))
   ([app]
-   ;; stub implementation until trapperkeeper bootstrap
-   (assert (= ::global-app app))
-   p/get-in-global-properties))
+   {:post [%]}
+   (-> app
+       (get-service-map :ConfigService)
+       :get-in-config)))
 
 (defn fixture-ctia
   ([t] (fixture-ctia t true))
@@ -238,21 +240,24 @@
      (with-properties ["ctia.http.enabled" enable-http?
                        "ctia.http.port" http-port
                        "ctia.http.show.port" http-port]
-       (try
-         (init/start-ctia!)
-         ;; TODO temporary implementation of with-config-transformer*
-         ;;      before we integrate trapperkeeper. must go after
-         ;;      `start-ctia!` because it calls `ctia.properties/init!`
-         ;;      to update global properties with System properties,
-         ;;      and we want to update the config _after_ that step.
-         (swap! (p/global-properties-atom)
-                (fn [init-config]
-                  (reduce #(%2 %1)
-                          init-config
-                          *config-transformers*)))
-         (t)
-         (finally
-           (shutdown/shutdown-ctia!)))))))
+       (let [;; TODO temporary implementation of with-config-transformer*
+             ;;      before we integrate trapperkeeper. must go after
+             ;;      `start-ctia!` because it calls `ctia.properties/init!`
+             ;;      to update global properties with System properties,
+             ;;      and we want to update the config _after_ that step.
+             config (swap! (p/global-properties-atom)
+                           (fn [init-config]
+                             (reduce #(%2 %1)
+                                     init-config
+                                     *config-transformers*)))
+             
+             app (init/start-ctia!)]
+         (try
+           (bind-current-app* app t)
+           (finally
+             (shutdown/shutdown-ctia!)
+             ;; redundant stop. this also emulates the double-shutdown triggered by a System/exit
+             (app/stop app))))))))
 
 (defn fixture-ctia-fast [t]
   (fixture-ctia t false))
@@ -293,7 +298,9 @@
             (~fixture-fn (fn [] (do ~@body)))))))
 
 (defn get-http-port []
-  (p/get-in-global-properties [:ctia :http :port]))
+  ;; Note: using current-get-in-config-fn here is a hack and should be refactored
+  ;; to function parameter once the initial TK setup is merged into master.
+  ((current-get-in-config-fn) [:ctia :http :port]))
 
 (def get
   (mthh/with-port-fn get-http-port mthh/get))
@@ -355,7 +362,9 @@
   [type-kw]
   (id/->id type-kw
            (crud/make-id (name type-kw))
-           (p/get-in-global-properties [:ctia :http :show])))
+           ;; FIXME using current-get-in-config-fn here is a hack and should be refactored
+           ;; to function parameter once the initial TK setup is merged into master.
+           ((current-get-in-config-fn) [:ctia :http :show])))
 
 (defn entity->short-id
   [entity]
@@ -370,7 +379,9 @@
    (id/long-id
     (id/short-id->id (name type-kw)
                      short-id
-                     (p/get-in-global-properties [:ctia :http :show])))))
+                     ;; FIXME using current-get-in-config-fn here is a hack and should be refactored
+                     ;; to function parameter once the initial TK setup is merged into master.
+                     ((current-get-in-config-fn) [:ctia :http :show])))))
 
 (def zero-uuid "00000000-0000-0000-0000-000000000000")
 
@@ -391,7 +402,9 @@
   (id/long-id
    (id/->id (keyword entity-name)
             (fake-short-id entity-name id)
-            (p/get-in-global-properties [:ctia :http :show]))))
+            ;; FIXME using current-get-in-config-fn here is a hack and should be refactored
+            ;; to function parameter once the initial TK setup is merged into master.
+            ((current-get-in-config-fn) [:ctia :http :show]))))
 
 (defmacro with-atom-logger
   [atom-logger & body]

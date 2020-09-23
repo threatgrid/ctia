@@ -232,6 +232,19 @@
              (.stop server))
            nil)))
 
+(defn- global-encryption-service-map []
+  (let [encryption-svc @@(requiring-resolve
+                           'ctia.encryption/encryption-service)
+        _ (assert encryption-svc "No global encryption service!")]
+    {:decrypt
+     (partial encryption-svc
+              (requiring-resolve
+                'ctia.encryption/decrypt))
+     :encrypt 
+     (partial encryption-svc
+              (requiring-resolve
+                'ctia.encryption/encrypt))}))
+
 ;; temporary, will be replaced by GraphQLService defservice
 (s/defn realize-fn-global-services
   :- RealizeFnServices
@@ -247,10 +260,7 @@
         'ctia.schemas.graphql.helpers/get-or-update-named-type-registry)
       @(requiring-resolve
          'ctia.schemas.graphql.helpers/default-named-type-registry))}
-   :IEncryption {:decrypt (requiring-resolve
-                            'ctia.encryption/decrypt-str)
-                 :encrypt (requiring-resolve
-                            'ctia.encryption/encrypt-str)}})
+   :IEncryption (global-encryption-service-map)})
 
 ;; temporary, will be replaced by defservice
 (s/defn ctia-http-server-service-global-services
@@ -289,10 +299,7 @@
         'ctia.schemas.graphql.helpers/get-or-update-named-type-registry)
       @(requiring-resolve
          'ctia.schemas.graphql.helpers/default-named-type-registry))}
-   :IEncryption {:decrypt (requiring-resolve
-                            'ctia.encryption/decrypt-str)
-                 :encrypt (requiring-resolve
-                            'ctia.encryption/encrypt-str)}})
+   :IEncryption (global-encryption-service-map)})
 
 
 (defn start! [& {:keys [join?]
