@@ -137,6 +137,7 @@
                   (pr-str errors))
       (exit true))
     (log/info "check complete")
+    (exit false)
     (catch Exception e
       (log/error e "Unexpected error during store checks")
       (exit true))
