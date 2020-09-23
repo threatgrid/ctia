@@ -58,11 +58,11 @@
 (defn setup
   "start CTIA and download swagger-codegen if needed"
   []
-  (let [_ (println "starting CTIA...")
-        app (start-ctia!)
-        _ (when-not (.exists (io/file local-jar-uri))
-            (println "downloading swagger-codegen" codegen-version "...")
-            (exec-command "curl" "-o" local-jar-uri jar-uri))]
+  (println "starting CTIA...")
+  (let [app (start-ctia!)]
+    (when-not (.exists (io/file local-jar-uri))
+      (println "downloading swagger-codegen" codegen-version "...")
+      (exec-command "curl" "-o" local-jar-uri jar-uri))
     app))
 
 (defn base-command
@@ -105,6 +105,7 @@
   (try
     (let [app (setup)
           {{:keys [get-in-config]} :ConfigService} (app/service-graph app)]
+      (assert get-in-config)
       (doseq [[lang props] langs]
         (generate-language lang props output-dir get-in-config))
 

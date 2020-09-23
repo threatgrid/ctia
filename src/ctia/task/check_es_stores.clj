@@ -40,8 +40,8 @@
   returns trapperkeeper app"
   []
   (log/info "starting CTIA Stores...")
-  (let [config (p/build-init-config)]
-    (log-properties config)
+  (let [config (doto (p/build-init-config)
+                 log-properties)]
     (init-store-service! (partial get-in config))))
 
 (defn fetch-batch

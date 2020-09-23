@@ -237,13 +237,13 @@
                            'ctia.encryption/encryption-service)
         _ (assert encryption-svc "No global encryption service!")]
     {:decrypt
-     (partial encryption-svc
-              (requiring-resolve
-                'ctia.encryption/decrypt))
+     (partial (requiring-resolve
+                'ctia.encryption/decrypt)
+              encryption-svc)
      :encrypt 
-     (partial encryption-svc
-              (requiring-resolve
-                'ctia.encryption/encrypt))}))
+     (partial (requiring-resolve
+                'ctia.encryption/encrypt)
+              encryption-svc)}))
 
 ;; temporary, will be replaced by GraphQLService defservice
 (s/defn realize-fn-global-services
