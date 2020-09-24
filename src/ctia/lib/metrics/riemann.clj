@@ -14,6 +14,7 @@
 (defprotocol RiemannMetricsService)
 
 (tk/defservice riemann-metrics-service
+  RiemannMetricsService
   [[:ConfigService get-in-config]]
   (start [this context]
          (init! get-in-config)
