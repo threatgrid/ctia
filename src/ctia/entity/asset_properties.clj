@@ -1,15 +1,23 @@
 (ns ctia.entity.asset-properties
-  (:require [ctia.domain.entities :refer [default-realize-fn]]
+  (:require [clj-momo.lib.clj-time.core :as time]
+            [compojure.api.sweet :refer [POST routes]]
+            [ctia.domain.entities :refer [default-realize-fn]]
+            [ctia.domain.entities :as entities]
+            [ctia.flows.crud :as flows]
+            [ctia.http.routes.common :as routes.common]
+            [ctia.http.routes.crud :refer [services->entity-crud-routes]]
+            [ctia.http.routes.crud :refer [entity-crud-routes]]
+            [ctia.schemas.core :refer [def-acl-schema def-stored-schema APIHandlerServices]]
             [ctia.schemas.core :refer [def-acl-schema def-stored-schema]]
-            [ctia.schemas.utils :as csu]
             [ctia.schemas.sorting :as sorting]
+            [ctia.schemas.utils :as csu]
+            [ctia.store]
             [ctia.stores.es.mapping :as em]
             [ctia.stores.es.store :refer [def-es-store]]
             [ctim.schemas.asset-properties :as asset-properties-schema]
-            [schema-tools.core :as st]
-            [ctia.http.routes.crud :refer [entity-crud-routes]]
-            [ctia.http.routes.common :as routes.common]
             [flanders.utils :as fu]
+            [ring.util.http-response :as http-response]
+            [schema-tools.core :as st]
             [schema.core :as s]))
 
 (def-acl-schema AssetProperties
@@ -96,28 +104,67 @@
    :valid_time.start_time
    :valid_time.end_time])
 
-(def asset-properties-routes
-  (entity-crud-routes
-   {:entity                   :asset-properties
-    :new-schema               NewAssetProperties
-    :entity-schema            AssetProperties
-    :get-schema               PartialAssetProperties
-    :get-params               AssetPropertiesGetParams
-    :list-schema              PartialAssetPropertiesList
-    :search-schema            PartialAssetPropertiesList
-    :external-id-q-params     AssetPropertiesByExternalIdQueryParams
-    :search-q-params          AssetPropertiesSearchParams
-    :new-spec                 :new-asset-properties/map
-    :realize-fn               realize-asset-properties
-    :get-capabilities         :read-asset-properties
-    :post-capabilities        :create-asset-properties
-    :put-capabilities         :create-asset-properties
-    :delete-capabilities      :delete-asset-properties
-    :search-capabilities      :search-asset-properties
-    :external-id-capabilities :read-asset-properties
-    :can-aggregate?           true
-    :histogram-fields         asset-properties-histogram-fields
-    :enumerable-fields        asset-properties-enumerable-fields}))
+(s/defn additional-routes [{{:keys [get-in-config]}          :ConfigService
+                            {:keys [read-store write-store]} :StoreService
+                            :as                              services} :- APIHandlerServices]
+  (routes
+   (POST "/expire/:id" []
+     :return         AssetProperties
+     :path-params    [id :- s/Str]
+     :summary        "Expire 'valid-time' field of AssetProperties entity"
+     :capabilities   :create-asset-properties
+     :auth-identity  identity
+     :identity-map   identity-map
+     (if-let [updated
+              (flows/patch-flow
+               :services services
+               :get-fn (fn [_] (read-store :asset-properties
+                                           ctia.store/read-record
+                                           id
+                                           identity-map
+                                           {}))
+               :realize-fn realize-asset-properties
+               :update-fn #(write-store :asset-properties
+                                        ctia.store/update-record
+                                        (:id %)
+                                        (assoc-in % [:valid_time :end_time] (time/internal-now))
+                                        identity-map
+                                        {})
+               :long-id-fn #(entities/with-long-id % get-in-config)
+               :entity-type :asset-properties
+               :entity-id id
+               :identity identity
+               :patch-operation :replace
+               :partial-entity {}
+               :spec :new-asset-properties/map)]
+       (http-response/ok (entities/un-store updated))
+       (http-response/not-found {:error "asset-properties not found"})))))
+
+(s/defn asset-properties-routes [services :- APIHandlerServices]
+  (routes
+   (additional-routes services)
+   (services->entity-crud-routes
+    services
+    {:entity                   :asset-properties
+     :new-schema               NewAssetProperties
+     :entity-schema            AssetProperties
+     :get-schema               PartialAssetProperties
+     :get-params               AssetPropertiesGetParams
+     :list-schema              PartialAssetPropertiesList
+     :search-schema            PartialAssetPropertiesList
+     :external-id-q-params     AssetPropertiesByExternalIdQueryParams
+     :search-q-params          AssetPropertiesSearchParams
+     :new-spec                 :new-asset-properties/map
+     :realize-fn               realize-asset-properties
+     :get-capabilities         :read-asset-properties
+     :post-capabilities        :create-asset-properties
+     :put-capabilities         :create-asset-properties
+     :delete-capabilities      :delete-asset-properties
+     :search-capabilities      :search-asset-properties
+     :external-id-capabilities :read-asset-properties
+     :can-aggregate?           true
+     :histogram-fields         asset-properties-histogram-fields
+     :enumerable-fields        asset-properties-enumerable-fields})))
 
 (def capabilities
   #{:create-asset-properties

@@ -48,7 +48,7 @@
         (:asset-ref asset-mapping-sample)
         "Searching Asset Mapping by asset-ref"))))
 
-  (testing "Expire valid-time"
+  (testing "Expire 'valid-time' field"
     (let [fixed-now (-> "2020-12-31" tc/from-string tc/to-date)]
       (helpers/fixture-with-fixed-time
        fixed-now
@@ -56,7 +56,7 @@
          (let [response (helpers/post
                          (str "ctia/asset-mapping/expire/" short-id)
                          :headers {"Authorization" "45c1f5e3f05d0"})]
-           (is (= 200 (:status response)) "PATCH asset-mapping/expire succeeds")
+           (is (= 200 (:status response)) "POST asset-mapping/expire succeeds")
            (is (= fixed-now (-> response :parsed-body :valid_time :end_time))
                ":valid_time properly reset")))))))
 
