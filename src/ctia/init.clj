@@ -13,7 +13,7 @@
    [ctia.lib.utils :as utils]
    [ctia
     [auth :as auth]
-    [events :as e]
+    [events-service :as events-svc]
     [logging :as event-logging]
     [properties :as p]
     [store :as store]
@@ -66,7 +66,7 @@
     (into
       [auth-svc
        encryption-svc
-       e/events-service
+       events-svc/events-service
        store-svc/store-service
        http-server-svc/ctia-http-server-service
        hooks-svc/hooks-service
