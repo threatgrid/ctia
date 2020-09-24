@@ -16,7 +16,7 @@
 
 (defgoal create-campaign "Create Campaign"
   :setup (fn [] [(setup-ctia-es-store!)])
-  :cleanup (fn [_] cleanup-ctia!))
+  :cleanup (fn [{:keys [app]}] (cleanup-ctia! app)))
 
 (defn play [fixture]
   (post "ctia/campaign"
