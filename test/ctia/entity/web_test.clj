@@ -198,8 +198,8 @@
                        :confidence "Low"
                        :source "test"
                        :tlp "green"
-                       :owner "foouser"
-                       :groups ["foogroup"]
+                       :owner "Unknown"
+                       :groups ["Administrators"]
                        :schema_version schema-version
                        :reason "This is a bad IP address that talked to some evil servers"
                        :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
