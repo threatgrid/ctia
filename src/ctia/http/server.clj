@@ -232,11 +232,25 @@
              (.stop server))
            nil)))
 
+(defn- global-encryption-service-map []
+  (let [encryption-svc @@(requiring-resolve
+                           'ctia.encryption/encryption-service)
+        _ (assert encryption-svc "No global encryption service!")]
+    {:decrypt
+     (partial (requiring-resolve
+                'ctia.encryption/decrypt)
+              encryption-svc)
+     :encrypt 
+     (partial (requiring-resolve
+                'ctia.encryption/encrypt)
+              encryption-svc)}))
+
 ;; temporary, will be replaced by GraphQLService defservice
 (s/defn realize-fn-global-services
   :- RealizeFnServices
-  []
-  {:ConfigService {:get-in-config #'p/get-in-global-properties}
+  [config]
+  {:pre [(map? config)]}
+  {:ConfigService {:get-in-config (partial get-in config)}
    :StoreService {:read-store
                   (requiring-resolve
                     'ctia.store/read-store)}
@@ -247,17 +261,14 @@
         'ctia.schemas.graphql.helpers/get-or-update-named-type-registry)
       @(requiring-resolve
          'ctia.schemas.graphql.helpers/default-named-type-registry))}
-   :IEncryption {:decrypt (requiring-resolve
-                            'ctia.encryption/decrypt-str)
-                 :encrypt (requiring-resolve
-                            'ctia.encryption/encrypt-str)}})
+   :IEncryption (global-encryption-service-map)})
 
 ;; temporary, will be replaced by defservice
 (s/defn ctia-http-server-service-global-services
   :- APIHandlerServices
-  []
-  {:ConfigService {:get-config #'p/get-global-properties
-                   :get-in-config #'p/get-in-global-properties}
+  [config]
+  {:ConfigService {:get-config (fn [] config)
+                   :get-in-config (partial get-in config)}
    :HooksService {:apply-hooks (requiring-resolve
                                  'ctia.flows.hooks/apply-hooks)
                   :apply-event-hooks (requiring-resolve
@@ -278,7 +289,8 @@
                     (let [graphql (-> @(requiring-resolve
                                          'ctia.graphql.schemas/graphql)
                                       (resolve-with-rt-ctx
-                                        {:services (realize-fn-global-services)}))]
+                                        {:services (realize-fn-global-services
+                                                     config)}))]
                       (fn []
                         {:post [(instance? graphql.GraphQL %)]}
                         graphql))}
@@ -289,19 +301,14 @@
         'ctia.schemas.graphql.helpers/get-or-update-named-type-registry)
       @(requiring-resolve
          'ctia.schemas.graphql.helpers/default-named-type-registry))}
-   :IEncryption {:decrypt (requiring-resolve
-                            'ctia.encryption/decrypt-str)
-                 :encrypt (requiring-resolve
-                            'ctia.encryption/encrypt-str)}})
+   :IEncryption (global-encryption-service-map)})
 
 
-(defn start! [& {:keys [join?]
-                 :or {join? true}}]
-  (let [http-config (p/get-in-global-properties [:ctia :http])
+(defn start! [config]
+  (let [http-config (get-in config [:ctia :http])
         server-instance (new-jetty-instance http-config
-                                            (ctia-http-server-service-global-services))]
+                                            (ctia-http-server-service-global-services
+                                              config))]
     (reset! server server-instance)
     (shutdown/register-hook! :http.server stop!)
-    (if join?
-      (.join server-instance)
-      server-instance)))
+    server-instance))

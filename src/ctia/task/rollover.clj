@@ -41,10 +41,10 @@
           stores))
 
 (defn -main [& _args]
-  (p/init!)
-  (log-properties)
-  (init-store-service!)
-  (let [{:keys [nb-errors]
+  (let [config (doto (p/build-init-config)
+                 log-properties)
+        _ (init-store-service! (partial get-in config))
+        {:keys [nb-errors]
          :as res} (rollover-stores @stores)]
     (log/info "completed rollover task: " res)
     (when (< 0 nb-errors)

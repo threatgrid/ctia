@@ -45,8 +45,8 @@
 
 (defn spec-uri
   "compose the full path of the swagger spec to generate from"
-  []
-  (let [port (p/get-in-global-properties [:ctia :http :port] 3000)]
+  [get-in-config]
+  (let [port (get-in-config [:ctia :http :port] 3000)]
     (str "http://localhost:" port "/swagger.json")))
 
 (defn exec-command
@@ -59,18 +59,19 @@
   "start CTIA and download swagger-codegen if needed"
   []
   (println "starting CTIA...")
-  (start-ctia!)
-  (when-not (.exists (io/file local-jar-uri))
-    (println "downloading swagger-codegen" codegen-version "...")
-    (exec-command "curl" "-o" local-jar-uri jar-uri)))
+  (let [app (start-ctia!)]
+    (when-not (.exists (io/file local-jar-uri))
+      (println "downloading swagger-codegen" codegen-version "...")
+      (exec-command "curl" "-o" local-jar-uri jar-uri))
+    app))
 
 (defn base-command
   "base command for all languages"
-  [lang output-dir]
+  [lang output-dir get-in-config]
   ["java"
    "-jar" local-jar-uri
    "generate"
-   "-i" (spec-uri)
+   "-i" (spec-uri get-in-config)
    "-l" (name lang)
    "--group-id" "cisco"
    "-o" (str (or output-dir "/tmp/ctia-client") "/" (name lang))
@@ -89,11 +90,11 @@
 
 (defn generate-language
   "generate code for one language"
-  [lang props output-dir]
+  [lang props output-dir get-in-config]
 
   (println "generating" lang "client...")
 
-  (let [base (base-command lang output-dir)
+  (let [base (base-command lang output-dir get-in-config)
         additional (props->additional-properties props)
         full-command (into base additional)]
     (apply exec-command full-command)))
@@ -101,9 +102,15 @@
 (defn -main
   "invoke with lein run -m ctia.task.codegen <output-dir>"
   [output-dir]
-  (setup)
-  (doseq [[lang props] langs]
-    (generate-language lang props output-dir))
+  (try
+    (let [app (setup)
+          {{:keys [get-in-config]} :ConfigService} (app/service-graph app)]
+      (assert get-in-config)
+      (doseq [[lang props] langs]
+        (generate-language lang props output-dir get-in-config))
 
-  (println "done")
-  (System/exit 0))
+      (println "done")
+      (System/exit 0))
+    (finally
+      (println "unknown error")
+      (System/exit 1))))

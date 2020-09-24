@@ -17,7 +17,12 @@
     {}))
 
 (deftest entity-realize-fn-test
-  (let [realize-fn-services (realize-fn-global-services)
+  (let [app (test-helpers/get-current-app)
+        {:keys [get-config]} (test-helpers/get-service-map
+                               app
+                               :ConfigService)
+        realize-fn-services (realize-fn-global-services
+                              (get-config))
         properties [:id :type :owner :groups :schema_version
                     :created :modified :timestamp :tlp]
         ;; properties to dissoc to get a valid entity when

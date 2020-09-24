@@ -11,6 +11,7 @@
             [clojure.tools.logging :as log]
             [ctia.init :refer [log-properties]]
             [ctia.lib.collection :refer [fmap]]
+            [ctia.lib.utils :refer [service-subgraph]]
             [ctia.properties :as p]
             [ctia.store :as store]
             [ctia.stores.es.crud :as crud]
@@ -57,7 +58,8 @@
 (def migration-es-conn (atom nil))
 
 (s/defschema MigrationStoreServices
-  {:ConfigService {:get-in-config (s/=>* s/Any
+  {:ConfigService {:get-config (s/=> s/Any s/Any)
+                   :get-in-config (s/=>* s/Any
                                          [(s/named [s/Any] 'path)]
                                          [(s/named [s/Any] 'path)
                                           (s/named s/Any 'default)])}})
@@ -65,7 +67,9 @@
 (s/defn MigrationStoreServices->ESConnServices
   :- ESConnServices
   [services :- MigrationStoreServices]
-  services)
+  (service-subgraph
+    services
+    :ConfigService [:get-in-config]))
 
 (defn prefixed-index [index prefix]
   (let [version-trimmed (string/replace index #"^v[^_]*_" "")]
@@ -700,12 +704,11 @@ when confirm? is true, it stores this state and creates the target indices."
 
 (s/defn setup!
   "setup store service"
-  [services :- MigrationStoreServices]
+  [{{:keys [get-config]} :ConfigService :as services} :- MigrationStoreServices]
   ;; TODO will be rolled into trapperkeeper bootstrap
   ;; START global services setup
   (log/info "starting CTIA Stores...")
-  (p/init!)
-  (log-properties)
+  (log-properties (get-config))
   ;; END global services setup
   (reset! migration-es-conn
           (-> (migration-store-properties services)
