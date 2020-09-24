@@ -78,14 +78,20 @@
          [this-split total-splits :as split-config] (read-env-config)
          all-nses (vec (@#'t/nses-in-directories (read-string dirs-str)))
          nses (vec (nses-for-this-build split-config all-nses))
-         _ (apply require :reload nses)
+         ;; Note: changed from circleci.test: removed :reload for more reliable tests
+         _ (apply require #_:reload nses)
          selector (@#'t/lookup-selector (t/read-config!) (read-string selector-str))
          _ (if (#{[0 1]} split-config)
-             (println "[ctia.dev.split-tests] Running all tests")
-             (println
-               (str "[ctia.dev.split-tests] Splitting tests. "
-                    "This is chunk " (inc this-split) " of " total-splits " testing "
-                    (count nses) " of " (count all-nses) " test namespaces: "
-                    nses)))
+             (println "[ctia.dev.split-tests] Running all tests. Reproduce locally with:")
+             (do 
+               (println "[ctia.dev.split-tests] Splitting tests. Reproduce locally with:")
+               (printf "[ctia.dev.split-tests] $ CTIA_SPLIT_TESTS=[%s,%s] lein test\n"
+                       this-split
+                       total-splits)
+               (println
+                 (str "[ctia.dev.split-tests] "
+                      "This is chunk " (inc this-split) " of " total-splits " testing "
+                      (count nses) " of " (count all-nses) " test namespaces: "
+                      nses))))
          summary (@#'t/run-selected-tests selector nses)]
      (System/exit (+ (:error summary) (:fail summary))))))
