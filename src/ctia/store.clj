@@ -58,14 +58,6 @@
    :vulnerability []
    :weakness []})
 
-(defonce stores (atom empty-stores))
-
-(defn write-store [store write-fn & args]
-  (first (doall (map #(apply write-fn % args) (store @stores)))))
-
-(defn read-store [store read-fn & args]
-  (apply read-fn (first (get @stores store)) args))
-
 (def read-fn read-record)
 (def create-fn create-record)
 (def list-fn list-records)

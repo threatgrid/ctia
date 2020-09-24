@@ -9,9 +9,9 @@
    [clojure.string :as string]
    [clojure.tools.logging :as log]
    [ctia
-    [init :refer [init-store-service! log-properties]]
+    [init :refer [start-ctia!*]]
     [properties :as p]
-    [store :refer [stores]]]
+    [store-service :as store-svc]]
    [ctia.entity.entities :refer [entities]]
    [ctia.entity.sighting.schemas :refer [StoredSighting]]
    [ctia.stores.es.crud :refer [coerce-to-fn]]
@@ -40,9 +40,9 @@
   returns trapperkeeper app"
   []
   (log/info "starting CTIA Stores...")
-  (let [config (doto (p/build-init-config)
-                 log-properties)]
-    (init-store-service! (partial get-in config))))
+  (let [config (p/build-init-config)]
+    (start-ctia!* {:services [store-svc/store-service]
+                   :config config})))
 
 (defn fetch-batch
   "fetch a batch of documents from an es index"
@@ -131,16 +131,16 @@
   (assert batch-size "Please specify a batch size")
   (log/info "checking all ES Stores")
   (try
-    (setup)
-    (when-let [errors (seq (check-store-indexes batch-size
-                                                (fn _all-stores []
-                                                  @stores)))]
-      (log/errorf "Schema errors found during check: %s"
-                  (pr-str errors))
-      (exit true))
-    (log/info "check complete")
-    (exit false)
-    (catch Exception e
+    (let [app (setup)
+          store-svc (app/get-service app :StoreService)
+          all-stores (partial store-svc/all-stores store-svc)]
+      (when-let [errors (seq (check-store-indexes batch-size all-stores))]
+        (log/errorf "Schema errors found during check: %s"
+                    (pr-str errors))
+        (exit true))
+      (log/info "check complete")
+      (exit false))
+    (catch Throwable e
       (log/error e "Unexpected error during store checks")
       (exit true))
     (finally

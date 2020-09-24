@@ -1,6 +1,5 @@
 (ns ctia.http.middleware.auth
   (:require [ctia.auth :as auth]
-            [ctia.schemas.core :refer [APIHandlerServices]]
             [compojure.api.meta :as meta]
             [ring.util.http-response :as http-response]
             [schema.core :as s]))

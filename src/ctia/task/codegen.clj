@@ -2,9 +2,8 @@
   (:require [clojure.java
              [io :as io]
              [shell :as shell]]
-            [ctia
-             [init :refer [start-ctia!]]
-             [properties :as p]]))
+            [ctia.init :refer [start-ctia!]]
+            [puppetlabs.trapperkeeper.app :as app]))
 
 ;; swagger codegen package
 (def codegen-version "2.2.3")

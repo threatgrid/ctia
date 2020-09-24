@@ -84,7 +84,11 @@
                                  (if error result id))))))
 
 (s/defschema ReadEntitiesServices
-  {:StoreService (-> APIHandlerServices
+  {:ConfigService (-> APIHandlerServices
+                      (st/get-in [:ConfigService])
+                      (st/select-keys [:get-in-config])
+                      (st/assoc s/Keyword s/Any))
+   :StoreService (-> APIHandlerServices
                      (st/get-in [:StoreService])
                      (st/select-keys [:read-store])
                      (st/assoc s/Keyword s/Any))

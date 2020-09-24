@@ -1,7 +1,7 @@
 (ns ctia.lib.metrics.riemann
   (:require [clj-momo.lib.metrics.riemann :as riemann]
-            [ctia.properties :as p]
-            [clojure.tools.logging :as log]))
+            [clojure.tools.logging :as log]
+            [puppetlabs.trapperkeeper.core :as tk]))
 
 (defn init! [get-in-config]
   (let [{enabled? :enabled :as config}
@@ -10,3 +10,11 @@
       (log/info "riemann metrics reporting")
       (riemann/start (select-keys config
                                   [:host :port :interval-in-ms])))))
+
+(defprotocol RiemannMetricsService)
+
+(tk/defservice riemann-metrics-service
+  [[:ConfigService get-in-config]]
+  (start [this context]
+         (init! get-in-config)
+         context))

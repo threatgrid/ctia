@@ -9,7 +9,9 @@
             [ctia.init :as init]
             [ctia.properties :as p]
             [ctia.store :as store]
+            [ctia.store-service :as store-svc]
             [ctia.stores.es.init :as es-init]
+            [puppetlabs.trapperkeeper.app :as app]
             [schema.core :as s])
   (:import [clojure.lang ExceptionInfo]))
 
@@ -22,7 +24,7 @@
          es-init/update-mapping!]))
 
 (defn update-mapping-stores!
-  "Takes a map the same shape as @ctia.store/stores
+  "Takes a map the same shape as returned by ctia.store-service/all-stores
   and updates the _mapping of every index contained in it."
   [stores-map]
   (doseq [[_ stores] stores-map
@@ -47,10 +49,9 @@
         (println summary)
         (System/exit 0))
       (pp/pprint options)
-      (let [config (doto (p/build-init-config)
-                     init/log-properties)
-            all-stores (fn [] @store/stores)]
-        (init/init-store-service! (partial get-in config))
+      (let [app (init/start-ctia!* {:services [store-svc/store-service]
+                                    :config (p/build-init-config)})
+            {{:keys [all-stores]} :StoreService} (app/service-graph app)]
         (->> (:stores options)
              (select-keys (all-stores))
              update-mapping-stores!)

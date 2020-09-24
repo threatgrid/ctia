@@ -15,15 +15,12 @@
              [auth :as auth]
              [init :as init]
              [properties :as p :refer [PropertiesSchema]]
-             [shutdown :as shutdown]
              [store :as store]
              [store-service :as store-svc]]
             [ctia.auth.allow-all :as aa]
             [ctia.encryption :as encryption]
             [ctia.events :as events]
             [ctia.flows.crud :as crud]
-            [ctia.flows.hooks :as hooks]
-            [ctia.flows.hooks-service :as hooks-svc]
             [ctim.domain.id :as id]
             [ctim.generators.common :as cgc]
             [flanders
@@ -35,51 +32,12 @@
 (def ^:dynamic ^:private *config-transformers* [])
 
 (defn get-service-map [app svc-kw]
-  {:pre [(keyword? svc-kw)]
-   :post [(map? %)]}
-  ;; temporary sanity check
-  (assert (not= app ::global-app))
-  ;; override with global services, otherwise use TK app
-  (case svc-kw
-    :HooksService {:add-hook! hooks/add-hook!
-                   :add-hooks! hooks/add-hooks!
-                   ;; takes map and flattens to kw args, since protocol method
-                   ;; cannot have varargs
-                   :apply-hooks (fn [hook-options]
-                                  (apply hooks/apply-hooks (apply concat hook-options)))
-                   :apply-event-hooks hooks/apply-event-hooks
-                   :init-hooks! hooks/init-hooks!
-                   :shutdown! hooks/shutdown!
-                   :reset-hooks! (partial hooks/reset-hooks!
-                                          (-> app
-                                              app/service-graph
-                                              :ConfigService
-                                              :get-in-config
-                                              (doto (assert "missing get-in-config"))))}
-    :EventsService {:send-event events/send-event
-                    :central-channel (fn []
-                                       {:post [%]}
-                                       @events/central-channel)
-                    :register-listener events/register-listener}
-    :StoreService {:all-stores (fn [] @store/stores)
-                   ;; no varargs to simulate eventual protocol method
-                   :read-store (fn [store read-fn]
-                                 (store/read-store store read-fn))
-                   ;; no varargs to simulate eventual protocol method
-                   :write-store (fn [store write-fn]
-                                  (store/write-store store write-fn))}
-    ;; real TK app
-    (let [service-map (-> app
-                          app/service-graph
-                          svc-kw)
-          _ (when-not (map? service-map)
-              (throw (ex-info (str "No service: " svc-kw)
-                              {:app app
-                               :service svc-kw})))]
-      service-map)))
+  {:pre [(keyword? svc-kw)]}
+  (let [graph (app/service-graph app)
+        m (svc-kw graph)]
+    (assert (map? m) (str "No service " svc-kw ", found " (keys graph)))
+    m))
 
-(def fixture-property
-  (mth/build-fixture-property-fn PropertiesSchema))
 
 (defn with-config-transformer*
   "For use in a test fixture to dynamically transform a Trapperkeeper
@@ -184,7 +142,8 @@
         #_(do ;; Uncomment to see logs while also capturing them for debug purpose
             (println "!DO NOT FORGET TO COMMENT ctia.test-helpers.core/atomic-log println BEFORE PUSHING YOUR PR")
             (when (log/enabled? level logger-ns)
-              (println (format "CAPTURED LOG: [%s] [%s] %s" logger-ns level message))))
+              (println (format "CAPTURED LOG: [%s] [%s] %s" logger-ns level message))
+              (println throwable)))
         (swap! log (fnil conj []) (log-entry-fn logger-ns level throwable message))
         this))))
 
@@ -245,12 +204,13 @@
      (with-properties ["ctia.http.enabled" enable-http?
                        "ctia.http.port" http-port
                        "ctia.http.show.port" http-port]
-       (let [app (init/start-ctia! (build-transformed-init-config))]
+       (let [config (build-transformed-init-config)
+             app (init/start-ctia!*
+                   {:services (init/default-services config)
+                    :config config})]
          (try
            (bind-current-app* app t)
            (finally
-             (shutdown/shutdown-ctia!)
-             ;; redundant stop. this also emulates the double-shutdown triggered by a System/exit
              (app/stop app))))))))
 
 (defn fixture-ctia-fast [t]
