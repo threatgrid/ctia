@@ -10,11 +10,12 @@
    [clojure.tools.logging :as log]
    [ctia
     [init :refer [init-store-service! log-properties]]
-    [properties :as p :refer [properties]]
+    [properties :as p]
     [store :refer [stores]]]
    [ctia.entity.entities :refer [entities]]
    [ctia.entity.sighting.schemas :refer [StoredSighting]]
    [ctia.stores.es.crud :refer [coerce-to-fn]]
+   [puppetlabs.trapperkeeper.app :as app]
    [schema-tools.core :as st]
    [schema.core :as s]))
 
@@ -35,12 +36,13 @@
         s/Any)))
 
 (defn setup
-  "init properties, start CTIA and its store service"
+  "init properties, start CTIA and its store service.
+  returns trapperkeeper app"
   []
   (log/info "starting CTIA Stores...")
-  (p/init!)
-  (log-properties)
-  (init-store-service!))
+  (let [config (doto (p/build-init-config)
+                 log-properties)]
+    (init-store-service! (partial get-in config))))
 
 (defn fetch-batch
   "fetch a batch of documents from an es index"
@@ -112,8 +114,8 @@
 
 (defn check-store-indexes
   "check all new es store indexes"
-  [batch-size]
-  (let [current-stores @stores
+  [batch-size all-stores]
+  (let [current-stores (all-stores)
         batch-size (or batch-size default-batch-size)]
     (log/infof "checking stores: %s" (keys current-stores))
     (log/infof "set batch size: %s" batch-size)
@@ -130,15 +132,20 @@
   (log/info "checking all ES Stores")
   (try
     (setup)
-    (when-let [errors (seq (check-store-indexes batch-size))]
+    (when-let [errors (seq (check-store-indexes batch-size
+                                                (fn _all-stores []
+                                                  @stores)))]
       (log/errorf "Schema errors found during check: %s"
                   (pr-str errors))
       (exit true))
     (log/info "check complete")
+    (exit false)
     (catch Exception e
       (log/error e "Unexpected error during store checks")
-      (exit true)))
-  (exit false))
+      (exit true))
+    (finally
+      (log/error "Unknown error")
+      (exit true))))
 
 (defn -main
   "invoke with lein run -m ctia.task.check-es-stores <batch-size>"

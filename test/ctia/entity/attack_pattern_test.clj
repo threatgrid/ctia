@@ -12,7 +12,7 @@
              [field-selection :refer [field-selection-tests]]
              [http :refer [doc-id->rel-url]]
              [pagination :refer [pagination-test]]
-             [store :refer [test-for-each-store store-fixtures]]]
+             [store :refer [test-for-each-store]]]
             [ctim.examples.attack-patterns
              :refer
              [new-attack-pattern-maximal new-attack-pattern-minimal]]))
@@ -68,20 +68,15 @@
         sut/attack-pattern-fields)))))
 
 (deftest attack-pattern-routes-access-control
-  (test-for-each-store
-   (fn []
-     (access-control-test "attack-pattern"
-                          new-attack-pattern-minimal
-                          true
-                          true))))
+  (access-control-test "attack-pattern"
+                       new-attack-pattern-minimal
+                       true
+                       true
+                       test-for-each-store))
 
 (deftest test-attack-pattern-metric-routes
-  ((:es-store store-fixtures)
-   (fn []
-     (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
-     (whoami-helpers/set-whoami-response "45c1f5e3f05d0" "foouser" "Administrators" "user")
-     (test-metric-routes (into sut/attack-pattern-entity
-                               {:plural :attack_patterns
-                                :entity-minimal new-attack-pattern-minimal
-                                :enumerable-fields sut/attack-pattern-enumerable-fields
-                                :date-fields sut/attack-pattern-histogram-fields})))))
+  (test-metric-routes (into sut/attack-pattern-entity
+                            {:plural :attack_patterns
+                             :entity-minimal new-attack-pattern-minimal
+                             :enumerable-fields sut/attack-pattern-enumerable-fields
+                             :date-fields sut/attack-pattern-histogram-fields})))

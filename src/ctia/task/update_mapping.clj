@@ -7,7 +7,7 @@
             [clojure.string :as str]
             [clojure.tools.logging :as log]
             [ctia.init :as init]
-            [ctia.properties :as properties]
+            [ctia.properties :as p]
             [ctia.store :as store]
             [ctia.stores.es.init :as es-init]
             [schema.core :as s])
@@ -32,24 +32,30 @@
 (def cli-options
   [["-h" "--help"]
    ["-s" "--stores STORES" "comma separated list of store names"
-    :default (set (keys @store/stores))
+    :default (set (keys store/empty-stores))
     :parse-fn #(map keyword (str/split % #","))]])
 
 (defn -main [& args]
-  (let [{:keys [options errors summary]} (parse-opts args cli-options)]
-    (when errors
-      (binding  [*out* *err*]
-        (println (str/join "\n" errors))
-        (println summary))
-      (System/exit 1))
-    (when (:help options)
-      (println summary)
-      (System/exit 0))
-    (pp/pprint options)
-    (properties/init!)
-    (init/log-properties)
-    (init/init-store-service!)
-    (->> (:stores options)
-         (select-keys @store/stores)
-         update-mapping-stores!)
-    (log/info "Completed update-mapping task")))
+  (try
+    (let [{:keys [options errors summary]} (parse-opts args cli-options)]
+      (when errors
+        (binding  [*out* *err*]
+          (println (str/join "\n" errors))
+          (println summary))
+        (System/exit 1))
+      (when (:help options)
+        (println summary)
+        (System/exit 0))
+      (pp/pprint options)
+      (let [config (doto (p/build-init-config)
+                     init/log-properties)
+            all-stores (fn [] @store/stores)]
+        (init/init-store-service! (partial get-in config))
+        (->> (:stores options)
+             (select-keys (all-stores))
+             update-mapping-stores!)
+        (log/info "Completed update-mapping task")
+        (System/exit 0)))
+    (catch Throwable e
+      (log/error e "Error!")
+      (System/exit 1))))

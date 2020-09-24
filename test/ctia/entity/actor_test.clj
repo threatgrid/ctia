@@ -12,7 +12,7 @@
              [field-selection :refer [field-selection-tests]]
              [http :refer [doc-id->rel-url]]
              [pagination :refer [pagination-test]]
-             [store :refer [test-for-each-store store-fixtures]]]
+             [store :refer [test-for-each-store]]]
             [ctim.examples.actors :refer [new-actor-maximal new-actor-minimal]]))
 
 (use-fixtures :once
@@ -65,19 +65,14 @@
       sut/actor-fields))))
 
 (deftest test-actor-routes-access-control
-  (test-for-each-store
-   (fn []
-     (access-control-test "actor"
-                          new-actor-minimal
-                          true
-                          true))))
+  (access-control-test "actor"
+                       new-actor-minimal
+                       true
+                       true
+                       test-for-each-store))
 
 (deftest test-actor-metric-routes
-  ((:es-store store-fixtures)
-   (fn []
-     (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
-     (whoami-helpers/set-whoami-response "45c1f5e3f05d0" "foouser" "Administrators" "user")
-     (test-metric-routes (into sut/actor-entity
-                               {:entity-minimal new-actor-minimal
-                                :enumerable-fields sut/actor-enumerable-fields
-                                :date-fields sut/actor-histogram-fields})))))
+  (test-metric-routes (into sut/actor-entity
+                            {:entity-minimal new-actor-minimal
+                             :enumerable-fields sut/actor-enumerable-fields
+                             :date-fields sut/actor-histogram-fields})))

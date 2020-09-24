@@ -1,9 +1,9 @@
 (ns ctia.entity.feed
   (:require
    [clojure.string :as string]
-   [ctia.encryption :as encryption]
    [ctia.http.routes.crud :as crud]
-   [compojure.api.sweet :refer [DELETE GET POST PUT routes]]
+   [ctia.schemas.core :refer [APIHandlerServices]]
+   [compojure.api.core :refer [DELETE GET POST PUT routes]]
    [ctia.domain.entities
     :refer
     [page-with-long-id un-store un-store-page with-long-id]]
@@ -31,7 +31,14 @@
    [ctia.schemas
     [core :refer [Observable]]
     [sorting :as sorting]]
-   [ctia.store :refer :all]
+   [ctia.store :refer [create-record
+                       delete-record
+                       list-all-pages
+                       list-records
+                       read-record
+                       update-record
+                       query-string-count
+                       query-string-search]]
    [ctia.stores.es
     [mapping :as em]
     [store :refer [def-es-store]]]
@@ -112,23 +119,31 @@
    (java.util.Date.)
    {:valid_time lifetime}))
 
-(defn decrypt-feed
+(s/defn decrypt-feed
   [{:keys [secret
            feed_view_url]
-    :as feed}]
+    :as feed}
+   {{:keys [decrypt]} :IEncryption
+    :as _services_} :- APIHandlerServices]
   (cond-> feed
     secret (assoc :secret
-                  (encryption/decrypt-str secret))
+                  (decrypt secret))
     feed_view_url (assoc :feed_view_url
-                         (encryption/decrypt-str
+                         (decrypt
                           feed_view_url))))
 
-(defn decrypt-feed-page [feed-page]
+(s/defn decrypt-feed-page [feed-page services :- APIHandlerServices]
   (update feed-page :data
           (fn [feeds]
-            (map decrypt-feed feeds))))
+            (map #(decrypt-feed % services) feeds))))
 
-(defn fetch-feed [id s]
+(def fetch-limit 200)
+
+(s/defn fetch-feed [id s
+                    {{:keys [get-in-config]} :ConfigService
+                     {:keys [decrypt]} :IEncryption
+                     {:keys [read-store]} :StoreService
+                     :as services} :- APIHandlerServices]
   (if-let [{:keys [indicator_id
                    secret
                    output
@@ -144,7 +159,7 @@
     (cond
       (not feed) :not-found
       (not (valid-lifetime? lifetime)) :not-found
-      (not= s (encryption/decrypt-str secret)) :unauthorized
+      (not= s (decrypt secret)) :unauthorized
       :else (let [;; VERY IMPORTANT! inherit the identity from the Feed!
                   feed-identity
                   {:login owner
@@ -158,7 +173,9 @@
                             list-records
                             {:all-of {:target_ref indicator_id}}
                             feed-identity
-                            {:fields [:source_ref]})
+                            {:fields [:source_ref]
+                             :limit fetch-limit}
+                            services)
                            (keep :source_ref)
                            (map #(read-store :judgement
                                              read-record
@@ -166,7 +183,7 @@
                                              feed-identity
                                              {}))
                            (remove nil?)
-                           (map with-long-id))]
+                           (map #(with-long-id % get-in-config)))]
               (cond-> {}
                 (= :observables output)
                 (assoc
@@ -189,7 +206,7 @@
 (defn render-headers? [output]
   (not= :observables output))
 
-(def feed-view-routes
+(s/defn feed-view-routes [services :- APIHandlerServices]
   (routes
    (GET "/:id/view.txt" []
      :summary "Get a Feed View as newline separated entries"
@@ -199,7 +216,7 @@
      :produces #{"text/plain"}
      :query-params [s :- (describe s/Str "The feed share token")]
      (let [{:keys [output]
-            :as feed} (fetch-feed id s)]
+            :as feed} (fetch-feed id s services)]
        (case feed
          :not-found (not-found "feed not found")
          :unauthorized (unauthorized "wrong secret")
@@ -215,13 +232,15 @@
      :path-params [id :- s/Str]
      :return FeedView
      :query-params [s :- (describe s/Str "The feed share token")]
-     (let [feed (fetch-feed id s)]
+     (let [feed (fetch-feed id s services)]
        (case feed
          :not-found (not-found "feed not found")
          :unauthorized (unauthorized "wrong secret")
          (ok (dissoc feed :output)))))))
 
-(def feed-routes
+(s/defn feed-routes [{{:keys [get-in-config]} :ConfigService
+                      {:keys [read-store write-store]} :StoreService
+                      :as services} :- APIHandlerServices]
   (routes
    (POST "/" []
      :return Feed
@@ -232,6 +251,7 @@
      :auth-identity identity
      :identity-map identity-map
      (-> (flows/create-flow
+          :services services
           :entity-type :feed
           :realize-fn realize-feed
           :store-fn #(write-store :feed
@@ -239,14 +259,14 @@
                                   %
                                   identity-map
                                   (wait_for->refresh wait_for))
-          :long-id-fn with-long-id
+          :long-id-fn #(with-long-id % get-in-config)
           :entity-type :feed
           :identity identity
           :entities [new-entity]
           :spec :new-feed/map)
          first
          un-store
-         decrypt-feed
+         (decrypt-feed services)
          created))
    (PUT "/:id" []
      :return Feed
@@ -259,6 +279,7 @@
      :identity-map identity-map
      (if-let [updated-rec
               (-> (flows/update-flow
+                   :services services
                    :get-fn #(read-store :feed
                                         read-record
                                         %
@@ -271,14 +292,14 @@
                                             %
                                             identity-map
                                             (wait_for->refresh wait_for))
-                   :long-id-fn with-long-id
+                   :long-id-fn #(with-long-id % get-in-config)
                    :entity-type :feed
                    :entity-id id
                    :identity identity
                    :entity entity-update
                    :spec :new-feed/map)
                   un-store
-                  decrypt-feed)]
+                  (decrypt-feed services))]
        (ok updated-rec)
        (not-found)))
 
@@ -295,9 +316,9 @@
                      {:all-of {:external_ids external_id}}
                      identity-map
                      q)
-         page-with-long-id
+         (page-with-long-id get-in-config)
          un-store-page
-         decrypt-feed-page
+         (decrypt-feed-page services)
          paginated-ok))
 
    (GET "/search" []
@@ -313,9 +334,9 @@
           (search-query :created params)
           identity-map
           (select-keys params search-options))
-         page-with-long-id
+         (page-with-long-id get-in-config)
          un-store-page
-         decrypt-feed-page
+         (decrypt-feed-page services)
          paginated-ok))
 
    (GET "/search/count" []
@@ -345,9 +366,9 @@
                               identity-map
                               params)]
        (-> rec
-           with-long-id
+           (with-long-id get-in-config)
            un-store
-           decrypt-feed
+           (decrypt-feed services)
            ok)
        (not-found)))
 
@@ -360,6 +381,7 @@
      :auth-identity identity
      :identity-map identity-map
      (if (flows/delete-flow
+          :services services
           :get-fn #(read-store :feed
                                read-record
                                %
@@ -371,7 +393,7 @@
                                    identity-map
                                    (wait_for->refresh wait_for))
           :entity-type :feed
-          :long-id-fn with-long-id
+          :long-id-fn #(with-long-id % get-in-config)
           :entity-id id
           :identity identity)
        (no-content)
@@ -399,5 +421,5 @@
    :realize-fn realize-feed
    :es-store ->FeedStore
    :es-mapping feed-mapping
-   :routes feed-routes
+   :services->routes feed-routes
    :capabilities capabilities})

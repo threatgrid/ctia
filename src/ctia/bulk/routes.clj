@@ -1,15 +1,17 @@
 (ns ctia.bulk.routes
   (:require
-   [compojure.api.sweet :refer :all]
+   [compojure.api.core :refer [GET POST routes]]
    [ctia.bulk
     [core :refer [bulk-size create-bulk fetch-bulk get-bulk-max-size]]
     [schemas :refer [Bulk BulkRefs NewBulk]]]
    [ctia.http.routes.common :as common]
-   [ctia.schemas.core :refer [Reference]]
-   [ring.util.http-response :refer :all]
+   [ctia.schemas.core :refer [APIHandlerServices Reference]]
+   [ring.swagger.json-schema :refer [describe]]
+   [ring.util.http-response :refer [bad-request ok]]
    [schema.core :as s]))
 
-(defroutes bulk-routes
+(s/defn bulk-routes [{{:keys [get-in-config]} :ConfigService :as services} :- APIHandlerServices]
+ (routes
   (POST "/" []
         :return BulkRefs
         :query-params [{wait_for :- (describe s/Bool "wait for created entities to be available for search") nil}]
@@ -17,6 +19,9 @@
         :summary "POST many new entities using a single HTTP call"
         :auth-identity login
         :capabilities #{:create-actor
+                        :create-asset
+                        :create-asset-mapping
+                        :create-asset-properties
                         :create-attack-pattern
                         :create-campaign
                         :create-coa
@@ -31,73 +36,87 @@
                         :create-casebook
                         :create-sighting
                         :create-identity-assertion
+                        :create-target-record
                         :create-tool
                         :create-vulnerability
                         :create-weakness}
         (if (> (bulk-size bulk)
-               (get-bulk-max-size))
-          (bad-request (str "Bulk max nb of entities: " (get-bulk-max-size)))
+               (get-bulk-max-size get-in-config))
+          (bad-request (str "Bulk max nb of entities: " (get-bulk-max-size get-in-config)))
           (common/created (create-bulk bulk
                                        {}
                                        login
-                                       (common/wait_for->refresh wait_for)))))
+                                       (common/wait_for->refresh wait_for)
+                                       services))))
 
   (GET "/" []
        :return (s/maybe Bulk)
        :summary "GET many entities at once"
-       :query-params [{actors          :- [Reference] []}
-                      {attack_patterns :- [Reference] []}
-                      {campaigns       :- [Reference] []}
-                      {coas            :- [Reference] []}
-                      {data_tables     :- [Reference] []}
-                      {feedbacks       :- [Reference] []}
-                      {incidents       :- [Reference] []}
-                      {indicators      :- [Reference] []}
-                      {investigations  :- [Reference] []}
-                      {judgements      :- [Reference] []}
-                      {malwares        :- [Reference] []}
-                      {relationships   :- [Reference] []}
-                      {casebooks       :- [Reference] []}
-                      {sightings       :- [Reference] []}
-                      {tools           :- [Reference] []}
-                      {weaknesses      :- [Reference] []}
-                      {vulnerabilities :- [Reference] []}
-                      {identity_assertions :- [Reference] []}]
+       :query-params [{actors              :- [Reference] []}
+                      {asset_mappings      :- [Reference] []}
+                      {assets              :- [Reference] []}
+                      {asset_properties    :- [Reference] []}
+                      {attack_patterns     :- [Reference] []}
+                      {campaigns           :- [Reference] []}
+                      {casebooks           :- [Reference] []}
+                      {coas                :- [Reference] []}
+                      {data_tables         :- [Reference] []}
+                      {feedbacks           :- [Reference] []}
+                      {identity_assertions :- [Reference] []}
+                      {incidents           :- [Reference] []}
+                      {indicators          :- [Reference] []}
+                      {investigations      :- [Reference] []}
+                      {judgements          :- [Reference] []}
+                      {malwares            :- [Reference] []}
+                      {relationships       :- [Reference] []}
+                      {sightings           :- [Reference] []}
+                      {target_records      :- [Reference] []}
+                      {tools               :- [Reference] []}
+                      {vulnerabilities     :- [Reference] []}
+                      {weaknesses          :- [Reference] []}]
        :capabilities #{:read-actor
+                       :read-asset
+                       :read-asset-mapping
+                       :read-asset-properties
                        :read-attack-pattern
                        :read-campaign
+                       :read-casebook
                        :read-coa
                        :read-data-table
                        :read-feedback
+                       :read-identity-assertion
                        :read-incident
                        :read-indicator
                        :read-investigation
                        :read-judgement
                        :read-malware
                        :read-relationship
-                       :read-casebook
                        :read-sighting
-                       :read-identity-assertion
+                       :read-target-record
                        :read-tool
                        :read-vulnerability
                        :read-weakness}
        :auth-identity auth-identity
-       (let [entities-map {:actors           actors
-                           :attack_patterns  attack_patterns
+       (let [entities-map {:actors              actors
+                           :asset_mappings      asset_mappings
+                           :assets              assets
+                           :asset_properties    asset_properties
+                           :attack_patterns     attack_patterns
                            :campaigns           campaigns
+                           :casebooks           casebooks
                            :coas                coas
                            :data_tables         data_tables
                            :feedbacks           feedbacks
+                           :identity_assertions identity_assertions
                            :incidents           incidents
-                           :investigations      investigations
                            :indicators          indicators
+                           :investigations      investigations
                            :judgements          judgements
                            :malwares            malwares
                            :relationships       relationships
-                           :casebooks           casebooks
                            :sightings           sightings
-                           :identity_assertions identity_assertions
+                           :target_records      target_records
                            :tools               tools
                            :vulnerabilities     vulnerabilities
                            :weaknesses          weaknesses}]
-         (ok (fetch-bulk entities-map auth-identity)))))
+         (ok (fetch-bulk entities-map auth-identity services))))))

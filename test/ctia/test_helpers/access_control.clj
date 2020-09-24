@@ -1,6 +1,8 @@
 (ns ctia.test-helpers.access-control
   (:refer-clojure :exclude [get])
-  (:require [clojure.test :refer [is testing]]
+  (:require [clojure.set :as set]
+            [clojure.test :refer [is testing]]
+            [ctia.properties :as p]
             [ctia.test-helpers
              [auth :refer [all-capabilities]]
              [core :as helpers :refer [delete get post put]]
@@ -161,20 +163,20 @@
 
     (testing "player 3 try to access player 1 entities"
       ;; read
-      (is (clojure.set/subset?
+      (is (set/subset?
            #{player-3-1-entity-read-status}
            player-3-1-expected-read-statuses)))
 
     ;; initial restrictions control
     (testing "player 2 try to access player 1 entities"
       ;; read
-      (is (clojure.set/subset?
+      (is (set/subset?
            #{player-2-1-entity-read-status}
            player-2-1-expected-read-statuses))
 
       ;; update
       (when can-update?
-        (is (clojure.set/subset?
+        (is (set/subset?
              #{player-2-1-entity-overwrite-status}
              player-2-1-expected-write-statuses))
 
@@ -185,19 +187,19 @@
 
       ;; delete
       (when can-delete?
-        (is (clojure.set/subset?
+        (is (set/subset?
              #{player-2-1-entity-delete-status}
              player-2-1-expected-write-statuses))))
 
     (testing "player 2 try to access player 3 created entities"
       ;; read
-      (is (clojure.set/subset?
+      (is (set/subset?
            #{player-2-3-entity-read-status}
            player-2-3-expected-read-statuses))
 
       ;; update
       (when can-update?
-        (is (clojure.set/subset?
+        (is (set/subset?
              #{player-2-3-entity-overwrite-status}
              player-2-3-expected-write-statuses))
 
@@ -209,7 +211,7 @@
 
       ;; delete
       (when can-delete?
-        (is (clojure.set/subset?
+        (is (set/subset?
              #{player-2-3-entity-delete-status}
              player-2-3-expected-write-statuses))))))
 
@@ -222,7 +224,9 @@
   (with-redefs [cdac/max-record-visibility-everyone?
                 (constantly false)]
     (testing "Green Max Record Visibility set to `Group`"
-      (is (false? (cdac/max-record-visibility-everyone?)))
+      (is (false? (cdac/max-record-visibility-everyone?
+                    ;; dummy get-in-config, since this is a tautological test
+                    (constantly nil))))
 
       (let [player-1-entity-post
             (post (format "ctia/%s" entity)
@@ -949,86 +953,112 @@
                                                   (:parsed-body player-3-entity-repost2)]})))))))
 
 (defn test-access-control-tlp-settings
-  [entity new-entity]
-  (testing "TLP Settings Enforcement"
-    (swap! ctia.properties/properties assoc-in
-           [:ctia :access-control]
-           {:default-tlp "amber"
-            :min-tlp "amber"})
+  [entity new-entity fixtures]
+  (helpers/with-config-transformer*
+    #(assoc-in % [:ctia :access-control] {:default-tlp "amber"
+                                          :min-tlp "amber"})
+    (fn []
+      (fixtures
+        (fn []
+          (testing "TLP Settings Enforcement"
+            (let [;; verify the with-config-transformer* call above--it's possible
+                  ;; a fixture could override it since we call it first
+                  get-in-config (helpers/current-get-in-config-fn)
+                  _ (assert (= (get-in-config [:ctia :access-control])
+                               {:default-tlp "amber"
+                                :min-tlp "amber"})
+                            (get-in-config [:ctia :access-control]))
 
-    (let [{status-default-tlp :status
-           body-default-tlp :parsed-body}
-          (post (format "ctia/%s" entity)
-                :body (dissoc new-entity :tlp)
-                :headers {"Authorization" "player-1-token"})
-          {status-disallowed-tlp :status
-           body-disallowed-tlp :parsed-body}
-          (post (format "ctia/%s" entity)
-                :body (assoc new-entity :tlp "white")
-                :headers {"Authorization" "player-1-token"})]
+                  {status-default-tlp :status
+                   body-default-tlp :parsed-body}
+                  (post (format "ctia/%s" entity)
+                        :body (dissoc new-entity :tlp)
+                        :headers {"Authorization" "player-1-token"})
+                  {status-disallowed-tlp :status
+                   body-disallowed-tlp :parsed-body}
+                  (post (format "ctia/%s" entity)
+                        :body (assoc new-entity :tlp "white")
+                        :headers {"Authorization" "player-1-token"})]
 
-      (is (= 201 status-default-tlp))
-      (is (= "amber" (:tlp body-default-tlp)))
+              (is (= 201 status-default-tlp))
+              (is (= "amber" (:tlp body-default-tlp)))
 
 
-      (is (= 400 status-disallowed-tlp))
-      (is (= "Invalid document TLP white, allowed TLPs are: amber,red"
-             (:message body-disallowed-tlp))))))
+              (is (= 400 status-disallowed-tlp))
+              (is (= "Invalid document TLP white, allowed TLPs are: amber,red"
+                     (:message body-disallowed-tlp))))))))))
 
+;; the body of this function must change the current TK config
+;; via test-access-control-tlp-settings. This is only possible by starting a new app.
+;; Since apps are started by fixtures, this function accepts a fixture and 
+;; must not be called in a context wrapped by fixture-ctia (this is dynamically enforced).
 (defn access-control-test
   [entity
    new-entity
    can-update?
-   can-delete?]
-  (helpers/set-capabilities! "player1"
-                             ["foogroup"]
-                             "user"
-                             all-capabilities)
-  (helpers/set-capabilities! "player2"
-                             ["bargroup"]
-                             "user"
-                             all-capabilities)
-  (helpers/set-capabilities! "player3"
-                             ["bargroup"]
-                             "user"
-                             all-capabilities)
+   can-delete?
+   fixtures]
+  (let [fixtures (fn [f]
+                   (let [setup! (fn [] 
+                                  (helpers/set-capabilities! "player1"
+                                                             ["foogroup"]
+                                                             "user"
+                                                             all-capabilities)
+                                  (helpers/set-capabilities! "player2"
+                                                             ["bargroup"]
+                                                             "user"
+                                                             all-capabilities)
+                                  (helpers/set-capabilities! "player3"
+                                                             ["bargroup"]
+                                                             "user"
+                                                             all-capabilities)
 
-  (whoami-helpers/set-whoami-response "player-1-token"
-                                      "player1"
-                                      "foogroup"
-                                      "user")
-  (whoami-helpers/set-whoami-response "player-2-token"
-                                      "player2"
-                                      "bargroup"
-                                      "user")
-  (whoami-helpers/set-whoami-response "player-3-token"
-                                      "player3"
-                                      "bargroup"
-                                      "user")
+                                  (whoami-helpers/set-whoami-response "player-1-token"
+                                                                      "player1"
+                                                                      "foogroup"
+                                                                      "user")
+                                  (whoami-helpers/set-whoami-response "player-2-token"
+                                                                      "player2"
+                                                                      "bargroup"
+                                                                      "user")
+                                  (whoami-helpers/set-whoami-response "player-3-token"
+                                                                      "player3"
+                                                                      "bargroup"
+                                                                      "user"))]
+                     (fixtures
+                       (fn []
+                         (setup!)
+                         (f)))))
+        
+        test-default-config (fn []
+                              (test-access-control-entity-tlp-green
+                                {:entity entity
+                                 :new-entity new-entity
+                                 :can-update? can-update?
+                                 :can-delete? can-delete?})
 
-  (test-access-control-entity-tlp-green
-   {:entity entity
-    :new-entity new-entity
-    :can-update? can-update?
-    :can-delete? can-delete?})
+                              (test-access-control-entity-tlp-green-max-record-visibility-group
+                                {:entity entity
+                                 :new-entity new-entity
+                                 :can-update? can-update?
+                                 :can-delete? can-delete?})
 
-  (test-access-control-entity-tlp-green-max-record-visibility-group
-   {:entity entity
-    :new-entity new-entity
-    :can-update? can-update?
-    :can-delete? can-delete?})
+                              (test-access-control-entity-tlp-amber
+                                {:entity entity
+                                 :new-entity new-entity
+                                 :can-update? can-update?
+                                 :can-delete? can-delete?})
 
-  (test-access-control-entity-tlp-amber
-   {:entity entity
-    :new-entity new-entity
-    :can-update? can-update?
-    :can-delete? can-delete?})
-
-  (test-access-control-entity-tlp-red
-   {:entity entity
-    :new-entity new-entity
-    :can-update? can-update?
-    :can-delete? can-delete?})
-
-  (test-access-control-tlp-settings entity
-                                    new-entity))
+                              (test-access-control-entity-tlp-red
+                                {:entity entity
+                                 :new-entity new-entity
+                                 :can-update? can-update?
+                                 :can-delete? can-delete?}))]
+    ;; we don't need to change TK config here, so we can call
+    ;; the fixtures immediately.
+    (fixtures test-default-config)
+    ;; pass control to test-access-control-tlp-settings since it
+    ;; needs to change the TK config
+    (test-access-control-tlp-settings entity
+                                      new-entity
+                                      fixtures)))

@@ -8,7 +8,7 @@
              [test :refer [is testing]]]
             [clojure.java.io :as io]
             [ctia.domain.entities :refer [schema-version]]
-            [ctia.properties :refer [get-http-show properties]]
+            [ctia.properties :as p :refer [get-http-show]]
             [ctia.test-helpers
              [core :as helpers
               :refer [delete entity->short-id get patch post put]]
@@ -16,7 +16,8 @@
             [ctim.domain.id :as id]))
 
 (defn crud-wait-for-test
-  [{:keys [entity
+  [{::keys [get-in-config]
+    :keys [entity
            example
            headers
            update-field
@@ -26,12 +27,12 @@
          update-tests? true
          patch-tests? false}}]
   (let [new-record (dissoc example :id)
-        default-es-refresh (->> (get-in @properties
-                                        [:ctia :store :es :default :refresh])
+        default-es-refresh (->> (get-in-config
+                                  [:ctia :store :es :default :refresh])
                                 (str "refresh="))
-        es-params (atom nil)
-        simple-handler (fn [{:keys [query-string]}]
-                         (reset! es-params query-string)
+        es-params (volatile! nil)
+        simple-handler (fn [{:keys [url query-string]}]
+                         (vreset! es-params query-string)
                          {:status 200
                           :headers {"Content-Type" "application/json"}
                           :body "{}"})
@@ -43,7 +44,7 @@
                                                      (parse-string true)
                                                      (get-in [:index :_type]))]
                                 (when-not (= "event" mapping-type)
-                                  (reset! es-params query-string))
+                                  (vreset! es-params query-string))
                                 {:status 200
                                  :headers {"Content-Type" "application/json"}
                                  :body "{}"}))}}
@@ -54,9 +55,8 @@
                                          (false? wait_for) "refresh=false")]
                           (is (some-> @es-params
                                       (string/includes? expected))
-                              (str msg (format " (%s|%s)" expected @es-params)))
-                          (reset! es-params nil)))]
-
+                              (str msg (format "(expected %s, actual: %s)" expected @es-params)))
+                          (vreset! es-params nil)))]
     (testing "testing wait_for values on entity creation"
       (let [test-create (fn [wait_for msg]
                           (let [path (cond-> (str "ctia/" entity)
@@ -85,8 +85,9 @@
                           (let [path (cond-> (format "ctia/%s/%s" entity entity-id)
                                        (boolean? wait_for) (str "?wait_for=" wait_for))
                                 updates (cond->> {update-field "modified"}
-                                          (= put method) (into new-record))]
-                            (with-global-fake-routes {#".*9200.*" {:put simple-handler}}
+                                          (= put method) (into new-record))
+                                es-index-uri-pattern (re-pattern (str ".*9200.*" entity-id ".*"))]
+                            (with-global-fake-routes {es-index-uri-pattern {:put simple-handler}}
                               (method path
                                       :body updates
                                       :headers headers))
@@ -119,9 +120,10 @@
                                                     :headers headers)
                                               :parsed-body
                                               entity->short-id)
+                                es-index-uri-pattern (re-pattern (str ".*9200.*" entity-id ".*"))
                                 path (cond-> (format "ctia/%s/%s" entity entity-id)
                                        (boolean? wait_for) (str "?wait_for=" wait_for))]
-                            (with-global-fake-routes {#".*9200.*" {:delete simple-handler}}
+                            (with-global-fake-routes {es-index-uri-pattern {:delete simple-handler}}
                               (delete path
                                       :headers headers))
                             (check-refresh wait_for msg)))]
@@ -147,7 +149,8 @@
            update-tests?
            patch-tests?
            search-tests?
-           additional-tests]
+           additional-tests
+           search-value]
     :or {invalid-tests? true
          invalid-test-field :title
          update-field :title
@@ -157,6 +160,8 @@
          patch-tests? false
          search-tests? true}
     :as params}]
+ (let [app (helpers/get-current-app)
+       get-in-config (helpers/current-get-in-config-fn app)]
   (testing (str "POST /ctia/" entity)
     (let [new-record (dissoc example :id)
           {post-status :status
@@ -171,7 +176,7 @@
       (is (= expected post-record))
 
       (testing (format "the %s ID has correct fields" entity)
-        (let [show-props (get-http-show)]
+        (let [show-props (get-http-show get-in-config)]
           (is (= (:hostname record-id)    (:hostname show-props)))
           (is (= (:protocol record-id)    (:protocol show-props)))
           (is (= (:port record-id)        (:port show-props)))
@@ -187,9 +192,11 @@
 
       (when search-tests?
         (test-query-string-search entity
-                                  (name search-field)
+                                  (or search-value
+                                      (name search-field))
                                   search-field
-                                  example))
+                                  example
+                                  get-in-config))
 
       (testing (format "GET /ctia/%s/external_id/:external_id" entity)
         (let [response (get (format "ctia/%s/external_id/%s"
@@ -305,6 +312,6 @@
                        (string/lower-case body))))))
 
     (when (= "es"
-             (get-in @properties
-                     [:ctia :store (keyword entity)]))
-      (crud-wait-for-test params))))
+             (get-in-config
+               [:ctia :store (keyword entity)]))
+      (crud-wait-for-test (assoc params ::get-in-config get-in-config))))))

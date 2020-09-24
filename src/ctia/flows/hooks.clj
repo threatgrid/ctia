@@ -3,6 +3,7 @@
   (:require [clojure.tools.logging :as log]
             [ctia.flows.hooks.event-hooks :as event-hooks]
             [ctia.flows.hook-protocol :as prot]
+            [ctia.properties :as p]
             [ctia.shutdown :as shutdown]))
 
 (defn- doc-list [& s]
@@ -21,10 +22,10 @@
 
 (defonce hooks (atom empty-hooks))
 
-(defn reset-hooks! []
+(defn reset-hooks! [get-in-config]
   (reset! hooks
           (-> empty-hooks
-              event-hooks/register-hooks)))
+              (event-hooks/register-hooks get-in-config))))
 
 (defn add-hook!
   "Add a `Hook` for the hook `hook-type`"
@@ -81,8 +82,8 @@
   []
   (destroy-hooks!))
 
-(defn init! []
-  (reset-hooks!)
+(defn init! [get-in-config]
+  (reset-hooks! get-in-config)
   (init-hooks!)
   (log/info "Hooks Initialized: " (pr-str @hooks))
   (shutdown/register-hook! :flows.hooks shutdown!))

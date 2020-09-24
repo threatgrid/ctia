@@ -7,7 +7,6 @@
              [utils :as csu]
              [core :refer [def-acl-schema def-stored-schema]]
              [sorting :refer [default-entity-sort-fields]]]
-            [ctia.store :refer :all]
             [ctia.stores.es
              [mapping :as em]
              [store :refer [def-es-store]]]
@@ -157,5 +156,5 @@
    :realize-fn realize-coa
    :es-store ->COAStore
    :es-mapping coa-mapping
-   :routes coa-routes
+   :services->routes coa-routes
    :capabilities capabilities})

@@ -1,10 +1,10 @@
 (ns ctia.task.rollover
   (:require [clj-momo.lib.es.index :as es-index]
-            [clj-momo.lib.es.schemas :refer [ESConnState]]
             [clojure.tools.logging :as log]
             [ctia.init :refer [init-store-service! log-properties]]
-            [ctia.properties :refer [init!]]
+            [ctia.properties :as p]
             [ctia.store :refer [stores]]
+            [ctia.stores.es.schemas :refer [ESConnState]]
             [schema.core :as s])
   (:import clojure.lang.ExceptionInfo))
 
@@ -29,7 +29,7 @@
          (rollover-store)
          (assoc state k))
     (catch ExceptionInfo e
-      (log/error (format "could not rollover, a concurrent rollover could be already running on that index"
+      (log/error (format "could not rollover %s, a concurrent rollover could be already running on that index %s"
                          k
                          (pr-str (ex-data e))))
       (update state :nb-errors inc))))
@@ -41,10 +41,10 @@
           stores))
 
 (defn -main [& _args]
-  (init!)
-  (log-properties)
-  (init-store-service!)
-  (let [{:keys [nb-errors]
+  (let [config (doto (p/build-init-config)
+                 log-properties)
+        _ (init-store-service! (partial get-in config))
+        {:keys [nb-errors]
          :as res} (rollover-stores @stores)]
     (log/info "completed rollover task: " res)
     (when (< 0 nb-errors)

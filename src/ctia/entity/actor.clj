@@ -153,5 +153,5 @@
    :realize-fn realize-actor
    :es-store ->ActorStore
    :es-mapping actor-mapping
-   :routes actor-routes
+   :services->routes actor-routes
    :capabilities capabilities})

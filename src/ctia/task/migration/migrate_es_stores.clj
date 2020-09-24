@@ -1,24 +1,20 @@
 (ns ctia.task.migration.migrate-es-stores
-  (:require [clojure.tools.cli :refer [parse-opts]]
-            [clojure.string :as string]
-            [clojure.tools.logging :as log]
-
-            [schema-tools.core :as st]
-            [schema.core :as s]
+  (:require [clj-momo.lib.es.schemas :refer [ESConn ESQuery]]
             [clj-momo.lib.time :as time]
-            [clj-momo.lib.es.schemas :refer [ESConn ESQuery]]
-
-            [ctia.store :refer [stores]]
+            [clojure.pprint :as pp]
+            [clojure.string :as string]
+            [clojure.tools.cli :refer [parse-opts]]
+            [clojure.tools.logging :as log]
             [ctia.entity.entities :refer [entities]]
             [ctia.entity.sighting.schemas :refer [StoredSighting]]
-            [ctia.properties :refer [properties]]
-            [ctia.stores.es
-             [crud :refer [coerce-to-fn]]
-             [store :refer [StoreMap]]]
+            [ctia.properties :as p]
+            [ctia.stores.es.crud :refer [coerce-to-fn]]
+            [ctia.stores.es.store :refer [StoreMap]]
             [ctia.task.migration.migrations :refer [available-migrations]]
-            [ctia.task.migration.store :as mst])
-  (:import [java.util UUID]
-           [java.lang AssertionError]))
+            [ctia.task.migration.store :as mst]
+            [schema-tools.core :as st]
+            [schema.core :as s])
+  (:import java.lang.AssertionError))
 
 (def default-batch-size 100)
 (def default-buffer-size 3)
@@ -53,19 +49,25 @@
   [{:keys [created stores]} :- mst/MigrationSchema
    store-keys :- [s/Keyword]
    batch-size :- s/Int
-   confirm? :- s/Bool]
-  (loop [search_after nil]
-    (let [{:keys [data paging]} (mst/fetch-deletes store-keys created batch-size search_after)
-          {new-search-after :sort next :next} paging]
-      (doseq [[entity-type entities] data]
-        (log/infof "Handling %s deleted %s during migration"
-                   (count entities)
-                   (name entity-type))
-        (when confirm?
-          (mst/batch-delete (get-in stores [entity-type :target :store])
-                            (map :id entities))))
-      (when next
-        (recur new-search-after)))))
+   confirm? :- s/Bool
+   services :- mst/MigrationStoreServices]
+  (let [event-store (mst/get-source-store :event services)]
+    (loop [search_after nil]
+      (let [{:keys [data paging]} (mst/fetch-deletes event-store
+                                                     store-keys
+                                                     created
+                                                     batch-size
+                                                     search_after)
+            {new-search-after :sort next :next} paging]
+        (doseq [[entity-type entities] data]
+          (log/infof "Handling %s deleted %s during migration"
+                     (count entities)
+                     (name entity-type))
+          (when confirm?
+            (mst/batch-delete (get-in stores [entity-type :target :store])
+                              (map :id entities))))
+        (when next
+          (recur new-search-after))))))
 
 (defn append-coerced
   [coercer coerced entity]
@@ -142,7 +144,8 @@
            migration-id
            list-coerce
            migration-es-conn
-           confirm?]} :- BatchParams]
+           confirm?]} :- BatchParams
+   services :- mst/MigrationStoreServices]
   (let [migrated (transduce migrations conj documents)
         {:keys [data errors]} (list-coerce migrated)
         new-migrated-count (+ migrated-count (count data))]
@@ -153,14 +156,15 @@
                     (pr-str entity))]
         (log/error message)))
     (when confirm?
-      (when (seq data) (mst/store-batch target-store data))
-      (mst/rollover target-store batch-size new-migrated-count)
+      (when (seq data) (mst/store-batch target-store data services))
+      (mst/rollover target-store batch-size new-migrated-count services)
       (mst/update-migration-store migration-id
                                   entity-type
                                   (cond-> {:target {:migrated new-migrated-count}}
                                     search_after (assoc :source
                                                         {:search_after search_after}))
-                                  migration-es-conn))
+                                  migration-es-conn
+                                  services))
     (log/infof "%s - migrated: %s documents"
                (name entity-type)
                new-migrated-count)
@@ -172,28 +176,30 @@
            migrated-count
            buffer-size]
     :as migration-params} :- BatchParams
-   query :- ESQuery]
+   query :- ESQuery
+   services :- mst/MigrationStoreServices]
   (log/infof "%s - handling sliced query %s"
              (name entity-type)
              (pr-str query))
   (let [read-params (assoc migration-params :query query)
         data-queue (seque buffer-size
                           (read-source read-params))
-        new-migrated-count (reduce write-target
+        new-migrated-count (reduce #(write-target %1 %2 services)
                                    migrated-count
                                    data-queue)]
     (assoc migration-params
            :migrated-count
            new-migrated-count)))
 
-(defn migrate-store
+(s/defn migrate-store
   "migrate a single store"
   [migration-state
    entity-type
    migrations
    batch-size
    buffer-size
-   confirm?]
+   confirm?
+   services :- mst/MigrationStoreServices]
   (log/infof "migrating store: %s" entity-type)
   (let [{stores :stores migration-id :id} migration-state
         {:keys [source target started]} (get stores entity-type)
@@ -223,8 +229,9 @@
     (when (and confirm? (not started))
       (mst/update-migration-store migration-id
                                   entity-type
-                                  {:started (time/now)}))
-    (->> (reduce migrate-query
+                                  {:started (time/now)}
+                                  services))
+    (->> (reduce #(migrate-query %1 %2 services)
                  base-params
                  queries)
          :migrated-count
@@ -235,31 +242,23 @@
                                entity-type
                                source-store
                                target-store
-                               @mst/migration-es-conn))))
-
-(s/defschema MigrationParams
-  {:migration-id s/Str
-   :prefix s/Str
-   :migrations [(apply s/enum (keys available-migrations))]
-   :store-keys [s/Keyword]
-   :batch-size s/Int
-   :buffer-size s/Int
-   :confirm? (s/maybe s/Bool)
-   :restart? (s/maybe s/Bool)})
+                               @mst/migration-es-conn
+                               services))))
 
 (s/defn migrate-store-indexes
   "migrate the selected es store indexes"
   [{:keys [migration-id
-           prefix
            migrations
            store-keys
            batch-size
            buffer-size
            confirm?
-           restart?]} :- MigrationParams]
+           restart?]
+    :as migration-params} :- mst/MigrationParams
+   services :- mst/MigrationStoreServices]
   (let [migration-state (if restart?
-                          (mst/get-migration migration-id @mst/migration-es-conn)
-                          (mst/init-migration migration-id prefix store-keys confirm?))
+                          (mst/get-migration migration-id @mst/migration-es-conn services)
+                          (mst/init-migration migration-params services))
         migrations (compose-migrations migrations)
         batch-size (or batch-size default-batch-size)]
     (log/infof "migrating stores: %s" store-keys)
@@ -270,8 +269,9 @@
                      migrations
                      batch-size
                      buffer-size
-                     confirm?))
-    (handle-deletes migration-state store-keys batch-size confirm?)))
+                     confirm?
+                     services))
+    (handle-deletes migration-state store-keys batch-size confirm? services)))
 
 (defn exit [error?]
   (if error?
@@ -280,9 +280,13 @@
 
 (s/defn ^:always-validate check-migration-params
   [{:keys [prefix
-           store-keys]} :- MigrationParams]
+           restart?
+           store-keys]} :- mst/MigrationParams
+   get-in-config]
+  (when-not restart?
+    (assert prefix "Please provide an indexname prefix for target store creation"))
   (doseq [store-key store-keys]
-    (let [index (get-in @properties [:ctia :store :es store-key :indexname])]
+    (let [index (get-in-config [:ctia :store :es store-key :indexname])]
       (when (= (mst/prefixed-index index prefix)
                index)
         (throw (AssertionError.
@@ -290,57 +294,51 @@
                         index))))))
   true)
 
-(s/defn ^:always-validate run-migration
-  [{:keys [prefix
-           restart?]
-    :as params} :- MigrationParams]
-  (when-not restart?
-    (assert prefix "Please provide an indexname prefix for target store creation"))
+(s/defn prepare-params :- mst/MigrationParams
+  [migration-properties]
+  (let [string-to-coll #(map (comp keyword string/trim)
+                             (string/split % #","))]
+    (-> migration-properties
+        (update :migrations string-to-coll)
+        (update :store-keys string-to-coll))))
+
+(s/defn run-migration
+  [options]
   (log/info "migrating all ES Stores")
   (try
-    (mst/setup!)
-    (check-migration-params params)
-    (migrate-store-indexes params)
-    (log/info "migration complete")
+    (let [_ (log/info "starting CTIA Stores...")
+          config (p/build-init-config)
+          get-in-config (partial get-in config)
+          services {:ConfigService {:get-config (fn [] config)
+                                    :get-in-config get-in-config}}
+          _ (mst/setup! services)]
+      (doto (-> (get-in-config [:ctia :migration])
+                (into options)
+                prepare-params)
+        (->> pr-str (log/info "migration started"))
+        (check-migration-params get-in-config)
+        (migrate-store-indexes services))
+      (log/info "migration complete")
+      (exit false))
     (catch AssertionError e
-       (log/error (.getMessage e)))
+      (log/error (.getMessage e))
+      (exit true))
     (catch Exception e
       (log/error e "Unexpected error during migration")
-      (exit true)))
-  (exit false))
+      (exit true))
+    (finally
+      (log/error "Unknown error")
+      (exit true))))
 
 (def cli-options
   ;; An option with a required argument
-  [["-i" "--id ID" "The ID of the migration state to create or restar"
-    :default (str "migration-" (UUID/randomUUID))]
-   ["-p" "--prefix PREFIX" "prefix of the newly created indices"]
-   ["-m" "--migrations MIGRATIONS" "a comma separated list of migration ids to apply"
-    :parse-fn #(map keyword (string/split % #","))]
-   ["-b" "--batch-size SIZE" "number of migrated documents per batch"
-    :default default-batch-size
-    :parse-fn read-string
-    :validate [#(< 0 %) "batch-size must be a positive number"]]
-   ["" "--buffer-size SIZE" "max number of batches in buffer between source and target"
-    :default default-buffer-size
-    :parse-fn read-string
-    :validate [#(< 0 %) "buffer-size must be a positive number"]]
-   ["-s" "--stores STORES" "comma separated list of stores to migrate"
-    :default (-> (keys @stores) set (disj :identity))
-    :parse-fn #(map keyword (string/split % #","))]
-   ["-c" "--confirm" "really do the migration?"]
+  [["-c" "--confirm" "really do the migration?"]
    ["-r" "--restart" "restart ongoing migration?"]
    ["-h" "--help"]])
 
 (defn -main [& args]
   (let [{:keys [options errors summary]} (parse-opts args cli-options)
-        {:keys [id
-                prefix
-                migrations
-                stores
-                batch-size
-                buffer-size
-                confirm
-                restart]} options]
+        {:keys [restart confirm]} options]
     (when errors
       (binding  [*out* *err*]
         (println (string/join "\n" errors))
@@ -349,12 +347,6 @@
     (when (:help options)
       (println summary)
       (System/exit 0))
-    (clojure.pprint/pprint options)
-    (run-migration {:migration-id id
-                    :prefix       prefix
-                    :migrations   migrations
-                    :store-keys   stores
-                    :batch-size   batch-size
-                    :buffer-size  buffer-size
-                    :confirm?     confirm
-                    :restart?     restart})))
+    (pp/pprint options)
+    (run-migration {:confirm? confirm
+                    :restart? restart})))

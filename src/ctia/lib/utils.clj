@@ -13,7 +13,6 @@
                                "pass"
                                "secret"
                                "tempfile"
-                               "customerKey"
                                "response-url"
                                "token"]]
     (re-pattern (str "(?i).*("
@@ -23,6 +22,10 @@
 ;; copied from log-helper.safe
 (def to-obfuscate-keys
   #{"jwt" "authorization"})
+
+;; put pattern exceptions here
+(def to-not-obfuscate-keys
+  #{"external-key-prefixes"})
 
 ;; copied from log-helper.safe
 (defn obfuscate?
@@ -37,6 +40,7 @@
                              (pr-str k))
                   (pr-str k)))]
     (cond
+      (contains? to-not-obfuscate-keys k-str) false
       (contains? to-obfuscate-keys k-str) (string? v)
       :else (some? (re-matches to-obfuscate-pattern k-str)))))
 
@@ -130,3 +134,42 @@
 (def deep-remove-nils
   "Remove nil values from a deep nested map recursively"
   (partial deep-filter some?))
+
+(defn service-subgraph
+  "Returns a subgraph of a Trapperkeeper service graph, omitting
+  any missing entries.
+  
+  (select-services
+    {:ConfigService {:get-in-config <...>
+                     :get-config <...>}
+     :FooService {:f1 <...>
+                  :f2 <...>}
+     :BarService {:b1 <...>}}
+    :ConfigService [:get-config]
+    :FooService [:f2 :f3]
+    :MissingService [:m1])
+  ;=> {:ConfigService {:get-config <...>}
+  ;    :FooService {:f2 <...>}}
+  "
+  [graph & selectors]
+  {:pre [(map? graph)]}
+  (reduce (fn [out [service-kw & [fn-kws :as is-even]]]
+            ;; the last partition of a `(partition-all 2)` may
+            ;; be of length 1. this check is equivalent to
+            ;; asserting `(even? (count selectors))` but avoids some extra sequence
+            ;; traversals.
+            (assert is-even
+                    (str "Uneven number of selectors: "
+                         (count selectors)))
+            (assert (keyword? service-kw)
+                    (pr-str service-kw))
+            (let [service-fns (some-> (get graph service-kw)
+                                      (select-keys fn-kws))]
+              (cond-> out
+                service-fns
+                (update service-kw
+                        (fn [old]
+                          (assert (nil? old) (str "Repeated key " service-kw))
+                          service-fns)))))
+          {}
+          (partition-all 2 selectors)))

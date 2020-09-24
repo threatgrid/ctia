@@ -3,8 +3,8 @@
   (:require [clj-momo.test-helpers.core :as mth]
             [clojure.test :refer [deftest is testing join-fixtures use-fixtures]]
             [ctia.entity.identity-assertion :as sut]
+            [ctia.properties :as p]
             [ctia.test-helpers
-             [access-control :refer [access-control-test]]
              [auth :refer [all-capabilities]]
              [core :as helpers :refer [post-entity-bulk post-bulk]]
              [crud :refer [entity-crud-test]]
@@ -14,7 +14,7 @@
              [http :refer [api-key doc-id->rel-url]]
              [pagination :refer [pagination-test]]
              [core :as helpers :refer [get]]
-             [store :refer [test-for-each-store store-fixtures]]]
+             [store :refer [test-for-each-store]]]
             [ctim.examples.identity-assertions
              :refer
              [new-identity-assertion-maximal new-identity-assertion-minimal]]))
@@ -36,8 +36,7 @@
 
 (defn additional-tests [identity-assertion-id _]
   (testing "GET /ctia/identity-assertion/search"
-  ;; only when ES store
-    (when (= "es" (get-in @ctia.properties/properties [:ctia :store :identity-assertion]))
+    (do
       (let [term "identity.observables.value:\"1.2.3.4\""
             response (get (str "ctia/identity-assertion/search")
                           :query-params {"query" term}
@@ -109,12 +108,8 @@
         sut/identity-assertion-fields)))))
 
 (deftest test-identity-assertion-metric-routes
-  ((:es-store store-fixtures)
-   (fn []
-     (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
-     (whoami-helpers/set-whoami-response "45c1f5e3f05d0" "foouser" "Administrators" "user")
-     (test-metric-routes (into sut/identity-assertion-entity
-                               {:plural :identity_assertions
-                                :entity-minimal new-identity-assertion-minimal
-                                :enumerable-fields sut/identity-assertion-enumerable-fields
-                                :date-fields sut/identity-assertion-histogram-fields})))))
+  (test-metric-routes (into sut/identity-assertion-entity
+                            {:plural :identity_assertions
+                             :entity-minimal new-identity-assertion-minimal
+                             :enumerable-fields sut/identity-assertion-enumerable-fields
+                             :date-fields sut/identity-assertion-histogram-fields})))

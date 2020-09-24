@@ -1,11 +1,16 @@
 (ns ctia.entity.judgement.schemas
   (:require [clj-momo.lib.time :as time]
             [ctia.domain
-             [access-control :refer [properties-default-tlp]]
              [entities :refer [default-realize-fn]]]
+            [ctia.graphql.delayed :as delayed]
             [ctia.schemas
              [utils :as csu]
-             [core :refer [def-acl-schema def-stored-schema TempIDs]]
+             [core :refer [def-acl-schema
+                           def-stored-schema
+                           GraphQLRuntimeContext
+                           TempIDs
+                           RealizeFnResult
+                           lift-realize-fn-with-context]]
              [sorting :as sorting]]
             [ctim.schemas
              [common :refer [determine-disposition-id disposition-map]]
@@ -41,7 +46,7 @@
 (def judgement-default-realize
   (default-realize-fn "judgement" NewJudgement StoredJudgement))
 
-(s/defn realize-judgement :- (with-error StoredJudgement)
+(s/defn realize-judgement :- (RealizeFnResult (with-error StoredJudgement))
   ([new-judgement id tempids owner groups]
    (realize-judgement new-judgement id tempids owner groups nil))
   ([new-judgement :- NewJudgement
@@ -50,9 +55,13 @@
     owner :- s/Str
     groups :- [s/Str]
     prev-judgement :- (s/maybe StoredJudgement)]
+  (delayed/fn :- (with-error StoredJudgement)
+   [rt-ctx :- GraphQLRuntimeContext]
    (try
      (let [disposition (determine-disposition-id new-judgement)
-           disposition-name (get disposition-map disposition)]
+           disposition-name (get disposition-map disposition)
+           judgement-default-realize (-> judgement-default-realize
+                                         (lift-realize-fn-with-context rt-ctx))]
        (judgement-default-realize
         (assoc new-judgement
                :disposition disposition
@@ -65,7 +74,7 @@
             :id id
             :type :realize-entity-error
             :judgement new-judgement}
-           (throw e)))))))
+           (throw e))))))))
 
 (def judgement-fields
   (concat sorting/base-entity-sort-fields

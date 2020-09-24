@@ -8,58 +8,102 @@
             [clojure.java.io :as io]
             [ctia
              [store :as store]]
+            [clojure.walk :as walk]
             [ctia.stores.es
              [init :as es-init]
-             [store :as es-store]]
-            [ctia.test-helpers.core :as h]))
+             [store :as es-store]
+             [schemas :refer [ESConnServices]]]
+            [ctia.test-helpers.core :as h]
+            [schema.core :as s]))
 
-(defn refresh-indices [entity]
+(s/defn app->ESConnServices
+  :- ESConnServices
+  "Create a ESConnServices map with an app"
+  [app]
+  (let [get-in-config (h/current-get-in-config-fn app)]
+    {:ConfigService {:get-in-config get-in-config}}))
+
+(s/defn ->ESConnServices
+  :- ESConnServices
+  "Create a ESConnServices map without an app"
+  []
+  (let [get-in-config (h/build-get-in-config-fn)]
+    {:ConfigService {:get-in-config get-in-config}}))
+
+(defn refresh-indices [entity get-in-config]
   (let [{:keys [host port]}
-        (es-init/get-store-properties entity)]
+        (es-init/get-store-properties entity get-in-config)]
     (http/post (format "http://%s:%s/_refresh" host port))))
 
-(defn delete-store-indexes [restore-conn?]
-  (doseq [store-impls (vals @store/stores)
-          {:keys [state]} store-impls]
-    (es-store/delete-state-indexes state)
-    (when restore-conn?
-      (es-init/init-es-conn!
-       (es-init/get-store-properties (get-in state [:props :entity]))))))
+(defn delete-store-indexes
+  ([restore-conn?]
+   (let [app (h/get-current-app)
+         {:keys [get-in-config]} (h/get-service-map app :ConfigService)
+         {:keys [all-stores]} (h/get-service-map app :StoreService)]
+     (delete-store-indexes
+       restore-conn?
+       all-stores
+       get-in-config)))
+  ([restore-conn? all-stores get-in-config]
+   (doseq [store-impls (vals (all-stores))
+           {:keys [state]} store-impls]
+     (es-store/delete-state-indexes state)
+     (when restore-conn?
+       (es-init/init-es-conn!
+         (es-init/get-store-properties (get-in state [:props :entity])
+                                       get-in-config)
+         {:ConfigService {:get-in-config get-in-config}})))))
 
 (defn fixture-delete-store-indexes
   "walk through all the es stores delete each store indexes"
   [t]
-  (delete-store-indexes true)
-  (t)
-  (delete-store-indexes false))
+  (let [app (h/get-current-app)
+        {:keys [get-in-config]} (h/get-service-map app :ConfigService)
+        {:keys [all-stores]} (h/get-service-map app :StoreService)]
+    (delete-store-indexes true all-stores get-in-config)
+    (try
+      (t)
+      (finally
+        (delete-store-indexes false all-stores get-in-config)))))
 
-(defn purge-index [entity]
+(s/defn purge-index [entity
+                     {{:keys [get-in-config]} :ConfigService
+                      :as services} :- ESConnServices]
   (let [{:keys [conn index]} (es-init/init-store-conn
-                              (es-init/get-store-properties entity))]
+                              (es-init/get-store-properties entity get-in-config)
+                              services)]
     (when conn
       (es-index/delete! conn (str index "*")))))
 
 (defn fixture-purge-event-indexes
   "walk through all producers and delete their index"
   [t]
-  (purge-index :event)
-  (t)
-  (purge-index :event))
+  (let [app (h/get-current-app)
+        services (app->ESConnServices app)]
+    (purge-index :event services)
+    (try
+      (t)
+      (finally
+        (purge-index :event services)))))
 
-(defn purge-indexes []
-  (doseq [entity (keys @store/stores)]
-    (purge-index entity)))
+(defn purge-indexes [all-stores get-in-config]
+  (doseq [entity (keys (all-stores))]
+    (purge-index entity get-in-config)))
 
 (defn fixture-purge-indexes
   "walk through all producers and delete their index"
   [t]
-  (purge-indexes)
-  (t)
-  (purge-indexes))
+  (let [app (h/get-current-app)
+        {:keys [get-in-config]} (h/get-service-map app :ConfigService)
+        {:keys [all-stores]} (h/get-service-map app :StoreService)]
+    (purge-indexes all-stores get-in-config)
+    (try
+      (t)
+      (finally (purge-indexes all-stores get-in-config)))))
 
 (defn fixture-properties:es-store [t]
   ;; Note: These properties may be overwritten by ENV variables
-  (h/with-properties ["ctia.store.es.default.shards" 1
+  (h/with-properties ["ctia.store.es.default.shards" 5
                       "ctia.store.es.default.replicas" 1
                       "ctia.store.es.default.refresh" "true"
                       "ctia.store.es.default.refresh_interval" "1s"
@@ -68,18 +112,19 @@
                       "ctia.store.es.default.default_operator" "AND"
                       "ctia.store.es.default.aliased" true
                       "ctia.store.es.default.rollover.max_docs" 50
-                      "ctia.store.es.event.rollover.max_docs" 1000
+
                       "ctia.store.es.actor.indexname" "ctia_actor"
                       "ctia.store.es.actor.default_operator" "OR"
-                      "ctia.store.es.migration.indexname" "ctia_migration"
-                      "ctia.store.es.actor.indexname" "ctia_actor"
+                      "ctia.store.es.asset.indexname" "ctia_assets"
+                      "ctia.store.es.asset-mapping.indexname" "ctia_asset_mapping"
+                      "ctia.store.es.asset-properties.indexname" "ctia_asset_properties"
                       "ctia.store.es.attack-pattern.indexname" "ctia_attack_pattern"
                       "ctia.store.es.campaign.indexname" "ctia_campaign"
                       "ctia.store.es.coa.indexname" "ctia_coa"
                       "ctia.store.es.event.indexname" "ctia_event"
                       "ctia.store.es.data-table.indexname" "ctia_data-table"
                       "ctia.store.es.feedback.indexname" "ctia_feedback"
-                      "ctia.store.es.identity.indexname" "ctia_identity"
+                      "ctia.store.es.identity.indexname" "ctia_identities"
                       "ctia.store.es.incident.indexname" "ctia_incident"
                       "ctia.store.es.indicator.indexname" "ctia_indicator"
                       "ctia.store.es.investigation.indexname" "ctia_investigation"
@@ -89,10 +134,15 @@
                       "ctia.store.es.casebook.indexname" "ctia_casebook"
                       "ctia.store.es.sighting.indexname" "ctia_sighting"
                       "ctia.store.es.identity-assertion.indexname" "ctia_identity_assertion"
+                      "ctia.store.es.target-record.indexname" "ctia_target_record"
                       "ctia.store.es.tool.indexname" "ctia_tool"
                       "ctia.store.es.vulnerability.indexname" "ctia_vulnerability"
                       "ctia.store.es.weakness.indexname" "ctia_weakness"
+
                       "ctia.store.actor" "es"
+                      "ctia.store.asset" "es"
+                      "ctia.store.asset-mapping" "es"
+                      "ctia.store.asset-properties" "es"
                       "ctia.store.attack-pattern" "es"
                       "ctia.store.campaign" "es"
                       "ctia.store.coa" "es"
@@ -109,11 +159,16 @@
                       "ctia.store.relationship" "es"
                       "ctia.store.casebook" "es"
                       "ctia.store.sighting" "es"
-                      "ctia.store.identity-assertion" "es" 
+                      "ctia.store.identity-assertion" "es"
+                      "ctia.store.target-record" "es"
                       "ctia.store.tool" "es"
                       "ctia.store.vulnerability" "es"
                       "ctia.store.weakness" "es"
-                      "ctia.store.bulk-refresh" "true"]
+                      "ctia.store.bulk-refresh" "true"
+
+                      "ctia.migration.store.es.migration.indexname" "ctia_migration"
+                      "ctia.migration.store.es.default.rollover.max_docs" 50
+                      "ctia.migration.store.es.event.rollover.max_docs" 1000]
     (t)))
 
 (defn fixture-properties:es-hook [t]
@@ -131,33 +186,6 @@
                       "ctia.hook.es.slicing.strategy" "aliased-index"
                       "ctia.hook.es.slicing.granularity" "week"]
     (t)))
-
-(defn- url-for-type [t]
-  (assert (keyword? t) "Type must be a keyword")
-  (let [{:keys [indexname host port]}
-        (-> @ctia.store/stores
-            t
-            first
-            :state
-            :props)]
-    (assert (seq host) "Missing host")
-    (assert (integer? port) "Missing port")
-    (assert (seq indexname) "Missing index-name")
-    (str "http://" host ":" port "/" indexname "/" (name t) "/")))
-
-(defn post-to-es [obj]
-  (let [{:keys [status]}
-        (http/post
-         (url-for-type (-> obj :type keyword))
-         {:as :json
-          :content-type :json
-          :throw-exceptions false
-          :body (json/generate-string obj)})]
-    (when (not= 201 status)
-      (throw (AssertionError. "POST to ES failed")))))
-
-(defn post-all-to-es [objects]
-  (run! post-to-es objects))
 
 (defn str->doc
   [str-doc]
@@ -198,4 +226,4 @@
                 {index (read-string
                         (:docs.count entry))}))
          (into {})
-         clojure.walk/keywordize-keys)))
+         walk/keywordize-keys)))

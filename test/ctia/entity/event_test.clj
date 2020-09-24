@@ -69,7 +69,11 @@
            (fixture-with-fixed-time
             (time/timestamp "2042-01-01")
             (fn []
-              (let [{incident :parsed-body
+              (let [app (helpers/get-current-app)
+                    {:keys [get-in-config]} (helpers/get-service-map app :ConfigService)
+
+                    port (get-in-config [:ctia :http :port])
+                    {incident :parsed-body
                      incident-status :status}
                     (post (str "ctia/incident")
                           :body (assoc new-incident-minimal
@@ -211,13 +215,15 @@
                               :incident_time {:opened "2042-01-01T00:00:00.000Z"},
                               :status "Open",
                               :id
-                              "http://localhost:3001/ctia/incident/incident-00000000-0000-0000-0000-111111111112",
+                              (format "http://localhost:%s/ctia/incident/incident-00000000-0000-0000-0000-111111111112"
+                                      port),
                               :tlp "amber",
                               :groups ["group1"],
                               :confidence "High",
                               :owner "user1"},
                              :id
-                             "http://localhost:3001/ctia/event/event-00000000-0000-0000-0000-111111111113",
+                             (format "http://localhost:%s/ctia/event/event-00000000-0000-0000-0000-111111111113"
+                                     port),
                              :type "event",
                              :event_type :record-created}
                             {:owner "user1",
@@ -234,13 +240,15 @@
                               :incident_time {:opened "2042-01-01T00:00:00.000Z"},
                               :status "Open",
                               :id
-                              "http://localhost:3001/ctia/incident/incident-00000000-0000-0000-0000-111111111112",
+                              (format "http://localhost:%s/ctia/incident/incident-00000000-0000-0000-0000-111111111112"
+                                      port),
                               :tlp "amber",
                               :groups ["group1"],
                               :confidence "High",
                               :owner "user1"},
                              :id
-                             "http://localhost:3001/ctia/event/event-00000000-0000-0000-0000-111111111116",
+                             (format "http://localhost:%s/ctia/event/event-00000000-0000-0000-0000-111111111116"
+                                     port),
                              :type "event",
                              :event_type :record-updated,
                              :fields
@@ -261,21 +269,25 @@
                              :entity
                              {:schema_version ctim-schema-version,
                               :target_ref
-                              "http://localhost:3001/ctia/incident/incident-00000000-0000-0000-0000-111111111112",
+                              (format "http://localhost:%s/ctia/incident/incident-00000000-0000-0000-0000-111111111112"
+                                      port),
                               :type "relationship",
                               :created "2042-01-01T00:00:00.000Z",
                               :modified "2042-01-01T00:00:00.000Z",
                               :timestamp "2042-01-01T00:00:00.000Z",
                               :source_ref
-                              "http://localhost:3001/ctia/casebook/casebook-00000000-0000-0000-0000-111111111117",
+                              (format "http://localhost:%s/ctia/casebook/casebook-00000000-0000-0000-0000-111111111117"
+                                      port),
                               :id
-                              "http://localhost:3001/ctia/relationship/relationship-00000000-0000-0000-0000-111111111119",
+                              (format "http://localhost:%s/ctia/relationship/relationship-00000000-0000-0000-0000-111111111119"
+                                      port),
                               :tlp "amber",
                               :groups ["group1"],
                               :owner "user1",
                               :relationship_type "related-to"},
                              :id
-                             "http://localhost:3001/ctia/event/event-00000000-0000-0000-0000-111111111120",
+                             (format "http://localhost:%s/ctia/event/event-00000000-0000-0000-0000-111111111120"
+                                     port),
                              :type "event",
                              :event_type :record-created}
                             {:owner "user1",
@@ -292,13 +304,15 @@
                               :incident_time {:opened "2042-01-01T00:00:00.000Z"},
                               :status "Open",
                               :id
-                              "http://localhost:3001/ctia/incident/incident-00000000-0000-0000-0000-111111111112",
+                              (format "http://localhost:%s/ctia/incident/incident-00000000-0000-0000-0000-111111111112"
+                                      port),
                               :tlp "amber",
                               :groups ["group1"],
                               :confidence "High",
                               :owner "user1"},
                              :id
-                             "http://localhost:3001/ctia/event/event-00000000-0000-0000-0000-111111111121",
+                             (format "http://localhost:%s/ctia/event/event-00000000-0000-0000-0000-111111111121"
+                                     port),
                              :type "event",
                              :event_type :record-deleted}]
                            results)))))))))))))
@@ -319,7 +333,8 @@
 
 
 (deftest bucket-operations-test
-  (let [t1 (t/internal-now)
+  (let [get-in-config (helpers/build-get-in-config-fn)
+        t1 (t/internal-now)
         t2 (t/plus t1 (t/seconds 1))
         t3 (t/plus t1 (t/seconds 2))
         t4 (t/plus t1 (t/days 1))
@@ -339,14 +354,15 @@
       (is (= #{event1 event2} (set (:events bucket2))))
       (is (= 2 (:count bucket2))))
     (testing "same-bucket? shoud properly assert that an event is part of a bucket or not"
-      (is (true? (ev/same-bucket? bucket1 event3)))
-      (is (true? (ev/same-bucket? bucket2 event3)))
-      (is (false? (ev/same-bucket? bucket1 event4)))
-      (is (false? (ev/same-bucket? bucket2 event4)))
-      (is (false? (ev/same-bucket? bucket2 event5))))))
+      (is (true? (ev/same-bucket? bucket1 event3 get-in-config)))
+      (is (true? (ev/same-bucket? bucket2 event3 get-in-config)))
+      (is (false? (ev/same-bucket? bucket1 event4 get-in-config)))
+      (is (false? (ev/same-bucket? bucket2 event4 get-in-config)))
+      (is (false? (ev/same-bucket? bucket2 event5 get-in-config))))))
 
 (deftest bucketize-events-test
-  (let [now (t/internal-now)
+  (let [get-in-config (helpers/build-get-in-config-fn)
+        now (t/internal-now)
         one-hour-ago (t/minus now (t/hours 1))
         two-hours-ago (t/minus now (t/hours 2))
         one-month-ago (t/minus now (t/months 1))
@@ -360,7 +376,7 @@
 
         events (->> (concat every-sec every-min every-day every-milli-1 every-milli-2)
                     shuffle)
-        timeline (ev/bucketize-events events)]
+        timeline (ev/bucketize-events events get-in-config)]
     (testing "bucketize function should group events in near same time from same owner"
       (is (< (count timeline) (count events)))
       (is (= (+ (count every-min) (count every-day) 3)
@@ -439,17 +455,17 @@
                         q (uri/uri-encode
                             (format "entity.id:\"%s\"" initial-id))
                         results (map :fields
-                                     (:parsed-body (get (str "ctia/event/search?query=" q)
+                                     (:parsed-body (get (str "ctia/event/search?sort_by=timestamp&query=" q)
                                                         :content-type :json
                                                         :headers {"Authorization" "user1"})))]
-                    (is (= '[nil
-                             [{:field :assignees
-                               :action "added"
-                               :change {:after ["1"]}}]
-                             [{:field :assignees
-                               :action "modified"
-                               :change {:before ["1"], :after ["1" "2"]}}]
-                             [{:field :assignees
-                               :action "deleted"
-                               :change {:before ["1" "2"]}}]]
+                    (is (= [nil
+                            [{:field :assignees
+                              :action "added"
+                              :change {:after ["1"]}}]
+                            [{:field :assignees
+                              :action "modified"
+                              :change {:before ["1"], :after ["1" "2"]}}]
+                            [{:field :assignees
+                              :action "deleted"
+                              :change {:before ["1" "2"]}}]]
                            results)))))))))))))

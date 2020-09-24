@@ -1,12 +1,13 @@
 (ns ctia.entity.feedback
-  (:require [compojure.api.sweet :refer [GET routes]]
+  (:require [compojure.api.core :refer [GET routes]]
             [ctia.domain.entities :refer [page-with-long-id un-store-page]]
             [ctia.entity.feedback.schemas :as fs]
             [ctia.http.routes
              [common :refer [paginated-ok PagingParams]]
-             [crud :refer [entity-crud-routes]]]
+             [crud :refer [services->entity-crud-routes]]]
+            [ctia.schemas.core :refer [APIHandlerServices]]
             [ctia.schemas.sorting :as sorting]
-            [ctia.store :refer :all]
+            [ctia.store :refer [list-records]]
             [ctia.stores.es
              [mapping :as em]
              [store :refer [def-es-store]]]
@@ -52,7 +53,9 @@
      JudgementFieldsParam
      {(s/optional-key :sort_by) feedback-sort-fields})))
 
-(def feedback-by-entity-route
+(s/defn feedback-by-entity-route [{{:keys [get-in-config]} :ConfigService
+                                   {:keys [read-store]} :StoreService
+                                   :as _services_} :- APIHandlerServices]
   (GET "/" []
        :return fs/PartialFeedbackList
        :query [params FeedbackQueryParams]
@@ -65,7 +68,7 @@
                        {:all-of (select-keys params [:entity_id])}
                        identity-map
                        (dissoc params :entity_id))
-           page-with-long-id
+           (page-with-long-id get-in-config)
            un-store-page
            paginated-ok)))
 
@@ -74,10 +77,11 @@
     :read-feedback
     :delete-feedback})
 
-(def feedback-routes
+(s/defn feedback-routes [services :- APIHandlerServices]
   (routes
-   feedback-by-entity-route
-   (entity-crud-routes
+   (feedback-by-entity-route services)
+   (services->entity-crud-routes
+    services
     {:entity :feedback
      :new-schema fs/NewFeedback
      :entity-schema fs/Feedback
@@ -111,5 +115,5 @@
    :realize-fn fs/realize-feedback
    :es-store ->FeedbackStore
    :es-mapping feedback-mapping
-   :routes feedback-routes
+   :services->routes feedback-routes
    :capabilities capabilities})

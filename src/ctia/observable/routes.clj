@@ -1,9 +1,10 @@
 (ns ctia.observable.routes
   (:require
-   [compojure.api.sweet :refer :all]
-   [ctia
-    [properties :refer [properties]]
-    [store :refer :all]]
+   [compojure.api.core :refer [routes GET]]
+   [ctia.store :refer [calculate-verdict
+                       list-judgements-by-observable
+                       list-records
+                       list-sightings-by-observables]]
    [ctia.domain.entities
     :refer
     [page-with-long-id short-id->long-id un-store-page]]
@@ -14,8 +15,9 @@
    [ctia.entity.sighting.schemas :refer [PartialSightingList]]
    [ctia.http.routes.common :refer [paginated-ok PagingParams]]
    [clj-momo.lib.es.pagination :as pag]
-   [ctia.schemas.core :refer [ObservableTypeIdentifier Reference Verdict]]
+   [ctia.schemas.core :refer [APIHandlerServices ObservableTypeIdentifier Reference Verdict]]
    [ctim.domain.id :as id]
+   [ring.swagger.schema :refer [describe]]
    [ring.util.http-response :refer [not-found ok]]
    [schema-tools.core :as st]
    [schema.core :as s]))
@@ -25,7 +27,10 @@
             (s/optional-key :sort_by)
             (describe (s/enum :id) "Sort result on a field")))
 
-(defroutes observable-routes
+(s/defn observable-routes [{{:keys [get-in-config]} :ConfigService
+                            {:keys [read-store]} :StoreService
+                            :as _services_} :- APIHandlerServices]
+ (routes
   (GET "/:observable_type/:observable_value/verdict" []
        :tags ["Verdict"]
        :path-params [observable_type :- ObservableTypeIdentifier
@@ -41,7 +46,7 @@
                                {:type observable_type
                                 :value observable_value}
                                identity-map)
-                   (clojure.core/update :judgement_id short-id->long-id)
+                   (clojure.core/update :judgement_id short-id->long-id get-in-config)
                    ok)
            (not-found {:message "no verdict currently available for the supplied observable"})))
 
@@ -61,7 +66,7 @@
                         :value observable_value}
                        identity-map
                        params)
-           page-with-long-id
+           (page-with-long-id get-in-config)
            un-store-page
            paginated-ok))
 
@@ -77,7 +82,7 @@
        :auth-identity identity
        :identity-map identity-map
        (paginated-ok
-        (let [http-show (get-in @properties [:ctia :http :show])
+        (let [http-show (get-in-config [:ctia :http :show])
               judgements (:data (read-store
                                  :judgement
                                  list-judgements-by-observable
@@ -122,7 +127,7 @@
                          :value observable_value}]
                        identity-map
                        params)
-           page-with-long-id
+           (page-with-long-id get-in-config)
            un-store-page
            paginated-ok))
 
@@ -138,7 +143,7 @@
        :auth-identity identity
        :identity-map identity-map
        (paginated-ok
-        (let [http-show (get-in @properties [:ctia :http :show])
+        (let [http-show (get-in-config [:ctia :http :show])
               sightings (:data (read-store :sighting
                                            list-sightings-by-observables
                                            [{:type observable_type
@@ -178,7 +183,7 @@
        :auth-identity identity
        :identity-map identity-map
        (paginated-ok
-        (let [http-show (get-in @properties [:ctia :http :show])
+        (let [http-show (get-in-config [:ctia :http :show])
               sightings (:data (read-store :sighting
                                            list-sightings-by-observables
                                            [{:type observable_type
@@ -204,4 +209,4 @@
               (pag/paginate params)
               (pag/response {:offset (:offset params)
                              :limit (:limit params)
-                             :hits (count incident-ids)}))))))
+                             :hits (count incident-ids)})))))))

@@ -1,8 +1,14 @@
 (ns ctia.test-helpers.aggregate
   (:require [clj-momo.lib.clj-time.core :as time]
+            [clj-momo.lib.time :refer [format-date-time]]
             [clj-momo.lib.clj-time.coerce :as tc]
             [clj-momo.lib.clj-time.format :as tf]
-            [ctia.test-helpers.core :as hc]
+            [clj-momo.lib.map :refer [deep-merge-with]]
+            [ctia.test-helpers
+             [auth :refer [all-capabilities]]
+             [fake-whoami-service :as helpers.whoami]
+             [core :as helpers.core]
+             [store :refer [store-fixtures]]]
             [clojure.string :as string]
             [clojure.pprint :refer [pprint]]
             [schema-generators.generators :as g]
@@ -18,7 +24,7 @@
   (let [metric-uri (format "ctia/%s/metric/%s"
                            (name entity)
                            (name agg-type))]
-    (-> (hc/get metric-uri
+    (-> (helpers.core/get metric-uri
                 :accept :json
                 :headers {"Authorization" "45c1f5e3f05d0"}
                 :query-params (into search-params agg-params))
@@ -45,25 +51,28 @@
    while (es-get-in {:a [{:b 2} {:b 3}]} [:a :b]) returns '(2 3)"
   {:test (fn []
            (is (= (es-get-in {:a [{:b 2} {:b 3}]} [:a :b])
-                      '(2 3)))
+                  '(2 3)))
            (is (= (es-get-in {:a [2 3]} [:a])
-                      [2 3]))
+                  [2 3]))
            (is (= (es-get-in {:a {:b [2 3]}} [:a :b])
-                      [2 3]))
+                  [2 3]))
            (is (= (es-get-in {:a [{:b 2} {:b 3}]} [:a :b])
-                      '(2 3)))
+                  '(2 3)))
            (is (= (es-get-in {:a {:b 2 :c 3}} [:a :b])
-                      2))
+                  2))
            (is (= (es-get-in {:a {:d 2 :c 3}} [:a :b])
-                      nil))
+                  nil))
            (is (= (es-get-in {:a [{:d 2} {:b 3}]} [:a :b])
-                      '(3))))}
+                  '(3))))}
   [m ks]
   (reduce (fn [acc k]
             (cond
-              (map? acc) (get acc k)
-              (coll? acc) (seq (keep #(get % k) acc))
-              :else (reduced acc)))
+              (map? acc)  (get acc k)
+              (coll? acc) (->> acc
+                               (keep #(es-get-in % [k]))
+                               flatten
+                               seq)
+              :else       (reduced acc)))
           m
           ks))
 
@@ -129,7 +138,7 @@
                            :limit limit})]
       (is (= expected
              (->> (parse-field field)
-                  (get-in (:data res))
+                  (es-get-in (:data res))
                   (map :value)))
           (error-helper-msg prepared))
       (check-from-to from to))))
@@ -149,32 +158,44 @@
        (map (fn [[k v]]
               {:key (str k) :value v}))))
 
+(defn- vals->date-vals [from-str to-str values]
+  (let [from  (tf/parse from-str)
+        to    (tf/parse to-str)
+        parse (fn [d] (cond-> d
+                        (inst? d) format-date-time
+                        d tf/parse))]
+    (->> values
+         (map parse)
+         (filter #(and (time/within? from to %)
+                       (time/before? % to))))))
+
 (defn- test-histogram
   "test one field histogram, examples are already created"
   [examples entity field granularity]
   (testing (format "histogram %s %s" entity field)
-    (let [parsed (parse-field field)
-          values (keep #(get-in % parsed) examples)
-          from-str "2020-03-01T00:00:00.000Z"
-          to-str "2020-10-01T00:00:00.000Z"
-          from (tf/parse from-str)
-          to (tf/parse to-str)
-          date-values (filter #(and (time/within? from to %)
-                                    (time/before? % to))
-                              (map tf/parse values))
-          res-days (map #(to-granularity-first-day granularity %)
-                        date-values)
-          expected (make-histogram-res res-days)
-          _ (assert (every? #(:value %) expected))
+    (let [parsed      (parse-field field)
+          values      (->>
+                       examples
+                       (keep #(es-get-in % parsed))
+                       flatten)
+          from-str    "2020-03-01T00:00:00.000Z"
+          to-str      "2020-10-01T00:00:00.000Z"
+          date-values (vals->date-vals from-str to-str values)
+          _           (assert (seq? date-values))
+          res-days    (map #(to-granularity-first-day granularity %)
+                           date-values)
+          expected    (make-histogram-res res-days)
+          _           (assert (every? #(:value %) expected))
           {{:keys [from to]} :filters
            :as res} (histogram entity
                                {:from from-str
-                                :to to-str}
+                                :to   to-str}
                                {:aggregate-on (name field)
-                                :granularity (name granularity)})]
+                                :granularity  (name granularity)})]
       (is (= expected
-             (->> (get-in (:data res) parsed)
-                  (filter #(pos? (:value %))))))
+             (->> (es-get-in (:data res) parsed)
+                  (filter #(pos? (:value %)))))
+          (format "test-histogram on: %s %s" entity field))
       (check-from-to from to))))
 
 (defn schema-enumerable-fields
@@ -206,7 +227,7 @@
           fields))
 
 (def string-generator
-  (->> (gen/sample gen/string-alphanumeric 20)
+  (->> (gen/sample gen/string-alphanumeric 10)
        (map string/lower-case)
        gen/elements))
 
@@ -219,25 +240,38 @@
   (let [enumerable-schema (schema-enumerable-fields new-schema enumerable-fields)
         base-doc (dissoc entity-minimal :id)]
     (doall
-     (repeatedly n (fn [] (merge base-doc
-                                 (g/generate enumerable-schema
-                                             {s/Str string-generator})
-                                 (generate-date-fields date-fields)))))))
+     (repeatedly n (fn [] (deep-merge-with
+                           (fn [a b]
+                             (if (and (sequential? a) (map? b))
+                               (map #(merge % b) a)
+                               a))
+                           base-doc
+                           (g/generate enumerable-schema
+                                       {s/Str string-generator})
+                           (generate-date-fields date-fields)))))))
 
 (defn test-metric-routes
   [{:keys [entity
            plural
            enumerable-fields
            date-fields] :as metric-params}]
-  (let [docs (generate-n-entity metric-params 100)]
-    (with-redefs [;; ensure from coercion in proper one year range
-                  now (-> (tc/from-string "2020-12-31")
-                          tc/to-date
-                          constantly)]
-      (hc/post-bulk {plural docs})
-      (doseq [field enumerable-fields]
-        (test-cardinality docs entity field)
-        (test-topn docs entity field 3))
-      (doseq [field date-fields]
-        (test-histogram docs entity field :day)
-        (test-histogram docs entity field :month)))))
+  ;; enforce 1 shard to avoid ES terms approximation used by topn which is not simulated here by the manual aggregation here.
+  ;; see ES details: https://www.elastic.co/guide/en/elasticsearch/reference/5.6/search-aggregations-bucket-terms-aggregation.html#search-aggregations-bucket-terms-aggregation-approximate-counts
+  (helpers.core/with-config-transformer*
+    #(assoc-in % [:ctia :store :es :default :shards] 1)
+    #((:es-store store-fixtures)
+      (fn []
+        (helpers.core/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
+        (helpers.whoami/set-whoami-response "45c1f5e3f05d0" "foouser" "foogroup" "user")
+        (let [docs (generate-n-entity metric-params 100)]
+          (with-redefs [;; ensure from coercion in proper one year range
+                        now (-> (tc/from-string "2020-12-31")
+                                tc/to-date
+                                constantly)]
+            (helpers.core/post-bulk {plural docs})
+            (doseq [field enumerable-fields]
+              (test-cardinality docs entity field)
+              (test-topn docs entity field 3))
+            (doseq [field date-fields]
+              (test-histogram docs entity field :day)
+              (test-histogram docs entity field :month))))))))

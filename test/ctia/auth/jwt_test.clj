@@ -1,20 +1,25 @@
 (ns ctia.auth.jwt-test
   (:require [ctia.auth.jwt :as sut]
             [ctia.auth.capabilities :as caps]
+            [ctia.test-helpers.core :as helpers]
             [clojure.test :as t :refer [deftest is]]
             [clojure.set :as set])
   (:import [ctia.auth.jwt JWTIdentity]))
+
+;; note: refactor into tests if this namespace uses any fixtures
+(def get-in-config
+  (helpers/build-get-in-config-fn))
 
 (deftest wrap-jwt-to-ctia-auth-test
   (let [handler (fn [r]
                   {:body r
                    :status 200})
-        wrapped-handler (sut/wrap-jwt-to-ctia-auth handler)
+        wrapped-handler (sut/wrap-jwt-to-ctia-auth handler get-in-config)
         request-no-jwt {:body "foo"
                         :url "http://localhost:8080/foo"}
         request-jwt (assoc request-no-jwt
                            :jwt {:sub "subject name"
-                                 (sut/iroh-claim "org/id") "organization-id"})
+                                 (sut/iroh-claim "org/id" get-in-config) "organization-id"})
         response-no-jwt (wrapped-handler request-no-jwt)
         response-jwt (wrapped-handler request-jwt)]
     (is (= {:body {:body "foo"
@@ -25,7 +30,7 @@
             {:body "foo"
              :url "http://localhost:8080/foo"
              :jwt {:sub "subject name"
-                   (sut/iroh-claim "org/id") "organization-id"}
+                   (sut/iroh-claim "org/id" get-in-config) "organization-id"}
              :groups ["organization-id"]
              :login  "subject name"}
             :status 200}
@@ -34,53 +39,64 @@
                    (get-in response-jwt [:body :identity])))))
 
 (deftest scopes-to-capapbilities-test
-  (is (= "private-intel" (sut/entity-root-scope))
+  (is (= "private-intel" (sut/entity-root-scope get-in-config))
       "entity root scope default value is private-intel")
-  (is (= "casebook" (sut/casebook-root-scope))
+  (is (= "casebook" (sut/casebook-root-scope get-in-config))
       "casebook root scope default value is casebook")
   (is (= #{:search-casebook :create-casebook :list-casebooks :read-casebook
            :delete-casebook}
-         (sut/scope-to-capabilities (sut/casebook-root-scope)))
+         (sut/scope-to-capabilities (sut/casebook-root-scope get-in-config) get-in-config))
       "Check the casebook capabilities from the casebook scope")
   (is (= #{:developer :specify-id}
          (set/difference caps/all-capabilities
-                         (sut/scopes-to-capabilities #{(sut/entity-root-scope)
-                                                       (sut/casebook-root-scope)})))
+                         (sut/scopes-to-capabilities #{(sut/entity-root-scope get-in-config)
+                                                       (sut/casebook-root-scope get-in-config)}
+                                                     get-in-config)))
       "with all scopes you should have most capabilities except some very
        specific ones")
 
-  (is (clojure.set/subset?
-       (sut/scopes-to-capabilities #{(sut/casebook-root-scope)})
-       (sut/scopes-to-capabilities #{(sut/entity-root-scope)}))
+  (is (set/subset?
+       (sut/scopes-to-capabilities #{(sut/casebook-root-scope get-in-config)}
+                                   get-in-config)
+       (sut/scopes-to-capabilities #{(sut/entity-root-scope get-in-config)}
+                                   get-in-config))
       "casebook capabilities are a subset of all entity caps")
 
   (is (= #{:import-bundle}
          (sut/scopes-to-capabilities
-          #{(str (sut/entity-root-scope) "/import-bundle")})))
+          #{(str (sut/entity-root-scope get-in-config) "/import-bundle")}
+          get-in-config)))
   (is (= #{}
          (sut/scopes-to-capabilities
-          #{(str (sut/entity-root-scope) "/import-bundle:read")})))
-  (is (contains? (sut/scopes-to-capabilities #{(str (sut/entity-root-scope) ":write")})
+          #{(str (sut/entity-root-scope get-in-config) "/import-bundle:read")}
+          get-in-config)))
+  (is (contains? (sut/scopes-to-capabilities #{(str (sut/entity-root-scope get-in-config) ":write")}
+                                             get-in-config)
                  :import-bundle))
-  (is (not (contains? (sut/scopes-to-capabilities #{(str (sut/entity-root-scope) ":read")})
+  (is (not (contains? (sut/scopes-to-capabilities #{(str (sut/entity-root-scope get-in-config) ":read")}
+                                                  get-in-config)
                       :import-bundle)))
   (is (= #{:read-sighting :list-sightings :search-sighting :create-sighting
            :delete-sighting}
          (sut/scopes-to-capabilities
-          #{(str (sut/entity-root-scope) "/sighting")}))
+          #{(str (sut/entity-root-scope get-in-config) "/sighting")}
+          get-in-config))
       "Scopes can be limited to some entity")
   (is (= #{:create-sighting :delete-sighting}
          (sut/scopes-to-capabilities
-          #{(str (sut/entity-root-scope) "/sighting:write")}))
+          #{(str (sut/entity-root-scope get-in-config) "/sighting:write")}
+          get-in-config))
       "Scopes can be limited to some entity and for write-only")
   (is (= #{:read-sighting :list-sightings :search-sighting}
          (sut/scopes-to-capabilities
-          #{(str (sut/entity-root-scope) "/sighting:read")}))
+          #{(str (sut/entity-root-scope get-in-config) "/sighting:read")}
+          get-in-config))
       "Scopes can be limited to some entity and for read-only")
   (is (= #{:search-casebook :read-sighting :list-sightings :search-sighting
            :list-casebooks :read-casebook}
-         (sut/scopes-to-capabilities #{(str (sut/entity-root-scope) "/sighting:read")
-                                       (str (sut/casebook-root-scope) ":read")}))
+         (sut/scopes-to-capabilities #{(str (sut/entity-root-scope get-in-config) "/sighting:read")
+                                       (str (sut/casebook-root-scope get-in-config) ":read")}
+                                     get-in-config))
       "Scopes can compose"))
 
 (deftest parse-jwt-pubkey-map-test

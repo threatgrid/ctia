@@ -4,6 +4,8 @@
             [ctia.flows.crud :refer [gen-random-uuid]]
             [clj-momo.lib.es.index :as es-index]
             [clj-momo.lib.es.conn :as es-conn]
+            [clj-momo.test-helpers.core :as mth]
+            [clojure.instant :as inst]
             [ctia.stores.es.query :refer [find-restriction-query-part]]
             [ctia.stores.es.crud :as sut]
             [ctia.stores.es.init :as init]
@@ -76,6 +78,8 @@
                                                        "title.whole:ASC,"
                                                        "schema_version:DESC")))
 
+(use-fixtures :once mth/fixture-schema-validation)
+
 (use-fixtures :each
   (join-fixtures [es-helpers/fixture-properties:es-store
                   helpers/fixture-ctia
@@ -109,7 +113,10 @@
                         :refresh "true"})
 
 (deftest crud-aliased-test
-  (let [state-aliased (init/init-es-conn! props-aliased)
+  (let [app (helpers/get-current-app)
+        services (es-helpers/app->ESConnServices app)
+
+        state-aliased (init/init-es-conn! props-aliased services)
         count-index #(count (es-index/get (:conn state-aliased)
                                           (str (:index state-aliased) "*")))
         base-sighting {:title "a sighting text title"
@@ -178,7 +185,10 @@
                             {}))))))
 
 (deftest crud-unaliased-test
-  (let [state-not-aliased (init/init-es-conn! props-not-aliased)]
+  (let [app (helpers/get-current-app)
+        services (es-helpers/app->ESConnServices app)
+
+        state-not-aliased (init/init-es-conn! props-not-aliased services)]
     (testing "crud operation should properly handle not aliased states"
       (create-fn state-not-aliased
                  (map #(assoc base-sighting
@@ -202,7 +212,10 @@
                             {}))))))
 
 (deftest make-search-query-test
-  (let [es-conn-state (-> (init/init-es-conn! props-not-aliased)
+  (let [app (helpers/get-current-app)
+        services (es-helpers/app->ESConnServices app)
+
+        es-conn-state (-> (init/init-es-conn! props-not-aliased services)
                           (update :props assoc :default_operator "AND"))
         simple-access-ctrl-query {:terms {"groups" (:groups ident)}}]
     (with-redefs [find-restriction-query-part (constantly simple-access-ctrl-query)]
@@ -210,11 +223,11 @@
             es-query-string-AND {:query_string {:query query-string
                                                 :default_operator "AND"}}
             es-query-string-no-op {:query_string {:query query-string}}
-            date-range {:created {:gte "2020-04-01T00:00:00.000Z"
-                                  :lt "2020-05-01T00:00:00.000Z"}}
+            date-range {:created {:gte #inst "2020-04-01T00:00:00.000Z"
+                                  :lt #inst "2020-05-01T00:00:00.000Z"}}
             es-date-range {:range date-range}
-            filter-map {"disposition" 2
-                        "observable.type" "domain"}
+            filter-map {:disposition 2
+                        :observable.type "domain"}
             es-terms [{:terms {"disposition" (list 2)}}
                       {:terms {"observable.type" (list "domain")}}]]
         (is (= {:bool {:filter [simple-access-ctrl-query]}}
@@ -277,7 +290,7 @@
          (sut/make-aggregation {:agg-type :cardinality
                                 :aggregate-on "observable.value"}))))
 
-(defn generete-sightings
+(defn generate-sightings
   [nb confidence title timestamp]
   (repeatedly nb
               #(assoc base-sighting
@@ -291,19 +304,19 @@
 (def title1 "this is title1 sighting")
 (def title2 "this is title2 sighting")
 
-(def high-t1-title1 (generete-sightings 60
+(def high-t1-title1 (generate-sightings 60
                                         "High"
                                         title1
                                         timestamp-1))
-(def high-t2-title2 (generete-sightings 20
+(def high-t2-title2 (generate-sightings 20
                                         "High"
                                         title2
                                         timestamp-2))
-(def medium-t1-title1 (generete-sightings 10
+(def medium-t1-title1 (generate-sightings 10
                                           "Medium"
                                           title1
                                           timestamp-1))
-(def low-t2-title2 (generete-sightings 5
+(def low-t2-title2 (generate-sightings 5
                                        "Low"
                                        title2
                                        timestamp-2))
@@ -316,15 +329,18 @@
 
 (deftest handle-query-string-search-count-test
   (testing "handle search and count shall properly apply query and params"
-    (let [es-conn-state (-> (init/init-es-conn! props-not-aliased)
+    (let [app (helpers/get-current-app)
+          services (es-helpers/app->ESConnServices app)
+
+          es-conn-state (-> (init/init-es-conn! props-not-aliased services)
                             (update :props assoc :default_operator "AND"))
           _ (create-fn es-conn-state
                        search-metrics-entities
                        ident
                        {:refresh "true"})
           query-string "title1"
-          date-range {:created {:gte timestamp-1
-                                :lt timestamp-2}}
+          date-range {:created {:gte (inst/read-instant-date timestamp-1)
+                                :lt (inst/read-instant-date timestamp-2)}}
           filter-map {:confidence "High"}
           search-helper (fn [q params]
                           (search-fn es-conn-state q ident params))
@@ -371,7 +387,10 @@
 
 (deftest handle-aggregate-test
   (testing "handle-aggregate"
-    (let [es-conn-state (-> (init/init-es-conn! props-not-aliased)
+    (let [app (helpers/get-current-app)
+          services (es-helpers/app->ESConnServices app)
+
+          es-conn-state (-> (init/init-es-conn! props-not-aliased services)
                             (update :props assoc :default_operator "AND"))
           _ (create-fn es-conn-state
                        search-metrics-entities

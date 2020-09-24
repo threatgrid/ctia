@@ -17,7 +17,7 @@
     [field-selection :refer [field-selection-tests]]
     [http :refer [doc-id->rel-url]]
     [pagination :refer [pagination-test]]
-    [store :refer [test-for-each-store store-fixtures]]]
+    [store :refer [test-for-each-store]]]
    [ctim.examples.casebooks
     :refer
     [new-casebook-maximal new-casebook-minimal]]
@@ -348,19 +348,14 @@
         sut/casebook-fields)))))
 
 (deftest test-casebook-routes-access-control
-  (test-for-each-store
-   (fn []
-     (access-control-test "casebook"
-                          new-casebook-minimal
-                          true
-                          true))))
+  (access-control-test "casebook"
+                       new-casebook-minimal
+                       true
+                       true
+                       test-for-each-store))
 
 (deftest test-casebook-metric-routes
-  ((:es-store store-fixtures)
-   (fn []
-     (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
-     (whoami-helpers/set-whoami-response "45c1f5e3f05d0" "foouser" "Administrators" "user")
-     (test-metric-routes (into sut/casebook-entity
-                               {:entity-minimal new-casebook-minimal
-                                :enumerable-fields sut/casebook-enumerable-fields
-                                :date-fields sut/casebook-histogram-fields})))))
+  (test-metric-routes (into sut/casebook-entity
+                            {:entity-minimal new-casebook-minimal
+                             :enumerable-fields sut/casebook-enumerable-fields
+                             :date-fields sut/casebook-histogram-fields})))

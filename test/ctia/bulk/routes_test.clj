@@ -11,9 +11,7 @@
              [string :as str]
              [test :refer [deftest is join-fixtures testing use-fixtures]]]
             [clj-http.fake :refer [with-global-fake-routes]]
-            [ctia
-             [properties :refer [get-http-show properties]]
-             [store :refer [stores]]]
+            [ctia.properties :refer [get-http-show]]
             [ctia.bulk.core
              :refer
              [bulk-size gen-bulk-from-fn get-bulk-max-size]]
@@ -204,8 +202,11 @@
                                          "foogroup"
                                          "user")
      (testing "POST /ctia/bulk with wait_for"
-       (let [default-es-refresh (->> (get-in @properties
-                                             [:ctia :store :es :default :refresh])
+       (let [app (helpers/get-current-app)
+             {:keys [get-in-config]} (helpers/get-service-map app :ConfigService)
+
+             default-es-refresh (->> (get-in-config
+                                       [:ctia :store :es :default :refresh])
                                      (str "refresh="))
              es-params (atom nil)
              fake-routes
@@ -260,7 +261,10 @@
                                          "foogroup"
                                          "user")
      (testing "POST /ctia/bulk"
-       (let [nb 7
+       (let [app (helpers/get-current-app)
+             {:keys [get-in-config]} (helpers/get-service-map app :ConfigService)
+
+             nb 7
              indicators (map mk-new-indicator (range nb))
              judgements (map mk-new-judgement (range nb))
              new-bulk {:actors (map mk-new-actor (range nb))
@@ -278,7 +282,7 @@
                             :body new-bulk
                             :headers {"Authorization" "45c1f5e3f05d0"})
              bulk-ids (:parsed-body response)
-             show-props (get-http-show)]
+             show-props (get-http-show get-in-config)]
          (is (= 201 (:status response)))
 
          (doseq [type (keys new-bulk)]
@@ -333,6 +337,8 @@
 (deftest bulk-max-size-post-test
   (test-for-each-store
    (fn []
+    (let [app (helpers/get-current-app)
+          {:keys [get-in-config]} (helpers/get-service-map app :ConfigService)]
      (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
      (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
                                          "foouser"
@@ -340,7 +346,7 @@
                                          "user")
 
      ;; Check changing the properties change the computed bulk max size
-     (is (= 100 (get-bulk-max-size)))
+     (is (= 100 (get-bulk-max-size get-in-config)))
      (let [nb 7
            indicators (map mk-new-indicator (range nb))
            judgements (map mk-new-judgement (range nb))
@@ -394,7 +400,7 @@
          (is (= 201 status-ok)))
        (testing "POST of too big bulks are rejected"
          (is (empty? (:errors response-too-big)) "No errors")
-         (is (= 400 status-too-big)))))))
+         (is (= 400 status-too-big))))))))
 
 (defn get-entity
   "Finds an entity in a collection by its ID"
@@ -488,7 +494,10 @@
                                          "foogroup"
                                          "user")
 
-     (let [{:keys [index conn]} (-> @stores :tool first :state)
+     (let [app (helpers/get-current-app)
+           {:keys [all-stores]} (helpers/get-service-map app :StoreService)
+
+           {:keys [index conn]} (-> (all-stores) :tool first :state)
        ;; close tool index to produce ES errors on that store
            _ (es-index/close! conn index)
            tools (->> [(mk-new-tool 1)

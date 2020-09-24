@@ -22,11 +22,14 @@
 (def examples (fixt/bundle 100 false))
 
 (deftest rollover-aliased-test
-  (let [props-not-aliased {:entity :malware
+  (let [app (helpers/get-current-app)
+        services (es-helpers/app->ESConnServices app)
+
+        props-not-aliased {:entity :malware
                            :indexname "ctia_malware"
                            :host "localhost"
                            :port 9200}
-        state-not-aliased (init/init-es-conn! props-not-aliased)
+        state-not-aliased (init/init-es-conn! props-not-aliased services)
         rollover-not-aliased (sut/rollover-store state-not-aliased)
         props-aliased {:entity :sighting
                        :indexname "ctia_sighting"
@@ -35,7 +38,7 @@
                        :aliased true
                        :rollover {:max_docs 3}
                        :refresh "true"}
-        state-aliased (init/init-es-conn! props-aliased)
+        state-aliased (init/init-es-conn! props-aliased services)
         rollover-aliased (sut/rollover-store state-aliased)
 
         count-index #(count (es-index/get (:conn state-aliased)
@@ -61,14 +64,19 @@
                                        {:rolled_over (rand-nth [true false])}
                                        (throw (ex-info "that's baaaaaaaddd"
                                                        {:code :unhappy}))))]
-    (let [ok-state (init/init-store-conn {:entity "sighting"
+    (let [app (helpers/get-current-app)
+          services (es-helpers/app->ESConnServices app)
+
+          ok-state (init/init-store-conn {:entity "sighting"
                                           :indexname "ok_index"
                                           :rollover {:max_docs 3}
-                                          :aliased true})
+                                          :aliased true}
+                                         services)
           ko-state (init/init-store-conn {:entity "sighting"
                                           :indexname "bbaaaaadddd_index"
                                           :rollover {:max_docs 2}
-                                          :aliased true})
+                                          :aliased true}
+                                         services)
           stores {:ok-type-1 [{:state ok-state}]
                   :ok-type-2 [{:state ok-state}]
                   :ok-type-3 [{:state ok-state}]

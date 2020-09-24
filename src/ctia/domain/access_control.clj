@@ -1,5 +1,6 @@
 (ns ctia.domain.access-control
-  (:require [ctia.properties :refer [get-access-control]]
+  (:require [clojure.set :as set]
+            [ctia.properties :refer [get-access-control]]
             [ctim.schemas.common :as csc]
             [schema.core :as s])
   (:import [java.util List]))
@@ -19,22 +20,22 @@
 
 (def ^List tlps ["white" "green" "amber" "red"])
 
-(defn properties-default-tlp []
-  (or (:default-tlp (get-access-control))
+(defn properties-default-tlp [get-in-config]
+  (or (:default-tlp (get-access-control get-in-config))
       csc/default-tlp))
 
-(defn allowed-tlps []
-  (let [min-tlp (:min-tlp (get-access-control) "white")]
+(defn allowed-tlps [get-in-config]
+  (let [min-tlp (:min-tlp (get-access-control get-in-config) "white")]
     (nthrest tlps
              (.indexOf tlps min-tlp))))
 
-(defn max-record-visibility-everyone? []
+(defn max-record-visibility-everyone? [get-in-config]
   (= "everyone"
-     (or (:max-record-visibility (get-access-control))
+     (or (:max-record-visibility (get-access-control get-in-config))
          "everyone")))
 
-(defn allowed-tlp? [tlp]
-  (some #{tlp} (allowed-tlps)))
+(defn allowed-tlp? [tlp get-in-config]
+  (some #{tlp} (allowed-tlps get-in-config)))
 
 (s/defn allowed-group? :- s/Bool
   [doc ident]
@@ -57,7 +58,7 @@
    (and
     (seq (:groups ident))
     (seq (:authorized_groups doc))
-    (seq (clojure.set/intersection
+    (seq (set/intersection
           (set (:groups ident))
           (set (:authorized_groups doc)))))))
 
@@ -67,7 +68,7 @@
    (and
     (not (nil? (:login ident)))
     (seq (:authorized_users doc))
-    (seq (clojure.set/intersection
+    (seq (set/intersection
           #{(:login ident)}
           (set (:authorized_users doc)))))))
 
@@ -98,9 +99,9 @@
   (not (:authorized-anonymous ident)))
 
 (s/defn allow-read? :- s/Bool
-  [doc ident]
+  [doc ident get-in-config]
   (boolean
    (or (not (restricted-read? ident))
-       (and (max-record-visibility-everyone?)
+       (and (max-record-visibility-everyone? get-in-config)
             (some #{(:tlp doc)} public-tlps))
        (allow-write? doc ident))))

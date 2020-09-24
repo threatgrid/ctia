@@ -74,6 +74,12 @@
 (def default-capabilities
   {:user
    #{:read-actor
+     :read-asset
+     :list-assets
+     :read-asset-mapping
+     :list-asset-mappings
+     :read-asset-properties
+     :list-asset-properties
      :read-attack-pattern
      :read-campaign
      :read-coa
@@ -90,6 +96,8 @@
      :list-sightings
      :read-identity-assertion
      :list-identity-assertions
+     :read-target-record
+     :list-target-records
      :read-tool
      :read-verdict
      :read-weakness

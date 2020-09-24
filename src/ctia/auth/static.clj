@@ -4,7 +4,9 @@
              [set :as set]
              [string :as str]]
             [ctia.auth :as auth :refer [IAuth IIdentity]]
-            [ctia.auth.capabilities :refer [all-capabilities]]))
+            [ctia.auth.capabilities :refer [all-capabilities]]
+            [puppetlabs.trapperkeeper.core :as tk]
+            [puppetlabs.trapperkeeper.services :refer [service-context]]))
 
 (def ^:private write-capabilities
   (set/difference all-capabilities
@@ -50,10 +52,14 @@
                  read-only-capabilities))
   (rate-limit-fn [_ _]))
 
-(defrecord AuthService [auth-config]
+(tk/defservice static-auth-service
   IAuth
-  (identity-for-token [_ token]
-    (let [secret (get-in auth-config [:static :secret])
+  [[:ConfigService get-in-config]]
+  (init [this context]
+        (assoc context :auth-config (get-in-config [:ctia :auth])))
+  (identity-for-token [this token]
+    (let [{:keys [auth-config]} (service-context this)
+          secret (get-in auth-config [:static :secret])
           readonly? (get-in auth-config [:static :readonly-for-anonymous])]
       (cond
         (= token secret) (->WriteIdentity (get-in auth-config [:static :name])

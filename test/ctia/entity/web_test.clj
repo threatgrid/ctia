@@ -456,6 +456,10 @@
                (is (= 401 (:status (get-judgement jwt-2))))
                (is (= 2 @counter)
                    "Making a call to another JWT should generate another call")
+               (assert (= test-cache-ttl ((helpers/current-get-in-config-fn)
+                                           [:ctia :http :jwt :http-check :cache-ttl]))
+                       ((helpers/current-get-in-config-fn)
+                         [:ctia :http :jwt :http-check :cache-ttl]))
                (Thread/sleep (+ test-cache-ttl 100)) ;; wait 100ms more than cache-ttl
                (is (= 401 (:status (get-judgement jwt-1))))
                (is (= 401 (:status (get-judgement jwt-1))))

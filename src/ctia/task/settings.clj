@@ -1,28 +1,29 @@
 (ns ctia.task.settings
   (:import clojure.lang.ExceptionInfo)
-  (:require [clojure.string :as str]
+  (:require [clojure.pprint :as pp]
+            [clojure.string :as str]
             [clojure.tools.cli :refer [parse-opts]]
             [clojure.tools.logging :as log]
             [schema.core :as s]
             [clj-momo.lib.es
-             [index :as es-index]
-             [schemas :refer [ESConnState]]]
+             [index :as es-index]]
             [ctia.stores.es.init :refer [init-es-conn! get-store-properties]]
             [ctia
-             [init :refer [init-store-service! log-properties]]
-             [properties :refer [properties init!]]
-             [store :refer [stores]]]))
+             [init :refer [log-properties]]
+             [properties :as p]
+             [store :refer [empty-stores]]]))
 
 (defn update-stores!
-  [store-keys]
+  [store-keys get-in-config]
   (doseq [kw store-keys]
     (log/infof "updating settings for store: %s" (name kw))
-    (init-es-conn! (get-store-properties kw))))
+    (init-es-conn! (get-store-properties kw get-in-config)
+                   get-in-config)))
 
 (def cli-options
   [["-h" "--help"]
    ["-s" "--stores STORES" "comma separated list of store names"
-    :default (set (keys @stores))
+    :default (set (keys empty-stores))
     :parse-fn #(map keyword (str/split % #","))]])
 
 (defn -main [& args]
@@ -35,7 +36,9 @@
     (when (:help options)
       (println summary)
       (System/exit 0))
-    (clojure.pprint/pprint options)
-    (init!)
-    (log-properties)
-    (update-stores! (:stores options))))
+    (pp/pprint options)
+    (let [config (doto (p/build-init-config)
+                   log-properties)
+          get-in-config (partial get-in config)]
+      (update-stores! (:stores options)
+                      get-in-config))))

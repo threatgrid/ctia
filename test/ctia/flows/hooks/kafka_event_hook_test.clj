@@ -4,7 +4,7 @@
             [clojure.test :refer [deftest is join-fixtures testing use-fixtures]]
             [ctia.domain.entities :refer [schema-version]]
             [ctia.lib.kafka :as lk]
-            [ctia.properties :refer [properties]]
+            [ctia.properties :as p]
             [ctim.domain.id :as id]
             [ctim.schemas.common :as c]
             [cheshire.core :refer [parse-string]]
@@ -22,15 +22,18 @@
                   es-helpers/fixture-properties:es-store
                   test-helpers/fixture-properties:kafka-hook
                   test-helpers/fixture-properties:events-enabled
-                  test-helpers/fixture-ctia
-                  test-helpers/fixture-allow-all-auth]))
+                  test-helpers/fixture-allow-all-auth
+                  test-helpers/fixture-ctia]))
 
 (deftest ^:integration test-events-topic
   (testing "Events are published to kafka topic"
-    (let [results (atom [])
+    (let [app (test-helpers/get-current-app)
+          {:keys [get-in-config]} (test-helpers/get-service-map app :ConfigService)
+
+          results (atom [])
           finish-signal (CountDownLatch. 3)
           rebalance-signal (CountDownLatch. 1)
-          kafka-props (get-in @properties [:ctia :hook :kafka])
+          kafka-props (get-in-config [:ctia :hook :kafka])
           consumer-map
           (lk/subscribe
            kafka-props

@@ -6,7 +6,6 @@
             [ctia.http.routes
              [common :refer [BaseEntityFilterParams PagingParams SourcableEntityFilterParams]]
              [crud :refer [entity-crud-routes]]]
-            [ctia.store :refer :all]
             [ctia.schemas
              [utils :as csu]
              [core :refer [def-acl-schema def-stored-schema]]
@@ -169,5 +168,5 @@
    :realize-fn realize-attack-pattern
    :es-store ->AttackPatternStore
    :es-mapping attack-pattern-mapping
-   :routes attack-pattern-routes
+   :services->routes attack-pattern-routes
    :capabilities capabilities})

@@ -1,8 +1,12 @@
 (ns ctia.test-helpers.fixtures
-  (:require [ctim.domain.id :refer [make-transient-id]]
-            [ctia.entity.investigation.examples :refer [investigation-maximal investigation-minimal]]
+  (:require [ctia.entity.investigation.examples :refer [investigation-maximal investigation-minimal]]
+            [ctim.domain.id :refer [make-transient-id]]
             [ctim.examples
              [actors :refer [actor-maximal actor-minimal]]
+             [assets :refer [asset-maximal asset-minimal]]
+             [asset-mappings :refer [asset-mapping-maximal asset-mapping-minimal]]
+             [asset-properties :refer [asset-properties-maximal asset-properties-minimal]]
+             [target-records :refer [target-record-maximal target-record-minimal]]
              [attack-patterns :refer [attack-pattern-maximal attack-pattern-minimal]]
              [campaigns :refer [campaign-maximal campaign-minimal]]
              [coas :refer [coa-maximal coa-minimal]]
@@ -27,36 +31,44 @@
 (defn n-examples
   [entity-type nb maximal?]
   (case entity-type
-    :actor (n-doc (if maximal? actor-maximal actor-minimal) nb)
-    :attack-pattern (n-doc (if maximal? attack-pattern-maximal attack-pattern-minimal) nb)
-    :campaign (n-doc (if maximal? campaign-maximal campaign-minimal) nb)
-    :coa (n-doc (if maximal? coa-maximal coa-minimal) nb)
-    :incident (n-doc (if maximal? incident-maximal incident-minimal) nb)
-    :indicator (n-doc (if maximal? indicator-maximal indicator-minimal) nb)
-    :investigation (n-doc (if maximal? investigation-maximal investigation-minimal) nb)
-    :judgement (n-doc (if maximal? judgement-maximal judgement-minimal) nb)
-    :malware (n-doc (if maximal? malware-maximal malware-minimal) nb)
-    :relationship (n-doc (if maximal? relationship-maximal relationship-minimal) nb)
-    :casebook (n-doc (if maximal? casebook-maximal casebook-minimal) nb)
-    :sighting (n-doc (if maximal? sighting-maximal sighting-minimal) nb)
-    :tool (n-doc (if maximal? tool-maximal tool-minimal) nb)
-    :vulnerability (n-doc (if maximal? vulnerability-maximal vulnerability-minimal) nb)
-    :weakness (n-doc (if maximal? weakness-maximal weakness-minimal) nb)))
+    :actor            (n-doc (if maximal? actor-maximal actor-minimal) nb)
+    :asset            (n-doc (if maximal? asset-maximal asset-minimal) nb)
+    :asset-mapping    (n-doc (if maximal? asset-mapping-maximal asset-mapping-minimal) nb)
+    :asset-properties (n-doc (if maximal? asset-properties-maximal asset-properties-minimal) nb)
+    :attack-pattern   (n-doc (if maximal? attack-pattern-maximal attack-pattern-minimal) nb)
+    :campaign         (n-doc (if maximal? campaign-maximal campaign-minimal) nb)
+    :coa              (n-doc (if maximal? coa-maximal coa-minimal) nb)
+    :incident         (n-doc (if maximal? incident-maximal incident-minimal) nb)
+    :indicator        (n-doc (if maximal? indicator-maximal indicator-minimal) nb)
+    :investigation    (n-doc (if maximal? investigation-maximal investigation-minimal) nb)
+    :judgement        (n-doc (if maximal? judgement-maximal judgement-minimal) nb)
+    :malware          (n-doc (if maximal? malware-maximal malware-minimal) nb)
+    :relationship     (n-doc (if maximal? relationship-maximal relationship-minimal) nb)
+    :casebook         (n-doc (if maximal? casebook-maximal casebook-minimal) nb)
+    :sighting         (n-doc (if maximal? sighting-maximal sighting-minimal) nb)
+    :target-record    (n-doc (if maximal? target-record-maximal target-record-minimal) nb)
+    :tool             (n-doc (if maximal? tool-maximal tool-minimal) nb)
+    :vulnerability    (n-doc (if maximal? vulnerability-maximal vulnerability-minimal) nb)
+    :weakness         (n-doc (if maximal? weakness-maximal weakness-minimal) nb)))
 
 (defn bundle
   [fixtures-nb maximal?]
-  {:actors (n-examples :actor fixtures-nb maximal?)
-   :attack_patterns (n-examples :attack-pattern fixtures-nb maximal?)
-   :campaigns (n-examples :campaign fixtures-nb maximal?)
-   :coas (n-examples :coa fixtures-nb maximal?)
-   :incidents (n-examples :incident fixtures-nb maximal?)
-   :indicators (n-examples :indicator fixtures-nb maximal?)
-   :investigations (n-examples :investigation fixtures-nb maximal?)
-   :judgements (n-examples :judgement fixtures-nb maximal?)
-   :malwares (n-examples :malware fixtures-nb maximal?)
-   :relationships (n-examples :relationship fixtures-nb maximal?)
-   :casebooks (n-examples :casebook fixtures-nb maximal?)
-   :sightings (n-examples :sighting fixtures-nb maximal?)
-   :tools (n-examples :tool fixtures-nb maximal?)
-   :vulnerabilities (n-examples :vulnerability fixtures-nb maximal?)
-   :weaknesses (n-examples :weakness fixtures-nb maximal?)})
+  {:actors           (n-examples :actor fixtures-nb maximal?)
+   :assets           (n-examples :asset fixtures-nb maximal?)
+   :asset_mappings   (n-examples :asset-mapping fixtures-nb maximal?)
+   :asset_properties (n-examples :asset-properties fixtures-nb maximal?)
+   :attack_patterns  (n-examples :attack-pattern fixtures-nb maximal?)
+   :campaigns        (n-examples :campaign fixtures-nb maximal?)
+   :coas             (n-examples :coa fixtures-nb maximal?)
+   :incidents        (n-examples :incident fixtures-nb maximal?)
+   :indicators       (n-examples :indicator fixtures-nb maximal?)
+   :investigations   (n-examples :investigation fixtures-nb maximal?)
+   :judgements       (n-examples :judgement fixtures-nb maximal?)
+   :malwares         (n-examples :malware fixtures-nb maximal?)
+   :relationships    (n-examples :relationship fixtures-nb maximal?)
+   :casebooks        (n-examples :casebook fixtures-nb maximal?)
+   :sightings        (n-examples :sighting fixtures-nb maximal?)
+   :target_records   (n-examples :target-record fixtures-nb maximal?)
+   :tools            (n-examples :tool fixtures-nb maximal?)
+   :vulnerabilities  (n-examples :vulnerability fixtures-nb maximal?)
+   :weaknesses       (n-examples :weakness fixtures-nb maximal?)})

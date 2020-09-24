@@ -1,9 +1,10 @@
 (ns ctia.test-helpers.search
-  (:require [clojure.string :as str]
+  (:require [clojure.set :as set]
+            [clojure.string :as str]
             [clojure.test :refer [is testing]]
             [clojure.tools.logging :refer [log*]]
             [ctim.domain.id :refer [long-id->id]]
-            [ctia.properties :refer [properties]]
+            [ctia.properties :as p]
             [clj-momo.lib.clj-time.coerce :as tc]
             [ctia.test-helpers.core :as helpers]))
 
@@ -55,7 +56,7 @@
   [entity text]
   (count-raw entity {:query text}))
 
-(defn test-describable-search [entity example]
+(defn test-describable-search [entity example get-in-config]
   (let [;; generate matched and unmatched terms / entities
         capital-word (unique-word "CAPITAL")
         base-possessive-word "possessive"
@@ -88,8 +89,8 @@
                            (repeatedly 2)
                            (map (comp :id :parsed-body))
                            set)
-        default_operator (or (get-in @properties [:ctia :store :es (keyword entity) :default_operator])
-                             (get-in @properties [:ctia :store :es :default :default_operator])
+        default_operator (or (get-in-config [:ctia :store :es (keyword entity) :default_operator])
+                             (get-in-config [:ctia :store :es :default :default_operator])
                              "AND")
         partially-matched-text (format "%s %s"
                                        "word"
@@ -175,8 +176,8 @@
       (if (= "AND" default_operator)
         (is (= matched-ids found-ids-escaped)
             "escaping reserved characters should avoid parsing errors and preserve behavior of AND")
-        (is (clojure.set/subset? (clojure.set/union matched-ids unmatched-ids)
-                                 found-ids-escaped)
+        (is (set/subset? (set/union matched-ids unmatched-ids)
+                         found-ids-escaped)
             ;; OR could match other test documents matching "http"
             "escaping reserved characters should avoid parsing errors and preserve behavior of OR"))
       (is (= matched-ids
@@ -207,53 +208,56 @@
 (defn ensure-one-document
   [f example entity & args]
   (let [{{full-id :id} :parsed-body} (create-doc entity (dissoc example :id))]
-       (apply (partial f entity) args)
-       (delete-doc entity full-id)))
+    (apply (partial f entity) args)
+    (delete-doc entity full-id)))
 
 (defn test-non-describable-search
-  [entity query query-field]
+  [entity value query-field]
   (testing "search term filter"
-    (let [{search-status :status
-           search-body :parsed-body} (search-text entity query)
-          {count-status :status
-           count-body :parsed-body} (count-text entity query)]
-      (is (= 200 search-status count-status))
-      (is (pos? (count search-body)))
-      (is (= (count search-body) count-body))
-      (doseq [res search-body]
-        (is (= query (get res query-field))
-            "query term must properly match values")))
-    (with-redefs [log* (fn [& _] nil)]
-      ;; avoid unnecessary verbosity
-      (let [{search-status :status} (search-text entity "2607:f0d0:1002:0051:0000:0000:0000:0004")
-            {count-status :status} (count-text entity "2607:f0d0:1002:0051:0000:0000:0000:0004")]
-        (is (= 400 search-status count-status))))
+    (let [query (format "%s:\"%s\""
+                        (name query-field)
+                        value)]
+      (let [{search-status :status
+             search-body :parsed-body} (search-text entity query)
+            {count-status :status
+             count-body :parsed-body} (count-text entity query)]
+        (is (= 200 search-status count-status))
+        (is (pos? (count search-body)))
+        (is (= (count search-body) count-body))
+        (doseq [res search-body]
+          (is (= value (get res query-field))
+              "query term must properly match values")))
+      (with-redefs [log* (fn [& _] nil)]
+        ;; avoid unnecessary verbosity
+        (let [{search-status :status} (search-text entity "2607:f0d0:1002:0051:0000:0000:0000:0004")
+              {count-status :status} (count-text entity "2607:f0d0:1002:0051:0000:0000:0000:0004")]
+          (is (= 400 search-status count-status))))
 
-    (let [query-params {"query" query
-                        "tlp" "red"}
-          {search-status :status
-           search-body :parsed-body} (search-raw entity query-params)
-          {count-status :status
-           count-body :parsed-body} (count-raw entity query-params)]
-      (is (= 200 search-status count-status))
-      (is (= 0 (count search-body) count-body)
-          "filters must be applied, and should discriminate"))
+      (let [query-params {"query" query
+                          "tlp" "red"}
+            {search-status :status
+             search-body :parsed-body} (search-raw entity query-params)
+            {count-status :status
+             count-body :parsed-body} (count-raw entity query-params)]
+        (is (= 200 search-status count-status))
+        (is (= 0 (count search-body) count-body)
+            "filters must be applied, and should discriminate"))
 
-    (let [query-params {:query query
-                        :tlp "green"}
-          {search-status :status
-           search-body :parsed-body} (search-raw entity query-params)
-          {count-status :status
-           count-body :parsed-body} (count-raw entity query-params)
-          matched-fields {:tlp "green"
-                          (keyword query-field) query}]
-      (is (= 200 search-status count-status))
-      (is (<= 1 (count search-body)))
-      (is (= (count search-body) count-body))
-      (doseq [res search-body]
-        (is (= (select-keys res [(keyword query-field) :tlp])
-               matched-fields)
-            "filters must be applied, and match properly")))))
+      (let [query-params {:query query
+                          :tlp "green"}
+            {search-status :status
+             search-body :parsed-body} (search-raw entity query-params)
+            {count-status :status
+             count-body :parsed-body} (count-raw entity query-params)
+            matched-fields {:tlp "green"
+                            (keyword query-field) value}]
+        (is (= 200 search-status count-status))
+        (is (<= 1 (count search-body)))
+        (is (= (count search-body) count-body))
+        (doseq [res search-body]
+          (is (= (select-keys res [(keyword query-field) :tlp])
+                 matched-fields)
+              "filters must be applied, and match properly"))))))
 
 (defn test-filter-by-id
   [entity]
@@ -320,11 +324,11 @@
       (delete-doc entity id-2))))
 
 (defn test-query-string-search
-  [entity query query-field example]
+  [entity query query-field example get-in-config]
   ;; only when ES store
-  (when (= "es" (get-in @properties [:ctia :store (keyword entity)]))
+  (when (= "es" (get-in-config [:ctia :store (keyword entity)]))
     (if (= :description query-field)
-      (test-describable-search entity example)
+      (test-describable-search entity example get-in-config)
       (ensure-one-document test-non-describable-search
                            example
                            entity

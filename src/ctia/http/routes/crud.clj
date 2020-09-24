@@ -18,9 +18,8 @@
                                     search-query
                                     coerce-date-range
                                     format-agg-result]]
-   [ctia.store :refer [write-store
-                       read-store
-                       query-string-search
+   [ctia.schemas.core :refer [APIHandlerServices DelayedRoutes]]
+   [ctia.store :refer [query-string-search
                        query-string-count
                        aggregate
                        create-record
@@ -37,7 +36,8 @@
    [schema.core :as s]
    [schema-tools.core :as st]))
 
-(defn entity-crud-routes
+(s/defn entity-crud-routes
+  :- DelayedRoutes
   [{:keys [entity
            new-schema
            entity-schema
@@ -76,6 +76,9 @@
          can-get-by-external-id? true
          date-field :created
          histogram-fields [:created]}}]
+ (s/fn [{{:keys [get-in-config]} :ConfigService
+         {:keys [write-store read-store]} :StoreService
+         :as services} :- APIHandlerServices]
   (let [entity-str (name entity)
         capitalized (capitalize entity-str)
         search-filters (st/dissoc search-q-params
@@ -110,6 +113,7 @@
              :auth-identity identity
              :identity-map identity-map
              (-> (flows/create-flow
+                  :services services
                   :entity-type entity
                   :realize-fn realize-fn
                   :store-fn #(write-store entity
@@ -117,7 +121,7 @@
                                           %
                                           identity-map
                                           (wait_for->refresh wait_for))
-                  :long-id-fn with-long-id
+                  :long-id-fn #(with-long-id % get-in-config)
                   :entity-type entity
                   :identity identity
                   :entities [new-entity]
@@ -137,6 +141,7 @@
             :identity-map identity-map
             (if-let [updated-rec
                      (-> (flows/update-flow
+                          :services services
                           :get-fn #(read-store entity
                                                read-record
                                                %
@@ -149,7 +154,7 @@
                                                    %
                                                    identity-map
                                                    (wait_for->refresh wait_for))
-                          :long-id-fn with-long-id
+                          :long-id-fn #(with-long-id % get-in-config)
                           :entity-type entity
                           :entity-id id
                           :identity identity
@@ -170,6 +175,7 @@
               :identity-map identity-map
               (if-let [updated-rec
                        (-> (flows/patch-flow
+                            :services services
                             :get-fn #(read-store entity
                                                  read-record
                                                  %
@@ -182,7 +188,7 @@
                                                      %
                                                      identity-map
                                                      (wait_for->refresh wait_for))
-                            :long-id-fn with-long-id
+                            :long-id-fn #(with-long-id % get-in-config)
                             :entity-type entity
                             :entity-id id
                             :identity identity
@@ -206,7 +212,7 @@
                             {:all-of {:external_ids external_id}}
                             identity-map
                             q)
-                page-with-long-id
+                (page-with-long-id get-in-config)
                 un-store-page
                 paginated-ok)))
 
@@ -225,7 +231,7 @@
                           (search-query date-field params)
                           identity-map
                           (select-keys params search-options))
-                         page-with-long-id
+                         (page-with-long-id get-in-config)
                          un-store-page
                          paginated-ok))
                 (GET "/count" []
@@ -310,7 +316,7 @@
                                    identity-map
                                    params)]
             (-> rec
-                with-long-id
+                (with-long-id get-in-config)
                 un-store
                 ok)
             (not-found)))
@@ -324,6 +330,7 @@
              :auth-identity identity
              :identity-map identity-map
              (if (flows/delete-flow
+                  :services services
                   :get-fn #(read-store entity
                                        read-record
                                        %
@@ -335,8 +342,14 @@
                                            identity-map
                                            (wait_for->refresh wait_for))
                   :entity-type entity
-                  :long-id-fn with-long-id
+                  :long-id-fn #(with-long-id % get-in-config)
                   :entity-id id
                   :identity identity)
                (no-content)
-               (not-found))))))
+               (not-found)))))))
+
+(s/defn services->entity-crud-routes
+  [services :- APIHandlerServices
+   opt]
+  ((entity-crud-routes opt)
+   services))

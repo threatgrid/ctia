@@ -1,7 +1,16 @@
 (ns ctia.schemas.graphql.helpers
   (:require [clojure
              [walk :as walk :refer [stringify-keys]]]
+            [ctia.graphql.delayed :as delayed]
+            [ctia.schemas.core :refer [AnyGraphQLTypeResolver
+                                       AnyRealizeFnResult
+                                       GraphQLRuntimeContext
+                                       GraphQLValue
+                                       RealizeFnResult
+                                       RealizeFnServices
+                                       resolve-with-rt-ctx]]
             [schema.core :as s]
+            [schema-tools.core :as st]
             [clojure.tools.logging :as log])
   (:import [graphql GraphQL GraphQLException]
            [graphql.language
@@ -25,13 +34,56 @@
             GraphQLObjectType$Builder
             GraphQLOutputType
             GraphQLSchema
+            GraphQLType
             GraphQLTypeReference
             GraphQLUnionType
             TypeResolver]))
 
-;; Type registry to avoid any duplicates when using new-object
-;; or new-enum. Contains a map with types indexed by name
-(def default-type-registry (atom {}))
+(s/defschema GraphQLFields
+  {s/Keyword
+   {:type AnyRealizeFnResult
+    (s/optional-key :args) s/Any
+    (s/optional-key :resolve) AnyGraphQLTypeResolver
+    (s/optional-key :description) s/Any
+    (s/optional-key :default-value) s/Any}})
+
+(s/defschema NamedTypeRegistry
+  "Type registry to ensure named GraphQL named types are created exactly once.
+  Contains a map with derefable types indexed by name.
+  Use via get-or-update-named-type-registry."
+  (s/atom {s/Str
+           #_(IDeref GraphQLNamedType)
+           (s/pred some?)}))
+
+(s/defn get-or-update-named-type-registry
+  ;; could return graphql.schema.GraphQLNamedType, but doesn't exist in current GraphQL version
+  :- GraphQLType
+  "If name exists in registry, return existing mapping. Otherwise
+  atomically calls (f) and returns result after adding to registry under name."
+  [type-registry :- NamedTypeRegistry
+   name :- s/Str
+   ;; TODO use GraphQLNamedType when available
+   f :- (s/=> GraphQLType)]
+  (if-some [d (@type-registry name)]
+    @d ;; fast-path for readers
+    ;; generate a new graphql value, or coordinate with another thread doing the same
+    (let [f (bound-fn* f) ;; may be run on another thread
+          {result-delay name} (swap! type-registry
+                                     (fn [{existing-delay name :as oldtr}]
+                                       (cond-> oldtr
+                                         (not existing-delay)
+                                         (assoc name (delay (f))))))]
+      @result-delay)))
+
+(s/defn create-named-type-registry
+  :- NamedTypeRegistry
+  []
+  (atom {}))
+
+;; TODO move to Trapperkeeper service
+(s/def default-named-type-registry
+  :- NamedTypeRegistry
+  (create-named-type-registry))
 
 (defprotocol ConvertibleToJava
   (->java [o] "convert clojure data structure to java object"))
@@ -79,19 +131,18 @@
   [c]
   (every? valid-type-name? c))
 
-(defn enum
+(s/defn enum :- (RealizeFnResult GraphQLEnumType)
   "Creates a GraphQLEnumType. If a type with the same name has already been
-   created, the corresponding object is retrieved from the provided or the
-   default type repository."
-  ([enum-name description values] (enum enum-name
-                                   description
-                                   values
-                                   default-type-registry))
-  ([^String enum-name ^String description values registry]
-   (or (get @registry enum-name)
-       (let [builder (-> (GraphQLEnumType/newEnum)
+   created, the corresponding object is retrieved instead."
+  [enum-name :- String description values]
+  (delayed/fn :- GraphQLEnumType
+    [{{{:keys [get-or-update-named-type-registry]} :GraphQLNamedTypeRegistryService}
+      :services} :- GraphQLRuntimeContext]
+    (get-or-update-named-type-registry
+      enum-name
+      #(let [builder (-> (GraphQLEnumType/newEnum)
                          (.name enum-name)
-                         (.description description))
+                         (.description ^String description))
              names-and-values? (map? values)]
          (doseq [value values]
            (if names-and-values?
@@ -101,12 +152,19 @@
                ;unsure if reachable
                (.value builder ^GraphQLEnumValueDefinition value))))
          (let [graphql-enum (.build builder)]
-           (swap! registry assoc enum-name graphql-enum)
            graphql-enum)))))
 
-(defn list-type [t] (GraphQLList/list t))
+(s/defn list-type :- (RealizeFnResult GraphQLList)
+  [t :- (RealizeFnResult GraphQLValue)]
+  (delayed/fn :- GraphQLList
+    [rt-ctx :- GraphQLRuntimeContext]
+    (GraphQLList/list (-> t (resolve-with-rt-ctx rt-ctx)))))
 
-(defn non-null [t] (GraphQLNonNull/nonNull t))
+(s/defn non-null :- (RealizeFnResult GraphQLNonNull)
+  [t :- (RealizeFnResult GraphQLValue)]
+  (delayed/fn :- GraphQLNonNull
+    [rt-ctx :- GraphQLRuntimeContext]
+    (GraphQLNonNull/nonNull (-> t (resolve-with-rt-ctx rt-ctx)))))
 
 (defn non-nulls
   "Takes a map containing GraphQL fields and decorates them
@@ -195,10 +253,11 @@
        (seq first-fields) (concat first-fields)
        (seq detected-selections) (concat detected-selections)))))
 
-(defn fn->data-fetcher
-  "Converts a function that takes 4 parameters (context, args, field-selection value)
+(s/defn fn->data-fetcher :- DataFetcher
+  "Converts a function that takes 4 parameters (context, args, field-selection, source)
   to a GraphQL DataFetcher"
-  [f]
+  [f :- AnyGraphQLTypeResolver
+   rt-ctx :- GraphQLRuntimeContext]
   (reify DataFetcher
     (get [_ env]
       (let [fragments (->clj (.getFragmentsByName env))
@@ -206,14 +265,15 @@
             args (->clj (.getArguments env))
             value (->clj (.getSource env))
             field-selection (env->field-selection env fragments)
-            result (f context args field-selection value)]
+            result (-> (f context args field-selection value)
+                       (resolve-with-rt-ctx rt-ctx))]
         (debug "data-fetcher context:" context)
         (debug "data-fetcher args:" args)
         (debug "data-fetcher value:"  value)
         (debug "data-fetcher result:" result)
         result))))
 
-(defn map-resolver
+(s/defn map-resolver :- AnyGraphQLTypeResolver
   ([k] (map-resolver k identity))
   ([k f]
    (fn [_ _ _ value]
@@ -222,25 +282,28 @@
 
                                         ;----- Input
 
-(defn new-argument
-  ^GraphQLArgument
+(s/defn ^:private
+  new-argument
+  :- GraphQLArgument
   [^String arg-name
-   arg-type
-   ^String arg-description
-   arg-default-value]
+   arg-type :- AnyRealizeFnResult
+   arg-description :- (s/maybe s/Str)
+   arg-default-value
+   rt-ctx :- GraphQLRuntimeContext]
   (let [builder
         (-> (GraphQLArgument/newArgument)
             (.name arg-name)
-            (.type arg-type)
-            (.description (or arg-description "")))]
+            (.type (-> arg-type (resolve-with-rt-ctx rt-ctx)))
+            (.description (or ^String arg-description "")))]
     (when (some? arg-default-value)
       (.defaultValue builder arg-default-value))
     (.build builder)))
 
-(defn add-args
-  ^GraphQLFieldDefinition$Builder
+(s/defn add-args
+  :- GraphQLFieldDefinition$Builder
   [^GraphQLFieldDefinition$Builder field
-   args]
+   args
+   rt-ctx :- GraphQLRuntimeContext]
   (doseq [[k {arg-type :type
               arg-description :description
               arg-default-value :default
@@ -249,18 +312,22 @@
           (new-argument (name k)
                         arg-type
                         arg-description
-                        arg-default-value)]
+                        arg-default-value
+                        rt-ctx)]
       (.argument field narg)))
   field)
 
-(defn new-input-field
-  ^GraphQLInputObjectField
+(s/defn new-input-field
+  :- GraphQLInputObjectField
   [^String field-name
-   ^GraphQLInputType field-type
+   field-type :- AnyRealizeFnResult
    ^String field-description
-   default-value]
-  (log/debug "New input field" field-name (pr-str field-type))
-  (let [builder
+   default-value
+   rt-ctx :- GraphQLRuntimeContext]
+  (let [^GraphQLInputType field-type (-> field-type
+                                         (resolve-with-rt-ctx rt-ctx))
+        _ (log/debug "New input field" field-name (pr-str field-type))
+        builder
         (-> (GraphQLInputObjectField/newInputObjectField)
             (.name field-name)
             (.type field-type)
@@ -269,10 +336,11 @@
       (.defaultValue builder default-value))
     (.build builder)))
 
-(defn add-input-fields
-  ^GraphQLInputObjectType$Builder
+(s/defn ^:private add-input-fields
+  :- GraphQLInputObjectType$Builder
   [^GraphQLInputObjectType$Builder builder
-   fields]
+   fields :- GraphQLFields
+   rt-ctx :- GraphQLRuntimeContext]
   (doseq [[k {field-type :type
               field-description :description
               field-default-value :default-value
@@ -281,42 +349,54 @@
           (new-input-field (name k)
                            field-type
                            field-description
-                           field-default-value)]
+                           field-default-value rt-ctx)]
       (.field builder newf)))
   builder)
 
-(defn new-input-object
-  [^String object-name
-   ^String description
-   fields]
-  (-> (GraphQLInputObjectType/newInputObject)
-      (.name object-name)
-      (.description description)
-      (add-input-fields fields)
-      .build))
+(s/defn new-input-object :- (RealizeFnResult GraphQLInputObjectType)
+  "Creates a GraphQLInputObjectType. If a type with the same name has already been
+   created, the corresponding object is retrieved instead."
+  [object-name :- s/Str
+   description :- s/Str
+   fields :- GraphQLFields]
+  (delayed/fn :- GraphQLInputObjectType
+    [{{{:keys [get-or-update-named-type-registry]} :GraphQLNamedTypeRegistryService}
+      :services
+      :as rt-ctx} :- GraphQLRuntimeContext]
+    (get-or-update-named-type-registry
+      object-name
+      #(-> (GraphQLInputObjectType/newInputObject)
+           (.name ^String object-name)
+           (.description ^String description)
+           (add-input-fields fields rt-ctx)
+           .build))))
 
 ;;----- Output
 
-(defn new-field
-  ^GraphQLFieldDefinition
-  [^String field-name
-   ^GraphQLOutputType field-type
-   ^String field-description
+(s/defn new-field
+  :- (RealizeFnResult GraphQLFieldDefinition)
+  [field-name
+   field-type :- (RealizeFnResult GraphQLOutputType)
+   field-description
    field-args
    field-data-fetcher]
-  (log/debug "New field" field-name (pr-str field-type))
-  (-> (GraphQLFieldDefinition/newFieldDefinition)
-      (.name field-name)
-      (.type field-type)
-      (.description field-description)
-      (.dataFetcher field-data-fetcher)
-      (add-args field-args)
-      .build))
+  (delayed/fn :- GraphQLFieldDefinition
+    [rt-ctx :- GraphQLRuntimeContext]
+    (let [^GraphQLOutputType field-type (-> field-type (resolve-with-rt-ctx rt-ctx))
+          _ (log/debug "New field" field-name (pr-str field-type))]
+      (-> (GraphQLFieldDefinition/newFieldDefinition)
+          (.name ^String field-name)
+          (.type field-type)
+          (.description ^String field-description)
+          (.dataFetcher field-data-fetcher)
+          (add-args field-args rt-ctx)
+          .build))))
 
-(defn add-fields
-  ^GraphQLObjectType$Builder
-  [^GraphQLObjectType$Builder builder
-   fields]
+(s/defn ^:private add-fields
+  :- GraphQLObjectType$Builder
+  [builder :- GraphQLObjectType$Builder
+   fields :- GraphQLFields
+   rt-ctx :- GraphQLRuntimeContext]
   (doseq [[k {field-type :type
               field-description :description
               field-args :args
@@ -329,70 +409,86 @@
                      field-type
                      field-description
                      field-args
-                     (fn->data-fetcher field-resolver))]
+                     (fn->data-fetcher field-resolver rt-ctx))
+          ^GraphQLFieldDefinition
+          newf (-> newf (resolve-with-rt-ctx rt-ctx))]
       (.field builder newf)))
   builder)
 
-(defn new-object
+(s/defn new-object :- (RealizeFnResult GraphQLObjectType)
   "Creates a GraphQLObjectType. If a type with the same name has already been
    created, the corresponding object is retrieved from the provided or the
    default type repository."
-  ([object-name description interfaces fields]
-   (new-object object-name description interfaces fields default-type-registry))
-  ([^String object-name
-    ^String description
-    interfaces
-    fields
-    registry]
-   (or (get @registry object-name)
-       (let [builder (-> (GraphQLObjectType/newObject)
-                         (.description description)
-                         (.name object-name)
-                         (add-fields fields))]
+  [object-name :- s/Str
+   description :- s/Str
+   interfaces
+   fields :- GraphQLFields]
+  (delayed/fn :- GraphQLObjectType
+    [{{{:keys [get-or-update-named-type-registry]} :GraphQLNamedTypeRegistryService} :services
+      :as rt-ctx} :- GraphQLRuntimeContext]
+    (get-or-update-named-type-registry
+      object-name
+      #(let [builder (-> (GraphQLObjectType/newObject)
+                         (.description ^String description)
+                         (.name ^String object-name)
+                         (add-fields fields rt-ctx))]
          (doseq [^GraphQLInterfaceType interface interfaces]
            (.withInterface builder interface))
          (let [obj (.build builder)]
-           (swap! registry assoc object-name obj)
            obj)))))
 
-(defn fn->type-resolver
+(s/defn fn->type-resolver :- TypeResolver
   "Converts a function that takes the current object, the args
   and the global schema to a TypeResolver."
-  ^TypeResolver
-  [f]
+  [f :- (s/=> AnyRealizeFnResult
+              (s/named s/Any 'object)
+              (s/named s/Any 'args)
+              (s/named s/Any 'schema))
+   rt-ctx :- GraphQLRuntimeContext]
   (reify TypeResolver
     (getType [_ env]
       (let [object (->clj (.getObject env))
             args (->clj (.getArguments env))
             schema (.getSchema env)]
-        (f object args schema)))))
+        (-> (f object args schema)
+            (resolve-with-rt-ctx rt-ctx))))))
 
-(defn new-union
-  [^String union-name
-   ^String description
+(s/defn new-union :- (RealizeFnResult GraphQLUnionType)
+  "Creates a GraphQLUnionType. If a type with the same name has already been
+   created, the corresponding object is retrieved instead."
+  [union-name :- s/Str
+   description :- s/Str
    type-resolver-fn
    types]
-  (let [type-resolver (fn->type-resolver type-resolver-fn)
-        graphql-union (-> (GraphQLUnionType/newUnionType)
-                          (.description description)
-                          (.name union-name)
-                          ; FIXME: this method is deprecated
-                          (.typeResolver type-resolver))]
-    (doseq [type types]
-      (if (instance? GraphQLObjectType type)
-        (.possibleType graphql-union ^GraphQLObjectType type)
-        (.possibleType graphql-union ^GraphQLTypeReference type)))
-    (.build graphql-union)))
+  (delayed/fn :- GraphQLUnionType
+    [{{{:keys [get-or-update-named-type-registry]} :GraphQLNamedTypeRegistryService} :services
+      :as rt-ctx} :- GraphQLRuntimeContext]
+    (get-or-update-named-type-registry
+      union-name
+      #(let [type-resolver (fn->type-resolver type-resolver-fn rt-ctx)
+             graphql-union (-> (GraphQLUnionType/newUnionType)
+                               (.description description)
+                               (.name union-name)
+                               ; FIXME: this method is deprecated
+                               (.typeResolver type-resolver))]
+         (doseq [type types
+                 :let [type (-> type (resolve-with-rt-ctx rt-ctx))]]
+           (if (instance? GraphQLObjectType type)
+             (.possibleType graphql-union ^GraphQLObjectType type)
+             (.possibleType graphql-union ^GraphQLTypeReference type)))
+         (.build graphql-union)))))
 
 (defn new-ref
   [object-name]
   (GraphQLTypeReference. object-name))
 
-(defn new-schema
-  [^GraphQLObjectType query]
-  (-> (GraphQLSchema/newSchema)
-      (.query query)
-      .build))
+(s/defn new-schema :- (RealizeFnResult GraphQLSchema)
+  [query :- (RealizeFnResult GraphQLObjectType)]
+  (delayed/fn :- GraphQLSchema
+    [rt-ctx :- GraphQLRuntimeContext]
+    (-> (GraphQLSchema/newSchema)
+        (.query ^GraphQLObjectType (resolve-with-rt-ctx query rt-ctx))
+        .build)))
 
 (defn get-type
   "Retrieves a Type from the given schema by its name"
@@ -400,10 +496,12 @@
    type-name]
   (.getType schema type-name))
 
-(defn new-graphql
-  [schema]
-  (-> (GraphQL/newGraphQL schema)
-      .build))
+(s/defn new-graphql :- (RealizeFnResult GraphQL)
+  [schema :- (RealizeFnResult GraphQLSchema)]
+  (delayed/fn :- GraphQL
+    [rt-ctx :- GraphQLRuntimeContext]
+    (-> (GraphQL/newGraphQL (-> schema (resolve-with-rt-ctx rt-ctx)))
+        .build)))
 
 (defn execute
   [^GraphQL graphql

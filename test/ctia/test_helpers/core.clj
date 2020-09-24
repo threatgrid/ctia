@@ -7,32 +7,95 @@
             [clojure
              [walk :refer [prewalk]]]
             [clojure.spec.alpha :as cs]
+            [clojure.test :as test]
             [clojure.test.check.generators :as gen]
             [clojure.tools.logging :as log]
             [clojure.tools.logging.test :as tlog]
             [ctia
              [auth :as auth]
              [init :as init]
-             [properties :refer [properties PropertiesSchema]]
+             [properties :as p :refer [PropertiesSchema]]
              [shutdown :as shutdown]
-             [store :as store]]
+             [store :as store]
+             [store-service :as store-svc]]
             [ctia.auth.allow-all :as aa]
+            [ctia.encryption :as encryption]
+            [ctia.events :as events]
             [ctia.flows.crud :as crud]
+            [ctia.flows.hooks :as hooks]
+            [ctia.flows.hooks-service :as hooks-svc]
             [ctim.domain.id :as id]
             [ctim.generators.common :as cgc]
             [flanders
              [spec :as fs]
-             [utils :as fu]]))
+             [utils :as fu]]
+            [puppetlabs.trapperkeeper.app :as app]))
+
+(def ^:dynamic ^:private *current-app*)
+(def ^:dynamic ^:private *config-transformers* [])
+
+(defn get-service-map [app svc-kw]
+  {:pre [(keyword? svc-kw)]
+   :post [(map? %)]}
+  ;; temporary sanity check
+  (assert (not= app ::global-app))
+  ;; override with global services, otherwise use TK app
+  (case svc-kw
+    :HooksService {:add-hook! hooks/add-hook!
+                   :add-hooks! hooks/add-hooks!
+                   ;; takes map and flattens to kw args, since protocol method
+                   ;; cannot have varargs
+                   :apply-hooks (fn [hook-options]
+                                  (apply hooks/apply-hooks (apply concat hook-options)))
+                   :apply-event-hooks hooks/apply-event-hooks
+                   :init-hooks! hooks/init-hooks!
+                   :shutdown! hooks/shutdown!
+                   :reset-hooks! (partial hooks/reset-hooks!
+                                          (-> app
+                                              app/service-graph
+                                              :ConfigService
+                                              :get-in-config
+                                              (doto (assert "missing get-in-config"))))}
+    :EventsService {:send-event events/send-event
+                    :central-channel (fn []
+                                       {:post [%]}
+                                       @events/central-channel)
+                    :register-listener events/register-listener}
+    :StoreService {:all-stores (fn [] @store/stores)
+                   ;; no varargs to simulate eventual protocol method
+                   :read-store (fn [store read-fn]
+                                 (store/read-store store read-fn))
+                   ;; no varargs to simulate eventual protocol method
+                   :write-store (fn [store write-fn]
+                                  (store/write-store store write-fn))}
+    ;; real TK app
+    (let [service-map (-> app
+                          app/service-graph
+                          svc-kw)
+          _ (when-not (map? service-map)
+              (throw (ex-info (str "No service: " svc-kw)
+                              {:app app
+                               :service svc-kw})))]
+      service-map)))
 
 (def fixture-property
   (mth/build-fixture-property-fn PropertiesSchema))
+
+(defn with-config-transformer*
+  "For use in a test fixture to dynamically transform a Trapperkeeper
+  config before creating an app."
+  [tf body-fn]
+  (assert (not (thread-bound? #'*current-app*))
+          "Cannot transform config after TK app has started!")
+  (binding [*config-transformers* (conj *config-transformers* tf)]
+    (body-fn)))
 
 (def with-properties-vec
   (mth/build-with-properties-vec-fn PropertiesSchema))
 
 (defmacro with-properties [properties-vec & sexprs]
   `(with-properties-vec ~properties-vec
-     (fn [] ~@sexprs)))
+     (fn [] (do ~@sexprs))))
 
 (defn fixture-properties:clean [f]
   ;; Remove any set system properties, presumably from a previous test
@@ -142,6 +205,34 @@
                   log/*logger-factory* lf]
       (f))))
 
+(defn build-transformed-init-config []
+  (reduce #(%2 %1)
+          (p/build-init-config)
+          *config-transformers*))
+
+(defn build-get-in-config-fn []
+  (assert (not (thread-bound? #'*current-app*)) "Building custom config while app bound!")
+  (partial get-in (build-transformed-init-config)))
+
+(defn bind-current-app* [app f]
+  (assert (not (thread-bound? #'*current-app*)) "Rebound app!")
+  (assert app)
+  (binding [*current-app* app]
+    (f)))
+
+(defn get-current-app []
+  {:post [%]}
+  (assert (thread-bound? #'*current-app*) "App not bound!")
+  *current-app*)
+
+(defn current-get-in-config-fn
+  ([] (current-get-in-config-fn (get-current-app)))
+  ([app]
+   {:post [%]}
+   (-> app
+       (get-service-map :ConfigService)
+       :get-in-config)))
+
 (defn fixture-ctia
   ([t] (fixture-ctia t true))
   ([t enable-http?]
@@ -154,21 +245,20 @@
      (with-properties ["ctia.http.enabled" enable-http?
                        "ctia.http.port" http-port
                        "ctia.http.show.port" http-port]
-       (try
-         (init/start-ctia! :join? false)
-         (t)
-         (finally
-           (shutdown/shutdown-ctia!)))))))
+       (let [app (init/start-ctia! (build-transformed-init-config))]
+         (try
+           (bind-current-app* app t)
+           (finally
+             (shutdown/shutdown-ctia!)
+             ;; redundant stop. this also emulates the double-shutdown triggered by a System/exit
+             (app/stop app))))))))
 
 (defn fixture-ctia-fast [t]
   (fixture-ctia t false))
 
-;; TODO - Convert this to a properties fixture
 (defn fixture-allow-all-auth [f]
-  (let [orig-auth-srvc @auth/auth-service]
-    (reset! auth/auth-service (aa/->AuthService))
-    (f)
-    (reset! auth/auth-service orig-auth-srvc)))
+  (with-properties ["ctia.auth.type" "allow-all"]
+    (f)))
 
 (defn fixture-properties:static-auth [name secret]
   (fn [f]
@@ -189,20 +279,25 @@
 
 (defn set-capabilities!
   [login groups role caps]
-  (store/write-store :identity store/create-identity {:login login
+  (let [app (get-current-app)
+        {:keys [write-store]} (-> (get-service-map app :StoreService)
+                                  store-svc/lift-store-service-fns)]
+    (write-store :identity store/create-identity {:login login
                                                       :groups groups
                                                       :role role
-                                                      :capabilities caps}))
+                                                      :capabilities caps})))
 
 (defmacro deftest-for-each-fixture [test-name fixture-map & body]
   `(do
      ~@(for [[name-key fixture-fn] fixture-map]
-         `(clojure.test/deftest ~(with-meta (symbol (str test-name "-" (name name-key)))
-                                   {(keyword name-key) true})
-            (~fixture-fn (fn [] ~@body))))))
+         `(test/deftest ~(with-meta (symbol (str test-name "-" (name name-key)))
+                                    {(keyword name-key) true})
+            (~fixture-fn (fn [] (do ~@body)))))))
 
 (defn get-http-port []
-  (get-in @properties [:ctia :http :port]))
+  ;; Note: using current-get-in-config-fn here is a hack and should be refactored
+  ;; to function parameter once the initial TK setup is merged into master.
+  ((current-get-in-config-fn) [:ctia :http :port]))
 
 (def get
   (mthh/with-port-fn get-http-port mthh/get))
@@ -264,7 +359,9 @@
   [type-kw]
   (id/->id type-kw
            (crud/make-id (name type-kw))
-           (get-in @properties [:ctia :http :show])))
+           ;; FIXME using current-get-in-config-fn here is a hack and should be refactored
+           ;; to function parameter once the initial TK setup is merged into master.
+           ((current-get-in-config-fn) [:ctia :http :show])))
 
 (defn entity->short-id
   [entity]
@@ -279,7 +376,9 @@
    (id/long-id
     (id/short-id->id (name type-kw)
                      short-id
-                     (get-in @properties [:ctia :http :show])))))
+                     ;; FIXME using current-get-in-config-fn here is a hack and should be refactored
+                     ;; to function parameter once the initial TK setup is merged into master.
+                     ((current-get-in-config-fn) [:ctia :http :show])))))
 
 (def zero-uuid "00000000-0000-0000-0000-000000000000")
 
@@ -300,7 +399,9 @@
   (id/long-id
    (id/->id (keyword entity-name)
             (fake-short-id entity-name id)
-            (get-in @properties [:ctia :http :show]))))
+            ;; FIXME using current-get-in-config-fn here is a hack and should be refactored
+            ;; to function parameter once the initial TK setup is merged into master.
+            ((current-get-in-config-fn) [:ctia :http :show]))))
 
 (defmacro with-atom-logger
   [atom-logger & body]

@@ -1,7 +1,7 @@
 (ns ctia.bundle.routes
   (:refer-clojure :exclude [identity])
   (:require
-   [compojure.api.sweet :refer [GET POST context defroutes describe]]
+   [compojure.api.core :refer [GET POST context routes]]
    [ctia.bundle
     [core :refer [bundle-max-size
                   bundle-size
@@ -12,7 +12,8 @@
                      BundleExportIds
                      BundleExportOptions
                      BundleExportQuery]]]
-   [ctia.schemas.core :refer [NewBundle]]
+   [ctia.schemas.core :refer [APIHandlerServices NewBundle]]
+   [ring.swagger.json-schema :refer [describe]]
    [ring.util.http-response :refer [ok bad-request]]
    [schema.core :as s]
    [schema-tools.core :as st]))
@@ -21,6 +22,12 @@
 (def export-capabilities
   #{:list-campaigns
     :read-actor
+    :read-asset
+    :list-assets
+    :read-asset-mapping
+    :list-asset-mappings
+    :read-asset-properties
+    :list-asset-properties
     :read-malware
     :read-attack-pattern
     :read-judgement
@@ -47,6 +54,8 @@
     :read-investigation
     :read-incident
     :list-coas
+    :read-target-record
+    :list-target-records
     :read-tool
     :list-investigations
     :read-data-table
@@ -57,7 +66,9 @@
     :read-casebook
     :list-casebooks})
 
-(defroutes bundle-routes
+(s/defn bundle-routes [{{:keys [get-in-config]} :ConfigService
+                        :as services} :- APIHandlerServices]
+ (routes 
   (context "/bundle" []
            :tags ["Bundle"]
            (GET "/export" []
@@ -71,7 +82,8 @@
                      (:ids q)
                      identity-map
                      identity
-                     q)))
+                     q
+                     services)))
 
            (POST "/export" []
                 :return NewBundleExport
@@ -85,7 +97,8 @@
                      (:ids b)
                      identity-map
                      identity
-                     q)))
+                     q
+                     services)))
 
            (POST "/import" []
                  :return BundleImportResult
@@ -97,24 +110,26 @@
                  :summary "POST many new entities using a single HTTP call"
                  :auth-identity auth-identity
                  :capabilities #{:create-actor
+                                 :create-asset
+                                 :create-asset-mapping
+                                 :create-asset-properties
                                  :create-attack-pattern
                                  :create-campaign
                                  :create-coa
                                  :create-data-table
                                  :create-feedback
+                                 :create-identity-assertion
                                  :create-incident
                                  :create-indicator
                                  :create-judgement
                                  :create-malware
                                  :create-relationship
                                  :create-sighting
-                                 :create-identity-assertion
                                  :create-tool
-                                 :create-weakness
                                  :create-vulnerability
+                                 :create-weakness
                                  :import-bundle}
-                 (let [max-size (bundle-max-size)]
-                   (if (> (bundle-size bundle)
-                          max-size)
+                 (let [max-size (bundle-max-size get-in-config)]
+                   (if (< max-size (bundle-size bundle))
                      (bad-request (str "Bundle max nb of entities: " max-size))
-                     (ok (import-bundle bundle external-key-prefixes auth-identity)))))))
+                     (ok (import-bundle bundle external-key-prefixes auth-identity services))))))))

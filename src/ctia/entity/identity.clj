@@ -2,12 +2,12 @@
   (:require [schema.core :as s]
             [schema-tools.core :as st]
             [clj-momo.lib.es
-             [schemas :refer [ESConnState]]
              [document :refer [create-doc get-doc delete-doc]]]
             [ctia.store :refer [IIdentityStore]]
             [ctia.stores.es
              [crud :as crud]
-             [mapping :as em]]))
+             [mapping :as em]
+             [schemas :refer [ESConnState]]]))
 
 (def Role s/Str)
 (def Login s/Str)
@@ -37,8 +37,8 @@
   (vec (map name caps)))
 
 (s/defn handle-create :- Identity
-[{:keys [conn props]} :- ESConnState
- new-identity :- Identity]
+  [{:keys [conn props]} :- ESConnState
+   new-identity :- Identity]
   (let [id (:login new-identity)
         realized (assoc new-identity :id id)
         transformed (update-in realized [:capabilities]

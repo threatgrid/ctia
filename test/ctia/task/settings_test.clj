@@ -1,16 +1,28 @@
 (ns ctia.task.settings-test
   (:require [clojure.test :refer [deftest is testing join-fixtures use-fixtures]]
-            [ctia.properties :as props]
+            [ctia.properties :as p]
             [ctia.task.settings :as sut]
             [ctia.stores.es.init :as init]
             [clj-momo.lib.es
              [index :as es-index]
              [conn :as es-conn]]
             [ctia.test-helpers
-             [core :refer [fixture-ctia fixture-properties:clean]]
+             [core :as h :refer [fixture-ctia fixture-properties:clean]]
              [es :refer [fixture-properties:es-store fixture-delete-store-indexes]]]))
 
+(defn fixture-update-stores [t]
+  (h/with-config-transformer*
+    #(-> %
+         (assoc-in [:ctia :store :es :relationship :replicas]
+                   12)
+         (assoc-in [:ctia :store :es :malware :refresh_interval]
+                   "12s")
+         (assoc-in [:ctia :store :es :indicator :refresh_interval]
+                   "12s"))
+    t))
+
 (use-fixtures :each (join-fixtures [fixture-properties:es-store
+                                    fixture-update-stores
                                     fixture-ctia
                                     fixture-delete-store-indexes]))
 
@@ -22,19 +34,12 @@
       (get-in [:settings :index setting])))
 
 (deftest update-stores!-test
-  ;;init all stores
-  (props/init!)
-  (let [initial-indicator-props (init/get-store-properties :indicator)
-        _ (swap! props/properties
-                 #(-> (assoc-in %
-                                [:ctia :store :es :relationship :replicas]
-                                12)
-                      (assoc-in [:ctia :store :es :malware :refresh_interval]
-                                "12s")
-                      (assoc-in [:ctia :store :es :indicator :refresh_interval]
-                                "12s")))
-        _ (sut/update-stores! [:relationship :malware])
-        es-props (get-in @props/properties [:ctia :store :es])
+  (let [app (h/get-current-app)
+        {:keys [get-in-config]} (h/get-service-map app :ConfigService)
+
+        initial-indicator-props (init/get-store-properties :indicator get-in-config)
+        _ (sut/update-stores! [:relationship :malware] get-in-config)
+        es-props (get-in-config [:ctia :store :es])
         conn (es-conn/connect (:default es-props))
         relationship-indexname (get-in es-props [:relationship :indexname])
         relationship-index (es-index/get conn (str relationship-indexname "*"))
@@ -56,9 +61,11 @@
              (get-setting malware-template :refresh_interval))))
 
     (testing "stores that are not passed to update-stores! should not have their settings updated"
-      (is (= (:refresh_interval initial-indicator-props)
+      (is (= "12s"
+             (:refresh_interval initial-indicator-props)
              (get-setting indicator-index :refresh_interval)
              (get-setting indicator-template :refresh_interval)))
-      (is (= (str (:replicas initial-indicator-props))
+      (is (= "1"
+             (str (:replicas initial-indicator-props))
              (get-setting indicator-index :number_of_replicas)
              (get-setting indicator-template :number_of_replicas))))))

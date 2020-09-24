@@ -10,13 +10,15 @@
              [test :as t :refer [deftest is join-fixtures testing use-fixtures]]]
             [ctia.bulk.core :as bulk]
             [ctia.bundle.core :as core]
-            [ctia.store :refer [stores]]
+            [ctia.store-service :as store-svc]
+            [ctia.properties :as p]
             [ctia.auth.capabilities :refer [all-capabilities]]
             [ctia.test-helpers
              [core :as helpers :refer [deep-dissoc-entity-ids get post delete]]
              [fake-whoami-service :as whoami-helpers]
              [store :refer [test-for-each-store]]]
             [ctim.domain.id :as id]
+            [ctia.auth :as auth :refer [IIdentity]]
             [ctim.examples.bundles :refer [bundle-maximal]]))
 
 (defn fixture-properties [t]
@@ -110,15 +112,9 @@
    :source_ref (:id source)
    :target_ref (:id target)})
 
-(deftest valid-external-id-test
-  (is (= "ctia-1"
-         (core/valid-external-id ["invalid-1" "invalid-2"  "ctia-1"]
-                                 ["ctia-" "cisco-"])))
-  (is (nil? (core/valid-external-id ["invalid-1" "invalid-2"  "ctia-1" "cisco-1"]
-                                    ["ctia-" "cisco-"]))))
-
 (defn validate-entity-record
-  [{:keys [id original_id external_id]
+  [{:keys [id original_id]
+    [external_id & _] :external_ids
     entity-type :type
     :or {entity-type :unknown}}
    original-entity]
@@ -215,7 +211,10 @@
                                          "foouser"
                                          "foogroup"
                                          "user")
-     (let [indicators [(mk-indicator 0)
+     (let [app (helpers/get-current-app)
+           {:keys [all-stores]} (helpers/get-service-map app :StoreService)
+
+           indicators [(mk-indicator 0)
                        (mk-indicator 1)]
            sightings [(mk-sighting 0)
                       (mk-sighting 1)]
@@ -370,7 +369,7 @@
                        (map :result (:results bundle-result-update)))
                "All existing entities are not updated")))
        (testing "Partial results with errors"
-         (let [indicator-store-state (-> @stores :indicator first :state)
+         (let [indicator-store-state (-> (all-stores) :indicator first :state)
                indexname (:index indicator-store-state)
                ;; close indicator index to produce ES errors on that store
                _ (es-index/close! (:conn indicator-store-state) indexname)
@@ -427,10 +426,65 @@
                [{:original_id (:id (-> bundle :indicators first)),
                  :result "error",
                  :type :indicator,
-                 :external_id "ctia-indicator-1",
+                 :external_ids ["ctia-indicator-1"],
                  :error "Entity validation Error",
                  :msg "#inst \"4242-07-11T00:40:48.212-00:00\" - failed: (inst-in-range? #inst \"1970-01-01T00:00:00.000-00:00\" #inst \"2525-01-01T00:01:00.000-00:00\" %) in: [:valid_time :end_time] at: [:valid_time :end_time] spec: :new-indicator.valid_time/end_time\n"}]}
               (:parsed-body response-create)))))))
+
+(defrecord FakeIdentity [login groups]
+  IIdentity
+  (authenticated? [_] true)
+  (login [_] login)
+  (groups [_] groups)
+  (allowed-capabilities [_] #{})
+  (capable? [_ _] true)
+  (rate-limit-fn [_ _] false))
+
+(deftest all-pages-test
+  (test-for-each-store
+   (fn []
+     (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
+     (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
+                                         "foouser"
+                                         "foogroup"
+                                         "user")
+     (let [app (helpers/get-current-app)
+           read-store (-> (helpers/get-service-map app :StoreService)
+                          :read-store
+                          store-svc/store-service-fn->varargs)
+
+           duplicated-indicators (->> (mk-indicator 0)
+                                      (repeat (* 10 core/find-by-external-ids-limit))
+                                      (map #(assoc % :id (id/make-transient-id nil))))
+           more-indicators (map mk-indicator (range 1 10))
+           all-indicators (set (concat duplicated-indicators more-indicators))
+           duplicated-external-id (-> duplicated-indicators first :external_ids first)
+           all-external-ids (mapcat :external_ids all-indicators)
+           bundle {:type "bundle"
+                   :source "source"
+                   :indicators all-indicators}
+           response-create (post "ctia/bundle/import"
+                                 :body bundle
+                                 :headers {"Authorization" "45c1f5e3f05d0"})
+           ident (FakeIdentity. "foouser" ["foogroup"])
+           matched-entities (core/all-pages :indicator all-external-ids ident read-store)
+           max-matched (+ core/find-by-external-ids-limit
+                          (count more-indicators))]
+       (assert (= 200 (:status response-create)))
+       (assert (seq all-external-ids))
+       (testing "all-pages should not retrieve more duplicates than find-by-external-ids-limit"
+         (is (<= (count matched-entities)
+                 max-matched))
+         (is (<= (->> matched-entities
+                      (filter #(= duplicated-external-id
+                                  (-> % :external_ids first)))
+                      count)
+                 max-matched)))
+       (is (= (set all-external-ids)
+              (->> matched-entities
+                   (mapcat :external_ids)
+                   set))
+           "all-pages must match at least one entity for each existing external-id")))))
 
 (deftest find-by-external-ids-test
   (test-for-each-store
@@ -451,6 +505,7 @@
            bundle-result-create (:parsed-body response-create)
            response-update (post "ctia/bundle/import"
                                  :body bundle
+                                 :query-params {"external-key-prefixes" "ctia-"}
                                  :headers {"Authorization" "45c1f5e3f05d0"})
            bundle-result-update (:parsed-body response-update)]
        (is (= 200 (:status response-create)))
@@ -726,17 +781,17 @@
 
              [sighting-id-1
               sighting-id-2] (->> (:sighting by-type)
-                                  (sort-by :external_id)
+                                  (sort-by :external_ids)
                                   (map :id))
 
              [indicator-id-1
               indicator-id-2
               indicator-id-3] (->> (:indicator by-type)
-                                   (sort-by :external_id)
+                                   (sort-by :external_ids)
                                    (map :id))
              [incident-id-1
               incident-id-2] (->> (:incident by-type)
-                                   (sort-by :external_id)
+                                   (sort-by :external_ids)
                                    (map :id))
              [relationship-id-1
               relationship-id-2
@@ -746,7 +801,7 @@
               relationship-id-6
               relationship-id-7
               relationship-id-8] (->> (:relationship by-type)
-                                      (sort-by :external_id)
+                                      (sort-by :external_ids)
                                       (map :id))
              ;; related to queries
              bundle-from-source
@@ -860,16 +915,17 @@
            (is (= bundle-incident-target-get bundle-incident-target-post))))))))
 
 (defn with-tlp-property-setting [tlp f]
-  (with-redefs [ctia.properties/properties
-                (-> (deref ctia.properties/properties)
-                    (assoc-in [:ctia :access-control :min-tlp] tlp)
-                    (assoc-in [:ctia :access-control :default-tlp] tlp)
-                    atom)]
-    (f)))
+  (helpers/with-config-transformer*
+    #(-> %
+         (assoc-in [:ctia :access-control :min-tlp] tlp)
+         (assoc-in [:ctia :access-control :default-tlp] tlp))
+    f))
 
 (deftest bundle-tlp-test
-  (test-for-each-store
-   (fn []
+ (with-tlp-property-setting "amber"
+  (fn []
+   (test-for-each-store
+    (fn []
      (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
      (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
                                          "foouser"
@@ -881,14 +937,14 @@
              new-bundle
              {:type "bundle"
               :source "source"
-              :sightings #{sighting}}]
+              :sightings #{sighting}}
 
-         (with-tlp-property-setting "amber"
-           #(let [res (post "ctia/bundle/import"
-                            :body new-bundle
-                            :headers {"Authorization" "45c1f5e3f05d0"})]
-              (is (= "Entity Access Control validation Error" (-> (:parsed-body res) :results first :error)))
-              (is (= 200 (:status res))))))))))
+             res (post "ctia/bundle/import"
+                       :body new-bundle
+                       :headers {"Authorization" "45c1f5e3f05d0"})]
+         (is (= "Entity Access Control validation Error" (-> (:parsed-body res) :results first :error))
+             res)
+         (is (= 200 (:status res))))))))))
 
 (deftest bundle-acl-fields-test
   (test-for-each-store
@@ -953,4 +1009,4 @@
          (is (= 201 (:status incident-post-res)))
          (is (= 201 (:status link-res)))
          (is (= 200 (:status bundle-get-res)))
-         (is seq (-> bundle-get-res :parsed-body :casebooks)))))))
+         (is (seq (-> bundle-get-res :parsed-body :casebooks))))))))

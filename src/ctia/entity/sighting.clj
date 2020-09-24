@@ -87,5 +87,5 @@
    :realize-fn ss/realize-sighting
    :es-store s-store/->SightingStore
    :es-mapping s-store/sighting-mapping
-   :routes sighting-routes
+   :services->routes sighting-routes
    :capabilities capabilities})

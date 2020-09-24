@@ -3,7 +3,8 @@
             [ctia.auth.capabilities :refer [all-capabilities]]
             [ctia.auth
              :refer [IIdentity IAuth]
-             :as auth]))
+             :as auth]
+            [puppetlabs.trapperkeeper.core :as tk]))
 
 (defrecord Identity []
   IIdentity
@@ -22,7 +23,8 @@
 (def identity-singleton
   (->Identity))
 
-(defrecord AuthService []
+(tk/defservice allow-all-auth-service
   IAuth
+  []
   (identity-for-token [_ _]
     identity-singleton))

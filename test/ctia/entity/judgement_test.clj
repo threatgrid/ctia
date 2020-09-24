@@ -11,7 +11,7 @@
               judgement-enumerable-fields
               judgement-histogram-fields
               NewJudgement]]
-            ctia.properties
+            [ctia.properties :as p]
             [ctia.test-helpers
              [access-control :refer [access-control-test]]
              [auth :refer [all-capabilities]]
@@ -22,7 +22,7 @@
              [field-selection :refer [field-selection-tests]]
              [http :refer [doc-id->rel-url]]
              [pagination :refer [pagination-test]]
-             [store :refer [test-for-each-store store-fixtures]]]
+             [store :refer [test-for-each-store]]]
             [ctim.examples.judgements :as ex]))
 
 (use-fixtures :once (join-fixtures [mth/fixture-schema-validation
@@ -48,8 +48,10 @@
 
 (defn additional-tests [judgement-id _]
   (testing "GET /ctia/judgement/search"
+   (let [app (helpers/get-current-app)
+         {:keys [get-in-config]} (helpers/get-service-map app :ConfigService)]
     ;; only when ES store
-    (when (= "es" (get-in @ctia.properties/properties [:ctia :store :indicator]))
+    (when (= "es" (get-in-config [:ctia :store :indicator]))
       (let [term "observable.value:\"1.2.3.4\""
             response (get (str "ctia/judgement/search")
                           :headers {"Authorization" "45c1f5e3f05d0"}
@@ -106,7 +108,7 @@
                                          "tlp" "green"})]
         (is (= 200 (:status response)))
         (is (= 1  (count (:parsed-body response)))
-            "filters are applied, and match properly"))))
+            "filters are applied, and match properly")))))
 
   (testing "GET /ctia/judgement/:id authentication failures"
     (testing "no Authorization"
@@ -162,14 +164,10 @@
        :headers {:Authorization "45c1f5e3f05d0"}}))))
 
 (deftest test-judgement-metric-routes
-  ((:es-store store-fixtures)
-   (fn []
-     (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
-     (whoami-helpers/set-whoami-response "45c1f5e3f05d0" "foouser" "foogroup" "user")
-     (test-metric-routes (into sut/judgement-entity
-                               {:entity-minimal ex/new-judgement-minimal
-                                :enumerable-fields judgement-enumerable-fields
-                                :date-fields judgement-histogram-fields})))))
+  (test-metric-routes (into sut/judgement-entity
+                            {:entity-minimal ex/new-judgement-minimal
+                             :enumerable-fields judgement-enumerable-fields
+                             :date-fields judgement-histogram-fields})))
 
 (deftest test-judgement-routes-for-dispositon-determination
   (test-for-each-store
@@ -368,9 +366,8 @@
         judgement-fields)))))
 
 (deftest test-judgement-routes-access-control
-  (test-for-each-store
-   (fn []
-     (access-control-test "judgement"
-                          ex/new-judgement-minimal
-                          true
-                          true))))
+  (access-control-test "judgement"
+                       ex/new-judgement-minimal
+                       true
+                       true
+                       test-for-each-store))

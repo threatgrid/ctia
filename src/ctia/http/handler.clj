@@ -3,10 +3,8 @@
             [clojure.string :as string]
             [ctia.entity.entities :refer [entities]]
             [ctia.entity.feed :refer [feed-view-routes]]
-            [ctia.entity.casebook :refer [casebook-operation-routes]]
-            [ctia.entity.incident :refer [incident-additional-routes]]
-            [ctia.entity.feedback :refer [feedback-by-entity-route]]
-            [ctia.entity.relationship :refer [incident-casebook-link-route]]
+            [ctia.entity.relationship :refer [incident-link-route]]
+            [ctia.schemas.core :refer [APIHandlerServices]]
             [compojure.api
              [core :refer [middleware]]
              [routes :as api-routes]
@@ -26,14 +24,16 @@
              [version :refer [wrap-version]]]
             [ctia.metrics.routes :refer [metrics-routes]]
             [ctia.observable.routes :refer [observable-routes]]
-            [ctia.properties :refer [properties
-                                     get-http-swagger]]
+            [ctia.properties :as p
+             :refer [get-http-swagger]]
             [ctia.properties.routes :refer [properties-routes]]
+            [ctia.schemas.core :refer [APIHandlerServices]]
             [ctia.version :refer [current-version]]
             [ctia.version.routes :refer [version-routes]]
             [ctia.status.routes :refer [status-routes]]
             [ring.middleware.not-modified :refer [wrap-not-modified]]
-            [ring.util.http-response :refer [ok]]))
+            [ring.util.http-response :refer [ok]]
+            [schema.core :as s]))
 
 (def api-description
   "A Threat Intelligence API service
@@ -70,17 +70,25 @@
 
   <a href='/doc/README.md'>CTIA Documentation</a>")
 
+(s/defn entity->routes [entity services-map :- APIHandlerServices]
+  {:pre [entity
+         (map? services-map)]
+   :post [%]}
+  (let [{:keys [services->routes]} entity]
+    (assert services->routes (str "Missing :services->routes for " (:entity entity)))
+    (services->routes services-map)))
 
 (defmacro entity-routes
-  [entities]
-  `(do
+  [entities services-map]
+  (let [gsm (gensym 'services-map)]
+  `(let [~gsm ~services-map]
      (compojure.api.sweet/routes
       ~@(for [entity (remove :no-api?
                              (vals (eval entities)))]
           `(context
             ~(:route-context entity) []
             :tags ~(:tags entity)
-            (:routes (~(:entity entity) entities)))))))
+            (entity->routes (~(:entity entity) entities) ~gsm)))))))
 
 (def exception-handlers
   {:compojure.api.exception/request-parsing ex/request-parsing-handler
@@ -94,31 +102,35 @@
    :compojure.api.exception/default ex/default-error-handler})
 
 (def api-tags
-  [{:name "Actor" :description "Actor operations"}
-   {:name "Attack Pattern" :description "Attack Pattern operations"}
-   {:name "Bundle" :description "Bundle operations"}
-   {:name "Campaign" :description "Campaign operations"}
-   {:name "COA" :description "COA operations"}
-   {:name "DataTable" :description "DataTable operations"}
-   {:name "Event" :description "Events operations"}
-   {:name "Feed" :description "Feed operations"}
-   {:name "Feedback" :description "Feedback operations"}
-   {:name "GraphQL" :description "GraphQL operations"}
-   {:name "Incident" :description "Incident operations"}
-   {:name "Indicator", :description "Indicator operations"}
-   {:name "Judgement", :description "Judgement operations"}
-   {:name "Malware", :description "Malware operations"}
-   {:name "Relationship", :description "Relationship operations"}
-   {:name "Properties", :description "Properties operations"}
-   {:name "Casebook", :description "Casebook operations"}
-   {:name "Sighting", :description "Sighting operations"}
-   {:name "Identity Assertion", :description "Identity Assertion operations"}
-   {:name "Bulk", :description "Bulk operations"}
-   {:name "Metrics", :description "Performance Statistics"}
-   {:name "Tool", :description "Tool operations"}
-   {:name "Verdict", :description "Verdict operations"}
-   {:name "Status", :description "Status Information"}
-   {:name "Version", :description "Version Information"}])
+  [{:name "Actor"               :description "Actor operations"}
+   {:name "Asset"               :description "Asset operations"}
+   {:name "Asset Mapping"       :description "Asset Mapping operations"}
+   {:name "Asset Properties"    :description "Asset Properties operations"}
+   {:name "Attack Pattern"      :description "Attack Pattern operations"}
+   {:name "Bundle"              :description "Bundle operations"}
+   {:name "Campaign"            :description "Campaign operations"}
+   {:name "COA"                 :description "COA operations"}
+   {:name "DataTable"           :description "DataTable operations"}
+   {:name "Event"               :description "Events operations"}
+   {:name "Feed"                :description "Feed operations"}
+   {:name "Feedback"            :description "Feedback operations"}
+   {:name "GraphQL"             :description "GraphQL operations"}
+   {:name "Incident"            :description "Incident operations"}
+   {:name "Indicator"           :description "Indicator operations"}
+   {:name "Judgement"           :description "Judgement operations"}
+   {:name "Malware"             :description "Malware operations"}
+   {:name "Relationship"        :description "Relationship operations"}
+   {:name "Properties"          :description "Properties operations"}
+   {:name "Casebook"            :description "Casebook operations"}
+   {:name "Sighting"            :description "Sighting operations"}
+   {:name "Identity Assertion"  :description "Identity Assertion operations"}
+   {:name "Bulk"                :description "Bulk operations"}
+   {:name "Metrics"             :description "Performance Statistics"}
+   {:name "Target Record"       :description "Target Record operations"}
+   {:name "Tool"                :description "Tool operations"}
+   {:name "Verdict"             :description "Verdict operations"}
+   {:name "Status"              :description "Status Information"}
+   {:name "Version"             :description "Version Information"}])
 
 (defn apply-oauth2-swagger-conf
   [swagger-base-conf
@@ -153,16 +165,17 @@
                     :tokenUrl token-url
                     :flow flow}))))
 
-(defn api-handler []
+(s/defn api-handler [{{:keys [get-in-config]} :ConfigService
+                      :as services} :- APIHandlerServices]
   (let [{:keys [oauth2]}
-        (get-http-swagger)]
+        (get-http-swagger get-in-config)]
     (api {:exceptions {:handlers exception-handlers}
           :swagger
           (cond-> {:ui "/"
                    :spec "/swagger.json"
                    :options {:ui {:jwtLocalStorageKey
-                                  (get-in @properties
-                                          [:ctia :http :jwt :local-storage-key])}}
+                                  (get-in-config
+                                    [:ctia :http :jwt :local-storage-key])}}
                    :data {:info {:title "CTIA"
                                  :version (string/replace (current-version) #"\n" "")
                                  :license {:name "All Rights Reserved",
@@ -182,37 +195,37 @@
             (apply-oauth2-swagger-conf
              oauth2))}
 
-         (middleware [wrap-rate-limit
+         (middleware [#(wrap-rate-limit % get-in-config)
                       wrap-not-modified
                       wrap-cache-control
-                      wrap-version
+                      #(wrap-version % get-in-config)
                       ;; always last
                       (metrics/wrap-metrics "ctia" api-routes/get-routes)]
            documentation-routes
-           (graphql-ui-routes)
+           (graphql-ui-routes services)
            (context
                "/ctia" []
              (context "/feed" []
                :tags ["Feed"]
-               feed-view-routes)
+               (feed-view-routes services))
              ;; The order is important here for version-routes
              ;; must be before the middleware fn
-             version-routes
+             (version-routes services)
              (middleware [wrap-authenticated]
-               (entity-routes entities)
+               (entity-routes entities services)
                status-routes
                (context
                    "/bulk" []
                  :tags ["Bulk"]
-                 bulk-routes)
+                 (bulk-routes services))
                (context
                    "/incident" []
                  :tags ["Incident"]
-                 incident-casebook-link-route)
-               bundle-routes
-               observable-routes
+                 (incident-link-route services))
+               (bundle-routes services)
+               (observable-routes services)
                metrics-routes
-               properties-routes
-               graphql-routes)))
+               (properties-routes services)
+               (graphql-routes services))))
          (undocumented
           (rt/not-found (ok (unk/err-html)))))))

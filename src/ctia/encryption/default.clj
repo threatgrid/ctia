@@ -4,7 +4,9 @@
    [clojure.string :as string]
    [ctia.encryption :refer [IEncryption]]
    [lock-key.core :refer [decrypt-from-base64
-                          encrypt-as-base64]]))
+                          encrypt-as-base64]]
+   [puppetlabs.trapperkeeper.core :as tk]
+   [puppetlabs.trapperkeeper.services :refer [service-context]]))
 
 (defn encryption-key
   [{:keys [secret key]}]
@@ -15,17 +17,18 @@
               slurp
               string/trim)))
 
-(defrecord EncryptionService [state]
+(tk/defservice default-encryption-service
   IEncryption
-  (init [this props]
+  [[:ConfigService get-in-config]]
+  (init [this context]
     (log/info "Loading Encryption Key")
-    (let [secret (encryption-key props)]
-      (reset! (:state this)
-              {:encrypt-fn #(encrypt-as-base64 % secret)
-               :decrypt-fn #(decrypt-from-base64 % secret)})))
-  (decrypt [{:keys [state]} src]
-    (let [{:keys [decrypt-fn]} @state]
+    (let [secret (encryption-key (get-in-config [:ctia :encryption]))]
+      (assoc context
+             :encrypt-fn #(encrypt-as-base64 % secret)
+             :decrypt-fn #(decrypt-from-base64 % secret))))
+  (decrypt [this src]
+    (let [{:keys [decrypt-fn]} (service-context this)]
       (decrypt-fn src)))
-  (encrypt [{:keys [state]} src]
-    (let [{:keys [encrypt-fn]} @state]
+  (encrypt [this src]
+    (let [{:keys [encrypt-fn]} (service-context this)]
       (encrypt-fn src))))

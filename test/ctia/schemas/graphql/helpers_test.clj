@@ -1,26 +1,125 @@
 (ns ctia.schemas.graphql.helpers-test
-  (:require [ctia.schemas.graphql.helpers :as sut]
-            [clojure.test :as t :refer [deftest is testing]]))
+  (:require [ctia.schemas.core :refer [GraphQLRuntimeContext
+                                       resolve-with-rt-ctx]]
+            [ctia.schemas.graphql.helpers :as sut]
+            [clj-momo.test-helpers.core :as mth]
+            [clojure.test :as t :refer [deftest is testing use-fixtures]]
+            [schema.core :as s])
+  (:import [graphql.schema GraphQLType]
+           [java.util.concurrent CountDownLatch TimeUnit]))
+
+(use-fixtures :once mth/fixture-schema-validation)
+
+;; TODO when global graphql schema is stubbable, add parallel tests to new-object-test etc
+
+;; TODO replace with real services using TK
+(s/defn dummy-rt-ctx
+  :- GraphQLRuntimeContext
+  []
+  {:services
+   {:ConfigService {:get-in-config (fn [& args] (assert nil))}
+    :StoreService {:read-store (fn [& args] (assert nil))}
+    :IEncryption {:encrypt (fn [& args] (assert nil))
+                  :decrypt (fn [& args] (assert nil))}
+    :GraphQLNamedTypeRegistryService
+    {:get-or-update-named-type-registry
+     (let [registry (atom {})]
+       #(sut/get-or-update-named-type-registry registry %1 %2))}}})
 
 (deftest new-object-test
   (testing "The same object is not created twice"
-    (is (= (sut/new-object "Object"
-                           "Description 1"
-                           []
-                           {})
-           (sut/new-object "Object"
-                           "Description 2"
-                           []
-                           {})))))
+    (let [rt-ctx (dummy-rt-ctx)
+          ;; while the graphql schema is global, we want to use the global registry
+          ;; to avoid recreating objects.
+          new-object-fn #(-> (sut/new-object
+                               "NewObjectTestObject"
+                               "Description 1"
+                               []
+                               {})
+                             (resolve-with-rt-ctx rt-ctx))]
+      (is (identical?
+            (new-object-fn)
+            (new-object-fn))))))
 
 (deftest enum-test
   (testing "The same enum is not created twice"
-    (is (= (sut/enum "Enum"
-                     "Description 1"
-                     ["V1" "v2" "V3"])
-           (sut/enum "Enum"
-                     "Description 2"
-                     ["V1"])))))
+    (let [rt-ctx (dummy-rt-ctx)
+          ;; while the graphql schema is global, we want to use the global registry
+          ;; to avoid recreating objects.
+          enum-fn #(-> (sut/enum
+                         "EnumTestEnum"
+                         "Description 1"
+                         ["V1" "v2" "V3"])
+                       (resolve-with-rt-ctx rt-ctx))]
+      (is (identical?
+            (enum-fn)
+            (enum-fn))))))
+
+(deftest new-union-test
+  (testing "The same union is not created twice"
+    (let [rt-ctx (dummy-rt-ctx)
+          ;; while the graphql schema is global, we want to use the global registry
+          ;; to avoid recreating objects.
+          union-fn #(-> (sut/new-union
+                          "NewUnionTestUnion"
+                          "Description"
+                          (fn [obj args schema]
+                            (throw (ex-info "stub" {})))
+                          [(sut/new-ref "NewUnionTestRefA")
+                           (sut/new-ref "NewUnionTestRefB")])
+                        (resolve-with-rt-ctx rt-ctx))]
+      (is (identical?
+            (union-fn)
+            (union-fn))))))
+
+(deftest get-or-update-type-named-registry-test
+  (dotimes [_ 30]
+    (let [rt-ctx (dummy-rt-ctx)
+          type-name "GetOrUpdateTypeNamedRegistryTestEnum"
+          ;; we simulate graphql's restriction that a named type
+          ;; can only be created once, since the graphql schema is
+          ;; currently global.
+          runs-once (let [ran? (atom false)]
+                      (fn []
+                        (swap! ran? (fn [ran?]
+                                      (if ran?
+                                        (throw (ex-info "Redefined type!" {}))
+                                        true)))
+                        ;; while the graphql schema is global, we want to use the global registry
+                        ;; to avoid recreating objects.
+                        (-> (sut/enum
+                              type-name
+                              "Description 1"
+                              ["V1" "v2" "V3"])
+                            (resolve-with-rt-ctx rt-ctx))))
+          timeout-ms 10000
+          registry (sut/create-named-type-registry)
+          thread-count 5
+          make-sync-fn (fn []
+                         (let [latch (CountDownLatch. thread-count)]
+                           #(do (.countDown latch)
+                                (assert (.await latch timeout-ms TimeUnit/MILLISECONDS)))))
+          sync-starts (make-sync-fn)
+          threads (doall
+                    (repeatedly
+                      thread-count
+                      #(future
+                         ;; synchronize threads to increase contention
+                         (sync-starts)
+                         (sut/get-or-update-named-type-registry
+                           registry
+                           type-name
+                           runs-once))))
+          _ (assert (seq threads))
+          expected-result (sut/get-or-update-named-type-registry
+                            registry
+                            type-name
+                            runs-once)
+          _ (assert (instance? GraphQLType expected-result))]
+      (doseq [d threads
+              :let [r (deref d timeout-ms :timeout)]]
+        (assert (instance? GraphQLType r))
+        (is (identical? expected-result r))))))
 
 (deftest valid-type-name?-test
   (is (not (sut/valid-type-name? nil))

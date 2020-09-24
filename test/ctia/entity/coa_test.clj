@@ -12,7 +12,7 @@
              [field-selection :refer [field-selection-tests]]
              [http :refer [doc-id->rel-url]]
              [pagination :refer [pagination-test]]
-             [store :refer [test-for-each-store store-fixtures]]]
+             [store :refer [test-for-each-store]]]
             [ctim.examples.coas :refer [new-coa-maximal new-coa-minimal]]))
 
 (use-fixtures :once (join-fixtures [mth/fixture-schema-validation
@@ -58,19 +58,14 @@
         sut/coa-fields)))))
 
 (deftest test-coa-routes-access-control
-  (test-for-each-store
-   (fn []
-     (access-control-test "coa"
-                          new-coa-minimal
-                          true
-                          true))))
+  (access-control-test "coa"
+                       new-coa-minimal
+                       true
+                       true
+                       test-for-each-store))
 
 (deftest test-coa-metric-routes
-  ((:es-store store-fixtures)
-   (fn []
-     (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
-     (whoami-helpers/set-whoami-response "45c1f5e3f05d0" "foouser" "Administrators" "user")
-     (test-metric-routes (into sut/coa-entity
-                               {:entity-minimal new-coa-minimal
-                                :enumerable-fields sut/coa-enumerable-fields
-                                :date-fields sut/coa-histogram-fields})))))
+  (test-metric-routes (into sut/coa-entity
+                            {:entity-minimal new-coa-minimal
+                             :enumerable-fields sut/coa-enumerable-fields
+                             :date-fields sut/coa-histogram-fields})))

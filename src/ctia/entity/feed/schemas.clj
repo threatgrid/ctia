@@ -7,8 +7,13 @@
     [entities
      :refer [schema-version
              short-id->long-id]]]
+   [ctia.graphql.delayed :as delayed]
    [ctia.schemas
-    [core :as ctia-schemas :refer [def-acl-schema def-stored-schema TempIDs]]
+    [core :as ctia-schemas :refer [def-acl-schema
+                                   def-stored-schema
+                                   GraphQLRuntimeContext
+                                   RealizeFnResult
+                                   TempIDs]]
     [utils :as csu]]
    [ctim.schemas.common :as csc]
    [flanders
@@ -68,7 +73,7 @@
 
 (s/defschema PartialFeedList [PartialFeed])
 
-(s/defn realize-feed :- StoredFeed
+(s/defn realize-feed :- (RealizeFnResult StoredFeed)
   ([new-object :- NewFeed
     id :- s/Str
     tempids :- (s/maybe TempIDs)
@@ -81,21 +86,25 @@
     owner :- s/Str
     groups :- [s/Str]
     prev-object :- (s/maybe StoredFeed)]
-   (let [long-id (short-id->long-id id)
+  (delayed/fn :- StoredFeed
+   [{{{:keys [get-in-config]} :ConfigService
+      {:keys [encrypt decrypt]} :IEncryption}
+     :services} :- GraphQLRuntimeContext]
+   (let [long-id (short-id->long-id id get-in-config)
          plain-secret (if-let [prev-secret (:secret prev-object)]
-                        (encryption/decrypt-str prev-secret)
+                        (decrypt prev-secret)
                         (str (java.util.UUID/randomUUID)))
          output (or (:output new-object)
                     (:output prev-object))
          secret
          (or (:secret prev-object)
-             (encryption/encrypt-str
+             (encrypt
               plain-secret))
          feed_view_url
-         (encryption/encrypt-str
+         (encrypt
           (str long-id "/view?s=" plain-secret))
          feed_view_url_txt
-         (encryption/encrypt-str
+         (encrypt
           (str long-id "/view.txt?s=" plain-secret))
          now (time/now)]
      (merge new-object
@@ -114,4 +123,4 @@
              :tlp
              (:tlp new-object
                    (:tlp prev-object
-                         (properties-default-tlp)))}))))
+                         (properties-default-tlp get-in-config)))})))))

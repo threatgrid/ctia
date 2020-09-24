@@ -2,8 +2,13 @@
   (:require [clj-momo.lib.time :as time]
             [ctia.domain.access-control :refer [properties-default-tlp]]
             [ctia.properties :refer [get-http-show]]
-            [ctia.schemas.core :as ctia-schemas :refer [TempIDs]]
+            [ctia.schemas.core :as ctia-schemas
+             :refer [GraphQLRuntimeContext
+                     RealizeFn
+                     RealizeFnResult
+                     TempIDs]]
             [ctim.domain.id :as id]
+            [ctia.graphql.delayed :as delayed]
             [ctim.schemas.common :refer [ctim-schema-version]]
             [schema.core :as s]))
 
@@ -29,8 +34,14 @@
                     (:end_time prev-valid-time)
                     time/default-expire-date)}})
 
-(defn default-realize-fn [type-name Model StoredModel]
-  (s/fn default-realize :- StoredModel
+(s/defn default-realize-fn
+  ;; commented since StoredModel is a parameter and not in scope here,
+  ;; checking is propagated to the body via s/fn
+  #_#_:- (RealizeFn StoredModel)
+  [type-name
+   Model :- (s/protocol s/Schema)
+   StoredModel  :- (s/protocol s/Schema)]
+  (s/fn default-realize :- (RealizeFnResult StoredModel)
     ([new-object :- Model
       id :- s/Str
       tempids :- (s/maybe TempIDs)
@@ -43,6 +54,8 @@
       owner :- s/Str
       groups :- [s/Str]
       prev-object :- (s/maybe StoredModel)]
+    (delayed/fn :- StoredModel
+     [{{{:keys [get-in-config]} :ConfigService} :services} :- GraphQLRuntimeContext]
      (let [now (time/now)]
        (merge new-object
               {:id id
@@ -54,40 +67,40 @@
                :modified now
                :timestamp (or (:timestamp new-object) now)
                :tlp (:tlp new-object
-                          (:tlp prev-object (properties-default-tlp)))}
+                          (:tlp prev-object (properties-default-tlp get-in-config)))}
               (when (contains-key? Model :valid_time)
                 (make-valid-time (:valid_time prev-object)
                                  (:valid_time new-object)
-                                 now)))))))
+                                 now))))))))
 
-(defn short-id->long-id [id]
-  (id/short-id->long-id id get-http-show))
+(defn short-id->long-id [id get-in-config]
+  (id/short-id->long-id id #(get-http-show get-in-config)))
 
 (defn long-id->id [id]
   (id/long-id->id id))
 
-(defn with-long-id [entity]
-  (update entity :id short-id->long-id))
+(defn with-long-id [entity get-in-config]
+  (update entity :id short-id->long-id get-in-config))
 
-(defn page-with-long-id [m]
-  (update m :data #(map with-long-id %)))
-
-(def ->long-id (id/factory:short-id+type->long-id get-http-show))
+(defn page-with-long-id [m get-in-config]
+  (update m :data #(map (fn [entity]
+                          (with-long-id entity get-in-config))
+                        %)))
 
 (defn long-id->entity-type [id-str]
   (:type (id/long-id->id id-str)))
 
-(defn short-id->entity-type [id-str]
+(defn short-id->entity-type [id-str get-in-config]
   (when-let [short-id (id/short-id->long-id
                        id-str
-                       (get-http-show))]
+                       #(get-http-show get-in-config))]
     (:type (id/long-id->id short-id))))
 
 (defn id->entity-type
   "Extract the entity type from an id"
-  [id-str]
+  [id-str get-in-config]
   (if (id/short-id? id-str)
-    (short-id->entity-type id-str)
+    (short-id->entity-type id-str get-in-config)
     (long-id->entity-type id-str)))
 
 (defn un-store [record]

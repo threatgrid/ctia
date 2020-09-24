@@ -126,7 +126,7 @@
    (st/optional-keys
     {:query s/Str
      :indicator_type s/Str
-     :tags s/Int
+     :tags s/Str
      :kill_chain_phases s/Str
      :producer s/Str
      :specification s/Str
@@ -212,5 +212,5 @@
    :realize-fn realize-indicator
    :es-store ->IndicatorStore
    :es-mapping indicator-mapping
-   :routes indicator-routes
+   :services->routes indicator-routes
    :capabilities capabilities})
