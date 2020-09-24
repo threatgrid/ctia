@@ -35,7 +35,7 @@
     (do (log/warnf "missing schema definition for: %s" type)
         s/Any)))
 
-(defn ^:private setup
+(defn setup
   "init properties, start CTIA and its store service.
   returns trapperkeeper app"
   []

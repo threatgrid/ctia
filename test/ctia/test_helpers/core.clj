@@ -30,16 +30,16 @@
              [utils :as fu]]
             [puppetlabs.trapperkeeper.app :as app]))
 
+(def ^:dynamic ^:private *current-app*)
+(def ^:dynamic ^:private *props-transformers* [])
+(def ^:dynamic ^:private *config-transformers* [])
+
 (defn get-service-map [app svc-kw]
   {:pre [(keyword? svc-kw)]}
   (let [graph (app/service-graph app)
         m (svc-kw graph)]
     (assert (map? m) (str "No service " svc-kw ", found " (keys graph)))
     m))
-
-(def ^:dynamic ^:private *current-app*)
-(def ^:dynamic ^:private *props-transformers* [])
-(def ^:dynamic ^:private *config-transformers* [])
 
 (defn ^:private with-props-transformer*
   "For use in a test fixture to dynamically transform an (uncoerced!) value of
@@ -212,16 +212,15 @@
   (partial get-in (build-transformed-init-config)))
 
 (defn bind-current-app* [app f]
-  (let [_ (assert (not (thread-bound? #'*current-app*)) "Rebound app!")
-        _ (assert app)]
-    (binding [*current-app* app]
-      (f))))
+  (assert (not (thread-bound? #'*current-app*)) "Rebound app!")
+  (assert app)
+  (binding [*current-app* app]
+    (f)))
 
 (defn get-current-app []
   {:post [%]}
   (assert (thread-bound? #'*current-app*) "App not bound!")
-  (let [app *current-app*]
-    app))
+  *current-app*)
 
 (defn current-get-in-config-fn
   ([] (current-get-in-config-fn (get-current-app)))
@@ -243,10 +242,10 @@
      (with-properties ["ctia.http.enabled" enable-http?
                        "ctia.http.port" http-port
                        "ctia.http.show.port" http-port]
-       (let [app (let [config (build-transformed-init-config)]
-                   (init/start-ctia!*
-                     {:services (init/default-services config)
-                      :config config}))]
+       (let [config (build-transformed-init-config)
+             app (init/start-ctia!*
+                   {:services (init/default-services config)
+                    :config config})]
          (try
            (bind-current-app* app t)
            (finally

@@ -213,9 +213,9 @@
 (defn build-init-config
   "Returns a (nested keyword) config map from (merged left-to-right):
 
-  1. [[files]] merged left-to-right
-  2. JVM Properties for keys of [[PropertiesSchema]]
-  3. Environment variables for keys of [[PropertiesSchema]]"
+  1. #'files merged left-to-right
+  2. JVM Properties for keys of #'PropertiesSchema
+  3. Environment variables for keys of #'PropertiesSchema"
   []
   {:post [(map? %)]}
   (let [a (atom nil)]

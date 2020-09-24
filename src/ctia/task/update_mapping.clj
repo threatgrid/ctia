@@ -49,15 +49,14 @@
         (println summary)
         (System/exit 0))
       (pp/pprint options)
-      (let [app (let [config (p/build-init-config)]
-                  (init/start-ctia!* {:services [store-svc/store-service]
-                                      :config config}))
+      (let [app (init/start-ctia!* {:services [store-svc/store-service]
+                                    :config (p/build-init-config)})
             {{:keys [all-stores]} :StoreService} (app/service-graph app)]
         (->> (:stores options)
              (select-keys (all-stores))
              update-mapping-stores!)
         (log/info "Completed update-mapping task")
         (System/exit 0)))
-    (finally
-      (log/error "unknown error")
+    (catch Throwable e
+      (log/error e "Error!")
       (System/exit 1))))

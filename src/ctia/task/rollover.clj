@@ -55,6 +55,6 @@
           (log/error "there were errors while rolling over stores")
           (System/exit 1))
         (System/exit 0)))
-    (finally
-      (log/error "Unknown error")
+    (catch Throwable e
+      (log/error e "Unknown error")
       (System/exit 2))))

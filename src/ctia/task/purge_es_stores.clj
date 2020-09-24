@@ -35,6 +35,6 @@
       (delete-store-indexes all-stores)
       (log/info "done")
       (System/exit 0))
-    (finally
-      (log/error "unknown error")
+    (catch Throwable e
+      (log/error e "unknown error")
       (System/exit 1))))
