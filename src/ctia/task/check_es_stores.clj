@@ -126,7 +126,7 @@
     (System/exit -1)
     (System/exit 0)))
 
-(defn ^:private run-check
+(defn run-check
   [batch-size]
   (assert batch-size "Please specify a batch size")
   (log/info "checking all ES Stores")

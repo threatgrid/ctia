@@ -6,5 +6,5 @@
   (assoc context :control (register-listener-fn #(log/info "event:" %) :blocking)))
 
 (defn stop [{:keys [control] :as context}]
-  (a/close! control)
+  (some-> control a/close!)
   (dissoc context :control))
