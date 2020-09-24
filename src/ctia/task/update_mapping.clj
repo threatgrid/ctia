@@ -56,6 +56,6 @@
              update-mapping-stores!)
         (log/info "Completed update-mapping task")
         (System/exit 0)))
-    (finally
-      (log/error "unknown error")
+    (catch Throwable e
+      (log/error e "Error!")
       (System/exit 1))))
