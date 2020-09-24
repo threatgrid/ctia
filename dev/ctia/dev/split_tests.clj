@@ -63,13 +63,13 @@
   pair [n m], where m is the number of splits, and n identifies the
   current split in `(range m)`.
   
-  eg., CTIA_SPLIT_TESTS=\"[0 2]\" lein split-test       ; run the first half of the tests
-  eg., CTIA_SPLIT_TESTS=\"[1 2]\" lein split-test       ; run the second half of the tests
+  eg., CTIA_SPLIT_TESTS=\"[0 2]\" lein test       ; run the first half of the tests
+  eg., CTIA_SPLIT_TESTS=\"[1 2]\" lein test       ; run the second half of the tests
   "
   ([a1 a2 a3 & rst]
    (println "ctia.dev.split-tests/dir does not support extra arguments:" (vec (cons a3 rst)))
-   (println "`lein split-test` only supports a selector, defaulting to `lein split-test :default`")
-   (println "For a `lein test :only ...` equivalent using circleci.test, use `lein tests ns1 ns2`")
+   (println "`lein test` only supports a selector, defaulting to `lein test :default`")
+   (println "For a `lein test :only ...` equivalent using, use `lein tests ns1 ns2` without setting CTIA_SPLIT_TESTS")
    (System/exit 1))
   ([dirs-str] (dir dirs-str ":default"))
   ([dirs-str selector-str]
@@ -90,7 +90,7 @@
              (println "[ctia.dev.split-tests] Running all tests")
              (do 
                (println "[ctia.dev.split-tests] Splitting tests. Reproduce locally with:")
-               (printf "[ctia.dev.split-tests] $ CTIA_SPLIT_TESTS=[%s,%s] lein split-test %s\n"
+               (printf "[ctia.dev.split-tests] $ CTIA_SPLIT_TESTS=[%s,%s] lein test %s\n"
                        this-split
                        total-splits
                        selector-str)
