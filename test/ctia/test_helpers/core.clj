@@ -71,8 +71,6 @@
      (fn [] (do ~@sexprs))))
 
 (defn fixture-properties:clean [f]
-  (assert (empty? *properties-overrides*)
-          "Setting default properties should go first")
   ;; Override any properties that are in the default properties file
   ;; yet are unsafe/undesirable for tests
   (with-properties ["ctia.auth.type"                            "allow-all"
