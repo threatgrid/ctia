@@ -2,7 +2,7 @@
   (:require [clj-momo.lib.metrics.jmx :as jmx]
             [puppetlabs.trapperkeeper.core :as tk]))
 
-(defn init! [get-in-config]
+(defn start! [get-in-config]
   (when (get-in-config [:ctia :metrics :jmx :enabled])
     (jmx/start)))
 
@@ -12,5 +12,5 @@
   JMXMetricsService
   [[:ConfigService get-in-config]]
   (start [this context]
-         (init! get-in-config)
+         (start! get-in-config)
          context))
