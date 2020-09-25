@@ -1,10 +1,11 @@
 (ns ctia.task.rollover
   (:require [clj-momo.lib.es.index :as es-index]
             [clojure.tools.logging :as log]
-            [ctia.init :refer [init-store-service! log-properties]]
-            [ctia.properties :as p]
-            [ctia.store :refer [stores]]
+            [ctia.init :refer [start-ctia!*]]
+            [ctia.store-service :as store-svc]
             [ctia.stores.es.schemas :refer [ESConnState]]
+            [ctia.properties :as p]
+            [puppetlabs.trapperkeeper.app :as app]
             [schema.core :as s])
   (:import clojure.lang.ExceptionInfo))
 
@@ -41,12 +42,19 @@
           stores))
 
 (defn -main [& _args]
-  (let [config (doto (p/build-init-config)
-                 log-properties)
-        _ (init-store-service! (partial get-in config))
-        {:keys [nb-errors]
-         :as res} (rollover-stores @stores)]
-    (log/info "completed rollover task: " res)
-    (when (< 0 nb-errors)
-      (log/error "there were errors while rolling over stores")
-      (System/exit 1))))
+  (try
+    (let [app (let [config (p/build-init-config)]
+                (start-ctia!* {:services [store-svc/store-service]
+                               :config config}))
+          {{:keys [all-stores]} :StoreService} (app/service-graph app)
+          {:keys [nb-errors]
+           :as res} (rollover-stores (all-stores))]
+      (log/info "completed rollover task: " res)
+      (if (< 0 nb-errors)
+        (do
+          (log/error "there were errors while rolling over stores")
+          (System/exit 1))
+        (System/exit 0)))
+    (catch Throwable e
+      (log/error e "Unknown error")
+      (System/exit 2))))

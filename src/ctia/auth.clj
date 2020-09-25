@@ -12,8 +12,6 @@
 (defprotocol IAuth
   (identity-for-token [this token]))
 
-(defonce auth-service (atom nil))
-
 (def not-logged-in-owner "Unknown")
 
 (def not-logged-in-groups ["Unknown Group"])

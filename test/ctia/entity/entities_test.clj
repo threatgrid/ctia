@@ -1,11 +1,19 @@
 (ns ctia.entity.entities-test
-  (:require [ctia.entity.entities :as sut]
+  (:require [clj-momo.test-helpers.core :as mth]
+            [ctia.entity.entities :as sut]
             [ctia.schemas.core :refer [lift-realize-fn-with-context]]
             [ctia.test-helpers.core :as test-helpers]
-            [ctia.http.server :refer [realize-fn-global-services]]
+            [ctia.lib.utils :refer [service-subgraph]]
             [clojure.test :as t :refer [deftest is use-fixtures join-fixtures]]
             [clojure.spec.alpha :refer [gen]]
-            [clojure.spec.gen.alpha :refer [generate]]))
+            [clojure.spec.gen.alpha :refer [generate]]
+            [puppetlabs.trapperkeeper.app :as app]
+            [puppetlabs.trapperkeeper.services :refer [service-context]]))
+
+;; FIXME this seems to fail because the specs used to generate
+;; data via gen-sample-entity don't agree with the schemas
+#_
+(use-fixtures :once mth/fixture-schema-validation)
 
 (use-fixtures :each (join-fixtures [test-helpers/fixture-properties:clean
                                     test-helpers/fixture-ctia-fast]))
@@ -18,11 +26,13 @@
 
 (deftest entity-realize-fn-test
   (let [app (test-helpers/get-current-app)
-        {:keys [get-config]} (test-helpers/get-service-map
-                               app
-                               :ConfigService)
-        realize-fn-services (realize-fn-global-services
-                              (get-config))
+        realize-fn-services (service-subgraph
+                              (app/service-graph app)
+                              :ConfigService [:get-in-config]
+                              :StoreService [:read-store]
+                              :GraphQLNamedTypeRegistryService
+                              [:get-or-update-named-type-registry]
+                              :IEncryption [:decrypt :encrypt])
         properties [:id :type :owner :groups :schema_version
                     :created :modified :timestamp :tlp]
         ;; properties to dissoc to get a valid entity when

@@ -1,5 +1,30 @@
 (ns ctia.store-service
-  (:require [schema.core :as s]))
+  (:require [ctia.store-service-core :as core]
+            [puppetlabs.trapperkeeper.core :as tk]
+            [puppetlabs.trapperkeeper.services :refer [service-context]]
+            [schema.core :as s]))
+
+(defprotocol StoreService
+  (all-stores [this] "Returns a map of current stores")
+  (write-store [this store write-fn])
+  (read-store [this store read-fn]))
+
+(tk/defservice store-service
+  "A service to manage the central storage area for all stores."
+  StoreService
+  [[:ConfigService get-in-config]]
+  (init [this context] (core/init context))
+  (start [this context]
+         (core/start context
+                     get-in-config))
+
+  (all-stores [this] (core/all-stores (service-context this)))
+  (write-store [this store write-fn]
+               (core/write-store (service-context this)
+                                 store write-fn))
+  (read-store [this store read-fn]
+              (core/read-store (service-context this)
+                               store read-fn)))
 
 (s/defn store-service-fn->varargs
   "Given a 2-argument write-store or read-store function (eg., from defservice),

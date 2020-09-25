@@ -55,7 +55,8 @@
 
 (def timeout (* 5 60000))
 (def es-max-retry 3)
-(def migration-es-conn (atom nil))
+;;FIXME refactor to local argument
+(defonce migration-es-conn (atom nil))
 
 (s/defschema MigrationStoreServices
   {:ConfigService {:get-config (s/=> s/Any s/Any)
@@ -705,11 +706,8 @@ when confirm? is true, it stores this state and creates the target indices."
 (s/defn setup!
   "setup store service"
   [{{:keys [get-config]} :ConfigService :as services} :- MigrationStoreServices]
-  ;; TODO will be rolled into trapperkeeper bootstrap
-  ;; START global services setup
   (log/info "starting CTIA Stores...")
   (log-properties (get-config))
-  ;; END global services setup
   (reset! migration-es-conn
           (-> (migration-store-properties services)
               (es.init/init-store-conn (MigrationStoreServices->ESConnServices

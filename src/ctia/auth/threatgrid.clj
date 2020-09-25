@@ -12,7 +12,8 @@
    [ctia
     [auth :as auth]
     [properties :as p]
-    [store :as store]]
+    [store :as store]
+    [store-service :as store-svc]]
    [puppetlabs.trapperkeeper.core :as tk]
    [puppetlabs.trapperkeeper.services :refer [service-context]]))
 
@@ -58,10 +59,10 @@
 (tk/defservice threatgrid-auth-service
   auth/IAuth
   [[:ConfigService get-in-config]
-   ;; TODO replace global store service
-   #_[:StoreService read-store]]
+   [:StoreService read-store]]
   (init [this context]
-        (let [read-store store/read-store ;;TODO replace with local
+        (let [read-store (-> read-store
+                             store-svc/store-service-fn->varargs)
               lookup-stored-identity #(lookup-stored-identity % read-store)]
           (into context
                 (make-auth-service get-in-config lookup-stored-identity))))

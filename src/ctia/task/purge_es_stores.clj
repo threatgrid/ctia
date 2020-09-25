@@ -1,20 +1,22 @@
 (ns ctia.task.purge-es-stores
   (:require [clojure.tools.logging :as log]
             [ctia
-             [init :refer [init-store-service! log-properties]]
-             [properties :as p]
-             [store :as store]]
-            [ctia.stores.es.store :refer [delete-state-indexes]]))
+             [init :refer [start-ctia!*]]
+             [properties :as p]]
+            [ctia.store-service :as store-svc]
+            [ctia.stores.es.store :refer [delete-state-indexes]]
+            [puppetlabs.trapperkeeper.app :as app]))
 
 (defn setup
-  "start CTIA store service"
+  "start CTIA store service.
+  returns a tk app."
   []
   (log/info "starting CTIA Stores...")
-  (let [config (doto (p/build-init-config)
-                 log-properties)]
-    (init-store-service! (partial get-in config))))
+  (let [config (p/build-init-config)]
+    (start-ctia!* {:services [store-svc/store-service]
+                   :config config})))
 
-(defn delete-store-indexes [all-stores]
+(s/defn delete-store-indexes [all-stores]
   (doseq [:let [stores (all-stores)
                 _ (assert (map? stores))]
           store-impls (vals stores)
@@ -27,8 +29,12 @@
   "invoke with lein run -m ctia.task.purge-es-stores"
   []
   (log/info "purging all ES Stores data")
-  (setup)
-  (delete-store-indexes (fn _all-stores []
-                          @store/stores))
-  (log/info "done")
-  (System/exit 0))
+  (try
+    (let [app (setup)
+          {{:keys [all-stores]} :StoreService} (app/service-graph app)]
+      (delete-store-indexes all-stores)
+      (log/info "done")
+      (System/exit 0))
+    (catch Throwable e
+      (log/error e "unknown error")
+      (System/exit 1))))

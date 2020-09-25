@@ -68,8 +68,8 @@
            [#(play-big port) cleanup-ctia!])))
 
 (defcase* create-campaign :big-campaign-es-store
-  (fn [_] (let [port (setup-ctia-es-store!)]
-           [#(play-big port) cleanup-ctia!])))
+  (fn [_] (let [{:keys [port app]} (setup-ctia-es-store!)]
+           [#(play-big port) #(cleanup-ctia! app)])))
 
 (defcase* create-campaign :big-campaign-es-store-native
   (fn [_] (let [port (setup-ctia-es-store-native!)]
