@@ -6,7 +6,7 @@
              [core :as helpers]
              [fake-whoami-service :as whoami-helpers]
              [graphql :as gh]
-             [store :refer [test-for-each-store]]]
+             [store :refer [test-for-each-store-with-app]]]
             [ctim.examples.incidents :refer [new-incident-maximal]]))
 
 (use-fixtures :once (join-fixtures [mth/fixture-schema-validation
@@ -61,9 +61,9 @@
      :feedback-2 f2}))
 
 (deftest incident-queries-test
-  (test-for-each-store
-   (fn []
-     (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
+  (test-for-each-store-with-app
+   (fn [app]
+     (helpers/set-capabilities! app "foouser" ["foogroup"] "user" all-capabilities)
      (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
                                          "foouser"
                                          "foogroup"

@@ -10,7 +10,7 @@
              [auth :refer [all-capabilities]]
              [core :as helpers :refer [delete get post]]
              [fake-whoami-service :as whoami-helpers]
-             [store :refer [test-for-each-store]]]
+             [store :refer [test-for-each-store-with-app]]]
             [ctim.domain.id :as id]))
 
 (use-fixtures :once (join-fixtures [mht/fixture-schema-validation
@@ -21,9 +21,9 @@
 (use-fixtures :each whoami-helpers/fixture-reset-state)
 
 (deftest test-observable-verdict-route
-  (test-for-each-store
-   (fn []
-     (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
+  (test-for-each-store-with-app
+   (fn [app]
+     (helpers/set-capabilities! app "foouser" ["foogroup"] "user" all-capabilities)
      (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
                                          "foouser"
                                          "foogroup"
@@ -130,9 +130,9 @@
 
 
 (deftest test-observable-verdict-route-2
-  (test-for-each-store
-   (fn []
-     (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
+  (test-for-each-store-with-app
+   (fn [app]
+     (helpers/set-capabilities! app "foouser" ["foogroup"] "user" all-capabilities)
      (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
                                          "foouser"
                                          "foogroup"
@@ -197,9 +197,9 @@
 
 
 (deftest test-observable-verdict-route-when-judgement-deleted
-  (test-for-each-store
-   (fn []
-     (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
+  (test-for-each-store-with-app
+   (fn [app]
+     (helpers/set-capabilities! app "foouser" ["foogroup"] "user" all-capabilities)
      (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
                                          "foouser"
                                          "foogroup"
@@ -296,9 +296,9 @@
                     verdict)))))))))
 
 (deftest test-observable-verdict-with-different-valid-times
-  (test-for-each-store
-   (fn []
-     (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
+  (test-for-each-store-with-app
+   (fn [app]
+     (helpers/set-capabilities! app "foouser" ["foogroup"] "user" all-capabilities)
      (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
                                          "foouser"
                                          "foogroup"
@@ -459,11 +459,11 @@
              (is (= 404 status)))))))))
 
 (deftest test-observable-verdict-access-control
-  (test-for-each-store
-   (fn []
-     (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
-     (helpers/set-capabilities! "baruser" ["bargroup"] "user" all-capabilities)
-     (helpers/set-capabilities! "foobaruser" ["bargroup"] "user" all-capabilities)
+  (test-for-each-store-with-app
+   (fn [app]
+     (helpers/set-capabilities! app "foouser" ["foogroup"] "user" all-capabilities)
+     (helpers/set-capabilities! app "baruser" ["bargroup"] "user" all-capabilities)
+     (helpers/set-capabilities! app "foobaruser" ["bargroup"] "user" all-capabilities)
 
      (whoami-helpers/set-whoami-response "foouser"
                                          "foouser"

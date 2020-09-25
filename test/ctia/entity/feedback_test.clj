@@ -8,7 +8,7 @@
              [core :as helpers :refer [get]]
              [crud :refer [entity-crud-test]]
              [fake-whoami-service :as whoami-helpers]
-             [store :refer [test-for-each-store]]]
+             [store :refer [test-for-each-store-with-app]]]
             [ctim.domain.id :as id]))
 
 (def new-feedback
@@ -40,10 +40,10 @@
 (use-fixtures :each whoami-helpers/fixture-reset-state)
 
 (deftest test-feedback-routes
-  (test-for-each-store
-   (fn []
-     (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
-     (helpers/set-capabilities! "baruser" ["bargroup"] "user" #{})
+  (test-for-each-store-with-app
+   (fn [app]
+     (helpers/set-capabilities! app "foouser" ["foogroup"] "user" all-capabilities)
+     (helpers/set-capabilities! app "baruser" ["bargroup"] "user" #{})
      (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
                                          "foouser"
                                          "foogroup"

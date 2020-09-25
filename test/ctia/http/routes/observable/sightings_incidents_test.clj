@@ -7,7 +7,7 @@
              [auth :refer [all-capabilities]]
              [core :as helpers :refer [get make-id post]]
              [fake-whoami-service :as whoami-helpers]
-             [store :refer [test-for-each-store]]]
+             [store :refer [test-for-each-store-with-app]]]
             [ctim.domain.id :as id]))
 
 (use-fixtures :once (join-fixtures [mht/fixture-schema-validation
@@ -16,16 +16,15 @@
                                     whoami-helpers/fixture-server]))
 
 (deftest test-observable-sightings-incidents
-  (test-for-each-store
-   (fn []
-     (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
+  (test-for-each-store-with-app
+   (fn [app]
+     (helpers/set-capabilities! app "foouser" ["foogroup"] "user" all-capabilities)
      (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
                                          "foouser"
                                          "foogroup"
                                          "user")
 
-     (let [app (helpers/get-current-app)
-           {:keys [get-in-config]} (helpers/get-service-map app :ConfigService)
+     (let [{:keys [get-in-config]} (helpers/get-service-map app :ConfigService)
            http-show (get-in-config [:ctia :http :show])
            sighting-1-id (make-id :sighting)
            sighting-2-id (make-id :sighting)

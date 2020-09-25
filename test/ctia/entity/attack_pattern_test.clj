@@ -12,7 +12,7 @@
              [field-selection :refer [field-selection-tests]]
              [http :refer [doc-id->rel-url]]
              [pagination :refer [pagination-test]]
-             [store :refer [test-for-each-store]]]
+             [store :refer [test-for-each-store-with-app]]]
             [ctim.examples.attack-patterns
              :refer
              [new-attack-pattern-maximal new-attack-pattern-minimal]]))
@@ -25,9 +25,10 @@
   whoami-helpers/fixture-reset-state)
 
 (deftest test-attack-pattern-crud-routes
-  (test-for-each-store
-   (fn []
-     (helpers/set-capabilities! "foouser"
+  (test-for-each-store-with-app
+   (fn [app]
+     (helpers/set-capabilities! app
+                                "foouser"
                                 ["foogroup"]
                                 "user"
                                 all-capabilities)
@@ -43,8 +44,8 @@
                         :invalid-test-field :name}))))
 
 (deftest test-attack-pattern-pagination-field-selection
-  (test-for-each-store
-   (fn []
+  (test-for-each-store-with-app
+   (fn [_app_]
      (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
      (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
                                          "foouser"
@@ -72,7 +73,7 @@
                        new-attack-pattern-minimal
                        true
                        true
-                       test-for-each-store))
+                       test-for-each-store-with-app))
 
 (deftest test-attack-pattern-metric-routes
   (test-metric-routes (into sut/attack-pattern-entity

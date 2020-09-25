@@ -54,9 +54,9 @@
           "Searching for target-record:targets:observables:type"))))))
 
 (deftest target-record-routes-test
-  (store/test-for-each-store
-   (fn []
-     (helpers/set-capabilities! "foouser" ["foogroup"] "user" auth/all-capabilities)
+  (store/test-for-each-store-with-app
+   (fn [app]
+     (helpers/set-capabilities! app "foouser" ["foogroup"] "user" auth/all-capabilities)
      (whoami-helpers/set-whoami-response http/api-key "foouser" "foogroup" "user")
      (entity-crud-test
       {:entity           "target-record"
@@ -69,9 +69,9 @@
        :headers          {:Authorization "45c1f5e3f05d0"}}))))
 
 (deftest target-record-pagination-test
-  (store/test-for-each-store
-   (fn []
-     (helpers/set-capabilities! "foouser" ["foogroup"] "user" auth/all-capabilities)
+  (store/test-for-each-store-with-app
+   (fn [app]
+     (helpers/set-capabilities! app "foouser" ["foogroup"] "user" auth/all-capabilities)
      (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
                                          "foouser"
                                          "foogroup"

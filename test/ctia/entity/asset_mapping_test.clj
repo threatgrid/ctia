@@ -61,9 +61,9 @@
                ":valid_time properly reset")))))))
 
 (deftest asset-mapping-routes-test
-  (store/test-for-each-store
-   (fn []
-     (helpers/set-capabilities! "foouser" ["foogroup"] "user" auth/all-capabilities)
+  (store/test-for-each-store-with-app
+   (fn [app]
+     (helpers/set-capabilities! app "foouser" ["foogroup"] "user" auth/all-capabilities)
      (whoami-helpers/set-whoami-response http/api-key "foouser" "foogroup" "user")
      (entity-crud-test
       {:entity             "asset-mapping"
@@ -79,8 +79,8 @@
        :headers            {:Authorization "45c1f5e3f05d0"}}))))
 
 (deftest asset-mapping-pagination-test
-  (store/test-for-each-store
-   (fn []
+  (store/test-for-each-store-with-app
+   (fn [_app_]
      (helpers/set-capabilities! "foouser" ["foogroup"] "user" auth/all-capabilities)
      (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
                                          "foouser"

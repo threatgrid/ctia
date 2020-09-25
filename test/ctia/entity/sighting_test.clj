@@ -18,7 +18,7 @@
              [field-selection :refer [field-selection-tests]]
              [http :refer [api-key doc-id->rel-url]]
              [pagination :refer [pagination-test]]
-             [store :refer [test-for-each-store]]]
+             [store :refer [test-for-each-store-with-app]]]
             [ctim.examples.sightings
              :refer
              [new-sighting-maximal new-sighting-minimal]]))
@@ -39,9 +39,9 @@
         "http://ex.tld/ctia/sighting/sighting-345"])))
 
 (deftest test-sighting-crud-routes
-  (test-for-each-store
-   (fn []
-     (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
+  (test-for-each-store-with-app
+   (fn [app]
+     (helpers/set-capabilities! app "foouser" ["foogroup"] "user" all-capabilities)
      (whoami-helpers/set-whoami-response api-key
                                          "foouser"
                                          "foogroup"
@@ -58,9 +58,9 @@
                              :date-fields sighting-histogram-fields})))
 
 (deftest test-sighting-pagination-field-selection
-  (test-for-each-store
-   (fn []
-     (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
+  (test-for-each-store-with-app
+   (fn [app]
+     (helpers/set-capabilities! app "foouser" ["foogroup"] "user" all-capabilities)
      (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
                                          "foouser"
                                          "foogroup"
@@ -102,4 +102,4 @@
                        new-sighting-minimal
                        true
                        true
-                       test-for-each-store))
+                       test-for-each-store-with-app))

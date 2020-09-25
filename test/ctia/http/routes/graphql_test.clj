@@ -6,7 +6,7 @@
              [core :as helpers]
              [fake-whoami-service :as whoami-helpers]
              [graphql :as gh]
-             [store :refer [test-for-each-store]]]
+             [store :refer [test-for-each-store-with-app]]]
             [ctim.examples.casebooks :refer [new-casebook-maximal]]))
 
 (use-fixtures :once (join-fixtures [mth/fixture-schema-validation
@@ -229,14 +229,14 @@
      :sighting-2 s2}))
 
 (deftest test-graphql-route
-  (test-for-each-store
-   (fn []
-     (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
+  (test-for-each-store-with-app
+   (fn [app]
+     (helpers/set-capabilities! app "foouser" ["foogroup"] "user" all-capabilities)
      (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
                                          "foouser"
                                          "foogroup"
                                          "user")
-     (helpers/set-capabilities! "baruser" ["bargroup"] "user" #{})
+     (helpers/set-capabilities! app "baruser" ["bargroup"] "user" #{})
      (whoami-helpers/set-whoami-response "2222222222222" "baruser" "bargroup" "user")
 
      (let [datamap (initialize-graphql-data)

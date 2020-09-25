@@ -18,7 +18,7 @@
      :refer [delete post put get fixture-with-fixed-time
              with-sequential-uuid]]
     [fake-whoami-service :as whoami-helpers]
-    [store :refer [test-for-each-store]]]
+    [store :refer [test-for-each-store-with-app]]]
    [ctim.examples.incidents :refer [new-incident-minimal]]
    [ctim.examples.casebooks :refer [new-casebook-minimal]]
    [ctim.domain.id :as id]
@@ -34,9 +34,10 @@
   whoami-helpers/fixture-reset-state)
 
 (deftest test-event-routes
-  (test-for-each-store
-   (fn []
-     (helpers/set-capabilities! "user1"
+  (test-for-each-store-with-app
+   (fn [app]
+     (helpers/set-capabilities! app
+                                "user1"
                                 ["group1"]
                                 "user1"
                                 all-capabilities)
@@ -45,7 +46,8 @@
                                          "group1"
                                          "user1")
 
-     (helpers/set-capabilities! "user2"
+     (helpers/set-capabilities! app
+                                "user2"
                                 ["group1"]
                                 "user2"
                                 all-capabilities)
@@ -54,7 +56,8 @@
                                          "group1"
                                          "user2")
 
-     (helpers/set-capabilities! "user3"
+     (helpers/set-capabilities! app
+                                "user3"
                                 ["group2"]
                                 "user3"
                                 all-capabilities)
@@ -385,9 +388,10 @@
       (is (= (count every-milli-2) (count (-> timeline second :events)))))))
 
 (deftest test-event-diffs
-  (test-for-each-store
-   (fn []
-     (helpers/set-capabilities! "user1"
+  (test-for-each-store-with-app
+   (fn [app]
+     (helpers/set-capabilities! app
+                                "user1"
                                 ["group1"]
                                 "user1"
                                 all-capabilities)

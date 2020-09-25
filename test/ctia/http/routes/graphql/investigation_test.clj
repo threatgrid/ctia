@@ -8,7 +8,7 @@
             [ctia.test-helpers.fake-whoami-service :as whoami-helpers]
             [ctia.test-helpers.fixtures :as fixt]
             [ctia.test-helpers.graphql :as gh]
-            [ctia.test-helpers.store :refer [test-for-each-store]]))
+            [ctia.test-helpers.store :refer [test-for-each-store-with-app]]))
 
 (use-fixtures :once (join-fixtures [mth/fixture-schema-validation
                                     helpers/fixture-properties:clean
@@ -31,9 +31,9 @@
           :search-txt))
 
 (deftest investigation-graphql-test
-  (test-for-each-store
-   (fn []
-     (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
+  (test-for-each-store-with-app
+   (fn [app]
+     (helpers/set-capabilities! app "foouser" ["foogroup"] "user" all-capabilities)
      (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
                                          "foouser"
                                          "foogroup"

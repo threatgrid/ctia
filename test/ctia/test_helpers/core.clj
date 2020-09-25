@@ -237,14 +237,13 @@
     (f)))
 
 (defn set-capabilities!
-  [login groups role caps]
-  (let [app (get-current-app)
-        {:keys [write-store]} (-> (get-service-map app :StoreService)
+  [app login groups role caps]
+  (let [{:keys [write-store]} (-> (get-service-map app :StoreService)
                                   store-svc/lift-store-service-fns)]
     (write-store :identity store/create-identity {:login login
-                                                      :groups groups
-                                                      :role role
-                                                      :capabilities caps})))
+                                                  :groups groups
+                                                  :role role
+                                                  :capabilities caps})))
 
 (defmacro deftest-for-each-fixture [test-name fixture-map & body]
   `(do

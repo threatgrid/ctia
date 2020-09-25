@@ -10,7 +10,9 @@
                    helpers/fixture-ctia
                    es-helpers/fixture-delete-store-indexes])})
 
-(defn test-for-each-store [t]
+(defn test-for-each-store-with-app [t]
   (doseq [[store-key fixtures] store-fixtures]
     (testing (name store-key)
-      (fixtures t))))
+      (fixtures
+        (fn []
+          (t (helpers/get-current-app)))))))
