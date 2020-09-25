@@ -209,7 +209,6 @@
           {:keys [all-stores]} (helpers/get-service-map app :StoreService)
           services (app->MigrationStoreServices app)
 
-
           store-types [:malware :tool :incident]]
       (helpers/set-capabilities! app
                                  "foouser"
@@ -520,7 +519,6 @@
           {:keys [get-in-config]} (helpers/get-service-map app :ConfigService)
           {:keys [all-stores]} (helpers/get-service-map app :StoreService)
           services (app->MigrationStoreServices app)
-
 
           store-types [:malware :tool :incident]
           logger (atom [])

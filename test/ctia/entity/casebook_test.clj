@@ -324,8 +324,8 @@
 
 (deftest test-casebook-pagination-field-selection
   (test-for-each-store-with-app
-   (fn [_app_]
-     (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
+   (fn [app]
+     (helpers/set-capabilities! app "foouser" ["foogroup"] "user" all-capabilities)
      (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
                                          "foouser"
                                          "foogroup"

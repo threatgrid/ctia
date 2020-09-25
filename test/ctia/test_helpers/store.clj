@@ -12,8 +12,8 @@
                    es-helpers/fixture-delete-store-indexes])})
 
 (s/defn test-for-each-store-with-app
-  "Takes a 1-argument function, and passes it the current
-  app for each kind of store."
+  "Takes a 1-argument function which accepts a Trapperkeeper `app`
+  which should succeed for all stores."
   [t :- (s/=> s/Any
               (s/named s/Any 'app))]
   (doseq [[store-key fixtures] store-fixtures]
