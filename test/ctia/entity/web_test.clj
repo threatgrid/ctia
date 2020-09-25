@@ -20,12 +20,12 @@
             [ctim.domain.id :as id]
             [ring.adapter.jetty :as jetty]))
 
-(use-fixtures :once (join-fixtures [mth/fixture-schema-validation
-                                    helpers/fixture-properties:clean
-                                    helpers/fixture-properties:cors
-                                    whoami-helpers/fixture-server]))
+(use-fixtures :once mth/fixture-schema-validation)
 
-(use-fixtures :each whoami-helpers/fixture-reset-state)
+(use-fixtures :each (join-fixtures [helpers/fixture-properties:clean
+                                    helpers/fixture-properties:cors
+                                    whoami-helpers/fixture-server
+                                    whoami-helpers/fixture-reset-state]))
 
 (def new-judgement-1
   {:observable {:value "1.2.3.4"
