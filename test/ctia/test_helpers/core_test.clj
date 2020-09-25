@@ -52,12 +52,16 @@
           (sut/with-properties
             ["obviously.wrong.path" "val"]
             (sut/build-transformed-init-config)))))
-  (testing "with-properties overrides test properties without changing System properties"
-    (let [uuid (UUID/randomUUID)]
-      (sut/with-properties
-        ["ctia.auth.type" uuid]
-        (is (= (get-in (sut/build-transformed-init-config)
-                       [:ctia :auth :type])
-               uuid))
-        (is (not= (System/getProperty "ctia.auth.type")
-                  uuid))))))
+  (testing "with-properties overrides test properties without also setting System properties"
+    (sut/with-properties
+      ["ctia.auth.type" "foobar"]
+      (is (= (get-in (sut/build-transformed-init-config)
+                     [:ctia :auth :type])
+             :foobar))
+      ;; the old behavior of with-properties did the opposite,
+      ;; this test is a little crude and is mostly a sanity check.
+      ;; more sophisticated checks like
+      ;;  "properties are unchanged before/during/after with-properties"
+      ;; might be more flaky.
+      (is (not= (System/getProperty "ctia.auth.type")
+                "foobar")))))
