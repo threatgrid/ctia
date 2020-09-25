@@ -20,12 +20,12 @@
             [ctim.domain.id :as id]
             [ring.adapter.jetty :as jetty]))
 
-(use-fixtures :once (join-fixtures [mth/fixture-schema-validation
-                                    helpers/fixture-properties:clean
-                                    helpers/fixture-properties:cors
-                                    whoami-helpers/fixture-server]))
+(use-fixtures :once mth/fixture-schema-validation)
 
-(use-fixtures :each whoami-helpers/fixture-reset-state)
+(use-fixtures :each (join-fixtures [helpers/fixture-properties:clean
+                                    helpers/fixture-properties:cors
+                                    whoami-helpers/fixture-server
+                                    whoami-helpers/fixture-reset-state]))
 
 (def new-judgement-1
   {:observable {:value "1.2.3.4"
@@ -198,8 +198,8 @@
                        :confidence "Low"
                        :source "test"
                        :tlp "green"
-                       :owner "Unknown"
-                       :groups ["Administrators"]
+                       :owner "foouser"
+                       :groups ["foogroup"]
                        :schema_version schema-version
                        :reason "This is a bad IP address that talked to some evil servers"
                        :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
