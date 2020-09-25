@@ -41,5 +41,5 @@
       (prn "play-big: " status))))
 
 (defcase* create-actor :big-actor-es-store
-  (fn [_] (let [port (setup-ctia-es-store!)]
-           [#(play-big port) cleanup-ctia!])))
+  (fn [_] (let [{:keys [port app]} (setup-ctia-es-store!)]
+           [#(play-big port) #(cleanup-ctia! app)])))

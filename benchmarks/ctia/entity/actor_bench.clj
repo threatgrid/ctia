@@ -13,7 +13,7 @@
 
 (defgoal create-actor "Create Actor"
   :setup (fn [] [(setup-ctia-es-store!)])
-  :cleanup (fn [_] cleanup-ctia!))
+  :cleanup (fn [{:keys [app]}] (cleanup-ctia! app)))
 
 (defn play [fixture]
   (post "ctia/actor"

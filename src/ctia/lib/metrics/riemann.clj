@@ -3,7 +3,7 @@
             [clojure.tools.logging :as log]
             [puppetlabs.trapperkeeper.core :as tk]))
 
-(defn init! [get-in-config]
+(defn start! [get-in-config]
   (let [{enabled? :enabled :as config}
         (get-in-config [:ctia :metrics :riemann])]
     (when enabled?
@@ -14,7 +14,8 @@
 (defprotocol RiemannMetricsService)
 
 (tk/defservice riemann-metrics-service
+  RiemannMetricsService
   [[:ConfigService get-in-config]]
   (start [this context]
-         (init! get-in-config)
+         (start! get-in-config)
          context))

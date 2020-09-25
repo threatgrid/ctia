@@ -61,8 +61,8 @@
            [#(play-create-bulk port) cleanup-ctia!])))
 
 (defcase* create-bulk :bulk-es-store
-  (fn [_] (let [port (setup-ctia-es-store!)]
-           [#(play-create-bulk port) cleanup-ctia!])))
+  (fn [_] (let [{:keys [port app]} (setup-ctia-es-store!)]
+           [#(play-create-bulk port) #(cleanup-ctia! app)])))
 
 (defcase* create-bulk :bulk-es-store-native
   (fn [_] (let [port (setup-ctia-es-store-native!)]
@@ -78,9 +78,9 @@
 (defn fast-timing
   []
   (fmap (fn [setup-fn]
-          (let [port (setup-fn)
+          (let [{:keys [port app]} (setup-fn)
                 duration (with-out-str (time (play-create-bulk port)))]
-            (cleanup-ctia! nil) ;; um, cleanup-ctia! is a thunk. is this namespace dead? - Ambrose
+            (cleanup-ctia! app)
             duration))
         {:atom-store setup-ctia-atom-store!
          :es-store setup-ctia-es-store!

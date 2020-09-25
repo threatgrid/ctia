@@ -4,19 +4,21 @@
              [init :refer [start-ctia!]]]
             [ctia.test-helpers
              [core :as helpers]
-             [es :as esh]]))
+             [es :as esh]]
+            [puppetlabs.trapperkeeper.app :as app]))
 
 (defn setup-ctia! [fixture]
-  (let [http-port (net/available-port)]
-    (fixture (fn []
-               (helpers/fixture-properties:clean
-                #(helpers/with-properties ["ctia.store.es.default.refresh" "false"
-                                           "ctia.http.enabled" true
-                                           "ctia.http.port" http-port
-                                           "ctia.http.bulk.max-size" 100000
-                                           "ctia.http.show.port" http-port]
-                   (start-ctia!)))))
-    http-port))
+  (let [http-port (net/available-port)
+        app (fixture (fn []
+                       (helpers/fixture-properties:clean
+                         #(helpers/with-properties ["ctia.store.es.default.refresh" "false"
+                                                    "ctia.http.enabled" true
+                                                    "ctia.http.port" http-port
+                                                    "ctia.http.bulk.max-size" 100000
+                                                    "ctia.http.show.port" http-port]
+                            (start-ctia!)))))]
+    {:port http-port
+     :app app}))
 
 
 (defn setup-ctia-es-store! []
@@ -24,8 +26,9 @@
 
 (def delete-store-indexes esh/delete-store-indexes)
 
-(defn cleanup-ctia! []
+(defn cleanup-ctia! [app]
   (esh/delete-store-indexes false)
-  #(do
-     (assert nil "dead?")
-     #_(requiring-resolve 'ctia.shutdown/shutdown-ctia!)))
+  (let [{{:keys [request-shutdown	
+                 wait-for-shutdown]} :ShutdownService} (app/service-graph app)]
+    (request-shutdown)
+    (wait-for-shutdown)))

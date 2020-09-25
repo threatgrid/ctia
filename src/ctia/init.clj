@@ -1,10 +1,8 @@
 (ns ctia.init
   (:require
    [ctia.encryption.default :as encryption-default]
-   [ctia.encryption :as encryption]
    [ctia.entity.entities :refer [validate-entities]]
    [clj-momo.properties :as mp]
-   [clojure.string :as str]
    [clojure.tools.logging :as log]
    [ctia.lib.metrics
     [riemann :as riemann]
@@ -12,13 +10,10 @@
     [console :as console]]
    [ctia.lib.utils :as utils]
    [ctia
-    [auth :as auth]
-    [events :as e]
+    [events-service :as events-svc]
     [logging :as event-logging]
     [properties :as p]
-    [store :as store]
-    [store-service :as store-svc]
-    [store-service-core :as store-svc-core]]
+    [store-service :as store-svc]]
    [ctia.auth
     [allow-all :as allow-all]
     [static :as static-auth]
@@ -28,7 +23,6 @@
    [ctia.graphql-named-type-registry-service :as graphql-registry-svc]
    [ctia.flows.hooks-service :as hooks-svc]
    [ctia.http.server-service :as http-server-svc]
-   [ctia.stores.es.init :as es-init]
    [puppetlabs.trapperkeeper.core :as tk]))
 
 (defn log-properties
@@ -66,7 +60,7 @@
     (into
       [auth-svc
        encryption-svc
-       e/events-service
+       events-svc/events-service
        store-svc/store-service
        http-server-svc/ctia-http-server-service
        hooks-svc/hooks-service

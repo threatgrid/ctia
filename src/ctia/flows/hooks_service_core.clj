@@ -33,6 +33,21 @@
   [{:keys [hooks] :as _context_} hook-type hook-list]
   (swap! hooks update hook-type into hook-list))
 
+(defn init-hooks!
+  "Initialize all hooks"
+  [{:keys [hooks] :as _context_}]
+  (doseq [hook-list (vals @hooks)
+          hook hook-list]
+    (prot/init hook))
+  @hooks)
+
+(defn destroy-hooks!
+  "Should call all destructor for each hook in reverse order."
+  [{:keys [hooks] :as _context_}]
+  (doseq [hook-list (vals @hooks)
+          hook (reverse hook-list)]
+    (prot/destroy hook)))
+
 (defn apply-hooks
   "Apply the registered hooks for a given hook-type to the passed in data.
    Data may be an entity (or an event) and a previous entity.  Accepts
@@ -59,27 +74,22 @@
                 :entity event
                 :read-only? true}))
 
-(defn init-hooks! [{:keys [hooks]}]
-  (doto @hooks
-    #(doseq [hook-list (vals %)
-             hook hook-list]
-       (prot/init hook))
-    #(log/info "Hooks Initialized: " (pr-str %))))
+(defn shutdown!
+  "Normally this should not be called directly since init! registers a
+  shutdown hook"
+  [context]
+  (destroy-hooks! context))
 
 (defn init [context]
   (assoc context :hooks (atom empty-hooks)))
 
 (defn start
   "Initialize all hooks"
-  [context get-in-config]
+  [{:keys [hooks] :as context} get-in-config]
   (reset-hooks! context get-in-config)
   (init-hooks! context)
+  (log/info "Hooks Initialized: " (pr-str @hooks))
   context)
-
-(defn shutdown! [{:keys [hooks] :as context}]
-  (doseq [hook-list (vals @hooks)
-          hook (reverse hook-list)]
-    (prot/destroy hook)))
 
 (defn stop
   "Should call all destructor for each hook in reverse order."

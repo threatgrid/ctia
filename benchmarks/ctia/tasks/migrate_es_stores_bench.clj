@@ -62,18 +62,17 @@
 (defgoal migrate-store-indexes "Run a migration"
   :setup (fn [& args]
            (println "launching CTIA...")
-           (setup-ctia-es-store!)
+           (let [{:keys [app]} (setup-ctia-es-store!)]
+             (println "clear ES stores")
+             (delete-store-indexes)
 
-           (println "clear ES stores")
-           (delete-store-indexes)
-
-           (println "posting fixtures...")
-           (post-fixtures)
-           (prn "fixtures loaded!")
-           [true])
-  :cleanup (fn [& args]
+             (println "posting fixtures...")
+             (post-fixtures)
+             (prn "fixtures loaded!")
+             [app]))
+  :cleanup (fn [app]
              (println "cleanup and exit CTIA...")
-             (cleanup-ctia!)))
+             (cleanup-ctia! app)))
 
 (defn run-migrate-es-stores []
   (with-redefs [sut/exit (fn [_] nil)]
