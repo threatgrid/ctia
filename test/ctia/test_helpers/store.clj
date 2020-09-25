@@ -2,7 +2,8 @@
   (:require [clojure.test :refer [join-fixtures testing]]
             [ctia.test-helpers
              [core :as helpers]
-             [es :as es-helpers]]))
+             [es :as es-helpers]]
+            [schema.core :as s]))
 
 (def store-fixtures
   {:es-store
@@ -10,7 +11,11 @@
                    helpers/fixture-ctia
                    es-helpers/fixture-delete-store-indexes])})
 
-(defn test-for-each-store-with-app [t]
+(s/defn test-for-each-store-with-app
+  "Takes a 1-argument function, and passes it the current
+  app for each kind of store."
+  [t :- (s/=> s/Any
+              (s/named s/Any 'app))]
   (doseq [[store-key fixtures] store-fixtures]
     (testing (name store-key)
       (fixtures
