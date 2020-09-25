@@ -7,7 +7,6 @@
             [clojure.tools.logging :as log]
             [ctia.entity.entities :refer [entities]]
             [ctia.entity.sighting.schemas :refer [StoredSighting]]
-            [ctia.init :as init]
             [ctia.properties :as p]
             [ctia.stores.es.crud :refer [coerce-to-fn]]
             [ctia.stores.es.store :refer [StoreMap]]
