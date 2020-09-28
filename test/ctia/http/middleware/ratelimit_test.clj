@@ -5,7 +5,6 @@
             [schema.test :refer [validate-schemas]]
             [ctia.auth :as auth :refer [IIdentity]]
             [ctia.test-helpers.core :as helpers]
-            [ctia.test-helpers.store :refer [test-for-each-store]]
             [ctia.test-helpers.fake-whoami-service :as whoami-helpers]
             [ctia.test-helpers.es :as es-helpers]
             [taoensso.carmine :as car]

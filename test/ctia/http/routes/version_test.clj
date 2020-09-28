@@ -6,7 +6,7 @@
             [ctia.test-helpers
              [core :as helpers :refer [get]]
              [fake-whoami-service :as whoami-helpers]
-             [store :refer [test-for-each-store]]]))
+             [store :refer [test-for-each-store-with-app]]]))
 
 (use-fixtures :once (join-fixtures [mth/fixture-schema-validation
                                     helpers/fixture-properties:clean
@@ -15,8 +15,8 @@
 (use-fixtures :each whoami-helpers/fixture-reset-state)
 
 (deftest test-version-routes
-  (test-for-each-store
-   (fn []
+  (test-for-each-store-with-app
+   (fn [_app_]
      (testing "we can request different content types"
        (let [response (get "ctia/version" :accept :json)]
          (is (= "/ctia" (get-in response [:parsed-body "base"]))))
@@ -31,8 +31,8 @@
          (is (= "test" (get-in response [:parsed-body :ctia-config]))))))))
 
 (deftest test-version-headers
-  (test-for-each-store
-   (fn []
+  (test-for-each-store-with-app
+   (fn [_app_]
      (testing "GET /ctia/version"
        (let [{headers :headers
               :as response} (get "ctia/version")]

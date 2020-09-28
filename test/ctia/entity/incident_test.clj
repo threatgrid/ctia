@@ -16,7 +16,7 @@
              [field-selection :refer [field-selection-tests]]
              [http :refer [doc-id->rel-url]]
              [pagination :refer [pagination-test]]
-             [store :refer [test-for-each-store]]]
+             [store :refer [test-for-each-store-with-app]]]
             [ctim.examples.incidents
              :refer
              [new-incident-maximal new-incident-minimal]]))
@@ -79,9 +79,9 @@
                   (tc/to-date fixed-now)))))))))
 
 (deftest test-incident-crud-routes
-  (test-for-each-store
-   (fn []
-     (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
+  (test-for-each-store-with-app
+   (fn [app]
+     (helpers/set-capabilities! app "foouser" ["foogroup"] "user" all-capabilities)
      (whoami-helpers/set-whoami-response "45c1f5e3f05d0" "foouser" "foogroup" "user")
      (let [parameters {:entity "incident"
                        :patch-tests? true
@@ -97,9 +97,9 @@
                              :date-fields sut/incident-histogram-fields})))
 
 (deftest test-incident-pagination-field-selection
-  (test-for-each-store
-   (fn []
-     (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
+  (test-for-each-store-with-app
+   (fn [app]
+     (helpers/set-capabilities! app "foouser" ["foogroup"] "user" all-capabilities)
      (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
                                          "foouser"
                                          "foogroup"
@@ -125,4 +125,4 @@
                        new-incident-minimal
                        true
                        true
-                       test-for-each-store))
+                       test-for-each-store-with-app))

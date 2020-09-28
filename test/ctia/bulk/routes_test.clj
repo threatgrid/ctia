@@ -20,7 +20,7 @@
              [auth :refer [all-capabilities]]
              [core :as helpers :refer [get post]]
              [fake-whoami-service :as whoami-helpers]
-             [store :refer [test-for-each-store store-fixtures]]]
+             [store :refer [test-for-each-store-with-app store-fixtures]]]
             [ctim.domain.id :as id]
             [ctim.examples.incidents :refer [new-incident-maximal]]))
 
@@ -196,14 +196,15 @@
 (deftest test-bulk-wait_for-test
   ((:es-store store-fixtures)
    (fn []
-     (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
-     (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
-                                         "foouser"
-                                         "foogroup"
-                                         "user")
      (testing "POST /ctia/bulk with wait_for"
        (let [app (helpers/get-current-app)
              {:keys [get-in-config]} (helpers/get-service-map app :ConfigService)
+
+             _ (helpers/set-capabilities! app "foouser" ["foogroup"] "user" all-capabilities)
+             _ (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
+                                                 "foouser"
+                                                 "foogroup"
+                                                 "user")
 
              default-es-refresh (->> (get-in-config
                                        [:ctia :store :es :default :refresh])
@@ -253,16 +254,15 @@
          (check-refresh nil "Configured ctia.store.bundle-refresh value is applied when wait_for is not specified"))))))
 
 (deftest test-bulk-routes
-  (test-for-each-store
-   (fn []
-     (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
+  (test-for-each-store-with-app
+   (fn [app]
+     (helpers/set-capabilities! app "foouser" ["foogroup"] "user" all-capabilities)
      (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
                                          "foouser"
                                          "foogroup"
                                          "user")
      (testing "POST /ctia/bulk"
-       (let [app (helpers/get-current-app)
-             {:keys [get-in-config]} (helpers/get-service-map app :ConfigService)
+       (let [{:keys [get-in-config]} (helpers/get-service-map app :ConfigService)
 
              nb 7
              indicators (map mk-new-indicator (range nb))
@@ -335,11 +335,10 @@
            (* nb (count new-bulk))))))
 
 (deftest bulk-max-size-post-test
-  (test-for-each-store
-   (fn []
-    (let [app (helpers/get-current-app)
-          {:keys [get-in-config]} (helpers/get-service-map app :ConfigService)]
-     (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
+  (test-for-each-store-with-app
+   (fn [app]
+    (let [{:keys [get-in-config]} (helpers/get-service-map app :ConfigService)]
+     (helpers/set-capabilities! app "foouser" ["foogroup"] "user" all-capabilities)
      (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
                                          "foouser"
                                          "foogroup"
@@ -410,9 +409,9 @@
            first))
 
 (deftest bulk-with-transient-ids
-  (test-for-each-store
-   (fn []
-     (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
+  (test-for-each-store-with-app
+   (fn [app]
+     (helpers/set-capabilities! app "foouser" ["foogroup"] "user" all-capabilities)
      (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
                                          "foouser"
                                          "foogroup"
@@ -451,9 +450,9 @@
                 "transient and real IDs"))))))
 
 (deftest bulk-spec-test
-  (test-for-each-store
-   (fn []
-     (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
+  (test-for-each-store-with-app
+   (fn [app]
+     (helpers/set-capabilities! app "foouser" ["foogroup"] "user" all-capabilities)
      (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
                                          "foouser"
                                          "foogroup"
@@ -486,16 +485,15 @@
            "The bulk create status should report errors")))))
 
 (deftest bulk-error-test
-  (test-for-each-store
-   (fn []
-     (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
+  (test-for-each-store-with-app
+   (fn [app]
+     (helpers/set-capabilities! app "foouser" ["foogroup"] "user" all-capabilities)
      (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
                                          "foouser"
                                          "foogroup"
                                          "user")
 
-     (let [app (helpers/get-current-app)
-           {:keys [all-stores]} (helpers/get-service-map app :StoreService)
+     (let [{:keys [all-stores]} (helpers/get-service-map app :StoreService)
 
            {:keys [index conn]} (-> (all-stores) :tool first :state)
        ;; close tool index to produce ES errors on that store

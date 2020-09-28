@@ -16,7 +16,7 @@
             [ctia.test-helpers
              [core :as helpers :refer [deep-dissoc-entity-ids get post delete]]
              [fake-whoami-service :as whoami-helpers]
-             [store :refer [test-for-each-store]]]
+             [store :refer [test-for-each-store-with-app]]]
             [ctim.domain.id :as id]
             [ctia.auth :as auth :refer [IIdentity]]
             [ctim.examples.bundles :refer [bundle-maximal]]))
@@ -204,15 +204,14 @@
        (into {})))
 
 (deftest bundle-import-test
-  (test-for-each-store
-   (fn []
-     (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
+  (test-for-each-store-with-app
+   (fn [app]
+     (helpers/set-capabilities! app "foouser" ["foogroup"] "user" all-capabilities)
      (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
                                          "foouser"
                                          "foogroup"
                                          "user")
-     (let [app (helpers/get-current-app)
-           {:keys [all-stores]} (helpers/get-service-map app :StoreService)
+     (let [{:keys [all-stores]} (helpers/get-service-map app :StoreService)
 
            indicators [(mk-indicator 0)
                        (mk-indicator 1)]
@@ -405,9 +404,9 @@
            (es-index/open! (:conn indicator-store-state) indexname)))))))
 
 (deftest bundle-import-errors-test
-  (test-for-each-store
-   (fn []
-     (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
+  (test-for-each-store-with-app
+   (fn [app]
+     (helpers/set-capabilities! app "foouser" ["foogroup"] "user" all-capabilities)
      (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
                                          "foouser"
                                          "foogroup"
@@ -441,15 +440,14 @@
   (rate-limit-fn [_ _] false))
 
 (deftest all-pages-test
-  (test-for-each-store
-   (fn []
-     (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
+  (test-for-each-store-with-app
+   (fn [app]
+     (helpers/set-capabilities! app "foouser" ["foogroup"] "user" all-capabilities)
      (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
                                          "foouser"
                                          "foogroup"
                                          "user")
-     (let [app (helpers/get-current-app)
-           read-store (-> (helpers/get-service-map app :StoreService)
+     (let [read-store (-> (helpers/get-service-map app :StoreService)
                           :read-store
                           store-svc/store-service-fn->varargs)
 
@@ -487,9 +485,9 @@
            "all-pages must match at least one entity for each existing external-id")))))
 
 (deftest find-by-external-ids-test
-  (test-for-each-store
-   (fn []
-     (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
+  (test-for-each-store-with-app
+   (fn [app]
+     (helpers/set-capabilities! app "foouser" ["foogroup"] "user" all-capabilities)
      (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
                                          "foouser"
                                          "foogroup"
@@ -553,9 +551,9 @@
      :relationships (set relationships)}))
 
 (deftest bundle-export-test
-  (test-for-each-store
-   (fn []
-     (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
+  (test-for-each-store-with-app
+   (fn [app]
+     (helpers/set-capabilities! app "foouser" ["foogroup"] "user" all-capabilities)
      (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
                                          "foouser"
                                          "foogroup"
@@ -644,9 +642,9 @@
 
 (deftest bundle-export-with-unreachable-entities
   (testing "external and deleted entities in fetched relationships should be ignored"
-    (test-for-each-store
-     (fn []
-       (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
+    (test-for-each-store-with-app
+     (fn [app]
+       (helpers/set-capabilities! app "foouser" ["foogroup"] "user" all-capabilities)
        (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
                                            "foouser"
                                            "foogroup"
@@ -741,9 +739,9 @@
 
 
 (deftest bundle-max-relationships-test
-  (test-for-each-store
-   (fn []
-     (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
+  (test-for-each-store-with-app
+   (fn [app]
+     (helpers/set-capabilities! app "foouser" ["foogroup"] "user" all-capabilities)
      (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
                                          "foouser"
                                          "foogroup"
@@ -764,9 +762,9 @@
 
 
 (deftest bundle-export-graph-test
-  (test-for-each-store
-   (fn []
-     (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
+  (test-for-each-store-with-app
+   (fn [app]
+     (helpers/set-capabilities! app "foouser" ["foogroup"] "user" all-capabilities)
      (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
                                          "foouser"
                                          "foogroup"
@@ -924,9 +922,9 @@
 (deftest bundle-tlp-test
  (with-tlp-property-setting "amber"
   (fn []
-   (test-for-each-store
-    (fn []
-     (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
+   (test-for-each-store-with-app
+    (fn [app]
+     (helpers/set-capabilities! app "foouser" ["foogroup"] "user" all-capabilities)
      (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
                                          "foouser"
                                          "foogroup"
@@ -947,9 +945,9 @@
          (is (= 200 (:status res))))))))))
 
 (deftest bundle-acl-fields-test
-  (test-for-each-store
-   (fn []
-     (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
+  (test-for-each-store-with-app
+   (fn [app]
+     (helpers/set-capabilities! app "foouser" ["foogroup"] "user" all-capabilities)
      (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
                                          "foouser"
                                          "foogroup"
@@ -978,9 +976,9 @@
          (is (= 200 (:status bundle-get-res))))))))
 
 (deftest bundle-export-casebook-test
-  (test-for-each-store
-   (fn []
-     (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
+  (test-for-each-store-with-app
+   (fn [app]
+     (helpers/set-capabilities! app "foouser" ["foogroup"] "user" all-capabilities)
      (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
                                          "foouser"
                                          "foogroup"

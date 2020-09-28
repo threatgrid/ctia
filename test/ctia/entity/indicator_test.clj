@@ -9,7 +9,7 @@
              [crud :refer [entity-crud-test]]
              [aggregate :refer [test-metric-routes]]
              [fake-whoami-service :as whoami-helpers]
-             [store :refer [test-for-each-store]]]
+             [store :refer [test-for-each-store-with-app]]]
             [ctim.examples.indicators
              :refer
              [new-indicator-maximal new-indicator-minimal]]))
@@ -55,9 +55,9 @@
         "Searching indicators by missing tags value should not match any document")))))
 
 (deftest test-indicator-crud-routes
-  (test-for-each-store
-   (fn []
-     (helpers/set-capabilities! "foouser" ["foogroup"] "user" caps/all-capabilities)
+  (test-for-each-store-with-app
+   (fn [app]
+     (helpers/set-capabilities! app "foouser" ["foogroup"] "user" caps/all-capabilities)
      (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
                                          "foouser"
                                          "foogroup"
@@ -73,7 +73,7 @@
                        new-indicator-minimal
                        true
                        false
-                       test-for-each-store))
+                       test-for-each-store-with-app))
 
 (deftest test-indicator-metric-routes
   (test-metric-routes (into sut/indicator-entity

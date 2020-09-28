@@ -6,7 +6,7 @@
              [core :as helpers]
              [crud :refer [entity-crud-test]]
              [fake-whoami-service :as whoami-helpers]
-             [store :refer [test-for-each-store]]]
+             [store :refer [test-for-each-store-with-app]]]
             [ctim.schemas.common :as c]))
 
 (use-fixtures :once (join-fixtures [mth/fixture-schema-validation
@@ -32,9 +32,9 @@
                 :end_time #inst "2016-07-11T00:40:48.212-00:00"}})
 
 (deftest test-data-table-routes
-  (test-for-each-store
-   (fn []
-     (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
+  (test-for-each-store-with-app
+   (fn [app]
+     (helpers/set-capabilities! app "foouser" ["foogroup"] "user" all-capabilities)
      (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
                                          "foouser"
                                          "foogroup"

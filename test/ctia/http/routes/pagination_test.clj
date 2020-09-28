@@ -9,7 +9,7 @@
              [http :refer [assert-post]]
              [pagination :refer [pagination-test
                                  pagination-test-no-sort]]
-             [store :refer [test-for-each-store]]]
+             [store :refer [test-for-each-store-with-app]]]
             [ctim.domain.id :as id]))
 
 (use-fixtures :once
@@ -19,10 +19,9 @@
 
 (deftest ^:slow test-pagination-lists
   "generate an observable and many records of all listable entities"
-  (test-for-each-store
-   (fn []
-     (let [app (helpers/get-current-app)
-           {:keys [get-in-config]} (helpers/get-service-map app :ConfigService)
+  (test-for-each-store-with-app
+   (fn [app]
+     (let [{:keys [get-in-config]} (helpers/get-service-map app :ConfigService)
 
            http-show (get-in-config [:ctia :http :show])
            observable {:type "ip"

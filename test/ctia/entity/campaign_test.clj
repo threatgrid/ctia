@@ -12,7 +12,7 @@
              [field-selection :refer [field-selection-tests]]
              [http :refer [doc-id->rel-url]]
              [pagination :refer [pagination-test]]
-             [store :refer [test-for-each-store]]]
+             [store :refer [test-for-each-store-with-app]]]
             [ctim.examples.campaigns :as ex :refer [new-campaign-maximal new-campaign-minimal]]))
 
 (use-fixtures :once (join-fixtures [mth/fixture-schema-validation
@@ -22,9 +22,9 @@
 (use-fixtures :each whoami-helpers/fixture-reset-state)
 
 (deftest test-campaign-routes
-  (test-for-each-store
-   (fn []
-     (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
+  (test-for-each-store-with-app
+   (fn [app]
+     (helpers/set-capabilities! app "foouser" ["foogroup"] "user" all-capabilities)
      (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
                                          "foouser"
                                          "foogroup"
@@ -35,9 +35,9 @@
                         :headers {:Authorization "45c1f5e3f05d0"}}))))
 
 (deftest test-campaign-pagination-field-selection
-  (test-for-each-store
-   (fn []
-     (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
+  (test-for-each-store-with-app
+   (fn [app]
+     (helpers/set-capabilities! app "foouser" ["foogroup"] "user" all-capabilities)
      (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
                                          "foouser"
                                          "foogroup"
@@ -64,7 +64,7 @@
                        ex/new-campaign-minimal
                        true
                        true
-                       test-for-each-store))
+                       test-for-each-store-with-app))
 
 (deftest test-campaign-metric-routes
   (test-metric-routes (into sut/campaign-entity

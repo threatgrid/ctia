@@ -5,16 +5,15 @@
             [ctia.store-service :as store-svc]
             [ctia.test-helpers
              [core :as helpers]
-             [store :refer [test-for-each-store]]]))
+             [store :refer [test-for-each-store-with-app]]]))
 
 (use-fixtures :once (join-fixtures [mth/fixture-schema-validation
                                     helpers/fixture-properties:clean]))
 
 (deftest test-read-identity
-  (test-for-each-store
-   (fn []
-    (let [app (helpers/get-current-app)
-          {:keys [read-store write-store]} (-> (helpers/get-service-map app :StoreService)
+  (test-for-each-store-with-app
+   (fn [app]
+    (let [{:keys [read-store write-store]} (-> (helpers/get-service-map app :StoreService)
                                                store-svc/lift-store-service-fns)]
      (testing "Reading not-found identity returns nil"
 

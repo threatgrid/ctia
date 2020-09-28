@@ -12,7 +12,7 @@
              [field-selection :refer [field-selection-tests]]
              [http :refer [doc-id->rel-url]]
              [pagination :refer [pagination-test]]
-             [store :refer [test-for-each-store]]]
+             [store :refer [test-for-each-store-with-app]]]
             [ctim.examples.weaknesses :refer [new-weakness-maximal new-weakness-minimal]]))
 
 (use-fixtures :once
@@ -24,9 +24,10 @@
   whoami-helpers/fixture-reset-state)
 
 (deftest test-weakness-routes
-  (test-for-each-store
-   (fn []
-     (helpers/set-capabilities! "foouser"
+  (test-for-each-store-with-app
+   (fn [app]
+     (helpers/set-capabilities! app
+                                "foouser"
                                 ["foogroup"]
                                 "user"
                                 all-capabilities)
@@ -40,9 +41,9 @@
        :headers {:Authorization "45c1f5e3f05d0"}}))))
 
 (deftest test-weakness-pagination-field-selection
-  (test-for-each-store
-   (fn []
-     (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
+  (test-for-each-store-with-app
+   (fn [app]
+     (helpers/set-capabilities! app "foouser" ["foogroup"] "user" all-capabilities)
      (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
                                          "foouser"
                                          "foogroup"
@@ -69,7 +70,7 @@
                        new-weakness-minimal
                        true
                        true
-                       test-for-each-store))
+                       test-for-each-store-with-app))
 
 (deftest test-weakness-metric-routes
   (test-metric-routes (into sut/weakness-entity

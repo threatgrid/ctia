@@ -22,7 +22,7 @@
              [field-selection :refer [field-selection-tests]]
              [http :refer [doc-id->rel-url]]
              [pagination :refer [pagination-test]]
-             [store :refer [test-for-each-store]]]
+             [store :refer [test-for-each-store-with-app]]]
             [ctim.examples.judgements :as ex]))
 
 (use-fixtures :once (join-fixtures [mth/fixture-schema-validation
@@ -140,10 +140,10 @@
                body))))))
 
 (deftest test-judgement-crud-routes
-  (test-for-each-store
-   (fn []
-     (helpers/set-capabilities! "foouser" ["foogroupi"] "user" all-capabilities)
-     (helpers/set-capabilities! "baruser"  ["bargroup"] "user" #{})
+  (test-for-each-store-with-app
+   (fn [app]
+     (helpers/set-capabilities! app "foouser" ["foogroupi"] "user" all-capabilities)
+     (helpers/set-capabilities! app "baruser"  ["bargroup"] "user" #{})
      (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
                                          "foouser"
                                          "foogroup"
@@ -170,9 +170,9 @@
                              :date-fields judgement-histogram-fields})))
 
 (deftest test-judgement-routes-for-dispositon-determination
-  (test-for-each-store
-   (fn []
-     (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
+  (test-for-each-store-with-app
+   (fn [app]
+     (helpers/set-capabilities! app "foouser" ["foogroup"] "user" all-capabilities)
      (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
                                          "foouser"
                                          "foogroup"
@@ -337,9 +337,9 @@
                 judgement)))))))
 
 (deftest test-judgement-pagination-field-selection
-  (test-for-each-store
-   (fn []
-     (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
+  (test-for-each-store-with-app
+   (fn [app]
+     (helpers/set-capabilities! app "foouser" ["foogroup"] "user" all-capabilities)
      (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
                                          "foouser"
                                          "foogroup"
@@ -370,4 +370,4 @@
                        ex/new-judgement-minimal
                        true
                        true
-                       test-for-each-store))
+                       test-for-each-store-with-app))

@@ -82,7 +82,8 @@
         {:keys [get-in-config]} (helpers/get-service-map app :ConfigService)
         {:keys [all-stores]} (helpers/get-service-map app :StoreService)
 
-        _ (helpers/set-capabilities! "foouser"
+        _ (helpers/set-capabilities! app
+                                     "foouser"
                                      ["foogroup"]
                                      "user"
                                      all-capabilities)

@@ -12,7 +12,7 @@
              [field-selection :refer [field-selection-tests]]
              [http :refer [doc-id->rel-url]]
              [pagination :refer [pagination-test]]
-             [store :refer [test-for-each-store]]]
+             [store :refer [test-for-each-store-with-app]]]
             [ctim.examples.coas :refer [new-coa-maximal new-coa-minimal]]))
 
 (use-fixtures :once (join-fixtures [mth/fixture-schema-validation
@@ -22,9 +22,9 @@
 (use-fixtures :each whoami-helpers/fixture-reset-state)
 
 (deftest test-coa-crud-routes
-  (test-for-each-store
-   (fn []
-     (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
+  (test-for-each-store-with-app
+   (fn [app]
+     (helpers/set-capabilities! app "foouser" ["foogroup"] "user" all-capabilities)
      (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
                                          "foouser"
                                          "foogroup"
@@ -34,9 +34,9 @@
                         :headers {:Authorization "45c1f5e3f05d0"}}))))
 
 (deftest test-coa-pagination-field-selection
-  (test-for-each-store
-   (fn []
-     (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
+  (test-for-each-store-with-app
+   (fn [app]
+     (helpers/set-capabilities! app "foouser" ["foogroup"] "user" all-capabilities)
      (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
                                          "foouser"
                                          "foogroup"
@@ -62,7 +62,7 @@
                        new-coa-minimal
                        true
                        true
-                       test-for-each-store))
+                       test-for-each-store-with-app))
 
 (deftest test-coa-metric-routes
   (test-metric-routes (into sut/coa-entity

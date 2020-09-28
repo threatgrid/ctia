@@ -18,7 +18,7 @@
     [field-selection :refer [field-selection-tests]]
     [http :refer [doc-id->rel-url]]
     [pagination :refer [pagination-test]]
-    [store :refer [test-for-each-store]]]))
+    [store :refer [test-for-each-store-with-app]]]))
 
 (def new-feed-maximal
   {:revision 0
@@ -203,9 +203,10 @@
                                  :headers {"Authorization" "45c1f5e3f05d0"}))))))))))
 
 (deftest test-feed-routes
-  (test-for-each-store
-   (fn []
-     (helpers/set-capabilities! "foouser"
+  (test-for-each-store-with-app
+   (fn [app]
+     (helpers/set-capabilities! app
+                                "foouser"
                                 ["foogroup"]
                                 "user"
                                 all-capabilities)
@@ -238,9 +239,9 @@
          :additional-tests feed-view-tests})))))
 
 (deftest test-feed-pagination-field-selection
-  (test-for-each-store
-   (fn []
-     (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
+  (test-for-each-store-with-app
+   (fn [app]
+     (helpers/set-capabilities! app "foouser" ["foogroup"] "user" all-capabilities)
      (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
                                          "foouser"
                                          "foogroup"
@@ -269,4 +270,4 @@
                        new-feed-minimal
                        true
                        true
-                       test-for-each-store))
+                       test-for-each-store-with-app))

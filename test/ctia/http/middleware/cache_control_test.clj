@@ -22,14 +22,14 @@
                     :headers (merge headers {"Authorization" "45c1f5e3f05d0"})) [:status :headers :parsed-body]))
 
 (deftest test-cache-control-middleware
-  (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
-  (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
-                                      "foouser"
-                                      "foogroup"
-                                      "user")
-
   (testing "Cache control with ETags"
-    (let [{status :status
+    (let [app (helpers/get-current-app)
+          _ (helpers/set-capabilities! app "foouser" ["foogroup"] "user" all-capabilities)
+          _ (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
+                                                "foouser"
+                                                "foogroup"
+                                                "user")
+          {status :status
            actor :parsed-body}
           (post "ctia/actor"
                 :body {:title "actor"

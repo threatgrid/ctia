@@ -261,9 +261,10 @@
     #(assoc-in % [:ctia :store :es :default :shards] 1)
     #((:es-store store-fixtures)
       (fn []
-        (helpers.core/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
-        (helpers.whoami/set-whoami-response "45c1f5e3f05d0" "foouser" "foogroup" "user")
-        (let [docs (generate-n-entity metric-params 100)]
+        (let [app (helpers.core/get-current-app)
+              _ (helpers.core/set-capabilities! app "foouser" ["foogroup"] "user" all-capabilities)
+              _ (helpers.whoami/set-whoami-response "45c1f5e3f05d0" "foouser" "foogroup" "user")
+              docs (generate-n-entity metric-params 100)]
           (with-redefs [;; ensure from coercion in proper one year range
                         now (-> (tc/from-string "2020-12-31")
                                 tc/to-date

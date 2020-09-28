@@ -203,14 +203,6 @@
 
 (deftest migration-with-rollover
  (with-each-fixtures identity
-  (helpers/set-capabilities! "foouser"
-                             ["foogroup"]
-                             "user"
-                             all-capabilities)
-  (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
-                                      "foouser"
-                                      "foogroup"
-                                      "user")
   (testing "migration with rollover and multiple indices for source stores"
     (let [app (helpers/get-current-app)
           {:keys [get-in-config]} (helpers/get-service-map app :ConfigService)
@@ -218,6 +210,15 @@
           services (app->MigrationStoreServices app)
 
           store-types [:malware :tool :incident]]
+      (helpers/set-capabilities! app
+                                 "foouser"
+                                 ["foogroup"]
+                                 "user"
+                                 all-capabilities)
+      (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
+                                          "foouser"
+                                          "foogroup"
+                                          "user")
       (rollover-post-bulk all-stores)
       ;; insert malformed documents
       (doseq [store-type store-types]
@@ -513,14 +514,6 @@
 
 (deftest migration-with-malformed-docs
  (with-each-fixtures identity
-  (helpers/set-capabilities! "foouser"
-                             ["foogroup"]
-                             "user"
-                             all-capabilities)
-  (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
-                                      "foouser"
-                                      "foogroup"
-                                      "user")
   (testing "migration with malformed documents in store"
     (let [app (helpers/get-current-app)
           {:keys [get-in-config]} (helpers/get-service-map app :ConfigService)
@@ -533,6 +526,15 @@
                    :hey "I"
                    :am "a"
                    :bad "document"}]
+      (helpers/set-capabilities! app
+                                 "foouser"
+                                 ["foogroup"]
+                                 "user"
+                                 all-capabilities)
+      (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
+                                          "foouser"
+                                          "foogroup"
+                                          "user")
       ;; insert proper documents
       (rollover-post-bulk all-stores)
       ;; insert malformed documents
@@ -572,18 +574,19 @@
 (deftest test-migrate-store-indexes
  (with-each-fixtures identity
   ;; TODO clean data
-  (helpers/set-capabilities! "foouser"
-                             ["foogroup"]
-                             "user"
-                             all-capabilities)
-  (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
-                                      "foouser"
-                                      "foogroup"
-                                      "user")
   (let [app (helpers/get-current-app)
         {:keys [get-in-config]} (helpers/get-service-map app :ConfigService)
         {:keys [all-stores]} (helpers/get-service-map app :StoreService)
         services (app->MigrationStoreServices app)]
+    (helpers/set-capabilities! app
+                               "foouser"
+                               ["foogroup"]
+                               "user"
+                               all-capabilities)
+    (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
+                                        "foouser"
+                                        "foogroup"
+                                        "user")
     ;; insert proper documents
     (rollover-post-bulk all-stores)
     (testing "migrate ES Stores test setup"

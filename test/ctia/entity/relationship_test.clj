@@ -15,7 +15,7 @@
              [field-selection :refer [field-selection-tests]]
              [http :refer [doc-id->rel-url]]
              [pagination :refer [pagination-test]]
-             [store :refer [test-for-each-store]]]
+             [store :refer [test-for-each-store-with-app]]]
             [ctim.domain.id :refer [long-id->id]]
             [ctim.examples
              [casebooks :refer [new-casebook-minimal]]
@@ -29,16 +29,12 @@
 
 (use-fixtures :each whoami-helpers/fixture-reset-state)
 
-(defn establish-user! []
-  (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
+(defn establish-user! [app]
+  (helpers/set-capabilities! app "foouser" ["foogroup"] "user" all-capabilities)
   (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
                                       "foouser"
                                       "foogroup"
                                       "user"))
-
-(defn establish-admin! []
-  (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
-  (whoami-helpers/set-whoami-response "45c1f5e3f05d0" "foouser" "Administrators" "user"))
 
 (def new-relationship
   (-> new-relationship-maximal
@@ -53,9 +49,9 @@
       (dissoc :id)))
 
 (deftest test-relationship-routes-bad-reference
-  (test-for-each-store
-   (fn []
-     (establish-user!)
+  (test-for-each-store-with-app
+   (fn [app]
+     (establish-user! app)
      (testing "POST /ctia/relationship"
        (let [new-relationship
              (-> new-relationship-maximal
@@ -74,18 +70,18 @@
          (is (= 400 status)))))))
 
 (deftest test-relationship-routes
-  (test-for-each-store
-   (fn []
-     (establish-user!)
+  (test-for-each-store-with-app
+   (fn [app]
+     (establish-user! app)
      (entity-crud-test
       {:entity "relationship"
        :example new-relationship
        :headers {:Authorization "45c1f5e3f05d0"}}))))
 
 (deftest test-relationship-pagination-field-selection
-  (test-for-each-store
-   (fn []
-     (establish-user!)
+  (test-for-each-store-with-app
+   (fn [app]
+     (establish-user! app)
      (let [ids (post-entity-bulk
                 new-relationship-maximal
                 :relationships
@@ -106,12 +102,12 @@
                        new-relationship-minimal
                        true
                        true
-                       test-for-each-store))
+                       test-for-each-store-with-app))
 
 (deftest links-routes-test
-  (test-for-each-store
-   (fn []
-     (establish-user!)
+  (test-for-each-store-with-app
+   (fn [app]
+     (establish-user! app)
      (testing "Indicator & Casebook test setup"
        (let [{casebook-body :parsed-body
               casebook-status :status}
@@ -176,9 +172,9 @@
              "Link Response is the created relationship"))))))
 
 (deftest incident-investigation-link-routes-test
-  (test-for-each-store
-   (fn []
-     (establish-user!)
+  (test-for-each-store-with-app
+   (fn [app]
+     (establish-user! app)
      ;; Creates an Incident and Investigation, and tests
      ;; various (successful and unsuccessful) ways to link them
      ;; via the /incident/:id/link route.
@@ -263,9 +259,9 @@
              "Link response is the created relationship"))))))
 
 (deftest incident-link-routes-ambiguous-test
-  (test-for-each-store
-   (fn []
-     (establish-user!)
+  (test-for-each-store-with-app
+   (fn [app]
+     (establish-user! app)
      ;; Exactly one of a fixed set of fields is allowed in the
      ;; body of an /incident/:id/link route. This test generates
      ;; the interesting combinations of these fields that trigger 400 errors.
