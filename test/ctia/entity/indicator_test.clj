@@ -63,7 +63,8 @@
                                          "foogroup"
                                          "user")
      (entity-crud-test
-      {:entity "indicator"
+      {:app app
+       :entity "indicator"
        :example new-indicator-maximal
        :additional-tests search-tests
        :headers {:Authorization "45c1f5e3f05d0"}}))))

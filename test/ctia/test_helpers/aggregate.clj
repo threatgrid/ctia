@@ -8,7 +8,7 @@
              [auth :refer [all-capabilities]]
              [fake-whoami-service :as helpers.whoami]
              [core :as helpers.core]
-             [store :refer [store-fixtures]]]
+             [store :refer [test-selected-stores-with-app]]]
             [clojure.string :as string]
             [clojure.pprint :refer [pprint]]
             [schema-generators.generators :as g]
@@ -259,10 +259,10 @@
   ;; see ES details: https://www.elastic.co/guide/en/elasticsearch/reference/5.6/search-aggregations-bucket-terms-aggregation.html#search-aggregations-bucket-terms-aggregation-approximate-counts
   (helpers.core/with-config-transformer*
     #(assoc-in % [:ctia :store :es :default :shards] 1)
-    #((:es-store store-fixtures)
-      (fn []
-        (let [app (helpers.core/get-current-app)
-              _ (helpers.core/set-capabilities! app "foouser" ["foogroup"] "user" all-capabilities)
+    #(test-selected-stores-with-app
+      #{:es-store}
+      (fn [app]
+        (let [_ (helpers.core/set-capabilities! app "foouser" ["foogroup"] "user" all-capabilities)
               _ (helpers.whoami/set-whoami-response "45c1f5e3f05d0" "foouser" "foogroup" "user")
               docs (generate-n-entity metric-params 100)]
           (with-redefs [;; ensure from coercion in proper one year range

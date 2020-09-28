@@ -19,7 +19,7 @@
 
 (use-fixtures :each whoami-helpers/fixture-reset-state)
 
-(defn additional-tests [asset-id asset-sample]
+(defn additional-tests [app asset-id asset-sample]
   (testing "GET /ctia/asset/search"
     (do
       (are [term check-fn expected desc] (let [response (helpers/get (str "ctia/asset/search")
@@ -39,7 +39,8 @@
      (helpers/set-capabilities! app "foouser" ["foogroup"] "user" auth/all-capabilities)
      (whoami-helpers/set-whoami-response http/api-key "foouser" "foogroup" "user")
      (entity-crud-test
-      {:entity           "asset"
+      {:app              app
+       :entity           "asset"
        :example          new-asset-maximal
        :invalid-tests?   true
        :update-tests?    true

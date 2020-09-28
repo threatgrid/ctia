@@ -20,10 +20,9 @@
 
 (use-fixtures :each whoami-helpers/fixture-reset-state)
 
-(defn additional-tests [_ target-record-sample]
+(defn additional-tests [app _ target-record-sample]
   (testing "GET /ctia/target-record/search"
-   (let [app (helpers/get-current-app)
-         {:keys [get-in-config]} (helpers/get-service-map app :ConfigService)]
+   (let [{:keys [get-in-config]} (helpers/get-service-map app :ConfigService)]
     ;; only when ES store
     (when (= "es" (get-in-config [:ctia :store :target-record]))
       (let [{[target] :targets} target-record-sample
@@ -59,7 +58,8 @@
      (helpers/set-capabilities! app "foouser" ["foogroup"] "user" auth/all-capabilities)
      (whoami-helpers/set-whoami-response http/api-key "foouser" "foogroup" "user")
      (entity-crud-test
-      {:entity           "target-record"
+      {:app              app
+       :entity           "target-record"
        :example          new-target-record-maximal
        :invalid-tests?   true
        :update-tests?    true

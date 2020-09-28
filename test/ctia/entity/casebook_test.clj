@@ -23,7 +23,7 @@
     [new-casebook-maximal new-casebook-minimal]]
    [ctim.schemas.common :refer [ctim-schema-version]]))
 
-(defn partial-operations-tests [casebook-id casebook]
+(defn partial-operations-tests [app casebook-id casebook]
   ;; observables
   (testing "POST /ctia/casebook/:id/observables :add"
     (let [new-observables [{:type "ip" :value "42.42.42.42"}]
@@ -316,7 +316,8 @@
                                          "foogroup"
                                          "user")
 
-     (entity-crud-test {:entity "casebook"
+     (entity-crud-test {:app app
+                        :entity "casebook"
                         :example new-casebook-maximal
                         :headers {:Authorization "45c1f5e3f05d0"}
                         :patch-tests? true

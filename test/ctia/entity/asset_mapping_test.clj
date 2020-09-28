@@ -22,10 +22,9 @@
 
 (use-fixtures :each whoami-helpers/fixture-reset-state)
 
-(defn additional-tests [{:keys [short-id]} asset-mapping-sample]
+(defn additional-tests [app {:keys [short-id]} asset-mapping-sample]
   (testing "GET /ctia/asset-mapping/search"
-   (let [app (helpers/get-current-app)
-         {:keys [get-in-config]} (helpers/get-service-map app :ConfigService)]
+   (let [{:keys [get-in-config]} (helpers/get-service-map app :ConfigService)]
     ;; only when ES store
     (when (= "es" (get-in-config [:ctia :store :asset-mapping]))
       (are [term check-fn expected desc] (let [response (helpers/get
@@ -66,7 +65,8 @@
      (helpers/set-capabilities! app "foouser" ["foogroup"] "user" auth/all-capabilities)
      (whoami-helpers/set-whoami-response http/api-key "foouser" "foogroup" "user")
      (entity-crud-test
-      {:entity             "asset-mapping"
+      {:app                app
+       :entity             "asset-mapping"
        :example            new-asset-mapping-maximal
        :invalid-tests?     true
        :invalid-test-field :asset_ref

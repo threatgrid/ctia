@@ -11,13 +11,26 @@
                    helpers/fixture-ctia
                    es-helpers/fixture-delete-store-indexes])})
 
+(s/defn test-selected-stores-with-app
+  "Takes a 1-argument function which accepts a Trapperkeeper `app`
+  which should succeed for the stores named in the first argument."
+  [selected-stores
+   t :- (s/=> s/Any
+              (s/named s/Any 'app))]
+  (assert (set? selected-stores))
+  (doseq [:let [store-fixtures (select-keys store-fixtures selected-stores)
+                _ (assert (seq store-fixtures) "No stores selected")]
+          [store-key fixtures] store-fixtures]
+    (testing (name store-key)
+      (fixtures
+        (fn []
+          (t (helpers/get-current-app)))))))
+
 (s/defn test-for-each-store-with-app
   "Takes a 1-argument function which accepts a Trapperkeeper `app`
   which should succeed for all stores."
   [t :- (s/=> s/Any
               (s/named s/Any 'app))]
-  (doseq [[store-key fixtures] store-fixtures]
-    (testing (name store-key)
-      (fixtures
-        (fn []
-          (t (helpers/get-current-app)))))))
+  (test-for-each-store-with-app
+    (-> store-fixtures keys set)
+    t))

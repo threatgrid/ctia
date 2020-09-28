@@ -34,7 +34,8 @@
                                          "user")
 
      (entity-crud-test
-      {:entity "investigation"
+      {:app app
+       :entity "investigation"
        :example new-investigation-maximal
        :update-tests? false
        :invalid-tests? false

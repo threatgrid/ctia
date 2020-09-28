@@ -73,23 +73,28 @@
           (es-index/delete! "v0.0.0*")
           (es-index/delete! (str (migration-index get-in-config) "*")))))))
 
-(defn with-each-fixtures*
+(s/defn with-each-fixtures*
   "Wrap this function around each deftest instead of use-fixtures
   so the TK config can be transformed before helpers/fixture-ctia
   starts the app."
-  [config-transformer body-fn]
+  [config-transformer body-fn :- (s/=> s/Any (s/=> s/Any (s/named s/Any 'app)))]
   (let [fixtures (join-fixtures [helpers/fixture-ctia
                                  fixture-setup! ;; Note: goes _after_ fixture-ctia
                                  es-helpers/fixture-delete-store-indexes
                                  fixture-clean-migration])]
     (helpers/with-config-transformer*
       config-transformer
-      #(fixtures body-fn))))
+      #(fixtures
+         (fn []
+           (body-fn (helpers/get-current-app)))))))
 
 (defmacro with-each-fixtures
-  "Primarily for check-migration-params-test."
-  [config-transformer & body]
-  `(with-each-fixtures* ~config-transformer #(do ~@body)))
+  "Primarily for check-migration-params-test. Binds `app` to current TK app."
+  [config-transformer app & body]
+  (assert (simple-symbol? app) (pr-str app))
+  `(with-each-fixtures* ~config-transformer
+     (fn [~app]
+       (do ~@body))))
 
 (defn index-exists?
   [store prefix]
@@ -157,8 +162,8 @@
                                          "v1.2.0_ctia_investigation")
                                (assoc-in [:malware 0 :state :props :indexname]
                                          "v1.2.0_ctia_malware"))
-        (let [app (helpers/get-current-app)
-              {:keys [get-in-config]} (helpers/get-service-map app :ConfigService)]
+        app
+        (let [{:keys [get-in-config]} (helpers/get-service-map app :ConfigService)]
           (let [v (get-in-config [:ctia :store :es :investigation :indexname])]
             (assert (= v "v1.2.0_ctia_investigation") v))
           (let [v (get-in-config [:malware 0 :state :props :indexname])]
@@ -167,9 +172,8 @@
                        (sut/check-migration-params migration-params
                                                    get-in-config))
               "source and target store must be different")))
-      (with-each-fixtures identity
-        (let [app (helpers/get-current-app)
-              {:keys [get-in-config]} (helpers/get-service-map app :ConfigService)]
+      (with-each-fixtures identity app
+        (let [{:keys [get-in-config]} (helpers/get-service-map app :ConfigService)]
           (is (thrown? ExceptionInfo
                        (sut/check-migration-params (update migration-params
                                                            :migrations
@@ -177,9 +181,8 @@
                                                            :bad-migration-id)
                                                    get-in-config))))))
     (testing "properly configured migration"
-      (with-each-fixtures identity
-        (let [app (helpers/get-current-app)
-              {:keys [get-in-config]} (helpers/get-service-map app :ConfigService)]
+      (with-each-fixtures identity app
+        (let [{:keys [get-in-config]} (helpers/get-service-map app :ConfigService)]
           (is (sut/check-migration-params migration-params
                                           get-in-config)))))))
 
@@ -202,10 +205,9 @@
              [:identity])))))
 
 (deftest migration-with-rollover
- (with-each-fixtures identity
+ (with-each-fixtures identity app
   (testing "migration with rollover and multiple indices for source stores"
-    (let [app (helpers/get-current-app)
-          {:keys [get-in-config]} (helpers/get-service-map app :ConfigService)
+    (let [{:keys [get-in-config]} (helpers/get-service-map app :ConfigService)
           {:keys [all-stores]} (helpers/get-service-map app :StoreService)
           services (app->MigrationStoreServices app)
 
@@ -254,10 +256,9 @@
   (comp time-coerce/to-long time-coerce/to-date-time))
 
 (deftest read-source-batch-test
- (with-each-fixtures identity
+ (with-each-fixtures identity app
   (with-open [rdr (io/reader "./test/data/indices/sample-relationships-1000.json")]
-    (let [app (helpers/get-current-app)
-          {:keys [get-in-config]} (helpers/get-service-map app :ConfigService)
+    (let [{:keys [get-in-config]} (helpers/get-service-map app :ConfigService)
 
           storemap {:conn (es-conn get-in-config)
                     :indexname "ctia_relationship"
@@ -331,7 +332,7 @@
                     set))))))))
 
 (deftest read-source-test
- (with-each-fixtures identity
+ (with-each-fixtures identity app
   (testing "read-source should produce a lazy seq from recursive read-source-batch calls"
     (let [counter (atom 0)]
       (with-redefs [sut/read-source-batch (fn [batch-params]
@@ -346,10 +347,9 @@
           (is (= 5 @counter))))))))
 
 (deftest write-target-test
- (with-each-fixtures identity
+ (with-each-fixtures identity app
   (with-open [rdr (io/reader "./test/data/indices/sample-relationships-1000.json")]
-    (let [app (helpers/get-current-app)
-          {:keys [get-in-config]} (helpers/get-service-map app :ConfigService)
+    (let [{:keys [get-in-config]} (helpers/get-service-map app :ConfigService)
           services (app->MigrationStoreServices app)
 
           prefix "0.0.1"
@@ -447,10 +447,9 @@
                {:confirm? false})))))
 
 (deftest sliced-migration-test
- (with-each-fixtures identity
+ (with-each-fixtures identity app
   (with-open [rdr (io/reader "./test/data/indices/sample-relationships-1000.json")]
-    (let [app (helpers/get-current-app)
-          {:keys [get-in-config]} (helpers/get-service-map app :ConfigService)
+    (let [{:keys [get-in-config]} (helpers/get-service-map app :ConfigService)
           services (app->MigrationStoreServices app)
 
           {wo-modified true
@@ -513,10 +512,9 @@
           "migration process should complete the migration after restart")))))
 
 (deftest migration-with-malformed-docs
- (with-each-fixtures identity
+ (with-each-fixtures identity app
   (testing "migration with malformed documents in store"
-    (let [app (helpers/get-current-app)
-          {:keys [get-in-config]} (helpers/get-service-map app :ConfigService)
+    (let [{:keys [get-in-config]} (helpers/get-service-map app :ConfigService)
           {:keys [all-stores]} (helpers/get-service-map app :StoreService)
           services (app->MigrationStoreServices app)
 
@@ -572,10 +570,9 @@
 
 
 (deftest test-migrate-store-indexes
- (with-each-fixtures identity
+ (with-each-fixtures identity app
   ;; TODO clean data
-  (let [app (helpers/get-current-app)
-        {:keys [get-in-config]} (helpers/get-service-map app :ConfigService)
+  (let [{:keys [get-in-config]} (helpers/get-service-map app :ConfigService)
         {:keys [all-stores]} (helpers/get-service-map app :StoreService)
         services (app->MigrationStoreServices app)]
     (helpers/set-capabilities! app
@@ -609,8 +606,7 @@
                                        "test-1"
                                        {})))))))
   (testing "migrate es indexes"
-    (let [app (helpers/get-current-app)
-          {:keys [get-in-config]} (helpers/get-service-map app :ConfigService)
+    (let [{:keys [get-in-config]} (helpers/get-service-map app :ConfigService)
           {:keys [all-stores]} (helpers/get-service-map app :StoreService)
           services (app->MigrationStoreServices app)
 
@@ -856,13 +852,12 @@
                 "deleted document must not be in target stores"))))))))
 
 (defn load-test-fn
-  [maximal?]
+  [app maximal?]
   ;; insert 20000 docs per entity-type
   (doseq [bundle (repeatedly 20 #(fixt/bundle 1000 maximal?))]
     (post-bulk bundle))
   (doseq [batch-size [1000 3000 6000 10000]]
-    (let [app (helpers/get-current-app)
-          {:keys [get-in-config]} (helpers/get-service-map app :ConfigService)
+    (let [{:keys [get-in-config]} (helpers/get-service-map app :ConfigService)
           services (app->MigrationStoreServices app)
 
           total-docs (* (count @example-types) 20000)
@@ -900,13 +895,13 @@
   (es-index/delete! (es-conn (helpers/current-get-in-config-fn)) "ctia_*"))
 
 ;;(deftest ^:integration minimal-load-test
-;; (with-each-fixtures identity
+;; (with-each-fixtures identity app
 ;;  (testing "load testing with minimal entities"
 ;;    (println "load testing with minimal entities")
-;;    (load-test-fn false))))
+;;    (load-test-fn app false))))
 
 ;;(deftest ^:integration maximal-load-test
-;; (with-each-fixtures identity
+;; (with-each-fixtures identity app
 ;;  (testing "load testing with maximal entities"
 ;;    (println "load testing with maximal entities")
-;;    (load-test-fn true))))
+;;    (load-test-fn app true))))

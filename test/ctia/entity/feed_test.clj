@@ -136,7 +136,7 @@
 (use-fixtures :each
   whoami-helpers/fixture-reset-state)
 
-(defn feed-view-tests [feed-id feed]
+(defn feed-view-tests [app feed-id feed]
   (testing "GET /ctia/feed/:id/view?s=:secret"
     (let [feed-view-url-txt (:feed_view_url feed)
           feed-view-url-txt-wrong-secret (->> (drop-last feed-view-url-txt)
@@ -228,7 +228,8 @@
            "we successfully have an indicator id to test the view")
 
        (entity-crud-test
-        {:entity "feed"
+        {:app app
+         :entity "feed"
          :example (assoc new-feed-maximal
                          :indicator_id
                          indicator-id)

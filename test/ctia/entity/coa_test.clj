@@ -29,7 +29,8 @@
                                          "foouser"
                                          "foogroup"
                                          "user")
-     (entity-crud-test {:entity "coa"
+     (entity-crud-test {:app app
+                        :entity "coa"
                         :example new-coa-maximal
                         :headers {:Authorization "45c1f5e3f05d0"}}))))
 

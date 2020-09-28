@@ -37,7 +37,8 @@
                                          "foogroup"
                                          "user")
 
-     (entity-crud-test {:entity "attack-pattern"
+     (entity-crud-test {:app app
+                        :entity "attack-pattern"
                         :example new-attack-pattern-maximal
                         :headers {:Authorization "45c1f5e3f05d0"}
                         :update-field :name
