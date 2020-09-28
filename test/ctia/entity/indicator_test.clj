@@ -21,10 +21,9 @@
 (use-fixtures :each whoami-helpers/fixture-reset-state)
 
 
-(defn search-tests [_ indicator-sample]
+(defn search-tests [app _ indicator-sample]
   (testing "GET /ctia/indicator/search"
-   (let [app (helpers/get-current-app)
-         {:keys [get-in-config]} (helpers/get-service-map app :ConfigService)]
+   (let [{:keys [get-in-config]} (helpers/get-service-map app :ConfigService)]
     ;; only when ES store
     (when (= "es" (get-in-config [:ctia :store :indicator]))
       (are [query check-fn expected desc]
