@@ -272,7 +272,7 @@
 (def CasebookType
   (let [{:keys [fields name description]}
         (flanders/->graphql
-         (fu/optionalize-all cs/Casebook)
+         (fu/optionalize-all (fu/replace-either-with-any cs/Casebook))
          {refs/observable-type-name refs/ObservableTypeRef
           refs/incident-type-name refs/IncidentRef
           refs/judgement-type-name refs/JudgementRef

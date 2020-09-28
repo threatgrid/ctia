@@ -16,7 +16,7 @@
     (start-ctia!* {:services [store-svc/store-service]
                    :config config})))
 
-(s/defn delete-store-indexes [all-stores]
+(defn delete-store-indexes [all-stores]
   (doseq [:let [stores (all-stores)
                 _ (assert (map? stores))]
           store-impls (vals stores)
