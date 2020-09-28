@@ -892,7 +892,7 @@
                (get-in state [:target :migrated]))))
       (es-index/delete! (es-conn get-in-config) (format "v%s*" prefix))
       (es-doc/delete-doc (es-conn get-in-config) "migration" migration-id "true")))
-  (es-index/delete! (es-conn (helpers/current-get-in-config-fn)) "ctia_*"))
+  (es-index/delete! (es-conn (helpers/current-get-in-config-fn app)) "ctia_*"))
 
 ;;(deftest ^:integration minimal-load-test
 ;; (with-each-fixtures identity app

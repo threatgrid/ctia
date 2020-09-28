@@ -314,12 +314,10 @@
 (defn make-id
   "Make a long style ID using CTIA code (eg with a random UUID).
   Returns an ID object."
-  [type-kw]
+  [type-kw get-in-config]
   (id/->id type-kw
            (crud/make-id (name type-kw))
-           ;; FIXME using current-get-in-config-fn here is a hack and should be refactored
-           ;; to function parameter once the initial TK setup is merged into master.
-           ((current-get-in-config-fn) [:ctia :http :show])))
+           (get-in-config [:ctia :http :show])))
 
 (defn entity->short-id
   [entity]
@@ -328,15 +326,13 @@
       :short-id))
 
 (defn url-id
-  ([type-kw]
-   (url-id (crud/make-id (name type-kw)) type-kw))
-  ([short-id type-kw]
+  ([type-kw get-in-config]
+   (url-id (crud/make-id (name type-kw)) type-kw get-in-config))
+  ([short-id type-kw get-in-config]
    (id/long-id
     (id/short-id->id (name type-kw)
                      short-id
-                     ;; FIXME using current-get-in-config-fn here is a hack and should be refactored
-                     ;; to function parameter once the initial TK setup is merged into master.
-                     ((current-get-in-config-fn) [:ctia :http :show])))))
+                     (get-in-config [:ctia :http :show])))))
 
 (def zero-uuid "00000000-0000-0000-0000-000000000000")
 
@@ -349,17 +345,6 @@
     (assert (<= id-cnt 8)
             "ID must be 8 chars or less")
     (str entity-name "-" id-str (subs zero-uuid id-cnt))))
-
-(defn fake-long-id
-  "Make a fake long style ID with a deterministic UUID.  Returns a
-  string."
-  [entity-name id]
-  (id/long-id
-   (id/->id (keyword entity-name)
-            (fake-short-id entity-name id)
-            ;; FIXME using current-get-in-config-fn here is a hack and should be refactored
-            ;; to function parameter once the initial TK setup is merged into master.
-            ((current-get-in-config-fn) [:ctia :http :show]))))
 
 (defmacro with-atom-logger
   [atom-logger & body]

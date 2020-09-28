@@ -31,6 +31,6 @@
   which should succeed for all stores."
   [t :- (s/=> s/Any
               (s/named s/Any 'app))]
-  (test-for-each-store-with-app
+  (test-selected-stores-with-app
     (-> store-fixtures keys set)
     t))
