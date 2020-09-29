@@ -97,6 +97,7 @@
                 {"Authorization" "45c1f5e3f05d0"})]
 
        (field-selection/field-selection-tests
+        app
         ["ctia/asset-mapping/search?query=*"
          (http/doc-id->rel-url (first ids))]
         {"Authorization" "45c1f5e3f05d0"}
