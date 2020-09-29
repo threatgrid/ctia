@@ -14,10 +14,10 @@
 (s/defn test-selected-stores-with-app
   "Takes a 1-argument function which accepts a Trapperkeeper `app`
   which should succeed for the stores named in the first argument."
-  [selected-stores
+  [selected-stores :- #{s/Keyword}
    t :- (s/=> s/Any
               (s/named s/Any 'app))]
-  (assert (set? selected-stores))
+  (assert (seq selected-stores) "Empty selected-stores")
   (doseq [:let [store-fixtures (select-keys store-fixtures selected-stores)
                 _ (assert (seq store-fixtures) "No stores selected")]
           [store-key fixtures] store-fixtures]
@@ -31,6 +31,5 @@
   which should succeed for all stores."
   [t :- (s/=> s/Any
               (s/named s/Any 'app))]
-  (test-selected-stores-with-app
-    (-> store-fixtures keys set)
-    t))
+  (test-selected-stores-with-app (-> store-fixtures keys set)
+                                 t))
