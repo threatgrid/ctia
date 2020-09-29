@@ -334,7 +334,7 @@ It returns the documents with full hits meta data including the real index in wh
         (seq query-string) (conj es-query-string))}}))
 
 (defn handle-query-string-search
-  "Generate an ES query handler using some mapping and schema"
+  "Generate an ES query handler for given schema schema"
   [Model]
   (let [response-schema (list-response-schema Model)
         coerce! (coerce-to-fn response-schema)]
@@ -360,8 +360,8 @@ It returns the documents with full hits meta data including the real index in wh
                                            ident
                                            get-in-config))))))
 
-(s/defn handle-query-string-count :- s/Int
-  "ES count handler using some mapping and schema"
+(s/defn handle-query-string-count :- (s/pred nat-int?)
+  "ES count handler"
   [{conn :conn
     index :index
     :as es-conn-state} :- ESConnState
@@ -416,7 +416,7 @@ It returns the documents with full hits meta data including the real index in wh
                     buckets)))
 
 (s/defn handle-aggregate
-  "Generate an ES aggregation handler using some mapping and schema"
+  "Generate an ES aggregation handler for given schema"
   [{:keys [conn index] :as es-conn-state} :- ESConnState
    {:keys [filter-map] :as search-query} :- SearchQuery
    {:keys [agg-type] :as agg-query} :- AggQuery

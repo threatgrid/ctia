@@ -1,11 +1,6 @@
 (ns ctia.task.migration.store
   (:require [clj-momo.lib.clj-time.coerce :as time-coerce]
             [clj-momo.lib.clj-time.core :as time]
-            [ductile.conn :as conn]
-            [ductile.document :as ductile.doc]
-            [ductile.index :as ductile.index]
-            [ductile.query :as ductile.query]
-            [ductile.schemas :refer [ESConn ESQuery Refresh]]
             [clj-momo.lib.es.document :as es-doc]
             [clj-momo.lib.es.index :as es-index]
             [clojure.set :as set]
@@ -14,16 +9,20 @@
             [ctia.init :refer [log-properties]]
             [ctia.lib.collection :refer [fmap]]
             [ctia.lib.utils :refer [service-subgraph]]
-            [ctia.properties :as p]
             [ctia.store :as store]
             [ctia.stores.es.crud :as crud]
             [ctia.stores.es.init :as es.init]
             [ctia.stores.es.mapping :as em]
             [ctia.stores.es.schemas :refer [ESConnServices ESConnState]]
             [ctia.stores.es.store :as es-store :refer [StoreMap]]
-            [ctia.task.rollover :refer [rollover-store]]
             [ctia.task.migration.migrations :refer [available-migrations]]
+            [ctia.task.rollover :refer [rollover-store]]
             [ctim.domain.id :refer [long-id->id]]
+            [ductile.conn :as conn]
+            [ductile.document :as ductile.doc]
+            ductile.index
+            ductile.query
+            [ductile.schemas :refer [ESConn ESQuery Refresh]]
             [schema-tools.core :as st]
             [schema.core :as s]))
 
