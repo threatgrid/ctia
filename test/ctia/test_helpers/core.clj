@@ -29,10 +29,13 @@
             [schema.core :as s]))
 
 (def ^:dynamic ^:private *current-app*)
-;; an even-sized vector of property key-val flattened pairs (like the
-;; first argument to #'with-properties) that will be
-;; used to override the default properties.
-(def ^:dynamic ^:private *properties-overrides* [])
+(def
+  ^:dynamic ^:private
+  *properties-overrides*
+  "An even-sized vector of property key-val flattened pairs (like the
+  first argument to #'with-properties) that will be
+  used to override the default properties."
+  [])
 (def ^:dynamic ^:private *config-transformers* [])
 
 (defn get-service-map [app svc-kw]
@@ -179,7 +182,7 @@
                   log/*logger-factory* lf]
       (f))))
 
-(defn- split-property-to-keywords [prop]
+(defn split-property-to-keywords [prop]
   (map keyword (str/split prop #"\.")))
 
 (defn build-transformed-init-config
