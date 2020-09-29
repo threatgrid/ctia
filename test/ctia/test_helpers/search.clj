@@ -210,7 +210,7 @@
       (delete-doc app entity full-id))))
 
 (defn ensure-one-document
-  [app f example entity & args]
+  [f app example entity & args]
   (let [{{full-id :id} :parsed-body} (create-doc app entity (dissoc example :id))]
     (apply f app entity args)
     (delete-doc app entity full-id)))
