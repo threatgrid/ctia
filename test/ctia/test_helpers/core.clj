@@ -235,8 +235,6 @@
        (get-service-map :ConfigService)
        :get-in-config)))
 
-(declare fixture-ctia)
-
 (s/defn fixture-ctia-with-app
   ([t-with-app :- (s/=> s/Any
                         (s/=> s/Any
