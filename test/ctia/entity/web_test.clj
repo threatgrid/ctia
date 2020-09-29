@@ -295,7 +295,10 @@
                  get-judgement (fn [jwt]
                                  (let [response
                                        (client/get
-                                        (str "http://localhost:" (helpers/get-http-port) "/ctia/judgement/" (:short-id judgement-id))
+                                        (str "http://localhost:"
+                                             (helpers/get-http-port app)
+                                             "/ctia/judgement/"
+                                             (:short-id judgement-id))
                                         {:headers {"Authorization" (str "Bearer " jwt)}
                                          :throw-exceptions false
                                          :as :json})]

@@ -30,7 +30,7 @@
            new-indicators (->> (csg/sample (cs/gen :new-indicator/map 5))
                                (map #(assoc % :title title))
                                (map #(assoc % :id (url-id :indicator get-in-config))))
-           created-indicators (map #(assert-post "ctia/indicator" %)
+           created-indicators (map #(assert-post app "ctia/indicator" %)
                                    new-indicators)
            new-judgements (->> (csg/sample (cs/gen :new-judgement/map) 5)
                                (map #(assoc %
@@ -47,22 +47,24 @@
 
        (testing "setup: create sightings and their relationships with indicators"
          (doseq [new-sighting new-sightings
-                 :let [{id :id} (assert-post "ctia/sighting" new-sighting)
+                 :let [{id :id} (assert-post app "ctia/sighting" new-sighting)
                        sighting-id (id/->id :sighting id http-show)]]
            (doseq [{id :id} created-indicators
                    :let [indicator-id (id/->id :indicator id http-show)]]
-             (assert-post "ctia/relationship"
+             (assert-post app
+                          "ctia/relationship"
                           {:source_ref (id/long-id sighting-id)
                            :relationship_type "indicates"
                            :target_ref (id/long-id indicator-id)}))))
 
        (testing "setup: create judgements and their relationships with indicators"
          (doseq [new-judgement new-judgements
-                 :let [{id :id} (assert-post "ctia/judgement" new-judgement)
+                 :let [{id :id} (assert-post app "ctia/judgement" new-judgement)
                        judgement-id (id/->id :judgement id http-show)]]
            (doseq [{id :id} created-indicators
                    :let [indicator-id (id/->id :indicator id http-show)]]
-             (assert-post "ctia/relationship"
+             (assert-post app
+                          "ctia/relationship"
                           {:source_ref (id/long-id judgement-id)
                            :relationship_type "observable-of"
                            :target_ref (id/long-id indicator-id)}))))

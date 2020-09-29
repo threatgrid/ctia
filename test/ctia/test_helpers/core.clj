@@ -318,9 +318,9 @@
                 (let [~app (get-current-app)]
                   ~@body)))))))
 
-(defn get-http-port
-  ([] (get-http-port (get-current-app)))
-  ([app] ((current-get-in-config-fn app) [:ctia :http :port])))
+(defn get-http-port [app]
+  (let [{{:keys [get-in-config]} :ConfigService} (app/service-graph app)]
+    (get-in-config [:ctia :http :port])))
 
 (defn GET [app & args]
   (apply (mthh/with-port-fn (partial get-http-port app) mthh/get)
