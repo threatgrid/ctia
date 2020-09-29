@@ -1,12 +1,12 @@
 (ns ctia.test-helpers.core
   (:refer-clojure :exclude [get])
   (:require [clj-momo.lib.net :as net]
-            [clj-momo.test-helpers
-             [core :as mth]
-             [http :as mthh]]
+            [clj-momo.properties :refer [coerce-properties read-property-files]]
+            [clj-momo.test-helpers.http :as mthh]
             [clojure
              [walk :refer [prewalk]]]
             [clojure.spec.alpha :as cs]
+            [clojure.string :as str]
             [clojure.test :as test]
             [clojure.test.check.generators :as gen]
             [clojure.tools.logging :as log]
@@ -25,9 +25,17 @@
             [flanders
              [spec :as fs]
              [utils :as fu]]
-            [puppetlabs.trapperkeeper.app :as app]))
+            [puppetlabs.trapperkeeper.app :as app]
+            [schema.core :as s]))
 
 (def ^:dynamic ^:private *current-app*)
+(def
+  ^:dynamic ^:private
+  *properties-overrides*
+  "An even-sized vector of property key-val flattened pairs (like the
+  first argument to #'with-properties) that will be
+  used to override the default properties."
+  [])
 (def ^:dynamic ^:private *config-transformers* [])
 
 (defn get-service-map [app svc-kw]
@@ -36,7 +44,6 @@
         m (svc-kw graph)]
     (assert (map? m) (str "No service " svc-kw ", found " (keys graph)))
     m))
-
 
 (defn with-config-transformer*
   "For use in a test fixture to dynamically transform a Trapperkeeper
@@ -47,44 +54,56 @@
   (binding [*config-transformers* (conj *config-transformers* tf)]
     (body-fn)))
 
-(def with-properties-vec
-  (mth/build-with-properties-vec-fn PropertiesSchema))
+(s/defn with-properties*
+  [properties-vec :- (s/pred vector?)
+   f :- (s/=> s/Any)]
+  (assert (not (thread-bound? #'*current-app*))
+          "Cannot override properties after TK app has started!")
+  (assert (even? (count properties-vec))
+          (str "Even count required for properties-vec, actual " (count properties-vec)))
+  (binding [*properties-overrides* (into *properties-overrides* properties-vec)]
+    (f)))
 
-(defmacro with-properties [properties-vec & sexprs]
-  `(with-properties-vec ~properties-vec
+(defmacro with-properties
+  "Simulates setting the specified System properties to configure
+  the creation of a TK app, except thread-locally.
+  
+  Note: Does not actually set System properties!"
+  [properties-vec & sexprs]
+  `(with-properties* ~properties-vec
      (fn [] (do ~@sexprs))))
 
 (defn fixture-properties:clean [f]
-  ;; Remove any set system properties, presumably from a previous test
-  ;; run
-  (mth/clear-properties PropertiesSchema)
-  ;; Override any properties that are in the default properties file
-  ;; yet are unsafe/undesirable for tests
-  (with-properties ["ctia.auth.type"                            "allow-all"
-                    "ctia.access-control.default-tlp"           "green"
-                    "ctia.access-control.min-tlp"               "white"
-                    "ctia.access-control.max-record-visibility" "everyone"
-                    "ctia.encryption.key.filepath"              "resources/cert/ctia-encryption.key"
-                    "ctia.events.enabled"                        true
-                    "ctia.events.log"                            false
-                    "ctia.http.dev-reload"                       false
-                    "ctia.http.min-threads"                      9
-                    "ctia.http.max-threads"                      10
-                    "ctia.http.show.protocol"                    "http"
-                    "ctia.http.show.hostname"                    "localhost"
-                    "ctia.http.show.port"                        "57254"
-                    "ctia.http.show.path-prefix"                 ""
-                    "ctia.http.jwt.enabled"                      true
-                    "ctia.http.jwt.public-key-path"              "resources/cert/ctia-jwt.pub"
-                    "ctia.http.bulk.max-size"                    30000
-                    "ctia.hook.redis.enabled"                    false
-                    "ctia.hook.redis.channel-name"               "events-test"
-                    "ctia.metrics.riemann.enabled"               false
-                    "ctia.metrics.console.enabled"               false
-                    "ctia.metrics.jmx.enabled"                   false
-                    "ctia.versions.config"                       "test"]
-    ;; run tests
-    (f)))
+  ;; reset overrides, to preserve previous behavior when #'with-properties
+  ;; used to set actual System properties.
+  (binding [*properties-overrides* []]
+    ;; Override any properties that are in the default properties file
+    ;; yet are unsafe/undesirable for tests
+    (with-properties ["ctia.auth.type"                            "allow-all"
+                      "ctia.access-control.default-tlp"           "green"
+                      "ctia.access-control.min-tlp"               "white"
+                      "ctia.access-control.max-record-visibility" "everyone"
+                      "ctia.encryption.key.filepath"              "resources/cert/ctia-encryption.key"
+                      "ctia.events.enabled"                        true
+                      "ctia.events.log"                            false
+                      "ctia.http.dev-reload"                       false
+                      "ctia.http.min-threads"                      9
+                      "ctia.http.max-threads"                      10
+                      "ctia.http.show.protocol"                    "http"
+                      "ctia.http.show.hostname"                    "localhost"
+                      "ctia.http.show.port"                        "57254"
+                      "ctia.http.show.path-prefix"                 ""
+                      "ctia.http.jwt.enabled"                      true
+                      "ctia.http.jwt.public-key-path"              "resources/cert/ctia-jwt.pub"
+                      "ctia.http.bulk.max-size"                    30000
+                      "ctia.hook.redis.enabled"                    false
+                      "ctia.hook.redis.channel-name"               "events-test"
+                      "ctia.metrics.riemann.enabled"               false
+                      "ctia.metrics.console.enabled"               false
+                      "ctia.metrics.jmx.enabled"                   false
+                      "ctia.versions.config"                       "test"]
+      ;; run tests
+      (f))))
 
 (defn fixture-properties:cors [f]
   (with-properties
@@ -163,10 +182,36 @@
                   log/*logger-factory* lf]
       (f))))
 
-(defn build-transformed-init-config []
-  (reduce #(%2 %1)
-          (p/build-init-config)
-          *config-transformers*))
+(defn split-property-to-keywords [prop]
+  (map keyword (str/split prop #"\.")))
+
+(defn build-transformed-init-config
+  "Builds a `config` map using just p/files, *properties-overrides*,
+  and *config-transformers*.
+  
+  Note that p/build-init-config uses p/files, System properties, and env vars.
+  This function emulates p/build-init-config in a thread-local fashion.
+  
+  Prefer over p/build-init-config during tests."
+  []
+  (assert (not (thread-bound? #'*current-app*))
+          "Building custom config while app bound!")
+  (let [init-props (read-property-files p/files)
+        properties-overrides *properties-overrides*
+        _ (assert (even? (count properties-overrides)))
+        transformed+coerced-props (->> (reduce (fn [m [k v]]
+                                                 (assoc m k v))
+                                               init-props
+                                               (partition 2 *properties-overrides*))
+                                       (coerce-properties PropertiesSchema))
+        init-config (reduce (fn [config [prop v]]
+                              (assoc-in config (split-property-to-keywords prop) v))
+                            {}
+                            transformed+coerced-props)
+        transformed-config (reduce #(%2 %1)
+                                   init-config
+                                   *config-transformers*)]
+    transformed-config))
 
 (defn build-get-in-config-fn []
   (assert (not (thread-bound? #'*current-app*)) "Building custom config while app bound!")
