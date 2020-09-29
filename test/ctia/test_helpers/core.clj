@@ -1,5 +1,4 @@
 (ns ctia.test-helpers.core
-  (:refer-clojure :exclude [get])
   (:require [clj-momo.lib.net :as net]
             [clj-momo.properties :refer [coerce-properties read-property-files]]
             [clj-momo.test-helpers.http :as mthh]
@@ -236,9 +235,17 @@
        (get-service-map :ConfigService)
        :get-in-config)))
 
-(defn fixture-ctia
-  ([t] (fixture-ctia t true))
-  ([t enable-http?]
+(declare fixture-ctia)
+
+(s/defn fixture-ctia-with-app
+  ([t-with-app :- (s/=> s/Any
+                        (s/=> s/Any
+                              (s/named s/Any 'app)))]
+   (fixture-ctia-with-app t-with-app true))
+  ([t-with-app :- (s/=> s/Any
+                        (s/=> s/Any
+                              (s/named s/Any 'app)))
+    enable-http?]
    ;; Start CTIA
    ;; This starts the server on an available port (if enabled)
    (let [http-port
@@ -253,9 +260,21 @@
                    {:services (init/default-services config)
                     :config config})]
          (try
-           (bind-current-app* app t)
+           ;; both bind app thread-locally and pass as argument.
+           ;; in the future, we should move to just an argument.
+           (bind-current-app*
+             app
+             #(t-with-app app))
            (finally
              (app/stop app))))))))
+
+(defn fixture-ctia
+  ([t] (fixture-ctia t true))
+  ([t enable-http?]
+   (fixture-ctia-with-app (fn [_app_]
+                            ;; app bound thread-locally
+                            (t))
+                          enable-http?)))
 
 (defn fixture-ctia-fast [t]
   (fixture-ctia t false))
@@ -290,59 +309,71 @@
                                                   :role role
                                                   :capabilities caps})))
 
-(defmacro deftest-for-each-fixture [test-name fixture-map & body]
+(defmacro deftest-for-each-fixture-with-app [test-name fixture-map app & body]
+  (assert (simple-symbol? app) (pr-str app))
   `(do
      ~@(for [[name-key fixture-fn] fixture-map]
          `(test/deftest ~(with-meta (symbol (str test-name "-" (name name-key)))
                                     {(keyword name-key) true})
-            (~fixture-fn (fn [] (do ~@body)))))))
+            (~fixture-fn
+              (fn []
+                (let [~app (get-current-app)]
+                  ~@body)))))))
 
-(defn get-http-port []
-  ;; Note: using current-get-in-config-fn here is a hack and should be refactored
-  ;; to function parameter once the initial TK setup is merged into master.
-  ((current-get-in-config-fn) [:ctia :http :port]))
+(defn get-http-port
+  ([] (get-http-port (get-current-app)))
+  ([app] ((current-get-in-config-fn app) [:ctia :http :port])))
 
-(def get
-  (mthh/with-port-fn get-http-port mthh/get))
+(defn GET [app & args]
+  (apply (mthh/with-port-fn (partial get-http-port app) mthh/get)
+         args))
 
-(def post
-  (mthh/with-port-fn get-http-port mthh/post))
+(defn POST [app & args]
+  (apply (mthh/with-port-fn (partial get-http-port app) mthh/post)
+         args))
 
-(defn post-bulk [examples]
+(defn POST-bulk [app examples]
   (let [{bulk-res :parsed-body}
-        (post "ctia/bulk"
+        (POST app
+              "ctia/bulk"
               :body examples
               :socket-timeout (* 5 60000)
               :headers {"Authorization" "45c1f5e3f05d0"})]
     bulk-res))
 
-(defn post-entity-bulk [example plural x headers]
+(defn POST-entity-bulk [app example plural x headers]
   (let [new-records
         (for [y (range 0 x)]
           (-> example
               (dissoc :id)
               (assoc :revision y)))]
-    (-> (post "ctia/bulk"
+    (-> (POST app
+              "ctia/bulk"
               :body {plural new-records}
               :headers headers
               :socket-timeout (* 5 60000))
         :parsed-body
         plural)))
 
-(def delete
-  (mthh/with-port-fn get-http-port mthh/delete))
+(defn DELETE [app & args]
+  (apply (mthh/with-port-fn (partial get-http-port app) mthh/delete)
+         args))
 
-(def put
-  (mthh/with-port-fn get-http-port mthh/put))
+(defn PUT [app & args]
+  (apply (mthh/with-port-fn (partial get-http-port app) mthh/put)
+         args))
 
-(def patch
-  (mthh/with-port-fn get-http-port mthh/patch))
+(defn PATCH [app & args]
+  (apply (mthh/with-port-fn (partial get-http-port app) mthh/patch)
+         args))
 
 (defn fixture-spec-validation [t]
   (with-redefs [cs/registry-ref (atom (cs/registry))]
-    (cs/check-asserts true)
-    (t)
-    (cs/check-asserts false)))
+    (try
+      (cs/check-asserts true)
+      (t)
+      (finally
+        (cs/check-asserts false)))))
 
 (defn fixture-spec [node-to-spec ns]
   (fn [t]

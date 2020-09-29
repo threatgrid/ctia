@@ -11,7 +11,7 @@
             [ctia.stores.es.mapping :as em]
             [ctia.task.migration.store :as sut]
             [ctia.task.rollover :refer [rollover-stores]]
-            [ctia.test-helpers.core :as helpers :refer [delete post-bulk put]]
+            [ctia.test-helpers.core :as helpers :refer [DELETE POST-bulk PUT]]
             [ctia.test-helpers.es :as es-helpers]
             [ctia.test-helpers.fake-whoami-service :as whoami-helpers]
             [ctia.test-helpers.fixtures :as fixt]
@@ -520,10 +520,10 @@
                             :type "sighting"
                             :settings {}
                             :config {}}
-        post-bulk-res-1 (post-bulk examples)
+        post-bulk-res-1 (POST-bulk app examples)
         {:keys [nb-errors]} (rollover-stores (all-stores))
         _ (is (= 0 nb-errors))
-        post-bulk-res-2 (post-bulk examples)
+        post-bulk-res-2 (POST-bulk app examples)
         malware-ids (->> (:malwares post-bulk-res-1)
                          (map #(-> % long-id->id :short-id))
                          (take 10))
@@ -574,10 +574,10 @@
                             :type "sighting"
                             :settings {}
                             :config {}}
-        post-bulk-res-1 (post-bulk examples)
+        post-bulk-res-1 (POST-bulk app examples)
         {:keys [nb-errors]} (rollover-stores (all-stores))
         _ (is (= 0 nb-errors))
-        post-bulk-res-2 (post-bulk examples)
+        post-bulk-res-2 (POST-bulk app examples)
         _ (es-index/refresh! (es-conn get-in-config))
 
         sighting-ids-1 (->> (:sightings post-bulk-res-1)
@@ -588,14 +588,18 @@
                             (take 3))
         sighting-id-1 (first sighting-ids-1)
         sighting-id-2 (first sighting-ids-2)
-        _  (put (format "ctia/sighting/%s" sighting-id-1)
-                :body (-> (helpers/get (format "ctia/sighting/%s" sighting-id-1)
+        _  (PUT app
+                (format "ctia/sighting/%s" sighting-id-1)
+                :body (-> (helpers/GET app
+                                       (format "ctia/sighting/%s" sighting-id-1)
                                        :headers {"Authorization" "45c1f5e3f05d0"})
                           :parsed-body
                           (assoc :description "UPDATED"))
                 :headers {"Authorization" "45c1f5e3f05d0"})
-        _  (put (format "ctia/sighting/%s" sighting-id-2)
-                :body (-> (helpers/get (format "ctia/sighting/%s" sighting-id-1)
+        _  (PUT app
+                (format "ctia/sighting/%s" sighting-id-2)
+                :body (-> (helpers/GET app
+                                       (format "ctia/sighting/%s" sighting-id-1)
                                        :headers {"Authorization" "45c1f5e3f05d0"})
                           :parsed-body
                           (assoc :description "UPDATED"))
@@ -798,23 +802,27 @@
   (es-index/delete! (es-conn (helpers/current-get-in-config-fn)) "test_*"))
 
 (deftest fetch-deletes-test
-  (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
-                                      "foouser"
-                                      "foogroup"
-                                      "user")
-  (post-bulk examples)
   (let [app (helpers/get-current-app)
         {:keys [get-in-config]} (helpers/get-service-map app :ConfigService)
         services (app->MigrationStoreServices app)
 
+        _ (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
+                                              "foouser"
+                                              "foogroup"
+                                              "user")
+        _ (POST-bulk app examples)
+
         _ (es-index/refresh! (es-conn get-in-config)) ;; ensure indices refresh
-        [sighting1 sighting2] (:parsed-body (helpers/get "ctia/sighting/search"
+        [sighting1 sighting2] (:parsed-body (helpers/GET app
+                                                         "ctia/sighting/search"
                                                          :query-params {:limit 2 :query "*"}
                                                          :headers {"Authorization" "45c1f5e3f05d0"}))
-        [tool1 tool2 tool3] (:parsed-body (helpers/get "ctia/tool/search"
+        [tool1 tool2 tool3] (:parsed-body (helpers/GET app
+                                                       "ctia/tool/search"
                                                        :query-params {:limit 3 :query "*"}
                                                        :headers {"Authorization" "45c1f5e3f05d0"}))
-        [malware1] (:parsed-body (helpers/get "ctia/malware/search"
+        [malware1] (:parsed-body (helpers/GET app
+                                              "ctia/malware/search"
                                               :query-params {:limit 1 :query "*"}
                                               :headers {"Authorization" "45c1f5e3f05d0"}))
         sighting1-id (-> sighting1 :id long-id->id :short-id)
@@ -823,19 +831,25 @@
         tool2-id (-> tool2 :id long-id->id :short-id)
         tool3-id (-> tool3 :id long-id->id :short-id)
         malware1-id (-> malware1 :id long-id->id :short-id)
-        _ (delete (format "ctia/sighting/%s" sighting1-id)
+        _ (DELETE app
+                  (format "ctia/sighting/%s" sighting1-id)
                   :headers {"Authorization" "45c1f5e3f05d0"})
         _ (es-index/refresh! (es-conn get-in-config))
         since (time/internal-now)
-        _ (delete (format "ctia/sighting/%s" sighting2-id)
+        _ (DELETE app
+                  (format "ctia/sighting/%s" sighting2-id)
                   :headers {"Authorization" "45c1f5e3f05d0"})
-        _ (delete (format "ctia/tool/%s" tool1-id)
+        _ (DELETE app
+                  (format "ctia/tool/%s" tool1-id)
                   :headers {"Authorization" "45c1f5e3f05d0"})
-        _ (delete (format "ctia/tool/%s" tool2-id)
+        _ (DELETE app
+                  (format "ctia/tool/%s" tool2-id)
                   :headers {"Authorization" "45c1f5e3f05d0"})
-        _ (delete (format "ctia/tool/%s" tool3-id)
+        _ (DELETE app
+                  (format "ctia/tool/%s" tool3-id)
                   :headers {"Authorization" "45c1f5e3f05d0"})
-        _ (delete (format "ctia/tool/%s" malware1-id)
+        _ (DELETE app
+                  (format "ctia/tool/%s" malware1-id)
                   :headers {"Authorization" "45c1f5e3f05d0"})
         event-store (sut/get-source-store :event services)
         {data1 :data paging1 :paging} (sut/fetch-deletes event-store
@@ -867,12 +881,12 @@
     (is (nil? (:malware data2)) "fetch-deletes shall only retrieve entity types given as parameter")))
 
 (deftest init-get-migration-test
-  (post-bulk examples)
   (testing "init-migration should properly create new migration state from selected types."
     (let [app (helpers/get-current-app)
           {:keys [get-in-config]} (helpers/get-service-map app :ConfigService)
           services (app->MigrationStoreServices app)
 
+          _ (POST-bulk app examples)
           _ (es-index/refresh! (es-conn get-in-config)) ; ensure indices refresh
           prefix "0.0.0"
           entity-types [:tool :malware :relationship]

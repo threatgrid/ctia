@@ -2,7 +2,7 @@
   (:require [ctia.test-helpers
              [benchmark :refer [cleanup-ctia!
                                 setup-ctia-es-store!]]
-             [core :as helpers :refer [delete post]]]
+             [core :as helpers :refer [POST]]]
             [ctim.examples.actors
              :refer [new-actor-minimal
                      new-actor-maximal]]
@@ -15,13 +15,14 @@
   :setup (fn [] [(setup-ctia-es-store!)])
   :cleanup (fn [{:keys [app]}] (cleanup-ctia! app)))
 
-(defn play [fixture]
-  (post "ctia/actor"
+(defn play [app fixture]
+  (POST app
+        "ctia/actor"
         :body fixture
         :headers {"Authorization" "45c1f5e3f05d0"}))
 
 (defcase create-actor :big-actor-es-store
-  [_] (play big-actor))
+  [{:keys [app]}] (play app big-actor))
 
 (defcase create-actor :small-actor-es-store
-  [_] (play small-actor))
+  [{:keys [app]}] (play app small-actor))

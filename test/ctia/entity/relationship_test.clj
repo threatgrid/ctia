@@ -8,7 +8,7 @@
             [ctia.test-helpers
              [access-control :refer [access-control-test]]
              [auth :refer [all-capabilities]]
-             [core :as helpers :refer [post post-entity-bulk]]
+             [core :as helpers :refer [POST POST-entity-bulk]]
              [crud :refer [entity-crud-test]]
              [aggregate :refer [test-metric-routes]]
              [fake-whoami-service :as whoami-helpers]
@@ -64,7 +64,8 @@
                  (dissoc :id))
              {status :status
               {error :error} :parsed-body}
-             (post "ctia/relationship"
+             (POST app
+                   "ctia/relationship"
                    :body new-relationship
                    :headers {"Authorization" "45c1f5e3f05d0"})]
          (is (= 400 status)))))))
@@ -83,16 +84,19 @@
   (test-for-each-store-with-app
    (fn [app]
      (establish-user! app)
-     (let [ids (post-entity-bulk
+     (let [ids (POST-entity-bulk
+                app
                 new-relationship-maximal
                 :relationships
                 30
                 {"Authorization" "45c1f5e3f05d0"})]
        (pagination-test
+        app
         "ctia/relationship/search?query=*"
         {"Authorization" "45c1f5e3f05d0"}
         sut/relationship-fields)
        (field-selection-tests
+        app
         ["ctia/relationship/search?query=*"
          (doc-id->rel-url (first ids))]
         {"Authorization" "45c1f5e3f05d0"}
@@ -112,38 +116,45 @@
      (testing "Indicator & Casebook test setup"
        (let [{casebook-body :parsed-body
               casebook-status :status}
-             (post "ctia/casebook"
+             (POST app
+                   "ctia/casebook"
                    :body new-casebook-minimal
                    :headers {"Authorization" "45c1f5e3f05d0"})
              {incident-body :parsed-body
               incident-status :status}
-             (post "ctia/incident"
+             (POST app
+                   "ctia/incident"
                    :body new-incident-minimal
                    :headers {"Authorization" "45c1f5e3f05d0"})
 
              {wrong-incident-status :status
               wrong-incident-response :body}
-             (post (str "ctia/incident/" "r0pV4UNSjWyUYXUtpgQxooVR7HbjnMKB" "/link")
+             (POST app
+                   (str "ctia/incident/" "r0pV4UNSjWyUYXUtpgQxooVR7HbjnMKB" "/link")
                    :body {:casebook_id (:id casebook-body)}
                    :headers {"Authorization" "45c1f5e3f05d0"})
 
              {wrong-casebook-status :status
               wrong-casebook-response :body}
-             (post (str "ctia/incident/" (-> (:id incident-body)
+             (POST app
+                   app
+                   (str "ctia/incident/" (-> (:id incident-body)
                                              long-id->id
                                              :short-id) "/link")
                    :body {:casebook_id ":"}
                    :headers {"Authorization" "45c1f5e3f05d0"})
              {link-status :status
               link-response :parsed-body}
-             (post (str "ctia/incident/" (-> (:id incident-body)
+             (POST app
+                   (str "ctia/incident/" (-> (:id incident-body)
                                              long-id->id
                                              :short-id) "/link")
                    :body {:casebook_id (:id casebook-body)}
                    :headers {"Authorization" "45c1f5e3f05d0"})
              {relationship-status :status
               relationship-response :parsed-body}
-             (helpers/get (str "ctia/relationship/" (-> (:id link-response)
+             (helpers/GET app
+                          (str "ctia/relationship/" (-> (:id link-response)
                                                         long-id->id
                                                         :short-id))
                           :headers {"Authorization" "45c1f5e3f05d0"})]
@@ -182,7 +193,8 @@
      (testing "/incident/:id/link + :investigation_id"
        (let [{incident-body :parsed-body
               incident-status :status}
-             (post "ctia/incident"
+             (POST app
+                   "ctia/incident"
                    :body new-incident-minimal
                    :headers {"Authorization" "45c1f5e3f05d0"})
              _ (testing "create an incident"
@@ -190,7 +202,8 @@
 
              {investigation-body :parsed-body
               investigation-status :status}
-             (post "ctia/investigation"
+             (POST app
+                   "ctia/investigation"
                    :body new-investigation-minimal
                    :headers {"Authorization" "45c1f5e3f05d0"})
              _ (testing "create an investigation"
@@ -198,7 +211,8 @@
 
              {wrong-incident-status :status
               wrong-incident-response :body}
-             (post (str "ctia/incident/" "r0pV4UNSjWyUYXUtpgQxooVR7HbjnMKB" "/link")
+             (POST app
+                   (str "ctia/incident/" "r0pV4UNSjWyUYXUtpgQxooVR7HbjnMKB" "/link")
                    :body {:investigation_id (:id investigation-body)}
                    :headers {"Authorization" "45c1f5e3f05d0"})
              _ (testing "cannot link non-existent incident"
@@ -208,7 +222,8 @@
 
              {wrong-investigation-status :status
               wrong-investigation-response :body}
-             (post (str "ctia/incident/"
+             (POST app
+                   (str "ctia/incident/"
                         (-> (:id incident-body)
                             long-id->id
                             :short-id)
@@ -222,7 +237,8 @@
 
              {link-status :status
               link-response :parsed-body}
-             (post (str "ctia/incident/"
+             (POST app
+                   (str "ctia/incident/"
                         (-> (:id incident-body)
                             long-id->id
                             :short-id)
@@ -234,7 +250,8 @@
 
              {relationship-status :status
               relationship-response :parsed-body}
-             (helpers/get (str "ctia/relationship/"
+             (helpers/GET app
+                          (str "ctia/relationship/"
                                (-> (:id link-response)
                                    long-id->id
                                    :short-id))
@@ -269,7 +286,8 @@
      (testing "/incident/:id/link + ambiguous body"
        (let [{incident-body :parsed-body
               incident-status :status}
-             (post "ctia/incident"
+             (POST app
+                   "ctia/incident"
                    :body new-incident-minimal
                    :headers {"Authorization" "45c1f5e3f05d0"})
              _ (testing "create an incident"
@@ -310,7 +328,8 @@
          (assert (<= 2 (count body->expected-msg)))
          (doseq [[body expected-msg :as test-case] body->expected-msg]
            (let [{response :body, :keys [status]}
-                 (post (str "ctia/incident/" incident-short-id "/link")
+                 (POST app
+                       (str "ctia/incident/" incident-short-id "/link")
                        :body body
                        :headers {"Authorization" "45c1f5e3f05d0"})]
              (testing test-case

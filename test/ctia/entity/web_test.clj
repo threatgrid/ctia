@@ -1,5 +1,4 @@
 (ns ctia.entity.web-test
-  (:refer-clojure :exclude [get])
   (:require [clj-http.client :as client]
             [clj-jwt
              [core :as jwt]
@@ -13,12 +12,13 @@
             [ctia.domain.entities :refer [schema-version]]
             [ctia.test-helpers
              [auth :refer [all-capabilities]]
-             [core :as helpers :refer [get post]]
+             [core :as helpers :refer [GET POST]]
              [es :as es-helpers]
              [fake-whoami-service :as whoami-helpers]
              [store :refer [test-for-each-store-with-app]]]
             [ctim.domain.id :as id]
-            [ring.adapter.jetty :as jetty]))
+            [ring.adapter.jetty :as jetty]
+            [schema.core :as s]))
 
 (use-fixtures :once mth/fixture-schema-validation)
 
@@ -60,16 +60,19 @@
           (let [{judgement :parsed-body
                  status :status
                  :as resp}
-                (post "ctia/judgement"
+                (POST app
+                      "ctia/judgement"
                       :body new-judgement-1
                       :headers {"Authorization" "45c1f5e3f05d0"
                                 "Origin" "http://external.cisco.com"})
-                bad-origin-resp (post "ctia/judgement"
+                bad-origin-resp (POST app
+                                      "ctia/judgement"
                                       :body new-judgement-1
                                       :headers {"Authorization" "45c1f5e3f05d0"
                                                 "Origin" "http://badcors.com"})
                 judgement-id (id/long-id->id (:id judgement))
-                swagger-ui-resp (get "index.html")]
+                swagger-ui-resp (GET app
+                                     "index.html")]
 
             (is (= 201 status))
             (is (= expected-headers
@@ -105,7 +108,8 @@
                 "We shouldn't returns the CORS headers for bad origins")
 
             (testing "GET /ctia/judgement/:id with bad JWT Authorization header"
-              (let [response (get (str "ctia/judgement/" (:short-id judgement-id))
+              (let [response (GET app
+                                  (str "ctia/judgement/" (:short-id judgement-id))
                                   :headers {"Authorization" "Bearer 45c1f5e3f05d0"
                                             "Origin" "http://external.cisco.com"})]
                 (is (= 401 (:status response)))
@@ -121,7 +125,8 @@
                 (let [jwt-token "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwczpcL1wvc2NoZW1hcy5jaXNjby5jb21cL2lyb2hcL2lkZW50aXR5XC9jbGFpbXNcL3VzZXJcL2VtYWlsIjoiZ2J1aXNzb24rcWFfc2RjX2lyb2hAY2lzY28uY29tIiwiaHR0cHM6XC9cL3NjaGVtYXMuY2lzY28uY29tXC9pcm9oXC9pZGVudGl0eVwvY2xhaW1zXC91c2VyXC9pZHBcL2lkIjoiYW1wIiwiaHR0cHM6XC9cL3NjaGVtYXMuY2lzY28uY29tXC9pcm9oXC9pZGVudGl0eVwvY2xhaW1zXC91c2VyXC9uaWNrIjoiZ2J1aXNzb24rcWFfc2RjX2lyb2hAY2lzY28uY29tIiwiZW1haWwiOiJnYnVpc3NvbitxYV9zZGNfaXJvaEBjaXNjby5jb20iLCJzdWIiOiI1NmJiNWY4Yy1jYzRlLTRlZDMtYTkxYS1jNjYwNDI4N2ZlMzIiLCJpc3MiOiJJUk9IIEF1dGgiLCJodHRwczpcL1wvc2NoZW1hcy5jaXNjby5jb21cL2lyb2hcL2lkZW50aXR5XC9jbGFpbXNcL3Njb3BlcyI6WyJjYXNlYm9vayIsImdsb2JhbC1pbnRlbCIsInByaXZhdGUtaW50ZWwiLCJjb2xsZWN0IiwiZW5yaWNoIiwiaW5zcGVjdCIsImludGVncmF0aW9uIiwiaXJvaC1hdXRoIiwicmVzcG9uc2UiLCJ1aS1zZXR0aW5ncyJdLCJleHAiOjE0ODc3NzI4NTAsImh0dHBzOlwvXC9zY2hlbWFzLmNpc2NvLmNvbVwvaXJvaFwvaWRlbnRpdHlcL2NsYWltc1wvb2F1dGhcL2NsaWVudFwvbmFtZSI6Imlyb2gtdWkiLCJodHRwczpcL1wvc2NoZW1hcy5jaXNjby5jb21cL2lyb2hcL2lkZW50aXR5XC9jbGFpbXNcL29yZ1wvaWQiOiI2MzQ4OWNmOS01NjFjLTQ5NTgtYTEzZC02ZDg0YjdlZjA5ZDQiLCJodHRwczpcL1wvc2NoZW1hcy5jaXNjby5jb21cL2lyb2hcL2lkZW50aXR5XC9jbGFpbXNcL29yZ1wvbmFtZSI6IklST0ggVGVzdGluZyIsImp0aSI6ImEyNjhhZTdhMy0wOWM5LTQxNDktYjQ5NS1iOThjOGM1ZGU2NjYiLCJuYmYiOjE0ODcxNjc3NTAsImh0dHBzOlwvXC9zY2hlbWFzLmNpc2NvLmNvbVwvaXJvaFwvaWRlbnRpdHlcL2NsYWltc1wvdXNlclwvaWQiOiI1NmJiNWY4Yy1jYzRlLTRlZDMtYTkxYS1jNjYwNDI4N2ZlMzIiLCJodHRwczpcL1wvc2NoZW1hcy5jaXNjby5jb21cL2lyb2hcL2lkZW50aXR5XC9jbGFpbXNcL29hdXRoXC9jbGllbnRcL2lkIjoiaXJvaC11aSIsImh0dHBzOlwvXC9zY2hlbWFzLmNpc2NvLmNvbVwvaXJvaFwvaWRlbnRpdHlcL2NsYWltc1wvdmVyc2lvbiI6IjEiLCJpYXQiOjE0ODcxNjgwNTAsImh0dHBzOlwvXC9zY2hlbWFzLmNpc2NvLmNvbVwvaXJvaFwvaWRlbnRpdHlcL2NsYWltc1wvb2F1dGhcL2tpbmQiOiJzZXNzaW9uLXRva2VuIn0.jl0r3LiL6qOy6DIDZs5NRiQBHlJEzXFXUvKXGPd2PL66xSE0v0Bkc6FD3vPccYxvk-tWBMJX8oiDuAgYt2eRU05blPtzy1yQ-V-zJtxnpuQbDzvVytZvE9n1_8NdvcLa9eXBjUkJ2FsXAIguXpVDIbR3zs9MkjfyrsKeVCmhC3QTehj55Rf-WINeTq0UflIyoZqfK5Mewl-DBwbvTRjTIRJpNPhjErJ0ypHNXzTKM-nVljSRhrfpoBYpPxQSQVTedWIA2Sks4fBvEwdeE60aBRK1HeTps0G1h3RXPYu7q1I5ti9a2axiQtRLA11CxoOvMmnjyWkffi5vyrFKqZ7muQ"
                       {judgement :parsed-body
                        :as response}
-                      (get (str "ctia/judgement/" (:short-id judgement-id))
+                      (GET app
+                           (str "ctia/judgement/" (:short-id judgement-id))
                            :headers {"Authorization" (str "Bearer " jwt-token)
                                      "Origin" "http://external.cisco.com"})]
                   (is (= 200 (:status response)))
@@ -162,7 +167,8 @@
      (testing "POST /ctia/judgement"
        (let [{judgement :parsed-body
               status :status}
-             (post "ctia/judgement"
+             (POST app
+                   "ctia/judgement"
                    :body new-judgement-1
                    :headers {"Authorization" "45c1f5e3f05d0"
                              "origin" "http://external.cisco.com"})
@@ -172,7 +178,8 @@
 
          (testing "GET /ctia/judgement/:id with bad JWT Authorization header"
            (let [response
-                 (get (str "ctia/judgement/" (:short-id judgement-id))
+                 (GET app
+                      (str "ctia/judgement/" (:short-id judgement-id))
                       :headers {"Authorization" "Bearer 45c1f5e3f05d0"})]
              (is (= 401 (:status response)))))
 
@@ -181,7 +188,8 @@
              (let [jwt-token "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwczpcL1wvc2NoZW1hcy5jaXNjby5jb21cL2lyb2hcL2lkZW50aXR5XC9jbGFpbXNcL3VzZXJcL2VtYWlsIjoiZ2J1aXNzb24rcWFfc2RjX2lyb2hAY2lzY28uY29tIiwiaHR0cHM6XC9cL3NjaGVtYXMuY2lzY28uY29tXC9pcm9oXC9pZGVudGl0eVwvY2xhaW1zXC91c2VyXC9pZHBcL2lkIjoiYW1wIiwiaHR0cHM6XC9cL3NjaGVtYXMuY2lzY28uY29tXC9pcm9oXC9pZGVudGl0eVwvY2xhaW1zXC91c2VyXC9uaWNrIjoiZ2J1aXNzb24rcWFfc2RjX2lyb2hAY2lzY28uY29tIiwiZW1haWwiOiJnYnVpc3NvbitxYV9zZGNfaXJvaEBjaXNjby5jb20iLCJzdWIiOiI1NmJiNWY4Yy1jYzRlLTRlZDMtYTkxYS1jNjYwNDI4N2ZlMzIiLCJpc3MiOiJJUk9IIEF1dGgiLCJodHRwczpcL1wvc2NoZW1hcy5jaXNjby5jb21cL2lyb2hcL2lkZW50aXR5XC9jbGFpbXNcL3Njb3BlcyI6WyJjYXNlYm9vayIsImdsb2JhbC1pbnRlbCIsInByaXZhdGUtaW50ZWwiLCJjb2xsZWN0IiwiZW5yaWNoIiwiaW5zcGVjdCIsImludGVncmF0aW9uIiwiaXJvaC1hdXRoIiwicmVzcG9uc2UiLCJ1aS1zZXR0aW5ncyJdLCJleHAiOjE0ODc3NzI4NTAsImh0dHBzOlwvXC9zY2hlbWFzLmNpc2NvLmNvbVwvaXJvaFwvaWRlbnRpdHlcL2NsYWltc1wvb2F1dGhcL2NsaWVudFwvbmFtZSI6Imlyb2gtdWkiLCJodHRwczpcL1wvc2NoZW1hcy5jaXNjby5jb21cL2lyb2hcL2lkZW50aXR5XC9jbGFpbXNcL29yZ1wvaWQiOiI2MzQ4OWNmOS01NjFjLTQ5NTgtYTEzZC02ZDg0YjdlZjA5ZDQiLCJodHRwczpcL1wvc2NoZW1hcy5jaXNjby5jb21cL2lyb2hcL2lkZW50aXR5XC9jbGFpbXNcL29yZ1wvbmFtZSI6IklST0ggVGVzdGluZyIsImp0aSI6ImEyNjhhZTdhMy0wOWM5LTQxNDktYjQ5NS1iOThjOGM1ZGU2NjYiLCJuYmYiOjE0ODcxNjc3NTAsImh0dHBzOlwvXC9zY2hlbWFzLmNpc2NvLmNvbVwvaXJvaFwvaWRlbnRpdHlcL2NsYWltc1wvdXNlclwvaWQiOiI1NmJiNWY4Yy1jYzRlLTRlZDMtYTkxYS1jNjYwNDI4N2ZlMzIiLCJodHRwczpcL1wvc2NoZW1hcy5jaXNjby5jb21cL2lyb2hcL2lkZW50aXR5XC9jbGFpbXNcL29hdXRoXC9jbGllbnRcL2lkIjoiaXJvaC11aSIsImh0dHBzOlwvXC9zY2hlbWFzLmNpc2NvLmNvbVwvaXJvaFwvaWRlbnRpdHlcL2NsYWltc1wvdmVyc2lvbiI6IjEiLCJpYXQiOjE0ODcxNjgwNTAsImh0dHBzOlwvXC9zY2hlbWFzLmNpc2NvLmNvbVwvaXJvaFwvaWRlbnRpdHlcL2NsYWltc1wvb2F1dGhcL2tpbmQiOiJzZXNzaW9uLXRva2VuIn0.jl0r3LiL6qOy6DIDZs5NRiQBHlJEzXFXUvKXGPd2PL66xSE0v0Bkc6FD3vPccYxvk-tWBMJX8oiDuAgYt2eRU05blPtzy1yQ-V-zJtxnpuQbDzvVytZvE9n1_8NdvcLa9eXBjUkJ2FsXAIguXpVDIbR3zs9MkjfyrsKeVCmhC3QTehj55Rf-WINeTq0UflIyoZqfK5Mewl-DBwbvTRjTIRJpNPhjErJ0ypHNXzTKM-nVljSRhrfpoBYpPxQSQVTedWIA2Sks4fBvEwdeE60aBRK1HeTps0G1h3RXPYu7q1I5ti9a2axiQtRLA11CxoOvMmnjyWkffi5vyrFKqZ7muQ"
                    {judgement :parsed-body
                     :as response}
-                   (get (str "ctia/judgement/" (:short-id judgement-id))
+                   (GET app
+                        (str "ctia/judgement/" (:short-id judgement-id))
                         :headers {"Authorization" (str "Bearer " jwt-token)})]
                (is (= 200 (:status response)))
                (is (= {:id (id/long-id judgement-id)
@@ -210,7 +218,8 @@
            (with-redefs [time/now (constantly (time/date-time 2017 02 16 0 0 0))]
              (let [jwt-token "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwczpcL1wvc2NoZW1hcy5jaXNjby5jb21cL2lyb2hcL2lkZW50aXR5XC9jbGFpbXNcL3VzZXJcL2VtYWlsIjoiZ2J1aXNzb24rcWFfc2RjX2lyb2hAY2lzY28uY29tIiwiaHR0cHM6XC9cL3NjaGVtYXMuY2lzY28uY29tXC9pcm9oXC9pZGVudGl0eVwvY2xhaW1zXC91c2VyXC9pZHBcL2lkIjoiYW1wIiwiaHR0cHM6XC9cL3NjaGVtYXMuY2lzY28uY29tXC9pcm9oXC9pZGVudGl0eVwvY2xhaW1zXC91c2VyXC9uaWNrIjoiZ2J1aXNzb24rcWFfc2RjX2lyb2hAY2lzY28uY29tIiwiZW1haWwiOiJnYnVpc3NvbitxYV9zZGNfaXJvaEBjaXNjby5jb20iLCJzdWIiOiI1NmJiNWY4Yy1jYzRlLTRlZDMtYTkxYS1jNjYwNDI4N2ZlMzIiLCJpc3MiOiJJUk9IIEF1dGgiLCJodHRwczpcL1wvc2NoZW1hcy5jaXNjby5jb21cL2lyb2hcL2lkZW50aXR5XC9jbGFpbXNcL3Njb3BlcyI6WyJjYXNlYm9vayIsImdsb2JhbC1pbnRlbCIsInByaXZhdGUtaW50ZWwiLCJjb2xsZWN0IiwiZW5yaWNoIiwiaW5zcGVjdCIsImludGVncmF0aW9uIiwiaXJvaC1hdXRoIiwicmVzcG9uc2UiLCJ1aS1zZXR0aW5ncyJdLCJleHAiOjE0ODc3NzI4NTAsImh0dHBzOlwvXC9zY2hlbWFzLmNpc2NvLmNvbVwvaXJvaFwvaWRlbnRpdHlcL2NsYWltc1wvb2F1dGhcL2NsaWVudFwvbmFtZSI6Imlyb2gtdWkiLCJodHRwczpcL1wvc2NoZW1hcy5jaXNjby5jb21cL2lyb2hcL2lkZW50aXR5XC9jbGFpbXNcL29yZ1wvaWQiOiI2MzQ4OWNmOS01NjFjLTQ5NTgtYTEzZC02ZDg0YjdlZjA5ZDQiLCJodHRwczpcL1wvc2NoZW1hcy5jaXNjby5jb21cL2lyb2hcL2lkZW50aXR5XC9jbGFpbXNcL29yZ1wvbmFtZSI6IklST0ggVGVzdGluZyIsImp0aSI6ImEyNjhhZTdhMy0wOWM5LTQxNDktYjQ5NS1iOThjOGM1ZGU2NjYiLCJuYmYiOjE0ODcxNjc3NTAsImh0dHBzOlwvXC9zY2hlbWFzLmNpc2NvLmNvbVwvaXJvaFwvaWRlbnRpdHlcL2NsYWltc1wvdXNlclwvaWQiOiI1NmJiNWY4Yy1jYzRlLTRlZDMtYTkxYS1jNjYwNDI4N2ZlMzIiLCJodHRwczpcL1wvc2NoZW1hcy5jaXNjby5jb21cL2lyb2hcL2lkZW50aXR5XC9jbGFpbXNcL29hdXRoXC9jbGllbnRcL2lkIjoiaXJvaC11aSIsImh0dHBzOlwvXC9zY2hlbWFzLmNpc2NvLmNvbVwvaXJvaFwvaWRlbnRpdHlcL2NsYWltc1wvdmVyc2lvbiI6IjEiLCJpYXQiOjE0ODcxNjgwNTAsImh0dHBzOlwvXC9zY2hlbWFzLmNpc2NvLmNvbVwvaXJvaFwvaWRlbnRpdHlcL2NsYWltc1wvb2F1dGhcL2tpbmQiOiJzZXNzaW9uLXRva2VuIn0.jl0r3LiL6qOy6DIDZs5NRiQBHlJEzXFXUvKXGPd2PL66xSE0v0Bkc6FD3vPccYxvk-tWBMJX8oiDuAgYt2eRU05blPtzy1yQ-V-zJtxnpuQbDzvVytZvE9n1_8NdvcLa9eXBjUkJ2FsXAIguXpVDIbR3zs9MkjfyrsKeVCmhC3QTehj55Rf-WINeTq0UflIyoZqfK5Mewl-DBwbvTRjTIRJpNPhjErJ0ypHNXzTKM-nVljSRhrfpoBYpPxQSQVTedWIA2Sks4fBvEwdeE60aBRK1HeTps0G1h3RXPYu7q1I5ti9a2axiQtRLA11CxoOvMmnjyWkffi5vyrFKqZ7muQ"
                    response
-                   (post "ctia/judgement"
+                   (POST app
+                         "ctia/judgement"
                          :body (assoc new-judgement-1
                                       :id "http://localhost:3001/ctia/judgement/judgement-00001111-0000-1111-2222-000011112222")
                          :headers {"Authorization" (str "Bearer " jwt-token)
@@ -251,8 +260,8 @@
      :jwt-2 (-> claims-2 jwt/jwt (jwt/sign :RS256 priv-key-2) jwt/to-str)
      :bad-iss-jwt-2 (-> claims-2 (assoc :iss "IROH Auth") jwt/jwt (jwt/sign :RS256 priv-key-2) jwt/to-str)}))
 
-(defn apply-fixtures
-  [properties fn]
+(s/defn apply-fixtures-with-app
+  [properties f-with-app :-  (s/=> s/Any (s/=> s/Any (s/named s/Any 'app)))]
   (let [fixture-fn
         (join-fixtures [helpers/fixture-log
                         helpers/fixture-properties:clean
@@ -261,20 +270,24 @@
                         es-helpers/fixture-properties:es-store
                         helpers/fixture-ctia
                         es-helpers/fixture-delete-store-indexes])]
-    (fixture-fn fn)))
+    (fixture-fn
+      (fn []
+        (f-with-app
+          (helpers/get-current-app))))))
 
 (deftest jwt-keymap-tests-on-judgements
   (testing "JWT Key Map"
-    (apply-fixtures
+    (apply-fixtures-with-app
      ["ctia.http.jwt.enabled" true
       "ctia.http.jwt.public-key-map"
       "IROH Auth=resources/cert/ctia-jwt.pub,IROH Auth TEST=resources/cert/ctia-jwt-2.pub"]
-     (fn []
+     (fn [app]
        (let [{:keys [jwt-1 bad-iss-jwt-1 jwt-2 bad-iss-jwt-2]} (gen-jwts)]
          (testing "POST /ctia/judgement"
            (let [{judgement :parsed-body
                   status :status}
-                 (post "ctia/judgement"
+                 (POST app
+                       "ctia/judgement"
                        :body new-judgement-1
                        :headers {"Authorization" "45c1f5e3f05d0"
                                  "origin" "http://external.cisco.com"})
@@ -290,7 +303,8 @@
              (is (= 201 status))
              (testing "GET /ctia/judgement/:id with bad JWT Authorization header"
                (let [response
-                     (get (str "ctia/judgement/" (:short-id judgement-id))
+                     (GET app
+                          (str "ctia/judgement/" (:short-id judgement-id))
                           :headers {"Authorization" "Bearer 45c1f5e3f05d0"})]
                  (is (= 401 (:status response)))))
 
@@ -311,7 +325,7 @@
 (defn jwt-http-checks-test
   [url-1 url-2 tst-fn]
   (testing "JWT Key Map + Http-Check"
-    (apply-fixtures
+    (apply-fixtures-with-app
      ["ctia.http.jwt.enabled" true
       "ctia.http.jwt.public-key-map"
       "IROH Auth=resources/cert/ctia-jwt.pub,IROH Auth TEST=resources/cert/ctia-jwt-2.pub"
@@ -319,17 +333,19 @@
       "ctia.http.jwt.http-check.endpoints" (str "IROH Auth=" url-1 ",IROH Auth TEST=" url-2)
       "ctia.http.jwt.http-check.timeout" test-timeout
       "ctia.http.jwt.http-check.cache-ttl" test-cache-ttl]
-     (fn []
+     (fn [app]
        (let [jwts (gen-jwts)]
          (let [{judgement :parsed-body status :status}
-               (post "ctia/judgement"
+               (POST app
+                     "ctia/judgement"
                      :body new-judgement-1
                      :headers {"Authorization" "45c1f5e3f05d0"
                                "origin" "http://external.cisco.com"})
                judgement-id (id/long-id->id (:id judgement))
                get-judgement (fn [jwt]
                                (let [{:keys [status] :as response}
-                                     (get (str "ctia/judgement/" (:short-id judgement-id))
+                                     (GET app
+                                          (str "ctia/judgement/" (:short-id judgement-id))
                                           :headers {"Authorization" (str "Bearer " jwt)})]
                                  response))
                ctx (assoc jwts :get-judgement get-judgement)]

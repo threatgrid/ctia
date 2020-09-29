@@ -1,9 +1,8 @@
 (ns ctia.http.server-test
-  (:refer-clojure :exclude [get])
   (:require [clj-momo.test-helpers.core :as mth]
             [ctia.http.server :as sut]
             [ctia.test-helpers
-             [core :as helpers :refer [post get with-properties]]
+             [core :as helpers :refer [GET with-properties]]
              [es :as es-helpers]]
             [clojure.test :refer [deftest is testing use-fixtures]]))
 
@@ -43,27 +42,30 @@
 
 (deftest version-header-test
   (testing "Server should not be sent by default"
-    (helpers/fixture-ctia
-     (fn []
+    (helpers/fixture-ctia-with-app
+     (fn [app]
        (let [{:keys [headers]}
-             (get "ctia/version")]
-         (is (nil? (clojure.core/get headers "Server")))))))
+             (GET app
+                  "ctia/version")]
+         (is (nil? (get headers "Server")))))))
 
   (testing "Server should not be sent if disabled"
     (with-properties ["ctia.http.send-server-version" false]
-      (helpers/fixture-ctia
-       (fn []
+      (helpers/fixture-ctia-with-app
+       (fn [app]
          (let [{:keys [headers]}
-               (get "ctia/version")]
-           (is (nil? (clojure.core/get headers "Server"))))))))
+               (GET app
+                    "ctia/version")]
+           (is (nil? (get headers "Server"))))))))
 
   (testing "Server should be sent if enabled"
     (with-properties ["ctia.http.send-server-version" true]
-      (helpers/fixture-ctia
-       (fn []
+      (helpers/fixture-ctia-with-app
+       (fn [app]
          (let [{:keys [headers]}
-               (get "ctia/version")]
-           (is (clojure.core/get headers "Server"))))))))
+               (GET app
+                    "ctia/version")]
+           (is (get headers "Server"))))))))
 
 (deftest build-csp-test
   (is (= (str "default-src 'self'; style-src 'self' 'unsafe-inline'; "

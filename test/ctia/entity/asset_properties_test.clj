@@ -26,7 +26,8 @@
    (let [{:keys [get-in-config]} (helpers/get-service-map app :ConfigService)]
     ;; only when ES store
     (when (= "es" (get-in-config [:ctia :store :asset-properties]))
-      (are [term check-fn expected desc] (let [response (helpers/get
+      (are [term check-fn expected desc] (let [response (helpers/GET
+                                                         app
                                                          "ctia/asset-properties/search"
                                                          :query-params {"query" term}
                                                          :headers {"Authorization" "45c1f5e3f05d0"})]
@@ -56,7 +57,8 @@
       (helpers/fixture-with-fixed-time
        fixed-now
        (fn []
-         (let [response (helpers/post
+         (let [response (helpers/POST
+                         app
                          (str "ctia/asset-properties/expire/" short-id)
                          :headers {"Authorization" "45c1f5e3f05d0"})]
            (is (= 200 (:status response)) "POST asset-properties/expire succeeds")
@@ -91,19 +93,22 @@
                                          "foogroup"
                                          "user")
 
-     (let [ids (helpers/post-entity-bulk
+     (let [ids (helpers/POST-entity-bulk
+                app
                 new-asset-properties-maximal
                 :asset_properties
                 30
                 {"Authorization" "45c1f5e3f05d0"})]
 
        (field-selection/field-selection-tests
+        app
         ["ctia/asset-properties/search?query=*"
          (http/doc-id->rel-url (first ids))]
         {"Authorization" "45c1f5e3f05d0"}
         asset-properties/asset-properties-fields)
 
        (pagination/pagination-test
+        app
         "ctia/asset-properties/search?query=*"
         {"Authorization" "45c1f5e3f05d0"}
         asset-properties/asset-properties-fields)))))

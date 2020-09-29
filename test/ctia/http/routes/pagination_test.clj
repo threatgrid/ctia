@@ -69,12 +69,14 @@
 
        (testing "indicators with query (ES only)"
          (when (= "es" (get-in-config [:ctia :store :indicator]))
-           (pagination-test (str "/ctia/indicator/search?query=" title)
+           (pagination-test app
+                            (str "/ctia/indicator/search?query=" title)
                             {"Authorization" "45c1f5e3f05d0"}
                             [:id :title])))
 
        (testing "sightings by observable"
-         (pagination-test (str route-pref "/sightings")
+         (pagination-test app
+                          (str route-pref "/sightings")
                           {"Authorization" "45c1f5e3f05d0"}
                           [:id
                            :timestamp
@@ -82,11 +84,13 @@
                            :observed_time.start_time]))
 
        (testing "sightings/indicators by observable"
-         (pagination-test-no-sort (str route-pref "/sightings/indicators")
+         (pagination-test-no-sort app
+                                  (str route-pref "/sightings/indicators")
                                   {"Authorization" "45c1f5e3f05d0"}))
 
        (testing "judgements by observable"
-         (pagination-test (str route-pref "/judgements")
+         (pagination-test app
+                          (str route-pref "/judgements")
                           {"Authorization" "45c1f5e3f05d0"}
                           [:id
                            :disposition
@@ -96,5 +100,6 @@
                            :valid_time.start_time]))
 
        (testing "judgements/indicators by observable"
-         (pagination-test-no-sort (str route-pref "/judgements/indicators")
+         (pagination-test-no-sort app
+                                  (str route-pref "/judgements/indicators")
                                   {"Authorization" "45c1f5e3f05d0"}))))))

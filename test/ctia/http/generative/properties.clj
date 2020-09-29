@@ -1,5 +1,4 @@
 (ns ctia.http.generative.properties
-  (:refer-clojure :exclude [get])
   (:require [clj-momo.test-helpers
              [core :refer [common=]]
              [http :refer [encode]]]
@@ -9,7 +8,7 @@
             [ctia.properties :refer [get-http-show]]
             [ctia.schemas.core] ;; for spec side-effects
             [ctia.test-helpers.core
-             :as helpers :refer [post get]]
+             :as helpers :refer [POST GET]]
             [ctim.domain.id :as id]
             [ctim.schemas
              [actor :refer [NewActor]]
@@ -46,7 +45,8 @@
            {id :id
             type :type
             :as post-entity} :parsed-body}
-          (post (str "ctia/" (name model-type))
+          (POST app
+                (str "ctia/" (name model-type))
                 :body new-entity)]
 
       (if (not= 201 post-status)
@@ -61,7 +61,8 @@
             {get-status :status
              get-entity :parsed-body
              :as response}
-            (get (str "ctia/" type "/" url-id))]
+            (GET app
+                 (str "ctia/" type "/" url-id))]
 
         (if (not= 200 get-status)
           (throw (ex-info "GET did not return status 200"

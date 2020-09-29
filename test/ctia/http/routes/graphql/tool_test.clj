@@ -19,30 +19,35 @@
   {:owner "foouser"
    :groups ["foogroup"]})
 
-(defn init-graph-data []
+(defn init-graph-data [app]
   (let [entity-1 (gh/create-object
+                  app
                   "tool"
                   (-> new-tool-maximal
                       (assoc :name "Tool 1")
                       (dissoc :id)))
         entity-2 (gh/create-object
+                  app
                   "tool"
                   (-> new-tool-maximal
                       (assoc :name "Tool 2")
                       (dissoc :id)))
         entity-3 (gh/create-object
+                  app
                   "tool"
                   (-> new-tool-maximal
                       (assoc :name "Tool 3")
                       (dissoc :id)))
-        f1 (gh/create-object "feedback" (gh/feedback-1 (:id entity-1) #inst "2042-01-01T00:00:00.000Z"))
-        f2 (gh/create-object "feedback" (gh/feedback-2 (:id entity-1) #inst "2042-01-01T00:00:00.000Z")) ]
-    (gh/create-object "relationship"
+        f1 (gh/create-object app "feedback" (gh/feedback-1 (:id entity-1) #inst "2042-01-01T00:00:00.000Z"))
+        f2 (gh/create-object app "feedback" (gh/feedback-2 (:id entity-1) #inst "2042-01-01T00:00:00.000Z")) ]
+    (gh/create-object app
+                      "relationship"
                       {:relationship_type "variant-of"
                        :target_ref (:id entity-2)
                        :source_ref (:id entity-1)
                        :timestamp #inst "2042-01-01T00:00:00.000Z"})
-    (gh/create-object "relationship"
+    (gh/create-object app
+                      "relationship"
                       {:relationship_type "variant-of"
                        :target_ref (:id entity-3)
                        :source_ref (:id entity-1)
@@ -61,7 +66,7 @@
                                          "foouser"
                                          "foogroup"
                                          "user")
-     (let [datamap (init-graph-data)
+     (let [datamap (init-graph-data app)
            tool-1-id (get-in datamap [:tool-1 :id])
            tool-2-id (get-in datamap [:tool-2 :id])
            tool-3-id (get-in datamap [:tool-3 :id])
@@ -70,7 +75,8 @@
 
        (testing "tool query"
          (let [{:keys [data errors status]}
-               (gh/query graphql-queries
+               (gh/query app
+                         graphql-queries
                          {:id (get-in datamap [:tool-1 :id])}
                          "ToolQueryTest")]
            (is (= 200 status))
@@ -82,7 +88,8 @@
                         (dissoc :relationships)))))
 
            (testing "relationships connection"
-             (gh/connection-test "ToolQueryTest"
+             (gh/connection-test app
+                                 "ToolQueryTest"
                                  graphql-queries
                                  {:id tool-1-id
                                   :relationship_type "variant-of"}
@@ -103,6 +110,7 @@
 
              (testing "sorting"
                (gh/connection-sort-test
+                app
                 "ToolQueryTest"
                 graphql-queries
                 {:id tool-1-id}
@@ -110,7 +118,8 @@
                 ctia.entity.relationship.schemas/relationship-fields)))
 
            (testing "feedbacks connection"
-             (gh/connection-test "ToolFeedbacksQueryTest"
+             (gh/connection-test app
+                                 "ToolFeedbacksQueryTest"
                                  graphql-queries
                                  {:id tool-1-id}
                                  [:tool :feedbacks]
@@ -119,6 +128,7 @@
 
              (testing "sorting"
                (gh/connection-sort-test
+                app
                 "ToolFeedbacksQueryTest"
                 graphql-queries
                 {:id tool-1-id}
@@ -126,7 +136,8 @@
                 ctia.entity.feedback.schemas/feedback-fields))))
          (testing "tools query"
            (testing "tools connection"
-             (gh/connection-test "ToolsQueryTest"
+             (gh/connection-test app
+                                 "ToolsQueryTest"
                                  graphql-queries
                                  {"query" "*"}
                                  [:tools]
@@ -136,6 +147,7 @@
 
              (testing "sorting"
                (gh/connection-sort-test
+                app
                 "ToolsQueryTest"
                 graphql-queries
                 {:query "*"}
@@ -144,7 +156,8 @@
 
            (testing "query argument"
              (let [{:keys [data errors status]}
-                   (gh/query graphql-queries
+                   (gh/query app
+                             graphql-queries
                              {:query (format "name:\"%s\""
                                              (get-in
                                               datamap

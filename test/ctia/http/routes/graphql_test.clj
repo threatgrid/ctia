@@ -160,59 +160,67 @@
    :entity_id entity_id})
 
 
-(defn initialize-graphql-data []
-  (let [i1  (gh/create-object "indicator" indicator-1)
-        i2  (gh/create-object "indicator" indicator-2)
-        i3  (gh/create-object "indicator" indicator-3)
-        j1  (gh/create-object "judgement" judgement-1)
-        j2  (gh/create-object "judgement" judgement-2)
-        j3  (gh/create-object "judgement" judgement-3)
-        sc1 (gh/create-object "casebook" casebook-1)
-        sc2 (gh/create-object "casebook" casebook-2)
-        s1  (gh/create-object "sighting" sighting-1)
-        s2  (gh/create-object "sighting" sighting-2)]
-    (gh/create-object "feedback" (feedback-1 (:id i1)))
-    (gh/create-object "feedback" (feedback-2 (:id i1)))
-    (gh/create-object "feedback" (feedback-1 (:id j1)))
-    (gh/create-object "feedback" (feedback-2 (:id j1)))
-    (gh/create-object "feedback" (feedback-1 (:id s1)))
-    (gh/create-object "feedback" (feedback-2 (:id s1)))
-    (gh/create-object "relationship"
+(defn initialize-graphql-data [app]
+  (let [i1  (gh/create-object app "indicator" indicator-1)
+        i2  (gh/create-object app "indicator" indicator-2)
+        i3  (gh/create-object app "indicator" indicator-3)
+        j1  (gh/create-object app "judgement" judgement-1)
+        j2  (gh/create-object app "judgement" judgement-2)
+        j3  (gh/create-object app "judgement" judgement-3)
+        sc1 (gh/create-object app "casebook" casebook-1)
+        sc2 (gh/create-object app "casebook" casebook-2)
+        s1  (gh/create-object app "sighting" sighting-1)
+        s2  (gh/create-object app "sighting" sighting-2)]
+    (gh/create-object app "feedback" (feedback-1 (:id i1)))
+    (gh/create-object app "feedback" (feedback-2 (:id i1)))
+    (gh/create-object app "feedback" (feedback-1 (:id j1)))
+    (gh/create-object app "feedback" (feedback-2 (:id j1)))
+    (gh/create-object app "feedback" (feedback-1 (:id s1)))
+    (gh/create-object app "feedback" (feedback-2 (:id s1)))
+    (gh/create-object app
+                      "relationship"
                       {:relationship_type "element-of"
                        :timestamp #inst "2042-01-01T00:00:00.000Z"
                        :target_ref (:id i1)
                        :source_ref (:id j1)})
-    (gh/create-object "relationship"
+    (gh/create-object app
+                      "relationship"
                       {:relationship_type "element-of"
                        :timestamp #inst "2042-01-01T00:00:00.000Z"
                        :target_ref (:id i2)
                        :source_ref (:id j1)})
-    (gh/create-object "relationship"
+    (gh/create-object app
+                      "relationship"
                       {:relationship_type "element-of"
                        :timestamp #inst "2042-01-01T00:00:00.000Z"
                        :target_ref (:id i1)
                        :source_ref (:id j2)})
-    (gh/create-object "relationship"
+    (gh/create-object app
+                      "relationship"
                       {:relationship_type "element-of"
                        :timestamp #inst "2042-01-01T00:00:00.000Z"
                        :target_ref (:id i1)
                        :source_ref (:id j3)})
-    (gh/create-object "relationship"
+    (gh/create-object app
+                      "relationship"
                       {:relationship_type "indicates"
                        :timestamp #inst "2042-01-01T00:00:00.000Z"
                        :target_ref (:id i1)
                        :source_ref (:id s1)})
-    (gh/create-object "relationship"
+    (gh/create-object app
+                      "relationship"
                       {:relationship_type "indicates"
                        :timestamp #inst "2042-01-01T00:00:00.000Z"
                        :target_ref (:id i2)
                        :source_ref (:id s1)})
-    (gh/create-object "relationship"
+    (gh/create-object app
+                      "relationship"
                       {:relationship_type "variant-of"
                        :timestamp #inst "2042-01-01T00:00:00.000Z"
                        :target_ref (:id i2)
                        :source_ref (:id i1)})
-    (gh/create-object "relationship"
+    (gh/create-object app
+                      "relationship"
                       {:relationship_type "variant-of"
                        :timestamp #inst "2042-01-01T00:00:00.000Z"
                        :target_ref (:id i3)
@@ -239,7 +247,7 @@
      (helpers/set-capabilities! app "baruser" ["bargroup"] "user" #{})
      (whoami-helpers/set-whoami-response "2222222222222" "baruser" "bargroup" "user")
 
-     (let [datamap (initialize-graphql-data)
+     (let [datamap (initialize-graphql-data app)
            indicator-1-id (get-in datamap [:indicator-1 :id])
            indicator-2-id (get-in datamap [:indicator-2 :id])
            indicator-3-id (get-in datamap [:indicator-3 :id])
@@ -251,14 +259,15 @@
        (testing "POST /ctia/graphql"
 
          (testing "Query syntax error"
-           (let [{:keys [_ errors status]} (gh/query "dummy" {} "")]
+           (let [{:keys [_ errors status]} (gh/query app "dummy" {} "")]
              (is (= 400 status))
              (is (= errors
                     ["InvalidSyntaxError{ message=Invalid Syntax ,locations=[SourceLocation{line=1, column=0}]}"]))))
 
          (testing "Query validation error"
            (let [{:keys [_ errors status]}
-                 (gh/query "query TestQuery { nonexistent }"
+                 (gh/query app
+                           "query TestQuery { nonexistent }"
                            {}
                            "TestQuery")]
              (is (= 400 status))
@@ -266,7 +275,8 @@
                     '("ValidationError{validationErrorType=FieldUndefined, queryPath=[nonexistent], message=Validation error of type FieldUndefined: Field 'nonexistent' in type 'Root' is undefined @ 'nonexistent', locations=[SourceLocation{line=1, column=19}], description='Field 'nonexistent' in type 'Root' is undefined'}")))))
          (testing "unauthorized access without capabilities"
            (let [{:keys [status]}
-                 (helpers/post "ctia/graphql"
+                 (helpers/POST app
+                               "ctia/graphql"
                                :body {:query ""
                                       :variables {}
                                       :operationName ""}
@@ -274,7 +284,8 @@
              (is (= 403 status))))
          (testing "observable query"
            (let [{:keys [data errors status]}
-                 (gh/query graphql-queries
+                 (gh/query app
+                           graphql-queries
                            {:type "ip"
                             :value "1.2.3.4"}
                            "ObservableQueryTest")]
@@ -300,7 +311,8 @@
                           (:judgement verdict))))))
 
              (testing "judgements connection"
-               (gh/connection-test "ObservableQueryTest"
+               (gh/connection-test app
+                                   "ObservableQueryTest"
                                    graphql-queries
                                    {:type "ip"
                                     :value "1.2.3.4"}
@@ -310,6 +322,7 @@
 
                (testing "sorting"
                  (gh/connection-sort-test
+                  app
                   "ObservableQueryTest"
                   graphql-queries
                   {:type "ip"
@@ -319,7 +332,8 @@
 
          (testing "judgement query"
            (let [{:keys [data errors status]}
-                 (gh/query graphql-queries
+                 (gh/query app
+                           graphql-queries
                            {:id judgement-1-id}
                            "JudgementQueryTest")]
              (is (= 200 status))
@@ -331,7 +345,8 @@
                               :relationships))))
 
              (testing "relationships connection"
-               (gh/connection-test "JudgementQueryTest"
+               (gh/connection-test app
+                                   "JudgementQueryTest"
                                    graphql-queries
                                    {:id judgement-1-id}
                                    [:judgement :relationships]
@@ -352,6 +367,7 @@
 
                (testing "sorting"
                  (gh/connection-sort-test
+                  app
                   "JudgementQueryTest"
                   graphql-queries
                   {:id judgement-1-id}
@@ -359,7 +375,8 @@
                   ctia.entity.relationship/relationship-fields)))
 
              (testing "feedbacks connection"
-               (gh/connection-test "JudgementFeedbacksQueryTest"
+               (gh/connection-test app
+                                   "JudgementFeedbacksQueryTest"
                                    graphql-queries
                                    {:id judgement-1-id}
                                    [:judgement :feedbacks]
@@ -369,6 +386,7 @@
 
                (testing "sorting"
                  (gh/connection-sort-test
+                  app
                   "JudgementFeedbacksQueryTest"
                   graphql-queries
                   {:id judgement-1-id}
@@ -377,7 +395,8 @@
 
          (testing "judgements query"
            (testing "judgements connection"
-             (gh/connection-test "JudgementsQueryTest"
+             (gh/connection-test app
+                                 "JudgementsQueryTest"
                                  graphql-queries
                                  {:query "*"}
                                  [:judgements]
@@ -388,6 +407,7 @@
 
              (testing "sorting"
                (gh/connection-sort-test
+                app
                 "JudgementsQueryTest"
                 graphql-queries
                 {:query "*"}
@@ -396,7 +416,8 @@
 
            (testing "query argument"
              (let [{:keys [data errors status]}
-                   (gh/query graphql-queries
+                   (gh/query app
+                             graphql-queries
                              {:query (format "external_ids:\"%s\""
                                              "http://ex.tld/ctia/judgement/judgement-123")}
                              "JudgementsQueryTest")]
@@ -408,7 +429,8 @@
 
          (testing "indicator query"
            (let [{:keys [data errors status]}
-                 (gh/query graphql-queries
+                 (gh/query app
+                           graphql-queries
                            {:id indicator-1-id}
                            "IndicatorQueryTest")]
              (is (= 200 status))
@@ -420,7 +442,8 @@
                               :relationships))))
 
              (testing "relationships connection"
-               (gh/connection-test "IndicatorQueryTest"
+               (gh/connection-test app
+                                   "IndicatorQueryTest"
                                    graphql-queries
                                    {:id indicator-1-id}
                                    [:indicator :relationships]
@@ -440,6 +463,7 @@
 
                (testing "sorting"
                  (gh/connection-sort-test
+                  app
                   "IndicatorQueryTest"
                   graphql-queries
                   {:id indicator-1-id}
@@ -447,7 +471,8 @@
                   ctia.entity.relationship/relationship-fields)))
 
              (testing "feedbacks connection"
-               (gh/connection-test "IndicatorFeedbacksQueryTest"
+               (gh/connection-test app
+                                   "IndicatorFeedbacksQueryTest"
                                    graphql-queries
                                    {:id indicator-1-id}
                                    [:indicator :feedbacks]
@@ -457,6 +482,7 @@
 
                (testing "sorting"
                  (gh/connection-sort-test
+                  app
                   "IndicatorFeedbacksQueryTest"
                   graphql-queries
                   {:id indicator-1-id}
@@ -465,7 +491,8 @@
 
          (testing "indicators query"
            (testing "indicators connection"
-             (gh/connection-test "IndicatorsQueryTest"
+             (gh/connection-test app
+                                 "IndicatorsQueryTest"
                                  graphql-queries
                                  {"query" "*"}
                                  [:indicators]
@@ -476,6 +503,7 @@
 
              (testing "sorting"
                (gh/connection-sort-test
+                app
                 "IndicatorsQueryTest"
                 graphql-queries
                 {:query "*"}
@@ -484,7 +512,8 @@
 
            (testing "query argument"
              (let [{:keys [data errors status]}
-                   (gh/query graphql-queries
+                   (gh/query app
+                             graphql-queries
                              {:query "indicator_type:\"C2\""}
                              "IndicatorsQueryTest")]
                (is (= 200 status))
@@ -497,7 +526,8 @@
 
          (testing "casebook query"
            (let [{:keys [data errors status]}
-                 (gh/query graphql-queries
+                 (gh/query app
+                           graphql-queries
                            {:id casebook-1-id}
                            "CasebookQueryTest")]
 
@@ -510,7 +540,8 @@
 
          (testing "casebooks query"
            (testing "casebooks connection"
-             (gh/connection-test "CasebooksQueryTest"
+             (gh/connection-test app
+                                 "CasebooksQueryTest"
                                  graphql-queries
                                  {"query" "*"}
                                  [:casebooks]
@@ -520,6 +551,7 @@
 
              (testing "sorting"
                (gh/connection-sort-test
+                app
                 "CasebooksQueryTest"
                 graphql-queries
                 {:query "*"}
@@ -528,7 +560,8 @@
 
            (testing "query argument"
              (let [{:keys [data errors status]}
-                   (gh/query graphql-queries
+                   (gh/query app
+                             graphql-queries
                              {:query "title:\"foo\""}
                              "CasebooksQueryTest")]
                (is (= 200 status))
@@ -542,7 +575,8 @@
                                         ;---------------------------
          (testing "sighting query"
            (let [{:keys [data errors status]}
-                 (gh/query graphql-queries
+                 (gh/query app
+                           graphql-queries
                            {:id (get-in datamap [:sighting-1 :id])}
                            "SightingQueryTest")]
              (is (= 200 status))
@@ -554,7 +588,8 @@
                           (dissoc :relationships)))))
 
              (testing "relationships connection"
-               (gh/connection-test "SightingQueryTest"
+               (gh/connection-test app
+                                   "SightingQueryTest"
                                    graphql-queries
                                    {:id sighting-1-id}
                                    [:sighting :relationships]
@@ -574,6 +609,7 @@
 
                (testing "sorting"
                  (gh/connection-sort-test
+                  app
                   "SightingQueryTest"
                   graphql-queries
                   {:id sighting-1-id}
@@ -581,7 +617,8 @@
                   ctia.entity.relationship/relationship-fields)))
 
              (testing "feedbacks connection"
-               (gh/connection-test "SightingFeedbacksQueryTest"
+               (gh/connection-test app
+                                   "SightingFeedbacksQueryTest"
                                    graphql-queries
                                    {:id sighting-1-id}
                                    [:sighting :feedbacks]
@@ -591,6 +628,7 @@
 
                (testing "sorting"
                  (gh/connection-sort-test
+                  app
                   "SightingFeedbacksQueryTest"
                   graphql-queries
                   {:id sighting-1-id}
@@ -600,7 +638,8 @@
          (testing "sightings query"
 
            (testing "sightings connection"
-             (gh/connection-test "SightingsQueryTest"
+             (gh/connection-test app
+                                 "SightingsQueryTest"
                                  graphql-queries
                                  {"query" "*"}
                                  [:sightings]
@@ -610,6 +649,7 @@
 
              (testing "sorting"
                (gh/connection-sort-test
+                app
                 "SightingsQueryTest"
                 graphql-queries
                 {:query "*"}
@@ -618,7 +658,8 @@
 
            (testing "query argument"
              (let [{:keys [data errors status]}
-                   (gh/query graphql-queries
+                   (gh/query app
+                             graphql-queries
                              {:query (format "description:\"%s\""
                                              (get sighting-1 "description"))}
                              "SightingsQueryTest")]
@@ -631,7 +672,8 @@
                    "The sighting matches the search query"))))
          (testing "Relationships without selection of target_ref"
            (let [{:keys [data errors status]}
-                 (gh/query (slurp "test/data/relationship.graphql")
+                 (gh/query app
+                           (slurp "test/data/relationship.graphql")
                            {:id sighting-1-id}
                            "RelationshipsWithoutTargetRefQueryTest")]
              (is (= 200 status))

@@ -22,7 +22,8 @@
 (defn additional-tests [app asset-id asset-sample]
   (testing "GET /ctia/asset/search"
     (do
-      (are [term check-fn expected desc] (let [response (helpers/get (str "ctia/asset/search")
+      (are [term check-fn expected desc] (let [response (helpers/GET app
+                                                                     (str "ctia/asset/search")
                                                                      :query-params {"query" term}
                                                                      :headers {"Authorization" "45c1f5e3f05d0"})]
                                            (is (= 200 (:status response)))
@@ -58,19 +59,22 @@
                                          "foogroup"
                                          "user")
 
-     (let [ids (helpers/post-entity-bulk
+     (let [ids (helpers/POST-entity-bulk
+                app
                 new-asset-maximal
                 :assets
                 30
                 {"Authorization" "45c1f5e3f05d0"})]
 
        (field-selection/field-selection-tests
+        app
         ["ctia/asset/search?query=*"
          (http/doc-id->rel-url (first ids))]
         {"Authorization" "45c1f5e3f05d0"}
         asset/asset-fields)
 
        (pagination/pagination-test
+        app
         "ctia/asset/search?query=*"
         {"Authorization" "45c1f5e3f05d0"}
         asset/asset-fields)))))

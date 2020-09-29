@@ -1,9 +1,8 @@
 (ns ctia.http.handler.static-auth-test
-  (:refer-clojure :exclude [get])
   (:require [clj-momo.test-helpers.core :as mth]
             [ctia.domain.entities :refer [schema-version]]
             [ctia.test-helpers
-             [core :as helpers :refer [post get]]
+             [core :as helpers :refer [POST GET]]
              [es :as es-helpers]]
             [clojure.test :refer [deftest is testing use-fixtures]]
             [ctim.domain.id :as id]))
@@ -18,9 +17,11 @@
 
 (deftest static-auth-judgement-routes-test
   (testing "POST /ctia/judgement"
-    (let [{status :status
+    (let [app (helpers/get-current-app)
+          {status :status
            judgement :parsed-body}
-          (post "ctia/judgement"
+          (POST app
+                "ctia/judgement"
                 :body {:observable {:value "1.2.3.4"
                                     :type "ip"}
                        :disposition 2
@@ -38,7 +39,8 @@
 
       (testing "fails without the correct key"
         (let [{status :status}
-              (post "ctia/judgement"
+              (POST app
+                    "ctia/judgement"
                     :body {:observable {:value "1.2.3.4"
                                         :type "ip"}
                            :disposition 2
@@ -51,7 +53,8 @@
           (is (= 401 status)))
 
         (let [{status :status}
-              (post "ctia/judgement"
+              (POST app
+                    "ctia/judgement"
                     :body {:observable {:value "1.2.3.4"
                                         :type "ip"}
                            :disposition 2
@@ -67,7 +70,8 @@
       (testing "GET /ctia/judgement"
         (let [{status :status
                get-judgement :parsed-body}
-              (get (str "ctia/judgement/" (:short-id judgement-id))
+              (GET app
+                   (str "ctia/judgement/" (:short-id judgement-id))
                    :headers {"Authorization" "tearbending"})]
           (is (= 200 status))
           (is (deep=
@@ -91,11 +95,13 @@
                get-judgement)))
         (testing "fails with any key"
           (let [{status :status}
-                (get (str "ctia/judgement/" (:short-id judgement-id))
+                (GET app
+                     (str "ctia/judgement/" (:short-id judgement-id))
                      :headers {"Authorization" "bloodbending"})]
             (is (= 401 status)))
 
           (let [{status :status}
-                (get (str "ctia/judgement/" (:short-id judgement-id)))]
+                (GET app
+                     (str "ctia/judgement/" (:short-id judgement-id)))]
             (is (= 401 status))))))))
 

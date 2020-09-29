@@ -1,11 +1,10 @@
 (ns ctia.test-helpers.access-control
-  (:refer-clojure :exclude [get])
   (:require [clojure.set :as set]
             [clojure.test :refer [is testing]]
             [ctia.properties :as p]
             [ctia.test-helpers
              [auth :refer [all-capabilities]]
-             [core :as helpers :refer [delete get post put]]
+             [core :as helpers :refer [DELETE GET POST PUT]]
              [fake-whoami-service :as whoami-helpers]]
             [ctia.domain.access-control :as cdac]
             [ctim.domain.id :as id]
@@ -56,7 +55,8 @@
           (:groups entity-2))))
 
 (defn crud-access-control-test
-  [{:keys [entity
+  [{:keys [app
+           entity
            can-update?
            can-delete?
            player-1-creation
@@ -72,7 +72,7 @@
            player-1-expected-entity-list
            player-2-expected-entity-list
            player-3-expected-entity-list]}]
-
+  (assert app)
   (let [{player-1-entity :parsed-body
          player-1-entity-status :status} player-1-creation
         {player-2-entity :parsed-body
@@ -90,66 +90,77 @@
 
         ;; searches
         {player-1-entity-search :parsed-body}
-        (get (format "ctia/%s/search" entity)
+        (GET app
+             (format "ctia/%s/search" entity)
              :query-params {:query list-query}
              :headers {"Authorization" "player-1-token"})
 
         {player-2-entity-search :parsed-body}
-        (get (format "ctia/%s/search" entity)
+        (GET app
+             (format "ctia/%s/search" entity)
              :query-params {:query list-query}
              :headers {"Authorization" "player-2-token"})
 
         {player-3-entity-search :parsed-body}
-        (get (format "ctia/%s/search" entity)
+        (GET app
+             (format "ctia/%s/search" entity)
              :query-params {:query list-query}
              :headers {"Authorization" "player-3-token"})
 
         ;; attempts to access player 1 entity
         {player-2-1-entity-read-status :status}
-        (get (format "ctia/%s/%s"
+        (GET app
+             (format "ctia/%s/%s"
                      entity
                      (:short-id player-1-entity-id))
              :headers {"Authorization" "player-2-token"})
 
         {player-3-1-entity-read-status :status}
-        (get (format "ctia/%s/%s"
+        (GET app
+             (format "ctia/%s/%s"
                      entity
                      (:short-id player-1-entity-id))
              :headers {"Authorization" "player-3-token"})
 
         {player-2-1-entity-overwrite-status :status
          player-2-1-entity-overwrite-body :parsed-body}
-        (put (format "ctia/%s/%s"
+        (PUT app
+             (format "ctia/%s/%s"
                      entity
                      (:short-id player-1-entity-id))
              :body (dissoc player-1-entity :id)
              :headers {"Authorization" "player-2-token"})
 
         {player-2-1-entity-delete-status :status}
-        (delete (format "ctia/%s/%s" entity (:short-id player-1-entity-id))
+        (DELETE app
+                (format "ctia/%s/%s" entity (:short-id player-1-entity-id))
                 :headers {"Authorization" "player-2-token"})
 
         ;; attempts to access player 3 entity
         {player-2-3-entity-read-status :status}
-        (get (format "ctia/%s/%s"
+        (GET app
+             (format "ctia/%s/%s"
                      entity
                      (:short-id player-3-entity-id))
              :headers {"Authorization" "player-2-token"})
 
         {player-2-3-entity-overwrite-status :status
          player-2-3-entity-overwrite-body :parsed-body}
-        (put  (format "ctia/%s/%s"
+        (PUT app
+             (format "ctia/%s/%s"
                       entity
                       (:short-id player-3-entity-id))
               :body (dissoc player-1-entity :id)
               :headers {"Authorization" "player-2-token"})
 
         {player-2-2-entity-delete-status :status}
-        (delete (format "ctia/%s/%s" entity (:short-id player-2-entity-id))
+        (DELETE app
+                (format "ctia/%s/%s" entity (:short-id player-2-entity-id))
                 :headers {"Authorization" "player-2-token"})
 
         {player-2-3-entity-delete-status :status}
-        (delete (format "ctia/%s/%s" entity (:short-id player-3-entity-id))
+        (DELETE app
+                (format "ctia/%s/%s" entity (:short-id player-3-entity-id))
                 :headers {"Authorization" "player-2-token"})]
 
     (testing "expected list outputs"
@@ -217,11 +228,12 @@
              player-2-3-expected-write-statuses))))))
 
 (defn test-access-control-entity-tlp-green-max-record-visibility-group
-  [{:keys [entity
+  [{:keys [app
+           entity
            new-entity
            can-update?]
     :as args}]
-
+  (assert app)
   (with-redefs [cdac/max-record-visibility-everyone?
                 (constantly false)]
     (testing "Green Max Record Visibility set to `Group`"
@@ -230,55 +242,64 @@
                     (constantly nil))))
 
       (let [player-1-entity-post
-            (post (format "ctia/%s" entity)
+            (POST app
+                  (format "ctia/%s" entity)
                   :body (assoc (green-entity new-entity)
                                :external_ids ["gmrvgpost"])
                   :headers {"Authorization" "player-1-token"})
 
             player-1-entity-repost
-            (post (format "ctia/%s" entity)
+            (POST app
+                  (format "ctia/%s" entity)
                   :body (assoc (green-entity new-entity)
                                :external_ids ["gmrvgrepost"])
                   :headers {"Authorization" "player-1-token"})
 
             player-1-entity-repost2
-            (post (format "ctia/%s" entity)
+            (POST app
+                  (format "ctia/%s" entity)
                   :body (assoc (green-entity new-entity)
                                :external_ids ["gmrvgrepost2"])
                   :headers {"Authorization" "player-1-token"})
 
             player-2-entity-post
-            (post (format "ctia/%s" entity)
+            (POST app
+                  (format "ctia/%s" entity)
                   :body (assoc (green-entity new-entity)
                                :external_ids ["gmrvgpost"])
                   :headers {"Authorization" "player-2-token"})
 
             player-2-entity-repost
-            (post (format "ctia/%s" entity)
+            (POST app
+                  (format "ctia/%s" entity)
                   :body (assoc (green-entity new-entity)
                                :external_ids ["gmrvgrepost"])
                   :headers {"Authorization" "player-2-token"})
 
             player-2-entity-repost2
-            (post (format "ctia/%s" entity)
+            (POST app
+                  (format "ctia/%s" entity)
                   :body (assoc (green-entity new-entity)
                                :external_ids ["gmrvgrepost2"])
                   :headers {"Authorization" "player-2-token"})
 
             player-3-entity-post
-            (post (format "ctia/%s" entity)
+            (POST app
+                  (format "ctia/%s" entity)
                   :body (assoc (green-entity new-entity)
                                :external_ids ["gmrvgpost"])
                   :headers {"Authorization" "player-3-token"})
 
             player-3-entity-repost
-            (post (format "ctia/%s" entity)
+            (POST app
+                  (format "ctia/%s" entity)
                   :body (assoc (green-entity new-entity)
                                :external_ids ["gmrvgrepost"])
                   :headers {"Authorization" "player-3-token"})
 
             player-3-entity-repost2
-            (post (format "ctia/%s" entity)
+            (POST app
+                  (format "ctia/%s" entity)
                   :body (assoc (green-entity new-entity)
                                :external_ids ["gmrvgrepost2"])
                   :headers {"Authorization" "player-3-token"})]
@@ -325,7 +346,8 @@
 
         (when can-update?
           (let [player-1-entity-update
-                (put (format "ctia/%s/%s"
+                (PUT app
+                     (format "ctia/%s/%s"
                              entity
                              (-> player-1-entity-repost
                                  :parsed-body
@@ -369,7 +391,8 @@
 
         (when can-update?
           (let [player-1-entity-update2
-                (put (format "ctia/%s/%s"
+                (PUT app
+                     (format "ctia/%s/%s"
                              entity
                              (-> player-1-entity-repost2
                                  :parsed-body
@@ -407,62 +430,72 @@
                                                     (:parsed-body player-3-entity-repost2)]}))))))))
 
 (defn test-access-control-entity-tlp-green
-  [{:keys [entity
+  [{:keys [app
+           entity
            new-entity
            can-update?]
     :as args}]
-
+  (assert app)
   (testing "TLP Green"
     (let [player-1-entity-post
-          (post (format "ctia/%s" entity)
+          (POST app
+                (format "ctia/%s" entity)
                 :body (assoc (green-entity new-entity)
                              :external_ids ["gpost"])
                 :headers {"Authorization" "player-1-token"})
 
           player-1-entity-repost
-          (post (format "ctia/%s" entity)
+          (POST app
+                (format "ctia/%s" entity)
                 :body (assoc (green-entity new-entity)
                              :external_ids ["grepost"])
                 :headers {"Authorization" "player-1-token"})
 
           player-1-entity-repost2
-          (post (format "ctia/%s" entity)
+          (POST app
+                (format "ctia/%s" entity)
                 :body (assoc (green-entity new-entity)
                              :external_ids ["grepost2"])
                 :headers {"Authorization" "player-1-token"})
 
           player-2-entity-post
-          (post (format "ctia/%s" entity)
+          (POST app
+                (format "ctia/%s" entity)
                 :body (assoc (green-entity new-entity)
                              :external_ids ["gpost"])
                 :headers {"Authorization" "player-2-token"})
 
           player-2-entity-repost
-          (post (format "ctia/%s" entity)
+          (POST app
+                (format "ctia/%s" entity)
                 :body (assoc (green-entity new-entity)
                              :external_ids ["grepost"])
                 :headers {"Authorization" "player-2-token"})
 
           player-2-entity-repost2
-          (post (format "ctia/%s" entity)
+          (POST app
+                (format "ctia/%s" entity)
                 :body (assoc (green-entity new-entity)
                              :external_ids ["grepost2"])
                 :headers {"Authorization" "player-2-token"})
 
           player-3-entity-post
-          (post (format "ctia/%s" entity)
+          (POST app
+                (format "ctia/%s" entity)
                 :body (assoc (green-entity new-entity)
                              :external_ids ["gpost"])
                 :headers {"Authorization" "player-3-token"})
 
           player-3-entity-repost
-          (post (format "ctia/%s" entity)
+          (POST app
+                (format "ctia/%s" entity)
                 :body (assoc (green-entity new-entity)
                              :external_ids ["grepost"])
                 :headers {"Authorization" "player-3-token"})
 
           player-3-entity-repost2
-          (post (format "ctia/%s" entity)
+          (POST app
+                (format "ctia/%s" entity)
                 :body (assoc (green-entity new-entity)
                              :external_ids ["grepost2"])
                 :headers {"Authorization" "player-3-token"})]
@@ -513,7 +546,8 @@
 
       (when can-update?
         (let [player-1-entity-update
-              (put (format "ctia/%s/%s"
+              (PUT app
+                   (format "ctia/%s/%s"
                            entity
                            (-> player-1-entity-repost
                                :parsed-body
@@ -560,7 +594,8 @@
 
       (when can-update?
         (let [player-1-entity-update2
-              (put (format "ctia/%s/%s"
+              (PUT app
+                   (format "ctia/%s/%s"
                            entity
                            (-> player-1-entity-repost2
                                :parsed-body
@@ -601,62 +636,72 @@
                                                   (:parsed-body player-3-entity-repost2)]})))))))
 
 (defn test-access-control-entity-tlp-amber
-  [{:keys [entity
+  [{:keys [app
+           entity
            new-entity
            can-update?]
     :as args}]
 
   (testing "TLP amber"
     (let [player-1-entity-post
-          (post (format "ctia/%s" entity)
+          (POST app
+                (format "ctia/%s" entity)
                 :body (assoc (amber-entity new-entity)
                              :external_ids ["apost"])
                 :headers {"Authorization" "player-1-token"})
 
           player-1-entity-repost
-          (post (format "ctia/%s" entity)
+          (POST app
+                (format "ctia/%s" entity)
                 :body (assoc (amber-entity new-entity)
                              :external_ids ["arepost"])
                 :headers {"Authorization" "player-1-token"})
 
           player-1-entity-repost2
-          (post (format "ctia/%s" entity)
+          (POST app
+                (format "ctia/%s" entity)
                 :body (assoc (amber-entity new-entity)
                              :external_ids ["arepost2"])
                 :headers {"Authorization" "player-1-token"})
 
           player-2-entity-post
-          (post (format "ctia/%s" entity)
+          (POST app
+                (format "ctia/%s" entity)
                 :body (assoc (amber-entity new-entity)
                              :external_ids ["apost"])
                 :headers {"Authorization" "player-2-token"})
 
           player-2-entity-repost
-          (post (format "ctia/%s" entity)
+          (POST app
+                (format "ctia/%s" entity)
                 :body (assoc (amber-entity new-entity)
                              :external_ids ["arepost"])
                 :headers {"Authorization" "player-2-token"})
 
           player-2-entity-repost2
-          (post (format "ctia/%s" entity)
+          (POST app
+                (format "ctia/%s" entity)
                 :body (assoc (amber-entity new-entity)
                              :external_ids ["arepost2"])
                 :headers {"Authorization" "player-2-token"})
 
           player-3-entity-post
-          (post (format "ctia/%s" entity)
+          (POST app
+                (format "ctia/%s" entity)
                 :body (assoc (amber-entity new-entity)
                              :external_ids ["apost"])
                 :headers {"Authorization" "player-3-token"})
 
           player-3-entity-repost
-          (post (format "ctia/%s" entity)
+          (POST app
+                (format "ctia/%s" entity)
                 :body (assoc (amber-entity new-entity)
                              :external_ids ["arepost"])
                 :headers {"Authorization" "player-3-token"})
 
           player-3-entity-repost2
-          (post (format "ctia/%s" entity)
+          (POST app
+                (format "ctia/%s" entity)
                 :body (assoc (amber-entity new-entity)
                              :external_ids ["arepost2"])
                 :headers {"Authorization" "player-3-token"})]
@@ -697,7 +742,8 @@
 
       (when can-update?
         (let [player-1-entity-update
-              (put (format "ctia/%s/%s"
+              (PUT app
+                   (format "ctia/%s/%s"
                            entity
                            (-> player-1-entity-repost
                                :parsed-body
@@ -741,7 +787,8 @@
 
       (when can-update?
         (let [player-1-entity-update2
-              (put (format "ctia/%s/%s"
+              (PUT app
+                   (format "ctia/%s/%s"
                            entity
                            (-> player-1-entity-repost2
                                :parsed-body
@@ -781,62 +828,72 @@
 
 
 (defn test-access-control-entity-tlp-red
-  [{:keys [entity
+  [{:keys [app
+           entity
            new-entity
            can-update?]
     :as args}]
-
+  (assert app)
   (testing "TLP Red"
     (let [player-1-entity-post
-          (post (format "ctia/%s" entity)
+          (POST app
+                (format "ctia/%s" entity)
                 :body (assoc (red-entity new-entity)
                              :external_ids ["rpost"])
                 :headers {"Authorization" "player-1-token"})
 
           player-1-entity-repost
-          (post (format "ctia/%s" entity)
+          (POST app
+                (format "ctia/%s" entity)
                 :body (assoc (red-entity new-entity)
                              :external_ids ["rrepost"])
                 :headers {"Authorization" "player-1-token"})
 
           player-1-entity-repost2
-          (post (format "ctia/%s" entity)
+          (POST app
+                (format "ctia/%s" entity)
                 :body (assoc (red-entity new-entity)
                              :external_ids ["rrepost2"])
                 :headers {"Authorization" "player-1-token"})
 
           player-2-entity-post
-          (post (format "ctia/%s" entity)
+          (POST app
+                (format "ctia/%s" entity)
                 :body (assoc (red-entity new-entity)
                              :external_ids ["rpost"])
                 :headers {"Authorization" "player-2-token"})
 
           player-2-entity-repost
-          (post (format "ctia/%s" entity)
+          (POST app
+                (format "ctia/%s" entity)
                 :body (assoc (red-entity new-entity)
                              :external_ids ["rrepost"])
                 :headers {"Authorization" "player-2-token"})
 
           player-2-entity-repost2
-          (post (format "ctia/%s" entity)
+          (POST app
+                (format "ctia/%s" entity)
                 :body (assoc (red-entity new-entity)
                              :external_ids ["rrepost2"])
                 :headers {"Authorization" "player-2-token"})
 
           player-3-entity-post
-          (post (format "ctia/%s" entity)
+          (POST app
+                (format "ctia/%s" entity)
                 :body (assoc (red-entity new-entity)
                              :external_ids ["rpost"])
                 :headers {"Authorization" "player-3-token"})
 
           player-3-entity-repost
-          (post (format "ctia/%s" entity)
+          (POST app
+                (format "ctia/%s" entity)
                 :body (assoc (red-entity new-entity)
                              :external_ids ["rrepost"])
                 :headers {"Authorization" "player-3-token"})
 
           player-3-entity-repost2
-          (post (format "ctia/%s" entity)
+          (POST app
+                (format "ctia/%s" entity)
                 :body (assoc (red-entity new-entity)
                              :external_ids ["rrepost2"])
                 :headers {"Authorization" "player-3-token"})]
@@ -875,7 +932,8 @@
 
       (when can-update?
         (let [player-1-entity-update
-              (put (format "ctia/%s/%s"
+              (PUT app
+                   (format "ctia/%s/%s"
                            entity
                            (-> player-1-entity-repost
                                :parsed-body
@@ -917,7 +975,8 @@
 
       (when can-update?
         (let [player-1-entity-update2
-              (put (format "ctia/%s/%s"
+              (PUT app
+                   (format "ctia/%s/%s"
                            entity
                            (-> player-1-entity-repost2
                                :parsed-body
@@ -976,12 +1035,14 @@
 
                   {status-default-tlp :status
                    body-default-tlp :parsed-body}
-                  (post (format "ctia/%s" entity)
+                  (POST app
+                        (format "ctia/%s" entity)
                         :body (dissoc new-entity :tlp)
                         :headers {"Authorization" "player-1-token"})
                   {status-disallowed-tlp :status
                    body-disallowed-tlp :parsed-body}
-                  (post (format "ctia/%s" entity)
+                  (POST app
+                        (format "ctia/%s" entity)
                         :body (assoc new-entity :tlp "white")
                         :headers {"Authorization" "player-1-token"})]
 
@@ -1041,27 +1102,31 @@
                                   (setup! app)
                                   (f app)))))
         
-        test-default-config (fn [_app_]
+        test-default-config (fn [app]
                               (test-access-control-entity-tlp-green
-                                {:entity entity
+                                {:app app
+                                 :entity entity
                                  :new-entity new-entity
                                  :can-update? can-update?
                                  :can-delete? can-delete?})
 
                               (test-access-control-entity-tlp-green-max-record-visibility-group
-                                {:entity entity
+                                {:app app
+                                 :entity entity
                                  :new-entity new-entity
                                  :can-update? can-update?
                                  :can-delete? can-delete?})
 
                               (test-access-control-entity-tlp-amber
-                                {:entity entity
+                                {:app app
+                                 :entity entity
                                  :new-entity new-entity
                                  :can-update? can-update?
                                  :can-delete? can-delete?})
 
                               (test-access-control-entity-tlp-red
-                                {:entity entity
+                                {:app app
+                                 :entity entity
                                  :new-entity new-entity
                                  :can-update? can-update?
                                  :can-delete? can-delete?}))]

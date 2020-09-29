@@ -12,7 +12,7 @@
    [ctia.test-helpers
     [access-control :refer [access-control-test]]
     [auth :refer [all-capabilities]]
-    [core :as helpers :refer [post]]
+    [core :as helpers :refer [POST]]
     [crud :refer [entity-crud-test]]
     [fake-whoami-service :as whoami-helpers]
     [field-selection :refer [field-selection-tests]]
@@ -163,7 +163,8 @@
       (testing "feed output judgements"
         (let [feed-update (assoc feed :output :judgements)
               updated-feed-response
-              (helpers/put (str "ctia/feed/" (:short-id feed-id))
+              (helpers/PUT app
+                           (str "ctia/feed/" (:short-id feed-id))
                            :body feed-update
                            :headers {"Authorization" "45c1f5e3f05d0"})
               updated-feed (:parsed-body updated-feed-response)]
@@ -198,7 +199,8 @@
             ;;teardown
             (is (= 200
                    (:status
-                    (helpers/put (str "ctia/feed/" (:short-id feed-id))
+                    (helpers/PUT app
+                                 (str "ctia/feed/" (:short-id feed-id))
                                  :body feed
                                  :headers {"Authorization" "45c1f5e3f05d0"}))))))))))
 
@@ -215,7 +217,8 @@
                                          "foogroup"
                                          "user")
 
-     (let [response (helpers/post "ctia/bundle/import"
+     (let [response (helpers/POST app
+                                  "ctia/bundle/import"
                                   :body blocklist-bundle
                                   :headers {"Authorization" "45c1f5e3f05d0"})
            bundle-import-result (:parsed-body response)
@@ -249,7 +252,8 @@
                                          "user")
      (let [entities (repeat 345 (assoc new-feed-maximal
                                        :title "foo"))
-           ids (->> (doall (map #(post "/ctia/feed"
+           ids (->> (doall (map #(POST app
+                                       "/ctia/feed"
                                        :body (dissoc % :id)
                                        :headers {"Authorization"
                                                  "45c1f5e3f05d0"})
@@ -257,11 +261,13 @@
                     (map :parsed-body)
                     (map :id))]
        (field-selection-tests
+        app
         ["ctia/feed/search?query=*"
          (doc-id->rel-url (first ids))]
         {"Authorization" "45c1f5e3f05d0"}
         sort-restricted-feed-fields)
        (pagination-test
+        app
         "ctia/feed/search?query=*"
         {"Authorization" "45c1f5e3f05d0"}
         sort-restricted-feed-fields)))))

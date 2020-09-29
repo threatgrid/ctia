@@ -27,7 +27,8 @@
    (let [{:keys [get-in-config]} (helpers/get-service-map app :ConfigService)]
     ;; only when ES store
     (when (= "es" (get-in-config [:ctia :store :asset-mapping]))
-      (are [term check-fn expected desc] (let [response (helpers/get
+      (are [term check-fn expected desc] (let [response (helpers/GET
+                                                         app
                                                          "ctia/asset-mapping/search"
                                                          :query-params {"query" term}
                                                          :headers {"Authorization" "45c1f5e3f05d0"})]
@@ -52,7 +53,8 @@
       (helpers/fixture-with-fixed-time
        fixed-now
        (fn []
-         (let [response (helpers/post
+         (let [response (helpers/POST
+                         app
                          (str "ctia/asset-mapping/expire/" short-id)
                          :headers {"Authorization" "45c1f5e3f05d0"})]
            (is (= 200 (:status response)) "POST asset-mapping/expire succeeds")
@@ -87,7 +89,8 @@
                                          "foogroup"
                                          "user")
 
-     (let [ids (helpers/post-entity-bulk
+     (let [ids (helpers/POST-entity-bulk
+                app
                 new-asset-mapping-maximal
                 :asset_mappings
                 30
@@ -100,6 +103,7 @@
         asset-mapping/asset-mapping-fields)
 
        (pagination/pagination-test
+        app
         "ctia/asset-mapping/search?query=*"
         {"Authorization" "45c1f5e3f05d0"}
         asset-mapping/asset-mapping-fields)))))

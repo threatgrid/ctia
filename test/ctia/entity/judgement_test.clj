@@ -1,5 +1,4 @@
 (ns ctia.entity.judgement-test
-  (:refer-clojure :exclude [get])
   (:require [clj-momo.test-helpers.core :as mth]
             [clojure.test :refer [deftest is join-fixtures testing use-fixtures]]
             [ctia.domain.entities :refer [schema-version]]
@@ -15,7 +14,7 @@
             [ctia.test-helpers
              [access-control :refer [access-control-test]]
              [auth :refer [all-capabilities]]
-             [core :as helpers :refer [get post post-entity-bulk]]
+             [core :as helpers :refer [GET POST POST-entity-bulk]]
              [crud :refer [entity-crud-test]]
              [aggregate :refer [test-metric-routes]]
              [fake-whoami-service :as whoami-helpers]
@@ -52,7 +51,8 @@
     ;; only when ES store
     (when (= "es" (get-in-config [:ctia :store :indicator]))
       (let [term "observable.value:\"1.2.3.4\""
-            response (get (str "ctia/judgement/search")
+            response (GET app
+                          (str "ctia/judgement/search")
                           :headers {"Authorization" "45c1f5e3f05d0"}
                           :query-params {"query" term})]
         (is (= 200 (:status response)))
@@ -60,7 +60,8 @@
             "IP quoted term works"))
 
       (let [term "1.2.3.4"
-            response (get (str "ctia/judgement/search")
+            response (GET app
+                          (str "ctia/judgement/search")
                           :headers {"Authorization" "45c1f5e3f05d0"}
                           :query-params {"query" term})]
         (is (= 200 (:status response)))
@@ -68,7 +69,8 @@
             "IP unquoted, all term works"))
 
       (let [term "Evil Servers"
-            response (get (str "ctia/judgement/search")
+            response (GET app
+                          (str "ctia/judgement/search")
                           :headers {"Authorization" "45c1f5e3f05d0"}
                           :query-params {"query" term})]
         (is (= 200 (:status response)))
@@ -76,7 +78,8 @@
             "Full text search, mixed case, _all term works"))
 
       (let [term "disposition_name:Malicious"
-            response (get (str "ctia/judgement/search")
+            response (GET app
+                          (str "ctia/judgement/search")
                           :headers {"Authorization" "45c1f5e3f05d0"}
                           :query-params {"query" term})]
         (is (= 200 (:status response)))
@@ -84,7 +87,8 @@
             "uppercase term works"))
 
       (let [term "disposition_name:malicious"
-            response (get (str "ctia/judgement/search")
+            response (GET app
+                          (str "ctia/judgement/search")
                           :headers {"Authorization" "45c1f5e3f05d0"}
                           :query-params {"query" term})]
         (is (= 200 (:status response)))
@@ -92,7 +96,8 @@
             "lowercase quoted term works"))
 
       (let [term "disposition_name:Malicious"
-            response (get (str "ctia/judgement/search")
+            response (GET app
+                          (str "ctia/judgement/search")
                           :headers {"Authorization" "45c1f5e3f05d0"}
                           :query-params {"query" term
                                          "tlp" "red"})]
@@ -101,7 +106,8 @@
             "filters are applied, and discriminate"))
 
       (let [term "disposition_name:Malicious"
-            response (get (str "ctia/judgement/search")
+            response (GET app
+                          (str "ctia/judgement/search")
                           :headers {"Authorization" "45c1f5e3f05d0"}
                           :query-params {"query" term
                                          "tlp" "green"})]
@@ -112,7 +118,8 @@
   (testing "GET /ctia/judgement/:id authentication failures"
     (testing "no Authorization"
       (let [{body :parsed-body status :status}
-            (get (str "ctia/judgement/" (:short-id judgement-id)))]
+            (GET app
+                 (str "ctia/judgement/" (:short-id judgement-id)))]
         (is (= 401 status))
         (is (= {:message "Only authenticated users allowed"
                 :error :not_authenticated}
@@ -120,7 +127,8 @@
 
     (testing "unknown Authorization"
       (let [{body :parsed-body status :status}
-            (get (str "ctia/judgement/" (:short-id judgement-id))
+            (GET app
+                 (str "ctia/judgement/" (:short-id judgement-id))
                  :headers {"Authorization" "1111111111111"})]
         (is (= 401 status))
         (is (= {:message "Only authenticated users allowed"
@@ -129,7 +137,8 @@
 
     (testing "doesn't have read capability"
       (let [{body :parsed-body status :status}
-            (get (str "ctia/judgement/" (:short-id judgement-id))
+            (GET app
+                 (str "ctia/judgement/" (:short-id judgement-id))
                  :headers {"Authorization" "2222222222222"})]
         (is (= 403 status))
         (is (= {:message "Missing capability",
@@ -181,7 +190,8 @@
      (testing "POST a judgement with dispositon (id)"
        (let [{status :status
               judgement :parsed-body}
-             (post "ctia/judgement"
+             (POST app
+                   "ctia/judgement"
                    :body {:observable {:value "1.2.3.4"
                                        :type "ip"}
                           :disposition 2
@@ -216,7 +226,8 @@
      (testing "POST a judgement with disposition_name"
        (let [{status :status
               judgement :parsed-body}
-             (post "ctia/judgement"
+             (POST app
+                   "ctia/judgement"
                    :body {:observable {:value "1.2.3.4"
                                        :type "ip"}
                           :disposition_name "Malicious"
@@ -250,7 +261,8 @@
      (testing "POST a judgement without disposition"
        (let [{status :status
               judgement :parsed-body}
-             (post "ctia/judgement"
+             (POST app
+                   "ctia/judgement"
                    :body {:observable {:value "1.2.3.4"
                                        :type "ip"}
                           :source "test"
@@ -284,7 +296,8 @@
      (testing "POST a judgement with mismatching disposition/disposition_name"
        (let [{status :status
               judgement :parsed-body}
-             (post "ctia/judgement"
+             (POST app
+                   "ctia/judgement"
                    :body {:observable {:value "1.2.3.4"
                                        :type "ip"}
                           :disposition 1
@@ -312,7 +325,8 @@
      (testing "POST a judgement with mismatching disposition/disposition_name"
        (let [{status :status
               judgement :parsed-body}
-             (post "ctia/judgement"
+             (POST app
+                   "ctia/judgement"
                    :body {:observable {:value "1.2.3.4"
                                        :type "ip"}
                           :disposition 1
@@ -349,17 +363,20 @@
            (assoc ex/new-judgement-maximal
                   :observable
                   {:value "1.2.3.4", :type "ip"})
-           ids (post-entity-bulk
+           ids (POST-entity-bulk
+                app
                 new-judgement
                 :judgements
                 30
                 {"Authorization" "45c1f5e3f05d0"})]
        (pagination-test
+        app
         "ctia/ip/1.2.3.4/judgements"
         {"Authorization" "45c1f5e3f05d0"}
         judgement-sort-fields)
 
        (field-selection-tests
+        app
         ["ctia/ip/1.2.3.4/judgements"
          (doc-id->rel-url (first ids))]
         {"Authorization" "45c1f5e3f05d0"}

@@ -1,11 +1,10 @@
 (ns ctia.entity.feedback-test
-  (:refer-clojure :exclude [get])
   (:require [clj-momo.test-helpers.core :as mth]
             [clojure.test :refer [deftest is join-fixtures testing use-fixtures]]
             [ctia.domain.entities :refer [schema-version]]
             [ctia.test-helpers
              [auth :refer [all-capabilities]]
-             [core :as helpers :refer [get]]
+             [core :as helpers :refer [GET]]
              [crud :refer [entity-crud-test]]
              [fake-whoami-service :as whoami-helpers]
              [store :refer [test-for-each-store-with-app]]]
@@ -25,7 +24,8 @@
 (defn feedback-by-entity-id-test
   [app feedback-id _]
   (testing "GET /ctia/feedback?entity_id="
-    (let [response (get (str "ctia/feedback")
+    (let [response (GET app
+                        (str "ctia/feedback")
                         :query-params {:entity_id "judgement-123"}
                         :headers {"Authorization" "45c1f5e3f05d0"})
           feedbacks (:parsed-body response)]

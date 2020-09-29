@@ -12,6 +12,7 @@
   (when doc-id
     (string/replace doc-id #".*(?=ctia)" "")))
 
+;; TODO thread app arg through these functions
 (def test-post
   (mthh/with-port-fn-and-api-key th/get-http-port api-key mthh/test-post))
 

@@ -1,10 +1,9 @@
 (ns ctia.test-helpers.pagination
-  (:refer-clojure :exclude [get])
   (:require [clojure.string :as str]
             [clojure.test :refer [is testing]]
             [ctim.domain.id :as id]
             [ctia.test-helpers.aggregate :as aggregate]
-            [ctia.test-helpers.core :as helpers :refer [get]]))
+            [ctia.test-helpers.core :as helpers :refer [GET]]))
 
 (defn total->limit
   "make a limit from a full list total and offset"
@@ -16,18 +15,19 @@
 
 (defn limit-test
   "test a list route with limit query param"
-  [route headers]
+  [app route headers]
   (headers (str route " with a limit")
            (let [{full-status :status
                   full-res :parsed-body
-                  full-headers :headers} (get route :headers headers)
+                  full-headers :headers} (GET app route :headers headers)
 
                  total (count full-res)
                  limit (total->limit total 0)
 
                  {limited-status :status
                   limited-res :parsed-body
-                  limited-headers :headers} (get route
+                  limited-headers :headers} (GET app
+                                                 route
                                                  :query-params {:limit limit}
                                                  :headers headers)
 
@@ -37,16 +37,17 @@
              (is (= limit (int limited-total)))
              (is (= (take limit full-res)
                     limited-res))
-             (is (= (clojure.core/get limited-headers "X-Total-Hits")
-                    (clojure.core/get full-headers "X-Total-Hits"))))))
+             (is (= (get limited-headers "X-Total-Hits")
+                    (get full-headers "X-Total-Hits"))))))
 
 
 (defn x-next-test
   "Retrieving a full paginated response with X-Next"
-  [route headers]
+  [app route headers]
   (let [{full-status :status
          full-res :parsed-body}
-        (get route
+        (GET app
+             route
              :headers headers
              :query-params {:limit 10000})
         paginated-res
@@ -55,11 +56,12 @@
           (if x-next
             (let [{res :parsed-body
                    headers :headers}
-                  (get (str route
+                  (GET app
+                       (str route
                             (when (seq x-next) "&") x-next)
                        :headers headers)]
-              (recur (concat results res)
-                     (clojure.core/get headers "X-Next")))
+              (recur (into results res)
+                     (get headers "X-Next")))
             results))]
 
     (is (= 200 full-status))
@@ -68,13 +70,14 @@
 
 (defn offset-test
   "test a list route with offset and limit query params"
-  [route headers]
+  [app route headers]
   (testing (str route " with limit and offset")
     (let [offset 1
           {full-status :status
            full-res :parsed-body
            full-headers :headers}
-          (get route
+          (GET app
+               route
                :headers headers
                :query-params {:limit 10000
                               :sort_by "id"})
@@ -94,7 +97,8 @@
                             base-x-next)
           {limited-status :status
            limited-res :parsed-body
-           limited-headers :headers} (get route
+           limited-headers :headers} (GET app
+                                          route
                                           :headers headers
                                           :query-params {:limit limit
                                                          :offset offset
@@ -107,8 +111,8 @@
                   (drop offset)
                   (take limit)) limited-res))
 
-      (is (= (clojure.core/get limited-headers "X-Total-Hits")
-             (clojure.core/get full-headers "X-Total-Hits")))
+      (is (= (get limited-headers "X-Total-Hits")
+             (get full-headers "X-Total-Hits")))
 
       (is (= {:X-Total-Hits (str total)
               :X-Previous (str "limit=" limit "&offset=" (if (pos? prev-offset)
@@ -141,15 +145,17 @@
 
 (defn sort-test
   "test a list route with all sort options"
-  [route headers sort-fields]
+  [app route headers sort-fields]
   (testing (str route " with sort")
     (doseq [field sort-fields]
-      (let [manually-sorted (->> (get route
+      (let [manually-sorted (->> (GET app
+                                      route
                                       :headers headers
                                       :query-params {:limit 10000})
                                  :parsed-body
                                  (sort-by #(sort-by-fn % field)))
-            route-sorted (->> (get route
+            route-sorted (->> (GET app
+                                   route
                                    :headers headers
                                    :query-params {:sort_by    (name field)
                                                   :sort_order "asc"
@@ -164,13 +170,15 @@
 
 (defn edge-cases-test
   "miscellaneous test which may expose small caveats"
-  [route headers]
+  [app route headers]
   (testing (str route " with invalid offset")
-    (let [total (-> (get route
+    (let [total (-> (GET app
+                         route
                          :headers headers
                          :query-params {:limit 10000})
                     :parsed-body count)
-          res (->> (get route
+          res (->> (GET app
+                        route
                         :headers headers
                         :query-params {:sort_by "id"
                                        :sort_order "asc"
@@ -180,13 +188,15 @@
       (is (= [] res))))
 
   (testing (str route " with invalid limit")
-    (let [total (-> (get route
+    (let [total (-> (GET app
+                         route
                          :headers headers
                          :query-params {:limit 10000})
                     :parsed-body count)
 
           {status :status
-           body :parsed-body} (get route
+           body :parsed-body} (GET app
+                                   route
                                    :headers headers
                                    :query-params {:sort_by "id"
                                                   :sort_order "asc"
@@ -197,17 +207,17 @@
 
 (defn pagination-test
   "all pagination related tests for a list route"
-  [route headers sort-fields]
+  [app route headers sort-fields]
   (testing (str "pagination tests for: " route)
-    (do (limit-test route headers)
-        (offset-test route headers)
-        (x-next-test route headers)
-        (sort-test route headers sort-fields)
-        (edge-cases-test route headers))))
+    (do (limit-test app route headers)
+        (offset-test app route headers)
+        (x-next-test app route headers)
+        (sort-test app route headers sort-fields)
+        (edge-cases-test app route headers))))
 
 (defn pagination-test-no-sort
   "all pagination related tests for a list route"
-  [route headers]
+  [app route headers]
   (testing (str "paginations tests for: " route)
-    (do (limit-test route headers)
-        (offset-test route headers))))
+    (do (limit-test app route headers)
+        (offset-test app route headers))))

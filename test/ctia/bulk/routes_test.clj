@@ -1,5 +1,4 @@
 (ns ctia.bulk.routes-test
-  (:refer-clojure :exclude [get])
   (:require [cheshire.core :refer [parse-string]]
             [clj-momo.lib.es.index :as es-index]
             [clj-momo.test-helpers
@@ -7,7 +6,6 @@
              [http :refer [encode]]]
             [clojure.java.io :as io]
             [clojure
-             [core :as core]
              [string :as str]
              [test :refer [deftest is join-fixtures testing use-fixtures]]]
             [clj-http.fake :refer [with-global-fake-routes]]
@@ -18,7 +16,7 @@
             [ctia.test-helpers
              [es :as es-helpers]
              [auth :refer [all-capabilities]]
-             [core :as helpers :refer [get post]]
+             [core :as helpers :refer [GET POST]]
              [fake-whoami-service :as whoami-helpers]
              [store :refer [test-for-each-store-with-app
                             test-selected-stores-with-app]]]
@@ -190,7 +188,7 @@
                                 (let [id (if (vector? id) (last id) id)
                                       short-id (:short-id (id/long-id->id id))]
                                   (str (encode (name type)) "=" (encode short-id))))
-                              (core/get bulk-ids type))))
+                              (get bulk-ids type))))
              (keys bulk-ids))))
 
 
@@ -242,7 +240,8 @@
                                           (boolean? wait_for) (str "?wait_for=" wait_for))]
 
                                (with-global-fake-routes fake-routes
-                                 (post path
+                                 (POST app
+                                       path
                                        :body new-bulk
                                        :headers {"Authorization" "45c1f5e3f05d0"}))
 
@@ -279,7 +278,8 @@
                                            (range nb))
                        :sightings (map mk-new-sighting (range nb))
                        :tools (map mk-new-tool (range nb))}
-             response (post "ctia/bulk"
+             response (POST app
+                            "ctia/bulk"
                             :body new-bulk
                             :headers {"Authorization" "45c1f5e3f05d0"})
              bulk-ids (:parsed-body response)
@@ -288,13 +288,14 @@
 
          (doseq [type (keys new-bulk)]
            (testing (str "number of created " (name type))
-             (is (= (count (core/get new-bulk type))
-                    (count (core/get bulk-ids type))))))
+             (is (= (count (get new-bulk type))
+                    (count (get bulk-ids type))))))
 
          (testing "GET /ctia/bulk"
            (let [{status :status
                   response :parsed-body}
-                 (get (str "ctia/bulk?"
+                 (GET app
+                      (str "ctia/bulk?"
                            (make-get-query-str-from-bulkrefs bulk-ids))
                       :headers {"Authorization" "45c1f5e3f05d0"})]
              (is (= 200 status))
@@ -302,11 +303,11 @@
              (doseq [k (keys new-bulk)]
                (testing (str "retrieved " (name k))
                  (is (= (map #(dissoc % :id :timestamp :source_ref :target_ref)
-                             (core/get new-bulk k))
+                             (get new-bulk k))
                         (map #(dissoc % :id :timestamp :type :tlp :schema_version :disposition_name :source_ref :target_ref :owner :groups)
-                             (core/get response k))))
+                             (get response k))))
 
-                 (let [id (id/long-id->id (:id (first (core/get response k))))]
+                 (let [id (id/long-id->id (:id (first (get response k))))]
                    (is (= (:hostname id)         (:hostname show-props)))
                    (is (= (:protocol id)         (:protocol show-props)))
                    (is (= (:port id)             (:port show-props)))
@@ -388,11 +389,13 @@
                              :tools (map mk-new-tool (range nb))}
            {status-ok :status
             response :body
-            response-ok :parsed-body} (post "ctia/bulk"
+            response-ok :parsed-body} (POST app
+                                            "ctia/bulk"
                                             :body new-ok-bulk
                                             :headers {"Authorization" "45c1f5e3f05d0"})
            {status-too-big :status
-            response-too-big :parsed-body} (post "ctia/bulk"
+            response-too-big :parsed-body} (POST app
+                                                 "ctia/bulk"
                                                  :body new-too-big-bulk
                                                  :headers {"Authorization" "45c1f5e3f05d0"})]
        (testing "POST of right size bulk are accepted"
@@ -424,14 +427,16 @@
                                :id (id/make-transient-id nil))
            ;; Submit all entities to create
            {status-create :status
-            bulk-ids :parsed-body} (post "ctia/bulk"
+            bulk-ids :parsed-body} (POST app
+                                         "ctia/bulk"
                                          :body {:tools tools
                                                 :relationships [relationship]}
                                          :headers {"Authorization" "45c1f5e3f05d0"})
            ;; Retrieve all entities that have been created
            {status-get :status
             {:keys [relationships tools]} :parsed-body}
-           (get (str "ctia/bulk?"
+           (GET app
+                (str "ctia/bulk?"
                      (make-get-query-str-from-bulkrefs (dissoc bulk-ids :tempids)))
                 :headers {"Authorization" "45c1f5e3f05d0"})
            {:keys [target_ref source_ref]} (first relationships)
@@ -466,7 +471,8 @@
                                     :vector_string "CLEARLY INVALID STRING"})
            {status-create :status
             bulk-ids :parsed-body}
-           (post "ctia/bulk"
+           (POST app
+                 "ctia/bulk"
                  :body {:vulnerabilities [vulnerability]}
                  :headers {"Authorization" "45c1f5e3f05d0"})]
 
@@ -513,7 +519,8 @@
            ;; Submit all entities to create
            {status-create :status
             bulk-ids :parsed-body}
-           (post "ctia/bulk"
+           (POST app
+                 "ctia/bulk"
                  :body {:tools tools
                         :sightings [sighting]}
                  :headers {"Authorization" "45c1f5e3f05d0"})
@@ -522,7 +529,8 @@
                          (dissoc bulk-ids :tempids :tools :vulnerabilities))
            {status-get :status
             {:keys [sightings] :as body} :parsed-body}
-           (get (str "ctia/bulk?"
+           (GET app
+                (str "ctia/bulk?"
                      query-string)
                 :headers {"Authorization" "45c1f5e3f05d0"})]
        (is (= 201 status-create) "The bulk create should be successfull")

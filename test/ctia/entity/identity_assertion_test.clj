@@ -1,19 +1,18 @@
 (ns ctia.entity.identity-assertion-test
-  (:refer-clojure :exclude [get])
   (:require [clj-momo.test-helpers.core :as mth]
             [clojure.test :refer [deftest is testing join-fixtures use-fixtures]]
             [ctia.entity.identity-assertion :as sut]
             [ctia.properties :as p]
             [ctia.test-helpers
              [auth :refer [all-capabilities]]
-             [core :as helpers :refer [post-entity-bulk post-bulk]]
+             [core :as helpers :refer [POST-entity-bulk]]
              [crud :refer [entity-crud-test]]
              [aggregate :refer [test-metric-routes]]
              [fake-whoami-service :as whoami-helpers]
              [field-selection :refer [field-selection-tests]]
              [http :refer [api-key doc-id->rel-url]]
              [pagination :refer [pagination-test]]
-             [core :as helpers :refer [get]]
+             [core :as helpers :refer [GET]]
              [store :refer [test-for-each-store-with-app]]]
             [ctim.examples.identity-assertions
              :refer
@@ -38,25 +37,29 @@
   (testing "GET /ctia/identity-assertion/search"
     (do
       (let [term "identity.observables.value:\"1.2.3.4\""
-            response (get (str "ctia/identity-assertion/search")
+            response (GET app
+                          (str "ctia/identity-assertion/search")
                           :query-params {"query" term}
                           :headers {"Authorization" "45c1f5e3f05d0"})]
         (is (= 200 (:status response)) "IP quoted term works"))
 
       (let [term "1.2.3.4"
-            response (get (str "ctia/identity-assertion/search")
+            response (GET app
+                          (str "ctia/identity-assertion/search")
                           :headers {"Authorization" "45c1f5e3f05d0"}
                           :query-params {"query" term})]
         (is (= 200 (:status response)) "IP unquoted, term works"))
 
       (let [term "assertions.name:\"cisco:ctr:device:id\""
-            response (get (str "ctia/identity-assertion/search")
+            response (GET app
+                          (str "ctia/identity-assertion/search")
                           :query-params {"query" term}
                           :headers {"Authorization" "45c1f5e3f05d0"})]
         (is (= 200 (:status response)) "Search by Assertion name term works"))
 
       (let [term "*"
-            response (get (str "ctia/identity-assertion/search")
+            response (GET app
+                          (str "ctia/identity-assertion/search")
                           :query-params {"query" term
                                          "assertions.name" "cisco:ctr:device:id"}
                           :headers {"Authorization" "45c1f5e3f05d0"})]
@@ -90,13 +93,15 @@
                                          "foogroup"
                                          "user")
 
-     (let [ids (post-entity-bulk
+     (let [ids (POST-entity-bulk
+                app
                 new-identity-assertion-maximal
                 :identity_assertions
                 30
                 {"Authorization" "45c1f5e3f05d0"})]
 
        (field-selection-tests
+        app
         ["ctia/identity-assertion/search?query=*"
          (doc-id->rel-url (first ids))]
         {"Authorization" "45c1f5e3f05d0"}
@@ -104,6 +109,7 @@
 
 
        (pagination-test
+        app
         "ctia/identity-assertion/search?query=*"
         {"Authorization" "45c1f5e3f05d0"}
         sut/identity-assertion-fields)))))

@@ -1,5 +1,4 @@
 (ns ctia.http.routes.observable.verdict-test
-  (:refer-clojure :exclude [get])
   (:require [clj-momo.lib.time :as time]
             [clj-momo.test-helpers.core :as mht]
             [clj-time
@@ -8,7 +7,7 @@
             [clojure.test :refer [deftest is join-fixtures testing use-fixtures]]
             [ctia.test-helpers
              [auth :refer [all-capabilities]]
-             [core :as helpers :refer [delete get post]]
+             [core :as helpers :refer [DELETE GET POST]]
              [fake-whoami-service :as whoami-helpers]
              [store :refer [test-for-each-store-with-app]]]
             [ctim.domain.id :as id]))
@@ -30,7 +29,8 @@
                                          "user")
      (testing "test setup: create a judgement (1)"
        ;; Incorrect observable
-       (let [response (post "ctia/judgement"
+       (let [response (POST app
+                            "ctia/judgement"
                             :body {:observable {:value "127.0.0.1"
                                                 :type "ip"}
                                    :disposition 1
@@ -44,7 +44,8 @@
 
      (testing "test setup: create a judgement (2)"
        ;; Lower priority
-       (let [response (post "ctia/judgement"
+       (let [response (POST app
+                            "ctia/judgement"
                             :body {:observable {:value "10.0.0.1"
                                                 :type "ip"}
                                    :disposition 1
@@ -58,7 +59,8 @@
 
      (testing "test setup: create a judgement (3)"
        ;; Wrong disposition
-       (let [response (post "ctia/judgement"
+       (let [response (POST app
+                            "ctia/judgement"
                             :body {:observable {:value "10.0.0.1"
                                                 :type "ip"}
                                    :disposition 3
@@ -74,7 +76,8 @@
      (testing "a verdict that doesn't exist is a 404"
        (let [{status :status
               parsed-body :body}
-             (get "ctia/ip/10.0.0.42/verdict"
+             (GET app
+                  "ctia/ip/10.0.0.42/verdict"
                   :headers {"Authorization" "45c1f5e3f05d0"})]
          (is (= 404 status))
          (is (= "{:message \"no verdict currently available for the supplied observable\"}"
@@ -82,7 +85,8 @@
 
      (testing "test setup: create a judgement (4)"
        ;; Loses a tie because of its timestamp being later
-       (let [response (post "ctia/judgement"
+       (let [response (POST app
+                            "ctia/judgement"
                             :body {:observable {:value "10.0.0.1"
                                                 :type "ip"}
                                    :disposition 2
@@ -98,7 +102,8 @@
      (testing "with a highest-priority judgement"
        (let [{status :status
               judgement :parsed-body}
-             (post "ctia/judgement"
+             (POST app
+                   "ctia/judgement"
                    :body {:observable {:value "10.0.0.1"
                                        :type "ip"}
                           :disposition 2
@@ -116,7 +121,8 @@
          (testing "GET /ctia/:observable_type/:observable_value/verdict"
            (let [{status :status
                   verdict :parsed-body}
-                 (get "ctia/ip/10.0.0.1/verdict"
+                 (GET app
+                      "ctia/ip/10.0.0.1/verdict"
                       :headers {"Authorization" "45c1f5e3f05d0"})]
              (is (= 200 status))
              (is (= {:type "verdict"
@@ -142,7 +148,8 @@
      ;; It tests the code path where priority is equal but dispositions differ
      (testing "test setup: create a judgement (1)"
        (let [{status :status}
-             (post "ctia/judgement"
+             (POST app
+                   "ctia/judgement"
                    :body {:observable {:value "string",
                                        :type "device"},
                           :reason_uri "string",
@@ -161,7 +168,8 @@
      (testing "with a verdict judgement"
        (let [{status :status
               judgement :parsed-body}
-             (post "ctia/judgement"
+             (POST app
+                   "ctia/judgement"
                    :body {:observable {:value "10.0.0.1",
                                        :type "ip"},
                           :reason_uri "string",
@@ -183,7 +191,8 @@
            (with-redefs [time/now (constantly (time/timestamp "2016-02-12T15:42:58.232-00:00"))]
              (let [{status :status
                     verdict :parsed-body}
-                   (get "ctia/ip/10.0.0.1/verdict"
+                   (GET app
+                        "ctia/ip/10.0.0.1/verdict"
                         :headers {"Authorization" "45c1f5e3f05d0"})]
                (is (= 200 status))
                (is (= {:observable {:value "10.0.0.1",:type "ip"}
@@ -208,7 +217,8 @@
      (testing "test setup: create judgement-1"
        (let [{status :status
               judgement-1 :parsed-body}
-             (post "ctia/judgement"
+             (POST app
+                   "ctia/judgement"
                    :body {:observable {:value "10.0.0.1"
                                        :type "ip"}
                           :external_ids ["judgement-1"]
@@ -226,20 +236,23 @@
 
          (testing "test setup: delete judgement-1"
            (let [{status :status}
-                 (delete (str "ctia/judgement/" (:short-id judgement-1-id))
+                 (DELETE app
+                         (str "ctia/judgement/" (:short-id judgement-1-id))
                          :headers {"Authorization" "45c1f5e3f05d0"})]
              (is (= 204 status))))
 
          (testing "GET /ctia/:observable_type/:observable_value/verdict"
            (let [{status :status}
-                 (get "ctia/ip/10.0.0.1/verdict"
+                 (GET app
+                      "ctia/ip/10.0.0.1/verdict"
                       :headers {"Authorization" "45c1f5e3f05d0"})]
              (is (= 404 status))))))
 
      (testing "test setup: create judgement-2"
        (let [{status :status
               judgement-2 :parsed-body}
-             (post "ctia/judgement"
+             (POST app
+                   "ctia/judgement"
                    :body {:observable {:value "10.0.0.1"
                                        :type "ip"}
                           :external_ids ["judgement-2"]
@@ -258,7 +271,8 @@
          (testing "test setup: create judgement-3"
            (let [{status :status
                   judgement-3 :parsed-body}
-                 (post "ctia/judgement"
+                 (POST app
+                       "ctia/judgement"
                        :body {:observable {:value "10.0.0.1"
                                            :type "ip"}
                               :external_ids ["judgement-3"]
@@ -276,14 +290,16 @@
 
              (testing "test steup: delete judgement-3"
                (let [{status :status}
-                     (delete (str "ctia/judgement/" (:short-id judgement-3-id))
+                     (DELETE app
+                             (str "ctia/judgement/" (:short-id judgement-3-id))
                              :headers {"Authorization" "45c1f5e3f05d0"})]
                  (is (= 204 status))))))
 
          (testing "GET /ctia/:observable_type/:observable_value/verdict"
            (let [{status :status
                   verdict :parsed-body}
-                 (get "ctia/ip/10.0.0.1/verdict"
+                 (GET app
+                      "ctia/ip/10.0.0.1/verdict"
                       :headers {"Authorization" "45c1f5e3f05d0"})]
              (is (= 200 status))
              (is (= {:type "verdict"
@@ -314,7 +330,8 @@
 
              {status :status
               judgement :parsed-body}
-             (post "ctia/judgement"
+             (POST app
+                   "ctia/judgement"
                    :body {:valid_time {:start_time (-> (time/now)
                                                        time/format-date-time)
                                        :end_time (-> (time/plus-n :weeks (time/now) 2)
@@ -337,7 +354,8 @@
          (testing "GET /ctia/:observable_type/:observable_value/verdict"
            (let [{status :status
                   verdict :parsed-body}
-                 (get (str "ctia/" type "/" value "/verdict")
+                 (GET app
+                      (str "ctia/" type "/" value "/verdict")
                       :headers {"Authorization" "45c1f5e3f05d0"})]
              (is (= 200 status))
              (is (= (:id judgement)
@@ -346,7 +364,8 @@
      (testing ":start_time and :end_time are the same (now)"
        (let [{status :status
               judgement :parsed-body}
-             (post "ctia/judgement"
+             (POST app
+                   "ctia/judgement"
                    :body {:valid_time {:start_time (-> (time/now)
                                                        time/format-date-time)
                                        :end_time (-> (time/now)
@@ -370,7 +389,8 @@
          (testing "GET /ctia/:observable_type/:observable_value/verdict"
            (let [{status :status
                   verdict :parsed-body}
-                 (get "ctia/ip/10.0.0.1/verdict"
+                 (GET app
+                      "ctia/ip/10.0.0.1/verdict"
                       :headers {"Authorization" "45c1f5e3f05d0"})]
              (is (= 404 status))))))
 
@@ -384,7 +404,8 @@
 
              {status :status
               judgement :parsed-body}
-             (post "ctia/judgement"
+             (POST app
+                   "ctia/judgement"
                    :body {:valid_time {:start_time (-> (clj-time/now)
                                                        (clj-time/minus
                                                         (clj-time/minutes 10))
@@ -411,7 +432,8 @@
          (testing "GET /ctia/:observable_type/:observable_value/verdict"
            (let [{status :status
                   verdict :parsed-body}
-                 (get (str "ctia/" type "/" value "/verdict")
+                 (GET app
+                      (str "ctia/" type "/" value "/verdict")
                       :headers {"Authorization" "45c1f5e3f05d0"})]
              (is (= 200 status))
              (is (= (:id judgement)
@@ -427,7 +449,8 @@
 
              {status :status
               judgement :parsed-body}
-             (post "ctia/judgement"
+             (POST app
+                   "ctia/judgement"
                    :body {:valid_time {:start_time (-> (clj-time/now)
                                                        (clj-time/plus
                                                         (clj-time/minutes 1))
@@ -454,7 +477,8 @@
          (testing "GET /ctia/:observable_type/:observable_value/verdict"
            (let [{status :status
                   verdict :parsed-body}
-                 (get (str "ctia/" type "/" value "/verdict")
+                 (GET app
+                      (str "ctia/" type "/" value "/verdict")
                       :headers {"Authorization" "45c1f5e3f05d0"})]
              (is (= 404 status)))))))))
 
@@ -507,25 +531,29 @@
               :tlp "green",
               :confidence "None"}
              green-judgement-post
-             (post "ctia/judgement"
+             (POST app
+                   "ctia/judgement"
                    :body (assoc base-judgement
                                 :observable green-observable
                                 :tlp "green")
                    :headers {"Authorization" "foouser"})
              amber-judgement-post
-             (post "ctia/judgement"
+             (POST app
+                   "ctia/judgement"
                    :body (assoc base-judgement
                                 :observable amber-observable
                                 :tlp "amber")
                    :headers {"Authorization" "baruser"})
              red-judgement-post
-             (post "ctia/judgement"
+             (POST app
+                   "ctia/judgement"
                    :body (assoc base-judgement
                                 :observable red-observable
                                 :tlp "red")
                    :headers {"Authorization" "foobaruser"})
              authorized-groups-judgement-post
-             (post "ctia/judgement"
+             (POST app
+                   "ctia/judgement"
                    :body (assoc base-judgement
                                 :observable auth-observable
                                 :tlp "red"
@@ -537,14 +565,16 @@
          (testing "a green Judgement implies a verdict readable by everyone"
            (let [{status-1 :status
                   verdict-1 :parsed-body}
-                 (get (str "ctia/"
+                 (GET app
+                      (str "ctia/"
                            (:type green-observable)
                            "/" (:value green-observable)
                            "/verdict")
                       :headers {"Authorization" "foouser"})
                  {status-2 :status
                   verdict-2 :parsed-body}
-                 (get (str "ctia/"
+                 (GET app
+                      (str "ctia/"
                            (:type green-observable)
                            "/"
                            (:value green-observable)
@@ -552,7 +582,8 @@
                       :headers {"Authorization" "baruser"})
                  {status-3 :status
                   verdict-3 :parsed-body}
-                 (get (str "ctia/"
+                 (GET app
+                      (str "ctia/"
                            (:type green-observable)
                            "/"
                            (:value green-observable)
@@ -576,14 +607,16 @@
          (testing "an amber Judgement implies a verdict readable by members of the same group only"
            (let [{status-1 :status
                   verdict-1 :parsed-body}
-                 (get (str "ctia/"
+                 (GET app
+                      (str "ctia/"
                            (:type amber-observable)
                            "/" (:value amber-observable)
                            "/verdict")
                       :headers {"Authorization" "foouser"})
                  {status-2 :status
                   verdict-2 :parsed-body}
-                 (get (str "ctia/"
+                 (GET app
+                      (str "ctia/"
                            (:type amber-observable)
                            "/"
                            (:value amber-observable)
@@ -591,7 +624,8 @@
                       :headers {"Authorization" "baruser"})
                  {status-3 :status
                   verdict-3 :parsed-body}
-                 (get (str "ctia/"
+                 (GET app
+                      (str "ctia/"
                            (:type amber-observable)
                            "/"
                            (:value amber-observable)
@@ -610,14 +644,16 @@
          (testing "a red Judgement implies a verdict readable to the owner only"
            (let [{status-1 :status
                   verdict-1 :parsed-body}
-                 (get (str "ctia/"
+                 (GET app
+                      (str "ctia/"
                            (:type red-observable)
                            "/" (:value red-observable)
                            "/verdict")
                       :headers {"Authorization" "foouser"})
                  {status-2 :status
                   verdict-2 :parsed-body}
-                 (get (str "ctia/"
+                 (GET app
+                      (str "ctia/"
                            (:type red-observable)
                            "/"
                            (:value red-observable)
@@ -625,7 +661,8 @@
                       :headers {"Authorization" "baruser"})
                  {status-3 :status
                   verdict-3 :parsed-body}
-                 (get (str "ctia/"
+                 (GET app
+                      (str "ctia/"
                            (:type red-observable)
                            "/"
                            (:value red-observable)
@@ -641,14 +678,16 @@
          (testing "a Judgement with authorized_groups"
            (let [{status-1 :status
                   verdict-1 :parsed-body}
-                 (get (str "ctia/"
+                 (GET app
+                      (str "ctia/"
                            (:type auth-observable)
                            "/" (:value auth-observable)
                            "/verdict")
                       :headers {"Authorization" "foouser"})
                  {status-2 :status
                   verdict-2 :parsed-body}
-                 (get (str "ctia/"
+                 (GET app
+                      (str "ctia/"
                            (:type auth-observable)
                            "/"
                            (:value auth-observable)
@@ -656,7 +695,8 @@
                       :headers {"Authorization" "baruser"})
                  {status-3 :status
                   verdict-3 :parsed-body}
-                 (get (str "ctia/"
+                 (GET app
+                      (str "ctia/"
                            (:type auth-observable)
                            "/"
                            (:value auth-observable)

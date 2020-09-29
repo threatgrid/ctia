@@ -8,7 +8,9 @@
                                     helpers/fixture-ctia]))
 
 (deftest test-swagger-json
-  (testing "We can get a swagger.json"
-    (is (= 200
-           (:status (helpers/get "swagger.json"
-                                 :accept :json))))))
+  (let [app (helpers/get-current-app)]
+    (testing "We can get a swagger.json"
+      (is (= 200
+             (:status (helpers/GET app
+                                   "swagger.json"
+                                   :accept :json)))))))

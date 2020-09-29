@@ -10,7 +10,7 @@
             [ctim.domain.id :as id]
             [ctim.schemas.common :as c]
             [ctia.test-helpers
-             [core :as test-helpers :refer [post]]
+             [core :as test-helpers :refer [POST]]
              [es :as es-helpers]])
   (:import [java.util.concurrent CountDownLatch TimeUnit]))
 
@@ -30,10 +30,12 @@
 
 (deftest ^:integration test-redismq
   (testing "Events are published to redismq queue"
-    (let [get-in-config (test-helpers/current-get-in-config-fn)
+    (let [app (test-helpers/get-current-app)
+          get-in-config (test-helpers/current-get-in-config-fn app)
           queue (:queue (eh/redismq-publisher get-in-config))]
       (rmq/flush-queue queue)
-      (post "ctia/judgement"
+      (POST app
+            "ctia/judgement"
             :body {:observable {:value "1.2.3.4"
                                 :type "ip"}
                    :disposition 1
@@ -43,7 +45,8 @@
                    :severity "High"
                    :confidence "Low"
                    :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"}})
-      (post "ctia/judgement"
+      (POST app
+            "ctia/judgement"
             :body {:observable {:value "1.2.3.4"
                                 :type "ip"}
                    :disposition 2
@@ -53,7 +56,8 @@
                    :severity "High"
                    :confidence "Low"
                    :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"}})
-      (post "ctia/judgement"
+      (POST app
+            "ctia/judgement"
             :body {:observable {:value "1.2.3.4"
                                 :type "ip"}
                    :disposition 3
@@ -63,5 +67,4 @@
                    :severity "High"
                    :confidence "Low"
                    :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"}})
-      (is (= 3 (rmq/current-depth queue)))
-      )))
+      (is (= 3 (rmq/current-depth queue))))))

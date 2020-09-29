@@ -4,7 +4,7 @@
             [clojure.test :refer [deftest is join-fixtures use-fixtures]]
             [ctia.stores.es.init :as init]
             [ctia.task.rollover :as sut]
-            [ctia.test-helpers.core :as helpers :refer [post-bulk]]
+            [ctia.test-helpers.core :as helpers :refer [POST-bulk]]
             [ctia.test-helpers.es :as es-helpers]
             [ctia.test-helpers.fake-whoami-service :as whoami-helpers]
             [ctia.test-helpers.fixtures :as fixt]))
@@ -47,13 +47,13 @@
     (is (seq rollover-aliased))
     (is (false? (:rolled_over rollover-aliased)))
     (is (= 1 (count-index)))
-    (post-bulk examples)
+    (POST-bulk app examples)
     (es-index/refresh! (:conn state-aliased))
     (is (nil? (sut/rollover-store state-not-aliased)))
     (is (= 1 (count-index)))
     (is (true? (:rolled_over (sut/rollover-store state-aliased))))
     (is (= 2 (count-index)))
-    (post-bulk examples)
+    (POST-bulk app examples)
     (es-index/refresh! (:conn state-aliased))
     (is (true? (:rolled_over (sut/rollover-store state-aliased))))
     (is (= 3 (count-index)))))

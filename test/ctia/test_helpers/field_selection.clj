@@ -1,8 +1,7 @@
 (ns ctia.test-helpers.field-selection
-  (:refer-clojure :exclude [get])
   (:require [clojure.string :as str]
             [clojure.test :refer [is testing]]
-            [ctia.test-helpers.core :as helpers :refer [get]]))
+            [ctia.test-helpers.core :refer [GET]]))
 
 (def default-fields
   #{:id
@@ -24,11 +23,12 @@
 
 (defn field-selection-test
   "all field selection related tests for given routes and fields"
-  [route headers fields]
+  [app route headers fields]
   (testing (str "field selection tests for: " route)
     (doseq [field (testable-fields fields)]
       (let [{:keys [status parsed-body]}
-            (get route
+            (GET app
+                 route
                  :headers headers
                  :query-params {:fields [(name field)]})
             response-fields (if (vector? parsed-body)
@@ -40,6 +40,6 @@
         (is (= 200 status))
         (is (= [(expected-field field)] response-fields))))))
 
-(defn field-selection-tests [routes headers fields]
+(defn field-selection-tests [app routes headers fields]
   (doseq [route routes]
-    (field-selection-test route headers fields)))
+    (field-selection-test app route headers fields)))

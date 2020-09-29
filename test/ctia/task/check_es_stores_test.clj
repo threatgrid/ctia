@@ -9,7 +9,7 @@
             [ctia.task.check-es-stores :as sut]
             [ctia.test-helpers
              [auth :refer [all-capabilities]]
-             [core :as helpers :refer [post-bulk with-atom-logger]]
+             [core :as helpers :refer [POST-bulk with-atom-logger]]
              [es :as es-helpers]
              [fake-whoami-service :as whoami-helpers]]
             [ctim.domain.id :refer [make-transient-id]]
@@ -92,7 +92,7 @@
                                               "foogroup"
                                               "user")
         store-config (get-in-config [:ctia :store :es :default])]
-    (post-bulk examples)
+    (POST-bulk app examples)
     (refresh-all-indices (:host store-config)
                          (:port store-config))
     (testing "check ES Stores test setup"

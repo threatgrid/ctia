@@ -2,6 +2,7 @@
   (:require [ctia.http.middleware.ratelimit :as sut]
             [clojure.test :as t
              :refer [deftest is are join-fixtures use-fixtures testing]]
+            [schema.core :as s]
             [schema.test :refer [validate-schemas]]
             [ctia.auth :as auth :refer [IIdentity]]
             [ctia.test-helpers.core :as helpers]
@@ -84,8 +85,11 @@
     (car/wcar {} {} (car/flushdb))
     (t)))
 
-(defn apply-fixtures
-  [properties fn]
+(s/defn apply-fixtures-with-app
+  [properties
+   f-with-app :- (s/=> s/Any
+                       (s/=> s/Any
+                             (s/named s/Any 'app)))]
   (let [fixture-fn
         (join-fixtures [reset-redis
                         helpers/fixture-properties:clean
@@ -94,62 +98,67 @@
                         es-helpers/fixture-properties:es-store
                         helpers/fixture-ctia
                         es-helpers/fixture-delete-store-indexes])]
-    (fixture-fn fn)))
+    (fixture-fn
+      (fn []
+        (f-with-app
+          (helpers/get-current-app))))))
 
 (deftest rate-limit-test
   (with-redefs [time/now (constantly (time/date-time 2017 02 16 0 0 0))]
-    (let [call #(helpers/get "ctia/status"
-                             :headers {"Authorization" (str "Bearer " jwt-token)
-                                       "Origin" "http://external.cisco.com"})]
+    (let [call (fn [app]
+                 (helpers/GET app
+                              "ctia/status"
+                              :headers {"Authorization" (str "Bearer " jwt-token)
+                                        "Origin" "http://external.cisco.com"}))]
       (testing "Group limit"
-        (apply-fixtures
+        (apply-fixtures-with-app
          ["ctia.http.rate-limit.limits.group.default" 5
           "ctia.http.rate-limit.enabled" true]
-         (fn []
-           (let [response (call)]
+         (fn [app]
+           (let [response (call app)]
              (testing "Rate limit headers"
                (is (= 200 (:status response)))
                (is (= "5" (get-in response [:headers "X-RateLimit-GROUP-Limit"]))))
              (testing "Rate limit status and response"
-               (dotimes [_ 4] (call))
-               (let [response (call)]
+               (dotimes [_ 4] (call app))
+               (let [response (call app)]
                  (is (= 429 (:status response)))
                  (is (= "3600" (get-in response [:headers "Retry-After"])))
                  (is (= "{\"error\": \"Too Many Requests\"}"
                         (:body response)))))))))
       (testing "Custom group limits"
-        (apply-fixtures
+        (apply-fixtures-with-app
          ["ctia.http.rate-limit.limits.group.default" 15
           "ctia.http.rate-limit.limits.group.customs" "63489cf9-561c-4958-a13d-6d84b7ef09d4|4,tg:1|1"
           "ctia.http.rate-limit.enabled" true]
-         (fn []
-           (let [response (call)]
+         (fn [app]
+           (let [response (call app)]
              (is (= "4" (get-in response [:headers "X-RateLimit-GROUP-Limit"])))))))
       (testing "Unlimited client"
-        (apply-fixtures
+        (apply-fixtures-with-app
          ["ctia.http.rate-limit.limits.group.default" 15
           "ctia.http.rate-limit.limits.group.customs" "63489cf9-561c-4958-a13d-6d84b7ef09d4|4,tg:1|1"
           "ctia.http.rate-limit.unlimited.client-ids" "iroh-ui"
           "ctia.http.rate-limit.enabled" true]
-         (fn []
-           (let [response (call)]
+         (fn [app]
+           (let [response (call app)]
              (is (= 200 (:status response)))
              (is (nil? (get-in response [:headers "X-RateLimit-GROUP-Limit"])))))))
       (testing "rate limit disabled"
-        (apply-fixtures
+        (apply-fixtures-with-app
          ["ctia.http.rate-limit.limits.group.default" 15
           "ctia.http.rate-limit.limits.group.customs" "63489cf9-561c-4958-a13d-6d84b7ef09d4|4,tg:1|1"
           "ctia.http.rate-limit.enabled" false]
-         (fn []
-           (let [response (call)]
+         (fn [app]
+           (let [response (call app)]
              (is (= 200 (:status response)))))))
       (testing "Error handling (wrong redis port)"
-        (apply-fixtures
+        (apply-fixtures-with-app
          ["ctia.http.rate-limit.limits.group.default" 15
           "ctia.http.rate-limit.enabled" true
           "ctia.http.rate-limit.redis.port" 7887]
-         (fn []
-           (let [response (call)]
+         (fn [app]
+           (let [response (call app)]
              (is (= 200 (:status response)))
              (is (nil? (get-in response [:headers "X-RateLimit-GROUP-Limit"]))))))))))
 

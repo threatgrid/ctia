@@ -1,5 +1,4 @@
 (ns ctia.entity.incident-test
-  (:refer-clojure :exclude [get])
   (:require [clj-momo.lib.clj-time
              [coerce :as tc]
              [core :as t]]
@@ -9,7 +8,7 @@
             [ctia.test-helpers
              [access-control :refer [access-control-test]]
              [auth :refer [all-capabilities]]
-             [core :as helpers :refer [patch post post-entity-bulk]]
+             [core :as helpers :refer [PATCH POST POST-entity-bulk]]
              [crud :refer [entity-crud-test]]
              [aggregate :refer [test-metric-routes]]
              [fake-whoami-service :as whoami-helpers]
@@ -33,7 +32,8 @@
      fixed-now
      (fn []
        (testing "Incident status update: test setup"
-         (let [response (patch (str "ctia/incident/" (:short-id incident-id))
+         (let [response (PATCH app
+                               (str "ctia/incident/" (:short-id incident-id))
                                :body {:incident_time {}}
                                :headers {"Authorization" "45c1f5e3f05d0"})
                updated-incident (:parsed-body response)]
@@ -41,7 +41,8 @@
 
        (testing "POST /ctia/incident/:id/status Open"
          (let [new-status {:status "Open"}
-               response (post (str "ctia/incident/" (:short-id incident-id) "/status")
+               response (POST app
+                              (str "ctia/incident/" (:short-id incident-id) "/status")
                               :body new-status
                               :headers {"Authorization" "45c1f5e3f05d0"})
                updated-incident (:parsed-body response)]
@@ -54,7 +55,8 @@
 
        (testing "POST /ctia/incident/:id/status Closed"
          (let [new-status {:status "Closed"}
-               response (post (str "ctia/incident/" (:short-id incident-id) "/status")
+               response (POST app
+                              (str "ctia/incident/" (:short-id incident-id) "/status")
                               :body new-status
                               :headers {"Authorization" "45c1f5e3f05d0"})
                updated-incident (:parsed-body response)]
@@ -67,7 +69,8 @@
 
        (testing "POST /ctia/incident/:id/status Containment Achieved"
          (let [new-status {:status "Containment Achieved"}
-               response (post (str "ctia/incident/" (:short-id incident-id) "/status")
+               response (POST app
+                              (str "ctia/incident/" (:short-id incident-id) "/status")
                               :body new-status
                               :headers {"Authorization" "45c1f5e3f05d0"})
                updated-incident (:parsed-body response)]
@@ -105,17 +108,20 @@
                                          "foouser"
                                          "foogroup"
                                          "user")
-     (let [ids (post-entity-bulk
+     (let [ids (POST-entity-bulk
+                app
                 (assoc new-incident-maximal :title "foo")
                 :incidents
                 30
                 {"Authorization" "45c1f5e3f05d0"})]
        (pagination-test
+        app
         "ctia/incident/search?query=*"
         {"Authorization" "45c1f5e3f05d0"}
         sut/incident-fields)
 
        (field-selection-tests
+        app
         ["ctia/incident/search?query=*"
          (doc-id->rel-url (first ids))]
         {"Authorization" "45c1f5e3f05d0"}
