@@ -36,7 +36,8 @@
                                          "foogroup"
                                          "user")
      (entity-crud-test
-      {:entity "weakness"
+      {:app app
+       :entity "weakness"
        :example new-weakness-maximal
        :headers {:Authorization "45c1f5e3f05d0"}}))))
 

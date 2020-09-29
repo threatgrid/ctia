@@ -34,7 +34,7 @@
        ["http://ex.tld/ctia/identity-assertion/identity-assertion-123"
         "http://ex.tld/ctia/identity-assertion/identity-assertion-345"])))
 
-(defn additional-tests [identity-assertion-id _]
+(defn additional-tests [app identity-assertion-id _]
   (testing "GET /ctia/identity-assertion/search"
     (do
       (let [term "identity.observables.value:\"1.2.3.4\""
@@ -71,7 +71,8 @@
                                          "foogroup"
                                          "user")
      (entity-crud-test
-      {:entity "identity-assertion"
+      {:app app
+       :entity "identity-assertion"
        :example new-identity-assertion-maximal
        :invalid-tests? false
        :update-tests? true

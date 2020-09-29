@@ -39,7 +39,8 @@
                                          "foouser"
                                          "foogroup"
                                          "user")
-     (entity-crud-test {:entity "data-table"
+     (entity-crud-test {:app app
+                        :entity "data-table"
                         :example new-data-table
                         :invalid-tests? false
                         :update-tests? false

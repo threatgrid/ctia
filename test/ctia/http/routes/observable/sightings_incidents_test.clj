@@ -25,7 +25,7 @@
                                          "user")
 
      (let [{:keys [get-in-config]} (helpers/get-service-map app :ConfigService)
-           http-show (get-in-config [:ctia :http :show])
+           make-id #(make-id % get-in-config)
            sighting-1-id (make-id :sighting)
            sighting-2-id (make-id :sighting)
            sighting-3-id (make-id :sighting)

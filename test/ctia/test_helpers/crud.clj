@@ -138,7 +138,8 @@
                           "applied when wait_for is not specified"))))))
 
 (defn entity-crud-test
-  [{:keys [entity
+  [{:keys [app
+           entity
            example
            headers
            update-field
@@ -160,8 +161,8 @@
          patch-tests? false
          search-tests? true}
     :as params}]
- (let [app (helpers/get-current-app)
-       get-in-config (helpers/current-get-in-config-fn app)]
+ (assert app "Must pass :app to entity-crud-test")
+ (let [get-in-config (helpers/current-get-in-config-fn app)]
   (testing (str "POST /ctia/" entity)
     (let [new-record (dissoc example :id)
           {post-status :status
@@ -239,7 +240,8 @@
           ;; execute entity custom tests before deleting the fixture
           (testing "additional tests"
             (when additional-tests
-              (additional-tests record-id
+              (additional-tests app
+                                record-id
                                 (if update-tests?
                                   updated-record
                                   post-record))))))

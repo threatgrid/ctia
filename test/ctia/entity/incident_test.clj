@@ -27,7 +27,7 @@
 
 (use-fixtures :each whoami-helpers/fixture-reset-state)
 
-(defn partial-operations-tests [incident-id incident]
+(defn partial-operations-tests [app incident-id incident]
   (let [fixed-now (t/internal-now)]
     (helpers/fixture-with-fixed-time
      fixed-now
@@ -83,7 +83,8 @@
    (fn [app]
      (helpers/set-capabilities! app "foouser" ["foogroup"] "user" all-capabilities)
      (whoami-helpers/set-whoami-response "45c1f5e3f05d0" "foouser" "foogroup" "user")
-     (let [parameters {:entity "incident"
+     (let [parameters {:app app
+                       :entity "incident"
                        :patch-tests? true
                        :example new-incident-maximal
                        :headers {:Authorization "45c1f5e3f05d0"}

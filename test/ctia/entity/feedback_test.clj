@@ -23,7 +23,7 @@
    :tlp "green"})
 
 (defn feedback-by-entity-id-test
-  [feedback-id _]
+  [app feedback-id _]
   (testing "GET /ctia/feedback?entity_id="
     (let [response (get (str "ctia/feedback")
                         :query-params {:entity_id "judgement-123"}
@@ -55,7 +55,8 @@
                                          "user")
 
      (entity-crud-test
-      {:entity "feedback"
+      {:app app
+       :entity "feedback"
        :example new-feedback
        :update-tests? false
        :invalid-tests? false

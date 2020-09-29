@@ -46,10 +46,9 @@
           :confidence "Low"
           :reason "This is a bad IP address that talked to some evil servers"}))
 
-(defn additional-tests [judgement-id _]
+(defn additional-tests [app judgement-id _]
   (testing "GET /ctia/judgement/search"
-   (let [app (helpers/get-current-app)
-         {:keys [get-in-config]} (helpers/get-service-map app :ConfigService)]
+   (let [{:keys [get-in-config]} (helpers/get-service-map app :ConfigService)]
     ;; only when ES store
     (when (= "es" (get-in-config [:ctia :store :indicator]))
       (let [term "observable.value:\"1.2.3.4\""
@@ -154,7 +153,8 @@
                                          "user")
 
      (entity-crud-test
-      {:entity "judgement"
+      {:app app
+       :entity "judgement"
        :example new-judgement
        :update-tests? true
        :update-field :source

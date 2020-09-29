@@ -20,7 +20,8 @@
              [auth :refer [all-capabilities]]
              [core :as helpers :refer [get post]]
              [fake-whoami-service :as whoami-helpers]
-             [store :refer [test-for-each-store-with-app store-fixtures]]]
+             [store :refer [test-for-each-store-with-app
+                            test-selected-stores-with-app]]]
             [ctim.domain.id :as id]
             [ctim.examples.incidents :refer [new-incident-maximal]]))
 
@@ -194,11 +195,11 @@
 
 
 (deftest test-bulk-wait_for-test
-  ((:es-store store-fixtures)
-   (fn []
+  (test-selected-stores-with-app
+   #{:es-store}
+   (fn [app]
      (testing "POST /ctia/bulk with wait_for"
-       (let [app (helpers/get-current-app)
-             {:keys [get-in-config]} (helpers/get-service-map app :ConfigService)
+       (let [{:keys [get-in-config]} (helpers/get-service-map app :ConfigService)
 
              _ (helpers/set-capabilities! app "foouser" ["foogroup"] "user" all-capabilities)
              _ (whoami-helpers/set-whoami-response "45c1f5e3f05d0"

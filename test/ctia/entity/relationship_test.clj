@@ -74,7 +74,8 @@
    (fn [app]
      (establish-user! app)
      (entity-crud-test
-      {:entity "relationship"
+      {:app app
+       :entity "relationship"
        :example new-relationship
        :headers {:Authorization "45c1f5e3f05d0"}}))))
 

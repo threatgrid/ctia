@@ -29,7 +29,7 @@
            title "test"
            new-indicators (->> (csg/sample (cs/gen :new-indicator/map 5))
                                (map #(assoc % :title title))
-                               (map #(assoc % :id (url-id :indicator))))
+                               (map #(assoc % :id (url-id :indicator get-in-config))))
            created-indicators (map #(assert-post "ctia/indicator" %)
                                    new-indicators)
            new-judgements (->> (csg/sample (cs/gen :new-judgement/map) 5)
@@ -37,12 +37,12 @@
                                             :observable observable
                                             :disposition 5
                                             :disposition_name "Unknown"))
-                               (map #(assoc % :id (url-id :judgement))))
+                               (map #(assoc % :id (url-id :judgement get-in-config))))
            new-sightings (->> (csg/sample (cs/gen :new-sighting/map) 5)
                               (map #(-> (assoc %
                                                :observables [observable])
                                         (dissoc % :relations :data)))
-                              (map #(assoc % :id (url-id :sighting))))
+                              (map #(assoc % :id (url-id :sighting get-in-config))))
            route-pref (str "ctia/" (:type observable) "/" (:value observable))]
 
        (testing "setup: create sightings and their relationships with indicators"

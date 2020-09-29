@@ -38,7 +38,8 @@
                                          "foogroup"
                                          "user")
      (entity-crud-test
-      {:entity "tool"
+      {:app app
+       :entity "tool"
        :example new-tool-maximal
        :invalid-test-field :name
        :update-field :description
