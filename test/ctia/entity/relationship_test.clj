@@ -137,7 +137,6 @@
              {wrong-casebook-status :status
               wrong-casebook-response :body}
              (POST app
-                   app
                    (str "ctia/incident/" (-> (:id incident-body)
                                              long-id->id
                                              :short-id) "/link")
