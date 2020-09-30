@@ -10,8 +10,7 @@
   (:import [java.util.concurrent CountDownLatch TimeUnit]))
 
 (use-fixtures :each (join-fixtures
-                     [test-helpers/fixture-properties:clean
-                      es-helpers/fixture-properties:es-store
+                     [es-helpers/fixture-properties:es-store
                       test-helpers/fixture-ctia-fast]))
 
 (deftest redis-conf->conn-spec-test

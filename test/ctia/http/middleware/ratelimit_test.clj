@@ -92,7 +92,6 @@
                              (s/named s/Any 'app)))]
   (let [fixture-fn
         (join-fixtures [reset-redis
-                        helpers/fixture-properties:clean
                         (helpers/fixture-properties:static-auth "user" "pwd")
                         #(helpers/with-properties properties (%))
                         es-helpers/fixture-properties:es-store

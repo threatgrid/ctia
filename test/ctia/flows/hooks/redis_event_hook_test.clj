@@ -14,8 +14,7 @@
 
 (use-fixtures :once mth/fixture-schema-validation)
 
-(use-fixtures :each (join-fixtures [test-helpers/fixture-properties:clean
-                                    es-helpers/fixture-properties:es-store
+(use-fixtures :each (join-fixtures [es-helpers/fixture-properties:es-store
                                     test-helpers/fixture-properties:redis-hook
                                     test-helpers/fixture-properties:events-enabled
                                     test-helpers/fixture-allow-all-auth

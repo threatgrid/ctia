@@ -15,8 +15,7 @@
 #_
 (use-fixtures :once mth/fixture-schema-validation)
 
-(use-fixtures :each (join-fixtures [test-helpers/fixture-properties:clean
-                                    test-helpers/fixture-ctia-fast]))
+(use-fixtures :each test-helpers/fixture-ctia-fast)
 
 (defn gen-sample-entity
   [{:keys [new-spec]}]

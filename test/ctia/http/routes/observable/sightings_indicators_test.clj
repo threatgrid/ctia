@@ -10,7 +10,6 @@
             [ctim.domain.id :as id]))
 
 (use-fixtures :once (join-fixtures [mht/fixture-schema-validation
-                                    helpers/fixture-properties:clean
                                     helpers/fixture-properties:events-enabled
                                     whoami-helpers/fixture-server]))
 

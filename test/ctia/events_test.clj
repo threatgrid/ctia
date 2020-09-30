@@ -15,8 +15,7 @@
 
 (use-fixtures :once st/validate-schemas)
 
-(use-fixtures :each (join-fixtures [helpers/fixture-properties:clean
-                                    es-helpers/fixture-properties:es-store
+(use-fixtures :each (join-fixtures [es-helpers/fixture-properties:es-store
                                     helpers/fixture-ctia-fast]))
 
 (deftest test-send-event

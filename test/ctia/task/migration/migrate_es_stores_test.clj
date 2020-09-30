@@ -46,7 +46,6 @@
   (join-fixtures [mth/fixture-schema-validation
                   whoami-helpers/fixture-server
                   whoami-helpers/fixture-reset-state
-                  helpers/fixture-properties:clean
                   es-helpers/fixture-properties:es-store]))
 
 (defn es-props [get-in-config]
