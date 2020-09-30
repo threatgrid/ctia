@@ -1,10 +1,8 @@
 (ns ctia.task.update-mapping
   "Updates the _mapping on an ES index."
-  (:require [clj-momo.lib.es.index :as es-index]
-            [clj-momo.lib.es.schemas :as es-schema]
-            [clojure.tools.cli :refer [parse-opts]]
-            [clojure.pprint :as pp]
+  (:require [clojure.pprint :as pp]
             [clojure.string :as str]
+            [clojure.tools.cli :refer [parse-opts]]
             [clojure.tools.logging :as log]
             [ctia.init :as init]
             [ctia.properties :as p]
@@ -12,8 +10,7 @@
             [ctia.store-service :as store-svc]
             [ctia.stores.es.init :as es-init]
             [puppetlabs.trapperkeeper.app :as app]
-            [schema.core :as s])
-  (:import [clojure.lang ExceptionInfo]))
+            [schema.core :as s]))
 
 (defn- update-mapping-state!
   [{:keys [conn index config] :as state}]

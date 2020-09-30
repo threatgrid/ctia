@@ -325,14 +325,12 @@
 
 (defn test-query-string-search
   [entity query query-field example get-in-config]
-  ;; only when ES store
-  (when (= "es" (get-in-config [:ctia :store (keyword entity)]))
-    (if (= :description query-field)
-      (test-describable-search entity example get-in-config)
-      (ensure-one-document test-non-describable-search
-                           example
-                           entity
-                           query
-                           query-field))
-    (test-filter-by-id entity)
-    (test-from-to entity example)))
+  (if (= :description query-field)
+    (test-describable-search entity example get-in-config)
+    (ensure-one-document test-non-describable-search
+                         example
+                         entity
+                         query
+                         query-field))
+  (test-filter-by-id entity)
+  (test-from-to entity example))

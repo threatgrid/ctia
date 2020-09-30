@@ -1,6 +1,7 @@
 (ns ctia.task.update-mapping-test
-  (:require [clj-momo.lib.es.index :as es-index]
-            [clj-momo.lib.es.conn :as conn]
+  (:require [ductile
+             [index :as es-index]
+             [conn :as conn]]
             [clojure.string :as string]
             [clojure.test :refer [deftest is join-fixtures use-fixtures testing]]
             [ctia.task.rollover :as rollover]

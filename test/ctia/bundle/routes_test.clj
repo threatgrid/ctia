@@ -1,7 +1,7 @@
 (ns ctia.bundle.routes-test
   (:refer-clojure :exclude [get])
   (:require [ctim.schemas.common :refer [ctim-schema-version]]
-            [clj-momo.lib.es.index :as es-index]
+            [ductile.index :as es-index]
             [clj-momo.test-helpers
              [core :as mth]
              [http :refer [encode]]]

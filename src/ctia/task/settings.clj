@@ -1,12 +1,9 @@
 (ns ctia.task.settings
-  (:import clojure.lang.ExceptionInfo)
   (:require [clojure.pprint :as pp]
             [clojure.string :as str]
             [clojure.tools.cli :refer [parse-opts]]
             [clojure.tools.logging :as log]
             [schema.core :as s]
-            [clj-momo.lib.es
-             [index :as es-index]]
             [ctia.stores.es.init :refer [init-es-conn! get-store-properties]]
             [ctia
              [init :refer [log-properties]]

@@ -7,8 +7,6 @@
    [schema-tools.core :as st]
    [schema.core :as s]
    [clj-momo.lib.clj-time.core :as t]
-   [clj-momo.lib.es
-    [slice :refer [get-slice-props]]]
    [ctia.entity.event.schemas
     :refer [Event PartialEvent PartialEventList EventBucket]]
    [ctia.http.routes
