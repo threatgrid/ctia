@@ -29,7 +29,8 @@
             [ductile.conn :refer [connect]]
             [ductile.document :as ductile.doc]
             [ductile.index :as es-index]
-            [ductile.query :as es-query])
+            [ductile.query :as es-query]
+            [schema.core :as s])
   (:import clojure.lang.ExceptionInfo
            java.lang.AssertionError
            java.text.SimpleDateFormat
