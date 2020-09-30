@@ -318,7 +318,8 @@
                 (let [~app (get-current-app)]
                   ~@body)))))))
 
-(s/defn get-http-port [app] :- s/Int
+(s/defn get-http-port :- s/Int
+  [app]
   (let [{{:keys [get-in-config]} :ConfigService} (app/service-graph app)]
     (get-in-config [:ctia :http :port])))
 
