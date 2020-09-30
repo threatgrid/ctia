@@ -170,7 +170,8 @@
           "The first page contains 1 edge")
       ;; page 2
       (let [{:keys [data errors status]}
-            (query graphql-query
+            (query app
+                   graphql-query
                    (into variables
                          {:first 50
                           :after (:endCursor page-info-p1)})
