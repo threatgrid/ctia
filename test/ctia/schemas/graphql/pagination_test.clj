@@ -2,7 +2,7 @@
   (:require [ctia.schemas.graphql.pagination :as sut]
             [clojure.test :refer [deftest is testing use-fixtures]]
             [schema.test :as st]
-            [clj-momo.lib.es.pagination :as pag]))
+            [ductile.pagination :as pag]))
 
 (use-fixtures :once st/validate-schemas)
 
@@ -89,7 +89,7 @@
   (let [data (range offset (+ offset limit))]
     (pag/response data {:offset offset
                         :limit limit
-                        :hits hits})))
+                        :total-hits hits})))
 
 (deftest result->connection-response
   (testing "Forwards paging"

@@ -2,9 +2,8 @@
   "ES test helpers"
   (:require [cheshire.core :as json]
             [clj-http.client :as http]
-            [clj-momo.lib.es
-             [document :as es-doc]
-             [index :as es-index]]
+            [ductile.index :as es-index]
+            [clj-momo.lib.es.document :as es-doc]
             [clojure.java.io :as io]
             [ctia
              [store :as store]]

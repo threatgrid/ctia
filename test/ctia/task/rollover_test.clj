@@ -1,5 +1,5 @@
 (ns ctia.task.rollover-test
-  (:require [clj-momo.lib.es.index :as es-index]
+  (:require [ductile.index :as es-index]
             [clojure.string :as string]
             [clojure.test :refer [deftest is join-fixtures use-fixtures]]
             [ctia.stores.es.init :as init]

@@ -19,18 +19,14 @@
                     {}))
 
 (def handle-list
-  (crud/handle-find :event Event))
+  (crud/handle-find Event))
 
 (def handle-read
-  (crud/handle-read :event PartialEvent))
+  (crud/handle-read PartialEvent))
 
 (def handle-event-query-string-search
-  (crud/handle-query-string-search
-   :event PartialEvent))
+  (crud/handle-query-string-search PartialEvent))
 
-(def handle-event-query-string-count
-  (crud/handle-query-string-count
-   :event))
+(def handle-event-query-string-count crud/handle-query-string-count)
 
-(def handle-aggregate
-  (crud/handle-aggregate :event))
+(def handle-aggregate crud/handle-aggregate)

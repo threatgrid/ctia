@@ -1,7 +1,9 @@
 (ns ctia.stores.es.crud
-  (:require [clj-momo.lib.es
-             [document :as d]
+  (:require [ductile
+             [document :as ductile.doc]
              [query :as q]]
+            [clj-momo.lib.es
+             [document :as d]]
             [clojure.string :as string]
             [ctia.domain.access-control
              :refer
@@ -97,27 +99,24 @@
  documents from an alias that points to multiple indices.
 It returns the documents with full hits meta data including the real index in which is stored the document."
   [{:keys [conn index]} :- ESConnState
-   mapping :- s/Keyword
    ids :- [s/Str]
    params]
   (let [ids-query (q/ids (map ensure-document-id ids))
-        res (d/query conn
-                     index
-                     (name mapping)
-                     ids-query
-                     (assoc (make-es-read-params params)
-                            :full-hits?
-                            true))]
+        res (ductile.doc/query conn
+                               index
+                               ids-query
+                               (assoc (make-es-read-params params)
+                                      :full-hits?
+                                      true))]
     (:data res)))
 
 (s/defn get-doc-with-index
   "Retrieves a document from a search \"ids\" query. It is used to perform a get query on an alias that points to multiple indices.
  It returns the document with full hits meta data including the real index in which is stored the document."
   [conn-state :- ESConnState
-   mapping :- s/Keyword
    _id :- s/Str
    params]
-  (first (get-docs-with-indices conn-state mapping [_id] params)))
+  (first (get-docs-with-indices conn-state [_id] params)))
 
 (defn handle-create
   "Generate an ES create handler using some mapping and schema"
@@ -157,7 +156,7 @@ It returns the documents with full hits meta data including the real index in wh
        ident
        {:keys [refresh]}]
       (when-let [{index :_index current-doc :_source}
-                 (get-doc-with-index state mapping id {})]
+                 (get-doc-with-index state id {})]
         (if (allow-write? current-doc ident)
           (coerce! (d/index-doc (:conn state)
                                 index
@@ -173,7 +172,7 @@ It returns the documents with full hits meta data including the real index in wh
 
 (defn handle-read
   "Generate an ES read handler using some mapping and schema"
-  [mapping Model]
+  [Model]
   (let [coerce! (coerce-to-fn (s/maybe Model))]
     (s/fn :- (s/maybe Model)
       [{{{:keys [get-in-config]} :ConfigService}
@@ -184,7 +183,6 @@ It returns the documents with full hits meta data including the real index in wh
        ident
        params]
       (when-let [doc (-> (get-doc-with-index state
-                                             mapping
                                              id
                                              (make-es-read-params params))
                          :_source
@@ -208,7 +206,7 @@ It returns the documents with full hits meta data including the real index in wh
      ident
      {:keys [refresh]}]
     (when-let [{index :_index doc :_source}
-               (get-doc-with-index state mapping id {})]
+               (get-doc-with-index state id {})]
       (if (allow-write? doc ident)
         (d/delete-doc (:conn state)
                       index
@@ -283,7 +281,7 @@ It returns the documents with full hits meta data including the real index in wh
 
 (defn handle-find
   "Generate an ES find/list handler using some mapping and schema"
-  [mapping Model]
+  [Model]
   (let [response-schema (list-response-schema Model)
         coerce! (coerce-to-fn response-schema)]
     (s/fn :- response-schema
@@ -303,14 +301,13 @@ It returns the documents with full hits meta data including the real index in wh
                                         {:should (q/prepare-terms one-of)
                                          :minimum_should_match 1})
                           query (update :filter conj query_string))]
-        (cond-> (coerce! (d/query (:conn state)
-                                  (:index state)
-                                  (name mapping)
-                                  (q/bool bool-params)
-                                  (-> params
-                                      rename-sort-fields
-                                      with-default-sort-field
-                                      make-es-read-params)))
+        (cond-> (coerce! (ductile.doc/query (:conn state)
+                                            (:index state)
+                                            (q/bool bool-params)
+                                            (-> params
+                                                rename-sort-fields
+                                                with-default-sort-field
+                                                make-es-read-params)))
           (restricted-read? ident) (update :data
                                            access-control-filter-list
                                            ident
@@ -337,8 +334,8 @@ It returns the documents with full hits meta data including the real index in wh
         (seq query-string) (conj es-query-string))}}))
 
 (defn handle-query-string-search
-  "Generate an ES query handler using some mapping and schema"
-  [mapping Model]
+  "Generate an ES query handler for given schema schema"
+  [Model]
   (let [response-schema (list-response-schema Model)
         coerce! (coerce-to-fn response-schema)]
     (s/fn :- response-schema
@@ -351,9 +348,8 @@ It returns the documents with full hits meta data including the real index in wh
        ident
        params]
       (let [query (make-search-query es-conn-state search-query ident)]
-        (cond-> (coerce! (d/query conn
+        (cond-> (coerce! (ductile.doc/query conn
                                   index
-                                  (name mapping)
                                   query
                                   (-> params
                                       rename-sort-fields
@@ -364,20 +360,17 @@ It returns the documents with full hits meta data including the real index in wh
                                            ident
                                            get-in-config))))))
 
-(defn handle-query-string-count
-  "Generate an ES count handler using some mapping and schema"
-  [mapping]
-  (s/fn :- s/Int
-    [{conn :conn
-      index :index
-      :as es-conn-state} :- ESConnState
-     {:keys [filter-map] :as search-query} :- SearchQuery
-     ident]
-    (let [query (make-search-query es-conn-state search-query ident)]
-      (d/count-docs conn
-                    index
-                    (name mapping)
-                    query))))
+(s/defn handle-query-string-count :- (s/pred nat-int?)
+  "ES count handler"
+  [{conn :conn
+    index :index
+    :as es-conn-state} :- ESConnState
+   {:keys [filter-map] :as search-query} :- SearchQuery
+   ident]
+  (let [query (make-search-query es-conn-state search-query ident)]
+    (ductile.doc/count-docs conn
+                            index
+                            query)))
 
 (s/defn make-histogram
   [{:keys [aggregate-on granularity timezone]
@@ -404,10 +397,10 @@ It returns the documents with full hits meta data including the real index in wh
   [{:keys [agg-type] :as agg-query} :- AggQuery]
   (let [agg-fn
         (case agg-type
-              :topn make-topn
-              :cardinality make-cardinality
-              :histogram make-histogram
-              (throw (ex-info "invalid aggregation type" agg-type)))]
+          :topn make-topn
+          :cardinality make-cardinality
+          :histogram make-histogram
+          (throw (ex-info "invalid aggregation type" agg-type)))]
     {:metric (agg-fn agg-query)}))
 
 (defn format-agg-result
@@ -422,21 +415,18 @@ It returns the documents with full hits meta data including the real index in wh
                                 :value (:doc_count %))
                     buckets)))
 
-(defn handle-aggregate
-  "Generate an ES aggregation handler using some mapping and schema"
-  [mapping]
-  (s/fn :- s/Any
-    [{:keys [conn index] :as es-conn-state} :- ESConnState
-     {:keys [filter-map] :as search-query} :- SearchQuery
-     {:keys [agg-type] :as agg-query} :- AggQuery
-     ident]
-    (let [query (make-search-query es-conn-state search-query ident)
-          agg (make-aggregation agg-query)
-          es-res (d/query conn
-                          index
-                          (name mapping)
-                          query
-                          agg
-                          {:limit 0})]
-      (format-agg-result agg-type
-                         (get-in es-res [:aggs :metric])))))
+(s/defn handle-aggregate
+  "Generate an ES aggregation handler for given schema"
+  [{:keys [conn index] :as es-conn-state} :- ESConnState
+   {:keys [filter-map] :as search-query} :- SearchQuery
+   {:keys [agg-type] :as agg-query} :- AggQuery
+   ident]
+  (let [query (make-search-query es-conn-state search-query ident)
+        agg (make-aggregation agg-query)
+        es-res (ductile.doc/query conn
+                                  index
+                                  query
+                                  agg
+                                  {:limit 0})]
+    (format-agg-result agg-type
+                       (get-in es-res [:aggs :metric]))))

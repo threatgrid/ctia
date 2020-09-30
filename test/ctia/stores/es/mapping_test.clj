@@ -1,9 +1,10 @@
 (ns ctia.stores.es.mapping-test
   (:require [ctia.stores.es.mapping :as sut]
-            [clj-momo.lib.es
-             [index :as index]
+            [ductile
              [document :as doc]
-             [conn :as conn]]
+             [conn :as conn]
+             [index :as index]]
+            [clj-momo.lib.es.document :refer [bulk-create-doc]]
             [clojure.test :refer [deftest testing is]]))
 
 (deftest mapping-test
@@ -50,7 +51,6 @@
                        (is (= found-doc-id
                               (-> (doc/search-docs es-conn
                                                    indexname
-                                                   doc-type
                                                    {"term" {field search-value}}
                                                    nil
                                                    {})
@@ -59,7 +59,6 @@
                                   :id)))
                        (is (nil? (-> (doc/search-docs es-conn
                                                       indexname
-                                                      doc-type
                                                       {"query_string" {"query" (str search-value)}}
                                                       nil
                                                       {})
@@ -69,7 +68,6 @@
                     (is (= expected-asc
                            (->> (doc/search-docs es-conn
                                                  indexname
-                                                 doc-type
                                                  nil
                                                  nil
                                                  {:sort_by field
@@ -79,7 +77,6 @@
                     (is (= (reverse expected-asc)
                            (->> (doc/search-docs es-conn
                                                  indexname
-                                                 doc-type
                                                  nil
                                                  nil
                                                  {:sort_by field
@@ -88,62 +85,53 @@
                                 (map :id)))))]
     (index/delete! es-conn indexname)
     (index/create! es-conn indexname settings)
-    (doc/bulk-create-doc es-conn docs "true")
+    (bulk-create-doc es-conn docs "true")
     (index/refresh! es-conn indexname)
     (testing "token should be matched with exact values, and can be directly used for aggregating and sorting on without fielddata"
       (let [search-res-doc0 (doc/search-docs es-conn
                                              indexname
-                                             doc-type
                                              nil
                                              {:id "doc0"}
                                              nil)
             search-res-token1-1 (doc/search-docs es-conn
                                                  indexname
-                                                 doc-type
                                                  nil
                                                  {:token1 "a lower token"}
                                                  nil)
             search-res-token1-2 (doc/search-docs es-conn
                                                  indexname
-                                                 doc-type
                                                  nil
                                                  {:token1 "a lower TOKEN"}
                                                  nil)
             search-res-token1-3 (doc/search-docs es-conn
                                                  indexname
-                                                 doc-type
                                                  nil
                                                  {:token1 "token"}
                                                  nil)
 
             search-res-token2-1 (doc/search-docs es-conn
                                                  indexname
-                                                 doc-type
                                                  nil
                                                  {:token2 "an upper token"}
                                                  nil)
             search-res-token2-2 (doc/search-docs es-conn
                                                  indexname
-                                                 doc-type
                                                  nil
                                                  {:token2 "an upper TOKEN"}
                                                  nil)
 
             search-res-all-token-1 (doc/search-docs es-conn
                                                     indexname
-                                                    doc-type
                                                     {:query_string {:query "\"token in _all\""}}
                                                     nil
                                                     nil)
             search-res-all-token-2 (doc/search-docs es-conn
                                                     indexname
-                                                    doc-type
                                                     {:query_string {:query "_all"}}
                                                     nil
                                                     nil)
             search-res-all-token-3 (doc/search-docs es-conn
                                                     indexname
-                                                    doc-type
                                                     {:query_string {:query "upper"}}
                                                     nil
                                                     nil)]
@@ -172,25 +160,21 @@
     (testing "text should be matched with analyzed values, and cannot be used for aggregating and sorting without a fielddata field"
       (let [search-res-text-1 (doc/search-docs es-conn
                                                indexname
-                                               doc-type
                                                nil
                                                {:text "simpletext"}
                                                nil)
             search-res-text-2 (doc/search-docs es-conn
                                                indexname
-                                               doc-type
                                                {:query_string {:query "text:simpletext"}}
                                                nil
                                                nil)
             search-res-text-3 (doc/search-docs es-conn
                                                indexname
-                                               doc-type
                                                {:query_string {:query "simpletext"}}
                                                nil
                                                nil)
             search-res-all-text (doc/search-docs es-conn
                                                  indexname
-                                                 doc-type
                                                  {:query_string {:query "alltext"}}
                                                  nil
                                                  nil)
@@ -207,7 +191,6 @@
         (is (thrown? clojure.lang.ExceptionInfo
                      (doc/search-docs es-conn
                                       indexname
-                                      doc-type
                                       {:query_string {:query "alltext"}}
                                       nil
                                       {:sort_by "sortable-all-text"
@@ -216,13 +199,11 @@
     (testing "ts mapping should be a date type, not in _all field and sortable"
       (let [search-res-all (doc/search-docs es-conn
                                             indexname
-                                            doc-type
                                             {:query_string {:query "2019"}}
                                             nil
                                             {})
             search-res-range (doc/search-docs es-conn
                                               indexname
-                                              doc-type
                                               {:range {:timestamp
                                                        {"gte" "2019-07-15T01:00:00.000-00:00"}}}
                                               nil

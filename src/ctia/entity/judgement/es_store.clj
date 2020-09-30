@@ -1,5 +1,5 @@
 (ns ctia.entity.judgement.es-store
-  (:require [clj-momo.lib.es.document :refer [search-docs]]
+  (:require [ductile.document :refer [search-docs]]
             [clj-momo.lib.time :as time]
             [ctia.domain.access-control :refer [allow-write?]]
             [ctia.entity.judgement.schemas
@@ -17,8 +17,6 @@
             [schema
              [coerce :as c]
              [core :as s]]))
-
-(def judgement-mapping "judgement")
 
 (def judgement-mapping-def
   {"judgement"
@@ -45,12 +43,12 @@
 
 (def handle-create (crud/handle-create :judgement StoredJudgement))
 (def handle-update (crud/handle-update :judgement StoredJudgement))
-(def handle-read (crud/handle-read :judgement PartialStoredJudgement))
+(def handle-read (crud/handle-read PartialStoredJudgement))
 (def handle-delete (crud/handle-delete :judgement PartialStoredJudgement))
-(def handle-list (crud/handle-find :judgement PartialStoredJudgement))
-(def handle-query-string-search (crud/handle-query-string-search :judgement PartialStoredJudgement))
-(def handle-query-string-count (crud/handle-query-string-count :judgement))
-(def handle-aggregate (crud/handle-aggregate :judgement))
+(def handle-list (crud/handle-find PartialStoredJudgement))
+(def handle-query-string-search (crud/handle-query-string-search PartialStoredJudgement))
+(def handle-query-string-count crud/handle-query-string-count)
+(def handle-aggregate crud/handle-aggregate)
 
 (defn list-active-by-observable
   [state observable ident get-in-config]
@@ -78,7 +76,6 @@
     (some->>
      (search-docs (:conn state)
                   (:index state)
-                  judgement-mapping
                   composed-query
                   nil
                   params)

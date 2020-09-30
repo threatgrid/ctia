@@ -3,7 +3,7 @@
             [ctia.properties :as p]
             [ctia.task.settings :as sut]
             [ctia.stores.es.init :as init]
-            [clj-momo.lib.es
+            [ductile
              [index :as es-index]
              [conn :as es-conn]]
             [ctia.test-helpers

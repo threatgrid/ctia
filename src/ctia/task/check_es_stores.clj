@@ -2,10 +2,9 @@
   (:require
    [ctia.stores.es.store
     :refer [store->map]]
-   [clj-momo.lib.es
+   [ductile
     [conn :as conn]
-    [document :as es-doc]
-    [index :as es-index]]
+    [document :as es-doc]]
    [clojure.string :as string]
    [clojure.tools.logging :as log]
    [ctia
@@ -55,7 +54,7 @@
           :limit batch-size}
          (when sort-keys
            {:search_after sort-keys}))]
-    (es-doc/search-docs conn indexname mapping nil {} params)))
+    (es-doc/search-docs conn indexname nil {} params)))
 
 (defn check-store
   "check a single store"

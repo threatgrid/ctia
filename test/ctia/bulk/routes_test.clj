@@ -1,6 +1,6 @@
 (ns ctia.bulk.routes-test
   (:require [cheshire.core :refer [parse-string]]
-            [clj-momo.lib.es.index :as es-index]
+            [ductile.index :as es-index]
             [clj-momo.test-helpers
              [core :as mth]
              [http :refer [encode]]]

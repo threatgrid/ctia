@@ -1,6 +1,6 @@
 (ns ctia.bundle.routes-test
   (:require [ctim.schemas.common :refer [ctim-schema-version]]
-            [clj-momo.lib.es.index :as es-index]
+            [ductile.index :as es-index]
             [clj-momo.test-helpers
              [core :as mth]
              [http :refer [encode]]]

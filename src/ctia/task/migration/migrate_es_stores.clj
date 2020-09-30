@@ -1,5 +1,5 @@
 (ns ctia.task.migration.migrate-es-stores
-  (:require [clj-momo.lib.es.schemas :refer [ESConn ESQuery]]
+  (:require [ductile.schemas :refer [ESConn ESQuery]]
             [clj-momo.lib.time :as time]
             [clojure.pprint :as pp]
             [clojure.string :as string]
