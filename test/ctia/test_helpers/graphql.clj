@@ -108,7 +108,8 @@
       (is (= 200 status))
       (is (empty? errors) "No errors")
       (let [{:keys [data errors status]}
-            (query graphql-query
+            (query app
+                   graphql-query
                    (into variables
                          {:sort_field (sorting/sorting-kw->enum-name sort-field)})
                    operation-name)
@@ -125,7 +126,8 @@
         (is (= edges-ref edges)
             (str "Edges should be correctly sorted by " sort-field)))
       (let [{data :data}
-            (query graphql-query
+            (query app
+                   graphql-query
                    (into variables
                          {:sort_field (sorting/sorting-kw->enum-name sort-field)
                           :sort_direction "desc"})
