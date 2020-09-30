@@ -4,7 +4,7 @@
                                 setup-ctia-atom-store!
                                 setup-ctia-es-store!
                                 setup-ctia-es-store-native!]]
-             [core :as helpers :refer [delete post]]]
+             [core :as helpers :refer [DELETE POST]]]
             [perforate.core :refer :all]))
 
 (def small-campaign
@@ -53,24 +53,25 @@
   :setup (fn [] [true])
   :cleanup (fn [_]))
 
-(defn play-big [port]
+(defn play-big [app port]
   (let [{:keys [status parsed_body]}
-        (post "ctia/campaign"
+        (POST app
+              "ctia/campaign"
               :port port
               :body big-campaign
               :headers {"Authorization" "45c1f5e3f05d0"})]
     (if (= 201 status)
-      (delete (str "ctia/campaign" (:id parsed_body)))
+      (DELETE app (str "ctia/campaign" (:id parsed_body)))
       (prn "play-big: " status))))
 
 (defcase* create-campaign :big-campaign-atom-store
-  (fn [_] (let [port (setup-ctia-atom-store!)]
-           [#(play-big port) cleanup-ctia!])))
+  (fn [_] (let [{:keys [port app]} (setup-ctia-atom-store!)]
+           [#(play-big app port) #(cleanup-ctia! app)])))
 
 (defcase* create-campaign :big-campaign-es-store
   (fn [_] (let [{:keys [port app]} (setup-ctia-es-store!)]
-           [#(play-big port) #(cleanup-ctia! app)])))
+           [#(play-big app port) #(cleanup-ctia! app)])))
 
 (defcase* create-campaign :big-campaign-es-store-native
-  (fn [_] (let [port (setup-ctia-es-store-native!)]
-           [#(play-big port) cleanup-ctia!])))
+  (fn [_] (let [{:keys [port app]} (setup-ctia-es-store-native!)]
+           [#(play-big app port) #(cleanup-ctia! app)])))

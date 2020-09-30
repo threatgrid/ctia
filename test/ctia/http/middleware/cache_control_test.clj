@@ -1,10 +1,9 @@
 (ns ctia.http.middleware.cache-control-test
-  (:refer-clojure :exclude [get])
   (:require [clj-momo.test-helpers.core :as mth]
             [clojure.test :refer [deftest is join-fixtures testing use-fixtures]]
             [ctia.test-helpers
              [auth :refer [all-capabilities]]
-             [core :as helpers :refer [delete get post put]]
+             [core :as helpers :refer [GET POST]]
              [es :as es-helpers]
              [fake-whoami-service :as whoami-helpers]]
             [ctim.domain.id :as id]))
@@ -17,9 +16,11 @@
 (use-fixtures :each (join-fixtures [whoami-helpers/fixture-reset-state
                                     helpers/fixture-ctia]))
 
-(defn get-actor [actor-id headers]
-  (select-keys (get (str "ctia/actor/" (:short-id actor-id))
-                    :headers (merge headers {"Authorization" "45c1f5e3f05d0"})) [:status :headers :parsed-body]))
+(defn get-actor [app actor-id headers]
+  (select-keys (GET app
+                    (str "ctia/actor/" (:short-id actor-id))
+                    :headers (merge headers {"Authorization" "45c1f5e3f05d0"}))
+               [:status :headers :parsed-body]))
 
 (deftest test-cache-control-middleware
   (testing "Cache control with ETags"
@@ -31,7 +32,8 @@
                                                 "user")
           {status :status
            actor :parsed-body}
-          (post "ctia/actor"
+          (POST app
+                "ctia/actor"
                 :body {:title "actor"
                        :description "description"
                        :actor_type "Hacker"
@@ -46,9 +48,9 @@
 
       (is (= 201 status))
 
-      (let [first-res (get-actor actor-id nil)
+      (let [first-res (get-actor app actor-id nil)
             etag (get-in first-res [:headers "ETag"])
-            second-res (get-actor actor-id {"If-none-match" etag})]
+            second-res (get-actor app actor-id {"If-none-match" etag})]
         (is (= 200 (:status first-res)))
         (is (not (nil? etag)))
         (is (= 304 (:status second-res)))

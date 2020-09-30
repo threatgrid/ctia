@@ -6,7 +6,7 @@
             [ctia.test-helpers
              [access-control :refer [access-control-test]]
              [auth :refer [all-capabilities]]
-             [core :as helpers :refer [post-entity-bulk]]
+             [core :as helpers :refer [POST-entity-bulk]]
              [crud :refer [entity-crud-test]]
              [aggregate :refer [test-metric-routes]]
              [fake-whoami-service :as whoami-helpers]
@@ -53,17 +53,20 @@
                                          "foouser"
                                          "foogroup"
                                          "user")
-     (let [ids (post-entity-bulk
+     (let [ids (POST-entity-bulk
+                app
                 new-tool-maximal
                 :tools
                 30
                 {"Authorization" "45c1f5e3f05d0"})]
        (pagination-test
+        app
         "ctia/tool/search?query=*"
         {"Authorization" "45c1f5e3f05d0"}
         ts/tool-fields)
 
        (field-selection-tests
+        app
         ["ctia/tool/search?query=*"
          (doc-id->rel-url (first ids))]
         {"Authorization" "45c1f5e3f05d0"}

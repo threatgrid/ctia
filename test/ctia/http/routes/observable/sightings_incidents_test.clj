@@ -1,11 +1,10 @@
 (ns ctia.http.routes.observable.sightings-incidents-test
-  (:refer-clojure :exclude [get])
   (:require [clj-momo.test-helpers.core :as mht]
             [clojure.test :refer [deftest is join-fixtures testing use-fixtures]]
             [ctia.properties :as p]
             [ctia.test-helpers
              [auth :refer [all-capabilities]]
-             [core :as helpers :refer [get make-id post]]
+             [core :as helpers :refer [GET make-id POST]]
              [fake-whoami-service :as whoami-helpers]
              [store :refer [test-for-each-store-with-app]]]
             [ctim.domain.id :as id]))
@@ -43,7 +42,8 @@
        ;; This sighting should be matched
        (testing "test setup: create sighting-1"
          (let [{status :status}
-               (post "ctia/sighting"
+               (POST app
+                     "ctia/sighting"
                      :body {:id (id/long-id sighting-1-id)
                             :observed_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
                                             :end_time #inst "2016-02-11T00:40:48.212-00:00"}
@@ -55,7 +55,8 @@
        ;; This sighting should not be matched (no incident relationship)
        (testing "test setup: create sighting-2"
          (let [{status :status}
-               (post "ctia/sighting"
+               (POST app
+                     "ctia/sighting"
                      :body {:id (id/long-id sighting-2-id)
                             :observed_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
                                             :end_time #inst "2016-02-11T00:40:48.212-00:00"}
@@ -67,7 +68,8 @@
        ;; This sighting should not be matched (different observable)
        (testing "test setup: create sighting-3"
          (let [{status :status}
-               (post "ctia/sighting"
+               (POST app
+                     "ctia/sighting"
                      :body {:id (id/long-id sighting-3-id)
                             :observed_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
                                             :end_time #inst "2016-02-11T00:40:48.212-00:00"}
@@ -79,7 +81,8 @@
        ;; This judgement should not be matched (it isn't an incident)
        (testing "test setup: create judgement-1"
          (let [{status :status}
-               (post "ctia/judgement"
+               (POST app
+                     "ctia/judgement"
                      :body {:observable observable-1
                             :source "source"
                             :priority 99
@@ -93,7 +96,8 @@
        ;; This incident should be found based on the observable/relationship
        (testing "test setup: create incident-1"
          (let [{status :status}
-               (post "ctia/incident"
+               (POST app
+                     "ctia/incident"
                      :body {:id (id/long-id incident-1-id)
                             :confidence "High"
                             :status "Open"
@@ -105,7 +109,8 @@
        ;; This incident should not be found
        (testing "test setup: create incident-1"
          (let [{status :status}
-               (post "ctia/incident"
+               (POST app
+                     "ctia/incident"
                      :body {:id (id/long-id incident-2-id)
                             :confidence "High"
                             :status "Open"
@@ -118,7 +123,8 @@
        (testing (str "test setup: create relationship-1 so that sighting-1 is a "
                      "member of incident-1")
          (let [{status :status}
-               (post "ctia/relationship"
+               (POST app
+                     "ctia/relationship"
                      :body {:id (id/long-id relationship-1-id)
                             :source_ref (id/long-id sighting-1-id)
                             :relationship_type "member-of"
@@ -131,7 +137,8 @@
        (testing (str "test setup: create relationship-2 so that sighting-3 is a "
                      "member of incident-2")
          (let [{status :status}
-               (post "ctia/relationship"
+               (POST app
+                     "ctia/relationship"
                      :body {:id (id/long-id relationship-2-id)
                             :source_ref (id/long-id sighting-3-id)
                             :relationship_type "member-of"
@@ -144,7 +151,8 @@
        (testing (str "test setup: create relationship-3 so that sighting-3 is "
                      "based on judgement-1")
          (let [{status :status}
-               (post "ctia/relationship"
+               (POST app
+                     "ctia/relationship"
                      :body {:id (id/long-id relationship-3-id)
                             :source_ref (id/long-id sighting-3-id)
                             :relationship_type "based-on"
@@ -156,7 +164,8 @@
        (testing "GET /:observable_type/:observable_value/sightings/incidents"
          (let [{status :status
                 incident-ids :parsed-body}
-               (get (str "ctia/" (:type observable-1) "/" (:value observable-1)
+               (GET app
+                    (str "ctia/" (:type observable-1) "/" (:value observable-1)
                          "/sightings/incidents")
                     :headers {"Authorization" "45c1f5e3f05d0"})]
            (is (= 200 status))

@@ -5,7 +5,7 @@
                                 setup-ctia-atom-store!
                                 setup-ctia-es-store!
                                 setup-ctia-es-store-native!]]
-             [core :as helpers :refer [delete post]]]
+             [core :as helpers :refer [POST]]]
             [clj-momo.lib.time :refer [now]]
             [criterium.core :as crit]
             [clojure.test.check.generators :as tcg]
@@ -36,7 +36,7 @@
   :setup (fn [] [true])
   :cleanup (fn [_]))
 
-(defn play-create-bulk [port]
+(defn play-create-bulk [app port]
   (try
     (let [nb-entities 20
           b (bulk nb-entities)]
@@ -44,7 +44,8 @@
                   (now)
                   (* (count (keys b)) nb-entities))
       (let [{:keys [status parsed_body]}
-            (post "ctia/bulk"
+            (POST app
+                  "ctia/bulk"
                   :body b
                   :port port
                   :socket-timeout 120000
@@ -57,16 +58,16 @@
       nil)))
 
 (defcase* create-bulk :bulk-atom-store
-  (fn [_] (let [port (setup-ctia-atom-store!)]
-           [#(play-create-bulk port) cleanup-ctia!])))
+  (fn [_] (let [{:keys [port app]} (setup-ctia-atom-store!)]
+           [#(play-create-bulk app port) #(cleanup-ctia! app)])))
 
 (defcase* create-bulk :bulk-es-store
   (fn [_] (let [{:keys [port app]} (setup-ctia-es-store!)]
-           [#(play-create-bulk port) #(cleanup-ctia! app)])))
+           [#(play-create-bulk app port) #(cleanup-ctia! app)])))
 
 (defcase* create-bulk :bulk-es-store-native
-  (fn [_] (let [port (setup-ctia-es-store-native!)]
-           [#(play-create-bulk port) cleanup-ctia!])))
+  (fn [_] (let [{:keys [port app]} (setup-ctia-es-store-native!)]
+           [#(play-create-bulk app port) #(cleanup-ctia! app)])))
 
 
 (defn fmap
@@ -79,7 +80,7 @@
   []
   (fmap (fn [setup-fn]
           (let [{:keys [port app]} (setup-fn)
-                duration (with-out-str (time (play-create-bulk port)))]
+                duration (with-out-str (time (play-create-bulk app port)))]
             (cleanup-ctia! app)
             duration))
         {:atom-store setup-ctia-atom-store!

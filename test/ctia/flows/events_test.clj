@@ -7,13 +7,13 @@
             [ctia.store :as store]
             [ctia.store-service :as store-svc]
             [ctia.test-helpers
-             [core :as test-helpers :refer [deftest-for-each-fixture post]]
+             [core :as test-helpers :refer [deftest-for-each-fixture-with-app POST]]
              [es :as es-helpers]]
             [ctim.domain.id :as id]))
 
 (use-fixtures :once mth/fixture-schema-validation)
 
-(deftest-for-each-fixture test-flow-event-creation
+(deftest-for-each-fixture-with-app test-flow-event-creation
 
   {:es-simple-index (join-fixtures [test-helpers/fixture-properties:clean
                                     es-helpers/fixture-properties:es-store
@@ -22,16 +22,16 @@
                                     test-helpers/fixture-ctia
                                     es-helpers/fixture-purge-event-indexes
                                     es-helpers/fixture-delete-store-indexes])}
-
+  app
   (testing "Events are published to es"
-    (let [app (test-helpers/get-current-app)
-          read-store (-> (test-helpers/get-service-map app :StoreService)
+    (let [read-store (-> (test-helpers/get-service-map app :StoreService)
                          :read-store
                          store-svc/store-service-fn->varargs)
           {{judgement-1-long-id :id
             :as judgement-1} :parsed-body
            judgement-1-status :status}
-          (post "ctia/judgement"
+          (POST app
+                "ctia/judgement"
                 :body {:observable {:value "1.2.3.4"
                                     :type "ip"}
                        :disposition 1
@@ -48,7 +48,8 @@
           {{judgement-2-long-id :id
             :as judgement-2} :parsed-body
            judgement-2-status :status}
-          (post "ctia/judgement"
+          (POST app
+                "ctia/judgement"
                 :body {:observable {:value "1.2.3.4"
                                     :type "ip"}
                        :disposition 2
@@ -65,7 +66,8 @@
           {{judgement-3-long-id :id
             :as judgement-3} :parsed-body
            judgement-3-status :status}
-          (post "ctia/judgement"
+          (POST app
+                "ctia/judgement"
                 :body {:observable {:value "1.2.3.4"
                                     :type "ip"}
                        :disposition 3

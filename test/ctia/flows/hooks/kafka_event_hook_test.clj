@@ -10,7 +10,7 @@
             [cheshire.core :refer [parse-string]]
 
             [ctia.test-helpers
-             [core :as test-helpers :refer [post]]
+             [core :as test-helpers :refer [POST]]
              [es :as es-helpers]])
   (:import [java.util.concurrent CountDownLatch TimeUnit]
            [org.apache.kafka.clients.consumer ConsumerRebalanceListener]))
@@ -54,7 +54,8 @@
       (let [{{judgement-1-long-id :id} :parsed-body
              judgement-1-status :status
              :as judgement-1}
-            (post "ctia/judgement"
+            (POST app
+                  "ctia/judgement"
                   :body {:observable {:value "1.2.3.4"
                                       :type "ip"}
                          :disposition 1
@@ -71,7 +72,8 @@
             {{judgement-2-long-id :id} :parsed-body
              judgement-2-status :status
              :as judgement-2}
-            (post "ctia/judgement"
+            (POST app
+                  "ctia/judgement"
                   :body {:observable {:value "1.2.3.4"
                                       :type "ip"}
                          :disposition 2
@@ -88,7 +90,8 @@
             {{judgement-3-long-id :id} :parsed-body
              judgement-3-status :status
              :as judgement-3}
-            (post "ctia/judgement"
+            (POST app
+                  "ctia/judgement"
                   :body {:observable {:value "1.2.3.4"
                                       :type "ip"}
                          :disposition 3

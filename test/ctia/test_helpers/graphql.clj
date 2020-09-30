@@ -5,10 +5,11 @@
             [ctia.schemas.graphql.sorting :as sorting]
             [ctia.test-helpers.core :as helpers]))
 
-(defn create-object [type obj]
+(defn create-object [app type obj]
   (let [{status :status
          body :parsed-body}
-        (helpers/post (str "ctia/" type)
+        (helpers/POST app
+                      (str "ctia/" type)
                       :body obj
                       :headers {"Authorization" "45c1f5e3f05d0"})]
     (when (not= status 201)
@@ -33,12 +34,14 @@
 
 (defn query
   "Requests the GraphQL endpoint"
-  [query
+  [app
+   query
    variables
    operation-name]
   (let [{status :status
          body :parsed-body}
-        (helpers/post "ctia/graphql"
+        (helpers/POST app
+                      "ctia/graphql"
                       :body {:query query
                              :variables variables
                              :operationName operation-name}
@@ -82,7 +85,8 @@
   "Test a connection with a list of sort-fields.
   It uses the $sort_field variable to specify a sort field.
   The specified query/operation-name should provide it."
-  [operation-name
+  [app
+   operation-name
    graphql-query
    variables
    connection-path
@@ -90,7 +94,8 @@
   ;; Free text fields are currently not sortable. Remove them
   (doseq [sort-field (disj (set sort-fields) :reason :description :title)]
     (let [{:keys [data errors status]}
-          (query graphql-query
+          (query app
+                 graphql-query
                  variables
                  operation-name)
           connection-data (get-in data connection-path)
@@ -103,7 +108,8 @@
       (is (= 200 status))
       (is (empty? errors) "No errors")
       (let [{:keys [data errors status]}
-            (query graphql-query
+            (query app
+                   graphql-query
                    (into variables
                          {:sort_field (sorting/sorting-kw->enum-name sort-field)})
                    operation-name)
@@ -120,7 +126,8 @@
         (is (= edges-ref edges)
             (str "Edges should be correctly sorted by " sort-field)))
       (let [{data :data}
-            (query graphql-query
+            (query app
+                   graphql-query
                    (into variables
                          {:sort_field (sorting/sorting-kw->enum-name sort-field)
                           :sort_direction "desc"})
@@ -137,14 +144,16 @@
   "Test a connection with more than one edge.
   It uses the $first and $after variables to paginate.
   The specified query/operation-name should provide them."
-  [operation-name
+  [app
+   operation-name
    graphql-query
    variables
    connection-path
    expected-nodes]
   ;; page 1
   (let [{:keys [data errors status]}
-        (query graphql-query
+        (query app
+               graphql-query
                (into variables
                      {:first 1})
                operation-name)]
@@ -163,7 +172,8 @@
           "The first page contains 1 edge")
       ;; page 2
       (let [{:keys [data errors status]}
-            (query graphql-query
+            (query app
+                   graphql-query
                    (into variables
                          {:first 50
                           :after (:endCursor page-info-p1)})

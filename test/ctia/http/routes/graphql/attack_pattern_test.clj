@@ -21,37 +21,45 @@
   {:owner "foouser"
    :groups ["foogroup"]})
 
-(defn init-graph-data []
+(defn init-graph-data [app]
   (let [ap1 (gh/create-object
+             app
              "attack-pattern"
              (-> new-attack-pattern-maximal
                  (assoc :name "Attack Pattern 1")
                  (dissoc :id)))
         ap2 (gh/create-object
+             app
              "attack-pattern"
              (-> new-attack-pattern-maximal
                  (assoc :name "Attack Pattern 2")
                  (dissoc :id)))
         ap3 (gh/create-object
+             app
              "attack-pattern"
              (-> new-attack-pattern-maximal
                  (assoc :name "Attack Pattern 3")
                  (dissoc :id)))
-        f1 (gh/create-object "feedback"
+        f1 (gh/create-object app
+                             "feedback"
                              (gh/feedback-1 (:id ap1) #inst "2042-01-01T00:00:00.000Z"))
-        f2 (gh/create-object "feedback"
+        f2 (gh/create-object app
+                             "feedback"
                              (gh/feedback-2 (:id ap1) #inst "2042-01-01T00:00:00.000Z"))]
-    (gh/create-object "relationship"
+    (gh/create-object app
+                      "relationship"
                       {:relationship_type "variant-of"
                        :timestamp #inst "2042-01-01T00:00:00.000Z"
                        :target_ref (:id ap2)
                        :source_ref (:id ap1)})
-    (gh/create-object "relationship"
+    (gh/create-object app
+                      "relationship"
                       {:relationship_type "variant-of"
                        :timestamp #inst "2042-01-01T00:00:00.000Z"
                        :target_ref (:id ap3)
                        :source_ref (:id ap1)})
-    (gh/create-object "relationship"
+    (gh/create-object app
+                      "relationship"
                       {:relationship_type "variant-of"
                        :timestamp #inst "2042-01-01T00:00:00.000Z"
                        :target_ref external-ref
@@ -70,7 +78,7 @@
                                          "foouser"
                                          "foogroup"
                                          "user")
-     (let [datamap (init-graph-data)
+     (let [datamap (init-graph-data app)
            attack-pattern-1-id (get-in datamap [:attack-pattern-1 :id])
            attack-pattern-2-id (get-in datamap [:attack-pattern-2 :id])
            attack-pattern-3-id (get-in datamap [:attack-pattern-3 :id])
@@ -79,7 +87,8 @@
 
        (testing "attack_pattern query"
          (let [{:keys [data errors status]}
-               (gh/query graphql-queries
+               (gh/query app
+                         graphql-queries
                          {:id (get-in datamap [:attack-pattern-1 :id])}
                          "AttackPatternQueryTest")]
            (is (= 200 status))
@@ -91,7 +100,8 @@
                         (dissoc :relationships)))))
 
            (testing "relationships connection"
-             (gh/connection-test "AttackPatternQueryTest"
+             (gh/connection-test app
+                                 "AttackPatternQueryTest"
                                  graphql-queries
                                  {:id attack-pattern-1-id
                                   :relationship_type "variant-of"}
@@ -118,6 +128,7 @@
 
              (testing "sorting"
                (gh/connection-sort-test
+                app
                 "AttackPatternQueryTest"
                 graphql-queries
                 {:id attack-pattern-1-id}
@@ -125,7 +136,8 @@
                 ctia.entity.relationship.schemas/relationship-fields)))
 
            (testing "feedbacks connection"
-             (gh/connection-test "AttackPatternFeedbacksQueryTest"
+             (gh/connection-test app
+                                 "AttackPatternFeedbacksQueryTest"
                                  graphql-queries
                                  {:id attack-pattern-1-id}
                                  [:attack_pattern :feedbacks]
@@ -142,6 +154,7 @@
 
              (testing "sorting"
                (gh/connection-sort-test
+                app
                 "AttackPatternFeedbacksQueryTest"
                 graphql-queries
                 {:id attack-pattern-1-id}
@@ -149,7 +162,8 @@
                 ctia.entity.feedback.schemas/feedback-fields))))
          (testing "attack_patterns query"
            (testing "attack_patterns connection"
-             (gh/connection-test "AttackPatternsQueryTest"
+             (gh/connection-test app
+                                 "AttackPatternsQueryTest"
                                  graphql-queries
                                  {"query" "*"}
                                  [:attack_patterns]
@@ -159,6 +173,7 @@
 
              (testing "sorting"
                (gh/connection-sort-test
+                app
                 "AttackPatternsQueryTest"
                 graphql-queries
                 {:query "*"}
@@ -167,7 +182,8 @@
 
            (testing "query argument"
              (let [{:keys [data errors status]}
-                   (gh/query graphql-queries
+                   (gh/query app
+                             graphql-queries
                              {:query (format "name:\"%s\""
                                              (get-in
                                               datamap

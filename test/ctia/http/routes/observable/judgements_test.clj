@@ -1,10 +1,9 @@
 (ns ctia.http.routes.observable.judgements-test
-  (:refer-clojure :exclude [get])
   (:require [clj-momo.test-helpers.core :as mht]
             [clojure.test :refer [deftest is join-fixtures testing use-fixtures]]
             [ctia.test-helpers
              [auth :refer [all-capabilities]]
-             [core :as helpers :refer [get post]]
+             [core :as helpers :refer [GET POST]]
              [fake-whoami-service :as whoami-helpers]
              [store :refer [test-for-each-store-with-app]]]
             [ctim.domain.id :as id]))
@@ -27,7 +26,8 @@
 
      (testing "test setup: create a judgement (1)"
        (let [{status :status}
-             (post "ctia/judgement"
+             (POST app
+                   "ctia/judgement"
                    :body {:observable {:type "ip",
                                        :value "10.0.0.1"}
                           :source "source"
@@ -43,7 +43,8 @@
 
      (testing "test setup: create a judgement (2)"
        (let [{status :status}
-             (post "ctia/judgement"
+             (POST app
+                   "ctia/judgement"
                    :body {:observable {:type "ip",
                                        :value "10.0.0.1"}
                           :source "source"
@@ -58,7 +59,8 @@
 
      (testing "test setup: create a judgement (3)"
        (let [{status :status}
-             (post "ctia/judgement"
+             (POST app
+                   "ctia/judgement"
                    :body {:observable {:type "ip",
                                        :value "10.0.0.1"}
                           :source "source"
@@ -73,7 +75,8 @@
 
      (testing "test setup: create a judgement (4)"
        (let [{status :status}
-             (post "ctia/judgement"
+             (POST app
+                   "ctia/judgement"
                    :body {:observable {:type "ip",
                                        :value "192.168.1.1"}
                           :source "source"
@@ -89,7 +92,8 @@
      (testing "GET /:observable_type/:observable_value/judgements"
        (let [{status :status
               judgements :parsed-body}
-             (get "ctia/ip/10.0.0.1/judgements"
+             (GET app
+                  "ctia/ip/10.0.0.1/judgements"
                   :headers {"Authorization" "45c1f5e3f05d0"})]
          (is (= 200 status))
          (is (= #{"judgement-1" "judgement-2" "judgement-3"}
@@ -98,7 +102,8 @@
      (testing "GET /:observable_type/:observable_value/judgements?sort_by=disposition%3Aasc%2Cvalid_time.start_time%3Adesc"
        (let [{status :status
               judgements :parsed-body}
-             (get "ctia/ip/10.0.0.1/judgements?sort_by=disposition%3Aasc%2Cvalid_time.start_time%3Adesc"
+             (GET app
+                  "ctia/ip/10.0.0.1/judgements?sort_by=disposition%3Aasc%2Cvalid_time.start_time%3Adesc"
                   :params {:sort_by "disposition:asc,valid_time.start_time:desc"}
                   :headers {"Authorization" "45c1f5e3f05d0"})]
          (is (= 200 status))

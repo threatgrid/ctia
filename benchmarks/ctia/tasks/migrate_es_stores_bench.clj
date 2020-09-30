@@ -5,7 +5,7 @@
              [benchmark :refer [cleanup-ctia!
                                 setup-ctia-es-store!
                                 delete-store-indexes]]
-             [core :as helpers :refer [post-bulk]]]
+             [core :as helpers :refer [POST-bulk]]]
             [ctim.domain.id :refer [make-transient-id]]
             [ctim.examples
              [assets :refer [asset-maximal]]
@@ -54,10 +54,10 @@
    :target_records   (n-doc target-record-maximal fixtures-nb)
    :tools            (n-doc tool-maximal fixtures-nb)})
 
-(defn post-fixtures []
+(defn post-fixtures [app]
   (dotimes [n 10]
     (println "posting bulk...")
-    (post-bulk (make-examples 1000))))
+    (POST-bulk app (make-examples 1000))))
 
 (defgoal migrate-store-indexes "Run a migration"
   :setup (fn [& args]
@@ -67,7 +67,7 @@
              (delete-store-indexes)
 
              (println "posting fixtures...")
-             (post-fixtures)
+             (post-fixtures app)
              (prn "fixtures loaded!")
              [app]))
   :cleanup (fn [app]

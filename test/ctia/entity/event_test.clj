@@ -1,5 +1,4 @@
 (ns ctia.entity.event-test
-  (:refer-clojure :exclude [get])
   (:require
    [ctim.schemas.common :refer [ctim-schema-version]]
    [ctim.domain.id :refer [str->short-id]]
@@ -15,7 +14,7 @@
    [ctia.test-helpers
     [auth :refer [all-capabilities]]
     [core :as helpers
-     :refer [delete post put get fixture-with-fixed-time
+     :refer [DELETE POST PUT GET fixture-with-fixed-time
              with-sequential-uuid]]
     [fake-whoami-service :as whoami-helpers]
     [store :refer [test-for-each-store-with-app]]]
@@ -78,7 +77,8 @@
                     port (get-in-config [:ctia :http :port])
                     {incident :parsed-body
                      incident-status :status}
-                    (post (str "ctia/incident")
+                    (POST app
+                          (str "ctia/incident")
                           :body (assoc new-incident-minimal
                                        :tlp "amber"
                                        :description "my description"
@@ -88,7 +88,8 @@
 
                     {incident-user-3 :parsed-body
                      incident-user-3-status :status}
-                    (post (str "ctia/incident")
+                    (POST app
+                          (str "ctia/incident")
                           :body (assoc new-incident-minimal
                                        :tlp "amber"
                                        :description "my description")
@@ -98,7 +99,8 @@
                     (fixture-with-fixed-time
                      (time/timestamp "2042-01-02")
                      (fn []
-                       (put (format "ctia/%s/%s"
+                       (PUT app
+                            (format "ctia/%s/%s"
                                     "incident"
                                     (-> (:id incident)
                                         id/long-id->id
@@ -109,14 +111,16 @@
 
                     {casebook :parsed-body
                      casebook-status :status}
-                    (post (str "ctia/casebook")
+                    (POST app
+                          (str "ctia/casebook")
                           :body (assoc new-casebook-minimal
                                        :tlp "amber")
                           :headers {"Authorization" "user1"})
 
                     {incident-casebook-link :parsed-body
                      incident-casebook-link-status :status}
-                    (post (format "ctia/%s/%s/link"
+                    (POST app
+                          (format "ctia/%s/%s/link"
                                   "incident"
                                   (-> (:id incident)
                                       id/long-id->id
@@ -125,7 +129,8 @@
                           :headers {"Authorization" "user1"})
                     {incident-delete-body :parsed-body
                      incident-delete-status :status}
-                    (delete (format "ctia/%s/%s"
+                    (DELETE app
+                            (format "ctia/%s/%s"
                                     "incident"
                                     (-> (:id incident)
                                         id/long-id->id
@@ -141,23 +146,28 @@
                          (str "ctia/event/history/"))
                     {timeline1-body :parsed-body
                      timeline1-status :status}
-                    (get uri-timeline-incident-user1
+                    (GET app
+                         uri-timeline-incident-user1
                          :headers {"Authorization" "user1"})
                     {timeline2-body :parsed-body
                      timeline2-status :status}
-                    (get uri-timeline-incident-user1
+                    (GET app
+                         uri-timeline-incident-user1
                          :headers {"Authorization" "user2"})
                     {timeline3-body :parsed-body
                      timeline3-status :status}
-                    (get uri-timeline-incident-user1
+                    (GET app
+                         uri-timeline-incident-user1
                          :headers {"Authorization" "user3"})
                     {timeline4-body :parsed-body
                      timeline4-status :status}
-                    (get uri-timeline-incident-user3
+                    (GET app
+                         uri-timeline-incident-user3
                          :headers {"Authorization" "user1"})
                     {timeline5-body :parsed-body
                      timeline5-status :status}
-                    (get uri-timeline-incident-user3
+                    (GET app
+                         uri-timeline-incident-user3
                          :headers {"Authorization" "user3"})]
 
                 (is (= 201 incident-status))
@@ -192,7 +202,8 @@
                                    (:id incident)
                                    (:id incident)
                                    (:id incident)))
-                        results (:parsed-body (get (str "ctia/event/search?query=" q)
+                        results (:parsed-body (GET app
+                                                   (str "ctia/event/search?query=" q)
                                                    :content-type :json
                                                    :headers {"Authorization" "user1"}))
                         event-id (-> results
@@ -201,7 +212,8 @@
                                      id/long-id->id
                                      :short-id)]
                     (testing "should be able to GET an event"
-                      (is (= 200 (:status (get (str "ctia/event/" event-id)
+                      (is (= 200 (:status (GET app
+                                               (str "ctia/event/" event-id)
                                                :headers {"Authorization" "user1"})))))
 
                     (is (= [{:owner "user1",
@@ -407,14 +419,16 @@
             (time/timestamp "2042-01-01")
             (fn []
               (let [initial-incident
-                    (post (str "ctia/incident")
+                    (POST app
+                          (str "ctia/incident")
                           :body new-incident-minimal
                           :headers {"Authorization" "user1"})
                     _ (is (= 201 (:status initial-incident)) initial-incident)
 
                     ;; add new :assignees field
                     added-assignees-incident
-                    (put (format "ctia/%s/%s"
+                    (PUT app
+                         (format "ctia/%s/%s"
                                  "incident"
                                  (-> (get-in initial-incident [:parsed-body :id])
                                      id/long-id->id
@@ -428,7 +442,8 @@
 
                     ;; update existing :assignees field
                     modified-assignees-incident
-                    (put (format "ctia/%s/%s"
+                    (PUT app
+                         (format "ctia/%s/%s"
                                  "incident"
                                  (-> (get-in added-assignees-incident [:parsed-body :id])
                                      id/long-id->id
@@ -442,7 +457,8 @@
 
                     ;; delete existing :assignees field
                     deleted-assignees-incident
-                    (put (format "ctia/%s/%s"
+                    (PUT app
+                         (format "ctia/%s/%s"
                                  "incident"
                                  (-> (get-in modified-assignees-incident [:parsed-body :id])
                                      id/long-id->id
@@ -459,7 +475,8 @@
                         q (uri/uri-encode
                             (format "entity.id:\"%s\"" initial-id))
                         results (map :fields
-                                     (:parsed-body (get (str "ctia/event/search?sort_by=timestamp&query=" q)
+                                     (:parsed-body (GET app
+                                                        (str "ctia/event/search?sort_by=timestamp&query=" q)
                                                         :content-type :json
                                                         :headers {"Authorization" "user1"})))]
                     (is (= [nil

@@ -27,7 +27,8 @@
     (when (= "es" (get-in-config [:ctia :store :target-record]))
       (let [{[target] :targets} target-record-sample
             {[observable] :observables} target]
-        (are [term check-fn expected desc] (let [response (helpers/get
+        (are [term check-fn expected desc] (let [response (helpers/GET
+                                                           app
                                                            "ctia/target-record/search"
                                                            :query-params {"query" term}
                                                            :headers {"Authorization" "45c1f5e3f05d0"})]
@@ -77,19 +78,22 @@
                                          "foogroup"
                                          "user")
 
-     (let [ids (helpers/post-entity-bulk
+     (let [ids (helpers/POST-entity-bulk
+                app
                 new-target-record-maximal
                 :target_records
                 30
                 {"Authorization" "45c1f5e3f05d0"})]
 
        (field-selection/field-selection-tests
+        app
         ["ctia/target-record/search?query=*"
          (http/doc-id->rel-url (first ids))]
         {"Authorization" "45c1f5e3f05d0"}
         target-record/target-record-fields)
 
        (pagination/pagination-test
+        app
         "ctia/target-record/search?query=*"
         {"Authorization" "45c1f5e3f05d0"}
         target-record/target-record-fields)))))

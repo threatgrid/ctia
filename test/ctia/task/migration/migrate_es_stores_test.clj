@@ -20,7 +20,7 @@
              :as
              helpers
              :refer
-             [delete post-bulk put with-atom-logger]]
+             [GET DELETE POST-bulk PUT with-atom-logger]]
             [ctia.test-helpers.es :as es-helpers]
             [ctia.test-helpers.fake-whoami-service :as whoami-helpers]
             [ctia.test-helpers.fixtures :as fixt]
@@ -106,19 +106,22 @@
        set))
 
 (defn update-entity
-  [{entity-type :type
+  [app
+   {entity-type :type
     entity-id :short-id}]
   (let [entity-path (format "ctia/%s/%s" (str entity-type) entity-id)
-        previous (-> (helpers/get entity-path
-                                  :headers {"Authorization" "45c1f5e3f05d0"})
+        previous (-> (GET app
+                          entity-path
+                          :headers {"Authorization" "45c1f5e3f05d0"})
                      :parsed-body)]
-    (put entity-path
+    (PUT app
+         entity-path
          :body (assoc previous :description "UPDATED")
          :headers {"Authorization" "45c1f5e3f05d0"})))
 
 (defn random-updates
   "select nb random entities of the bulk and update them"
-  [bulk-result nb]
+  [app bulk-result nb]
   (let [random-ids (->> (select-keys bulk-result
                                      [:malwares
                                       :sightings
@@ -130,17 +133,17 @@
                         (take nb)
                         (map long-id->id))]
     (doseq [entity random-ids]
-      (update-entity entity))))
+      (update-entity app entity))))
 
 (defn rollover-post-bulk
   "post data in 2 parts with rollover, randomly update son entities"
-  [all-stores]
-  (let [bulk-res-1 (post-bulk (fixt/bundle (/ fixtures-nb 2) false))
+  [app all-stores]
+  (let [bulk-res-1 (POST-bulk app (fixt/bundle (/ fixtures-nb 2) false))
         _ (rollover-stores (all-stores))
-        bulk-res-2 (post-bulk (fixt/bundle (/ fixtures-nb 2) false))
+        bulk-res-2 (POST-bulk app (fixt/bundle (/ fixtures-nb 2) false))
         _ (rollover-stores (all-stores))]
-    (random-updates bulk-res-1 (/ updates-nb 2))
-    (random-updates bulk-res-2 (/ updates-nb 2))))
+    (random-updates app bulk-res-1 (/ updates-nb 2))
+    (random-updates app bulk-res-2 (/ updates-nb 2))))
 
 (deftest check-migration-params-test
   (let [migration-params {:migration-id "id"
@@ -216,7 +219,7 @@
                                           "foouser"
                                           "foogroup"
                                           "user")
-      (rollover-post-bulk all-stores)
+      (rollover-post-bulk app all-stores)
       ;; insert malformed documents
       (doseq [store-type store-types]
         (es-index/get (es-conn get-in-config)
@@ -526,7 +529,7 @@
                                           "foogroup"
                                           "user")
         ;; insert proper documents
-        (rollover-post-bulk all-stores)
+        (rollover-post-bulk app all-stores)
         ;; insert malformed documents
         (doseq [store-type store-types]
           (es-doc/create-doc (es-conn get-in-config)
@@ -577,7 +580,7 @@
                                         "foogroup"
                                         "user")
     ;; insert proper documents
-    (rollover-post-bulk all-stores)
+    (rollover-post-bulk app all-stores)
     (testing "migrate ES Stores test setup"
       (testing "simulate migrate es indexes shall not create any document"
         (sut/migrate-store-indexes {:migration-id "test-1"
@@ -790,17 +793,20 @@
                                           (dissoc :id)
                                           (assoc :description "UPDATED"))]
             ;; insert new entities in source store
-            (post-bulk new-malwares)
+            (POST-bulk app new-malwares)
             ;; modify entities in first and second source indices
-            (put (format "ctia/sighting/%s" sighting0-id)
+            (PUT app
+                 (format "ctia/sighting/%s" sighting0-id)
                  :body updated-sighting-body
                  :headers {"Authorization" "45c1f5e3f05d0"})
-            (put (format "ctia/sighting/%s" sighting1-id)
+            (PUT app
+                 (format "ctia/sighting/%s" sighting1-id)
                  :body updated-sighting-body
                  :headers {"Authorization" "45c1f5e3f05d0"})
             ;; delete entities from first and second source indices
             (doseq [sighting-id sighting-ids]
-              (delete (format "ctia/sighting/%s" sighting-id)
+              (DELETE app
+                      (format "ctia/sighting/%s" sighting-id)
                       :headers {"Authorization" "45c1f5e3f05d0"}))
             (sut/migrate-store-indexes {:migration-id "test-2"
                                         :prefix       "0.0.0"
@@ -840,7 +846,7 @@
   [app maximal?]
   ;; insert 20000 docs per entity-type
   (doseq [bundle (repeatedly 20 #(fixt/bundle 1000 maximal?))]
-    (post-bulk bundle))
+    (POST-bulk app bundle))
   (doseq [batch-size [1000 3000 6000 10000]]
     (let [{:keys [get-in-config]} (helpers/get-service-map app :ConfigService)
           services (app->MigrationStoreServices app)

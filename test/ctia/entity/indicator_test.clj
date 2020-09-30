@@ -29,7 +29,8 @@
       (are [query check-fn expected desc]
           (testing desc
 
-            (let [response (helpers/get
+            (let [response (helpers/GET
+                            app
                             "ctia/indicator/search"
                             :query-params query
                             :headers {"Authorization" "45c1f5e3f05d0"})]

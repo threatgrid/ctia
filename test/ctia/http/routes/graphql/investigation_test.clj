@@ -39,14 +39,15 @@
                                          "foogroup"
                                          "user")
      (let [inv1 (prepare-result
-                 (gh/create-object "investigation" investigation-1))
+                 (gh/create-object app "investigation" investigation-1))
            inv2 (prepare-result
-                 (gh/create-object "investigation" investigation-2))
+                 (gh/create-object app "investigation" investigation-2))
            graphql-queries (slurp "test/data/investigation.graphql")]
 
        (testing "investigation query"
          (let [{:keys [data errors status]}
-               (gh/query graphql-queries
+               (gh/query app
+                         graphql-queries
                          {:id (:id inv1)}
                          "InvestigationQueryTest")]
 
@@ -58,7 +59,8 @@
                     (:investigation data))))))
        (testing "investigations query"
          (testing "investigations connection"
-           (gh/connection-test "InvestigationsQueryTest"
+           (gh/connection-test app
+                               "InvestigationsQueryTest"
                                graphql-queries
                                {"query" "*"}
                                [:investigations]
@@ -67,6 +69,7 @@
 
            (testing "sorting"
              (gh/connection-sort-test
+              app
               "InvestigationsQueryTest"
               graphql-queries
               {:query "*"}
@@ -74,7 +77,8 @@
               inv/investigation-fields)))
          (testing "query argument"
            (let [{:keys [data errors status]}
-                 (gh/query graphql-queries
+                 (gh/query app
+                           graphql-queries
                            {:query "source:\"ngfw\""}
                            "InvestigationsQueryTest")]
              (is (= 200 status))

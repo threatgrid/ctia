@@ -7,7 +7,7 @@
             [ctia.test-helpers
              [auth :refer [all-capabilities]]
              [fake-whoami-service :as helpers.whoami]
-             [core :as helpers.core]
+             [core :as helpers.core :refer [GET POST-bulk]]
              [store :refer [test-selected-stores-with-app]]]
             [clojure.string :as string]
             [clojure.pprint :refer [pprint]]
@@ -20,14 +20,15 @@
             [schema.core :as s]))
 
 (defn metric-raw
-  [agg-type entity search-params agg-params]
+  [agg-type app entity search-params agg-params]
   (let [metric-uri (format "ctia/%s/metric/%s"
                            (name entity)
                            (name agg-type))]
-    (-> (helpers.core/get metric-uri
-                :accept :json
-                :headers {"Authorization" "45c1f5e3f05d0"}
-                :query-params (into search-params agg-params))
+    (-> (GET app
+             metric-uri
+             :accept :json
+             :headers {"Authorization" "45c1f5e3f05d0"}
+             :query-params (into search-params agg-params))
         :parsed-body
         keywordize-keys)))
 
@@ -106,13 +107,14 @@
 
 (defn- test-cardinality
   "test one field cardinality, examples are already created."
-  [examples entity field]
+  [app examples entity field]
   (testing (format "cardinality %s %s" entity field)
     (let [unique-values (set (normalized-values examples field))
           expected (count unique-values)
           _ (assert (pos? expected))
           {{:keys [from to]} :filters
-           :as res} (cardinality entity
+           :as res} (cardinality app
+                                 entity
                                  {:query "*"
                                   :from "2020-01-01"}
                                  {:aggregate-on (name field)})]
@@ -123,7 +125,7 @@
 
 (defn- test-topn
   "test one field topn, examples are already created."
-  [examples entity field limit]
+  [app examples entity field limit]
   (testing (format "topn %s %s" entity field)
     (let [prepared (->> (normalized-values examples field)
                         frequencies
@@ -132,7 +134,8 @@
           expected (vals (take limit prepared))
           _ (assert (every? pos? expected))
           {{:keys [from to]} :filters
-           :as res} (topn entity
+           :as res} (topn app
+                          entity
                           {:from "2020-01-01"}
                           {:aggregate-on (name field)
                            :limit limit})]
@@ -171,7 +174,7 @@
 
 (defn- test-histogram
   "test one field histogram, examples are already created"
-  [examples entity field granularity]
+  [app examples entity field granularity]
   (testing (format "histogram %s %s" entity field)
     (let [parsed      (parse-field field)
           values      (->>
@@ -187,7 +190,8 @@
           expected    (make-histogram-res res-days)
           _           (assert (every? #(:value %) expected))
           {{:keys [from to]} :filters
-           :as res} (histogram entity
+           :as res} (histogram app
+                               entity
                                {:from from-str
                                 :to   to-str}
                                {:aggregate-on (name field)
@@ -269,10 +273,10 @@
                         now (-> (tc/from-string "2020-12-31")
                                 tc/to-date
                                 constantly)]
-            (helpers.core/post-bulk {plural docs})
+            (POST-bulk app {plural docs})
             (doseq [field enumerable-fields]
-              (test-cardinality docs entity field)
-              (test-topn docs entity field 3))
+              (test-cardinality app docs entity field)
+              (test-topn app docs entity field 3))
             (doseq [field date-fields]
-              (test-histogram docs entity field :day)
-              (test-histogram docs entity field :month))))))))
+              (test-histogram app docs entity field :day)
+              (test-histogram app docs entity field :month))))))))

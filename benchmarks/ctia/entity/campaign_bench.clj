@@ -5,7 +5,7 @@
    [ctia.test-helpers
     [benchmark :refer [cleanup-ctia!
                        setup-ctia-es-store!]]
-    [core :as helpers :refer [delete post]]]
+    [core :as helpers :refer [POST]]]
    [perforate.core :refer :all]))
 
 (def small-campaign
@@ -18,13 +18,14 @@
   :setup (fn [] [(setup-ctia-es-store!)])
   :cleanup (fn [{:keys [app]}] (cleanup-ctia! app)))
 
-(defn play [fixture]
-  (post "ctia/campaign"
+(defn play [app fixture]
+  (POST app
+        "ctia/campaign"
         :body fixture
         :headers {"Authorization" "45c1f5e3f05d0"}))
 
 (defcase create-campaign :big-campaign-es-store
-  [_] (play big-campaign))
+  [{:keys [app]}] (play app big-campaign))
 
 (defcase create-campaign :small-campaign-es-store
-  [_] (play small-campaign))
+  [{:keys [app]}] (play app small-campaign))

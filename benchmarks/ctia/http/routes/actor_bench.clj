@@ -2,7 +2,7 @@
   (:require [ctia.test-helpers
              [benchmark :refer [cleanup-ctia!
                                 setup-ctia-es-store!]]
-             [core :as helpers :refer [delete post]]]
+             [core :as helpers :refer [DELETE POST]]]
             [perforate.core :refer :all]))
 
 (def small-actor
@@ -30,16 +30,17 @@
   :setup (fn [] [true])
   :cleanup (fn [_]))
 
-(defn play-big [port]
+(defn play-big [app port]
   (let [{:keys [status parsed_body]}
-        (post "ctia/actor"
+        (POST app
+              "ctia/actor"
               :body big-actor
               :port port
               :headers {"Authorization" "45c1f5e3f05d0"})]
     (if (= 201 status)
-      (delete (str "ctia/actor" (:id parsed_body)))
+      (DELETE app (str "ctia/actor" (:id parsed_body)))
       (prn "play-big: " status))))
 
 (defcase* create-actor :big-actor-es-store
   (fn [_] (let [{:keys [port app]} (setup-ctia-es-store!)]
-           [#(play-big port) #(cleanup-ctia! app)])))
+           [#(play-big app port) #(cleanup-ctia! app)])))

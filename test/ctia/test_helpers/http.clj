@@ -12,20 +12,9 @@
   (when doc-id
     (string/replace doc-id #".*(?=ctia)" "")))
 
-(def test-post
-  (mthh/with-port-fn-and-api-key th/get-http-port api-key mthh/test-post))
-
-(def assert-post
-  (mthh/with-port-fn-and-api-key th/get-http-port api-key mthh/assert-post))
-
-(def test-put
-  (mthh/with-port-fn-and-api-key th/get-http-port api-key mthh/test-put))
-
-(def test-get
-  (mthh/with-port-fn-and-api-key th/get-http-port api-key mthh/test-put))
-
-(def test-get-list
-  (mthh/with-port-fn-and-api-key th/get-http-port api-key mthh/test-get-list))
-
-(def test-delete
-  (mthh/with-port-fn-and-api-key th/get-http-port api-key mthh/test-delete))
+(defn assert-post [app & args]
+  (apply (mthh/with-port-fn-and-api-key
+           (partial th/get-http-port app)
+           api-key
+           mthh/assert-post)
+         args))

@@ -1,9 +1,8 @@
 (ns ctia.http.handler.allow-all-test
-  (:refer-clojure :exclude [get])
   (:require [clj-momo.test-helpers.core :as mth]
             [ctia.domain.entities :refer [schema-version]]
             [ctia.test-helpers
-             [core :as helpers :refer [post get]]
+             [core :as helpers :refer [POST GET]]
              [es :as es-helpers]]
             [clojure.test :refer [deftest is testing use-fixtures join-fixtures]]
             [ctim.domain.id :as id]))
@@ -17,9 +16,11 @@
 
 (deftest allow-all-auth-judgement-routes-test
   (testing "POST /ctia/judgement"
-    (let [{status :status
+    (let [app (helpers/get-current-app)
+          {status :status
            judgement :parsed-body}
-          (post "ctia/judgement"
+          (POST app
+                "ctia/judgement"
                 :body {:observable {:value "1.2.3.4"
                                     :type "ip"}
                        :disposition 2
@@ -56,7 +57,8 @@
       (testing "GET /ctia/judgement"
         (let [{status :status
                get-judgement :parsed-body}
-              (get (str "ctia/judgement/" (:short-id judgement-id)))]
+              (GET app
+                   (str "ctia/judgement/" (:short-id judgement-id)))]
           (is (= 200 status))
           (is (deep=
                {:id (:id judgement)

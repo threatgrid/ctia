@@ -21,35 +21,41 @@
 
 (def external-ref "http://external.com/ctia/incident/incident-ab053333-2ad2-41d0-a445-31e9b9c38caf")
 
-(defn init-graph-data []
+(defn init-graph-data [app]
   (let [ap1 (gh/create-object
+             app
              "incident"
              (-> new-incident-maximal
                  (assoc :title "Incident 1")
                  (dissoc :id)))
         ap2 (gh/create-object
+             app
              "incident"
              (-> new-incident-maximal
                  (assoc :title "Incident 2")
                  (dissoc :id)))
         ap3 (gh/create-object
+             app
              "incident"
              (-> new-incident-maximal
                  (assoc :title "Incident 3")
                  (dissoc :id)))
-        f1 (gh/create-object "feedback" (gh/feedback-1 (:id ap1) #inst "2042-01-01T00:00:00.000Z"))
-        f2 (gh/create-object "feedback" (gh/feedback-2 (:id ap1) #inst "2042-01-01T00:00:00.000Z"))]
-    (gh/create-object "relationship"
+        f1 (gh/create-object app "feedback" (gh/feedback-1 (:id ap1) #inst "2042-01-01T00:00:00.000Z"))
+        f2 (gh/create-object app "feedback" (gh/feedback-2 (:id ap1) #inst "2042-01-01T00:00:00.000Z"))]
+    (gh/create-object app
+                      "relationship"
                       {:relationship_type "variant-of"
                        :timestamp #inst "2042-01-01T00:00:00.000Z"
                        :target_ref (:id ap2)
                        :source_ref (:id ap1)})
-    (gh/create-object "relationship"
+    (gh/create-object app
+                      "relationship"
                       {:relationship_type "variant-of"
                        :timestamp #inst "2042-01-01T00:00:00.000Z"
                        :target_ref (:id ap3)
                        :source_ref (:id ap1)})
-    (gh/create-object "relationship"
+    (gh/create-object app
+                      "relationship"
                       {:relationship_type "variant-of"
                        :timestamp #inst "2042-01-01T00:00:00.000Z"
                        :target_ref external-ref
@@ -68,7 +74,7 @@
                                          "foouser"
                                          "foogroup"
                                          "user")
-     (let [datamap (init-graph-data)
+     (let [datamap (init-graph-data app)
            incident-1-id (get-in datamap [:incident-1 :id])
            incident-2-id (get-in datamap [:incident-2 :id])
            incident-3-id (get-in datamap [:incident-3 :id])
@@ -77,7 +83,8 @@
 
        (testing "incident query"
          (let [{:keys [data errors status]}
-               (gh/query graphql-queries
+               (gh/query app
+                         graphql-queries
                          {:id (get-in datamap [:incident-1 :id])}
                          "IncidentQueryTest")]
            (is (= 200 status))
@@ -89,7 +96,8 @@
                         (dissoc :relationships)))))
 
            (testing "relationships connection"
-             (gh/connection-test "IncidentQueryTest"
+             (gh/connection-test app
+                                 "IncidentQueryTest"
                                  graphql-queries
                                  {:id incident-1-id
                                   :relationship_type "variant-of"}
@@ -116,6 +124,7 @@
 
              (testing "sorting"
                (gh/connection-sort-test
+                app
                 "IncidentQueryTest"
                 graphql-queries
                 {:id incident-1-id}
@@ -123,7 +132,8 @@
                 ctia.entity.relationship.schemas/relationship-fields)))
 
            (testing "feedbacks connection"
-             (gh/connection-test "IncidentFeedbacksQueryTest"
+             (gh/connection-test app
+                                 "IncidentFeedbacksQueryTest"
                                  graphql-queries
                                  {:id incident-1-id}
                                  [:incident :feedbacks]
@@ -132,6 +142,7 @@
 
              (testing "sorting"
                (gh/connection-sort-test
+                app
                 "IncidentFeedbacksQueryTest"
                 graphql-queries
                 {:id incident-1-id}
@@ -139,7 +150,8 @@
                 ctia.entity.feedback.schemas/feedback-fields))))
          (testing "incidents query"
            (testing "incidents connection"
-             (gh/connection-test "IncidentsQueryTest"
+             (gh/connection-test app
+                                 "IncidentsQueryTest"
                                  graphql-queries
                                  {"query" "*"}
                                  [:incidents]
@@ -149,6 +161,7 @@
 
              (testing "sorting"
                (gh/connection-sort-test
+                app
                 "IncidentsQueryTest"
                 graphql-queries
                 {:query "*"}
@@ -157,7 +170,8 @@
 
            (testing "query argument"
              (let [{:keys [data errors status]}
-                   (gh/query graphql-queries
+                   (gh/query app
+                             graphql-queries
                              {:query (format "title:\"%s\""
                                              (get-in
                                               datamap

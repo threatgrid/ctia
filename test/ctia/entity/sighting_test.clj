@@ -10,8 +10,8 @@
             [ctia.test-helpers
              [access-control :refer [access-control-test]]
              [auth :refer [all-capabilities]]
-             [core :as helpers :refer [post-entity-bulk
-                                       post-bulk]]
+             [core :as helpers :refer [POST-entity-bulk
+                                       POST-bulk]]
              [crud :refer [entity-crud-test]]
              [aggregate :refer [test-metric-routes]]
              [fake-whoami-service :as whoami-helpers]
@@ -66,7 +66,8 @@
                                          "foouser"
                                          "foogroup"
                                          "user")
-     (let [ids (post-entity-bulk
+     (let [ids (POST-entity-bulk
+                app
                 new-sighting-maximal
                 :sightings
                 30
@@ -84,15 +85,18 @@
                                      #inst "2016-01-03T01:01:01.000Z")
                               (assoc-in [:observed_time :start_time]
                                         #inst "2016-01-02T01:01:01.000Z"))
-           custom-samples (post-bulk {:sightings [first-sighting
+           custom-samples (POST-bulk app
+                                     {:sightings [first-sighting
                                                   second-sighting
                                                   third-sighting]})]
        (pagination-test
+        app
         "ctia/sighting/search?query=*"
         {"Authorization" "45c1f5e3f05d0"}
         sighting-sort-fields)
 
        (field-selection-tests
+        app
         ["ctia/sighting/search?query=*"
          (doc-id->rel-url (first ids))]
         {"Authorization" "45c1f5e3f05d0"}

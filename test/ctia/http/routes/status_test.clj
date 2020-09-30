@@ -1,10 +1,9 @@
 (ns ctia.http.routes.status-test
-  (:refer-clojure :exclude [get])
   (:require [clj-momo.test-helpers.core :as mth]
             [clojure.test :refer [deftest is join-fixtures testing use-fixtures]]
             [ctia.test-helpers
              [auth :refer [all-capabilities]]
-             [core :as helpers :refer [get]]
+             [core :as helpers :refer [GET]]
              [fake-whoami-service :as whoami-helpers]
              [store :refer [test-for-each-store-with-app]]]))
 
@@ -23,6 +22,7 @@
                                          "foogroup"
                                          "user")
      (testing "GET /ctia/status"
-       (let [response (get "ctia/status" :headers {"Authorization" "45c1f5e3f05d0"})]
+       (let [response (GET app
+                           "ctia/status" :headers {"Authorization" "45c1f5e3f05d0"})]
          (is (= 200 (:status response)))
          (is (= {:status :ok} (:parsed-body response))))))))

@@ -1,5 +1,4 @@
 (ns ctia.test-helpers.crud
-  (:refer-clojure :exclude [get])
   (:require [cheshire.core :refer [parse-string]]
             [clj-http.fake :refer [with-global-fake-routes]]
             [clj-momo.test-helpers.http :refer [encode]]
@@ -11,13 +10,14 @@
             [ctia.properties :as p :refer [get-http-show]]
             [ctia.test-helpers
              [core :as helpers
-              :refer [delete entity->short-id get patch post put]]
+              :refer [DELETE entity->short-id GET PATCH POST PUT]]
              [search :refer [test-query-string-search]]]
             [ctim.domain.id :as id]))
 
 (defn crud-wait-for-test
   [{::keys [get-in-config]
-    :keys [entity
+    :keys [app
+           entity
            example
            headers
            update-field
@@ -26,6 +26,7 @@
     :or {update-field :title
          update-tests? true
          patch-tests? false}}]
+  (assert app)
   (let [new-record (dissoc example :id)
         default-es-refresh (->> (get-in-config
                                   [:ctia :store :es :default :refresh])
@@ -62,7 +63,8 @@
                           (let [path (cond-> (str "ctia/" entity)
                                        (boolean? wait_for) (str "?wait_for=" wait_for))]
                             (with-global-fake-routes bulk-routes
-                              (post path
+                              (POST app
+                                    path
                                     :body new-record
                                     :headers headers))
                             (check-refresh wait_for msg)))]
@@ -76,46 +78,52 @@
                           "when wait_for is not specified"))))
 
     (testing "testing wait_for values on entity update / patch"
-      (let [entity-id (-> (format "ctia/%s?wait_for=true" entity)
-                          (post :body new-record
+      (let [entity-id (-> (POST app
+                                (format "ctia/%s?wait_for=true" entity)
+                                :body new-record
                                 :headers headers)
                           :parsed-body
                           entity->short-id)
-            test-modify (fn [method wait_for msg]
-                          (let [path (cond-> (format "ctia/%s/%s" entity entity-id)
+            test-modify (fn [method-kw wait_for msg]
+                          (let [method (case method-kw
+                                         :PUT PUT
+                                         :PATCH PATCH)
+                                path (cond-> (format "ctia/%s/%s" entity entity-id)
                                        (boolean? wait_for) (str "?wait_for=" wait_for))
                                 updates (cond->> {update-field "modified"}
-                                          (= put method) (into new-record))
+                                          (= :PUT method-kw) (into new-record))
                                 es-index-uri-pattern (re-pattern (str ".*9200.*" entity-id ".*"))]
                             (with-global-fake-routes {es-index-uri-pattern {:put simple-handler}}
-                              (method path
+                              (method app
+                                      path
                                       :body updates
                                       :headers headers))
                             (check-refresh wait_for msg)))]
         (when update-tests?
-          (test-modify put true
+          (test-modify :PUT true
                        (str "Update queries should wait for index refresh when "
                             "wait_for is true"))
-          (test-modify put false
+          (test-modify :PUT false
                        (str "Update queries should not wait for index refresh "
                             "when wait_for is false"))
-          (test-modify put nil
+          (test-modify :PUT nil
                        (str "Configured ctia.store.es.default.refresh value "
                             "is applied when wait_for is not specified")))
         (when patch-tests?
-          (test-modify patch true
+          (test-modify :PATCH true
                        (str "Patch queries should wait for index refresh when "
                             "wait_for is true"))
-          (test-modify patch false
+          (test-modify :PATCH false
                        (str "Patch queries should not wait for index refresh "
                             "when wait_for is false"))
-          (test-modify patch nil
+          (test-modify :PATCH nil
                        (str "Configured ctia.store.es.default.refresh value is "
                             "applied when wait_for is not specified")))))
 
     (testing "testing wait_for values on entity deletion"
       (let [test-delete (fn [wait_for msg]
-                          (let [entity-id (-> (post (str "ctia/" entity "?wait_for=true")
+                          (let [entity-id (-> (POST app
+                                                    (str "ctia/" entity "?wait_for=true")
                                                     :body new-record
                                                     :headers headers)
                                               :parsed-body
@@ -124,7 +132,8 @@
                                 path (cond-> (format "ctia/%s/%s" entity entity-id)
                                        (boolean? wait_for) (str "?wait_for=" wait_for))]
                             (with-global-fake-routes {es-index-uri-pattern {:delete simple-handler}}
-                              (delete path
+                              (DELETE app
+                                      path
                                       :headers headers))
                             (check-refresh wait_for msg)))]
         (test-delete true
@@ -167,7 +176,8 @@
     (let [new-record (dissoc example :id)
           {post-status :status
            post-record :parsed-body}
-          (post (str "ctia/" entity "?wait_for=true")
+          (POST app
+                (str "ctia/" entity "?wait_for=true")
                 :body new-record
                 :headers headers)
           record-id (id/long-id->id (:id post-record))
@@ -186,13 +196,15 @@
       (testing (format "GET /ctia/%s/:id" entity)
         (let [{get-status :status
                get-record :parsed-body}
-              (get (format "ctia/%s/%s" entity (:short-id record-id))
+              (GET app
+                   (format "ctia/%s/%s" entity (:short-id record-id))
                    :headers headers)]
           (is (= 200 get-status))
           (is (= expected get-record))))
 
       (when search-tests?
-        (test-query-string-search entity
+        (test-query-string-search app
+                                  entity
                                   (or search-value
                                       (name search-field))
                                   search-field
@@ -200,7 +212,8 @@
                                   get-in-config))
 
       (testing (format "GET /ctia/%s/external_id/:external_id" entity)
-        (let [response (get (format "ctia/%s/external_id/%s"
+        (let [response (GET app
+                            (format "ctia/%s/external_id/%s"
                                     entity (encode (rand-nth record-external-ids)))
                             :headers headers)
               records (:parsed-body response)]
@@ -209,7 +222,8 @@
 
       (testing (format "PATCH /ctia/%s/:id" entity)
         (let [updates {update-field "patch"}
-              response (patch (format "ctia/%s/%s" entity (:short-id record-id))
+              response (PATCH app
+                              (format "ctia/%s/%s" entity (:short-id record-id))
                               :body updates
                               :headers headers)
               updated-record (:parsed-body response)]
@@ -224,11 +238,13 @@
                                (dissoc optional-field))
               {updated-record :parsed-body
                update-status :status}
-              (put (format "ctia/%s/%s" entity (:short-id record-id))
+              (PUT app
+                   (format "ctia/%s/%s" entity (:short-id record-id))
                    :body with-updates
                    :headers headers)
               {stored-record :parsed-body}
-              (get (format "ctia/%s/%s" entity (:short-id record-id))
+              (GET app
+                   (format "ctia/%s/%s" entity (:short-id record-id))
                    :headers headers)]
           (when update-tests?
             (is (= 200 update-status))
@@ -250,7 +266,8 @@
         (testing (format "PUT invalid /ctia/%s/:id" entity)
           (let [{status :status
                  body :body}
-                (put (format "ctia/%s/%s" entity (:short-id record-id))
+                (PUT app
+                     (format "ctia/%s/%s" entity (:short-id record-id))
                      :body (assoc post-record invalid-test-field (string/join
                                                                   (repeatedly 1025 (constantly \0))))
                      :headers {"Authorization" "45c1f5e3f05d0"})]
@@ -261,15 +278,18 @@
                          (string/lower-case body))))))
 
       (testing (format "DELETE non-existant /ctia/%s/:id" entity)
-        (let [response (delete (format "ctia/%s/%s-42424242" entity entity )
+        (let [response (DELETE app
+                               (format "ctia/%s/%s-42424242" entity entity )
                                :headers headers)]
           (is (= 404 (:status response)))))
 
       (testing (format "DELETE /ctia/%s/:id" entity)
-        (let [response (delete (format "ctia/%s/%s" entity (:short-id record-id))
+        (let [response (DELETE app
+                               (format "ctia/%s/%s" entity (:short-id record-id))
                                :headers headers)]
           (is (= 204 (:status response)))
-          (let [response (get (format "ctia/%s/%s" entity (:short-id record-id))
+          (let [response (GET app
+                              (format "ctia/%s/%s" entity (:short-id record-id))
                               :headers headers)]
             (is (= 404 (:status response)))))))
 
@@ -277,7 +297,8 @@
       (testing (format "POST invalid /ctia/%s :schema_version should be ignored" entity)
         (let [{status :status
                record :parsed-body}
-              (post (str "ctia/" entity)
+              (POST app
+                    (str "ctia/" entity)
                     ;; This record has an outdated schema_version
                     :body (-> example
                               (dissoc :id)
@@ -291,7 +312,8 @@
             (let [id (id/long-id->id (:id record))
                   {status :status
                    updated-record :parsed-body}
-                  (put (format "ctia/%s/%s" entity (:short-id id))
+                  (PUT app
+                       (format "ctia/%s/%s" entity (:short-id id))
                        ;; This update has an outdated schema_version
                        :body (-> record
                                  (assoc :schema_version "0.4.2"))
@@ -303,7 +325,8 @@
       (testing (format "POST invalid /ctia/%s" entity)
         (let [{status :status
                body :body}
-              (post (str "ctia/" entity)
+              (POST app
+                    (str "ctia/" entity)
                     ;; This field has an invalid length
                     :body (assoc example
                                  invalid-test-field (string/join (repeatedly 1025 (constantly \0))))

@@ -1,5 +1,4 @@
 (ns ctia.bundle.routes-test
-  (:refer-clojure :exclude [get])
   (:require [ctim.schemas.common :refer [ctim-schema-version]]
             [ductile.index :as es-index]
             [clj-momo.test-helpers
@@ -14,7 +13,7 @@
             [ctia.properties :as p]
             [ctia.auth.capabilities :refer [all-capabilities]]
             [ctia.test-helpers
-             [core :as helpers :refer [deep-dissoc-entity-ids get post delete]]
+             [core :as helpers :refer [deep-dissoc-entity-ids GET POST DELETE]]
              [fake-whoami-service :as whoami-helpers]
              [store :refer [test-for-each-store-with-app]]]
             [ctim.domain.id :as id]
@@ -113,7 +112,8 @@
    :target_ref (:id target)})
 
 (defn validate-entity-record
-  [{:keys [id original_id]
+  [app
+   {:keys [id original_id]
     [external_id & _] :external_ids
     entity-type :type
     :or {entity-type :unknown}}
@@ -125,7 +125,8 @@
                    external_id)
         "The external ID is in the result")
     (testing "External ID"
-      (let [response (get (format "ctia/%s/external_id/%s"
+      (let [response (GET app
+                          (format "ctia/%s/external_id/%s"
                                   (name entity-type)
                                   external_id)
                           :headers {"Authorization" "45c1f5e3f05d0"})
@@ -136,7 +137,8 @@
             "The submitted entity is linked to the external ID")))
     (testing "Entity values"
       (when id
-        (let [response (get (format "ctia/%s/%s"
+        (let [response (GET app
+                            (format "ctia/%s/%s"
                                     (name entity-type)
                                     (encode id))
                             :headers {"Authorization" "45c1f5e3f05d0"})
@@ -162,11 +164,11 @@
   (let [by-original-id (set/index (:results bundle-result)
                                   [:original_id])
         source-result (first
-                       (clojure.core/get by-original-id
-                                         {:original_id source_ref}))
+                       (get by-original-id
+                            {:original_id source_ref}))
         target-result (first
-                       (clojure.core/get by-original-id
-                                         {:original_id target_ref}))]
+                       (get by-original-id
+                            {:original_id target_ref}))]
 
     (assoc relationship
            :source_ref
@@ -227,7 +229,8 @@
                               sightings)]
        (testing "Import bundle with all entity types"
          (let [new-bundle (deep-dissoc-entity-ids bundle-maximal)
-               response (post "ctia/bundle/import"
+               response (POST app
+                              "ctia/bundle/import"
                               :body new-bundle
                               :headers {"Authorization" "45c1f5e3f05d0"})
                bundle-result (:parsed-body response)]
@@ -243,7 +246,8 @@
                        :sightings (set sightings)
                        :identity_assertions (set identity_assertions)
                        :relationships (set relationships)}
-               response (post "ctia/bundle/import"
+               response (POST app
+                              "ctia/bundle/import"
                               :body bundle
                               :headers {"Authorization" "45c1f5e3f05d0"})
                bundle-result (:parsed-body response)]
@@ -258,6 +262,7 @@
                                   (map #(resolve-ids bundle-result %)
                                        relationships))]
              (validate-entity-record
+              app
               (find-result-by-original-id bundle-result (:id entity))
               entity))))
        (testing "Update"
@@ -267,7 +272,8 @@
                 :indicators (set (map with-modified-description indicators))
                 :sightings (set (map with-modified-description sightings))
                 :relationships (set (map with-modified-description relationships))}
-               response (post "ctia/bundle/import"
+               response (POST app
+                              "ctia/bundle/import"
                               :body bundle
                               :headers {"Authorization" "45c1f5e3f05d0"})
                bundle-result (:parsed-body response)]
@@ -284,6 +290,7 @@
                                   (map #(resolve-ids bundle-result %)
                                        relationships))]
              (validate-entity-record
+              app
               (find-result-by-original-id bundle-result (:id entity))
               entity))))
        (testing "Update and create"
@@ -299,7 +306,8 @@
                 :indicators [indicator]
                 :sightings [sighting]
                 :relationships [relationship]}
-               response (post "ctia/bundle/import"
+               response (POST app
+                              "ctia/bundle/import"
                               :body bundle
                               :headers {"Authorization" "45c1f5e3f05d0"})
                bundle-result (:parsed-body response)]
@@ -310,6 +318,7 @@
            (doseq [entity [indicator sighting
                            (resolve-ids bundle-result relationship)]]
              (validate-entity-record
+              app
               (find-result-by-original-id bundle-result (:id entity))
               entity))))
        (testing "Bundle with missing entities"
@@ -320,7 +329,8 @@
                bundle {:type "bundle"
                        :source "source"
                        :relationships [relationship]}
-               response-create (post "ctia/bundle/import"
+               response-create (POST app
+                                     "ctia/bundle/import"
                                      :query-params {"external-key-prefixes" "custom-"}
                                      :body bundle
                                      :headers {"Authorization" "45c1f5e3f05d0"})
@@ -345,12 +355,14 @@
                                     (assoc (first indicators)
                                            :external_ids
                                            ["custom-2"]))}
-               response-create (post "ctia/bundle/import"
+               response-create (POST app
+                                     "ctia/bundle/import"
                                      :query-params {"external-key-prefixes" "custom-"}
                                      :body bundle
                                      :headers {"Authorization" "45c1f5e3f05d0"})
                bundle-result-create (:parsed-body response-create)
-               response-update (post "ctia/bundle/import"
+               response-update (POST app
+                                     "ctia/bundle/import"
                                      :query-params {"external-key-prefixes" "custom-"}
                                      :body bundle
                                      :headers {"Authorization" "45c1f5e3f05d0"})
@@ -380,7 +392,8 @@
                        ;; coming from the search operation
                        :indicators [(dissoc (mk-indicator 10)
                                             :external_ids)]}
-               response-create (post "ctia/bundle/import"
+               response-create (POST app
+                                     "ctia/bundle/import"
                                      :body bundle
                                      :headers {"Authorization" "45c1f5e3f05d0"})
                bundle-result-create (:parsed-body response-create)]
@@ -392,6 +405,7 @@
                "All valid entities are created")
            (doseq [entity (:sightings bundle)]
              (validate-entity-record
+              app
               (find-result-by-original-id bundle-result-create (:id entity))
               entity))
            (let [indicators (filter
@@ -416,7 +430,8 @@
                                        :valid_time
                                        {:start_time #inst "2042-05-11T00:40:48.212-00:00"
                                         :end_time #inst "4242-07-11T00:40:48.212-00:00"})]}
-           response-create (post "ctia/bundle/import"
+           response-create (POST app
+                                 "ctia/bundle/import"
                                  :body bundle
                                  :headers {"Authorization" "45c1f5e3f05d0"})]
 
@@ -461,7 +476,8 @@
            bundle {:type "bundle"
                    :source "source"
                    :indicators all-indicators}
-           response-create (post "ctia/bundle/import"
+           response-create (POST app
+                                 "ctia/bundle/import"
                                  :body bundle
                                  :headers {"Authorization" "45c1f5e3f05d0"})
            ident (FakeIdentity. "foouser" ["foogroup"])
@@ -497,11 +513,13 @@
            bundle {:type "bundle"
                    :source "source"
                    :indicators (set (map mk-indicator (range nb-entities)))}
-           response-create (post "ctia/bundle/import"
+           response-create (POST app
+                                 "ctia/bundle/import"
                                  :body bundle
                                  :headers {"Authorization" "45c1f5e3f05d0"})
            bundle-result-create (:parsed-body response-create)
-           response-update (post "ctia/bundle/import"
+           response-update (POST app
+                                 "ctia/bundle/import"
                                  :body bundle
                                  :query-params {"external-key-prefixes" "ctia-"}
                                  :headers {"Authorization" "45c1f5e3f05d0"})
@@ -560,11 +578,13 @@
                                          "user")
      (testing "filtering on entities ids"
        (let [bundle-res-1
-             (:parsed-body (post "ctia/bundle/import"
+             (:parsed-body (POST app
+                                 "ctia/bundle/import"
                                  :body bundle-fixture-1
                                  :headers {"Authorization" "45c1f5e3f05d0"}))
              bundle-res-2
-             (:parsed-body (post "ctia/bundle/import"
+             (:parsed-body (POST app
+                                 "ctia/bundle/import"
                                  :body bundle-fixture-2
                                  :headers {"Authorization" "45c1f5e3f05d0"}))
              sighting-id-1
@@ -583,37 +603,43 @@
                       :id)
              bundle-get-res-1
              (:parsed-body
-              (get "ctia/bundle/export"
+              (GET app
+                   "ctia/bundle/export"
                    :query-params {:ids sighting-id-1}
                    :headers {"Authorization" "45c1f5e3f05d0"}))
              bundle-get-res-2
              (:parsed-body
-              (get "ctia/bundle/export"
+              (GET app
+                   "ctia/bundle/export"
                    :query-params {:ids sighting-id-2}
                    :headers {"Authorization" "45c1f5e3f05d0"}))
              bundle-get-res-3
              (:parsed-body
-              (get "ctia/bundle/export"
+              (GET app
+                   "ctia/bundle/export"
                    :query-params {:ids [sighting-id-1
                                         sighting-id-2]}
                    :headers {"Authorization" "45c1f5e3f05d0"}))
              bundle-get-res-4
              (:parsed-body
-              (get "ctia/bundle/export"
+              (GET app
+                   "ctia/bundle/export"
                    :query-params {:ids [sighting-id-1
                                         sighting-id-2]
                                   :include_related_entities false}
                    :headers {"Authorization" "45c1f5e3f05d0"}))
              bundle-get-res-5
              (:parsed-body
-              (get "ctia/bundle/export"
+              (GET app
+                   "ctia/bundle/export"
                    :query-params {:ids [sighting-id-1
                                         sighting-id-2]
                                   :related_to ["target_ref" "source_ref"]}
                    :headers {"Authorization" "45c1f5e3f05d0"}))
              bundle-post-res
              (:parsed-body
-              (post "ctia/bundle/export"
+              (POST app
+                    "ctia/bundle/export"
                     :body {:ids [sighting-id-1
                                  sighting-id-2]}
                     :query-params {:related_to ["target_ref" "source_ref"]}
@@ -664,7 +690,8 @@
                      :sightings #{sighting-1}
                      :indicators #{indicator-1 indicator-2}
                      :relationships #{relationship-1 relationship-2 relationship-3}}
-             bundle-import (post "ctia/bundle/import"
+             bundle-import (POST app
+                                 "ctia/bundle/import"
                                  :body bundle
                                  :headers {"Authorization" "45c1f5e3f05d0"})
              id-map (some->> bundle-import
@@ -673,12 +700,14 @@
                              (map (fn [{:keys [original_id id]}]
                                     [original_id id]))
                              (into {}))
-             indicator-1-final-id (clojure.core/get id-map (:id indicator-1))
-             indicator-2-final-id (clojure.core/get id-map (:id indicator-2))
-             sighting-1-final-id (clojure.core/get id-map (:id sighting-1))
-             delete-indicator (delete (format "ctia/indicator/%s" (id/str->short-id indicator-1-final-id))
+             indicator-1-final-id (get id-map (:id indicator-1))
+             indicator-2-final-id (get id-map (:id indicator-2))
+             sighting-1-final-id (get id-map (:id sighting-1))
+             delete-indicator (DELETE app
+                                      (format "ctia/indicator/%s" (id/str->short-id indicator-1-final-id))
                                       :headers {"Authorization" "45c1f5e3f05d0"})
-             bundle-export (get "ctia/bundle/export"
+             bundle-export (GET app
+                                "ctia/bundle/export"
                                 :query-params {:ids [sighting-1-final-id]}
                                 :headers {"Authorization" "45c1f5e3f05d0"})
              bundle-export-body (:parsed-body bundle-export)]
@@ -747,7 +776,8 @@
                                          "foogroup"
                                          "user")
      (testing "testing max number of retrieved relationships"
-       (let [imported-bundle (post "ctia/bundle/import"
+       (let [imported-bundle (POST app
+                                   "ctia/bundle/import"
                                    :body fixture-many-relationships
                                    :headers {"Authorization" "45c1f5e3f05d0"})
              sighting-ids (->> (-> imported-bundle :parsed-body :results)
@@ -755,7 +785,8 @@
                                (map :id))
              exported-bundle
              (:parsed-body
-              (get "ctia/bundle/export"
+              (GET app
+                   "ctia/bundle/export"
                    :query-params {:ids sighting-ids}
                    :headers {"Authorization" "45c1f5e3f05d0"}))]
          (is (= 500 (count (:relationships exported-bundle)))))))))
@@ -771,7 +802,8 @@
                                          "user")
      (testing "testing relationships filters"
        (let [bundle-res
-             (:parsed-body (post "ctia/bundle/import"
+             (:parsed-body (POST app
+                                 "ctia/bundle/import"
                                  :body bundle-graph-fixture
                                  :headers {"Authorization" "45c1f5e3f05d0"}))
 
@@ -804,19 +836,22 @@
              ;; related to queries
              bundle-from-source
              (:parsed-body
-              (get "ctia/bundle/export"
+              (GET app
+                   "ctia/bundle/export"
                    :query-params {:ids [sighting-id-1]
                                   :related_to ["source_ref"]}
                    :headers {"Authorization" "45c1f5e3f05d0"}))
              bundle-from-target-1
              (:parsed-body
-              (get "ctia/bundle/export"
+              (GET app
+                   "ctia/bundle/export"
                    :query-params {:ids [indicator-id-1]
                                   :related_to ["target_ref"]}
                    :headers {"Authorization" "45c1f5e3f05d0"}))
              bundle-from-target-2
              (:parsed-body
-              (get "ctia/bundle/export"
+              (GET app
+                   "ctia/bundle/export"
                    :query-params {:ids [indicator-id-2]
                                   :related_to ["target_ref"]}
                    :headers {"Authorization" "45c1f5e3f05d0"}))
@@ -824,20 +859,23 @@
              ;; node type filters
              bundle-sighting-source
              (:parsed-body
-              (get "ctia/bundle/export"
+              (GET app
+                   "ctia/bundle/export"
                    :query-params {:ids [incident-id-2]
                                   :source_type "sighting"}
                    :headers {"Authorization" "45c1f5e3f05d0"}))
              bundle-incident-target-get
              (:parsed-body
-              (get "ctia/bundle/export"
+              (GET app
+                   "ctia/bundle/export"
                    :query-params {:ids [sighting-id-2]
                                   :target_type "incident"}
                    :headers {"Authorization" "45c1f5e3f05d0"}))
 
              bundle-incident-target-post
              (:parsed-body
-              (post "ctia/bundle/export"
+              (POST app
+                    "ctia/bundle/export"
                     :body {:ids [sighting-id-2]}
                     :query-params {:target_type "incident"}
                     :headers {"Authorization" "45c1f5e3f05d0"}))]
@@ -937,7 +975,8 @@
               :source "source"
               :sightings #{sighting}}
 
-             res (post "ctia/bundle/import"
+             res (POST app
+                       "ctia/bundle/import"
                        :body new-bundle
                        :headers {"Authorization" "45c1f5e3f05d0"})]
          (is (= "Entity Access Control validation Error" (-> (:parsed-body res) :results first :error))
@@ -956,19 +995,23 @@
      (testing "Bundle export allows acl fields"
        (let [sighting (assoc (mk-sighting 1) :authorized_users ["foo"])
              judgement (assoc (mk-judgement) :authorized_users ["foo"])
-             judgement-post-res (post "ctia/judgement"
+             judgement-post-res (POST app
+                                      "ctia/judgement"
                                       :body judgement
                                       :headers {"Authorization" "45c1f5e3f05d0"})
-             sighting-post-res (post "ctia/sighting"
+             sighting-post-res (POST app
+                                     "ctia/sighting"
                                      :body sighting
                                      :headers {"Authorization" "45c1f5e3f05d0"})
              sighting-id (-> sighting-post-res :parsed-body :id)
              judgement-id (-> judgement-post-res :parsed-body :id)
-             bundle-get-res (get "ctia/bundle/export"
+             bundle-get-res (GET app
+                                 "ctia/bundle/export"
                                  :query-params {:ids [sighting-id
                                                       judgement-id]}
                                  :headers {"Authorization" "45c1f5e3f05d0"})
-             bundle-post-res (post "ctia/bundle/export"
+             bundle-post-res (POST app
+                                   "ctia/bundle/export"
                                    :body {:ids [sighting-id
                                                 judgement-id]}
                                    :headers {"Authorization" "45c1f5e3f05d0"})]
@@ -987,20 +1030,24 @@
      (testing "Bundle export should include casebooks"
        (let [casebook (mk-casebook)
              incident (mk-incident 1)
-             casebook-post-res (post "ctia/casebook"
+             casebook-post-res (POST app
+                                     "ctia/casebook"
                                      :body casebook
                                      :headers {"Authorization" "45c1f5e3f05d0"})
-             incident-post-res (post "ctia/incident"
+             incident-post-res (POST app
+                                     "ctia/incident"
                                      :body incident
                                      :headers {"Authorization" "45c1f5e3f05d0"})
              incident-id (-> incident-post-res :parsed-body :id)
              casebook-id (-> casebook-post-res :parsed-body :id)
              incident-short-id (id/str->short-id incident-id)
-             link-res (post (str "/ctia/incident/" incident-short-id "/link")
+             link-res (POST app
+                            (str "/ctia/incident/" incident-short-id "/link")
                             :body {:casebook_id casebook-id
                                    :tlp "white"}
                             :headers {"Authorization" "45c1f5e3f05d0"})
-             bundle-get-res (get "ctia/bundle/export"
+             bundle-get-res (GET app
+                                 "ctia/bundle/export"
                                  :query-params {:ids [incident-id]}
                                  :headers {"Authorization" "45c1f5e3f05d0"})]
          (is (= 201 (:status casebook-post-res)))
