@@ -264,7 +264,9 @@
   (let [fixture-fn
         (join-fixtures [helpers/fixture-log
                         helpers/fixture-properties:cors
-                        #(helpers/with-properties properties (%))
+                        #(helpers/with-properties
+                           (conj properties "ctia.auth.type" "allow-all")
+                           (%))
                         es-helpers/fixture-properties:es-store
                         helpers/fixture-ctia
                         es-helpers/fixture-delete-store-indexes])]
