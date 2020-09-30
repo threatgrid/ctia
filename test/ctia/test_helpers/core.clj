@@ -318,17 +318,19 @@
                 (let [~app (get-current-app)]
                   ~@body)))))))
 
-(defn get-http-port [app]
+(s/defn get-http-port [app] :- s/Int
   (let [{{:keys [get-in-config]} :ConfigService} (app/service-graph app)]
     (get-in-config [:ctia :http :port])))
 
-(defn GET [app & args]
+(s/defn GET [app path :- s/Str & kw-options]
   (apply (mthh/with-port-fn (partial get-http-port app) mthh/get)
-         args))
+         path
+         kw-options))
 
-(defn POST [app & args]
+(s/defn POST [app path :- s/Str & kw-options]
   (apply (mthh/with-port-fn (partial get-http-port app) mthh/post)
-         args))
+         path
+         kw-options))
 
 (defn POST-bulk [app examples]
   (let [{bulk-res :parsed-body}
@@ -353,25 +355,29 @@
         :parsed-body
         plural)))
 
-(defn DELETE [app & args]
+(s/defn DELETE [app path :- s/Str & kw-options]
   (apply (mthh/with-port-fn (partial get-http-port app) mthh/delete)
-         args))
+         path
+         kw-options))
 
-(defn PUT [app & args]
+(s/defn PUT [app path :- s/Str & kw-options]
   (apply (mthh/with-port-fn (partial get-http-port app) mthh/put)
-         args))
+         path
+         kw-options))
 
-(defn PATCH [app & args]
+(s/defn PATCH [app path :- s/Str & kw-options]
   (apply (mthh/with-port-fn (partial get-http-port app) mthh/patch)
-         args))
+         path
+         kw-options))
 
 (defn fixture-spec-validation [t]
   (with-redefs [cs/registry-ref (atom (cs/registry))]
-    (try
-      (cs/check-asserts true)
-      (t)
-      (finally
-        (cs/check-asserts false)))))
+    (let [old (cs/check-asserts?)]
+      (try
+        (cs/check-asserts true)
+        (t)
+        (finally
+          (cs/check-asserts old))))))
 
 (defn fixture-spec [node-to-spec ns]
   (fn [t]
