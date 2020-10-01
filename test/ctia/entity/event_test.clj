@@ -22,7 +22,8 @@
    [ctim.examples.casebooks :refer [new-casebook-minimal]]
    [ctim.domain.id :as id]
    [cemerick.uri :as uri]
-   [ctia.test-helpers.es :as es-helpers]))
+   [ctia.test-helpers.es :as es-helpers]
+   [puppetlabs.trapperkeeper.app :as app]))
 
 (use-fixtures :once
   (join-fixtures [mth/fixture-schema-validation
@@ -72,9 +73,9 @@
             (time/timestamp "2042-01-01")
             (fn []
               (let [app (helpers/get-current-app)
-                    {:keys [get-in-config]} (helpers/get-service-map app :ConfigService)
+                    {{:keys [get-port]} :CTIAHTTPServerService} (app/service-graph app)
 
-                    port (get-in-config [:ctia :http :port])
+                    port (get-port)
                     {incident :parsed-body
                      incident-status :status}
                     (POST app

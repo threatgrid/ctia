@@ -1,6 +1,5 @@
 (ns ctia.test-helpers.core
-  (:require [clj-momo.lib.net :as net]
-            [clj-momo.properties :refer [coerce-properties read-property-files]]
+  (:require [clj-momo.properties :refer [coerce-properties read-property-files]]
             [clj-momo.test-helpers.http :as mthh]
             [clojure
              [walk :refer [prewalk]]]
@@ -246,10 +245,7 @@
     enable-http?]
    ;; Start CTIA
    ;; This starts the server on an available port (if enabled)
-   (let [http-port
-         (if enable-http?
-           (net/available-port)
-           3000)]
+   (let [http-port 0]
      (with-properties ["ctia.http.enabled" enable-http?
                        "ctia.http.port" http-port
                        "ctia.http.show.port" http-port]
@@ -318,10 +314,10 @@
                 (let [~app (get-current-app)]
                   ~@body)))))))
 
-(s/defn get-http-port :- s/Int
+(s/defn get-http-port :- (s/constrained s/Int pos?)
   [app]
-  (let [{{:keys [get-in-config]} :ConfigService} (app/service-graph app)]
-    (get-in-config [:ctia :http :port])))
+  (let [{{:keys [get-port]} :CTIAHTTPServerService} (app/service-graph app)]
+    (get-port)))
 
 (s/defn GET [app path :- s/Str & kw-options]
   (apply (mthh/with-port-fn (partial get-http-port app) mthh/get)

@@ -60,7 +60,7 @@
 | Property              | Description                                           | Possible values |
 |-----------------------+-------------------------------------------------------+-----------------|
 | ctia.http.enabled     | enable the http server                                | =true= =false=  |
-| ctia.http.port        | set the listening port                                | number          |
+| ctia.http.port        | set the listening port. 0 for any free port.          | number          |
 | ctia.http.min-threads | set the min number of threads to handle HTTP requests | number          |
 | ctia.http.max-threads | set the max number of threads to handle HTTP requests | number          |
 

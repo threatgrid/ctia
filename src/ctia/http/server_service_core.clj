@@ -5,14 +5,28 @@
             [schema.core :as s])
   (:import [org.eclipse.jetty.server Server]))
 
+(s/defn ^:private server->port :- (s/constrained s/Int pos?)
+  [server :- Server]
+  (-> server
+      .getURI
+      .getPort))
+
 (s/defn start [context
-               {:keys [port] :as http-config}
+               http-config
                services :- APIHandlerServices]
-  (log/info (str "Starting HTTP server on port " port))
-  (assoc context
-         :services services
-         :server (new-jetty-instance http-config services)))
+  (let [_ (log/info "Starting HTTP server...")
+        server (new-jetty-instance http-config services)
+        _ (log/info (str "Started HTTP server on port " (server->port server)))]
+    (assoc context
+           :services services
+           :server server)))
 
 (defn stop [{:keys [^Server server] :as context}]
   (some-> server .stop)
   (dissoc context :server))
+
+(s/defn get-port :- s/Int
+  [{:keys [server] :as context}]
+  (when-not server
+    (throw (ex-info "Server not started!" {})))
+  (server->port server))

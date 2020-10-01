@@ -355,23 +355,17 @@
            (is (= 201 status))
            (tst-fn ctx)))))))
 
-(defn get-free-port
-  "find a free port that could be used to start a new server."
-  []
-  (let [socket (java.net.ServerSocket. 0)]
-    (.close socket)
-    (.getLocalPort socket)))
-
 (defn with-server
   "Start tst-fn function while handler is started as a server.
   The tst-fn should be a function that takes the port as parameter."
   [handler tst-fn]
-  (let [port (get-free-port)
-        s (jetty/run-jetty handler {:port port
+  (let [s (jetty/run-jetty handler {:port 0
                                     :join? false
                                     :min-threads 2})]
-    (tst-fn port)
-    (.stop s)))
+    (try
+      (tst-fn (-> s .getURI .getPort))
+      (finally
+        (.stop s)))))
 
 (deftest jwt-http-checks-server-down-test
   (let [url-1 "https://jwt.check-1/check"

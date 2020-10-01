@@ -6,7 +6,8 @@
             [puppetlabs.trapperkeeper.core :as tk]
             [puppetlabs.trapperkeeper.services :refer [service-context]]))
 
-(defprotocol CTIAHTTPServerService)
+(defprotocol CTIAHTTPServerService
+  (get-port [this]))
 
 (tk/defservice ctia-http-server-service
   CTIAHTTPServerService
@@ -34,4 +35,6 @@
                                      :GraphQLService GraphQLService
                                      :GraphQLNamedTypeRegistryService GraphQLNamedTypeRegistryService
                                      :IEncryption IEncryption}))
-  (stop [this context] (core/stop context)))
+  (stop [this context] (core/stop context))
+
+  (get-port [this] (core/get-port (service-context this))))

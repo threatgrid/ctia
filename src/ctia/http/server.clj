@@ -148,7 +148,8 @@
            jwt
            send-server-version]
     :or {access-control-allow-methods "get,post,put,patch,delete"
-         send-server-version false}
+         send-server-version false
+         port 0}
     :as http-config}
    {{:keys [identity-for-token]} :IAuth
     {:keys [get-in-config]} :ConfigService
