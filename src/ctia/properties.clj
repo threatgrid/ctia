@@ -11,7 +11,7 @@
             [schema-tools.core :as st]
             [schema.core :as s]
             [ctia.schemas.core
-             :refer [TLP]]))
+             :refer [HTTPShowServices TLP]]))
 
 (def files
   "Property file names, they will be merged, with last one winning"
@@ -224,8 +224,11 @@
                        a))
     @a))
 
-(defn get-http-show [get-in-config]
-  (get-in-config [:ctia :http :show]))
+(s/defn get-http-show [{{:keys [get-in-config]} :ConfigService
+                        {:keys [get-port]} :CTIAHTTPServerService} :- HTTPShowServices]
+  (let [config (get-in-config [:ctia :http :show])]
+    (cond-> config
+      (zero? (:port config)) (assoc :port (get-port)))))
 
 (defn get-http-swagger [get-in-config]
   (get-in-config [:ctia :http :swagger]))

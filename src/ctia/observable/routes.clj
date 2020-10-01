@@ -8,6 +8,7 @@
             [ctia.entity.sighting :refer [SightingsByObservableQueryParams]]
             [ctia.entity.sighting.schemas :refer [PartialSightingList]]
             [ctia.http.routes.common :refer [paginated-ok PagingParams]]
+            [ctia.properties :as p]
             [ctia.schemas.core
              :refer
              [APIHandlerServices ObservableTypeIdentifier Reference Verdict]]
@@ -29,9 +30,8 @@
             (s/optional-key :sort_by)
             (describe (s/enum :id) "Sort result on a field")))
 
-(s/defn observable-routes [{{:keys [get-in-config]} :ConfigService
-                            {:keys [read-store]} :StoreService
-                            :as _services_} :- APIHandlerServices]
+(s/defn observable-routes [{{:keys [read-store]} :StoreService
+                            :as services} :- APIHandlerServices]
   (routes
    (GET "/:observable_type/:observable_value/verdict" []
      :tags ["Verdict"]
@@ -48,7 +48,7 @@
                              {:type observable_type
                               :value observable_value}
                              identity-map)
-                 (clojure.core/update :judgement_id short-id->long-id get-in-config)
+                 (clojure.core/update :judgement_id short-id->long-id services)
                  ok)
          (not-found {:message "no verdict currently available for the supplied observable"})))
 
@@ -68,7 +68,7 @@
                       :value observable_value}
                      identity-map
                      params)
-         (page-with-long-id get-in-config)
+         (page-with-long-id services)
          un-store-page
          paginated-ok))
 
@@ -84,7 +84,7 @@
      :auth-identity identity
      :identity-map identity-map
      (paginated-ok
-      (let [http-show (get-in-config [:ctia :http :show])
+      (let [http-show (p/get-http-show services)
             judgements (:data (read-store
                                :judgement
                                list-judgements-by-observable
@@ -129,7 +129,7 @@
                        :value observable_value}]
                      identity-map
                      params)
-         (page-with-long-id get-in-config)
+         (page-with-long-id services)
          un-store-page
          paginated-ok))
 
@@ -145,7 +145,7 @@
      :auth-identity identity
      :identity-map identity-map
      (paginated-ok
-      (let [http-show (get-in-config [:ctia :http :show])
+      (let [http-show (p/get-http-show services)
             sightings (:data (read-store :sighting
                                          list-sightings-by-observables
                                          [{:type observable_type
@@ -185,7 +185,7 @@
      :auth-identity identity
      :identity-map identity-map
      (paginated-ok
-      (let [http-show (get-in-config [:ctia :http :show])
+      (let [http-show (p/get-http-show services)
             sightings (:data (read-store :sighting
                                          list-sightings-by-observables
                                          [{:type observable_type

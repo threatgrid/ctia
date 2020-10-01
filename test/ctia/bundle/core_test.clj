@@ -1,10 +1,13 @@
 (ns ctia.bundle.core-test
-  (:require [ctia.bundle.core :as sut]
+  (:require [clojure.test :as t :refer [deftest use-fixtures join-fixtures are is testing]]
             [clojure.tools.logging.test :refer [logged? with-log]]
+            [ctia.bundle.core :as sut]
             [ctia.domain.entities :as ent :refer [with-long-id]]
             [ctia.flows.crud :refer [make-id]]
-            [clojure.test :as t :refer [deftest use-fixtures join-fixtures are is testing]]
-            [ctia.test-helpers.core :as h]))
+            [ctia.lib.utils :refer [service-subgraph]]
+            [ctia.schemas.core :refer [HTTPShowServices]]
+            [ctia.test-helpers.core :as h]
+            [schema.core :as s]))
 
 (use-fixtures :once
   (join-fixtures [h/fixture-properties:clean
@@ -50,10 +53,16 @@
            (sut/relationships-filters "id" {:source_type :malware
                                             :related_to [:source_ref]})))))
 
+(s/defn app->HTTPShowServices :- HTTPShowServices [app]
+  (service-subgraph
+    app
+    :CTIAHTTPServerService [:get-port]
+    :ConfigService [:get-in-config]))
+
 (deftest with-existing-entity-test
   (testing "with-existing-entity"
     (let [app (h/get-current-app)
-          {:keys [get-in-config]} (h/get-service-map app :ConfigService)
+          http-show-services (app->HTTPShowServices app)
 
           indicator-id-1 (make-id "indicator")
           indicator-id-2 (make-id "indicator")
@@ -72,7 +81,7 @@
                                (sut/with-existing-entity
                                  new-indicator
                                  (find-by-ext-ids existing-ids)
-                                 get-in-config)))
+                                 http-show-services)))
                         (is (= log?
                                (logged? 'ctia.bundle.core
                                         :warn
@@ -86,14 +95,14 @@
                 :expected (with-long-id {:result "exists"
                                          :external_ids ["swe-alarm-indicator-1"]
                                          :id indicator-id-1}
-                                        get-in-config)
+                                        http-show-services)
                 :existing-ids [indicator-id-1]
                 :log? false})
       (test-fn {:msg "more than 1 existing external id"
                 :expected (with-long-id {:result "exists"
                                          :external_ids ["swe-alarm-indicator-1"]
                                          :id indicator-id-2}
-                                        get-in-config)
+                                        http-show-services)
                 :existing-ids [indicator-id-2
                                indicator-id-1]
                 :log? true}))))

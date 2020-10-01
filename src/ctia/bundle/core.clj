@@ -17,7 +17,7 @@
     :refer
     [BundleImportData BundleImportResult EntityImportData]]
    [ctia.domain.entities :as ent :refer [with-long-id]]
-   [ctia.schemas.core :refer [APIHandlerServices NewBundle TempIDs]]
+   [ctia.schemas.core :refer [APIHandlerServices HTTPShowServices NewBundle TempIDs]]
    [ctim.domain.id :as id]
    [schema.core :as s]))
 
@@ -94,10 +94,14 @@
         (recur remaining-ext-ids acc-entities)
         acc-entities))))
 
+(s/defschema FindByExternalIdsServices
+  {:StoreService {:read-store (s/pred ifn?)
+                  s/Keyword s/Any}
+   s/Keyword s/Any})
+
 (s/defn find-by-external-ids
   [import-data entity-type auth-identity
-   {{:keys [read-store]} :StoreService
-    :as _services_} :- APIHandlerServices]
+   {{:keys [read-store]} :StoreService} :- FindByExternalIdsServices]
   (let [external-ids (mapcat :external_ids import-data)]
     (log/debugf "Searching %s matching these external_ids %s"
                 entity-type
@@ -164,12 +168,12 @@
   [{:keys [external_ids]
     :as entity-data} :- EntityImportData
    find-by-external-id :- (s/=> s/Any (s/named s/Any 'external_id))
-   get-in-config]
+   services :- HTTPShowServices]
   (if-let [old-entities (mapcat find-by-external-id external_ids)]
     (let [old-entity (some-> old-entities
                              first
                              :entity
-                             (with-long-id get-in-config)
+                             (with-long-id services)
                              ent/un-store)]
       (when (< 1 (count old-entities))
         (log/warn
@@ -186,11 +190,23 @@
                           :id (:id old-entity))))
     entity-data))
 
+(s/defschema WithExistingEntitiesServices
+  {:StoreService {;; for `find-by-external-ids`
+                  :read-store (s/pred ifn?)
+                  s/Keyword s/Any}
+   :CTIAHTTPServerService {;; for `with-existing-entity`
+                           :get-port (s/=> (s/constrained s/Int pos?))}
+   :ConfigService {;; for `with-existing-entity`
+                   :get-in-config (s/=>* s/Any
+                                         [[s/Any]]
+                                         [[s/Any] s/Any])
+                   s/Keyword s/Any}
+   s/Keyword s/Any})
+
 (s/defn with-existing-entities :- [EntityImportData]
   "Add existing entities to the import data map."
   [import-data entity-type identity-map
-   {{:keys [get-in-config]} :ConfigService
-    :as services} :- APIHandlerServices]
+   services :- WithExistingEntitiesServices]
   (let [entities-by-external-id
         (by-external-id
          (find-by-external-ids import-data
@@ -201,7 +217,7 @@
                                  (when external_id
                                    (get entities-by-external-id
                                         {:external_id external_id})))]
-    (map #(with-existing-entity % find-by-external-id-fn get-in-config)
+    (map #(with-existing-entity % find-by-external-id-fn services)
          import-data)))
 
 (s/defn prepare-import :- BundleImportData
@@ -403,8 +419,7 @@
    identity-map
    ident
    params
-   {{:keys [get-in-config]} :ConfigService
-    :as services} :- APIHandlerServices]
+   services :- APIHandlerServices]
   (if-let [record (fetch-record id identity-map services)]
     (let [relationships (when (:include_related_entities params true)
                           (fetch-entity-relationships id identity-map params services))]
@@ -415,11 +430,11 @@
                    bulk/bulk-key)
                #{(-> record
                      ent/un-store
-                     (ent/with-long-id get-in-config))})
+                     (ent/with-long-id services))})
 
         (seq relationships)
         (assoc :relationships
-               (set (map #(ent/with-long-id % get-in-config) relationships)))
+               (set (map #(ent/with-long-id % services) relationships)))
 
         (seq relationships)
         (->> (deep-merge-with coll/add-colls

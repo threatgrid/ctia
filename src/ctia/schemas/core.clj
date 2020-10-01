@@ -19,6 +19,7 @@
                    :get-in-config (s/=>* s/Any
                                          [[s/Any]]
                                          [[s/Any] s/Any])}
+   :CTIAHTTPServerService {:get-port (s/=> (s/constrained s/Int pos?))}
    :HooksService {:apply-hooks (s/pred ifn?) ;;keyword varargs
                   :apply-event-hooks (s/=> s/Any s/Any)}
    :StoreService {:read-store (s/pred ifn?) ;;varags
@@ -31,6 +32,15 @@
                                            (s/=> graphql.schema.GraphQLType))}
    :IEncryption {:encrypt (s/=> s/Any s/Any)
                  :decrypt (s/=> s/Any s/Any)}})
+
+(s/defschema HTTPShowServices
+  {:ConfigService {:get-in-config (s/=>* s/Any
+                                         [[s/Any]]
+                                         [[s/Any] s/Any])
+                   s/Keyword s/Any}
+   :CTIAHTTPServerService {:get-port (s/=> (s/constrained s/Int pos?))
+                           s/Keyword s/Any}
+   s/Keyword s/Any})
 
 (s/defschema DelayedRoutes
   "Function taking a map of services and returning routes
