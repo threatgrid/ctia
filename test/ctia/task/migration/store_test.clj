@@ -267,7 +267,9 @@
           (ductile.index/delete! (str (migration-index get-in-config) "*")))))))
 
 (use-fixtures :each
-  (join-fixtures [helpers/fixture-ctia
+  (join-fixtures [#(helpers/with-properties
+                     ["ctia.auth.type" "allow-all"]
+                     (helpers/fixture-ctia %))
                   es-helpers/fixture-delete-store-indexes
                   fixture-clean-migration]))
 
