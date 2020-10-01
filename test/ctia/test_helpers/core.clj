@@ -45,7 +45,7 @@
    "ctia.events.enabled"                        true
    "ctia.events.log"                            false
    "ctia.http.dev-reload"                       false
-   "ctia.http.min-threads"                      1
+   "ctia.http.min-threads"                      9
    "ctia.http.max-threads"                      10
    "ctia.http.show.protocol"                    "http"
    "ctia.http.show.hostname"                    "localhost"

@@ -369,7 +369,7 @@
   (let [port (get-free-port)
         s (jetty/run-jetty handler {:port port
                                     :join? false
-                                    :min-threads 1})]
+                                    :min-threads 2})]
     (tst-fn port)
     (.stop s)))
 
