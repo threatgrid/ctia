@@ -215,7 +215,8 @@
                                  ["foogroup"]
                                  "user"
                                  all-capabilities)
-      (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
+      (whoami-helpers/set-whoami-response app
+                                          "45c1f5e3f05d0"
                                           "foouser"
                                           "foogroup"
                                           "user")
@@ -524,7 +525,8 @@
                                  ["foogroup"]
                                  "user"
                                  all-capabilities)
-      (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
+      (whoami-helpers/set-whoami-response app
+                                          "45c1f5e3f05d0"
                                           "foouser"
                                           "foogroup"
                                           "user")
@@ -575,7 +577,8 @@
                                ["foogroup"]
                                "user"
                                all-capabilities)
-    (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
+    (whoami-helpers/set-whoami-response app
+                                        "45c1f5e3f05d0"
                                         "foouser"
                                         "foogroup"
                                         "user")

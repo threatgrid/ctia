@@ -40,7 +40,8 @@
                                 ["group1"]
                                 "user1"
                                 all-capabilities)
-     (whoami-helpers/set-whoami-response "user1"
+     (whoami-helpers/set-whoami-response app
+                                         "user1"
                                          "user1"
                                          "group1"
                                          "user1")
@@ -50,7 +51,8 @@
                                 ["group1"]
                                 "user2"
                                 all-capabilities)
-     (whoami-helpers/set-whoami-response "user2"
+     (whoami-helpers/set-whoami-response app
+                                         "user2"
                                          "user2"
                                          "group1"
                                          "user2")
@@ -60,7 +62,8 @@
                                 ["group2"]
                                 "user3"
                                 all-capabilities)
-     (whoami-helpers/set-whoami-response "user3"
+     (whoami-helpers/set-whoami-response app
+                                         "user3"
                                          "user3"
                                          "group2"
                                          "user3")
@@ -407,7 +410,8 @@
                                 ["group1"]
                                 "user1"
                                 all-capabilities)
-     (whoami-helpers/set-whoami-response "user1"
+     (whoami-helpers/set-whoami-response app
+                                         "user1"
                                          "user1"
                                          "group1"
                                          "user1")

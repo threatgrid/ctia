@@ -812,7 +812,8 @@
         {:keys [get-in-config]} (helpers/get-service-map app :ConfigService)
         services (app->MigrationStoreServices app)
 
-        _ (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
+        _ (whoami-helpers/set-whoami-response app
+                                              "45c1f5e3f05d0"
                                               "foouser"
                                               "foogroup"
                                               "user")

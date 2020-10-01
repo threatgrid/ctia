@@ -200,10 +200,11 @@
        (let [{:keys [get-in-config]} (helpers/get-service-map app :ConfigService)
 
              _ (helpers/set-capabilities! app "foouser" ["foogroup"] "user" all-capabilities)
-             _ (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
-                                                 "foouser"
-                                                 "foogroup"
-                                                 "user")
+             _ (whoami-helpers/set-whoami-response app
+                                                   "45c1f5e3f05d0"
+                                                   "foouser"
+                                                   "foogroup"
+                                                   "user")
 
              default-es-refresh (->> (get-in-config
                                        [:ctia :store :es :default :refresh])
@@ -257,7 +258,8 @@
   (test-for-each-store-with-app
    (fn [app]
      (helpers/set-capabilities! app "foouser" ["foogroup"] "user" all-capabilities)
-     (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
+     (whoami-helpers/set-whoami-response app
+                                         "45c1f5e3f05d0"
                                          "foouser"
                                          "foogroup"
                                          "user")
@@ -341,7 +343,8 @@
    (fn [app]
     (let [{:keys [get-in-config]} (helpers/get-service-map app :ConfigService)]
      (helpers/set-capabilities! app "foouser" ["foogroup"] "user" all-capabilities)
-     (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
+     (whoami-helpers/set-whoami-response app
+                                         "45c1f5e3f05d0"
                                          "foouser"
                                          "foogroup"
                                          "user")
@@ -416,7 +419,8 @@
   (test-for-each-store-with-app
    (fn [app]
      (helpers/set-capabilities! app "foouser" ["foogroup"] "user" all-capabilities)
-     (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
+     (whoami-helpers/set-whoami-response app
+                                         "45c1f5e3f05d0"
                                          "foouser"
                                          "foogroup"
                                          "user")
@@ -459,7 +463,8 @@
   (test-for-each-store-with-app
    (fn [app]
      (helpers/set-capabilities! app "foouser" ["foogroup"] "user" all-capabilities)
-     (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
+     (whoami-helpers/set-whoami-response app
+                                         "45c1f5e3f05d0"
                                          "foouser"
                                          "foogroup"
                                          "user")
@@ -495,7 +500,8 @@
   (test-for-each-store-with-app
    (fn [app]
      (helpers/set-capabilities! app "foouser" ["foogroup"] "user" all-capabilities)
-     (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
+     (whoami-helpers/set-whoami-response app
+                                         "45c1f5e3f05d0"
                                          "foouser"
                                          "foogroup"
                                          "user")

@@ -7,7 +7,8 @@
             [schema.core :as s]
             [ctia.auth :as ctia-auth]
             [ring.adapter.jetty :as jetty]
-            [ring.middleware.params :as params])
+            [ring.middleware.params :as params]
+            [puppetlabs.trapperkeeper.app :as app])
   (:import org.eclipse.jetty.server.Server))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -112,7 +113,8 @@
       :port port
       :token->response (atom {})})))
 
-(defonce fake-whoami-service (atom nil))
+;; (s/atom {s/Str IFakeWhoAmIServer})
+(defonce ^:private fake-whoami-services (atom {}))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -140,37 +142,52 @@
 (s/defn set-whoami-response
   "Meant to be called from code that is wrapped in 'fixture-server'
    because it assumes that FakeWhoAmIService is being used"
-  ([token :- s/Str
+  ([app
+    token :- s/Str
     login :- s/Str
     group :- s/Str
     role :- s/Str]
-   (set-whoami-response token (->whoami-response login group role)))
-  ([token :- s/Str
+   (set-whoami-response app token (->whoami-response login group role)))
+  ([app
+    token :- s/Str
     response :- WhoAmIResponse]
-   (register-token-response @fake-whoami-service
-                            token
-                            response)))
+   (let [{{:keys [get-in-config]} :ConfigService} (app/service-graph app)
+         whoami-url (get-in-config [:ctia :auth :threatgrid :whoami-url])
+         _ (assert ((every-pred string? seq) whoami-url))
+         whoami-service (@fake-whoami-services whoami-url)
+         _ (assert whoami-service)]
+     (register-token-response whoami-service
+                              token
+                              response))))
+
+(def ^:dynamic ^:private *current-whoami-url* nil)
 
 (defn fixture-server
   "Start and stop a fake whoami service. Sets the auth property with the URL to
    the service, so the CTIA instance/HTTP server should be started after this."
   [t]
-  (let [port (net/available-port)]
-    (reset! fake-whoami-service (make-fake-whoami-service port))
+  (let [port (net/available-port)
+        whoami-service (make-fake-whoami-service port)
+        whoami-url (str "http://localhost:" port "/")]
     (try
-      (start-server @fake-whoami-service)
+      (start-server whoami-service)
+      (swap! fake-whoami-services assoc whoami-url whoami-service)
       (helpers-core/with-properties
-        ["ctia.auth.threatgrid.whoami-url" (str "http://localhost:" port "/")
+        ["ctia.auth.threatgrid.whoami-url" whoami-url
          "ctia.auth.threatgrid.cache" false
          "ctia.auth.type" "threatgrid"]
-        (t))
+        (binding [;; communicate explicitly with fixture-reset-state
+                  *current-whoami-url* whoami-url]
+          (t)))
       (finally
-        (stop-server @fake-whoami-service)
-        (reset! fake-whoami-service nil)))))
+        (swap! fake-whoami-services dissoc whoami-url)
+        (stop-server whoami-service)))))
 
 (defn fixture-reset-state
   "May be used inside of fixture-server, eg fixture :once
    fixture-server and fixture :each fixture-reset-state."
   [t]
-  (clear-all @fake-whoami-service)
-  (t))
+  (let [fake-whoami-service (@fake-whoami-services *current-whoami-url*)
+        _ (assert fake-whoami-service)]
+    (clear-all fake-whoami-service)
+    (t)))
