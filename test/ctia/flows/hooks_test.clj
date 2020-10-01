@@ -8,7 +8,6 @@
             [clojure.test :as t]))
 
 (t/use-fixtures :each (t/join-fixtures [mth/fixture-schema-validation
-                                        helpers/fixture-properties:clean
                                         es-helpers/fixture-properties:es-store
                                         helpers/fixture-ctia-fast]))
 

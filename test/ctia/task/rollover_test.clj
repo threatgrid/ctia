@@ -12,11 +12,12 @@
 (use-fixtures :once
   (join-fixtures [whoami-helpers/fixture-server
                   whoami-helpers/fixture-reset-state
-                  helpers/fixture-properties:clean
                   es-helpers/fixture-properties:es-store]))
 
 (use-fixtures :each
-  (join-fixtures [helpers/fixture-ctia
+  (join-fixtures [#(helpers/with-properties
+                     ["ctia.auth.type" "allow-all"]
+                     (helpers/fixture-ctia %))
                   es-helpers/fixture-delete-store-indexes]))
 
 (def examples (fixt/bundle 100 false))

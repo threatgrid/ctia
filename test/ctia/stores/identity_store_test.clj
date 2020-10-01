@@ -1,14 +1,13 @@
 (ns ctia.stores.identity-store-test
   (:require [clj-momo.test-helpers.core :as mth]
-            [clojure.test :refer [deftest is join-fixtures testing use-fixtures]]
+            [clojure.test :refer [deftest is testing use-fixtures]]
             [ctia.store :as store]
             [ctia.store-service :as store-svc]
             [ctia.test-helpers
              [core :as helpers]
              [store :refer [test-for-each-store-with-app]]]))
 
-(use-fixtures :once (join-fixtures [mth/fixture-schema-validation
-                                    helpers/fixture-properties:clean]))
+(use-fixtures :once mth/fixture-schema-validation)
 
 (deftest test-read-identity
   (test-for-each-store-with-app

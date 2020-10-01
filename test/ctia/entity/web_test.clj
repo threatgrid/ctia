@@ -22,8 +22,7 @@
 
 (use-fixtures :once mth/fixture-schema-validation)
 
-(use-fixtures :each (join-fixtures [helpers/fixture-properties:clean
-                                    helpers/fixture-properties:cors
+(use-fixtures :each (join-fixtures [helpers/fixture-properties:cors
                                     whoami-helpers/fixture-server
                                     whoami-helpers/fixture-reset-state]))
 
@@ -261,12 +260,13 @@
      :bad-iss-jwt-2 (-> claims-2 (assoc :iss "IROH Auth") jwt/jwt (jwt/sign :RS256 priv-key-2) jwt/to-str)}))
 
 (s/defn apply-fixtures-with-app
-  [properties f-with-app :-  (s/=> s/Any (s/=> s/Any (s/named s/Any 'app)))]
+  [properties f-with-app :- (s/=> s/Any (s/=> s/Any (s/named s/Any 'app)))]
   (let [fixture-fn
         (join-fixtures [helpers/fixture-log
-                        helpers/fixture-properties:clean
                         helpers/fixture-properties:cors
-                        #(helpers/with-properties properties (%))
+                        #(helpers/with-properties
+                           (conj properties "ctia.auth.type" "allow-all")
+                           (%))
                         es-helpers/fixture-properties:es-store
                         helpers/fixture-ctia
                         es-helpers/fixture-delete-store-indexes])]

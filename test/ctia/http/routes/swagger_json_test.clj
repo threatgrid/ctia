@@ -4,7 +4,6 @@
             [ctia.test-helpers.core :as helpers]))
 
 (use-fixtures :once (join-fixtures [mth/fixture-schema-validation
-                                    helpers/fixture-properties:clean
                                     helpers/fixture-ctia]))
 
 (deftest test-swagger-json

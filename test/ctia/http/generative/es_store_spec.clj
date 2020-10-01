@@ -8,7 +8,6 @@
 
 (use-fixtures :once
   mth/fixture-schema-validation
-  th/fixture-properties:clean
   esh/fixture-properties:es-store
   th/fixture-ctia
   esh/fixture-delete-store-indexes
