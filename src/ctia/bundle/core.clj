@@ -195,7 +195,8 @@
                   :read-store (s/pred ifn?)
                   s/Keyword s/Any}
    :CTIAHTTPServerService {;; for `with-existing-entity`
-                           :get-port (s/=> (s/constrained s/Int pos?))}
+                           :get-port (s/=> (s/constrained s/Int pos?))
+                           s/Keyword s/Any}
    :ConfigService {;; for `with-existing-entity`
                    :get-in-config (s/=>* s/Any
                                          [[s/Any]]

@@ -53,10 +53,11 @@
                                             :related_to [:source_ref]})))))
 
 (s/defn app->HTTPShowServices :- HTTPShowServices [app]
-  (service-subgraph
-    app
-    :CTIAHTTPServerService [:get-port]
-    :ConfigService [:get-in-config]))
+  (-> app
+      app/service-graph
+      (service-subgraph
+        :CTIAHTTPServerService [:get-port]
+        :ConfigService [:get-in-config])))
 
 (deftest with-existing-entity-test
   (testing "with-existing-entity"
