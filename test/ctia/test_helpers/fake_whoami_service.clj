@@ -19,7 +19,7 @@
 ;;
 
 (defprotocol IFakeWhoAmIServer
-  (start-server [this])
+  (start-server [this port])
   (stop-server [this])
   (get-url [this])
   (get-port [this])
@@ -123,7 +123,7 @@
      :requests (atom [])
      :token->response (atom {})}))
 
-(s/defservice fake-threatgrid-auth-whoami-url-service
+(tk/defservice fake-threatgrid-auth-whoami-url-service
   threatgrid/ThreatgridAuthWhoAmIURLService
   []
   (start [_ context]

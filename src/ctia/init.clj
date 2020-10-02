@@ -23,7 +23,8 @@
    [ctia.graphql-named-type-registry-service :as graphql-registry-svc]
    [ctia.flows.hooks-service :as hooks-svc]
    [ctia.http.server-service :as http-server-svc]
-   [puppetlabs.trapperkeeper.core :as tk]))
+   [puppetlabs.trapperkeeper.core :as tk]
+   [schema.core :as s]))
 
 (defn log-properties
   [config]
@@ -99,6 +100,6 @@
 
   ;; trapperkeeper init
   (let [config (p/build-init-config)
-        services-map (default-services config)]
+        services-map (default-services-map config)]
     (start-ctia!* {:services (vals services-map)
                    :config config})))
