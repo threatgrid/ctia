@@ -15,7 +15,6 @@
              [new-indicator-maximal new-indicator-minimal]]))
 
 (use-fixtures :once (join-fixtures [mth/fixture-schema-validation
-                                    helpers/fixture-properties:clean
                                     whoami-helpers/fixture-server]))
 
 (defn search-tests [app _ indicator-sample]

@@ -130,7 +130,6 @@
 
 (use-fixtures :once
   (join-fixtures [mth/fixture-schema-validation
-                  helpers/fixture-properties:clean
                   whoami-helpers/fixture-server]))
 
 (defn feed-view-tests [app feed-id feed]

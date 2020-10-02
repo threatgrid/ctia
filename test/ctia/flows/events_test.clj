@@ -15,8 +15,7 @@
 
 (deftest-for-each-fixture-with-app test-flow-event-creation
 
-  {:es-simple-index (join-fixtures [test-helpers/fixture-properties:clean
-                                    es-helpers/fixture-properties:es-store
+  {:es-simple-index (join-fixtures [es-helpers/fixture-properties:es-store
                                     test-helpers/fixture-properties:events-enabled
                                     test-helpers/fixture-allow-all-auth
                                     test-helpers/fixture-ctia

@@ -10,7 +10,6 @@
             [ctim.examples.attack-patterns :refer [new-attack-pattern-maximal]]))
 
 (use-fixtures :once (join-fixtures [mth/fixture-schema-validation
-                                    helpers/fixture-properties:clean
                                     whoami-helpers/fixture-server]))
 
 (def external-ref "http://external.com/ctia/attack-pattern/attack-pattern-ab053333-2ad2-41d0-a445-31e9b9c38caf")

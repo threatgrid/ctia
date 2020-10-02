@@ -15,7 +15,6 @@
                                                   new-target-record-maximal]]))
 
 (use-fixtures :once (join-fixtures [mth/fixture-schema-validation
-                                    helpers/fixture-properties:clean
                                     whoami-helpers/fixture-server]))
 
 (defn additional-tests [app _ target-record-sample]

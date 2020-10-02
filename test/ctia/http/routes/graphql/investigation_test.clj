@@ -11,7 +11,6 @@
             [ctia.test-helpers.store :refer [test-for-each-store-with-app]]))
 
 (use-fixtures :once (join-fixtures [mth/fixture-schema-validation
-                                    helpers/fixture-properties:clean
                                     whoami-helpers/fixture-server]))
 
 (def ownership-data-fixture

@@ -318,7 +318,6 @@
 
 (use-fixtures :once
   (join-fixtures [mth/fixture-schema-validation
-                  helpers/fixture-properties:clean
                   whoami-helpers/fixture-server]))
 
 (deftest test-casebook-routes

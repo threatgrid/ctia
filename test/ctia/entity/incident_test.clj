@@ -21,7 +21,6 @@
              [new-incident-maximal new-incident-minimal]]))
 
 (use-fixtures :once (join-fixtures [mth/fixture-schema-validation
-                                    helpers/fixture-properties:clean
                                     whoami-helpers/fixture-server]))
 
 (defn partial-operations-tests [app incident-id incident]

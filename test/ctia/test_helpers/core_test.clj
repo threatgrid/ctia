@@ -11,7 +11,7 @@
 
 (deftest build-transformed-init-config-test
   (assert (empty? @#'sut/*config-transformers*))
-  (assert (empty? @#'sut/*properties-overrides*))
+  (assert (not (thread-bound? #'sut/*properties-overrides*)))
   ;; TODO generate paths and vals from PropertiesSchema
   (testing "defaults to ctia-default.properties values"
     (doseq [:let [test-cases [{:ctia-path [:ctia :auth :type]

@@ -18,7 +18,6 @@
               new-investigation-minimal]]))
 
 (use-fixtures :once (join-fixtures [mth/fixture-schema-validation
-                                    helpers/fixture-properties:clean
                                     whoami-helpers/fixture-server]))
 
 (deftest test-investigation-routes

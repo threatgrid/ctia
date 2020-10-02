@@ -24,7 +24,6 @@
              [new-sighting-maximal new-sighting-minimal]]))
 
 (use-fixtures :once (join-fixtures [mth/fixture-schema-validation
-                                    helpers/fixture-properties:clean
                                     whoami-helpers/fixture-server]))
 
 (def new-sighting

@@ -17,7 +17,6 @@
                                                   new-asset-mapping-maximal]]))
 
 (use-fixtures :once (join-fixtures [mth/fixture-schema-validation
-                                    helpers/fixture-properties:clean
                                     whoami-helpers/fixture-server]))
 
 (defn additional-tests [app {:keys [short-id]} asset-mapping-sample]

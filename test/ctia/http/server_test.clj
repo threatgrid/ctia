@@ -8,9 +8,6 @@
 
 (use-fixtures :once mth/fixture-schema-validation)
 
-(use-fixtures :each
-  helpers/fixture-properties:clean)
-
 (deftest parse-external-endpoints-test
   (is (nil? (sut/parse-external-endpoints nil)))
 

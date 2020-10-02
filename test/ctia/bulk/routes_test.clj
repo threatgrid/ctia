@@ -29,7 +29,6 @@
     (t)))
 
 (use-fixtures :once (join-fixtures [mth/fixture-schema-validation
-                                    helpers/fixture-properties:clean
                                     fixture-properties:small-max-bulk-size
                                     whoami-helpers/fixture-server]))
 

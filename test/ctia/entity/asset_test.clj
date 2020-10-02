@@ -14,7 +14,6 @@
             [ctim.examples.assets :refer [new-asset-minimal new-asset-maximal]]))
 
 (use-fixtures :once (join-fixtures [mth/fixture-schema-validation
-                                    helpers/fixture-properties:clean
                                     whoami-helpers/fixture-server]))
 
 (defn additional-tests [app asset-id asset-sample]

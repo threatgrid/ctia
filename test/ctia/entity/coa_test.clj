@@ -16,7 +16,6 @@
             [ctim.examples.coas :refer [new-coa-maximal new-coa-minimal]]))
 
 (use-fixtures :once (join-fixtures [mth/fixture-schema-validation
-                                    helpers/fixture-properties:clean
                                     whoami-helpers/fixture-server]))
 
 (deftest test-coa-crud-routes

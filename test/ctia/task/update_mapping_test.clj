@@ -18,7 +18,6 @@
 
 (use-fixtures :once
   (join-fixtures [whoami-helpers/fixture-server
-                  helpers/fixture-properties:clean
                   es-helpers/fixture-properties:es-store]))
 
 (use-fixtures :each

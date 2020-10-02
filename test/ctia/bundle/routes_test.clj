@@ -32,7 +32,6 @@
 (use-fixtures :once
   (join-fixtures
    [mth/fixture-schema-validation
-    helpers/fixture-properties:clean
     fixture-properties
     fixture-find-by-external-ids-limit
     whoami-helpers/fixture-server]))

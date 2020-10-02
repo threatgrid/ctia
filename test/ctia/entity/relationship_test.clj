@@ -24,7 +24,6 @@
              [relationships :refer [new-relationship-maximal new-relationship-minimal]]]))
 
 (use-fixtures :once (join-fixtures [mth/fixture-schema-validation
-                                    helpers/fixture-properties:clean
                                     whoami-helpers/fixture-server]))
 
 (defn establish-user! [app]
