@@ -62,6 +62,7 @@
 (tk/defservice threatgrid-auth-whoami-url-service
   ThreatgridAuthWhoAmIURLService
   [[:ConfigService get-in-config]]
+  ;; TODO unit test
   (get-whoami-url [_] (get-in-config [:ctia :auth :threatgrid :whoami-url])))
 
 (tk/defservice threatgrid-auth-service

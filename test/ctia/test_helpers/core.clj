@@ -252,11 +252,14 @@
              services-map (let [services-map (init/default-services-map config)]
                             (cond-> services-map
                               (:ThreatgridAuthWhoAmIURLService services-map)
+                              ;; dynamic requires can be removed when #'with-properties is phased out or moved
                               (assoc
                                 :ThreatgridAuthWhoAmIURLService
-                                ;; dynamic require can be removed when #'with-properties is phased out
                                 @(requiring-resolve 
-                                   'ctia.test-helpers.fake-whoami-service/fake-threatgrid-auth-whoami-url-service))))
+                                   'ctia.test-helpers.fake-whoami-service/fake-threatgrid-auth-whoami-url-service)
+                                :IFakeWhoAmIServer
+                                @(requiring-resolve 
+                                   'ctia.test-helpers.fake-whoami-service/fake-whoami-service))))
              app (init/start-ctia!*
                    {:services (vals services-map)
                     :config config})]

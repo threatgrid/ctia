@@ -19,8 +19,6 @@
 ;;
 
 (defprotocol IFakeWhoAmIServer
-  (start-server [this port])
-  (stop-server [this])
   (get-port [this])
   (register-request [this request])
   (clear-requests [this])
@@ -35,10 +33,11 @@
 ;; Fake server
 ;;
 
-(defn make-handler [fake-whoami-service]
+(defn make-handler [fake-whoami-service-promise]
   (fn [request]
-    (register-request fake-whoami-service request)
-    (let [api-key (get-in request [:params "api_key"])]
+    (let [fake-whoami-service @fake-whoami-service-promise
+          _ (register-request fake-whoami-service request)
+          api-key (get-in request [:params "api_key"])]
       (cond
         (nil? api-key)
         {:status 401
@@ -77,61 +76,60 @@
                            "login" login
                            "title" title}})})))))
 
-(defrecord FakeWhoAmIService [server requests url token->response]
+(tk/defservice fake-whoami-service
   IFakeWhoAmIServer
-  (start-server [this port]
-    (swap! server (fn [old]
-                    (assert (not old) "Server already started!")
-                    (jetty/run-jetty (params/wrap-params
-                                       (make-handler this))
-                                     {:port port
-                                      :min-threads 9
-                                      :max-threads 10
-                                      :join? false}))))
-  (stop-server [_]
-    (swap! server (fn [^Server s]
-                    (some-> s .stop)
-                    nil)))
-  (get-port [_]
-    (let [^Server s (doto @server
-                      (assert "Server not started"))]
-      (-> s .getURI .getPort)))
-  (register-request [_ request]
-    (swap! requests conj request))
-  (clear-requests [_]
-    (reset! requests []))
-  (register-token-response [_ token response]
-    (swap! token->response assoc token response))
-  (clear-token-responses [_]
-    (reset! token->response {}))
+  []
+  (init [_ context]
+        (let [this-promise (promise)]
+          (assoc context
+                 :requests (atom [])
+                 :token->response (atom {})
+                 :this-promise this-promise
+                 :server (jetty/run-jetty (params/wrap-params
+                                            (make-handler this-promise))
+                                          {;; any available port
+                                           :port 0
+                                           :min-threads 9
+                                           :max-threads 10
+                                           :join? false}))))
+  (start [this {:keys [this-promise] :as context}]
+         ;; deliver after initialization
+         (deliver this-promise this)
+         context)
+  (stop [_ {:keys [^Server server] :as context}]
+        (some-> server .stop)
+        (dissoc context :requests :token->response :server))
+  (get-port [this]
+    (let [{:keys [^Server server]} (service-context this)]
+      (-> (doto server
+            (assert "Server not started"))
+          .getURI .getPort)))
+  (register-request [this request]
+    (let [{:keys [requests]} (service-context this)]
+      (swap! requests conj request)))
+  (clear-requests [this]
+    (let [{:keys [requests]} (service-context this)]
+      (reset! requests [])))
+  (register-token-response [this token response]
+    (let [{:keys [token->response]} (service-context this)]
+      (swap! token->response assoc token response)))
+  (clear-token-responses [this]
+    (let [{:keys [token->response]} (service-context this)]
+      (reset! token->response {})))
   (clear-all [this]
     (clear-requests this)
     (clear-token-responses this))
-  (known-token? [_ token]
-    (contains? @token->response token))
-  (get-response [_ token]
-    (get @token->response token)))
-
-(defn make-fake-whoami-service []
-  (map->FakeWhoAmIService
-    {:server (atom nil)
-     :requests (atom [])
-     :token->response (atom {})}))
+  (known-token? [this token]
+    (let [{:keys [token->response]} (service-context this)]
+      (contains? @token->response token)))
+  (get-response [this token]
+    (let [{:keys [token->response]} (service-context this)]
+      (get @token->response token))))
 
 (tk/defservice fake-threatgrid-auth-whoami-url-service
   threatgrid/ThreatgridAuthWhoAmIURLService
-  []
-  (init [_ context]
-        (assoc context :server (doto (make-fake-whoami-service)
-                                 (start-server 0))))
-  (stop [_ {:keys [server] :as context}]
-        (some-> server stop-server)
-        (dissoc context :server))
-  (get-whoami-url
-    [this]
-    (let [{:keys [server]} (service-context this)]
-      (assert server)
-      (str "http://localhost:" (get-port server) "/"))))
+  [[:IFakeWhoAmIServer get-port]]
+  (get-whoami-url [this] (str "http://localhost:" (get-port) "/")))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -158,7 +156,7 @@
 
 (s/defn set-whoami-response
   "Meant to be called from code that is wrapped in 'fixture-server'
-   because it assumes that FakeWhoAmIService is being used"
+   because it assumes that IFakeWhoAmIService is being used"
   ([app
     token :- s/Str
     login :- s/Str
@@ -168,13 +166,8 @@
   ([app
     token :- s/Str
     response :- WhoAmIResponse]
-   (let [;; assuming ThreatgridAuthWhoAmIURLService is fake-threatgrid-auth-whoami-url-service
-         whoami-service (-> (app/get-service app :ThreatgridAuthWhoAmIURLService)
-                            service-context
-                            :server)
-         _ (assert whoami-service)]
-     (register-token-response whoami-service
-                              token
+   (let [{{:keys [register-token-response]} :IFakeWhoAmIServer} (app/service-graph app)]
+     (register-token-response token
                               response))))
 
 (defn fixture-server
