@@ -51,8 +51,8 @@
         auth-svc
         (case auth-service-type
           :allow-all {:IAuth allow-all/allow-all-auth-service}
-          :threatgrid {:IAuth threatgrid/threatgrid-auth-whoami-url-service
-                       :ThreatgridAuthWhoAmIURLService threatgrid/threatgrid-auth-service}
+          :threatgrid {:IAuth threatgrid/threatgrid-auth-service
+                       :ThreatgridAuthWhoAmIURLService threatgrid/threatgrid-auth-whoami-url-service}
           :static {:IAuth static-auth/static-auth-service}
           (throw (ex-info "Auth service not configured"
                           {:message "Unknown service"
