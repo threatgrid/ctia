@@ -19,13 +19,13 @@
                    :get-in-config (s/=>* s/Any
                                          [[s/Any]]
                                          [[s/Any] s/Any])}
-   :CTIAHTTPServerService {:get-port (s/=> (s/constrained s/Int pos?))}
+   :CTIAHTTPServerService {:get-port (s/=> (s/constrained s/Int pos?))
+                           :get-graphql (s/=> graphql.GraphQL)}
    :HooksService {:apply-hooks (s/pred ifn?) ;;keyword varargs
                   :apply-event-hooks (s/=> s/Any s/Any)}
    :StoreService {:read-store (s/pred ifn?) ;;varags
                   :write-store (s/pred ifn?)} ;;varags
    :IAuth {:identity-for-token (s/=> s/Any s/Any)}
-   :GraphQLService {:get-graphql (s/=> graphql.GraphQL)}
    :GraphQLNamedTypeRegistryService {:get-or-update-named-type-registry
                                      (s/=> graphql.schema.GraphQLType
                                            s/Str

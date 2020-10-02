@@ -19,7 +19,6 @@
     [static :as static-auth]
     [threatgrid :as threatgrid]]
    [ctia.version :as version]
-   [ctia.graphql-service :as graphql-svc]
    [ctia.graphql-named-type-registry-service :as graphql-registry-svc]
    [ctia.flows.hooks-service :as hooks-svc]
    [ctia.http.server-service :as http-server-svc]
@@ -64,7 +63,6 @@
        store-svc/store-service
        http-server-svc/ctia-http-server-service
        hooks-svc/hooks-service
-       graphql-svc/graphql-service
        graphql-registry-svc/graphql-named-type-registry-service
        riemann/riemann-metrics-service
        jmx/jmx-metrics-service
