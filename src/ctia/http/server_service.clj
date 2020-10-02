@@ -33,7 +33,6 @@
                                                        store-svc/lift-store-service-fns)
                                      :IAuth IAuth
                                      :GraphQLService GraphQLService
-                                     :GraphQLNamedTypeRegistryService GraphQLNamedTypeRegistryService
                                      :IEncryption IEncryption}))
   (stop [this context] (core/stop context))
 

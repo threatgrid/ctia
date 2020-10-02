@@ -48,7 +48,7 @@
                              {:type observable_type
                               :value observable_value}
                              identity-map)
-                 (clojure.core/update :judgement_id short-id->long-id services)
+                 (update :judgement_id short-id->long-id services)
                  ok)
          (not-found {:message "no verdict currently available for the supplied observable"})))
 

@@ -7,7 +7,6 @@
                                        GraphQLRuntimeContext
                                        GraphQLValue
                                        RealizeFnResult
-                                       RealizeFnServices
                                        resolve-with-rt-ctx]]
             [schema.core :as s]
             [schema-tools.core :as st]

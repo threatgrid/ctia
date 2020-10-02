@@ -59,6 +59,7 @@
   {:ConfigService {:get-in-config (s/=>* s/Any
                                          [[s/Any]]
                                          [[s/Any] s/Any])}
+   :CTIAHTTPServerService {:get-port (s/=> (s/constrained s/Int pos?))}
    :StoreService {:read-store (s/pred ifn?)} ;;varags
    :GraphQLNamedTypeRegistryService
    {:get-or-update-named-type-registry
@@ -74,6 +75,7 @@
   (service-subgraph
     services
     :ConfigService [:get-in-config]
+    :CTIAHTTPServerService [:get-port]
     :StoreService [:read-store]
     :GraphQLNamedTypeRegistryService [:get-or-update-named-type-registry]
     :IEncryption [:decrypt :encrypt]))
