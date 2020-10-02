@@ -13,8 +13,6 @@
                                     helpers/fixture-properties:clean
                                     whoami-helpers/fixture-server]))
 
-(use-fixtures :each whoami-helpers/fixture-reset-state)
-
 (def ownership-data-fixture
   {:groups ["foogroup"]
    :owner "foouser"})

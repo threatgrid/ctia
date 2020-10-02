@@ -37,15 +37,22 @@
               (do (newline)
                   (utils/safe-pprint config)))))
 
-(defn default-services
-  "Returns the default collection of CTIA services based on provided properties."
+(s/defn default-services-map
+  :- {(s/constrained s/Keyword simple-keyword?)
+      ;; could be (s/protocol puppetlabs.trapperkeeper.services/ServiceDefinition),
+      ;; but trapperkeeper claims the protocol is internal only
+      (s/pred some?)}
+  "Returns the default map of CTIA services based on provided properties.
+  Keys are the unqualified keyword names of each service protocol, values are
+  the defservice instances."
   [config]
   (let [{auth-service-type :type} (get-in config [:ctia :auth])
         auth-svc
         (case auth-service-type
-          :allow-all allow-all/allow-all-auth-service
-          :threatgrid threatgrid/threatgrid-auth-service
-          :static static-auth/static-auth-service
+          :allow-all {:IAuth allow-all/allow-all-auth-service}
+          :threatgrid {:IAuth threatgrid/threatgrid-auth-whoami-url-service
+                       :ThreatgridAuthWhoAmIURLService threatgrid/threatgrid-auth-service}
+          :static {:IAuth static-auth/static-auth-service}
           (throw (ex-info "Auth service not configured"
                           {:message "Unknown service"
                            :requested-service auth-service-type})))
@@ -53,25 +60,27 @@
         (let [{:keys [type] :as encryption-properties}
               (get-in config [:ctia :encryption])]
           (case type
-            :default encryption-default/default-encryption-service
+            :default {:IEncryption encryption-default/default-encryption-service}
             (throw (ex-info "Encryption service not configured"
                             {:message "Unknown service"
                              :requested-service type}))))]
-    (into
-      [auth-svc
-       encryption-svc
-       events-svc/events-service
-       store-svc/store-service
-       http-server-svc/ctia-http-server-service
-       hooks-svc/hooks-service
-       graphql-svc/graphql-service
-       graphql-registry-svc/graphql-named-type-registry-service
-       riemann/riemann-metrics-service
-       jmx/jmx-metrics-service
-       console/console-metrics-service]
+    (merge-with
+      (fn [l r]
+        (throw (ex-info "Conflict!" {:left l :right r})))
+      auth-svc
+      encryption-svc
+      {:EventsService events-svc/events-service
+       :StoreService store-svc/store-service
+       :CTIAHTTPServerService http-server-svc/ctia-http-server-service
+       :HooksService hooks-svc/hooks-service
+       :GraphQLService graphql-svc/graphql-service
+       :GraphQLNamedTypeRegistryService graphql-registry-svc/graphql-named-type-registry-service
+       :RiemannMetricsService riemann/riemann-metrics-service
+       :JMXMetricsService jmx/jmx-metrics-service
+       :ConsoleMetricsService console/console-metrics-service}
       ;; register event file logging only when enabled
       (when (get-in config [:ctia :events :log])
-        [event-logging/event-logging-service]))))
+        {:EventLoggingService event-logging/event-logging-service}))))
 
 (defn start-ctia!*
   "Lower-level Trapperkeeper booting function for
@@ -89,6 +98,7 @@
             (version/current-version))
 
   ;; trapperkeeper init
-  (let [config (p/build-init-config)]
-    (start-ctia!* {:services (default-services config)
+  (let [config (p/build-init-config)
+        services-map (default-services config)]
+    (start-ctia!* {:services (vals services-map)
                    :config config})))

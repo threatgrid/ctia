@@ -13,8 +13,7 @@
                                     es-helpers/fixture-properties:es-store
                                     whoami-helpers/fixture-server]))
 
-(use-fixtures :each (join-fixtures [whoami-helpers/fixture-reset-state
-                                    helpers/fixture-ctia]))
+(use-fixtures :each helpers/fixture-ctia)
 
 (defn get-actor [app actor-id headers]
   (select-keys (GET app

@@ -8,6 +8,8 @@
             [ctia.auth :as ctia-auth]
             [ring.adapter.jetty :as jetty]
             [ring.middleware.params :as params]
+            [puppetlabs.trapperkeeper.core :as tk]
+            [puppetlabs.trapperkeeper.services :refer [service-context]]
             [puppetlabs.trapperkeeper.app :as app])
   (:import org.eclipse.jetty.server.Server))
 
@@ -19,6 +21,8 @@
 (defprotocol IFakeWhoAmIServer
   (start-server [this])
   (stop-server [this])
+  (get-url [this])
+  (get-port [this])
   (register-request [this request])
   (clear-requests [this])
   (register-token-response [this token response])
@@ -74,19 +78,29 @@
                            "login" login
                            "title" title}})})))))
 
-(defrecord FakeWhoAmIService [whoami-fn server requests url port token->response]
+(defrecord FakeWhoAmIService [server requests url token->response]
   IFakeWhoAmIServer
-  (start-server [this]
-    (reset! server (jetty/run-jetty (params/wrap-params
-                                     (make-handler this))
-                                    {:port port
-                                     :min-threads 9
-                                     :max-threads 10
-                                     :join? false})))
+  (start-server [this port]
+    (swap! server (fn [old]
+                    (assert (not old) "Server already started!")
+                    (jetty/run-jetty (params/wrap-params
+                                       (make-handler this))
+                                     {:port port
+                                      :min-threads 9
+                                      :max-threads 10
+                                      :join? false}))))
   (stop-server [_]
     (swap! server (fn [^Server s]
-                    (if s (.stop s))
+                    (some-> s .stop)
                     nil)))
+  (get-url [_]
+    (let [^Server s (doto @server
+                      (assert "Server not started"))]
+      (-> s .getURL str)))
+  (get-port [_]
+    (let [^Server s (doto @server
+                      (assert "Server not started"))]
+      (-> s .getURL .getPort)))
   (register-request [_ request]
     (swap! requests conj request))
   (clear-requests [_]
@@ -103,18 +117,26 @@
   (get-response [_ token]
     (get @token->response token)))
 
-(defn make-fake-whoami-service [port]
-  (let [url (str "http://127.0.0.1:" port "/")]
-    (map->FakeWhoAmIService
-     {:whoami-fn (threatgrid/make-whoami-fn url)
-      :server (atom nil)
-      :requests (atom [])
-      :url url
-      :port port
-      :token->response (atom {})})))
+(defn make-fake-whoami-service []
+  (map->FakeWhoAmIService
+    {:server (atom nil)
+     :requests (atom [])
+     :token->response (atom {})}))
 
-;; (s/atom {s/Str IFakeWhoAmIServer})
-(defonce ^:private fake-whoami-services (atom {}))
+(s/defservice fake-threatgrid-auth-whoami-url-service
+  threatgrid/ThreatgridAuthWhoAmIURLService
+  []
+  (start [_ context]
+         (assoc context :server (doto (make-fake-whoami-service)
+                                  (start-server 0))))
+  (stop [_ {:keys [server] :as context}]
+        (some-> server stop-server)
+        (dissoc :server context))
+  (get-whoami-url
+    [this]
+    (let [{:keys [server]} (service-context this)]
+      (assert server)
+      (get-url server))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -151,43 +173,27 @@
   ([app
     token :- s/Str
     response :- WhoAmIResponse]
-   (let [{{:keys [get-in-config]} :ConfigService} (app/service-graph app)
-         whoami-url (get-in-config [:ctia :auth :threatgrid :whoami-url])
+   (let [{{:keys [get-in-config]} :ConfigService
+          {:keys [get-whoami-url]} :ThreatgridAuthWhoAmIURLService} (app/service-graph app)
+         whoami-url (get-whoami-url)
          _ (assert ((every-pred string? seq) whoami-url))
-         whoami-service (@fake-whoami-services whoami-url)
+         ;; assuming ThreatgridAuthWhoAmIURLService is fake-threatgrid-auth-whoami-url-service
+         whoami-service (-> (app/get-service app :ThreatgridAuthWhoAmIURLService)
+                            service-context
+                            :server)
          _ (assert whoami-service)]
      (register-token-response whoami-service
                               token
                               response))))
 
-(def ^:dynamic ^:private *current-whoami-url* nil)
-
 (defn fixture-server
   "Start and stop a fake whoami service. Sets the auth property with the URL to
    the service, so the CTIA instance/HTTP server should be started after this."
   [t]
-  (let [port (net/available-port)
-        whoami-service (make-fake-whoami-service port)
-        whoami-url (str "http://localhost:" port "/")]
-    (try
-      (start-server whoami-service)
-      (swap! fake-whoami-services assoc whoami-url whoami-service)
-      (helpers-core/with-properties
-        ["ctia.auth.threatgrid.whoami-url" whoami-url
-         "ctia.auth.threatgrid.cache" false
-         "ctia.auth.type" "threatgrid"]
-        (binding [;; communicate explicitly with fixture-reset-state
-                  *current-whoami-url* whoami-url]
-          (t)))
-      (finally
-        (swap! fake-whoami-services dissoc whoami-url)
-        (stop-server whoami-service)))))
-
-(defn fixture-reset-state
-  "May be used inside of fixture-server, eg fixture :once
-   fixture-server and fixture :each fixture-reset-state."
-  [t]
-  (let [fake-whoami-service (@fake-whoami-services *current-whoami-url*)
-        _ (assert fake-whoami-service)]
-    (clear-all fake-whoami-service)
+  (helpers-core/with-properties
+    [;; fake-threatgrid-auth-whoami-url-service will override this stub
+     ;; this after the app has started via ThreatgridAuthWhoAmIURLService's `get-whoami-url`
+     "ctia.auth.threatgrid.whoami-url" "http://STUB:0/"
+     "ctia.auth.threatgrid.cache" false
+     "ctia.auth.type" "threatgrid"]
     (t)))

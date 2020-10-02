@@ -13,8 +13,6 @@
                                     helpers/fixture-properties:clean
                                     whoami-helpers/fixture-server]))
 
-(use-fixtures :each whoami-helpers/fixture-reset-state)
-
 (def new-data-table
   {:type "data-table"
    :row_count 1

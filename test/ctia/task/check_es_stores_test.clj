@@ -40,8 +40,7 @@
                   whoami-helpers/fixture-server]))
 
 (use-fixtures :each
-  (join-fixtures [whoami-helpers/fixture-reset-state
-                  helpers/fixture-ctia
+  (join-fixtures [helpers/fixture-ctia
                   es-helpers/fixture-delete-store-indexes]))
 
 (def fixtures-nb 100)

@@ -22,8 +22,6 @@
                                     helpers/fixture-properties:clean
                                     whoami-helpers/fixture-server]))
 
-(use-fixtures :each whoami-helpers/fixture-reset-state)
-
 (def new-identity-assertion
   (-> new-identity-assertion-maximal
       (dissoc :id)

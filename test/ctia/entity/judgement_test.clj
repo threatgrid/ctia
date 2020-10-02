@@ -29,8 +29,6 @@
                                     helpers/fixture-properties:cors
                                     whoami-helpers/fixture-server]))
 
-(use-fixtures :each whoami-helpers/fixture-reset-state)
-
 (def new-judgement
   (merge ex/new-judgement-maximal
          {:observable {:value "1.2.3.4"

@@ -27,8 +27,6 @@
                                     helpers/fixture-properties:clean
                                     whoami-helpers/fixture-server]))
 
-(use-fixtures :each whoami-helpers/fixture-reset-state)
-
 (defn establish-user! [app]
   (helpers/set-capabilities! app "foouser" ["foogroup"] "user" all-capabilities)
   (whoami-helpers/set-whoami-response app

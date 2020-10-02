@@ -18,8 +18,6 @@
                                     helpers/fixture-properties:clean
                                     whoami-helpers/fixture-server]))
 
-(use-fixtures :each whoami-helpers/fixture-reset-state)
-
 (defn additional-tests [app _ target-record-sample]
   (testing "GET /ctia/target-record/search"
    (let [{:keys [get-in-config]} (helpers/get-service-map app :ConfigService)]

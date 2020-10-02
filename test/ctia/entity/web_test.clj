@@ -24,8 +24,7 @@
 
 (use-fixtures :each (join-fixtures [helpers/fixture-properties:clean
                                     helpers/fixture-properties:cors
-                                    whoami-helpers/fixture-server
-                                    whoami-helpers/fixture-reset-state]))
+                                    whoami-helpers/fixture-server]))
 
 (def new-judgement-1
   {:observable {:value "1.2.3.4"

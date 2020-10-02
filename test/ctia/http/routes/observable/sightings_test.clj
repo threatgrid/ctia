@@ -12,8 +12,6 @@
                                     helpers/fixture-properties:events-enabled
                                     whoami-helpers/fixture-server]))
 
-(use-fixtures :each whoami-helpers/fixture-reset-state)
-
 (deftest test-sightings-route
   (test-for-each-store-with-app
    (fn [app]

@@ -133,9 +133,6 @@
                   helpers/fixture-properties:clean
                   whoami-helpers/fixture-server]))
 
-(use-fixtures :each
-  whoami-helpers/fixture-reset-state)
-
 (defn feed-view-tests [app feed-id feed]
   (testing "GET /ctia/feed/:id/view?s=:secret"
     (let [feed-view-url-txt (:feed_view_url feed)

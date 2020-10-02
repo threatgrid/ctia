@@ -254,8 +254,16 @@
                        "ctia.http.port" http-port
                        "ctia.http.show.port" http-port]
        (let [config (build-transformed-init-config)
+             services-map (let [services-map (init/default-services-map config)]
+                            (cond-> services-map
+                              (:ThreatgridAuthWhoAmIURLService services-map)
+                              (assoc
+                                :ThreatgridAuthWhoAmIURLService
+                                ;; dynamic require can be removed when #'with-properties is phased out
+                                @(requiring-resolve 
+                                   'ctia.test-helpers.fake-whoami-service/fake-threatgrid-auth-whoami-url-service))))
              app (init/start-ctia!*
-                   {:services (init/default-services config)
+                   {:services (vals services-map)
                     :config config})]
          (try
            ;; both bind app thread-locally and pass as argument.

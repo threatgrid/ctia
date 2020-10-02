@@ -11,8 +11,6 @@
                                     helpers/fixture-properties:clean
                                     whoami-helpers/fixture-server]))
 
-(use-fixtures :each whoami-helpers/fixture-reset-state)
-
 (deftest test-status-routes
   (test-for-each-store-with-app
    (fn [app]

@@ -24,8 +24,6 @@
                                     helpers/fixture-properties:clean
                                     whoami-helpers/fixture-server]))
 
-(use-fixtures :each whoami-helpers/fixture-reset-state)
-
 (defn partial-operations-tests [app incident-id incident]
   (let [fixed-now (t/internal-now)]
     (helpers/fixture-with-fixed-time

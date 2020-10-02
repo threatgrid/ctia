@@ -2,7 +2,8 @@
   (:require [clojure.test :refer [join-fixtures testing]]
             [ctia.test-helpers
              [core :as helpers]
-             [es :as es-helpers]]
+             [es :as es-helpers]
+             [fake-whoami-service :as whoami-service]]
             [schema.core :as s]))
 
 (def store-fixtures

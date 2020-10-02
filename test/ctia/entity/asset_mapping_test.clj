@@ -20,8 +20,6 @@
                                     helpers/fixture-properties:clean
                                     whoami-helpers/fixture-server]))
 
-(use-fixtures :each whoami-helpers/fixture-reset-state)
-
 (defn additional-tests [app {:keys [short-id]} asset-mapping-sample]
   (testing "GET /ctia/asset-mapping/search"
    (let [{:keys [get-in-config]} (helpers/get-service-map app :ConfigService)]

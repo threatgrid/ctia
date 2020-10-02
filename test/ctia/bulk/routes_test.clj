@@ -33,8 +33,6 @@
                                     fixture-properties:small-max-bulk-size
                                     whoami-helpers/fixture-server]))
 
-(use-fixtures :each whoami-helpers/fixture-reset-state)
-
 (defn mk-new-actor [n]
   {:id (str "transient:actor-" n)
    :title (str "actor-" n)

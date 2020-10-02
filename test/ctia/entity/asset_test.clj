@@ -17,8 +17,6 @@
                                     helpers/fixture-properties:clean
                                     whoami-helpers/fixture-server]))
 
-(use-fixtures :each whoami-helpers/fixture-reset-state)
-
 (defn additional-tests [app asset-id asset-sample]
   (testing "GET /ctia/asset/search"
     (do

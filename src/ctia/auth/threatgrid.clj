@@ -56,16 +56,25 @@
 (defn lookup-stored-identity [login read-store]
   (read-store :identity store/read-identity login))
 
+(defprotocol ThreatgridAuthWhoAmIURLService
+  (get-whoami-url [this]))
+
+(tk/defservice threatgrid-auth-whoami-url-service
+  ThreatgridAuthWhoAmIURLService
+  [[:ConfigService get-in-config]]
+  (get-whoami-url [_] (get-in-config [:ctia :auth :threatgrid :whoami-url])))
+
 (tk/defservice threatgrid-auth-service
   auth/IAuth
   [[:ConfigService get-in-config]
-   [:StoreService read-store]]
-  (init [this context]
+   [:StoreService read-store]
+   [:ThreatgridAuthWhoAmIURLService get-whoami-url]]
+  (init [_ context]
         (let [read-store (-> read-store
                              store-svc/store-service-fn->varargs)
               lookup-stored-identity #(lookup-stored-identity % read-store)]
           (into context
-                (make-auth-service get-in-config lookup-stored-identity))))
+                (make-auth-service get-in-config lookup-stored-identity get-whoami-url))))
 
   (identity-for-token [this token]
    (let [{:keys [whoami-fn lookup-stored-identity-fn]} (service-context this)]
@@ -84,9 +93,9 @@
                                                    (get default-capabilities))}))))
         auth/denied-identity-singleton))))
 
-(defn make-auth-service [get-in-config lookup-stored-identity]
-  (let [{:keys [whoami-url cache]} (get-in-config [:ctia :auth :threatgrid])
-        whoami-fn (make-whoami-fn whoami-url)]
+(defn make-auth-service [get-in-config lookup-stored-identity get-whoami-url]
+  (let [{:keys [cache]} (get-in-config [:ctia :auth :threatgrid])
+        whoami-fn (make-whoami-fn (get-whoami-url))]
     {:whoami-fn
      (if cache (memo whoami-fn) whoami-fn)
      :lookup-stored-identity-fn

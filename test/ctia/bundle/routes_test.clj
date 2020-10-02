@@ -37,9 +37,6 @@
     fixture-find-by-external-ids-limit
     whoami-helpers/fixture-server]))
 
-(use-fixtures :each
-  whoami-helpers/fixture-reset-state)
-
 (defn mk-sighting
   [n]
   {:id (id/make-transient-id nil)
