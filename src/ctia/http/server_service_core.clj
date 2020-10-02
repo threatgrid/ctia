@@ -12,7 +12,7 @@
 
 (defn get-graphql [{:keys [graphql]}]
   {:post [(instance? GraphQL %)]}
-  @graphql)
+  graphql)
 
 (s/defn ^:private server->port :- (s/constrained s/Int pos?)
   [server :- Server]
