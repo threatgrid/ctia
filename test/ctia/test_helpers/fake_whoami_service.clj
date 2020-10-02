@@ -126,7 +126,7 @@
                                  (start-server 0))))
   (stop [_ {:keys [server] :as context}]
         (some-> server stop-server)
-        (dissoc :server context))
+        (dissoc context :server))
   (get-whoami-url
     [this]
     (let [{:keys [server]} (service-context this)]
@@ -168,9 +168,7 @@
   ([app
     token :- s/Str
     response :- WhoAmIResponse]
-   (let [{{:keys [get-in-config]} :ConfigService
-          {:keys [get-whoami-url]} :ThreatgridAuthWhoAmIURLService} (app/service-graph app)
-         ;; assuming ThreatgridAuthWhoAmIURLService is fake-threatgrid-auth-whoami-url-service
+   (let [;; assuming ThreatgridAuthWhoAmIURLService is fake-threatgrid-auth-whoami-url-service
          whoami-service (-> (app/get-service app :ThreatgridAuthWhoAmIURLService)
                             service-context
                             :server)
