@@ -144,12 +144,12 @@ Rate limit related configuration
    Configure how CTIA is hosted,
    setting those values correctly is mandatory as it defines how entity ids are generated.
 
-| Property                   | Description                                            | Possible values |
-|----------------------------+--------------------------------------------------------+-----------------|
-| ctia.http.show.protocol    | is this instance hosted through http or https          | =http= =https=  |
-| ctia.http.show.hostname    | set the hostname used to access this instance          | string          |
-| ctia.http.show.path-prefix | set a path prefix if CTIA is not exposed at /          | string          |
-| ctia.http.show.port        | set the exposed http port. if 0, defaults to HTTP port | number          |
+| Property                   | Description                                   | Possible values |
+|----------------------------+-----------------------------------------------+-----------------|
+| ctia.http.show.protocol    | is this instance hosted through http or https | =http= =https=  |
+| ctia.http.show.hostname    | set the hostname used to access this instance | string          |
+| ctia.http.show.path-prefix | set a path prefix if CTIA is not exposed at / | string          |
+| ctia.http.show.port        | set the exposed http port                     | number          |
 
 
 *** Swagger
