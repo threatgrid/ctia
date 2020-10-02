@@ -2,7 +2,11 @@
   (:require
    [clojure.string :as string]
    [clj-momo.test-helpers.http-assert-1 :as mthh]
-   [ctia.test-helpers.core :as th]))
+   [ctia.lib.utils :refer [service-subgraph]]
+   [ctia.schemas.core :refer [HTTPShowServices]]
+   [ctia.test-helpers.core :as th]
+   [puppetlabs.trapperkeeper.app :as app]
+   [schema.core :as s]))
 
 (def api-key "45c1f5e3f05d0")
 
@@ -18,3 +22,10 @@
            api-key
            mthh/assert-post)
          args))
+
+(s/defn app->HTTPShowServices :- HTTPShowServices [app]
+  (-> app
+      app/service-graph
+      (service-subgraph
+        :CTIAHTTPServerService [:get-port]
+        :ConfigService [:get-in-config])))

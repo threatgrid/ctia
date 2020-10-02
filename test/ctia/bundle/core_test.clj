@@ -1,17 +1,14 @@
 (ns ctia.bundle.core-test
-  (:require [clojure.test :as t :refer [deftest use-fixtures join-fixtures are is testing]]
+  (:require [clojure.test :as t :refer [deftest use-fixtures are is testing]]
             [clojure.tools.logging.test :refer [logged? with-log]]
             [ctia.bundle.core :as sut]
             [ctia.domain.entities :as ent :refer [with-long-id]]
             [ctia.flows.crud :refer [make-id]]
-            [ctia.lib.utils :refer [service-subgraph]]
-            [ctia.schemas.core :refer [HTTPShowServices]]
             [ctia.test-helpers.core :as h]
-            [schema.core :as s]
-            [puppetlabs.trapperkeeper.app :as app]))
+            [ctia.test-helpers.http :refer [app->HTTPShowServices]]
+            [schema.core :as s]))
 
-(use-fixtures :once
-  (join-fixtures [h/fixture-ctia-fast]))
+(use-fixtures :once h/fixture-ctia-fast)
 
 (deftest local-entity?-test
   (are [x y] (= x (sut/local-entity? y (h/current-get-in-config-fn)))
@@ -52,13 +49,6 @@
             :query "source_ref:*malware*"}
            (sut/relationships-filters "id" {:source_type :malware
                                             :related_to [:source_ref]})))))
-
-(s/defn app->HTTPShowServices :- HTTPShowServices [app]
-  (-> app
-      app/service-graph
-      (service-subgraph
-        :CTIAHTTPServerService [:get-port]
-        :ConfigService [:get-in-config])))
 
 (deftest with-existing-entity-test
   (testing "with-existing-entity"
