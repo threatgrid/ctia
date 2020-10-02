@@ -21,7 +21,6 @@
 (defprotocol IFakeWhoAmIServer
   (start-server [this port])
   (stop-server [this])
-  (get-url [this])
   (get-port [this])
   (register-request [this request])
   (clear-requests [this])
@@ -93,14 +92,10 @@
     (swap! server (fn [^Server s]
                     (some-> s .stop)
                     nil)))
-  (get-url [_]
-    (let [^Server s (doto @server
-                      (assert "Server not started"))]
-      (-> s .getURL str)))
   (get-port [_]
     (let [^Server s (doto @server
                       (assert "Server not started"))]
-      (-> s .getURL .getPort)))
+      (-> s .getURI .getPort)))
   (register-request [_ request]
     (swap! requests conj request))
   (clear-requests [_]
@@ -126,9 +121,9 @@
 (tk/defservice fake-threatgrid-auth-whoami-url-service
   threatgrid/ThreatgridAuthWhoAmIURLService
   []
-  (start [_ context]
-         (assoc context :server (doto (make-fake-whoami-service)
-                                  (start-server 0))))
+  (init [_ context]
+        (assoc context :server (doto (make-fake-whoami-service)
+                                 (start-server 0))))
   (stop [_ {:keys [server] :as context}]
         (some-> server stop-server)
         (dissoc :server context))
@@ -136,7 +131,7 @@
     [this]
     (let [{:keys [server]} (service-context this)]
       (assert server)
-      (get-url server))))
+      (str "http://localhost:" (get-port server) "/"))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -175,8 +170,6 @@
     response :- WhoAmIResponse]
    (let [{{:keys [get-in-config]} :ConfigService
           {:keys [get-whoami-url]} :ThreatgridAuthWhoAmIURLService} (app/service-graph app)
-         whoami-url (get-whoami-url)
-         _ (assert ((every-pred string? seq) whoami-url))
          ;; assuming ThreatgridAuthWhoAmIURLService is fake-threatgrid-auth-whoami-url-service
          whoami-service (-> (app/get-service app :ThreatgridAuthWhoAmIURLService)
                             service-context
