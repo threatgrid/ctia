@@ -24,7 +24,7 @@
 (defn es-store-impl-properties [prefix store]
   {(str prefix store ".host") s/Str
    (str prefix store ".port") s/Int
-   (str prefix store ".transport") s/Keyword
+   (str prefix store ".protocol") s/Keyword
    (str prefix store ".clustername") s/Str
    (str prefix store ".indexname") s/Str
    (str prefix store ".refresh") Refresh

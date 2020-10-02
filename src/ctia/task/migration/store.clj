@@ -30,7 +30,7 @@
   (st/optional-keys
    {:host s/Str
     :port s/Int
-    :transport s/Keyword
+    :protocol s/Keyword
     :indexname s/Str
     :refresh Refresh
     :refresh_interval  s/Str

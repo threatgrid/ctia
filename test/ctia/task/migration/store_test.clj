@@ -969,7 +969,7 @@
 (deftest target-store-properties-test
   (let [default-es-props {:host "localhost"
                           :port 9200
-                          :transport "http"
+                          :protocol "http"
                           :indexname "ctia_default"
                           :replicas 1
                           :refresh_interval "1s"
@@ -985,7 +985,7 @@
 
         migration-cluster-props {:host "es7.iroh.site"
                                  :port 443
-                                 :transport "https"}
+                                 :protocol "https"}
 
         target-store-props {:indexname "custom-target-indexname"
                             :shards 4
