@@ -7,7 +7,7 @@
              [index :as es-index]
              [conn :as es-conn]]
             [ctia.test-helpers
-             [core :as h :refer [fixture-ctia fixture-properties:clean]]
+             [core :as h :refer [fixture-ctia]]
              [es :refer [fixture-properties:es-store fixture-delete-store-indexes]]]))
 
 (defn fixture-update-stores [t]

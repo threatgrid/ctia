@@ -27,13 +27,40 @@
             [schema.core :as s]))
 
 (def ^:dynamic ^:private *current-app*)
+
 (def
   ^:dynamic ^:private
   *properties-overrides*
   "An even-sized vector of property key-val flattened pairs (like the
   first argument to #'with-properties) that will be
   used to override the default properties."
-  [])
+  ;; Default overrides for any properties that are in the default properties file
+  ;; yet are unsafe/undesirable for tests
+  ["ctia.auth.type"                            "allow-all"
+   "ctia.access-control.default-tlp"           "green"
+   "ctia.access-control.min-tlp"               "white"
+   "ctia.access-control.max-record-visibility" "everyone"
+   "ctia.encryption.key.filepath"              "resources/cert/ctia-encryption.key"
+   "ctia.events.enabled"                        true
+   "ctia.events.log"                            false
+   "ctia.http.dev-reload"                       false
+   "ctia.http.min-threads"                      9
+   "ctia.http.max-threads"                      10
+   "ctia.http.show.protocol"                    "http"
+   "ctia.http.show.hostname"                    "localhost"
+   "ctia.http.show.port"                        "57254"
+   "ctia.http.show.path-prefix"                 ""
+   "ctia.http.jwt.enabled"                      true
+   "ctia.http.jwt.public-key-path"              "resources/cert/ctia-jwt.pub"
+   "ctia.http.bulk.max-size"                    30000
+   "ctia.hook.redis.enabled"                    false
+   "ctia.hook.redis.channel-name"               "events-test"
+   "ctia.metrics.riemann.enabled"               false
+   "ctia.metrics.console.enabled"               false
+   "ctia.metrics.jmx.enabled"                   false
+   "ctia.versions.config"                       "test"])
+(assert (even? (count *properties-overrides*)))
+
 (def ^:dynamic ^:private *config-transformers* [])
 
 (defn get-service-map [app svc-kw]
@@ -70,38 +97,6 @@
   [properties-vec & sexprs]
   `(with-properties* ~properties-vec
      (fn [] (do ~@sexprs))))
-
-(defn fixture-properties:clean [f]
-  ;; reset overrides, to preserve previous behavior when #'with-properties
-  ;; used to set actual System properties.
-  (binding [*properties-overrides* []]
-    ;; Override any properties that are in the default properties file
-    ;; yet are unsafe/undesirable for tests
-    (with-properties ["ctia.auth.type"                            "allow-all"
-                      "ctia.access-control.default-tlp"           "green"
-                      "ctia.access-control.min-tlp"               "white"
-                      "ctia.access-control.max-record-visibility" "everyone"
-                      "ctia.encryption.key.filepath"              "resources/cert/ctia-encryption.key"
-                      "ctia.events.enabled"                        true
-                      "ctia.events.log"                            false
-                      "ctia.http.dev-reload"                       false
-                      "ctia.http.min-threads"                      9
-                      "ctia.http.max-threads"                      10
-                      "ctia.http.show.protocol"                    "http"
-                      "ctia.http.show.hostname"                    "localhost"
-                      "ctia.http.show.port"                        "57254"
-                      "ctia.http.show.path-prefix"                 ""
-                      "ctia.http.jwt.enabled"                      true
-                      "ctia.http.jwt.public-key-path"              "resources/cert/ctia-jwt.pub"
-                      "ctia.http.bulk.max-size"                    30000
-                      "ctia.hook.redis.enabled"                    false
-                      "ctia.hook.redis.channel-name"               "events-test"
-                      "ctia.metrics.riemann.enabled"               false
-                      "ctia.metrics.console.enabled"               false
-                      "ctia.metrics.jmx.enabled"                   false
-                      "ctia.versions.config"                       "test"]
-      ;; run tests
-      (f))))
 
 (defn fixture-properties:cors [f]
   (with-properties

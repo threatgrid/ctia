@@ -8,13 +8,12 @@
 (defn setup-ctia! [fixture]
   (let [http-port 0
         app (fixture (fn []
-                       (helpers/fixture-properties:clean
-                         #(helpers/with-properties ["ctia.store.es.default.refresh" "false"
-                                                    "ctia.http.enabled" true
-                                                    "ctia.http.port" http-port
-                                                    "ctia.http.bulk.max-size" 100000
-                                                    "ctia.http.show.port" http-port]
-                            (start-ctia!)))))]
+                       (helpers/with-properties ["ctia.store.es.default.refresh" "false"
+                                                 "ctia.http.enabled" true
+                                                 "ctia.http.port" http-port
+                                                 "ctia.http.bulk.max-size" 100000
+                                                 "ctia.http.show.port" http-port]
+                         (start-ctia!))))]
     {:port (helpers/get-http-port app)
      :app app}))
 

@@ -25,7 +25,6 @@
             [ctim.examples.judgements :as ex]))
 
 (use-fixtures :once (join-fixtures [mth/fixture-schema-validation
-                                    helpers/fixture-properties:clean
                                     helpers/fixture-properties:cors
                                     whoami-helpers/fixture-server]))
 

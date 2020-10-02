@@ -9,8 +9,7 @@
             [clojure.string :as str]))
 
 (use-fixtures :once st/validate-schemas)
-(use-fixtures :each (join-fixtures [test-helpers/fixture-properties:clean
-                                    es-helpers/fixture-properties:es-store
+(use-fixtures :each (join-fixtures [es-helpers/fixture-properties:es-store
                                     test-helpers/fixture-properties:events-logging
                                     test-helpers/fixture-ctia-fast]))
 

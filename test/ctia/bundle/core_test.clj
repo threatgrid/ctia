@@ -10,8 +10,7 @@
             [schema.core :as s]))
 
 (use-fixtures :once
-  (join-fixtures [h/fixture-properties:clean
-                  h/fixture-ctia-fast]))
+  (join-fixtures [h/fixture-ctia-fast]))
 
 (deftest local-entity?-test
   (are [x y] (= x (sut/local-entity? y (h/current-get-in-config-fn)))

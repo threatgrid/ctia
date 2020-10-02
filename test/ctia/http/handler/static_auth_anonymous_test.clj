@@ -16,7 +16,6 @@
 (use-fixtures :once mth/fixture-schema-validation)
 
 (use-fixtures :each
-  helpers/fixture-properties:clean
   es-helpers/fixture-properties:es-store
   (helpers/fixture-properties:static-auth "kitara" "tearbending")
   fixture-anonymous-readonly-access

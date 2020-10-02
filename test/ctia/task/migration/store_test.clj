@@ -245,7 +245,6 @@
   (join-fixtures [mth/fixture-schema-validation
                   whoami-helpers/fixture-server
                   whoami-helpers/fixture-reset-state
-                  helpers/fixture-properties:clean
                   es-helpers/fixture-properties:es-store]))
 
 (defn es-props [get-in-config]
@@ -268,7 +267,9 @@
           (ductile.index/delete! (str (migration-index get-in-config) "*")))))))
 
 (use-fixtures :each
-  (join-fixtures [helpers/fixture-ctia
+  (join-fixtures [#(helpers/with-properties
+                     ["ctia.auth.type" "allow-all"]
+                     (helpers/fixture-ctia %))
                   es-helpers/fixture-delete-store-indexes
                   fixture-clean-migration]))
 

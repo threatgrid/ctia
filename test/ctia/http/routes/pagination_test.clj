@@ -14,7 +14,6 @@
 
 (use-fixtures :once
   mth/fixture-schema-validation
-  helpers/fixture-properties:clean
   helpers/fixture-allow-all-auth)
 
 (deftest ^:slow test-pagination-lists
