@@ -403,10 +403,9 @@
 (s/defn fetch-record
   "Fetch a record by ID guessing its type"
   [id identity-map
-   {{:keys [get-in-config]} :ConfigService
-    {:keys [read-store]} :StoreService
-    :as _services_} :- APIHandlerServices]
-  (when-let [entity-type (ent/id->entity-type id get-in-config)]
+   {{:keys [read-store]} :StoreService
+    :as services} :- APIHandlerServices]
+  (when-let [entity-type (ent/id->entity-type id services)]
     (read-store (keyword entity-type)
                 read-fn
                 id
