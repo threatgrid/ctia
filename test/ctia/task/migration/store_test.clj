@@ -243,7 +243,6 @@
 
 (use-fixtures :once
   (join-fixtures [mth/fixture-schema-validation
-                  whoami-helpers/fixture-server
                   es-helpers/fixture-properties:es-store]))
 
 (defn es-props [get-in-config]
@@ -266,9 +265,7 @@
           (ductile.index/delete! (str (migration-index get-in-config) "*")))))))
 
 (use-fixtures :each
-  (join-fixtures [#(helpers/with-properties
-                     ["ctia.auth.type" "allow-all"]
-                     (helpers/fixture-ctia %))
+  (join-fixtures [helpers/fixture-ctia
                   es-helpers/fixture-delete-store-indexes
                   fixture-clean-migration]))
 
@@ -812,11 +809,6 @@
         {:keys [get-in-config]} (helpers/get-service-map app :ConfigService)
         services (app->MigrationStoreServices app)
 
-        _ (whoami-helpers/set-whoami-response app
-                                              "45c1f5e3f05d0"
-                                              "foouser"
-                                              "foogroup"
-                                              "user")
         _ (POST-bulk app examples)
         _ (ductile.index/refresh! (es-conn get-in-config)) ;; ensure indices refresh
         [sighting1 sighting2] (:parsed-body (GET app

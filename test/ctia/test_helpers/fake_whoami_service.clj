@@ -166,7 +166,8 @@
   ([app
     token :- s/Str
     response :- WhoAmIResponse]
-   (let [{{:keys [register-token-response]} :IFakeWhoAmIServer} (app/service-graph app)]
+   (let [_ (assert (app/get-service app :IFakeWhoAmIServer))
+         {{:keys [register-token-response]} :IFakeWhoAmIServer} (app/service-graph app)]
      (register-token-response token
                               response))))
 
