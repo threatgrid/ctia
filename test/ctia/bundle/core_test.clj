@@ -7,7 +7,8 @@
             [ctia.lib.utils :refer [service-subgraph]]
             [ctia.schemas.core :refer [HTTPShowServices]]
             [ctia.test-helpers.core :as h]
-            [schema.core :as s]))
+            [schema.core :as s]
+            [puppetlabs.trapperkeeper.app :as app]))
 
 (use-fixtures :once
   (join-fixtures [h/fixture-ctia-fast]))
