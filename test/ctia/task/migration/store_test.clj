@@ -17,7 +17,8 @@
             [ctia.test-helpers.fake-whoami-service :as whoami-helpers]
             [ctia.test-helpers.fixtures :as fixt]
             [ctia.test-helpers.migration :refer [app->MigrationStoreServices]]
-            [ctim.domain.id :refer [long-id->id]])
+            [ctim.domain.id :refer [long-id->id]]
+            [schema.test :refer [validate-schemas]])
   (:import [java.util UUID]))
 
 (deftest prefixed-index-test
@@ -245,7 +246,8 @@
   (join-fixtures [mth/fixture-schema-validation
                   whoami-helpers/fixture-server
                   whoami-helpers/fixture-reset-state
-                  es-helpers/fixture-properties:es-store]))
+                  es-helpers/fixture-properties:es-store
+                  validate-schemas]))
 
 (defn es-props [get-in-config]
   (get-in-config [:ctia :store :es]))
@@ -969,7 +971,7 @@
 (deftest target-store-properties-test
   (let [default-es-props {:host "localhost"
                           :port 9200
-                          :protocol "http"
+                          :protocol :http
                           :indexname "ctia_default"
                           :replicas 1
                           :refresh_interval "1s"
@@ -985,7 +987,7 @@
 
         migration-cluster-props {:host "es7.iroh.site"
                                  :port 443
-                                 :protocol "https"}
+                                 :protocol :https}
 
         target-store-props {:indexname "custom-target-indexname"
                             :shards 4
