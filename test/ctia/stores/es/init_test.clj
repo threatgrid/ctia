@@ -7,7 +7,7 @@
             [ductile
              [index :as index]
              [conn :as conn]]
-            [clojure.test :refer [deftest testing is]]))
+            [clojure.test :refer [deftest testing is are]]))
 
 (def es-conn (conn/connect {:host "localhost"
                             :port "9200"}))
@@ -33,32 +33,55 @@
                         :aliased false})
 
 (deftest init-store-conn-test
-  (testing "init store conn should return a proper conn state with unaliased conf"
-    (let [services (->ESConnServices)
-          {:keys [index props config conn]}
-          (sut/init-store-conn props-not-aliased services)]
-      (is (= index indexname))
-      (is (= (:write-index props) indexname))
-      (is (= "http://localhost:9200" (:uri conn)))
-      (is (nil? (:aliases config)))
-      (is (= "1s" (get-in config [:settings :refresh_interval])))
-      (is (= 1 (get-in config [:settings :number_of_replicas])))
-      (is (= 2 (get-in config [:settings :number_of_shards])))
-      (is (= {} (select-keys (:mappings config) [:a :b])))))
+ (let [services (->ESConnServices)]
+   (testing "init store conn should return a proper conn state with unaliased conf"
+     (let [{:keys [index props config conn]}
+           (sut/init-store-conn props-not-aliased services)]
+       (is (= index indexname))
+       (is (= (:write-index props) indexname))
+       (is (= "http://localhost:9200" (:uri conn)))
+       (is (nil? (:aliases config)))
+       (is (= "1s" (get-in config [:settings :refresh_interval])))
+       (is (= 1 (get-in config [:settings :number_of_replicas])))
+       (is (= 2 (get-in config [:settings :number_of_shards])))
+       (is (= {} (select-keys (:mappings config) [:a :b])))))
 
-  (testing "init store conn should return a proper conn state with aliased conf"
-    (let [services (->ESConnServices)
-          {:keys [index props config conn]}
-          (sut/init-store-conn props-aliased services)]
-      (is (= index indexname))
-      (is (= (:write-index props) write-alias))
-      (is (= "http://localhost:9200" (:uri conn)))
-      (is (= indexname
-             (-> config :aliases keys first)))
-      (is (= "2s" (get-in config [:settings :refresh_interval])))
-      (is (= 1 (get-in config [:settings :number_of_replicas])))
-      (is (= 2 (get-in config [:settings :number_of_shards])))
-      (is (= {} (select-keys (:mappings config) [:a :b]))))))
+   (testing "init store conn should return a proper conn state with aliased conf"
+     (let [{:keys [index props config conn]}
+           (sut/init-store-conn props-aliased services)]
+       (is (= index indexname))
+       (is (= (:write-index props) write-alias))
+       (is (= "http://localhost:9200" (:uri conn)))
+       (is (= indexname
+              (-> config :aliases keys first)))
+       (is (= "2s" (get-in config [:settings :refresh_interval])))
+       (is (= 1 (get-in config [:settings :number_of_replicas])))
+       (is (= 2 (get-in config [:settings :number_of_shards])))
+       (is (= {} (select-keys (:mappings config) [:a :b])))))
+   (testing "init store conn should provide a proper ES connection"
+     (are [msg props expected-uri]
+         (testing msg
+           (is (= expected-uri
+                  (-> (sut/init-store-conn props services)
+                      :conn
+                      :uri)))
+           true)
+
+       "default protocol is http"
+       props-aliased
+       "http://localhost:9200"
+
+       "uri should respect given protocol"
+       (assoc props-aliased
+              :protocol :https)
+       "https://localhost:9200"
+
+       "uri should respect given protocol, host and port"
+       (assoc props-aliased
+              :protocol :https
+              :port 9201
+              :host "cisco.com")
+       "https://cisco.com:9201"))))
 
 (deftest update-settings!-test
   (let [services (->ESConnServices)

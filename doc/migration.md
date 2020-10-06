@@ -6,7 +6,7 @@ A migration state will be stored in a configured state to enable restart.
  - As the migration task copies indexes, make sure you have enough disk space before launching it.
  - Make sure the resulting indices from your prefix configuration don't match existing ones as they will be deleted.
  - Prepare the migration properties (ex: `ctia_migration.properties`):
-   - Keep current CTIA ES properties to read source indices: host, port, transport and current store indices.
+   - Keep current CTIA ES properties to read source indices: host, port, protocol and current store indices.
    - Define your migration properties and configure your target store properties (see migration properties below)
    - Modify `aliased`, `rollover`, and `shards` options according to the need of future indices. The migrated indices will be built with these options. Note that only `max_docs` rollover condition will be considered during migration.
    - Configure desired number of shards.
@@ -34,7 +34,7 @@ You can configure target stores similarly to source store by prefixing each stor
 ```
 ctia.migration.store.es.default.host=es-storage.int.iroh.site
 ctia.migration.store.es.default.port=443
-ctia.migration.store.es.default.transport=https
+ctia.migration.store.es.default.protocol=https
 ctia.migration.store.es.default.replicas=2
 ctia.migration.store.es.default.shards=10
 ctia.migration.store.es.default.refresh_interval=1s
@@ -53,7 +53,7 @@ Below is an example of simple migration properties to migrates `tool` and `sight
 # Use ES for all Stores
 ctia.store.es.default.host=es-storage.int.iroh.site
 ctia.store.es.default.port=443
-ctia.store.es.default.transport=https
+ctia.store.es.default.protocol=https
 ctia.store.es.default.replicas=1
 ctia.store.es.default.refresh_interval=1s
 ctia.store.es.default.default_operator=AND
@@ -128,7 +128,7 @@ A more advanced migration can in particular rename indices while ignoring given 
 ```
 ctia.migration.store.es.default.host=localhost
 ctia.migration.store.es.default.port=9200
-ctia.migration.store.es.default.transport=http
+ctia.migration.store.es.default.protocol=http
 ctia.migration.store.es.default.shards=1
 
 ctia.migration.store.es.tool.indexname=ctia_tool

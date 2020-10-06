@@ -8,7 +8,7 @@
   (testing "Stores ES properties are generated according to given prefix and entity name."
     (is (= {"ctia.store.es.malware.host" s/Str
             "ctia.store.es.malware.port" s/Int
-            "ctia.store.es.malware.transport" s/Keyword
+            "ctia.store.es.malware.protocol" s/Keyword
             "ctia.store.es.malware.clustername" s/Str
             "ctia.store.es.malware.indexname" s/Str
             "ctia.store.es.malware.refresh" Refresh
@@ -24,7 +24,7 @@
 
     (is (= {"prefix.sighting.host" s/Str
             "prefix.sighting.port" s/Int
-            "prefix.sighting.transport" s/Keyword
+            "prefix.sighting.protocol" s/Keyword
             "prefix.sighting.clustername" s/Str
             "prefix.sighting.indexname" s/Str
             "prefix.sighting.refresh" Refresh
