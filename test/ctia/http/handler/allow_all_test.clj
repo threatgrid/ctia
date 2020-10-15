@@ -4,14 +4,15 @@
             [ctia.test-helpers
              [core :as helpers :refer [POST GET]]
              [es :as es-helpers]]
-            [clojure.test :refer [deftest is testing use-fixtures join-fixtures]]
-            [ctim.domain.id :as id]))
+            [clojure.test :refer [deftest is testing use-fixtures]]
+            [ctim.domain.id :as id]
+            [schema.test :refer [validate-schemas]]))
 
-(use-fixtures :once mth/fixture-schema-validation)
-
-(use-fixtures :each (join-fixtures [es-helpers/fixture-properties:es-store
-                                    helpers/fixture-allow-all-auth
-                                    helpers/fixture-ctia]))
+(use-fixtures :each
+  validate-schemas
+  es-helpers/fixture-properties:es-store
+  helpers/fixture-allow-all-auth
+  helpers/fixture-ctia)
 
 (deftest allow-all-auth-judgement-routes-test
   (testing "POST /ctia/judgement"

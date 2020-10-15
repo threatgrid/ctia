@@ -96,8 +96,8 @@
                                        (boolean? wait_for) (str "?wait_for=" wait_for))
                                 updates (cond->> {update-field "modified"}
                                           (= :PUT method-kw) (into new-record))
-                                es-index-uri-pattern (re-pattern (str ".*9200.*" entity-id ".*"))]
-                            (with-global-fake-routes {es-index-uri-pattern {:put simple-handler}}
+                                es-index-uri-pattern (re-pattern (str ".*920.*" entity-id ".*"))]
+                            (with-global-fake-routes {es-index-uri-pattern {:post simple-handler}}
                               (method app
                                       path
                                       :body updates

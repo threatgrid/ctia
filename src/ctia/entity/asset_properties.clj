@@ -46,7 +46,7 @@
   {:type "object"
    :properties
    {:name  em/token
-    :value em/all_token}})
+    :value em/token}})
 
 (def asset-properties-mapping
   {"asset-properties"
