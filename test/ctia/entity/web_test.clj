@@ -18,12 +18,12 @@
              [store :refer [test-for-each-store-with-app]]]
             [ctim.domain.id :as id]
             [ring.adapter.jetty :as jetty]
-            [schema.core :as s]))
+            [schema.core :as s]
+            [schema.test :refer [validate-schemas]]))
 
-(use-fixtures :once mth/fixture-schema-validation)
-
-(use-fixtures :each (join-fixtures [helpers/fixture-properties:cors
-                                    whoami-helpers/fixture-server]))
+(use-fixtures :once (join-fixtures [helpers/fixture-properties:cors
+                                    whoami-helpers/fixture-server
+                                    validate-schemas]))
 
 (def new-judgement-1
   {:observable {:value "1.2.3.4"

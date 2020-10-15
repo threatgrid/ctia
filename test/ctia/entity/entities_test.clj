@@ -2,7 +2,9 @@
   (:require [clj-momo.test-helpers.core :as mth]
             [ctia.entity.entities :as sut]
             [ctia.schemas.core :refer [lift-realize-fn-with-context]]
-            [ctia.test-helpers.core :as test-helpers]
+            [ctia.test-helpers
+             [core :as test-helpers]
+             [es :as es-helpers]]
             [ctia.lib.utils :refer [service-subgraph]]
             [clojure.test :as t :refer [deftest is use-fixtures join-fixtures]]
             [clojure.spec.alpha :refer [gen]]
@@ -15,7 +17,8 @@
 #_
 (use-fixtures :once mth/fixture-schema-validation)
 
-(use-fixtures :each test-helpers/fixture-ctia-fast)
+(use-fixtures :once (join-fixtures [es-helpers/fixture-properties:es-store
+                                    test-helpers/fixture-ctia-fast]))
 
 (defn gen-sample-entity
   [{:keys [new-spec]}]

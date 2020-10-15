@@ -254,10 +254,10 @@
                             ;; dynamic requires can be removed when #'with-properties is phased out or moved
                             (assoc
                               :ThreatgridAuthWhoAmIURLService
-                              @(requiring-resolve 
+                              @(requiring-resolve
                                  'ctia.test-helpers.fake-whoami-service/fake-threatgrid-auth-whoami-url-service)
                               :IFakeWhoAmIServer
-                              @(requiring-resolve 
+                              @(requiring-resolve
                                  'ctia.test-helpers.fake-whoami-service/fake-whoami-service)))
              app (init/start-ctia!*
                    {:services (vals services-map)
@@ -338,14 +338,19 @@
          path
          kw-options))
 
-(defn POST-bulk [app examples]
-  (let [{bulk-res :parsed-body}
-        (POST app
-              "ctia/bulk"
-              :body examples
-              :socket-timeout (* 5 60000)
-              :headers {"Authorization" "45c1f5e3f05d0"})]
-    bulk-res))
+(defn POST-bulk
+  ([app examples] (POST-bulk app examples true))
+  ([app examples check?]
+   (let [{{:keys [error message] :as bulk-res} :parsed-body}
+         (POST app
+               "ctia/bulk"
+               :body examples
+               :socket-timeout (* 5 60000)
+               :headers {"Authorization" "45c1f5e3f05d0"})]
+     (when check?
+       (assert (nil? error)
+               (format "POST-bulk error: %s, message: \"%s\"" error message)))
+     bulk-res)))
 
 (defn POST-entity-bulk [app example plural x headers]
   (let [new-records

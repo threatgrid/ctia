@@ -9,7 +9,7 @@
              [es :as es-helpers]])
   (:import [java.util.concurrent CountDownLatch TimeUnit]))
 
-(use-fixtures :each (join-fixtures
+(use-fixtures :once (join-fixtures
                      [es-helpers/fixture-properties:es-store
                       test-helpers/fixture-ctia-fast]))
 
