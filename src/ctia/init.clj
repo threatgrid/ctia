@@ -84,11 +84,14 @@
 (defn start-ctia!
   "Does the heavy lifting for ctia.main (ie entry point that isn't a class).
   Returns the Trapperkeeper app."
-  []
-  (log/info "starting CTIA version: "
-            (version/current-version))
+  ([] (start-ctia! {}))
+  ([{:keys [services config]}]
+   (log/info "starting CTIA version: "
+             (version/current-version))
 
-  ;; trapperkeeper init
-  (let [config (p/build-init-config)]
-    (start-ctia!* {:services (default-services config)
-                   :config config})))
+   ;; trapperkeeper init
+   (let [config (or config
+                    (p/build-init-config))]
+     (start-ctia!* {:services (or services
+                                  (default-services config))
+                    :config config}))))

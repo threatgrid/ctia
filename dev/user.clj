@@ -2,7 +2,92 @@
   (:require [cheshire.core :as json]
             [clj-http.client :as http]
             [clj-momo.lib.time :as time]
-            [ctim.schemas.vocabularies :as vocab]))
+            [ctia.init :as init]
+            [ctia.properties :as p]
+            [ctim.schemas.vocabularies :as vocab]
+            [puppetlabs.trapperkeeper.app :as app]))
+
+(set! *warn-on-reflection* true)
+
+;;;;;;;;;;;;;;;;;;;;;;;
+;; Lifecycle management
+;;;;;;;;;;;;;;;;;;;;;;;
+
+;; implementation details for #'serially-alter-system
+(doto (intern (create-ns 'ctia.repl.system-var) 'system)
+  ;; set root binding of var to nil only once
+  (alter-var-root 
+    #(if (instance? clojure.lang.Var$Unbound %)
+       nil
+       %)))
+(doto (intern 'ctia.repl.system-var 'semaphore)
+  (alter-var-root #(if (instance? clojure.lang.Var$Unbound %)
+                     (java.util.concurrent.Semaphore. 1)
+                     %)))
+
+(defn current-app
+  "Returns the current app, or nil."
+  []
+  ctia.repl.system-var/system)
+
+(defmacro serially-alter-system
+  "Alters the current app (the 'system'), except throws if parallelism is
+  detected during swap.
+  
+  Implementation is robust to namespace refreshes by defining a
+  semaphore in a namespace that is unlikely to be refreshed. This
+  is why we don't simply defonce the semaphore in this namespace."
+  [f & args]
+  `(let [^java.util.concurrent.Semaphore
+         ;; interned above
+         s# ctia.repl.system-var/semaphore
+         has-lock# (.tryAcquire s#)]
+     (try (if has-lock#
+            (alter-var-root #'ctia.repl.system-var/system
+                            ;; `constantly` to remove side effects
+                            (constantly
+                              (~f (current-app) ~@args)))
+            (throw (ex-info "Lifecycle management parallelism!"
+                            {})))
+          (finally
+            (when has-lock#
+              (.release s#))))))
+
+(defn start
+  "Starts CTIA with given config and services, otherwise defaults
+  to the same configuration as #'init/start-ctia."
+  [& {:keys [config services] :as m}]
+  (serially-alter-system 
+    (fn [app]
+      (println "Starting CTIA...")
+      (if app
+        (do (println "CTIA already started!")
+            app)
+        (init/start-ctia! m)))))
+
+(defn stop
+  "Stops CTIA."
+  []
+  (serially-alter-system
+    (fn [app]
+      (println "Stopping CTIA...")
+      (if app
+        (app/stop app)
+        (println "CTIA already stopped!"))
+      nil)))
+
+(defn go
+  "Restarts CTIA. Same args as #'start."
+  [& {:keys [config services] :as m}]
+  (serially-alter-system
+    (fn [app]
+      (println "Restarting CTIA...")
+      (some-> app app/stop)
+      (init/start-ctia! m))))
+
+;;;;;;;;;;;;;;;;;;;;;;;
+;; Helpers
+;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn- judgement-search-url
   ([]
