@@ -5,7 +5,8 @@
             [ctia.init :as init]
             [ctia.properties :as p]
             [ctim.schemas.vocabularies :as vocab]
-            [puppetlabs.trapperkeeper.app :as app]))
+            [puppetlabs.trapperkeeper.app :as app]
+            [schema.core :as s]))
 
 (set! *warn-on-reflection* true)
 
@@ -13,73 +14,73 @@
 ;; Lifecycle management
 ;;;;;;;;;;;;;;;;;;;;;;;
 
-;; implementation details for #'serially-alter-system
-(doto (intern (create-ns 'ctia.repl.system-var) 'system)
-  ;; set root binding of var to nil only once
-  (alter-var-root 
-    #(if (instance? clojure.lang.Var$Unbound %)
-       nil
-       %)))
-(doto (intern 'ctia.repl.system-var 'semaphore)
-  (alter-var-root #(if (instance? clojure.lang.Var$Unbound %)
-                     (java.util.concurrent.Semaphore. 1)
-                     %)))
+;; initialize #'ctia.repl.no-reload/system-state
+(s/validate
+  {:app s/Any ;; nil or a running App
+   ;; coordination mechanism for #'serially-alter-app
+   :semaphore java.util.concurrent.Semaphore}
+  (-> (create-ns 'ctia.repl.no-reload)
+      (intern 'system-state)
+      (alter-var-root 
+        #(if (map? %)
+           ;; set root binding exactly once
+           %
+           {:app nil
+            :semaphore (java.util.concurrent.Semaphore. 1)}))))
+
+(defn serially-alter-app
+  "Alters the current app, except throws if parallelism is
+  detected during swap.
+  
+  Implementation is robust to namespace refreshes by defining a
+  semaphore in a namespace that is unlikely to be refreshed."
+  [f & args]
+  (let [{^java.util.concurrent.Semaphore
+         s :semaphore} ctia.repl.no-reload/system-state
+        has-lock (.tryAcquire s)]
+    (try (if has-lock
+           (:app
+             (alter-var-root #'ctia.repl.no-reload/system-state
+                             ;; `constantly` to remove side effects
+                             (constantly
+                               (update ctia.repl.no-reload/system-state
+                                       :app #(apply f % args)))))
+           (throw (ex-info "Lifecycle management parallelism!"
+                           {})))
+         (finally
+           (when has-lock
+             (.release s))))))
 
 (defn current-app
   "Returns the current app, or nil."
   []
-  ctia.repl.system-var/system)
-
-(defmacro serially-alter-system
-  "Alters the current app (the 'system'), except throws if parallelism is
-  detected during swap.
-  
-  Implementation is robust to namespace refreshes by defining a
-  semaphore in a namespace that is unlikely to be refreshed. This
-  is why we don't simply defonce the semaphore in this namespace."
-  [f & args]
-  `(let [^java.util.concurrent.Semaphore
-         ;; interned above
-         s# ctia.repl.system-var/semaphore
-         has-lock# (.tryAcquire s#)]
-     (try (if has-lock#
-            (alter-var-root #'ctia.repl.system-var/system
-                            ;; `constantly` to remove side effects
-                            (constantly
-                              (~f (current-app) ~@args)))
-            (throw (ex-info "Lifecycle management parallelism!"
-                            {})))
-          (finally
-            (when has-lock#
-              (.release s#))))))
+  (:app ctia.repl.no-reload/system-state))
 
 (defn start
   "Starts CTIA with given config and services, otherwise defaults
   to the same configuration as #'init/start-ctia."
   [& {:keys [config services] :as m}]
-  (serially-alter-system 
+  (serially-alter-app 
     (fn [app]
       (println "Starting CTIA...")
       (if app
-        (do (println "CTIA already started!")
+        (do (println "CTIA already started! Use (go ...) to restart")
             app)
         (init/start-ctia! m)))))
 
 (defn stop
   "Stops CTIA."
   []
-  (serially-alter-system
+  (serially-alter-app
     (fn [app]
       (println "Stopping CTIA...")
-      (if app
-        (app/stop app)
-        (println "CTIA already stopped!"))
+      (some-> app app/stop)
       nil)))
 
 (defn go
   "Restarts CTIA. Same args as #'start."
   [& {:keys [config services] :as m}]
-  (serially-alter-system
+  (serially-alter-app
     (fn [app]
       (println "Restarting CTIA...")
       (some-> app app/stop)

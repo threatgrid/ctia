@@ -23,6 +23,7 @@
    [ctia.graphql-named-type-registry-service :as graphql-registry-svc]
    [ctia.flows.hooks-service :as hooks-svc]
    [ctia.http.server-service :as http-server-svc]
+   [puppetlabs.trapperkeeper.app :as app]
    [puppetlabs.trapperkeeper.core :as tk]))
 
 (defn log-properties
@@ -79,7 +80,8 @@
   [{:keys [services config]}]
   (validate-entities)
   (log-properties config)
-  (tk/boot-services-with-config services config))
+  (-> (tk/boot-services-with-config services config)
+      app/check-for-errors!))
 
 (defn start-ctia!
   "Does the heavy lifting for ctia.main (ie entry point that isn't a class).
