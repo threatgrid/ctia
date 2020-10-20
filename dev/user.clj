@@ -22,7 +22,7 @@
 (s/validate
   {:app s/Any ;; nil or a running App
    ;; coordination mechanism for #'serially-alter-app
-   :semaphore java.util.concurrent.Semaphore}
+   :lock java.util.concurrent.locks.Lock}
   (-> (create-ns 'ctia.repl.no-reload)
       (intern 'system-state)
       (alter-var-root 
@@ -30,33 +30,39 @@
            ;; set root binding exactly once
            %
            {:app nil
-            :semaphore (java.util.concurrent.Semaphore. 1)}))))
+            :lock (java.util.concurrent.locks.ReentrantLock.)}))))
 
-;; avoids #'locking and private vars to be robust in the presence of code reloading
+(defn ^:private get-system-state-var []
+  {:post [(var? %)]}
+  (resolve 'ctia.repl.no-reload/system-state))
+
+;; we want all definitions of #'serially-alter-app to share the same lock,
+;; so we :lock in the system state. this robustly handles the case where
+;; #'serially-alter-app is reloaded while we're calling it.
 (defn serially-alter-app
   "Alters the current app, except throws if more than 1 thread
   attempts to alter it simultaneously."
   [f & args]
-  (let [{^java.util.concurrent.Semaphore
-         s :semaphore} ctia.repl.no-reload/system-state
-        has-lock (.tryAcquire s)]
+  (let [system-state-var (get-system-state-var)
+        {:keys [^java.util.concurrent.locks.Lock lock]} @system-state-var
+        has-lock (.tryLock lock)]
     (try (if has-lock
            (:app
-             (alter-var-root #'ctia.repl.no-reload/system-state
+             (alter-var-root system-state-var
                              ;; `constantly` to remove side effects
                              (constantly
-                               (update ctia.repl.no-reload/system-state
+                               (update @system-state-var
                                        :app #(apply f % args)))))
            (throw (ex-info "Lifecycle management parallelism!"
                            {})))
          (finally
            (when has-lock
-             (.release s))))))
+             (.unlock lock))))))
 
 (defn current-app
   "Returns the current app, or nil."
   []
-  (:app ctia.repl.no-reload/system-state))
+  (:app @(get-system-state-var)))
 
 (defn start
   "Starts CTIA with given config and services, otherwise defaults
