@@ -230,9 +230,9 @@
             
             ; circleci.test
             ;"test" ["run" "-m" "circleci.test/dir" :project/test-paths]
-            "test" ["trampoline"
-                    "with-profile" "+test" ;https://github.com/circleci/circleci.test/issues/13
-                    "run" "-m" "ctia.dev.split-tests/dir" :project/test-paths]
+            "split-test" ["trampoline"
+                          "with-profile" "+test" ;https://github.com/circleci/circleci.test/issues/13
+                          "run" "-m" "ctia.dev.split-tests/dir" :project/test-paths]
             "tests" ["run" "-m" "circleci.test"]
             ;"retest" ["run" "-m" "circleci.test.retest"]
             })

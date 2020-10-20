@@ -13,7 +13,8 @@
   {:pre [(integer? n)]
    :post [(or (empty? %)
               (let [fc (count (first %))]
-                (every? #{fc (dec fc)} (map count %))))]}
+                (every? #{fc (dec fc)} (map count %))))
+          (= coll (apply concat %))]}
   ;TODO make lazier (use partition with overlapping steps to iterate
   ; over `indices`)
   (let [coll (vec coll)
@@ -90,7 +91,7 @@
              (println "[ctia.dev.split-tests] Running all tests")
              (do 
                (println "[ctia.dev.split-tests] Splitting tests. Reproduce locally with:")
-               (printf "[ctia.dev.split-tests] $ CTIA_SPLIT_TESTS=[%s,%s] lein test %s\n"
+               (printf "[ctia.dev.split-tests] $ CTIA_SPLIT_TESTS=[%s,%s] lein split-test %s\n"
                        this-split
                        total-splits
                        selector-str)
