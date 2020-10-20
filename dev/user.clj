@@ -14,6 +14,10 @@
 ;; Lifecycle management
 ;;;;;;;;;;;;;;;;;;;;;;;
 
+;; To avoid losing the current system state, we manually
+;; intern a var in some namespace that is unlikely to be
+;; reloaded.
+
 ;; initialize #'ctia.repl.no-reload/system-state
 (s/validate
   {:app s/Any ;; nil or a running App
@@ -28,12 +32,10 @@
            {:app nil
             :semaphore (java.util.concurrent.Semaphore. 1)}))))
 
+;; avoids #'locking and private vars to be robust in the presence of code reloading
 (defn serially-alter-app
-  "Alters the current app, except throws if parallelism is
-  detected during swap.
-  
-  Implementation is robust to namespace refreshes by defining a
-  semaphore in a namespace that is unlikely to be refreshed."
+  "Alters the current app, except throws if more than 1 thread
+  attempts to alter it simultaneously."
   [f & args]
   (let [{^java.util.concurrent.Semaphore
          s :semaphore} ctia.repl.no-reload/system-state
