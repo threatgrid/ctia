@@ -23,10 +23,7 @@
                       (repeatedly 10
                                   #(str "https://cisco.com/" (UUID/randomUUID))))
                 (assert "Must define cases"))
-          services (doto (not-empty
-                           (map vals [(threatgrid-auth-whoami-url-services)
-                                      (threatgrid-auth-services)]))
-                     (assert "Must define cases"))]
+          :let [services (vals (threatgrid-auth-whoami-url-services))]]
     (testing ":whoami-url configuration corresponds to (get-whoami-url)"
       (with-app-with-config app services
         {:ctia {:auth {:threatgrid {:whoami-url url}}}}
