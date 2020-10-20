@@ -104,7 +104,6 @@
    ;; trapperkeeper init
    (let [config (or config
                     (p/build-init-config))]
-     (start-ctia!* {:services (vals
-                                (or services-map
-                                    (default-services config)))
+     (start-ctia!* {:services (or services
+                                  (vals (default-services config)))
                     :config config}))))
