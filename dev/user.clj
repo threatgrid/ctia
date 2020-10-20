@@ -32,12 +32,12 @@
            {:app nil
             :lock (java.util.concurrent.locks.ReentrantLock.)}))))
 
-(defn ^:private get-system-state-var []
+(defn get-system-state-var []
   {:post [(var? %)]}
   (resolve 'ctia.repl.no-reload/system-state))
 
 ;; we want all definitions of #'serially-alter-app to share the same lock,
-;; so we :lock in the system state. this robustly handles the case where
+;; so we use :lock in the system state. this robustly handles the case where
 ;; #'serially-alter-app is reloaded while we're calling it.
 (defn serially-alter-app
   "Alters the current app, except throws if more than 1 thread
