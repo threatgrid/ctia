@@ -6,7 +6,7 @@
             [ctia.properties :as p]
             [ctia.test-helpers
              [core :as helpers :refer [url-id]]
-             [http :refer [assert-post]]
+             [http :refer [app->HTTPShowServices assert-post]]
              [pagination :refer [pagination-test
                                  pagination-test-no-sort]]
              [store :refer [test-for-each-store-with-app]]]
@@ -22,13 +22,13 @@
    (fn [app]
      (let [{:keys [get-in-config]} (helpers/get-service-map app :ConfigService)
 
-           http-show (get-in-config [:ctia :http :show])
+           http-show (p/get-http-show (app->HTTPShowServices app))
            observable {:type "ip"
                        :value "1.2.3.4"}
            title "test"
            new-indicators (->> (csg/sample (cs/gen :new-indicator/map 5))
                                (map #(assoc % :title title))
-                               (map #(assoc % :id (url-id :indicator get-in-config))))
+                               (map #(assoc % :id (url-id :indicator (app->HTTPShowServices app)))))
            created-indicators (map #(assert-post app "ctia/indicator" %)
                                    new-indicators)
            new-judgements (->> (csg/sample (cs/gen :new-judgement/map) 5)
@@ -36,12 +36,12 @@
                                             :observable observable
                                             :disposition 5
                                             :disposition_name "Unknown"))
-                               (map #(assoc % :id (url-id :judgement get-in-config))))
+                               (map #(assoc % :id (url-id :judgement (app->HTTPShowServices app)))))
            new-sightings (->> (csg/sample (cs/gen :new-sighting/map) 5)
                               (map #(-> (assoc %
                                                :observables [observable])
                                         (dissoc % :relations :data)))
-                              (map #(assoc % :id (url-id :sighting get-in-config))))
+                              (map #(assoc % :id (url-id :sighting (app->HTTPShowServices app)))))
            route-pref (str "ctia/" (:type observable) "/" (:value observable))]
 
        (testing "setup: create sightings and their relationships with indicators"

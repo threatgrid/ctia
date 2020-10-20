@@ -6,6 +6,7 @@
              [auth :refer [all-capabilities]]
              [core :as helpers :refer [GET make-id POST]]
              [fake-whoami-service :as whoami-helpers]
+             [http :refer [app->HTTPShowServices]]
              [store :refer [test-for-each-store-with-app]]]
             [ctim.domain.id :as id]))
 
@@ -22,8 +23,8 @@
                                          "foogroup"
                                          "user")
 
-     (let [{:keys [get-in-config]} (helpers/get-service-map app :ConfigService)
-           make-id #(make-id % get-in-config)
+     (let [make-id #(make-id % (app->HTTPShowServices app))
+
            sighting-1-id (make-id :sighting)
            sighting-2-id (make-id :sighting)
            sighting-3-id (make-id :sighting)

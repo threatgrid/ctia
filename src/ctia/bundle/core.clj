@@ -325,14 +325,14 @@
    (select-keys bundle
                 bundle-entity-keys)))
 
-(defn local-entity?
+(s/defn local-entity?
   "Returns true if this entity'ID is hosted by this CTIA instance,
    false otherwise"
-  [id get-in-config]
+  [id services :- HTTPShowServices]
   (if (seq id)
     (if (id/long-id? id)
       (let [id-rec (id/long-id->id id)
-            this-host (get-in-config [:ctia :http :show :hostname])]
+            this-host (:hostname (p/get-http-show services))]
         (= (:hostname id-rec) this-host))
       true)
     false))
@@ -346,14 +346,13 @@
 (s/defn fetch-relationship-targets
   "given relationships, fetch all related objects"
   [relationships identity-map
-   {{:keys [get-in-config]} :ConfigService
-    :as services} :- APIHandlerServices]
+   services :- APIHandlerServices]
   (let [all-ids (->> relationships
                      (map (fn [{:keys [target_ref source_ref]}]
                             [target_ref source_ref]))
                      flatten
                      set
-                     (filter #(local-entity? % get-in-config))
+                     (filter #(local-entity? % services))
                      set)
         by-type (dissoc (group-by
                          #(ent/long-id->entity-type %) all-ids) nil)

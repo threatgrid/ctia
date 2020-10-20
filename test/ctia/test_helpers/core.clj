@@ -18,6 +18,7 @@
             [ctia.auth.allow-all :as aa]
             [ctia.encryption :as encryption]
             [ctia.flows.crud :as crud]
+            [ctia.schemas.core :refer [HTTPShowServices]]
             [ctim.domain.id :as id]
             [ctim.generators.common :as cgc]
             [flanders
@@ -383,13 +384,13 @@
   (with-redefs [gen/vector cgc/vector]
     (t)))
 
-(defn make-id
+(s/defn make-id
   "Make a long style ID using CTIA code (eg with a random UUID).
   Returns an ID object."
-  [type-kw get-in-config]
+  [type-kw services :- HTTPShowServices]
   (id/->id type-kw
            (crud/make-id (name type-kw))
-           (get-in-config [:ctia :http :show])))
+           (p/get-http-show services)))
 
 (defn entity->short-id
   [entity]
@@ -397,14 +398,14 @@
       id/long-id->id
       :short-id))
 
-(defn url-id
-  ([type-kw get-in-config]
-   (url-id (crud/make-id (name type-kw)) type-kw get-in-config))
-  ([short-id type-kw get-in-config]
+(s/defn url-id
+  ([type-kw services :- HTTPShowServices]
+   (url-id (crud/make-id (name type-kw)) type-kw services))
+  ([short-id type-kw services :- HTTPShowServices]
    (id/long-id
     (id/short-id->id (name type-kw)
                      short-id
-                     (get-in-config [:ctia :http :show])))))
+                     (p/get-http-show services)))))
 
 (def zero-uuid "00000000-0000-0000-0000-000000000000")
 

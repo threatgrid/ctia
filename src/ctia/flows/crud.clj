@@ -12,8 +12,10 @@
             [ctia.domain
              [access-control :refer [allowed-tlp? allowed-tlps]]
              [entities :refer [un-store]]]
+            [ctia.properties :as p]
             [ctia.schemas.core :refer [APIHandlerServices
                                        APIHandlerServices->RealizeFnServices
+                                       HTTPShowServices
                                        RealizeFn
                                        lift-realize-fn-with-context
                                        TempIDs]]
@@ -56,16 +58,16 @@
   (when (seq id)
     (id/str->short-id id)))
 
-(defn- find-checked-id
+(s/defn ^:private find-checked-id
   "Like find-id above, but checks that the hostname in the ID (if it
   is a long ID) is the local server hostname.  Throws bad-request! on
   mismatch."
   [{id :id, :as entity}
-   get-in-config]
+   services :- HTTPShowServices]
   (when (seq id)
     (if (id/long-id? id)
       (let [id-rec (id/long-id->id id)
-            this-host (get-in-config [:ctia :http :show :hostname])]
+            this-host (:hostname (p/get-http-show services))]
         (if (= (:hostname id-rec) this-host)
           (:short-id id-rec)
           (http-response/bad-request!
@@ -86,10 +88,10 @@
   [{identity-obj :identity
     :keys [entity-type prev-entity tempids]} :- FlowMap
    entity :- {s/Keyword s/Any}
-   get-in-config]
+   services :- HTTPShowServices]
   (or (find-id prev-entity)
       (get tempids (:id entity))
-      (when-let [entity-id (find-checked-id entity get-in-config)]
+      (when-let [entity-id (find-checked-id entity services)]
         (when-not (auth/capable? identity-obj :specify-id)
           (http-response/forbidden!
            {:error "Missing capability to specify entity ID"
@@ -147,11 +149,10 @@
     (update fm :tempids (fnil into {}) newtempids)))
 
 (s/defn ^:private realize-entities :- FlowMap
-  [{{{:keys [get-in-config]} :ConfigService
-     :as services} :services
-    :keys [entities
+  [{:keys [entities
            flow-type
            identity
+           services
            tempids
            prev-entity] :as fm} :- FlowMap]
   (let [login (auth/login identity)
@@ -164,7 +165,7 @@
            :entities
            (doall
             (for [entity entities
-                  :let [entity-id (find-entity-id fm entity get-in-config)]]
+                  :let [entity-id (find-entity-id fm entity services)]]
               (cond
                 (:error entity) entity
                 (:error entity-id) entity-id
