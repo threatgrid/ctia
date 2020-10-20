@@ -120,6 +120,13 @@ docker-compose -f containers/dev/docker-compose.yml up --force-recreate --remove
 In particular, this resets ElasticSearch indices, which cannot
 be created more than once.
 
+### Local workflow
+
+To start CTIA locally, use `./scripts/run`.
+
+For a REPL workflow, run `lein repl`. Use `(start)` to start CTIA,
+`(stop)` to stop it, and `(go)` to restart it.
+
 ### Testing and CI
 
 All PRs must pass `lein test` with no fails for PRs to be accepted.
