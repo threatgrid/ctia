@@ -206,7 +206,8 @@
                               ["Welcome to CTIA!"
                                " (go)    => start or restart CTIA"
                                " (start) => start CTIA, if not already started"
-                               " (stop)  => stop CTIA, if not already stopped"]))}
+                               " (stop)  => stop CTIA, if not already stopped"
+                               " (current-app) => get current app, or nil"]))}
   :middleware [lein-git-down.plugin/inject-properties]
   ;; lein-git-down config
   :repositories [["public-github" {:url "git://github.com"}]
