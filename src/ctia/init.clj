@@ -105,5 +105,5 @@
    (let [config (or config
                     (p/build-init-config))]
      (start-ctia!* {:services (or services
-                                  (vals (default-services config)))
+                                  (vals (default-services-map config)))
                     :config config}))))
