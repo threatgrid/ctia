@@ -13,13 +13,17 @@
             [schema-tools.core :as st]
             [schema.core :as s :refer [Bool Str]]))
 
+(s/defschema Port
+  "A port number"
+  (s/constrained s/Int pos?))
+
 (s/defschema APIHandlerServices
   "Maps of services available to routes"
   {:ConfigService {:get-config (s/=> s/Any s/Any)
                    :get-in-config (s/=>* s/Any
                                          [[s/Any]]
                                          [[s/Any] s/Any])}
-   :CTIAHTTPServerService {:get-port (s/=> (s/constrained s/Int pos?))
+   :CTIAHTTPServerService {:get-port (s/=> Port)
                            :get-graphql (s/=> graphql.GraphQL)}
    :HooksService {:apply-hooks (s/pred ifn?) ;;keyword varargs
                   :apply-event-hooks (s/=> s/Any s/Any)}
@@ -38,7 +42,7 @@
                                          [[s/Any]]
                                          [[s/Any] s/Any])
                    s/Keyword s/Any}
-   :CTIAHTTPServerService {:get-port (s/=> (s/constrained s/Int pos?))
+   :CTIAHTTPServerService {:get-port (s/=> Port)
                            s/Keyword s/Any}
    s/Keyword s/Any})
 
@@ -59,7 +63,7 @@
   {:ConfigService {:get-in-config (s/=>* s/Any
                                          [[s/Any]]
                                          [[s/Any] s/Any])}
-   :CTIAHTTPServerService {:get-port (s/=> (s/constrained s/Int pos?))}
+   :CTIAHTTPServerService {:get-port (s/=> Port)}
    :StoreService {:read-store (s/pred ifn?)} ;;varags
    :GraphQLNamedTypeRegistryService
    {:get-or-update-named-type-registry

@@ -18,7 +18,7 @@
             [ctia.auth.allow-all :as aa]
             [ctia.encryption :as encryption]
             [ctia.flows.crud :as crud]
-            [ctia.schemas.core :refer [HTTPShowServices]]
+            [ctia.schemas.core :refer [HTTPShowServices Port]]
             [ctim.domain.id :as id]
             [ctim.generators.common :as cgc]
             [flanders
@@ -310,7 +310,7 @@
                 (let [~app (get-current-app)]
                   ~@body)))))))
 
-(s/defn get-http-port :- (s/constrained s/Int pos?)
+(s/defn get-http-port :- Port
   [app]
   (let [{{:keys [get-port]} :CTIAHTTPServerService} (app/service-graph app)]
     (get-port)))

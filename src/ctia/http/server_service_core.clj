@@ -3,6 +3,7 @@
             [ctia.http.server :refer [new-jetty-instance]]
             [ctia.schemas.core :refer [APIHandlerServices
                                        APIHandlerServices->RealizeFnServices
+                                       Port
                                        resolve-with-rt-ctx]]
             [clojure.tools.logging :as log]
             [schema.core :as s]
@@ -14,7 +15,7 @@
   {:post [(instance? GraphQL %)]}
   graphql)
 
-(s/defn ^:private server->port :- (s/constrained s/Int pos?)
+(s/defn ^:private server->port :- Port
   [server :- Server]
   (-> server
       .getURI
@@ -23,8 +24,7 @@
 (s/defn start [context
                http-config
                services :- (-> APIHandlerServices
-                               (st/dissoc-in [:CTIAHTTPServerService :get-port])
-                               (st/dissoc-in [:CTIAHTTPServerService :get-graphql]))]
+                               (st/dissoc :CTIAHTTPServerService))]
   (let [_ (log/info "Starting HTTP server...")
         [server graphql] (let [graphql-prm (promise)
                                server-prm (promise)
@@ -50,7 +50,7 @@
   (some-> server .stop)
   (dissoc context :server :graphql))
 
-(s/defn get-port :- s/Int
+(s/defn get-port :- Port
   [{:keys [server] :as context}]
   (when-not server
     (throw (ex-info "Server not started!" {:context context})))

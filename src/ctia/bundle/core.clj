@@ -15,7 +15,7 @@
    [ctia.bulk.core :as bulk]
    [ctia.bundle.schemas
     :refer
-    [BundleImportData BundleImportResult EntityImportData]]
+    [BundleImportData BundleImportResult EntityImportData FindByExternalIdsServices]]
    [ctia.domain.entities :as ent :refer [with-long-id]]
    [ctia.schemas.core :refer [APIHandlerServices HTTPShowServices NewBundle TempIDs]]
    [ctim.domain.id :as id]
@@ -93,11 +93,6 @@
       (if next-page
         (recur remaining-ext-ids acc-entities)
         acc-entities))))
-
-(s/defschema FindByExternalIdsServices
-  {:StoreService {:read-store (s/pred ifn?)
-                  s/Keyword s/Any}
-   s/Keyword s/Any})
 
 (s/defn find-by-external-ids
   [import-data entity-type auth-identity
