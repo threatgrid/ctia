@@ -30,7 +30,10 @@
                                            s/Str
                                            (s/=> graphql.schema.GraphQLType))}
    :IEncryption {:encrypt (s/=> s/Any s/Any)
-                 :decrypt (s/=> s/Any s/Any)}})
+                 :decrypt (s/=> s/Any s/Any)}
+   :FeaturesService {:disabled? (s/=> s/Any s/Any)
+                     :enabled? (s/=> s/Any s/Any)
+                     :feature-flags (s/=> s/Any s/Any)}})
 
 (s/defschema DelayedRoutes
   "Function taking a map of services and returning routes

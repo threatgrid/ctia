@@ -5,6 +5,7 @@
             [ctia.entity.feed :refer [feed-view-routes]]
             [ctia.entity.relationship :refer [incident-link-route]]
             [ctia.schemas.core :refer [APIHandlerServices]]
+            [compojure.core]
             [compojure.api
              [core :refer [middleware]]
              [routes :as api-routes]
@@ -33,7 +34,8 @@
             [ctia.status.routes :refer [status-routes]]
             [ring.middleware.not-modified :refer [wrap-not-modified]]
             [ring.util.http-response :refer [ok]]
-            [schema.core :as s]))
+            [schema.core :as s]
+            [puppetlabs.trapperkeeper.app :as tk-app]))
 
 (def api-description
   "A Threat Intelligence API service
@@ -78,6 +80,11 @@
     (assert services->routes (str "Missing :services->routes for " (:entity entity)))
     (services->routes services-map)))
 
+(defn- entity-enabled?
+  [entity
+   {{:keys [enabled?]} :FeaturesService}]
+  (enabled? entity))
+
 (defmacro entity-routes
   [entities services-map]
   (let [gsm (gensym 'services-map)]
@@ -85,10 +92,11 @@
      (compojure.api.sweet/routes
       ~@(for [entity (remove :no-api?
                              (vals (eval entities)))]
-          `(context
-            ~(:route-context entity) []
-            :tags ~(:tags entity)
-            (entity->routes (~(:entity entity) entities) ~gsm)))))))
+          `(when (entity-enabled? ~(:entity entity) ~gsm)
+             (context
+                 ~(:route-context entity) []
+               :tags ~(:tags entity)
+               (entity->routes (~(:entity entity) entities) ~gsm))))))))
 
 (def exception-handlers
   {:compojure.api.exception/request-parsing ex/request-parsing-handler
@@ -101,36 +109,41 @@
    :spec-validation-error ex/spec-validation-error-handler
    :compojure.api.exception/default ex/default-error-handler})
 
-(def api-tags
-  [{:name "Actor"               :description "Actor operations"}
-   {:name "Asset"               :description "Asset operations"}
-   {:name "Asset Mapping"       :description "Asset Mapping operations"}
-   {:name "Asset Properties"    :description "Asset Properties operations"}
-   {:name "Attack Pattern"      :description "Attack Pattern operations"}
-   {:name "Bundle"              :description "Bundle operations"}
-   {:name "Campaign"            :description "Campaign operations"}
-   {:name "COA"                 :description "COA operations"}
-   {:name "DataTable"           :description "DataTable operations"}
-   {:name "Event"               :description "Events operations"}
-   {:name "Feed"                :description "Feed operations"}
-   {:name "Feedback"            :description "Feedback operations"}
-   {:name "GraphQL"             :description "GraphQL operations"}
-   {:name "Incident"            :description "Incident operations"}
-   {:name "Indicator"           :description "Indicator operations"}
-   {:name "Judgement"           :description "Judgement operations"}
-   {:name "Malware"             :description "Malware operations"}
-   {:name "Relationship"        :description "Relationship operations"}
-   {:name "Properties"          :description "Properties operations"}
-   {:name "Casebook"            :description "Casebook operations"}
-   {:name "Sighting"            :description "Sighting operations"}
-   {:name "Identity Assertion"  :description "Identity Assertion operations"}
-   {:name "Bulk"                :description "Bulk operations"}
-   {:name "Metrics"             :description "Performance Statistics"}
-   {:name "Target Record"       :description "Target Record operations"}
-   {:name "Tool"                :description "Tool operations"}
-   {:name "Verdict"             :description "Verdict operations"}
-   {:name "Status"              :description "Status Information"}
-   {:name "Version"             :description "Version Information"}])
+(s/defn api-tags
+  [{{:keys [enabled?]} :FeaturesService} :- APIHandlerServices]
+  (->>
+   [[:actor               "Actor"               "Actor operations"]
+    [:asset               "Asset"               "Asset operations"]
+    [:asset-mapping       "Asset Mapping"       "Asset Mapping operations"]
+    [:asset-properties    "Asset Properties"    "Asset Properties operations"]
+    [:attack-pattern      "Attack Pattern"      "Attack Pattern operations"]
+    [:bundle              "Bundle"              "Bundle operations"]
+    [:campaign            "Campaign"            "Campaign operations"]
+    [:coa                 "COA"                 "COA operations"]
+    [:datatable           "DataTable"           "DataTable operations"]
+    [:event               "Event"               "Events operations"]
+    [:feed                "Feed"                "Feed operations"]
+    [:feedback            "Feedback"            "Feedback operations"]
+    [:graphql             "GraphQL"             "GraphQL operations"]
+    [:incident            "Incident"            "Incident operations"]
+    [:indicator           "Indicator"           "Indicator operations"]
+    [:judgement           "Judgement"           "Judgement operations"]
+    [:malware             "Malware"             "Malware operations"]
+    [:relationship        "Relationship"        "Relationship operations"]
+    [:properties          "Properties"          "Properties operations"]
+    [:casebook            "Casebook"            "Casebook operations"]
+    [:sighting            "Sighting"            "Sighting operations"]
+    [:identity-assertion  "Identity Assertion"  "Identity Assertion operations"]
+    [:bulk                "Bulk"                "Bulk operations"]
+    [:metrics             "Metrics"             "Performance Statistics"]
+    [:target-record       "Target Record"       "Target Record operations"]
+    [:tool                "Tool"                "Tool operations"]
+    [:verdict             "Verdict"             "Verdict operations"]
+    [:status              "Status"              "Status Information"]
+    [:version             "Version"             "Version Information"]]
+   (mapv (fn [[k n desc]]
+           (when (enabled? k)
+             {:name n :description desc})))))
 
 (defn apply-oauth2-swagger-conf
   [swagger-base-conf
@@ -190,7 +203,7 @@
                                   :in "header"
                                   :name "Authorization"
                                   :description "Ex: Bearer \\<token\\>"}}
-                          :tags api-tags}}
+                          :tags (api-tags services)}}
             (:enabled oauth2)
             (apply-oauth2-swagger-conf
              oauth2))}
