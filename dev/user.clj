@@ -2,7 +2,101 @@
   (:require [cheshire.core :as json]
             [clj-http.client :as http]
             [clj-momo.lib.time :as time]
-            [ctim.schemas.vocabularies :as vocab]))
+            [ctia.init :as init]
+            [ctia.properties :as p]
+            [ctim.schemas.vocabularies :as vocab]
+            [puppetlabs.trapperkeeper.app :as app]
+            [schema.core :as s]))
+
+(set! *warn-on-reflection* true)
+
+;;;;;;;;;;;;;;;;;;;;;;;
+;; Lifecycle management
+;;;;;;;;;;;;;;;;;;;;;;;
+
+;; To avoid losing the current system state, we manually
+;; intern a var in some namespace that is unlikely to be
+;; reloaded.
+
+;; initialize #'ctia.repl.no-reload/system-state
+(s/validate
+  {:app s/Any ;; nil or a running App
+   ;; coordination mechanism for #'serially-alter-app
+   :lock java.util.concurrent.locks.Lock}
+  (-> (create-ns 'ctia.repl.no-reload)
+      (intern 'system-state)
+      (alter-var-root 
+        #(if (map? %)
+           ;; set root binding exactly once
+           %
+           {:app nil
+            :lock (java.util.concurrent.locks.ReentrantLock.)}))))
+
+(defn get-system-state-var []
+  {:post [(var? %)]}
+  (resolve 'ctia.repl.no-reload/system-state))
+
+;; we want all definitions of #'serially-alter-app to share the same lock,
+;; so we use :lock in the system state. this robustly handles the case where
+;; #'serially-alter-app is reloaded while we're calling it.
+(defn serially-alter-app
+  "Alters the current app, except throws if more than 1 thread
+  attempts to alter it simultaneously."
+  [f & args]
+  (let [system-state-var (get-system-state-var)
+        {:keys [^java.util.concurrent.locks.Lock lock]} @system-state-var
+        has-lock (.tryLock lock)]
+    (try (if has-lock
+           (:app
+             (alter-var-root system-state-var
+                             ;; `constantly` to remove side effects
+                             (constantly
+                               (update @system-state-var
+                                       :app #(apply f % args)))))
+           (throw (ex-info "Lifecycle management parallelism!"
+                           {})))
+         (finally
+           (when has-lock
+             (.unlock lock))))))
+
+(defn current-app
+  "Returns the current app, or nil."
+  []
+  (:app @(get-system-state-var)))
+
+(defn start
+  "Starts CTIA with given config and services, otherwise defaults
+  to the same configuration as #'init/start-ctia."
+  [& {:keys [config services] :as m}]
+  (serially-alter-app 
+    (fn [app]
+      (println "Starting CTIA...")
+      (if app
+        (do (println "CTIA already started! Use (go ...) to restart")
+            app)
+        (init/start-ctia! m)))))
+
+(defn stop
+  "Stops CTIA."
+  []
+  (serially-alter-app
+    (fn [app]
+      (println "Stopping CTIA...")
+      (some-> app app/stop)
+      nil)))
+
+(defn go
+  "Restarts CTIA. Same args as #'start."
+  [& {:keys [config services] :as m}]
+  (serially-alter-app
+    (fn [app]
+      (println "Restarting CTIA...")
+      (some-> app app/stop)
+      (init/start-ctia! m))))
+
+;;;;;;;;;;;;;;;;;;;;;;;
+;; Helpers
+;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn- judgement-search-url
   ([]

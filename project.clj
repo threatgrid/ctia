@@ -56,7 +56,7 @@
                  [metosin/schema-tools "0.12.2"]
                  [threatgrid/flanders "0.1.23"]
 
-                 [threatgrid/ctim "1.0.20"]
+                 [threatgrid/ctim "1.0.21"]
                  [threatgrid/clj-momo "0.3.5"]
                  [threatgrid/ductile "0.1.0"]
 
@@ -200,6 +200,14 @@
             [org.clojure/clojure ~clj-version] ;override perforate
             [perforate ~perforate-version]
             [reifyhealth/lein-git-down "0.3.5"]]
+  :repl-options {:welcome (println
+                            (clojure.string/join
+                              "\n"
+                              ["Welcome to CTIA!"
+                               " (go)    => start or restart CTIA"
+                               " (start) => start CTIA, if not already started"
+                               " (stop)  => stop CTIA, if not already stopped"
+                               " (current-app) => get current app, or nil"]))}
   :middleware [lein-git-down.plugin/inject-properties]
   ;; lein-git-down config
   :repositories [["public-github" {:url "git://github.com"}]

@@ -17,7 +17,8 @@
             [ctia.test-helpers.fake-whoami-service :as whoami-helpers]
             [ctia.test-helpers.fixtures :as fixt]
             [ctia.test-helpers.migration :refer [app->MigrationStoreServices]]
-            [ctim.domain.id :refer [long-id->id]])
+            [ctim.domain.id :refer [long-id->id]]
+            [schema.test :refer [validate-schemas]])
   (:import [java.util UUID]))
 
 (deftest prefixed-index-test
@@ -243,9 +244,8 @@
 
 (use-fixtures :once
   (join-fixtures [mth/fixture-schema-validation
-                  whoami-helpers/fixture-server
-                  whoami-helpers/fixture-reset-state
-                  es-helpers/fixture-properties:es-store]))
+                  es-helpers/fixture-properties:es-store
+                  validate-schemas]))
 
 (defn es-props [get-in-config]
   (get-in-config [:ctia :store :es]))
@@ -267,9 +267,7 @@
           (ductile.index/delete! (str (migration-index get-in-config) "*")))))))
 
 (use-fixtures :each
-  (join-fixtures [#(helpers/with-properties
-                     ["ctia.auth.type" "allow-all"]
-                     (helpers/fixture-ctia %))
+  (join-fixtures [helpers/fixture-ctia
                   es-helpers/fixture-delete-store-indexes
                   fixture-clean-migration]))
 
@@ -813,10 +811,6 @@
         {:keys [get-in-config]} (helpers/get-service-map app :ConfigService)
         services (app->MigrationStoreServices app)
 
-        _ (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
-                                              "foouser"
-                                              "foogroup"
-                                              "user")
         _ (POST-bulk app examples)
         _ (ductile.index/refresh! (es-conn get-in-config)) ;; ensure indices refresh
         [sighting1 sighting2] (:parsed-body (GET app
@@ -969,7 +963,7 @@
 (deftest target-store-properties-test
   (let [default-es-props {:host "localhost"
                           :port 9200
-                          :transport "http"
+                          :protocol :http
                           :indexname "ctia_default"
                           :replicas 1
                           :refresh_interval "1s"
@@ -985,7 +979,7 @@
 
         migration-cluster-props {:host "es7.iroh.site"
                                  :port 443
-                                 :transport "https"}
+                                 :protocol :https}
 
         target-store-props {:indexname "custom-target-indexname"
                             :shards 4

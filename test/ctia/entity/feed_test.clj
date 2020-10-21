@@ -132,9 +132,6 @@
   (join-fixtures [mth/fixture-schema-validation
                   whoami-helpers/fixture-server]))
 
-(use-fixtures :each
-  whoami-helpers/fixture-reset-state)
-
 (defn feed-view-tests [app feed-id feed]
   (testing "GET /ctia/feed/:id/view?s=:secret"
     (let [feed-view-url-txt (:feed_view_url feed)
@@ -211,7 +208,8 @@
                                 ["foogroup"]
                                 "user"
                                 all-capabilities)
-     (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
+     (whoami-helpers/set-whoami-response app
+                                         "45c1f5e3f05d0"
                                          "foouser"
                                          "foogroup"
                                          "user")
@@ -245,7 +243,8 @@
   (test-for-each-store-with-app
    (fn [app]
      (helpers/set-capabilities! app "foouser" ["foogroup"] "user" all-capabilities)
-     (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
+     (whoami-helpers/set-whoami-response app
+                                         "45c1f5e3f05d0"
                                          "foouser"
                                          "foogroup"
                                          "user")

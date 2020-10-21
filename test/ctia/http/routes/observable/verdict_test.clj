@@ -16,13 +16,12 @@
                                     helpers/fixture-properties:events-enabled
                                     whoami-helpers/fixture-server]))
 
-(use-fixtures :each whoami-helpers/fixture-reset-state)
-
 (deftest test-observable-verdict-route
   (test-for-each-store-with-app
    (fn [app]
      (helpers/set-capabilities! app "foouser" ["foogroup"] "user" all-capabilities)
-     (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
+     (whoami-helpers/set-whoami-response app
+                                         "45c1f5e3f05d0"
                                          "foouser"
                                          "foogroup"
                                          "user")
@@ -138,7 +137,8 @@
   (test-for-each-store-with-app
    (fn [app]
      (helpers/set-capabilities! app "foouser" ["foogroup"] "user" all-capabilities)
-     (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
+     (whoami-helpers/set-whoami-response app
+                                         "45c1f5e3f05d0"
                                          "foouser"
                                          "foogroup"
                                          "user")
@@ -208,7 +208,8 @@
   (test-for-each-store-with-app
    (fn [app]
      (helpers/set-capabilities! app "foouser" ["foogroup"] "user" all-capabilities)
-     (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
+     (whoami-helpers/set-whoami-response app
+                                         "45c1f5e3f05d0"
                                          "foouser"
                                          "foogroup"
                                          "user")
@@ -314,7 +315,8 @@
   (test-for-each-store-with-app
    (fn [app]
      (helpers/set-capabilities! app "foouser" ["foogroup"] "user" all-capabilities)
-     (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
+     (whoami-helpers/set-whoami-response app
+                                         "45c1f5e3f05d0"
                                          "foouser"
                                          "foogroup"
                                          "user")
@@ -488,17 +490,20 @@
      (helpers/set-capabilities! app "baruser" ["bargroup"] "user" all-capabilities)
      (helpers/set-capabilities! app "foobaruser" ["bargroup"] "user" all-capabilities)
 
-     (whoami-helpers/set-whoami-response "foouser"
+     (whoami-helpers/set-whoami-response app
+                                         "foouser"
                                          "foouser"
                                          "foogroup"
                                          "user")
 
-     (whoami-helpers/set-whoami-response "baruser"
+     (whoami-helpers/set-whoami-response app
+                                         "baruser"
                                          "baruser"
                                          "bargroup"
                                          "user")
 
-     (whoami-helpers/set-whoami-response "foobaruser"
+     (whoami-helpers/set-whoami-response app
+                                         "foobaruser"
                                          "foobaruser"
                                          "bargroup"
                                          "user")

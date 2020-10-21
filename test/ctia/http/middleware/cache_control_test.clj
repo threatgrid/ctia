@@ -12,8 +12,7 @@
                                     es-helpers/fixture-properties:es-store
                                     whoami-helpers/fixture-server]))
 
-(use-fixtures :each (join-fixtures [whoami-helpers/fixture-reset-state
-                                    helpers/fixture-ctia]))
+(use-fixtures :each helpers/fixture-ctia)
 
 (defn get-actor [app actor-id headers]
   (select-keys (GET app
@@ -25,7 +24,8 @@
   (testing "Cache control with ETags"
     (let [app (helpers/get-current-app)
           _ (helpers/set-capabilities! app "foouser" ["foogroup"] "user" all-capabilities)
-          _ (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
+          _ (whoami-helpers/set-whoami-response app
+                                                "45c1f5e3f05d0"
                                                 "foouser"
                                                 "foogroup"
                                                 "user")

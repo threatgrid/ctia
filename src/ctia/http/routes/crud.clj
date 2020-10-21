@@ -132,7 +132,7 @@
        (PUT "/:id" []
             :return entity-schema
             :body [entity-update new-schema {:description (format "an updated %s" capitalized)}]
-            :summary (format "Updates an %s" capitalized)
+            :summary (format "Updates an existing %s" capitalized)
             :query-params [{wait_for :- (describe s/Bool "wait for updated entity to be available for search") nil}]
             :path-params [id :- s/Str]
             :capabilities put-capabilities
@@ -222,7 +222,7 @@
                 :identity-map identity-map
                 (GET "/" []
                      :return search-schema
-                     :summary (format "Search for a %s using a Lucene/ES query string and field filters" capitalized)
+                     :summary (format "Search for %s entities using a Lucene/ES query string and field filters" capitalized)
                      :query [params search-q-params]
                      (-> (read-store
                           entity
@@ -249,7 +249,7 @@
                 :identity-map identity-map
                 (GET "/histogram" []
                      :return MetricResult
-                     :summary (format "Histogram for a %s field" capitalized)
+                     :summary (format "Histogram for some %s field" capitalized)
                      :query [params histogram-q-params]
                      (let [aggregate-on (keyword (:aggregate-on params))
                            search-q (search-query aggregate-on
@@ -267,7 +267,7 @@
                            ok)))
                 (GET "/topn" []
                      :return MetricResult
-                     :summary (format "Topn for a %s field" capitalized)
+                     :summary (format "Topn for some %s field" capitalized)
                      :query [params topn-q-params]
                      (let [aggregate-on (:aggregate-on params)
                            search-q (search-query date-field
@@ -285,7 +285,7 @@
                            ok)))
                 (GET "/cardinality" []
                      :return MetricResult
-                     :summary (format "Cardinality for a %s field" capitalized)
+                     :summary (format "Cardinality for some %s field" capitalized)
                      :query [params cardinality-q-params]
                      (let [aggregate-on (:aggregate-on params)
                            search-q (search-query date-field
@@ -303,7 +303,7 @@
                            ok)))))
      (GET "/:id" []
           :return (s/maybe get-schema)
-          :summary (format "Gets a %s by ID" entity-str)
+          :summary (format "Gets one %s by ID" capitalized)
           :path-params [id :- s/Str]
           :query [params get-params]
           :capabilities get-capabilities
@@ -324,7 +324,7 @@
              :no-doc hide-delete?
              :path-params [id :- s/Str]
              :query-params [{wait_for :- (describe s/Bool "wait for deleted entity to no more be available for search") nil}]
-             :summary (format "Deletes a %s" capitalized)
+             :summary (format "Deletes one %s" capitalized)
              :capabilities delete-capabilities
              :auth-identity identity
              :identity-map identity-map

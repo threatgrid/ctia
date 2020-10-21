@@ -267,7 +267,7 @@
       #{:es-store}
       (fn [app]
         (let [_ (helpers.core/set-capabilities! app "foouser" ["foogroup"] "user" all-capabilities)
-              _ (helpers.whoami/set-whoami-response "45c1f5e3f05d0" "foouser" "foogroup" "user")
+              _ (helpers.whoami/set-whoami-response app "45c1f5e3f05d0" "foouser" "foogroup" "user")
               docs (generate-n-entity metric-params 100)]
           (with-redefs [;; ensure from coercion in proper one year range
                         now (-> (tc/from-string "2020-12-31")

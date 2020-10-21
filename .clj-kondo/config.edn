@@ -1,0 +1,10 @@
+{:linters
+  {:unresolved-symbol
+   {:exclude [(puppetlabs.trapperkeeper.testutils.bootstrap/with-app-with-config [app])]}}
+ :lint-as {puppetlabs.trapperkeeper.core/defservice clj-kondo.lint-as/def-catch-all
+           compojure.api.core/GET clj-kondo.lint-as/def-catch-all
+           compojure.api.core/PATCH clj-kondo.lint-as/def-catch-all
+           compojure.api.core/POST clj-kondo.lint-as/def-catch-all
+           compojure.api.core/PUT clj-kondo.lint-as/def-catch-all
+           compojure.api.core/DELETE clj-kondo.lint-as/def-catch-all
+           compojure.api.core/context clj-kondo.lint-as/def-catch-all}}
