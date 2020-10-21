@@ -19,10 +19,8 @@
          {:IAuth sut/threatgrid-auth-service}))
 
 (deftest threatgrid-auth-whoami-url-service-test
-  (doseq [url (doto (not-empty
-                      (repeatedly 10
-                                  #(str "https://cisco.com/" (UUID/randomUUID))))
-                (assert "Must define cases"))
+  (doseq [url (repeatedly 10
+                          #(str "https://cisco.com/" (UUID/randomUUID)))
           :let [services (vals (threatgrid-auth-whoami-url-service-map))]]
     (testing ":whoami-url configuration corresponds to (get-whoami-url)"
       (with-app-with-config app services

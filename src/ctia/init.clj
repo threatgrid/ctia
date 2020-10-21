@@ -68,7 +68,7 @@
                              :requested-service type}))))]
     (merge-with
       (fn [l r]
-        (throw (ex-info "Conflict!" {:left l :right r})))
+        (throw (ex-info "Service graph conflict!" {:left l :right r})))
       auth-svc
       encryption-svc
       {:EventsService events-svc/events-service
