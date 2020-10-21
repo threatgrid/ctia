@@ -10,8 +10,6 @@
 (use-fixtures :once (join-fixtures [mth/fixture-schema-validation
                                     whoami-helpers/fixture-server]))
 
-(use-fixtures :each whoami-helpers/fixture-reset-state)
-
 (deftest test-version-routes
   (test-for-each-store-with-app
    (fn [app]

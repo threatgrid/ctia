@@ -23,8 +23,7 @@
 (use-fixtures :once mth/fixture-schema-validation)
 
 (use-fixtures :each (join-fixtures [helpers/fixture-properties:cors
-                                    whoami-helpers/fixture-server
-                                    whoami-helpers/fixture-reset-state]))
+                                    whoami-helpers/fixture-server]))
 
 (def new-judgement-1
   {:observable {:value "1.2.3.4"
@@ -53,8 +52,8 @@
       (fn [app]
         (helpers/set-capabilities! app "foouser" ["foogroup"] "user" all-capabilities)
         (helpers/set-capabilities! app "baruser" ["bargroup"] "user" #{})
-        (whoami-helpers/set-whoami-response "45c1f5e3f05d0" "foouser" "foogroup" "user")
-        (whoami-helpers/set-whoami-response "2222222222222" "baruser" "bargroup" "user")
+        (whoami-helpers/set-whoami-response app "45c1f5e3f05d0" "foouser" "foogroup" "user")
+        (whoami-helpers/set-whoami-response app "2222222222222" "baruser" "bargroup" "user")
         (testing "Headers"
           (let [{judgement :parsed-body
                  status :status
@@ -160,8 +159,8 @@
    (fn [app]
      (helpers/set-capabilities! app "foouser" ["foogroup"] "user" all-capabilities)
      (helpers/set-capabilities! app "baruser" ["bargroup"] "user" #{})
-     (whoami-helpers/set-whoami-response "45c1f5e3f05d0" "foouser" "foogroup" "user")
-     (whoami-helpers/set-whoami-response "2222222222222" "baruser" "bargroup" "user")
+     (whoami-helpers/set-whoami-response app "45c1f5e3f05d0" "foouser" "foogroup" "user")
+     (whoami-helpers/set-whoami-response app "2222222222222" "baruser" "bargroup" "user")
 
      (testing "POST /ctia/judgement"
        (let [{judgement :parsed-body

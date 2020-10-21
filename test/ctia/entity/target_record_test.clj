@@ -17,8 +17,6 @@
 (use-fixtures :once (join-fixtures [mth/fixture-schema-validation
                                     whoami-helpers/fixture-server]))
 
-(use-fixtures :each whoami-helpers/fixture-reset-state)
-
 (defn additional-tests [app _ target-record-sample]
   (testing "GET /ctia/target-record/search"
    (let [{:keys [get-in-config]} (helpers/get-service-map app :ConfigService)]
@@ -56,7 +54,7 @@
   (store/test-for-each-store-with-app
    (fn [app]
      (helpers/set-capabilities! app "foouser" ["foogroup"] "user" auth/all-capabilities)
-     (whoami-helpers/set-whoami-response http/api-key "foouser" "foogroup" "user")
+     (whoami-helpers/set-whoami-response app http/api-key "foouser" "foogroup" "user")
      (entity-crud-test
       {:app              app
        :entity           "target-record"
@@ -72,7 +70,8 @@
   (store/test-for-each-store-with-app
    (fn [app]
      (helpers/set-capabilities! app "foouser" ["foogroup"] "user" auth/all-capabilities)
-     (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
+     (whoami-helpers/set-whoami-response app
+                                         "45c1f5e3f05d0"
                                          "foouser"
                                          "foogroup"
                                          "user")

@@ -12,8 +12,6 @@
 (use-fixtures :once (join-fixtures [mth/fixture-schema-validation
                                     whoami-helpers/fixture-server]))
 
-(use-fixtures :each whoami-helpers/fixture-reset-state)
-
 (def ownership-data-fixture
   {:groups ["foogroup"]
    :owner "foouser"})
@@ -239,12 +237,13 @@
   (test-for-each-store-with-app
    (fn [app]
      (helpers/set-capabilities! app "foouser" ["foogroup"] "user" all-capabilities)
-     (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
+     (whoami-helpers/set-whoami-response app
+                                         "45c1f5e3f05d0"
                                          "foouser"
                                          "foogroup"
                                          "user")
      (helpers/set-capabilities! app "baruser" ["bargroup"] "user" #{})
-     (whoami-helpers/set-whoami-response "2222222222222" "baruser" "bargroup" "user")
+     (whoami-helpers/set-whoami-response app "2222222222222" "baruser" "bargroup" "user")
 
      (let [datamap (initialize-graphql-data app)
            indicator-1-id (get-in datamap [:indicator-1 :id])

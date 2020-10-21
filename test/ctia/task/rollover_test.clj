@@ -11,7 +11,6 @@
 
 (use-fixtures :once
   (join-fixtures [whoami-helpers/fixture-server
-                  whoami-helpers/fixture-reset-state
                   es-helpers/fixture-properties:es-store]))
 
 (use-fixtures :each

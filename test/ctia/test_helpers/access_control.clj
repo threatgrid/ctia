@@ -1085,15 +1085,18 @@
                                                                       "user"
                                                                       all-capabilities)
 
-                                           (whoami-helpers/set-whoami-response "player-1-token"
+                                           (whoami-helpers/set-whoami-response app
+                                                                               "player-1-token"
                                                                                "player1"
                                                                                "foogroup"
                                                                                "user")
-                                           (whoami-helpers/set-whoami-response "player-2-token"
+                                           (whoami-helpers/set-whoami-response app
+                                                                               "player-2-token"
                                                                                "player2"
                                                                                "bargroup"
                                                                                "user")
-                                           (whoami-helpers/set-whoami-response "player-3-token"
+                                           (whoami-helpers/set-whoami-response app
+                                                                               "player-3-token"
                                                                                "player3"
                                                                                "bargroup"
                                                                                "user"))]

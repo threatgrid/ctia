@@ -45,7 +45,6 @@
 (use-fixtures :once
   (join-fixtures [mth/fixture-schema-validation
                   whoami-helpers/fixture-server
-                  whoami-helpers/fixture-reset-state
                   es-helpers/fixture-properties:es-store]))
 
 (defn es-props [get-in-config]
@@ -214,7 +213,8 @@
                                  ["foogroup"]
                                  "user"
                                  all-capabilities)
-      (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
+      (whoami-helpers/set-whoami-response app
+                                          "45c1f5e3f05d0"
                                           "foouser"
                                           "foogroup"
                                           "user")
@@ -523,7 +523,8 @@
                                  ["foogroup"]
                                  "user"
                                  all-capabilities)
-      (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
+      (whoami-helpers/set-whoami-response app
+                                          "45c1f5e3f05d0"
                                           "foouser"
                                           "foogroup"
                                           "user")
@@ -574,7 +575,8 @@
                                ["foogroup"]
                                "user"
                                all-capabilities)
-    (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
+    (whoami-helpers/set-whoami-response app
+                                        "45c1f5e3f05d0"
                                         "foouser"
                                         "foogroup"
                                         "user")

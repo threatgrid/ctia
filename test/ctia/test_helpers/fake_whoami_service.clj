@@ -7,7 +7,10 @@
             [schema.core :as s]
             [ctia.auth :as ctia-auth]
             [ring.adapter.jetty :as jetty]
-            [ring.middleware.params :as params])
+            [ring.middleware.params :as params]
+            [puppetlabs.trapperkeeper.core :as tk]
+            [puppetlabs.trapperkeeper.services :refer [service-context]]
+            [puppetlabs.trapperkeeper.app :as app])
   (:import org.eclipse.jetty.server.Server))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -16,8 +19,7 @@
 ;;
 
 (defprotocol IFakeWhoAmIServer
-  (start-server [this])
-  (stop-server [this])
+  (get-port [this])
   (register-request [this request])
   (clear-requests [this])
   (register-token-response [this token response])
@@ -31,10 +33,11 @@
 ;; Fake server
 ;;
 
-(defn make-handler [fake-whoami-service]
+(defn make-handler [fake-whoami-service-promise]
   (fn [request]
-    (register-request fake-whoami-service request)
-    (let [api-key (get-in request [:params "api_key"])]
+    (let [fake-whoami-service @fake-whoami-service-promise
+          _ (register-request fake-whoami-service request)
+          api-key (get-in request [:params "api_key"])]
       (cond
         (nil? api-key)
         {:status 401
@@ -73,46 +76,60 @@
                            "login" login
                            "title" title}})})))))
 
-(defrecord FakeWhoAmIService [whoami-fn server requests url port token->response]
+(tk/defservice fake-whoami-service
   IFakeWhoAmIServer
-  (start-server [this]
-    (reset! server (jetty/run-jetty (params/wrap-params
-                                     (make-handler this))
-                                    {:port port
-                                     :min-threads 9
-                                     :max-threads 10
-                                     :join? false})))
-  (stop-server [_]
-    (swap! server (fn [^Server s]
-                    (if s (.stop s))
-                    nil)))
-  (register-request [_ request]
-    (swap! requests conj request))
-  (clear-requests [_]
-    (reset! requests []))
-  (register-token-response [_ token response]
-    (swap! token->response assoc token response))
-  (clear-token-responses [_]
-    (reset! token->response {}))
+  []
+  (init [_ context]
+        (let [this-promise (promise)]
+          (assoc context
+                 :requests (atom [])
+                 :token->response (atom {})
+                 :this-promise this-promise
+                 :server (jetty/run-jetty (params/wrap-params
+                                            (make-handler this-promise))
+                                          {;; any available port
+                                           :port 0
+                                           :min-threads 9
+                                           :max-threads 10
+                                           :join? false}))))
+  (start [this {:keys [this-promise] :as context}]
+         ;; deliver after initialization
+         (deliver this-promise this)
+         context)
+  (stop [_ {:keys [^Server server] :as context}]
+        (some-> server .stop)
+        (dissoc context :requests :token->response :server))
+  (get-port [this]
+    (let [{:keys [^Server server]} (service-context this)]
+      (-> (doto server
+            (assert "Server not started"))
+          .getURI .getPort)))
+  (register-request [this request]
+    (let [{:keys [requests]} (service-context this)]
+      (swap! requests conj request)))
+  (clear-requests [this]
+    (let [{:keys [requests]} (service-context this)]
+      (reset! requests [])))
+  (register-token-response [this token response]
+    (let [{:keys [token->response]} (service-context this)]
+      (swap! token->response assoc token response)))
+  (clear-token-responses [this]
+    (let [{:keys [token->response]} (service-context this)]
+      (reset! token->response {})))
   (clear-all [this]
     (clear-requests this)
     (clear-token-responses this))
-  (known-token? [_ token]
-    (contains? @token->response token))
-  (get-response [_ token]
-    (get @token->response token)))
+  (known-token? [this token]
+    (let [{:keys [token->response]} (service-context this)]
+      (contains? @token->response token)))
+  (get-response [this token]
+    (let [{:keys [token->response]} (service-context this)]
+      (get @token->response token))))
 
-(defn make-fake-whoami-service [port]
-  (let [url (str "http://127.0.0.1:" port "/")]
-    (map->FakeWhoAmIService
-     {:whoami-fn (threatgrid/make-whoami-fn url)
-      :server (atom nil)
-      :requests (atom [])
-      :url url
-      :port port
-      :token->response (atom {})})))
-
-(defonce fake-whoami-service (atom nil))
+(tk/defservice fake-threatgrid-auth-whoami-url-service
+  threatgrid/ThreatgridAuthWhoAmIURLService
+  [[:IFakeWhoAmIServer get-port]]
+  (get-whoami-url [this] (str "http://localhost:" (get-port) "/")))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -139,38 +156,29 @@
 
 (s/defn set-whoami-response
   "Meant to be called from code that is wrapped in 'fixture-server'
-   because it assumes that FakeWhoAmIService is being used"
-  ([token :- s/Str
+   because it assumes that IFakeWhoAmIService is being used"
+  ([app
+    token :- s/Str
     login :- s/Str
     group :- s/Str
     role :- s/Str]
-   (set-whoami-response token (->whoami-response login group role)))
-  ([token :- s/Str
+   (set-whoami-response app token (->whoami-response login group role)))
+  ([app
+    token :- s/Str
     response :- WhoAmIResponse]
-   (register-token-response @fake-whoami-service
-                            token
-                            response)))
+   (let [_ (assert (app/get-service app :IFakeWhoAmIServer))
+         {{:keys [register-token-response]} :IFakeWhoAmIServer} (app/service-graph app)]
+     (register-token-response token
+                              response))))
 
 (defn fixture-server
   "Start and stop a fake whoami service. Sets the auth property with the URL to
    the service, so the CTIA instance/HTTP server should be started after this."
   [t]
-  (let [port (net/available-port)]
-    (reset! fake-whoami-service (make-fake-whoami-service port))
-    (try
-      (start-server @fake-whoami-service)
-      (helpers-core/with-properties
-        ["ctia.auth.threatgrid.whoami-url" (str "http://localhost:" port "/")
-         "ctia.auth.threatgrid.cache" false
-         "ctia.auth.type" "threatgrid"]
-        (t))
-      (finally
-        (stop-server @fake-whoami-service)
-        (reset! fake-whoami-service nil)))))
-
-(defn fixture-reset-state
-  "May be used inside of fixture-server, eg fixture :once
-   fixture-server and fixture :each fixture-reset-state."
-  [t]
-  (clear-all @fake-whoami-service)
-  (t))
+  (helpers-core/with-properties
+    [;; fake-threatgrid-auth-whoami-url-service will override this stub
+     ;; this after the app has started via ThreatgridAuthWhoAmIURLService's `get-whoami-url`
+     "ctia.auth.threatgrid.whoami-url" "http://STUB:0/"
+     "ctia.auth.threatgrid.cache" false
+     "ctia.auth.type" "threatgrid"]
+    (t)))
