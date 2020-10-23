@@ -37,8 +37,7 @@
 
 (s/defschema DelayedRoutesOptions
   {:services APIHandlerServices
-   :tags SwaggerTags
-   :route-context s/Str})
+   :tags SwaggerTags})
 
 (s/defschema DelayedRoutes
   "Function taking a map of options that must include :services, and return routes"

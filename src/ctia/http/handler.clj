@@ -78,7 +78,7 @@
   (let [{:keys [services->routes]} entity]
     (assert services->routes (str "Missing :services->routes for " (:entity entity)))
     (services->routes (into {:services services-map}
-                            (select-keys entity [:route-context :tags])))))
+                            (select-keys entity [:tags])))))
 
 (s/defn entity-routes
   ([services :- APIHandlerServices]
@@ -87,9 +87,11 @@
   ([entities :- [Entity]
     services :- APIHandlerServices]
    (apply routes
-          (for [entity entities
-                :when (not (:no-api? entity))]
-            (entity->routes entity services)))))
+          (for [{:keys [no-api?
+                        route-context] :as entity} entities
+                :when (not no-api?)]
+            (context route-context []
+              (entity->routes entity services))))))
 
 (def exception-handlers
   {:compojure.api.exception/request-parsing ex/request-parsing-handler
