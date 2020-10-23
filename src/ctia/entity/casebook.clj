@@ -10,7 +10,7 @@
              [crud :refer [services->entity-crud-routes]]]
             [ctia.schemas
              [utils :as csu]
-             [core :refer [APIHandlerServices Bundle def-acl-schema def-stored-schema]]
+             [core :refer [APIHandlerServices Bundle DelayedRoutesOptions def-acl-schema def-stored-schema]]
              [sorting :as sorting]]
             [ctia.schemas.graphql
              [flanders :as flanders]
@@ -308,11 +308,11 @@
 (def casebook-histogram-fields
   [:timestamp])
 
-(s/defn casebook-routes [services :- APIHandlerServices]
+(s/defn casebook-routes [{:keys [services] :as delayed-routes-opts} :- DelayedRoutesOptions]
   (routes
    (casebook-operation-routes services)
    (services->entity-crud-routes
-    services
+    delayed-routes-opts
     {:api-tags ["Casebook"]
      :entity :casebook
      :new-schema NewCasebook

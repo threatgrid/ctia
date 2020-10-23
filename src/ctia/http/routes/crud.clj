@@ -412,7 +412,7 @@
                                           (not-found)))}})))))))
 
 (s/defn services->entity-crud-routes
-  [services :- APIHandlerServices
-   opt]
-  ((entity-crud-routes opt)
-   services))
+  [delayed-routes-opts :- DelayedRoutesOptions
+   entity-crud-routes-opt]
+  ((entity-crud-routes entity-crud-routes-opt)
+   delayed-routes-opts))

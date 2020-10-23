@@ -14,7 +14,7 @@
                       wait_for->refresh]]
              [crud :refer [services->entity-crud-routes]]]
             [ctia.schemas
-             [core :refer [APIHandlerServices def-acl-schema def-stored-schema]]
+             [core :refer [APIHandlerServices DelayedRoutesOptions def-acl-schema def-stored-schema]]
              [sorting
               :refer [default-entity-sort-fields describable-entity-sort-fields
                       sourcable-entity-sort-fields]]
@@ -212,11 +212,11 @@
    PagingParams
    IncidentFieldsParam))
 
-(s/defn incident-routes [services :- APIHandlerServices]
+(s/defn incident-routes [{:keys [services] :as delayed-routes-opts} :- DelayedRoutesOptions]
   (routes
    (incident-additional-routes services)
    (services->entity-crud-routes
-    services
+    delayed-routes-opts
     {:entity :incident
      :new-schema NewIncident
      :entity-schema Incident

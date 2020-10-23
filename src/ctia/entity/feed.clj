@@ -2,7 +2,7 @@
   (:require
    [clojure.string :as string]
    [ctia.http.routes.crud :as crud]
-   [ctia.schemas.core :refer [APIHandlerServices]]
+   [ctia.schemas.core :refer [APIHandlerServices DelayedRoutesOptions]]
    [compojure.api.core :refer [DELETE GET POST PUT routes]]
    [ctia.domain.entities
     :refer
@@ -238,9 +238,10 @@
          :unauthorized (unauthorized "wrong secret")
          (ok (dissoc feed :output)))))))
 
-(s/defn feed-routes [{{:keys [get-in-config]} :ConfigService
-                      {:keys [read-store write-store]} :StoreService
-                      :as services} :- APIHandlerServices]
+(s/defn feed-routes [{{{:keys [get-in-config]} :ConfigService
+                       {:keys [read-store write-store]} :StoreService
+                       :as services}
+                     :services} :- DelayedRoutesOptions]
   (routes
    (POST "/" []
      :return Feed

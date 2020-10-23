@@ -13,7 +13,7 @@
     [common :refer [BaseEntityFilterParams PagingParams]]
     [crud :refer [services->entity-crud-routes]]]
    [ctia.lib.pagination :refer [list-response-schema]]
-   [ctia.schemas.core :refer [APIHandlerServices]]
+   [ctia.schemas.core :refer [APIHandlerServices DelayedRoutesOptions]]
    [ctia.schemas.sorting :as sorting]
    [ctia.stores.es
     [crud :as crud]
@@ -145,11 +145,11 @@
               timeline (bucketize-events res get-in-config)]
           (ok timeline)))))
 
-(s/defn event-routes [services :- APIHandlerServices]
+(s/defn event-routes [{:keys [services] :as delayed-routes-opts} :- DelayedRoutesOptions]
   (routes
    (event-history-routes services)
    (services->entity-crud-routes
-    services
+    delayed-routes-opts
     {:tags ["Event"]
      :entity :event
      :entity-schema Event

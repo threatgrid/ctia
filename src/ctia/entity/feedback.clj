@@ -5,7 +5,7 @@
             [ctia.http.routes
              [common :refer [paginated-ok PagingParams]]
              [crud :refer [services->entity-crud-routes]]]
-            [ctia.schemas.core :refer [APIHandlerServices]]
+            [ctia.schemas.core :refer [APIHandlerServices DelayedRoutesOptions]]
             [ctia.schemas.sorting :as sorting]
             [ctia.store :refer [list-records]]
             [ctia.stores.es
@@ -77,11 +77,11 @@
     :read-feedback
     :delete-feedback})
 
-(s/defn feedback-routes [services :- APIHandlerServices]
+(s/defn feedback-routes [{:keys [services] :as delayed-routes-opts} :- DelayedRoutesOptions]
   (routes
    (feedback-by-entity-route services)
    (services->entity-crud-routes
-    services
+    delayed-routes-opts
     {:entity :feedback
      :new-schema fs/NewFeedback
      :entity-schema fs/Feedback

@@ -7,8 +7,7 @@
             [ctia.http.routes.common :as routes.common]
             [ctia.http.routes.crud :refer [services->entity-crud-routes]]
             [ctia.http.routes.crud :refer [entity-crud-routes]]
-            [ctia.schemas.core :refer [def-acl-schema def-stored-schema APIHandlerServices]]
-            [ctia.schemas.core :refer [def-acl-schema def-stored-schema]]
+            [ctia.schemas.core :refer [def-acl-schema def-stored-schema APIHandlerServices DelayedRoutesOptions]]
             [ctia.schemas.sorting :as sorting]
             [ctia.schemas.utils :as csu]
             [ctia.store]
@@ -140,11 +139,11 @@
        (http-response/ok (entities/un-store updated))
        (http-response/not-found {:error "asset-properties not found"})))))
 
-(s/defn asset-properties-routes [services :- APIHandlerServices]
+(s/defn asset-properties-routes [{:keys [services] :as delayed-routes-opts} :- DelayedRoutesOptions]
   (routes
    (additional-routes services)
    (services->entity-crud-routes
-    services
+    delayed-routes-opts
     {:entity                   :asset-properties
      :new-schema               NewAssetProperties
      :entity-schema            AssetProperties

@@ -41,8 +41,7 @@
    :route-context s/Str})
 
 (s/defschema DelayedRoutes
-  "Function taking a map that must include :services and returning routes, specifically
-  for the return value of `entity-crud-routes`."
+  "Function taking a map of options that must include :services, and return routes"
   (s/=> s/Any
         DelayedRoutesOptions))
 

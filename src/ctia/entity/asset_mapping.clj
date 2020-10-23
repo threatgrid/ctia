@@ -5,7 +5,7 @@
             [ctia.flows.crud :as flows]
             [ctia.http.routes.common :as routes.common]
             [ctia.http.routes.crud :refer [services->entity-crud-routes]]
-            [ctia.schemas.core :refer [def-acl-schema def-stored-schema APIHandlerServices]]
+            [ctia.schemas.core :refer [def-acl-schema def-stored-schema APIHandlerServices DelayedRoutesOptions]]
             [ctia.schemas.sorting :as sorting]
             [ctia.schemas.utils :as csu]
             [ctia.store]
@@ -141,11 +141,11 @@
        (http-response/ok (entities/un-store updated))
        (http-response/not-found {:error "asset-mapping not found"})))))
 
-(s/defn asset-mapping-routes [services :- APIHandlerServices]
+(s/defn asset-mapping-routes [{:keys [services] :as delayed-routes-opts} :- DelayedRoutesOptions]
   (routes
    (additional-routes services)
    (services->entity-crud-routes
-    services
+    delayed-routes-opts
     {:entity                   :asset-mapping
      :new-schema               NewAssetMapping
      :entity-schema            AssetMapping
