@@ -32,10 +32,19 @@
    :IEncryption {:encrypt (s/=> s/Any s/Any)
                  :decrypt (s/=> s/Any s/Any)}})
 
+(s/defschema SwaggerTags
+  [s/Str])
+
+(s/defschema DelayedRoutesOptions
+  {:services APIHandlerServices
+   :tags SwaggerTags
+   :route-context s/Str})
+
 (s/defschema DelayedRoutes
-  "Function taking a map of services and returning routes
-  (eg., return value of `entity-crud-routes`)"
-  (s/=> s/Any APIHandlerServices))
+  "Function taking a map that must include :services and returning routes, specifically
+  for the return value of `entity-crud-routes`."
+  (s/=> s/Any
+        DelayedRoutesOptions))
 
 (def base-stored-entity-entries
   {:id s/Str
@@ -175,7 +184,7 @@
     {:new-schema (s/protocol s/Schema)
      :route-context s/Str
      :services->routes DelayedRoutes
-     :tags [s/Str]
+     :tags SwaggerTags
      :capabilities #{s/Keyword}
      :no-bulk? s/Bool
      :no-api? s/Bool
