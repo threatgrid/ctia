@@ -19,7 +19,7 @@
                                     search-query
                                     coerce-date-range
                                     format-agg-result]]
-   [ctia.schemas.core :refer [APIHandlerServices DelayedRoutes DelayedRoutesOptions]]
+   [ctia.schemas.core :refer [DelayedRoutes DelayedRoutesOptions]]
    [ctia.store :refer [query-string-search
                        query-string-count
                        aggregate
@@ -105,7 +105,7 @@
         topn-q-params (st/merge agg-search-schema
                                 TopnParams
                                 aggregate-on-enumerable)]
-        (routes
+    (routes
      (when can-post?
        (context "/" []
                 :return entity-schema
@@ -349,62 +349,62 @@
                                        agg-q
                                        identity-map)
                                      (format-agg-result :cardinality aggregate-on search-q)
-                                     ok)))}}))
-                (context "/:id" []
-                         :return (s/maybe get-schema)
-                         :summary (format "Gets one %s by ID" capitalized)
-                         :path-params [id :- s/Str]
-                         :query [params get-params]
-                         :capabilities get-capabilities
-                         :auth-identity identity
-                         :identity-map identity-map
-                         (resource
-                           {:tags tags
-                            :get
-                            {:handler
-                             (fn [_]
-                               (if-let [rec (read-store entity
-                                                        read-record
-                                                        id
-                                                        identity-map
-                                                        params)]
-                                 (-> rec
-                                     (with-long-id get-in-config)
-                                     un-store
-                                     ok)
-                                 (not-found)))}}))
+                                     ok)))}}))))
+     (context "/:id" []
+              :return (s/maybe get-schema)
+              :summary (format "Gets one %s by ID" capitalized)
+              :path-params [id :- s/Str]
+              :query [params get-params]
+              :capabilities get-capabilities
+              :auth-identity identity
+              :identity-map identity-map
+              (resource
+                {:tags tags
+                 :get
+                 {:handler
+                  (fn [_]
+                    (if-let [rec (read-store entity
+                                             read-record
+                                             id
+                                             identity-map
+                                             params)]
+                      (-> rec
+                          (with-long-id get-in-config)
+                          un-store
+                          ok)
+                      (not-found)))}}))
 
-                (context "/:id" []
-                         :no-doc hide-delete?
-                         :path-params [id :- s/Str]
-                         :query-params [{wait_for :- (describe s/Bool "wait for deleted entity to no more be available for search") nil}]
-                         :summary (format "Deletes one %s" capitalized)
-                         :capabilities delete-capabilities
-                         :auth-identity identity
-                         :identity-map identity-map
-                         (resource
-                           {:tags tags
-                            :delete
-                            {:handler
-                             (fn [_]
-                               (if (flows/delete-flow
-                                     :services services
-                                     :get-fn #(read-store entity
-                                                          read-record
-                                                          %
-                                                          identity-map
-                                                          {})
-                                     :delete-fn #(write-store entity
-                                                              delete-record
-                                                              %
-                                                              identity-map
-                                                              (wait_for->refresh wait_for))
-                                     :entity-type entity
-                                     :long-id-fn #(with-long-id % get-in-config)
-                                     :entity-id id
-                                     :identity identity)
-                                 (no-content)
-                                 (not-found)))}}))))))))
+     (context "/:id" []
+              :no-doc hide-delete?
+              :path-params [id :- s/Str]
+              :query-params [{wait_for :- (describe s/Bool "wait for deleted entity to no more be available for search") nil}]
+              :summary (format "Deletes one %s" capitalized)
+              :capabilities delete-capabilities
+              :auth-identity identity
+              :identity-map identity-map
+              (resource
+                {:tags tags
+                 :delete
+                 {:handler
+                  (fn [_]
+                    (if (flows/delete-flow
+                          :services services
+                          :get-fn #(read-store entity
+                                               read-record
+                                               %
+                                               identity-map
+                                               {})
+                          :delete-fn #(write-store entity
+                                                   delete-record
+                                                   %
+                                                   identity-map
+                                                   (wait_for->refresh wait_for))
+                          :entity-type entity
+                          :long-id-fn #(with-long-id % get-in-config)
+                          :entity-id id
+                          :identity identity)
+                      (no-content)
+                      (not-found)))}}))))))
 
 (s/defn services->entity-crud-routes
   [delayed-routes-opts :- DelayedRoutesOptions
