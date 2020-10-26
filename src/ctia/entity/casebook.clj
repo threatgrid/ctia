@@ -1,5 +1,6 @@
 (ns ctia.entity.casebook
-  (:require [compojure.api.sweet :refer [context POST PATCH routes]]
+  (:require [compojure.api.core :refer [context routes]]
+            [compojure.api.resource :refer [resource]]
             [ctia.domain.entities :refer [default-realize-fn un-store with-long-id]]
             [ctia.flows.crud :as flows]
             [ctia.http.routes
@@ -128,11 +129,13 @@
     :delete-casebook
     :search-casebook})
 
-(s/defn casebook-operation-routes [{{:keys [get-in-config]} :ConfigService
-                                    {:keys [read-store write-store]} :StoreService
-                                    :as services} :- APIHandlerServices]
+(s/defn casebook-operation-routes [{{{:keys [get-in-config]} :ConfigService
+                                     {:keys [read-store write-store]} :StoreService
+                                     :as services}
+                                    :services
+                                    :keys [tags]} :- DelayedRoutesOptions]
   (routes
-   (PATCH "/:id" []
+   (context "/:id" []
           :return Casebook
           :body [partial-casebook PartialNewCasebook {:description "a Casebook partial update"}]
           :summary "Partially Update a Casebook"
@@ -141,31 +144,36 @@
           :capabilities :create-casebook
           :auth-identity identity
           :identity-map identity-map
-          (if-let [res (flows/patch-flow
-                        :services services
-                        :get-fn #(read-store :casebook
-                                             read-record
-                                             %
-                                             identity-map
-                                             {})
-                        :realize-fn realize-casebook
-                        :update-fn #(write-store :casebook
-                                                 update-record
-                                                 (:id %)
-                                                 %
-                                                 identity-map
-                                                 (wait_for->refresh wait_for))
-                        :long-id-fn #(with-long-id % get-in-config)
-                        :entity-type :casebook
-                        :entity-id id
-                        :identity identity
-                        :patch-operation :replace
-                        :partial-entity partial-casebook
-                        :spec :new-casebook/map)]
-            (ok (un-store res))
-            (not-found {:error "casebook not found"})))
+          (resource
+            {:tags tags
+             :patch
+             {:handler
+              (fn [_]
+                (if-let [res (flows/patch-flow
+                              :services services
+                              :get-fn #(read-store :casebook
+                                                   read-record
+                                                   %
+                                                   identity-map
+                                                   {})
+                              :realize-fn realize-casebook
+                              :update-fn #(write-store :casebook
+                                                       update-record
+                                                       (:id %)
+                                                       %
+                                                       identity-map
+                                                       (wait_for->refresh wait_for))
+                              :long-id-fn #(with-long-id % get-in-config)
+                              :entity-type :casebook
+                              :entity-id id
+                              :identity identity
+                              :patch-operation :replace
+                              :partial-entity partial-casebook
+                              :spec :new-casebook/map)]
+                  (ok (un-store res))
+                  (not-found {:error "casebook not found"})))}}))
    (context "/:id/observables" []
-            (POST "/" []
+            (context "/" []
                   :return Casebook
                   :body [operation CasebookObservablesUpdate
                          {:description "A casebook Observables operation"}]
@@ -175,32 +183,37 @@
                   :capabilities :create-casebook
                   :auth-identity identity
                   :identity-map identity-map
-                  (if-let [res (flows/patch-flow
-                                :services services
-                                :get-fn #(read-store :casebook
-                                                     read-record
-                                                     %
-                                                     identity-map
-                                                     {})
-                                :realize-fn realize-casebook
-                                :update-fn #(write-store :casebook
-                                                         update-record
-                                                         (:id %)
-                                                         %
-                                                         identity-map
-                                                         (wait_for->refresh wait_for))
-                                :long-id-fn #(with-long-id % get-in-config)
-                                :entity-type :casebook
-                                :entity-id id
-                                :identity identity
-                                :patch-operation (:operation operation)
-                                :partial-entity {:observables (:observables operation)}
-                                :spec :new-casebook/map)]
-                    (ok (un-store res))
-                    (not-found {:error "casebook not found"}))))
+                  (resource
+                    {:tags tags
+                     :post
+                     {:handler
+                      (fn [_]
+                        (if-let [res (flows/patch-flow
+                                      :services services
+                                      :get-fn #(read-store :casebook
+                                                           read-record
+                                                           %
+                                                           identity-map
+                                                           {})
+                                      :realize-fn realize-casebook
+                                      :update-fn #(write-store :casebook
+                                                               update-record
+                                                               (:id %)
+                                                               %
+                                                               identity-map
+                                                               (wait_for->refresh wait_for))
+                                      :long-id-fn #(with-long-id % get-in-config)
+                                      :entity-type :casebook
+                                      :entity-id id
+                                      :identity identity
+                                      :patch-operation (:operation operation)
+                                      :partial-entity {:observables (:observables operation)}
+                                      :spec :new-casebook/map)]
+                          (ok (un-store res))
+                          (not-found {:error "casebook not found"})))}})))
 
    (context "/:id/texts" []
-            (POST "/" []
+            (context "/" []
                   :return Casebook
                   :body [operation CasebookTextsUpdate
                          {:description "A casebook Texts operation"}]
@@ -210,32 +223,37 @@
                   :capabilities :create-casebook
                   :auth-identity identity
                   :identity-map identity-map
-                  (if-let [res (flows/patch-flow
-                                :services services
-                                :get-fn #(read-store :casebook
-                                                     read-record
-                                                     %
-                                                     identity-map
-                                                     {})
-                                :realize-fn realize-casebook
-                                :update-fn #(write-store :casebook
-                                                         update-record
-                                                         (:id %)
-                                                         %
-                                                         identity-map
-                                                         (wait_for->refresh wait_for))
-                                :long-id-fn #(with-long-id % get-in-config)
-                                :entity-type :casebook
-                                :entity-id id
-                                :identity identity
-                                :patch-operation (:operation operation)
-                                :partial-entity {:texts (:texts operation)}
-                                :spec :new-casebook/map)]
-                    (ok (un-store res))
-                    (not-found {:error "casebook not found"}))))
+                  (resource
+                    {:tags tags
+                     :post
+                     {:handler
+                      (fn [_]
+                        (if-let [res (flows/patch-flow
+                                      :services services
+                                      :get-fn #(read-store :casebook
+                                                           read-record
+                                                           %
+                                                           identity-map
+                                                           {})
+                                      :realize-fn realize-casebook
+                                      :update-fn #(write-store :casebook
+                                                               update-record
+                                                               (:id %)
+                                                               %
+                                                               identity-map
+                                                               (wait_for->refresh wait_for))
+                                      :long-id-fn #(with-long-id % get-in-config)
+                                      :entity-type :casebook
+                                      :entity-id id
+                                      :identity identity
+                                      :patch-operation (:operation operation)
+                                      :partial-entity {:texts (:texts operation)}
+                                      :spec :new-casebook/map)]
+                          (ok (un-store res))
+                          (not-found {:error "casebook not found"})))}})))
 
    (context "/:id/bundle" []
-            (POST "/" []
+            (context "/" []
                   :return Casebook
                   :body [operation CasebookBundleUpdate
                          {:description "A casebook Bundle operation"}]
@@ -245,29 +263,34 @@
                   :capabilities :create-casebook
                   :auth-identity identity
                   :identity-map identity-map
-                  (if-let [res (flows/patch-flow
-                                :services services
-                                :get-fn #(read-store :casebook
-                                                     read-record
-                                                     %
-                                                     identity-map
-                                                     {})
-                                :realize-fn realize-casebook
-                                :update-fn #(write-store :casebook
-                                                         update-record
-                                                         (:id %)
-                                                         %
-                                                         identity-map
-                                                         (wait_for->refresh wait_for))
-                                :long-id-fn #(with-long-id % get-in-config)
-                                :entity-type :casebook
-                                :entity-id id
-                                :identity identity
-                                :patch-operation (:operation operation)
-                                :partial-entity {:bundle (:bundle operation)}
-                                :spec :new-casebook/map)]
-                    (ok (un-store res))
-                    (not-found {:error "casebook not found"}))))))
+                  (resource
+                    {:tags tags
+                     :post
+                     {:handler
+                      (fn [_]
+                        (if-let [res (flows/patch-flow
+                                      :services services
+                                      :get-fn #(read-store :casebook
+                                                           read-record
+                                                           %
+                                                           identity-map
+                                                           {})
+                                      :realize-fn realize-casebook
+                                      :update-fn #(write-store :casebook
+                                                               update-record
+                                                               (:id %)
+                                                               %
+                                                               identity-map
+                                                               (wait_for->refresh wait_for))
+                                      :long-id-fn #(with-long-id % get-in-config)
+                                      :entity-type :casebook
+                                      :entity-id id
+                                      :identity identity
+                                      :patch-operation (:operation operation)
+                                      :partial-entity {:bundle (:bundle operation)}
+                                      :spec :new-casebook/map)]
+                          (ok (un-store res))
+                          (not-found {:error "casebook not found"})))}})))))
 
 (def CasebookType
   (let [{:keys [fields name description]}
@@ -308,9 +331,9 @@
 (def casebook-histogram-fields
   [:timestamp])
 
-(s/defn casebook-routes [{:keys [services] :as delayed-routes-opts} :- DelayedRoutesOptions]
+(s/defn casebook-routes [delayed-routes-opts :- DelayedRoutesOptions]
   (routes
-   (casebook-operation-routes services)
+   (casebook-operation-routes delayed-routes-opts)
    (services->entity-crud-routes
     delayed-routes-opts
     {:api-tags ["Casebook"]

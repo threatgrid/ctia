@@ -2,7 +2,8 @@
   (:require
    [ctia.entity.event.store
     :refer [->EventStore]]
-   [compojure.api.sweet :refer [GET routes]]
+   [compojure.api.core :refer [context routes]]
+   [compojure.api.resource :refer [resource]]
    [ring.util.http-response :refer [ok]]
    [schema-tools.core :as st]
    [schema.core :as s]
@@ -127,10 +128,12 @@
                             services)
             ent/un-store-all)))
 
-(s/defn event-history-routes [{{:keys [get-in-config]} :ConfigService
-                               :as services} :- APIHandlerServices]
+(s/defn event-history-routes [{{{:keys [get-in-config]} :ConfigService
+                                :as services}
+                               :services
+                               :keys [tags]} :- DelayedRoutesOptions]
   (routes
-   (GET "/history/:entity_id" []
+   (context "/history/:entity_id" []
         :return [EventBucket]
         :query [q EventTimelineParams]
         :path-params [entity_id :- s/Str]
@@ -138,16 +141,21 @@
         :capabilities :search-event
         :auth-identity identity
         :identity-map identity-map
-        (let [res (fetch-related-events entity_id
-                                        identity-map
-                                        (into q {:sort_by :timestamp :sort_order :desc})
-                                        services)
-              timeline (bucketize-events res get-in-config)]
-          (ok timeline)))))
+        (resource
+          {:tags tags
+           :get
+           {:handler
+            (fn [_]
+              (let [res (fetch-related-events entity_id
+                                              identity-map
+                                              (into q {:sort_by :timestamp :sort_order :desc})
+                                              services)
+                    timeline (bucketize-events res get-in-config)]
+                (ok timeline)))}}))))
 
-(s/defn event-routes [{:keys [services] :as delayed-routes-opts} :- DelayedRoutesOptions]
+(s/defn event-routes [delayed-routes-opts :- DelayedRoutesOptions]
   (routes
-   (event-history-routes services)
+   (event-history-routes delayed-routes-opts)
    (services->entity-crud-routes
     delayed-routes-opts
     {:tags ["Event"]

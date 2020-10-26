@@ -2,8 +2,8 @@
   (:require
    [clojure.string :refer [capitalize]]
    [ctia.http.middleware.auth :as auth]
-   [compojure.api.sweet :refer [context routes]]
    [compojure.api.resource :refer [resource]]
+   [compojure.api.sweet :refer [context routes]]
    [ctia.domain.entities
     :refer
     [page-with-long-id
@@ -111,7 +111,7 @@
     ;; so must also abandon the compojure verb macros (GET/PATCH/PUT/POST/DELETE).
         (routes
      (when can-post?
-       (context "" []
+       (context "/" []
              :return entity-schema
              :query-params [{wait_for :- (describe s/Bool "wait for entity to be available for search") nil}]
              :body [new-entity new-schema {:description (format "a new %s" capitalized)}]

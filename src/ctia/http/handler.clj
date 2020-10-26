@@ -81,17 +81,14 @@
                             (select-keys entity [:tags])))))
 
 (s/defn entity-routes
-  ([services :- APIHandlerServices]
-   (entity-routes (vals entities/entities)
-                  services))
-  ([entities :- [Entity]
-    services :- APIHandlerServices]
-   (apply routes
-          (for [{:keys [no-api?
-                        route-context] :as entity} entities
-                :when (not no-api?)]
-            (context route-context []
-              (entity->routes entity services))))))
+  [entities :- [Entity]
+   services :- APIHandlerServices]
+  (apply routes
+         (for [{:keys [no-api?
+                       route-context] :as entity} entities
+               :when (not no-api?)]
+           (context route-context []
+                    (entity->routes entity services)))))
 
 (def exception-handlers
   {:compojure.api.exception/request-parsing ex/request-parsing-handler
@@ -215,7 +212,8 @@
              ;; must be before the middleware fn
              (version-routes services)
              (middleware [wrap-authenticated]
-               (entity-routes services)
+               (entity-routes (vals entities/entities)
+                              services)
                status-routes
                (context
                    "/bulk" []

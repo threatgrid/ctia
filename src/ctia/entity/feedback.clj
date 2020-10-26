@@ -1,5 +1,6 @@
 (ns ctia.entity.feedback
-  (:require [compojure.api.core :refer [GET routes]]
+  (:require [compojure.api.core :refer [context routes]]
+            [compojure.api.resource :refer [resource]]
             [ctia.domain.entities :refer [page-with-long-id un-store-page]]
             [ctia.entity.feedback.schemas :as fs]
             [ctia.http.routes
@@ -53,33 +54,39 @@
      JudgementFieldsParam
      {(s/optional-key :sort_by) feedback-sort-fields})))
 
-(s/defn feedback-by-entity-route [{{:keys [get-in-config]} :ConfigService
-                                   {:keys [read-store]} :StoreService
-                                   :as _services_} :- APIHandlerServices]
-  (GET "/" []
+(s/defn feedback-by-entity-route [{{{:keys [get-in-config]} :ConfigService
+                                    {:keys [read-store]} :StoreService}
+                                   :services
+                                   :keys [tags]} :- DelayedRoutesOptions]
+  (context "/" []
        :return fs/PartialFeedbackList
        :query [params FeedbackQueryParams]
        :summary "Search Feedback"
        :capabilities :read-feedback
        :auth-identity identity
        :identity-map identity-map
-       (-> (read-store :feedback
-                       list-records
-                       {:all-of (select-keys params [:entity_id])}
-                       identity-map
-                       (dissoc params :entity_id))
-           (page-with-long-id get-in-config)
-           un-store-page
-           paginated-ok)))
+       (resource 
+         {:tags tags
+          :get
+          {:handler
+           (fn [_]
+             (-> (read-store :feedback
+                             list-records
+                             {:all-of (select-keys params [:entity_id])}
+                             identity-map
+                             (dissoc params :entity_id))
+                 (page-with-long-id get-in-config)
+                 un-store-page
+                 paginated-ok))}})))
 
 (def capabilities
   #{:create-feedback
     :read-feedback
     :delete-feedback})
 
-(s/defn feedback-routes [{:keys [services] :as delayed-routes-opts} :- DelayedRoutesOptions]
+(s/defn feedback-routes [delayed-routes-opts :- DelayedRoutesOptions]
   (routes
-   (feedback-by-entity-route services)
+   (feedback-by-entity-route delayed-routes-opts)
    (services->entity-crud-routes
     delayed-routes-opts
     {:entity :feedback

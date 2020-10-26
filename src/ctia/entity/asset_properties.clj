@@ -1,8 +1,8 @@
 (ns ctia.entity.asset-properties
   (:require [clj-momo.lib.clj-time.core :as time]
-            [compojure.api.sweet :refer [POST routes]]
-            [ctia.domain.entities :refer [default-realize-fn]]
-            [ctia.domain.entities :as entities]
+            [compojure.api.core :refer [context routes]]
+            [compojure.api.resource :refer [resource]]
+            [ctia.domain.entities :as entities :refer [default-realize-fn]]
             [ctia.flows.crud :as flows]
             [ctia.http.routes.common :as routes.common]
             [ctia.http.routes.crud :refer [services->entity-crud-routes]]
@@ -103,45 +103,52 @@
    :valid_time.start_time
    :valid_time.end_time])
 
-(s/defn additional-routes [{{:keys [get-in-config]}          :ConfigService
-                            {:keys [read-store write-store]} :StoreService
-                            :as                              services} :- APIHandlerServices]
+(s/defn additional-routes [{{{:keys [get-in-config]} :ConfigService
+                             {:keys [read-store write-store]} :StoreService
+                             :as services}
+                            :services
+                            :keys [tags]} :- DelayedRoutesOptions]
   (routes
-   (POST "/expire/:id" []
+   (context "/expire/:id" []
      :return         AssetProperties
      :path-params    [id :- s/Str]
      :summary        "Expire 'valid-time' field of AssetProperties entity"
      :capabilities   :create-asset-properties
      :auth-identity  identity
      :identity-map   identity-map
-     (if-let [updated
-              (flows/patch-flow
-               :services services
-               :get-fn (fn [_] (read-store :asset-properties
-                                           ctia.store/read-record
-                                           id
-                                           identity-map
-                                           {}))
-               :realize-fn realize-asset-properties
-               :update-fn #(write-store :asset-properties
-                                        ctia.store/update-record
-                                        (:id %)
-                                        (assoc-in % [:valid_time :end_time] (time/internal-now))
-                                        identity-map
-                                        {})
-               :long-id-fn #(entities/with-long-id % get-in-config)
-               :entity-type :asset-properties
-               :entity-id id
-               :identity identity
-               :patch-operation :replace
-               :partial-entity {}
-               :spec :new-asset-properties/map)]
-       (http-response/ok (entities/un-store updated))
-       (http-response/not-found {:error "asset-properties not found"})))))
+     (resource
+       {:tags tags
+        :post
+        {:handler
+         (fn [_]
+           (if-let [updated
+                    (flows/patch-flow
+                     :services services
+                     :get-fn (fn [_] (read-store :asset-properties
+                                                 ctia.store/read-record
+                                                 id
+                                                 identity-map
+                                                 {}))
+                     :realize-fn realize-asset-properties
+                     :update-fn #(write-store :asset-properties
+                                              ctia.store/update-record
+                                              (:id %)
+                                              (assoc-in % [:valid_time :end_time] (time/internal-now))
+                                              identity-map
+                                              {})
+                     :long-id-fn #(entities/with-long-id % get-in-config)
+                     :entity-type :asset-properties
+                     :entity-id id
+                     :identity identity
+                     :patch-operation :replace
+                     :partial-entity {}
+                     :spec :new-asset-properties/map)]
+             (http-response/ok (entities/un-store updated))
+             (http-response/not-found {:error "asset-properties not found"})))}}))))
 
-(s/defn asset-properties-routes [{:keys [services] :as delayed-routes-opts} :- DelayedRoutesOptions]
+(s/defn asset-properties-routes [delayed-routes-opts :- DelayedRoutesOptions]
   (routes
-   (additional-routes services)
+   (additional-routes delayed-routes-opts)
    (services->entity-crud-routes
     delayed-routes-opts
     {:entity                   :asset-properties

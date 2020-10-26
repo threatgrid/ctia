@@ -1,6 +1,7 @@
 (ns ctia.entity.asset-mapping
   (:require [clj-momo.lib.clj-time.core :as time]
-            [compojure.api.sweet :refer [POST routes]]
+            [compojure.api.core :refer [context routes]]
+            [compojure.api.resource :refer [resource]]
             [ctia.domain.entities :as entities]
             [ctia.flows.crud :as flows]
             [ctia.http.routes.common :as routes.common]
@@ -105,45 +106,52 @@
    :valid_time.start_time
    :valid_time.end_time])
 
-(s/defn additional-routes [{{:keys [get-in-config]}          :ConfigService
-                            {:keys [read-store write-store]} :StoreService
-                            :as                              services} :- APIHandlerServices]
+(s/defn additional-routes [{{{:keys [get-in-config]} :ConfigService
+                             {:keys [read-store write-store]} :StoreService
+                             :as services}
+                            :services
+                            :keys [tags]} :- DelayedRoutesOptions]
   (routes
-   (POST "/expire/:id" []
+   (context "/expire/:id" []
      :return         AssetMapping
      :path-params    [id :- s/Str]
      :summary        "Expire Asset Mapping's valid-time property"
      :capabilities   :create-asset-mapping
      :auth-identity  identity
      :identity-map   identity-map
-     (if-let [updated
-              (flows/patch-flow
-               :services services
-               :get-fn (fn [_] (read-store :asset-mapping
-                                           ctia.store/read-record
-                                           id
-                                           identity-map
-                                           {}))
-               :realize-fn realize-asset-mapping
-               :update-fn #(write-store :asset-mapping
-                                        ctia.store/update-record
-                                        (:id %)
-                                        (assoc-in % [:valid_time :end_time] (time/internal-now))
-                                        identity-map
-                                        {})
-               :long-id-fn #(entities/with-long-id % get-in-config)
-               :entity-type :asset-mapping
-               :entity-id id
-               :identity identity
-               :patch-operation :replace
-               :partial-entity {}
-               :spec :new-asset-mapping/map)]
-       (http-response/ok (entities/un-store updated))
-       (http-response/not-found {:error "asset-mapping not found"})))))
+     (resource
+      {:tags tags
+       :post
+       {:handler
+        (fn [_]
+          (if-let [updated
+                   (flows/patch-flow
+                    :services services
+                    :get-fn (fn [_] (read-store :asset-mapping
+                                                ctia.store/read-record
+                                                id
+                                                identity-map
+                                                {}))
+                    :realize-fn realize-asset-mapping
+                    :update-fn #(write-store :asset-mapping
+                                             ctia.store/update-record
+                                             (:id %)
+                                             (assoc-in % [:valid_time :end_time] (time/internal-now))
+                                             identity-map
+                                             {})
+                    :long-id-fn #(entities/with-long-id % get-in-config)
+                    :entity-type :asset-mapping
+                    :entity-id id
+                    :identity identity
+                    :patch-operation :replace
+                    :partial-entity {}
+                    :spec :new-asset-mapping/map)]
+            (http-response/ok (entities/un-store updated))
+            (http-response/not-found {:error "asset-mapping not found"})))}}))))
 
-(s/defn asset-mapping-routes [{:keys [services] :as delayed-routes-opts} :- DelayedRoutesOptions]
+(s/defn asset-mapping-routes [delayed-routes-opts :- DelayedRoutesOptions]
   (routes
-   (additional-routes services)
+   (additional-routes delayed-routes-opts)
    (services->entity-crud-routes
     delayed-routes-opts
     {:entity                   :asset-mapping

@@ -1,6 +1,7 @@
 (ns ctia.entity.incident
   (:require [clj-momo.lib.clj-time.core :as time]
-            [compojure.api.sweet :refer [POST routes]]
+            [compojure.api.core :refer [context routes]]
+            [compojure.api.resource :refer [resource]]
             [ctia.domain.entities
              :refer [default-realize-fn un-store with-long-id]]
             [ctia.entity.feedback.graphql-schemas :as feedback]
@@ -91,11 +92,13 @@
     (cond-> {:status status}
       verb (assoc :incident_time {verb t}))))
 
-(s/defn incident-additional-routes [{{:keys [get-in-config]} :ConfigService
-                                     {:keys [read-store write-store]} :StoreService
-                                     :as services} :- APIHandlerServices]
+(s/defn incident-additional-routes [{{{:keys [get-in-config]} :ConfigService
+                                      {:keys [read-store write-store]} :StoreService
+                                      :as services}
+                                     :services
+                                     :keys [tags]} :- DelayedRoutesOptions]
   (routes
-   (POST "/:id/status" []
+   (context "/:id/status" []
          :return Incident
          :body [update IncidentStatusUpdate
                 {:description "an Incident Status Update"}]
@@ -105,32 +108,37 @@
          :capabilities :create-incident
          :auth-identity identity
          :identity-map identity-map
-         (let [status-update (make-status-update update)]
-           (if-let [updated
-                    (un-store
-                     (flows/patch-flow
-                      :services services
-                      :get-fn #(read-store :incident
-                                           read-record
-                                           %
-                                           identity-map
-                                           {})
-                      :realize-fn realize-incident
-                      :update-fn #(write-store :incident
-                                               update-record
-                                               (:id %)
-                                               %
-                                               identity-map
-                                               (wait_for->refresh wait_for))
-                      :long-id-fn #(with-long-id % get-in-config)
-                      :entity-type :incident
-                      :entity-id id
-                      :identity identity
-                      :patch-operation :replace
-                      :partial-entity status-update
-                      :spec :new-incident/map))]
-             (ok updated)
-             (not-found))))))
+         (resource
+           {:tags tags
+            :post
+            {:handler
+             (fn [_]
+               (let [status-update (make-status-update update)]
+                 (if-let [updated
+                          (un-store
+                           (flows/patch-flow
+                            :services services
+                            :get-fn #(read-store :incident
+                                                 read-record
+                                                 %
+                                                 identity-map
+                                                 {})
+                            :realize-fn realize-incident
+                            :update-fn #(write-store :incident
+                                                     update-record
+                                                     (:id %)
+                                                     %
+                                                     identity-map
+                                                     (wait_for->refresh wait_for))
+                            :long-id-fn #(with-long-id % get-in-config)
+                            :entity-type :incident
+                            :entity-id id
+                            :identity identity
+                            :patch-operation :replace
+                            :partial-entity status-update
+                            :spec :new-incident/map))]
+                   (ok updated)
+                   (not-found))))}}))))
 
 (def incident-mapping
   {"incident"
@@ -212,9 +220,9 @@
    PagingParams
    IncidentFieldsParam))
 
-(s/defn incident-routes [{:keys [services] :as delayed-routes-opts} :- DelayedRoutesOptions]
+(s/defn incident-routes [delayed-routes-opts :- DelayedRoutesOptions]
   (routes
-   (incident-additional-routes services)
+   (incident-additional-routes delayed-routes-opts)
    (services->entity-crud-routes
     delayed-routes-opts
     {:entity :incident
