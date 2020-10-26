@@ -6,7 +6,7 @@
             [ctia.http.routes
              [common :refer [paginated-ok PagingParams]]
              [crud :refer [services->entity-crud-routes]]]
-            [ctia.schemas.core :refer [APIHandlerServices DelayedRoutesOptions]]
+            [ctia.schemas.core :refer [DelayedRoutesOptions]]
             [ctia.schemas.sorting :as sorting]
             [ctia.store :refer [list-records]]
             [ctia.stores.es

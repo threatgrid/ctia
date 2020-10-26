@@ -15,7 +15,7 @@
                       wait_for->refresh]]
              [crud :refer [services->entity-crud-routes]]]
             [ctia.schemas
-             [core :refer [APIHandlerServices DelayedRoutesOptions def-acl-schema def-stored-schema]]
+             [core :refer [DelayedRoutesOptions def-acl-schema def-stored-schema]]
              [sorting
               :refer [default-entity-sort-fields describable-entity-sort-fields
                       sourcable-entity-sort-fields]]
@@ -82,8 +82,13 @@
         verb (case status
                "New" nil
                "Stalled" nil
-               ("Containment Achieved"
-                "Restoration Achieved") :remediated
+               ;; Note: the paren syntax to group case statements
+               ;;       breaks GitHub's syntax highlighting when used
+               ;;       with strings.
+               ;; START GROUP
+               "Containment Achieved" :remediated
+               "Restoration Achieved" :remediated
+               ;; END GROUP
                "Open" :opened
                "Rejected" :rejected
                "Closed" :closed
