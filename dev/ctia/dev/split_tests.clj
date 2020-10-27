@@ -29,7 +29,7 @@
           (range n))))
 
 (defn read-env-config
-  "Returns CTIA_SPLIT_TESTS as Clojure data."
+  "Returns [${CTIA_THIS_SPLIT} ${CTIA_NSPLITS}] as Clojure data."
   []
   {:post [((every-pred vector?
                        (comp #{2} count)
@@ -37,10 +37,18 @@
            %)
           (let [[this-split total-splits] %]
             (< -1 this-split total-splits))]}
-  (or (some-> (System/getenv "CTIA_SPLIT_TESTS")
-              edn/read-string)
+  (let [split (some-> (System/getenv "CTIA_THIS_SPLIT")
+                      edn/read-string)
+        nsplits (some-> (System/getenv "CTIA_NSPLITS")
+                        edn/read-string)]
+    (assert (or (every? number? [split nsplits])
+                (every? nil? [split nsplits]))
+            (str "Must specify both CTIA_NSPLITS and CTIA_THIS_SPLIT "
+                 [split nsplits]))
+    (if split
+      [split nsplits]
       ; default: this is the first split of total 1 split. (ie., run everything)
-      [0 1]))
+      [0 1])))
 
 (defn nses-for-this-build [[this-split total-splits] nses]
   (as-> nses nses

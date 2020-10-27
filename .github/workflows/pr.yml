@@ -18,6 +18,7 @@ env:
   CTIA_HOOK_ES_PORT: 9200
   CTIA_HOOK_ES_INDEXNAME: elasticsearch
   CTIA_HOOK_REDIS_URI: redis://127.0.0.1:6379
+  CTIA_NSPLITS: 5 # matrix build with 5 jobs
   SHELLCHECK_VERSION: "v0.7.0" # "stable" or "v0.4.7", or "latest"
 
 jobs:
@@ -28,7 +29,9 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        split: [0,1,2,3,4]
+        this-split: [0,1,2,3,4] # (range ${CTIA_NSPLITS})
+    env:
+      CTIA_THIS_SPLIT: ${{ matrix.this-split }}
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-java@v1
@@ -70,5 +73,3 @@ jobs:
           until echo dump | nc 127.0.0.1 2181 | grep brokers; do sleep 1; done
 
       - run: ./build/run-tests.sh
-        env:
-          CTIA_SPLIT_TESTS: [${{ matrix.split }},$TRAVISCI_JOB_PARALLELISM]
