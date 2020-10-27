@@ -11,6 +11,7 @@
    [ctia.lib.utils :as utils]
    [ctia
     [events-service :as events-svc]
+    [features-service :as features-svc]
     [logging :as event-logging]
     [properties :as p]
     [store-service :as store-svc]]
@@ -79,7 +80,8 @@
        :GraphQLNamedTypeRegistryService graphql-registry-svc/graphql-named-type-registry-service
        :RiemannMetricsService riemann/riemann-metrics-service
        :JMXMetricsService jmx/jmx-metrics-service
-       :ConsoleMetricsService console/console-metrics-service}
+       :ConsoleMetricsService console/console-metrics-service
+       :FeaturesService features-svc/features-service}
       ;; register event file logging only when enabled
       (when (get-in config [:ctia :events :log])
         {:EventLoggingService event-logging/event-logging-service}))))
