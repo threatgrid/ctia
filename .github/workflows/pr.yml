@@ -21,9 +21,16 @@ env:
   SHELLCHECK_VERSION: "v0.7.0" # "stable" or "v0.4.7", or "latest"
 
 jobs:
-  build:
+  ## TODO fan in and deploy
+  # deploy:
+  #   needs: test
+  test:
     runs-on: ubuntu-latest
-
+    strategy:
+      matrix:
+        split: [0,1,2,3,4]
+    env:
+      CTIA_SPLIT_TESTS: [${{ matrix.split}},$TRAVISCI_JOB_PARALLELISM]
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-java@v1
@@ -64,4 +71,4 @@ jobs:
           # Wait Kafka
           until echo dump | nc 127.0.0.1 2181 | grep brokers; do sleep 1; done
 
-      - run: ./build/run-tests.sh && ./build/build.sh
+      - run: ./build/run-tests.sh
