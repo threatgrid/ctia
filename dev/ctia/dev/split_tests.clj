@@ -83,15 +83,10 @@
 
 (defn wait-docker []
   (when (System/getenv "CTIA_WAIT_DOCKER")
-    (println "Waiting for docker to start up...")
     ; Wait ES
-    (sh/sh "until" "curl" "http://127.0.0.1:9200/;" "do" "sleep" "1;" "done")
+    (sh/sh "bash" "-c" "until curl http://127.0.0.1:9200/; do sleep 1; done")
     ; Wait Kafka
-    (sh/sh "until"
-           "echo" "dump" "|"
-           "nc" "127.0.0.1" "2181" "|"
-           "grep" "brokers;" "do" "sleep 1;"
-           "done")))
+    (sh/sh "bash" "-c" "until echo dump | nc 127.0.0.1 2181 | grep brokers; do sleep 1; done")))
 
 ;Derived from https://github.com/circleci/circleci.test/blob/master/src/circleci/test.clj
 ;
