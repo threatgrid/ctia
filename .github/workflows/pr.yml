@@ -52,11 +52,6 @@ jobs:
       - name: Create log dir if missing
         run: mkdir -p $LOG_DIR
 
-      - name: Install docker-compose
-        run: |
-          #if [ ! -f $COMPOSE_BIN ]; then curl -L {$COMPOSE_URI}/docker-compose-`uname -s`-`uname -m` > $COMPOSE_BIN; fi
-          curl -L {$COMPOSE_URI}/docker-compose-`uname -s`-`uname -m` > $COMPOSE_BIN
-          chmod +x $COMPOSE_BIN
       - name: Setup rvm
         run: |
           source ~/.rvm/scripts/rvm
@@ -64,7 +59,7 @@ jobs:
 
       - name: Docker
         run: |
-          $COMPOSE_BIN -f containers/dev/docker-compose.yml up -d> $COMPOSE_LOG
+          docker-compose -f containers/dev/docker-compose.yml up -d > $COMPOSE_LOG
           # Wait ES
           until curl http://127.0.0.1:9200/; do sleep 1; done
           # Wait Kafka
