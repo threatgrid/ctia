@@ -54,11 +54,17 @@
 (defn nses-for-this-build [[this-split total-splits] nsyms]
   (let [{entity-nsyms true
          non-entity-nsyms false} (group-by (fn [nsym]
-                                            (assert (symbol? nsym))
-                                            (boolean
-                                              (str/starts-with?
-                                                (name nsym)
-                                                "ctia.entity")))
+                                             (assert (symbol? nsym))
+                                             (boolean
+                                               (and
+                                                 (str/starts-with?
+                                                   (name nsym)
+                                                   "ctia.entity")
+                                                 (not
+                                                   ('#{ctia.entity.entities-test
+                                                       ctia.entity.event.obj-to-event-test
+                                                       ctia.entity.web-test}
+                                                     nsym)))))
                                           nsyms)
         ;stabilize order across builds
         entity-nsyms (sort entity-nsyms)
