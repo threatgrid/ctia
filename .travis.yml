@@ -18,7 +18,13 @@ env:
       - CTIA_HOOK_ES_PORT=9200
       - CTIA_HOOK_ES_INDEXNAME=elasticsearch
       - CTIA_HOOK_REDIS_URI=redis://127.0.0.1:6379
-      - SHELLCHECK_VERSION="v0.7.0" # "stable" or "v0.4.7", or "latest"
+      - SHELLCHECK_VERSION=v0.7.0 # "stable" or "v0.4.7", or "latest"
+      # https://stackoverflow.com/a/34809448
+      # travis allows 5 concurrent builds for open source plans
+      # across org
+      - TRAVISCI_JOB_PARALLELISM=5
+      # test future clojure releases
+      - CLOJURE_NEXT=1.10.2-alpha1
 
 # Cache our Maven deps to be kind to clojars, github, docker images
 cache:
@@ -26,10 +32,80 @@ cache:
     - $HOME/bin
     - $HOME/.m2
     - $HOME/.cache/pip
+
+# default jdk for testing and (always) deployment.
+# others tested in cron job.
 jdk:
-    - oraclejdk8
-    - openjdk11
-    - openjdk13
+  - openjdk11
+
+# define stage order
+stages:
+  - test
+  - deploy
+
+matrix: #note: don't use "jobs:" introduces an extra build
+  include:
+    # Main build
+    # ==========
+    # Parallelizes the tests via $TRAVISCI_JOB_PARALLELISM TravisCI jobs.
+    #
+    # CTIA_SPLIT_TESTS is a string containing a clojure vector [n m], where m is the
+    # total number of splits, and n is a number in (clojure.core/range m)
+    # unique to the container which identifies which chunk
+    # of the tests to run.
+    #
+    # eg., CTIA_SPLIT_TESTS="[0 2]" runs the first half of the tests
+    # eg., CTIA_SPLIT_TESTS="[1 2]" runs the second half of the tests
+    #
+    # Notes:
+    # - this is currently not the case, but it would be nice if the jdk
+    #   tested here matched with
+    #     https://github.com/threatgrid/tenzin/blob/master/nextgen/saltstack/srv/salt/openjdk/defaults.yml
+    # - IMPORTANT! Must include split build id's from in (range $TRAVISCI_JOB_PARALLELISM).
+    #    Nothing ensures this is actually true, so make sure it is!
+    - stage: test
+      name: "JDK 11"
+      if: type != cron
+      env: CTIA_SPLIT_TESTS=[0,$TRAVISCI_JOB_PARALLELISM]
+    - name: "JDK 11"
+      if: type != cron
+      env: CTIA_SPLIT_TESTS=[1,$TRAVISCI_JOB_PARALLELISM]
+    - name: "JDK 11"
+      if: type != cron
+      env: CTIA_SPLIT_TESTS=[2,$TRAVISCI_JOB_PARALLELISM]
+    - name: "JDK 11"
+      if: type != cron
+      env: CTIA_SPLIT_TESTS=[3,$TRAVISCI_JOB_PARALLELISM]
+    - name: "JDK 11"
+      if: type != cron
+      env: CTIA_SPLIT_TESTS=[4,$TRAVISCI_JOB_PARALLELISM]
+
+    # Cron jobs:
+    # ==========
+    # Note:
+    # - cron jobs are created here: https://travis-ci.com/threatgrid/ctia/settings
+    # - they repeat around the same time as initially started
+    # - we deploy (also) during cron jobs in the 'deploy' stage
+    - name: "JDK 11"
+      if: type = cron
+    - name: "JDK 11 + Clojure next"
+      if: type = cron
+      env: CLOJURE_VERSION=$CLOJURE_NEXT
+    - name: "JDK 14 + Clojure next"
+      if: type = cron
+      jdk: openjdk14
+      env: CLOJURE_VERSION=$CLOJURE_NEXT
+
+    # Deploy
+    # ======
+    # fan in and deploy on master branch
+    - stage: deploy
+      # also deploy after every cron job. helps minimize issues with
+      # 'push' deployment races.
+      if: type = cron || type = push
+      before_script: skip # don't need docker
+      script: skip        # tests already pass
+      after_script: ./build/build.sh
 
 before_install:
     # upgrade shellcheck (https://github.com/koalaman/shellcheck#installing-a-pre-compiled-binary)
@@ -68,12 +144,7 @@ services:
     - docker
 
 script:
-  - ./build/run-tests.sh && ./build/build.sh
+  - ./build/run-tests.sh
 
 notifications:
   email: false
-  hipchat:
-    rooms:
-      - secure: "Ec3/ASBzCcC+oTDJOcsTb+h2MHSWMZP2PbgZTOvHuf8nOokMU2LUjQi6ptaeMQlESvLPGGp8/b+mOOAaLQI15BrK0M+FaUfBxElHvWMqR9MxpNyprgDvs+0koZn/A6Ewal/eMHFl3IP1afBikDEbQWQJnhOtvgKYDZdX5sya4H9kCdPw+kFnj2CcOGybnIGuGGyZ90pvOsEobW6sYDz3B799YBki1QGcQ+8y9x5icUDV1ZdvhLZj+IP++kATqxyqq4VadF7PgbiBbac0umviiSpqE/RsD5tcAbm1a+57qIrzW1ofLDndUdp56gACOVvpvem0AjSfX3AHj7gYylLRk1KlDquNy55Ue/WfxUwyR59gvvueFlz+lQYcIVV7HDsE6uxQe4AcEUQ1pRdsCEUnPAbOqtouHGyqVyjMv42GDbf5nuPdPLIVodRD8mGfS+NCERB0sl62VFvM/dkJEz2BrLdgqOELwA2qZIZqgbhVTjsG6sVAa7G5t88eByIDKQjZWxq491hKbxPPU46s5/QXEQGTIOr6E+/52E+aRxcKT4232k404Mhga9U7TxLdKT2/VSLYOKU8cVGWHo317e7eJvucWJTSJ90yuCEUM0kyRckwuygZVTxUgql6DXadFVtdAKuNt6ZQM+UNGtnUODwFc/ZZGgMnJEM84+3N1AXaAKU="
-    template:
-      - '%{repository}#%{build_number} (%{branch} - %{commit} : %{author}): %{message} (%{build_url})'

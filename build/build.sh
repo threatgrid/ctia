@@ -41,32 +41,28 @@ function build-and-publish-package {
   fi
 }
 
-if [[ "${TRAVIS_PULL_REQUEST}" = "false" && "${TRAVIS_EVENT_TYPE}" != "cron" ]]; then
-  if [[ ${TRAVIS_BRANCH} == "master" ]]; then
-    # non-pr builds on the master branch yield INT packages
-    echo "OK: master branch detected"
-    build-and-publish-package "int"
+if [[ ${TRAVIS_BRANCH} == "master" ]]; then
+  # non-pr builds on the master branch yield INT packages
+  echo "OK: master branch detected"
+  build-and-publish-package "int"
 
-  elif [[ ${TRAVIS_BRANCH} == "release" ]]; then
-    # non-pr builds on 'release' branch yield REL packages
-    echo "OK: release branch detected using regex"
-    build-and-publish-package "rel"
+elif [[ ${TRAVIS_BRANCH} == "release" ]]; then
+  # non-pr builds on 'release' branch yield REL packages
+  echo "OK: release branch detected using regex"
+  build-and-publish-package "rel"
 
-  elif [[ ${TRAVIS_BRANCH} =~ ^rel-[0-9]{4}(0[1-9]|1[0-2])(0[1-9]|[1-2][0-9]|3[0-1])$ ]]; then
-    # non-pr builds on 'rel-yyyymmdd' branches yield REL packages
-    # To be removed at a future date, depending on the success of the new method
-    echo "OK: release branch detected using regex"
-    build-and-publish-package "rel"
+elif [[ ${TRAVIS_BRANCH} =~ ^rel-[0-9]{4}(0[1-9]|1[0-2])(0[1-9]|[1-2][0-9]|3[0-1])$ ]]; then
+  # non-pr builds on 'rel-yyyymmdd' branches yield REL packages
+  # To be removed at a future date, depending on the success of the new method
+  echo "OK: release branch detected using regex"
+  build-and-publish-package "rel"
 
-  elif [[ ${TRAVIS_BRANCH} =~ ^v[0-9]+(.[0-9]+)+$ ]]; then
-    # non-pr builds on 'v?.?' branches yield REL packages
-    # To be removed at a future date, once we're sure the process works.
-    echo "OK: v branch detected using regex"
-    build-and-publish-package "rel"
+elif [[ ${TRAVIS_BRANCH} =~ ^v[0-9]+(.[0-9]+)+$ ]]; then
+  # non-pr builds on 'v?.?' branches yield REL packages
+  # To be removed at a future date, once we're sure the process works.
+  echo "OK: v branch detected using regex"
+  build-and-publish-package "rel"
 
-  else
-    echo "Not on master or release branch. Not building a package."
-  fi
 else
-  echo "Build is for a pull request or cron job.  Not building a package."
+  echo "Not on master or release branch. Not building a package."
 fi
