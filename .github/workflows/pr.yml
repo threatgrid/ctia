@@ -41,6 +41,11 @@ jobs:
             ~/.cache/pip
           key: ${{ runner.os }}-${{ hashFiles('project.clj') }}
 
+      - name: Setup folders
+        run: |
+          mkdir -p ~/bin
+          mkdir -p ~/log
+
       - name: ES5 setup
         run: sudo sysctl -w vm.max_map_count=262144
 
