@@ -53,30 +53,39 @@
       [0 1])))
 
 (defn nses-for-this-build [[this-split total-splits] nsyms]
-  (let [{entity-nsyms true
-         non-entity-nsyms false} (group-by (fn [nsym]
-                                             (assert (symbol? nsym))
-                                             (boolean
-                                               (and
-                                                 (str/starts-with?
-                                                   (name nsym)
-                                                   "ctia.entity")
-                                                 (not
-                                                   ('#{ctia.entity.entities-test
-                                                       ctia.entity.event.obj-to-event-test
-                                                       ctia.entity.web-test}
-                                                     nsym)))))
-                                          nsyms)
-        ;stabilize order across builds
-        entity-nsyms (sort entity-nsyms)
-        non-entity-nsyms (sort non-entity-nsyms)
+  (let [;stabilize order across builds
+        groups (->> nsyms
+                    (group-by
+                      (fn [nsym]
+                        {:post [(keyword? %)]}
+                        (assert (symbol? nsym))
+                        (or
+                          (when (and
+                                  (str/starts-with?
+                                    (name nsym)
+                                    "ctia.entity")
+                                  (not
+                                    ('#{ctia.entity.entities-test
+                                        ctia.entity.event.obj-to-event-test
+                                        ctia.entity.web-test}
+                                      nsym)))
+                            :entity-nsyms)
+                          (when (str/starts-with?
+                                  (name nsym)
+                                  "ctia.task")
+                            :task-nsyms)
+                          :default-nsyms)))
+                    sort
+                    (map second)
+                    (map sort))
 
         ;calculate all splits
-        entity-splits (partition-fairly total-splits entity-nsyms)
-        non-entity-splits (partition-fairly total-splits non-entity-nsyms)
+        groups-splits (map (fn [group]
+                             (partition-fairly total-splits group))
+                           groups)
         all-splits (map (fn [n]
-                          (concat (nth entity-splits n)
-                                  (nth non-entity-splits n)))
+                          (mapcat #(nth % n)
+                                  groups-splits))
                         (range total-splits))]
     ;select this split
     (nth all-splits this-split)))
@@ -130,7 +139,7 @@
              (println "[ctia.dev.split-tests] Running all tests")
              (do 
                (println "[ctia.dev.split-tests] Splitting tests. Reproduce locally with:")
-               (printf "[ctia.dev.split-tests] $ CTIA_SPLIT_TESTS=[%s,%s] lein split-test %s\n"
+               (printf "[ctia.dev.split-tests] $ CTIA_THIS_SPLIT=%s CTIA_NSPLITS=%s lein split-test %s\n"
                        this-split
                        total-splits
                        selector-str)
