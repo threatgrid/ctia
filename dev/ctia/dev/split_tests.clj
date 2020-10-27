@@ -1,7 +1,7 @@
 (ns ctia.dev.split-tests
   (:require [circleci.test :as t]
             [clojure.edn :as edn]
-            [clojure.shell :as sh]
+            [clojure.java.shell :as sh]
             [clojure.string :as str]
             [clojure.test :as test]
             [clojure.pprint :as pprint]))
