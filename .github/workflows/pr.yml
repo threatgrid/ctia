@@ -54,7 +54,8 @@ jobs:
 
       - name: Install docker-compose
         run: |
-          if [ ! -f $COMPOSE_BIN ]; then curl -L {$COMPOSE_URI}/docker-compose-`uname -s`-`uname -m` > $COMPOSE_BIN; fi
+          #if [ ! -f $COMPOSE_BIN ]; then curl -L {$COMPOSE_URI}/docker-compose-`uname -s`-`uname -m` > $COMPOSE_BIN; fi
+          curl -L {$COMPOSE_URI}/docker-compose-`uname -s`-`uname -m` > $COMPOSE_BIN
           chmod +x $COMPOSE_BIN
       - name: Setup rvm
         run: |
