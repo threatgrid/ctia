@@ -1,6 +1,7 @@
 (ns ctia.dev.split-tests
   (:require [circleci.test :as t]
             [clojure.edn :as edn]
+            [clojure.string :as str]
             [clojure.test :as test]
             [clojure.pprint :as pprint]))
 
@@ -50,14 +51,28 @@
       ; default: this is the first split of total 1 split. (ie., run everything)
       [0 1])))
 
-(defn nses-for-this-build [[this-split total-splits] nses]
-  (as-> nses nses
-    ;stabilize order across builds
-    (sort nses)
-    ;calculate all splits
-    (partition-fairly total-splits nses)
+(defn nses-for-this-build [[this-split total-splits] nsyms]
+  (let [{entity-nsyms true
+         non-entity-nsyms false} (group-by (fn [nsym]
+                                            (assert (symbol? nsym))
+                                            (boolean
+                                              (str/starts-with?
+                                                (name nsym)
+                                                "ctia.entity")))
+                                          nsyms)
+        ;stabilize order across builds
+        entity-nsyms (sort entity-nsyms)
+        non-entity-nsyms (sort non-entity-nsyms)
+
+        ;calculate all splits
+        entity-splits (partition-fairly total-splits entity-splits)
+        non-entity-splits (partition-fairly total-splits non-entity-splits)
+        all-splits (map (fn [n]
+                          (concat (nth entity-splits n)
+                                  (nth non-entity-splits n)))
+                        (range total-splits))]
     ;select this split
-    (nth nses this-split)))
+    (nth all-splits this-split)))
 
 ;Derived from https://github.com/circleci/circleci.test/blob/master/src/circleci/test.clj
 ;
