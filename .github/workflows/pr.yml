@@ -18,7 +18,7 @@ env:
   CTIA_HOOK_ES_PORT: 9200
   CTIA_HOOK_ES_INDEXNAME: elasticsearch
   CTIA_HOOK_REDIS_URI: redis://127.0.0.1:6379
-  CTIA_NSPLITS: 20 # number of matrix builds
+  CTIA_NSPLITS: 10 # number of matrix builds
   SHELLCHECK_VERSION: "v0.7.0" # "stable" or "v0.4.7", or "latest"
 
 jobs:
@@ -29,7 +29,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        this-split: [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19] # (range ${CTIA_NSPLITS})
+        this-split: [0,1,2,3,4,5,6,7,8,9] # (range ${CTIA_NSPLITS})
     env:
       CTIA_THIS_SPLIT: ${{ matrix.this-split }}
     steps:
