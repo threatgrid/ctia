@@ -29,8 +29,6 @@ jobs:
     strategy:
       matrix:
         split: [0,1,2,3,4]
-    env:
-      CTIA_SPLIT_TESTS: [${{ matrix.split}},$TRAVISCI_JOB_PARALLELISM]
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-java@v1
@@ -72,3 +70,5 @@ jobs:
           until echo dump | nc 127.0.0.1 2181 | grep brokers; do sleep 1; done
 
       - run: ./build/run-tests.sh
+        env:
+          CTIA_SPLIT_TESTS: [${{ matrix.split}},$TRAVISCI_JOB_PARALLELISM]
