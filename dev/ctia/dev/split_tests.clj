@@ -83,12 +83,12 @@
 
 (defn wait-docker []
   (when (System/getenv "CTIA_WAIT_DOCKER")
-    (println "Waiting for docker...")
+    (println "[ctia.dev.split-tests] Waiting for docker...")
     ; Wait ES
     (sh/sh "bash" "-c" "until curl http://127.0.0.1:9200/; do sleep 1; done")
     ; Wait Kafka
     (sh/sh "bash" "-c" "until echo dump | nc 127.0.0.1 2181 | grep brokers; do sleep 1; done")
-    (println "Docker initialized.")))
+    (println "[ctia.dev.split-tests] Docker initialized.")))
 
 ;Derived from https://github.com/circleci/circleci.test/blob/master/src/circleci/test.clj
 ;
@@ -121,7 +121,6 @@
                (println "Please see the readme for usage of this function.")
                (System/exit 1)))
          [this-split total-splits :as split-config] (read-env-config)
-         _ (wait-docker)
          all-nses (vec (@#'t/nses-in-directories (read-string dirs-str)))
          nses (vec (nses-for-this-build split-config all-nses))
          ;; Note: changed from circleci.test: removed :reload for more reliable tests
@@ -140,6 +139,7 @@
                       "This is chunk " (inc this-split) " of " total-splits " testing "
                       (count nses) " of " (count all-nses) " test namespaces: "
                       nses))))
+         _ (wait-docker)
          summary (@#'t/run-selected-tests selector nses)]
      (shutdown-agents)
      (System/exit (+ (:error summary) (:fail summary))))))
