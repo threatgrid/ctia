@@ -52,10 +52,9 @@ jobs:
       - name: Create log dir if missing
         run: mkdir -p $LOG_DIR
 
-      - name: Setup rvm
-        run: |
-          source ~/.rvm/scripts/rvm
-          rvm use 2.2
+      - uses: actions/setup-ruby@v1
+        with:
+          ruby-version: '2.2'
 
       - name: Docker
         run: |
