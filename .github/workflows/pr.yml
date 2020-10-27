@@ -71,4 +71,4 @@ jobs:
 
       - run: ./build/run-tests.sh
         env:
-          CTIA_SPLIT_TESTS: [${{ matrix.split}},$TRAVISCI_JOB_PARALLELISM]
+          CTIA_SPLIT_TESTS: [${{ matrix.split }},$TRAVISCI_JOB_PARALLELISM]
