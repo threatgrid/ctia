@@ -1,6 +1,7 @@
 (ns ctia.dev.split-tests
   (:require [circleci.test :as t]
             [clojure.edn :as edn]
+            [clojure.shell :as sh]
             [clojure.string :as str]
             [clojure.test :as test]
             [clojure.pprint :as pprint]))
@@ -80,6 +81,13 @@
     ;select this split
     (nth all-splits this-split)))
 
+(defn wait-docker []
+  (when (System/getenv "CTIA_WAIT_DOCKER")
+    ; Wait ES
+    (sh/sh "until curl http://127.0.0.1:9200/; do sleep 1; done")
+    ; Wait Kafka
+    (sh/sh "until echo dump | nc 127.0.0.1 2181 | grep brokers; do sleep 1; done")))
+
 ;Derived from https://github.com/circleci/circleci.test/blob/master/src/circleci/test.clj
 ;
 ;Copyright © 2017-2020 Circle Internet Services and contributors
@@ -111,6 +119,7 @@
                (println "Please see the readme for usage of this function.")
                (System/exit 1)))
          [this-split total-splits :as split-config] (read-env-config)
+         _ (wait-docker)
          all-nses (vec (@#'t/nses-in-directories (read-string dirs-str)))
          nses (vec (nses-for-this-build split-config all-nses))
          ;; Note: changed from circleci.test: removed :reload for more reliable tests
@@ -130,4 +139,5 @@
                       (count nses) " of " (count all-nses) " test namespaces: "
                       nses))))
          summary (@#'t/run-selected-tests selector nses)]
+     (shutdown-agents)
      (System/exit (+ (:error summary) (:fail summary))))))
