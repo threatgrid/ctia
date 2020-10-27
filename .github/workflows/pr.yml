@@ -4,13 +4,13 @@ on:
   pull_request:
 
 env:
-  LOG_DIR: $HOME/log
-  BIN_DIR: $HOME/bin
+  LOG_DIR: ~/log
+  BIN_DIR: ~/bin
   LEIN_ROOT: 1
   CTIA_MAJOR_VERSION: 1
   COMPOSE_URI: https://github.com/docker/compose/releases/download/1.9.0
-  COMPOSE_BIN: $HOME/bin/docker-compose-1-9-0
-  COMPOSE_LOG: $HOME/log/docker-compose.log
+  COMPOSE_BIN: ~/bin/docker-compose-1-9-0
+  COMPOSE_LOG: ~/log/docker-compose.log
   CTIA_STORE_ES_DEFAULT_HOST: 127.0.0.1
   CTIA_STORE_ES_DEFAULT_INDEXNAME: elasticsearch
   CTIA_STORE_ES_DEFAULT_CLUSTERNAME: elasticsearch
@@ -58,7 +58,7 @@ jobs:
           chmod +x $COMPOSE_BIN
       - name: Setup rvm
         run: |
-          source $HOME/.rvm/scripts/rvm
+          source ~/.rvm/scripts/rvm
           rvm use 2.2
 
       - name: Docker
