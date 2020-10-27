@@ -1,10 +1,10 @@
 (ns ctia.http.handler
   (:require [clj-momo.ring.middleware.metrics :as metrics]
             [clojure.string :as string]
-            [ctia.entity.entities :refer [entities]]
+            [ctia.entity.entities :as entities]
             [ctia.entity.feed :refer [feed-view-routes]]
             [ctia.entity.relationship :refer [incident-link-route]]
-            [ctia.schemas.core :refer [APIHandlerServices]]
+            [ctia.schemas.core :refer [APIHandlerServices Entity]]
             [compojure.api
              [core :refer [middleware]]
              [routes :as api-routes]
@@ -70,7 +70,10 @@
 
   <a href='/doc/README.md'>CTIA Documentation</a>")
 
-(s/defn entity->routes [entity services-map :- APIHandlerServices]
+(s/defn ^:private entity->routes
+  "Implementation detail of entity-routes."
+  [entity :- Entity
+   services-map :- APIHandlerServices]
   {:pre [entity
          (map? services-map)]
    :post [%]}
@@ -78,17 +81,28 @@
     (assert services->routes (str "Missing :services->routes for " (:entity entity)))
     (services->routes services-map)))
 
-(defmacro entity-routes
-  [entities services-map]
-  (let [gsm (gensym 'services-map)]
-  `(let [~gsm ~services-map]
-     (compojure.api.sweet/routes
-      ~@(for [entity (remove :no-api?
-                             (vals (eval entities)))]
-          `(context
-            ~(:route-context entity) []
-            :tags ~(:tags entity)
-            (entity->routes (~(:entity entity) entities) ~gsm)))))))
+(defn add-dynamic-tags [route tags]
+  {:pre [(instance? compojure.api.routes.Route route)]
+   :post [(instance? compojure.api.routes.Route %)]}
+  (update-in route [:info :tags] (comp set into) tags))
+
+(s/defn entity-routes
+  [entity :- Entity
+   services :- APIHandlerServices]
+  (routes
+    (when-not (:no-api? entity)
+      (let [{:keys [route-context tags]} entity]
+        (context
+          route-context []
+          (-> (entity->routes entity services)
+              (add-dynamic-tags tags)))))))
+
+(s/defn entities-routes
+  [entities :- [Entity]
+   services :- APIHandlerServices]
+  (apply routes
+         (map #(entity-routes % services)
+              entities)))
 
 (def exception-handlers
   {:compojure.api.exception/request-parsing ex/request-parsing-handler
@@ -212,7 +226,9 @@
              ;; must be before the middleware fn
              (version-routes services)
              (middleware [wrap-authenticated]
-               (entity-routes entities services)
+               (entities-routes
+                 (vals entities/entities)
+                 services)
                status-routes
                (context
                    "/bulk" []
