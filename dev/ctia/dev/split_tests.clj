@@ -65,8 +65,8 @@
         non-entity-nsyms (sort non-entity-nsyms)
 
         ;calculate all splits
-        entity-splits (partition-fairly total-splits entity-splits)
-        non-entity-splits (partition-fairly total-splits non-entity-splits)
+        entity-splits (partition-fairly total-splits entity-nsyms)
+        non-entity-splits (partition-fairly total-splits non-entity-nsyms)
         all-splits (map (fn [n]
                           (concat (nth entity-splits n)
                                   (nth non-entity-splits n)))
