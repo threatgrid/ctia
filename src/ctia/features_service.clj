@@ -23,6 +23,7 @@
    [this key]
    (as-> [:ctia :features :disable] x
      (get-in-config x)
+     (str x)
      (string/split x #",")
      (map keyword x)
      (set x)

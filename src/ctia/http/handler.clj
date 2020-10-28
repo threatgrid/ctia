@@ -147,10 +147,9 @@
     [:tool                "Tool"                "Tool operations"]
     [:verdict             "Verdict"             "Verdict operations"]
     [:version             "Version"             "Version Information"]]
-   (mapv (fn [[k n desc]]
+   (keep (fn [[k n desc]]
           (when (enabled? k)
-            {:name n :description desc})))
-   (remove nil?)))
+            {:name n :description desc})))))
 
 (defn apply-oauth2-swagger-conf
   [swagger-base-conf
@@ -240,7 +239,7 @@
              (middleware [wrap-authenticated]
                (->>
                 entities/entities
-                (vals)
+                vals
                 (map (partial mark-disabled-entities services))
                 (entities-routes services))
                status-routes

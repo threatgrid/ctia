@@ -14,20 +14,25 @@
              (is (every? enabled? [:incident :indicator])))))))))
 
 (deftest routes-for-disabled-entities-test
-  (testing "No http routes should exist for disabled entities"
-    (th/with-properties ["ctia.features.disable" "asset,actor,sighting"]
-      (th/fixture-ctia-with-app
-       (fn [app]
-         (are [entity status-code] (->> entity
-                                        name
-                                        (format "ctia/%s/search")
-                                        (th/GET app)
-                                        :status
-                                        (= status-code))
-
-           :asset            404
-           :actor            404
-           :sighting         404
-           :asset-mapping    200
-           :indicator        200
-           :asset-properties 200))))))
+  (let [try-route (fn [app entity]
+                    (->> entity
+                         name
+                         (format "ctia/%s/search")
+                         (th/GET app)
+                         :status))]
+    (testing "http routes should exist for entities that aren't explicitly disabled in the config"
+      (th/with-properties []
+        (th/fixture-ctia-with-app
+         (fn [app]
+           (are [entity status-code] (is (= status-code (try-route app entity)))
+             :asset            200
+             :actor            200
+             :sighting         200)))))
+    (testing "No http routes should exist for disabled entities"
+      (th/with-properties ["ctia.features.disable" "asset,actor,sighting"]
+        (th/fixture-ctia-with-app
+         (fn [app]
+           (are [entity status-code] (is (= status-code (try-route app entity)))
+             :asset            404
+             :actor            404
+             :sighting         404)))))))
