@@ -11,22 +11,20 @@
   would not be visible in Swagger console."
   (feature-flags [this]
     "Returns all feature flags defined in the config")
-  (disabled? [this key]
-    "Returns true if the given entity key is marked as Disabled in properties config")
   (enabled? [this key]
-    "Returns false if the given entity key is marked as Disabled in properties config"))
+    "Returns `true` unless entity key is marked as Disabled in properties config"))
 
 (tk/defservice features-service
   FeaturesService
   [[:ConfigService get-config get-in-config]]
   (feature-flags [this]
     (-> (get-config) :ctia :features))
-  (disabled? [this key]
-    (as-> [:ctia :features :disable] x
-      (get-in-config x)
-      (string/split x #",")
-      (map keyword x)
-      (set x)
-      (contains? x key)))
-  (enabled? [this key]
-    (not (disabled? this key))))
+  (enabled?
+   [this key]
+   (as-> [:ctia :features :disable] x
+     (get-in-config x)
+     (string/split x #",")
+     (map keyword x)
+     (set x)
+     (contains? x key)
+     (not x))))

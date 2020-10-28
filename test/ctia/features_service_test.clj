@@ -15,10 +15,8 @@
     (fn [app]
       (let [{:keys [disabled? enabled?]} (th/get-service-map app :FeaturesService)]
         (testing "Asset, Actor and Sighting are disabled"
-          (is (every? disabled? [:asset :actor :sighting]))
-          (is (every? (comp not enabled?) [:asset :actor :sighting])))
+          (is (not-any? enabled? [:asset :actor :sighting])))
         (testing "Incident, Indicator entities are enabled"
-          (is (every? (comp not disabled?) [:incident :indicator]))
           (is (every? enabled? [:incident :indicator]))))))))
 
 (deftest routes-for-disabled-entities-test
