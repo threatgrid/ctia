@@ -98,8 +98,8 @@
               (add-dynamic-tags tags)))))))
 
 (s/defn entities-routes
-  [entities :- [Entity]
-   services :- APIHandlerServices]
+  [services :- APIHandlerServices
+   entities :- [Entity]]
   (apply routes
          (map #(entity-routes % services)
               entities)))
@@ -115,36 +115,42 @@
    :spec-validation-error ex/spec-validation-error-handler
    :compojure.api.exception/default ex/default-error-handler})
 
-(def api-tags
-  [{:name "Actor"               :description "Actor operations"}
-   {:name "Asset"               :description "Asset operations"}
-   {:name "Asset Mapping"       :description "Asset Mapping operations"}
-   {:name "Asset Properties"    :description "Asset Properties operations"}
-   {:name "Attack Pattern"      :description "Attack Pattern operations"}
-   {:name "Bundle"              :description "Bundle operations"}
-   {:name "Campaign"            :description "Campaign operations"}
-   {:name "COA"                 :description "COA operations"}
-   {:name "DataTable"           :description "DataTable operations"}
-   {:name "Event"               :description "Events operations"}
-   {:name "Feed"                :description "Feed operations"}
-   {:name "Feedback"            :description "Feedback operations"}
-   {:name "GraphQL"             :description "GraphQL operations"}
-   {:name "Incident"            :description "Incident operations"}
-   {:name "Indicator"           :description "Indicator operations"}
-   {:name "Judgement"           :description "Judgement operations"}
-   {:name "Malware"             :description "Malware operations"}
-   {:name "Relationship"        :description "Relationship operations"}
-   {:name "Properties"          :description "Properties operations"}
-   {:name "Casebook"            :description "Casebook operations"}
-   {:name "Sighting"            :description "Sighting operations"}
-   {:name "Identity Assertion"  :description "Identity Assertion operations"}
-   {:name "Bulk"                :description "Bulk operations"}
-   {:name "Metrics"             :description "Performance Statistics"}
-   {:name "Target Record"       :description "Target Record operations"}
-   {:name "Tool"                :description "Tool operations"}
-   {:name "Verdict"             :description "Verdict operations"}
-   {:name "Status"              :description "Status Information"}
-   {:name "Version"             :description "Version Information"}])
+
+(s/defn api-tags
+  [{{:keys [enabled?]} :FeaturesService} :- APIHandlerServices]
+  (->>
+   [[:actor               "Actor"               "Actor operations"]
+    [:asset               "Asset"               "Asset operations"]
+    [:asset-mapping       "Asset Mapping"       "Asset Mapping operations"]
+    [:asset-properties    "Asset Properties"    "Asset Properties operations"]
+    [:attack-pattern      "Attack Pattern"      "Attack Pattern operations"]
+    [:bundle              "Bundle"              "Bundle operations"]
+    [:campaign            "Campaign"            "Campaign operations"]
+    [:coa                 "COA"                 "COA operations"]
+    [:datatable           "DataTable"           "DataTable operations"]
+    [:event               "Event"               "Events operations"]
+    [:feed                "Feed"                "Feed operations"]
+    [:feedback            "Feedback"            "Feedback operations"]
+    [:graphql             "GraphQL"             "GraphQL operations"]
+    [:incident            "Incident"            "Incident operations"]
+    [:indicator           "Indicator"           "Indicator operations"]
+    [:judgement           "Judgement"           "Judgement operations"]
+    [:malware             "Malware"             "Malware operations"]
+    [:relationship        "Relationship"        "Relationship operations"]
+    [:properties          "Properties"          "Properties operations"]
+    [:casebook            "Casebook"            "Casebook operations"]
+    [:sighting            "Sighting"            "Sighting operations"]
+    [:identity-assertion  "Identity Assertion"  "Identity Assertion operations"]
+    [:bulk                "Bulk"                "Bulk operations"]
+    [:metrics             "Metrics"             "Performance Statistics"]
+    [:target-record       "Target Record"       "Target Record operations"]
+    [:tool                "Tool"                "Tool operations"]
+    [:verdict             "Verdict"             "Verdict operations"]
+    [:status              "Status"              "Status Information"]
+    [:version             "Version"             "Version Information"]]
+   (mapv (fn [[k n desc]]
+          (when (enabled? k)
+            {:name n :description desc})))))
 
 (defn apply-oauth2-swagger-conf
   [swagger-base-conf
@@ -179,6 +185,13 @@
                     :tokenUrl token-url
                     :flow flow}))))
 
+(defn- check-entity-enabled
+  [{{:keys [enabled?]} :FeaturesService}
+   {:keys [entity] :as entity-map}]
+  (if (enabled? entity)
+    entity-map
+    (assoc entity-map :no-api? true)))
+
 (s/defn api-handler [{{:keys [get-in-config]} :ConfigService
                       :as services} :- APIHandlerServices]
   (let [{:keys [oauth2]}
@@ -204,7 +217,7 @@
                                   :in "header"
                                   :name "Authorization"
                                   :description "Ex: Bearer \\<token\\>"}}
-                          :tags api-tags}}
+                          :tags (api-tags services)}}
             (:enabled oauth2)
             (apply-oauth2-swagger-conf
              oauth2))}
@@ -226,9 +239,11 @@
              ;; must be before the middleware fn
              (version-routes services)
              (middleware [wrap-authenticated]
-               (entities-routes
-                 (vals entities/entities)
-                 services)
+               (->>
+                entities/entities
+                (vals)
+                (map (partial check-entity-enabled services))
+                (entities-routes services))
                status-routes
                (context
                    "/bulk" []
