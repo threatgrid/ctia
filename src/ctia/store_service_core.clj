@@ -37,11 +37,8 @@
   (reset! stores-atom
           (->> (keys empty-stores)
                (map (fn [store-kw]
-                      [store-kw
-                       (->> (get-store-types store-kw get-in-config)
-                            (pmap (partial build-store store-kw get-in-config))
-                            (keep identity)
-                            vec)]))
+                      [store-kw (keep (partial build-store store-kw get-in-config)
+                                      (get-store-types store-kw get-in-config))]))
                (into {})
                (merge-with into empty-stores))))
 
