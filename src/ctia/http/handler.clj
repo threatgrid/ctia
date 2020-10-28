@@ -115,7 +115,6 @@
    :spec-validation-error ex/spec-validation-error-handler
    :compojure.api.exception/default ex/default-error-handler})
 
-
 (s/defn api-tags
   [{{:keys [enabled?]} :FeaturesService} :- APIHandlerServices]
   (->>
@@ -150,7 +149,8 @@
     [:version             "Version"             "Version Information"]]
    (mapv (fn [[k n desc]]
           (when (enabled? k)
-            {:name n :description desc})))))
+            {:name n :description desc})))
+   (remove nil?)))
 
 (defn apply-oauth2-swagger-conf
   [swagger-base-conf
