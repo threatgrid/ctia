@@ -185,7 +185,7 @@
                     :tokenUrl token-url
                     :flow flow}))))
 
-(defn- check-entity-enabled
+(defn- mark-disabled-entities
   [{{:keys [enabled?]} :FeaturesService}
    {:keys [entity] :as entity-map}]
   (if (enabled? entity)
@@ -242,7 +242,7 @@
                (->>
                 entities/entities
                 (vals)
-                (map (partial check-entity-enabled services))
+                (map (partial mark-disabled-entities services))
                 (entities-routes services))
                status-routes
                (context
