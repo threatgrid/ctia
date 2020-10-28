@@ -72,7 +72,7 @@
                                         nsym)))
                                   (str/starts-with?
                                     (name nsym)
-                                    "ctia.task")
+                                    "ctia.task.migration")
                                   (str/starts-with?
                                     (name nsym)
                                     "ctia.http.routes.graphql"))
