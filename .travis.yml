@@ -2,6 +2,13 @@ language: clojure
 lein: 2.9.1
 dist: trusty
 
+branches:
+  only:
+  - master
+  - release
+  - /^rel-[0-9]{4}(0[1-9]|1[0-2])(0[1-9]|[1-2][0-9]|3[0-1])$/
+  - /^v[0-9]+(.[0-9]+)+$/
+
 env:
     global:
       - LOG_DIR=$HOME/log
