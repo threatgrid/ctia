@@ -29,7 +29,7 @@ env:
       # https://stackoverflow.com/a/34809448
       # travis allows 5 concurrent builds for open source plans
       # across org
-      - TRAVISCI_JOB_PARALLELISM=5
+      - CTIA_NSPLITS=5
       # test future clojure releases
       - CLOJURE_NEXT=1.10.2-alpha1
 
@@ -68,24 +68,24 @@ matrix: #note: don't use "jobs:" introduces an extra build
     # - this is currently not the case, but it would be nice if the jdk
     #   tested here matched with
     #     https://github.com/threatgrid/tenzin/blob/master/nextgen/saltstack/srv/salt/openjdk/defaults.yml
-    # - IMPORTANT! Must include split build id's from in (range $TRAVISCI_JOB_PARALLELISM).
+    # - IMPORTANT! Must include split build id's from in (range ${CTIA_NSPLITS}).
     #    Nothing ensures this is actually true, so make sure it is!
     - stage: test
       name: "JDK 11"
       if: type != cron
-      env: CTIA_SPLIT_TESTS=[0,$TRAVISCI_JOB_PARALLELISM]
+      env: CTIA_THIS_SPLIT=0
     - name: "JDK 11"
       if: type != cron
-      env: CTIA_SPLIT_TESTS=[1,$TRAVISCI_JOB_PARALLELISM]
+      env: CTIA_THIS_SPLIT=1
     - name: "JDK 11"
       if: type != cron
-      env: CTIA_SPLIT_TESTS=[2,$TRAVISCI_JOB_PARALLELISM]
+      env: CTIA_THIS_SPLIT=2
     - name: "JDK 11"
       if: type != cron
-      env: CTIA_SPLIT_TESTS=[3,$TRAVISCI_JOB_PARALLELISM]
+      env: CTIA_THIS_SPLIT=3
     - name: "JDK 11"
       if: type != cron
-      env: CTIA_SPLIT_TESTS=[4,$TRAVISCI_JOB_PARALLELISM]
+      env: CTIA_THIS_SPLIT=4
 
     # Cron jobs:
     # ==========
