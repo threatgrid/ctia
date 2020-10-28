@@ -86,7 +86,10 @@
         groups-splits (map (fn [group]
                              (partition-fairly total-splits group))
                            groups)
+        nsyms-set (set nsyms)
         all-splits (map (fn [n]
+                          {:post [(sequential? %)
+                                  (= nsyms-set (into #{} (mapcat identity) %))]}
                           (mapcat #(nth % n)
                                   groups-splits))
                         (range total-splits))]
