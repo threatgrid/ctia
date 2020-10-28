@@ -188,9 +188,8 @@
 (defn- mark-disabled-entities
   [{{:keys [enabled?]} :FeaturesService}
    {:keys [entity] :as entity-map}]
-  (if (enabled? entity)
-    entity-map
-    (assoc entity-map :no-api? true)))
+  (cond-> entity-map
+    (not (enabled? entity)) (assoc :no-api? true)))
 
 (s/defn api-handler [{{:keys [get-in-config]} :ConfigService
                       :as services} :- APIHandlerServices]
