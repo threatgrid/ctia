@@ -57,24 +57,27 @@
         groups (->> nsyms
                     (group-by
                       (fn [nsym]
-                        {:post [(keyword? %)]}
+                        {:post [(number? %)]}
                         (assert (symbol? nsym))
                         (or
-                          (when (and
+                          (when (or
+                                  (and
+                                    (str/starts-with?
+                                      (name nsym)
+                                      "ctia.entity")
+                                    (not
+                                      ('#{ctia.entity.entities-test
+                                          ctia.entity.event.obj-to-event-test
+                                          ctia.entity.web-test}
+                                        nsym)))
                                   (str/starts-with?
                                     (name nsym)
-                                    "ctia.entity")
-                                  (not
-                                    ('#{ctia.entity.entities-test
-                                        ctia.entity.event.obj-to-event-test
-                                        ctia.entity.web-test}
-                                      nsym)))
-                            :entity-nsyms)
-                          (when (str/starts-with?
-                                  (name nsym)
-                                  "ctia.task")
-                            :task-nsyms)
-                          :default-nsyms)))
+                                    "ctia.task")
+                                  (str/starts-with?
+                                    (name nsym)
+                                    "ctia.http.routes.graphql"))
+                            0)
+                          1)))
                     sort
                     (map second)
                     (map sort))
