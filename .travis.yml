@@ -62,7 +62,7 @@ matrix: #note: don't use "jobs:" introduces an extra build
       before_script: skip
       before_script: skip
       install: skip
-      test: echo "Nothing"
+      script: echo "Nothing"
       after_script: skip
 
 
