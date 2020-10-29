@@ -59,6 +59,7 @@
                         {:post [(number? %)]}
                         (assert (symbol? nsym))
                         (or
+                          ;; slow namespaces
                           (when (or
                                   (and
                                     (str/starts-with?
@@ -76,7 +77,9 @@
                                     (name nsym)
                                     "ctia.http.routes.graphql"))
                             0)
+                          ;; fast namespaces
                           1)))
+                    ;; slow namespaces first
                     sort
                     (map second)
                     (map sort))
