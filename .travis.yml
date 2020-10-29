@@ -59,9 +59,9 @@ matrix: #note: don't use "jobs:" introduces an extra build
     # dashboard for threatgrid/ctia.
     - stage: test
       if: type = pull_request
-      before_script: skip
-      before_script: skip
+      before_install: skip
       install: skip
+      before_script: skip
       script: skip
       after_script: skip
 
