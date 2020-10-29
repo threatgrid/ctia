@@ -52,19 +52,13 @@ stages:
 
 matrix: #note: don't use "jobs:" introduces an extra build
   include:
-    # # Dummy build for PR's
-    # While we have TravisCI PR builds enabled, Travis seems to need
-    # "something" to build so then the PR passes.
-    # This should go away when we disable PR builds on the Travis
-    # dashboard for threatgrid/ctia.
+    # just run "before_install" to shellcheck our scripts
     - stage: test
       if: type = pull_request
-      before_install: skip
       install: skip
       before_script: skip
       script: skip
       after_script: skip
-
 
     # Main build
     # ==========
