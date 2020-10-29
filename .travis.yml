@@ -54,15 +54,15 @@ matrix: #note: don't use "jobs:" introduces an extra build
   include:
     # Main build
     # ==========
-    # Parallelizes the tests via $TRAVISCI_JOB_PARALLELISM TravisCI jobs.
+    # Parallelizes the tests using ${CTIA_NSPLITS} TravisCI jobs.
     #
-    # CTIA_SPLIT_TESTS is a string containing a clojure vector [n m], where m is the
+    # To split tests, set CTIA_THIS_SPLIT=n CTIA_NSPLITS=m, where m is the
     # total number of splits, and n is a number in (clojure.core/range m)
     # unique to the container which identifies which chunk
     # of the tests to run.
     #
-    # eg., CTIA_SPLIT_TESTS="[0 2]" runs the first half of the tests
-    # eg., CTIA_SPLIT_TESTS="[1 2]" runs the second half of the tests
+    #  eg., CTIA_THIS_SPLIT=0 CTIA_NSPLITS=2 lein test       ; run the first half of the tests
+    #  eg., CTIA_THIS_SPLIT=1 CTIA_NSPLITS=2 lein test       ; run the second half of the tests
     #
     # Notes:
     # - this is currently not the case, but it would be nice if the jdk
