@@ -114,12 +114,12 @@
 ; See [[LICENSE]] for a copy of EPL 1.0.
 (defn dir
   "Same usage as circleci.test/dir. To split tests, bind
-  environment variable CTIA_SPLIT_TESTS to a string containing a vector
-  pair [n m], where m is the number of splits, and n identifies the
+  environment variables CTIA_THIS_SPLIT=n CTIA_NSPLITS=m,
+  where m is the number of splits, and n identifies the
   current split in `(range m)`.
   
-  eg., CTIA_SPLIT_TESTS=\"[0 2]\" lein test       ; run the first half of the tests
-  eg., CTIA_SPLIT_TESTS=\"[1 2]\" lein test       ; run the second half of the tests
+  eg., CTIA_THIS_SPLIT=0 CTIA_NSPLITS=2 lein test       ; run the first half of the tests
+  eg., CTIA_THIS_SPLIT=1 CTIA_NSPLITS=2 lein test       ; run the second half of the tests
   "
   ([a1 a2 a3 & rst]
    (println "ctia.dev.split-tests/dir does not support extra arguments:" (vec (cons a3 rst)))
