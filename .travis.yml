@@ -2,14 +2,12 @@ language: clojure
 lein: 2.9.1
 dist: trusty
 
-# Note: once GitHub Actions is used for PR's, we can uncomment this
-# and disable PR builds for Travis CI (in the dashboard)
-#branches:
-#  only:
-#  - master
-#  - release
-#  - /^rel-[0-9]{4}(0[1-9]|1[0-2])(0[1-9]|[1-2][0-9]|3[0-1])$/
-#  - /^v[0-9]+(.[0-9]+)+$/
+branches:
+  only:
+  - master
+  - release
+  - /^rel-[0-9]{4}(0[1-9]|1[0-2])(0[1-9]|[1-2][0-9]|3[0-1])$/
+  - /^v[0-9]+(.[0-9]+)+$/
 
 env:
     global:
@@ -74,19 +72,19 @@ matrix: #note: don't use "jobs:" introduces an extra build
     #    Nothing ensures this is actually true, so make sure it is!
     - stage: test
       name: "JDK 11"
-      if: type != cron
+      if: type = push
       env: CTIA_THIS_SPLIT=0
     - name: "JDK 11"
-      if: type != cron
+      if: type = push
       env: CTIA_THIS_SPLIT=1
     - name: "JDK 11"
-      if: type != cron
+      if: type = push
       env: CTIA_THIS_SPLIT=2
     - name: "JDK 11"
-      if: type != cron
+      if: type = push
       env: CTIA_THIS_SPLIT=3
     - name: "JDK 11"
-      if: type != cron
+      if: type = push
       env: CTIA_THIS_SPLIT=4
 
     # Cron jobs:
