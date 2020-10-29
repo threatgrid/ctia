@@ -31,7 +31,10 @@
           (range n))))
 
 (defn read-env-config
-  "Returns [${CTIA_THIS_SPLIT} ${CTIA_NSPLITS}] as Clojure data."
+  "Returns [${CTIA_THIS_SPLIT} ${CTIA_NSPLITS}] as Clojure data.
+  If either is not defined, returns [0 1]. This allows $CTIA_NSPLITS
+  to be defined globally in a build, and jobs can opt-in to
+  splitting."
   []
   {:post [((every-pred vector?
                        (comp #{2} count)
@@ -43,13 +46,9 @@
                       edn/read-string)
         nsplits (some-> (System/getenv "CTIA_NSPLITS")
                         edn/read-string)]
-    (assert (or (every? number? [split nsplits])
-                (every? nil? [split nsplits]))
-            (str "Must specify both CTIA_NSPLITS and CTIA_THIS_SPLIT "
-                 [split nsplits]))
-    (if split
+    (if (and split nsplits)
       [split nsplits]
-      ; default: this is the first split of total 1 split. (ie., run everything)
+      ; default to the first split of total 1 split. (ie., run everything)
       [0 1])))
 
 (defn nses-for-this-build [[this-split total-splits] nsyms]
