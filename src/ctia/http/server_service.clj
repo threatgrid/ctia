@@ -16,7 +16,8 @@
    GraphQLService
    GraphQLNamedTypeRegistryService
    IEncryption
-   ConfigService]
+   ConfigService
+   FeaturesService]
   (start [this context] (core/start context
                                     ((:get-in-config ConfigService) [:ctia :http])
                                     {:ConfigService (-> ConfigService
@@ -33,5 +34,6 @@
                                      :IAuth IAuth
                                      :GraphQLService GraphQLService
                                      :GraphQLNamedTypeRegistryService GraphQLNamedTypeRegistryService
-                                     :IEncryption IEncryption}))
+                                     :IEncryption IEncryption
+                                     :FeaturesService FeaturesService}))
   (stop [this context] (core/stop context)))
