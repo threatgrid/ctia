@@ -51,48 +51,48 @@
       ; default to the first split of total 1 split. (ie., run everything)
       [0 1])))
 
+(defn slow-namespace? [nsym]
+  {:pre [(symbol? nsym)]}
+  (or
+    (and
+      (str/starts-with?
+        (name nsym)
+        "ctia.entity")
+      (not
+        ('#{ctia.entity.entities-test
+            ctia.entity.event.obj-to-event-test
+            ctia.entity.web-test}
+          nsym)))
+    (str/starts-with?
+      (name nsym)
+      "ctia.task.migration")
+    (str/starts-with?
+      (name nsym)
+      "ctia.http.routes.graphql")))
+
 (defn nses-for-this-build [[this-split total-splits] nsyms]
   (let [;stabilize order across builds
         groups (->> nsyms
                     (group-by
                       (fn [nsym]
                         {:post [(number? %)]}
-                        (assert (symbol? nsym))
-                        (or
-                          ;; slow namespaces
-                          (when (or
-                                  (and
-                                    (str/starts-with?
-                                      (name nsym)
-                                      "ctia.entity")
-                                    (not
-                                      ('#{ctia.entity.entities-test
-                                          ctia.entity.event.obj-to-event-test
-                                          ctia.entity.web-test}
-                                        nsym)))
-                                  (str/starts-with?
-                                    (name nsym)
-                                    "ctia.task.migration")
-                                  (str/starts-with?
-                                    (name nsym)
-                                    "ctia.http.routes.graphql"))
-                            0)
-                          ;; fast namespaces
+                        (if (slow-namespace? nsym) 
+                          0
                           1)))
                     ;; slow namespaces first
                     sort
                     (map second)
                     (map sort))
 
+        groups-splits (->> groups
+                           (map (fn [group]
+                                  (partition-fairly total-splits group))))
         ;calculate all splits
-        groups-splits (map (fn [group]
-                             (partition-fairly total-splits group))
-                           groups)
-        all-splits (mapv (fn [n]
-                           {:post [(sequential? %)]}
-                           (mapcat #(nth % n)
-                                   groups-splits))
-                         (range total-splits))]
+        all-splits (->> (range total-splits)
+                        (mapv (fn [n]
+                                {:post [(sequential? %)]}
+                                (mapcat #(nth % n)
+                                        groups-splits))))]
     (assert (= (sort nsyms)
                (sort (apply concat all-splits))))
     ;select this split
