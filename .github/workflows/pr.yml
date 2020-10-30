@@ -73,6 +73,8 @@ jobs:
   # fan-in tests so there's a single job we can add to protected branches.
   # otherwise, we'll have add all (range ${CTIA_NSPLITS}) jobs, and keep
   # them up to date
+  # here's a GitHub Actions feature request that is relevant:
+  # https://github.community/t/branch-protections-job-names-and-matrix-jobs/16317
   test:
     runs-on: ubuntu-18.04
     needs: matrix-test
