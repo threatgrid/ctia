@@ -39,7 +39,7 @@ jobs:
           (set -x && cp "shellcheck-${SHELLCHECK_VERSION}/shellcheck" "${BIN_DIR}/shellcheck")
           (set -x && $SHELLCHECK_COMMAND --version)
       - name: Run shellcheck
-        run: ./scripts/shellcheck-build.sh $SHELLCHECK_COMMAND
+        run: ./scripts/shellcheck-build.sh
   test-matrix:
     runs-on: ubuntu-18.04
     strategy:
