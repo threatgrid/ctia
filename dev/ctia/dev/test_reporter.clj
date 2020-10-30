@@ -29,26 +29,29 @@
                               :start-ns (System/nanoTime)})))))
 
   (end-test-ns [this {:keys [ns]}]
-    (let [nsym (ns-name ns)]
-      (swap! ns-timing update nsym
-             (fn [{:keys [status start-ns] :as timing}]
-               (case status
-                 :in-progress {:status :done
-                               :elapsed-ns (- (System/nanoTime) start-ns)}
-                 (:done nil) (throw (ex-info (str "end-test-ns called without begin-test-ns: " nsym)
-                                             (or timing {})))))))
-    (-> out-dir File. .mkdirs)
-    (spit (str out-dir "/ns-timing" #_id ".edn")
-          @ns-timing
-          :append true)
-    (with-test-out
-      (println "Timing: " @ns-timing)))
+    (let [nsym (ns-name ns)
+          {{:keys [elapsed-ns]} nsym}
+          (swap! ns-timing update nsym
+                 (fn [{:keys [status start-ns] :as timing}]
+                   (case status
+                     :in-progress {:status :done
+                                   :elapsed-ns (- (System/nanoTime) start-ns)}
+                     (:done nil) (throw (ex-info (str "end-test-ns called without begin-test-ns: " nsym)
+                                                 (or timing {}))))))]
+      (-> out-dir File. .mkdirs)
+      (spit (str out-dir "/ns-timing-" nsym ".edn")
+            {nsym {:elapsed-ns elapsed-ns}})
+      (with-test-out
+        (println (format "\n%3.0f%s for %s"
+                         (/ elapsed-ns 1e+9)
+                         "s"
+                         nsym)))))
 
   (begin-test-var [this m])
 
   (end-test-var [this {:keys [elapsed] var-ref :var}]
     (with-test-out
-      (println (format "%5f%s for %s."
+      (println (format "%5.0f%s for %s."
                        elapsed
                        "s"
                        (symbol var-ref))))))
