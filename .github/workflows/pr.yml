@@ -90,8 +90,7 @@ jobs:
         with:
           retention-days: 1
           name: test-timing
-          path: |
-            target/test-results/ns-timing-*.edn
+          path: target/test-results/ns-timing-*.edn
   # fan-in tests so there's a single job we can add to protected branches.
   # otherwise, we'll have add all (range ${CTIA_NSPLITS}) jobs, and keep
   # them up to date
@@ -108,11 +107,18 @@ jobs:
       - uses: DeLaGuardo/setup-clojure@e73bf2b6435244b2c9c5c226ae5022d91d0ce702
         with:
           cli: '1.10.1.469'
+      - name: Cache
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.m2
+          key: ${{ runner.os }}-${{ hashFiles('scripts/summarize-tests.clj') }}
 
       - name: Download test timings
         uses: actions/download-artifact@v2
         with:
           name: test-timing
+          path: target/test-results
 
       - name: Print test timings
         run: ./scripts/summarize-tests.clj
