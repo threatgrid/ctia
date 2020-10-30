@@ -33,8 +33,8 @@ jobs:
       - name: Install shellcheck
         run: |
           mkdir -p "${BIN_DIR}"
-          wget -qO- "https://github.com/koalaman/shellcheck/releases/download/${SHELLCHECK_VERSION?}/shellcheck-${SHELLCHECK_VERSION?}.linux.x86_64.tar.xz" | tar -xJv
-          cp "shellcheck-${SHELLCHECK_VERSION}/shellcheck" "${BIN_DIR}/shellcheck"
+          (set -x && wget -qO- "https://github.com/koalaman/shellcheck/releases/download/${SHELLCHECK_VERSION}/shellcheck-${SHELLCHECK_VERSION}.linux.x86_64.tar.xz" | tar -xJv)
+          (set -x && cp "shellcheck-${SHELLCHECK_VERSION}/shellcheck" "${BIN_DIR}/shellcheck")
           shellcheck --version
       - name: Run shellcheck
         run: ./scripts/shellcheck-build.sh
