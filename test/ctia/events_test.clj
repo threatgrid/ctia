@@ -20,7 +20,6 @@
 
 (deftest test-send-event
   "Tests the basic action of sending an event"
-  (is nil)
   (let [app (helpers/get-current-app)
         {:keys [send-event]} (helpers/get-service-map app :EventsService)
 
