@@ -1,7 +1,10 @@
 (ns ctia.dev.split-tests
   (:require [circleci.test :as t]
+            [clojure.data.priority-map :refer [priority-map-keyfn]]
             [clojure.edn :as edn]
+            [clojure.java.io :as io]
             [clojure.java.shell :as sh]
+            [clojure.set :as set]
             [clojure.string :as str]
             [clojure.test :as test]
             [clojure.pprint :as pprint]))
@@ -70,7 +73,7 @@
       (name nsym)
       "ctia.http.routes.graphql")))
 
-(defn nses-for-this-build [[this-split total-splits] nsyms]
+(defn this-split-using-slow-namespace-heuristic [[this-split total-splits] nsyms]
   (let [;stabilize order across builds
         groups (->> nsyms
                     (group-by
@@ -97,6 +100,55 @@
                (sort (apply concat all-splits))))
     ;select this split
     (nth all-splits this-split)))
+
+(defn this-split-using-load-balancing [timings [this-split total-splits] nsyms]
+  {:pre [(map? timings)]}
+  (prn "top of this-split-using-load-balancing")
+  (let [extra-namespaces (set/difference (set nsyms)
+                                         (set (keys timings)))
+        _ (assert (empty? extra-namespaces) "TODO")
+        ;; algorithm: always allocate new work to the fastest job, and process
+        ;;            work from fastest to slowest
+        splits (loop [so-far (apply priority-map-keyfn
+                                    (juxt :duration :split)
+                                    (mapcat (fn [split]
+                                              [split {:split split
+                                                      :duration 0
+                                                      :nsyms []}])
+                                            (range total-splits)))
+                      [[[elapsed-ns nsym] :as fastest] & fastest-to-slowest]
+                      (->> timings
+                           (map (fn [[nsym {:keys [elapsed-ns]}]]
+                                  {:pre [(simple-symbol? nsym)
+                                         (nat-int? elapsed-ns)]}
+                                  [elapsed-ns nsym]))
+                           sort)]
+                 (prn "in loop")
+                 (assert (seq so-far))
+                 (if (not fastest)
+                   so-far
+                   (let [fastest-split-number (key (first so-far))
+                         _ (assert (<= 0 fastest-split-number))
+                         _ (assert (< fastest-split-number total-splits))]
+                     (recur
+                       (-> so-far
+                           (update fastest-split-number
+                                   #(-> %
+                                        (update :duration + elapsed-ns)
+                                        (update :nsyms conj nsym))))
+                       fastest-to-slowest))))]
+    (assert (= (sort nsyms)
+               (sort (mapcat :nsyms (vals splits)))))
+    (sort (get splits this-split))))
+
+(defn nses-for-this-build [split-info nsyms]
+  (if-some [timings (some-> (io/resource "ctia_test_timings.edn")
+                            slurp
+                            read-string)]
+    (do (println "[ctia.dev.split-tests] Splitting with load balancing via dev-resources/ctia_test_timings.edn")
+        (this-split-using-load-balancing timings split-info nsyms))
+    (do (println "[ctia.dev.split-tests] Splitting via slow-namespace heuristic")
+        (this-split-using-slow-namespace-heuristic split-info nsyms))))
 
 (defn wait-docker []
   (when (System/getenv "CTIA_WAIT_DOCKER")
