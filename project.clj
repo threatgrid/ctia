@@ -1,6 +1,7 @@
 (def cheshire-version "5.10.0")
 (def clj-http-fake-version "1.0.3")
-(def clj-version "1.10.1")
+(def clj-version (or (System/getenv "CLOJURE_VERSION")
+                     "1.10.1"))
 (def metrics-clojure-version "2.10.0")
 (def perforate-version "0.3.4")
 (def ring-version "1.8.0")
@@ -129,16 +130,9 @@
   :resource-paths ["resources" "doc"]
   :classpath ".:resources"
   :min-lein-version "2.9.1"
-  :test-selectors {:es-store :es-store
-                   :disabled :disabled
-                   :default #(not (or (:disabled %)
-                                      (:sleepy %)
-                                      (:generative %)))
-                   :integration #(or (:es-store %)
-                                     (:integration %)
-                                     (:es-aliased-index %))
-                   :no-gen #(not (:generative %))
-                   :all #(not (:disabled %))}
+  :test-selectors ~(-> (slurp "dev-resources/circleci_test/config.clj")
+                       read-string
+                       :selectors)
   :filespecs [{:type :fn
                :fn (fn [_]
                      {:type :bytes :path "ctia-version.txt"
@@ -156,6 +150,7 @@
                                   [com.gfredericks/test.chuck ~test-chuck-version]
                                   [clj-http-fake ~clj-http-fake-version]
                                   [prismatic/schema-generators ~schema-generators-version]
+                                  [circleci/circleci.test "0.4.3"]
                                   [org.clojure/math.combinatorics "0.1.6"]]
                    :pedantic? :warn
 
@@ -240,4 +235,13 @@
 
             "init-properties" ^{:doc (str "create an initial `ctia.properties`"
                                           " using docker machine ip")}
-            ["shell" "scripts/init-properties-for-docker.sh"]})
+            ["shell" "scripts/init-properties-for-docker.sh"]
+            
+            ; circleci.test
+            ;"test" ["run" "-m" "circleci.test/dir" :project/test-paths]
+            "split-test" ["trampoline"
+                          "with-profile" "+test" ;https://github.com/circleci/circleci.test/issues/13
+                          "run" "-m" "ctia.dev.split-tests/dir" :project/test-paths]
+            "tests" ["run" "-m" "circleci.test"]
+            ;"retest" ["run" "-m" "circleci.test.retest"]
+            })

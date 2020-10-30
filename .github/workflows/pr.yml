@@ -1,0 +1,97 @@
+name: GitHub Actions Pull Request
+
+on:
+  pull_request:
+
+env:
+  LOG_DIR: ~/log
+  BIN_DIR: ~/bin
+  LEIN_ROOT: 1
+  CTIA_MAJOR_VERSION: 1
+  COMPOSE_URI: https://github.com/docker/compose/releases/download/1.9.0
+  COMPOSE_BIN: ~/bin/docker-compose-1-9-0
+  COMPOSE_LOG: ~/log/docker-compose.log
+  CTIA_STORE_ES_DEFAULT_HOST: 127.0.0.1
+  CTIA_STORE_ES_DEFAULT_INDEXNAME: elasticsearch
+  CTIA_STORE_ES_DEFAULT_CLUSTERNAME: elasticsearch
+  CTIA_HOOK_ES_HOST: 127.0.0.1
+  CTIA_HOOK_ES_PORT: 9200
+  CTIA_HOOK_ES_INDEXNAME: elasticsearch
+  CTIA_HOOK_REDIS_URI: redis://127.0.0.1:6379
+  # number of test-matrix builds
+  # (9 jobs for test-matrix + 1 for shellcheck) + 1 for fan-in
+  # allows 2 commits to build simultaneously, since one build
+  # will take at most 10 builds at any one time
+  CTIA_NSPLITS: 9
+  SHELLCHECK_VERSION: v0.7.1 # "stable" or "v0.4.7", or "latest"
+  # shellcheck is preinstalled, use this to override shellcheck for our scripts
+  SHELLCHECK_COMMAND: ~/bin/shellcheck
+
+jobs:
+  shellcheck:
+    runs-on: ubuntu-18.04
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install shellcheck
+        run: |
+          (set -x && mkdir -p "${BIN_DIR}")
+          (set -x && wget -qO- "https://github.com/koalaman/shellcheck/releases/download/${SHELLCHECK_VERSION}/shellcheck-${SHELLCHECK_VERSION}.linux.x86_64.tar.xz" | tar -xJv)
+          (set -x && cp "shellcheck-${SHELLCHECK_VERSION}/shellcheck" "${BIN_DIR}/shellcheck")
+          (set -x && $SHELLCHECK_COMMAND --version)
+      - name: Run shellcheck
+        run: ./scripts/shellcheck-build.sh
+  test-matrix:
+    runs-on: ubuntu-18.04
+    strategy:
+      matrix:
+        this-split: [0,1,2,3,4,5,6,7,8] # (range ${CTIA_NSPLITS})
+    env:
+      CTIA_THIS_SPLIT: ${{ matrix.this-split }}
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-java@v1
+        with:
+          java-version: '11'
+      - uses: DeLaGuardo/setup-clojure@e73bf2b6435244b2c9c5c226ae5022d91d0ce702
+        with:
+          lein: 2.9.4
+      - name: Cache
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/bin
+            ~/.m2
+            ~/.cache/pip
+          key: ${{ runner.os }}-${{ hashFiles('project.clj') }}
+
+      - name: Setup folders
+        run: |
+          mkdir -p ~/bin
+          mkdir -p ~/log
+
+      - name: ES5 setup
+        run: sudo sysctl -w vm.max_map_count=262144
+
+      - name: Create log dir if missing
+        run: mkdir -p $LOG_DIR
+
+      - uses: actions/setup-ruby@v1
+        with:
+          ruby-version: '2.4'
+
+      - name: Docker (async)
+        run: docker-compose -f containers/dev/docker-compose.yml up -d > $COMPOSE_LOG &
+
+      - run: ./build/run-tests.sh
+        env:
+          CTIA_WAIT_DOCKER: 1
+  # fan-in tests so there's a single job we can add to protected branches.
+  # otherwise, we'll have add all (range ${CTIA_NSPLITS}) jobs, and keep
+  # them up to date
+  # here's a GitHub Actions feature request that is relevant:
+  # https://github.community/t/branch-protections-job-names-and-matrix-jobs/16317
+  all-pr-checks:
+    runs-on: ubuntu-18.04
+    needs: [shellcheck, test-matrix]
+    steps:
+      - run: echo "All tests pass!"
