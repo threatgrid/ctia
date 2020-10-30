@@ -76,3 +76,5 @@ jobs:
   test:
     runs-on: ubuntu-18.04
     needs: matrix-test
+    steps:
+      - run: echo "All tests pass!"
