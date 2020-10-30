@@ -1,4 +1,4 @@
-name: Clojure CI
+name: GitHub Actions Pull Request
 
 on:
   pull_request:
@@ -25,7 +25,7 @@ jobs:
   ## TODO fan in and deploy
   # deploy:
   #   needs: test
-  test:
+  matrix-test:
     runs-on: ubuntu-18.04
     strategy:
       matrix:
@@ -70,3 +70,9 @@ jobs:
       - run: ./build/run-tests.sh
         env:
           CTIA_WAIT_DOCKER: 1
+  # fan-in tests so there's a single job we can add to protected branches.
+  # otherwise, we'll have add all (range ${CTIA_NSPLITS}) jobs, and keep
+  # them up to date
+  test:
+    runs-on: ubuntu-18.04
+    needs: matrix-test
