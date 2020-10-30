@@ -18,8 +18,8 @@ env:
   CTIA_HOOK_ES_PORT: 9200
   CTIA_HOOK_ES_INDEXNAME: elasticsearch
   CTIA_HOOK_REDIS_URI: redis://127.0.0.1:6379
-  # number of matrix-test builds
-  # (9 jobs for matrix-test + 1 for shellcheck) + 1 for fan-in
+  # number of test-matrix builds
+  # (9 jobs for test-matrix + 1 for shellcheck) + 1 for fan-in
   # allows 2 commits to build simultaneously, since one build
   # will take at most 10 builds at any one time
   CTIA_NSPLITS: 9
@@ -87,6 +87,6 @@ jobs:
   # https://github.community/t/branch-protections-job-names-and-matrix-jobs/16317
   all-pr-checks:
     runs-on: ubuntu-18.04
-    needs: [matrix-test, shellcheck]
+    needs: [shellcheck, test-matrix]
     steps:
       - run: echo "All tests pass!"
