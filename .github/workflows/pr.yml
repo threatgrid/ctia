@@ -19,8 +19,9 @@ env:
   CTIA_HOOK_ES_INDEXNAME: elasticsearch
   CTIA_HOOK_REDIS_URI: redis://127.0.0.1:6379
   # number of matrix builds
-  # 19 jobs for matrix-test + 1 for test
-  CTIA_NSPLITS: 19
+  # 9 jobs for matrix-test + 1 for test
+  # allows 2 commits to build simultaneously
+  CTIA_NSPLITS: 9
   SHELLCHECK_VERSION: "v0.7.0" # "stable" or "v0.4.7", or "latest"
 
 jobs:
@@ -31,7 +32,7 @@ jobs:
     runs-on: ubuntu-18.04
     strategy:
       matrix:
-        this-split: [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18] # (range ${CTIA_NSPLITS})
+        this-split: [0,1,2,3,4,5,6,7,8] # (range ${CTIA_NSPLITS})
     env:
       CTIA_THIS_SPLIT: ${{ matrix.this-split }}
     steps:
