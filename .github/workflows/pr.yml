@@ -23,7 +23,7 @@ env:
   # allows 2 commits to build simultaneously, since one build
   # will take at most 10 builds at any one time
   CTIA_NSPLITS: 9
-  SHELLCHECK_VERSION: v0.7.0 # "stable" or "v0.4.7", or "latest"
+  SHELLCHECK_VERSION: v0.7.1 # "stable" or "v0.4.7", or "latest"
 
 jobs:
   shellcheck:
