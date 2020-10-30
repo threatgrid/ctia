@@ -140,9 +140,11 @@
          [this-split total-splits :as split-config] (read-env-config)
          all-nses (vec (@#'t/nses-in-directories (read-string dirs-str)))
          nses (vec (nses-for-this-build split-config all-nses))
-         ;; Note: changed from circleci.test: removed :reload for more reliable tests
-         _ (apply require #_:reload nses)
-         selector (@#'t/lookup-selector (t/read-config!) (read-string selector-str))
+         _ (when (seq nses)
+             ;; Note: changed from circleci.test: removed :reload for more reliable tests
+             (apply require #_:reload nses))
+         config (t/read-config!)
+         selector (@#'t/lookup-selector config (read-string selector-str))
          _ (if (#{[0 1]} split-config)
              (println "[ctia.dev.split-tests] Running all tests")
              (do 
@@ -157,6 +159,11 @@
                       (count nses) " of " (count all-nses) " test namespaces: "
                       nses))))
          _ (wait-docker)
-         summary (@#'t/run-selected-tests selector nses)]
+         summary (if (seq nses)
+                   (@#'t/run-selected-tests selector nses config)
+                   (do
+                     (println "\nNo tests to run.")
+                     (shutdown-agents)
+                     (System/exit 1)))]
      (shutdown-agents)
      (System/exit (+ (:error summary) (:fail summary))))))
