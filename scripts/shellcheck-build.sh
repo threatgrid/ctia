@@ -2,4 +2,4 @@
 
 set -ex
 
-${SHELLCHECK_COMMAND?shellcheck} -S style build/*.sh
+${SHELLCHECK_COMMAND:-shellcheck} -S style build/*.sh
