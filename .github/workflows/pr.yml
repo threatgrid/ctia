@@ -29,6 +29,7 @@ jobs:
   shellcheck:
     runs-on: ubuntu-18.04
     steps:
+      - uses: actions/checkout@v2
       - name: Install shellcheck
         run: |
           mkdir -p "${BIN_DIR}"
