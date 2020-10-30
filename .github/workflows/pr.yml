@@ -24,6 +24,8 @@ env:
   # will take at most 10 builds at any one time
   CTIA_NSPLITS: 9
   SHELLCHECK_VERSION: v0.7.1 # "stable" or "v0.4.7", or "latest"
+  # shellcheck is preinstalled, use this to override shellcheck for our scripts
+  SHELLCHECK_COMMAND: ~/bin/shellcheck
 
 jobs:
   shellcheck:
@@ -32,12 +34,12 @@ jobs:
       - uses: actions/checkout@v2
       - name: Install shellcheck
         run: |
-          mkdir -p "${BIN_DIR}"
+          (set -x && mkdir -p "${BIN_DIR}")
           (set -x && wget -qO- "https://github.com/koalaman/shellcheck/releases/download/${SHELLCHECK_VERSION}/shellcheck-${SHELLCHECK_VERSION}.linux.x86_64.tar.xz" | tar -xJv)
           (set -x && cp "shellcheck-${SHELLCHECK_VERSION}/shellcheck" "${BIN_DIR}/shellcheck")
-          shellcheck --version
+          (set -x && $SHELLCHECK_COMMAND --version)
       - name: Run shellcheck
-        run: ./scripts/shellcheck-build.sh
+        run: ./scripts/shellcheck-build.sh $SHELLCHECK_COMMAND
   test-matrix:
     runs-on: ubuntu-18.04
     strategy:
