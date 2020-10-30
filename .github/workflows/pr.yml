@@ -34,12 +34,14 @@ jobs:
         with:
           path: |
             ~/bin
+          key: ${{ runner.os }}-${{ env.SHELLCHECK_VERSION }}
       - name: Setup folders
         run: |
           mkdir -p ~/bin
-      - run: |
-          wget -qO- "https://github.com/koalaman/shellcheck/releases/download/${SHELLCHECK_VERSION?}/shellcheck-${SHELLCHECK_VERSION?}.linux.x86_64.tar.xz" | tar -xJv
-          cp "shellcheck-${SHELLCHECK_VERSION}/shellcheck" "${BIN_DIR}"
+      - name: Run shellcheck
+        run: |
+          # install shellcheck if not in cache
+          if [ ! -f "${BIN_DIR}/shellcheck" ]; wget -qO- "https://github.com/koalaman/shellcheck/releases/download/${SHELLCHECK_VERSION?}/shellcheck-${SHELLCHECK_VERSION?}.linux.x86_64.tar.xz" | tar -xJv && cp "shellcheck-${SHELLCHECK_VERSION}/shellcheck" "${BIN_DIR}"; fi
           shellcheck --version
           # run shellcheck
           ./scripts/shellcheck-build.sh
