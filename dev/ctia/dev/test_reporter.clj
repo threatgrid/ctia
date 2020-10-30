@@ -1,10 +1,12 @@
 (ns ctia.dev.test-reporter
-  (:require
-   [circleci.test.report]))
+  (:require [circleci.test.report :refer [TestReporter]]
+            [clojure.test :refer [with-test-out]])
+  (:import [java.io File]
+           [java.util UUID]))
 
-(deftype TimeReporter [ns-timing]
-  circleci.test.report/TestReporter
-  (circleci.test.report/default [this m])
+(deftype TimeReporter [out-dir ns-timing id]
+  TestReporter
+  (default [this m])
 
   (pass [this m])
 
@@ -13,8 +15,8 @@
   (error [this m])
 
   (summary [this m]
-    (print "Timing: "
-           @ns-timing))
+    (with-test-out
+      (println "Summary: Timing: " @ns-timing)))
 
   (begin-test-ns [this {:keys [ns]}]
     (let [nsym (ns-name ns)]
@@ -34,14 +36,24 @@
                  :in-progress {:status :done
                                :elapsed-ns (- (System/nanoTime) start-ns)}
                  (:done nil) (throw (ex-info (str "end-test-ns called without begin-test-ns: " nsym)
-                                             (or timing {}))))))))
+                                             (or timing {})))))))
+    (-> out-dir File. .mkdirs)
+    (spit (str out-dir "/ns-timing" #_id ".edn")
+          @ns-timing
+          :append true)
+    (with-test-out
+      (println "Timing: " @ns-timing)))
 
   (begin-test-var [this m])
 
   (end-test-var [this {:keys [elapsed] var-ref :var}]
-    (println (format "%10.2f ms for %s."
-                     (* elapsed 1000.0)
-                     (symbol var-ref)))))
+    (with-test-out
+      (println (format "%5f%s for %s."
+                       elapsed
+                       "s"
+                       (symbol var-ref))))))
 
-(defn time-reporter [_config]
-  (->TimeReporter (atom {})))
+(defn time-reporter [config]
+  (->TimeReporter (:test-results-dir config)
+                  (atom {})
+                  (str (UUID/randomUUID))))
