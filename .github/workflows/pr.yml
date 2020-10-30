@@ -18,17 +18,24 @@ env:
   CTIA_HOOK_ES_PORT: 9200
   CTIA_HOOK_ES_INDEXNAME: elasticsearch
   CTIA_HOOK_REDIS_URI: redis://127.0.0.1:6379
-  # number of matrix builds
-  # 9 jobs for matrix-test + 1 for test
-  # allows 2 commits to build simultaneously
+  # number of matrix-test builds
+  # (9 jobs for matrix-test + 1 for shellcheck) + 1 for fan-in
+  # allows 2 commits to build simultaneously, since one build
+  # will take at most 10 builds at any one time
   CTIA_NSPLITS: 9
   SHELLCHECK_VERSION: "v0.7.0" # "stable" or "v0.4.7", or "latest"
 
 jobs:
-  ## TODO fan in and deploy
-  # deploy:
-  #   needs: test
-  matrix-test:
+  shellcheck:
+    runs-on: ubuntu-18.04
+    steps:
+      - run: |
+          wget -qO- "https://github.com/koalaman/shellcheck/releases/download/${SHELLCHECK_VERSION?}/shellcheck-${SHELLCHECK_VERSION?}.linux.x86_64.tar.xz" | tar -xJv
+          cp "shellcheck-${SHELLCHECK_VERSION}/shellcheck" "${BIN_DIR}"
+          shellcheck --version
+          # run shellcheck
+          ./scripts/shellcheck-build.sh
+  test-matrix:
     runs-on: ubuntu-18.04
     strategy:
       matrix:
@@ -78,8 +85,8 @@ jobs:
   # them up to date
   # here's a GitHub Actions feature request that is relevant:
   # https://github.community/t/branch-protections-job-names-and-matrix-jobs/16317
-  mergable-pr:
+  all-pr-checks:
     runs-on: ubuntu-18.04
-    needs: matrix-test
+    needs: [matrix-test, shellcheck]
     steps:
       - run: echo "All tests pass!"

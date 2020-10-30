@@ -52,9 +52,10 @@ stages:
 
 matrix: #note: don't use "jobs:" introduces an extra build
   include:
-    # just run "before_install" to shellcheck our scripts
+    # dummy build to ease transition to GitHub Actions
     - stage: test
       if: type = pull_request
+      before_install: skip
       install: skip
       before_script: skip
       script: skip
