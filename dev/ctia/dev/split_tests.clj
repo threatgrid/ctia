@@ -110,23 +110,23 @@
                                          (set (keys timings)))
         ;; algorithm: always allocate new work to the fastest job, and process
         ;;            work from slowest to fastest
-        splits (loop [so-far (apply priority-map-keyfn
-                                    (juxt :duration :id)
-                                    (mapcat (fn [split]
-                                              [split {:id split
-                                                      :duration 0
-                                                      :nsyms []}])
-                                            (range total-splits)))
+        splits (loop [so-far (into (priority-map-keyfn (juxt :duration :id))
+                                   (map (fn [split]
+                                          [split {:id split
+                                                  :duration 0
+                                                  :nsyms []}]))
+                                   (range total-splits))
                       [[elapsed-ns nsym :as current-timing] & more-namespaces]
                       (->> (concat timings
-                                   (zipmap extra-namespaces
-                                           {:elapsed-ns (repeat ##Inf)}))
+                                   (map vector
+                                        extra-namespaces
+                                        ;; allocated last
+                                        (repeat {:elapsed-ns 0})))
                            (map (fn [[nsym {:keys [elapsed-ns]}]]
                                   {:pre [(simple-symbol? nsym)
                                          (<= 0 elapsed-ns)]}
                                   [elapsed-ns nsym]))
-                           sort
-                           vec
+                           sorted-set
                            rseq)]
                  (assert (seq so-far))
                  (if (not current-timing)
