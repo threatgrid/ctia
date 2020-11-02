@@ -63,7 +63,7 @@ jobs:
       - name: Run shellcheck
         run: ./scripts/shellcheck-build.sh
         env: 
-          SHELLCHECK_COMMAND: "${BIN_DIR}/shellcheck"
+          SHELLCHECK_COMMAND: $BIN_DIR/shellcheck
 
       - name: ES5 setup
         run: sudo sysctl -w vm.max_map_count=262144
