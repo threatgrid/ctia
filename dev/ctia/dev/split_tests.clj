@@ -102,28 +102,27 @@
     (nth all-splits this-split)))
 
 (defn this-split-using-load-balancing [timings [this-split total-splits] nsyms]
-  {:pre [(map? timings)]}
-  (prn "top of this-split-using-load-balancing")
+  {:pre [(map? timings)]
+   :post [(vector? %)]}
   (let [extra-namespaces (set/difference (set nsyms)
                                          (set (keys timings)))
         _ (assert (empty? extra-namespaces) "TODO")
         ;; algorithm: always allocate new work to the fastest job, and process
         ;;            work from fastest to slowest
         splits (loop [so-far (apply priority-map-keyfn
-                                    (juxt :duration :split)
+                                    (juxt :duration :id)
                                     (mapcat (fn [split]
-                                              [split {:split split
+                                              [split {:id split
                                                       :duration 0
                                                       :nsyms []}])
                                             (range total-splits)))
-                      [[[elapsed-ns nsym] :as fastest] & fastest-to-slowest]
+                      [[elapsed-ns nsym :as fastest] & fastest-to-slowest]
                       (->> timings
                            (map (fn [[nsym {:keys [elapsed-ns]}]]
                                   {:pre [(simple-symbol? nsym)
                                          (nat-int? elapsed-ns)]}
                                   [elapsed-ns nsym]))
                            sort)]
-                 (prn "in loop")
                  (assert (seq so-far))
                  (if (not fastest)
                    so-far
@@ -139,7 +138,8 @@
                        fastest-to-slowest))))]
     (assert (= (sort nsyms)
                (sort (mapcat :nsyms (vals splits)))))
-    (sort (get splits this-split))))
+    ;; return sorted from fastest-to-slowest
+    (:nsyms (get splits this-split))))
 
 (defn nses-for-this-build [split-info nsyms]
   (if-some [timings (some-> (io/resource "ctia_test_timings.edn")
@@ -147,7 +147,7 @@
                             read-string)]
     (do (println "[ctia.dev.split-tests] Splitting with load balancing via dev-resources/ctia_test_timings.edn")
         (this-split-using-load-balancing timings split-info nsyms))
-    (do (println "[ctia.dev.split-tests] Splitting via slow-namespace heuristic")
+    (do (println "[ctia.dev.split-tests] Splitting via `slow-namespace?` heuristic")
         (this-split-using-slow-namespace-heuristic split-info nsyms))))
 
 (defn wait-docker []
