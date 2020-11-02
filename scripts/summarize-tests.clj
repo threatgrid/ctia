@@ -25,6 +25,7 @@
                        1e9)
                     " seconds")))
     (println "Test summary:")
-    (pp/pprint timing)))
+    (pp/pprint timing)
+    (spit "target/test-results/all-test-timings.edn" timing)))
 
 (summarize)

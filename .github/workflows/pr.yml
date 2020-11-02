@@ -117,4 +117,11 @@ jobs:
       - name: Print test timings
         run: ./scripts/summarize-tests.clj
 
+      - name: Upload all test timings
+        uses: actions/upload-artifact@v2
+        with:
+          retention-days: 30
+          name: all-test-timings
+          path: target/test-results/all-test-timings.edn
+
       - run: echo "All tests pass!"
