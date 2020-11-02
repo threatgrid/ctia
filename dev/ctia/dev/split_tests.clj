@@ -142,11 +142,15 @@
                                         (update :nsyms conj nsym))))
                        more-namespaces))))]
     (assert (seq splits))
-    (println "[ctia.dev.split-tests] Wasted time: "
-             (/ (- (apply max (map :duration (vals splits)))
-                   (apply min (map :duration (vals splits))))
-                1e9)
-             " seconds")
+    (println (str "[ctia.dev.split-tests] Wasted time: "
+                  (/ (- (apply max (map :duration (vals splits)))
+                        (apply min (map :duration (vals splits))))
+                     1e9)
+                  " seconds"))
+    (println (str "[ctia.dev.split-tests] Predicted time for this split: "
+                  (/ (:duration (get splits this-split))
+                     1e9)
+                  " seconds"))
     (assert (= (sort nsyms)
                (sort (mapcat :nsyms (vals splits)))))
     ;; return sorted from fastest-to-slowest
