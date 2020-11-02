@@ -61,9 +61,7 @@ jobs:
           ( set -x && cp "shellcheck-${SHELLCHECK_VERSION}/shellcheck" "${BIN_DIR}" )
           ( set -x && $BIN_DIR/shellcheck --version)
       - name: Run shellcheck
-        run: ./scripts/shellcheck-build.sh
-        env: 
-          SHELLCHECK_COMMAND: $BIN_DIR/shellcheck
+        run: SHELLCHECK_COMMAND="${BIN_DIR}/shellcheck" ./scripts/shellcheck-build.sh
 
       - name: ES5 setup
         run: sudo sysctl -w vm.max_map_count=262144
