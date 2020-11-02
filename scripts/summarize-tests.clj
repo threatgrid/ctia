@@ -24,10 +24,7 @@
                     (/ (apply + (map :elapsed-ns (vals timing)))
                        1e9)
                     " seconds")))
-    (println
-      "Test summary:\n"
-      (with-out-str
-        (pp/pprint
-          timing)))))
+    (println "Test summary:")
+    (pp/pprint timing)))
 
 (summarize)
