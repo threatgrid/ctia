@@ -1,6 +1,5 @@
 (ns ctia.dev.split-tests
   (:require [circleci.test :as t]
-            [clojure.math.combinatorics :as comb]
             [clojure.data.priority-map :refer [priority-map-keyfn]]
             [clojure.edn :as edn]
             [clojure.java.io :as io]
