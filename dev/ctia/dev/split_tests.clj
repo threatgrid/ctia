@@ -1,5 +1,6 @@
 (ns ctia.dev.split-tests
   (:require [circleci.test :as t]
+            [clojure.math.combinatorics :as comb]
             [clojure.data.priority-map :refer [priority-map-keyfn]]
             [clojure.edn :as edn]
             [clojure.java.io :as io]
@@ -101,13 +102,15 @@
     ;select this split
     (nth all-splits this-split)))
 
-(defn this-split-using-load-balancing [timings [this-split total-splits] nsyms]
-  {:pre [(map? timings)]
+(defn this-split-using-round-robin [timings [this-split total-splits] nsyms]
+  {:pre [(map? timings)
+         (vector? nsyms)
+         (seq nsyms)]
    :post [(vector? %)]}
   (let [extra-namespaces (set/difference (set nsyms)
                                          (set (keys timings)))
         ;; algorithm: always allocate new work to the fastest job, and process
-        ;;            work from fastest to slowest
+        ;;            work from slowest to fastest
         splits (loop [so-far (apply priority-map-keyfn
                                     (juxt :duration :id)
                                     (mapcat (fn [split]
@@ -115,7 +118,7 @@
                                                       :duration 0
                                                       :nsyms []}])
                                             (range total-splits)))
-                      [[elapsed-ns nsym :as fastest] & fastest-to-slowest]
+                      [[elapsed-ns nsym :as current-timing] & more-namespaces]
                       (->> (concat timings
                                    (zipmap extra-namespaces
                                            {:elapsed-ns (repeat ##Inf)}))
@@ -123,9 +126,11 @@
                                   {:pre [(simple-symbol? nsym)
                                          (<= 0 elapsed-ns)]}
                                   [elapsed-ns nsym]))
-                           sort)]
+                           sort
+                           vec
+                           rseq)]
                  (assert (seq so-far))
-                 (if (not fastest)
+                 (if (not current-timing)
                    so-far
                    (let [fastest-split-number (key (first so-far))
                          _ (assert (<= 0 fastest-split-number))
@@ -136,18 +141,29 @@
                                    #(-> %
                                         (update :duration + elapsed-ns)
                                         (update :nsyms conj nsym))))
-                       fastest-to-slowest))))]
+                       more-namespaces))))]
+    (assert (seq splits))
+    (println "[ctia.dev.split-tests] Wasted time: "
+             (/ (- (apply max (map :duration (vals splits)))
+                   (apply min (map :duration (vals splits))))
+                1e9)
+             " seconds")
     (assert (= (sort nsyms)
                (sort (mapcat :nsyms (vals splits)))))
     ;; return sorted from fastest-to-slowest
     (:nsyms (get splits this-split))))
 
+(def load-balancing-algorithm :round-robin)
+
 (defn nses-for-this-build [split-info nsyms]
+  {:pre [(vector? nsyms)]}
   (if-some [timings (some-> (io/resource "ctia_test_timings.edn")
                             slurp
                             read-string)]
-    (do (println "[ctia.dev.split-tests] Splitting with load balancing via dev-resources/ctia_test_timings.edn")
-        (this-split-using-load-balancing timings split-info nsyms))
+    (case load-balancing-algorithm
+      :round-robin
+      (do (println "[ctia.dev.split-tests] Splitting with round-robin with prior knowledge from dev-resources/ctia_test_timings.edn")
+          (this-split-using-round-robin timings split-info nsyms)))
     (do (println "[ctia.dev.split-tests] Splitting via `slow-namespace?` heuristic")
         (this-split-using-slow-namespace-heuristic split-info nsyms))))
 
