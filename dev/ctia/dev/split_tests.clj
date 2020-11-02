@@ -117,10 +117,11 @@
                                             (range total-splits)))
                       [[elapsed-ns nsym :as fastest] & fastest-to-slowest]
                       (->> (concat timings
-                                   (zipmap extra-namespaces (repeat ##Inf)))
+                                   (zipmap extra-namespaces
+                                           {:elapsed-ns (repeat ##Inf)}))
                            (map (fn [[nsym {:keys [elapsed-ns]}]]
                                   {:pre [(simple-symbol? nsym)
-                                         (nat-int? elapsed-ns)]}
+                                         (<= 0 elapsed-ns)]}
                                   [elapsed-ns nsym]))
                            sort)]
                  (assert (seq so-far))
