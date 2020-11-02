@@ -24,8 +24,6 @@ env:
   # will take at most 10 builds at any one time
   CTIA_NSPLITS: 10
   SHELLCHECK_VERSION: v0.7.1 # "stable" or "v0.4.7", or "latest"
-  # shellcheck is preinstalled, use this to override shellcheck for our scripts
-  SHELLCHECK_COMMAND: ~/bin/shellcheck
 
 jobs:
   test-matrix:
@@ -60,10 +58,12 @@ jobs:
       - name: Install shellcheck
         run: |
           ( set -x && wget -qO- "https://github.com/koalaman/shellcheck/releases/download/${SHELLCHECK_VERSION}/shellcheck-${SHELLCHECK_VERSION}.linux.x86_64.tar.xz" | tar -xJv )
-          ( set -x && cp "shellcheck-${SHELLCHECK_VERSION}/shellcheck" $BIN_DIR )
-          ( set -x && $SHELLCHECK_COMMAND --version)
+          ( set -x && cp "shellcheck-${SHELLCHECK_VERSION}/shellcheck" "${BIN_DIR}" )
+          ( set -x && "${BIN_DIR}/shellcheck" --version)
       - name: Run shellcheck
         run: ./scripts/shellcheck-build.sh
+        env: 
+          SHELLCHECK_COMMAND: "${BIN_DIR}/shellcheck"
 
       - name: ES5 setup
         run: sudo sysctl -w vm.max_map_count=262144

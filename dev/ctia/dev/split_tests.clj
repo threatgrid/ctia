@@ -106,7 +106,6 @@
    :post [(vector? %)]}
   (let [extra-namespaces (set/difference (set nsyms)
                                          (set (keys timings)))
-        _ (assert (empty? extra-namespaces) "TODO")
         ;; algorithm: always allocate new work to the fastest job, and process
         ;;            work from fastest to slowest
         splits (loop [so-far (apply priority-map-keyfn
@@ -117,7 +116,8 @@
                                                       :nsyms []}])
                                             (range total-splits)))
                       [[elapsed-ns nsym :as fastest] & fastest-to-slowest]
-                      (->> timings
+                      (->> (concat timings
+                                   (zipmap extra-namespaces (repeat ##Inf)))
                            (map (fn [[nsym {:keys [elapsed-ns]}]]
                                   {:pre [(simple-symbol? nsym)
                                          (nat-int? elapsed-ns)]}
