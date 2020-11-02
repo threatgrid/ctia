@@ -47,21 +47,21 @@ jobs:
         uses: actions/cache@v2
         with:
           path: |
-            ~/bin
+            #~/bin
             ~/.m2
             ~/.cache/pip
           key: ${{ runner.os }}-${{ hashFiles('project.clj') }}
 
       - name: Setup folders
         run: |
-          mkdir -p ~/bin
+          mkdir -p $BIN_DIR
           mkdir -p ~/log
 
       - name: Install shellcheck
         run: |
-          (set -x && wget -qO- "https://github.com/koalaman/shellcheck/releases/download/${SHELLCHECK_VERSION}/shellcheck-${SHELLCHECK_VERSION}.linux.x86_64.tar.xz" | tar -xJv)
-          (set -x && cp "shellcheck-${SHELLCHECK_VERSION}/shellcheck" ~/bin)
-          (set -x && $SHELLCHECK_COMMAND --version)
+          ( set -x && wget -qO- "https://github.com/koalaman/shellcheck/releases/download/${SHELLCHECK_VERSION}/shellcheck-${SHELLCHECK_VERSION}.linux.x86_64.tar.xz" | tar -xJv )
+          ( set -x && cp "shellcheck-${SHELLCHECK_VERSION}/shellcheck" $BIN_DIR )
+          ( set -x && $SHELLCHECK_COMMAND --version)
       - name: Run shellcheck
         run: ./scripts/shellcheck-build.sh
 
