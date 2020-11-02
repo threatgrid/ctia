@@ -126,7 +126,7 @@
                                   {:pre [(simple-symbol? nsym)
                                          (<= 0 elapsed-ns)]}
                                   [elapsed-ns nsym]))
-                           sorted-set
+                           (into (sorted-set))
                            rseq)]
                  (assert (seq so-far))
                  (if (not current-timing)
