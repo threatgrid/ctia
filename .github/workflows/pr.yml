@@ -35,6 +35,18 @@ jobs:
       CTIA_THIS_SPLIT: ${{ matrix.this-split }}
     steps:
       - uses: actions/checkout@v2
+      - name: ES5 setup
+        run: sudo sysctl -w vm.max_map_count=262144
+
+      - name: Create log dir if missing
+        run: mkdir -p $LOG_DIR
+
+      - uses: actions/setup-ruby@v1
+        with:
+          ruby-version: '2.4'
+
+      - name: Docker (async)
+        run: docker-compose -f containers/dev/docker-compose.yml up -d > $COMPOSE_LOG &
       - uses: actions/setup-java@v1
         with:
           java-version: '11'
@@ -63,18 +75,6 @@ jobs:
       - name: Run shellcheck
         run: SHELLCHECK_COMMAND="${BIN_DIR}/shellcheck" ./scripts/shellcheck-build.sh
 
-      - name: ES5 setup
-        run: sudo sysctl -w vm.max_map_count=262144
-
-      - name: Create log dir if missing
-        run: mkdir -p $LOG_DIR
-
-      - uses: actions/setup-ruby@v1
-        with:
-          ruby-version: '2.4'
-
-      - name: Docker (async)
-        run: docker-compose -f containers/dev/docker-compose.yml up -d > $COMPOSE_LOG &
 
       - run: ./build/run-tests.sh
         env:
