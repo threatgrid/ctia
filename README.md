@@ -160,8 +160,8 @@ You will need a completed GitHub Actions Pull Request build to base it on.
    - eg., https://github.com/threatgrid/ctia/actions/runs/342562872
 2. Go to the `all-pr-checks` job (should be the last job) and download the `all-test-timings` artifact
 3. Unzip the downloaded file and locate the inflated `all-test-timings.edn` file.
-4. Copy this `all-test-timings.edn` file to `dev-resources/ctia_test_timings.edn`
-5. Commit commit this change and push.
+4. Copy the inflated `all-test-timings.edn` file to `dev-resources/ctia_test_timings.edn`
+5. Commit this change and push.
 
 Note: Unfortunately, even public artifacts require an API key to download
 them via the API, so this is not straightforward to automate
