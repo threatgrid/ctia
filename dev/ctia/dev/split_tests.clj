@@ -153,8 +153,7 @@
                   " seconds"))
     (assert (= (sort nsyms)
                (sort (mapcat :nsyms (vals splits)))))
-    ;; return sorted from fastest-to-slowest
-    (:nsyms (get splits this-split))))
+    (get-in splits [this-split :nsyms])))
 
 (def load-balancing-algorithm :round-robin)
 
