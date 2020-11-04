@@ -101,7 +101,7 @@
     ;select this split
     (nth all-splits this-split)))
 
-(defn this-split-using-round-robin [timings [this-split total-splits] nsyms]
+(defn this-split-using-scheduling-with-full-knowledge [timings [this-split total-splits] nsyms]
   {:pre [(map? timings)
          (vector? nsyms)
          (seq nsyms)]
@@ -154,17 +154,13 @@
                (sort (mapcat :nsyms (vals splits)))))
     (get-in splits [this-split :nsyms])))
 
-(def load-balancing-algorithm :round-robin)
-
 (defn nses-for-this-build [split-info nsyms]
   {:pre [(vector? nsyms)]}
   (if-some [timings (some-> (io/resource "ctia_test_timings.edn")
                             slurp
                             read-string)]
-    (case load-balancing-algorithm
-      :round-robin
-      (do (println "[ctia.dev.split-tests] Splitting with round-robin with prior knowledge from dev-resources/ctia_test_timings.edn")
-          (this-split-using-round-robin timings split-info nsyms)))
+    (do (println "[ctia.dev.split-tests] Splitting with prior knowledge from dev-resources/ctia_test_timings.edn")
+        (this-split-using-scheduling-with-full-knowledge timings split-info nsyms))
     (do (println "[ctia.dev.split-tests] Splitting via `slow-namespace?` heuristic")
         (this-split-using-slow-namespace-heuristic split-info nsyms))))
 
