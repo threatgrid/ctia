@@ -35,7 +35,7 @@ jobs:
       CTIA_THIS_SPLIT: ${{ matrix.this-split }}
     steps:
       - uses: actions/checkout@v2
-      - name: ES5 setup
+      - name: ES setup
         run: sudo sysctl -w vm.max_map_count=262144
 
       - name: Create log dir if missing
