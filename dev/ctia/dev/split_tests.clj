@@ -108,39 +108,38 @@
    :post [(vector? %)]}
   (let [extra-namespaces (set/difference (set nsyms)
                                          (set (keys timings)))
+        unallocated-splits (into (priority-map-keyfn (juxt :duration :id))
+                                 (map (fn [split]
+                                        [split {:id split
+                                                :duration 0
+                                                :nsyms []}]))
+                                 (range total-splits))
+        slowest-to-fastest-timings (->> (concat timings
+                                                (map vector
+                                                     extra-namespaces
+                                                     ;; allocated last
+                                                     (repeat {:elapsed-ns 0})))
+                                        (map (fn [[nsym {:keys [elapsed-ns]}]]
+                                               {:pre [(simple-symbol? nsym)
+                                                      (<= 0 elapsed-ns)]}
+                                               [elapsed-ns nsym]))
+                                        (into (sorted-set))
+                                        rseq)
         ;; algorithm: always allocate new work to the fastest job, and process
         ;;            work from slowest to fastest
-        splits (loop [so-far (into (priority-map-keyfn (juxt :duration :id))
-                                   (map (fn [split]
-                                          [split {:id split
-                                                  :duration 0
-                                                  :nsyms []}]))
-                                   (range total-splits))
-                      [[elapsed-ns nsym :as current-timing] & more-namespaces]
-                      (->> (concat timings
-                                   (map vector
-                                        extra-namespaces
-                                        ;; allocated last
-                                        (repeat {:elapsed-ns 0})))
-                           (map (fn [[nsym {:keys [elapsed-ns]}]]
-                                  {:pre [(simple-symbol? nsym)
-                                         (<= 0 elapsed-ns)]}
-                                  [elapsed-ns nsym]))
-                           (into (sorted-set))
-                           rseq)]
-                 (assert (seq so-far))
-                 (if (not current-timing)
-                   so-far
-                   (let [fastest-split-number (key (first so-far))
-                         _ (assert (<= 0 fastest-split-number))
-                         _ (assert (< fastest-split-number total-splits))]
-                     (recur
-                       (-> so-far
-                           (update fastest-split-number
-                                   #(-> %
-                                        (update :duration + elapsed-ns)
-                                        (update :nsyms conj nsym))))
-                       more-namespaces))))]
+        splits (reduce (fn [so-far [elapsed-ns nsym :as current-timing]]
+                         {:pre [(seq so-far)
+                                current-timing]}
+                         (let [fastest-split-number (key (first so-far))]
+                           (assert (<= 0 fastest-split-number))
+                           (assert (< fastest-split-number total-splits))
+                           (-> so-far
+                               (update fastest-split-number
+                                       #(-> %
+                                            (update :duration + elapsed-ns)
+                                            (update :nsyms conj nsym))))))
+                       unallocated-splits
+                       slowest-to-fastest-timings)]
     (assert (seq splits))
     (println (str "[ctia.dev.split-tests] Wasted time: "
                   (/ (- (apply max (map :duration (vals splits)))
