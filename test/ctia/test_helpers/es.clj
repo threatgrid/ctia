@@ -236,22 +236,26 @@
 - wrap body with a `testing` block with with `msg` formatted with `version`
 - call `clean` fn if not `nil` before and after body (takes conn as parameter)."
   {:style/indent 2}
-  `(doseq [~'version ~versions]
-     (let [~'es-port (+ 9200 ~'version)
-           ~'conn (es-conn/connect {:host "localhost"
-                                    :port ~'es-port
-                                    :version ~'version})
-           clean-fn# ~clean]
-       (try
-         (testing (format "%s (ES version: %s)." ~msg  ~'version)
-           (when clean-fn#
-             (clean-fn# ~'conn))
-           ~@body
-           (when clean-fn#
-             (clean-fn# ~'conn)))
-         (finally (es-conn/close ~'conn))))))
+  `(let [;; avoid version and the other explicitly bound locals will to be captured
+         clean-fn# ~clean
+         msg# ~msg]
+     (doseq [~'version ~versions]
+       (let [~'es-port (+ 9200 ~'version)
+             ~'conn (es-conn/connect {:host "localhost"
+                                      :port ~'es-port
+                                      :version ~'version})]
+         (try
+           (testing (format "%s (ES version: %s)." msg#  ~'version)
+             (when clean-fn#
+               (clean-fn# ~'conn))
+             ~@body
+             (when clean-fn#
+               (clean-fn# ~'conn)))
+         (finally (es-conn/close ~'conn)))))))
 
 (defn build-mappings
   [base-mappings entity-type version]
-  (cond->> {:properties base-mappings}
-    (= version 5) (assoc {} entity-type)))
+  (let [p {:properties base-mappings}]
+    (if (= version 5)
+      {entity-type p}
+      p)))
