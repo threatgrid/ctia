@@ -36,6 +36,7 @@ jobs:
         run: |
           mkdir -p ~/bin
           echo "~/bin" >> $GITHUB_PATH
+      - uses: actions/checkout@v2
       - uses: actions/setup-node@v1
         with:
           node-version: '12'
@@ -54,6 +55,15 @@ jobs:
           path: |
             ~/bin
           key: ctia-setup-
+
+      - name: Install shellcheck
+        run: |
+          ( set -x && wget -qO- "https://github.com/koalaman/shellcheck/releases/download/${SHELLCHECK_VERSION}/shellcheck-${SHELLCHECK_VERSION}.linux.x86_64.tar.xz" | tar -xJv )
+          ( set -x && cp "shellcheck-${SHELLCHECK_VERSION}/shellcheck" "${BIN_DIR}" )
+          ~/bin/shellcheck --version
+          shellcheck --version
+      - name: Run shellcheck
+        run: ./scripts/shellcheck-build.sh
   test-matrix:
     runs-on: ubuntu-18.04
     needs: [setup]
@@ -101,15 +111,6 @@ jobs:
         run: |
           mkdir -p $BIN_DIR
           mkdir -p ~/log
-
-      - name: Install shellcheck
-        run: |
-          ( set -x && wget -qO- "https://github.com/koalaman/shellcheck/releases/download/${SHELLCHECK_VERSION}/shellcheck-${SHELLCHECK_VERSION}.linux.x86_64.tar.xz" | tar -xJv )
-          ( set -x && cp "shellcheck-${SHELLCHECK_VERSION}/shellcheck" "${BIN_DIR}" )
-          shellcheck --version
-      - name: Run shellcheck
-        run: ./scripts/shellcheck-build.sh
-
 
       - run: ./build/run-tests.sh
         env:
