@@ -46,7 +46,7 @@ jobs:
           mkdir -p tmp 
           cd tmp 
           # calculate (range ${CTIA_NSPLITS})
-          node -e "[...Array(${CTIA_NSPLITS}).keys()];" > splits.json
+          node -e "console.log([...Array(${CTIA_NSPLITS}).keys()])" > splits.json
           echo "::set-output name=matrix::$( cat splits.json )"
       - name: Cache
         uses: actions/cache@v2
