@@ -1,19 +1,17 @@
-#! /usr/bin/env clojure
+#!/usr/bin/env bb
 
-(ns summarize-tests
-  (:require [clojure.java.io :as io]
-            [clojure.pprint :as pp])
-  (:import [java.io File]))
+(require '[clojure.pprint :as pp])
+(import '[java.io File])
 
 (defn summarize []
-  (let [timing (->> (file-seq (io/file "target/test-results"))
+  (let [timing (->> (file-seq (File. "target/test-results"))
                     (filter (fn [^File f]
                               (and (.isFile f)
                                    (.startsWith (.getName f)
                                                 "ns-timing"))))
                     (map (comp read-string slurp))
                     (apply merge))]
-    (when-some [expected (some-> (io/file "dev-resources/ctia_test_timings.edn")
+    (when-some [expected (some-> (File. "dev-resources/ctia_test_timings.edn")
                                  slurp
                                  read-string)]
       (println (str "Expected test duration: "
@@ -26,6 +24,8 @@
                     " seconds")))
     (println "Test summary:")
     (pp/pprint timing)
+    (-> (File. "target/test-results")
+        .mkdir)
     (spit "target/test-results/all-test-timings.edn" timing)))
 
 (summarize)

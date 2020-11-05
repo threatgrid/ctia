@@ -24,16 +24,49 @@ env:
   # will take at most 10 builds at any one time
   CTIA_NSPLITS: 10
   SHELLCHECK_VERSION: v0.7.1 # "stable" or "v0.4.7", or "latest"
+  BB_VERSION: 0.2.3
 
 jobs:
+  setup:
+    runs-on: ubuntu-18.04
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+      - name: Setup PATH
+        run: |
+          mkdir -p ~/bin
+          echo "~/bin" >> $GITHUB_PATH
+      - uses: actions/setup-node@v1
+        with:
+          node-version: '12'
+      - name: Setup test matrix splits
+        id: set-matrix
+        run: |
+          set +x
+          mkdir -p tmp 
+          cd tmp 
+          # calculate (range ${CTIA_NSPLITS})
+          node -e "[...Array(${CTIA_NSPLITS}).keys()];" > splits.json
+          echo "::set-output name=matrix::$( cat splits.json )"
+      - name: Cache
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/bin
+          key: ctia-setup-
   test-matrix:
     runs-on: ubuntu-18.04
+    needs: [setup]
     strategy:
       matrix:
-        this-split: [0,1,2,3,4,5,6,7,8,9] # (range ${CTIA_NSPLITS})
+        this-split: ${{fromJson(needs.setup.outputs.matrix)}}
     env:
       CTIA_THIS_SPLIT: ${{ matrix.this-split }}
     steps:
+      - name: Setup PATH
+        run: |
+          mkdir -p ~/bin
+          echo "~/bin" >> $GITHUB_PATH
       - uses: actions/checkout@v2
       - name: ES setup
         run: sudo sysctl -w vm.max_map_count=262144
@@ -57,10 +90,12 @@ jobs:
         uses: actions/cache@v2
         with:
           path: |
-            #~/bin
+            ~/bin
             ~/.m2
             ~/.cache/pip
-          key: ${{ runner.os }}-${{ hashFiles('project.clj') }}
+          key: |
+            ctia-test-matrix-${{ hashFiles('project.clj') }}
+            ctia-test-matrix-
 
       - name: Setup folders
         run: |
@@ -71,9 +106,9 @@ jobs:
         run: |
           ( set -x && wget -qO- "https://github.com/koalaman/shellcheck/releases/download/${SHELLCHECK_VERSION}/shellcheck-${SHELLCHECK_VERSION}.linux.x86_64.tar.xz" | tar -xJv )
           ( set -x && cp "shellcheck-${SHELLCHECK_VERSION}/shellcheck" "${BIN_DIR}" )
-          ( set -x && $BIN_DIR/shellcheck --version)
+          shellcheck --version
       - name: Run shellcheck
-        run: SHELLCHECK_COMMAND="${BIN_DIR}/shellcheck" ./scripts/shellcheck-build.sh
+        run: ./scripts/shellcheck-build.sh
 
 
       - run: ./build/run-tests.sh
@@ -94,27 +129,46 @@ jobs:
     runs-on: ubuntu-18.04
     needs: [test-matrix]
     steps:
+      - name: Setup PATH
+        run: |
+          mkdir -p ~/bin
+          echo "~/bin" >> $GITHUB_PATH
       - uses: actions/checkout@v2
+      - name: Cache
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.m2
+            target/test-results/all-test-timings.edn
+            ~/bin
+          key: ctia-all-pr-checks-${{ hashFiles('scripts/summarize-tests.clj') }}
+          restore-keys: |
+            ctia-all-pr-checks-
+
+      - name: Install babashka
+        run: |
+          if ! command -v bb &> /dev/null
+          then
+            mkdir -p tmp
+            cd tmp
+            curl -sLO https://raw.githubusercontent.com/borkdude/babashka/master/install
+            chmod +x install
+            ./install --dir ~/bin --version 0.2.3
+          fi
+
       - uses: actions/setup-java@v1
         with:
           java-version: '11'
       - uses: DeLaGuardo/setup-clojure@e73bf2b6435244b2c9c5c226ae5022d91d0ce702
         with:
           cli: '1.10.1.469'
-      - name: Cache
-        uses: actions/cache@v2
-        with:
-          path: |
-            ~/.m2
-          key: ${{ runner.os }}-${{ hashFiles('scripts/summarize-tests.clj') }}
-
       - name: Download test timings
         uses: actions/download-artifact@v2
         with:
           name: test-timing
           path: target/test-results
 
-      - name: Print test timings
+      - nae: Print test timings
         run: ./scripts/summarize-tests.clj
 
       - name: Upload all test timings
