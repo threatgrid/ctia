@@ -7,7 +7,7 @@
             [clj-momo.test-helpers.core :as mth]
             [clj-time.core :as t]
             [clojure.data.json :as json]
-            [clojure.test :refer [deftest is testing use-fixtures]]
+            [clojure.test :refer [deftest is testing use-fixtures join-fixtures]]
             [clojure.tools.logging.test :as tlog]
             [ctia.domain.entities :refer [schema-version]]
             [ctia.test-helpers

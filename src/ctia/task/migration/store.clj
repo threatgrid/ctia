@@ -40,7 +40,8 @@
                 :max_age s/Str})
     :aliased  s/Bool
     :default_operator (s/enum "OR" "AND")
-    :timeout s/Num}))
+    :timeout s/Num
+    :version s/Num}))
 
 (s/defschema MigrationParams
   {:migration-id s/Str
