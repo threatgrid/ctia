@@ -25,7 +25,7 @@
     (println "Test summary:")
     (pp/pprint timing)
     (-> (File. "target/test-results")
-        .mkdir)
+        .mkdirs)
     (spit "target/test-results/all-test-timings.edn" timing)))
 
 (summarize)
