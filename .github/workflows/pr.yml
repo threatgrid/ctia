@@ -56,9 +56,22 @@ jobs:
             ~/bin
           key: ctia-setup-
 
+      - name: Install shellcheck
+        run: |
+          if ! command -v shellcheck &> /dev/null || ! shellcheck --version | grep "^version: ${SHELLCHECK_VERSION}$"
+          then
+            ( set -x && wget -qO- "https://github.com/koalaman/shellcheck/releases/download/${SHELLCHECK_VERSION}/shellcheck-${SHELLCHECK_VERSION}.linux.x86_64.tar.xz" | tar -xJv )
+            ( set -x && cp "shellcheck-${SHELLCHECK_VERSION}/shellcheck" ~/bin/shellcheck )
+          fi
+          shellcheck --version
+      - name: Run shellcheck
+        run: ./scripts/shellcheck-build.sh
+
+
+      ## DELETE ME
       - name: Install babashka
         run: |
-          if ! command -v bb &> /dev/null || ! bb --version | grep '^babashka v0.2.3$'
+          if ! command -v bb &> /dev/null || ! bb --version | grep "^babashka v${BB_VERSION}$"
           then
             mkdir -p tmp
             cd tmp
@@ -68,16 +81,9 @@ jobs:
           fi
           bb --version
 
-      - name: Install shellcheck
-        run: |
-          if ! shellcheck --version | grep '^version: 0.7.0$'
-          then
-            ( set -x && wget -qO- "https://github.com/koalaman/shellcheck/releases/download/${SHELLCHECK_VERSION}/shellcheck-${SHELLCHECK_VERSION}.linux.x86_64.tar.xz" | tar -xJv )
-            ( set -x && cp "shellcheck-${SHELLCHECK_VERSION}/shellcheck" ~/bin/shellcheck )
-          fi
-          shellcheck --version
-      - name: Run shellcheck
-        run: ./scripts/shellcheck-build.sh
+      ## DELETE ME
+      - name: Print test timings
+        run: ./scripts/summarize-tests.clj
   test-matrix:
     runs-on: ubuntu-18.04
     needs: [setup]
@@ -159,6 +165,18 @@ jobs:
           key: ctia-all-pr-checks-${{ hashFiles('scripts/summarize-tests.clj') }}
           restore-keys: |
             ctia-all-pr-checks-
+
+      - name: Install babashka
+        run: |
+          if ! command -v bb &> /dev/null || ! bb --version | grep "^babashka v${BB_VERSION}$"
+          then
+            mkdir -p tmp
+            cd tmp
+            curl -sLO https://raw.githubusercontent.com/borkdude/babashka/master/install
+            chmod +x install
+            ./install --dir ~/bin --version 0.2.3
+          fi
+          bb --version
 
       - name: Download test timings
         uses: actions/download-artifact@v2
