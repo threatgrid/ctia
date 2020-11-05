@@ -168,7 +168,7 @@ jobs:
           name: test-timing
           path: target/test-results
 
-      - nae: Print test timings
+      - name: Print test timings
         run: ./scripts/summarize-tests.clj
 
       - name: Upload all test timings
