@@ -95,7 +95,8 @@ jobs:
         run: docker-compose -f containers/dev/docker-compose.yml up -d > $COMPOSE_LOG &
       - uses: actions/setup-java@v1
         with:
-          java-version: '11'
+          java-version: '11.0.9'
+      - run: java -version
       - uses: DeLaGuardo/setup-clojure@e73bf2b6435244b2c9c5c226ae5022d91d0ce702
         with:
           lein: 2.9.4
