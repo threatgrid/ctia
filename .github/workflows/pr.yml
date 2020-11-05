@@ -57,6 +57,33 @@ jobs:
             ~/bin
           key: ctia-setup-
 
+      # Setup previous timing information
+      - name: Cache
+        id: get-timing
+        uses: actions/cache@v2
+        with:
+          path: |
+            target/test-results/all-test-timings.edn
+          # cache will never match, will always restore from 'restore-keys'.
+          # this is so we pick up timing information from the most recent build.
+          key: ctia-all-test-timings-${{ env.GITHUB_REF }}-${{ env.GITHUB_SHA }}
+          restore-keys: |
+            # cache should match test timings from previous runs, if they exist
+            ctia-all-test-timings-${{ env.GITHUB_REF }}-
+            ctia-all-test-timings-master-
+            ctia-all-test-timings-
+      - run: |
+          if [ -f target/test-results/all-test-timings.edn ]; then
+            cp target/test-results/all-test-timings.edn dev-resources/ctia_test_timings.edn
+          fi
+      - name: Upload current test timing
+        uses: actions/upload-artifact@v2
+        with:
+          retention-days: 1
+          name: current-test-timing
+          path: dev-resources/ctia_test_timings.edn
+
+      # Run shellcheck on CTIA's scripts
       - name: Install shellcheck
         run: |
           if ! command -v shellcheck &> /dev/null || ! shellcheck --version | grep "^version: ${SHELLCHECK_VERSION}$"
@@ -81,6 +108,12 @@ jobs:
           mkdir -p ~/bin
           echo "~/bin" >> $GITHUB_PATH
       - uses: actions/checkout@v2
+      - name: Download test timings
+        uses: actions/download-artifact@v2
+        with:
+          name: current-test-timing
+          path: dev-resources/ctia_test_timings.edn
+      - run: cat dev-resources/ctia_test_timings.edn
       - name: ES setup
         run: sudo sysctl -w vm.max_map_count=262144
 
@@ -144,11 +177,16 @@ jobs:
         with:
           path: |
             ~/.m2
-            target/test-results/all-test-timings.edn
             ~/bin
           key: ctia-all-pr-checks-${{ hashFiles('scripts/summarize-tests.clj') }}
           restore-keys: |
             ctia-all-pr-checks-
+      - name: Cache
+        uses: actions/cache@v2
+        with:
+          path: |
+            target/test-results/all-test-timings.edn
+          key: ctia-all-test-timings-${{ env.GITHUB_REF }}-
 
       - name: Install babashka
         run: |
