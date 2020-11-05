@@ -5,7 +5,6 @@ on:
 
 env:
   LOG_DIR: ~/log
-  BIN_DIR: ~/bin
   LEIN_ROOT: 1
   CTIA_MAJOR_VERSION: 1
   COMPOSE_URI: https://github.com/docker/compose/releases/download/1.9.0
@@ -59,7 +58,7 @@ jobs:
       - name: Install shellcheck
         run: |
           ( set -x && wget -qO- "https://github.com/koalaman/shellcheck/releases/download/${SHELLCHECK_VERSION}/shellcheck-${SHELLCHECK_VERSION}.linux.x86_64.tar.xz" | tar -xJv )
-          ( set -x && cp "shellcheck-${SHELLCHECK_VERSION}/shellcheck" "${BIN_DIR}" )
+          ( set -x && cp "shellcheck-${SHELLCHECK_VERSION}/shellcheck" ~/bin/shellcheck )
           ~/bin/shellcheck --version
           shellcheck --version
       - name: Run shellcheck
@@ -109,7 +108,7 @@ jobs:
 
       - name: Setup folders
         run: |
-          mkdir -p $BIN_DIR
+          mkdir -p ~/bin
           mkdir -p ~/log
 
       - run: ./build/run-tests.sh
