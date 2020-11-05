@@ -18,7 +18,7 @@ env:
   CTIA_HOOK_ES_INDEXNAME: elasticsearch
   CTIA_HOOK_REDIS_URI: redis://127.0.0.1:6379
   # number of test-matrix builds
-  # 10 jobs + 1 for fan-in
+  # 1 setup + 10 test jobs + 1 for fan-in
   # allows 2 commits to build simultaneously, since one build
   # will take at most 10 builds at any one time
   CTIA_NSPLITS: 10
@@ -30,6 +30,7 @@ jobs:
     runs-on: ubuntu-18.04
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
+      previous-runs: ${{ steps.set-matrix.outputs.previous-runs }}
     steps:
       - name: Setup PATH
         run: |
@@ -55,11 +56,25 @@ jobs:
             ~/bin
           key: ctia-setup-
 
+      - name: Install babashka
+        run: |
+          if ! command -v bb &> /dev/null || ! bb --version | grep '^babashka v0.2.3$'
+          then
+            mkdir -p tmp
+            cd tmp
+            curl -sLO https://raw.githubusercontent.com/borkdude/babashka/master/install
+            chmod +x install
+            ./install --dir ~/bin --version 0.2.3
+          fi
+          bb --version
+
       - name: Install shellcheck
         run: |
-          ( set -x && wget -qO- "https://github.com/koalaman/shellcheck/releases/download/${SHELLCHECK_VERSION}/shellcheck-${SHELLCHECK_VERSION}.linux.x86_64.tar.xz" | tar -xJv )
-          ( set -x && cp "shellcheck-${SHELLCHECK_VERSION}/shellcheck" ~/bin/shellcheck )
-          ~/bin/shellcheck --version
+          if ! shellcheck --version | grep '^version: 0.7.0$'
+          then
+            ( set -x && wget -qO- "https://github.com/koalaman/shellcheck/releases/download/${SHELLCHECK_VERSION}/shellcheck-${SHELLCHECK_VERSION}.linux.x86_64.tar.xz" | tar -xJv )
+            ( set -x && cp "shellcheck-${SHELLCHECK_VERSION}/shellcheck" ~/bin/shellcheck )
+          fi
           shellcheck --version
       - name: Run shellcheck
         run: ./scripts/shellcheck-build.sh
@@ -145,23 +160,6 @@ jobs:
           restore-keys: |
             ctia-all-pr-checks-
 
-      - name: Install babashka
-        run: |
-          if ! command -v bb &> /dev/null
-          then
-            mkdir -p tmp
-            cd tmp
-            curl -sLO https://raw.githubusercontent.com/borkdude/babashka/master/install
-            chmod +x install
-            ./install --dir ~/bin --version 0.2.3
-          fi
-
-      - uses: actions/setup-java@v1
-        with:
-          java-version: '11'
-      - uses: DeLaGuardo/setup-clojure@e73bf2b6435244b2c9c5c226ae5022d91d0ce702
-        with:
-          cli: '1.10.1.469'
       - name: Download test timings
         uses: actions/download-artifact@v2
         with:
