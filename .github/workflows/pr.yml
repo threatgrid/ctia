@@ -84,7 +84,7 @@ jobs:
 
       ## DELETE ME
       - name: Print test timings
-        run: ./scripts/summarize-tests.clj
+        run: bb -f ./scripts/summarize-tests.clj
   test-matrix:
     runs-on: ubuntu-18.04
     needs: [setup]
@@ -186,7 +186,7 @@ jobs:
           path: target/test-results
 
       - name: Print test timings
-        run: ./scripts/summarize-tests.clj
+        run: bb -f ./scripts/summarize-tests.clj
 
       - name: Upload all test timings
         uses: actions/upload-artifact@v2
