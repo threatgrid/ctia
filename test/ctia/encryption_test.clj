@@ -8,9 +8,10 @@
     [core :as test-helpers]
     [es :as es-helpers]]))
 
-(use-fixtures :once (join-fixtures [es-helpers/fixture-properties:es-store
-                                    test-helpers/fixture-ctia-fast
-                                    validate-schemas]))
+(use-fixtures :each
+  validate-schemas
+  es-helpers/fixture-properties:es-store
+  test-helpers/fixture-ctia-fast)
 
 (deftest test-encryption-fns
   (testing "encryption shortcuts"

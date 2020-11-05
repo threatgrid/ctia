@@ -7,9 +7,10 @@
             [clojure.test :as t]
             [schema.test :refer [validate-schemas]]))
 
-(t/use-fixtures :once (t/join-fixtures [validate-schemas
-                                        es-helpers/fixture-properties:es-store
-                                        helpers/fixture-ctia-fast]))
+(t/use-fixtures :each
+  validate-schemas
+  es-helpers/fixture-properties:es-store
+  helpers/fixture-ctia-fast)
 
 (def obj {:x "x" :y 0 :z {:foo "bar"}})
 

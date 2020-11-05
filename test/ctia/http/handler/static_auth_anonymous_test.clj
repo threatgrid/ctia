@@ -14,7 +14,7 @@
     ["ctia.auth.static.readonly-for-anonymous" true]
     (t)))
 
-(use-fixtures :once
+(use-fixtures :each
   validate-schemas
   es-helpers/fixture-properties:es-store
   (helpers/fixture-properties:static-auth "kitara" "tearbending")

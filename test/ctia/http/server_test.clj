@@ -6,7 +6,7 @@
              [es :as es-helpers]]
             [clojure.test :refer [deftest is testing use-fixtures]]))
 
-(use-fixtures :once
+(use-fixtures :each
   es-helpers/fixture-properties:es-store
   validate-schemas)
 

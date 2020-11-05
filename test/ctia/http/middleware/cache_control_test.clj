@@ -1,5 +1,5 @@
 (ns ctia.http.middleware.cache-control-test
-  (:require [clojure.test :refer [deftest is join-fixtures testing use-fixtures]]
+  (:require [clojure.test :refer [deftest is testing use-fixtures]]
             [ctia.test-helpers
              [auth :refer [all-capabilities]]
              [core :as helpers :refer [GET POST]]
@@ -8,10 +8,11 @@
             [ctim.domain.id :as id]
             [schema.test :refer [validate-schemas]]))
 
-(use-fixtures :once (join-fixtures [validate-schemas
-                                    es-helpers/fixture-properties:es-store
-                                    whoami-helpers/fixture-server
-                                    helpers/fixture-ctia]))
+(use-fixtures :each
+  validate-schemas
+  es-helpers/fixture-properties:es-store
+  whoami-helpers/fixture-server
+  helpers/fixture-ctia)
 
 (defn get-actor [app actor-id headers]
   (select-keys (GET app

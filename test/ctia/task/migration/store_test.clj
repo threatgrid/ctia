@@ -7,7 +7,7 @@
              [document :as es-doc]]
             [clojure.java.io :as io]
             [clojure.string :as str]
-            [clojure.test :refer [deftest is join-fixtures testing use-fixtures]]
+            [clojure.test :refer [deftest is testing use-fixtures]]
             [ctia.stores.es.mapping :as em]
             [ctia.task.migration.store :as sut]
             [ctia.task.rollover :refer [rollover-stores]]
@@ -242,8 +242,8 @@
 
 
 (use-fixtures :once
-  (join-fixtures [es-helpers/fixture-properties:es-store
-                  validate-schemas]))
+  es-helpers/fixture-properties:es-store
+  validate-schema))
 
 (def fixtures-nb 100)
 (def examples (fixt/bundle fixtures-nb false))

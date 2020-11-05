@@ -6,7 +6,7 @@
              [core :as test-helpers]
              [es :as es-helpers]]
             [ctia.lib.utils :refer [service-subgraph]]
-            [clojure.test :as t :refer [deftest is use-fixtures join-fixtures]]
+            [clojure.test :as t :refer [deftest is use-fixtures]]
             [clojure.spec.alpha :refer [gen]]
             [clojure.spec.gen.alpha :refer [generate]]
             [puppetlabs.trapperkeeper.app :as app]
@@ -17,8 +17,9 @@
 #_
 (use-fixtures :once mth/fixture-schema-validation)
 
-(use-fixtures :once (join-fixtures [es-helpers/fixture-properties:es-store
-                                    test-helpers/fixture-ctia-fast]))
+(use-fixtures :each
+  es-helpers/fixture-properties:es-store
+  test-helpers/fixture-ctia-fast)
 
 (defn gen-sample-entity
   [{:keys [new-spec]}]

@@ -3,7 +3,7 @@
              [index :as es-index]
              [conn :as conn]]
             [clojure.string :as string]
-            [clojure.test :refer [deftest is join-fixtures use-fixtures testing]]
+            [clojure.test :refer [deftest is use-fixtures testing]]
             [ctia.task.rollover :as rollover]
             [ctia.entity.incident :as incident]
             [ctia.store :as store]
@@ -57,8 +57,7 @@
    [5] ;; TODO compatbility with ES7
    #(ductile.index/delete! % "ctia_*")
    (helpers/with-properties*
-     [;;"ctia.store.es.default.aliased" aliased?
-      "ctia.store.es.default.port" es-port
+     ["ctia.store.es.default.port" es-port
       "ctia.store.es.default.version" version]
      (fn []
        (helpers/fixture-ctia-with-app
@@ -71,7 +70,7 @@
                                           :port es-port
                                           :aliased aliased?
                                           :version version}
-                                        ; cheap trick to rollover store without adding docs
+                                   ;; cheap trick to rollover store without adding docs
                                    aliased? (assoc :rollover {:max_docs 0}))
 
                 index-names (cond-> ["ctia_incident"]

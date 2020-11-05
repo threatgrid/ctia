@@ -1,7 +1,7 @@
 (ns ctia.task.rollover-test
   (:require [ductile.index :as es-index]
             [clojure.string :as string]
-            [clojure.test :refer [deftest testing is join-fixtures use-fixtures]]
+            [clojure.test :refer [deftest testing is]]
             [ctia.stores.es.init :as init]
             [ctia.task.rollover :as sut]
             [ctia.test-helpers.core :as helpers]

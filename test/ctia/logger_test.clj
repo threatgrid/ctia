@@ -3,20 +3,20 @@
              [core :as test-helpers]
              [es :as es-helpers]]
             [ctia.entity.event.obj-to-event :as o2e]
-            [clojure.test :refer [deftest is use-fixtures join-fixtures]]
+            [clojure.test :refer [deftest is use-fixtures]]
             [schema.test :as st]
             [clojure.tools.logging :as log]
             [clojure.string :as str]))
 
-(use-fixtures :once (join-fixtures [es-helpers/fixture-properties:es-store
-                                    test-helpers/fixture-properties:events-logging
-                                    test-helpers/fixture-ctia-fast
-                                    st/validate-schemas]))
+(use-fixtures :each
+  es-helpers/fixture-properties:es-store
+  test-helpers/fixture-properties:events-logging
+  test-helpers/fixture-ctia-fast
+  st/validate-schemas)
 
 (deftest test-logged
   (let [app (test-helpers/get-current-app)
         {:keys [send-event]} (test-helpers/get-service-map app :EventsService)
-        
         sb (StringBuilder.)
         patched-log (fn [logger
                          level

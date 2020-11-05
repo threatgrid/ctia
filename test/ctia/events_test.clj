@@ -11,12 +11,12 @@
    [ctia.test-helpers
     [core :as helpers]
     [es :as es-helpers]]
-   [schema.test :as st]))
+   [schema.test :refer [validate-schemas]]))
 
-(use-fixtures :once (join-fixtures [es-helpers/fixture-properties:es-store
-                                    helpers/fixture-ctia-fast
-                                    st/validate-schemas]))
-
+(use-fixtures :each
+  validate-schemas
+  es-helpers/fixture-properties:es-store
+  helpers/fixture-ctia-fast)
 
 (deftest test-send-event
   "Tests the basic action of sending an event"

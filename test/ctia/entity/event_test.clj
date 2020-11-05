@@ -6,9 +6,8 @@
     [string :as str]
     [test :refer [is testing]]]
    [clj-momo.lib.time :as time]
-   [clj-momo.test-helpers.core :as mth]
    [clj-momo.lib.clj-time.core :as t]
-   [clojure.test :refer [deftest join-fixtures use-fixtures]]
+   [clojure.test :refer [deftest use-fixtures]]
    [ctim.domain.id :as id]
    [ctia.entity.event :as ev]
    [ctia.test-helpers
@@ -22,11 +21,12 @@
    [ctim.examples.casebooks :refer [new-casebook-minimal]]
    [ctim.domain.id :as id]
    [cemerick.uri :as uri]
-   [ctia.test-helpers.es :as es-helpers]))
+   [ctia.test-helpers.es :as es-helpers]
+   [schema.test :refer [validate-schemas]]))
 
-(use-fixtures :once
-  (join-fixtures [mth/fixture-schema-validation
-                  whoami-helpers/fixture-server]))
+(use-fixtures :each
+  validate-schemas
+  whoami-helpers/fixture-server)
 
 (deftest test-event-routes
   (test-for-each-store-with-app

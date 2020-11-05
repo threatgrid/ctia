@@ -3,13 +3,14 @@
             [clojure.tools.logging.test :refer [logged? with-log]]
             [ctia.domain.entities :as ent :refer [with-long-id]]
             [ctia.flows.crud :refer [make-id]]
-            [clojure.test :as t :refer [deftest use-fixtures join-fixtures are is testing]]
+            [clojure.test :as t :refer [deftest use-fixtures are is testing]]
             [ctia.test-helpers
              [core :as h]
              [es :as es-helpers]]))
 
-(use-fixtures :once (join-fixtures [es-helpers/fixture-properties:es-store
-                                    h/fixture-ctia-fast]))
+(use-fixtures :each
+  es-helpers/fixture-properties:es-store
+  h/fixture-ctia-fast)
 
 (deftest local-entity?-test
   (are [x y] (= x (sut/local-entity? y (h/current-get-in-config-fn)))
