@@ -67,8 +67,8 @@ jobs:
           # cache will never match, will always restore from 'restore-keys'.
           # this is so we pick up timing information from the most recent build.
           key: ctia-all-test-timings-${{ env.GITHUB_REF }}-${{ env.GITHUB_SHA }}
+          # cache should match test timings from previous runs, if they exist
           restore-keys: |
-            # cache should match test timings from previous runs, if they exist
             ctia-all-test-timings-${{ env.GITHUB_REF }}-
             ctia-all-test-timings-master-
             ctia-all-test-timings-
