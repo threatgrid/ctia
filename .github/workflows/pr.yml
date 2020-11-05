@@ -67,24 +67,6 @@ jobs:
           shellcheck --version
       - name: Run shellcheck
         run: ./scripts/shellcheck-build.sh
-
-
-      ## DELETE ME
-      - name: Install babashka
-        run: |
-          if ! command -v bb &> /dev/null || ! bb --version | grep "^babashka v${BB_VERSION}$"
-          then
-            mkdir -p tmp
-            cd tmp
-            curl -sLO https://raw.githubusercontent.com/borkdude/babashka/master/install
-            chmod +x install
-            ./install --dir ~/bin --version 0.2.3
-          fi
-          bb --version
-
-      ## DELETE ME
-      - name: Print test timings
-        run: bb -f ./scripts/summarize-tests.clj
   test-matrix:
     runs-on: ubuntu-18.04
     needs: [setup]
