@@ -9,7 +9,7 @@
 
 (deftest mapping-test
   (es-helpers/for-each-es-version
-   "rollover should refresh write index and trigger rollover when index size is strictly bigger than max-docs"
+   "mappings of different type should apply proper analyzers and tokenizers"
    [5 7]
    #(index/delete! % "ctia_*")
    (let [indexname "ctia_test_mapping"
@@ -181,8 +181,12 @@
                      (map :id)
                      set)))))
      (testing "scalar type should be properly sorted"
-       (test-sort "float" '("doc0" "doc1" "doc2"))
-       (test-sort "long" '("doc0" "doc1" "doc2"))
-       (test-sort "integer" '("doc0" "doc1" "doc2"))
-       (test-sort "boolean,id" '("doc1" "doc0" "doc2"))
-       (test-sort "table.row_count" '("doc0" "doc1" "doc2"))))))
+       (doseq [[s r] (concat
+                      (map vector
+                           ["float"
+                            "long"
+                            "integer"
+                            "table.row_count"]
+                           (repeat '("doc0" "doc1" "doc2")))
+                      [["boolean,id" '("doc1" "doc0" "doc2")]])]
+         (test-sort s r))))))
