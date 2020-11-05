@@ -48,6 +48,7 @@ jobs:
           cd tmp 
           # calculate (range ${CTIA_NSPLITS})
           node -e "console.log(JSON.stringify([...Array(${CTIA_NSPLITS}).keys()]))" > splits.json
+          # send splits to 'matrix' output variable for the test-matrix job
           echo "::set-output name=matrix::$( cat splits.json )"
       - name: Cache
         uses: actions/cache@v2
@@ -80,6 +81,7 @@ jobs:
             ./install --dir ~/bin --version 0.2.3
           fi
           bb --version
+          /usr/bin/env bb --version
 
       ## DELETE ME
       - name: Print test timings
