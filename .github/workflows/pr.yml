@@ -81,7 +81,6 @@ jobs:
             ./install --dir ~/bin --version 0.2.3
           fi
           bb --version
-          /usr/bin/env bb --version
 
       ## DELETE ME
       - name: Print test timings
