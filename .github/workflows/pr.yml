@@ -241,7 +241,8 @@ jobs:
         uses: actions/cache@v2
         with:
           path: target/test-results/all-test-timings.edn
-          key: ctia-timings-${{ github.ref }}
+          # cache should never hit
+          key: ctia-timings-${{ github.ref }}-${{ github.sha }}
 
       - name: Install babashka
         run: |
