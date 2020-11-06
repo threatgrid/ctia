@@ -4,7 +4,6 @@ on:
   pull_request:
 
 env:
-  BIN_PATH: ~/bin
   LEIN_ROOT: 1
   LEIN_VERSION: 2.9.4
   CTIA_MAJOR_VERSION: 1
@@ -19,6 +18,8 @@ env:
 jobs:
   setup:
     runs-on: ubuntu-18.04
+    env:
+      BIN_PATH: ~/bin
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
       previous-runs: ${{ steps.set-matrix.outputs.previous-runs }}
@@ -122,7 +123,10 @@ jobs:
         run: lein deps
   test-matrix:
     runs-on: ubuntu-18.04
+    env:
+      BIN_PATH: ~/bin
     needs: [setup]
+    # TODO specify docker services here https://docs.github.com/en/free-pro-team@latest/actions/reference/workflow-syntax-for-github-actions#jobsjob_idservices
     strategy:
       matrix:
         this-split: ${{fromJson(needs.setup.outputs.matrix)}}
@@ -224,6 +228,8 @@ jobs:
   # https://github.community/t/branch-protections-job-names-and-matrix-jobs/16317
   all-pr-checks:
     runs-on: ubuntu-18.04
+    env:
+      BIN_PATH: ~/bin
     needs: [test-matrix]
     steps:
       - name: Setup PATH
