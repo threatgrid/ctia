@@ -7,7 +7,7 @@ env:
   LEIN_ROOT: 1
   LEIN_VERSION: 2.9.4
   CTIA_MAJOR_VERSION: 1
-  COMPOSE_LOG: ${{ github.workspace }}/log/docker-compose.log
+  COMPOSE_LOG: ${{ env.HOME }}/log/docker-compose.log
   # number of test-matrix builds
   # 1 setup + 10 test jobs + 1 for fan-in
   # allows 2 commits to build simultaneously, since one build
@@ -25,9 +25,9 @@ jobs:
     steps:
       - name: Setup PATH and directories
         run: |
-          ( set +x && mkdir -p "${GITHUB_WORKSPACE}/bin" )
-          ( set +x && ls -al "${GITHUB_WORKSPACE}/bin" )
-          echo "${GITHUB_WORKSPACE}/bin" >> $GITHUB_PATH
+          ( set +x && mkdir -p "${HOME}/bin" )
+          ( set +x && ls -al "${HOME}/bin" )
+          echo "${HOME}/bin" >> $GITHUB_PATH
       - uses: actions/checkout@v2
       - uses: actions/setup-node@v1
         with:
@@ -89,8 +89,8 @@ jobs:
           if ! command -v shellcheck &> /dev/null || ! shellcheck --version | grep "^version: ${SHELLCHECK_VERSION}$"
           then
             ( set -x && wget -qO- "https://github.com/koalaman/shellcheck/releases/download/${SHELLCHECK_VERSION}/shellcheck-${SHELLCHECK_VERSION}.linux.x86_64.tar.xz" | tar -xJv )
-            ( set -x && ls -al "${GITHUB_WORKSPACE}/bin" )
-            ( set -x && cp "shellcheck-${SHELLCHECK_VERSION}/shellcheck" "${GITHUB_WORKSPACE}/bin" )
+            ( set -x && ls -al "${HOME}/bin" )
+            ( set -x && cp "shellcheck-${SHELLCHECK_VERSION}/shellcheck" "${HOME}/bin" )
           fi
           shellcheck --version
       - name: Run shellcheck
@@ -114,7 +114,7 @@ jobs:
       - name: Install Leiningen
         if: steps.lein-cache.cache-hit != 'true' && steps.maven-cache.cache-hit != 'true'
         run: |
-          cd "${GITHUB_WORKSPACE}/bin"
+          cd "${HOME}/bin"
           curl -sLO "https://raw.githubusercontent.com/technomancy/leiningen/${LEIN_VERSION}/bin/lein"
           chmod a+x lein
           lein version
@@ -132,10 +132,10 @@ jobs:
     steps:
       - name: Setup PATH, folders, and files
         run: |
-          mkdir -p "${GITHUB_WORKSPACE}/bin"
-          mkdir -p "${GITHUB_WORKSPACE}/log"
+          mkdir -p "${HOME}/bin"
+          mkdir -p "${HOME}/log"
           touch $COMPOSE_LOG
-          echo "${GITHUB_WORKSPACE}/bin" >> $GITHUB_PATH
+          echo "${HOME}/bin" >> $GITHUB_PATH
       - uses: actions/checkout@v2
       - name: Download test timings
         uses: actions/download-artifact@v2
@@ -204,7 +204,7 @@ jobs:
       - name: Install Leiningen
         if: steps.lein-cache.cache-hit != 'true'
         run: |
-          cd "${GITHUB_WORKSPACE}/bin"
+          cd "${HOME}/bin"
           curl -sLO https://raw.githubusercontent.com/technomancy/leiningen/${LEIN_VERSION}/bin/lein
           chmod a+x lein
           lein version
@@ -230,8 +230,8 @@ jobs:
     steps:
       - name: Setup PATH
         run: |
-          mkdir -p "${GITHUB_WORKSPACE}/bin"
-          echo "${GITHUB_WORKSPACE}/bin" >> $GITHUB_PATH
+          mkdir -p "${HOME}/bin"
+          echo "${HOME}/bin" >> $GITHUB_PATH
       - uses: actions/checkout@v2
       - name: Binary Cache
         uses: actions/cache@v2
@@ -252,7 +252,7 @@ jobs:
             cd tmp
             curl -sLO https://raw.githubusercontent.com/borkdude/babashka/master/install
             chmod +x install
-            ./install --dir "${GITHUB_WORKSPACE}/bin" --version 0.2.3
+            ./install --dir "${HOME}/bin" --version 0.2.3
           fi
           bb --version
 
