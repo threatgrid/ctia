@@ -6,6 +6,7 @@ on:
 env:
   LOG_DIR: ~/log
   LEIN_ROOT: 1
+  LEIN_VERSION: 2.9.4
   CTIA_MAJOR_VERSION: 1
   COMPOSE_URI: https://github.com/docker/compose/releases/download/1.9.0
   COMPOSE_BIN: ~/bin/docker-compose-1-9-0
@@ -142,6 +143,16 @@ jobs:
       - name: Create log dir if missing
         run: mkdir -p $LOG_DIR
 
+      - name: Cache
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.m2
+            ~/.cache/pip
+          key: |
+            ctia-test-matrix-${{ hashFiles('project.clj') }}
+            ctia-test-matrix-
+
       - uses: actions/setup-ruby@v1
         with:
           ruby-version: '2.4'
@@ -152,24 +163,25 @@ jobs:
         with:
           java-version: '11.0.9'
       - run: java -version
-      - uses: DeLaGuardo/setup-clojure@e73bf2b6435244b2c9c5c226ae5022d91d0ce702
-        with:
-          lein: 2.9.4
-      - name: Cache
-        uses: actions/cache@v2
-        with:
-          path: |
-            ~/bin
-            ~/.m2
-            ~/.cache/pip
-          key: |
-            ctia-test-matrix-${{ hashFiles('project.clj') }}
-            ctia-test-matrix-
 
       - name: Setup folders
         run: |
           mkdir -p ~/bin
           mkdir -p ~/log
+
+      # install lein using cache to avoid extra download and startup time
+      - name: Cache
+        uses: actions/cache@v2
+        id: lein-cache
+        with:
+          path: ~/bin/lein
+          key: ctia-test-matrix-lein-cache-${{ env.LEIN_VERSION }}
+      - run: |
+          cd ~/bin
+          curl https://raw.githubusercontent.com/technomancy/leiningen/${LEIN_VERSION}/bin/lein
+          chmod +x lein
+          lein --version
+        if: steps.lein-cache.cache-hit != 'true'
 
       - run: ./build/run-tests.sh
         env:
