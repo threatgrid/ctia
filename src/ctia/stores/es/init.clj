@@ -70,8 +70,8 @@
       (log/warn "could not update settings on that store"
                 (pr-str (ex-data e))))))
 
-(defn upsert-template!
-  [conn index config]
+(s/defn upsert-template!
+  [{:keys [conn index config]} :- ESConnState]
   (ductile.index/create-template! conn index config)
   (log/infof "updated template: %s" index))
 
@@ -81,17 +81,12 @@
                   "CTIA tried to start with an invalid configuration: \n"
                   "- invalid mapping\n"
                   "- ambiguous index names"))
-  ;; mappings must be changed for ES7
-  ;; automatic update will fail until migration
-  ;; TODO reactivate it after migration
-  ;;(System/exit 1)
-  )
+  (System/exit 1))
 
-(defn update-mapping!
-  [{:keys [version] :as conn}
-   index
-   {:keys [mappings] :as _config}]
-  (let [[entity-type type-mappings] (when (= version 5 )
+(s/defn update-mappings!
+  [{:keys [conn index]
+    {:keys [mappings]} :config} :- ESConnState]
+  (let [[entity-type type-mappings] (when (= (:version conn) 5)
                                       (first mappings))
         update-body (or type-mappings mappings)]
     (try
@@ -124,6 +119,21 @@
           (system-exit-error))
       existing)))
 
+(defn update-index-state
+  [{{update-mappings? :update-mappings
+     update-settings? :update-settings}
+    :props
+    :as conn-state}]
+  (when update-mappings?
+    (update-mappings! conn-state)
+    ;; template update must be after update-mapping
+    ;; if it fails a System/exit is triggered because
+    ;; this means that the mapping in invalid and thus
+    ;; must not be propagated to the template that would accept it
+    (upsert-template! conn-state))
+  (when update-settings?
+    (update-settings! conn-state)))
+
 (s/defn init-es-conn! :- ESConnState
   "initiate an ES Store connection,
    put the index template, return an ESConnState"
@@ -132,10 +142,9 @@
   (let [{:keys [conn index props config] :as conn-state}
         (init-store-conn properties services)
         existing-indices (get-existing-indices conn index)]
-    (when (seq existing-indices)
-      (update-mapping! conn index config)
-      (update-settings! conn-state))
-    (upsert-template! conn index config)
+    (if (seq existing-indices)
+      (update-index-state conn-state)
+      (upsert-template! conn-state))
     (when (and (:aliased props)
                (empty? existing-indices))
       ;;https://github.com/elastic/elasticsearch/pull/34499
