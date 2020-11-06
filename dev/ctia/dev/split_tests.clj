@@ -171,11 +171,31 @@
 (defn wait-docker []
   (when (System/getenv "CTIA_WAIT_DOCKER")
     (println "[ctia.dev.split-tests] Waiting for docker...")
-    ; Wait ES
-    (sh/sh "bash" "-c" "until curl http://127.0.0.1:9200/; do sleep 1; done")
-    ; Wait Kafka
-    (sh/sh "bash" "-c" "until echo dump | nc 127.0.0.1 2181 | grep brokers; do sleep 1; done")
-    (println "[ctia.dev.split-tests] Docker initialized.")))
+    (let [assert-sh (fn [{:keys [exit out err] :as res} msg]
+                      (when-not (zero? exit)
+                        (throw (ex-info (str msg
+                                             "\nExit: " exit
+                                             "\nOut:\n" out
+                                             "\nErr:\n" err)
+                                        {:res res}))))
+          timeout-seconds 60
+          exit-if-too-long (str "if [[ " timeout-seconds " -le $SECONDS ]]; then "
+                                "  echo \"timeout during connection attempt (waited ${SECONDS} seconds)\"; "
+                                "  exit 1; "
+                                "fi ")]
+      ; Wait ES
+      (-> (sh/sh "bash" "-c"
+                 (str "set +e; "
+                      "SECONDS=0; "
+                      "until curl http://127.0.0.1:9200; do sleep 1; " exit-if-too-long " ; done"))
+          (assert-sh "Error connecting to docker"))
+      ; Wait Kafka
+      (-> (sh/sh "bash" "-c"
+                 (str "set +e; "
+                      "SECONDS=0; "
+                      "until echo dump | nc 127.0.0.1 2181 | grep brokers; do sleep 1; " exit-if-too-long " ; done"))
+          (assert-sh "Error connecting to kafaka"))
+      (println "[ctia.dev.split-tests] Docker initialized."))))
 
 ;Derived from https://github.com/circleci/circleci.test/blob/master/src/circleci/test.clj
 ;
