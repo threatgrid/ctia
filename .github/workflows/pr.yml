@@ -115,13 +115,16 @@ jobs:
           path: ~/bin/lein
           key: ctia-lein-cache-${{ env.LEIN_VERSION }}
         if: steps.maven-cache.cache-hit != 'true'
-      - name: Install Leiningen and warm dependency cache
+      - name: Install Leiningen
         run: |
           cd ~/bin
           curl -sLO https://raw.githubusercontent.com/technomancy/leiningen/${LEIN_VERSION}/bin/lein
           chmod a+x lein
-          lein do version, deps
+          lein version
         if: steps.lein-cache.cache-hit != 'true' && steps.maven-cache.cache-hit != 'true'
+      - name: Warm dependency cache
+        run: lein deps
+        if: steps.maven-cache.cache-hit != 'true'
   test-matrix:
     runs-on: ubuntu-18.04
     needs: [setup]
