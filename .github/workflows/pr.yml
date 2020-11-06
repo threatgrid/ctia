@@ -16,6 +16,7 @@ env:
   CTIA_NSPLITS: 10
   SHELLCHECK_VERSION: v0.7.1 # "stable" or "v0.4.7", or "latest"
   BB_VERSION: 0.2.3
+  JAVA_VERSION: 11.0.9
 
 jobs:
   setup:
@@ -104,7 +105,7 @@ jobs:
       ###   if: steps.maven-cache.cache-hit != 'true'
       ###   uses: actions/setup-java@v1
       ###   with:
-      ###     java-version: '11.0.9'
+      ###     java-version: ${{ env.JAVA_VERSION }}
       ### - run: java -version
       ### # install lein using cache to avoid extra download and startup time
       ### - name: Cache Leiningen
@@ -184,7 +185,7 @@ jobs:
 
       - uses: actions/setup-java@v1
         with:
-          java-version: '11.0.9'
+          java-version: ${{ env.JAVA_VERSION }}
       - run: java -version
 
       # install lein using cache to avoid extra download and startup time
