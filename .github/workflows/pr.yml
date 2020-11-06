@@ -139,12 +139,13 @@ jobs:
           mkdir -p "${BIN_PATH}"
           mkdir -p "${LOG_PATH}"
           echo "${BIN_PATH}" >> $GITHUB_PATH
+      - uses: actions/checkout@v2
       # run docker as early as possible asynchronously. if this command
       # fails, the split-test test runner will timeout in a reasonable amount
       # of time and throw an error.
       - name: Docker (async)
+        # depends on LOG_PATH and actions/checkout@v2
         run: docker-compose -f containers/dev/docker-compose.yml up -d > "${LOG_PATH}/docker-compose.log" &
-      - uses: actions/checkout@v2
       - name: Download test timings
         uses: actions/download-artifact@v2
         with:
