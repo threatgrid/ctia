@@ -4,7 +4,6 @@ on:
   pull_request:
 
 env:
-  LOG_DIR: ~/log
   LEIN_ROOT: 1
   LEIN_VERSION: 2.9.4
   CTIA_MAJOR_VERSION: 1
@@ -108,9 +107,10 @@ jobs:
     env:
       CTIA_THIS_SPLIT: ${{ matrix.this-split }}
     steps:
-      - name: Setup PATH
+      - name: Setup PATH and folders
         run: |
           mkdir -p ~/bin
+          mkdir -p ~/log
           echo "~/bin" >> $GITHUB_PATH
       - uses: actions/checkout@v2
       - name: Download test timings
@@ -140,9 +140,6 @@ jobs:
       - name: ES setup
         run: sudo sysctl -w vm.max_map_count=262144
 
-      - name: Create log dir if missing
-        run: mkdir -p $LOG_DIR
-
       - name: Cache
         uses: actions/cache@v2
         with:
@@ -164,11 +161,6 @@ jobs:
           java-version: '11.0.9'
       - run: java -version
 
-      - name: Setup folders
-        run: |
-          mkdir -p ~/bin
-          mkdir -p ~/log
-
       # install lein using cache to avoid extra download and startup time
       - name: Cache
         uses: actions/cache@v2
@@ -178,8 +170,8 @@ jobs:
           key: ctia-test-matrix-lein-cache-${{ env.LEIN_VERSION }}
       - run: |
           cd ~/bin
-          curl https://raw.githubusercontent.com/technomancy/leiningen/${LEIN_VERSION}/bin/lein
-          chmod +x lein
+          curl -sLO https://raw.githubusercontent.com/technomancy/leiningen/${LEIN_VERSION}/bin/lein
+          chmod a+x lein
           lein --version
         if: steps.lein-cache.cache-hit != 'true'
 
