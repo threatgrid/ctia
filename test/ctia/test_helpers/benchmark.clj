@@ -6,10 +6,12 @@
             [puppetlabs.trapperkeeper.app :as app]))
 
 (defn setup-ctia! [fixture]
-  (let [app (helpers/with-properties ["ctia.store.es.default.refresh" "false"
-                                      "ctia.http.bulk.max-size" 100000]
-              (helpers/fixture-ctia
-                fixture))
+  (let [app (fixture
+              (fn []
+                (helpers/with-properties ["ctia.store.es.default.refresh" "false"
+                                          "ctia.http.bulk.max-size" 100000]
+                  (helpers/fixture-ctia-with-app
+                    identity))))
         get-in-config (helpers/current-get-in-config-fn app)]
     {:port (get-in-config [:ctia :http :port])
      :app app}))
