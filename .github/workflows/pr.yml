@@ -25,8 +25,8 @@ jobs:
     steps:
       - name: Setup PATH and directories
         run: |
-          mkdir -p $GITHUB_WORKSPACE/bin
-          echo "$GITHUB_WORKSPACE/bin" >> $GITHUB_PATH
+          mkdir -p "${GITHUB_WORKSPACE}/bin"
+          echo "${GITHUB_WORKSPACE}/bin" >> $GITHUB_PATH
       - uses: actions/checkout@v2
       - uses: actions/setup-node@v1
         with:
@@ -88,7 +88,8 @@ jobs:
           if ! command -v shellcheck &> /dev/null || ! shellcheck --version | grep "^version: ${SHELLCHECK_VERSION}$"
           then
             ( set -x && wget -qO- "https://github.com/koalaman/shellcheck/releases/download/${SHELLCHECK_VERSION}/shellcheck-${SHELLCHECK_VERSION}.linux.x86_64.tar.xz" | tar -xJv )
-            ( set -x && cp "shellcheck-${SHELLCHECK_VERSION}/shellcheck" "${GITHUB_WORKSPACE}/bin/shellcheck" )
+            ( set -x && ls -al "${GITHUB_WORKSPACE}/bin" )
+            ( set -x && cp "shellcheck-${SHELLCHECK_VERSION}/shellcheck" "${GITHUB_WORKSPACE}/bin" )
           fi
           shellcheck --version
       - name: Run shellcheck
