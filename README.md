@@ -132,15 +132,17 @@ For a REPL workflow, run `lein repl`. Use `(start)` to start CTIA,
 All PRs must pass `lein test` with no fails for PRs to be accepted.
 Any new code functionality/change should have tests accompanying it.
 
-### Rebalancing the tests
+### Test balancing
 
 Continuous integration test runs are parallelized using
 prior timing information in `dev-resources/ctia_test_timings.edn`.
 
-If these timings become out of date, CI runs may take longer than necessary
-and the tests should be rebalanced.
+For GitHub Actions Pull Requests, tests are automatically balanced
+by accessing the cache of previous builds.
 
-There are 2 ways to do this, described in the below subsections:
+To experiment with this feature locally, you need the timings in
+your local repository.
+There are 2 ways to generate them, described in the below subsections:
 1. locally (slow)
 2. by downloading a GitHub Actions artifact for a recent build (fast).
 
