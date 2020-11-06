@@ -23,7 +23,6 @@ jobs:
     runs-on: ubuntu-18.04
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
-      previous-runs: ${{ steps.set-matrix.outputs.previous-runs }}
     steps:
       - run: echo "BIN_PATH=${HOME}/bin" >> $GITHUB_ENV
       - name: Setup PATH and directories
