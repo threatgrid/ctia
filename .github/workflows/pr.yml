@@ -22,8 +22,7 @@ jobs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
       previous-runs: ${{ steps.set-matrix.outputs.previous-runs }}
     steps:
-      - run: echo ::set-env name=BIN_PATH::~/bin
-        shell: bash
+      - run: echo "BIN_PATH=${HOME}/bin" >> $GITHUB_ENV
       - name: Setup PATH and directories
         run: |
           mkdir -p "${BIN_PATH}"
@@ -131,7 +130,7 @@ jobs:
     env:
       CTIA_THIS_SPLIT: ${{ matrix.this-split }}
     steps:
-      - run: echo ::set-env name=BIN_PATH::~/bin
+      - run: echo "BIN_PATH=${HOME}/bin" >> $GITHUB_ENV
       - name: Setup PATH, folders, and files
         run: |
           mkdir -p "${BIN_PATH}"
@@ -229,7 +228,7 @@ jobs:
     runs-on: ubuntu-18.04
     needs: [test-matrix]
     steps:
-      - run: echo ::set-env name=BIN_PATH::~/bin
+      - run: echo "BIN_PATH=${HOME}/bin" >> $GITHUB_ENV
       - name: Setup PATH
         run: |
           mkdir -p "${BIN_PATH}"
