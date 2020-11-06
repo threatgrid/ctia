@@ -12,7 +12,7 @@ env:
   # 1 setup + 10 test jobs + 1 for fan-in
   # allows 2 commits to build simultaneously, since one build
   # will take at most 10 builds at any one time
-  cTIA_NSPLITS: 10
+  CTIA_NSPLITS: 10
   SHELLCHECK_VERSION: v0.7.1 # "stable" or "v0.4.7", or "latest"
   BB_VERSION: 0.2.3
 
