@@ -47,7 +47,7 @@ jobs:
           # send splits to 'matrix' output variable for the test-matrix job
           echo "::set-output name=matrix::$( cat splits.json )"
       # Setup previous timing information
-      - name: Cache
+      - name: Timing Cache
         id: get-timing
         uses: actions/cache@v2
         with:
@@ -189,7 +189,7 @@ jobs:
       - run: java -version
 
       # install lein using cache to avoid extra download and startup time
-      - name: Cache Leiningen
+      - name: Leiningen Cache
         uses: actions/cache@v2
         id: lein-cache
         with:
