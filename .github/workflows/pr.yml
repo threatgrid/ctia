@@ -50,12 +50,14 @@ jobs:
           node -e "console.log(JSON.stringify([...Array(${CTIA_NSPLITS}).keys()]))" > splits.json
           # send splits to 'matrix' output variable for the test-matrix job
           echo "::set-output name=matrix::$( cat splits.json )"
-      - name: Cache
+      - name: Maven Cache
+        id: maven-cache
         uses: actions/cache@v2
         with:
-          path: |
-            ~/bin
-          key: ctia-setup-
+          path: ~/.m2
+          key: ctia-m2-cache-${{ hashFiles('project.clj') }}
+          restore-keys: |
+            ctia-m2-cache-
 
       # Setup previous timing information
       - name: Cache
@@ -98,6 +100,28 @@ jobs:
           shellcheck --version
       - name: Run shellcheck
         run: ./scripts/shellcheck-build.sh
+
+      # warm maven dependency cache if needed
+      - uses: actions/setup-java@v1
+        with:
+          java-version: '11.0.9'
+        if: steps.maven-cache.cache-hit != 'true'
+      - run: java -version
+      # install lein using cache to avoid extra download and startup time
+      - name: Cache Leiningen
+        uses: actions/cache@v2
+        id: lein-cache
+        with:
+          path: ~/bin/lein
+          key: ctia-lein-cache-${{ env.LEIN_VERSION }}
+        if: steps.maven-cache.cache-hit != 'true'
+      - name: Install Leiningen and warm dependency cache
+        run: |
+          cd ~/bin
+          curl -sLO https://raw.githubusercontent.com/technomancy/leiningen/${LEIN_VERSION}/bin/lein
+          chmod a+x lein
+          lein do version, deps
+        if: steps.lein-cache.cache-hit != 'true' && steps.maven-cache.cache-hit != 'true'
   test-matrix:
     runs-on: ubuntu-18.04
     needs: [setup]
@@ -149,6 +173,13 @@ jobs:
           key: |
             ctia-test-matrix-${{ hashFiles('project.clj') }}
             ctia-test-matrix-
+      - name: Maven Cache
+        uses: actions/cache@v2
+        with:
+          path: ~/.m2
+          key: ctia-m2-cache-${{ hashFiles('project.clj') }}
+          restore-keys: |
+            ctia-m2-cache-
 
       - uses: actions/setup-ruby@v1
         with:
@@ -167,13 +198,13 @@ jobs:
         id: lein-cache
         with:
           path: ~/bin/lein
-          key: ctia-test-matrix-lein-cache-${{ env.LEIN_VERSION }}
+          key: ctia-lein-cache-${{ env.LEIN_VERSION }}
       - name: Install Leiningen
         run: |
           cd ~/bin
           curl -sLO https://raw.githubusercontent.com/technomancy/leiningen/${LEIN_VERSION}/bin/lein
           chmod a+x lein
-          lein --version
+          lein version
         if: steps.lein-cache.cache-hit != 'true'
 
       - name: Run CTIA tests
