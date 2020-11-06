@@ -7,7 +7,7 @@ env:
   LEIN_ROOT: 1
   LEIN_VERSION: 2.9.4
   CTIA_MAJOR_VERSION: 1
-  COMPOSE_LOG: "${GITHUB_WORKSPACE}/log/docker-compose.log"
+  COMPOSE_LOG: ${{ github.workspace }}/log/docker-compose.log
   # number of test-matrix builds
   # 1 setup + 10 test jobs + 1 for fan-in
   # allows 2 commits to build simultaneously, since one build
@@ -26,6 +26,7 @@ jobs:
       - name: Setup PATH and directories
         run: |
           ( set +x && mkdir -p "${GITHUB_WORKSPACE}/bin" )
+          ( set +x && ls -al "${GITHUB_WORKSPACE}/bin" )
           echo "${GITHUB_WORKSPACE}/bin" >> $GITHUB_PATH
       - uses: actions/checkout@v2
       - uses: actions/setup-node@v1
