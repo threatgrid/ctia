@@ -7,21 +7,12 @@ env:
   LEIN_ROOT: 1
   LEIN_VERSION: 2.9.4
   CTIA_MAJOR_VERSION: 1
-  COMPOSE_URI: https://github.com/docker/compose/releases/download/1.9.0
-  COMPOSE_BIN: ~/bin/docker-compose-1-9-0
   COMPOSE_LOG: ~/log/docker-compose.log
-  CTIA_STORE_ES_DEFAULT_HOST: 127.0.0.1
-  CTIA_STORE_ES_DEFAULT_INDEXNAME: elasticsearch
-  CTIA_STORE_ES_DEFAULT_CLUSTERNAME: elasticsearch
-  CTIA_HOOK_ES_HOST: 127.0.0.1
-  CTIA_HOOK_ES_PORT: 9200
-  CTIA_HOOK_ES_INDEXNAME: elasticsearch
-  CTIA_HOOK_REDIS_URI: redis://127.0.0.1:6379
   # number of test-matrix builds
   # 1 setup + 10 test jobs + 1 for fan-in
   # allows 2 commits to build simultaneously, since one build
   # will take at most 10 builds at any one time
-  CTIA_NSPLITS: 10
+  cTIA_NSPLITS: 10
   SHELLCHECK_VERSION: v0.7.1 # "stable" or "v0.4.7", or "latest"
   BB_VERSION: 0.2.3
 
@@ -32,7 +23,7 @@ jobs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
       previous-runs: ${{ steps.set-matrix.outputs.previous-runs }}
     steps:
-      - name: Setup PATH
+      - name: Setup PATH and directories
         run: |
           mkdir -p ~/bin
           echo "~/bin" >> $GITHUB_PATH
@@ -234,17 +225,15 @@ jobs:
           mkdir -p ~/bin
           echo "~/bin" >> $GITHUB_PATH
       - uses: actions/checkout@v2
-      - name: Cache
+      - name: Binary Cache
         uses: actions/cache@v2
         with:
-          path: |
-            ~/bin
+          path: ~/bin
           key: ctia-all-pr-checks-bin-${{ env.BB_VERSION }}
-      - name: Cache
+      - name: Timing results Cache
         uses: actions/cache@v2
         with:
-          path: |
-            target/test-results/all-test-timings.edn
+          path: target/test-results/all-test-timings.edn
           key: ctia-timings-${{ github.ref }}
 
       - name: Install babashka
