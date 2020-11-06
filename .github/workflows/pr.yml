@@ -25,7 +25,7 @@ jobs:
     steps:
       - name: Setup PATH and directories
         run: |
-          mkdir -p "${GITHUB_WORKSPACE}/bin"
+          ( set +x && mkdir -p "${GITHUB_WORKSPACE}/bin" )
           echo "${GITHUB_WORKSPACE}/bin" >> $GITHUB_PATH
       - uses: actions/checkout@v2
       - uses: actions/setup-node@v1
