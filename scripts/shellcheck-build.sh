@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
 
-set -e
+set -ex
 
-shellcheck -S style build/*.sh
+${SHELLCHECK_COMMAND:-shellcheck} -S style build/*.sh

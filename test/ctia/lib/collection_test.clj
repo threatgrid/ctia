@@ -1,5 +1,6 @@
 (ns ctia.lib.collection-test
   (:require [ctia.lib.collection :as sut]
+            [clj-momo.test-helpers.core] ;; deep=
             [clojure.test :refer [deftest is]]))
 
 (deftest add-colls-test

@@ -205,7 +205,8 @@
 
                       "ctia.store.es.event.slicing.granularity"
                       (s/enum :minute :hour :day :week :month :year)})
-   (st/optional-keys {"ctia.versions.config" s/Str})))
+   (st/optional-keys {"ctia.versions.config" s/Str})
+   (st/optional-keys {"ctia.features.disable" (s/constrained s/Str #(not (re-find #"\s" %)))})))
 
 (def configurable-properties
   (mls/keys PropertiesSchema))

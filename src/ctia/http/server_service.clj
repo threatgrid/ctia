@@ -17,27 +17,27 @@
    IAuth
    GraphQLNamedTypeRegistryService
    IEncryption
-   ConfigService]
-  (start [_ context]
-         (core/start context
-                     ((:get-in-config ConfigService) [:ctia :http])
-                     {:ConfigService (-> ConfigService
-                                         (select-keys [:get-config
-                                                       :get-in-config]))
-                      :HooksService (-> HooksService 
-                                        (select-keys [:apply-hooks
-                                                      :apply-event-hooks])
-                                        hooks-svc/lift-hooks-service-fns)
-                      :StoreService (-> StoreService 
-                                        (select-keys [:read-store
-                                                      :write-store])
-                                        store-svc/lift-store-service-fns)
-                      :IAuth IAuth
-                      :GraphQLNamedTypeRegistryService GraphQLNamedTypeRegistryService
-                      :IEncryption IEncryption}))
-  (stop [_ context]
-        (core/stop context))
-
+   ConfigService
+   FeaturesService]
+  (start [this context] (core/start context
+                                    ((:get-in-config ConfigService) [:ctia :http])
+                                    {:ConfigService (-> ConfigService
+                                                        (select-keys [:get-config
+                                                                      :get-in-config]))
+                                     :HooksService (-> HooksService 
+                                                       (select-keys [:apply-hooks
+                                                                     :apply-event-hooks])
+                                                       hooks-svc/lift-hooks-service-fns)
+                                     :StoreService (-> StoreService 
+                                                       (select-keys [:read-store
+                                                                     :write-store])
+                                                       store-svc/lift-store-service-fns)
+                                     :IAuth IAuth
+                                     :GraphQLService GraphQLService
+                                     :GraphQLNamedTypeRegistryService GraphQLNamedTypeRegistryService
+                                     :IEncryption IEncryption
+                                     :FeaturesService FeaturesService}))
+  (stop [this context] (core/stop context))
   (get-port [this]
             (core/get-port (service-context this)))
   (get-graphql [this]

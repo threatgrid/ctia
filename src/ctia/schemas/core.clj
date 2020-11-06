@@ -35,7 +35,9 @@
                                            s/Str
                                            (s/=> graphql.schema.GraphQLType))}
    :IEncryption {:encrypt (s/=> s/Any s/Any)
-                 :decrypt (s/=> s/Any s/Any)}})
+                 :decrypt (s/=> s/Any s/Any)}
+   :FeaturesService {:enabled? (s/=> s/Keyword s/Bool)
+                     :feature-flags (s/=> s/Any [s/Str])}})
 
 (s/defschema HTTPShowServices
   {:ConfigService {:get-in-config (s/=>* s/Any

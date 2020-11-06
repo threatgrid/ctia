@@ -3,4 +3,4 @@
 set -ex
 
 # shellcheck disable=SC1010
-lein do clean, javac, test :no-gen
+lein with-profile -dev do clean, javac, split-test :no-gen
