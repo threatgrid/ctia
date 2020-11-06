@@ -1,4 +1,4 @@
-#! bb
+#! /usr/bin/env bb
 
 (require '[clojure.pprint :as pp])
 (import '[java.io File])

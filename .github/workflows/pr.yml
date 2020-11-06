@@ -7,7 +7,7 @@ env:
   LEIN_ROOT: 1
   LEIN_VERSION: 2.9.4
   CTIA_MAJOR_VERSION: 1
-  COMPOSE_LOG: ~/log/docker-compose.log
+  COMPOSE_LOG: "${GITHUB_WORKSPACE}/log/docker-compose.log"
   # number of test-matrix builds
   # 1 setup + 10 test jobs + 1 for fan-in
   # allows 2 commits to build simultaneously, since one build
@@ -25,8 +25,8 @@ jobs:
     steps:
       - name: Setup PATH and directories
         run: |
-          mkdir -p ~/bin
-          echo "~/bin" >> $GITHUB_PATH
+          mkdir -p $GITHUB_WORKSPACE/bin
+          echo "$GITHUB_WORKSPACE/bin" >> $GITHUB_PATH
       - uses: actions/checkout@v2
       - uses: actions/setup-node@v1
         with:
@@ -47,7 +47,7 @@ jobs:
         id: maven-cache
         uses: actions/cache@v2
         with:
-          path: ~/.m2
+          path: ~/.m2/repository
           key: ctia-m2-cache-${{ hashFiles('project.clj') }}
           restore-keys: |
             ctia-m2-cache-
@@ -88,7 +88,7 @@ jobs:
           if ! command -v shellcheck &> /dev/null || ! shellcheck --version | grep "^version: ${SHELLCHECK_VERSION}$"
           then
             ( set -x && wget -qO- "https://github.com/koalaman/shellcheck/releases/download/${SHELLCHECK_VERSION}/shellcheck-${SHELLCHECK_VERSION}.linux.x86_64.tar.xz" | tar -xJv )
-            ( set -x && cp "shellcheck-${SHELLCHECK_VERSION}/shellcheck" ~/bin/shellcheck )
+            ( set -x && cp "shellcheck-${SHELLCHECK_VERSION}/shellcheck" "${GITHUB_WORKSPACE}/bin/shellcheck" )
           fi
           shellcheck --version
       - name: Run shellcheck
@@ -107,13 +107,13 @@ jobs:
         uses: actions/cache@v2
         id: lein-cache
         with:
-          path: ~/bin/lein
+          path: ${{ github.workspace }}/bin/lein
           key: ctia-lein-cache-${{ env.LEIN_VERSION }}
       - name: Install Leiningen
         if: steps.lein-cache.cache-hit != 'true' && steps.maven-cache.cache-hit != 'true'
         run: |
-          cd ~/bin
-          curl -sLO https://raw.githubusercontent.com/technomancy/leiningen/${LEIN_VERSION}/bin/lein
+          cd "${GITHUB_WORKSPACE}/bin"
+          curl -sLO "https://raw.githubusercontent.com/technomancy/leiningen/${LEIN_VERSION}/bin/lein"
           chmod a+x lein
           lein version
       - name: Warm dependency cache
@@ -130,10 +130,10 @@ jobs:
     steps:
       - name: Setup PATH, folders, and files
         run: |
-          mkdir -p ~/bin
-          mkdir -p ~/log
+          mkdir -p "${GITHUB_WORKSPACE}/bin"
+          mkdir -p "${GITHUB_WORKSPACE}/log"
           touch $COMPOSE_LOG
-          echo "~/bin" >> $GITHUB_PATH
+          echo "${GITHUB_WORKSPACE}/bin" >> $GITHUB_PATH
       - uses: actions/checkout@v2
       - name: Download test timings
         uses: actions/download-artifact@v2
@@ -174,7 +174,7 @@ jobs:
       - name: Maven Cache
         uses: actions/cache@v2
         with:
-          path: ~/.m2
+          path: ~/.m2/repository
           key: ctia-m2-cache-${{ hashFiles('project.clj') }}
           restore-keys: |
             ctia-m2-cache-
@@ -197,12 +197,12 @@ jobs:
         uses: actions/cache@v2
         id: lein-cache
         with:
-          path: ~/bin/lein
+          path: ${{ github.workspace }}/bin/lein
           key: ctia-lein-cache-${{ env.LEIN_VERSION }}
       - name: Install Leiningen
         if: steps.lein-cache.cache-hit != 'true'
         run: |
-          cd ~/bin
+          cd "${GITHUB_WORKSPACE}/bin"
           curl -sLO https://raw.githubusercontent.com/technomancy/leiningen/${LEIN_VERSION}/bin/lein
           chmod a+x lein
           lein version
@@ -228,13 +228,13 @@ jobs:
     steps:
       - name: Setup PATH
         run: |
-          mkdir -p ~/bin
-          echo "~/bin" >> $GITHUB_PATH
+          mkdir -p "${GITHUB_WORKSPACE}/bin"
+          echo "${GITHUB_WORKSPACE}/bin" >> $GITHUB_PATH
       - uses: actions/checkout@v2
       - name: Binary Cache
         uses: actions/cache@v2
         with:
-          path: ~/bin
+          path: ${{ github.workspace }}/bin
           key: ctia-all-pr-checks-bin-${{ env.BB_VERSION }}
       - name: Timing results Cache
         uses: actions/cache@v2
@@ -250,7 +250,7 @@ jobs:
             cd tmp
             curl -sLO https://raw.githubusercontent.com/borkdude/babashka/master/install
             chmod +x install
-            ./install --dir ~/bin --version 0.2.3
+            ./install --dir "${GITHUB_WORKSPACE}/bin" --version 0.2.3
           fi
           bb --version
 
@@ -261,7 +261,7 @@ jobs:
           path: target/test-results
 
       - name: Print test timings
-        run: bb -f ./scripts/summarize-tests.clj
+        run: ./scripts/summarize-tests.clj
 
       - name: Upload all test timings
         uses: actions/upload-artifact@v2
