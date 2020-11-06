@@ -28,3 +28,10 @@ jobs:
           # Wait Kafka
           until echo dump | nc 127.0.0.1 2181 | grep brokers; do sleep 1; done
       - run: ./scripts/run-benchmarks.sh
+      - name: Upload benchmark results
+        uses: actions/upload-artifact@v2
+        with:
+          retention-days: 30
+          name: benchmark-results
+          path: target/bench/*.edn
+
