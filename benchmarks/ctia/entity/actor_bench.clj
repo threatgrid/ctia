@@ -38,7 +38,7 @@
       (play app small-actor))))
 
 (defn -main []
-  (-> "target/bench/" java.util.File. .mkdirs)
+  (-> "target/bench/" java.io.File. .mkdirs)
   (spit "target/bench/small-actor-es-store-benchmark.edn"
         (small-actor-es-store-benchmark))
   (spit "target/bench/big-actor-es-store-benchmark.edn"
