@@ -77,6 +77,9 @@ jobs:
             echo "Found new timings"
             cat target/test-results/all-test-timings.edn
             cp target/test-results/all-test-timings.edn dev-resources/ctia_test_timings.edn
+          else
+            echo "Timings not found, creating empty dummy timings which will be ignored by tests"
+            touch dev-resources/ctia_test_timings.edn
           fi
       - name: Upload current test timing
         uses: actions/upload-artifact@v2
@@ -116,11 +119,11 @@ jobs:
           name: current-test-timing
           path: target/current-test-timing
       - run: |
-          if [ -f target/current-test-timing/all-test-timings.edn ]; then
+          if [ -s target/current-test-timing/all-test-timings.edn]; then
+            echo "No previous timings found (empty file downloaded)"
+          else
             echo "Updating dev-resources/ctia_test_timings.edn with new timing"
             cp target/current-test-timing/all-test-timings.edn dev-resources/ctia_test_timings.edn
-          else
-            echo "No previous timings found"
           fi
       - run: cat dev-resources/ctia_test_timings.edn
       - name: ES setup
