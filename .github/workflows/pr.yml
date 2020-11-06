@@ -7,7 +7,6 @@ env:
   LEIN_ROOT: 1
   LEIN_VERSION: 2.9.4
   CTIA_MAJOR_VERSION: 1
-  COMPOSE_LOG: ${{ env.HOME }}/log/docker-compose.log
   # number of test-matrix builds
   # 1 setup + 10 test jobs + 1 for fan-in
   # allows 2 commits to build simultaneously, since one build
@@ -134,7 +133,6 @@ jobs:
         run: |
           mkdir -p "${HOME}/bin"
           mkdir -p "${HOME}/log"
-          touch $COMPOSE_LOG
           echo "${HOME}/bin" >> $GITHUB_PATH
       - uses: actions/checkout@v2
       - name: Download test timings
@@ -189,6 +187,8 @@ jobs:
         run: ls -al ~/log
       - name: Docker
         run: docker-compose -f containers/dev/docker-compose.yml up -d > $COMPOSE_LOG
+        env:
+          COMPOSE_LOG: ${{ env.HOME }}/log/docker-compose.log
       - uses: actions/setup-java@v1
         with:
           java-version: '11.0.9'
