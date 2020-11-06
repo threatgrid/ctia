@@ -131,14 +131,15 @@ jobs:
     env:
       CTIA_THIS_SPLIT: ${{ matrix.this-split }}
     steps:
-      - name: Docker (async)
-        run: docker-compose -f containers/dev/docker-compose.yml up -d > ${HOME}/log/docker-compose.log &
       - run: echo "BIN_PATH=${HOME}/bin" >> $GITHUB_ENV
-      - name: Setup PATH, folders, and files
+      - run: echo "LOG_PATH=${HOME}/log" >> $GITHUB_ENV
+      - name: Setup PATH and folders
         run: |
           mkdir -p "${BIN_PATH}"
-          mkdir -p "${HOME}/log"
+          mkdir -p "${LOG_PATH}"
           echo "${BIN_PATH}" >> $GITHUB_PATH
+      - name: Docker (async)
+        run: docker-compose -f containers/dev/docker-compose.yml up -d > "${LOG_PATH}/docker-compose.log" &
       - uses: actions/checkout@v2
       - name: Download test timings
         uses: actions/download-artifact@v2
