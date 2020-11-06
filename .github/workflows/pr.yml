@@ -66,12 +66,12 @@ jobs:
             target/test-results/all-test-timings.edn
           # cache will never match, will always restore from 'restore-keys'.
           # this is so we pick up timing information from the most recent build.
-          key: ctia-all-test-timings-${{ env.GITHUB_REF }}-${{ env.GITHUB_SHA }}
+          key: writeonly-ctia-all-test-timings-${{ env.GITHUB_REF }}-${{ env.GITHUB_SHA }}
           # cache should match test timings from previous runs, if they exist
           restore-keys: |
-            ctia-all-test-timings-${{ env.GITHUB_REF }}-
-            ctia-all-test-timings-master-
-            ctia-all-test-timings-
+            ctia-timings-${{ env.GITHUB_REF }}
+            ctia-timings-master
+            ctia-timings-
       - run: |
           if [ -f target/test-results/all-test-timings.edn ]; then
             echo "Found new timings"
@@ -204,7 +204,7 @@ jobs:
         with:
           path: |
             target/test-results/all-test-timings.edn
-          key: ctia-all-test-timings-${{ env.GITHUB_REF }}-
+          key: ctia-timings-${{ env.GITHUB_REF }}
 
       - name: Install babashka
         run: |
