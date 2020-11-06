@@ -112,7 +112,14 @@ jobs:
         uses: actions/download-artifact@v2
         with:
           name: current-test-timing
-          path: dev-resources/ctia_test_timings.edn
+          path: target/current-test-timing
+      - run: |
+          if [ -f target/current-test-timing/all-test-timings.edn ]; then
+            echo "Updating dev-resources/ctia_test_timings.edn with new timing"
+            cp target/current-test-timing/all-test-timings.edn dev-resources/ctia_test_timings.edn
+          else
+            echo "Using checked-in dev-resources/ctia_test_timings.edn for previous timing"
+          fi
       - run: cat dev-resources/ctia_test_timings.edn
       - name: ES setup
         run: sudo sysctl -w vm.max_map_count=262144
