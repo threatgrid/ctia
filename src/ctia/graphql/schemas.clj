@@ -169,5 +169,5 @@
                  operation-name
                  variables
                  context
-                 {{:keys [get-graphql]} :CTIAHTTPServerService} :- APIHandlerServices]
+                 {{:keys [get-graphql]} :GraphQLService} :- APIHandlerServices]
   (g/execute (get-graphql) query operation-name variables context))

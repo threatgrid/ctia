@@ -27,5 +27,5 @@
   (-> app
       app/service-graph
       (service-subgraph
-        :CTIAHTTPServerService [:get-port]
+        :CTIAHTTPServerPortService [:get-port]
         :ConfigService [:get-in-config])))

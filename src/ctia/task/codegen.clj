@@ -103,7 +103,7 @@
   [output-dir]
   (try
     (let [app (setup)
-          {{:keys [get-port]} :CTIAHTTPServerService} (app/service-graph app)]
+          {{:keys [get-port]} :CTIAHTTPServerPortService} (app/service-graph app)]
       (doseq [[lang props] langs]
         (generate-language lang props output-dir get-port))
 

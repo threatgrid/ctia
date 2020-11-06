@@ -23,8 +23,7 @@
                    :get-in-config (s/=>* s/Any
                                          [[s/Any]]
                                          [[s/Any] s/Any])}
-   :CTIAHTTPServerService {:get-port (s/=> Port)
-                           :get-graphql (s/=> graphql.GraphQL)}
+   :CTIAHTTPServerPortService {:get-port (s/=> Port)}
    :HooksService {:apply-hooks (s/pred ifn?) ;;keyword varargs
                   :apply-event-hooks (s/=> s/Any s/Any)}
    :StoreService {:read-store (s/pred ifn?) ;;varags
@@ -34,6 +33,7 @@
                                      (s/=> graphql.schema.GraphQLType
                                            s/Str
                                            (s/=> graphql.schema.GraphQLType))}
+   :GraphQLService {:get-graphql (s/=> graphql.GraphQL)}
    :IEncryption {:encrypt (s/=> s/Any s/Any)
                  :decrypt (s/=> s/Any s/Any)}})
 
@@ -42,8 +42,8 @@
                                          [[s/Any]]
                                          [[s/Any] s/Any])
                    s/Keyword s/Any}
-   :CTIAHTTPServerService {:get-port (s/=> Port)
-                           s/Keyword s/Any}
+   :CTIAHTTPServerPortService {:get-port (s/=> Port)
+                               s/Keyword s/Any}
    s/Keyword s/Any})
 
 (s/defschema DelayedRoutes
@@ -63,7 +63,7 @@
   {:ConfigService {:get-in-config (s/=>* s/Any
                                          [[s/Any]]
                                          [[s/Any] s/Any])}
-   :CTIAHTTPServerService {:get-port (s/=> Port)}
+   :CTIAHTTPServerPortService {:get-port (s/=> Port)}
    :StoreService {:read-store (s/pred ifn?)} ;;varags
    :GraphQLNamedTypeRegistryService
    {:get-or-update-named-type-registry
@@ -79,7 +79,7 @@
   (service-subgraph
     services
     :ConfigService [:get-in-config]
-    :CTIAHTTPServerService [:get-port]
+    :CTIAHTTPServerPortService [:get-port]
     :StoreService [:read-store]
     :GraphQLNamedTypeRegistryService [:get-or-update-named-type-registry]
     :IEncryption [:decrypt :encrypt]))

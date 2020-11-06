@@ -322,7 +322,7 @@
 
 (s/defn get-http-port :- Port
   [app]
-  (let [{{:keys [get-port]} :CTIAHTTPServerService} (app/service-graph app)]
+  (let [{{:keys [get-port]} :CTIAHTTPServerPortService} (app/service-graph app)]
     (get-port)))
 
 (s/defn GET [app path :- s/Str & kw-options]

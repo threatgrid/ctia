@@ -72,7 +72,7 @@
             (time/timestamp "2042-01-01")
             (fn []
               (let [app (helpers/get-current-app)
-                    {{:keys [get-port]} :CTIAHTTPServerService} (app/service-graph app)
+                    {{:keys [get-port]} :CTIAHTTPServerPortService} (app/service-graph app)
 
                     port (get-port)
                     {incident :parsed-body

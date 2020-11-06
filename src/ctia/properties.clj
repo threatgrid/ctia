@@ -225,7 +225,7 @@
     @a))
 
 (s/defn get-http-show [{{:keys [get-in-config]} :ConfigService
-                        {:keys [get-port]} :CTIAHTTPServerService} :- HTTPShowServices]
+                        {:keys [get-port]} :CTIAHTTPServerPortService} :- HTTPShowServices]
   (let [config (get-in-config [:ctia :http :show])]
     (cond-> config
       (zero? (:port config)) (assoc :port (get-port)))))
