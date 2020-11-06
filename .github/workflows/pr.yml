@@ -162,20 +162,22 @@ jobs:
       - run: java -version
 
       # install lein using cache to avoid extra download and startup time
-      - name: Cache
+      - name: Cache Leiningen
         uses: actions/cache@v2
         id: lein-cache
         with:
           path: ~/bin/lein
           key: ctia-test-matrix-lein-cache-${{ env.LEIN_VERSION }}
-      - run: |
+      - name: Install Leiningen
+        run: |
           cd ~/bin
           curl -sLO https://raw.githubusercontent.com/technomancy/leiningen/${LEIN_VERSION}/bin/lein
           chmod a+x lein
           lein --version
         if: steps.lein-cache.cache-hit != 'true'
 
-      - run: ./build/run-tests.sh
+      - name: Run CTIA tests
+        run: ./build/run-tests.sh
         env:
           CTIA_WAIT_DOCKER: 1
       - name: Upload test timing
