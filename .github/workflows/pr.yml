@@ -37,6 +37,8 @@ jobs:
           set +x
           mkdir -p tmp 
           cd tmp 
+          # ensure positive splits
+          node -e "process.exit(${CTIA_NSPLITS} < 0 ? 0 : 1)"
           # calculate (range ${CTIA_NSPLITS})
           node -e "console.log(JSON.stringify([...Array(${CTIA_NSPLITS}).keys()]))" > splits.json
           # send splits to 'matrix' output variable for the test-matrix job
