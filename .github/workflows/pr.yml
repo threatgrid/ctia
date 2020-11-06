@@ -120,7 +120,7 @@ jobs:
       - run: |
           # debugging
           ls -al target/current-test-timing
-          if [ -f target/current-test-timing/ctia_test_timings.edn]; then
+          if [ -f target/current-test-timing/ctia_test_timings.edn ]; then
             cat target/current-test-timing/ctia_test_timings.edn
           fi
           if [ -s target/current-test-timing/ctia_test_timings.edn ]; then
