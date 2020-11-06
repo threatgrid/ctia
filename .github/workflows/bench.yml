@@ -2,7 +2,7 @@ name: GitHub Actions Benchmark
 
 # TODO change to cron or push 
 on:
-  pull-request:
+  pull_request:
 
 jobs:
   benchmark:
