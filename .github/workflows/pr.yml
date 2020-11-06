@@ -125,7 +125,13 @@ jobs:
             echo "Updating dev-resources/ctia_test_timings.edn with new timing"
             cp target/current-test-timing/all-test-timings.edn dev-resources/ctia_test_timings.edn
           fi
-      - run: cat dev-resources/ctia_test_timings.edn
+      - run: |
+          if [ -f dev-resources/ctia_test_timings.edn ]
+            echo "Timing:"
+            cat dev-resources/ctia_test_timings.edn
+          else
+            echo "No timing data, using slow-namespace heuristic"
+          fi
       - name: ES setup
         run: sudo sysctl -w vm.max_map_count=262144
 
