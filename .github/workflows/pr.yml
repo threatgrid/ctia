@@ -58,7 +58,7 @@ jobs:
           key: writeonly-ctia-all-test-timings-${{ github.ref }}-${{ github.sha }}
           # cache should match test timings from previous runs, if they exist
           restore-keys: |
-            ctia-timings-${{ github.ref }}
+            ctia-timings-${{ github.ref }}-
             ctia-timings-
       - run: |
           if [ -f target/test-results/all-test-timings.edn ]; then
