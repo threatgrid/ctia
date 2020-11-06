@@ -192,7 +192,9 @@ jobs:
         uses: actions/cache@v2
         id: lein-cache
         with:
-          path: ${{ github.workspace }}/bin/lein
+          # note: this should coincide with ${BIN_PATH}/lein. unclear
+          # if variables can be used here
+          path: ~/bin/lein
           key: ctia-lein-cache-${{ env.LEIN_VERSION }}
       - name: Install Leiningen
         # why doesn't this work!? using an if statement instead
