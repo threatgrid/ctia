@@ -106,7 +106,11 @@
          (vector? nsyms)
          (seq nsyms)]
    :post [(vector? %)]}
-  (let [extra-namespaces (set/difference (set nsyms)
+  (let [;; discard timings for namespaces that don't exist.
+        ;; they might have been deleted since the timings
+        ;; were recorded.
+        timings (select-keys timings nsyms)
+        extra-namespaces (set/difference (set nsyms)
                                          (set (keys timings)))
         unallocated-splits (into (priority-map-keyfn (juxt :duration :id))
                                  (map (fn [split]
