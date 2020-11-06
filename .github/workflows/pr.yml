@@ -19,7 +19,7 @@ jobs:
   setup:
     runs-on: ubuntu-18.04
     env:
-      BIN_PATH: ~/bin
+      BIN_PATH: $HOME/bin
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
       previous-runs: ${{ steps.set-matrix.outputs.previous-runs }}
