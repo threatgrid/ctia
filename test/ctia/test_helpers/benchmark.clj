@@ -1,24 +1,18 @@
 (ns ctia.test-helpers.benchmark
   (:require [clj-momo.lib.net :as net]
-            [ctia
-             [init :refer [start-ctia!]]]
             [ctia.test-helpers
              [core :as helpers]
              [es :as esh]]
             [puppetlabs.trapperkeeper.app :as app]))
 
 (defn setup-ctia! [fixture]
-  (let [http-port (net/available-port)
-        app (fixture (fn []
-                       (helpers/with-properties ["ctia.store.es.default.refresh" "false"
-                                                 "ctia.http.enabled" true
-                                                 "ctia.http.port" http-port
-                                                 "ctia.http.bulk.max-size" 100000
-                                                 "ctia.http.show.port" http-port]
-                         (start-ctia!))))]
-    {:port http-port
+  (let [app (helpers/with-properties ["ctia.store.es.default.refresh" "false"
+                                      "ctia.http.bulk.max-size" 100000]
+              (helpers/fixture-ctia
+                fixture))
+        get-in-config (helpers/current-get-in-config-fn app)]
+    {:port (get-in-config [:ctia :http :port])
      :app app}))
-
 
 (defn setup-ctia-es-store! []
   (setup-ctia! esh/fixture-properties:es-store))
