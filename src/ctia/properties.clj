@@ -36,7 +36,9 @@
    (str prefix store ".aliased")  s/Bool
    (str prefix store ".default_operator") (s/enum "OR" "AND")
    (str prefix store ".timeout") s/Num
-   (str prefix store ".version") s/Num})
+   (str prefix store ".version") s/Num
+   (str prefix store ".update-mappings")  s/Bool
+   (str prefix store ".update-settings")  s/Bool})
 
 (s/defschema StorePropertiesSchema
   "All entity store properties for every implementation"

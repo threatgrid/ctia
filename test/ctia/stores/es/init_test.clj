@@ -20,6 +20,8 @@
                     :host "localhost"
                     :port 9207
                     :aliased true
+                    :update-mappings true
+                    :update-settings true
                     :version 7})
 
 (def props-not-aliased {:entity :sighting
@@ -30,6 +32,8 @@
                         :host "localhost"
                         :port 9207
                         :aliased false
+                        :update-mappings true
+                        :update-settings true
                         :version 7})
 
 (deftest init-store-conn-test
@@ -170,7 +174,7 @@
 
 (deftest init-es-conn!-test
   (let [clean-template (fn [{:keys [uri] :as c}]
-                      (http/delete (format "%s/_template/%s*" uri indexname)))
+                         (http/delete (format "%s/_template/%s*" uri indexname)))
         clean-index #(index/delete! % (str indexname "*"))
         clean-all #(do (clean-index %) (clean-template %))
         prepare-props (fn [props version]
@@ -275,5 +279,23 @@
                 (-> config :aliases keys first)))
          (is (= 1 (get-in config [:settings :number_of_replicas])))
          (is (= 2 (get-in config [:settings :number_of_shards])))
-         (is (= {} (select-keys (:mappings config) [:a :b])))))
-     (clean-template conn))))
+         (is (= {} (select-keys (:mappings config) [:a :b]))))))))
+
+(deftest update-index-state-test
+  (let [test-fn (fn [{:keys [update-mappings update-settings]
+                      :as props}]
+                  (let [updated-mappings (atom false)
+                        updated-template (atom false)
+                        updated-settings (atom false)]
+                    (with-redefs [sut/update-mappings! (fn [c] (reset! updated-mappings true))
+                                  sut/update-settings! (fn [c] (reset! updated-settings true))
+                                  sut/upsert-template! (fn [c] (reset! updated-template true))]
+                      (sut/update-index-state {:props props})
+                      (is (= @updated-mappings (boolean update-mappings)))
+                      (is (= @updated-template (boolean update-mappings)))
+                      (is (= @updated-settings (boolean update-settings))))))]
+    (doseq [update-mappings? [true false nil]
+            update-settings? [true false nil]]
+      (test-fn (assoc props-aliased
+                      :update-mappings update-mappings?
+                      :update-settings update-settings?)))))
