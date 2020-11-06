@@ -80,7 +80,7 @@ jobs:
       - name: Upload current test timing
         uses: actions/upload-artifact@v2
         with:
-          retention-days: 1
+          retention-days: 30
           name: current-test-timing
           path: dev-resources/ctia_test_timings.edn
 
