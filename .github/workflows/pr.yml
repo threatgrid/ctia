@@ -95,29 +95,30 @@ jobs:
         run: ./scripts/shellcheck-build.sh
 
       # warm maven dependency cache if needed
-      - uses: actions/setup-java@v1
+      - name: Setup Java
+        if: steps.maven-cache.cache-hit != 'true'
+        uses: actions/setup-java@v1
         with:
           java-version: '11.0.9'
-        if: steps.maven-cache.cache-hit != 'true'
       - run: java -version
       # install lein using cache to avoid extra download and startup time
       - name: Cache Leiningen
+        if: steps.maven-cache.cache-hit != 'true'
         uses: actions/cache@v2
         id: lein-cache
         with:
           path: ~/bin/lein
           key: ctia-lein-cache-${{ env.LEIN_VERSION }}
-        if: steps.maven-cache.cache-hit != 'true'
       - name: Install Leiningen
+        if: steps.lein-cache.cache-hit != 'true' && steps.maven-cache.cache-hit != 'true'
         run: |
           cd ~/bin
           curl -sLO https://raw.githubusercontent.com/technomancy/leiningen/${LEIN_VERSION}/bin/lein
           chmod a+x lein
           lein version
-        if: steps.lein-cache.cache-hit != 'true' && steps.maven-cache.cache-hit != 'true'
       - name: Warm dependency cache
-        run: lein deps
         if: steps.maven-cache.cache-hit != 'true'
+        run: lein deps
   test-matrix:
     runs-on: ubuntu-18.04
     needs: [setup]
@@ -182,7 +183,7 @@ jobs:
           ruby-version: '2.4'
 
       - name: Debug Docker
-        run: ls ~/log
+        run: ls -al ~/log
       - name: Docker
         run: docker-compose -f containers/dev/docker-compose.yml up -d > $COMPOSE_LOG
       - uses: actions/setup-java@v1
@@ -198,12 +199,12 @@ jobs:
           path: ~/bin/lein
           key: ctia-lein-cache-${{ env.LEIN_VERSION }}
       - name: Install Leiningen
+        if: steps.lein-cache.cache-hit != 'true'
         run: |
           cd ~/bin
           curl -sLO https://raw.githubusercontent.com/technomancy/leiningen/${LEIN_VERSION}/bin/lein
           chmod a+x lein
           lein version
-        if: steps.lein-cache.cache-hit != 'true'
 
       - name: Run CTIA tests
         run: ./build/run-tests.sh
