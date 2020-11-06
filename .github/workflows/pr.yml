@@ -174,15 +174,6 @@ jobs:
       - name: ES setup
         run: sudo sysctl -w vm.max_map_count=262144
 
-      - name: Cache
-        uses: actions/cache@v2
-        with:
-          path: |
-            ~/.m2
-            ~/.cache/pip
-          key: |
-            ctia-test-matrix-${{ hashFiles('project.clj') }}
-            ctia-test-matrix-
       - name: Maven Cache
         uses: actions/cache@v2
         with:
