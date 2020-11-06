@@ -18,10 +18,10 @@ env:
   CTIA_HOOK_ES_INDEXNAME: elasticsearch
   CTIA_HOOK_REDIS_URI: redis://127.0.0.1:6379
   # number of test-matrix builds
-  # 1 setup + 14 test jobs + 1 for fan-in
+  # 1 setup + 10 test jobs + 1 for fan-in
   # allows 2 commits to build simultaneously, since one build
   # will take at most 10 builds at any one time
-  CTIA_NSPLITS: 14
+  CTIA_NSPLITS: 10
   SHELLCHECK_VERSION: v0.7.1 # "stable" or "v0.4.7", or "latest"
   BB_VERSION: 0.2.3
 
@@ -126,7 +126,7 @@ jobs:
             cp target/current-test-timing/all-test-timings.edn dev-resources/ctia_test_timings.edn
           fi
       - run: |
-          if [ -f dev-resources/ctia_test_timings.edn ]
+          if [ -f dev-resources/ctia_test_timings.edn ]; then
             echo "Timing:"
             cat dev-resources/ctia_test_timings.edn
           else
