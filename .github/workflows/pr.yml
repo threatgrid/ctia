@@ -204,12 +204,16 @@ jobs:
           path: ${{ github.workspace }}/bin/lein
           key: ctia-lein-cache-${{ env.LEIN_VERSION }}
       - name: Install Leiningen
-        if: steps.lein-cache.cache-hit != 'true'
+        # why doesn't this work!? using an if statement instead
+        #if: steps.lein-cache.cache-hit != 'true'
         run: |
-          cd "${BIN_PATH}"
-          curl -sLO https://raw.githubusercontent.com/technomancy/leiningen/${LEIN_VERSION}/bin/lein
-          chmod a+x lein
-          lein version
+          if ! command -v lein
+          then
+            cd "${BIN_PATH}"
+            curl -sLO https://raw.githubusercontent.com/technomancy/leiningen/${LEIN_VERSION}/bin/lein
+            chmod a+x lein
+            lein version
+          fi
 
       - name: Run CTIA tests
         run: ./build/run-tests.sh
