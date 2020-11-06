@@ -198,11 +198,8 @@ jobs:
         uses: actions/cache@v2
         with:
           path: |
-            ~/.m2
             ~/bin
-          key: ctia-all-pr-checks-${{ hashFiles('scripts/summarize-tests.clj') }}
-          restore-keys: |
-            ctia-all-pr-checks-
+          key: ctia-all-pr-checks-bin-${{ env.BB_VERSION }}
       - name: Cache
         uses: actions/cache@v2
         with:
