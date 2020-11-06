@@ -45,15 +45,6 @@ jobs:
           node -e "console.log(JSON.stringify([...Array(${CTIA_NSPLITS}).keys()]))" > splits.json
           # send splits to 'matrix' output variable for the test-matrix job
           echo "::set-output name=matrix::$( cat splits.json )"
-      - name: Maven Cache
-        id: maven-cache
-        uses: actions/cache@v2
-        with:
-          path: ~/.m2/repository
-          key: ctia-m2-cache-${{ hashFiles('project.clj') }}
-          restore-keys: |
-            ctia-m2-cache-
-
       # Setup previous timing information
       - name: Cache
         id: get-timing
@@ -97,7 +88,17 @@ jobs:
       - name: Run shellcheck
         run: ./scripts/shellcheck-build.sh
 
-      # note: this slows the setup build considerably
+      # note: this slows the setup build considerably. the cache-hit
+      #       logic does not seem to work, so steps are run even when
+      #       not needed.
+      ### - name: Maven Cache
+      ###   id: maven-cache
+      ###   uses: actions/cache@v2
+      ###   with:
+      ###     path: ~/.m2/repository
+      ###     key: ctia-m2-cache-${{ hashFiles('project.clj') }}
+      ###     restore-keys: |
+      ###       ctia-m2-cache-
       ### # warm maven dependency cache if needed
       ### - name: Setup Java
       ###   if: steps.maven-cache.cache-hit != 'true'
