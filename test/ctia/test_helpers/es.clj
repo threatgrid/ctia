@@ -229,13 +229,14 @@
          (into {})
          walk/keywordize-keys)))
 
-(defmacro for-each-es-version [msg versions clean & body]
+(defmacro for-each-es-version
   "for each given ES version:
-- init an ES connection assuming that ES version n listens on port 9200 + n
-- expose anaphoric `version`, `es-port` and `conn` to use in body
-- wrap body with a `testing` block with with `msg` formatted with `version`
-- call `clean` fn if not `nil` before and after body (takes conn as parameter)."
-  {:style/indent 2}
+  - init an ES connection assuming that ES version n listens on port 9200 + n
+  - expose anaphoric `version`, `es-port` and `conn` to use in body
+  - wrap body with a `testing` block with with `msg` formatted with `version`
+  - call `clean` fn if not `nil` before and after body (takes conn as parameter)."
+  {:style/indent 3}
+  [msg versions clean & body]
   `(let [;; avoid version and the other explicitly bound locals will to be captured
          clean-fn# ~clean
          msg# ~msg]
@@ -251,7 +252,7 @@
              ~@body
              (when clean-fn#
                (clean-fn# ~'conn)))
-         (finally (es-conn/close ~'conn)))))))
+           (finally (es-conn/close ~'conn)))))))
 
 (defn build-mappings
   [base-mappings entity-type version]

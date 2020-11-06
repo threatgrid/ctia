@@ -243,7 +243,7 @@
 
 (use-fixtures :once
   es-helpers/fixture-properties:es-store
-  validate-schema))
+  validate-schemas)
 
 (def fixtures-nb 100)
 (def examples (fixt/bundle fixtures-nb false))
@@ -901,7 +901,9 @@
   (es-helpers/for-each-es-version
    "init-migration should properly create new migration state from selected types."
    [5 7]
-   #(ductile.index/delete! % "ctia_*")
+   (fn [c]
+     (ductile.index/delete! c "ctia_*")
+     (ductile.index/delete! c "v0.0.0*"))
    (helpers/with-properties*
      ["ctia.migration.store.es.default.port" es-port
       "ctia.migration.store.es.default.version" version
