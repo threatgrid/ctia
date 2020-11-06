@@ -182,7 +182,9 @@ jobs:
           ruby-version: '2.4'
 
       - name: Docker
-        run: docker-compose -f containers/dev/docker-compose.yml up -d > $COMPOSE_LOG
+        run: |
+          ls ~/log
+          docker-compose -f containers/dev/docker-compose.yml up -d > $COMPOSE_LOG
       - uses: actions/setup-java@v1
         with:
           java-version: '11.0.9'
