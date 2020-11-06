@@ -6,14 +6,20 @@
             [ctim.examples.actors
              :refer [new-actor-minimal
                      new-actor-maximal]]
-            [perforate.core :refer :all]))
+            [criterium.core :as bench
+             :refer [benchmark quick-benchmark]]))
 
 (def small-actor new-actor-minimal)
 (def big-actor (dissoc new-actor-maximal :id))
 
-(defgoal create-actor "Create Actor"
-  :setup (fn [] [(setup-ctia-es-store!)])
-  :cleanup (fn [{:keys [app]}] (cleanup-ctia! app)))
+(defn actor-benchmark-fixture [f]
+  (let [{:keys [app] :as m} (setup-ctia-es-store!)
+        result (bench/with-progress-reporting
+                 (quick-benchmark
+                   (f m)
+                   {:verbose true}))]
+    (cleanup-ctia! app)
+    (doto result bench/report-result)))
 
 (defn play [app fixture]
   (POST app
@@ -21,8 +27,18 @@
         :body fixture
         :headers {"Authorization" "45c1f5e3f05d0"}))
 
-(defcase create-actor :big-actor-es-store
-  [{:keys [app]}] (play app big-actor))
+(defn big-actor-es-store-benchmark []
+  (actor-benchmark-fixture
+    (fn [{:keys [app]}]
+      (play app big-actor))))
 
-(defcase create-actor :small-actor-es-store
-  [{:keys [app]}] (play app small-actor))
+(defn small-actor-es-store-benchmark []
+  (actor-benchmark-fixture
+    (fn [{:keys [app]}]
+      (play app small-actor))))
+
+(defn -main []
+  (spit "target/small-actor-es-store-benchmark.edn"
+        (small-actor-es-store-benchmark))
+  (spit "target/big-actor-es-store-benchmark.edn"
+        (big-actor-es-store-benchmark)))

@@ -10,6 +10,13 @@
 (def test-chuck-version "0.2.10")
 (def trapperkeeper-version "3.1.0")
 
+(def bench-deps
+  [['perforate perforate-version]
+   ['criterium "0.4.6"]
+   ['org.clojure/test.check test-check-version]
+   ['com.gfredericks/test.chuck test-chuck-version]
+   ['prismatic/schema-generators schema-generators-version]])
+
 ;; On avoiding dependency overrides:
 ;; - :pedantic? should be set to :abort; Use "lein deps :tree" to resolve
 ;;   conflicts.  Do not change this in master.
@@ -142,30 +149,29 @@
                                          "git" "symbolic-ref" "--short" "HEAD")))})}]
 
   :global-vars {*warn-on-reflection* true}
-  :profiles {:dev {:dependencies [[puppetlabs/trapperkeeper ~trapperkeeper-version
-                                   :classifier "test"]
-                                  [puppetlabs/kitchensink ~trapperkeeper-version
-                                   :classifier "test"]
-                                  [org.clojure/test.check ~test-check-version]
-                                  [com.gfredericks/test.chuck ~test-chuck-version]
-                                  [clj-http-fake ~clj-http-fake-version]
-                                  [prismatic/schema-generators ~schema-generators-version]
-                                  [circleci/circleci.test "0.4.3"]
-                                  [org.clojure/math.combinatorics "0.1.6"]]
+  :profiles {:dev {:dependencies
+                   ~(into
+                      [['puppetlabs/trapperkeeper trapperkeeper-version
+                        :classifier "test"]
+                       ['puppetlabs/kitchensink trapperkeeper-version
+                        :classifier "test"]
+                       ['org.clojure/test.check test-check-version]
+                       ['com.gfredericks/test.chuck test-chuck-version]
+                       ['clj-http-fake clj-http-fake-version]
+                       ['prismatic/schema-generators schema-generators-version]
+                       ['circleci/circleci.test "0.4.3"]
+                       ['org.clojure/math.combinatorics "0.1.6"]]
+                      bench-deps)
                    :pedantic? :warn
 
                    :resource-paths ["test/resources"]
-                   :source-paths ["dev"]}
+                   :source-paths ["dev" "benchmarks"]}
              :jmx {:jvm-opts ["-Dcom.sun.management.jmxremote"
                               "-Dcom.sun.management.jmxremote.port=9010"
                               "-Dcom.sun.management.jmxremote.local.only=false"
                               "-Dcom.sun.management.jmxremote.authenticate=false"
                               "-Dcom.sun.management.jmxremote.ssl=false"]}
-             :bench {:dependencies [[perforate ~perforate-version]
-                                    [criterium "0.4.5"]
-                                    [org.clojure/test.check ~test-check-version]
-                                    [com.gfredericks/test.chuck ~test-chuck-version]
-                                    [prismatic/schema-generators ~schema-generators-version]]
+             :bench {:dependencies ~bench-deps
                      :source-paths ["src","test","benchmarks"]}
              :uberjar {:aot [ctia.main]
                        :main ctia.main

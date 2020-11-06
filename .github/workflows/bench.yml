@@ -1,0 +1,31 @@
+name: GitHub Actions Benchmark
+
+# TODO change to cron or push 
+on:
+  pull-request:
+  - master
+
+jobs:
+  benchmark:
+    runs-on: ubuntu-18.04
+    steps:
+      - uses: actions/checkout@v2
+      - name: Cache
+        uses: actions/cache@v2
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-${{ hashFiles('project.clj') }}
+      - uses: actions/setup-java@v1
+        with:
+          java-version: '11'
+      - uses: DeLaGuardo/setup-clojure@e73bf2b6435244b2c9c5c226ae5022d91d0ce702
+        with:
+          lein: 2.9.4
+      - name: Docker
+        run: |
+          docker-compose -f containers/dev/docker-compose.yml up -d
+          # Wait ES
+          until curl http://127.0.0.1:9200/; do sleep 1; done
+          # Wait Kafka
+          until echo dump | nc 127.0.0.1 2181 | grep brokers; do sleep 1; done
+      - run: ./scripts/run-benchmarks.sh

@@ -36,8 +36,9 @@
 
 (defn delete-store-indexes
   ([restore-conn?]
-   (let [app (h/get-current-app)
-         {:keys [get-in-config]} (h/get-service-map app :ConfigService)
+   (delete-store-indexes (h/get-current-app) restore-conn?))
+  ([app restore-conn?]
+   (let [{:keys [get-in-config]} (h/get-service-map app :ConfigService)
          {:keys [all-stores]} (h/get-service-map app :StoreService)]
      (delete-store-indexes
        restore-conn?
