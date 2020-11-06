@@ -117,9 +117,9 @@ jobs:
         uses: actions/download-artifact@v2
         with:
           name: current-test-timing
-          path: target/current-test-timing
+          path: target/current-test-timing/all-test-timings.edn
       - run: |
-          if [ -s target/current-test-timing/all-test-timings.edn]; then
+          if [ -s target/current-test-timing/all-test-timings.edn ]; then
             echo "No previous timings found (empty file downloaded)"
           else
             echo "Updating dev-resources/ctia_test_timings.edn with new timing"
