@@ -70,7 +70,6 @@ jobs:
           # cache should match test timings from previous runs, if they exist
           restore-keys: |
             ctia-timings-${{ github.ref }}
-            ctia-timings-refs/heads/master
             ctia-timings-
       - run: |
           if [ -f target/test-results/all-test-timings.edn ]; then
@@ -121,12 +120,12 @@ jobs:
       - run: |
           # debugging
           ls -al target/current-test-timing
-          if [ -f target/current-test-timing/all-test-timings.edn]; then
-            cat target/current-test-timing/all-test-timings.edn
+          if [ -f target/current-test-timing/ctia_test_timings.edn]; then
+            cat target/current-test-timing/ctia_test_timings.edn
           fi
-          if [ -s target/current-test-timing/all-test-timings.edn ]; then
+          if [ -s target/current-test-timing/ctia_test_timings.edn ]; then
             echo "Updating dev-resources/ctia_test_timings.edn with new timing"
-            cp target/current-test-timing/all-test-timings.edn dev-resources/ctia_test_timings.edn
+            cp target/current-test-timing/ctia_test_timings.edn dev-resources/ctia_test_timings.edn
           else
             echo "No previous timings found (empty file downloaded)"
           fi
