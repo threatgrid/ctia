@@ -11,9 +11,11 @@
                                                 "ns-timing"))))
                     (map (comp read-string slurp))
                     (apply merge))]
-    (when-some [expected (some-> (File. "dev-resources/ctia_test_timings.edn")
+    (when-some [expected (let [f (File. "dev-resources/ctia_test_timings.edn")]
+                           (when (.exists f)
+                             (-> f
                                  slurp
-                                 read-string)]
+                                 read-string)))]
       (println (str "Expected test duration: "
                     (/ (apply + (map :elapsed-ns (vals expected)))
                        1e9)
