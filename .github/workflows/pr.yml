@@ -117,10 +117,13 @@ jobs:
         uses: actions/download-artifact@v2
         with:
           name: current-test-timing
-          path: target/current-test-timing/all-test-timings.edn
+          path: target/current-test-timing
       - run: |
           # debugging
-          cat target/current-test-timing/all-test-timings.edn
+          ls -al target/current-test-timing
+          if [ -f target/current-test-timing/all-test-timings.edn]; then
+            cat target/current-test-timing/all-test-timings.edn
+          fi
           if [ -s target/current-test-timing/all-test-timings.edn ]; then
             echo "Updating dev-resources/ctia_test_timings.edn with new timing"
             cp target/current-test-timing/all-test-timings.edn dev-resources/ctia_test_timings.edn
