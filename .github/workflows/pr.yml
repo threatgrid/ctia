@@ -18,12 +18,12 @@ env:
 jobs:
   setup:
     runs-on: ubuntu-18.04
-    env:
-      BIN_PATH: $HOME/bin
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
       previous-runs: ${{ steps.set-matrix.outputs.previous-runs }}
     steps:
+      - run: echo ::set-env name=BIN_PATH::~/bin
+        shell: bash
       - name: Setup PATH and directories
         run: |
           mkdir -p "${BIN_PATH}"
@@ -129,9 +129,9 @@ jobs:
       matrix:
         this-split: ${{fromJson(needs.setup.outputs.matrix)}}
     env:
-      BIN_PATH: ~/bin
       CTIA_THIS_SPLIT: ${{ matrix.this-split }}
     steps:
+      - run: echo ::set-env name=BIN_PATH::~/bin
       - name: Setup PATH, folders, and files
         run: |
           mkdir -p "${BIN_PATH}"
@@ -227,10 +227,9 @@ jobs:
   # https://github.community/t/branch-protections-job-names-and-matrix-jobs/16317
   all-pr-checks:
     runs-on: ubuntu-18.04
-    env:
-      BIN_PATH: ~/bin
     needs: [test-matrix]
     steps:
+      - run: echo ::set-env name=BIN_PATH::~/bin
       - name: Setup PATH
         run: |
           mkdir -p "${BIN_PATH}"
