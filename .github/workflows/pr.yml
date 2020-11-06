@@ -123,14 +123,13 @@ jobs:
         run: lein deps
   test-matrix:
     runs-on: ubuntu-18.04
-    env:
-      BIN_PATH: ~/bin
     needs: [setup]
     # TODO specify docker services here https://docs.github.com/en/free-pro-team@latest/actions/reference/workflow-syntax-for-github-actions#jobsjob_idservices
     strategy:
       matrix:
         this-split: ${{fromJson(needs.setup.outputs.matrix)}}
     env:
+      BIN_PATH: ~/bin
       CTIA_THIS_SPLIT: ${{ matrix.this-split }}
     steps:
       - name: Setup PATH, folders, and files
