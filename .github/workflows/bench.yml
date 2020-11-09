@@ -58,10 +58,10 @@ jobs:
           git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}
           for attempt in $( seq 0 5 )
           do
-            git pull --force origin
+            git pull origin gh-pages:gh-pages
             git reset --hard
             mkdir -p bench
-            ( set -x; cp "${GITHUB_WORKSPACE}/master/target/bench/*" bench || true )
+            ( set -x; cp ${GITHUB_WORKSPACE}/master/target/bench/* bench || true )
             git add bench
             git status
             git commit --allow-empty -m "Upload benchmarks"
