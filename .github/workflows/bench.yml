@@ -6,17 +6,16 @@ on:
 
 defaults:
   run:
-    working-directory: ./master
+    working-directory: ./ctia
 
 jobs:
   benchmark:
     runs-on: ubuntu-18.04
     steps:
-      - name: Checkout master
+      - name: Checkout current branch
         uses: actions/checkout@v2
         with:
-          ref: master
-          path: master
+          path: ctia
       - name: Checkout gh-pages
         uses: actions/checkout@v2
         with:
@@ -26,7 +25,7 @@ jobs:
         uses: actions/cache@v2
         with:
           path: ~/.m2/repository
-          key: ${{ runner.os }}-${{ hashFiles('master/project.clj') }}
+          key: ${{ runner.os }}-${{ hashFiles('ctia/project.clj') }}
       - uses: actions/setup-java@v1
         with:
           java-version: '11'
@@ -50,7 +49,7 @@ jobs:
         with:
           retention-days: 30
           name: benchmark-results
-          path: master/target/bench/*.edn
+          path: ctia/target/bench/*.edn
       - name: Copy benchmark results to gh-pages
         working-directory: gh-pages
         run: |
@@ -63,7 +62,7 @@ jobs:
             git pull origin gh-pages:gh-pages
             git reset --hard
             mkdir -p bench
-            ( set -x; cp ${GITHUB_WORKSPACE}/master/target/bench/* bench || true )
+            ( set -x; cp ${GITHUB_WORKSPACE}/ctia/target/bench/* bench || true )
             git add bench
             git status
             git commit --allow-empty -m "Upload benchmarks"
