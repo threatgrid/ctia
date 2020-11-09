@@ -22,7 +22,7 @@
    [ctim.domain.id :as id]
    [cemerick.uri :as uri]
    [ctia.test-helpers.es :as es-helpers]
-   [schema.test :refer [validate-schemas]]))
+   [schema.test :refer [validate-schemas]]
    [puppetlabs.trapperkeeper.app :as app]))
 
 (use-fixtures :each
