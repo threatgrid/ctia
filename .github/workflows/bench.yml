@@ -63,6 +63,7 @@ jobs:
               break
             else
               ## TODO test this branch works
+              ## TODO return failure error code if all attempts fail
               echo "Git push failed, trying (attempt ${attempt})"
               # exponential backoff
               sleep $(( 2 ** $attempt + $( seq 0 10 | sort -R | head -n 1 )))
