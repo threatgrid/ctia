@@ -10,12 +10,15 @@ jobs:
     steps:
       - name: Checkout master
         uses: actions/checkout@v2
+        with:
+          path: master
       - name: Checkout gh-pages
         uses: actions/checkout@v2
         with:
           ref: gh-pages
-          path: ../gh-pages
+          path: gh-pages
       - name: Cache
+        working-directory: master
         uses: actions/cache@v2
         with:
           path: ~/.m2/repository
@@ -27,6 +30,7 @@ jobs:
         with:
           lein: 2.9.4
       #- name: Docker
+      #  working-directory: master
       #  run: |
       #    docker-compose -f containers/dev/docker-compose.yml up -d
       #    # Wait ES
@@ -34,34 +38,31 @@ jobs:
       #    # Wait Kafka
       #    until echo dump | nc 127.0.0.1 2181 | grep brokers; do sleep 1; done
       #- run: ./scripts/run-benchmarks.sh
-      - run: |
+      #  working-directory: master
+      - working-directory: master
+        run: |
           mkdir -p target/bench
           echo "test" > target/bench/test.edn
           ls target/bench
-      - run: pwd
-      - run: ls target/bench
-      - run: ls "${GITHUB_WORKSPACE}/target/bench"
-      - run: ls "${GITHUB_WORKSPACE}/target/bench"
-        working-directory: ${{ env.GITHUB_WORKSPACE }}../gh-pages
       - name: Upload benchmark results
         uses: actions/upload-artifact@v2
         with:
           retention-days: 30
           name: benchmark-results
-          path: target/bench/*.edn
+          path: master/target/bench/*.edn
       - name: Copy benchmark results to gh-pages
-        working-directory: ${{ env.GITHUB_WORKSPACE }}../gh-pages
+        working-directory: gh-pages
         run: |
           git config pull.ff only
-          git config --global user.name 'GitHub Actions'
-          #git config --global user.email 'build@cisco.com'
+          git config user.name github-actions
+          git config --global user.email github-actions@github.com
           git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}
           for attempt in $( seq 0 5 )
           do
             git pull --force origin
             git reset --hard
             mkdir -p bench
-            ( set -x; cp "${GITHUB_WORKSPACE}/../ctia/target/bench/*" bench || true )
+            ( set -x; cp "${GITHUB_WORKSPACE}/master/target/bench/*" bench || true )
             git add bench
             git status
             git commit --allow-empty -m "Upload benchmarks"
