@@ -1,7 +1,8 @@
 name: GitHub Actions Pull Request
 
 on:
-  pull_request:
+  push:
+    branches: dontbuildme
 
 env:
   LOG_DIR: ~/log
@@ -22,7 +23,7 @@ env:
   # (9 jobs for test-matrix + 1 for shellcheck) + 1 for fan-in
   # allows 2 commits to build simultaneously, since one build
   # will take at most 10 builds at any one time
-  CTIA_NSPLITS: 1
+  CTIA_NSPLITS: 9
   SHELLCHECK_VERSION: v0.7.1 # "stable" or "v0.4.7", or "latest"
   # shellcheck is preinstalled, use this to override shellcheck for our scripts
   SHELLCHECK_COMMAND: ~/bin/shellcheck
@@ -44,7 +45,7 @@ jobs:
     runs-on: ubuntu-18.04
     strategy:
       matrix:
-        this-split: [0] # (range ${CTIA_NSPLITS})
+        this-split: [0,1,2,3,4,5,6,7,8] # (range ${CTIA_NSPLITS})
     env:
       CTIA_THIS_SPLIT: ${{ matrix.this-split }}
     steps:
