@@ -34,4 +34,3 @@ jobs:
           retention-days: 30
           name: benchmark-results
           path: target/bench/*.edn
-
