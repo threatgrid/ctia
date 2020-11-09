@@ -32,16 +32,13 @@ jobs:
       - uses: DeLaGuardo/setup-clojure@e73bf2b6435244b2c9c5c226ae5022d91d0ce702
         with:
           lein: 2.9.4
-            #- name: Docker
-            #  run: |
-            #    docker-compose -f containers/dev/docker-compose.yml up -d
-            #    # Wait ES
-            #    until curl http://127.0.0.1:9200/; do sleep 1; done
-            #    # Wait Kafka
-            #    until echo dump | nc 127.0.0.1 2181 | grep brokers; do sleep 1; done
-      - run: pwd
-      - run: ls
-      - run: ls scripts
+      - name: Docker
+        run: |
+          docker-compose -f containers/dev/docker-compose.yml up -d
+          # Wait ES
+          until curl http://127.0.0.1:9200/; do sleep 1; done
+          # Wait Kafka
+          until echo dump | nc 127.0.0.1 2181 | grep brokers; do sleep 1; done
       - run: ./scripts/run-benchmarks.sh
       - run: |
           mkdir -p target/bench
