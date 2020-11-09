@@ -15,7 +15,7 @@
   (fixture-ctia-es-store-with-app
     (fn [app]
       (let [result (bench/with-progress-reporting
-                     (quick-benchmark
+                     (benchmark
                        (f app)
                        {:verbose true}))]
         (doto result bench/report-result)))))
