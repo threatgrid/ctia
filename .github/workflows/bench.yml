@@ -54,7 +54,7 @@ jobs:
         working-directory: gh-pages
         run: |
           git config pull.ff only
-          git config user.name github-actions
+          git config --global user.name github-actions
           git config --global user.email github-actions@github.com
           git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}
           for attempt in $( seq 0 5 )
