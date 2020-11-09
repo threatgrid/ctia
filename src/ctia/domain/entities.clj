@@ -4,6 +4,7 @@
             [ctia.properties :refer [get-http-show]]
             [ctia.schemas.core :as ctia-schemas
              :refer [GraphQLRuntimeContext
+                     HTTPShowServices
                      RealizeFn
                      RealizeFnResult
                      TempIDs]]
@@ -73,34 +74,34 @@
                                  (:valid_time new-object)
                                  now))))))))
 
-(defn short-id->long-id [id get-in-config]
-  (id/short-id->long-id id #(get-http-show get-in-config)))
+(s/defn short-id->long-id [id services :- HTTPShowServices]
+  (id/short-id->long-id id #(get-http-show services)))
 
 (defn long-id->id [id]
   (id/long-id->id id))
 
-(defn with-long-id [entity get-in-config]
-  (update entity :id short-id->long-id get-in-config))
+(s/defn with-long-id [entity services :- HTTPShowServices]
+  (update entity :id short-id->long-id services))
 
-(defn page-with-long-id [m get-in-config]
+(s/defn page-with-long-id [m services :- HTTPShowServices]
   (update m :data #(map (fn [entity]
-                          (with-long-id entity get-in-config))
+                          (with-long-id entity services))
                         %)))
 
 (defn long-id->entity-type [id-str]
   (:type (id/long-id->id id-str)))
 
-(defn short-id->entity-type [id-str get-in-config]
+(s/defn short-id->entity-type [id-str services :- HTTPShowServices]
   (when-let [short-id (id/short-id->long-id
                        id-str
-                       #(get-http-show get-in-config))]
+                       #(get-http-show services))]
     (:type (id/long-id->id short-id))))
 
-(defn id->entity-type
+(s/defn id->entity-type
   "Extract the entity type from an id"
-  [id-str get-in-config]
+  [id-str services :- HTTPShowServices]
   (if (id/short-id? id-str)
-    (short-id->entity-type id-str get-in-config)
+    (short-id->entity-type id-str services)
     (long-id->entity-type id-str)))
 
 (defn un-store [record]

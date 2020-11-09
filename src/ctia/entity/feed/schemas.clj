@@ -88,9 +88,10 @@
     prev-object :- (s/maybe StoredFeed)]
   (delayed/fn :- StoredFeed
    [{{{:keys [get-in-config]} :ConfigService
-      {:keys [encrypt decrypt]} :IEncryption}
+      {:keys [encrypt decrypt]} :IEncryption
+      :as services}
      :services} :- GraphQLRuntimeContext]
-   (let [long-id (short-id->long-id id get-in-config)
+   (let [long-id (short-id->long-id id services)
          plain-secret (if-let [prev-secret (:secret prev-object)]
                         (decrypt prev-secret)
                         (str (java.util.UUID/randomUUID)))

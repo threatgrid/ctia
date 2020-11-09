@@ -140,8 +140,7 @@
 (def fetch-limit 200)
 
 (s/defn fetch-feed [id s
-                    {{:keys [get-in-config]} :ConfigService
-                     {:keys [decrypt]} :IEncryption
+                    {{:keys [decrypt]} :IEncryption
                      {:keys [read-store]} :StoreService
                      :as services} :- APIHandlerServices]
   (if-let [{:keys [indicator_id
@@ -183,7 +182,7 @@
                                              feed-identity
                                              {}))
                            (remove nil?)
-                           (map #(with-long-id % get-in-config)))]
+                           (map #(with-long-id % services)))]
               (cond-> {}
                 (= :observables output)
                 (assoc
@@ -238,8 +237,7 @@
          :unauthorized (unauthorized "wrong secret")
          (ok (dissoc feed :output)))))))
 
-(s/defn feed-routes [{{:keys [get-in-config]} :ConfigService
-                      {:keys [read-store write-store]} :StoreService
+(s/defn feed-routes [{{:keys [read-store write-store]} :StoreService
                       :as services} :- APIHandlerServices]
   (routes
    (POST "/" []
@@ -259,7 +257,7 @@
                                   %
                                   identity-map
                                   (wait_for->refresh wait_for))
-          :long-id-fn #(with-long-id % get-in-config)
+          :long-id-fn #(with-long-id % services)
           :entity-type :feed
           :identity identity
           :entities [new-entity]
@@ -292,7 +290,7 @@
                                             %
                                             identity-map
                                             (wait_for->refresh wait_for))
-                   :long-id-fn #(with-long-id % get-in-config)
+                   :long-id-fn #(with-long-id % services)
                    :entity-type :feed
                    :entity-id id
                    :identity identity
@@ -316,7 +314,7 @@
                      {:all-of {:external_ids external_id}}
                      identity-map
                      q)
-         (page-with-long-id get-in-config)
+         (page-with-long-id services)
          un-store-page
          (decrypt-feed-page services)
          paginated-ok))
@@ -334,7 +332,7 @@
           (search-query :created params)
           identity-map
           (select-keys params search-options))
-         (page-with-long-id get-in-config)
+         (page-with-long-id services)
          un-store-page
          (decrypt-feed-page services)
          paginated-ok))
@@ -366,7 +364,7 @@
                               identity-map
                               params)]
        (-> rec
-           (with-long-id get-in-config)
+           (with-long-id services)
            un-store
            (decrypt-feed services)
            ok)
@@ -393,7 +391,7 @@
                                    identity-map
                                    (wait_for->refresh wait_for))
           :entity-type :feed
-          :long-id-fn #(with-long-id % get-in-config)
+          :long-id-fn #(with-long-id % services)
           :entity-id id
           :identity identity)
        (no-content)

@@ -105,8 +105,7 @@
    :valid_time.start_time
    :valid_time.end_time])
 
-(s/defn additional-routes [{{:keys [get-in-config]}          :ConfigService
-                            {:keys [read-store write-store]} :StoreService
+(s/defn additional-routes [{{:keys [read-store write-store]} :StoreService
                             :as                              services} :- APIHandlerServices]
   (routes
    (POST "/expire/:id" []
@@ -131,7 +130,7 @@
                                         (assoc-in % [:valid_time :end_time] (time/internal-now))
                                         identity-map
                                         {})
-               :long-id-fn #(entities/with-long-id % get-in-config)
+               :long-id-fn #(entities/with-long-id % services)
                :entity-type :asset-mapping
                :entity-id id
                :identity identity

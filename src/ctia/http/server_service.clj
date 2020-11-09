@@ -6,14 +6,15 @@
             [puppetlabs.trapperkeeper.core :as tk]
             [puppetlabs.trapperkeeper.services :refer [service-context]]))
 
-(defprotocol CTIAHTTPServerService)
+(defprotocol CTIAHTTPServerService
+  (get-graphql [this] "Returns an instance of graphql.GraphQL")
+  (get-port [this] "Returns the port bound by HTTP server"))
 
 (tk/defservice ctia-http-server-service
   CTIAHTTPServerService
   [HooksService
    StoreService
    IAuth
-   GraphQLService
    GraphQLNamedTypeRegistryService
    IEncryption
    ConfigService
@@ -32,8 +33,11 @@
                                                                      :write-store])
                                                        store-svc/lift-store-service-fns)
                                      :IAuth IAuth
-                                     :GraphQLService GraphQLService
                                      :GraphQLNamedTypeRegistryService GraphQLNamedTypeRegistryService
                                      :IEncryption IEncryption
                                      :FeaturesService FeaturesService}))
-  (stop [this context] (core/stop context)))
+  (stop [this context] (core/stop context))
+  (get-port [this]
+            (core/get-port (service-context this)))
+  (get-graphql [this]
+               (core/get-graphql (service-context this))))

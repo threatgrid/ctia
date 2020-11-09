@@ -5,6 +5,7 @@
             [ctia.test-helpers
              [auth :refer [all-capabilities]]
              [core :as helpers :refer [GET make-id POST]]
+             [http :refer [app->HTTPShowServices]]
              [fake-whoami-service :as whoami-helpers]
              [store :refer [test-for-each-store-with-app]]]
             [ctim.domain.id :as id]))
@@ -23,8 +24,7 @@
                                          "foogroup"
                                          "user")
 
-     (let [{:keys [get-in-config]} (helpers/get-service-map app :ConfigService)
-           make-id #(make-id % get-in-config)
+     (let [make-id #(make-id % (app->HTTPShowServices app))
 
            judgement-1-id (make-id :judgement)
            judgement-2-id (make-id :judgement)

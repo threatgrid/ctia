@@ -13,18 +13,23 @@
             [schema-tools.core :as st]
             [schema.core :as s :refer [Bool Str]]))
 
+(s/defschema Port
+  "A port number"
+  (s/constrained s/Int pos?))
+
 (s/defschema APIHandlerServices
   "Maps of services available to routes"
   {:ConfigService {:get-config (s/=> s/Any s/Any)
                    :get-in-config (s/=>* s/Any
                                          [[s/Any]]
                                          [[s/Any] s/Any])}
+   :CTIAHTTPServerService {:get-port (s/=> Port)
+                           :get-graphql (s/=> graphql.GraphQL)}
    :HooksService {:apply-hooks (s/pred ifn?) ;;keyword varargs
                   :apply-event-hooks (s/=> s/Any s/Any)}
    :StoreService {:read-store (s/pred ifn?) ;;varags
                   :write-store (s/pred ifn?)} ;;varags
    :IAuth {:identity-for-token (s/=> s/Any s/Any)}
-   :GraphQLService {:get-graphql (s/=> graphql.GraphQL)}
    :GraphQLNamedTypeRegistryService {:get-or-update-named-type-registry
                                      (s/=> graphql.schema.GraphQLType
                                            s/Str
@@ -33,6 +38,15 @@
                  :decrypt (s/=> s/Any s/Any)}
    :FeaturesService {:enabled? (s/=> s/Keyword s/Bool)
                      :feature-flags (s/=> s/Any [s/Str])}})
+
+(s/defschema HTTPShowServices
+  {:ConfigService {:get-in-config (s/=>* s/Any
+                                         [[s/Any]]
+                                         [[s/Any] s/Any])
+                   s/Keyword s/Any}
+   :CTIAHTTPServerService {:get-port (s/=> Port)
+                           s/Keyword s/Any}
+   s/Keyword s/Any})
 
 (s/defschema DelayedRoutes
   "Function taking a map of services and returning routes
@@ -51,6 +65,7 @@
   {:ConfigService {:get-in-config (s/=>* s/Any
                                          [[s/Any]]
                                          [[s/Any] s/Any])}
+   :CTIAHTTPServerService {:get-port (s/=> Port)}
    :StoreService {:read-store (s/pred ifn?)} ;;varags
    :GraphQLNamedTypeRegistryService
    {:get-or-update-named-type-registry
@@ -66,6 +81,7 @@
   (service-subgraph
     services
     :ConfigService [:get-in-config]
+    :CTIAHTTPServerService [:get-port]
     :StoreService [:read-store]
     :GraphQLNamedTypeRegistryService [:get-or-update-named-type-registry]
     :IEncryption [:decrypt :encrypt]))
