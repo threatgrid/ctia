@@ -18,8 +18,8 @@
 
 (defn fixture-ctia-with-app [fixture-with-app]
   (when (System/getenv "GITHUB_ACTIONS")
-    ;; fix estimated overhead (as recommended by criterium's readme) to a value source
-    ;; during a run on GitHub Actions.
+    ;; fix estimated overhead (as recommended by criterium's readme) to a value sourced
+    ;; from a run on GitHub Actions.
     (alter-var-root #'bench/estimated-overhead-cache (constantly 1.286691260245356E-8)))
   (helpers/with-properties ["ctia.store.es.default.refresh" "false"
                             "ctia.http.bulk.max-size" 100000]

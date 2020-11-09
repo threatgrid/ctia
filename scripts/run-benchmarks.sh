@@ -1,5 +1,5 @@
 #!/bin/sh
 
-set +ex
+set -ex
 
 lein run -m ctia.entity.actor-bench

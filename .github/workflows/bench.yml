@@ -37,7 +37,10 @@ jobs:
       - run: |
           mkdir -p target/bench
           echo "test" > target/bench/test.edn
+          ls target/bench
       - run: pwd
+      - run: ls target/bench
+      - run: ls "${GITHUB_WORKSPACE}/ctia/target/bench"
       - name: Upload benchmark results
         uses: actions/upload-artifact@v2
         with:
