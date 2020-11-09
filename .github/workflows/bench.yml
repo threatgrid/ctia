@@ -18,11 +18,10 @@ jobs:
           ref: gh-pages
           path: gh-pages
       - name: Cache
-        working-directory: master
         uses: actions/cache@v2
         with:
           path: ~/.m2/repository
-          key: ${{ runner.os }}-${{ hashFiles('project.clj') }}
+          key: ${{ runner.os }}-${{ hashFiles('master/project.clj') }}
       - uses: actions/setup-java@v1
         with:
           java-version: '11'
