@@ -8,7 +8,13 @@ jobs:
   benchmark:
     runs-on: ubuntu-18.04
     steps:
-      - uses: actions/checkout@v2
+      - name: Checkout master
+        uses: actions/checkout@v2
+      - name: Checkout gh-pages
+        uses: actions/checkout@v2
+        with:
+          ref: gh-pages
+          path: gh-pages
       - name: Cache
         uses: actions/cache@v2
         with:
@@ -27,10 +33,23 @@ jobs:
           until curl http://127.0.0.1:9200/; do sleep 1; done
           # Wait Kafka
           until echo dump | nc 127.0.0.1 2181 | grep brokers; do sleep 1; done
-      - run: ./scripts/run-benchmarks.sh
+      #- run: ./scripts/run-benchmarks.sh
+      - run: |
+          mkdir target/bench
+          echo "test" > target/bench/test.edn
       - name: Upload benchmark results
         uses: actions/upload-artifact@v2
         with:
           retention-days: 30
           name: benchmark-results
           path: target/bench/*.edn
+      - name: Copy benchmark results to gh-pages
+        working-directory: gh-pages
+        run: |
+          git config --global user.name 'GitHub Actions'
+          git config --global user.email 'dummy@email.com'
+          git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}
+          cp "${GITHUB_WORKSPACE}/ctia/target/bench/*" bench || true
+          git add bench
+          git commit -m "Upload benchmarks"
+          git push
