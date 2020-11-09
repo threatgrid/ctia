@@ -14,6 +14,9 @@ jobs:
     steps:
       - name: Checkout master
         uses: actions/checkout@v2
+        with:
+          ref: master
+          path: master
       - name: Checkout gh-pages
         uses: actions/checkout@v2
         with:
