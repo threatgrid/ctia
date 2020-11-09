@@ -11,6 +11,7 @@
             [ctia.test-helpers
              [core :as helpers
               :refer [DELETE entity->short-id GET PATCH POST PUT]]
+             [http :refer [app->HTTPShowServices]]
              [search :refer [test-query-string-search]]]
             [ctim.domain.id :as id]))
 
@@ -187,7 +188,7 @@
       (is (= expected post-record))
 
       (testing (format "the %s ID has correct fields" entity)
-        (let [show-props (get-http-show get-in-config)]
+        (let [show-props (get-http-show (app->HTTPShowServices app))]
           (is (= (:hostname record-id)    (:hostname show-props)))
           (is (= (:protocol record-id)    (:protocol show-props)))
           (is (= (:port record-id)        (:port show-props)))

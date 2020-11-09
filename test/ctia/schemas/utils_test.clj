@@ -17,7 +17,7 @@
    identity
    m))
 
-(deftest recursvie-open-schema-version-test
+(deftest recursive-open-schema-version-test
   (testing "should replace all inners for schema_version with s/Str"
     (let [res-schema (sut/recursive-open-schema-version CTIMNewBundle)
           found-leaves (atom [])]

@@ -23,6 +23,7 @@
    [cemerick.uri :as uri]
    [ctia.test-helpers.es :as es-helpers]
    [schema.test :refer [validate-schemas]]))
+   [puppetlabs.trapperkeeper.app :as app]))
 
 (use-fixtures :each
   validate-schemas
@@ -71,9 +72,9 @@
             (time/timestamp "2042-01-01")
             (fn []
               (let [app (helpers/get-current-app)
-                    {:keys [get-in-config]} (helpers/get-service-map app :ConfigService)
+                    {{:keys [get-port]} :CTIAHTTPServerService} (app/service-graph app)
 
-                    port (get-in-config [:ctia :http :port])
+                    port (get-port)
                     {incident :parsed-body
                      incident-status :status}
                     (POST app

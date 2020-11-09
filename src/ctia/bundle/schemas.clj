@@ -51,3 +51,8 @@
 (s/defschema BundleExportQuery
   (merge BundleExportIds
          BundleExportOptions))
+
+(s/defschema FindByExternalIdsServices
+  {:StoreService {:read-store (s/pred ifn?)
+                  s/Keyword s/Any}
+   s/Keyword s/Any})

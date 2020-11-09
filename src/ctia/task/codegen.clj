@@ -44,8 +44,8 @@
 
 (defn spec-uri
   "compose the full path of the swagger spec to generate from"
-  [get-in-config]
-  (let [port (get-in-config [:ctia :http :port] 3000)]
+  [get-port]
+  (let [port (get-port)]
     (str "http://localhost:" port "/swagger.json")))
 
 (defn exec-command
@@ -66,11 +66,11 @@
 
 (defn base-command
   "base command for all languages"
-  [lang output-dir get-in-config]
+  [lang output-dir get-port]
   ["java"
    "-jar" local-jar-uri
    "generate"
-   "-i" (spec-uri get-in-config)
+   "-i" (spec-uri get-port)
    "-l" (name lang)
    "--group-id" "cisco"
    "-o" (str (or output-dir "/tmp/ctia-client") "/" (name lang))
@@ -89,11 +89,11 @@
 
 (defn generate-language
   "generate code for one language"
-  [lang props output-dir get-in-config]
+  [lang props output-dir get-port]
 
   (println "generating" lang "client...")
 
-  (let [base (base-command lang output-dir get-in-config)
+  (let [base (base-command lang output-dir get-port)
         additional (props->additional-properties props)
         full-command (into base additional)]
     (apply exec-command full-command)))
@@ -103,10 +103,9 @@
   [output-dir]
   (try
     (let [app (setup)
-          {{:keys [get-in-config]} :ConfigService} (app/service-graph app)]
-      (assert get-in-config)
+          {{:keys [get-port]} :CTIAHTTPServerService} (app/service-graph app)]
       (doseq [[lang props] langs]
-        (generate-language lang props output-dir get-in-config))
+        (generate-language lang props output-dir get-port))
 
       (println "done")
       (System/exit 0))
