@@ -33,7 +33,6 @@
                                                                      :write-store])
                                                        store-svc/lift-store-service-fns)
                                      :IAuth IAuth
-                                     :GraphQLService GraphQLService
                                      :GraphQLNamedTypeRegistryService GraphQLNamedTypeRegistryService
                                      :IEncryption IEncryption
                                      :FeaturesService FeaturesService}))
