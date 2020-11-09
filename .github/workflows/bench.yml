@@ -50,9 +50,20 @@ jobs:
           git config --global user.name 'GitHub Actions'
           #git config --global user.email 'build@cisco.com'
           git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}
-          mkdir -p bench
-          ( set -x; cp "${GITHUB_WORKSPACE}/ctia/target/bench/*" bench || true )
-          git add bench
-          git status
-          git commit --allow-empty -m "Upload benchmarks"
-          git push
+          for attempt in $( seq 1 5 )
+          do
+            git pull origin
+            git reset --hard
+            mkdir -p bench
+            ( set -x; cp "${GITHUB_WORKSPACE}/ctia/target/bench/*" bench || true )
+            git add bench
+            git status
+            git commit --allow-empty -m "Upload benchmarks"
+            if git push ; then
+              break
+            else
+              echo "Git push failed, trying (attempt ${attempt})"
+              # exponential backoff
+              sleep $(( 2 ** $attempt + $( seq 0 10 | sort -R | head -n 1 )))
+            fi
+          done
