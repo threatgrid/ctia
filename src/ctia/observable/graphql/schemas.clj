@@ -1,5 +1,5 @@
 (ns ctia.observable.graphql.schemas
-  (:refer-clojure :exclude [update list read])
+  (:refer-clojure :exclude [list read])
   (:require
    [ctia.domain.entities :as ctia-entities]
    [ctia.entity.judgement :as judgement]
@@ -24,13 +24,14 @@
     observable-value :value}
    ident
    {{{:keys [get-in-config]} :ConfigService
-     {:keys [read-store]} :StoreService}
+     {:keys [read-store]} :StoreService
+     :as services}
     :services} :- GraphQLRuntimeContext]
   (some-> (read-store :judgement
                       calculate-verdict
                       {:type observable-type :value observable-value}
                       ident)
-          (clojure.core/update :judgement_id ctia-entities/short-id->long-id get-in-config)))
+          (update :judgement_id ctia-entities/short-id->long-id services)))
 
 (def observable-fields
   {:verdict {:type verdict/VerdictType

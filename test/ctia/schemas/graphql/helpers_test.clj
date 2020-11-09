@@ -18,6 +18,7 @@
   []
   {:services
    {:ConfigService {:get-in-config (fn [& args] (assert nil))}
+    :CTIAHTTPServerService {:get-port (fn [& args] (assert nil))}
     :StoreService {:read-store (fn [& args] (assert nil))}
     :IEncryption {:encrypt (fn [& args] (assert nil))
                   :decrypt (fn [& args] (assert nil))}

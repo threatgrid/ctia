@@ -53,9 +53,8 @@
      JudgementFieldsParam
      {(s/optional-key :sort_by) feedback-sort-fields})))
 
-(s/defn feedback-by-entity-route [{{:keys [get-in-config]} :ConfigService
-                                   {:keys [read-store]} :StoreService
-                                   :as _services_} :- APIHandlerServices]
+(s/defn feedback-by-entity-route [{{:keys [read-store]} :StoreService
+                                   :as services} :- APIHandlerServices]
   (GET "/" []
        :return fs/PartialFeedbackList
        :query [params FeedbackQueryParams]
@@ -68,7 +67,7 @@
                        {:all-of (select-keys params [:entity_id])}
                        identity-map
                        (dissoc params :entity_id))
-           (page-with-long-id get-in-config)
+           (page-with-long-id services)
            un-store-page
            paginated-ok)))
 

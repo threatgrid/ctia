@@ -1,7 +1,6 @@
 (ns ctia.entity.actor-bench
   (:require [ctia.test-helpers
-             [benchmark :refer [cleanup-ctia!
-                                setup-ctia-es-store!]]
+             [benchmark :refer [fixture-ctia-es-store-with-app]]
              [core :as helpers :refer [POST]]]
             [ctim.examples.actors
              :refer [new-actor-minimal
@@ -13,13 +12,13 @@
 (def big-actor (dissoc new-actor-maximal :id))
 
 (defn actor-benchmark-fixture [f]
-  (let [{:keys [app] :as m} (setup-ctia-es-store!)
-        result (bench/with-progress-reporting
-                 (quick-benchmark
-                   (f m)
-                   {:verbose true}))]
-    (cleanup-ctia! app)
-    (doto result bench/report-result)))
+  (fixture-ctia-es-store-with-app
+    (fn [app]
+      (let [result (bench/with-progress-reporting
+                     (quick-benchmark
+                       (f app)
+                       {:verbose true}))]
+        (doto result bench/report-result)))))
 
 (defn play [app fixture]
   (POST app
@@ -27,19 +26,21 @@
         :body fixture
         :headers {"Authorization" "45c1f5e3f05d0"}))
 
-(defn big-actor-es-store-benchmark []
-  (actor-benchmark-fixture
-    (fn [{:keys [app]}]
-      (play app big-actor))))
+(def benchmarks
+  {:big-actor-es-store-benchmark (fn [app]
+                                   (play app big-actor))
+   :small-actor-es-store-benchmark (fn [app]
+                                     (play app small-actor))})
 
-(defn small-actor-es-store-benchmark []
-  (actor-benchmark-fixture
-    (fn [{:keys [app]}]
-      (play app small-actor))))
+(defn run-benchmarks []
+  (-> "target/bench/" java.io.File. .mkdirs)
+  (doseq [[b f] benchmarks]
+    (assert (simple-keyword? b))
+    (spit (str "target/bench/" (name b) ".edn")
+          (-> f
+              actor-benchmark-fixture
+              (dissoc :results)))))
 
 (defn -main []
-  (-> "target/bench/" java.io.File. .mkdirs)
-  (spit "target/bench/small-actor-es-store-benchmark.edn"
-        (small-actor-es-store-benchmark))
-  (spit "target/bench/big-actor-es-store-benchmark.edn"
-        (big-actor-es-store-benchmark)))
+  (run-benchmarks)
+  (System/exit 0))

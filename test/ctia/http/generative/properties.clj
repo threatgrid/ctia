@@ -9,6 +9,7 @@
             [ctia.schemas.core] ;; for spec side-effects
             [ctia.test-helpers.core
              :as helpers :refer [POST GET]]
+            [ctia.test-helpers.http :refer [app->HTTPShowServices]]
             [ctim.domain.id :as id]
             [ctim.schemas
              [actor :refer [NewActor]]
@@ -54,7 +55,7 @@
                         post-entity)))
 
       (let [url-id
-            (-> (id/->id type id (get-http-show get-in-config))
+            (-> (id/->id type id (get-http-show (app->HTTPShowServices app)))
                 :short-id
                 encode)
 
