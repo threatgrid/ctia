@@ -41,6 +41,8 @@ jobs:
       - run: pwd
       - run: ls target/bench
       - run: ls "${GITHUB_WORKSPACE}/../ctia/target/bench"
+      - run: ls "${GITHUB_WORKSPACE}/../ctia/target/bench"
+        working-directory: ${{ env.GITHUB_WORKSPACE}../gh-pages
       - name: Upload benchmark results
         uses: actions/upload-artifact@v2
         with:
@@ -48,8 +50,9 @@ jobs:
           name: benchmark-results
           path: target/bench/*.edn
       - name: Copy benchmark results to gh-pages
-        working-directory: gh-pages
+        working-directory: ${{ env.GITHUB_WORKSPACE}../gh-pages
         run: |
+          git config pull.ff only
           git config --global user.name 'GitHub Actions'
           #git config --global user.email 'build@cisco.com'
           git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}
