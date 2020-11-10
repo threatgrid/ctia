@@ -122,10 +122,10 @@
                                                            (update :reason str " " reason)))
                                :enumerable-fields js/judgement-enumerable-fields}]
     (routes
-      (judgement-revocation-routes
+      (services->entity-crud-routes
         services
         delayed-routes-config)
-      (services->entity-crud-routes
+      (judgement-revocation-routes
         services
         delayed-routes-config))))
 

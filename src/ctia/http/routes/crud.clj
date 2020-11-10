@@ -294,10 +294,6 @@
                            un-store)]
                 (ok updated-rec)
                 (not-found))))
-     (when can-revoke?
-       (revocation-routes
-         services
-         delayed-routes-config))
      (when can-get-by-external-id?
        (GET "/external_id/:external_id" []
             :return list-schema
@@ -446,7 +442,11 @@
                   :entity-id id
                   :identity identity)
                (no-content)
-               (not-found)))))))
+               (not-found)))
+     (when can-revoke?
+       (revocation-routes
+         services
+         delayed-routes-config))))))
 
 (s/defn services->entity-crud-routes
   [services :- APIHandlerServices
