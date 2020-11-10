@@ -176,10 +176,8 @@
 
 (defn assoc-absent [m & kv]
   (assert (even? (count kv)))
-  (if kv
-    (reduce (fn [m [k v]]
-              (cond-> m
-                (contains? m k) (assoc k v)))
-            m
-            (partition 2 kv))
-    m))
+  (reduce (fn [m [k v]]
+            (cond-> m
+              (contains? m k) (assoc k v)))
+          m
+          (partition 2 kv)))
