@@ -4,11 +4,15 @@
             [ctia.bundle.core :as sut]
             [ctia.domain.entities :as ent :refer [with-long-id]]
             [ctia.flows.crud :refer [make-id]]
-            [ctia.test-helpers.core :as h]
-            [ctia.test-helpers.http :refer [app->HTTPShowServices]]
-            [schema.core :as s]))
+            [clojure.test :as t :refer [deftest use-fixtures are is testing]]
+            [ctia.test-helpers
+             [http :refer [app->HTTPShowServices]]
+             [core :as h]
+             [es :as es-helpers]]))
 
-(use-fixtures :each h/fixture-ctia-fast)
+(use-fixtures :each
+  es-helpers/fixture-properties:es-store
+  h/fixture-ctia-fast)
 
 (deftest local-entity?-test
   (are [x y] (= x (sut/local-entity? y (app->HTTPShowServices (h/get-current-app))))

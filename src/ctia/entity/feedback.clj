@@ -24,7 +24,7 @@
      em/stored-entity-mapping
      {:entity_id em/token
       :feedback em/integer-type
-      :reason em/sortable-all-text})}})
+      :reason em/sortable-text})}})
 
 (def-es-store FeedbackStore :feedback fs/StoredFeedback fs/PartialStoredFeedback)
 

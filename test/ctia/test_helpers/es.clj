@@ -1,9 +1,12 @@
 (ns ctia.test-helpers.es
   "ES test helpers"
-  (:require [cheshire.core :as json]
+  (:require [clojure.test :refer [testing]]
+            [cheshire.core :as json]
             [clj-http.client :as http]
-            [ductile.index :as es-index]
-            [clj-momo.lib.es.document :as es-doc]
+            [ductile
+             [index :as es-index]
+             [conn :as es-conn]
+             [document :as es-doc]]
             [clojure.java.io :as io]
             [ctia
              [store :as store]]
@@ -106,11 +109,12 @@
                       "ctia.store.es.default.replicas" 1
                       "ctia.store.es.default.refresh" "true"
                       "ctia.store.es.default.refresh_interval" "1s"
-                      "ctia.store.es.default.port" "9200"
+                      "ctia.store.es.default.port" "9205"
                       "ctia.store.es.default.indexname" "test_ctia"
                       "ctia.store.es.default.default_operator" "AND"
                       "ctia.store.es.default.aliased" true
                       "ctia.store.es.default.rollover.max_docs" 50
+                      "ctia.store.es.default.version" 5
 
                       "ctia.store.es.actor.indexname" "ctia_actor"
                       "ctia.store.es.actor.default_operator" "OR"
@@ -165,6 +169,7 @@
                       "ctia.store.weakness" "es"
                       "ctia.store.bulk-refresh" "true"
 
+                     ;; "ctia.migration.store.es.default.port" "9207"
                       "ctia.migration.store.es.migration.indexname" "ctia_migration"
                       "ctia.migration.store.es.default.rollover.max_docs" 50
                       "ctia.migration.store.es.event.rollover.max_docs" 1000]
@@ -173,14 +178,14 @@
 (defn fixture-properties:es-hook [t]
   ;; Note: These properties may be overwritten by ENV variables
   (h/with-properties ["ctia.hook.es.enabled" true
-                      "ctia.hook.es.port" 9200
+                      "ctia.hook.es.port" 9205
                       "ctia.hook.es.indexname" "test_ctia_events"]
     (t)))
 
 (defn fixture-properties:es-hook:aliased-index [t]
   ;; Note: These properties may be overwritten by ENV variables
   (h/with-properties ["ctia.hook.es.enabled" true
-                      "ctia.hook.es.port" 9200
+                      "ctia.hook.es.port" 9205
                       "ctia.hook.es.indexname" "test_ctia_events"
                       "ctia.hook.es.slicing.strategy" "aliased-index"
                       "ctia.hook.es.slicing.granularity" "week"]
@@ -199,11 +204,12 @@
            :_id _id)))
 
 (defn load-bulk
-  ([es-conn docs] (load-bulk es-conn docs "true"))
-  ([es-conn docs refresh?]
-   (es-doc/bulk-create-doc es-conn
-                           docs
-                           refresh?)))
+  ([conn docs] (load-bulk conn docs "true"))
+  ([{:keys [version] :as conn} docs refresh?]
+   (es-doc/bulk-create-doc conn
+                           (cond->> docs
+                             (> version 5) (map #(dissoc % :_type)))
+                           {:refresh refresh?})))
 
 (defn load-file-bulk
   [es-conn filepath]
@@ -212,12 +218,8 @@
                (map prepare-bulk-ops
                     (line-seq rdr)))))
 
-(defn make-cat-indices-url [host port]
-  (format "http://%s:%s/_cat/indices?format=json&pretty=true" host port))
-
-(defn get-cat-indices [host port]
-  (let [url (make-cat-indices-url host
-                                  port)
+(defn get-cat-indices [{:keys [uri] :as _conn}]
+  (let [url (str uri "/_cat/indices?format=json&pretty=true")
         {:keys [body]} (http/get url {:as :json})]
     (->> body
          (map (fn [{:keys [index]
@@ -226,3 +228,35 @@
                         (:docs.count entry))}))
          (into {})
          walk/keywordize-keys)))
+
+(defmacro for-each-es-version
+  "for each given ES version:
+  - init an ES connection assuming that ES version n listens on port 9200 + n
+  - expose anaphoric `version`, `es-port` and `conn` to use in body
+  - wrap body with a `testing` block with with `msg` formatted with `version`
+  - call `clean` fn if not `nil` before and after body (takes conn as parameter)."
+  {:style/indent 3}
+  [msg versions clean & body]
+  `(let [;; avoid version and the other explicitly bound locals will to be captured
+         clean-fn# ~clean
+         msg# ~msg]
+     (doseq [~'version ~versions]
+       (let [~'es-port (+ 9200 ~'version)
+             ~'conn (es-conn/connect {:host "localhost"
+                                      :port ~'es-port
+                                      :version ~'version})]
+         (try
+           (testing (format "%s (ES version: %s)." msg#  ~'version)
+             (when clean-fn#
+               (clean-fn# ~'conn))
+             ~@body
+             (when clean-fn#
+               (clean-fn# ~'conn)))
+           (finally (es-conn/close ~'conn)))))))
+
+(defn build-mappings
+  [base-mappings entity-type version]
+  (let [p {:properties base-mappings}]
+    (if (= version 5)
+      {entity-type p}
+      p)))
