@@ -76,11 +76,13 @@
             :a [:b]
             :a [:b])))))
 
-(deftest assoc-absent-test
-  (is (= (sut/assoc-absent {})
+(deftest assoc-new-keys-test
+  (is (= (sut/assoc-new-keys {})
          {}))
-  (is (= (sut/assoc-absent {:a 1} :a 2)
+  (is (= (sut/assoc-new-keys {:a 1} :a 2)
          {:a 1}))
-  (is (= (sut/assoc-absent {:b 1} :a 2)
+  (is (= (sut/assoc-new-keys {:b 1} :a 2)
          {:a 2
-          :b 1})))
+          :b 1}))
+  (is (= (sut/assoc-new-keys {} :a 1 :a 2 :a 3 :a 4)
+         {:a 4})))

@@ -33,14 +33,14 @@
                                     CardinalityParams
                                     TopnParams
                                     MetricResult]]
-   [ctia.lib.utils :refer [assoc-absent]]
+   [ctia.lib.utils :refer [assoc-new-keys]]
    [ring.util.http-response :refer [no-content not-found ok]]
    [ring.swagger.schema :refer [describe]]
    [schema.core :as s]
    [schema-tools.core :as st]))
 
 (defn fill-delayed-routes-config-defaults [delayed-routes-config]
-  (assoc-absent
+  (assoc-new-keys
     delayed-routes-config
     :hide-delete? false
     :can-post? true

@@ -174,10 +174,14 @@
           {}
           (partition-all 2 selectors)))
 
-(defn assoc-absent [m & kv]
+(defn assoc-new-keys
+  "Like assoc, except only associates keys that
+  are contained in orig-m. Note: for duplicate keys in kv,
+  last wins."
+  [m & kv]
   (assert (even? (count kv)))
-  (reduce (fn [m [k v]]
-            (cond-> m
+  (reduce (fn [inner-m [k v]]
+            (cond-> inner-m
               (not (contains? m k)) (assoc k v)))
           m
           (partition 2 kv)))
