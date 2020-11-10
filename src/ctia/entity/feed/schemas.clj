@@ -1,7 +1,6 @@
 (ns ctia.entity.feed.schemas
   (:require
    [ctia.encryption :as encryption]
-   [clj-momo.lib.time :as time]
    [ctia.domain
     [access-control :refer [properties-default-tlp]]
     [entities
@@ -88,6 +87,7 @@
     prev-object :- (s/maybe StoredFeed)]
   (delayed/fn :- StoredFeed
    [{{{:keys [get-in-config]} :ConfigService
+      {:keys [now]} :CTIARouteTimeService
       {:keys [encrypt decrypt]} :IEncryption
       :as services}
      :services} :- GraphQLRuntimeContext]
@@ -107,7 +107,7 @@
          feed_view_url_txt
          (encrypt
           (str long-id "/view.txt?s=" plain-secret))
-         now (time/now)]
+         now (now)]
      (merge new-object
             {:id id
              :type "feed"

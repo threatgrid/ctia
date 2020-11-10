@@ -26,6 +26,7 @@
 (defn partial-operations-tests [app incident-id incident]
   (let [fixed-now (t/internal-now)]
     (helpers/fixture-with-fixed-time
+     app
      fixed-now
      (fn []
        (testing "Incident status update: test setup"

@@ -18,10 +18,13 @@
    GraphQLNamedTypeRegistryService
    IEncryption
    ConfigService
-   FeaturesService]
+   FeaturesService
+   CTIARouteTimeService]
   (start [this context] (core/start context
                                     ((:get-in-config ConfigService) [:ctia :http])
-                                    {:ConfigService (-> ConfigService
+                                    {:CTIARouteTimeService (-> CTIARouteTimeService
+                                                               (select-keys [:now]))
+                                     :ConfigService (-> ConfigService
                                                         (select-keys [:get-config
                                                                       :get-in-config]))
                                      :HooksService (-> HooksService 

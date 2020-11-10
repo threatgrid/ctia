@@ -105,7 +105,8 @@
    :valid_time.start_time
    :valid_time.end_time])
 
-(s/defn additional-routes [{{:keys [read-store write-store]} :StoreService
+(s/defn additional-routes [{{:keys [now]} :CTIARouteTimeService
+                            {:keys [read-store write-store]} :StoreService
                             :as                              services} :- APIHandlerServices]
   (routes
    (POST "/expire/:id" []
@@ -127,7 +128,7 @@
                :update-fn #(write-store :asset-mapping
                                         ctia.store/update-record
                                         (:id %)
-                                        (assoc-in % [:valid_time :end_time] (time/internal-now))
+                                        (assoc-in % [:valid_time :end_time] (now))
                                         identity-map
                                         {})
                :long-id-fn #(entities/with-long-id % services)

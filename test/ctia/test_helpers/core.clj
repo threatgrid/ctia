@@ -291,14 +291,12 @@
                       "ctia.auth.static.group" name]
       (f))))
 
-(defn fixture-with-fixed-time [time f]
-  (with-redefs [clj-momo.lib.clj-time.core/now
-                (fn [] time)
-                clj-momo.lib.time/now
-                (fn [] time)
-                clj-momo.lib.clj-time.core/internal-now
-                (fn [] (clj-momo.lib.clj-time.coerce/to-date time))]
-    (f)))
+(defn fixture-with-fixed-time [app time f]
+  (let [{{:keys [fixture-with-time-fn!]} :CTIARouteTimeService}
+        (app/service-graph app)]
+    (fixture-with-time-fn!
+      (constantly time)
+      f)))
 
 (defn set-capabilities!
   [app login groups role caps]

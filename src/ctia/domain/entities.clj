@@ -56,8 +56,9 @@
       groups :- [s/Str]
       prev-object :- (s/maybe StoredModel)]
     (delayed/fn :- StoredModel
-     [{{{:keys [get-in-config]} :ConfigService} :services} :- GraphQLRuntimeContext]
-     (let [now (time/now)]
+     [{{{:keys [get-in-config]} :ConfigService
+        {:keys [now]} :CTIARouteTimeService} :services} :- GraphQLRuntimeContext]
+     (let [now (now)]
        (merge new-object
               {:id id
                :type type-name

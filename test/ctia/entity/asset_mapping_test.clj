@@ -48,6 +48,7 @@
   (testing "Expire 'valid-time' field"
     (let [fixed-now (-> "2020-12-31" tc/from-string tc/to-date)]
       (helpers/fixture-with-fixed-time
+       app
        fixed-now
        (fn []
          (let [response (helpers/POST

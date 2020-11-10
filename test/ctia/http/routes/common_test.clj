@@ -2,91 +2,94 @@
   (:require [ctia.http.routes.common :as sut]
             [clj-momo.lib.clj-time.coerce :as tc]
             [clj-momo.lib.clj-time.core :as t]
-            [clojure.test :refer [is deftest testing]]))
+            [clj-momo.test-helpers.core :as mth]
+            [clojure.test :refer [is deftest testing use-fixtures]]))
+
+(use-fixtures :once mth/fixture-schema-validation)
 
 (deftest coerce-date-range
-  (with-redefs [sut/now (constantly (tc/from-string "2020-12-31"))]
-    (let [from (tc/from-string "2020-04-01")
-          to (tc/from-string "2020-06-01")]
-      (is (= {:gte (tc/from-string "2019-12-31")
-              :lt (sut/now)}
-             (sut/coerce-date-range (tc/from-string "2019-12-30") nil)))
-      (is (= {:gte (tc/from-string "2019-06-01")
-              :lt to}
-             (sut/coerce-date-range (tc/from-string "2019-06-1") to)))
-      (is (= {:gte from
-              :lt (sut/now)}
-             (sut/coerce-date-range from nil)))
-      (is (= {:gte from
-              :lt to}
-             (sut/coerce-date-range from to))))))
+  (let [now (constantly (tc/from-string "2020-12-31"))
+        services {:CTIARouteTimeService {:now now}}
+        from (tc/from-string "2020-04-01")
+        to (tc/from-string "2020-06-01")]
+    (is (= {:gte (tc/from-string "2019-12-31")
+            :lt (now)}
+           (sut/coerce-date-range services (tc/from-string "2019-12-30") nil)))
+    (is (= {:gte (tc/from-string "2019-06-01")
+            :lt to}
+           (sut/coerce-date-range services (tc/from-string "2019-06-1") to)))
+    (is (= {:gte from
+            :lt (now)}
+           (sut/coerce-date-range services from nil)))
+    (is (= {:gte from
+            :lt to}
+           (sut/coerce-date-range services from to)))))
 
 (deftest search-query-test
-  (with-redefs [sut/now (constantly (tc/from-string "2020-12-31"))]
-    (let [from (tc/from-string "2020-04-01")
-          to (tc/from-string "2020-06-01")]
-      (is (= {:query-string "bad-domain"}
-             (sut/search-query :created {:query "bad-domain"})))
-      (is (= {:date-range {:created
-                           {:gte from
-                            :lt to}}}
-             (sut/search-query :created {:from from
-                                         :to to})))
+  (let [from (tc/from-string "2020-04-01")
+        to (tc/from-string "2020-06-01")]
+    (is (= {:query-string "bad-domain"}
+           (sut/search-query :created {:query "bad-domain"})))
+    (is (= {:date-range {:created
+                         {:gte from
+                          :lt to}}}
+           (sut/search-query :created {:from from
+                                       :to to})))
 
+    (is (= {:date-range {:timestamp
+                         {:gte from
+                          :lt to}}}
+           (sut/search-query :timestamp {:from from
+                                         :to to})))
+    (is (= {:date-range {:created
+                         {:lt to}}}
+           (sut/search-query :created {:to to})))
+    (is (= {:date-range {:created
+                         {:gte from}}}
+           (sut/search-query :created {:from from})))
+    (is (= {:filter-map {:title "firefox exploit"
+                         :disposition 2}}
+           (sut/search-query :created {:title "firefox exploit"
+                                       :disposition 2})))
+    (is (= {:query-string "bad-domain"
+            :filter-map {:title "firefox exploit"
+                         :disposition 2}}
+           (sut/search-query :created {:query "bad-domain"
+                                       :disposition 2
+                                       :title "firefox exploit"})))
+    (is (= {:query-string "bad-domain"
+            :filter-map {:title "firefox exploit"
+                         :disposition 2}}
+           (sut/search-query :created {:query "bad-domain"
+                                       :disposition 2
+                                       :title "firefox exploit"
+                                       :fields ["title"]
+                                       :sort_by "disposition"
+                                       :sort_order :desc})))
+    (is (= {:query-string "bad-domain"
+            :date-range {:created
+                         {:gte from
+                          :lt to}}
+            :filter-map {:title "firefox exploit"
+                         :disposition 2}}
+           (sut/search-query :created {:query "bad-domain"
+                                       :from from
+                                       :to to
+                                       :disposition 2
+                                       :title "firefox exploit"
+                                       :fields ["title"]
+                                       :sort_by "disposition"
+                                       :sort_order :desc})))
+    (testing "make-date-range-fn should be properly called"
       (is (= {:date-range {:timestamp
-                           {:gte from
-                            :lt to}}}
-             (sut/search-query :timestamp {:from from
-                                           :to to})))
-      (is (= {:date-range {:created
-                           {:lt to}}}
-             (sut/search-query :created {:to to})))
-      (is (= {:date-range {:created
-                           {:gte from}}}
-             (sut/search-query :created {:from from})))
-      (is (= {:filter-map {:title "firefox exploit"
-                           :disposition 2}}
-             (sut/search-query :created {:title "firefox exploit"
-                                         :disposition 2})))
-      (is (= {:query-string "bad-domain"
-              :filter-map {:title "firefox exploit"
-                           :disposition 2}}
-             (sut/search-query :created {:query "bad-domain"
-                                         :disposition 2
-                                         :title "firefox exploit"})))
-      (is (= {:query-string "bad-domain"
-              :filter-map {:title "firefox exploit"
-                           :disposition 2}}
-             (sut/search-query :created {:query "bad-domain"
-                                         :disposition 2
-                                         :title "firefox exploit"
-                                         :fields ["title"]
-                                         :sort_by "disposition"
-                                         :sort_order :desc})))
-      (is (= {:query-string "bad-domain"
-              :date-range {:created
-                           {:gte from
-                            :lt to}}
-              :filter-map {:title "firefox exploit"
-                           :disposition 2}}
-             (sut/search-query :created {:query "bad-domain"
-                                         :from from
-                                         :to to
-                                         :disposition 2
-                                         :title "firefox exploit"
-                                         :fields ["title"]
-                                         :sort_by "disposition"
-                                         :sort_order :desc})))
-      (testing "make-date-range-fn should be properly called"
-        (is (= {:date-range {:timestamp
-                             {:gte (tc/from-string "2050-01-01")
-                              :lt "2100-01-01"}}}
-                (sut/search-query :timestamp
-                                  {:from from
-                                   :to to}
-                                  (fn [from to]
-                                    {:gte (tc/from-string "2050-01-01")
-                                     :lt "2100-01-01"}))))))))
+                           {:gte (tc/from-string "2050-01-01")
+                            :lt "2100-01-01"}}}
+             (sut/search-query :timestamp
+                               {:from from
+                                :to to}
+                               (fn [from to]
+                                 {:gte (tc/from-string "2050-01-01")
+                                  :lt "2100-01-01"})))))))
 
 (deftest format-agg-result-test
   (let [from (tc/from-string "2019-01-01")

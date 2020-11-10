@@ -69,6 +69,7 @@
        (with-sequential-uuid
          (fn []
            (fixture-with-fixed-time
+            app
             (time/timestamp "2042-01-01")
             (fn []
               (let [app (helpers/get-current-app)
@@ -97,6 +98,7 @@
                     {updated-incident :parsed-body
                      updated-incident-status :status}
                     (fixture-with-fixed-time
+                     app
                      (time/timestamp "2042-01-02")
                      (fn []
                        (PUT app
@@ -417,6 +419,7 @@
        (with-sequential-uuid
          (fn []
            (fixture-with-fixed-time
+            app
             (time/timestamp "2042-01-01")
             (fn []
               (let [initial-incident

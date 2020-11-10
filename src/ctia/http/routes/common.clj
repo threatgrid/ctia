@@ -9,6 +9,8 @@
              [http-response :as http-res]
              [http-status :refer [ok]]]
             [ctia.schemas.search-agg :refer [SearchQuery MetricResult]]
+            [puppetlabs.trapperkeeper.core :refer [defservice]]
+            [puppetlabs.trapperkeeper.services :refer [service-context]]
             [schema.core :as s]))
 
 (def search-options [:sort_by
@@ -82,18 +84,43 @@
   [{:keys [id] :as resource}]
   (http-res/created id resource))
 
-(defn now [] (java.util.Date.))
+(s/defschema CoerceDateRangeServices
+  {:CTIARouteTimeService
+   {:now (s/=> s/Inst)
+    s/Keyword s/Any}
+   s/Keyword s/Any})
 
 (s/defn coerce-date-range :- {:gte s/Inst
                               :lt s/Inst}
   "coerce from to limit interval querying to one year"
-  [from :- s/Inst
+  [{{:keys [now]} :CTIARouteTimeService} :- CoerceDateRangeServices
+   from :- s/Inst
    to :- (s/maybe s/Inst)]
   (let [to-or-now (or to (now))
         to-minus-one-year (t/minus to-or-now (t/years 1))
         from (t/latest from to-minus-one-year)]
     {:gte from
      :lt to-or-now}))
+
+(defn default-now-fn [] (java.util.Date.))
+
+(defprotocol CTIARouteTimeService
+  (now [this])
+  ;; testing only
+  (fixture-with-time-fn! [this time-fn f]))
+
+(defservice ctia-route-time-service
+  CTIARouteTimeService
+  []
+  (init [_ _] {:now-fn-atom (atom default-now-fn)})
+  (fixture-with-time-fn! [this time-fn f]
+    (let [{:keys [now-fn-atom]} (service-context this)
+          [old-time-fn] (swap-vals! now-fn-atom (constantly time-fn))]
+      (f)
+      (reset! now-fn-atom old-time-fn)))
+  (now [this]
+    (let [{:keys [now-fn-atom]} (service-context this)]
+      (@now-fn-atom))))
 
 (s/defn search-query :- SearchQuery
   ([date-field search-params]

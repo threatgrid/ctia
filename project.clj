@@ -194,7 +194,8 @@
   :plugins [[lein-shell "0.5.0"]
             [org.clojure/clojure ~clj-version] ;override perforate
             [perforate ~perforate-version]
-            [reifyhealth/lein-git-down "0.3.5"]]
+            [reifyhealth/lein-git-down "0.3.5"]
+            [lein-eftest "0.5.9"]]
   :repl-options {:welcome (println
                             (clojure.string/join
                               "\n"
@@ -221,6 +222,7 @@
   #_:git-down #_{threatgrid/ctim {:coordinates frenchy64/ctim}
                  threatgrid/clj-momo {:coordinates frenchy64/clj-momo}
                  threatgrid/ring-jwt-middleware {:coordinates frenchy64/ring-jwt-middleware}}
+  :eftest {:fail-fast true}
   :aliases {"dev-test" ["with-profile" "test,dev-test" "test"]
             "kibit" ["with-profile" "prepush" "kibit"]
             "bikeshed" ["with-profile" "prepush" "bikeshed" "-m" "100"]
