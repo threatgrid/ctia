@@ -248,8 +248,10 @@
   (fixture-with-time-fn! [this time-fn f]
     (let [{:keys [now-fn-atom]} (service-context this)
           [old-time-fn] (swap-vals! now-fn-atom (constantly time-fn))]
-      (f)
-      (reset! now-fn-atom old-time-fn))))
+      (try
+        (f)
+        (finally
+          (reset! now-fn-atom old-time-fn))))))
 
 (defservice ctia-time-service
   CTIATimeService
