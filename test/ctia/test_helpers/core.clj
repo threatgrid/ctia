@@ -20,11 +20,14 @@
             [ctia.flows.crud :as crud]
             [ctia.schemas.core :refer [HTTPShowServices Port]]
             [ctim.domain.id :as id]
+            [ctia.http.routes.common :refer [CTIATimeService default-now-fn]]
             [ctim.generators.common :as cgc]
             [flanders
              [spec :as fs]
              [utils :as fu]]
             [puppetlabs.trapperkeeper.app :as app]
+            [puppetlabs.trapperkeeper.core :refer [defservice]]
+            [puppetlabs.trapperkeeper.services :refer [service-context]]
             [schema.core :as s]))
 
 (def ^:dynamic ^:private *current-app*)
@@ -230,6 +233,29 @@
        (get-service-map :ConfigService)
        :get-in-config)))
 
+(defprotocol CTIATestingTimeService
+  (get-now-fn [this])
+  ;; testing only
+  (fixture-with-time-fn! [this time-fn f]))
+
+(defservice ctia-testing-time-service
+  CTIATestingTimeService
+  []
+  (init [_ _] {:now-fn-atom (atom default-now-fn)})
+  (get-now-fn [this]
+    (let [{:keys [now-fn-atom]} (service-context this)]
+      @now-fn-atom))
+  (fixture-with-time-fn! [this time-fn f]
+    (let [{:keys [now-fn-atom]} (service-context this)
+          [old-time-fn] (swap-vals! now-fn-atom (constantly time-fn))]
+      (f)
+      (reset! now-fn-atom old-time-fn))))
+
+(defservice ctia-time-service
+  CTIATimeService
+  [[:CTIATestingTimeService get-now-fn]]
+  (now [_] ((get-now-fn))))
+
 (s/defn fixture-ctia-with-app
   ([t-with-app :- (s/=> s/Any
                         (s/=> s/Any
@@ -247,6 +273,8 @@
                        "ctia.http.show.port" http-port]
        (let [config (build-transformed-init-config)
              services-map (cond-> (init/default-services-map config)
+                            true (assoc :CTIATimeService ctia-time-service
+                                        :CTIATestingTimeService ctia-testing-time-service)
                             (#{:threatgrid} (get-in config [:ctia :auth :type]))
                             ;; dynamic requires can be removed when #'with-properties is phased out or moved
                             (assoc
@@ -292,8 +320,7 @@
       (f))))
 
 (defn fixture-with-fixed-time [app time f]
-  (let [{{:keys [fixture-with-time-fn!]} :CTIATimeService}
-        (app/service-graph app)]
+  (let [{{:keys [fixture-with-time-fn!]} :CTIATestingTimeService} (app/service-graph app)]
     (fixture-with-time-fn!
       (constantly time)
       f)))

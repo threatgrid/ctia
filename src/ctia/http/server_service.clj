@@ -23,7 +23,7 @@
   (start [this context] (core/start context
                                     ((:get-in-config ConfigService) [:ctia :http])
                                     {:CTIATimeService (-> CTIATimeService
-                                                               (select-keys [:now]))
+                                                          (select-keys [:now]))
                                      :ConfigService (-> ConfigService
                                                         (select-keys [:get-config
                                                                       :get-in-config]))

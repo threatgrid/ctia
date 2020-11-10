@@ -10,7 +10,6 @@
              [http-status :refer [ok]]]
             [ctia.schemas.search-agg :refer [SearchQuery MetricResult]]
             [puppetlabs.trapperkeeper.core :refer [defservice]]
-            [puppetlabs.trapperkeeper.services :refer [service-context]]
             [schema.core :as s]))
 
 (def search-options [:sort_by
@@ -105,22 +104,13 @@
 (defn default-now-fn [] (java.util.Date.))
 
 (defprotocol CTIATimeService
-  (now [this])
-  ;; testing only
-  (fixture-with-time-fn! [this time-fn f]))
+  (now [this]))
 
-(defservice ctia-route-time-service
+;; TODO unit test me
+(defservice ctia-time-service
   CTIATimeService
   []
-  (init [_ _] {:now-fn-atom (atom default-now-fn)})
-  (fixture-with-time-fn! [this time-fn f]
-    (let [{:keys [now-fn-atom]} (service-context this)
-          [old-time-fn] (swap-vals! now-fn-atom (constantly time-fn))]
-      (f)
-      (reset! now-fn-atom old-time-fn)))
-  (now [this]
-    (let [{:keys [now-fn-atom]} (service-context this)]
-      (@now-fn-atom))))
+  (now [this] (default-now-fn)))
 
 (s/defn search-query :- SearchQuery
   ([date-field search-params]

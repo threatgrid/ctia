@@ -23,7 +23,7 @@
    [ctia.graphql-named-type-registry-service :as graphql-registry-svc]
    [ctia.flows.hooks-service :as hooks-svc]
    [ctia.http.server-service :as http-server-svc]
-   [ctia.http.routes.common :refer [ctia-route-time-service]]
+   [ctia.http.routes.common :refer [ctia-time-service]]
    [puppetlabs.trapperkeeper.app :as app]
    [puppetlabs.trapperkeeper.core :as tk]
    [schema.core :as s]))
@@ -74,7 +74,7 @@
       encryption-svc
       {:EventsService events-svc/events-service
        :StoreService store-svc/store-service
-       :CTIATimeService ctia-route-time-service
+       :CTIATimeService ctia-time-service
        :CTIAHTTPServerService http-server-svc/ctia-http-server-service
        :HooksService hooks-svc/hooks-service
        :GraphQLNamedTypeRegistryService graphql-registry-svc/graphql-named-type-registry-service
