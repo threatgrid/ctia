@@ -178,6 +178,6 @@
   (assert (even? (count kv)))
   (reduce (fn [m [k v]]
             (cond-> m
-              (contains? m k) (assoc k v)))
+              (not (contains? m k)) (assoc k v)))
           m
           (partition 2 kv)))
