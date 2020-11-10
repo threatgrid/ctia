@@ -66,8 +66,8 @@
     (req->auth-identity req)))
 
 (defn capabilities! [req capabilities]
-  (require-capability! (req->auth-identity req)
-                       capabilities))
+  (require-capability! capabilities
+                       (req->auth-identity req)))
 
 ;; Create a compojure-api meta-data handler for capability-based
 ;; security. The :identity field must by on the request object
