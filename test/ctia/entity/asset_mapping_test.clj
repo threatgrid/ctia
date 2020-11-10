@@ -52,9 +52,9 @@
        (fn []
          (let [response (helpers/POST
                          app
-                         (str "ctia/asset-mapping/expire/" short-id)
+                         (format "ctia/asset-mapping/%s/expire" short-id)
                          :headers {"Authorization" "45c1f5e3f05d0"})]
-           (is (= 200 (:status response)) "POST asset-mapping/expire succeeds")
+           (is (= 200 (:status response)) "POST asset-mapping/:id/expire succeeds")
            (is (= fixed-now (-> response :parsed-body :valid_time :end_time))
                ":valid_time properly reset")))))))
 

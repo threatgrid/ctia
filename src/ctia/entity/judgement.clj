@@ -1,14 +1,24 @@
 (ns ctia.entity.judgement
-  (:require [ctia.entity.feedback.graphql-schemas :as feedback]
+  (:require [clj-momo.lib.clj-time.core :as time]
+            [compojure.api.core :refer [context POST routes]]
+            [compojure.api.resource :refer [resource]]
+            [ctia.domain.entities :refer [un-store with-long-id]]
+            [ctia.entity.feedback.graphql-schemas :as feedback]
             [ctia.entity.judgement
              [es-store :as j-store]
              [schemas :as js]]
             [ctia.entity.relationship.graphql-schemas :as relationship]
+            [ctia.flows.crud :as flows]
+            ;; do not delete, defmethod side effects
+            [ctia.http.middleware.auth]
             [ctia.http.routes
              [common :refer [BaseEntityFilterParams
                              PagingParams
                              SourcableEntityFilterParams]]
-             [crud :refer [entity-crud-routes]]]
+             [crud :refer [fill-delayed-routes-config-defaults 
+                           revocation-routes*
+                           services->entity-crud-routes]]]
+            [ctia.schemas.core :refer [APIHandlerServices Entity]]
             [ctia.schemas.graphql
              [flanders :as f]
              [helpers :as g]
@@ -17,6 +27,8 @@
              [sorting :as graphql-sorting]]
             [ctim.schemas.judgement :as judgement]
             [flanders.utils :as fu]
+            [ring.swagger.schema :refer [describe]]
+            [ring.util.http-response :refer [not-found ok]]
             [schema-tools.core :as st]
             [schema.core :as s]
             [ctia.schemas.graphql.ownership :as go]))
@@ -73,29 +85,49 @@
    JudgementsQueryParams
    JudgementFieldsParam))
 
-(def judgement-routes
-  (entity-crud-routes
-   {:entity :judgement
-    :new-schema js/NewJudgement
-    :entity-schema js/Judgement
-    :get-schema js/PartialJudgement
-    :get-params JudgementGetParams
-    :list-schema js/PartialJudgementList
-    :search-schema js/PartialJudgementList
-    :external-id-q-params JudgementsByExternalIdQueryParams
-    :search-q-params JudgementSearchParams
-    :new-spec :new-judgement/map
-    :realize-fn js/realize-judgement
-    :get-capabilities :read-judgement
-    :post-capabilities :create-judgement
-    :put-capabilities #{:create-judgement :developer}
-    :delete-capabilities :delete-judgement
-    :search-capabilities :search-judgement
-    :external-id-capabilities :read-judgement
-    :can-update? true
-    :can-aggregate? true
-    :histogram-fields js/judgement-histogram-fields
-    :enumerable-fields js/judgement-enumerable-fields}))
+;; must be a macro to pass hygienic forms to :extra-query-params-syntax.
+;; otherwise, eg., `describe` could be captured by some internal binding of revocation-routes*.
+(defmacro judgement-revocation-routes
+  [services ;:- APIHandlerServices
+   delayed-routes-config]
+  `(revocation-routes*
+     ~services
+     (fill-delayed-routes-config-defaults
+       ~delayed-routes-config)
+     :extra-query-params-syntax [~'reason :- (describe s/Str "Message to append to the Judgement's reason value")]))
+
+(s/defn judgement-routes [services :- APIHandlerServices]
+  (let [delayed-routes-config {:entity :judgement
+                               :new-schema js/NewJudgement
+                               :entity-schema js/Judgement
+                               :get-schema js/PartialJudgement
+                               :get-params JudgementGetParams
+                               :list-schema js/PartialJudgementList
+                               :search-schema js/PartialJudgementList
+                               :external-id-q-params JudgementsByExternalIdQueryParams
+                               :search-q-params JudgementSearchParams
+                               :new-spec :new-judgement/map
+                               :realize-fn js/realize-judgement
+                               :get-capabilities :read-judgement
+                               :post-capabilities :create-judgement
+                               :put-capabilities #{:create-judgement :developer}
+                               :delete-capabilities :delete-judgement
+                               :search-capabilities :search-judgement
+                               :external-id-capabilities :read-judgement
+                               :can-update? true
+                               :can-aggregate? true
+                               :histogram-fields js/judgement-histogram-fields
+                               :revocation-update-fn (fn [entity {{{:keys [reason]} :query-params} :req}]
+                                                       (-> entity
+                                                           (update :reason str " " reason)))
+                               :enumerable-fields js/judgement-enumerable-fields}]
+    (routes
+      (judgement-revocation-routes
+        services
+        delayed-routes-config)
+      (services->entity-crud-routes
+        services
+        delayed-routes-config))))
 
 (def capabilities
   #{:create-judgement
@@ -130,7 +162,7 @@
 (def JudgementConnectionType
   (pagination/new-connection JudgementType))
 
-(def judgement-entity
+(s/def judgement-entity :- Entity
   {:route-context "/judgement"
    :tags ["Judgement"]
    :entity :judgement

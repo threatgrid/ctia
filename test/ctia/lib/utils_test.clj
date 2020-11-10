@@ -75,3 +75,12 @@
             {:a {:b 1}}
             :a [:b]
             :a [:b])))))
+
+(deftest assoc-absent-test
+  (is (= (sut/assoc-absent {})
+         {}))
+  (is (= (sut/assoc-absent {:a 1} :a 2)
+         {:a 1}))
+  (is (= (sut/assoc-absent {:b 1} :a 2)
+         {:a 2
+          :b 1})))

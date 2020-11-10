@@ -1,8 +1,10 @@
 (ns ctia.http.routes.crud
   (:require
+   [clj-momo.lib.clj-time.core :as time]
    [clojure.string :refer [capitalize]]
-   [ctia.http.middleware.auth]
-   [compojure.api.sweet :refer [context DELETE GET POST PUT PATCH routes]]
+   ;; do not delete, defmethod side effects
+   [ctia.http.middleware.auth :as auth]
+   [compojure.api.core :refer [context DELETE GET POST PUT PATCH routes]]
    [ctia.domain.entities
     :refer
     [page-with-long-id
@@ -18,7 +20,7 @@
                                     search-query
                                     coerce-date-range
                                     format-agg-result]]
-   [ctia.schemas.core :refer [APIHandlerServices DelayedRoutes]]
+   [ctia.schemas.core :refer [APIHandlerServices DelayedRoutes Entity]]
    [ctia.store :refer [query-string-search
                        query-string-count
                        aggregate
@@ -31,55 +33,150 @@
                                     CardinalityParams
                                     TopnParams
                                     MetricResult]]
+   [ctia.lib.utils :refer [assoc-absent]]
    [ring.util.http-response :refer [no-content not-found ok]]
    [ring.swagger.schema :refer [describe]]
    [schema.core :as s]
    [schema-tools.core :as st]))
 
-(s/defn entity-crud-routes
-  :- DelayedRoutes
-  [{:keys [entity
-           new-schema
-           entity-schema
-           get-schema
-           get-params
-           list-schema
-           search-schema
-           patch-schema
-           external-id-q-params
-           search-q-params
+(defn fill-delayed-routes-config-defaults [delayed-routes-config]
+  (assoc-absent
+    delayed-routes-config
+    :hide-delete? false
+    :can-post? true
+    :can-update? true
+    :can-patch? false
+    :can-search? true
+    :can-aggregate? false
+    :can-get-by-external-id? true
+    :date-field :created
+    :histogram-fields [:created]))
+
+(s/defn capitalize-entity [entity :- (s/pred simple-keyword?)]
+  (-> entity name capitalize))
+
+(s/defn revoke-request
+  "Implementation details of revocation-routes* that can
+  be implemented with a function (rather than requiring a macro).
+  
+  Would be private, except it's used by a macro."
+  [{{:keys [id]} :path-params
+    {:keys [wait_for]} :query-params :as req}
+   {{:keys [read-store
+            write-store]} :StoreService
+    :as services} :- APIHandlerServices
+   {:keys [entity
            new-spec
-           realize-fn
-           get-capabilities
            post-capabilities
-           put-capabilities
-           patch-capabilities
-           delete-capabilities
-           search-capabilities
-           external-id-capabilities
-           hide-delete?
-           can-post?
-           can-update?
-           can-patch?
-           can-search?
-           can-aggregate?
-           can-get-by-external-id?
-           date-field
-           histogram-fields
-           enumerable-fields]
-    :or {hide-delete? false
-         can-post? true
-         can-update? true
-         can-patch? false
-         can-search? true
-         can-aggregate? false
-         can-get-by-external-id? true
-         date-field :created
-         histogram-fields [:created]}}]
+           realize-fn
+           revocation-update-fn]
+    :as _delayed-routes-config}]
+  {:pre [post-capabilities]}
+  (let [_ (auth/capabilities! req post-capabilities)
+        identity (auth/req->auth-identity req)
+        identity-map (auth/req->identity-map req)]
+    ;; almost identical to the PATCH route returned by entity-crud-routes
+    ;; except for :update-fn and :partial-entity
+    (if-let [updated-rec
+             (-> (flows/patch-flow
+                   :services services
+                   :get-fn #(read-store entity
+                                        read-record
+                                        %
+                                        identity-map
+                                        {})
+                   :realize-fn realize-fn
+                   :update-fn #(write-store entity
+                                            update-record
+                                            (:id %)
+                                            (cond-> %
+                                              true (assoc-in [:valid_time :end_time] (time/internal-now))
+                                              revocation-update-fn (revocation-update-fn {:req req}))
+                                            identity-map
+                                            (wait_for->refresh wait_for))
+                   :long-id-fn #(with-long-id % services)
+                   :entity-type entity
+                   :entity-id id
+                   :identity identity
+                   :patch-operation :replace
+                   :partial-entity {}
+                   :spec new-spec)
+                 un-store)]
+      (ok updated-rec)
+      (not-found (str (capitalize-entity entity) " not found")))))
+
+(defmacro revocation-routes*
+  "A lower level version of revocation-routes that
+  allows configurable :query-params.
+
+  :extra-query-params-syntax is assumed hygienic, so
+  must be created by another macro.
+  
+  Assumes delayed-routes-config defaults have been filled
+  by fill-delayed-routes-config-defaults."
+  [services ;:- APIHandlerServices
+   delayed-routes-config
+   & {:keys [extra-query-params-syntax]}]
+  `(let [services# ~services
+         {entity# :entity
+          entity-schema# :entity-schema
+          :as delayed-routes-config#} ~delayed-routes-config]
+     (POST "/:id/expire" [req#]
+           :summary (format "Expires the supplied %s" (capitalize-entity entity#))
+           :path-params [~'id :- s/Str]
+           :query-params [~@extra-query-params-syntax
+                          {~'wait_for :- (describe s/Bool "wait for entity to be available for search") nil}]
+           :return entity-schema#
+           (revoke-request req# services# delayed-routes-config#))))
+
+(s/defn revocation-routes
+  "Returns POST /:id/expire routes for the given entity
+
+  Assumes delayed-routes-config defaults have been filled
+  by fill-delayed-routes-config-defaults."
+  [services :- APIHandlerServices
+   delayed-routes-config]
+  (revocation-routes* services
+                      delayed-routes-config))
+
+(s/defn entity-crud-routes
+ :- DelayedRoutes
+ [delayed-routes-config-no-defaults]
  (s/fn [{{:keys [write-store read-store]} :StoreService
          :as services} :- APIHandlerServices]
-  (let [entity-str (name entity)
-        capitalized (capitalize entity-str)
+  (let [{:keys [entity
+                can-revoke?
+                new-schema
+                entity-schema
+                get-schema
+                get-params
+                list-schema
+                search-schema
+                patch-schema
+                external-id-q-params
+                search-q-params
+                new-spec
+                realize-fn
+                get-capabilities
+                post-capabilities
+                put-capabilities
+                patch-capabilities
+                delete-capabilities
+                search-capabilities
+                external-id-capabilities
+                hide-delete?
+                can-post?
+                can-update?
+                can-patch?
+                can-search?
+                can-aggregate?
+                can-get-by-external-id?
+                date-field
+                histogram-fields
+                enumerable-fields]
+         :as delayed-routes-config} (fill-delayed-routes-config-defaults
+                                     delayed-routes-config-no-defaults)
+        capitalized (capitalize-entity entity)
         search-filters (st/dissoc search-q-params
                                   :sort_by
                                   :sort_order
@@ -197,6 +294,10 @@
                            un-store)]
                 (ok updated-rec)
                 (not-found))))
+     (when can-revoke?
+       (revocation-routes
+         services
+         delayed-routes-config))
      (when can-get-by-external-id?
        (GET "/external_id/:external_id" []
             :return list-schema
