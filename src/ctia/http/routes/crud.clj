@@ -58,52 +58,49 @@
 (s/defn revoke-request
   "Implementation details of revocation-routes* that can
   be implemented with a function (rather than requiring a macro).
-  
+
   Would be private, except it's used by a macro."
-  [{{:keys [id]} :path-params
-    {:keys [wait_for]} :query-params :as req}
+  [{{:keys [wait_for]} :query-params :as req}
    {{:keys [read-store
             write-store]} :StoreService
     :as services} :- APIHandlerServices
    {:keys [entity
            new-spec
-           post-capabilities
            realize-fn
            revocation-update-fn]
-    :as _delayed-routes-config}]
-  {:pre [post-capabilities]}
-  (let [_ (auth/capabilities! req post-capabilities)
-        identity (auth/req->auth-identity req)
-        identity-map (auth/req->identity-map req)]
-    ;; almost identical to the PATCH route returned by entity-crud-routes
-    ;; except for :update-fn and :partial-entity
-    (if-let [updated-rec
-             (-> (flows/patch-flow
-                   :services services
-                   :get-fn #(read-store entity
-                                        read-record
-                                        %
-                                        identity-map
-                                        {})
-                   :realize-fn realize-fn
-                   :update-fn #(write-store entity
-                                            update-record
-                                            (:id %)
-                                            (cond-> %
-                                              true (assoc-in [:valid_time :end_time] (time/internal-now))
-                                              revocation-update-fn (revocation-update-fn {:req req}))
-                                            identity-map
-                                            (wait_for->refresh wait_for))
-                   :long-id-fn #(with-long-id % services)
-                   :entity-type entity
-                   :entity-id id
-                   :identity identity
-                   :patch-operation :replace
-                   :partial-entity {}
-                   :spec new-spec)
-                 un-store)]
-      (ok updated-rec)
-      (not-found (str (capitalize-entity entity) " not found")))))
+    :as _delayed-routes-config}
+   {:keys [identity
+           identity-map
+           id]}]
+  ;; almost identical to the PATCH route returned by entity-crud-routes
+  ;; except for :update-fn and :partial-entity
+  (if-let [updated-rec
+           (flows/patch-flow
+            :services services
+            :get-fn (fn [_]
+                      (read-store entity
+                                  read-record
+                                  id
+                                  identity-map
+                                  {}))
+            :realize-fn realize-fn
+            :update-fn #(write-store entity
+                                     update-record
+                                     (:id %)
+                                     (cond-> %
+                                       true (assoc-in [:valid_time :end_time] (time/internal-now))
+                                       revocation-update-fn (revocation-update-fn {:req req}))
+                                     identity-map
+                                     (wait_for->refresh wait_for))
+            :long-id-fn #(with-long-id % services)
+            :entity-type entity
+            :entity-id id
+            :identity identity
+            :patch-operation :replace
+            :partial-entity {}
+            :spec new-spec)]
+    (ok (un-store updated-rec))
+    (not-found (str (capitalize-entity entity) " not found"))))
 
 (defmacro revocation-routes*
   "A lower level version of revocation-routes that
@@ -111,7 +108,7 @@
 
   :extra-query-params-syntax is assumed hygienic, so
   must be created by another macro.
-  
+
   Assumes delayed-routes-config defaults have been filled
   by fill-delayed-routes-config-defaults."
   [services ;:- APIHandlerServices
@@ -120,6 +117,7 @@
   `(let [services# ~services
          {entity# :entity
           entity-schema# :entity-schema
+          post-capabilities# :post-capabilities
           :as delayed-routes-config#} ~delayed-routes-config]
      (POST "/:id/expire" [req#]
            :summary (format "Expires the supplied %s" (capitalize-entity entity#))
@@ -127,7 +125,13 @@
            :query-params [~@extra-query-params-syntax
                           {~'wait_for :- (describe s/Bool "wait for entity to be available for search") nil}]
            :return entity-schema#
-           (revoke-request req# services# delayed-routes-config#))))
+           :capabilities post-capabilities#
+           :auth-identity identity#
+           :identity-map identity-map#
+       (revoke-request req# services# delayed-routes-config#
+                       {:id ~'id
+                        :identity identity#
+                        :identity-map identity-map#}))))
 
 (s/defn revocation-routes
   "Returns POST /:id/expire routes for the given entity
@@ -443,11 +447,11 @@
                   :identity identity)
                (no-content)
                (not-found)))
-#_
+
      (when can-revoke?
        (revocation-routes
-         services
-         delayed-routes-config))))))
+        services
+        delayed-routes-config))))))
 
 (s/defn services->entity-crud-routes
   [services :- APIHandlerServices
