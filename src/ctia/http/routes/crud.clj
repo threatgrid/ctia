@@ -443,6 +443,7 @@
                   :identity identity)
                (no-content)
                (not-found)))
+#_
      (when can-revoke?
        (revocation-routes
          services
