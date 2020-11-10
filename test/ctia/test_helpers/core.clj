@@ -292,7 +292,7 @@
       (f))))
 
 (defn fixture-with-fixed-time [app time f]
-  (let [{{:keys [fixture-with-time-fn!]} :CTIARouteTimeService}
+  (let [{{:keys [fixture-with-time-fn!]} :CTIATimeService}
         (app/service-graph app)]
     (fixture-with-time-fn!
       (constantly time)

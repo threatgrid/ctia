@@ -105,7 +105,7 @@
    :valid_time.start_time
    :valid_time.end_time])
 
-(s/defn additional-routes [{{:keys [now]} :CTIARouteTimeService
+(s/defn additional-routes [{{:keys [now]} :CTIATimeService
                             {:keys [read-store write-store]} :StoreService
                             :as                              services} :- APIHandlerServices]
   (routes

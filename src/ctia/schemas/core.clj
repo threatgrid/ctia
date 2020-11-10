@@ -23,7 +23,7 @@
                    :get-in-config (s/=>* s/Any
                                          [[s/Any]]
                                          [[s/Any] s/Any])}
-   :CTIARouteTimeService {:now (s/=> s/Inst)}
+   :CTIATimeService {:now (s/=> s/Inst)}
    :CTIAHTTPServerService {:get-port (s/=> Port)
                            :get-graphql (s/=> graphql.GraphQL)}
    :HooksService {:apply-hooks (s/pred ifn?) ;;keyword varargs
@@ -66,7 +66,7 @@
   {:ConfigService {:get-in-config (s/=>* s/Any
                                          [[s/Any]]
                                          [[s/Any] s/Any])}
-   :CTIARouteTimeService {:now (s/=> s/Inst)}
+   :CTIATimeService {:now (s/=> s/Inst)}
    :CTIAHTTPServerService {:get-port (s/=> Port)}
    :StoreService {:read-store (s/pred ifn?)} ;;varags
    :GraphQLNamedTypeRegistryService
@@ -84,7 +84,7 @@
     services
     :ConfigService [:get-in-config]
     :CTIAHTTPServerService [:get-port]
-    :CTIARouteTimeService [:now]
+    :CTIATimeService [:now]
     :StoreService [:read-store]
     :GraphQLNamedTypeRegistryService [:get-or-update-named-type-registry]
     :IEncryption [:decrypt :encrypt]))

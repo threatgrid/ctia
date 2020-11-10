@@ -57,7 +57,7 @@
       prev-object :- (s/maybe StoredModel)]
     (delayed/fn :- StoredModel
      [{{{:keys [get-in-config]} :ConfigService
-        {:keys [now]} :CTIARouteTimeService} :services} :- GraphQLRuntimeContext]
+        {:keys [now]} :CTIATimeService} :services} :- GraphQLRuntimeContext]
      (let [now (now)]
        (merge new-object
               {:id id

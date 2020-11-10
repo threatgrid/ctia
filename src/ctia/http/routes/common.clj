@@ -85,7 +85,7 @@
   (http-res/created id resource))
 
 (s/defschema CoerceDateRangeServices
-  {:CTIARouteTimeService
+  {:CTIATimeService
    {:now (s/=> s/Inst)
     s/Keyword s/Any}
    s/Keyword s/Any})
@@ -93,7 +93,7 @@
 (s/defn coerce-date-range :- {:gte s/Inst
                               :lt s/Inst}
   "coerce from to limit interval querying to one year"
-  [{{:keys [now]} :CTIARouteTimeService} :- CoerceDateRangeServices
+  [{{:keys [now]} :CTIATimeService} :- CoerceDateRangeServices
    from :- s/Inst
    to :- (s/maybe s/Inst)]
   (let [to-or-now (or to (now))
@@ -104,13 +104,13 @@
 
 (defn default-now-fn [] (java.util.Date.))
 
-(defprotocol CTIARouteTimeService
+(defprotocol CTIATimeService
   (now [this])
   ;; testing only
   (fixture-with-time-fn! [this time-fn f]))
 
 (defservice ctia-route-time-service
-  CTIARouteTimeService
+  CTIATimeService
   []
   (init [_ _] {:now-fn-atom (atom default-now-fn)})
   (fixture-with-time-fn! [this time-fn f]

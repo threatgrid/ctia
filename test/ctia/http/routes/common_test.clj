@@ -9,7 +9,7 @@
 
 (deftest coerce-date-range
   (let [now (constantly (tc/from-string "2020-12-31"))
-        services {:CTIARouteTimeService {:now now}}
+        services {:CTIATimeService {:now now}}
         from (tc/from-string "2020-04-01")
         to (tc/from-string "2020-06-01")]
     (is (= {:gte (tc/from-string "2019-12-31")

@@ -74,7 +74,7 @@
       encryption-svc
       {:EventsService events-svc/events-service
        :StoreService store-svc/store-service
-       :CTIARouteTimeService ctia-route-time-service
+       :CTIATimeService ctia-route-time-service
        :CTIAHTTPServerService http-server-svc/ctia-http-server-service
        :HooksService hooks-svc/hooks-service
        :GraphQLNamedTypeRegistryService graphql-registry-svc/graphql-named-type-registry-service

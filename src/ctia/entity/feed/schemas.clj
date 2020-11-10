@@ -87,7 +87,7 @@
     prev-object :- (s/maybe StoredFeed)]
   (delayed/fn :- StoredFeed
    [{{{:keys [get-in-config]} :ConfigService
-      {:keys [now]} :CTIARouteTimeService
+      {:keys [now]} :CTIATimeService
       {:keys [encrypt decrypt]} :IEncryption
       :as services}
      :services} :- GraphQLRuntimeContext]

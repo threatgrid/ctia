@@ -19,10 +19,10 @@
    IEncryption
    ConfigService
    FeaturesService
-   CTIARouteTimeService]
+   CTIATimeService]
   (start [this context] (core/start context
                                     ((:get-in-config ConfigService) [:ctia :http])
-                                    {:CTIARouteTimeService (-> CTIARouteTimeService
+                                    {:CTIATimeService (-> CTIATimeService
                                                                (select-keys [:now]))
                                      :ConfigService (-> ConfigService
                                                         (select-keys [:get-config
