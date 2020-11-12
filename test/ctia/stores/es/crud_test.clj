@@ -87,7 +87,7 @@
 (def create-fn (sut/handle-create :sighting s/Any))
 (def update-fn (sut/handle-update :sighting s/Any))
 (def read-fn (sut/handle-read s/Any))
-(def delete-fn (sut/handle-delete :sighting))
+(def delete-fn (sut/handle-delete :sighting s/Any))
 (def search-fn (sut/handle-query-string-search s/Any))
 (def count-fn sut/handle-query-string-count)
 (def aggregate-fn sut/handle-aggregate)
@@ -100,18 +100,16 @@
 (def props-aliased {:entity :sighting
                     :indexname "ctia_sighting"
                     :host "localhost"
-                    :port 9205
+                    :port 9200
                     :aliased true
                     :rollover {:max_docs 3}
-                    :refresh "true"
-                    :version 5})
+                    :refresh "true"})
 
 (def props-not-aliased {:entity :sighting
                         :indexname "ctia_sighting"
                         :host "localhost"
-                        :port 9205
-                        :refresh "true"
-                        :version 5})
+                        :port 9200
+                        :refresh "true"})
 
 (deftest crud-aliased-test
   (let [app (helpers/get-current-app)

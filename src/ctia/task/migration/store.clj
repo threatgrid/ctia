@@ -1,6 +1,8 @@
 (ns ctia.task.migration.store
   (:require [clj-momo.lib.clj-time.coerce :as time-coerce]
             [clj-momo.lib.clj-time.core :as time]
+            [clj-momo.lib.es.document :as es-doc]
+            [clj-momo.lib.es.index :as es-index]
             [clojure.set :as set]
             [clojure.string :as string]
             [clojure.tools.logging :as log]
@@ -16,11 +18,10 @@
             [ctia.task.migration.migrations :refer [available-migrations]]
             [ctia.task.rollover :refer [rollover-store]]
             [ctim.domain.id :refer [long-id->id]]
-            [ductile
-             [conn :as conn]
-             [document :as ductile.doc]
-             [index :as ductile.index]
-             [query :as ductile.query]]
+            [ductile.conn :as conn]
+            [ductile.document :as ductile.doc]
+            ductile.index
+            ductile.query
             [ductile.schemas :refer [ESConn ESQuery Refresh]]
             [schema-tools.core :as st]
             [schema.core :as s]))
@@ -40,8 +41,7 @@
                 :max_age s/Str})
     :aliased  s/Bool
     :default_operator (s/enum "OR" "AND")
-    :timeout s/Num
-    :version s/Num}))
+    :timeout s/Num}))
 
 (s/defschema MigrationParams
   {:migration-id s/Str
@@ -190,12 +190,12 @@
   (let [prepared (wo-storemaps migration)
         {:keys [indexname entity]} (migration-store-properties services)]
     (retry es-max-retry
-           ductile.doc/index-doc
+           es-doc/index-doc
            conn
            indexname
            (name entity)
            prepared
-           {:refresh "true"}))
+           "true"))
   migration)
 
 (def conn-overrides {:cm (conn/make-connection-manager {:timeout timeout})})
@@ -222,8 +222,7 @@
   (when (seq ids)
     (-> (store-map->es-conn-state store-map services)
         (crud/get-docs-with-indices ids {})
-        (->> (map #(assoc % :_type (name mapping))) ;; TODO remove after ES7 migration
-             (map (fn [{:keys [_id] :as hit}]
+        (->> (map (fn [{:keys [_id] :as hit}]
                     {_id (select-keys hit [:_id :_index :_type])}))
              (into {})))))
 
@@ -245,7 +244,6 @@
   and uses them to set :_index meta for these documents"
   [{:keys [mapping]
     {:keys [aliased write-index]} :props
-    {:keys [version]} :conn
     :as store-map}
    docs
    services :- MigrationStoreServices]
@@ -272,10 +270,9 @@
               mapping
               (count batch))
   (retry es-max-retry
-         ductile.doc/bulk-create-doc
-         conn
+         es-doc/bulk-create-doc conn
          (prepare-docs store-map batch services)
-         {:refresh "false"}
+         "false"
          bulk-max-size))
 
 (s/defn rollover?
@@ -534,7 +531,7 @@ Rollover requires refresh so we cannot just call ES with condition since refresh
     (log/infof "%s - creating index template: %s" entity-type indexname)
     (purge-store entity-type conn indexname)
     (log/infof "%s - creating store: %s" entity-type indexname)
-    (retry es-max-retry ductile.index/create-template! conn indexname index-config)
+    (retry es-max-retry es-index/create-template! conn indexname index-config)
     (retry es-max-retry ductile.index/create! conn (format "<%s-{now/d}-000001>" indexname) index-config)))
 
 (s/defn init-storemap :- StoreMap
@@ -542,7 +539,7 @@ Rollover requires refresh so we cannot just call ES with condition since refresh
    services :- MigrationStoreServices]
   (-> props
       (es.init/init-store-conn (MigrationStoreServices->ESConnServices
-                                services))
+                                 services))
       (es-store/store-state->map conn-overrides)))
 
 (s/defn get-target-store
@@ -640,7 +637,7 @@ when confirm? is true, it stores this state and creates the target indices."
    services :- MigrationStoreServices]
   (let [{:keys [indexname entity]} (migration-store-properties services)
         {:keys [prefix] :as migration-raw} (retry es-max-retry
-                                                  ductile.doc/get-doc
+                                                  es-doc/get-doc
                                                   es-conn
                                                   indexname
                                                   (name entity)
@@ -672,13 +669,13 @@ when confirm? is true, it stores this state and creates the target indices."
    (let [partial-doc {:stores {store-key migrated-doc}}
          {:keys [indexname entity]} (migration-store-properties services)]
      (retry es-max-retry
-            ductile.doc/update-doc
+            es-doc/update-doc
             es-conn
             indexname
             (name entity)
             migration-id
             partial-doc
-            {:refresh "true"}))))
+            "true"))))
 
 (s/defn finalize-migration! :- s/Any
   "reverts optimization settings of target index with configured settings.

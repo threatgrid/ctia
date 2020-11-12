@@ -31,7 +31,7 @@ env:
       # across org
       - CTIA_NSPLITS=5
       # test future clojure releases
-      - CLOJURE_NEXT=1.10.2-alpha1
+      - CLOJURE_NEXT=1.10.2-alpha4
 
 # Cache our Maven deps to be kind to clojars, github, docker images
 cache:
@@ -152,8 +152,7 @@ install:
 before_script:
     - $COMPOSE_BIN -f containers/dev/docker-compose.yml up -d> $COMPOSE_LOG
     # Wait ES
-    - until curl http://127.0.0.1:9205/; do sleep 1; done
-    - until curl http://127.0.0.1:9207/; do sleep 1; done
+    - until curl http://127.0.0.1:9200/; do sleep 1; done
     # Wait Kafka
     - until echo dump | nc 127.0.0.1 2181 | grep brokers; do sleep 1; done
 

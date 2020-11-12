@@ -1,5 +1,6 @@
 (ns ctia.task.migration.migrate-es-stores-test
   (:require [clj-momo.lib.clj-time.coerce :as time-coerce]
+            [clj-momo.lib.es.document :as es-doc]
             [clj-momo.test-helpers.core :as mth]
             [clojure.data :refer [diff]]
             [clojure.java.io :as io]
@@ -205,7 +206,7 @@
     (let [{:keys [get-in-config]} (helpers/get-service-map app :ConfigService)
           {:keys [all-stores]} (helpers/get-service-map app :StoreService)
           services (app->MigrationStoreServices app)
-          conn (es-conn get-in-config)
+
           store-types [:malware :tool :incident]]
       (helpers/set-capabilities! app
                                  "foouser"
@@ -220,7 +221,7 @@
       (rollover-post-bulk app all-stores)
       ;; insert malformed documents
       (doseq [store-type store-types]
-        (es-index/get conn
+        (es-index/get (es-conn get-in-config)
                       (str (get-in (es-props get-in-config) [store-type :indexname]) "*")))
       (sut/migrate-store-indexes {:migration-id "test-3"
                                   :prefix       "0.0.0"
@@ -231,17 +232,17 @@
                                   :confirm?     true
                                   :restart?     false}
                                  services)
-      (let [migration-state (ductile.doc/get-doc conn
-                                                 (migration-index get-in-config)
-                                                 "migration"
-                                                 "test-3"
-                                                 {})]
+      (let [migration-state (es-doc/get-doc (es-conn get-in-config)
+                                            (migration-index get-in-config)
+                                            "migration"
+                                            "test-3"
+                                            {})]
           (doseq [store-type store-types]
-            (is (= (count (es-index/get conn
+            (is (= (count (es-index/get (es-conn get-in-config)
                                         (str "v0.0.0_" (get-in (es-props get-in-config) [store-type :indexname]) "*")))
                    3)
                 "target indice should be rolledover during migration")
-            (es-index/get conn
+            (es-index/get (es-conn get-in-config)
                           (str "v0.0.0_" (get-in (es-props get-in-config) [store-type :indexname]) "*"))
             (let [migrated-store (get-in migration-state [:stores store-type])
                   {:keys [source target]} migrated-store]
@@ -255,8 +256,8 @@
   (with-each-fixtures identity app
     (with-open [rdr (io/reader "./test/data/indices/sample-relationships-1000.json")]
       (let [{:keys [get-in-config]} (helpers/get-service-map app :ConfigService)
-            conn (es-conn get-in-config)
-            storemap {:conn conn
+
+            storemap {:conn (es-conn get-in-config)
                       :indexname "ctia_relationship"
                       :mapping "relationship"
                       :props {:write-index "ctia_relationship"}
@@ -265,7 +266,7 @@
                       :config {}}
             docs (map es-helpers/prepare-bulk-ops
                       (line-seq rdr))
-            _ (es-helpers/load-bulk conn docs)
+            _ (es-helpers/load-bulk (es-conn get-in-config) docs)
             no-meta-docs (map #(dissoc % :_index :_type :_id)
                               docs)
             docs-no-modified (filter #(nil? (:modified %))
@@ -350,8 +351,7 @@
 
             prefix "0.0.1"
             indexname "v0.0.1_ctia_relationship"
-            conn (es-conn get-in-config)
-            storemap {:conn conn
+            storemap {:conn (es-conn get-in-config)
                       :indexname indexname
                       :mapping "relationship"
                       :props {:write-index indexname}
@@ -368,7 +368,7 @@
                          :migration-id migration-id
                          :migrations (sut/compose-migrations [:__test])
                          :batch-size 1000
-                         :migration-es-conn conn
+                         :migration-es-conn (es-conn get-in-config)
                          :confirm? true}
             test-fn (fn [total
                          migrated-count
@@ -395,12 +395,12 @@
                                                           services)
                             {target-state :target
                              source-state :source} (-> (get-migration migration-id
-                                                                      conn
+                                                                      (es-conn get-in-config)
                                                                       services)
                                                        :stores
                                                        :relationship)
-                            _ (es-index/refresh! conn)
-                            migrated-docs (:data (ductile.doc/query conn
+                            _ (es-index/refresh! (es-conn get-in-config))
+                            migrated-docs (:data (ductile.doc/query (es-conn get-in-config)
                                                                     indexname
                                                                     {:match_all {}}
                                                                     {:limit total}))]
@@ -447,7 +447,7 @@
     (with-open [rdr (io/reader "./test/data/indices/sample-relationships-1000.json")]
       (let [{:keys [get-in-config]} (helpers/get-service-map app :ConfigService)
             services (app->MigrationStoreServices app)
-            conn (es-conn get-in-config)
+
             {wo-modified true
              w-modified false} (->> (line-seq rdr)
                                     (map es-helpers/prepare-bulk-ops)
@@ -456,7 +456,7 @@
             bulk-1 (concat wo-modified (take 500 sorted-w-modified))
             bulk-2 (drop 500 sorted-w-modified)
             logger-1 (atom [])
-            _ (es-helpers/load-bulk conn bulk-1)
+            _ (es-helpers/load-bulk (es-conn get-in-config) bulk-1)
             _ (with-atom-logger logger-1
                 (sut/migrate-store-indexes {:migration-id "migration-test-4"
                                             :prefix       "0.0.0"
@@ -467,15 +467,15 @@
                                             :confirm?     true
                                             :restart?     false}
                                            services))
-            migration-state-1 (ductile.doc/get-doc conn
-                                                   (migration-index get-in-config)
-                                                   "migration"
-                                                   "migration-test-4"
-                                                   {})
-            target-count-1 (ductile.doc/count-docs conn
+            migration-state-1 (es-doc/get-doc (es-conn get-in-config)
+                                              (migration-index get-in-config)
+                                              "migration"
+                                              "migration-test-4"
+                                              {})
+            target-count-1 (ductile.doc/count-docs (es-conn get-in-config)
                                                    "v0.0.0_ctia_relationship"
                                                    nil)
-            _ (es-helpers/load-bulk conn bulk-2)
+            _ (es-helpers/load-bulk (es-conn get-in-config) bulk-2)
             _ (with-atom-logger logger-1
                 (sut/migrate-store-indexes {:migration-id "migration-test-4"
                                             :prefix       "0.0.0"
@@ -486,14 +486,14 @@
                                             :confirm?     true
                                             :restart?     true}
                                            services))
-            target-count-2 (ductile.doc/count-docs conn
+            target-count-2 (ductile.doc/count-docs (es-conn get-in-config)
                                                    "v0.0.0_ctia_relationship"
                                                    nil)
-            migration-state-2 (ductile.doc/get-doc conn
-                                                   (migration-index get-in-config)
-                                                   "migration"
-                                                   "migration-test-4"
-                                                   {})]
+            migration-state-2 (es-doc/get-doc (es-conn get-in-config)
+                                              (migration-index get-in-config)
+                                              "migration"
+                                              "migration-test-4"
+                                              {})]
         (is (= (+ 500 (count wo-modified))
                target-count-1
                (get-in migration-state-1 [:stores :relationship :target :migrated])
@@ -511,7 +511,7 @@
     (let [{:keys [get-in-config]} (helpers/get-service-map app :ConfigService)
           {:keys [all-stores]} (helpers/get-service-map app :StoreService)
           services (app->MigrationStoreServices app)
-          conn (es-conn get-in-config)
+
           store-types [:malware :tool :incident]
           logger (atom [])
           bad-doc {:id 1
@@ -532,11 +532,11 @@
         (rollover-post-bulk app all-stores)
         ;; insert malformed documents
         (doseq [store-type store-types]
-          (ductile.doc/create-doc conn
-                                  (str (get-in (es-props get-in-config) [store-type :indexname]) "-write")
-                                  (name store-type)
-                                  bad-doc
-                                  {:refresh "true"}))
+          (es-doc/create-doc (es-conn get-in-config)
+                             (str (get-in (es-props get-in-config) [store-type :indexname]) "-write")
+                             (name store-type)
+                             bad-doc
+                             "true"))
         (with-atom-logger logger
           (sut/migrate-store-indexes {:migration-id "test-3"
                                       :prefix       "0.0.0"
@@ -548,11 +548,11 @@
                                       :restart?     false}
                                      services))
         (let [messages (set @logger)
-              migration-state (ductile.doc/get-doc conn
-                                                   (migration-index get-in-config)
-                                                   "migration"
-                                                   "test-3"
-                                                   {})]
+              migration-state (es-doc/get-doc (es-conn get-in-config)
+                                              (migration-index get-in-config)
+                                              "migration"
+                                              "test-3"
+                                              {})]
           (doseq [store-type store-types]
             (let [migrated-store (get-in migration-state [:stores store-type])
                   {:keys [source target]} migrated-store]
@@ -569,8 +569,7 @@
   ;; TODO clean data
   (let [{:keys [get-in-config]} (helpers/get-service-map app :ConfigService)
         {:keys [all-stores]} (helpers/get-service-map app :StoreService)
-        services (app->MigrationStoreServices app)
-        conn (es-conn get-in-config)]
+        services (app->MigrationStoreServices app)]
     (helpers/set-capabilities! app
                                "foouser"
                                ["foogroup"]
@@ -597,33 +596,32 @@
 
         (doseq [store (vals (all-stores))]
           (is (not (index-exists? store "0.0.0"))))
-        (is (nil? (seq (ductile.doc/get-doc conn
-                                            (migration-index get-in-config)
-                                            "migration"
-                                            "test-1"
-                                            {})))))))
-   (testing "migrate es indexes"
-     (let [{:keys [get-in-config]} (helpers/get-service-map app :ConfigService)
-           {:keys [all-stores]} (helpers/get-service-map app :StoreService)
-           services (app->MigrationStoreServices app)
-           conn (es-conn get-in-config)
-           logger (atom [])]
-       (with-atom-logger logger
-         (sut/migrate-store-indexes {:migration-id "test-2"
-                                     :prefix       "0.0.0"
-                                     :migrations   [:__test]
-                                     :store-keys   (keys (all-stores))
-                                     :batch-size   10
-                                     :buffer-size  3
-                                     :confirm?     true
-                                     :restart?     false}
-                                    services))
-       (testing "shall generate a proper migration state"
-          (let [migration-state (ductile.doc/get-doc conn
-                                                     (migration-index get-in-config)
-                                                     "migration"
-                                                     "test-2"
-                                                     {})]
+        (is (nil? (seq (es-doc/get-doc (es-conn get-in-config)
+                                       (migration-index get-in-config)
+                                       "migration"
+                                       "test-1"
+                                       {})))))))
+  (testing "migrate es indexes"
+    (let [{:keys [get-in-config]} (helpers/get-service-map app :ConfigService)
+          {:keys [all-stores]} (helpers/get-service-map app :StoreService)
+          services (app->MigrationStoreServices app)
+          logger (atom [])]
+        (with-atom-logger logger
+          (sut/migrate-store-indexes {:migration-id "test-2"
+                                      :prefix       "0.0.0"
+                                      :migrations   [:__test]
+                                      :store-keys   (keys (all-stores))
+                                      :batch-size   10
+                                      :buffer-size  3
+                                      :confirm?     true
+                                      :restart?     false}
+                                     services))
+        (testing "shall generate a proper migration state"
+          (let [migration-state (es-doc/get-doc (es-conn get-in-config)
+                                                (migration-index get-in-config)
+                                                "migration"
+                                                "test-2"
+                                                {})]
             (is (= (set (keys (all-stores)))
                    (set (keys (:stores migration-state)))))
             (doseq [[entity-type migrated-store] (:stores migration-state)]
@@ -722,8 +720,9 @@
                              (format  "v0.0.0_%s-%s-000003" (:indexname k) index-date) 0}))
                      (into expected-event-indices)
                      keywordize-keys)
-                _ (es-index/refresh! conn)
-                formatted-cat-indices (es-helpers/get-cat-indices conn)
+                _ (es-index/refresh! (es-conn get-in-config))
+                formatted-cat-indices (es-helpers/get-cat-indices (:host default)
+                                                                  (:port default))
                 result-indices (select-keys formatted-cat-indices
                                             (keys expected-indices))]
             (is (= expected-indices result-indices)
@@ -734,7 +733,7 @@
                           only-result)))
             (doseq [[index _]
                     expected-indices]
-              (let [docs (->> (ductile.doc/search-docs conn (name index) nil nil {})
+              (let [docs (->> (ductile.doc/search-docs (es-conn get-in-config) (name index) nil nil {})
                               :data
                               (map :groups))]
                 (is (every? #(= ["migration-test"] %)
@@ -743,7 +742,7 @@
           (let [;; retrieve the first 2 source indices for sighting store
                 {:keys [host port]} (get-in-config [:ctia :store :es :default])
                 [sighting-index-1 sighting-index-2]
-                (->> (es-helpers/get-cat-indices conn)
+                (->> (es-helpers/get-cat-indices host port)
                      keys
                      (map name)
                      (filter #(.contains ^String % "sighting"))
@@ -751,7 +750,7 @@
                      (take 2))
 
                 ;; retrieve source entity to update, in first position of first index
-                es-sighting0 (-> (ductile.doc/query conn
+                es-sighting0 (-> (ductile.doc/query (es-conn get-in-config)
                                                     sighting-index-1
                                                     {:match_all {}}
                                                     {:sort_by "timestamp:asc"
@@ -759,7 +758,7 @@
                                  :data
                                  first)
                 ;; retrieve source entity to update, in first position of second index
-                es-sighting1 (-> (ductile.doc/query conn
+                es-sighting1 (-> (ductile.doc/query (es-conn get-in-config)
                                                     sighting-index-2
                                                     {:match_all {}}
                                                     {:sort_by "timestamp:asc"
@@ -773,14 +772,14 @@
                                   (hash-map :malwares))
 
                 ;; retrieve 5 source entities to delete, in last positions of first index
-                es-sightings-1 (-> (ductile.doc/query conn
+                es-sightings-1 (-> (ductile.doc/query (es-conn get-in-config)
                                                       sighting-index-1
                                                       {:match_all {}}
                                                       {:sort_by "timestamp:desc"
                                                        :limit 5})
                                    :data)
                 ;; retrieve 5 source entities to delete, in last positions of second index
-                es-sightings-2 (-> (ductile.doc/query conn
+                es-sightings-2 (-> (ductile.doc/query (es-conn get-in-config)
                                                       sighting-index-2
                                                       {:match_all {}}
                                                       {:sort_by "timestamp:desc"
@@ -820,7 +819,7 @@
                                         :confirm?     true
                                         :restart?     true}
                                        services)
-            (let [migration-state (get-migration "test-2" conn services)
+            (let [migration-state (get-migration "test-2" (es-conn get-in-config) services)
                   malware-migration (get-in migration-state [:stores :malware])
                   sighting-migration (get-in migration-state [:stores :sighting])
                   malware-target-store (get-in malware-migration [:target :store])
@@ -852,7 +851,7 @@
   (doseq [batch-size [1000 3000 6000 10000]]
     (let [{:keys [get-in-config]} (helpers/get-service-map app :ConfigService)
           services (app->MigrationStoreServices app)
-          conn (es-conn get-in-config)
+
           total-docs (* (count @example-types) 20000)
           _ (println (format "===== migrating %s documents with batch size %s"
                              total-docs
@@ -872,19 +871,19 @@
           end (System/currentTimeMillis)
           total (/ (- end start) 1000)
           doc-per-sec (/ total-docs total)
-          migration-state (ductile.doc/get-doc conn
-                                               (migration-index get-in-config)
-                                               "migration"
-                                               migration-id
-                                               {})]
+          migration-state (es-doc/get-doc (es-conn get-in-config)
+                                          (migration-index get-in-config)
+                                          "migration"
+                                          migration-id
+                                          {})]
       (println "total: " (float total))
       (println "documents per seconds: " (float doc-per-sec))
       (doseq [[_ state] (:stores migration-state)]
         (is (= 20000
                (get-in state [:source :total])
                (get-in state [:target :migrated]))))
-      (es-index/delete! conn (format "v%s*" prefix))
-      (ductile.doc/delete-doc conn "migration" migration-id {:refresh "true"})))
+      (es-index/delete! (es-conn get-in-config) (format "v%s*" prefix))
+      (es-doc/delete-doc (es-conn get-in-config) "migration" migration-id "true")))
   (es-index/delete! (es-conn (helpers/current-get-in-config-fn app)) "ctia_*"))
 
 ;;(deftest ^:integration minimal-load-test
