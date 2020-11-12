@@ -1,6 +1,7 @@
 (ns ctia.test-helpers.crud
   (:require [cheshire.core :refer [parse-string]]
             [clj-http.fake :refer [with-global-fake-routes]]
+            [clj-momo.lib.clj-time.coerce :as tc]
             [clj-momo.test-helpers.http :refer [encode]]
             [clojure
              [string :as string]
@@ -161,7 +162,8 @@
            patch-tests?
            search-tests?
            additional-tests
-           search-value]
+           search-value
+           revoke-tests?]
     :or {invalid-tests? true
          invalid-test-field :title
          update-field :title
@@ -253,6 +255,21 @@
                    updated-record))
             (is (= updated-record
                    stored-record)))
+
+          (when revoke-tests?
+            (testing "Expire 'valid-time' field"
+              (let [fixed-now (-> "2020-12-31" tc/from-string tc/to-date)]
+                (helpers/fixture-with-fixed-time
+                  fixed-now
+                  (fn []
+                    (let [response (helpers/POST
+                                     app
+                                     (format "ctia/%s/%s/expire" entity (:short-id record-id))
+                                     :headers headers)]
+                      (is (= 200 (:status response))
+                          (format "POST %s/:id/expire succeeds" entity))
+                      (is (= fixed-now (-> response :parsed-body :valid_time :end_time))
+                          ":valid_time properly reset")))))))
 
           ;; execute entity custom tests before deleting the fixture
           (testing "additional tests"

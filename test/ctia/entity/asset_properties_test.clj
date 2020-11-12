@@ -47,20 +47,7 @@
         (str "asset_ref:\"" (:asset-ref asset-properties-sample) "\"")
         #(-> % :parsed-body first :asset-ref)
         (:asset-ref asset-properties-sample)
-        "Searching Asset Properties by asset-ref"))))
-
-  (testing "Expire 'valid-time' field"
-    (let [fixed-now (-> "2020-12-31" tc/from-string tc/to-date)]
-      (helpers/fixture-with-fixed-time
-       fixed-now
-       (fn []
-         (let [response (helpers/POST
-                         app
-                         (format "ctia/asset-properties/%s/expire" short-id)
-                         :headers {"Authorization" "45c1f5e3f05d0"})]
-           (is (= 200 (:status response)) "POST asset-properties/:id/expire succeeds")
-           (is (= fixed-now (-> response :parsed-body :valid_time :end_time))
-               ":valid_time properly reset")))))))
+        "Searching Asset Properties by asset-ref")))))
 
 (deftest asset-properties-routes-test
   (store/test-for-each-store-with-app
@@ -79,7 +66,8 @@
        :search-field       :source
        :search-value       "cisco:unified_connect"
        :additional-tests   additional-tests
-       :headers            {:Authorization "45c1f5e3f05d0"}}))))
+       :headers            {:Authorization "45c1f5e3f05d0"}
+       :revoke-tests?      asset-properties/asset-properties-can-revoke?}))))
 
 (deftest asset-properties-pagination-test
   (store/test-for-each-store-with-app

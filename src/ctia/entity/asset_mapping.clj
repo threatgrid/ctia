@@ -102,6 +102,8 @@
    :valid_time.start_time
    :valid_time.end_time])
 
+(def asset-mapping-can-revoke? true)
+
 (def asset-mapping-routes
   (entity-crud-routes
     {:entity                   :asset-mapping
@@ -124,7 +126,7 @@
      :can-aggregate?           true
      :histogram-fields         asset-mapping-histogram-fields
      :enumerable-fields        asset-mapping-enumerable-fields
-     :can-revoke?              true}))
+     :can-revoke?              asset-mapping-can-revoke?}))
 
 (def capabilities
   #{:create-asset-mapping

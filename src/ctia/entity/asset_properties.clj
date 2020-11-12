@@ -103,6 +103,8 @@
    :valid_time.start_time
    :valid_time.end_time])
 
+(def asset-properties-can-revoke? true)
+
 (def asset-properties-routes
   (entity-crud-routes
     {:entity                   :asset-properties
@@ -125,7 +127,7 @@
      :can-aggregate?           true
      :histogram-fields         asset-properties-histogram-fields
      :enumerable-fields        asset-properties-enumerable-fields
-     :can-revoke?              true}))
+     :can-revoke?              asset-properties-can-revoke?}))
 
 (def capabilities
   #{:create-asset-properties
