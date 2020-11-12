@@ -3,88 +3,221 @@ name: GitHub Actions Pull Request
 on:
   pull_request:
 
+# Note: see BIN_PATH for how to set an env variable that depends on
+# other env variables.
 env:
-  LOG_DIR: ~/log
-  BIN_DIR: ~/bin
   LEIN_ROOT: 1
+  LEIN_VERSION: 2.9.4
   CTIA_MAJOR_VERSION: 1
-  COMPOSE_URI: https://github.com/docker/compose/releases/download/1.9.0
-  COMPOSE_BIN: ~/bin/docker-compose-1-9-0
-  COMPOSE_LOG: ~/log/docker-compose.log
-  CTIA_STORE_ES_DEFAULT_HOST: 127.0.0.1
-  CTIA_STORE_ES_DEFAULT_INDEXNAME: elasticsearch
-  CTIA_STORE_ES_DEFAULT_CLUSTERNAME: elasticsearch
-  CTIA_HOOK_ES_HOST: 127.0.0.1
-  CTIA_HOOK_ES_PORT: 9200
-  CTIA_HOOK_ES_INDEXNAME: elasticsearch
-  CTIA_HOOK_REDIS_URI: redis://127.0.0.1:6379
   # number of test-matrix builds
-  # (9 jobs for test-matrix + 1 for shellcheck) + 1 for fan-in
+  # 1 setup + 10 test jobs + 1 for fan-in
   # allows 2 commits to build simultaneously, since one build
   # will take at most 10 builds at any one time
-  CTIA_NSPLITS: 9
+  CTIA_NSPLITS: 10
   SHELLCHECK_VERSION: v0.7.1 # "stable" or "v0.4.7", or "latest"
-  # shellcheck is preinstalled, use this to override shellcheck for our scripts
-  SHELLCHECK_COMMAND: ~/bin/shellcheck
+  BB_VERSION: 0.2.3
+  JAVA_VERSION: 11.0.9
 
 jobs:
-  shellcheck:
+  setup:
     runs-on: ubuntu-18.04
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
     steps:
-      - uses: actions/checkout@v2
-      - name: Install shellcheck
+      - run: echo "BIN_PATH=${HOME}/bin" >> $GITHUB_ENV
+      - name: Setup PATH and directories
         run: |
-          (set -x && mkdir -p "${BIN_DIR}")
-          (set -x && wget -qO- "https://github.com/koalaman/shellcheck/releases/download/${SHELLCHECK_VERSION}/shellcheck-${SHELLCHECK_VERSION}.linux.x86_64.tar.xz" | tar -xJv)
-          (set -x && cp "shellcheck-${SHELLCHECK_VERSION}/shellcheck" "${BIN_DIR}/shellcheck")
-          (set -x && $SHELLCHECK_COMMAND --version)
-      - name: Run shellcheck
-        run: ./scripts/shellcheck-build.sh
-  test-matrix:
-    runs-on: ubuntu-18.04
-    strategy:
-      matrix:
-        this-split: [0,1,2,3,4,5,6,7,8] # (range ${CTIA_NSPLITS})
-    env:
-      CTIA_THIS_SPLIT: ${{ matrix.this-split }}
-    steps:
+          mkdir -p "${BIN_PATH}"
+          echo "${BIN_PATH}" >> $GITHUB_PATH
       - uses: actions/checkout@v2
-      - uses: actions/setup-java@v1
+      - uses: actions/setup-node@v1
         with:
-          java-version: '11'
-      - uses: DeLaGuardo/setup-clojure@e73bf2b6435244b2c9c5c226ae5022d91d0ce702
-        with:
-          lein: 2.9.4
-      - name: Cache
+          node-version: '12'
+      - name: Setup test matrix splits
+        id: set-matrix
+        run: |
+          set +x
+          mkdir -p tmp 
+          cd tmp 
+          # ensure positive splits
+          node -e "process.exit(0 < ${CTIA_NSPLITS} ? 0 : 1)"
+          # calculate (range ${CTIA_NSPLITS})
+          node -e "console.log(JSON.stringify([...Array(${CTIA_NSPLITS}).keys()]))" > splits.json
+          # send splits to 'matrix' output variable for the test-matrix job
+          echo "::set-output name=matrix::$( cat splits.json )"
+      # Setup previous timing information
+      - name: Timing Cache
+        id: get-timing
         uses: actions/cache@v2
         with:
           path: |
-            ~/bin
-            ~/.m2
-            ~/.cache/pip
-          key: ${{ runner.os }}-${{ hashFiles('project.clj') }}
+            target/test-results/all-test-timings.edn
+          # cache will never match, will always restore from 'restore-keys'.
+          # this is so we pick up timing information from the most recent build.
+          key: writeonly-ctia-all-test-timings-${{ github.ref }}-${{ github.sha }}
+          # cache should match test timings from previous runs, if they exist
+          restore-keys: |
+            ctia-timings-${{ github.ref }}-
+            ctia-timings-
+      - run: |
+          if [ -f target/test-results/all-test-timings.edn ]; then
+            echo "Found new timings"
+            cat target/test-results/all-test-timings.edn
+            cp target/test-results/all-test-timings.edn dev-resources/ctia_test_timings.edn
+          else
+            echo "Timings not found, creating empty dummy timings which will be ignored by tests"
+            touch dev-resources/ctia_test_timings.edn
+          fi
+      - name: Upload current test timing
+        uses: actions/upload-artifact@v2
+        with:
+          retention-days: 30
+          name: current-test-timing
+          path: dev-resources/ctia_test_timings.edn
 
-      - name: Setup folders
+      # Run shellcheck on CTIA's scripts
+      - name: Install shellcheck
         run: |
-          mkdir -p ~/bin
-          mkdir -p ~/log
+          if ! command -v shellcheck &> /dev/null || ! shellcheck --version | grep "^version: ${SHELLCHECK_VERSION}$"
+          then
+            ( set -x && wget -qO- "https://github.com/koalaman/shellcheck/releases/download/${SHELLCHECK_VERSION}/shellcheck-${SHELLCHECK_VERSION}.linux.x86_64.tar.xz" | tar -xJv )
+            ( set -x && ls -al "${BIN_PATH}" )
+            ( set -x && cp "shellcheck-${SHELLCHECK_VERSION}/shellcheck" "${BIN_PATH}" )
+          fi
+          shellcheck --version
+      - name: Run shellcheck
+        run: ./scripts/shellcheck-build.sh
 
-      - name: ES5 setup
+      # note: this slows the setup build considerably. the cache-hit
+      #       logic does not seem to work, so steps are run even when
+      #       not needed.
+      ### - name: Maven Cache
+      ###   id: maven-cache
+      ###   uses: actions/cache@v2
+      ###   with:
+      ###     path: ~/.m2/repository
+      ###     key: ctia-m2-cache-${{ hashFiles('project.clj') }}
+      ###     restore-keys: |
+      ###       ctia-m2-cache-
+      ### # warm maven dependency cache if needed
+      ### - name: Setup Java
+      ###   if: steps.maven-cache.cache-hit != 'true'
+      ###   uses: actions/setup-java@v1
+      ###   with:
+      ###     java-version: ${{ env.JAVA_VERSION }}
+      ### - run: java -version
+      ### # install lein using cache to avoid extra download and startup time
+      ### - name: Cache Leiningen
+      ###   if: steps.maven-cache.cache-hit != 'true'
+      ###   uses: actions/cache@v2
+      ###   id: lein-cache
+      ###   with:
+      ###     path: ${{ env.BIN_PATH }}/lein
+      ###     key: ctia-lein-cache-${{ env.LEIN_VERSION }}
+      ### - name: Install Leiningen
+      ###   if: steps.lein-cache.cache-hit != 'true' && steps.maven-cache.cache-hit != 'true'
+      ###   run: |
+      ###     cd "${BIN_PATH}"
+      ###     curl -sLO "https://raw.githubusercontent.com/technomancy/leiningen/${LEIN_VERSION}/bin/lein"
+      ###     chmod a+x lein
+      ###     lein version
+      ### - name: Warm dependency cache
+      ###   if: steps.maven-cache.cache-hit != 'true'
+      ###   run: lein deps
+  test-matrix:
+    runs-on: ubuntu-18.04
+    needs: [setup]
+    strategy:
+      matrix:
+        this-split: ${{fromJson(needs.setup.outputs.matrix)}}
+    env:
+      CTIA_THIS_SPLIT: ${{ matrix.this-split }}
+    steps:
+      - run: echo "BIN_PATH=${HOME}/bin" >> $GITHUB_ENV
+      - run: echo "LOG_PATH=${HOME}/log" >> $GITHUB_ENV
+      - name: Setup PATH and folders
+        run: |
+          mkdir -p "${BIN_PATH}"
+          mkdir -p "${LOG_PATH}"
+          echo "${BIN_PATH}" >> $GITHUB_PATH
+      - uses: actions/checkout@v2
+      # run docker as early as possible asynchronously. if this command
+      # fails, the split-test test runner will timeout in a reasonable amount
+      # of time and throw an error.
+      - name: Docker (async)
+        # depends on LOG_PATH and actions/checkout@v2
+        run: docker-compose -f containers/dev/docker-compose.yml up -d &> "${LOG_PATH}/docker-compose.log" &
+      - name: Download test timings
+        uses: actions/download-artifact@v2
+        with:
+          name: current-test-timing
+          path: target/current-test-timing
+      - run: |
+          # debugging
+          ls -al target/current-test-timing
+          if [ -f target/current-test-timing/ctia_test_timings.edn ]; then
+            cat target/current-test-timing/ctia_test_timings.edn
+          fi
+          if [ -s target/current-test-timing/ctia_test_timings.edn ]; then
+            echo "Updating dev-resources/ctia_test_timings.edn with new timing"
+            cp target/current-test-timing/ctia_test_timings.edn dev-resources/ctia_test_timings.edn
+          else
+            echo "No previous timings found (empty file downloaded)"
+          fi
+      - run: |
+          if [ -f dev-resources/ctia_test_timings.edn ]; then
+            echo "Timing:"
+            cat dev-resources/ctia_test_timings.edn
+          else
+            echo "No timing data, using slow-namespace heuristic"
+          fi
+      - name: ES setup
         run: sudo sysctl -w vm.max_map_count=262144
 
-      - name: Create log dir if missing
-        run: mkdir -p $LOG_DIR
-
-      - uses: actions/setup-ruby@v1
+      - name: Maven Cache
+        uses: actions/cache@v2
         with:
-          ruby-version: '2.4'
+          path: ~/.m2/repository
+          key: ctia-m2-cache-${{ hashFiles('project.clj') }}
+          restore-keys: |
+            ctia-m2-cache-
 
-      - name: Docker (async)
-        run: docker-compose -f containers/dev/docker-compose.yml up -d > $COMPOSE_LOG &
+      - uses: actions/setup-java@v1
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+      - run: java -version
 
-      - run: ./build/run-tests.sh
+      # install lein using cache to avoid extra download and startup time
+      - name: Leiningen Cache
+        uses: actions/cache@v2
+        id: lein-cache
+        with:
+          # note: this should coincide with ${BIN_PATH}/lein. unclear
+          # if variables can be used here
+          path: ~/bin/lein
+          key: ctia-lein-cache-${{ env.LEIN_VERSION }}
+      - name: Install Leiningen
+        # why doesn't this work!? using an if statement instead
+        #if: steps.lein-cache.cache-hit != 'true'
+        run: |
+          if ! command -v lein
+          then
+            cd "${BIN_PATH}"
+            curl -sLO https://raw.githubusercontent.com/technomancy/leiningen/${LEIN_VERSION}/bin/lein
+            chmod a+x lein
+            lein version
+          fi
+
+      - name: Run CTIA tests
+        run: ./build/run-tests.sh
         env:
           CTIA_WAIT_DOCKER: 1
+      - name: Upload test timing
+        uses: actions/upload-artifact@v2
+        with:
+          retention-days: 1
+          name: test-timing
+          path: target/test-results/ns-timing-*.edn
   # fan-in tests so there's a single job we can add to protected branches.
   # otherwise, we'll have add all (range ${CTIA_NSPLITS}) jobs, and keep
   # them up to date
@@ -92,6 +225,52 @@ jobs:
   # https://github.community/t/branch-protections-job-names-and-matrix-jobs/16317
   all-pr-checks:
     runs-on: ubuntu-18.04
-    needs: [shellcheck, test-matrix]
+    needs: [test-matrix]
     steps:
+      - run: echo "BIN_PATH=${HOME}/bin" >> $GITHUB_ENV
+      - name: Setup PATH
+        run: |
+          mkdir -p "${BIN_PATH}"
+          echo "${BIN_PATH}" >> $GITHUB_PATH
+      - uses: actions/checkout@v2
+      - name: Binary Cache
+        uses: actions/cache@v2
+        with:
+          path: ${{ env.BIN_PATH }}
+          key: ctia-all-pr-checks-bin-${{ env.BB_VERSION }}
+      - name: Timing results Cache
+        uses: actions/cache@v2
+        with:
+          path: target/test-results/all-test-timings.edn
+          # cache should never hit
+          key: ctia-timings-${{ github.ref }}-${{ github.sha }}
+
+      - name: Install babashka
+        run: |
+          if ! command -v bb &> /dev/null || ! bb --version | grep "^babashka v${BB_VERSION}$"
+          then
+            mkdir -p tmp
+            cd tmp
+            curl -sLO https://raw.githubusercontent.com/borkdude/babashka/master/install
+            chmod +x install
+            ./install --dir "${BIN_PATH}" --version 0.2.3
+          fi
+          bb --version
+
+      - name: Download test timings
+        uses: actions/download-artifact@v2
+        with:
+          name: test-timing
+          path: target/test-results
+
+      - name: Print test timings
+        run: ./scripts/summarize-tests.clj
+
+      - name: Upload all test timings
+        uses: actions/upload-artifact@v2
+        with:
+          retention-days: 30
+          name: all-test-timings
+          path: target/test-results/all-test-timings.edn
+
       - run: echo "All tests pass!"

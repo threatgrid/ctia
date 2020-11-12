@@ -132,6 +132,43 @@ For a REPL workflow, run `lein repl`. Use `(start)` to start CTIA,
 All PRs must pass `lein test` with no fails for PRs to be accepted.
 Any new code functionality/change should have tests accompanying it.
 
+### Test balancing
+
+Continuous integration test runs are parallelized using
+prior timing information in `dev-resources/ctia_test_timings.edn`.
+
+For GitHub Actions Pull Requests, tests are automatically balanced
+by accessing the cache of previous builds.
+
+To experiment with this feature locally, you need the timings in
+your local repository.
+There are 2 ways to generate them, described in the below subsections:
+1. locally (slow)
+2. by downloading a GitHub Actions artifact for a recent build (fast).
+
+#### Rebalance tests locally (slow)
+
+1. Run `./build/run-tests.sh` to get the latest test timings.
+2. Run `./scripts/summarize-tests.clj` to collect timings
+3. Run `cp target/test-results/all-test-timings.edn dev-resources/ctia_test_timings.edn`
+   to update the latest timings.
+4. Commit this change and push.
+
+#### Rebalance tests via GitHub Actions (fast)
+
+You will need a completed GitHub Actions Pull Request build to base it on.
+
+1. Visit the GitHub Actions Pull Request build you would like to use to rebalance
+   - eg., https://github.com/threatgrid/ctia/actions/runs/342562872
+2. Go to the `all-pr-checks` job (should be the last job) and download the `all-test-timings` artifact
+3. Unzip the downloaded file and locate the inflated `all-test-timings.edn` file.
+4. Copy the inflated `all-test-timings.edn` file to `dev-resources/ctia_test_timings.edn`
+5. Commit this change and push.
+
+Note: Unfortunately, even public artifacts require an API key to download
+them via the API, so this is not straightforward to automate
+([see more](https://github.com/actions/upload-artifact/issues/51)).
+
 ### Data Access Control
 
 Document Access control is defined at the document level, rules are defined using TLP combined with the max-record-visibility property (Traffic Light Protocol) by default:

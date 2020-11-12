@@ -151,7 +151,8 @@
                                   [clj-http-fake ~clj-http-fake-version]
                                   [prismatic/schema-generators ~schema-generators-version]
                                   [circleci/circleci.test "0.4.3"]
-                                  [org.clojure/math.combinatorics "0.1.6"]]
+                                  [org.clojure/math.combinatorics "0.1.6"]
+                                  [org.clojure/data.priority-map "1.0.0"]]
                    :pedantic? :warn
 
                    :resource-paths ["test/resources"]
