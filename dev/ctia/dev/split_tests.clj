@@ -178,7 +178,7 @@
                                              "\nOut:\n" out
                                              "\nErr:\n" err)
                                         {:res res}))))
-          timeout-seconds 60
+          timeout-seconds 120
           exit-if-too-long (str "if [[ " timeout-seconds " -le $SECONDS ]]; then "
                                 "  echo \"timeout during connection attempt (waited ${SECONDS} seconds)\"; "
                                 "  exit 1; "
