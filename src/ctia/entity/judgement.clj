@@ -15,8 +15,9 @@
              [common :refer [BaseEntityFilterParams
                              PagingParams
                              SourcableEntityFilterParams]]
-             [crud :refer [fill-delayed-routes-config-defaults 
-                           revocation-routes*
+             [crud :refer [capitalize-entity
+                           fill-entity-crud-config-defaults 
+                           revoke-request
                            services->entity-crud-routes]]]
             [ctia.schemas.core :refer [APIHandlerServices Entity]]
             [ctia.schemas.graphql
@@ -85,19 +86,35 @@
    JudgementsQueryParams
    JudgementFieldsParam))
 
-;; must be a macro to pass hygienic forms to :extra-query-params-syntax.
-;; otherwise, eg., `describe` could be captured by some internal binding of revocation-routes*.
-(defmacro judgement-revocation-routes
-  [services ;:- APIHandlerServices
-   delayed-routes-config]
-  `(revocation-routes*
-     ~services
-     (fill-delayed-routes-config-defaults
-       ~delayed-routes-config)
-     :extra-query-params-syntax [~'reason :- (describe s/Str "Message to append to the Judgement's reason value")]))
+;; Note: almost identical to ctia.http.routes.crud/revocation-routes
+;; except uses a `reason` query-param. If we could figure out how to
+;; construct :query-params dynamically, we could consolidate both
+;; impls. An unsatisfactory way to abstract over these would be to use macros.
+;; This would be too error-prone since `query-params` introduce unhygienic
+;; bindings.
+(s/defn judgement-revocation-routes
+  "Assumes entity-crud-config defaults have been filled
+  by fill-entity-crud-config-defaults."
+  [services :- APIHandlerServices
+   {:keys [entity
+           entity-schema
+           post-capabilities] :as entity-crud-config}]
+  (POST "/:id/expire" [req]
+        :summary (format "Expires the supplied %s" (capitalize-entity entity))
+        :path-params [id :- s/Str]
+        :query-params [reason :- (describe s/Str "Message to append to the Judgement's reason value")
+                       {wait_for :- (describe s/Bool "wait for entity to be available for search") nil}]
+        :return entity-schema
+        :capabilities post-capabilities
+        :auth-identity identity
+        :identity-map identity-map
+        (revoke-request req services entity-crud-config
+                        {:id id
+                         :identity identity
+                         :identity-map identity-map})))
 
 (s/defn judgement-routes [services :- APIHandlerServices]
-  (let [delayed-routes-config {:entity :judgement
+  (let [entity-crud-config {:entity :judgement
                                :new-schema js/NewJudgement
                                :entity-schema js/Judgement
                                :get-schema js/PartialJudgement
@@ -124,10 +141,10 @@
     (routes
       (services->entity-crud-routes
         services
-        delayed-routes-config)
+        entity-crud-config)
       (judgement-revocation-routes
         services
-        delayed-routes-config))))
+        entity-crud-config))))
 
 (def capabilities
   #{:create-judgement

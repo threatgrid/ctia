@@ -39,9 +39,9 @@
    [schema.core :as s]
    [schema-tools.core :as st]))
 
-(defn fill-delayed-routes-config-defaults [delayed-routes-config]
+(defn fill-entity-crud-config-defaults [entity-crud-config]
   (assoc-new-keys
-    delayed-routes-config
+    entity-crud-config
     :hide-delete? false
     :can-post? true
     :can-update? true
@@ -56,10 +56,11 @@
   (-> entity name capitalize))
 
 (s/defn revoke-request
-  "Implementation details of revocation-routes* that can
-  be implemented with a function (rather than requiring a macro).
-
-  Would be private, except it's used by a macro."
+  "Process POST /:id/expire route.
+  Implemented separately from a POST call to share
+  between entity implementations with different :query-params
+  requirements (which must be provided at compile-time with
+  POST)."
   [{{:keys [wait_for]} :query-params :as req}
    {{:keys [read-store
             write-store]} :StoreService
@@ -68,7 +69,7 @@
            new-spec
            realize-fn
            revocation-update-fn]
-    :as _delayed-routes-config}
+    :as _entity-crud-config}
    {:keys [identity
            identity-map
            id]}]
@@ -102,50 +103,31 @@
     (ok (un-store updated-rec))
     (not-found (str (capitalize-entity entity) " not found"))))
 
-(defmacro revocation-routes*
-  "A lower level version of revocation-routes that
-  allows configurable :query-params.
-
-  :extra-query-params-syntax is assumed hygienic, so
-  must be created by another macro.
-
-  Assumes delayed-routes-config defaults have been filled
-  by fill-delayed-routes-config-defaults."
-  [services ;:- APIHandlerServices
-   delayed-routes-config
-   & {:keys [extra-query-params-syntax]}]
-  `(let [services# ~services
-         {entity# :entity
-          entity-schema# :entity-schema
-          post-capabilities# :post-capabilities
-          :as delayed-routes-config#} ~delayed-routes-config]
-     (POST "/:id/expire" [req#]
-           :summary (format "Expires the supplied %s" (capitalize-entity entity#))
-           :path-params [~'id :- s/Str]
-           :query-params [~@extra-query-params-syntax
-                          {~'wait_for :- (describe s/Bool "wait for entity to be available for search") nil}]
-           :return entity-schema#
-           :capabilities post-capabilities#
-           :auth-identity identity#
-           :identity-map identity-map#
-       (revoke-request req# services# delayed-routes-config#
-                       {:id ~'id
-                        :identity identity#
-                        :identity-map identity-map#}))))
-
 (s/defn revocation-routes
   "Returns POST /:id/expire routes for the given entity
 
-  Assumes delayed-routes-config defaults have been filled
-  by fill-delayed-routes-config-defaults."
+  Assumes entity-crud-config defaults have been filled
+  by fill-entity-crud-config-defaults."
   [services :- APIHandlerServices
-   delayed-routes-config]
-  (revocation-routes* services
-                      delayed-routes-config))
+   {:keys [entity
+           entity-schema
+           post-capabilities] :as entity-crud-config}]
+  (POST "/:id/expire" [req]
+        :summary (format "Expires the supplied %s" (capitalize-entity entity))
+        :path-params [id :- s/Str]
+        :query-params [{wait_for :- (describe s/Bool "wait for entity to be available for search") nil}]
+        :return entity-schema
+        :capabilities post-capabilities
+        :auth-identity identity
+        :identity-map identity-map
+        (revoke-request req services entity-crud-config
+                        {:id id
+                         :identity identity
+                         :identity-map identity-map})))
 
 (s/defn entity-crud-routes
  :- DelayedRoutes
- [delayed-routes-config-no-defaults]
+ [entity-crud-config-no-defaults]
  (s/fn [{{:keys [write-store read-store]} :StoreService
          :as services} :- APIHandlerServices]
   (let [{:keys [entity
@@ -178,8 +160,8 @@
                 date-field
                 histogram-fields
                 enumerable-fields]
-         :as delayed-routes-config} (fill-delayed-routes-config-defaults
-                                     delayed-routes-config-no-defaults)
+         :as entity-crud-config} (fill-entity-crud-config-defaults
+                                   entity-crud-config-no-defaults)
         capitalized (capitalize-entity entity)
         search-filters (st/dissoc search-q-params
                                   :sort_by
@@ -451,7 +433,7 @@
      (when can-revoke?
        (revocation-routes
         services
-        delayed-routes-config))))))
+        entity-crud-config))))))
 
 (s/defn services->entity-crud-routes
   [services :- APIHandlerServices
