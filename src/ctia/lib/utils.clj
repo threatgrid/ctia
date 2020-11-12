@@ -176,7 +176,11 @@
 
 (defn assoc-new-keys
   "Like assoc, except only associates keys contained in m.
-  Note: for duplicate keys in kv, last wins."
+  Note: for duplicate keys in kv, last wins.
+  
+  (assoc-new-keys m k v ...) is like (into {k v ...} m)
+  except does not traverse m -- useful when m is larger
+  than the number of kv's."
   [m & kv]
   (when-not (even? (count kv))
     (throw (ex-info "Uneven kv passed to assoc-new-keys"
