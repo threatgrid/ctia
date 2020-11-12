@@ -38,13 +38,13 @@
 (def ^:private targets
   {:type "object"
    :properties
-   {:type          em/token
+   {:type          em/all_token
     :observables   em/observable
-    :os            em/token
+    :os            em/all_token
     :internal      em/boolean-type
-    :source_uri    em/token
+    :source_uri    em/all_token
     :observed_time em/valid-time
-    :sensor        em/token}})
+    :sensor        em/all_token}})
 
 (def target-record-mapping
   {"target-record"

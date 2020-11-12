@@ -13,12 +13,12 @@
             [schema.core :as s]))
 
 (defn- update-mapping-state!
-  [conn-state]
-  (run! #(% conn-state)
+  [{:keys [conn index config] :as state}]
+  (run! #(% conn index config)
         ; template update should go first in the (unlikely) case of
         ; a race condition with a simultaneously successful rollover.
         [es-init/upsert-template!
-         es-init/update-mappings!]))
+         es-init/update-mapping!]))
 
 (defn update-mapping-stores!
   "Takes a map the same shape as returned by ctia.store-service/all-stores

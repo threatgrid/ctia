@@ -1,16 +1,15 @@
 (ns ctia.flows.hooks-test
-  (:require [ctia.flows.hooks-service :as hooks-svc]
+  (:require [clj-momo.test-helpers.core :as mth]
+            [ctia.flows.hooks-service :as hooks-svc]
             [ctia.flows.hook-protocol :refer [Hook]]
             [ctia.test-helpers
              [core :as helpers]
              [es :as es-helpers]]
-            [clojure.test :as t]
-            [schema.test :refer [validate-schemas]]))
+            [clojure.test :as t]))
 
-(t/use-fixtures :each
-  validate-schemas
-  es-helpers/fixture-properties:es-store
-  helpers/fixture-ctia-fast)
+(t/use-fixtures :each (t/join-fixtures [mth/fixture-schema-validation
+                                        es-helpers/fixture-properties:es-store
+                                        helpers/fixture-ctia-fast]))
 
 (def obj {:x "x" :y 0 :z {:foo "bar"}})
 

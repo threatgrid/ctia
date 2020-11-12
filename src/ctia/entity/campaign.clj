@@ -61,7 +61,7 @@
      em/stored-entity-mapping
      {:valid_time em/valid-time
       :campaign_type em/token
-      :names em/token
+      :names em/all_token
       :intended_effect em/token
       :status em/token
       :confidence em/token

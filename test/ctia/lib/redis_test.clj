@@ -9,9 +9,9 @@
              [es :as es-helpers]])
   (:import [java.util.concurrent CountDownLatch TimeUnit]))
 
-(use-fixtures :each
-  es-helpers/fixture-properties:es-store
-  test-helpers/fixture-ctia-fast)
+(use-fixtures :each (join-fixtures
+                     [es-helpers/fixture-properties:es-store
+                      test-helpers/fixture-ctia-fast]))
 
 (deftest redis-conf->conn-spec-test
   (is (= {:port 6379
