@@ -106,11 +106,6 @@
          (vector? nsyms)
          (seq nsyms)]
    :post [(vector? %)]}
-  (spit "out.edn"
-        `(this-split-using-scheduling-with-full-knowledge
-           ~timings
-           [~this-split ~total-splits]
-           ~nsyms))
   (let [;; discard timings for namespaces that don't exist.
         ;; they might have been deleted since the timings
         ;; were recorded.
