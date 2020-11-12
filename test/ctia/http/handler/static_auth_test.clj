@@ -5,11 +5,11 @@
              [core :as helpers :refer [POST GET]]
              [es :as es-helpers]]
             [clojure.test :refer [deftest is testing use-fixtures]]
-            [ctim.domain.id :as id]
-            [schema.test :refer [validate-schemas]]))
+            [ctim.domain.id :as id]))
+
+(use-fixtures :once mth/fixture-schema-validation)
 
 (use-fixtures :each
-  validate-schemas
   es-helpers/fixture-properties:es-store
   (helpers/fixture-properties:static-auth "kitara" "tearbending")
   helpers/fixture-ctia)

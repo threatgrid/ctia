@@ -64,8 +64,8 @@
      em/sourcable-entity-mapping
      em/stored-entity-mapping
      {:abstraction_level em/token
-      :name em/token
-      :description em/text
+      :name em/all_token
+      :description em/all_text
       :kill_chain_phases em/kill-chain-phase
       :x_mitre_data_sources em/token
       :x_mitre_platforms em/token

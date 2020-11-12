@@ -1,13 +1,14 @@
 (ns ctia.stores.es.store
   (:require [schema.core :as s]
             [schema-tools.core :as st]
-            [ductile
+            [clj-momo.lib.es
              [index :as es-index]
+             [conn :as conn]
              [schemas :refer [ESConn]]]
             [ctia.store :refer [IStore IQueryStringSearchableStore]]
             [ctia.stores.es.crud :as crud]))
 
-(defn delete-state-indexes [{:keys [conn index config] :as state}]
+(defn delete-state-indexes [{:keys [conn index config]}]
   (when conn
     (es-index/delete! conn (str index "*"))))
 
@@ -33,7 +34,7 @@
       ((crud/handle-update ~entity ~stored-schema)
        ~(symbol "state") id# actor# ident# params#))
      (~(symbol "delete-record") [_# id# ident# params#]
-      ((crud/handle-delete ~entity)
+      ((crud/handle-delete ~entity ~stored-schema)
        ~(symbol "state") id# ident# params#))
      (~(symbol "list-records") [_# filter-map# ident# params#]
       ((crud/handle-find ~partial-stored-schema)
