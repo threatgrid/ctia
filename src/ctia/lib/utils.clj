@@ -175,11 +175,13 @@
           (partition-all 2 selectors)))
 
 (defn assoc-new-keys
-  "Like assoc, except only associates keys that
-  are contained in m. Note: for duplicate keys in kv,
-  last wins."
+  "Like assoc, except only associates keys contained in m.
+  Note: for duplicate keys in kv, last wins."
   [m & kv]
-  (assert (even? (count kv)))
+  (when-not (even? (count kv))
+    (throw (ex-info "Uneven kv passed to assoc-new-keys"
+                    {:m m
+                     :kv kv})))
   (reduce (fn [inner-m [k v]]
             (cond-> inner-m
               (not (contains? m k)) (assoc k v)))
