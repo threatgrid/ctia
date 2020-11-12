@@ -106,6 +106,11 @@
          (vector? nsyms)
          (seq nsyms)]
    :post [(vector? %)]}
+  (spit "out.edn"
+        `(this-split-using-scheduling-with-full-knowledge
+           ~timings
+           [~this-split ~total-splits]
+           ~nsyms))
   (let [;; discard timings for namespaces that don't exist.
         ;; they might have been deleted since the timings
         ;; were recorded.
@@ -157,6 +162,32 @@
     (assert (= (sort nsyms)
                (sort (mapcat :nsyms (vals splits)))))
     (get-in splits [this-split :nsyms])))
+
+;; TODO spin off into a library to share with other teams
+;; temporary test suite
+(defn this-split-using-scheduling-with-full-knowledge-unit-tests []
+  (let [example-timings (read-string (slurp "dev-resources/example_ctia_test_timings.edn"))
+        _ (assert (map? example-timings))
+        _ (assert (seq example-timings))
+        example-nses (-> example-timings keys sort vec)]
+    (doseq [nsplits (range 1 15)]
+      (let [all-splits (for [id (range nsplits)]
+                         (binding [*out* (java.io.PrintWriter.
+                                           ;; JDK11+
+                                           (java.io.OutputStream/nullOutputStream))]
+                           (this-split-using-scheduling-with-full-knowledge
+                             example-timings
+                             [id nsplits]
+                             example-nses)))
+            sorted-example-nses (sort example-nses)
+            sorted-all-splits (sort (apply concat all-splits))]
+        (assert (= sorted-example-nses
+                   sorted-all-splits)
+                {:sorted-all-splits sorted-all-splits
+                 :sorted-example-nses sorted-example-nses})))))
+
+;; run temporary test suite
+(this-split-using-scheduling-with-full-knowledge-unit-tests)
 
 (defn nses-for-this-build [split-info nsyms]
   {:pre [(vector? nsyms)]}
