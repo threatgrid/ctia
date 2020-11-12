@@ -1,7 +1,10 @@
 (ns ctia.dev.split-tests
   (:require [circleci.test :as t]
+            [clojure.data.priority-map :refer [priority-map-keyfn]]
             [clojure.edn :as edn]
+            [clojure.java.io :as io]
             [clojure.java.shell :as sh]
+            [clojure.set :as set]
             [clojure.string :as str]
             [clojure.test :as test]
             [clojure.pprint :as pprint]))
@@ -70,7 +73,7 @@
       (name nsym)
       "ctia.http.routes.graphql")))
 
-(defn nses-for-this-build [[this-split total-splits] nsyms]
+(defn this-split-using-slow-namespace-heuristic [[this-split total-splits] nsyms]
   (let [;stabilize order across builds
         groups (->> nsyms
                     (group-by
@@ -98,14 +101,135 @@
     ;select this split
     (nth all-splits this-split)))
 
+(defn this-split-using-scheduling-with-full-knowledge [timings [this-split total-splits] nsyms]
+  {:pre [(map? timings)
+         (vector? nsyms)
+         (seq nsyms)]
+   :post [(vector? %)]}
+  (let [;; discard timings for namespaces that don't exist.
+        ;; they might have been deleted since the timings
+        ;; were recorded.
+        timings (select-keys timings nsyms)
+        extra-namespaces (set/difference (set nsyms)
+                                         (set (keys timings)))
+        unallocated-splits (into (priority-map-keyfn (juxt :duration :id))
+                                 (map (fn [split]
+                                        [split {:id split
+                                                :duration 0
+                                                :nsyms []}]))
+                                 (range total-splits))
+        slowest-to-fastest-timings (->> (concat timings
+                                                (map vector
+                                                     extra-namespaces
+                                                     ;; allocated last
+                                                     (repeat {:elapsed-ns 0})))
+                                        (map (fn [[nsym {:keys [elapsed-ns]}]]
+                                               {:pre [(simple-symbol? nsym)
+                                                      (<= 0 elapsed-ns)]}
+                                               [elapsed-ns nsym]))
+                                        (into (sorted-set))
+                                        rseq)
+        ;; algorithm: always allocate new work to the fastest job, and process
+        ;;            work from slowest to fastest
+        splits (reduce (fn [so-far [elapsed-ns nsym :as current-timing]]
+                         {:pre [(seq so-far)
+                                current-timing]}
+                         (let [fastest-split-number (key (first so-far))]
+                           (assert (<= 0 fastest-split-number))
+                           (assert (< fastest-split-number total-splits))
+                           (-> so-far
+                               (update fastest-split-number
+                                       #(-> %
+                                            (update :duration + elapsed-ns)
+                                            (update :nsyms conj nsym))))))
+                       unallocated-splits
+                       slowest-to-fastest-timings)]
+    (assert (seq splits))
+    (println (str "[ctia.dev.split-tests] Wasted time: "
+                  (/ (- (apply max (map :duration (vals splits)))
+                        (apply min (map :duration (vals splits))))
+                     1e9)
+                  " seconds"))
+    (println (str "[ctia.dev.split-tests] Predicted time for this split: "
+                  (/ (:duration (get splits this-split))
+                     1e9)
+                  " seconds"))
+    (assert (= (sort nsyms)
+               (sort (mapcat :nsyms (vals splits)))))
+    (get-in splits [this-split :nsyms])))
+
+;; TODO spin off into a library to share with other teams
+;; temporary test suite
+(defn this-split-using-scheduling-with-full-knowledge-unit-tests []
+  (let [example-timings (read-string (slurp "dev-resources/example_ctia_test_timings.edn"))
+        _ (assert (map? example-timings))
+        _ (assert (seq example-timings))
+        example-nses (-> example-timings keys sort vec)]
+    (doseq [nsplits (range 1 15)]
+      (let [all-splits (for [id (range nsplits)]
+                         (binding [*out* (java.io.PrintWriter.
+                                           ;; JDK11+
+                                           (java.io.OutputStream/nullOutputStream))]
+                           (this-split-using-scheduling-with-full-knowledge
+                             example-timings
+                             [id nsplits]
+                             example-nses)))
+            sorted-example-nses (sort example-nses)
+            sorted-all-splits (sort (apply concat all-splits))]
+        (assert (= sorted-example-nses
+                   sorted-all-splits)
+                {:sorted-all-splits sorted-all-splits
+                 :sorted-example-nses sorted-example-nses})))))
+
+;; run temporary test suite
+(this-split-using-scheduling-with-full-knowledge-unit-tests)
+
+(defn nses-for-this-build [split-info nsyms]
+  {:pre [(vector? nsyms)]}
+  (if-some [timings (some-> (io/resource "ctia_test_timings.edn")
+                            slurp
+                            read-string)]
+    (do (println "[ctia.dev.split-tests] Splitting with prior knowledge from dev-resources/ctia_test_timings.edn")
+        (this-split-using-scheduling-with-full-knowledge timings split-info nsyms))
+    (do (println "[ctia.dev.split-tests] Splitting via `slow-namespace?` heuristic")
+        (this-split-using-slow-namespace-heuristic split-info nsyms))))
+
 (defn wait-docker []
   (when (System/getenv "CTIA_WAIT_DOCKER")
     (println "[ctia.dev.split-tests] Waiting for docker...")
-    ; Wait ES
-    (sh/sh "bash" "-c" "until curl http://127.0.0.1:9200/; do sleep 1; done")
-    ; Wait Kafka
-    (sh/sh "bash" "-c" "until echo dump | nc 127.0.0.1 2181 | grep brokers; do sleep 1; done")
-    (println "[ctia.dev.split-tests] Docker initialized.")))
+    (let [assert-sh (fn [{:keys [exit out err] :as res} msg]
+                      (when-not (zero? exit)
+                        (throw (ex-info (str msg
+                                             "\nExit: " exit
+                                             "\nOut:\n" out
+                                             "\nErr:\n" err)
+                                        {:res res}))))
+          timeout-seconds 120
+          exit-if-too-long (str "if [[ " timeout-seconds " -le $SECONDS ]]; then "
+                                "  echo \"timeout during connection attempt (waited ${SECONDS} seconds)\"; "
+                                "  exit 1; "
+                                "fi ")
+          wait-es (fn [version]
+                    (-> (sh/sh "bash" "-c"
+                               (str "set +e; "
+                                    "SECONDS=0; "
+                                    (format "until curl http://127.0.0.1:920%s; do sleep 1; " version)
+                                    exit-if-too-long " ; done"))
+                        (assert-sh "Error connecting to docker")))]
+      (wait-es 0)
+      ;; uncomment for port 9205
+      #_
+      (wait-es 5)
+      ;; uncomment for port 9207
+      #_
+      (wait-es 7)
+      ; Wait Kafka
+      (-> (sh/sh "bash" "-c"
+                 (str "set +e; "
+                      "SECONDS=0; "
+                      "until echo dump | nc 127.0.0.1 2181 | grep brokers; do sleep 1; " exit-if-too-long " ; done"))
+          (assert-sh "Error connecting to kafaka"))
+      (println "[ctia.dev.split-tests] Docker initialized."))))
 
 ;Derived from https://github.com/circleci/circleci.test/blob/master/src/circleci/test.clj
 ;
@@ -140,9 +264,11 @@
          [this-split total-splits :as split-config] (read-env-config)
          all-nses (vec (@#'t/nses-in-directories (read-string dirs-str)))
          nses (vec (nses-for-this-build split-config all-nses))
-         ;; Note: changed from circleci.test: removed :reload for more reliable tests
-         _ (apply require #_:reload nses)
-         selector (@#'t/lookup-selector (t/read-config!) (read-string selector-str))
+         _ (when (seq nses)
+             ;; Note: changed from circleci.test: removed :reload for more reliable tests
+             (apply require #_:reload nses))
+         config (t/read-config!)
+         selector (@#'t/lookup-selector config (read-string selector-str))
          _ (if (#{[0 1]} split-config)
              (println "[ctia.dev.split-tests] Running all tests")
              (do 
@@ -157,6 +283,11 @@
                       (count nses) " of " (count all-nses) " test namespaces: "
                       nses))))
          _ (wait-docker)
-         summary (@#'t/run-selected-tests selector nses)]
+         summary (if (seq nses)
+                   (@#'t/run-selected-tests selector nses config)
+                   (do
+                     (println "\nNo tests to run.")
+                     (shutdown-agents)
+                     (System/exit 1)))]
      (shutdown-agents)
      (System/exit (+ (:error summary) (:fail summary))))))

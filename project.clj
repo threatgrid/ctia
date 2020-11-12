@@ -64,7 +64,7 @@
                  [metosin/schema-tools "0.12.2"]
                  [threatgrid/flanders "0.1.23"]
 
-                 [threatgrid/ctim "1.0.21"]
+                 [threatgrid/ctim "1.0.22"]
                  [threatgrid/clj-momo "0.3.5"]
                  [threatgrid/ductile "0.1.0"]
 
@@ -160,7 +160,8 @@
                        ['clj-http-fake clj-http-fake-version]
                        ['prismatic/schema-generators schema-generators-version]
                        ['circleci/circleci.test "0.4.3"]
-                       ['org.clojure/math.combinatorics "0.1.6"]]
+                       ['org.clojure/math.combinatorics "0.1.6"]
+                       ['org.clojure/data.priority-map "1.0.0"]]
                       bench-deps)
                    :pedantic? :warn
 
