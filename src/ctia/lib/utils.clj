@@ -178,16 +178,16 @@
   "Like assoc, except only associates keys contained in m.
   Note: for duplicate keys in kv, last wins.
   
-  (assoc-new-keys m k v ...) is like (into {k v ...} m)
+  (assoc-new-keys m k v ...) is like (into (hash-map k v ...) m)
   except does not traverse m -- useful when m is larger
   than the number of kv's."
   [m & kv]
-  (when-not (even? (count kv))
-    (throw (ex-info "Uneven kv passed to assoc-new-keys"
-                    {:m m
-                     :kv kv})))
-  (reduce (fn [inner-m [k v]]
+  (reduce (fn [inner-m [k & [v :as has-v]]]
+            (when-not has-v
+              (throw (ex-info "Uneven kv passed to assoc-new-keys"
+                              {:m m
+                               :kv kv})))
             (cond-> inner-m
               (not (contains? m k)) (assoc k v)))
           m
-          (partition 2 kv)))
+          (partition-all 2 kv)))
