@@ -31,7 +31,7 @@ env:
       # across org
       - CTIA_NSPLITS=5
       # test future clojure releases
-      - CLOJURE_NEXT=1.10.2-alpha3
+      - CLOJURE_NEXT=1.10.2-alpha4
 
 # Cache our Maven deps to be kind to clojars, github, docker images
 cache:
