@@ -120,7 +120,7 @@
     (update-fn state id $ ident params)
     (es-stored-sighting->stored-sighting $)))
 
-(def handle-delete (crud/handle-delete :sighting))
+(def handle-delete (crud/handle-delete :sighting StoredSighting))
 
 (s/defn es-paginated-list->paginated-list
   :- PartialStoredSightingList

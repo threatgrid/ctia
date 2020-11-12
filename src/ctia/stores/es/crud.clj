@@ -2,6 +2,8 @@
   (:require [ductile
              [document :as ductile.doc]
              [query :as q]]
+            [clj-momo.lib.es
+             [document :as d]]
             [clojure.string :as string]
             [ctia.domain.access-control
              :refer
@@ -27,12 +29,12 @@
   "Prepare ES Params for read operations, setting the _source field
    and including ACL mandatory ones."
   [{:keys [fields]
-    :as es-params}]
+    :as params}]
   (if (coll? fields)
-    (-> es-params
+    (-> params
         (assoc :_source (concat fields acl-fields))
         (dissoc :fields))
-    es-params))
+    params))
 
 (defn coerce-to-fn
   [Model]
@@ -98,12 +100,12 @@
 It returns the documents with full hits meta data including the real index in which is stored the document."
   [{:keys [conn index]} :- ESConnState
    ids :- [s/Str]
-   es-params]
+   params]
   (let [ids-query (q/ids (map ensure-document-id ids))
         res (ductile.doc/query conn
                                index
                                ids-query
-                               (assoc (make-es-read-params es-params)
+                               (assoc (make-es-read-params params)
                                       :full-hits?
                                       true))]
     (:data res)))
@@ -113,64 +115,58 @@ It returns the documents with full hits meta data including the real index in wh
  It returns the document with full hits meta data including the real index in which is stored the document."
   [conn-state :- ESConnState
    _id :- s/Str
-   es-params]
-  (first (get-docs-with-indices conn-state [_id] es-params)))
-
-
-(defn ^:private prepare-opts
-  [{:keys [props]}
-   {:keys [refresh]}]
-  {:refresh (or refresh
-                (:refresh props)
-                "false")})
+   params]
+  (first (get-docs-with-indices conn-state [_id] params)))
 
 (defn handle-create
   "Generate an ES create handler using some mapping and schema"
   [mapping Model]
   (let [coerce! (coerce-to-fn (s/maybe Model))]
     (s/fn :- (s/maybe [Model])
-      [{:keys [conn props] :as conn-state} :- ESConnState
-       docs :- [Model]
+      [{:keys [props] :as state} :- ESConnState
+       models :- [Model]
        _ident
-       es-params]
-      (let [prepare-doc #(assoc %
-                                :_id (:id %)
-                                :_index (:write-index props)
-                                :_type (name mapping))]
-        (try
-          (map #(build-create-result % coerce!)
-               (ductile.doc/bulk-create-doc conn
-                                            (map prepare-doc docs)
-                                            (prepare-opts conn-state es-params)))
-          (catch Exception e
-            (throw
-             (if-let [ex-data (ex-data e)]
-               ;; Add partial results to the exception data map
-               (ex-info (.getMessage e)
-                        (partial-results ex-data docs coerce!))
-               e))))))))
+       {:keys [refresh]}]
+      (try
+        (map #(build-create-result % coerce!)
+             (d/bulk-create-doc (:conn state)
+                                (map #(assoc %
+                                             :_id (:id %)
+                                             :_index (:write-index props)
+                                             :_type (name mapping))
+                                     models)
+                                (or refresh
+                                    (:refresh props "false"))))
+        (catch Exception e
+          (throw
+           (if-let [ex-data (ex-data e)]
+             ;; Add partial results to the exception data map
+             (ex-info (.getMessage e)
+                      (partial-results ex-data models coerce!))
+             e)))))))
 
 (defn handle-update
   "Generate an ES update handler using some mapping and schema"
   [mapping Model]
   (let [coerce! (coerce-to-fn (s/maybe Model))]
     (s/fn :- (s/maybe Model)
-      [{:keys [conn] :as conn-state} :- ESConnState
+      [state :- ESConnState
        id :- s/Str
        realized :- Model
        ident
-       es-params]
+       {:keys [refresh]}]
       (when-let [{index :_index current-doc :_source}
-                 (get-doc-with-index conn-state id {})]
+                 (get-doc-with-index state id {})]
         (if (allow-write? current-doc ident)
-          (let [update-doc (assoc realized
-                                  :id (ensure-document-id id))]
-            (ductile.doc/index-doc conn
-                                   index
-                                   (name mapping)
-                                   update-doc
-                                   (prepare-opts conn-state es-params))
-            (coerce! update-doc))
+          (coerce! (d/index-doc (:conn state)
+                                index
+                                (name mapping)
+                                (assoc realized
+                                       :id (ensure-document-id id))
+                                (or refresh
+                                    (get-in state
+                                            [:props :refresh]
+                                            "false"))))
           (throw (ex-info "You are not allowed to update this document"
                           {:type :access-control-error})))))))
 
@@ -181,14 +177,14 @@ It returns the documents with full hits meta data including the real index in wh
     (s/fn :- (s/maybe Model)
       [{{{:keys [get-in-config]} :ConfigService}
         :services
-        :as conn-state}
+        :as state}
        :- ESConnState
        id :- s/Str
        ident
-       es-params]
-      (when-let [doc (-> (get-doc-with-index conn-state
+       params]
+      (when-let [doc (-> (get-doc-with-index state
                                              id
-                                             (make-es-read-params es-params))
+                                             (make-es-read-params params))
                          :_source
                          coerce!)]
         (if (allow-read? doc ident get-in-config)
@@ -203,30 +199,33 @@ It returns the documents with full hits meta data including the real index in wh
 
 (defn handle-delete
   "Generate an ES delete handler using some mapping and schema"
-  [mapping]
+  [mapping _Model]
   (s/fn :- s/Bool
-    [{:keys [conn] :as conn-state} :- ESConnState
+    [state :- ESConnState
      id :- s/Str
      ident
-     es-params]
+     {:keys [refresh]}]
     (when-let [{index :_index doc :_source}
-               (get-doc-with-index conn-state id {})]
+               (get-doc-with-index state id {})]
       (if (allow-write? doc ident)
-        (ductile.doc/delete-doc conn
-                                index
-                                (name mapping)
-                                (ensure-document-id id)
-                                (prepare-opts conn-state es-params))
+        (d/delete-doc (:conn state)
+                      index
+                      (name mapping)
+                      (ensure-document-id id)
+                      (or refresh
+                          (get-in state
+                                  [:props :refresh]
+                                  "false")))
         (throw (ex-info "You are not allowed to delete this document"
                         {:type :access-control-error}))))))
 
 (def default-sort-field "_doc,id")
 
 (defn with-default-sort-field
-  [es-params]
-  (if (contains? es-params :sort_by)
-    es-params
-    (assoc es-params :sort_by default-sort-field)))
+  [params]
+  (if (contains? params :sort_by)
+    params
+    (assoc params :sort_by default-sort-field)))
 
 (s/defschema FilterSchema
   (st/optional-keys
@@ -269,7 +268,7 @@ It returns the documents with full hits meta data including the real index in wh
 
 (defn rename-sort-fields
   "Renames sort fields based on the content of the `sort-fields-mapping` table."
-  [{:keys [sort_by] :as es-params}]
+  [{:keys [sort_by] :as params}]
   (if-let [updated-sort-by
            (some->> sort_by
                     parse-sort-by
@@ -277,8 +276,8 @@ It returns the documents with full hits meta data including the real index in wh
                            (assoc field 0
                                   (get sort-fields-mapping field-name field-name))))
                     format-sort-by)]
-    (assoc es-params :sort_by updated-sort-by)
-    es-params))
+    (assoc params :sort_by updated-sort-by)
+    params))
 
 (defn handle-find
   "Generate an ES find/list handler using some mapping and schema"
@@ -286,13 +285,12 @@ It returns the documents with full hits meta data including the real index in wh
   (let [response-schema (list-response-schema Model)
         coerce! (coerce-to-fn response-schema)]
     (s/fn :- response-schema
-      [{{{:keys [get-in-config]} :ConfigService} :services
-        :keys [conn index]
-        :as conn-state} :- ESConnState
+      [{{{:keys [get-in-config]} :ConfigService}
+        :services :as state} :- ESConnState
        {:keys [all-of one-of query]
         :or {all-of {} one-of {}}} :- FilterSchema
        ident
-       es-params]
+       params]
       (let [filter-val (cond-> (q/prepare-terms all-of)
                          (restricted-read? ident)
                          (conj (find-restriction-query-part ident get-in-config)))
@@ -303,10 +301,10 @@ It returns the documents with full hits meta data including the real index in wh
                                         {:should (q/prepare-terms one-of)
                                          :minimum_should_match 1})
                           query (update :filter conj query_string))]
-        (cond-> (coerce! (ductile.doc/query conn
-                                            index
+        (cond-> (coerce! (ductile.doc/query (:conn state)
+                                            (:index state)
                                             (q/bool bool-params)
-                                            (-> es-params
+                                            (-> params
                                                 rename-sort-fields
                                                 with-default-sort-field
                                                 make-es-read-params)))
@@ -314,6 +312,7 @@ It returns the documents with full hits meta data including the real index in wh
                                            access-control-filter-list
                                            ident
                                            get-in-config))))))
+
 
 (s/defn make-search-query
   [{{:keys [default_operator]} :props
@@ -347,12 +346,12 @@ It returns the documents with full hits meta data including the real index in wh
         :as es-conn-state} :- ESConnState
        {:keys [filter-map] :as search-query} :- SearchQuery
        ident
-       es-params]
+       params]
       (let [query (make-search-query es-conn-state search-query ident)]
         (cond-> (coerce! (ductile.doc/query conn
                                   index
                                   query
-                                  (-> es-params
+                                  (-> params
                                       rename-sort-fields
                                       with-default-sort-field
                                       make-es-read-params)))

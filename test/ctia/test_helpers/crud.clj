@@ -93,8 +93,8 @@
                                        (boolean? wait_for) (str "?wait_for=" wait_for))
                                 updates (cond->> {update-field "modified"}
                                           (= :PUT method-kw) (into new-record))
-                                es-index-uri-pattern (re-pattern (str ".*920.*" entity-id ".*"))]
-                            (with-global-fake-routes {es-index-uri-pattern {:post simple-handler}}
+                                es-index-uri-pattern (re-pattern (str ".*9200.*" entity-id ".*"))]
+                            (with-global-fake-routes {es-index-uri-pattern {:put simple-handler}}
                               (method app
                                       path
                                       :body updates
@@ -129,7 +129,7 @@
                                                     :headers headers)
                                               :parsed-body
                                               entity->short-id)
-                                es-index-uri-pattern (re-pattern (str ".*920.*" entity-id ".*"))
+                                es-index-uri-pattern (re-pattern (str ".*9200.*" entity-id ".*"))
                                 path (cond-> (format "ctia/%s/%s" entity entity-id)
                                        (boolean? wait_for) (str "?wait_for=" wait_for))]
                             (with-global-fake-routes {es-index-uri-pattern {:delete simple-handler}}

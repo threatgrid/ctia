@@ -1,14 +1,12 @@
 (ns ctia.http.server-test
-  (:require [schema.test :refer [validate-schemas]]
+  (:require [clj-momo.test-helpers.core :as mth]
             [ctia.http.server :as sut]
             [ctia.test-helpers
              [core :as helpers :refer [GET with-properties]]
              [es :as es-helpers]]
             [clojure.test :refer [deftest is testing use-fixtures]]))
 
-(use-fixtures :each
-  es-helpers/fixture-properties:es-store
-  validate-schemas)
+(use-fixtures :once mth/fixture-schema-validation)
 
 (deftest parse-external-endpoints-test
   (is (nil? (sut/parse-external-endpoints nil)))

@@ -9,44 +9,59 @@
 ;; even in different entities.
 
 (def float-type
-  {:type "float"})
+  {:type "float"
+   :include_in_all false})
 
 (def long-type
-  {:type "long"})
+  {:type "long"
+   :include_in_all false})
 
 (def boolean-type
-  {:type "boolean"})
+  {:type "boolean"
+   :include_in_all false})
 
 (def integer-type
-  {:type "integer"})
+  {:type "integer"
+   :include_in_all false})
 
 (def ts
   "A mapping for our timestamps, which should all be ISO8601 format"
   {:type "date"
+   :include_in_all false
    :format "date_time"})
 
 (def text
   "A mapping for free text, or markdown, fields.  They will be
   analyzed and treated like prose."
   {:type "text"
+   :include_in_all false
    :analyzer "text_analyzer"
    :search_quote_analyzer "text_analyzer"
    :search_analyzer "search_analyzer"})
+
+(def all_text
+  "The same as the `text` maping, but will be included in the _all field"
+  (assoc text :include_in_all true))
 
 (def token
   "A mapping for fields whose value should be treated like a symbol.
   They will not be analyzed, and they will be lowercased."
   {:type "keyword"
+   :include_in_all false
    :normalizer "lowercase_normalizer"})
 
-(def sortable-text
-  (assoc text
+(def all_token
+  "The same as the `token` mapping, but will be included in the _all field"
+  (assoc token :include_in_all true))
+
+(def sortable-all-text
+  (assoc all_text
          :fields {:whole token}))
 
 (def external-reference
   {:properties
    {:source_name token
-    :description text
+    :description all_text
     :url token
     :hashes token
     :external_id token}})
@@ -63,9 +78,9 @@
    :tlp token})
 
 (def describable-entity-mapping
-  {:title sortable-text
-   :short_description text
-   :description text})
+  {:title sortable-all-text
+   :short_description all_text
+   :description all_text})
 
 (def sourcable-entity-mapping
   {:source token
@@ -127,7 +142,7 @@
   {:type "object"
    :properties
    {:type token
-    :value token}})
+    :value all_token}})
 
 (def identity
   {:dynamic false
@@ -136,23 +151,23 @@
 
 (def assertion
   {:properties
-   {:name token
-    :value text}})
+   {:name all_token
+    :value all_text}})
 
 (def related-identities
   {:properties (assoc related
-                      :identity token
+                      :identity all_token
                       :information_source token)})
 
 (def tg-identity
   {:properties
-   {:description text
+   {:description all_text
     :related_identities related-identities}})
 
 (def activity
   {:properties
    {:date_time ts
-    :description text}})
+    :description all_text}})
 
 (def incident-time
   {:properties
@@ -215,6 +230,7 @@
     :origin_uri token
     :relation token
     :relation_info {:type "object"
+                    :include_in_all false
                     :dynamic true}
     :source observable
     :related observable}})
@@ -246,6 +262,7 @@
 
 (def embedded-data-table
   {:dynamic false
+   :include_in_all false
    :properties
    {:row_count {:type "long"}
     :columns {:enabled false}
