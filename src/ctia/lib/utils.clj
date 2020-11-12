@@ -176,7 +176,7 @@
 
 (defn assoc-new-keys
   "Like assoc, except only associates keys that
-  are contained in orig-m. Note: for duplicate keys in kv,
+  are contained in m. Note: for duplicate keys in kv,
   last wins."
   [m & kv]
   (assert (even? (count kv)))
