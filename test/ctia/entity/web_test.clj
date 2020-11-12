@@ -7,7 +7,7 @@
             [clj-momo.test-helpers.core :as mth]
             [clj-time.core :as t]
             [clojure.data.json :as json]
-            [clojure.test :refer [deftest is join-fixtures testing use-fixtures]]
+            [clojure.test :refer [deftest is testing use-fixtures join-fixtures]]
             [clojure.tools.logging.test :as tlog]
             [ctia.domain.entities :refer [schema-version]]
             [ctia.test-helpers
@@ -18,12 +18,13 @@
              [store :refer [test-for-each-store-with-app]]]
             [ctim.domain.id :as id]
             [ring.adapter.jetty :as jetty]
-            [schema.core :as s]))
+            [schema.core :as s]
+            [schema.test :refer [validate-schemas]]))
 
-(use-fixtures :once mth/fixture-schema-validation)
-
-(use-fixtures :each (join-fixtures [helpers/fixture-properties:cors
-                                    whoami-helpers/fixture-server]))
+(use-fixtures :each
+  validate-schemas
+  helpers/fixture-properties:cors
+  whoami-helpers/fixture-server)
 
 (def new-judgement-1
   {:observable {:value "1.2.3.4"
@@ -354,23 +355,17 @@
            (is (= 201 status))
            (tst-fn ctx)))))))
 
-(defn get-free-port
-  "find a free port that could be used to start a new server."
-  []
-  (let [socket (java.net.ServerSocket. 0)]
-    (.close socket)
-    (.getLocalPort socket)))
-
 (defn with-server
   "Start tst-fn function while handler is started as a server.
   The tst-fn should be a function that takes the port as parameter."
   [handler tst-fn]
-  (let [port (get-free-port)
-        s (jetty/run-jetty handler {:port port
+  (let [s (jetty/run-jetty handler {:port 0
                                     :join? false
                                     :min-threads 2})]
-    (tst-fn port)
-    (.stop s)))
+    (try
+      (tst-fn (-> s .getURI .getPort))
+      (finally
+        (.stop s)))))
 
 (deftest jwt-http-checks-server-down-test
   (let [url-1 "https://jwt.check-1/check"

@@ -11,7 +11,7 @@
             [schema-tools.core :as st]
             [schema.core :as s]
             [ctia.schemas.core
-             :refer [TLP]]))
+             :refer [HTTPShowServices TLP]]))
 
 (def files
   "Property file names, they will be merged, with last one winning"
@@ -35,7 +35,10 @@
    (str prefix store ".rollover.max_age") s/Str
    (str prefix store ".aliased")  s/Bool
    (str prefix store ".default_operator") (s/enum "OR" "AND")
-   (str prefix store ".timeout") s/Num})
+   (str prefix store ".timeout") s/Num
+   (str prefix store ".version") s/Num
+   (str prefix store ".update-mappings")  s/Bool
+   (str prefix store ".update-settings")  s/Bool})
 
 (s/defschema StorePropertiesSchema
   "All entity store properties for every implementation"
@@ -225,8 +228,11 @@
                        a))
     @a))
 
-(defn get-http-show [get-in-config]
-  (get-in-config [:ctia :http :show]))
+(s/defn get-http-show [{{:keys [get-in-config]} :ConfigService
+                        {:keys [get-port]} :CTIAHTTPServerService} :- HTTPShowServices]
+  (let [config (get-in-config [:ctia :http :show])]
+    (cond-> config
+      (zero? (:port config)) (assoc :port (get-port)))))
 
 (defn get-http-swagger [get-in-config]
   (get-in-config [:ctia :http :swagger]))

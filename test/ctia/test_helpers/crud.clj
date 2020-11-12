@@ -11,6 +11,7 @@
             [ctia.test-helpers
              [core :as helpers
               :refer [DELETE entity->short-id GET PATCH POST PUT]]
+             [http :refer [app->HTTPShowServices]]
              [search :refer [test-query-string-search]]]
             [ctim.domain.id :as id]))
 
@@ -92,8 +93,8 @@
                                        (boolean? wait_for) (str "?wait_for=" wait_for))
                                 updates (cond->> {update-field "modified"}
                                           (= :PUT method-kw) (into new-record))
-                                es-index-uri-pattern (re-pattern (str ".*9200.*" entity-id ".*"))]
-                            (with-global-fake-routes {es-index-uri-pattern {:put simple-handler}}
+                                es-index-uri-pattern (re-pattern (str ".*920.*" entity-id ".*"))]
+                            (with-global-fake-routes {es-index-uri-pattern {:post simple-handler}}
                               (method app
                                       path
                                       :body updates
@@ -128,7 +129,7 @@
                                                     :headers headers)
                                               :parsed-body
                                               entity->short-id)
-                                es-index-uri-pattern (re-pattern (str ".*9200.*" entity-id ".*"))
+                                es-index-uri-pattern (re-pattern (str ".*920.*" entity-id ".*"))
                                 path (cond-> (format "ctia/%s/%s" entity entity-id)
                                        (boolean? wait_for) (str "?wait_for=" wait_for))]
                             (with-global-fake-routes {es-index-uri-pattern {:delete simple-handler}}
@@ -187,7 +188,7 @@
       (is (= expected post-record))
 
       (testing (format "the %s ID has correct fields" entity)
-        (let [show-props (get-http-show get-in-config)]
+        (let [show-props (get-http-show (app->HTTPShowServices app))]
           (is (= (:hostname record-id)    (:hostname show-props)))
           (is (= (:protocol record-id)    (:protocol show-props)))
           (is (= (:port record-id)        (:port show-props)))

@@ -182,13 +182,16 @@
           exit-if-too-long (str "if [[ " timeout-seconds " -le $SECONDS ]]; then "
                                 "  echo \"timeout during connection attempt (waited ${SECONDS} seconds)\"; "
                                 "  exit 1; "
-                                "fi ")]
-      ; Wait ES
-      (-> (sh/sh "bash" "-c"
-                 (str "set +e; "
-                      "SECONDS=0; "
-                      "until curl http://127.0.0.1:9200; do sleep 1; " exit-if-too-long " ; done"))
-          (assert-sh "Error connecting to docker"))
+                                "fi ")
+          wait-es (fn [version]
+                    (-> (sh/sh "bash" "-c"
+                               (str "set +e; "
+                                    "SECONDS=0; "
+                                    (format "until curl http://127.0.0.1:920%s; do sleep 1; " version)
+                                    exit-if-too-long " ; done"))
+                        (assert-sh "Error connecting to docker")))]
+      (wait-es 5)
+      (wait-es 7)
       ; Wait Kafka
       (-> (sh/sh "bash" "-c"
                  (str "set +e; "

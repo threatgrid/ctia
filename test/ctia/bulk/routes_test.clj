@@ -18,6 +18,7 @@
              [auth :refer [all-capabilities]]
              [core :as helpers :refer [GET POST]]
              [fake-whoami-service :as whoami-helpers]
+             [http :refer [app->HTTPShowServices]]
              [store :refer [test-for-each-store-with-app
                             test-selected-stores-with-app]]]
             [ctim.domain.id :as id]
@@ -282,7 +283,7 @@
                             :body new-bulk
                             :headers {"Authorization" "45c1f5e3f05d0"})
              bulk-ids (:parsed-body response)
-             show-props (get-http-show get-in-config)]
+             show-props (get-http-show (app->HTTPShowServices app))]
          (is (= 201 (:status response)))
 
          (doseq [type (keys new-bulk)]

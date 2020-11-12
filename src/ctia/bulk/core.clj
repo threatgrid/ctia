@@ -66,15 +66,14 @@
 (s/defn create-entities
   "Create many entities provided their type and returns a list of ids"
   [new-entities entity-type tempids auth-identity params
-   {{:keys [get-in-config]} :ConfigService
-    :as services} :- APIHandlerServices]
+   services :- APIHandlerServices]
   (when (seq new-entities)
     (update (flows/create-flow
              :services services
              :entity-type entity-type
              :realize-fn (-> entities entity-type :realize-fn)
              :store-fn (create-fn entity-type auth-identity params services)
-             :long-id-fn #(with-long-id % get-in-config)
+             :long-id-fn #(with-long-id % services)
              :enveloped-result? true
              :identity auth-identity
              :entities new-entities
@@ -97,13 +96,12 @@
 (s/defn read-entities
   "Retrieve many entities of the same type provided their ids and common type"
   [ids entity-type auth-identity
-   {{:keys [get-in-config]} :ConfigService
-    :as services} :- ReadEntitiesServices]
+   services :- ReadEntitiesServices]
   (let [read-entity (read-fn entity-type auth-identity {} services)]
     (map (fn [id]
            (try
              (some-> (read-entity id)
-                     (with-long-id get-in-config))
+                     (with-long-id services))
              (catch Exception e
                (do (log/error (pr-str e))
                    nil)))) ids)))

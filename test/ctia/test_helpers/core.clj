@@ -1,6 +1,5 @@
 (ns ctia.test-helpers.core
-  (:require [clj-momo.lib.net :as net]
-            [clj-momo.properties :refer [coerce-properties read-property-files]]
+  (:require [clj-momo.properties :refer [coerce-properties read-property-files]]
             [clj-momo.test-helpers.http :as mthh]
             [clojure
              [walk :refer [prewalk]]]
@@ -19,6 +18,7 @@
             [ctia.auth.allow-all :as aa]
             [ctia.encryption :as encryption]
             [ctia.flows.crud :as crud]
+            [ctia.schemas.core :refer [HTTPShowServices Port]]
             [ctim.domain.id :as id]
             [ctim.generators.common :as cgc]
             [flanders
@@ -241,10 +241,7 @@
     enable-http?]
    ;; Start CTIA
    ;; This starts the server on an available port (if enabled)
-   (let [http-port
-         (if enable-http?
-           (net/available-port)
-           3000)]
+   (let [http-port 0]
      (with-properties ["ctia.http.enabled" enable-http?
                        "ctia.http.port" http-port
                        "ctia.http.show.port" http-port]
@@ -254,10 +251,10 @@
                             ;; dynamic requires can be removed when #'with-properties is phased out or moved
                             (assoc
                               :ThreatgridAuthWhoAmIURLService
-                              @(requiring-resolve 
+                              @(requiring-resolve
                                  'ctia.test-helpers.fake-whoami-service/fake-threatgrid-auth-whoami-url-service)
                               :IFakeWhoAmIServer
-                              @(requiring-resolve 
+                              @(requiring-resolve
                                  'ctia.test-helpers.fake-whoami-service/fake-whoami-service)))
              app (init/start-ctia!*
                    {:services (vals services-map)
@@ -323,10 +320,10 @@
                 (let [~app (get-current-app)]
                   ~@body)))))))
 
-(s/defn get-http-port :- s/Int
+(s/defn get-http-port :- Port
   [app]
-  (let [{{:keys [get-in-config]} :ConfigService} (app/service-graph app)]
-    (get-in-config [:ctia :http :port])))
+  (let [{{:keys [get-port]} :CTIAHTTPServerService} (app/service-graph app)]
+    (get-port)))
 
 (s/defn GET [app path :- s/Str & kw-options]
   (apply (mthh/with-port-fn (partial get-http-port app) mthh/get)
@@ -338,14 +335,19 @@
          path
          kw-options))
 
-(defn POST-bulk [app examples]
-  (let [{bulk-res :parsed-body}
-        (POST app
-              "ctia/bulk"
-              :body examples
-              :socket-timeout (* 5 60000)
-              :headers {"Authorization" "45c1f5e3f05d0"})]
-    bulk-res))
+(defn POST-bulk
+  ([app examples] (POST-bulk app examples true))
+  ([app examples check?]
+   (let [{{:keys [error message] :as bulk-res} :parsed-body}
+         (POST app
+               "ctia/bulk"
+               :body examples
+               :socket-timeout (* 5 60000)
+               :headers {"Authorization" "45c1f5e3f05d0"})]
+     (when check?
+       (assert (nil? error)
+               (format "POST-bulk error: %s, message: \"%s\"" error message)))
+     bulk-res)))
 
 (defn POST-entity-bulk [app example plural x headers]
   (let [new-records
@@ -397,13 +399,13 @@
   (with-redefs [gen/vector cgc/vector]
     (t)))
 
-(defn make-id
+(s/defn make-id
   "Make a long style ID using CTIA code (eg with a random UUID).
   Returns an ID object."
-  [type-kw get-in-config]
+  [type-kw services :- HTTPShowServices]
   (id/->id type-kw
            (crud/make-id (name type-kw))
-           (get-in-config [:ctia :http :show])))
+           (p/get-http-show services)))
 
 (defn entity->short-id
   [entity]
@@ -411,14 +413,14 @@
       id/long-id->id
       :short-id))
 
-(defn url-id
-  ([type-kw get-in-config]
-   (url-id (crud/make-id (name type-kw)) type-kw get-in-config))
-  ([short-id type-kw get-in-config]
+(s/defn url-id
+  ([type-kw services :- HTTPShowServices]
+   (url-id (crud/make-id (name type-kw)) type-kw services))
+  ([short-id type-kw services :- HTTPShowServices]
    (id/long-id
     (id/short-id->id (name type-kw)
                      short-id
-                     (get-in-config [:ctia :http :show])))))
+                     (p/get-http-show services)))))
 
 (def zero-uuid "00000000-0000-0000-0000-000000000000")
 
