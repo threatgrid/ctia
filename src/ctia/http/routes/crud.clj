@@ -33,24 +33,23 @@
                                     CardinalityParams
                                     TopnParams
                                     MetricResult]]
-   [ctia.lib.utils :refer [assoc-new-keys]]
    [ring.util.http-response :refer [no-content not-found ok]]
    [ring.swagger.schema :refer [describe]]
    [schema.core :as s]
    [schema-tools.core :as st]))
 
 (defn fill-entity-crud-config-defaults [entity-crud-config]
-  (assoc-new-keys
-    entity-crud-config
-    :hide-delete? false
-    :can-post? true
-    :can-update? true
-    :can-patch? false
-    :can-search? true
-    :can-aggregate? false
-    :can-get-by-external-id? true
-    :date-field :created
-    :histogram-fields [:created]))
+  (into
+    {:hide-delete? false
+     :can-post? true
+     :can-update? true
+     :can-patch? false
+     :can-search? true
+     :can-aggregate? false
+     :can-get-by-external-id? true
+     :date-field :created
+     :histogram-fields [:created]}
+    entity-crud-config))
 
 (s/defn capitalize-entity [entity :- (s/pred simple-keyword?)]
   (-> entity name capitalize))

@@ -75,18 +75,3 @@
             {:a {:b 1}}
             :a [:b]
             :a [:b])))))
-
-(deftest assoc-new-keys-test
-  (is (= (sut/assoc-new-keys {})
-         {}))
-  (is (= (sut/assoc-new-keys {:a 1} :a 2)
-         {:a 1}))
-  (is (= (sut/assoc-new-keys {:b 1} :a 2)
-         {:a 2
-          :b 1}))
-  (is (= (sut/assoc-new-keys {} :a 1 :a 2 :a 3 :a 4)
-         {:a 4}))
-  (is (thrown-with-msg?
-        clojure.lang.ExceptionInfo
-        #"Uneven kv passed to assoc-new-keys"
-        (sut/assoc-new-keys {} :a))))
