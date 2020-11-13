@@ -25,7 +25,8 @@
            update-field
            update-tests?
            patch-tests?
-           revoke-tests?]
+           revoke-tests?
+           revoke-tests-extra-query-params]
     :or {update-field :title
          update-tests? true
          patch-tests? false}}]
@@ -151,9 +152,12 @@
                                   path (cond-> (format "ctia/%s/%s/expire" entity entity-id)
                                          (boolean? wait_for) (str "?wait_for=" wait_for))]
                               (with-global-fake-routes {es-index-uri-pattern {:put simple-handler}}
-                                (POST app
-                                      path
-                                      :headers headers))
+                                (apply POST
+                                       app
+                                       path
+                                       :headers headers
+                                       (when revoke-tests-extra-query-params
+                                         [:query-params revoke-tests-extra-query-params])))
                               (check-refresh wait_for msg)))]
           (test-revoke true
                        (str "Revoke queries should wait for index refresh when "
@@ -180,7 +184,8 @@
            search-tests?
            additional-tests
            search-value
-           revoke-tests?]
+           revoke-tests?
+           revoke-tests-extra-query-params]
     :or {invalid-tests? true
          invalid-test-field :title
          update-field :title
@@ -279,10 +284,12 @@
                 (helpers/fixture-with-fixed-time
                   fixed-now
                   (fn []
-                    (let [response (helpers/POST
-                                     app
-                                     (format "ctia/%s/%s/expire" entity (:short-id record-id))
-                                     :headers headers)]
+                    (let [response (apply helpers/POST
+                                          app
+                                          (format "ctia/%s/%s/expire" entity (:short-id record-id))
+                                          :headers headers
+                                          (when revoke-tests-extra-query-params
+                                            [:query-params revoke-tests-extra-query-params]))]
                       (is (= 200 (:status response))
                           (format "POST %s/:id/expire succeeds" entity))
                       (is (= fixed-now (-> response :parsed-body :valid_time :end_time))
