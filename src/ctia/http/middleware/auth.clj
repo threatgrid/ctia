@@ -58,17 +58,6 @@
                                  :capabilities required-capability
                                  :owner (auth/login id)}))))
 
-(defn req->auth-identity [req]
-  (:identity req))
-
-(defn req->identity-map [req]
-  (auth/ident->map
-    (req->auth-identity req)))
-
-(defn capabilities! [req capabilities]
-  (require-capability! capabilities
-                       (req->auth-identity req)))
-
 ;; Create a compojure-api meta-data handler for capability-based
 ;; security. The :identity field must by on the request object
 ;; already, put there by the wrap-authentication middleware. This
@@ -77,8 +66,8 @@
 ;; https://github.com/metosin/compojure-api/wiki/Creating-your-own-metadata-handlers
 (defmethod meta/restructure-param :capabilities [_ capabilities acc]
   (update acc :lets into
-          ['_ `(capabilities! ~'+compojure-api-request+
-                              ~capabilities)]))
+          ['_ `(require-capability! ~capabilities
+                                    (:identity ~'+compojure-api-request+))]))
 
 (defmethod meta/restructure-param :login [_ bind-to acc]
   (update acc :lets into
@@ -90,8 +79,9 @@
 
 (defmethod meta/restructure-param :auth-identity [_ bind-to acc]
   (update acc :lets into
-          [bind-to `(req->auth-identity ~'+compojure-api-request+)]))
+          [bind-to `(:identity ~'+compojure-api-request+)]))
 
 (defmethod meta/restructure-param :identity-map [_ bind-to acc]
   (update acc :lets into
-          [bind-to `(req->identity-map ~'+compojure-api-request+)]))
+          [bind-to `(auth/ident->map
+                     (:identity ~'+compojure-api-request+))]))

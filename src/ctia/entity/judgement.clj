@@ -112,6 +112,7 @@
                         {:id id
                          :identity identity
                          :identity-map identity-map})))
+
 (s/defn judgement-revocation-update-fn
   [entity
    {{{:strs [reason]} :query-params :as req} :req} :- {:req (s/pred map?)}]
