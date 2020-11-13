@@ -172,7 +172,8 @@
                        :main ctia.main
                        :uberjar-name "ctia.jar"
                        :uberjar-exclusions [#"ctia\.properties"]}
-             :test {:jvm-opts ["-Dlog.console.threshold=WARN"]
+             :test {:jvm-opts ["-Dlog.console.threshold=WARN"
+                               "-XX:-OmitStackTraceInFastThrow"]
                     :dependencies [[clj-http-fake ~clj-http-fake-version]
                                    [com.gfredericks/test.chuck ~test-chuck-version]
                                    [org.clojure/test.check ~test-check-version]

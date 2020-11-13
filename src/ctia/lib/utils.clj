@@ -1,4 +1,5 @@
 (ns ctia.lib.utils
+  (:refer-clojure :exclude [run!])
   (:require [clojure.string :as string]
             [clojure.pprint :as pp]
             [clojure.tools.logging :as log]
@@ -173,3 +174,9 @@
                           service-fns)))))
           {}
           (partition-all 2 selectors)))
+
+(defn run!
+  "Like clojure.core/run! but does not short-circuit on reduced."
+  [proc coll]
+  (reduce #(do (proc %2) nil) nil coll)
+  nil)

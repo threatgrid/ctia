@@ -1,7 +1,9 @@
 (ns ctia.lib.utils-test
   (:require [ctia.lib.utils :as sut]
             [clojure.pprint :as pp]
-            [clojure.test :as t :refer [are deftest is testing]]))
+            [com.gfredericks.test.chuck.clojure-test :refer [checking]]
+            [clojure.test :as t :refer [are deftest is testing]]
+            [clojure.test.check.generators :as gen]))
 
 (def map-with-creds
   {:ctia
@@ -75,3 +77,13 @@
             {:a {:b 1}}
             :a [:b]
             :a [:b])))))
+
+(deftest run!-test
+  (checking "run! always traverses entire collection" 50
+    [c (gen/vector
+         (gen/frequency
+           [[5 (gen/fmap reduced gen/any)]
+            [1 gen/any]]))]
+    (let [a (atom [])]
+      (sut/run! #(swap! a conj %) c)
+      (is (= @a c)))))
