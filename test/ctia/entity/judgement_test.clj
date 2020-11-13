@@ -1,5 +1,6 @@
 (ns ctia.entity.judgement-test
-  (:require [clj-momo.test-helpers.core :as mth]
+  (:require [clj-momo.lib.clj-time.coerce :as tc]
+            [clj-momo.test-helpers.core :as mth]
             [clojure.test :refer [deftest is join-fixtures testing use-fixtures]]
             [ctia.domain.entities :refer [schema-version]]
             [ctia.entity.judgement :as sut]
@@ -142,7 +143,42 @@
                 :capabilities :read-judgement,
                 :owner "baruser"
                 :error :missing_capability}
-               body))))))
+               body)))))
+  ;; TODO wait_for query param?
+  (testing "POST /ctia/judgement/:id/expire revokes"
+    (let [fixed-now (-> "2020-12-31" tc/from-string tc/to-date)]
+      (helpers/fixture-with-fixed-time
+        fixed-now
+        (fn []
+          (let [expiry-reason "(because it's old)"
+                {{:keys [^String reason
+                         valid_time]}
+                 :parsed-body :as response}
+                (POST
+                  app
+                  (format "ctia/judgement/%s/expire"
+                          (:short-id judgement-id))
+                  :query-params {"reason" expiry-reason}
+                  :headers {"Authorization" "45c1f5e3f05d0"})]
+            (is (= 200 (:status response))
+                "POST ctia/judgement/:id/expire succeeds")
+            (is (= fixed-now (:end_time valid_time))
+                ":valid_time correctly reset")
+            (is (.endsWith reason (str " " expiry-reason))
+                (str ":reason correctly appended: " (pr-str reason))))))))
+  (testing "POST /ctia/judgement/:id/expire requires reason"
+    (let [fixed-now (-> "2020-12-31" tc/from-string tc/to-date)]
+      (helpers/fixture-with-fixed-time
+        fixed-now
+        (fn []
+          (let [response
+                (POST
+                  app
+                  (format "ctia/judgement/%s/expire"
+                          (:short-id judgement-id))
+                  :headers {"Authorization" "45c1f5e3f05d0"})]
+            (is (= 400 (:status response))
+                "POST ctia/judgement/:id/expire succeeds")))))))
 
 (deftest test-judgement-crud-routes
   (test-for-each-store-with-app

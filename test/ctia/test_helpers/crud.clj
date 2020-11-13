@@ -256,8 +256,9 @@
             (is (= updated-record
                    stored-record)))
 
+          ;; TODO wait_for query param?
           (when revoke-tests?
-            (testing "Expire 'valid-time' field"
+            (testing (format "POST /ctia/%s/:id/expire revokes" entity)
               (let [fixed-now (-> "2020-12-31" tc/from-string tc/to-date)]
                 (helpers/fixture-with-fixed-time
                   fixed-now

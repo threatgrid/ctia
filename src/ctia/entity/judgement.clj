@@ -99,7 +99,7 @@
    {:keys [entity
            entity-schema
            post-capabilities] :as entity-crud-config}]
-  (POST "/:id/expire" [req]
+  (POST "/:id/expire" req
         :summary (format "Expires the supplied %s" (capitalize-entity entity))
         :path-params [id :- s/Str]
         :query-params [reason :- (describe s/Str "Message to append to the Judgement's reason value")
@@ -112,32 +112,38 @@
                         {:id id
                          :identity identity
                          :identity-map identity-map})))
+(s/defn judgement-revocation-update-fn
+  [entity
+   {{{:strs [reason]} :query-params :as req} :req} :- {:req (s/pred map?)}]
+  (assert (string? reason)
+          [(-> req keys vec)
+           (:query-params req)])
+  (-> entity
+      (update :reason str " " reason)))
 
 (s/defn judgement-routes [services :- APIHandlerServices]
   (let [entity-crud-config {:entity :judgement
-                               :new-schema js/NewJudgement
-                               :entity-schema js/Judgement
-                               :get-schema js/PartialJudgement
-                               :get-params JudgementGetParams
-                               :list-schema js/PartialJudgementList
-                               :search-schema js/PartialJudgementList
-                               :external-id-q-params JudgementsByExternalIdQueryParams
-                               :search-q-params JudgementSearchParams
-                               :new-spec :new-judgement/map
-                               :realize-fn js/realize-judgement
-                               :get-capabilities :read-judgement
-                               :post-capabilities :create-judgement
-                               :put-capabilities #{:create-judgement :developer}
-                               :delete-capabilities :delete-judgement
-                               :search-capabilities :search-judgement
-                               :external-id-capabilities :read-judgement
-                               :can-update? true
-                               :can-aggregate? true
-                               :histogram-fields js/judgement-histogram-fields
-                               :revocation-update-fn (fn [entity {{{:keys [reason]} :query-params} :req}]
-                                                       (-> entity
-                                                           (update :reason str " " reason)))
-                               :enumerable-fields js/judgement-enumerable-fields}]
+                            :new-schema js/NewJudgement
+                            :entity-schema js/Judgement
+                            :get-schema js/PartialJudgement
+                            :get-params JudgementGetParams
+                            :list-schema js/PartialJudgementList
+                            :search-schema js/PartialJudgementList
+                            :external-id-q-params JudgementsByExternalIdQueryParams
+                            :search-q-params JudgementSearchParams
+                            :new-spec :new-judgement/map
+                            :realize-fn js/realize-judgement
+                            :get-capabilities :read-judgement
+                            :post-capabilities :create-judgement
+                            :put-capabilities #{:create-judgement :developer}
+                            :delete-capabilities :delete-judgement
+                            :search-capabilities :search-judgement
+                            :external-id-capabilities :read-judgement
+                            :can-update? true
+                            :can-aggregate? true
+                            :histogram-fields js/judgement-histogram-fields
+                            :revocation-update-fn #'judgement-revocation-update-fn
+                            :enumerable-fields js/judgement-enumerable-fields}]
     (routes
       (services->entity-crud-routes
         services
