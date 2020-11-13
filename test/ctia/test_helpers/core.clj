@@ -9,6 +9,7 @@
             [clojure.test.check.generators :as gen]
             [clojure.tools.logging :as log]
             [clojure.tools.logging.test :as tlog]
+            [ctia.test-helpers.global-routes-service :refer [ctia-test-global-routes-service]]
             [ctia
              [auth :as auth]
              [init :as init]
@@ -247,6 +248,8 @@
                        "ctia.http.show.port" http-port]
        (let [config (build-transformed-init-config)
              services-map (cond-> (init/default-services-map config)
+                            ;; fake routing
+                            true (assoc :CTIATestGlobalRoutesService ctia-test-global-routes-service)
                             (#{:threatgrid} (get-in config [:ctia :auth :type]))
                             ;; dynamic requires can be removed when #'with-properties is phased out or moved
                             (assoc

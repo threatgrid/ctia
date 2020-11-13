@@ -12,13 +12,17 @@
 
 (tk/defservice ctia-http-server-service
   CTIAHTTPServerService
-  [HooksService
-   StoreService
-   IAuth
-   GraphQLNamedTypeRegistryService
-   IEncryption
-   ConfigService
-   FeaturesService]
+  {:required
+   [HooksService
+    StoreService
+    IAuth
+    GraphQLNamedTypeRegistryService
+    IEncryption
+    ConfigService
+    FeaturesService]
+   :optional
+   [;; test only
+    CTIATestGlobalRoutesService]}
   (start [this context] (core/start context
                                     ((:get-in-config ConfigService) [:ctia :http])
                                     {:ConfigService (-> ConfigService
@@ -35,7 +39,12 @@
                                      :IAuth IAuth
                                      :GraphQLNamedTypeRegistryService GraphQLNamedTypeRegistryService
                                      :IEncryption IEncryption
-                                     :FeaturesService FeaturesService}))
+                                     :FeaturesService FeaturesService}
+                                    (cond-> {}
+                                      CTIATestGlobalRoutesService
+                                      (assoc :CTIATestGlobalRoutesService
+                                             (-> CTIATestGlobalRoutesService
+                                                 (select-keys [:wrap-fake-routes]))))))
   (stop [this context] (core/stop context))
   (get-port [this]
             (core/get-port (service-context this)))

@@ -29,3 +29,49 @@
       (service-subgraph
         :CTIAHTTPServerService [:get-port]
         :ConfigService [:get-in-config])))
+
+;; clj-http.fake API for isolated Trapperkeeper apps
+
+(defmacro with-fake-routes-in-isolation
+  "Makes all requests for the current app in the current thread first match against given routes.
+  If no route matches, an exception is thrown."
+  [app routes & body]
+  `((-> ~app
+        app/service-graph
+        :CTIATestGlobalRoutesService
+        :with-fake-routes-in-isolation)
+    ~routes
+    #(do ~@body)))
+
+(defmacro with-fake-routes
+  "Makes all requests for the current app in the current thread first match against given routes.
+  The actual HTTP request will be sent only if no matches are found."
+  [app routes & body]
+  `((-> ~app
+        app/service-graph
+        :CTIATestGlobalRoutesService
+        :with-fake-routes)
+    ~routes
+    #(do ~@body)))
+
+(defmacro with-global-fake-routes-in-isolation
+  "Makes all requests for the current app first match against given routes.
+  If no route matches, an exception is thrown."
+  [app routes & body]
+  `((-> ~app
+        app/service-graph
+        :CTIATestGlobalRoutesService
+        :with-global-fake-routes-in-isolation)
+    ~routes
+    #(do ~@body)))
+
+(defmacro with-global-fake-routes
+  "Makes all wrapped clj-http requests first match against given routes.
+  The actual HTTP request will be sent only if no matches are found."
+  [app routes & body]
+  `((-> ~app
+        app/service-graph
+        :CTIATestGlobalRoutesService
+        :with-global-fake-routes)
+    ~routes
+    #(do ~@body)))

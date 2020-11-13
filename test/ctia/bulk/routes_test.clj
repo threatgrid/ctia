@@ -8,7 +8,6 @@
             [clojure
              [string :as str]
              [test :refer [deftest is join-fixtures testing use-fixtures]]]
-            [clj-http.fake :refer [with-global-fake-routes]]
             [ctia.properties :refer [get-http-show]]
             [ctia.bulk.core
              :refer
@@ -18,7 +17,7 @@
              [auth :refer [all-capabilities]]
              [core :as helpers :refer [GET POST]]
              [fake-whoami-service :as whoami-helpers]
-             [http :refer [app->HTTPShowServices]]
+             [http :refer [app->HTTPShowServices with-global-fake-routes]]
              [store :refer [test-for-each-store-with-app
                             test-selected-stores-with-app]]]
             [ctim.domain.id :as id]
@@ -238,7 +237,7 @@
                                    path (cond-> "ctia/bulk"
                                           (boolean? wait_for) (str "?wait_for=" wait_for))]
 
-                               (with-global-fake-routes fake-routes
+                               (with-global-fake-routes app fake-routes
                                  (POST app
                                        path
                                        :body new-bulk

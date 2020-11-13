@@ -1,6 +1,6 @@
 (ns ctia.http.server-service-core
   (:require [ctia.graphql.schemas :as graphql.schemas]
-            [ctia.http.server :refer [new-jetty-instance]]
+            [ctia.http.server :refer [DevServices new-jetty-instance]]
             [ctia.schemas.core :refer [APIHandlerServices
                                        APIHandlerServices->RealizeFnServices
                                        Port
@@ -24,7 +24,8 @@
 (s/defn start [context
                http-config
                services :- (-> APIHandlerServices
-                               (st/dissoc :CTIAHTTPServerService))]
+                               (st/dissoc :CTIAHTTPServerService))
+               dev-services :- DevServices]
   (let [_ (log/info "Starting HTTP server...")
         [server graphql] (let [graphql-prm (promise)
                                server-prm (promise)
@@ -34,7 +35,10 @@
                                                       #(server->port @server-prm))
                                             (assoc-in [:CTIAHTTPServerService :get-graphql]
                                                       #(deref graphql-prm)))]
-                           (deliver server-prm (new-jetty-instance http-config services))
+                           (deliver server-prm (new-jetty-instance
+                                                 http-config
+                                                 services
+                                                 dev-services))
                            (deliver graphql-prm
                                     (-> graphql.schemas/graphql
                                         (resolve-with-rt-ctx

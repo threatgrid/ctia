@@ -14,6 +14,7 @@
              [params :refer [wrap-params]]
              [reload :refer [wrap-reload]]]
             [schema.core :as s]
+            [schema-tools.core :as st]
             [clojure.core.memoize :as memo])
   (:import org.eclipse.jetty.server.Server
            (java.util.concurrent TimeoutException)
@@ -136,6 +137,13 @@
            refresh-url (str " " refresh-url)))
        ";"))
 
+(s/defschema DevServices
+  (st/optional-keys
+    {:CTIATestGlobalRoutesService
+     {:wrap-fake-routes (s/=> (s/=> s/Any
+                                    (s/named s/Any 'request))
+                              (s/named ifn? 'handler))}}))
+
 (s/defn ^Server new-jetty-instance
   [{:keys [dev-reload
            max-threads
@@ -151,7 +159,8 @@
     :as http-config}
    {{:keys [identity-for-token]} :IAuth
     {:keys [get-in-config]} :ConfigService
-     :as services} :- APIHandlerServices]
+     :as services} :- APIHandlerServices
+   {{:keys [wrap-fake-routes]} :CTIATestGlobalRoutesService} :- DevServices]
   (doto
       (jetty/run-jetty
        (cond-> (handler/api-handler services)
@@ -210,7 +219,8 @@
 
          true wrap-params
 
-         dev-reload wrap-reload)
+         dev-reload wrap-reload
+         wrap-fake-routes wrap-fake-routes)
        {:port port
         :min-threads min-threads
         :max-threads max-threads

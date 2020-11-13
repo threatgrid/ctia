@@ -1,7 +1,7 @@
 (ns ctia.test-helpers.crud
   (:require [cheshire.core :refer [parse-string]]
-            [clj-http.fake :refer [with-global-fake-routes]]
-            [clj-momo.test-helpers.http :refer [encode]]
+            [clj-momo.test-helpers.http :refer [encode ]]
+            
             [clojure
              [string :as string]
              [test :refer [is testing]]]
@@ -11,7 +11,8 @@
             [ctia.test-helpers
              [core :as helpers
               :refer [DELETE entity->short-id GET PATCH POST PUT]]
-             [http :refer [app->HTTPShowServices]]
+             [http :refer [app->HTTPShowServices
+                           with-global-fake-routes]]
              [search :refer [test-query-string-search]]]
             [ctim.domain.id :as id]))
 
@@ -63,7 +64,7 @@
       (let [test-create (fn [wait_for msg]
                           (let [path (cond-> (str "ctia/" entity)
                                        (boolean? wait_for) (str "?wait_for=" wait_for))]
-                            (with-global-fake-routes bulk-routes
+                            (with-global-fake-routes app bulk-routes
                               (POST app
                                     path
                                     :body new-record
@@ -94,7 +95,7 @@
                                 updates (cond->> {update-field "modified"}
                                           (= :PUT method-kw) (into new-record))
                                 es-index-uri-pattern (re-pattern (str ".*9200.*" entity-id ".*"))]
-                            (with-global-fake-routes {es-index-uri-pattern {:put simple-handler}}
+                            (with-global-fake-routes app {es-index-uri-pattern {:put simple-handler}}
                               (method app
                                       path
                                       :body updates
@@ -132,7 +133,7 @@
                                 es-index-uri-pattern (re-pattern (str ".*9200.*" entity-id ".*"))
                                 path (cond-> (format "ctia/%s/%s" entity entity-id)
                                        (boolean? wait_for) (str "?wait_for=" wait_for))]
-                            (with-global-fake-routes {es-index-uri-pattern {:delete simple-handler}}
+                            (with-global-fake-routes app {es-index-uri-pattern {:delete simple-handler}}
                               (DELETE app
                                       path
                                       :headers headers))
