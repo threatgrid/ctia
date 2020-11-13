@@ -24,15 +24,13 @@
            headers
            update-field
            update-tests?
-           patch-tests?]
+           patch-tests?
+           revoke-tests?]
     :or {update-field :title
          update-tests? true
          patch-tests? false}}]
   (assert app)
   (let [new-record (dissoc example :id)
-        default-es-refresh (->> (get-in-config
-                                  [:ctia :store :es :default :refresh])
-                                (str "refresh="))
         es-params (volatile! nil)
         simple-handler (fn [{:keys [url query-string]}]
                          (vreset! es-params query-string)
@@ -52,14 +50,22 @@
                                  :headers {"Content-Type" "application/json"}
                                  :body "{}"}))}}
         check-refresh (fn [wait_for msg]
-                        (let [expected (cond
-                                         (nil? wait_for) default-es-refresh
-                                         (true? wait_for) "refresh=wait_for"
-                                         (false? wait_for) "refresh=false")]
+                        (let [default-es-refresh (get-in-config [:ctia :store :es :default :refresh])
+                              expected (str "refresh="
+                                            (case wait_for
+                                              nil default-es-refresh
+                                              true "wait_for"
+                                              false "false"))]
                           (is (some-> @es-params
                                       (string/includes? expected))
-                              (str msg (format "(expected %s, actual: %s)" expected @es-params)))
-                          (vreset! es-params nil)))]
+                              (format "%s (expected %s, actual: %s)" msg expected @es-params))
+                          (vreset! es-params nil)))
+        new-entity-short-id #(-> (POST app
+                                       (format "ctia/%s?wait_for=true" entity)
+                                       :body new-record
+                                       :headers headers)
+                                 :parsed-body
+                                 entity->short-id)]
     (testing "testing wait_for values on entity creation"
       (let [test-create (fn [wait_for msg]
                           (let [path (cond-> (str "ctia/" entity)
@@ -80,12 +86,7 @@
                           "when wait_for is not specified"))))
 
     (testing "testing wait_for values on entity update / patch"
-      (let [entity-id (-> (POST app
-                                (format "ctia/%s?wait_for=true" entity)
-                                :body new-record
-                                :headers headers)
-                          :parsed-body
-                          entity->short-id)
+      (let [entity-id (new-entity-short-id)
             test-modify (fn [method-kw wait_for msg]
                           (let [method (case method-kw
                                          :PUT PUT
@@ -124,12 +125,7 @@
 
     (testing "testing wait_for values on entity deletion"
       (let [test-delete (fn [wait_for msg]
-                          (let [entity-id (-> (POST app
-                                                    (str "ctia/" entity "?wait_for=true")
-                                                    :body new-record
-                                                    :headers headers)
-                                              :parsed-body
-                                              entity->short-id)
+                          (let [entity-id (new-entity-short-id)
                                 es-index-uri-pattern (re-pattern (str ".*9200.*" entity-id ".*"))
                                 path (cond-> (format "ctia/%s/%s" entity entity-id)
                                        (boolean? wait_for) (str "?wait_for=" wait_for))]
@@ -146,7 +142,28 @@
                           "when wait_for is false"))
         (test-delete nil
                      (str "Configured ctia.store.es.default.refresh value is "
-                          "applied when wait_for is not specified"))))))
+                          "applied when wait_for is not specified"))))
+    (when revoke-tests?
+      (testing "testing wait_for values on entity revocation"
+        (let [test-revoke (fn [wait_for msg]
+                            (let [entity-id (new-entity-short-id)
+                                  es-index-uri-pattern (re-pattern (str ".*9200.*" entity-id ".*"))
+                                  path (cond-> (format "ctia/%s/%s/expire" entity entity-id)
+                                         (boolean? wait_for) (str "?wait_for=" wait_for))]
+                              (with-global-fake-routes {es-index-uri-pattern {:put simple-handler}}
+                                (POST app
+                                      path
+                                      :headers headers))
+                              (check-refresh wait_for msg)))]
+          (test-revoke true
+                       (str "Revoke queries should wait for index refresh when "
+                            "wait_for is true"))
+          (test-revoke false
+                       (str "Revoke queries should not wait for index refresh "
+                            "when wait_for is false"))
+          (test-revoke nil
+                       (str "Configured ctia.store.es.default.refresh value is "
+                            "applied when wait_for is not specified")))))))
 
 (defn entity-crud-test
   [{:keys [app
@@ -256,7 +273,6 @@
             (is (= updated-record
                    stored-record)))
 
-          ;; TODO wait_for query param?
           (when revoke-tests?
             (testing (format "POST /ctia/%s/:id/expire revokes" entity)
               (let [fixed-now (-> "2020-12-31" tc/from-string tc/to-date)]
