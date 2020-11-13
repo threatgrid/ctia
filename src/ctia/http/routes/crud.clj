@@ -111,7 +111,7 @@
    {:keys [entity
            entity-schema
            post-capabilities] :as entity-crud-config}]
-  (POST "/:id/expire" [req]
+  (POST "/:id/expire" req
         :summary (format "Expires the supplied %s" (capitalize-entity entity))
         :path-params [id :- s/Str]
         :query-params [{wait_for :- (describe s/Bool "wait for entity to be available for search") nil}]
