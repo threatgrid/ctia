@@ -19,7 +19,38 @@
              [http :refer [app->HTTPShowServices]]
              [search :refer [test-query-string-search]]]
             [ctim.domain.id :as id]
-            [schema.core :as s]))
+            [schema.core :as s]
+            [schema-tools.core :as st]))
+
+(s/defschema EntityCrudTestOptions
+  (st/merge
+    {:app (s/pred some?)
+     :entity (s/pred simple-keyword?)
+     :example (s/pred map?)
+     :headers (s/pred map?)}
+    (st/optional-keys
+      {:invalid-tests? s/Bool
+       :update-tests s/Bool
+       :patch-tests? s/Bool
+       :search-tests? s/Bool
+       :invalid-test-field (s/pred simple-keyword?)
+       :update-field (s/pred simple-keyword?)
+       :search-field (s/pred simple-keyword?)
+       :optional-field (s/pred simple-keyword?)})))
+
+(s/defn fill-entity-crud-test-options-defaults
+  :- (st/required-keys EntityCrudTestOptions)
+  [opt :- EntityCrudTestOptions]
+  (into
+    {:invalid-tests? true
+     :invalid-test-field :title
+     :update-field :title
+     :search-field :description
+     :optional-field :external_ids
+     :update-tests? true
+     :patch-tests? false
+     :search-tests? true}
+    opt))
 
 (s/defschema WaitForTestStep
   {:method-kw (s/pred #{:DELETE
@@ -63,10 +94,10 @@
 (s/defn crud-wait-for-test
   "Tests the wait_for query param for the given entity.
   
-  (crud-wait-for-test params)
+  (crud-wait-for-test opt)
      Runs all wait_for tests for specified entity.
 
-  (crud-wait-for-test params test-step)
+  (crud-wait-for-test opt test-step)
      Runs just the tests specified by test-step (see WaitForTestStep) for
      the specified entity.
      eg., (crud-wait-for-test {..
@@ -78,20 +109,20 @@
                                ..}
                               {:method-kw :POST,
                                :wait_for true})"
-  ([params]
-   (let [params (into {:update-tests? true
-                       :patch-tests? false}
-                      params)
-         qc-opts (-> (:crud-wait_for-quickcheck-options params)
+  ([opt]
+   (let [opt (into {:update-tests? true
+                    :patch-tests? false}
+                   opt)
+         qc-opts (-> (:crud-wait_for-quickcheck-options opt)
                      (update :num-tests #(or % 2)))
-         test-plan-generator (-> (gen-wait-for-test-plan params)
+         test-plan-generator (-> (gen-wait-for-test-plan opt)
                                  gen/shuffle 
                                  gen/no-shrink)]
      (checking "wait_for operations" qc-opts
        [t test-plan-generator]
-       (run! (partial crud-wait-for-test params)
+       (run! (partial crud-wait-for-test opt)
              t))))
-  ([params
+  ([opt :- EntityCrudTestOptions
     test-step :- WaitForTestStep]
    (testing (str "\n" test-step)
      (let [{:keys [app
@@ -99,8 +130,7 @@
                    example
                    headers
                    update-field]
-            :as params
-            :or {update-field :title}} params
+            :as opt} (fill-entity-crud-test-options-defaults opt)
            {:keys [method-kw wait_for]} test-step
            get-in-config (helpers/current-get-in-config-fn app)
            default-es-refresh (->> (get-in-config
@@ -190,8 +220,8 @@
                     [:body body]))))
        (check-refresh)))))
 
-(defn entity-crud-test
- [params]
+(s/defn entity-crud-test
+ [opt :- EntityCrudTestOptions]
  (let [{:keys [app
                entity
                example
@@ -207,7 +237,7 @@
                additional-tests
                search-value
                revoke-tests?]
-        :as params} (into
+        :as opt} (into
                       {:invalid-tests? true
                        :invalid-test-field :title
                        :update-field :title
@@ -216,7 +246,7 @@
                        :update-tests? true
                        :patch-tests? false
                        :search-tests? true}
-                      params)
+                      opt)
        get-in-config (helpers/current-get-in-config-fn app)]
   (testing (str "POST /ctia/" entity)
     (let [new-record (dissoc example :id)
@@ -401,4 +431,4 @@
     (when (= "es"
              (get-in-config
                [:ctia :store (keyword entity)]))
-      (crud-wait-for-test params)))))
+      (crud-wait-for-test opt)))))
