@@ -58,7 +58,12 @@
            identity-map
            id
            revocation-update-fn
-           wait_for]}]
+           wait_for]} :- {:identity s/Any
+                          :identity-map s/Any
+                          :id s/Any
+                          :wait_for (s/pred (some-fn nil? boolean?)
+                                            'nilable-boolean?)
+                          (s/optional-key :revocation-update-fn) (s/pred ifn?)}]
   ;; almost identical to the PATCH route returned by entity-crud-routes
   ;; except for :update-fn and :partial-entity
   (if-let [updated-rec
