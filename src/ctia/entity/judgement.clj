@@ -16,7 +16,6 @@
                              PagingParams
                              SourcableEntityFilterParams]]
              [crud :refer [capitalize-entity
-                           fill-entity-crud-config-defaults 
                            revoke-request
                            services->entity-crud-routes]]]
             [ctia.schemas.core :refer [APIHandlerServices Entity]]
@@ -86,15 +85,7 @@
    JudgementsQueryParams
    JudgementFieldsParam))
 
-;; Note: almost identical to ctia.http.routes.crud/revocation-routes
-;; except uses a `reason` query-param. If we could figure out how to
-;; construct :query-params dynamically, we could consolidate both
-;; impls. An unsatisfactory way to abstract over these would be to use macros.
-;; This would be too error-prone since `query-params` introduce unhygienic
-;; bindings.
 (s/defn judgement-revocation-routes
-  "Assumes entity-crud-config defaults have been filled
-  by fill-entity-crud-config-defaults."
   [services :- APIHandlerServices
    {:keys [entity
            entity-schema
@@ -108,19 +99,15 @@
         :capabilities post-capabilities
         :auth-identity identity
         :identity-map identity-map
-        (revoke-request req services entity-crud-config
+        (revoke-request req services
+                        entity-crud-config
                         {:id id
                          :identity identity
-                         :identity-map identity-map})))
-
-(s/defn judgement-revocation-update-fn
-  [entity
-   {{{:strs [reason]} :query-params :as req} :req} :- {:req (s/pred map?)}]
-  (assert (string? reason)
-          [(-> req keys vec)
-           (:query-params req)])
-  (-> entity
-      (update :reason str " " reason)))
+                         :identity-map identity-map
+                         :revocation-update-fn (fn [entity _]
+                                                 (-> entity
+                                                     (update :reason str " " reason)))
+                         :wait_for wait_for})))
 
 (s/defn judgement-routes [services :- APIHandlerServices]
   (let [entity-crud-config {:entity :judgement
@@ -143,7 +130,6 @@
                             :can-update? true
                             :can-aggregate? true
                             :histogram-fields js/judgement-histogram-fields
-                            :revocation-update-fn #'judgement-revocation-update-fn
                             :enumerable-fields js/judgement-enumerable-fields}]
     (routes
       (services->entity-crud-routes

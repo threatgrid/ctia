@@ -2,8 +2,7 @@
   (:require
    [clj-momo.lib.clj-time.core :as time]
    [clojure.string :refer [capitalize]]
-   ;; do not delete, defmethod side effects
-   [ctia.http.middleware.auth :as auth]
+   [ctia.http.middleware.auth]
    [compojure.api.core :refer [context DELETE GET POST PUT PATCH routes]]
    [ctia.domain.entities
     :refer
@@ -20,7 +19,7 @@
                                     search-query
                                     coerce-date-range
                                     format-agg-result]]
-   [ctia.schemas.core :refer [APIHandlerServices DelayedRoutes Entity]]
+   [ctia.schemas.core :refer [APIHandlerServices DelayedRoutes]]
    [ctia.store :refer [query-string-search
                        query-string-count
                        aggregate
@@ -38,19 +37,6 @@
    [schema.core :as s]
    [schema-tools.core :as st]))
 
-(defn fill-entity-crud-config-defaults [entity-crud-config]
-  (into
-    {:hide-delete? false
-     :can-post? true
-     :can-update? true
-     :can-patch? false
-     :can-search? true
-     :can-aggregate? false
-     :can-get-by-external-id? true
-     :date-field :created
-     :histogram-fields [:created]}
-    entity-crud-config))
-
 (s/defn capitalize-entity [entity :- (s/pred simple-keyword?)]
   (-> entity name capitalize))
 
@@ -60,18 +46,19 @@
   between entity implementations with different :query-params
   requirements (which must be provided at compile-time with
   POST)."
-  [{{:strs [wait_for]} :query-params :as req} :- (s/pred map?)
+  [req :- (s/pred map?)
    {{:keys [read-store
             write-store]} :StoreService
     :as services} :- APIHandlerServices
    {:keys [entity
            new-spec
-           realize-fn
-           revocation-update-fn]
+           realize-fn]
     :as _entity-crud-config}
    {:keys [identity
            identity-map
-           id]}]
+           id
+           revocation-update-fn
+           wait_for]}]
   ;; almost identical to the PATCH route returned by entity-crud-routes
   ;; except for :update-fn and :partial-entity
   (if-let [updated-rec
@@ -103,10 +90,7 @@
     (not-found (str (capitalize-entity entity) " not found"))))
 
 (s/defn revocation-routes
-  "Returns POST /:id/expire routes for the given entity
-
-  Assumes entity-crud-config defaults have been filled
-  by fill-entity-crud-config-defaults."
+  "Returns POST /:id/expire routes for the given entity."
   [services :- APIHandlerServices
    {:keys [entity
            entity-schema
@@ -122,46 +106,54 @@
         (revoke-request req services entity-crud-config
                         {:id id
                          :identity identity
-                         :identity-map identity-map})))
+                         :identity-map identity-map
+                         :wait_for wait_for})))
 
 (s/defn entity-crud-routes
- :- DelayedRoutes
- [entity-crud-config-no-defaults]
+  :- DelayedRoutes
+  [{:keys [entity
+           new-schema
+           entity-schema
+           get-schema
+           get-params
+           list-schema
+           search-schema
+           patch-schema
+           external-id-q-params
+           search-q-params
+           new-spec
+           realize-fn
+           get-capabilities
+           post-capabilities
+           put-capabilities
+           patch-capabilities
+           delete-capabilities
+           search-capabilities
+           external-id-capabilities
+           hide-delete?
+           can-post?
+           can-update?
+           can-patch?
+           can-revoke?
+           can-search?
+           can-aggregate?
+           can-get-by-external-id?
+           date-field
+           histogram-fields
+           enumerable-fields]
+    :or {hide-delete? false
+         can-post? true
+         can-update? true
+         can-patch? false
+         can-search? true
+         can-aggregate? false
+         can-get-by-external-id? true
+         date-field :created
+         histogram-fields [:created]}
+    :as entity-crud-config}]
  (s/fn [{{:keys [write-store read-store]} :StoreService
          :as services} :- APIHandlerServices]
-  (let [{:keys [entity
-                can-revoke?
-                new-schema
-                entity-schema
-                get-schema
-                get-params
-                list-schema
-                search-schema
-                patch-schema
-                external-id-q-params
-                search-q-params
-                new-spec
-                realize-fn
-                get-capabilities
-                post-capabilities
-                put-capabilities
-                patch-capabilities
-                delete-capabilities
-                search-capabilities
-                external-id-capabilities
-                hide-delete?
-                can-post?
-                can-update?
-                can-patch?
-                can-search?
-                can-aggregate?
-                can-get-by-external-id?
-                date-field
-                histogram-fields
-                enumerable-fields]
-         :as entity-crud-config} (fill-entity-crud-config-defaults
-                                   entity-crud-config-no-defaults)
-        capitalized (capitalize-entity entity)
+  (let [capitalized (capitalize-entity entity)
         search-filters (st/dissoc search-q-params
                                   :sort_by
                                   :sort_order

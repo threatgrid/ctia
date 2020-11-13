@@ -144,7 +144,7 @@
                 :owner "baruser"
                 :error :missing_capability}
                body)))))
-  ;; TODO wait_for query param?
+  ;; TODO add test for wait_for query param
   (testing "POST /ctia/judgement/:id/expire revokes"
     (let [fixed-now (-> "2020-12-31" tc/from-string tc/to-date)]
       (helpers/fixture-with-fixed-time
