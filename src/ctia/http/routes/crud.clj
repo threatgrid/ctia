@@ -60,7 +60,7 @@
   between entity implementations with different :query-params
   requirements (which must be provided at compile-time with
   POST)."
-  [{{:keys [wait_for]} :query-params :as req} :- (s/pred map?)
+  [{{:strs [wait_for]} :query-params :as req} :- (s/pred map?)
    {{:keys [read-store
             write-store]} :StoreService
     :as services} :- APIHandlerServices
