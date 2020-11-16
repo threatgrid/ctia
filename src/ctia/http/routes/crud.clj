@@ -94,25 +94,40 @@
     (ok (un-store updated-rec))
     (not-found (str (capitalize-entity entity) " not found"))))
 
+(s/defn capabilities->description
+  :- (s/conditional
+       nil? (s/pred nil?)
+       :else s/Str)
+  [capabilities :- (s/conditional
+                     keyword? (s/pred simple-keyword?)
+                     :else #{(s/pred simple-keyword?)})]
+  (cond
+    (keyword? capabilities) (str "Requires capability " (name capabilities) ".")
+    ((every-pred set? seq) capabilities) (-> (apply str "Requires capabilities "
+                                                    (str/join ", " (map name capabilities)))
+                                             (str "."))))
+
 (s/defn revocation-routes
   "Returns POST /:id/expire routes for the given entity."
   [services :- APIHandlerServices
    {:keys [entity
            entity-schema
            post-capabilities] :as entity-crud-config}]
-  (POST "/:id/expire" req
-        :summary (format "Expires the supplied %s" (capitalize-entity entity))
-        :path-params [id :- s/Str]
-        :query-params [{wait_for :- (describe s/Bool "wait for entity to be available for search") nil}]
-        :return entity-schema
-        :capabilities post-capabilities
-        :auth-identity identity
-        :identity-map identity-map
-        (revoke-request req services entity-crud-config
-                        {:id id
-                         :identity identity
-                         :identity-map identity-map
-                         :wait_for wait_for})))
+  (let [capabilities post-capabilities]
+    (POST "/:id/expire" req
+          :summary (format "Expires the supplied %s" (capitalize-entity entity))
+          :path-params [id :- s/Str]
+          :query-params [{wait_for :- (describe s/Bool "wait for entity to be available for search") nil}]
+          :return entity-schema
+          :description (capabilities->description capabilities)
+          :capabilities capabilities
+          :auth-identity identity
+          :identity-map identity-map
+          (revoke-request req services entity-crud-config
+                          {:id id
+                           :identity identity
+                           :identity-map identity-map
+                           :wait_for wait_for}))))
 
 (s/defn ^:private entity-crud-routes
   :- DelayedRoutes
@@ -180,84 +195,50 @@
                                        aggregate-on-enumerable)
         topn-q-params (st/merge agg-search-schema
                                 TopnParams
-                                aggregate-on-enumerable)
-        capabilities->description (fn [capabilities]
-                                    (apply str "Requires these capabilities: "
-                                           (str/join "\n" (sort capabilities))))]
-        (routes
+                                aggregate-on-enumerable)]
+   (routes
      (when can-post?
-       (POST "/" []
-             :return entity-schema
-             :query-params [{wait_for :- (describe s/Bool "wait for entity to be available for search") nil}]
-             :body [new-entity new-schema {:description (format "a new %s" capitalized)}]
-             :summary (format "Adds a really new %s" capitalized)
-             :description (format "Adds a really new %s\n stuff more \nstuff\na" capitalized)
-             :capabilities post-capabilities
-             :auth-identity identity
-             :identity-map identity-map
-             (-> (flows/create-flow
-                  :services services
-                  :entity-type entity
-                  :realize-fn realize-fn
-                  :store-fn #(write-store entity
-                                          create-record
-                                          %
-                                          identity-map
-                                          (wait_for->refresh wait_for))
-                  :long-id-fn #(with-long-id % services)
-                  :entity-type entity
-                  :identity identity
-                  :entities [new-entity]
-                  :spec new-spec)
-                 first
-                 un-store
-                 created)))
+       (let [capabilities post-capabilities]
+         (POST "/" []
+               :return entity-schema
+               :query-params [{wait_for :- (describe s/Bool "wait for entity to be available for search") nil}]
+               :body [new-entity new-schema {:description (format "a new %s" capitalized)}]
+               :summary (format "Adds a new %s" capitalized)
+               :description (capabilities->description capabilities)
+               :capabilities capabilities
+               :auth-identity identity
+               :identity-map identity-map
+               (-> (flows/create-flow
+                    :services services
+                    :entity-type entity
+                    :realize-fn realize-fn
+                    :store-fn #(write-store entity
+                                            create-record
+                                            %
+                                            identity-map
+                                            (wait_for->refresh wait_for))
+                    :long-id-fn #(with-long-id % services)
+                    :entity-type entity
+                    :identity identity
+                    :entities [new-entity]
+                    :spec new-spec)
+                   first
+                   un-store
+                   created))))
      (when can-update?
-       (PUT "/:id" []
-            :return entity-schema
-            :body [entity-update new-schema {:description (format "an updated %s" capitalized)}]
-            :summary (format "Updates an existing %s" capitalized)
-            :query-params [{wait_for :- (describe s/Bool "wait for updated entity to be available for search") nil}]
-            :path-params [id :- s/Str]
-            :capabilities put-capabilities
-            :auth-identity identity
-            :identity-map identity-map
-            (if-let [updated-rec
-                     (-> (flows/update-flow
-                          :services services
-                          :get-fn #(read-store entity
-                                               read-record
-                                               %
-                                               identity-map
-                                               {})
-                          :realize-fn realize-fn
-                          :update-fn #(write-store entity
-                                                   update-record
-                                                   (:id %)
-                                                   %
-                                                   identity-map
-                                                   (wait_for->refresh wait_for))
-                          :long-id-fn #(with-long-id % services)
-                          :entity-type entity
-                          :entity-id id
-                          :identity identity
-                          :entity entity-update
-                          :spec new-spec)
-                         un-store)]
-              (ok updated-rec)
-              (not-found))))
-     (when can-patch?
-       (PATCH "/:id" []
+       (let [capabilities put-capabilities]
+         (PUT "/:id" []
               :return entity-schema
-              :body [partial-update patch-schema {:description (format "%s partial update" capitalized)}]
-              :summary (format "Partially Update %s" capitalized)
-              :query-params [{wait_for :- (describe s/Bool "wait for patched entity to be available for search") nil}]
+              :body [entity-update new-schema {:description (format "an updated %s" capitalized)}]
+              :summary (format "Updates an existing %s" capitalized)
+              :query-params [{wait_for :- (describe s/Bool "wait for updated entity to be available for search") nil}]
               :path-params [id :- s/Str]
-              :capabilities patch-capabilities
+              :description (capabilities->description capabilities)
+              :capabilities capabilities
               :auth-identity identity
               :identity-map identity-map
               (if-let [updated-rec
-                       (-> (flows/patch-flow
+                       (-> (flows/update-flow
                             :services services
                             :get-fn #(read-store entity
                                                  read-record
@@ -275,161 +256,207 @@
                             :entity-type entity
                             :entity-id id
                             :identity identity
-                            :patch-operation :replace
-                            :partial-entity partial-update
+                            :entity entity-update
                             :spec new-spec)
                            un-store)]
                 (ok updated-rec)
-                (not-found))))
+                (not-found)))))
+     (when can-patch?
+       (let [capabilities patch-capabilities]
+         (PATCH "/:id" []
+                :return entity-schema
+                :body [partial-update patch-schema {:description (format "%s partial update" capitalized)}]
+                :summary (format "Partially Update %s" capitalized)
+                :query-params [{wait_for :- (describe s/Bool "wait for patched entity to be available for search") nil}]
+                :path-params [id :- s/Str]
+                :description (capabilities->description capabilities)
+                :capabilities capabilities
+                :auth-identity identity
+                :identity-map identity-map
+                (if-let [updated-rec
+                         (-> (flows/patch-flow
+                              :services services
+                              :get-fn #(read-store entity
+                                                   read-record
+                                                   %
+                                                   identity-map
+                                                   {})
+                              :realize-fn realize-fn
+                              :update-fn #(write-store entity
+                                                       update-record
+                                                       (:id %)
+                                                       %
+                                                       identity-map
+                                                       (wait_for->refresh wait_for))
+                              :long-id-fn #(with-long-id % services)
+                              :entity-type entity
+                              :entity-id id
+                              :identity identity
+                              :patch-operation :replace
+                              :partial-entity partial-update
+                              :spec new-spec)
+                             un-store)]
+                  (ok updated-rec)
+                  (not-found)))))
      (when can-get-by-external-id?
-       (GET "/external_id/:external_id" []
-            :return list-schema
-            :query [q external-id-q-params]
-            :path-params [external_id :- s/Str]
-            :summary (format "List %s by external id" capitalized)
-            :capabilities external-id-capabilities
-            :auth-identity identity
-            :identity-map identity-map
-            (-> (read-store entity
-                            list-records
-                            {:all-of {:external_ids external_id}}
-                            identity-map
-                            q)
-                (page-with-long-id services)
-                un-store-page
-                paginated-ok)))
+       (let [capabilities external-id-capabilities]
+         (GET "/external_id/:external_id" []
+              :return list-schema
+              :query [q external-id-q-params]
+              :path-params [external_id :- s/Str]
+              :summary (format "List %s by external id" capitalized)
+              :description (capabilities->description capabilities)
+              :capabilities capabilities
+              :auth-identity identity
+              :identity-map identity-map
+              (-> (read-store entity
+                              list-records
+                              {:all-of {:external_ids external_id}}
+                              identity-map
+                              q)
+                  (page-with-long-id services)
+                  un-store-page
+                  paginated-ok))))
 
      (when can-search?
-       (context "/search" []
-                :capabilities search-capabilities
-                :auth-identity identity
-                :identity-map identity-map
-                (GET "/" []
-                     :return search-schema
-                     :summary (format "Search for %s entities using a Lucene/ES query string and field filters" capitalized)
-                     :query [params search-q-params]
-                     (-> (read-store
-                          entity
-                          query-string-search
-                          (search-query date-field params)
-                          identity-map
-                          (select-keys params search-options))
-                         (page-with-long-id services)
-                         un-store-page
-                         paginated-ok))
-                (GET "/count" []
-                     :return s/Int
-                     :summary (format "Count %s matching a Lucene/ES query string and field filters" capitalized)
-                     :query [params search-filters]
-                     (ok (read-store
-                          entity
-                          query-string-count
-                          (search-query date-field params)
-                          identity-map)))))
+       (let [capabilities search-capabilities]
+         (context "/search" []
+                  :description (capabilities->description search-capabilities)
+                  :capabilities search-capabilities
+                  :auth-identity identity
+                  :identity-map identity-map
+                  (GET "/" []
+                       :return search-schema
+                       :summary (format "Search for %s entities using a Lucene/ES query string and field filters" capitalized)
+                       :query [params search-q-params]
+                       (-> (read-store
+                            entity
+                            query-string-search
+                            (search-query date-field params)
+                            identity-map
+                            (select-keys params search-options))
+                           (page-with-long-id services)
+                           un-store-page
+                           paginated-ok))
+                  (GET "/count" []
+                       :return s/Int
+                       :summary (format "Count %s matching a Lucene/ES query string and field filters" capitalized)
+                       :query [params search-filters]
+                       (ok (read-store
+                            entity
+                            query-string-count
+                            (search-query date-field params)
+                            identity-map))))))
      (when can-aggregate?
-       (context "/metric" []
-                :capabilities search-capabilities
-                :auth-identity identity
-                :identity-map identity-map
-                (GET "/histogram" []
-                     :return MetricResult
-                     :summary (format "Histogram for some %s field" capitalized)
-                     :query [params histogram-q-params]
-                     (let [aggregate-on (keyword (:aggregate-on params))
-                           search-q (search-query aggregate-on
-                                                  (st/select-schema params agg-search-schema)
-                                                  coerce-date-range)
-                           agg-q (st/assoc (st/select-schema params HistogramParams)
-                                           :agg-type :histogram)]
-                       (-> (read-store
-                            entity
-                            aggregate
-                            search-q
-                            agg-q
-                            identity-map)
-                           (format-agg-result :histogram aggregate-on search-q)
-                           ok)))
-                (GET "/topn" []
-                     :return MetricResult
-                     :summary (format "Topn for some %s field" capitalized)
-                     :query [params topn-q-params]
-                     (let [aggregate-on (:aggregate-on params)
-                           search-q (search-query date-field
-                                                  (st/select-schema params agg-search-schema)
-                                                  coerce-date-range)
-                           agg-q (st/assoc (st/select-schema params TopnParams)
-                                           :agg-type :topn)]
-                       (-> (read-store
-                            entity
-                            aggregate
-                            search-q
-                            agg-q
-                            identity-map)
-                           (format-agg-result :topn aggregate-on search-q)
-                           ok)))
-                (GET "/cardinality" []
-                     :return MetricResult
-                     :summary (format "Cardinality for some %s field" capitalized)
-                     :query [params cardinality-q-params]
-                     (let [aggregate-on (:aggregate-on params)
-                           search-q (search-query date-field
-                                                  (st/select-schema params agg-search-schema)
-                                                  coerce-date-range)
-                           agg-q (st/assoc (st/select-schema params CardinalityParams)
-                                           :agg-type :cardinality)]
-                       (-> (read-store
-                            entity
-                            aggregate
-                            search-q
-                            agg-q
-                            identity-map)
-                           (format-agg-result :cardinality aggregate-on search-q)
-                           ok)))))
-     (GET "/:id" []
-          :return (s/maybe get-schema)
-          :summary (format "Gets one %s by ID" capitalized)
-          :path-params [id :- s/Str]
-          :query [params get-params]
-          :capabilities get-capabilities
-          :auth-identity identity
-          :identity-map identity-map
-          (if-let [rec (read-store entity
-                                   read-record
-                                   id
-                                   identity-map
-                                   params)]
-            (-> rec
-                (with-long-id services)
-                un-store
-                ok)
-            (not-found)))
+       (let [capabilities search-capabilities]
+         (context "/metric" []
+                  :description (capabilities->description capabilities)
+                  :capabilities capabilities
+                  :auth-identity identity
+                  :identity-map identity-map
+                  (GET "/histogram" []
+                       :return MetricResult
+                       :summary (format "Histogram for some %s field" capitalized)
+                       :query [params histogram-q-params]
+                       (let [aggregate-on (keyword (:aggregate-on params))
+                             search-q (search-query aggregate-on
+                                                    (st/select-schema params agg-search-schema)
+                                                    coerce-date-range)
+                             agg-q (st/assoc (st/select-schema params HistogramParams)
+                                             :agg-type :histogram)]
+                         (-> (read-store
+                              entity
+                              aggregate
+                              search-q
+                              agg-q
+                              identity-map)
+                             (format-agg-result :histogram aggregate-on search-q)
+                             ok)))
+                  (GET "/topn" []
+                       :return MetricResult
+                       :summary (format "Topn for some %s field" capitalized)
+                       :query [params topn-q-params]
+                       (let [aggregate-on (:aggregate-on params)
+                             search-q (search-query date-field
+                                                    (st/select-schema params agg-search-schema)
+                                                    coerce-date-range)
+                             agg-q (st/assoc (st/select-schema params TopnParams)
+                                             :agg-type :topn)]
+                         (-> (read-store
+                              entity
+                              aggregate
+                              search-q
+                              agg-q
+                              identity-map)
+                             (format-agg-result :topn aggregate-on search-q)
+                             ok)))
+                  (GET "/cardinality" []
+                       :return MetricResult
+                       :summary (format "Cardinality for some %s field" capitalized)
+                       :query [params cardinality-q-params]
+                       (let [aggregate-on (:aggregate-on params)
+                             search-q (search-query date-field
+                                                    (st/select-schema params agg-search-schema)
+                                                    coerce-date-range)
+                             agg-q (st/assoc (st/select-schema params CardinalityParams)
+                                             :agg-type :cardinality)]
+                         (-> (read-store
+                              entity
+                              aggregate
+                              search-q
+                              agg-q
+                              identity-map)
+                             (format-agg-result :cardinality aggregate-on search-q)
+                             ok))))))
+     (let [capabilities get-capabilities]
+       (GET "/:id" []
+            :return (s/maybe get-schema)
+            :summary (format "Gets one %s by ID" capitalized)
+            :path-params [id :- s/Str]
+            :query [params get-params]
+            :description (capabilities->description capabilities)
+            :capabilities capabilities
+            :auth-identity identity
+            :identity-map identity-map
+            (if-let [rec (read-store entity
+                                     read-record
+                                     id
+                                     identity-map
+                                     params)]
+              (-> rec
+                  (with-long-id services)
+                  un-store
+                  ok)
+              (not-found))))
 
-     (DELETE "/:id" []
-             :no-doc hide-delete?
-             :path-params [id :- s/Str]
-             :query-params [{wait_for :- (describe s/Bool "wait for deleted entity to no more be available for search") nil}]
-             :summary (format "Deletes one %s" capitalized)
-             :capabilities delete-capabilities
-             :auth-identity identity
-             :identity-map identity-map
-             (if (flows/delete-flow
-                  :services services
-                  :get-fn #(read-store entity
-                                       read-record
-                                       %
-                                       identity-map
-                                       {})
-                  :delete-fn #(write-store entity
-                                           delete-record
-                                           %
-                                           identity-map
-                                           (wait_for->refresh wait_for))
-                  :entity-type entity
-                  :long-id-fn #(with-long-id % services)
-                  :entity-id id
-                  :identity identity)
-               (no-content)
-               (not-found)))
+     (let [capabilities delete-capabilities]
+       (DELETE "/:id" []
+               :no-doc hide-delete?
+               :path-params [id :- s/Str]
+               :query-params [{wait_for :- (describe s/Bool "wait for deleted entity to no more be available for search") nil}]
+               :summary (format "Deletes one %s" capitalized)
+               :description (capabilities->description capabilities)
+               :capabilities capabilities
+               :auth-identity identity
+               :identity-map identity-map
+               (if (flows/delete-flow
+                    :services services
+                    :get-fn #(read-store entity
+                                         read-record
+                                         %
+                                         identity-map
+                                         {})
+                    :delete-fn #(write-store entity
+                                             delete-record
+                                             %
+                                             identity-map
+                                             (wait_for->refresh wait_for))
+                    :entity-type entity
+                    :long-id-fn #(with-long-id % services)
+                    :entity-id id
+                    :identity identity)
+                 (no-content)
+                 (not-found))))
 
      (when can-revoke?
        (revocation-routes
