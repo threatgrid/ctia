@@ -147,8 +147,9 @@
   (testing "POST /ctia/judgement/:id/expire revokes"
     (let [fixed-now (-> "2020-12-31" tc/from-string tc/to-date)]
       (helpers/fixture-with-fixed-time
+        app
         fixed-now
-        (fn []
+        (fn [app]
           (let [expiry-reason "(because it's old)"
                 {{:keys [^String reason
                          valid_time]}
@@ -168,8 +169,9 @@
   (testing "POST /ctia/judgement/:id/expire requires reason"
     (let [fixed-now (-> "2020-12-31" tc/from-string tc/to-date)]
       (helpers/fixture-with-fixed-time
+        app
         fixed-now
-        (fn []
+        (fn [app]
           (let [response
                 (POST
                   app

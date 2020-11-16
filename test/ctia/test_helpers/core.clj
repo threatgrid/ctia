@@ -321,11 +321,13 @@
                       "ctia.auth.static.group" name]
       (f))))
 
-(defn fixture-with-fixed-time [app time f]
+(s/defn fixture-with-fixed-time [app
+                                 time
+                                 f :- (s/=> s/Any (s/named s/Any 'app))]
   (let [{{:keys [fixture-with-time-fn!]} :CTIATestingTimeService} (app/service-graph app)]
     (fixture-with-time-fn!
       (constantly time)
-      f)))
+      (partial f app))))
 
 (defn set-capabilities!
   [app login groups role caps]

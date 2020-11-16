@@ -71,9 +71,8 @@
            (fixture-with-fixed-time
             app
             (time/timestamp "2042-01-01")
-            (fn []
-              (let [app (helpers/get-current-app)
-                    {{:keys [get-port]} :CTIAHTTPServerService} (app/service-graph app)
+            (fn [app]
+              (let [{{:keys [get-port]} :CTIAHTTPServerService} (app/service-graph app)
 
                     port (get-port)
                     {incident :parsed-body
@@ -100,7 +99,7 @@
                     (fixture-with-fixed-time
                      app
                      (time/timestamp "2042-01-02")
-                     (fn []
+                     (fn [app]
                        (PUT app
                             (format "ctia/%s/%s"
                                     "incident"
@@ -421,7 +420,7 @@
            (fixture-with-fixed-time
             app
             (time/timestamp "2042-01-01")
-            (fn []
+            (fn [app]
               (let [initial-incident
                     (POST app
                           (str "ctia/incident")

@@ -28,7 +28,7 @@
     (helpers/fixture-with-fixed-time
      app
      fixed-now
-     (fn []
+     (fn [app]
        (testing "Incident status update: test setup"
          (let [response (PATCH app
                                (str "ctia/incident/" (:short-id incident-id))
