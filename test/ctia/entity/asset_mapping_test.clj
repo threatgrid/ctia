@@ -1,7 +1,5 @@
 (ns ctia.entity.asset-mapping-test
-  (:require [clj-momo.lib.clj-time.coerce :as tc]
-            [clj-momo.lib.clj-time.core :as t]
-            [clj-momo.test-helpers.core :as mth]
+  (:require [clj-momo.test-helpers.core :as mth]
             [clojure.test :refer [deftest is are join-fixtures testing use-fixtures]]
             [ctia.entity.asset-mapping :as asset-mapping]
             [ctia.test-helpers.aggregate :as aggregate]
@@ -43,20 +41,7 @@
         (str "asset_ref:\"" (:asset-ref asset-mapping-sample) "\"")
         #(-> % :parsed-body first :asset-ref)
         (:asset-ref asset-mapping-sample)
-        "Searching Asset Mapping by asset-ref"))))
-
-  (testing "Expire 'valid-time' field"
-    (let [fixed-now (-> "2020-12-31" tc/from-string tc/to-date)]
-      (helpers/fixture-with-fixed-time
-       fixed-now
-       (fn []
-         (let [response (helpers/POST
-                         app
-                         (str "ctia/asset-mapping/expire/" short-id)
-                         :headers {"Authorization" "45c1f5e3f05d0"})]
-           (is (= 200 (:status response)) "POST asset-mapping/expire succeeds")
-           (is (= fixed-now (-> response :parsed-body :valid_time :end_time))
-               ":valid_time properly reset")))))))
+        "Searching Asset Mapping by asset-ref")))))
 
 (deftest asset-mapping-routes-test
   (store/test-for-each-store-with-app
@@ -75,6 +60,7 @@
        :search-value       "High"
        :update-field       :source
        :additional-tests   additional-tests
+       :revoke-tests?      asset-mapping/asset-mapping-can-revoke?
        :headers            {:Authorization "45c1f5e3f05d0"}}))))
 
 (deftest asset-mapping-pagination-test
