@@ -226,7 +226,7 @@
                       #(wrap-version % get-in-config)
                       ;; always last
                       (metrics/wrap-metrics "ctia" api-routes/get-routes)]
-           documentation-routes
+           (documentation-routes)
            (graphql-ui-routes services)
            (context
                "/ctia" []

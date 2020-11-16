@@ -44,7 +44,7 @@
           :message "Only authenticated users allowed"})))))
 
 (defn require-capability! [required-capability id]
-  (if required-capability
+  (when required-capability
     (cond
       (or (nil? id)
           (not (auth/authenticated? id)))

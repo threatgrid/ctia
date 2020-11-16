@@ -11,7 +11,8 @@
      un-store-page
      with-long-id]]
    [ctia.flows.crud :as flows]
-   [ctia.http.routes.common :refer [created
+   [ctia.http.routes.common :refer [capabilities->description
+                                    created
                                     filter-map-search-options
                                     paginated-ok
                                     search-options
@@ -93,22 +94,6 @@
             :spec new-spec)]
     (ok (un-store updated-rec))
     (not-found (str (capitalize-entity entity) " not found"))))
-
-(s/defn capabilities->description
-  :- s/Str
-  [capabilities :- (s/conditional
-                     keyword? (s/pred simple-keyword?)
-                     nil? (s/pred nil?)
-                     :else #{(s/pred simple-keyword?)})]
-  (cond
-    (keyword? capabilities) (str "Requires capability " (name capabilities) ".")
-    ((every-pred set? seq) capabilities) (-> (apply str "Requires capabilities "
-                                                    (->> capabilities
-                                                         sort
-                                                         (map name)
-                                                         (str/join ", ")))
-                                             (str "."))
-    :else "No capabilities needed."))
 
 (s/defn revocation-routes
   "Returns POST /:id/expire routes for the given entity."

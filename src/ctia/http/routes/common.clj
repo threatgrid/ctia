@@ -134,3 +134,19 @@
     true {:refresh "wait_for"}
     false {:refresh "false"}
     {}))
+
+(s/defn capabilities->description :- s/Str
+  "Does not add leading or trailing new lines."
+  [capabilities :- (s/conditional
+                     keyword? (s/pred simple-keyword?)
+                     nil? (s/pred nil?)
+                     :else #{(s/pred simple-keyword?)})]
+  (cond
+    (keyword? capabilities) (str "Requires capability " (name capabilities) ".")
+    ((every-pred set? seq) capabilities) (-> (apply str "Requires capabilities "
+                                                    (->> capabilities
+                                                         sort
+                                                         (map name)
+                                                         (str/join ", ")))
+                                             (str "."))
+    :else "No capabilities needed."))
