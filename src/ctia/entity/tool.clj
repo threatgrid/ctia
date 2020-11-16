@@ -3,10 +3,11 @@
             [ctia.entity.tool.graphql-schemas :as tgs]
             [ctia.http.routes
              [common :refer [BaseEntityFilterParams PagingParams SourcableEntityFilterParams]]
-             [crud :refer [entity-crud-routes]]]
+             [crud :refer [services->entity-crud-routes]]]
             [ctia.stores.es
              [mapping :as em]
              [store :refer [def-es-store]]]
+            [ctia.schemas.core :refer [APIHandlerServices]]
             [schema-tools.core :as st]
             [schema.core :as s]))
 
@@ -70,8 +71,9 @@
     :delete-tool
     :search-tool})
 
-(def tool-routes
-  (entity-crud-routes
+(s/defn tool-routes [services :- APIHandlerServices]
+  (services->entity-crud-routes
+   services
    {:entity :tool
     :new-schema ts/NewTool
     :entity-schema ts/Tool
@@ -108,5 +110,5 @@
    :realize-fn ts/realize-tool
    :es-store ->ToolStore
    :es-mapping tool-mapping
-   :services->routes tool-routes
+   :services->routes #'tool-routes
    :capabilities capabilities})

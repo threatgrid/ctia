@@ -4,7 +4,8 @@
              [schemas :as ss]]
             [ctia.http.routes
              [common :refer [BaseEntityFilterParams PagingParams SourcableEntityFilterParams]]
-             [crud :refer [entity-crud-routes]]]
+             [crud :refer [services->entity-crud-routes]]]
+            [ctia.schemas.core :refer [APIHandlerServices]]
             [schema-tools.core :as st]
             [schema.core :as s]))
 
@@ -43,8 +44,9 @@
    PagingParams
    SightingFieldsParam))
 
-(def sighting-routes
-  (entity-crud-routes
+(s/defn sighting-routes [services :- APIHandlerServices]
+  (services->entity-crud-routes
+   services
    {:entity :sighting
     :new-schema ss/NewSighting
     :entity-schema ss/Sighting
@@ -87,5 +89,5 @@
    :realize-fn ss/realize-sighting
    :es-store s-store/->SightingStore
    :es-mapping s-store/sighting-mapping
-   :services->routes sighting-routes
+   :services->routes #'sighting-routes
    :capabilities capabilities})

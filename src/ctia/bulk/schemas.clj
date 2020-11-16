@@ -1,6 +1,6 @@
 (ns ctia.bulk.schemas
   (:require [clojure.string :as str]
-            [ctia.entity.entities :refer [entities]]
+            [ctia.entity.entities :as entities]
             [ctia.schemas.core :refer [TempIDs Reference]]
             [schema-tools.core :as st]
             [schema.core :as s]))
@@ -28,16 +28,20 @@
   "Error related to one entity of the bulk"
   {:error s/Any})
 
+; TODO def => defn
 (s/defschema Bulk
-  (entities-bulk-schema entities :schema))
+  (entities-bulk-schema (entities/all-entities) :schema))
 
+; TODO def => defn
 (s/defschema StoredBulk
-  (entities-bulk-schema entities :stored-schema))
+  (entities-bulk-schema (entities/all-entities) :stored-schema))
 
+; TODO def => defn
 (s/defschema BulkRefs
   (st/assoc
-   (entities-bulk-schema entities [(s/maybe Reference)])
+   (entities-bulk-schema (entities/all-entities) [(s/maybe Reference)])
    (s/optional-key :tempids) TempIDs))
 
+; TODO def => defn
 (s/defschema NewBulk
-  (entities-bulk-schema entities :new-schema))
+  (entities-bulk-schema (entities/all-entities) :new-schema))

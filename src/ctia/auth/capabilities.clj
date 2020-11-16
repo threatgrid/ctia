@@ -1,12 +1,12 @@
 (ns ctia.auth.capabilities
   (:require
-   [ctia.entity.entities
-    :refer [entities]]
+   [ctia.entity.entities :as entities :refer [AllEntities]]
    [clojure.set :as set]
-   [clojure.string :as string]))
+   [clojure.string :as string]
+   [schema.core :as s]))
 
-(def all-entities
-  (assoc entities
+(s/defn all-entities :- AllEntities []
+  (assoc (entities/all-entities)
          :verdict
          {:plural :verdicts
           :entity :verdict}))
@@ -27,11 +27,11 @@
                          (name plural)
                          (name entity)))))))
 
-(def all-entity-capabilities
+(defn all-entity-capabilities []
   (apply set/union
          (map #(gen-capabilities-for-entity-and-accesses
                 % (keys prefixes))
-              (vals all-entities))))
+              (vals (all-entities)))))
 
 (def misc-capabilities
   #{:read-verdict
@@ -40,10 +40,10 @@
     :specify-id
     :import-bundle})
 
-(def all-capabilities
+(defn all-capabilities []
   (set/union
    misc-capabilities
-   all-entity-capabilities))
+   (all-entity-capabilities)))
 
 (comment
 
@@ -69,8 +69,9 @@
         (str "private-intel/" loc))))
 
   (sort (set/union
-         (set (map cap-to-scope all-capabilities)))))
+         (set (map cap-to-scope (all-capabilities))))))
 
+;; TODO def => defn
 (def default-capabilities
   {:user
    #{:read-actor
@@ -104,4 +105,4 @@
      :list-weaknesses
      :import-bundle}
    :admin
-   all-capabilities})
+   (all-capabilities)})

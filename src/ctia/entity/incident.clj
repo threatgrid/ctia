@@ -286,5 +286,5 @@
    :realize-fn realize-incident
    :es-store ->IncidentStore
    :es-mapping incident-mapping
-   :services->routes incident-routes
+   :services->routes #'incident-routes
    :capabilities capabilities})

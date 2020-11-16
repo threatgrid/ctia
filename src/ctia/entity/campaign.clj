@@ -2,10 +2,10 @@
   (:require [ctia.domain.entities :refer [default-realize-fn]]
             [ctia.http.routes
              [common :refer [BaseEntityFilterParams PagingParams SourcableEntityFilterParams]]
-             [crud :refer [entity-crud-routes]]]
+             [crud :refer [services->entity-crud-routes]]]
             [ctia.schemas
              [utils :as csu]
-             [core :refer [def-acl-schema def-stored-schema]]
+             [core :refer [APIHandlerServices def-acl-schema def-stored-schema]]
              [sorting :as sorting :refer [default-entity-sort-fields]]]
             [ctia.stores.es
              [mapping :as em]
@@ -103,8 +103,9 @@
    PagingParams
    CampaignFieldsParam))
 
-(def campaign-routes
-  (entity-crud-routes
+(s/defn campaign-routes [services :- APIHandlerServices]
+  (services->entity-crud-routes
+   services
    {:api-tags ["Campaign"]
     :entity :campaign
     :new-schema NewCampaign
@@ -148,5 +149,5 @@
    :realize-fn realize-campaign
    :es-store ->CampaignStore
    :es-mapping campaign-mapping
-   :services->routes campaign-routes
+   :services->routes #'campaign-routes
    :capabilities capabilities})

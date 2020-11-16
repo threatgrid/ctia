@@ -1,7 +1,7 @@
 (ns ctia.http.routes.crud
   (:require
    [clj-momo.lib.clj-time.core :as time]
-   [clojure.string :refer [capitalize]]
+   [clojure.string :as str]
    [ctia.http.middleware.auth]
    [compojure.api.core :refer [context DELETE GET POST PUT PATCH routes]]
    [ctia.domain.entities
@@ -38,7 +38,7 @@
    [schema-tools.core :as st]))
 
 (s/defn capitalize-entity [entity :- (s/pred simple-keyword?)]
-  (-> entity name capitalize))
+  (-> entity name str/capitalize))
 
 (s/defn revoke-request
   "Process POST /:id/expire route.
@@ -114,8 +114,9 @@
                          :identity-map identity-map
                          :wait_for wait_for})))
 
-(s/defn entity-crud-routes
+(s/defn ^:private entity-crud-routes
   :- DelayedRoutes
+  "Implementation of services->entity-crud-routes."
   [{:keys [entity
            new-schema
            entity-schema
@@ -179,14 +180,18 @@
                                        aggregate-on-enumerable)
         topn-q-params (st/merge agg-search-schema
                                 TopnParams
-                                aggregate-on-enumerable)]
+                                aggregate-on-enumerable)
+        capabilities->description (fn [capabilities]
+                                    (apply str "Requires these capabilities: "
+                                           (str/join "\n" (sort capabilities))))]
         (routes
      (when can-post?
        (POST "/" []
              :return entity-schema
              :query-params [{wait_for :- (describe s/Bool "wait for entity to be available for search") nil}]
              :body [new-entity new-schema {:description (format "a new %s" capitalized)}]
-             :summary (format "Adds a new %s" capitalized)
+             :summary (format "Adds a really new %s" capitalized)
+             :description (format "Adds a really new %s\n stuff more \nstuff\na" capitalized)
              :capabilities post-capabilities
              :auth-identity identity
              :identity-map identity-map

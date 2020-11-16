@@ -114,5 +114,5 @@
    :realize-fn fs/realize-feedback
    :es-store ->FeedbackStore
    :es-mapping feedback-mapping
-   :services->routes feedback-routes
+   :services->routes #'feedback-routes
    :capabilities capabilities})

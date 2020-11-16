@@ -10,7 +10,7 @@
     [index]]
    [clj-momo.lib.es
     [index :as es-index]]
-   [ctia.entity.entities :refer [entities]]
+   [ctia.entity.entities :as entities]
    [schema.core :as s]
    [schema-tools.core :as st]))
 
@@ -26,11 +26,12 @@
        :refresh_interval s/Str
        :aliased s/Any})))
 
+;; TODO def => defn
 (def store-mappings
   (apply merge {}
          (map (fn [[_ {:keys [entity es-mapping]}]]
                 {entity es-mapping})
-              entities)))
+              (entities/all-entities))))
 
 (s/defn init-store-conn :- ESConnState
   "initiate an ES store connection, returning a map containing a
@@ -160,7 +161,7 @@
   (apply merge {}
          (map (fn [[_ {:keys [entity es-store]}]]
                 {entity (make-factory es-store services)})
-              entities)))
+              (entities/all-entities))))
 
 (s/defn init-store! [store-kw services :- ESConnServices]
   (when-let [factory (get (factories services) store-kw)]

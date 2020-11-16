@@ -419,5 +419,5 @@
    :realize-fn realize-feed
    :es-store ->FeedStore
    :es-mapping feed-mapping
-   :services->routes feed-routes
+   :services->routes #'feed-routes
    :capabilities capabilities})

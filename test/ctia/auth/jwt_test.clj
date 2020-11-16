@@ -48,7 +48,7 @@
          (sut/scope-to-capabilities (sut/casebook-root-scope get-in-config) get-in-config))
       "Check the casebook capabilities from the casebook scope")
   (is (= #{:developer :specify-id}
-         (set/difference caps/all-capabilities
+         (set/difference (caps/all-capabilities)
                          (sut/scopes-to-capabilities #{(sut/entity-root-scope get-in-config)
                                                        (sut/casebook-root-scope get-in-config)}
                                                      get-in-config)))

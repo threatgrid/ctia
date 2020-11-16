@@ -238,7 +238,7 @@
              (version-routes services)
              (middleware [wrap-authenticated]
                (->>
-                entities/entities
+                (entities/all-entities)
                 vals
                 (map (partial mark-disabled-entities services))
                 (entities-routes services))

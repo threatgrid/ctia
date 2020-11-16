@@ -2,7 +2,7 @@
   (:require [schema.core :as s]
             [schema-tools.core :as st]
             [ctia.schemas.core :as csc]
-            [ctia.entity.entities :refer [entities]]))
+            [ctia.entity.entities :refer [all-entities]]))
 
 (s/defschema EntityImportResult
   (st/optional-keys
@@ -32,9 +32,10 @@
 (s/defschema NewBundleExport
   (st/open-schema csc/NewBundle))
 
+;; TODO def => defn
 (s/defschema EntityTypes
   (apply s/enum
-         (-> (keys entities)
+         (-> (keys (all-entities))
              set
              (disj :relationship :event :identity))))
 

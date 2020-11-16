@@ -3,7 +3,8 @@
             [ctia.http.routes.common
              :refer
              [BaseEntityFilterParams PagingParams SourcableEntityFilterParams]]
-            [ctia.http.routes.crud :refer [entity-crud-routes]]
+            [ctia.http.routes.crud :refer [services->entity-crud-routes]]
+            [ctia.schemas.core :refer [APIHandlerServices]]
             [ctia.schemas.sorting :as sorting]
             [ctia.stores.es.mapping :as em]
             [ctia.stores.es.store :refer [def-es-store]]
@@ -73,8 +74,9 @@
 (def investigation-histogram-fields
   [:timestamp])
 
-(def investigation-routes
-  (entity-crud-routes
+(s/defn investigation-routes [services :- APIHandlerServices]
+  (services->entity-crud-routes
+   services
    {:entity :investigation
     :new-schema inv/NewInvestigation
     :entity-schema inv/Investigation
@@ -118,5 +120,5 @@
    :realize-fn inv/realize-investigation
    :es-store ->InvestigationStore
    :es-mapping investigation-mapping
-   :services->routes investigation-routes
+   :services->routes #'investigation-routes
    :capabilities capabilities})

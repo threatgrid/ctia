@@ -181,4 +181,4 @@
    :plural :events
    :es-store ->EventStore
    :es-mapping event-mapping
-   :services->routes event-routes})
+   :services->routes #'event-routes})

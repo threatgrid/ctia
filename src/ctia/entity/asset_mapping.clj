@@ -1,7 +1,7 @@
 (ns ctia.entity.asset-mapping
   (:require [ctia.domain.entities :as entities]
             [ctia.http.routes.common :as routes.common]
-            [ctia.http.routes.crud :refer [entity-crud-routes]]
+            [ctia.http.routes.crud :refer [services->entity-crud-routes]]
             [ctia.schemas.core :refer [def-acl-schema def-stored-schema APIHandlerServices]]
             [ctia.schemas.sorting :as sorting]
             [ctia.schemas.utils :as csu]
@@ -104,8 +104,9 @@
 
 (def asset-mapping-can-revoke? true)
 
-(def asset-mapping-routes
-  (entity-crud-routes
+(s/defn asset-mapping-routes [services :- APIHandlerServices]
+  (services->entity-crud-routes
+    services
     {:entity                   :asset-mapping
      :new-schema               NewAssetMapping
      :entity-schema            AssetMapping
@@ -149,5 +150,5 @@
    :realize-fn            realize-asset-mapping
    :es-store              ->AssetMappingStore
    :es-mapping            asset-mapping-mapping
-   :services->routes      asset-mapping-routes
+   :services->routes      #'asset-mapping-routes
    :capabilities          capabilities})

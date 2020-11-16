@@ -2,9 +2,9 @@
   (:require [ctia.domain.entities :refer [default-realize-fn]]
             [ctia.http.routes
              [common :refer [BaseEntityFilterParams PagingParams SourcableEntityFilterParams]]
-             [crud :refer [entity-crud-routes]]]
+             [crud :refer [services->entity-crud-routes]]]
             [ctia.schemas
-             [core :refer [def-acl-schema def-stored-schema]]
+             [core :refer [APIHandlerServices def-acl-schema def-stored-schema]]
              [sorting :as sorting]
              [utils :as csu]]
             [ctia.stores.es
@@ -109,8 +109,9 @@
    :valid_time.start_time
    :valid_time.end_time])
 
-(def actor-routes
-  (entity-crud-routes
+(s/defn actor-routes [services :- APIHandlerServices]
+  (services->entity-crud-routes
+   services
    {:entity :actor
     :new-schema NewActor
     :entity-schema Actor
@@ -153,5 +154,5 @@
    :realize-fn realize-actor
    :es-store ->ActorStore
    :es-mapping actor-mapping
-   :services->routes actor-routes
+   :services->routes #'actor-routes
    :capabilities capabilities})

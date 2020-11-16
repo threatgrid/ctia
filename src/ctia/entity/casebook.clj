@@ -350,5 +350,5 @@
    :realize-fn realize-casebook
    :es-store ->CasebookStore
    :es-mapping casebook-mapping
-   :services->routes casebook-routes
+   :services->routes #'casebook-routes
    :capabilities capabilities})

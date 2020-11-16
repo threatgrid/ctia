@@ -2,10 +2,10 @@
   (:require [ctia.domain.entities :refer [default-realize-fn]]
             [ctia.http.routes
              [common :refer [BaseEntityFilterParams PagingParams SourcableEntityFilterParams]]
-             [crud :refer [entity-crud-routes]]]
+             [crud :refer [services->entity-crud-routes]]]
             [ctia.schemas
              [utils :as csu]
-             [core :refer [def-acl-schema def-stored-schema]]
+             [core :refer [APIHandlerServices def-acl-schema def-stored-schema]]
              [sorting :refer [default-entity-sort-fields]]]
             [ctia.stores.es
              [mapping :as em]
@@ -112,8 +112,9 @@
    :cost
    :coa_type])
 
-(def coa-routes
-  (entity-crud-routes
+(s/defn coa-routes [services :- APIHandlerServices]
+  (services->entity-crud-routes
+   services
    {:entity :coa
     :new-schema NewCOA
     :entity-schema COA
@@ -156,5 +157,5 @@
    :realize-fn realize-coa
    :es-store ->COAStore
    :es-mapping coa-mapping
-   :services->routes coa-routes
+   :services->routes #'coa-routes
    :capabilities capabilities})

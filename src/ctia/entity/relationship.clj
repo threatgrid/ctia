@@ -8,7 +8,7 @@
             [ctia.flows.crud :as flows]
             [ctia.http.routes
              [common :refer [BaseEntityFilterParams created PagingParams SourcableEntityFilterParams]]
-             [crud :refer [entity-crud-routes]]]
+             [crud :refer [services->entity-crud-routes]]]
             [ctia.http.middleware.auth :refer [require-capability!]]
             [ctia.schemas
              [core :refer [APIHandlerServices Reference TLP]]
@@ -190,8 +190,9 @@
   [:source
    :relationship_type])
 
-(def relationship-routes
-  (entity-crud-routes
+(s/defn relationship-routes [services :- APIHandlerServices]
+  (services->entity-crud-routes
+   services
    {:entity :relationship
     :new-schema rs/NewRelationship
     :entity-schema rs/Relationship
@@ -235,5 +236,5 @@
    :realize-fn rs/realize-relationship
    :es-store ->RelationshipStore
    :es-mapping relationship-mapping
-   :services->routes relationship-routes
+   :services->routes #'relationship-routes
    :capabilities capabilities})
