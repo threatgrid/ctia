@@ -86,6 +86,10 @@
    JudgementFieldsParam))
 
 (s/defn judgement-revocation-routes
+  "Like ctia.http.routes.crud/revocation-routes except defines a
+  custom :revocation-update-fn and has an extra :reason query-param.
+  It's unclear how to reliably specify and retrieve :reason dynamically,
+  which is why this is a separate function."
   [services :- APIHandlerServices
    {:keys [entity
            entity-schema
