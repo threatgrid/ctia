@@ -76,7 +76,7 @@
              (GET "/export" []
                   :return NewBundleExport
                   :query [q BundleExportQuery]
-                  :summary "Export records with their local relationships. Ids are URIs (with port if precised)."
+                  :summary "Export records with their local relationships. Ids are URIs (with port if specified)."
                   :description (common/capabilities->description capabilities)
                   :capabilities capabilities
                   :auth-identity identity
@@ -93,7 +93,7 @@
                   :return NewBundleExport
                   :query [q BundleExportOptions]
                   :body [b BundleExportIds]
-                  :summary "Export records with their local relationships. Ids are URIs (with port if precised)."
+                  :summary "Export records with their local relationships. Ids are URIs (with port if specified)."
                   :description (common/capabilities->description capabilities)
                   :capabilities capabilities
                   :auth-identity identity

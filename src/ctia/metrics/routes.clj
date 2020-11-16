@@ -1,6 +1,6 @@
 (ns ctia.metrics.routes
   (:require
-   [compojure.api.sweet :refer :all]
+   [compojure.api.core :refer [context GET routes]]
    [metrics
     [core :refer [default-registry]]
     [counters :as counters]
@@ -9,7 +9,7 @@
     [meters :as meters]
     [timers :as timers]
     [utils :refer [all-metrics]]]
-   [ring.util.http-response :refer :all]
+   [ring.util.http-response :refer [ok]]
    [schema.core :as s])
   (:import [com.codahale.metrics Counter Gauge Histogram Meter Timer]))
 
@@ -62,10 +62,11 @@
 (defn render-metrics []
   (into {} (map render-metric (all-metrics default-registry))))
 
-(defroutes metrics-routes
-  (context "/metrics" []
-    :tags ["Metrics"]
-    (GET "/" []
-      :summary "Display Metrics"
-      :capabilities :developer
-      (ok (render-metrics)))))
+(defn metrics-routes []
+  (routes
+    (context "/metrics" []
+      :tags ["Metrics"]
+      (GET "/" []
+        :summary "Display Metrics"
+        :capabilities :developer
+        (ok (render-metrics))))))

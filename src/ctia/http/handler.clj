@@ -242,7 +242,7 @@
                 vals
                 (map (partial mark-disabled-entities services))
                 (entities-routes services))
-               status-routes
+               (status-routes)
                (context
                    "/bulk" []
                  :tags ["Bulk"]
@@ -253,7 +253,7 @@
                  (incident-link-route services))
                (bundle-routes services)
                (observable-routes services)
-               metrics-routes
+               (metrics-routes)
                (properties-routes services)
                (graphql-routes services))))
          (undocumented
