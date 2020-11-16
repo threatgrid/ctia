@@ -8,6 +8,7 @@
             [ctia.schemas.core :refer [Verdict]]
             [ctia.store :refer [IJudgementStore IQueryStringSearchableStore IStore]]
             [ctia.stores.es
+             [store :refer [close-cm!]]
              [crud :as crud]
              [mapping :as em]
              [query :refer [active-judgements-by-observable-query find-restriction-query-part]]
@@ -126,4 +127,5 @@
   (query-string-count [_ search-query ident]
     (handle-query-string-count state search-query ident))
   (aggregate [_ search-query agg-query ident]
-    (handle-aggregate state search-query agg-query ident)))
+    (handle-aggregate state search-query agg-query ident))
+  (close [_] (close-cm! state)))

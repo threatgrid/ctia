@@ -7,7 +7,8 @@
   (read-record [this id ident params])
   (update-record [this id record ident params])
   (delete-record [this id ident params])
-  (list-records [this filtermap ident params]))
+  (list-records [this filtermap ident params])
+  (close [this]))
 
 (defprotocol IJudgementStore
   (calculate-verdict [this observable ident])
@@ -19,7 +20,8 @@
 (defprotocol IIdentityStore
   (read-identity [this login])
   (create-identity [this new-identity])
-  (delete-identity [this org-id role]))
+  (delete-identity [this org-id role])
+  (close-identity [this]))
 
 (defprotocol IEventStore
   (read-event [this id ident params])

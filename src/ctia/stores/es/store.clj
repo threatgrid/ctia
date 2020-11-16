@@ -2,6 +2,7 @@
   (:require [schema.core :as s]
             [schema-tools.core :as st]
             [ductile
+             [conn :as es-conn]
              [index :as es-index]
              [schemas :refer [ESConn]]]
             [ctia.store :refer [IStore IQueryStringSearchableStore]]
@@ -10,6 +11,10 @@
 (defn delete-state-indexes [{:keys [conn index config] :as state}]
   (when conn
     (es-index/delete! conn (str index "*"))))
+
+(s/defn close-cm!
+  [{:keys [conn]}]
+  (es-conn/close conn))
 
 (defmacro def-es-store
   [store-name
@@ -47,7 +52,9 @@
        ~(symbol "state") search-query# ident#))
      (~(symbol "aggregate") [_# search-query# agg-query# ident#]
       (crud/handle-aggregate
-       ~(symbol "state") search-query# agg-query# ident#))))
+       ~(symbol "state") search-query# agg-query# ident#))
+     (~(symbol "close") [_#]
+      (close-cm! ~(symbol "state")))))
 
 (s/defschema StoreMap
   {:conn ESConn

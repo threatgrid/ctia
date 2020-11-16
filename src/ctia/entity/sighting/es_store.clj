@@ -6,6 +6,7 @@
             [ctia.schemas.core :refer [Observable]]
             [ctia.store :refer [IQueryStringSearchableStore ISightingStore IStore]]
             [ctia.stores.es
+             [store :refer [close-cm!]]
              [crud :as crud]
              [mapping :as em]
              [schemas :refer [ESConnState]]]
@@ -170,4 +171,5 @@
   (query-string-count [_ search-query ident]
     (handle-query-string-count state search-query ident))
   (aggregate [_ search-query agg-query ident]
-    (handle-aggregate state search-query agg-query ident)))
+    (handle-aggregate state search-query agg-query ident))
+  (close [_] (close-cm! state)))
