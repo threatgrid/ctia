@@ -5,11 +5,16 @@
             [clj-momo.lib.time :as time]
             [clj-momo.lib.clj-time.core :as t]
             [ctia.schemas.core :refer [APIHandlerServices]]
-            [schema.core :as s]))
+            [ctia.lib.utils :refer [open-service-schema service-subschema]]
+            [schema.core :as s]
+            [schema-tools.core :as st]))
 
 (s/defn to-create-event :- vs/Event
   "Create a CreateEvent from a StoredX object"
-  [{{:keys [now]} :CTIATimeService} :- APIHandlerServices
+  [{{:keys [now]} :CTIATimeService} :- (-> APIHandlerServices
+                                           (service-subschema
+                                             :CTIATimeService [:now])
+                                           open-service-schema)
    object
    id]
   {:owner (:owner object)
@@ -91,11 +96,17 @@
    The two arguments `object` and `prev-object` should have the same schema.
    The fields should contain enough information to retrieve all information,
    but the complete object is given for simplicity."
-  [object prev-object event-id]
+  [{{:keys [now]} :CTIATimeService} :- (-> APIHandlerServices
+                                           (service-subschema
+                                             :CTIATimeService [:now])
+                                           open-service-schema)
+   object
+   prev-object
+   event-id]
   {:owner (:owner object)
    :groups (:groups object)
    :entity object
-   :timestamp (t/internal-now)
+   :timestamp (now)
    :id event-id
    :type "event"
    :tlp (:tlp object)
@@ -104,13 +115,19 @@
              (dissoc prev-object :id)
              (dissoc object :id))})
 
+;; TODO unit test
 (s/defn to-delete-event :- vs/Event
   "transform an object (generally a `StoredObject`) to its corresponding `Event`"
-  [object id]
+  [{{:keys [now]} :CTIATimeService} :- (-> APIHandlerServices
+                                           (service-subschema
+                                             :CTIATimeService [:now])
+                                           open-service-schema)
+   object
+   id]
   {:owner (:owner object)
    :groups (:groups object)
    :entity object
-   :timestamp (t/internal-now)
+   :timestamp (now)
    :id id
    :type "event"
    :tlp (:tlp object)

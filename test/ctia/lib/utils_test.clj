@@ -37,33 +37,35 @@
          (with-out-str
            (sut/safe-pprint map-with-creds)))))
 
-
-(deftest service-subgraph-test
-  (is (= (sut/service-subgraph {:a {:b 1}})
+(defn service-subgraph-test* [service-subgraph int->v]
+  {:pre [(vector? int->v)
+         (>= 5 (count int->v))
+         (apply distinct? int->v)]}
+  (is (= (service-subgraph {:a {:b (int->v 1)}})
          {}))
-  (is (= (sut/service-subgraph
-           {:a {:b 1 :c 2}
-            :d {:e 3 :f 4}}
+  (is (= (service-subgraph
+           {:a {:b (int->v 1) :c (int->v 2)}
+            :d {:e (int->v 3) :f (int->v 4)}}
            :a [:b])
-         {:a {:b 1}}))
-  (is (= (sut/service-subgraph
-           {:a {:b 1 :c 2}
-            :d {:e 3 :f 4}}
+         {:a {:b (int->v 1)}}))
+  (is (= (service-subgraph
+           {:a {:b (int->v 1) :c (int->v 2)}
+            :d {:e (int->v 3) :f (int->v 4)}}
            :a [:b]
            :d [:e])
-         {:a {:b 1}
-          :d {:e 3}}))
+         {:a {:b (int->v 1)}
+          :d {:e (int->v 3)}}))
   (testing "throws on uneven args"
     (is (thrown-with-msg?
           AssertionError
           #"Uneven number of selectors"
-          (sut/service-subgraph
+          (service-subgraph
             {}
             :b)))
     (is (thrown-with-msg?
           AssertionError
           #"Uneven number of selectors"
-          (sut/service-subgraph
+          (service-subgraph
             {}
             :b [:c]
             :d))))
@@ -71,7 +73,20 @@
     (is (thrown?
           AssertionError
           #"Repeated key :a"
-          (sut/service-subgraph
-            {:a {:b 1}}
+          (service-subgraph
+            {:a {:b (int->v 1)}}
             :a [:b]
             :a [:b])))))
+
+(deftest service-subgraph-test
+  (service-subgraph-test*
+    sut/service-subgraph
+    (vec (range 5))))
+
+(deftest service-subschema-test
+  (service-subgraph-test*
+    sut/service-subgraph
+    (let [;; distinct with stable ordering
+          ps [int? boolean? map? vector? set?]]
+      (assert (apply distinct? ps))
+      (mapv s/pred ps))))

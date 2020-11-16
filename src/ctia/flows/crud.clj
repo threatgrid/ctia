@@ -464,7 +464,7 @@
            :realize-fn realize-fn
            :spec spec
            :store-fn update-fn
-           :create-event-fn to-update-event}
+           :create-event-fn (partial to-update-event services)}
           validate-entities
           realize-entities
           throw-validation-error
@@ -508,7 +508,7 @@
            :realize-fn realize-fn
            :spec spec
            :store-fn update-fn
-           :create-event-fn to-update-event}
+           :create-event-fn (partial to-update-event services)}
           patch-entities
           validate-entities
           realize-entities
@@ -545,7 +545,7 @@
          :identity identity
          :long-id-fn long-id-fn
          :store-fn delete-fn
-         :create-event-fn to-delete-event}
+         :create-event-fn (partial to-delete-event services)}
         apply-before-hooks
         apply-store-fn
         apply-long-id-fn
