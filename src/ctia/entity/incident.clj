@@ -77,7 +77,10 @@
 
 (s/defn ^:private make-status-update
   [{:keys [status]}
-   {{:keys [now]} :CTIATimeService} :- APIHandlerServices]
+   {{:keys [now]} :CTIATimeService} :- (-> APIHandlerServices
+                                           (csu/service-subschema
+                                             {:CTIATimeService #{:now}})
+                                           csu/open-service-schema)]
   (let [t (now)
         verb (case status
                "New" nil
