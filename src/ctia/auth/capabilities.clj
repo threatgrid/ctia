@@ -5,7 +5,10 @@
    [clojure.string :as string]
    [schema.core :as s]))
 
-(s/defn all-entities :- AllEntities []
+(s/defn all-entities
+  ;; FIXME :verdict is not an Entity
+  #_#_:- AllEntities
+  []
   (assoc (entities/all-entities)
          :verdict
          {:plural :verdicts
