@@ -79,7 +79,7 @@
       :negate em/boolean-type
       :indicator_type em/token
       :alternate_ids em/token
-      :tags em/token
+      :tags em/all_token
       :composite_indicator_expression {:type "object"
                                        :properties
                                        {:operator em/token

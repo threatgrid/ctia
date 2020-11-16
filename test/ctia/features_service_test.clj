@@ -1,10 +1,6 @@
 (ns ctia.features-service-test
-  (:require  [clojure.test :refer [deftest are is testing use-fixtures]]
-             [ctia.test-helpers
-              [core :as th]
-              [es :as es-helpers]]))
-
-(use-fixtures :each es-helpers/fixture-properties:es-store)
+  (:require  [clojure.test :refer [deftest are is join-fixtures testing use-fixtures]]
+             [ctia.test-helpers.core :as th]))
 
 (deftest features-service-test
   (testing "FeaturesService methods for entity marked as disabled in config"
