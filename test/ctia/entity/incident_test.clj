@@ -25,60 +25,57 @@
 
 (defn partial-operations-tests [app incident-id incident]
   (let [fixed-now (t/internal-now)]
-    (helpers/fixture-with-fixed-time
-     app
-     fixed-now
-     (fn [app]
-       (testing "Incident status update: test setup"
-         (let [response (PATCH app
-                               (str "ctia/incident/" (:short-id incident-id))
-                               :body {:incident_time {}}
-                               :headers {"Authorization" "45c1f5e3f05d0"})
-               updated-incident (:parsed-body response)]
-           (is (= 200 (:status response)))))
-
-       (testing "POST /ctia/incident/:id/status Open"
-         (let [new-status {:status "Open"}
-               response (POST app
-                              (str "ctia/incident/" (:short-id incident-id) "/status")
-                              :body new-status
+    (helpers/with-fixed-time app fixed-now
+      (testing "Incident status update: test setup"
+        (let [response (PATCH app
+                              (str "ctia/incident/" (:short-id incident-id))
+                              :body {:incident_time {}}
                               :headers {"Authorization" "45c1f5e3f05d0"})
-               updated-incident (:parsed-body response)]
-           (is (= 200 (:status response)))
-           (is (= "Open" (:status updated-incident)))
-           (is (get-in updated-incident [:incident_time :opened]))
-
-           (is (= (get-in updated-incident [:incident_time :opened])
-                  (tc/to-date fixed-now)))))
-
-       (testing "POST /ctia/incident/:id/status Closed"
-         (let [new-status {:status "Closed"}
-               response (POST app
-                              (str "ctia/incident/" (:short-id incident-id) "/status")
-                              :body new-status
-                              :headers {"Authorization" "45c1f5e3f05d0"})
-               updated-incident (:parsed-body response)]
-           (is (= 200 (:status response)))
-           (is (= "Closed" (:status updated-incident)))
-           (is (get-in updated-incident [:incident_time :closed]))
-
-           (is (= (get-in updated-incident [:incident_time :closed])
-                  (tc/to-date fixed-now)))))
-
-       (testing "POST /ctia/incident/:id/status Containment Achieved"
-         (let [new-status {:status "Containment Achieved"}
-               response (POST app
-                              (str "ctia/incident/" (:short-id incident-id) "/status")
-                              :body new-status
-                              :headers {"Authorization" "45c1f5e3f05d0"})
-               updated-incident (:parsed-body response)]
-           (is (= 200 (:status response)))
-           (is (= "Containment Achieved" (:status updated-incident)))
-           (is (get-in updated-incident [:incident_time :remediated]))
-
-           (is (= (get-in updated-incident [:incident_time :remediated])
-                  (tc/to-date fixed-now)))))))))
-
+              updated-incident (:parsed-body response)]
+          (is (= 200 (:status response)))))
+ 
+      (testing "POST /ctia/incident/:id/status Open"
+        (let [new-status {:status "Open"}
+              response (POST app
+                             (str "ctia/incident/" (:short-id incident-id) "/status")
+                             :body new-status
+                             :headers {"Authorization" "45c1f5e3f05d0"})
+              updated-incident (:parsed-body response)]
+          (is (= 200 (:status response)))
+          (is (= "Open" (:status updated-incident)))
+          (is (get-in updated-incident [:incident_time :opened]))
+ 
+          (is (= (get-in updated-incident [:incident_time :opened])
+                 (tc/to-date fixed-now)))))
+ 
+      (testing "POST /ctia/incident/:id/status Closed"
+        (let [new-status {:status "Closed"}
+              response (POST app
+                             (str "ctia/incident/" (:short-id incident-id) "/status")
+                             :body new-status
+                             :headers {"Authorization" "45c1f5e3f05d0"})
+              updated-incident (:parsed-body response)]
+          (is (= 200 (:status response)))
+          (is (= "Closed" (:status updated-incident)))
+          (is (get-in updated-incident [:incident_time :closed]))
+ 
+          (is (= (get-in updated-incident [:incident_time :closed])
+                 (tc/to-date fixed-now)))))
+ 
+      (testing "POST /ctia/incident/:id/status Containment Achieved"
+        (let [new-status {:status "Containment Achieved"}
+              response (POST app
+                             (str "ctia/incident/" (:short-id incident-id) "/status")
+                             :body new-status
+                             :headers {"Authorization" "45c1f5e3f05d0"})
+              updated-incident (:parsed-body response)]
+          (is (= 200 (:status response)))
+          (is (= "Containment Achieved" (:status updated-incident)))
+          (is (get-in updated-incident [:incident_time :remediated]))
+ 
+          (is (= (get-in updated-incident [:incident_time :remediated])
+                 (tc/to-date fixed-now))))))))
+ 
 (deftest test-incident-crud-routes
   (test-for-each-store-with-app
    (fn [app]

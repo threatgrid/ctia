@@ -321,13 +321,16 @@
                       "ctia.auth.static.group" name]
       (f))))
 
-(s/defn fixture-with-fixed-time [app
-                                 time
-                                 f :- (s/=> s/Any (s/named s/Any 'app))]
+(s/defn with-fixed-time* [app
+                          time
+                          f :- (s/=> s/Any)]
   (let [{{:keys [fixture-with-time-fn!]} :CTIATestingTimeService} (app/service-graph app)]
     (fixture-with-time-fn!
       (constantly time)
-      (partial f app))))
+      f)))
+
+(defmacro with-fixed-time [app time & body]
+  `(with-fixed-time* ~app ~time #(do ~@body)))
 
 (defn set-capabilities!
   [app login groups role caps]
@@ -458,16 +461,20 @@
             "ID must be 8 chars or less")
     (str entity-name "-" id-str (subs zero-uuid id-cnt))))
 
+(defn with-atom-logger*
+  [atom-logger f]
+  (let [patched-log
+        (fn [logger
+             level
+             throwable
+             message]
+          (swap! atom-logger conj message))]
+    (with-redefs [clojure.tools.logging/log* patched-log]
+      (f))))
+
 (defmacro with-atom-logger
   [atom-logger & body]
-  `(let [patched-log#
-         (fn [logger#
-              level#
-              throwable#
-              message#]
-           (swap! ~atom-logger conj message#))]
-     (with-redefs [clojure.tools.logging/log* patched-log#]
-       ~@body)))
+  `(with-atom-logger* #(do ~@body)))
 
 (defn deep-dissoc-entity-ids
   "Dissoc all entity ID in the given map recursively"
@@ -479,13 +486,14 @@
               %)
            m))
 
-(defn with-sequential-uuid [f]
+(defn with-sequential-uuid* [f]
   (let [uuid-counter-start 111111111111
         uuid-counter (atom uuid-counter-start)]
     (with-redefs [crud/gen-random-uuid
                   (fn []
                     (swap! uuid-counter inc)
                     (str "00000000-0000-0000-0000-" @uuid-counter))]
-      (f)
-      (reset! uuid-counter
-              uuid-counter-start))))
+      (f))))
+
+(defmacro with-sequential-uuid [& body]
+  `(with-sequential-uuid* #(do ~@body)))

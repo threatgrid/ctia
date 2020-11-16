@@ -4,15 +4,18 @@
             [clojure.set :as set]
             [clj-momo.lib.time :as time]
             [clj-momo.lib.clj-time.core :as t]
+            [ctia.schemas.core :refer [APIHandlerServices]]
             [schema.core :as s]))
 
 (s/defn to-create-event :- vs/Event
   "Create a CreateEvent from a StoredX object"
-  [object id]
+  [{{:keys [now]} :CTIATimeService} :- APIHandlerServices
+   object
+   id]
   {:owner (:owner object)
    :groups (:groups object)
    :entity object
-   :timestamp (t/internal-now)
+   :timestamp (now)
    :id id
    :type "event"
    :tlp (:tlp object)

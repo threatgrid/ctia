@@ -3,7 +3,7 @@
    [clojure.string :as string]
    [clj-momo.test-helpers.http-assert-1 :as mthh]
    [ctia.lib.utils :refer [service-subgraph]]
-   [ctia.schemas.core :refer [HTTPShowServices]]
+   [ctia.schemas.core :refer [APIHandlerServices HTTPShowServices]]
    [ctia.test-helpers.core :as th]
    [puppetlabs.trapperkeeper.app :as app]
    [schema.core :as s]))
@@ -29,3 +29,24 @@
       (service-subgraph
         :CTIAHTTPServerService [:get-port]
         :ConfigService [:get-in-config])))
+
+(s/defn app->APIHanderServices :- APIHandlerServices
+  [app]
+  (-> app
+      app/service-graph
+      (service-subgraph
+        :ConfigService [:get-config
+                        :get-in-config]
+        :CTIATimeService [:now]
+        :CTIAHTTPServerService [:get-port
+                                :get-graphql]
+        :HooksService [:apply-hooks
+                       :apply-event-hooks]
+        :StoreService [:read-store
+                       :write-store]
+        :IAuth [:identity-for-token]
+        :GraphQLNamedTypeRegistryService [:get-or-update-named-type-registry]
+        :IEncryption [:encrypt
+                      :decrypt]
+        :FeaturesService [:enabled?
+                          :feature-flags])))
