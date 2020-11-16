@@ -1,5 +1,4 @@
 (ns ctia.entity.entities
-  (:refer-clojure :exclude [identity])
   (:require
    ;; !!! Order Matters !!!
    [clojure.tools.logging :as log]
