@@ -34,7 +34,7 @@
     (write-capabilities))
   (capable? [this required-capabilities]
     (set/subset? (as-set required-capabilities)
-                 write-capabilities))
+                 (write-capabilities)))
   (rate-limit-fn [_ _]))
 
 (defrecord ReadOnlyIdentity []
