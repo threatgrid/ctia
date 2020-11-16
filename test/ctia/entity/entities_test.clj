@@ -1,9 +1,9 @@
 (ns ctia.entity.entities-test
   (:require [clj-momo.test-helpers.core :as mth]
             [ctia.entity.entities :as sut]
-            [ctia.schemas.core :refer [lift-realize-fn-with-context]]
+            [ctia.schemas.core :refer [lift-realize-fn-with-context RealizeFnServices]]
             [ctia.test-helpers.core :as test-helpers]
-            [ctia.lib.utils :refer [service-subgraph]]
+            [ctia.lib.utils :refer [service-subgraph-from-schema]]
             [clojure.test :as t :refer [deftest is use-fixtures join-fixtures]]
             [clojure.spec.alpha :refer [gen]]
             [clojure.spec.gen.alpha :refer [generate]]
@@ -25,13 +25,9 @@
 
 (deftest entity-realize-fn-test
   (let [app (test-helpers/get-current-app)
-        realize-fn-services (service-subgraph
+        realize-fn-services (service-subgraph-from-schema
                               (app/service-graph app)
-                              :ConfigService [:get-in-config]
-                              :StoreService [:read-store]
-                              :GraphQLNamedTypeRegistryService
-                              [:get-or-update-named-type-registry]
-                              :IEncryption [:decrypt :encrypt])
+                              RealizeFnServices)
         properties [:id :type :owner :groups :schema_version
                     :created :modified :timestamp :tlp]
         ;; properties to dissoc to get a valid entity when

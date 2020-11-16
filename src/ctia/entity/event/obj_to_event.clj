@@ -5,7 +5,7 @@
             [clj-momo.lib.time :as time]
             [clj-momo.lib.clj-time.core :as t]
             [ctia.schemas.core :refer [APIHandlerServices]]
-            [ctia.lib.utils :refer [open-service-schema service-subschema]]
+            [ctia.schemas.utils :refer [open-service-schema service-subschema]]
             [schema.core :as s]
             [schema-tools.core :as st]))
 
@@ -13,7 +13,7 @@
   "Create a CreateEvent from a StoredX object"
   [{{:keys [now]} :CTIATimeService} :- (-> APIHandlerServices
                                            (service-subschema
-                                             :CTIATimeService [:now])
+                                             {:CTIATimeService #{:now}})
                                            open-service-schema)
    object
    id]
@@ -98,7 +98,7 @@
    but the complete object is given for simplicity."
   [{{:keys [now]} :CTIATimeService} :- (-> APIHandlerServices
                                            (service-subschema
-                                             :CTIATimeService [:now])
+                                             {:CTIATimeService #{:now}})
                                            open-service-schema)
    object
    prev-object
@@ -120,7 +120,7 @@
   "transform an object (generally a `StoredObject`) to its corresponding `Event`"
   [{{:keys [now]} :CTIATimeService} :- (-> APIHandlerServices
                                            (service-subschema
-                                             :CTIATimeService [:now])
+                                             {:CTIATimeService #{:now}})
                                            open-service-schema)
    object
    id]
