@@ -8,6 +8,7 @@
             [ctia.schemas.core :refer [Verdict]]
             [ctia.store :refer [IJudgementStore IQueryStringSearchableStore IStore]]
             [ctia.stores.es
+             [store :refer [close-cm!]]
              [crud :as crud]
              [mapping :as em]
              [query :refer [active-judgements-by-observable-query find-restriction-query-part]]
@@ -34,7 +35,7 @@
       :confidence em/token
       :severity em/token
       :valid_time em/valid-time
-      :reason em/sortable-all-text
+      :reason em/sortable-text
       :reason_uri em/token})}})
 
 (def coerce-stored-judgement-list
@@ -44,7 +45,7 @@
 (def handle-create (crud/handle-create :judgement StoredJudgement))
 (def handle-update (crud/handle-update :judgement StoredJudgement))
 (def handle-read (crud/handle-read PartialStoredJudgement))
-(def handle-delete (crud/handle-delete :judgement PartialStoredJudgement))
+(def handle-delete (crud/handle-delete :judgement))
 (def handle-list (crud/handle-find PartialStoredJudgement))
 (def handle-query-string-search (crud/handle-query-string-search PartialStoredJudgement))
 (def handle-query-string-count crud/handle-query-string-count)
@@ -126,4 +127,5 @@
   (query-string-count [_ search-query ident]
     (handle-query-string-count state search-query ident))
   (aggregate [_ search-query agg-query ident]
-    (handle-aggregate state search-query agg-query ident)))
+    (handle-aggregate state search-query agg-query ident))
+  (close [_] (close-cm! state)))

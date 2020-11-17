@@ -58,7 +58,7 @@
     :properties
     (merge em/base-entity-mapping
            em/stored-entity-mapping
-           {:title em/all_text
+           {:title em/text
             :lifetime em/valid-time
             :output em/token
             :secret em/token

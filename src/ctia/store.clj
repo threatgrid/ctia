@@ -7,7 +7,8 @@
   (read-record [this id ident params])
   (update-record [this id record ident params])
   (delete-record [this id ident params])
-  (list-records [this filtermap ident params]))
+  (list-records [this filtermap ident params])
+  (close [this]))
 
 (defprotocol IJudgementStore
   (calculate-verdict [this observable ident])

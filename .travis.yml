@@ -152,7 +152,8 @@ install:
 before_script:
     - $COMPOSE_BIN -f containers/dev/docker-compose.yml up -d> $COMPOSE_LOG
     # Wait ES
-    - until curl http://127.0.0.1:9200/; do sleep 1; done
+    - until curl http://127.0.0.1:9205/; do sleep 1; done
+    - until curl http://127.0.0.1:9207/; do sleep 1; done
     # Wait Kafka
     - until echo dump | nc 127.0.0.1 2181 | grep brokers; do sleep 1; done
 
@@ -164,7 +165,7 @@ script:
 
 notifications:
   email:
-    if: type = cron
+    if: type = cron || (type = push && branch = master)
     on_success: never
     on_failure: always
     recipients:

@@ -6,6 +6,7 @@
             [ctia.schemas.core :refer [Observable]]
             [ctia.store :refer [IQueryStringSearchableStore ISightingStore IStore]]
             [ctia.stores.es
+             [store :refer [close-cm!]]
              [crud :as crud]
              [mapping :as em]
              [schemas :refer [ESConnState]]]
@@ -120,7 +121,7 @@
     (update-fn state id $ ident params)
     (es-stored-sighting->stored-sighting $)))
 
-(def handle-delete (crud/handle-delete :sighting StoredSighting))
+(def handle-delete (crud/handle-delete :sighting))
 
 (s/defn es-paginated-list->paginated-list
   :- PartialStoredSightingList
@@ -170,4 +171,5 @@
   (query-string-count [_ search-query ident]
     (handle-query-string-count state search-query ident))
   (aggregate [_ search-query agg-query ident]
-    (handle-aggregate state search-query agg-query ident)))
+    (handle-aggregate state search-query agg-query ident))
+  (close [_] (close-cm! state)))

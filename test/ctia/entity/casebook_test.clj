@@ -1,10 +1,10 @@
 (ns ctia.entity.casebook-test
   (:require
    [ctia.domain.entities :refer [schema-version]]
-   [clj-momo.test-helpers.core :as mth]
    [clojure
     [set :refer [subset?]]
-    [test :refer [deftest is join-fixtures testing use-fixtures]]]
+    [test :refer [deftest is testing use-fixtures]]]
+   [schema.test :refer [validate-schemas]]
    [ctia.entity.casebook :as sut]
    [ctia.test-helpers
     [access-control :refer [access-control-test]]
@@ -21,6 +21,10 @@
     :refer
     [new-casebook-maximal new-casebook-minimal]]
    [ctim.schemas.common :refer [ctim-schema-version]]))
+
+(use-fixtures :each
+  validate-schemas
+  whoami-helpers/fixture-server)
 
 (defn partial-operations-tests [app casebook-id casebook]
   ;; observables
@@ -315,10 +319,6 @@
                   final-casebook (:parsed-body response)]
               (is (= 200 (:status response)))
               (is (deep= expected-entity final-casebook)))))))))
-
-(use-fixtures :once
-  (join-fixtures [mth/fixture-schema-validation
-                  whoami-helpers/fixture-server]))
 
 (deftest test-casebook-routes
   (test-for-each-store-with-app

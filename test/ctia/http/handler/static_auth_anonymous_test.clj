@@ -5,7 +5,8 @@
              [core :as helpers :refer [GET with-properties]]
              [es :as es-helpers]]
             [clojure.test :refer [deftest is testing use-fixtures]]
-            [ctim.domain.id :as id]))
+            [ctim.domain.id :as id]
+            [schema.test :refer [validate-schemas]]))
 
 (defn fixture-anonymous-readonly-access
   [t]
@@ -13,9 +14,8 @@
     ["ctia.auth.static.readonly-for-anonymous" true]
     (t)))
 
-(use-fixtures :once mth/fixture-schema-validation)
-
 (use-fixtures :each
+  validate-schemas
   es-helpers/fixture-properties:es-store
   (helpers/fixture-properties:static-auth "kitara" "tearbending")
   fixture-anonymous-readonly-access
