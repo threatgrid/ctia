@@ -216,12 +216,7 @@
                                     (format "until curl http://127.0.0.1:920%s; do sleep 1; " version)
                                     exit-if-too-long " ; done"))
                         (assert-sh "Error connecting to docker")))]
-      (wait-es 0)
-      ;; uncomment for port 9205
-      #_
       (wait-es 5)
-      ;; uncomment for port 9207
-      #_
       (wait-es 7)
       ; Wait Kafka
       (-> (sh/sh "bash" "-c"

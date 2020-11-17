@@ -7,7 +7,7 @@
             [clj-momo.test-helpers.core :as mth]
             [clj-time.core :as t]
             [clojure.data.json :as json]
-            [clojure.test :refer [deftest is join-fixtures testing use-fixtures]]
+            [clojure.test :refer [deftest is testing use-fixtures join-fixtures]]
             [clojure.tools.logging.test :as tlog]
             [ctia.domain.entities :refer [schema-version]]
             [ctia.test-helpers
@@ -18,12 +18,13 @@
              [store :refer [test-for-each-store-with-app]]]
             [ctim.domain.id :as id]
             [ring.adapter.jetty :as jetty]
-            [schema.core :as s]))
+            [schema.core :as s]
+            [schema.test :refer [validate-schemas]]))
 
-(use-fixtures :once mth/fixture-schema-validation)
-
-(use-fixtures :each (join-fixtures [helpers/fixture-properties:cors
-                                    whoami-helpers/fixture-server]))
+(use-fixtures :each
+  validate-schemas
+  helpers/fixture-properties:cors
+  whoami-helpers/fixture-server)
 
 (def new-judgement-1
   {:observable {:value "1.2.3.4"
