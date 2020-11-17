@@ -14,7 +14,8 @@
             [ctia.http.routes
              [common :refer [BaseEntityFilterParams
                              PagingParams
-                             SourcableEntityFilterParams]]
+                             SourcableEntityFilterParams]
+              :as routes.common]
              [crud :refer [capitalize-entity
                            revoke-request
                            services->entity-crud-routes]]]
@@ -191,5 +192,6 @@
    :realize-fn js/realize-judgement
    :es-store j-store/->JudgementStore
    :es-mapping j-store/judgement-mapping-def
-   :services->routes #'judgement-routes
+   :services->routes (routes.common/reloadable-function
+                       judgement-routes)
    :capabilities capabilities})

@@ -4,7 +4,8 @@
             [ctia.entity.relationship.graphql-schemas
              :as relationship-graphql]
             [ctia.http.routes
-             [common :refer [BaseEntityFilterParams PagingParams SourcableEntityFilterParams]]
+             [common :refer [BaseEntityFilterParams PagingParams SourcableEntityFilterParams]
+              :as routes.common]
              [crud :refer [services->entity-crud-routes]]]
             [ctia.schemas
              [utils :as csu]
@@ -169,5 +170,6 @@
    :realize-fn realize-attack-pattern
    :es-store ->AttackPatternStore
    :es-mapping attack-pattern-mapping
-   :services->routes #'attack-pattern-routes
+   :services->routes (routes.common/reloadable-function
+                       attack-pattern-routes)
    :capabilities capabilities})

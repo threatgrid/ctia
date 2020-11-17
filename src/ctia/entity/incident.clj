@@ -11,7 +11,8 @@
               :refer [BaseEntityFilterParams
                       PagingParams
                       SourcableEntityFilterParams
-                      wait_for->refresh]]
+                      wait_for->refresh]
+              :as routes.common]
              [crud :refer [services->entity-crud-routes]]]
             [ctia.schemas
              [core :refer [APIHandlerServices def-acl-schema def-stored-schema]]
@@ -286,5 +287,6 @@
    :realize-fn realize-incident
    :es-store ->IncidentStore
    :es-mapping incident-mapping
-   :services->routes #'incident-routes
+   :services->routes (routes.common/reloadable-function
+                       incident-routes)
    :capabilities capabilities})

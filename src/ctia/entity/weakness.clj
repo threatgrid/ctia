@@ -13,7 +13,8 @@
    [ctia.http.routes
     [common :refer [BaseEntityFilterParams
                     PagingParams
-                    SourcableEntityFilterParams]]
+                    SourcableEntityFilterParams]
+     :as routes.common]
     [crud :refer [services->entity-crud-routes]]]
    [ctia.schemas
     [utils :as csu]
@@ -182,5 +183,6 @@
    :realize-fn realize-weakness
    :es-store ->WeaknessStore
    :es-mapping weakness-mapping
-   :services->routes #'weakness-routes
+   :services->routes (routes.common/reloadable-function
+                       weakness-routes)
    :capabilities capabilities})

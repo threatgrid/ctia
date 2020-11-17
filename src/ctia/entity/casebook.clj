@@ -7,7 +7,7 @@
                              PagingParams
                              SourcableEntityFilterParams
                              wait_for->refresh]
-              :as common]
+              :as routes.common]
              [crud :refer [services->entity-crud-routes]]]
             [ctia.schemas
              [utils :as csu]
@@ -139,7 +139,7 @@
              :summary "Partially Update a Casebook"
              :query-params [{wait_for :- (describe s/Bool "wait for patched entity to be available for search") nil}]
              :path-params [id :- s/Str]
-             :description (common/capabilities->description capabilities)
+             :description (routes.common/capabilities->description capabilities)
              :capabilities capabilities
              :auth-identity identity
              :identity-map identity-map
@@ -175,7 +175,7 @@
                      :query-params [{wait_for :- (describe s/Bool "wait for updated entity to be available for search") nil}]
                      :path-params [id :- s/Str]
                      :summary "Edit Observables on a casebook"
-                     :description (common/capabilities->description capabilities)
+                     :description (routes.common/capabilities->description capabilities)
                      :capabilities capabilities
                      :auth-identity identity
                      :identity-map identity-map
@@ -212,7 +212,7 @@
                      :query-params [{wait_for :- (describe s/Bool "wait for updated entity to be available for search") nil}]
                      :path-params [id :- s/Str]
                      :summary "Edit Texts on a casebook"
-                     :description (common/capabilities->description capabilities)
+                     :description (routes.common/capabilities->description capabilities)
                      :capabilities capabilities
                      :auth-identity identity
                      :identity-map identity-map
@@ -249,7 +249,7 @@
                      :query-params [{wait_for :- (describe s/Bool "wait for updated entity to be available for search") nil}]
                      :path-params [id :- s/Str]
                      :summary "Edit a Bundle on a casebook"
-                     :description (common/capabilities->description capabilities)
+                     :description (routes.common/capabilities->description capabilities)
                      :capabilities capabilities
                      :auth-identity identity
                      :identity-map identity-map
@@ -359,5 +359,6 @@
    :realize-fn realize-casebook
    :es-store ->CasebookStore
    :es-mapping casebook-mapping
-   :services->routes #'casebook-routes
+   :services->routes (routes.common/reloadable-function
+                       casebook-routes)
    :capabilities casebook-capabilities})

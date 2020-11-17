@@ -19,7 +19,7 @@
    [ctia.entity.judgement.schemas :refer [Judgement]]
    [ctia.flows.crud :as flows]
    [ctia.http.routes.common
-    :as common
+    :as routes.common
     :refer
     [BaseEntityFilterParams
      created
@@ -247,7 +247,7 @@
         :query-params [{wait_for :- (describe s/Bool "wait for entity to be available for search") nil}]
         :body [new-entity NewFeed {:description "a new Feed"}]
         :summary "Adds a new Feed"
-        :description (common/capabilities->description capabilities)
+        :description (routes.common/capabilities->description capabilities)
         :capabilities capabilities
         :auth-identity identity
         :identity-map identity-map
@@ -277,7 +277,7 @@
         :summary "Updates a Feed"
         :query-params [{wait_for :- (describe s/Bool "wait for updated entity to be available for search") nil}]
         :path-params [id :- s/Str]
-        :description (common/capabilities->description capabilities)
+        :description (routes.common/capabilities->description capabilities)
         :capabilities capabilities
         :auth-identity identity
         :identity-map identity-map
@@ -313,7 +313,7 @@
         :query [q FeedByExternalIdQueryParams]
         :path-params [external_id :- s/Str]
         :summary "List Feeds by external_id"
-        :description (common/capabilities->description capabilities)
+        :description (routes.common/capabilities->description capabilities)
         :capabilities capabilities
         :auth-identity identity
         :identity-map identity-map
@@ -332,7 +332,7 @@
         :return PartialFeedList
         :summary "Search for a Feed using a Lucene/ES query string"
         :query [params FeedSearchParams]
-        :description (common/capabilities->description capabilities)
+        :description (routes.common/capabilities->description capabilities)
         :capabilities capabilities
         :auth-identity identity
         :identity-map identity-map
@@ -352,7 +352,7 @@
            :return s/Int
            :summary "Count Feed entities matching given search filters."
            :query [params FeedCountParams]
-           :description (common/capabilities->description capabilities)
+           :description (routes.common/capabilities->description capabilities)
            :capabilities capabilities
            :auth-identity identity
            :identity-map identity-map
@@ -368,7 +368,7 @@
         :summary "Gets a Feed by ID"
         :path-params [id :- s/Str]
         :query [params FeedGetParams]
-        :description (common/capabilities->description capabilities)
+        :description (routes.common/capabilities->description capabilities)
         :capabilities capabilities
         :auth-identity identity
         :identity-map identity-map
@@ -390,7 +390,7 @@
         :path-params [id :- s/Str]
         :query-params [{wait_for :- (describe s/Bool "wait for deleted entity to no more be available for search") nil}]
         :summary "Deletes a Feed"
-        :description (common/capabilities->description capabilities)
+        :description (routes.common/capabilities->description capabilities)
         :capabilities capabilities
         :auth-identity identity
         :identity-map identity-map
@@ -435,5 +435,6 @@
    :realize-fn realize-feed
    :es-store ->FeedStore
    :es-mapping feed-mapping
-   :services->routes #'feed-routes
+   :services->routes (routes.common/reloadable-function
+                       feed-routes)
    :capabilities capabilities})

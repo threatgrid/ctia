@@ -150,3 +150,22 @@
                                                          (str/join ", ")))
                                              (str "."))
     :else "No capabilities needed."))
+
+(defmacro reloadable-function
+  "Transforms v to (var v).
+
+  This can help REPL development in several situations.
+
+  When entities are top-level maps, :services->routes
+  is fixed when the entity is evaluated.
+  If passing :services->routes using a var deref,
+  this means updates to the route function will
+  not be observed until the entity namespace *and*
+  the server's routes have been reloaded.
+
+  Using (var v) instead of v in top-level
+  maps enables routes to dynamically
+  update."
+  [v]
+  {:pre [(symbol? v)]}
+  `(var ~v))

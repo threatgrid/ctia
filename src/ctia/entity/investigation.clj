@@ -2,7 +2,8 @@
   (:require [ctia.entity.investigation.schemas :as inv]
             [ctia.http.routes.common
              :refer
-             [BaseEntityFilterParams PagingParams SourcableEntityFilterParams]]
+             [BaseEntityFilterParams PagingParams SourcableEntityFilterParams]
+             :as routes.common]
             [ctia.http.routes.crud :refer [services->entity-crud-routes]]
             [ctia.schemas.core :refer [APIHandlerServices]]
             [ctia.schemas.sorting :as sorting]
@@ -120,5 +121,6 @@
    :realize-fn inv/realize-investigation
    :es-store ->InvestigationStore
    :es-mapping investigation-mapping
-   :services->routes #'investigation-routes
+   :services->routes (routes.common/reloadable-function
+                       investigation-routes)
    :capabilities capabilities})

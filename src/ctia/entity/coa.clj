@@ -1,7 +1,8 @@
 (ns ctia.entity.coa
   (:require [ctia.domain.entities :refer [default-realize-fn]]
             [ctia.http.routes
-             [common :refer [BaseEntityFilterParams PagingParams SourcableEntityFilterParams]]
+             [common :refer [BaseEntityFilterParams PagingParams SourcableEntityFilterParams]
+              :as routes.common]
              [crud :refer [services->entity-crud-routes]]]
             [ctia.schemas
              [utils :as csu]
@@ -157,5 +158,6 @@
    :realize-fn realize-coa
    :es-store ->COAStore
    :es-mapping coa-mapping
-   :services->routes #'coa-routes
+   :services->routes (routes.common/reloadable-function
+                       coa-routes)
    :capabilities capabilities})

@@ -130,6 +130,7 @@
    :realize-fn            realize-asset
    :es-store              ->AssetStore
    :es-mapping            asset-mapping
-   :services->routes      #'asset-routes
+   :services->routes      (routes.common/reloadable-function
+                            asset-routes)
    :capabilities          capabilities
    })

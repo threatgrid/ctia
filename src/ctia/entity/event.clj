@@ -2,7 +2,7 @@
   (:require
    [ctia.entity.event.store
     :refer [->EventStore]]
-   [compojure.api.sweet :refer [GET routes]]
+   [compojure.api.core :refer [GET routes]]
    [ring.util.http-response :refer [ok]]
    [schema-tools.core :as st]
    [schema.core :as s]
@@ -10,7 +10,8 @@
    [ctia.entity.event.schemas
     :refer [Event PartialEvent PartialEventList EventBucket]]
    [ctia.http.routes
-    [common :refer [BaseEntityFilterParams PagingParams]]
+    [common :refer [BaseEntityFilterParams PagingParams]
+     :as routes.common]
     [crud :refer [services->entity-crud-routes]]]
    [ctia.lib.pagination :refer [list-response-schema]]
    [ctia.schemas.core :refer [APIHandlerServices]]
@@ -181,4 +182,5 @@
    :plural :events
    :es-store ->EventStore
    :es-mapping event-mapping
-   :services->routes #'event-routes})
+   :services->routes (routes.common/reloadable-function
+                       event-routes)})

@@ -8,7 +8,7 @@
             [ctia.flows.crud :as flows]
             [ctia.http.routes
              [common :refer [BaseEntityFilterParams created PagingParams SourcableEntityFilterParams]
-              :as common]
+              :as routes.common]
              [crud :refer [services->entity-crud-routes]]]
             [ctia.http.middleware.auth :refer [require-capability!]]
             [ctia.schemas
@@ -101,7 +101,7 @@
                  {:description "an Incident Link request"}]
           :summary "Link an Incident to a Casebook or Investigation"
           :path-params [id :- s/Str]
-          :description (common/capabilities->description capabilities)
+          :description (routes.common/capabilities->description capabilities)
           :capabilities capabilities
           :auth-identity identity
           :identity-map identity-map
@@ -239,5 +239,6 @@
    :realize-fn rs/realize-relationship
    :es-store ->RelationshipStore
    :es-mapping relationship-mapping
-   :services->routes #'relationship-routes
+   :services->routes (routes.common/reloadable-function
+                       relationship-routes)
    :capabilities capabilities})

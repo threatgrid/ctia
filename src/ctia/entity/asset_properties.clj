@@ -149,5 +149,6 @@
    :realize-fn            realize-asset-properties
    :es-store              ->AssetPropertiesStore
    :es-mapping            asset-properties-mapping
-   :services->routes      #'asset-properties-routes
+   :services->routes      (routes.common/reloadable-function
+                            asset-properties-routes)
    :capabilities          capabilities})

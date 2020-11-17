@@ -3,7 +3,8 @@
             [ctia.domain.entities :refer [page-with-long-id un-store-page]]
             [ctia.entity.feedback.schemas :as fs]
             [ctia.http.routes
-             [common :refer [paginated-ok PagingParams]]
+             [common :refer [paginated-ok PagingParams]
+              :as routes.common]
              [crud :refer [services->entity-crud-routes]]]
             [ctia.schemas.core :refer [APIHandlerServices]]
             [ctia.schemas.sorting :as sorting]
@@ -114,5 +115,6 @@
    :realize-fn fs/realize-feedback
    :es-store ->FeedbackStore
    :es-mapping feedback-mapping
-   :services->routes #'feedback-routes
+   :services->routes (routes.common/reloadable-function
+                       feedback-routes)
    :capabilities capabilities})

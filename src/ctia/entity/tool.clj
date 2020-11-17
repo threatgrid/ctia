@@ -2,7 +2,8 @@
   (:require [ctia.entity.tool.schemas :as ts]
             [ctia.entity.tool.graphql-schemas :as tgs]
             [ctia.http.routes
-             [common :refer [BaseEntityFilterParams PagingParams SourcableEntityFilterParams]]
+             [common :refer [BaseEntityFilterParams PagingParams SourcableEntityFilterParams]
+              :as routes.common]
              [crud :refer [services->entity-crud-routes]]]
             [ctia.stores.es
              [mapping :as em]
@@ -110,5 +111,6 @@
    :realize-fn ts/realize-tool
    :es-store ->ToolStore
    :es-mapping tool-mapping
-   :services->routes #'tool-routes
+   :services->routes (routes.common/reloadable-function
+                       tool-routes)
    :capabilities capabilities})

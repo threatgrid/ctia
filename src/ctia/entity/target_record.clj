@@ -148,5 +148,6 @@
    :realize-fn            realize-target-record
    :es-store              ->TargetRecordStore
    :es-mapping            target-record-mapping
-   :services->routes      #'target-record-routes
+   :services->routes      (routes.common/reloadable-function
+                            target-record-routes)
    :capabilities          capabilities})
