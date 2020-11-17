@@ -218,7 +218,7 @@
          (PUT "/:id" []
               :return entity-schema
               :body [entity-update new-schema {:description (format "an updated %s" capitalized)}]
-              :summary (format "Updates an existing %s" capitalized)
+              :summary (format "Update an existing %s" capitalized)
               :query-params [{wait_for :- (describe s/Bool "wait for updated entity to be available for search") nil}]
               :path-params [id :- s/Str]
               :description (capabilities->description capabilities)
@@ -254,7 +254,7 @@
          (PATCH "/:id" []
                 :return entity-schema
                 :body [partial-update patch-schema {:description (format "%s partial update" capitalized)}]
-                :summary (format "Partially Update %s" capitalized)
+                :summary (format "Partially update an existing %s" capitalized)
                 :query-params [{wait_for :- (describe s/Bool "wait for patched entity to be available for search") nil}]
                 :path-params [id :- s/Str]
                 :description (capabilities->description capabilities)
@@ -399,7 +399,7 @@
      (let [capabilities get-capabilities]
        (GET "/:id" []
             :return (s/maybe get-schema)
-            :summary (format "Gets one %s by ID" capitalized)
+            :summary (format "Get one %s by ID" capitalized)
             :path-params [id :- s/Str]
             :query [params get-params]
             :description (capabilities->description capabilities)
@@ -422,7 +422,7 @@
                :no-doc hide-delete?
                :path-params [id :- s/Str]
                :query-params [{wait_for :- (describe s/Bool "wait for deleted entity to no more be available for search") nil}]
-               :summary (format "Deletes one %s" capitalized)
+               :summary (format "Delete one %s" capitalized)
                :description (capabilities->description capabilities)
                :capabilities capabilities
                :auth-identity identity
