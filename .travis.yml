@@ -165,7 +165,7 @@ script:
 
 notifications:
   email:
-    if: type = cron || ( type = push && branch = master)
+    if: type = cron || (type = push && branch = master)
     on_success: never
     on_failure: always
     recipients:
