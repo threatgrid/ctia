@@ -1,13 +1,21 @@
 (ns ctia.auth.capabilities
   (:require
-   [ctia.entity.entities :as entities :refer [AllEntities]]
    [clojure.set :as set]
    [clojure.string :as string]
-   [schema.core :as s]))
+   [ctia.entity.entities :as entities]
+   [ctia.schemas.core :refer [Entity]]
+   [ctia.schemas.utils :as csu]
+   [schema.core :as s]
+   [schema-tools.core :as st]))
+
+(s/defschema EntityCapabilitySuffixes
+  (-> Entity
+      (csu/select-all-keys [:entity :plural])
+      st/required-keys
+      (st/assoc s/Keyword s/Any)))
 
 (s/defn all-entities
-  ;; FIXME :verdict is not an Entity
-  #_#_:- AllEntities
+  :- {(s/pred simple-keyword?) EntityCapabilitySuffixes}
   []
   (assoc (entities/all-entities)
          :verdict
@@ -18,10 +26,10 @@
   {:read #{:read :search :list}
    :write #{:create :delete}})
 
-(defn gen-capabilities-for-entity-and-accesses
+(s/defn gen-capabilities-for-entity-and-accesses :- #{(s/pred simple-keyword?)}
   "Given an entity and a set of access (:read or :write) generate a set of
   capabilities"
-  [{:keys [entity plural]}
+  [{:keys [entity plural]} :- EntityCapabilitySuffixes
    accesses]
   (set (for [access accesses
              prefix (get prefixes access)]
@@ -30,7 +38,7 @@
                          (name plural)
                          (name entity)))))))
 
-(defn all-entity-capabilities []
+(s/defn all-entity-capabilities [] :- #{(s/pred simple-keyword?)}
   (apply set/union
          (map #(gen-capabilities-for-entity-and-accesses
                 % (keys prefixes))
