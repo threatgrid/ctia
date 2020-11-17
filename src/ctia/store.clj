@@ -20,8 +20,7 @@
 (defprotocol IIdentityStore
   (read-identity [this login])
   (create-identity [this new-identity])
-  (delete-identity [this org-id role])
-  (close-identity [this]))
+  (delete-identity [this org-id role]))
 
 (defprotocol IEventStore
   (read-event [this id ident params])
