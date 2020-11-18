@@ -1,8 +1,8 @@
 (ns ctia.entity.actor
   (:require [ctia.domain.entities :refer [default-realize-fn]]
             [ctia.http.routes
-             [common :refer [BaseEntityFilterParams PagingParams SourcableEntityFilterParams
-                             reloadable-function]]
+             [common :refer [BaseEntityFilterParams PagingParams SourcableEntityFilterParams]
+              :as routes.common]
              [crud :refer [services->entity-crud-routes]]]
             [ctia.schemas
              [core :refer [APIHandlerServices def-acl-schema def-stored-schema]]
@@ -155,6 +155,6 @@
    :realize-fn realize-actor
    :es-store ->ActorStore
    :es-mapping actor-mapping
-   :services->routes (reloadable-function
+   :services->routes (routes.common/reloadable-function
                        actor-routes)
    :capabilities capabilities})

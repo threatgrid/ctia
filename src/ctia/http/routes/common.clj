@@ -160,7 +160,7 @@
   is fixed when the entity is evaluated.
   If passing :services->routes using a var deref,
   this means updates to the route function will
-  not be observed until the entity namespace *and*
+  not be observed until *both* the entity namespace and
   the server's routes have been reloaded.
 
   Using (var v) instead of v in top-level
