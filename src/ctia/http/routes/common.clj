@@ -140,7 +140,7 @@
   [capabilities :- (s/conditional
                      keyword? (s/pred simple-keyword?)
                      nil? (s/pred nil?)
-                     :else #{(s/pred simple-keyword?)})]
+                     set? #{(s/pred simple-keyword?)})]
   (cond
     (keyword? capabilities) (str "Requires capability " (name capabilities) ".")
     ((every-pred set? seq) capabilities) (-> (apply str "Requires capabilities "
@@ -149,7 +149,7 @@
                                                          (map name)
                                                          (str/join ", ")))
                                              (str "."))
-    :else "No capabilities needed."))
+    :else (throw (ex-info "Missing capabilities!" {}))))
 
 (defmacro reloadable-function
   "Transforms v to (var v).

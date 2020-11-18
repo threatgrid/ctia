@@ -287,13 +287,16 @@
                   (ok updated-rec)
                   (not-found)))))
      (when can-get-by-external-id?
-       (let [capabilities external-id-capabilities]
+       (let [capabilities external-id-capabilities
+             _ (assert capabilities
+                       (str ":external-id-capabilities is missing for " entity))]
          (GET "/external_id/:external_id" []
               :return list-schema
               :query [q external-id-q-params]
               :path-params [external_id :- s/Str]
               :summary (format "List %s by external id" capitalized)
               :description (capabilities->description capabilities)
+              ;; TODO unit test this capability is required in entity-crud-test
               :capabilities capabilities
               :auth-identity identity
               :identity-map identity-map

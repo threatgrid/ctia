@@ -56,6 +56,7 @@
     :list-schema ss/PartialSightingList
     :search-schema ss/PartialSightingList
     :external-id-q-params SightingByExternalIdQueryParams
+    :external-id-capabilities :read-sighting
     :search-q-params SightingSearchParams
     :new-spec :new-sighting/map
     :realize-fn ss/realize-sighting

@@ -95,42 +95,44 @@
 (s/defn incident-additional-routes [{{:keys [read-store write-store]} :StoreService
                                      :as services} :- APIHandlerServices]
   (routes
-   (POST "/:id/status" []
-         :return Incident
-         :body [update IncidentStatusUpdate
-                {:description "an Incident Status Update"}]
-         :summary "Update an Incident Status"
-         :query-params [{wait_for :- (describe s/Bool "wait for updated entity to be available for search") nil}]
-         :path-params [id :- s/Str]
-         :capabilities :create-incident
-         :auth-identity identity
-         :identity-map identity-map
-         (let [status-update (make-status-update update)]
-           (if-let [updated
-                    (un-store
-                     (flows/patch-flow
-                      :services services
-                      :get-fn #(read-store :incident
-                                           read-record
-                                           %
-                                           identity-map
-                                           {})
-                      :realize-fn realize-incident
-                      :update-fn #(write-store :incident
-                                               update-record
-                                               (:id %)
-                                               %
-                                               identity-map
-                                               (wait_for->refresh wait_for))
-                      :long-id-fn #(with-long-id % services)
-                      :entity-type :incident
-                      :entity-id id
-                      :identity identity
-                      :patch-operation :replace
-                      :partial-entity status-update
-                      :spec :new-incident/map))]
-             (ok updated)
-             (not-found))))))
+    (let [capabilities :create-incident]
+      (POST "/:id/status" []
+            :return Incident
+            :body [update IncidentStatusUpdate
+                   {:description "an Incident Status Update"}]
+            :summary "Update an Incident Status"
+            :query-params [{wait_for :- (describe s/Bool "wait for updated entity to be available for search") nil}]
+            :path-params [id :- s/Str]
+            :description (routes.common/capabilities->description capabilities)
+            :capabilities :create-incident
+            :auth-identity identity
+            :identity-map identity-map
+            (let [status-update (make-status-update update)]
+              (if-let [updated
+                       (un-store
+                        (flows/patch-flow
+                         :services services
+                         :get-fn #(read-store :incident
+                                              read-record
+                                              %
+                                              identity-map
+                                              {})
+                         :realize-fn realize-incident
+                         :update-fn #(write-store :incident
+                                                  update-record
+                                                  (:id %)
+                                                  %
+                                                  identity-map
+                                                  (wait_for->refresh wait_for))
+                         :long-id-fn #(with-long-id % services)
+                         :entity-type :incident
+                         :entity-id id
+                         :identity identity
+                         :patch-operation :replace
+                         :partial-entity status-update
+                         :spec :new-incident/map))]
+                (ok updated)
+                (not-found)))))))
 
 (def incident-mapping
   {"incident"
