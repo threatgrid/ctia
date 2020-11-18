@@ -1,6 +1,7 @@
 (ns ctia.metrics.routes
   (:require
-   [compojure.api.core :refer [context GET routes]]
+   [compojure.api.core :refer [context GET]]
+   [ctia.http.routes.common :as routes.common]
    [metrics
     [core :refer [default-registry]]
     [counters :as counters]
@@ -63,10 +64,11 @@
   (into {} (map render-metric (all-metrics default-registry))))
 
 (defn metrics-routes []
-  (routes
+  (let [capabilities :developer]
     (context "/metrics" []
       :tags ["Metrics"]
       (GET "/" []
         :summary "Display Metrics"
-        :capabilities :developer
+        :description (routes.common/capabilities->description capabilities)
+        :capabilities capabilities
         (ok (render-metrics))))))

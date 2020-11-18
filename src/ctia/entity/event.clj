@@ -131,20 +131,22 @@
 (s/defn event-history-routes [{{:keys [get-in-config]} :ConfigService
                                :as services} :- APIHandlerServices]
   (routes
-   (GET "/history/:entity_id" []
-        :return [EventBucket]
-        :query [q EventTimelineParams]
-        :path-params [entity_id :- s/Str]
-        :summary "Timeline history of an entity"
-        :capabilities :search-event
-        :auth-identity identity
-        :identity-map identity-map
-        (let [res (fetch-related-events entity_id
-                                        identity-map
-                                        (into q {:sort_by :timestamp :sort_order :desc})
-                                        services)
-              timeline (bucketize-events res get-in-config)]
-          (ok timeline)))))
+    (let [capabilities :search-event]
+      (GET "/history/:entity_id" []
+           :return [EventBucket]
+           :query [q EventTimelineParams]
+           :path-params [entity_id :- s/Str]
+           :summary "Timeline history of an entity"
+           :description (routes.common/capabilities->description capabilities)
+           :capabilities capabilities
+           :auth-identity identity
+           :identity-map identity-map
+           (let [res (fetch-related-events entity_id
+                                           identity-map
+                                           (into q {:sort_by :timestamp :sort_order :desc})
+                                           services)
+                 timeline (bucketize-events res get-in-config)]
+             (ok timeline))))))
 
 (s/defn event-routes [services :- APIHandlerServices]
   (routes

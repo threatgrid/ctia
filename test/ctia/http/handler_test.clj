@@ -36,12 +36,7 @@
                               "/ctia/feed/:id/view.txt"
                               "/ctia/feed/:id/view"
                               "/ctia/version"
-                              "/ctia/feedback"
-                              "/ctia/judgement/:id/expire"
-                              "/ctia/event/history/:entity_id"
-                              "/ctia/status"
-                              "/ctia/metrics"
-                              "/ctia/properties"}
+                              "/ctia/status"}
             actual-no-doc (->> 
                             (sut/api-handler (app->APIHandlerServices app))
                             routes/get-routes
@@ -52,7 +47,15 @@
                             (map first)
                             set)]
         (is (= expected-no-doc actual-no-doc)
-            (str "Consider adding a :description with capabilities to these routes: "
-                 (str/join ", " (sort (set/difference actual-no-doc expected-no-doc)))))))
+            (let [missing-docs (sort (set/difference actual-no-doc expected-no-doc))
+                  extra-docs (sort (set/difference expected-no-doc actual-no-doc))]
+              (str
+                (when (seq missing-docs)
+                  (str "Consider adding a :description with capabilities to these routes: "
+                       (str/join ", " missing-docs)
+                       "\n\n"))
+                (when (seq extra-docs)
+                  (str "Expected no :description on these routes, but found some: "
+                       (str/join ", " extra-docs))))))))
     ;; disable http
     false))

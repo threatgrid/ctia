@@ -95,24 +95,26 @@
    {:keys [entity
            entity-schema
            post-capabilities] :as entity-crud-config}]
-  (POST "/:id/expire" req
-        :summary (format "Expires the supplied %s" (capitalize-entity entity))
-        :path-params [id :- s/Str]
-        :query-params [reason :- (describe s/Str "Message to append to the Judgement's reason value")
-                       {wait_for :- (describe s/Bool "wait for entity to be available for search") nil}]
-        :return entity-schema
-        :capabilities post-capabilities
-        :auth-identity identity
-        :identity-map identity-map
-        (revoke-request req services
-                        entity-crud-config
-                        {:id id
-                         :identity identity
-                         :identity-map identity-map
-                         :revocation-update-fn (fn [entity _]
-                                                 (-> entity
-                                                     (update :reason str " " reason)))
-                         :wait_for wait_for})))
+  (let [capabilities post-capabilities]
+    (POST "/:id/expire" req
+          :summary (format "Expires the supplied %s" (capitalize-entity entity))
+          :path-params [id :- s/Str]
+          :query-params [reason :- (describe s/Str "Message to append to the Judgement's reason value")
+                         {wait_for :- (describe s/Bool "wait for entity to be available for search") nil}]
+          :return entity-schema
+          :description (routes.common/capabilities->description capabilities)
+          :capabilities capabilities
+          :auth-identity identity
+          :identity-map identity-map
+          (revoke-request req services
+                          entity-crud-config
+                          {:id id
+                           :identity identity
+                           :identity-map identity-map
+                           :revocation-update-fn (fn [entity _]
+                                                   (-> entity
+                                                       (update :reason str " " reason)))
+                           :wait_for wait_for}))))
 
 (s/defn judgement-routes [services :- APIHandlerServices]
   (let [entity-crud-config {:entity :judgement

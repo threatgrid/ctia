@@ -56,21 +56,23 @@
 
 (s/defn feedback-by-entity-route [{{:keys [read-store]} :StoreService
                                    :as services} :- APIHandlerServices]
-  (GET "/" []
-       :return fs/PartialFeedbackList
-       :query [params FeedbackQueryParams]
-       :summary "Search Feedback"
-       :capabilities :read-feedback
-       :auth-identity identity
-       :identity-map identity-map
-       (-> (read-store :feedback
-                       list-records
-                       {:all-of (select-keys params [:entity_id])}
-                       identity-map
-                       (dissoc params :entity_id))
-           (page-with-long-id services)
-           un-store-page
-           paginated-ok)))
+  (let [capabilites :read-feedback]
+    (GET "/" []
+         :return fs/PartialFeedbackList
+         :query [params FeedbackQueryParams]
+         :summary "Search Feedback"
+         :description (routes.common/capabilities->description capabilites)
+         :capabilities :read-feedback
+         :auth-identity identity
+         :identity-map identity-map
+         (-> (read-store :feedback
+                         list-records
+                         {:all-of (select-keys params [:entity_id])}
+                         identity-map
+                         (dissoc params :entity_id))
+             (page-with-long-id services)
+             un-store-page
+             paginated-ok))))
 
 (def capabilities
   #{:create-feedback
