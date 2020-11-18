@@ -91,7 +91,7 @@
         "import-bundle" (if (contains? (:access scope-repr) :write)
                           #{:import-bundle}
                           #{})
-        (let [entity (get all-entities
+        (let [entity (get (all-entities)
                           (-> scope-repr
                               :path
                               second
@@ -100,7 +100,7 @@
            entity
            (:access scope-repr))))
     ;; typically: ["private-intel"]
-    1 (->> all-entities
+    1 (->> (all-entities)
            vals
            (map #(gen-capabilities-for-entity-and-accesses % (:access scope-repr)))
            unionize
@@ -114,7 +114,7 @@
   capabilities"
   [scope-repr]
   (gen-capabilities-for-entity-and-accesses
-   (:casebook all-entities)
+   (:casebook (all-entities))
    (:access scope-repr)))
 
 (defn scope-to-capabilities

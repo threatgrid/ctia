@@ -15,7 +15,7 @@
   (groups [_]
     [auth/admingroup])
   (allowed-capabilities [_]
-    all-capabilities)
+    (all-capabilities))
   (capable? [_ _]
     true)
   (rate-limit-fn [_ _]))

@@ -53,7 +53,7 @@
 (deftest test-indicator-crud-routes
   (test-for-each-store-with-app
    (fn [app]
-     (helpers/set-capabilities! app "foouser" ["foogroup"] "user" caps/all-capabilities)
+     (helpers/set-capabilities! app "foouser" ["foogroup"] "user" (caps/all-capabilities))
      (whoami-helpers/set-whoami-response app
                                          "45c1f5e3f05d0"
                                          "foouser"

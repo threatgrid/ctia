@@ -3,7 +3,8 @@
             [ctia.domain.entities :refer [page-with-long-id un-store-page]]
             [ctia.entity.feedback.schemas :as fs]
             [ctia.http.routes
-             [common :refer [paginated-ok PagingParams]]
+             [common :refer [paginated-ok PagingParams]
+              :as routes.common]
              [crud :refer [services->entity-crud-routes]]]
             [ctia.schemas.core :refer [APIHandlerServices]]
             [ctia.schemas.sorting :as sorting]
@@ -55,21 +56,23 @@
 
 (s/defn feedback-by-entity-route [{{:keys [read-store]} :StoreService
                                    :as services} :- APIHandlerServices]
-  (GET "/" []
-       :return fs/PartialFeedbackList
-       :query [params FeedbackQueryParams]
-       :summary "Search Feedback"
-       :capabilities :read-feedback
-       :auth-identity identity
-       :identity-map identity-map
-       (-> (read-store :feedback
-                       list-records
-                       {:all-of (select-keys params [:entity_id])}
-                       identity-map
-                       (dissoc params :entity_id))
-           (page-with-long-id services)
-           un-store-page
-           paginated-ok)))
+  (let [capabilites :read-feedback]
+    (GET "/" []
+         :return fs/PartialFeedbackList
+         :query [params FeedbackQueryParams]
+         :summary "Search Feedback"
+         :description (routes.common/capabilities->description capabilites)
+         :capabilities :read-feedback
+         :auth-identity identity
+         :identity-map identity-map
+         (-> (read-store :feedback
+                         list-records
+                         {:all-of (select-keys params [:entity_id])}
+                         identity-map
+                         (dissoc params :entity_id))
+             (page-with-long-id services)
+             un-store-page
+             paginated-ok))))
 
 (def capabilities
   #{:create-feedback
@@ -114,5 +117,6 @@
    :realize-fn fs/realize-feedback
    :es-store ->FeedbackStore
    :es-mapping feedback-mapping
-   :services->routes feedback-routes
+   :services->routes (routes.common/reloadable-function
+                       feedback-routes)
    :capabilities capabilities})

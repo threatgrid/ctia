@@ -13,11 +13,12 @@
    [ctia.http.routes
     [common :refer [BaseEntityFilterParams
                     PagingParams
-                    SourcableEntityFilterParams]]
-    [crud :refer [entity-crud-routes]]]
+                    SourcableEntityFilterParams]
+     :as routes.common]
+    [crud :refer [services->entity-crud-routes]]]
    [ctia.schemas
     [utils :as csu]
-    [core :refer [def-acl-schema def-stored-schema]]
+    [core :refer [APIHandlerServices def-acl-schema def-stored-schema]]
     [sorting :refer [default-entity-sort-fields]]]
    [ctia.stores.es.store :refer [def-es-store]]
    [ctim.schemas.weakness :as ws]
@@ -137,8 +138,9 @@
    :technologies.name
    :technologies.prevalence])
 
-(def weakness-routes
-  (entity-crud-routes
+(s/defn weakness-routes [services :- APIHandlerServices]
+  (services->entity-crud-routes
+   services
    {:entity :weakness
     :new-schema NewWeakness
     :entity-schema Weakness
@@ -181,5 +183,6 @@
    :realize-fn realize-weakness
    :es-store ->WeaknessStore
    :es-mapping weakness-mapping
-   :services->routes weakness-routes
+   :services->routes (routes.common/reloadable-function
+                       weakness-routes)
    :capabilities capabilities})

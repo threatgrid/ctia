@@ -1,11 +1,12 @@
 (ns ctia.entity.data-table
   (:require [ctia.domain.entities :refer [default-realize-fn]]
             [ctia.http.routes
-             [common :refer [BaseEntityFilterParams PagingParams SourcableEntityFilterParams]]
-             [crud :refer [entity-crud-routes]]]
+             [common :refer [BaseEntityFilterParams PagingParams SourcableEntityFilterParams]
+              :as routes.common]
+             [crud :refer [services->entity-crud-routes]]]
             [ctia.schemas
              [utils :as csu]
-             [core :refer [def-acl-schema def-stored-schema]]
+             [core :refer [APIHandlerServices def-acl-schema def-stored-schema]]
              [sorting :refer [default-entity-sort-fields]]]
             [ctia.stores.es
              [mapping :as em]
@@ -87,8 +88,9 @@
     :delete-data-table
     :search-data-table})
 
-(def data-table-routes
-  (entity-crud-routes
+(s/defn data-table-routes [services :- APIHandlerServices]
+  (services->entity-crud-routes
+   services
    {:entity :data-table
     :new-spec :new-data-table/map
     :new-schema NewDataTable
@@ -121,5 +123,6 @@
    :realize-fn realize-data-table
    :es-store ->DataTableStore
    :es-mapping data-table-mapping
-   :services->routes data-table-routes
+   :services->routes (routes.common/reloadable-function
+                       data-table-routes)
    :capabilities capabilities})

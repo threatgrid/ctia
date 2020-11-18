@@ -1,11 +1,12 @@
 (ns ctia.entity.identity-assertion
   (:require [ctia.domain.entities :refer [default-realize-fn]]
             [ctia.http.routes
-             [common :refer [BaseEntityFilterParams PagingParams SourcableEntityFilterParams]]
-             [crud :refer [entity-crud-routes]]]
+             [common :refer [BaseEntityFilterParams PagingParams SourcableEntityFilterParams]
+              :as routes.common]
+             [crud :refer [services->entity-crud-routes]]]
             [ctia.schemas
              [utils :as csu]
-             [core :refer [def-acl-schema def-stored-schema]]
+             [core :refer [APIHandlerServices def-acl-schema def-stored-schema]]
              [sorting :as sorting]]
             [ctia.stores.es
              [mapping :as em]
@@ -94,8 +95,9 @@
    PagingParams
    IdentityAssertionFieldsParam))
 
-(def identity-assertion-routes
-  (entity-crud-routes
+(s/defn identity-assertion-routes [services :- APIHandlerServices]
+  (services->entity-crud-routes
+   services
    {:entity :identity-assertion
     :new-schema NewIdentityAssertion
     :entity-schema IdentityAssertion
@@ -137,5 +139,6 @@
    :realize-fn realize-identity-assertion
    :es-store ->IdentityAssertionStore
    :es-mapping identity-assertion-mapping
-   :services->routes identity-assertion-routes
+   :services->routes (routes.common/reloadable-function
+                       identity-assertion-routes)
    :capabilities capabilities})

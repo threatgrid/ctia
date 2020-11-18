@@ -4,11 +4,12 @@
             [ctia.entity.relationship.graphql-schemas
              :as relationship-graphql]
             [ctia.http.routes
-             [common :refer [BaseEntityFilterParams PagingParams SourcableEntityFilterParams]]
-             [crud :refer [entity-crud-routes]]]
+             [common :refer [BaseEntityFilterParams PagingParams SourcableEntityFilterParams]
+              :as routes.common]
+             [crud :refer [services->entity-crud-routes]]]
             [ctia.schemas
              [utils :as csu]
-             [core :refer [def-acl-schema def-stored-schema]]
+             [core :refer [APIHandlerServices def-acl-schema def-stored-schema]]
              [sorting :as sorting]]
             [ctia.schemas.graphql
              [flanders :as flanders]
@@ -99,8 +100,9 @@
 (def attack-pattern-histogram-fields
   [:timestamp])
 
-(def attack-pattern-routes
-  (entity-crud-routes
+(s/defn attack-pattern-routes [services :- APIHandlerServices]
+  (services->entity-crud-routes
+   services
    {:entity :attack-pattern
     :new-schema NewAttackPattern
     :entity-schema AttackPattern
@@ -168,5 +170,6 @@
    :realize-fn realize-attack-pattern
    :es-store ->AttackPatternStore
    :es-mapping attack-pattern-mapping
-   :services->routes attack-pattern-routes
+   :services->routes (routes.common/reloadable-function
+                       attack-pattern-routes)
    :capabilities capabilities})

@@ -2,7 +2,7 @@
   (:require [clojure.test :as t :refer [deftest use-fixtures are is testing]]
             [clojure.tools.logging.test :refer [logged? with-log]]
             [ctia.bundle.core :as sut]
-            [ctia.domain.entities :as ent :refer [with-long-id]]
+            [ctia.domain.entities :refer [with-long-id]]
             [ctia.flows.crud :refer [make-id]]
             [clojure.test :as t :refer [deftest use-fixtures are is testing]]
             [ctia.test-helpers

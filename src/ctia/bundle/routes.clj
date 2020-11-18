@@ -12,6 +12,7 @@
                      BundleExportIds
                      BundleExportOptions
                      BundleExportQuery]]]
+   [ctia.http.routes.common :as common]
    [ctia.schemas.core :refer [APIHandlerServices NewBundle]]
    [ring.swagger.json-schema :refer [describe]]
    [ring.util.http-response :refer [ok bad-request]]
@@ -71,65 +72,71 @@
  (routes 
   (context "/bundle" []
            :tags ["Bundle"]
-           (GET "/export" []
-                :return NewBundleExport
-                :query [q BundleExportQuery]
-                :summary "Export records with their local relationships. Ids are URIs (with port if precised)."
-                :capabilities export-capabilities
-                :auth-identity identity
-                :identity-map identity-map
-                (ok (export-bundle
-                     (:ids q)
-                     identity-map
-                     identity
-                     q
-                     services)))
+           (let [capabilities export-capabilities]
+             (GET "/export" []
+                  :return NewBundleExport
+                  :query [q BundleExportQuery]
+                  :summary "Export records with their local relationships. Ids are URIs (with port if specified)."
+                  :description (common/capabilities->description capabilities)
+                  :capabilities capabilities
+                  :auth-identity identity
+                  :identity-map identity-map
+                  (ok (export-bundle
+                       (:ids q)
+                       identity-map
+                       identity
+                       q
+                       services))))
 
-           (POST "/export" []
-                :return NewBundleExport
-                :query [q BundleExportOptions]
-                :body [b BundleExportIds]
-                :summary "Export records with their local relationships. Ids are URIs (with port if precised)."
-                :capabilities export-capabilities
-                :auth-identity identity
-                :identity-map identity-map
-                (ok (export-bundle
-                     (:ids b)
-                     identity-map
-                     identity
-                     q
-                     services)))
+           (let [capabilities export-capabilities]
+             (POST "/export" []
+                  :return NewBundleExport
+                  :query [q BundleExportOptions]
+                  :body [b BundleExportIds]
+                  :summary "Export records with their local relationships. Ids are URIs (with port if specified)."
+                  :description (common/capabilities->description capabilities)
+                  :capabilities capabilities
+                  :auth-identity identity
+                  :identity-map identity-map
+                  (ok (export-bundle
+                       (:ids b)
+                       identity-map
+                       identity
+                       q
+                       services))))
 
-           (POST "/import" []
-                 :return BundleImportResult
-                 :body [bundle NewBundle {:description "a Bundle to import"}]
-                 :query-params
-                 [{external-key-prefixes
-                   :- (describe s/Str "Comma separated list of external key prefixes")
-                   nil}]
-                 :summary "POST many new entities using a single HTTP call"
-                 :auth-identity auth-identity
-                 :capabilities #{:create-actor
-                                 :create-asset
-                                 :create-asset-mapping
-                                 :create-asset-properties
-                                 :create-attack-pattern
-                                 :create-campaign
-                                 :create-coa
-                                 :create-data-table
-                                 :create-feedback
-                                 :create-identity-assertion
-                                 :create-incident
-                                 :create-indicator
-                                 :create-judgement
-                                 :create-malware
-                                 :create-relationship
-                                 :create-sighting
-                                 :create-tool
-                                 :create-vulnerability
-                                 :create-weakness
-                                 :import-bundle}
-                 (let [max-size (bundle-max-size get-in-config)]
-                   (if (< max-size (bundle-size bundle))
-                     (bad-request (str "Bundle max nb of entities: " max-size))
-                     (ok (import-bundle bundle external-key-prefixes auth-identity services))))))))
+           (let [capabilities #{:create-actor
+                                :create-asset
+                                :create-asset-mapping
+                                :create-asset-properties
+                                :create-attack-pattern
+                                :create-campaign
+                                :create-coa
+                                :create-data-table
+                                :create-feedback
+                                :create-identity-assertion
+                                :create-incident
+                                :create-indicator
+                                :create-judgement
+                                :create-malware
+                                :create-relationship
+                                :create-sighting
+                                :create-tool
+                                :create-vulnerability
+                                :create-weakness
+                                :import-bundle}]
+             (POST "/import" []
+                   :return BundleImportResult
+                   :body [bundle NewBundle {:description "a Bundle to import"}]
+                   :query-params
+                   [{external-key-prefixes
+                     :- (describe s/Str "Comma separated list of external key prefixes")
+                     nil}]
+                   :summary "POST many new entities using a single HTTP call"
+                   :auth-identity auth-identity
+                   :description (common/capabilities->description capabilities)
+                   :capabilities capabilities
+                   (let [max-size (bundle-max-size get-in-config)]
+                     (if (< max-size (bundle-size bundle))
+                       (bad-request (str "Bundle max nb of entities: " max-size))
+                       (ok (import-bundle bundle external-key-prefixes auth-identity services)))))))))

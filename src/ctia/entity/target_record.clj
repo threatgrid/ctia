@@ -1,13 +1,13 @@
 (ns ctia.entity.target-record
   (:require [ctia.domain.entities :refer [default-realize-fn]]
-            [ctia.schemas.core :refer [def-acl-schema def-stored-schema]]
+            [ctia.schemas.core :refer [APIHandlerServices def-acl-schema def-stored-schema]]
             [ctia.schemas.utils :as csu]
             [ctia.schemas.sorting :as sorting]
             [ctia.stores.es.mapping :as em]
             [ctia.stores.es.store :refer [def-es-store]]
             [ctim.schemas.target-record :as target-record-schema]
             [schema-tools.core :as st]
-            [ctia.http.routes.crud :refer [entity-crud-routes]]
+            [ctia.http.routes.crud :refer [services->entity-crud-routes]]
             [ctia.http.routes.common :as routes.common]
             [flanders.utils :as fu]
             [schema.core :as s]))
@@ -103,8 +103,9 @@
    :targets.observed_time.start_time
    :targets.observed_time.end_time])
 
-(def target-record-routes
-  (entity-crud-routes
+(s/defn target-record-routes [services :- APIHandlerServices]
+  (services->entity-crud-routes
+   services
    {:entity                   :target-record
     :new-schema               NewTargetRecord
     :entity-schema            TargetRecord
@@ -147,5 +148,6 @@
    :realize-fn            realize-target-record
    :es-store              ->TargetRecordStore
    :es-mapping            target-record-mapping
-   :services->routes      target-record-routes
+   :services->routes      (routes.common/reloadable-function
+                            target-record-routes)
    :capabilities          capabilities})
