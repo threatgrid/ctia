@@ -135,20 +135,29 @@
     false {:refresh "false"}
     {}))
 
+(s/defschema Capability
+  (s/conditional
+    keyword? (s/pred simple-keyword?)
+    nil? (s/pred nil?)
+    set? #{(s/pred simple-keyword?)}))
+
+(s/defn capabilities->string :- s/Str
+  "Does not add leading or trailing new lines."
+  [capabilities :- Capability]
+  (cond
+    (keyword? capabilities) (name capabilities)
+    ((every-pred set? seq) capabilities) (->> capabilities
+                                              sort
+                                              (map name)
+                                              (str/join ", "))
+    :else (throw (ex-info "Missing capabilities!" {}))))
+
 (s/defn capabilities->description :- s/Str
   "Does not add leading or trailing new lines."
-  [capabilities :- (s/conditional
-                     keyword? (s/pred simple-keyword?)
-                     nil? (s/pred nil?)
-                     set? #{(s/pred simple-keyword?)})]
+  [capabilities :- Capability]
   (cond
-    (keyword? capabilities) (str "Requires capability " (name capabilities) ".")
-    ((every-pred set? seq) capabilities) (-> (apply str "Requires capabilities "
-                                                    (->> capabilities
-                                                         sort
-                                                         (map name)
-                                                         (str/join ", ")))
-                                             (str "."))
+    (keyword? capabilities) (str "Requires capability " (capabilities->string capabilities) ".")
+    ((every-pred set? seq) capabilities) (str "Requires capabilities " (capabilities->string capabilities) ".")
     :else (throw (ex-info "Missing capabilities!" {}))))
 
 (defmacro reloadable-function

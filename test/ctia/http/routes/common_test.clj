@@ -169,3 +169,12 @@
                (sut/capabilities->description v))
          nil
          #{})))
+
+(deftest capabilities->string-test
+  (testing "empty capabilities throws"
+    (are [v] (thrown-with-msg?
+               clojure.lang.ExceptionInfo
+               #"Missing capabilities!"
+               (sut/capabilities->string v))
+         nil
+         #{})))

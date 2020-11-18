@@ -91,7 +91,11 @@
 
 (s/defn incident-link-route [{{:keys [read-store write-store]} :StoreService
                               :as services} :- APIHandlerServices]
-  (let [;; :read-<source-type> is checked while processing the body
+  (let [;; a request may contain at most of these fields in the body.
+        ;; the corresponding capability is required for a successful response.
+        additional-field->capabilities {:casebook_id :read-casebook
+                                        :investigation_id :read-investigation}
+        ;; :read-<source-type> is checked while processing the body
         capabilities #{:read-incident
                        :read-relationship
                        :create-relationship}]
@@ -101,18 +105,27 @@
                  {:description "an Incident Link request"}]
           :summary "Link an Incident to a Casebook or Investigation"
           :path-params [id :- s/Str]
-          :description (routes.common/capabilities->description capabilities)
+          :description (str (routes.common/capabilities->description capabilities)
+                            "\n\n"
+                            "Additionally, "
+                            (str/join ", "
+                                      (for [[additional-field capability] (sort additional-field->capabilities)]
+                                        (str (name additional-field)
+                                             " requires "
+                                             (routes.common/capabilities->string capability))))
+                            ".")
           :capabilities capabilities
           :auth-identity identity
           :identity-map identity-map
-          (let [source-type-kw (let [one-of-kws [:casebook_id
-                                                 :investigation_id]
-                                     provided-types (select-keys link-req one-of-kws)]
+          (let [source-type-kw (let [provided-types (select-keys link-req (keys additional-field->capabilities))]
                                  (when-not (= 1 (count provided-types))
                                    (bad-request!
                                      {:error
                                       (str "Please provide exactly one of the following fields: "
-                                           (str/join ", " (->> one-of-kws (map name) sort))
+                                           (str/join ", " (->> additional-field->capabilities
+                                                               keys
+                                                               (map name)
+                                                               sort))
                                            "\n"
                                            (if-let [given-str (when (seq provided-types)
                                                                 (->> provided-types
@@ -123,10 +136,11 @@
                                              (str "Provided: " given-str)
                                              "None provided."))}))
                                  (-> provided-types first key))
-                additional-required-capabilities
-                (case source-type-kw
-                  :casebook_id #{:read-casebook}
-                  :investigation_id #{:read-investigation})
+                additional-required-capabilities (additional-field->capabilities source-type-kw)
+                _ (when-not additional-required-capabilities
+                    (throw (ex-info (str "Missing capability check for " source-type-kw)
+                                    {:additional-required-capabilities additional-required-capabilities
+                                     :source-type-kw source-type-kw})))
                 _ (require-capability! additional-required-capabilities
                                        identity)
                 incident (read-store :incident
