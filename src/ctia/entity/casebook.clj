@@ -139,7 +139,6 @@
              :summary "Partially Update a Casebook"
              :query-params [{wait_for :- (describe s/Bool "wait for patched entity to be available for search") nil}]
              :path-params [id :- s/Str]
-             :description (routes.common/capabilities->description capabilities)
              :capabilities capabilities
              :auth-identity identity
              :identity-map identity-map
@@ -175,7 +174,6 @@
                      :query-params [{wait_for :- (describe s/Bool "wait for updated entity to be available for search") nil}]
                      :path-params [id :- s/Str]
                      :summary "Edit Observables on a casebook"
-                     :description (routes.common/capabilities->description capabilities)
                      :capabilities capabilities
                      :auth-identity identity
                      :identity-map identity-map
@@ -212,7 +210,6 @@
                      :query-params [{wait_for :- (describe s/Bool "wait for updated entity to be available for search") nil}]
                      :path-params [id :- s/Str]
                      :summary "Edit Texts on a casebook"
-                     :description (routes.common/capabilities->description capabilities)
                      :capabilities capabilities
                      :auth-identity identity
                      :identity-map identity-map
@@ -249,7 +246,6 @@
                      :query-params [{wait_for :- (describe s/Bool "wait for updated entity to be available for search") nil}]
                      :path-params [id :- s/Str]
                      :summary "Edit a Bundle on a casebook"
-                     :description (routes.common/capabilities->description capabilities)
                      :capabilities capabilities
                      :auth-identity identity
                      :identity-map identity-map

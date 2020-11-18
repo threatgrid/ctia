@@ -75,7 +75,6 @@
             :return gql/RelayGraphQLResponse
             :body [body gql/RelayGraphQLQuery {:description "a Relay compatible GraphQL body"}]
             :summary "EXPERIMENTAL: Executes a Relay compatible GraphQL query"
-            :description (common/capabilities->description capabilities)
             :capabilities capabilities
             :identity-map identity-map
             (let [request-context {:ident identity-map}

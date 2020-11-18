@@ -1,5 +1,6 @@
 (ns ctia.http.middleware.auth
   (:require [ctia.auth :as auth]
+            [ctia.http.routes.common :as routes.common]
             [compojure.api.meta :as meta]
             [ring.util.http-response :as http-response]
             [schema.core :as s]))
@@ -65,9 +66,16 @@
 ;; Reference:
 ;; https://github.com/metosin/compojure-api/wiki/Creating-your-own-metadata-handlers
 (defmethod meta/restructure-param :capabilities [_ capabilities acc]
-  (update acc :lets into
-          ['_ `(require-capability! ~capabilities
-                                    (:identity ~'+compojure-api-request+))]))
+  (-> acc
+      (update :lets into
+              ['_ `(require-capability! ~capabilities
+                                        (:identity ~'+compojure-api-request+))])
+      (update-in [:swagger :description]
+                 (fn [old]
+                   (str
+                    (routes.common/capabilities->description capabilities)
+                    (when old
+                      (str "\n\n" old)))))))
 
 (defmethod meta/restructure-param :login [_ bind-to acc]
   (update acc :lets into

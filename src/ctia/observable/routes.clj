@@ -42,7 +42,6 @@
         :return (s/maybe Verdict)
         :summary (str "Returns the current Verdict associated with the specified "
                       "observable.")
-        :description (common/capabilities->description capabilities)
         :capabilities capabilities
         :auth-identity identity
         :identity-map identity-map
@@ -63,7 +62,6 @@
                       observable_value :- s/Str]
         :return PartialJudgementList
         :summary "Returns the Judgements associated with the specified observable."
-        :description (common/capabilities->description capabilities)
         :capabilities capabilities
         :auth-identity identity
         :identity-map identity-map
@@ -86,7 +84,6 @@
         :return (s/maybe [Reference])
         :summary (str "Returns the Indicator references associated with the "
                       "specified observable based on Judgement relationships.")
-        :description (common/capabilities->description capabilities)
         :capabilities capabilities
         :auth-identity identity
         :identity-map identity-map
@@ -126,7 +123,6 @@
         :query [params SightingsByObservableQueryParams]
         :path-params [observable_type :- ObservableTypeIdentifier
                       observable_value :- s/Str]
-        :description (common/capabilities->description capabilities)
         :capabilities capabilities
         :auth-identity identity
         :identity-map identity-map
@@ -151,7 +147,6 @@
         :return (s/maybe [Reference])
         :summary (str "Returns Indicator references associated with the "
                       "specified observable based on Sighting relationships.")
-        :description (common/capabilities->description capabilities)
         :capabilities capabilities
         :auth-identity identity
         :identity-map identity-map
@@ -193,7 +188,6 @@
         :return (s/maybe [Reference])
         :summary (str "Returns Incident references associated with the "
                       "specified observable based on Sighting relationships")
-        :description (common/capabilities->description capabilities)
         :capabilities capabilities
         :auth-identity identity
         :identity-map identity-map
