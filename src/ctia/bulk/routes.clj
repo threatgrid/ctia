@@ -40,6 +40,7 @@
             :body [bulk NewBulk {:description "a new Bulk object"}]
             :summary "POST many new entities using a single HTTP call"
             :auth-identity login
+            :description (common/capabilities->description capabilities)
             :capabilities capabilities
             (if (> (bulk-size bulk)
                    (get-bulk-max-size get-in-config))
@@ -97,6 +98,7 @@
                          {tools               :- [Reference] []}
                          {vulnerabilities     :- [Reference] []}
                          {weaknesses          :- [Reference] []}]
+          :description (common/capabilities->description capabilities)
           :capabilities capabilities
           :auth-identity auth-identity
           (let [entities-map {:actors              actors

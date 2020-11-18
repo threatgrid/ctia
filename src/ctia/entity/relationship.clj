@@ -105,7 +105,9 @@
                  {:description "an Incident Link request"}]
           :summary "Link an Incident to a Casebook or Investigation"
           :path-params [id :- s/Str]
-          :description (str "Additionally, "
+          :description (str (routes.common/capabilities->description capabilities)
+                            "\n\n"
+                            "Additionally, "
                             (str/join ", "
                                       (for [[additional-field capability] (sort additional-field->capabilities)]
                                         (str (name additional-field)

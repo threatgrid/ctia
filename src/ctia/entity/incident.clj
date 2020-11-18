@@ -103,6 +103,7 @@
             :summary "Update an Incident Status"
             :query-params [{wait_for :- (describe s/Bool "wait for updated entity to be available for search") nil}]
             :path-params [id :- s/Str]
+            :description (routes.common/capabilities->description capabilities)
             :capabilities :create-incident
             :auth-identity identity
             :identity-map identity-map

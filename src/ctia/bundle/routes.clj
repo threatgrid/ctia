@@ -77,6 +77,7 @@
                   :return NewBundleExport
                   :query [q BundleExportQuery]
                   :summary "Export records with their local relationships. Ids are URIs (with port if specified)."
+                  :description (common/capabilities->description capabilities)
                   :capabilities capabilities
                   :auth-identity identity
                   :identity-map identity-map
@@ -93,6 +94,7 @@
                   :query [q BundleExportOptions]
                   :body [b BundleExportIds]
                   :summary "Export records with their local relationships. Ids are URIs (with port if specified)."
+                  :description (common/capabilities->description capabilities)
                   :capabilities capabilities
                   :auth-identity identity
                   :identity-map identity-map
@@ -132,6 +134,7 @@
                      nil}]
                    :summary "POST many new entities using a single HTTP call"
                    :auth-identity auth-identity
+                   :description (common/capabilities->description capabilities)
                    :capabilities capabilities
                    (let [max-size (bundle-max-size get-in-config)]
                      (if (< max-size (bundle-size bundle))

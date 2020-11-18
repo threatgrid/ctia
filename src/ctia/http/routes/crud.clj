@@ -107,6 +107,7 @@
           :path-params [id :- s/Str]
           :query-params [{wait_for :- (describe s/Bool "wait for entity to be available for search") nil}]
           :return entity-schema
+          :description (capabilities->description capabilities)
           :capabilities capabilities
           :auth-identity identity
           :identity-map identity-map
@@ -191,6 +192,7 @@
                :query-params [{wait_for :- (describe s/Bool "wait for entity to be available for search") nil}]
                :body [new-entity new-schema {:description (format "a new %s" capitalized)}]
                :summary (format "Adds a new %s" capitalized)
+               :description (capabilities->description capabilities)
                :capabilities capabilities
                :auth-identity identity
                :identity-map identity-map
@@ -219,6 +221,7 @@
               :summary (format "Update an existing %s" capitalized)
               :query-params [{wait_for :- (describe s/Bool "wait for updated entity to be available for search") nil}]
               :path-params [id :- s/Str]
+              :description (capabilities->description capabilities)
               :capabilities capabilities
               :auth-identity identity
               :identity-map identity-map
@@ -254,6 +257,7 @@
                 :summary (format "Partially update an existing %s" capitalized)
                 :query-params [{wait_for :- (describe s/Bool "wait for patched entity to be available for search") nil}]
                 :path-params [id :- s/Str]
+                :description (capabilities->description capabilities)
                 :capabilities capabilities
                 :auth-identity identity
                 :identity-map identity-map
@@ -291,6 +295,7 @@
               :query [q external-id-q-params]
               :path-params [external_id :- s/Str]
               :summary (format "List %s by external id" capitalized)
+              :description (capabilities->description capabilities)
               ;; TODO unit test this capability is required in entity-crud-test
               :capabilities capabilities
               :auth-identity identity
@@ -307,6 +312,7 @@
      (when can-search?
        (let [capabilities search-capabilities]
          (context "/search" []
+                  :description (capabilities->description search-capabilities)
                   :capabilities search-capabilities
                   :auth-identity identity
                   :identity-map identity-map
@@ -335,6 +341,7 @@
      (when can-aggregate?
        (let [capabilities search-capabilities]
          (context "/metric" []
+                  :description (capabilities->description capabilities)
                   :capabilities capabilities
                   :auth-identity identity
                   :identity-map identity-map
@@ -398,6 +405,7 @@
             :summary (format "Get one %s by ID" capitalized)
             :path-params [id :- s/Str]
             :query [params get-params]
+            :description (capabilities->description capabilities)
             :capabilities capabilities
             :auth-identity identity
             :identity-map identity-map
@@ -418,6 +426,7 @@
                :path-params [id :- s/Str]
                :query-params [{wait_for :- (describe s/Bool "wait for deleted entity to no more be available for search") nil}]
                :summary (format "Delete one %s" capitalized)
+               :description (capabilities->description capabilities)
                :capabilities capabilities
                :auth-identity identity
                :identity-map identity-map
