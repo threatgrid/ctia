@@ -10,7 +10,7 @@
          [:a :b :c])))
 
 (deftest build-transformed-init-config-test
-  (assert (empty? @#'sut/*config-transformers*))
+  (assert (not (thread-bound? @#'sut/*config-transformers*)))
   (assert (not (thread-bound? #'sut/*properties-overrides*)))
   ;; TODO generate paths and vals from PropertiesSchema
   (testing "defaults to ctia-default.properties values"
