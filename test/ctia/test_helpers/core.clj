@@ -25,7 +25,8 @@
              [spec :as fs]
              [utils :as fu]]
             [puppetlabs.trapperkeeper.app :as app]
-            [schema.core :as s]))
+            [schema.core :as s])
+  (:import [java.util UUID]))
 
 (def ^:dynamic ^:private *current-app*)
 
@@ -62,7 +63,20 @@
    "ctia.versions.config"                       "test"])
 (assert (even? (count *properties-overrides*)))
 
-(def ^:dynamic ^:private *config-transformers* [])
+(defn- isolate-config-indices
+  "Updates all ES indices to be unique."
+  [config]
+  (let [suffix (UUID/randomUUID)]
+    (-> config
+        (update-in [:ctia :store :es]
+                   (fn [es]
+                     (into {}
+                           (map (fn [[k v]]
+                                  [k (cond-> v
+                                       (:indexname k) (update v :indexname str suffix))]))
+                           es))))))
+
+(def ^:dynamic ^:private *config-transformers* [#'isolate-config-indices])
 
 (defn get-service-map [app svc-kw]
   {:pre [(keyword? svc-kw)]}
