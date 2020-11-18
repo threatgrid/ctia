@@ -334,12 +334,13 @@
                                          "foogroup"
                                          "user")
 
-     (entity-crud-test {:app app
-                        :entity "casebook"
-                        :example new-casebook-maximal
-                        :headers {:Authorization "45c1f5e3f05d0"}
-                        :patch-tests? true
-                        :additional-tests partial-operations-tests}))))
+     (entity-crud-test
+      (into sut/casebook-entity
+            {:app app
+             :example new-casebook-maximal
+             :headers {:Authorization "45c1f5e3f05d0"}
+             :patch-tests? true
+             :additional-tests partial-operations-tests})))))
 
 (deftest test-casebook-pagination-field-selection
   (test-for-each-store-with-app

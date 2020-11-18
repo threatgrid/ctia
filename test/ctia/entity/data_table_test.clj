@@ -1,5 +1,6 @@
 (ns ctia.entity.data-table-test
   (:require [clj-momo.test-helpers.core :as mth]
+            [ctia.entity.data-table :as sut]
             [clojure.test :refer [deftest join-fixtures use-fixtures]]
             [ctia.test-helpers
              [auth :refer [all-capabilities]]
@@ -37,10 +38,12 @@
                                          "foouser"
                                          "foogroup"
                                          "user")
-     (entity-crud-test {:app app
-                        :entity "data-table"
-                        :example new-data-table
-                        :invalid-tests? false
-                        :update-tests? false
-                        :search-tests? false
-                        :headers {:Authorization "45c1f5e3f05d0"}}))))
+     (entity-crud-test
+      (into sut/data-table-entity
+       {:app app
+        :example new-data-table
+        :invalid-tests? false
+        :update-tests? false
+        :search-tests? false
+        :delete-search-tests? false
+        :headers {:Authorization "45c1f5e3f05d0"}})))))

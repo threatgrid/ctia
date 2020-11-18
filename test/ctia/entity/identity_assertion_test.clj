@@ -72,15 +72,15 @@
                                          "foogroup"
                                          "user")
      (entity-crud-test
-      {:app app
-       :entity "identity-assertion"
-       :example new-identity-assertion-maximal
-       :invalid-tests? false
-       :update-tests? true
-       :search-tests? false
-       :update-field :source
-       :additional-tests additional-tests
-       :headers {:Authorization "45c1f5e3f05d0"}}))))
+      (into sut/identity-assertion-entity
+            {:app app
+             :example new-identity-assertion-maximal
+             :invalid-tests? false
+             :update-tests? true
+             :search-tests? false
+             :update-field :source
+             :additional-tests additional-tests
+             :headers {:Authorization "45c1f5e3f05d0"}})))))
 
 (deftest test-identity-assertion-pagination-field-selection
   (test-for-each-store-with-app

@@ -5,7 +5,7 @@
             [clojure.tools.logging :refer [log*]]
             [ctim.domain.id :refer [long-id->id]]
             [clj-momo.lib.clj-time.coerce :as tc]
-            [ctia.test-helpers.core :refer [DELETE GET POST]])
+            [ctia.test-helpers.core :refer [POST-bulk DELETE GET POST]])
   (:import [java.util UUID]))
 
 (defn unique-word
@@ -27,8 +27,16 @@
   (let [short-id (:short-id (long-id->id full-id))]
     (DELETE app
             (format "ctia/%s/%s" (name entity) short-id)
+            :accept :json
             :headers {"Authorization" "45c1f5e3f05d0"})))
 
+(defn delete-search
+  [app entity query-params]
+  (let [delete-search-uri (format "ctia/%s/search" (name entity))]
+    (DELETE app
+            delete-search-uri
+            :headers {"Authorization" "45c1f5e3f05d0"}
+            :query-params query-params)))
 (defn search-raw
   [app entity query-params]
   (let [search-uri (format "ctia/%s/search" (name entity))]
@@ -331,15 +339,71 @@
       (delete-doc app entity id-1)
       (delete-doc app entity id-2))))
 
+
+(defn test-delete-search
+  [app entity bundle-key example]
+  (let [docs (->> (dissoc example :id)
+                  (repeat 100)
+                  (map #(assoc % :tlp (rand-nth ["green" "amber" "red"]))))
+        {green-docs "green"
+         amber-docs "amber"
+         red-docs "red"} (group-by :tlp docs)
+        count-fn #(:parsed-body (count-raw app entity %))
+        delete-search-fn (fn [q confirm?]
+                           (let [query (if (boolean? confirm?)
+                                         (assoc q :REALLY_DELETE_ALL_THOSE_ENTITIES
+                                                confirm?)
+                                         q)]
+                             (-> (delete-search app entity query)
+                                 :body
+                                 read-string)))
+        filter-green {:tlp "green"}
+        filter-amber {:tlp "amber"}
+        filter-red {:tlp "red"}]
+    (POST-bulk app {bundle-key docs})
+    (is (= 403
+           (:status (delete-search app entity {:REALLY_DELETE_ALL_THOSE_ENTITIES true}))))
+    (assert (= (count green-docs)
+               (count-fn filter-green)))
+    (assert (= (count amber-docs)
+               (count-fn filter-amber)))
+    (assert (= (count red-docs)
+               (count-fn filter-red)))
+    (testing "delete with :REALLY_DELETE_ALL_THOSE_ENTITIES set to false or nil must not delete entities but return the actual number of matched entities"
+      (is (= (count green-docs)
+             (delete-search-fn filter-green false)
+             (delete-search-fn filter-green nil)
+             (count-fn filter-green)))
+      (is (= (count amber-docs)
+             (delete-search-fn filter-amber false)
+             (delete-search-fn filter-amber nil)
+             (count-fn filter-amber)))
+      (is (= (count red-docs)
+             (delete-search-fn filter-red false)
+             (delete-search-fn filter-red nil)
+             (count-fn filter-red))))
+    (testing "delete with :REALLY_DELETE_ALL_THOSE_ENTITIES set to true must really delete entities"
+      (is (= (count green-docs)
+             (delete-search-fn filter-green true)))
+      (is (= (count amber-docs)
+             (delete-search-fn filter-amber true)))
+      (is (= (count red-docs)
+             (delete-search-fn filter-red true)))
+      (is (= 0
+             (count-fn filter-green)
+             (count-fn filter-amber)
+             (count-fn filter-red))))))
+
 (defn test-query-string-search
   [app entity query query-field example get-in-config]
-  (if (= :description query-field)
-    (test-describable-search app entity example get-in-config)
-    (ensure-one-document test-non-describable-search
-                         app
-                         example
-                         entity
-                         query
-                         query-field))
-  (test-filter-by-id app entity)
-  (test-from-to app entity example))
+  (let [{{full-id :id} :parsed-body} (create-doc app entity (dissoc example :id))]
+    (if (= :description query-field)
+      (test-describable-search app entity example get-in-config)
+      (test-non-describable-search
+       app
+       entity
+       query
+       query-field))
+    (test-filter-by-id app entity)
+    (test-from-to app entity example)
+    (delete-doc app entity full-id)))

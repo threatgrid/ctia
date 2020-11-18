@@ -245,7 +245,7 @@
   - expose anaphoric `version`, `es-port` and `conn` to use in body
   - wrap body with a `testing` block with with `msg` formatted with `version`
   - call `clean` fn if not `nil` before and after body (takes conn as parameter)."
-  {:style/indent 3}
+  {:style/indent 2}
   [msg versions clean & body]
   `(let [;; avoid version and the other explicitly bound locals will to be captured
          clean-fn# ~clean
@@ -256,14 +256,18 @@
                                       :port ~'es-port
                                       :version ~'version})]
          (try
-           (testing (format "%s (ES version: %s)." msg#  ~'version)
+           (testing (format "%s (ES version: %s).\n" msg#  ~'version)
              (when clean-fn#
                (clean-fn# ~'conn))
-             ~@body)
-           (finally
-             (when clean-fn#
-               (clean-fn# ~'conn))
-             (es-conn/close ~'conn)))))))
+             (h/with-properties*
+               ["ctia.store.es.default.port" ~'es-port
+                "ctia.store.es.default.version" ~'version]
+               (fn []
+                 ~@body))
+             (finally
+               (when clean-fn#
+                 (clean-fn# ~'conn))
+               (es-conn/close ~'conn))))))))
 
 (defn build-mappings
   [base-mappings entity-type version]

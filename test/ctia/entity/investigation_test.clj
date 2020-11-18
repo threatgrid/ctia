@@ -31,12 +31,13 @@
                                          "user")
 
      (entity-crud-test
-      {:app app
-       :entity "investigation"
-       :example new-investigation-maximal
-       :update-tests? false
-       :invalid-tests? false
-       :headers {:Authorization "45c1f5e3f05d0"}}))))
+      (into sut/investigation-entity
+            {:app app
+             :example new-investigation-maximal
+             :update-tests? false
+             :invalid-tests? false
+             :delete-search-tests? false
+             :headers {:Authorization "45c1f5e3f05d0"}})))))
 
 (deftest test-investigation-pagination-field-selection
   (test-for-each-store-with-app
