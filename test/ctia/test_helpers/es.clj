@@ -88,9 +88,20 @@
       (finally
         (purge-index :event services)))))
 
-(defn purge-indices [all-stores get-in-config]
+(defn purge-indexes [all-stores get-in-config]
   (doseq [entity (keys (all-stores))]
     (purge-index entity get-in-config)))
+
+(defn fixture-purge-indexes
+  "walk through all producers and delete their index"
+  [t]
+  (let [app (h/get-current-app)
+        {:keys [get-in-config]} (h/get-service-map app :ConfigService)
+        {:keys [all-stores]} (h/get-service-map app :StoreService)]
+    (purge-indexes all-stores get-in-config)
+    (try
+      (t)
+      (finally (purge-indexes all-stores get-in-config)))))
 
 (defn fixture-properties:es-store [t]
   ;; Note: These properties may be overwritten by ENV variables
