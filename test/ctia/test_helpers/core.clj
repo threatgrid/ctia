@@ -63,20 +63,7 @@
    "ctia.versions.config"                       "test"])
 (assert (even? (count *properties-overrides*)))
 
-(defn- isolate-config-indices
-  "Updates all ES indices in config to be unique."
-  [config]
-  (let [suffix (UUID/randomUUID)]
-    (-> config
-        (update-in [:ctia :store :es]
-                   (fn [es]
-                     (into {}
-                           (map (fn [[k v]]
-                                  [k (cond-> v
-                                       (:indexname k) (update v :indexname str suffix))]))
-                           es))))))
-
-(def ^:dynamic ^:private *config-transformers* [#'isolate-config-indices])
+(def ^:dynamic ^:private *config-transformers* [])
 
 (defn get-service-map [app svc-kw]
   {:pre [(keyword? svc-kw)]}
@@ -252,23 +239,6 @@
        (get-service-map :ConfigService)
        :get-in-config)))
 
-;; workaround cycle with this namespace
-(def ^:private purge-indices (delay (requiring-resolve 'ctia.test-helpers.es/purge-indices)))
-
-(defn ^:private stop-and-cleanup
-  "Stop and garbage collect a running app."
-  [app]
-  (let [{{:keys [get-config]} :ConfigService
-         {:keys [all-stores]} :StoreService} (app/service-graph app)
-        ;; simulate the current output of these functions before we stop or restart
-        ;; the app
-        get-in-config (partial get-in (get-config))
-        all-stores (constantly (all-stores))]
-    (app/stop app)
-    (purge-indices
-      all-stores
-      get-in-config)))
-
 (s/defn fixture-ctia-with-app
   "Note: ES indicies are unique, use `with-config-transformer`
   to make them explicit."
@@ -305,7 +275,7 @@
              app
              #(t-with-app app))
            (finally
-             (stop-and-cleanup app))))))))
+             (app/stop app))))))))
 
 (s/defn fixture-ctia
   "Note: ES indicies are unique, use `with-config-transformer`
