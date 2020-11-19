@@ -253,7 +253,7 @@
        :get-in-config)))
 
 ;; workaround cycle with this namespace
-(def ^:private purge-indices (delay (requiring-resolve 'ctia.test-helpers.es/purge-indices)))
+(def ^:private purge-indices-and-templates (delay (requiring-resolve 'ctia.test-helpers.es/purge-indices-and-templates)))
 
 (defn ^:private stop-and-cleanup
   "Stop and garbage collect a running app."
@@ -265,7 +265,7 @@
         get-in-config (partial get-in (get-config))
         all-stores (constantly (all-stores))]
     (app/stop app)
-    (@purge-indices
+    (@purge-indices-and-templates
       all-stores
       get-in-config)))
 

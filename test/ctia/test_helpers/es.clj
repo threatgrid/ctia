@@ -68,29 +68,31 @@
       (finally
         (delete-store-indexes false all-stores get-in-config)))))
 
-(s/defn purge-index [entity
-                     {{:keys [get-in-config]} :ConfigService
-                      :as services} :- ESConnServices]
+(s/defn purge-index-and-template [entity
+                                  {{:keys [get-in-config]} :ConfigService
+                                   :as services} :- ESConnServices]
   (let [{:keys [conn index]} (es-init/init-store-conn
                               (es-init/get-store-properties entity get-in-config)
                               services)]
     (when conn
-      (es-index/delete! conn (str index "*")))))
+      (doto (str index "*")
+        #(es-index/delete! conn %)
+        #(es-index/delete-template! conn %)))))
 
-(defn fixture-purge-event-indexes
-  "walk through all producers and delete their index"
+(defn fixture-purge-event-indexes-and-templates
+  "walk through all producers and delete their indices and templates"
   [t]
   (let [app (h/get-current-app)
         services (app->ESConnServices app)]
-    (purge-index :event services)
+    (purge-index-and-template :event services)
     (try
       (t)
       (finally
-        (purge-index :event services)))))
+        (purge-index-and-template :event services)))))
 
-(defn purge-indices [all-stores get-in-config]
+(defn purge-indices-and-templates [all-stores get-in-config]
   (doseq [entity (keys (all-stores))]
-    (purge-index entity {:ConfigService {:get-in-config get-in-config}})))
+    (purge-index-and-template entity {:ConfigService {:get-in-config get-in-config}})))
 
 (defn fixture-properties:es-store [t]
   ;; Note: These properties may be overwritten by ENV variables
