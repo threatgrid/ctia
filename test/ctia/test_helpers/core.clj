@@ -265,7 +265,7 @@
         get-in-config (partial get-in (get-config))
         all-stores (constantly (all-stores))]
     (app/stop app)
-    (purge-indices
+    (@purge-indices
       all-stores
       get-in-config)))
 
