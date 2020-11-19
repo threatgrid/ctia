@@ -474,7 +474,9 @@
 
 (defmacro with-atom-logger
   [atom-logger & body]
-  `(with-atom-logger* #(do ~@body)))
+  `(with-atom-logger*
+     ~atom-logger
+     #(do ~@body)))
 
 (defn deep-dissoc-entity-ids
   "Dissoc all entity ID in the given map recursively"
