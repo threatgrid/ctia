@@ -954,12 +954,14 @@
            (is (nil?  (:indicators bundle-incident-target-get)))
            (is (= bundle-incident-target-get bundle-incident-target-post))))))))
 
-(defn with-tlp-property-setting* [tlp f]
-  (helpers/with-config-transformer*
+(s/defn with-tlp-property-setting*
+  [tlp :- s/Str
+   f :- (s/=> s/Any)]
+  (helpers/with-config-transformer
     #(-> %
          (assoc-in [:ctia :access-control :min-tlp] tlp)
          (assoc-in [:ctia :access-control :default-tlp] tlp))
-    f))
+    (f)))
 
 (defmacro with-tlp-property-setting [tlp & body]
   `(with-tlp-property-setting* ~tlp #(do ~@body)))
