@@ -69,7 +69,9 @@
   "Wrap this function around each deftest instead of use-fixtures
   so the TK config can be transformed before helpers/fixture-ctia
   starts the app."
-  [config-transformer body-fn :- (s/=> s/Any (s/=> s/Any (s/named s/Any 'app)))]
+  [config-transformer
+   body-fn :- (s/=> s/Any
+                    (s/named s/Any 'app))]
   (let [fixtures (join-fixtures [helpers/fixture-ctia
                                  fixture-setup! ;; Note: goes _after_ fixture-ctia
                                  es-helpers/fixture-delete-store-indexes
@@ -77,8 +79,7 @@
     (helpers/with-config-transformer
       config-transformer
       (fixtures
-        (fn []
-          (body-fn (helpers/get-current-app)))))))
+        #(body-fn (helpers/get-current-app))))))
 
 (defmacro with-each-fixtures
   "Primarily for check-migration-params-test. Binds `app` to current TK app."
