@@ -1,9 +1,9 @@
 (ns ctia.entity.event.store
   (:require
    [ctia.entity.event.schemas :refer [PartialEvent]]
-   [ctia.store :refer [IStore IQueryStringSearchableStore]]
+   [ctia.store :refer [IStore IQueryStringSearchableStore IEventStore]]
    [ctia.entity.event.crud :as crud]
-   [ctia.store :refer [IEventStore]]))
+   [ctia.stores.es.store :refer [close-cm!]]))
 
 (defrecord EventStore [state]
   IStore
@@ -23,4 +23,5 @@
      state search-query ident))
   (aggregate [_ search-query agg-query ident]
     (crud/handle-aggregate
-     state search-query agg-query ident)))
+     state search-query agg-query ident))
+  (close [_] (close-cm! state)))

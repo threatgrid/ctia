@@ -12,12 +12,12 @@
     [core :as helpers]
     [es :as es-helpers]
     [http :refer [app->APIHanderServices]]]
-   [schema.test :as st]))
+   [schema.test :refer [validate-schemas]]))
 
-(use-fixtures :once st/validate-schemas)
-
-(use-fixtures :each (join-fixtures [es-helpers/fixture-properties:es-store
-                                    helpers/fixture-ctia-fast]))
+(use-fixtures :each
+  validate-schemas
+  es-helpers/fixture-properties:es-store
+  helpers/fixture-ctia-fast)
 
 (deftest test-send-event
   "Tests the basic action of sending an event"

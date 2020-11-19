@@ -1,11 +1,9 @@
 (ns ctia.entity.asset-properties
   (:require [compojure.api.core :refer [POST routes]]
-            [ctia.domain.entities
-             :refer [default-realize-fn]
-             :as entities]
+            [ctia.domain.entities :refer [default-realize-fn]]
             [ctia.flows.crud :as flows]
             [ctia.http.routes.common :as routes.common]
-            [ctia.http.routes.crud :refer [entity-crud-routes]]
+            [ctia.http.routes.crud :refer [services->entity-crud-routes]]
             [ctia.schemas.core :refer [def-acl-schema def-stored-schema APIHandlerServices]]
             [ctia.schemas.sorting :as sorting]
             [ctia.schemas.utils :as csu]
@@ -44,7 +42,7 @@
   {:type "object"
    :properties
    {:name  em/token
-    :value em/all_token}})
+    :value em/token}})
 
 (def asset-properties-mapping
   {"asset-properties"
@@ -103,8 +101,9 @@
 
 (def asset-properties-can-revoke? true)
 
-(def asset-properties-routes
-  (entity-crud-routes
+(s/defn asset-properties-routes [services :- APIHandlerServices]
+  (services->entity-crud-routes
+    services
     {:entity                   :asset-properties
      :new-schema               NewAssetProperties
      :entity-schema            AssetProperties
@@ -148,5 +147,6 @@
    :realize-fn            realize-asset-properties
    :es-store              ->AssetPropertiesStore
    :es-mapping            asset-properties-mapping
-   :services->routes  asset-properties-routes
+   :services->routes      (routes.common/reloadable-function
+                            asset-properties-routes)
    :capabilities          capabilities})

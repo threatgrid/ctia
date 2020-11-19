@@ -1,10 +1,10 @@
 (ns ctia.entity.identity
   (:require [schema.core :as s]
             [schema-tools.core :as st]
-            [clj-momo.lib.es
-             [document :refer [create-doc get-doc delete-doc]]]
-            [ctia.store :refer [IIdentityStore]]
+            [ductile.document :refer [create-doc get-doc delete-doc]]
+            [ctia.store :refer [IIdentityStore IStore]]
             [ctia.stores.es
+             [store :refer [close-cm!]]
              [crud :as crud]
              [mapping :as em]
              [schemas :refer [ESConnState]]]))
@@ -37,20 +37,24 @@
   (vec (map name caps)))
 
 (s/defn handle-create :- Identity
-  [{:keys [conn props]} :- ESConnState
+  [{:keys [conn]
+    {:keys [refresh write-index]
+     :or {refresh "false"}} :props} :- ESConnState
    new-identity :- Identity]
   (let [id (:login new-identity)
         realized (assoc new-identity :id id)
-        transformed (update-in realized [:capabilities]
+        transformed (update-in realized
+                               [:capabilities]
                                capabilities-set->capabilities)
-        res (create-doc conn
-                        (:write-index props)
-                        mapping
-                        transformed
-                        (:refresh props "false"))]
-    (-> res
-        (update-in [:capabilities] capabilities->capabilities-set)
-        (dissoc :id))))
+        response (-> transformed
+                     (update-in [:capabilities] capabilities->capabilities-set)
+                     (dissoc :id))]
+    (create-doc conn
+                write-index
+                mapping
+                transformed
+                {:refresh refresh})
+    response))
 
 (s/defn handle-read :- (s/maybe Identity)
   [state :- ESConnState
@@ -69,19 +73,22 @@
                 index
                 mapping
                 login
-                true)))
+                {:refresh "true"})))
 
 (def identity-mapping
   {"identity"
    {:dynamic false
     :properties
-    {:id em/all_token
+    {:id em/token
      :role em/token
      :capabilities em/token
      :login em/token
      :groups em/token}}})
 
 (defrecord IdentityStore [state]
+  IStore
+  (close [this]
+    (close-cm! (:state this)))
   IIdentityStore
   (read-identity [_ login]
     (handle-read state login))

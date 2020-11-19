@@ -4,13 +4,22 @@ services:
     image: redis:5.0.5
     ports:
       - "6379:6379"
-  elasticsearch-dev:
+  elasticsearch5:
     image: elasticsearch:5.6.9
     environment:
-      - cluster.name=elasticsearch
+      - cluster.name=elasticsearch5
+      - discovery.type=single-node
     ports:
-      - "9200:9200"
-      - "9300:9300"
+      - "9205:9200"
+      - "9305:9300"
+  elasticsearch7:
+    image: elasticsearch:7.9.2
+    environment:
+      - cluster.name=elasticsearch7
+      - discovery.type=single-node
+    ports:
+      - "9207:9200"
+      - "9307:9300"
   zookeeper:
     image: confluentinc/cp-zookeeper:5.3.2
     hostname: "zookeeper"

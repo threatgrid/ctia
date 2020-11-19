@@ -4,15 +4,16 @@
              [es :as es-helpers]
              [http :refer [app->APIHanderServices]]]
             [ctia.entity.event.obj-to-event :as o2e]
-            [clojure.test :as t :refer :all]
+            [clojure.test :refer [deftest is use-fixtures]]
             [schema.test :as st]
             [clojure.tools.logging :as log]
             [clojure.string :as str]))
 
-(use-fixtures :once st/validate-schemas)
-(use-fixtures :each (join-fixtures [es-helpers/fixture-properties:es-store
-                                    test-helpers/fixture-properties:events-logging
-                                    test-helpers/fixture-ctia-fast]))
+(use-fixtures :each
+  es-helpers/fixture-properties:es-store
+  test-helpers/fixture-properties:events-logging
+  test-helpers/fixture-ctia-fast
+  st/validate-schemas)
 
 (deftest test-logged
   (let [app (test-helpers/get-current-app)

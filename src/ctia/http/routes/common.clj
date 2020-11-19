@@ -151,3 +151,47 @@
     true {:refresh "wait_for"}
     false {:refresh "false"}
     {}))
+
+(s/defschema Capability
+  (s/conditional
+    keyword? (s/pred simple-keyword?)
+    nil? (s/pred nil?)
+    set? #{(s/pred simple-keyword?)}))
+
+(s/defn capabilities->string :- s/Str
+  "Does not add leading or trailing new lines."
+  [capabilities :- Capability]
+  (cond
+    (keyword? capabilities) (name capabilities)
+    ((every-pred set? seq) capabilities) (->> capabilities
+                                              sort
+                                              (map name)
+                                              (str/join ", "))
+    :else (throw (ex-info "Missing capabilities!" {}))))
+
+(s/defn capabilities->description :- s/Str
+  "Does not add leading or trailing new lines."
+  [capabilities :- Capability]
+  (cond
+    (keyword? capabilities) (str "Requires capability " (capabilities->string capabilities) ".")
+    ((every-pred set? seq) capabilities) (str "Requires capabilities " (capabilities->string capabilities) ".")
+    :else (throw (ex-info "Missing capabilities!" {}))))
+
+(defmacro reloadable-function
+  "Transforms v to (var v).
+
+  This can help REPL development in several situations.
+
+  When entities are top-level maps, :services->routes
+  is fixed when the entity is evaluated.
+  If passing :services->routes using a var deref,
+  this means updates to the route function will
+  not be observed until *both* the entity namespace and
+  the server's routes have been reloaded.
+
+  Using (var v) instead of v in top-level
+  maps enables routes to dynamically
+  update."
+  [v]
+  {:pre [(symbol? v)]}
+  `(var ~v))

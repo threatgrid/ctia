@@ -2,7 +2,7 @@
   (:require
    [clojure.string :as string]
    [clj-momo.test-helpers.http-assert-1 :as mthh]
-   [ctia.lib.utils :refer [service-subgraph service-subgraph-from-schema]]
+   [ctia.lib.utils :refer [service-subgraph-from-schema]]
    [ctia.schemas.core :refer [APIHandlerServices HTTPShowServices]]
    [ctia.test-helpers.core :as th]
    [puppetlabs.trapperkeeper.app :as app]
@@ -23,13 +23,12 @@
            mthh/assert-post)
          args))
 
+(s/defn app->APIHandlerServices :- APIHandlerServices [app]
+  (-> app
+      app/service-graph
+      (service-subgraph-from-schema APIHandlerServices)))
+
 (s/defn app->HTTPShowServices :- HTTPShowServices [app]
   (-> app
       app/service-graph
       (service-subgraph-from-schema HTTPShowServices)))
-
-(s/defn app->APIHanderServices :- APIHandlerServices
-  [app]
-  (-> app
-      app/service-graph
-      (service-subgraph-from-schema APIHandlerServices)))

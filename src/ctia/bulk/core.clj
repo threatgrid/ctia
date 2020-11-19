@@ -7,13 +7,14 @@
              [properties :as p]
              [store :as store]]
             [ctia.domain.entities :as ent :refer [with-long-id]]
-            [ctia.entity.entities :refer [entities]]
+            [ctia.entity.entities :refer [all-entities]]
             [ctia.flows.crud :as flows]
             [ctia.schemas.core :refer [APIHandlerServices]]
             [ring.util.http-response :refer [bad-request]]
             [schema.core :as s]
             [schema-tools.core :as st]))
 
+;; TODO def => defn
 (def bulk-entity-mapping
   (into {}
         (map (fn [{:keys [entity plural]}]
@@ -21,7 +22,7 @@
                            name
                            (str/replace #"-" "_")
                            keyword)})
-             (vals entities))))
+             (vals (all-entities)))))
 
 (def inverted-bulk-entity-mapping
   (set/map-invert bulk-entity-mapping))
@@ -68,19 +69,20 @@
   [new-entities entity-type tempids auth-identity params
    services :- APIHandlerServices]
   (when (seq new-entities)
-    (update (flows/create-flow
-             :services services
-             :entity-type entity-type
-             :realize-fn (-> entities entity-type :realize-fn)
-             :store-fn (create-fn entity-type auth-identity params services)
-             :long-id-fn #(with-long-id % services)
-             :enveloped-result? true
-             :identity auth-identity
-             :entities new-entities
-             :tempids tempids
-             :spec (-> entities entity-type :new-spec))
-            :data (partial map (fn [{:keys [error id] :as result}]
-                                 (if error result id))))))
+    (let [entities (all-entities)]
+      (update (flows/create-flow
+                :services services
+                :entity-type entity-type
+                :realize-fn (-> entities entity-type :realize-fn)
+                :store-fn (create-fn entity-type auth-identity params services)
+                :long-id-fn #(with-long-id % services)
+                :enveloped-result? true
+                :identity auth-identity
+                :entities new-entities
+                :tempids tempids
+                :spec (-> entities entity-type :new-spec))
+              :data (partial map (fn [{:keys [error id] :as result}]
+                                   (if error result id)))))))
 
 (s/defschema ReadEntitiesServices
   {:ConfigService (-> APIHandlerServices

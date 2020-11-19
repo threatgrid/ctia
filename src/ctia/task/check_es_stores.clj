@@ -11,7 +11,7 @@
     [init :refer [start-ctia!*]]
     [properties :as p]
     [store-service :as store-svc]]
-   [ctia.entity.entities :refer [entities]]
+   [ctia.entity.entities :as entities]
    [ctia.entity.sighting.schemas :refer [StoredSighting]]
    [ctia.stores.es.crud :refer [coerce-to-fn]]
    [puppetlabs.trapperkeeper.app :as app]
@@ -21,10 +21,11 @@
 (def default-batch-size 100)
 (def timeout (* 5 60000))
 
+;; TODO def => defn
 (def all-types
   (assoc (into {}
                (map (fn [[_ {:keys [entity stored-schema]}]]
-                      {entity stored-schema}) entities))
+                      {entity stored-schema}) (entities/all-entities)))
          :sighting (st/merge StoredSighting
                              {(s/optional-key :observables_hash) s/Any})))
 

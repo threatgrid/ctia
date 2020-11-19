@@ -1,13 +1,13 @@
 (ns ctia.entity.asset
   (:require [ctia.domain.entities :refer [default-realize-fn]]
-            [ctia.schemas.core :refer [def-acl-schema def-stored-schema]]
+            [ctia.schemas.core :refer [APIHandlerServices def-acl-schema def-stored-schema]]
             [ctia.schemas.utils :as csu]
             [ctia.schemas.sorting :as sorting]
             [ctia.stores.es.mapping :as em]
             [ctia.stores.es.store :refer [def-es-store]]
             [ctim.schemas.asset :as asset-schema]
             [schema-tools.core :as st]
-            [ctia.http.routes.crud :refer [entity-crud-routes]]
+            [ctia.http.routes.crud :refer [services->entity-crud-routes]]
             [ctia.http.routes.common :as routes.common]
             [flanders.utils :as fu]
             [schema.core :as s]))
@@ -84,8 +84,9 @@
    :valid_time.start_time
    :valid_time.end_time])
 
-(def asset-routes
-  (entity-crud-routes
+(s/defn asset-routes [services :- APIHandlerServices]
+  (services->entity-crud-routes
+   services
    {:entity                   :asset
     :new-schema               NewAsset
     :entity-schema            Asset
@@ -129,6 +130,7 @@
    :realize-fn            realize-asset
    :es-store              ->AssetStore
    :es-mapping            asset-mapping
-   :services->routes      asset-routes
+   :services->routes      (routes.common/reloadable-function
+                            asset-routes)
    :capabilities          capabilities
    })

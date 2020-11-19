@@ -1,7 +1,7 @@
 (ns ctia.store-service-core
   (:require [clojure.string :as str]
             [ctia.properties :as p]
-            [ctia.store :refer [empty-stores]]
+            [ctia.store :refer [empty-stores close]]
             [ctia.stores.es.init :as es-init]))
 
 (defn init [context]
@@ -45,3 +45,9 @@
 (defn start [{:keys [stores-atom] :as context} get-in-config]
   (init-store-service! stores-atom get-in-config)
   context)
+
+(defn stop
+  [ctx]
+  (doseq [[kw [s]] (all-stores ctx)]
+    (close s))
+  ctx)

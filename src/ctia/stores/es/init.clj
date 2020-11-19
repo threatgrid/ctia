@@ -8,9 +8,7 @@
    [ductile
     [conn :refer [connect]]
     [index]]
-   [clj-momo.lib.es
-    [index :as es-index]]
-   [ctia.entity.entities :refer [entities]]
+   [ctia.entity.entities :as entities]
    [schema.core :as s]
    [schema-tools.core :as st]))
 
@@ -26,32 +24,36 @@
        :refresh_interval s/Str
        :aliased s/Any})))
 
+;; TODO def => defn
 (def store-mappings
   (apply merge {}
          (map (fn [[_ {:keys [entity es-mapping]}]]
                 {entity es-mapping})
-              entities)))
+              (entities/all-entities))))
 
 (s/defn init-store-conn :- ESConnState
   "initiate an ES store connection, returning a map containing a
    connection manager and dedicated store index properties"
-  [{:keys [entity indexname mappings aliased shards replicas refresh_interval]
+  [{:keys [entity indexname mappings aliased shards replicas refresh_interval version]
     :or {aliased false
          shards 1
          replicas 1
-         refresh_interval "1s"}
+         refresh_interval "1s"
+         version 7}
     :as props} :- StoreProperties
    services :- ESConnServices]
   (let [write-index (str indexname
                          (when aliased "-write"))
         settings {:refresh_interval refresh_interval
                   :number_of_shards shards
-                  :number_of_replicas replicas}]
+                  :number_of_replicas replicas}
+        mappings (cond-> (get store-mappings entity mappings)
+                   (> version 5) (some-> first val))]
     {:index indexname
      :props (assoc props :write-index write-index)
      :config (into
               {:settings (into store-settings settings)
-               :mappings (get store-mappings entity mappings)}
+               :mappings mappings}
               (when aliased
                 {:aliases {indexname {}}}))
      :conn (connect props)
@@ -63,35 +65,43 @@
     {:keys [settings]} :config} :- ESConnState]
   (try
     (->> {:index (select-keys settings [:refresh_interval :number_of_replicas])}
-         (es-index/update-settings! conn index))
+         (ductile.index/update-settings! conn index))
     (log/info "updated settings: " index)
     (catch clojure.lang.ExceptionInfo e
       (log/warn "could not update settings on that store"
                 (pr-str (ex-data e))))))
 
-(defn upsert-template!
-  [conn index config]
-  (es-index/create-template! conn index config)
+(s/defn upsert-template!
+  [{:keys [conn index config]} :- ESConnState]
+  (ductile.index/create-template! conn index config)
   (log/infof "updated template: %s" index))
 
 (defn system-exit-error
   []
-  (log/error (str "CTIA tried to start with an invalid configuration: \n"
+  (log/error (str "IGNORE THIS LOG UNTIL MIGRATION"
+                  "CTIA tried to start with an invalid configuration: \n"
                   "- invalid mapping\n"
                   "- ambiguous index names"))
   (System/exit 1))
 
-(defn update-mapping!
-  [conn index config]
-  (try
-    (log/info "updating mapping: " index)
-    (es-index/update-mapping!
-     conn
-     index
-     (:mappings config))
-    (catch clojure.lang.ExceptionInfo e
-      (log/error "cannot update mapping. You probably tried to update the mapping of an existing field. It's only possible to add new field to existing mappings. If you need to modify the type of a field in an existing index, you must perform a migration" (ex-data e))
-      (system-exit-error))))
+(s/defn update-mappings!
+  [{:keys [conn index]
+    {:keys [mappings]} :config} :- ESConnState]
+  (let [[entity-type type-mappings] (when (= (:version conn) 5)
+                                      (first mappings))
+        update-body (or type-mappings mappings)]
+    (try
+      (log/info "updating mapping: " index)
+      (ductile.index/update-mappings! conn
+                                      index
+                                      entity-type
+                                      update-body)
+      (catch clojure.lang.ExceptionInfo e
+        (log/error "cannot update mapping. You probably tried to update the mapping of an existing field. It's only possible to add new field to existing mappings. If you need to modify the type of a field in an existing index, you must perform a migration"
+                   (assoc (ex-data e)
+                          :conn conn
+                          :mappings mappings))
+        (system-exit-error)))))
 
 (defn get-existing-indices
   [conn index]
@@ -110,6 +120,21 @@
           (system-exit-error))
       existing)))
 
+(defn update-index-state
+  [{{update-mappings? :update-mappings
+     update-settings? :update-settings}
+    :props
+    :as conn-state}]
+  (when update-mappings?
+    (update-mappings! conn-state)
+    ;; template update must be after update-mapping
+    ;; if it fails a System/exit is triggered because
+    ;; this means that the mapping in invalid and thus
+    ;; must not be propagated to the template that would accept it
+    (upsert-template! conn-state))
+  (when update-settings?
+    (update-settings! conn-state)))
+
 (s/defn init-es-conn! :- ESConnState
   "initiate an ES Store connection,
    put the index template, return an ESConnState"
@@ -118,10 +143,9 @@
   (let [{:keys [conn index props config] :as conn-state}
         (init-store-conn properties services)
         existing-indices (get-existing-indices conn index)]
-    (when (seq existing-indices)
-      (update-mapping! conn index config)
-      (update-settings! conn-state))
-    (upsert-template! conn index config)
+    (if (seq existing-indices)
+      (update-index-state conn-state)
+      (upsert-template! conn-state))
     (when (and (:aliased props)
                (empty? existing-indices))
       ;;https://github.com/elastic/elasticsearch/pull/34499
@@ -160,7 +184,7 @@
   (apply merge {}
          (map (fn [[_ {:keys [entity es-store]}]]
                 {entity (make-factory es-store services)})
-              entities)))
+              (entities/all-entities))))
 
 (s/defn init-store! [store-kw services :- ESConnServices]
   (when-let [factory (get (factories services) store-kw)]

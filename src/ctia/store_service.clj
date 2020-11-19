@@ -17,6 +17,8 @@
   (start [this context]
          (core/start context
                      get-in-config))
+  (stop [this context]
+        (core/stop context))
 
   (all-stores [this] (core/all-stores (service-context this)))
   (write-store [this store write-fn]

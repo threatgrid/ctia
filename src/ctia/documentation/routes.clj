@@ -1,6 +1,6 @@
 (ns ctia.documentation.routes
   (:require
-   [compojure.api.sweet :refer :all]
+   [compojure.api.core :refer [context GET]]
    [clojure.core.memoize :as memo]
    [clojure.java.io :as io]
    [hiccup.page :as page]
@@ -90,7 +90,7 @@
    render-request
    :ttl/threshold cache-ttl-ms))
 
-(defroutes documentation-routes
+(defn documentation-routes []
   (context "/doc" []
     (GET "/*.*" req
       :no-doc true

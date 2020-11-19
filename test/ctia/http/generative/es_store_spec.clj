@@ -9,9 +9,9 @@
 (use-fixtures :once
   mth/fixture-schema-validation
   esh/fixture-properties:es-store
+  th/fixture-allow-all-auth
   th/fixture-ctia
   esh/fixture-delete-store-indexes
-  th/fixture-allow-all-auth
   ;; The spec definitions below set all fields to be required
   ;; which we use to prove our ES mappings are complete
   th/fixture-spec-validation

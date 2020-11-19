@@ -2,11 +2,13 @@
   (:require [ctia.entity.tool.schemas :as ts]
             [ctia.entity.tool.graphql-schemas :as tgs]
             [ctia.http.routes
-             [common :refer [BaseEntityFilterParams PagingParams SourcableEntityFilterParams]]
-             [crud :refer [entity-crud-routes]]]
+             [common :refer [BaseEntityFilterParams PagingParams SourcableEntityFilterParams]
+              :as routes.common]
+             [crud :refer [services->entity-crud-routes]]]
             [ctia.stores.es
              [mapping :as em]
              [store :refer [def-es-store]]]
+            [ctia.schemas.core :refer [APIHandlerServices]]
             [schema-tools.core :as st]
             [schema.core :as s]))
 
@@ -18,8 +20,8 @@
      em/base-entity-mapping
      em/sourcable-entity-mapping
      em/stored-entity-mapping
-     {:name em/all_token
-      :description em/all_text
+     {:name em/token
+      :description em/text
       :labels em/token
       :kill_chain_phases em/kill-chain-phase
       :tool_version em/token
@@ -70,8 +72,9 @@
     :delete-tool
     :search-tool})
 
-(def tool-routes
-  (entity-crud-routes
+(s/defn tool-routes [services :- APIHandlerServices]
+  (services->entity-crud-routes
+   services
    {:entity :tool
     :new-schema ts/NewTool
     :entity-schema ts/Tool
@@ -108,5 +111,6 @@
    :realize-fn ts/realize-tool
    :es-store ->ToolStore
    :es-mapping tool-mapping
-   :services->routes tool-routes
+   :services->routes (routes.common/reloadable-function
+                       tool-routes)
    :capabilities capabilities})

@@ -96,8 +96,8 @@
                                        (boolean? wait_for) (str "?wait_for=" wait_for))
                                 updates (cond->> {update-field "modified"}
                                           (= :PUT method-kw) (into new-record))
-                                es-index-uri-pattern (re-pattern (str ".*9200.*" entity-id ".*"))]
-                            (with-global-fake-routes {es-index-uri-pattern {:put simple-handler}}
+                                es-index-uri-pattern (re-pattern (str ".*920.*" entity-id ".*"))]
+                            (with-global-fake-routes {es-index-uri-pattern {:post simple-handler}}
                               (method app
                                       path
                                       :body updates
@@ -127,7 +127,7 @@
     (testing "testing wait_for values on entity deletion"
       (let [test-delete (fn [wait_for msg]
                           (let [entity-id (new-entity-short-id)
-                                es-index-uri-pattern (re-pattern (str ".*9200.*" entity-id ".*"))
+                                es-index-uri-pattern (re-pattern (str ".*920.*" entity-id ".*"))
                                 path (cond-> (format "ctia/%s/%s" entity entity-id)
                                        (boolean? wait_for) (str "?wait_for=" wait_for))]
                             (with-global-fake-routes {es-index-uri-pattern {:delete simple-handler}}
@@ -148,10 +148,10 @@
       (testing "testing wait_for values on entity revocation"
         (let [test-revoke (fn [wait_for msg]
                             (let [entity-id (new-entity-short-id)
-                                  es-index-uri-pattern (re-pattern (str ".*9200.*" entity-id ".*"))
+                                  es-index-uri-pattern (re-pattern (str ".*920.*" entity-id ".*"))
                                   path (cond-> (format "ctia/%s/%s/expire" entity entity-id)
                                          (boolean? wait_for) (str "?wait_for=" wait_for))]
-                              (with-global-fake-routes {es-index-uri-pattern {:put simple-handler}}
+                              (with-global-fake-routes {es-index-uri-pattern {:post simple-handler}}
                                 (apply POST
                                        app
                                        path
