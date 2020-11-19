@@ -961,9 +961,11 @@
          (assoc-in [:ctia :access-control :default-tlp] tlp))
     f))
 
+(defmacro with-tlp-property-setting [tlp & body]
+  `(with-tlp-property-setting* ~tlp #(do ~@body)))
+
 (deftest bundle-tlp-test
- (with-tlp-property-setting* "amber"
-  (fn []
+ (with-tlp-property-setting "amber"
    (test-for-each-store-with-app
     (fn [app]
      (helpers/set-capabilities! app "foouser" ["foogroup"] "user" (all-capabilities))
@@ -986,7 +988,7 @@
                        :headers {"Authorization" "45c1f5e3f05d0"})]
          (is (= "Entity Access Control validation Error" (-> (:parsed-body res) :results first :error))
              res)
-         (is (= 200 (:status res))))))))))
+         (is (= 200 (:status res)))))))))
 
 (deftest bundle-acl-fields-test
   (test-for-each-store-with-app
