@@ -74,11 +74,11 @@
                                  fixture-setup! ;; Note: goes _after_ fixture-ctia
                                  es-helpers/fixture-delete-store-indexes
                                  fixture-clean-migration])]
-    (helpers/with-config-transformer
+    (helpers/with-config-transformer*
       config-transformer
-      (fixtures
-        (fn []
-          (body-fn (helpers/get-current-app)))))))
+      #(fixtures
+         (fn []
+           (body-fn (helpers/get-current-app)))))))
 
 (defmacro with-each-fixtures
   "Primarily for check-migration-params-test. Binds `app` to current TK app."

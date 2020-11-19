@@ -2,83 +2,81 @@
   (:require [ctia.domain.access-control :as sut]
             [clojure.test :refer [deftest testing is]]
             [ctia.properties :as p]
-            [ctia.test-helpers.core :as helpers]
-            [schema.core :as s]))
+            [ctia.test-helpers.core :as helpers]))
 
-;; macros for improved error messages via `is`
-(defmacro test-matching-user [tlp sut-fn check-fn]
-  `(is (~check-fn (~sut-fn
-                    {:tlp ~tlp
-                     :owner "foo"
-                     :groups ["bar"]}
-                    {:login "foo"
-                     :groups ["foo" "bar"]}))))
+(defn test-matching-user [tlp sut-fn check-fn]
+  (is (check-fn (sut-fn
+                 {:tlp tlp
+                  :owner "foo"
+                  :groups ["bar"]}
+                 {:login "foo"
+                  :groups ["foo" "bar"]}))))
 
-(defmacro test-matching-group [tlp sut-fn check-fn]
-  `(is (~check-fn (~sut-fn
-                    {:tlp ~tlp
-                     :owner "bar"
-                     :groups ["foobar"]}
-                    {:login "foo"
-                     :groups ["foobar"]}))))
+(defn test-matching-group [tlp sut-fn check-fn]
+  (is (check-fn (sut-fn
+                 {:tlp tlp
+                  :owner "bar"
+                  :groups ["foobar"]}
+                 {:login "foo"
+                  :groups ["foobar"]}))))
 
-(defmacro test-user-group-mismatch [tlp sut-fn check-fn]
-  `(is (~check-fn (~sut-fn
-                    {:tlp ~tlp
-                     :owner "foo"
-                     :groups ["bar"]}
-                    {:login "anyone"
-                     :groups ["everyone"]}))))
+(defn test-user-group-mismatch [tlp sut-fn check-fn]
+  (is (check-fn (sut-fn
+                 {:tlp tlp
+                  :owner "foo"
+                  :groups ["bar"]}
+                 {:login "anyone"
+                  :groups ["everyone"]}))))
 
-(defmacro test-no-group [tlp sut-fn check-fn]
-  `(is (~check-fn (~sut-fn
-                    {:tlp ~tlp
-                     :owner "foo"}
-                    {:login "anyone"
-                     :groups ["everyone"]}))))
+(defn test-no-group [tlp sut-fn check-fn]
+  (is (check-fn (sut-fn
+                 {:tlp tlp
+                  :owner "foo"}
+                 {:login "anyone"
+                  :groups ["everyone"]}))))
 
-(defmacro test-authorized_users-mismatch [tlp sut-fn check-fn]
-  `(is (~check-fn (~sut-fn
-                    {:tlp ~tlp
-                     :owner "foo"
-                     :groups ["bar"]
-                     :authorized_users ["someone"]}
-                    {:login "anyone"
-                     :groups ["everyone"]}))))
+(defn test-authorized_users-mismatch [tlp sut-fn check-fn]
+  (is (check-fn (sut-fn
+                 {:tlp tlp
+                  :owner "foo"
+                  :groups ["bar"]
+                  :authorized_users ["someone"]}
+                 {:login "anyone"
+                  :groups ["everyone"]}))))
 
-(defmacro test-authorized_groups-mismatch [tlp sut-fn check-fn]
-  `(is (~check-fn (~sut-fn
-                    {:tlp ~tlp
-                     :owner "foo"
-                     :groups ["bar"]
-                     :authorized_grouos ["somegroup"]}
-                    {:login "anyone"
-                     :groups ["everyone"]}))))
+(defn test-authorized_groups-mismatch [tlp sut-fn check-fn]
+  (is (check-fn (sut-fn
+                 {:tlp tlp
+                  :owner "foo"
+                  :groups ["bar"]
+                  :authorized_grouos ["somegroup"]}
+                 {:login "anyone"
+                  :groups ["everyone"]}))))
 
-(defmacro test-authorized_users-match [tlp sut-fn check-fn]
-  `(is (~check-fn (~sut-fn
-                    {:tlp ~tlp
-                     :owner "foo"
-                     :groups ["bar"]
-                     :authorized_users ["anyone"]}
-                    {:login "anyone"
-                     :groups ["everyone"]}))))
+(defn test-authorized_users-match [tlp sut-fn check-fn]
+  (is (check-fn (sut-fn
+                 {:tlp tlp
+                  :owner "foo"
+                  :groups ["bar"]
+                  :authorized_users ["anyone"]}
+                 {:login "anyone"
+                  :groups ["everyone"]}))))
 
-(defmacro test-authorized_groups-match [tlp sut-fn check-fn]
-  `(is (~check-fn (~sut-fn
-                    {:tlp ~tlp
-                     :owner "foo"
-                     :groups ["bar"]
-                     :authorized_groups ["everyone"]}
-                    {:login "anyone"
-                     :groups ["everyone"]}))))
+(defn test-authorized_groups-match [tlp sut-fn check-fn]
+  (is (check-fn (sut-fn
+                 {:tlp tlp
+                  :owner "foo"
+                  :groups ["bar"]
+                  :authorized_groups ["everyone"]}
+                 {:login "anyone"
+                  :groups ["everyone"]}))))
 
-(defmacro test-authorized-anonymous [tlp sut-fn check-fn]
-  `(is (~check-fn (~sut-fn
-                    {:tlp ~tlp
-                     :owner "foo"
-                     :groups ["bar"]}
-                    {:authorized-anonymous true}))))
+(defn test-authorized-anonymous [tlp sut-fn check-fn]
+  (is (check-fn (sut-fn
+                 {:tlp tlp
+                  :owner "foo"
+                  :groups ["bar"]}
+                 {:authorized-anonymous true}))))
 ;; -- Read tests
 
 
@@ -143,17 +141,15 @@
 
 ;; ---- Max record visibility group
 
-(s/defn with-max-record-visibility-group*
-  [f :- (s/=> s/Any
-              (s/named ifn? 'get-in-config))]
-  (helpers/with-config-transformer
+(defn with-max-record-visibility-group [f]
+  (helpers/with-config-transformer*
     #(assoc-in % [:ctia :access-control :max-record-visibility] "group")
     ;; instead of booting a TK app just for get-in-config, we build it manually instead
-    (f (helpers/build-get-in-config-fn))))
+    #(f (helpers/build-get-in-config-fn))))
 
 
 (deftest allow-read?-tlp-white-max-record-visibility-group-test
-  (with-max-record-visibility-group*
+  (with-max-record-visibility-group
     (fn [get-in-config]
       (let [allow-read? #(sut/allow-read? %1 %2 get-in-config)]
         (testing "white TLP should disallow document read to everyone"
@@ -167,7 +163,7 @@
           (test-authorized_groups-match "white" allow-read? true?))))))
 
 (deftest allow-read?-tlp-green-max-record-visibility-group-test
-  (with-max-record-visibility-group*
+  (with-max-record-visibility-group
     (fn [get-in-config]
       (let [allow-read? #(sut/allow-read? %1 %2 get-in-config)]
         (testing "green TLPs should disallow document read to everyone"
@@ -181,7 +177,7 @@
           (test-authorized_groups-match "green" allow-read? true?))))))
 
 (deftest allow-read?-tlp-amber-max-record-visibility-group-test
-  (with-max-record-visibility-group*
+  (with-max-record-visibility-group
     (fn [get-in-config]
       (let [allow-read? #(sut/allow-read? %1 %2 get-in-config)]
         (testing "amber TLPs should allow document read to same group"
@@ -195,7 +191,7 @@
           (test-authorized_groups-match "amber" allow-read? true?))))))
 
 (deftest allow-read?-tlp-red-max-record-visibility-group-test
-  (with-max-record-visibility-group*
+  (with-max-record-visibility-group
     (fn [get-in-config]
       (let [allow-read? #(sut/allow-read? %1 %2 get-in-config)]
         (testing "red TLPs should allow document read to owner only"
