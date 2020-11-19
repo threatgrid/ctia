@@ -90,7 +90,7 @@
 
 (defn purge-indices [all-stores get-in-config]
   (doseq [entity (keys (all-stores))]
-    (purge-index entity get-in-config)))
+    (purge-index entity {:ConfigService {:get-in-config get-in-config}})))
 
 (defn fixture-properties:es-store [t]
   ;; Note: These properties may be overwritten by ENV variables
