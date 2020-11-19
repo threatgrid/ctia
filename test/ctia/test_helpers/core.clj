@@ -236,7 +236,7 @@
 (defprotocol CTIATestingTimeService
   (get-now-fn [this])
   ;; testing only
-  (fixture-with-time-fn! [this time-fn f]))
+  (fixture-with-time-fn [this time-fn f]))
 
 (defservice ctia-testing-time-service
   CTIATestingTimeService
@@ -245,7 +245,7 @@
   (get-now-fn [this]
     (let [{:keys [now-fn-atom]} (service-context this)]
       @now-fn-atom))
-  (fixture-with-time-fn! [this time-fn f]
+  (fixture-with-time-fn [this time-fn f]
     (let [{:keys [now-fn-atom]} (service-context this)
           [old-time-fn] (swap-vals! now-fn-atom (constantly time-fn))]
       (try
@@ -324,8 +324,8 @@
 (s/defn with-fixed-time* [app
                           time
                           f :- (s/=> s/Any)]
-  (let [{{:keys [fixture-with-time-fn!]} :CTIATestingTimeService} (app/service-graph app)]
-    (fixture-with-time-fn!
+  (let [{{:keys [fixture-with-time-fn]} :CTIATestingTimeService} (app/service-graph app)]
+    (fixture-with-time-fn
       (constantly time)
       f)))
 
