@@ -356,7 +356,6 @@
                                                   :capabilities caps})))
 
 (defmacro deftest-for-each-fixture-with-app [test-name fixture-map app & body]
-  (assert (seq fixture-map))
   (assert (simple-symbol? app) (pr-str app))
   `(do
      ~@(for [[name-key fixture-fn] fixture-map]
