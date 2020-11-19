@@ -19,7 +19,7 @@
                                     test-helpers/fixture-properties:events-enabled
                                     test-helpers/fixture-allow-all-auth
                                     test-helpers/fixture-ctia
-                                    es-helpers/fixture-purge-event-indicies-and-templates
+                                    es-helpers/fixture-purge-event-indices-and-templates
                                     es-helpers/fixture-delete-store-indexes])}
   app
   (testing "Events are published to es"

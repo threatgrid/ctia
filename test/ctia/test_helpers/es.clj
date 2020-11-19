@@ -79,7 +79,7 @@
         #(es-index/delete! conn %)
         #(es-index/delete-template! conn %)))))
 
-(defn fixture-purge-event-indicies-and-templates
+(defn fixture-purge-event-indices-and-templates
   "walk through all producers and delete their indices and templates"
   [t]
   (let [app (h/get-current-app)

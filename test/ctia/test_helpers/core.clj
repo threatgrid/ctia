@@ -270,7 +270,7 @@
       get-in-config)))
 
 (s/defn fixture-ctia-with-app
-  "Note: ES indicies are unique, use `with-config-transformer`
+  "Note: ES indices are unique, use `with-config-transformer`
   to make them explicit."
   ([t-with-app :- (s/=> s/Any
                         (s/named s/Any 'app))]
@@ -308,7 +308,7 @@
              (stop-and-cleanup app))))))))
 
 (s/defn fixture-ctia
-  "Note: ES indicies are unique, use `with-config-transformer`
+  "Note: ES indices are unique, use `with-config-transformer`
   to make them explicit."
   ([t :- (s/=> s/Any)]
    (fixture-ctia t true))
@@ -320,7 +320,7 @@
                           enable-http?)))
 
 (s/defn fixture-ctia-fast
-  "Note: ES indicies are unique, use `with-config-transformer`
+  "Note: ES indices are unique, use `with-config-transformer`
   to make them explicit."
   [t :- (s/=> s/Any)]
   (fixture-ctia t false))
