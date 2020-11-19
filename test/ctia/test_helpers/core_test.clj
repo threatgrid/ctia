@@ -45,7 +45,11 @@
         (sut/with-config-transformer*
           #(assoc-in % ctia-path foobar-kw)
           #(is (= (get-in (sut/build-transformed-init-config) ctia-path)
-                  foobar-kw))))))
+                  foobar-kw)))
+        (sut/with-config-transformer
+          #(assoc-in % ctia-path foobar-kw)
+          (is (= (get-in (sut/build-transformed-init-config) ctia-path)
+                 foobar-kw))))))
   (testing "overrides using with-properties and with-config-transformer*"
     (testing "both change config when called with different paths"
       (doseq [:let [test-cases [{:ctia-property1 "ctia.auth.type"
@@ -68,7 +72,14 @@
                  (is (= (get-in config ctia-path1)
                         foobar1-kw))
                  (is (= (get-in config ctia-path2)
-                        foobar2-kw))))))))
+                        foobar2-kw))))
+            (sut/with-config-transformer
+              #(assoc-in % ctia-path2 foobar2-kw)
+              (let [config (sut/build-transformed-init-config)]
+                (is (= (get-in config ctia-path1)
+                       foobar1-kw))
+                (is (= (get-in config ctia-path2)
+                       foobar2-kw))))))))
     (testing "with-config-transformer* wins with conflicting paths"
       (doseq [:let [test-cases [{:ctia-property "ctia.auth.type" 
                                  :foobar1-str "foobar1"
@@ -84,7 +95,12 @@
               #(assoc-in % ctia-path foobar2-kw)
               #(is (= (get-in (sut/build-transformed-init-config)
                               ctia-path)
-                      foobar2-kw))))))))
+                      foobar2-kw)))
+            (sut/with-config-transformer
+              #(assoc-in % ctia-path foobar2-kw)
+              (is (= (get-in (sut/build-transformed-init-config)
+                             ctia-path)
+                     foobar2-kw))))))))
   (testing "properties are corced to PropertiesSchema"
     (doseq [:let [test-cases [{:ctia-bad-path "obviously.wrong.path"
                                :foobar-str "val"}]]

@@ -1018,41 +1018,40 @@
    fixtures-with-app :- (s/=> s/Any
                               (s/=> s/Any
                                     (s/named s/Any 'app)))]
-  (helpers/with-config-transformer*
+  (helpers/with-config-transformer
     #(assoc-in % [:ctia :access-control] {:default-tlp "amber"
                                           :min-tlp "amber"})
-    (fn []
-      (fixtures-with-app
-        (fn [app]
-          (testing "TLP Settings Enforcement"
-            (let [;; verify the with-config-transformer* call above--it's possible
-                  ;; a fixture could override it since we call it first
-                  get-in-config (helpers/current-get-in-config-fn app)
-                  _ (assert (= (get-in-config [:ctia :access-control])
-                               {:default-tlp "amber"
-                                :min-tlp "amber"})
-                            (get-in-config [:ctia :access-control]))
+    (fixtures-with-app
+      (fn [app]
+        (testing "TLP Settings Enforcement"
+          (let [;; verify the helpers/with-config-transformer call above--it's possible
+                ;; a fixture could override it since we call it first
+                get-in-config (helpers/current-get-in-config-fn app)
+                _ (assert (= (get-in-config [:ctia :access-control])
+                             {:default-tlp "amber"
+                              :min-tlp "amber"})
+                          (get-in-config [:ctia :access-control]))
 
-                  {status-default-tlp :status
-                   body-default-tlp :parsed-body}
-                  (POST app
-                        (format "ctia/%s" entity)
-                        :body (dissoc new-entity :tlp)
-                        :headers {"Authorization" "player-1-token"})
-                  {status-disallowed-tlp :status
-                   body-disallowed-tlp :parsed-body}
-                  (POST app
-                        (format "ctia/%s" entity)
-                        :body (assoc new-entity :tlp "white")
-                        :headers {"Authorization" "player-1-token"})]
+                {status-default-tlp :status
+                 body-default-tlp :parsed-body}
+                (POST app
+                      (format "ctia/%s" entity)
+                      :body (dissoc new-entity :tlp)
+                      :headers {"Authorization" "player-1-token"})
+                {status-disallowed-tlp :status
+                 body-disallowed-tlp :parsed-body}
+                (POST app
+                      (format "ctia/%s" entity)
+                      :body (assoc new-entity :tlp "white")
+                      :headers {"Authorization" "player-1-token"})]
 
-              (is (= 201 status-default-tlp))
-              (is (= "amber" (:tlp body-default-tlp)))
+            (is (= 201 status-default-tlp))
+            (is (= "amber" (:tlp body-default-tlp)))
 
 
-              (is (= 400 status-disallowed-tlp))
-              (is (= "Invalid document TLP white, allowed TLPs are: amber,red"
-                     (:message body-disallowed-tlp))))))))))
+            (is (= 400 status-disallowed-tlp))
+            (is (= "Invalid document TLP white, allowed TLPs are: amber,red"
+                   (:message body-disallowed-tlp)))))))))
 
 ;; the body of this function must change the current TK config
 ;; via test-access-control-tlp-settings. This is only possible by starting a new app.
