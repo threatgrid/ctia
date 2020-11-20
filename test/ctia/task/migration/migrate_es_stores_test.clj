@@ -152,23 +152,25 @@
                           :confirm? true
                           :restart? false}]
     (testing "misconfigured migration"
-      (with-each-fixtures #(-> %
-                               (assoc-in [:ctia :store :es :investigation :indexname]
-                                         (str "v1.2.0_ctia_investigation" (UUID/randomUUID)))
-                               (assoc-in [:malware 0 :state :props :indexname]
-                                         (str "v1.2.0_ctia_malware" (UUID/randomUUID))))
-        app
-        (let [{:keys [get-in-config]} (helpers/get-service-map app :ConfigService)]
-          (let [v (get-in-config [:ctia :store :es :investigation :indexname])]
-            (assert (= v (es-helpers/get-indexname app :investigation))
-                    v))
-          (let [v (get-in-config [:malware 0 :state :props :indexname])]
-            (assert (= v (es-helpers/get-indexname app :malware))
-                    v))
-          (is (thrown? AssertionError
-                       (sut/check-migration-params migration-params
-                                                   get-in-config))
-              "source and target store must be different")))
+      (let [investigation-indexname (str "v1.2.0_ctia_investigation" (UUID/randomUUID))
+            malware-indexname (str "v1.2.0_ctia_malware" (UUID/randomUUID))]
+        (with-each-fixtures #(-> %
+                                 (assoc-in [:ctia :store :es :investigation :indexname]
+                                           investigation-indexname)
+                                 (assoc-in [:malware 0 :state :props :indexname]
+                                           malware-indexname))
+          app
+          (let [{:keys [get-in-config]} (helpers/get-service-map app :ConfigService)]
+            (let [v (get-in-config [:ctia :store :es :investigation :indexname])]
+              (assert (= v investigation-indexname)
+                      [v investigation-indexname]))
+            (let [v (get-in-config [:malware 0 :state :props :indexname])]
+              (assert (= v malware-indexname)
+                      [v malware-indexname]))
+            (is (thrown? AssertionError
+                         (sut/check-migration-params migration-params
+                                                     get-in-config))
+                "source and target store must be different")))
       (with-each-fixtures identity app
         (let [{:keys [get-in-config]} (helpers/get-service-map app :ConfigService)]
           (is (thrown? ExceptionInfo
@@ -181,7 +183,7 @@
       (with-each-fixtures identity app
         (let [{:keys [get-in-config]} (helpers/get-service-map app :ConfigService)]
           (is (sut/check-migration-params migration-params
-                                          get-in-config)))))))
+                                          get-in-config))))))))
 
 (deftest prepare-params-test
   (let [migration-props {:buffer-size 3,
