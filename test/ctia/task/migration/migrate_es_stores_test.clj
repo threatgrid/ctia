@@ -807,19 +807,25 @@
             ;; insert new entities in source store
             (POST-bulk app new-malwares)
             ;; modify entities in first and second source indices
-            (PUT app
-                 (format "ctia/sighting/%s" sighting0-id)
-                 :body updated-sighting-body
-                 :headers {"Authorization" "45c1f5e3f05d0"})
-            (PUT app
-                 (format "ctia/sighting/%s" sighting1-id)
-                 :body updated-sighting-body
-                 :headers {"Authorization" "45c1f5e3f05d0"})
+            (let [response (PUT app
+                                (format "ctia/sighting/%s" sighting0-id)
+                                :body updated-sighting-body
+                                :headers {"Authorization" "45c1f5e3f05d0"})]
+              (is (= 204 (:status response))
+                  response))
+            (let [response (PUT app
+                                (format "ctia/sighting/%s" sighting1-id)
+                                :body updated-sighting-body
+                                :headers {"Authorization" "45c1f5e3f05d0"})]
+              (is (= 204 (:status response))
+                  response))
             ;; delete entities from first and second source indices
             (doseq [sighting-id sighting-ids]
-              (DELETE app
-                      (format "ctia/sighting/%s" sighting-id)
-                      :headers {"Authorization" "45c1f5e3f05d0"}))
+              (let [response (DELETE app
+                                     (format "ctia/sighting/%s" sighting-id)
+                                     :headers {"Authorization" "45c1f5e3f05d0"})]
+                (is (= 204 (:status response))
+                    response)))
             (sut/migrate-store-indexes {:migration-id "test-2"
                                         :prefix       "0.0.0"
                                         :migrations   [:__test]
