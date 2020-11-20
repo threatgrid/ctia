@@ -66,15 +66,16 @@
 (defn- isolate-config-indices
   "Updates all ES indices in config to be unique."
   [config]
-  (let [suffix (UUID/randomUUID)]
+  (let [suffix (UUID/randomUUID)
+        uniquify-es-map (fn [es]
+                          (into {}
+                                (map (fn [[k v]]
+                                       [k (cond-> v
+                                            (:indexname v) (update :indexname str suffix))]))
+                                es))]
     (-> config
-        (update-in [:ctia :store :es]
-                   (fn [es]
-                     (into {}
-                           (map (fn [[k v]]
-                                  [k (cond-> v
-                                       (:indexname v) (update :indexname str suffix))]))
-                           es))))))
+        (update-in [:ctia :store :es] uniquify-es-map)
+        (update-in [:ctia :migration :store :es] uniquify-es-map))))
 
 (def ^:dynamic ^:private *config-transformers* [#'isolate-config-indices])
 

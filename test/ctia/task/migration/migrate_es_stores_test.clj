@@ -154,15 +154,17 @@
     (testing "misconfigured migration"
       (with-each-fixtures #(-> %
                                (assoc-in [:ctia :store :es :investigation :indexname]
-                                         "v1.2.0_ctia_investigation")
+                                         (str "v1.2.0_ctia_investigation" (UUID/randomUUID)))
                                (assoc-in [:malware 0 :state :props :indexname]
-                                         "v1.2.0_ctia_malware"))
+                                         (str "v1.2.0_ctia_malware" (UUID/randomUUID))))
         app
         (let [{:keys [get-in-config]} (helpers/get-service-map app :ConfigService)]
           (let [v (get-in-config [:ctia :store :es :investigation :indexname])]
-            (assert (= v "v1.2.0_ctia_investigation") v))
+            (assert (= v (es-helpers/get-indexname app :investigation))
+                    v))
           (let [v (get-in-config [:malware 0 :state :props :indexname])]
-            (assert (= v "v1.2.0_ctia_malware") v))
+            (assert (= v (es-helpers/get-indexname app :malware))
+                    v))
           (is (thrown? AssertionError
                        (sut/check-migration-params migration-params
                                                    get-in-config))
@@ -257,13 +259,13 @@
       (let [{:keys [get-in-config]} (helpers/get-service-map app :ConfigService)
             conn (es-conn get-in-config)
             storemap {:conn conn
-                      :indexname "ctia_relationship"
+                      :indexname (es-helpers/get-indexname app :relationship)
                       :mapping "relationship"
-                      :props {:write-index "ctia_relationship"}
+                      :props {:write-index (es-helpers/get-indexname app :relationship)}
                       :type "relationship"
                       :settings {}
                       :config {}}
-            docs (map es-helpers/prepare-bulk-ops
+            docs (map (partial es-helpers/prepare-bulk-ops app)
                       (line-seq rdr))
             _ (es-helpers/load-bulk conn docs)
             no-meta-docs (map #(dissoc % :_index :_type :_id)
@@ -349,7 +351,7 @@
             services (app->MigrationStoreServices app)
 
             prefix "0.0.1"
-            indexname "v0.0.1_ctia_relationship"
+            indexname (str "v0.0.1_" (es-helpers/get-indexname app :relationship))
             conn (es-conn get-in-config)
             storemap {:conn conn
                       :indexname indexname
@@ -450,7 +452,7 @@
             conn (es-conn get-in-config)
             {wo-modified true
              w-modified false} (->> (line-seq rdr)
-                                    (map es-helpers/prepare-bulk-ops)
+                                    (map (partial es-helpers/prepare-bulk-ops app))
                                     (group-by #(nil? (:modified %))))
             sorted-w-modified (sort-by :modified w-modified)
             bulk-1 (concat wo-modified (take 500 sorted-w-modified))

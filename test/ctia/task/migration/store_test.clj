@@ -346,7 +346,7 @@
                          :type "relationship"
                          :settings {}
                          :config {}}
-               _ (es-helpers/load-file-bulk conn "./test/data/indices/sample-relationships-1000.json")
+               _ (es-helpers/load-file-bulk app conn "./test/data/indices/sample-relationships-1000.json")
                expected-queries [missing-modified-query
                                  {:bool
                                   {:filter
@@ -909,11 +909,11 @@
    (fn [c]
      (ductile.index/delete! c "ctia_*")
      (ductile.index/delete! c "v0.0.0*"))
-   (helpers/with-properties*
+   (helpers/with-properties
      ["ctia.migration.store.es.default.port" es-port
       "ctia.migration.store.es.default.version" version
       "ctia.auth.type" "allow-all"]
-     #(helpers/fixture-ctia-with-app
+     (helpers/fixture-ctia-with-app
        (fn [app]
          (let [{:keys [get-in-config]} (helpers/get-service-map app :ConfigService)
                services (app->MigrationStoreServices app)
@@ -983,7 +983,7 @@
                "migration-id-1 was not confirmed it should not exist and thus get-migration must raise a proper exception")
            (testing "stored document shall not contains object stores in source and target"
              (let [{:keys [stores]} (es-doc/get-doc conn
-                                                    (es-helpers/get-indexname app :migration)
+                                                    (es-helpers/get-migration-indexname app :migration)
                                                     "migration"
                                                     migration-id-2
                                                     {})]
