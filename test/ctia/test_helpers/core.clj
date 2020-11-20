@@ -513,7 +513,7 @@
               uuid-counter-start))))
 
 (defn naive-longest-common-suffix
-  "O(|strs| * longest string)"
+  "O(|strs| * shortest string)"
   [strs]
   (when-not (seq strs)
     (throw (ex-info "non-empty strs needed" {})))
