@@ -25,18 +25,15 @@
                               (= version (get-in-config [:ctia :store :es :default :version])))
                          (format "CTIA is not properly configured for testing ES version %s."
                                  version))
-               get-indexname (fn [entity]
-                               {:post [(string? %)]}
-                               (get-in-config [:ctia :store :es entity :indexname]))
                props-not-aliased {:entity :malware
-                                  :indexname (get-indexname :malware)
+                                  :indexname (es-helpers/get-indexname :malware)
                                   :host "localhost"
                                   :port es-port
                                   :version version}
                state-not-aliased (init/init-es-conn! props-not-aliased services)
                rollover-not-aliased (sut/rollover-store state-not-aliased)
                props-aliased {:entity :sighting
-                              :indexname (get-indexname :sighting)
+                              :indexname (es-helpers/get-indexname :sighting)
                               :host "localhost"
                               :port es-port
                               :aliased true

@@ -16,6 +16,7 @@
              [store :as es-store]
              [schemas :refer [ESConnServices]]]
             [ctia.test-helpers.core :as h]
+            [puppetlabs.trapperkeeper.app :as app]
             [schema.core :as s]))
 
 (s/defn app->ESConnServices
@@ -251,3 +252,9 @@
     (if (= version 5)
       {entity-type p}
       p)))
+
+(defn get-indexname [app entity]
+  {:pre [(simple-keyword? entity)]
+   :post [(string? %)]}
+  (let [{{:keys [get-in-config]} :ConfigService} (app/service-graph app)]
+    (get-in-config [:ctia :store :es entity :indexname])))
