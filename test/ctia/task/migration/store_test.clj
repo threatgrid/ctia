@@ -657,18 +657,20 @@
                                   (range nb-docs-1))
                sample-docs-2 (map (partial make-sample-doc 2)
                                   (range nb-docs-2))]
-           (testing "store-batch and store-size"
-             (sut/store-batch store sample-docs-1 services)
-             (is (= 0 (sut/store-size store))
-                 "store-batch shall not refresh the index")
-             (ductile.index/refresh! conn indexname)
-             (sut/store-batch store sample-docs-2 services)
-             (is (= nb-docs-1 (sut/store-size store))
-                 "store-size shall return the number of first batch docs")
-             (ductile.index/refresh! conn indexname)
-             (is (= (+ nb-docs-1 nb-docs-2) (sut/store-size store))
-                 "store size shall return the proper number of documents after second refresh")
-             (ductile.index/delete! conn indexname))))))))
+           (try
+             (testing "store-batch and store-size"
+               (sut/store-batch store sample-docs-1 services)
+               (is (= 0 (sut/store-size store))
+                   "store-batch shall not refresh the index")
+               (ductile.index/refresh! conn indexname)
+               (sut/store-batch store sample-docs-2 services)
+               (is (= nb-docs-1 (sut/store-size store))
+                   "store-size shall return the number of first batch docs")
+               (ductile.index/refresh! conn indexname)
+               (is (= (+ nb-docs-1 nb-docs-2) (sut/store-size store))
+                   "store size shall return the proper number of documents after second refresh"))
+             (finally
+               (ductile.index/delete! conn indexname)))))))))
 
 (defn test-query-fetch-batch-events
   [{:keys [version] :as conn} services]
