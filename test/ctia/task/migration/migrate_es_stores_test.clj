@@ -33,7 +33,7 @@
   (:import clojure.lang.ExceptionInfo
            java.lang.AssertionError
            java.text.SimpleDateFormat
-           java.util.Date))
+           [java.util Date UUID]))
 
 (defn fixture-setup! [f]
   (let [app (helpers/get-current-app)
