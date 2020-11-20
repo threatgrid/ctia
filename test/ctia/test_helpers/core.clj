@@ -25,7 +25,8 @@
              [spec :as fs]
              [utils :as fu]]
             [puppetlabs.trapperkeeper.app :as app]
-            [schema.core :as s]))
+            [schema.core :as s])
+  (:import [java.util UUID]))
 
 (def ^:dynamic ^:private *current-app*)
 
@@ -62,7 +63,20 @@
    "ctia.versions.config"                       "test"])
 (assert (even? (count *properties-overrides*)))
 
-(def ^:dynamic ^:private *config-transformers* [])
+(defn- isolate-config-indices
+  "Updates all ES indices in config to be unique."
+  [config]
+  (let [suffix (UUID/randomUUID)]
+    (-> config
+        (update-in [:ctia :store :es]
+                   (fn [es]
+                     (into {}
+                           (map (fn [[k v]]
+                                  [k (cond-> v
+                                       (:indexname k) (update v :indexname str suffix))]))
+                           es))))))
+
+(def ^:dynamic ^:private *config-transformers* [#'isolate-config-indices])
 
 (defn get-service-map [app svc-kw]
   {:pre [(keyword? svc-kw)]}
@@ -71,14 +85,22 @@
     (assert (map? m) (str "No service " svc-kw ", found " (keys graph)))
     m))
 
-(defn with-config-transformer*
+(s/defn with-config-transformer*
   "For use in a test fixture to dynamically transform a Trapperkeeper
   config before creating an app."
-  [tf body-fn]
+  [tf :- (s/=> (s/named s/Any 'config)
+               (s/named s/Any 'config))
+   body-fn :- (s/=> s/Any)]
   (assert (not (thread-bound? #'*current-app*))
           "Cannot transform config after TK app has started!")
   (binding [*config-transformers* (conj *config-transformers* tf)]
     (body-fn)))
+
+(defmacro with-config-transformer
+  "For use in a test fixture to dynamically transform a Trapperkeeper
+  config before creating an app."
+  [tf & body]
+  `(with-config-transformer* ~tf #(do ~@body)))
 
 (s/defn with-properties*
   [properties-vec :- (s/pred vector?)
@@ -97,7 +119,7 @@
   Note: Does not actually set System properties!"
   [properties-vec & sexprs]
   `(with-properties* ~properties-vec
-     (fn [] (do ~@sexprs))))
+     #(do ~@sexprs)))
 
 (defn fixture-properties:cors [f]
   (with-properties
@@ -230,14 +252,31 @@
        (get-service-map :ConfigService)
        :get-in-config)))
 
+;; workaround cycle with this namespace
+(def ^:private purge-indices-and-templates (delay (requiring-resolve 'ctia.test-helpers.es/purge-indices-and-templates)))
+
+(defn ^:private stop-and-cleanup
+  "Stop and garbage collect a running app."
+  [app]
+  (let [{{:keys [get-config]} :ConfigService
+         {:keys [all-stores]} :StoreService} (app/service-graph app)
+        ;; simulate the current output of these functions before we stop or restart
+        ;; the app
+        get-in-config (partial get-in (get-config))
+        all-stores (constantly (all-stores))]
+    (app/stop app)
+    (@purge-indices-and-templates
+      all-stores
+      get-in-config)))
+
 (s/defn fixture-ctia-with-app
+  "Note: ES indices are unique, use `with-config-transformer`
+  to make them explicit."
   ([t-with-app :- (s/=> s/Any
-                        (s/=> s/Any
-                              (s/named s/Any 'app)))]
+                        (s/named s/Any 'app))]
    (fixture-ctia-with-app t-with-app true))
   ([t-with-app :- (s/=> s/Any
-                        (s/=> s/Any
-                              (s/named s/Any 'app)))
+                        (s/named s/Any 'app))
     enable-http?]
    ;; Start CTIA
    ;; This starts the server on an available port (if enabled)
@@ -266,17 +305,24 @@
              app
              #(t-with-app app))
            (finally
-             (app/stop app))))))))
+             (stop-and-cleanup app))))))))
 
-(defn fixture-ctia
-  ([t] (fixture-ctia t true))
-  ([t enable-http?]
+(s/defn fixture-ctia
+  "Note: ES indices are unique, use `with-config-transformer`
+  to make them explicit."
+  ([t :- (s/=> s/Any)]
+   (fixture-ctia t true))
+  ([t :- (s/=> s/Any)
+    enable-http?]
    (fixture-ctia-with-app (fn [_app_]
                             ;; app bound thread-locally
                             (t))
                           enable-http?)))
 
-(defn fixture-ctia-fast [t]
+(s/defn fixture-ctia-fast
+  "Note: ES indices are unique, use `with-config-transformer`
+  to make them explicit."
+  [t :- (s/=> s/Any)]
   (fixture-ctia t false))
 
 (defn fixture-allow-all-auth [f]
