@@ -97,27 +97,29 @@
 (def base-sighting {:title "a sighting text title"
                     :tlp "green"
                     :groups ["group1"]})
-(def props-aliased {:entity :sighting
-                    :indexname "ctia_sighting"
-                    :host "localhost"
-                    :port 9205
-                    :aliased true
-                    :rollover {:max_docs 3}
-                    :refresh "true"
-                    :version 5})
+(defn props-aliased [app]
+  {:entity :sighting
+   :indexname (es-helpers/get-indexname app :sighting)
+   :host "localhost"
+   :port 9205
+   :aliased true
+   :rollover {:max_docs 3}
+   :refresh "true"
+   :version 5})
 
-(def props-not-aliased {:entity :sighting
-                        :indexname "ctia_sighting"
-                        :host "localhost"
-                        :port 9205
-                        :refresh "true"
-                        :version 5})
+(defn props-not-aliased [app]
+  {:entity :sighting
+   :indexname (es-helpers/get-indexname app :sighting)
+   :host "localhost"
+   :port 9205
+   :refresh "true"
+   :version 5})
 
 (deftest crud-aliased-test
   (let [app (helpers/get-current-app)
         services (es-helpers/app->ESConnServices app)
 
-        state-aliased (init/init-es-conn! props-aliased services)
+        state-aliased (init/init-es-conn! (props-aliased app) services)
         count-index #(count (es-index/get (:conn state-aliased)
                                           (str (:index state-aliased) "*")))
         base-sighting {:title "a sighting text title"
@@ -189,7 +191,7 @@
   (let [app (helpers/get-current-app)
         services (es-helpers/app->ESConnServices app)
 
-        state-not-aliased (init/init-es-conn! props-not-aliased services)]
+        state-not-aliased (init/init-es-conn! (props-not-aliased app) services)]
     (testing "crud operation should properly handle not aliased states"
       (create-fn state-not-aliased
                  (map #(assoc base-sighting
@@ -216,7 +218,7 @@
   (let [app (helpers/get-current-app)
         services (es-helpers/app->ESConnServices app)
 
-        es-conn-state (-> (init/init-es-conn! props-not-aliased services)
+        es-conn-state (-> (init/init-es-conn! (props-not-aliased app) services)
                           (update :props assoc :default_operator "AND"))
         simple-access-ctrl-query {:terms {"groups" (:groups ident)}}]
     (with-redefs [find-restriction-query-part (constantly simple-access-ctrl-query)]
@@ -333,7 +335,7 @@
     (let [app (helpers/get-current-app)
           services (es-helpers/app->ESConnServices app)
 
-          es-conn-state (-> (init/init-es-conn! props-not-aliased services)
+          es-conn-state (-> (init/init-es-conn! (props-not-aliased app) services)
                             (update :props assoc :default_operator "AND"))
           _ (create-fn es-conn-state
                        search-metrics-entities
@@ -391,7 +393,7 @@
     (let [app (helpers/get-current-app)
           services (es-helpers/app->ESConnServices app)
 
-          es-conn-state (-> (init/init-es-conn! props-not-aliased services)
+          es-conn-state (-> (init/init-es-conn! (props-not-aliased app) services)
                             (update :props assoc :default_operator "AND"))
           _ (create-fn es-conn-state
                        search-metrics-entities

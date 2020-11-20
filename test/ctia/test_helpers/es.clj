@@ -241,10 +241,11 @@
            (testing (format "%s (ES version: %s)." msg#  ~'version)
              (when clean-fn#
                (clean-fn# ~'conn))
-             ~@body
+             ~@body)
+           (finally
              (when clean-fn#
-               (clean-fn# ~'conn)))
-           (finally (es-conn/close ~'conn)))))))
+               (clean-fn# ~'conn))
+             (es-conn/close ~'conn)))))))
 
 (defn build-mappings
   [base-mappings entity-type version]
