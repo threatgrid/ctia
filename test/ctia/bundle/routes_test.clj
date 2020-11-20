@@ -18,7 +18,8 @@
              [store :refer [test-for-each-store-with-app]]]
             [ctim.domain.id :as id]
             [ctia.auth :as auth :refer [IIdentity]]
-            [ctim.examples.bundles :refer [bundle-maximal]]))
+            [ctim.examples.bundles :refer [bundle-maximal]]
+            [schema.core :as s]))
 
 (defn fixture-properties [t]
   (helpers/with-properties ["ctia.http.bulk.max-size" 1000
