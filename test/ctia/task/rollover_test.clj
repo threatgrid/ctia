@@ -26,14 +26,14 @@
                          (format "CTIA is not properly configured for testing ES version %s."
                                  version))
                props-not-aliased {:entity :malware
-                                  :indexname (es-helpers/get-indexname :malware)
+                                  :indexname (es-helpers/get-indexname app :malware)
                                   :host "localhost"
                                   :port es-port
                                   :version version}
                state-not-aliased (init/init-es-conn! props-not-aliased services)
                rollover-not-aliased (sut/rollover-store state-not-aliased)
                props-aliased {:entity :sighting
-                              :indexname (es-helpers/get-indexname :sighting)
+                              :indexname (es-helpers/get-indexname app :sighting)
                               :host "localhost"
                               :port es-port
                               :aliased true
