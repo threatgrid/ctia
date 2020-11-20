@@ -203,7 +203,9 @@
                                " (go)    => start or restart CTIA"
                                " (start) => start CTIA, if not already started"
                                " (stop)  => stop CTIA, if not already stopped"
-                               " (current-app) => get current app, or nil"]))}
+                               " (current-app) => get current app, or nil"]))
+                 ;2m
+                 :repl-timeout 120000}
   :middleware [lein-git-down.plugin/inject-properties]
   ;; lein-git-down config
   :repositories [["public-github" {:url "git://github.com"}]

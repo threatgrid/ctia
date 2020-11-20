@@ -73,7 +73,7 @@
                      (into {}
                            (map (fn [[k v]]
                                   [k (cond-> v
-                                       (:indexname k) (update v :indexname str suffix))]))
+                                       (:indexname v) (update :indexname str suffix))]))
                            es))))))
 
 (def ^:dynamic ^:private *config-transformers* [#'isolate-config-indices])
@@ -511,3 +511,17 @@
       (f)
       (reset! uuid-counter
               uuid-counter-start))))
+
+(defn naive-longest-common-suffix
+  "O(|strs| * longest string)"
+  [strs]
+  (when-not (seq strs)
+    (throw (ex-info "non-empty strs needed" {})))
+  (let [shortest-str-count (count (apply min-key count strs))]
+    (reduce (fn [so-far i]
+              (let [suffixes (map #(subs % (- (count %) i)) strs)]
+                (if (apply = suffixes)
+                  (first suffixes)
+                  (reduced so-far))))
+            ""
+            (range 1 (inc shortest-str-count)))))
