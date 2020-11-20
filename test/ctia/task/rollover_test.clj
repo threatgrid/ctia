@@ -14,26 +14,29 @@
    "rollover should properly trigger _rollover"
    [5 7]
    #(es-index/delete! % "ctia_*")
-   (helpers/with-properties*
+   (helpers/with-properties
      ["ctia.store.es.default.port" es-port
       "ctia.store.es.default.version" version
       "ctia.auth.type" "allow-all"]
-     #(helpers/fixture-ctia-with-app
+     (helpers/fixture-ctia-with-app
        (fn [app]
          (let [{{:keys [get-in-config]} :ConfigService :as services} (es-helpers/app->ESConnServices app)
                _ (assert (and (= es-port (get-in-config [:ctia :store :es :default :port]))
                               (= version (get-in-config [:ctia :store :es :default :version])))
                          (format "CTIA is not properly configured for testing ES version %s."
                                  version))
+               get-indexname (fn [entity]
+                               {:post [(string? %)]}
+                               (get-in-config [:ctia :store :es entity :indexname]))
                props-not-aliased {:entity :malware
-                                  :indexname "ctia_malware"
+                                  :indexname (get-indexname :malware)
                                   :host "localhost"
                                   :port es-port
                                   :version version}
                state-not-aliased (init/init-es-conn! props-not-aliased services)
                rollover-not-aliased (sut/rollover-store state-not-aliased)
                props-aliased {:entity :sighting
-                              :indexname "ctia_sighting"
+                              :indexname (get-indexname :sighting)
                               :host "localhost"
                               :port es-port
                               :aliased true
