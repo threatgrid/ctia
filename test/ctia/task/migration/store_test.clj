@@ -235,10 +235,14 @@
      (let [services (app->MigrationStoreServices app)
            {:keys [tool malware]}
            (sut/get-target-stores "0.0.0" [:tool :malware] services)]
-       (is (= "v0.0.0_ctia_malware" (:indexname malware)))
-       (is (= "v0.0.0_ctia_tool" (:indexname tool)))
-       (is (= "v0.0.0_ctia_malware-write" (get-in malware [:props :write-index])))
-       (is (= "v0.0.0_ctia_tool-write" (get-in tool [:props :write-index])))))))
+       (is (= (str "v0.0.0_" (es-helpers/get-indexname app :malware))
+              (:indexname malware)))
+       (is (= (str "v0.0.0_" (es-helpers/get-indexname app :tool))
+              (:indexname tool)))
+       (is (= (str "v0.0.0_" (es-helpers/get-indexname app :malware) "-write")
+              (get-in malware [:props :write-index])))
+       (is (= (str "v0.0.0_" (es-helpers/get-indexname app :tool) "-write")
+              (get-in tool [:props :write-index])))))))
 
 
 (use-fixtures :once
@@ -263,7 +267,7 @@
           (with-open [rdr (io/reader "./test/data/indices/sample-relationships-1000.json")]
             (let [{:keys [get-in-config]} (helpers/get-service-map app :ConfigService)
                   services (app->MigrationStoreServices app)
-                  storename "ctia_relationship"
+                  storename (es-helpers/get-indexname app :relationship)
                   write-alias (str storename "-write")
                   max-docs 40
                   batch-size 4
@@ -330,15 +334,15 @@
    "Sliced-queries should properly decompose a store into time window queries for given time interval"
    [5 7]
    #(ductile.index/delete! % "*ctia_relationship*")
-   (helpers/with-properties* ;; simple way to have a proper store initialization
+   (helpers/with-properties ;; simple way to have a proper store initialization
      ["ctia.store.es.default.port" es-port
       "ctia.store.es.default.version" version]
-     #(helpers/fixture-ctia-with-app
+     (helpers/fixture-ctia-with-app
        (fn [app]
          (let [storemap {:conn conn
-                         :indexname "ctia_relationship"
+                         :indexname (es-helpers/get-indexname app :relationship)
                          :mapping "relationship"
-                         :props {:write-index "ctia_relationship"}
+                         :props {:write-index (es-helpers/get-indexname app :relationship)}
                          :type "relationship"
                          :settings {}
                          :config {}}
@@ -484,32 +488,32 @@
                "slice-queries should take into account search_after param")))))))
 
 
-(def short-id (fn [s] (-> s long-id->id :short-id)))
+(defn short-id [s] (-> s long-id->id :short-id))
 
 (deftest bulk-metas-test
   (es-helpers/for-each-es-version
    "bulk-metas prepares ES bulk data for given document ids"
    [5 7]
    #(ductile.index/delete! % "ctia_*")
-   (helpers/with-properties*
+   (helpers/with-properties
      ["ctia.store.es.default.port" es-port
       "ctia.store.es.default.version" version
       "ctia.auth.type" "allow-all"]
-     #(helpers/fixture-ctia-with-app
+     (helpers/fixture-ctia-with-app
        (fn [app]
          (let [{:keys [all-stores]} (helpers/get-service-map app :StoreService)
                services (app->MigrationStoreServices app)
                ;; insert elements in different indices and check that we retrieve the right one
                sighting-store-map {:conn conn
-                                   :indexname "ctia_sighting"
-                                   :props {:write-index "ctia_sighting"}
+                                   :indexname (es-helpers/get-indexname app :sighting)
+                                   :props {:write-index (es-helpers/get-indexname app :sighting)}
                                    :mapping "sighting"
                                    :type "sighting"
                                    :settings {}
                                    :config {}}
                malware-store-map {:conn conn
-                                  :indexname "ctia_malware"
-                                  :props {:write-index "ctia_malware"}
+                                  :indexname (es-helpers/get-indexname app :malware)
+                                  :props {:write-index (es-helpers/get-indexname app :malware)}
                                   :mapping "malware"
                                   :type "malware"
                                   :settings {}
@@ -528,11 +532,12 @@
                                    (map short-id)
                                    (take 10))
                _ (ductile.index/refresh! conn)
-               [malware-index-1 _] (->> (ductile.index/get conn "ctia_malware*")
+               [malware-index-1 _] (->> (ductile.index/get conn (str (es-helpers/get-indexname app :malware) "*"))
                                         keys
                                         sort
                                         (map name))
-               [sighting-index-1 sighting-index-2] (->> (ductile.index/get conn "ctia_sighting*")
+               [sighting-index-1 sighting-index-2] (->> (ductile.index/get conn
+                                                                           (str (es-helpers/get-indexname app :sighting) "*"))
                                                         keys
                                                         sort
                                                         (map name))
@@ -559,18 +564,18 @@
    "prepare-docs properly generates meta data for bulk ops for new and modified documents"
    [5 7]
    #(ductile.index/delete! % "ctia_*")
-   (helpers/with-properties*
+   (helpers/with-properties
      ["ctia.store.es.default.port" es-port
       "ctia.store.es.default.version" version
       "ctia.auth.type" "allow-all"]
-     #(helpers/fixture-ctia-with-app
+     (helpers/fixture-ctia-with-app
        (fn [app]
          (let [{:keys [all-stores]} (helpers/get-service-map app :StoreService)
                services (app->MigrationStoreServices app)
 
                sighting-store-map {:conn conn
-                                   :indexname "ctia_sighting"
-                                   :props {:write-index "ctia_sighting-write"
+                                   :indexname (es-helpers/get-indexname app :sighting)
+                                   :props {:write-index (str (es-helpers/get-indexname app :sighting) "-write")
                                            :aliased true}
                                    :mapping "sighting"
                                    :type "sighting"
@@ -599,7 +604,7 @@
                _  (update-sighting sighting-id-1)
                _  (update-sighting sighting-id-2)
                _ (ductile.index/refresh! conn)
-               [sighting-index-1 sighting-index-2] (->> (ductile.index/get conn "ctia_sighting*")
+               [sighting-index-1 sighting-index-2] (->> (ductile.index/get conn (str (es-helpers/get-indexname app :sighting) "*"))
                                                         keys
                                                         sort
                                                         (map name))
@@ -617,7 +622,7 @@
                prepared-docs (sut/prepare-docs sighting-store-map sighting-docs services)]
            (testing "prepare-docs should set proper _id, _type, _index for modified and unmodified documents"
              (is (= (sort (concat [sighting-index-1 sighting-index-2]
-                                  (repeat 4 "ctia_sighting-write")))
+                                  (repeat 4 (str (es-helpers/get-indexname app :sighting) "-write"))))
                     (sort (map :_index prepared-docs))))
              (is (= (repeat 6 "sighting")
                     (sort (map :_type prepared-docs))))
@@ -630,14 +635,14 @@
    [5 7]
    #(do (ductile.index/delete! % "test_index*")
         (ductile.index/delete! % "ctia_*"))
-   (helpers/with-properties*
+   (helpers/with-properties
      ["ctia.store.es.default.port" es-port
       "ctia.store.es.default.version" version
       "ctia.auth.type" "allow-all"]
-     #(helpers/fixture-ctia-with-app
+     (helpers/fixture-ctia-with-app
        (fn [app]
          (let [services (app->MigrationStoreServices app)
-               indexname "test_index"
+               indexname (str "test_index" (UUID/randomUUID))
                store {:conn conn
                       :indexname indexname
                       :props {:write-index indexname}
@@ -668,7 +673,7 @@
 (defn test-query-fetch-batch-events
   [{:keys [version] :as conn} services]
   (testing "query-fetch-batch should property fetch and sort events on timestamp"
-    (let [indexname "event_index"
+    (let [indexname (str "event_index" (UUID/randomUUID))
           event-store {:conn conn
                        :indexname indexname
                        :props {:write-index indexname}
@@ -747,8 +752,8 @@
 (defn test-query-fetch-batch-entities
   [{:keys [version] :as conn} services]
   (testing "query-fetch-batch should properly sort entities on modified field"
-    (let [tool-indexname "tool_index"
-          malware-indexname "malware_index"
+    (let [tool-indexname (str "tool_index" (UUID/randomUUID))
+          malware-indexname (str "malware_index" (UUID/randomUUID))
           tool-store {:conn conn
                       :indexname tool-indexname
                       :props {:write-index tool-indexname}
@@ -810,11 +815,11 @@
      (ductile.index/delete! conn "event_index*")
      (ductile.index/delete! conn "tool_index*")
      (ductile.index/delete! conn "malware_index*"))
-   (helpers/with-properties*
+   (helpers/with-properties
      ["ctia.store.es.default.port" es-port
       "ctia.store.es.default.version" version
       "ctia.auth.type" "allow-all"]
-     #(helpers/fixture-ctia-with-app
+     (helpers/fixture-ctia-with-app
        (fn [app]
          (let [services (app->MigrationStoreServices app)]
            (test-query-fetch-batch-events conn services)
@@ -825,11 +830,11 @@
    "fetch-deletes should be properly configured to fetch deletes in source store"
    [5 7]
    #(ductile.index/delete! % "ctia_*")
-   (helpers/with-properties*
+   (helpers/with-properties
      ["ctia.store.es.default.port" es-port
       "ctia.store.es.default.version" version
       "ctia.auth.type" "allow-all"]
-     #(helpers/fixture-ctia-with-app
+     (helpers/fixture-ctia-with-app
        (fn [app]
          (let [{:keys [get-in-config]} (helpers/get-service-map app :ConfigService)
                services (app->MigrationStoreServices app)
@@ -978,7 +983,7 @@
                "migration-id-1 was not confirmed it should not exist and thus get-migration must raise a proper exception")
            (testing "stored document shall not contains object stores in source and target"
              (let [{:keys [stores]} (es-doc/get-doc conn
-                                                    "ctia_migration"
+                                                    (es-helpers/get-indexname app :migration)
                                                     "migration"
                                                     migration-id-2
                                                     {})]
@@ -990,7 +995,7 @@
   (let [default-es-props {:host "localhost"
                           :port 9200
                           :protocol :http
-                          :indexname "ctia_default"
+                          :indexname (str "ctia_default" (UUID/randomUUID))
                           :replicas 1
                           :refresh_interval "1s"
                           :default_operator "AND"
@@ -1000,14 +1005,14 @@
                           :aliased true}
 
 
-        source-custom-props {:indexname "source-indexname"
+        source-custom-props {:indexname (str "source-indexname" (UUID/randomUUID))
                              :shards 4}
 
         migration-cluster-props {:host "es7.iroh.site"
                                  :port 443
                                  :protocol :https}
 
-        target-store-props {:indexname "custom-target-indexname"
+        target-store-props {:indexname (str "custom-target-indexname" (UUID/randomUUID))
                             :shards 4
                             :refresh_interval "10s"}
         base-es-props {:ctia {:store {:es {:default default-es-props}}}}
@@ -1021,7 +1026,7 @@
     (testing "Target store properties generated from only source properties and a migration prefix reuse source properties and add the migration prefix to indexname property."
       (let [get-in-config (partial get-in with-source-props)]
         (is (= (assoc (into default-es-props source-custom-props)
-                      :indexname "v0.0.1_source-indexname"
+                      :indexname (str "v0.0.1_" (:indexname source-custom-props))
                       :entity :sighting)
                (sut/target-store-properties "0.0.1" :sighting get-in-config)))))
 
@@ -1030,7 +1035,7 @@
         (is (= (assoc (merge default-es-props
                              source-custom-props
                              migration-cluster-props)
-                      :indexname "v0.0.1_source-indexname"
+                      :indexname (str "v0.0.1_" (:indexname source-custom-props))
                       :entity :sighting)
                (sut/target-store-properties "0.0.1" :sighting get-in-config)))))
 
@@ -1039,7 +1044,7 @@
         (is (= (assoc (merge default-es-props
                              source-custom-props
                              migration-cluster-props)
-                      :indexname "source-indexname"
+                      :indexname (:indexname source-custom-props)
                       :entity :sighting)
                (sut/target-store-properties nil :sighting get-in-config)))))
 
@@ -1052,7 +1057,7 @@
                              source-custom-props
                              migration-cluster-props
                              target-store-props)
-                      :indexname "v0.0.1_source-indexname"
+                      :indexname (str "v0.0.1_" (:indexname source-custom-props))
                       :entity :sighting)
                (sut/target-store-properties "0.0.1" :sighting get-in-config)))))
 
@@ -1065,6 +1070,6 @@
                              source-custom-props
                              migration-cluster-props
                              target-store-props)
-                      :indexname "custom-target-indexname"
+                      :indexname (:indexname target-store-props)
                       :entity :sighting)
                (sut/target-store-properties "0.0.1" :sighting get-in-config)))))))
