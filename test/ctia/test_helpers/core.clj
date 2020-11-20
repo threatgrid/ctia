@@ -63,7 +63,20 @@
    "ctia.versions.config"                       "test"])
 (assert (even? (count *properties-overrides*)))
 
-(def ^:dynamic ^:private *config-transformers* [])
+(defn- isolate-config-indices
+  "Updates all ES indices in config to be unique."
+  [config]
+  (let [suffix (UUID/randomUUID)]
+    (-> config
+        (update-in [:ctia :store :es]
+                   (fn [es]
+                     (into {}
+                           (map (fn [[k v]]
+                                  [k (cond-> v
+                                       (:indexname k) (update v :indexname str suffix))]))
+                           es))))))
+
+(def ^:dynamic ^:private *config-transformers* [#'isolate-config-indices])
 
 (defn get-service-map [app svc-kw]
   {:pre [(keyword? svc-kw)]}
@@ -239,7 +252,26 @@
        (get-service-map :ConfigService)
        :get-in-config)))
 
+;; workaround cycle with this namespace
+(def ^:private purge-indices-and-templates (delay (requiring-resolve 'ctia.test-helpers.es/purge-indices-and-templates)))
+
+(defn ^:private stop-and-cleanup
+  "Stop and garbage collect a running app."
+  [app]
+  (let [{{:keys [get-config]} :ConfigService
+         {:keys [all-stores]} :StoreService} (app/service-graph app)
+        ;; simulate the current output of these functions before we stop or restart
+        ;; the app
+        get-in-config (partial get-in (get-config))
+        all-stores (constantly (all-stores))]
+    (app/stop app)
+    (@purge-indices-and-templates
+      all-stores
+      get-in-config)))
+
 (s/defn fixture-ctia-with-app
+  "Note: ES indices are unique, use `with-config-transformer`
+  to make them explicit."
   ([t-with-app :- (s/=> s/Any
                         (s/named s/Any 'app))]
    (fixture-ctia-with-app t-with-app true))
@@ -273,9 +305,11 @@
              app
              #(t-with-app app))
            (finally
-             (app/stop app))))))))
+             (stop-and-cleanup app))))))))
 
 (s/defn fixture-ctia
+  "Note: ES indices are unique, use `with-config-transformer`
+  to make them explicit."
   ([t :- (s/=> s/Any)]
    (fixture-ctia t true))
   ([t :- (s/=> s/Any)
@@ -286,6 +320,8 @@
                           enable-http?)))
 
 (s/defn fixture-ctia-fast
+  "Note: ES indices are unique, use `with-config-transformer`
+  to make them explicit."
   [t :- (s/=> s/Any)]
   (fixture-ctia t false))
 
