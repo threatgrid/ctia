@@ -811,13 +811,13 @@
                                 (format "ctia/sighting/%s" sighting0-id)
                                 :body updated-sighting-body
                                 :headers {"Authorization" "45c1f5e3f05d0"})]
-              (is (= 204 (:status response))
+              (is (= 200 (:status response))
                   response))
             (let [response (PUT app
                                 (format "ctia/sighting/%s" sighting1-id)
                                 :body updated-sighting-body
                                 :headers {"Authorization" "45c1f5e3f05d0"})]
-              (is (= 204 (:status response))
+              (is (= 200 (:status response))
                   response))
             ;; delete entities from first and second source indices
             (doseq [sighting-id sighting-ids]
