@@ -281,7 +281,7 @@
                             :settings {}
                             :config {}}
                   docs-all (->> (line-seq rdr)
-                                 (map es-helpers/prepare-bulk-ops)
+                                 (map (partial es-helpers/prepare-bulk-ops app))
                                  (map #(assoc % :_index write-alias)))
                   batch-sizes (repeatedly 300 #(inc (rand-int batch-size)))
                   test-fn (fn [{:keys [source-docs
