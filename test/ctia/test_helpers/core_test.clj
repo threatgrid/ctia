@@ -25,11 +25,11 @@
             (range 1 (inc shortest-str-count)))))
 
 (deftest naive-longest-common-suffix-test
-  (is (thrown? clojure.lang.ExceptionInfo (sut/naive-longest-common-suffix [])))
-  (is (= "" (sut/naive-longest-common-suffix [""])))
-  (is (= "13" (sut/naive-longest-common-suffix ["a113" "b13"])))
-  (is (= "" (sut/naive-longest-common-suffix ["a" "b"])))
-  (is (= "a" (sut/naive-longest-common-suffix ["a" "a"]))))
+  (is (thrown? clojure.lang.ExceptionInfo (naive-longest-common-suffix [])))
+  (is (= "" (naive-longest-common-suffix [""])))
+  (is (= "13" (naive-longest-common-suffix ["a113" "b13"])))
+  (is (= "" (naive-longest-common-suffix ["a" "b"])))
+  (is (= "a" (naive-longest-common-suffix ["a" "a"]))))
 
 (deftest build-transformed-init-config-test
   (assert (not (thread-bound? #'sut/*config-transformers*)))
@@ -55,7 +55,7 @@
                                                  indexname)
                                        _ (assert (seq indices))
                                        _ (assert (every? string? indices))
-                                       suffix (sut/naive-longest-common-suffix indices)]
+                                       suffix (naive-longest-common-suffix indices)]
                                    (assert (seq suffix))
                                    suffix))]
       (is (apply distinct? (repeatedly 5 gen-non-empty-suffix)))))
