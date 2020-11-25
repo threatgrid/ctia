@@ -18,6 +18,7 @@
     [allow-all :as allow-all]
     [static :as static-auth]
     [threatgrid :as threatgrid]]
+   [ctia.ductile-service :as ductile-svc]
    [ctia.version :as version]
    [ctia.graphql-named-type-registry-service :as graphql-registry-svc]
    [ctia.flows.hooks-service :as hooks-svc]
@@ -72,6 +73,8 @@
       encryption-svc
       {:EventsService events-svc/events-service
        :StoreService store-svc/store-service
+       ;; StoreService dependency
+       :DuctileService ductile-svc/ductile-service
        :CTIAHTTPServerService http-server-svc/ctia-http-server-service
        :HooksService hooks-svc/hooks-service
        :GraphQLNamedTypeRegistryService graphql-registry-svc/graphql-named-type-registry-service

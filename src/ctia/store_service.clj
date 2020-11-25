@@ -12,11 +12,17 @@
 (tk/defservice store-service
   "A service to manage the central storage area for all stores."
   StoreService
-  [[:ConfigService get-in-config]]
-  (init [this context] (core/init context))
+  [ConfigService
+   DuctileService]
+  (init [this context]
+        (-> context
+            (assoc :services {:ConfigService (-> ConfigService
+                                                 (select-keys [:get-in-config]))
+                              :DuctileService (-> DuctileService
+                                                  (select-keys [:request-fn]))})
+            core/init))
   (start [this context]
-         (core/start context
-                     get-in-config))
+         (core/start context))
   (stop [this context]
         (core/stop context))
 
