@@ -16,6 +16,7 @@
              [store :as es-store]
              [schemas :refer [ESConnServices]]]
             [ctia.test-helpers.core :as h]
+            [puppetlabs.trapperkeeper.app :as app]
             [schema.core :as s]))
 
 (s/defn app->ESConnServices
@@ -186,12 +187,30 @@
   [str-doc]
   (json/parse-string str-doc true))
 
+(defn get-indexname [app entity]
+  {:pre [(simple-keyword? entity)]
+   :post [(string? %)]}
+  (let [{{:keys [get-in-config]} :ConfigService} (app/service-graph app)
+        indexname (get-in-config [:ctia :store :es entity :indexname])]
+    (when-not indexname
+      (throw (ex-info (str "No indexname for " entity) {})))
+    indexname))
+
+(defn get-migration-indexname [app entity]
+  {:pre [(simple-keyword? entity)]
+   :post [(string? %)]}
+  (let [{{:keys [get-in-config]} :ConfigService} (app/service-graph app)
+        indexname (get-in-config [:ctia :migration :store :es entity :indexname])]
+    (when-not indexname
+      (throw (ex-info (str "No migration indexname for " entity) {})))
+    indexname))
+
 (defn prepare-bulk-ops
-  [str-doc]
+  [app str-doc]
   (let [{:keys [_type _id _index _source]} (str->doc str-doc)]
     (assoc _source
            :_type _type
-           :_index _index
+           :_index (get-indexname app (keyword _type))
            :_id _id)))
 
 (defn load-bulk
@@ -203,10 +222,10 @@
                            {:refresh refresh?})))
 
 (defn load-file-bulk
-  [es-conn filepath]
+  [app es-conn filepath]
   (with-open [rdr (io/reader filepath)]
     (load-bulk es-conn
-               (map prepare-bulk-ops
+               (map (partial prepare-bulk-ops app)
                     (line-seq rdr)))))
 
 (defn get-cat-indices [{:keys [uri] :as _conn}]
@@ -240,10 +259,11 @@
            (testing (format "%s (ES version: %s)." msg#  ~'version)
              (when clean-fn#
                (clean-fn# ~'conn))
-             ~@body
+             ~@body)
+           (finally
              (when clean-fn#
-               (clean-fn# ~'conn)))
-           (finally (es-conn/close ~'conn)))))))
+               (clean-fn# ~'conn))
+             (es-conn/close ~'conn)))))))
 
 (defn build-mappings
   [base-mappings entity-type version]

@@ -1,6 +1,7 @@
 (ns ctia.test-helpers.core-test
   (:require [clojure.test :refer [deftest is testing]]
-            [ctia.test-helpers.core :as sut])
+            [ctia.test-helpers.core :as sut]
+            [schema.core :as s])
   (:import [clojure.lang ExceptionInfo]
            [java.util UUID]))
 
@@ -8,6 +9,27 @@
   (is (= (sut/split-property-to-keywords
            "a.b.c")
          [:a :b :c])))
+
+(defn naive-longest-common-suffix
+  "O(|strs| * shortest string)"
+  [strs]
+  (when-not (seq strs)
+    (throw (ex-info "non-empty strs needed" {})))
+  (let [shortest-str-count (count (apply min-key count strs))]
+    (reduce (fn [so-far i]
+              (let [suffixes (map #(subs % (- (count %) i)) strs)]
+                (if (apply = suffixes)
+                  (first suffixes)
+                  (reduced so-far))))
+            ""
+            (range 1 (inc shortest-str-count)))))
+
+(deftest naive-longest-common-suffix-test
+  (is (thrown? clojure.lang.ExceptionInfo (naive-longest-common-suffix [])))
+  (is (= "" (naive-longest-common-suffix [""])))
+  (is (= "13" (naive-longest-common-suffix ["a113" "b13"])))
+  (is (= "" (naive-longest-common-suffix ["a" "b"])))
+  (is (= "a" (naive-longest-common-suffix ["a" "a"]))))
 
 (deftest build-transformed-init-config-test
   (assert (not (thread-bound? #'sut/*config-transformers*)))
@@ -24,6 +46,19 @@
         (is (= (get-in (sut/build-transformed-init-config)
                        ctia-path)
                ctia-val)))))
+  (testing "defaults to randomized indices"
+    (let [gen-non-empty-suffix (fn []
+                                 (let [config (sut/build-transformed-init-config)
+                                       es (get-in config [:ctia :store :es])
+                                       indices (for [[_ {:keys [indexname]}] es
+                                                     :when indexname]
+                                                 indexname)
+                                       _ (assert (seq indices))
+                                       _ (assert (every? string? indices))
+                                       suffix (naive-longest-common-suffix indices)]
+                                   (assert (seq suffix))
+                                   suffix))]
+      (is (apply distinct? (repeatedly 5 gen-non-empty-suffix)))))
   (testing "overrides using with-properties"
     (doseq [:let [test-cases [{:ctia-property "ctia.auth.type"
                                :foobar-str "foobar"}]]

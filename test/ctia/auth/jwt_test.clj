@@ -38,7 +38,7 @@
     (is (instance? ctia.auth.jwt.JWTIdentity
                    (get-in response-jwt [:body :identity])))))
 
-(deftest scopes-to-capapbilities-test
+(deftest scopes-to-capabilities-test
   (is (= "private-intel" (sut/entity-root-scope get-in-config))
       "entity root scope default value is private-intel")
   (is (= "casebook" (sut/casebook-root-scope get-in-config))
