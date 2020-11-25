@@ -3,6 +3,7 @@
    [clojure.tools.logging :as log]
    [ctia.properties :as p]
    [clojure.set :refer [difference]]
+   [ctia.ductile-service.schemas :refer [RequestFn]]
    [ctia.stores.es.mapping :refer [store-settings]]
    [ctia.stores.es.schemas :refer [ESConnServices ESConnState]]
    [ductile
@@ -22,7 +23,8 @@
        :replicas s/Num
        :write-suffix s/Str
        :refresh_interval s/Str
-       :aliased s/Any})))
+       :aliased s/Any
+       :request-fn RequestFn})))
 
 ;; TODO def => defn
 (def store-mappings
@@ -41,8 +43,10 @@
          refresh_interval "1s"
          version 7}
     :as props} :- StoreProperties
-   services :- ESConnServices]
-  (let [write-index (str indexname
+   {{:keys [request-fn]} :DuctileService
+    :as services} :- ESConnServices]
+  (let [props (update props :request-fn #(or % request-fn))
+        write-index (str indexname
                          (when aliased "-write"))
         settings {:refresh_interval refresh_interval
                   :number_of_shards shards

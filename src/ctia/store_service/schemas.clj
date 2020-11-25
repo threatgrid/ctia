@@ -4,7 +4,10 @@
             [schema.core :as s]))
 
 (s/defschema Services
-  {:ConfigService {:get-in-config (s/pred ifn?)} ;;TODO
+  {:ConfigService {:get-in-config (s/=>* s/Any
+                                         [(s/named [s/Any] 'path)]
+                                         [(s/named [s/Any] 'path)
+                                          (s/named s/Any 'default)])}
    :DuctileService (-> ductile/ServiceGraph
                        (csu/select-all-keys [:request-fn]))})
 

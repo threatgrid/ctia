@@ -1,13 +1,11 @@
 (ns ctia.stores.es.schemas
-  (:require [ductile.schemas] ;; no alias to avoid ESConnState clashes
+  (:require [ctia.store-service.schemas :as store-schemas]
+            [ductile.schemas] ;; no alias to avoid ESConnState clashes
             [schema.core :as s]
             [schema-tools.core :as st]))
 
 (s/defschema ESConnServices
-  {:ConfigService {:get-in-config (s/=>* s/Any
-                                         [(s/named [s/Any] 'path)]
-                                         [(s/named [s/Any] 'path)
-                                          (s/named s/Any 'default)])}})
+  store-schemas/Services)
 
 (s/defschema ESConnState
   (st/merge
