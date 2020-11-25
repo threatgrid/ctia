@@ -869,9 +869,9 @@
     (doseq [batch-size [1000 3000 6000 10000]
             :let [{:keys [get-in-config]} (helpers/get-service-map app :ConfigService)
                   services (app->MigrationStoreServices app)
-                  conn (es-conn get-in-config)]
-            migration-id (format "test-load-%s" batch-size)
-            prefix (format "test_load_%s" batch-size)]
+                  conn (es-conn get-in-config)
+                  migration-id (format "test-load-%s" batch-size)
+                  prefix (format "test_load_%s" batch-size)]]
       (try
         (let [total-docs (* (count @example-types) 20000)
               _ (println (format "===== migrating %s documents with batch size %s"

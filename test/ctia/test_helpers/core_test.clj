@@ -10,6 +10,20 @@
            "a.b.c")
          [:a :b :c])))
 
+(defn naive-longest-common-suffix
+  "O(|strs| * shortest string)"
+  [strs]
+  (when-not (seq strs)
+    (throw (ex-info "non-empty strs needed" {})))
+  (let [shortest-str-count (count (apply min-key count strs))]
+    (reduce (fn [so-far i]
+              (let [suffixes (map #(subs % (- (count %) i)) strs)]
+                (if (apply = suffixes)
+                  (first suffixes)
+                  (reduced so-far))))
+            ""
+            (range 1 (inc shortest-str-count)))))
+
 (deftest naive-longest-common-suffix-test
   (is (thrown? clojure.lang.ExceptionInfo (sut/naive-longest-common-suffix [])))
   (is (= "" (sut/naive-longest-common-suffix [""])))
@@ -32,7 +46,7 @@
         (is (= (get-in (sut/build-transformed-init-config)
                        ctia-path)
                ctia-val)))))
-  (testing "defaults to randomized indicies"
+  (testing "defaults to randomized indices"
     (let [gen-non-empty-suffix (fn []
                                  (let [config (sut/build-transformed-init-config)
                                        es (get-in config [:ctia :store :es])
