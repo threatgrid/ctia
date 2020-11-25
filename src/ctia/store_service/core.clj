@@ -3,7 +3,7 @@
             [ctia.properties :as p]
             [ctia.store :refer [empty-stores close]]
             [ctia.stores.es.init :as es-init]
-            [ctia.store-service.schemas :refer [Context Services]]
+            [ctia.store-service.schemas :refer [Context Services StoresAtom]]
             [schema.core :as s]))
 
 (s/defn init [context]
@@ -47,12 +47,12 @@
     "es" (es-init/init-store! store-kw services)))
 
 (s/defn ^:private init-store-service!
-  [stores-atom
-   services :- Services]
+  [stores-atom :- StoresAtom
+   {{:keys [get-in-config]} :ConfigService :as services} :- Services]
   (reset! stores-atom
           (->> (keys empty-stores)
                (map (fn [store-kw]
-                      [store-kw (keep #(build-store store-kw % get-in-config)
+                      [store-kw (keep #(build-store store-kw % services)
                                       (get-store-types store-kw services))]))
                (into {})
                (merge-with into empty-stores))))

@@ -1,5 +1,5 @@
 (ns ctia.store-service
-  (:require [ctia.store-service-core :as core]
+  (:require [ctia.store-service.core :as core]
             [puppetlabs.trapperkeeper.core :as tk]
             [puppetlabs.trapperkeeper.services :refer [service-context]]
             [schema.core :as s]))

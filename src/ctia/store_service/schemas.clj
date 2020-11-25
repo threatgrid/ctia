@@ -8,6 +8,9 @@
    :DuctileService (-> ductile/ServiceGraph
                        (csu/select-all-keys [:request-fn]))})
 
+(s/defschema StoresAtom 
+  (s/pred #(instance? clojure.lang.IAtom2 %)))
+
 (s/defschema Context
   {:services Services
-   :stores-atom (s/pred #(instance? clojure.lang.IAtom2 %))})
+   :stores-atom StoresAtom})
