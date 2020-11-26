@@ -263,11 +263,11 @@
                ["ctia.store.es.default.port" ~'es-port
                 "ctia.store.es.default.version" ~'version]
                (fn []
-                 ~@body))
-             (finally
-               (when clean-fn#
-                 (clean-fn# ~'conn))
-               (es-conn/close ~'conn))))))))
+                 ~@body)))
+           (finally
+             (when clean-fn#
+               (clean-fn# ~'conn))
+             (es-conn/close ~'conn)))))))
 
 (defn build-mappings
   [base-mappings entity-type version]
