@@ -726,11 +726,11 @@
               :player-3-1-expected-write-statuses forbidden-statuses
 
               :list-query "external_ids:apost"
-              :player-1-expected-entity-list [:parsed-body player-1-entity-post]
-              :player-2-expected-entity-list [:parsed-body player-2-entity-post
-                                              :parsed-body player-3-entity-post]
-              :player-3-expected-entity-list [:parsed-body player-2-entity-post
-                                              :parsed-body player-3-entity-post]}))
+              :player-1-expected-entity-list [(:parsed-body player-1-entity-post)]
+              :player-2-expected-entity-list [(:parsed-body player-2-entity-post)
+                                              (:parsed-body player-3-entity-post)]
+              :player-3-expected-entity-list [(:parsed-body player-2-entity-post)
+                                              (:parsed-body player-3-entity-post)]}))
 
       ;; player1 and player2 repost deleted entities
       (is (= 201 (:status player-1-entity-repost)))
@@ -829,11 +829,11 @@
         (search-access-control-test
          (into args
                {:list-query (str "external_ids:" ext-id)
-                :player-1-expected-entity-list [(:parsed-body player-1-entity-search)]
-                :player-2-expected-entity-list [(:parsed-body player-2-entity-search)
-                                                (:parsed-body player-3-entity-search)]
-                :player-3-expected-entity-list [(:parsed-body player-2-entity-search)
-                                                (:parsed-body player-3-entity-search)]}))))))
+                :player-1-expected-entity-list [player-1-entity-search]
+                :player-2-expected-entity-list [player-2-entity-search
+                                                player-3-entity-search]
+                :player-3-expected-entity-list [player-2-entity-search
+                                                player-3-entity-search]}))))))
 
 
 (defn test-access-control-entity-tlp-red
@@ -981,9 +981,9 @@
         (search-access-control-test
          (into args
                {:list-query (str "external_ids:" ext-id)
-                :player-1-expected-entity-list [(:parsed-body player-1-entity-search)]
-                :player-2-expected-entity-list [(:parsed-body player-2-entity-search)]
-                :player-3-expected-entity-list [(:parsed-body player-3-entity-search)]}))))))
+                :player-1-expected-entity-list [player-1-entity-search]
+                :player-2-expected-entity-list [player-2-entity-search]
+                :player-3-expected-entity-list [player-3-entity-search]}))))))
 
 (s/defn test-access-control-tlp-settings
   [entity
