@@ -10,6 +10,7 @@
 
 (defn delete-state-indexes [{:keys [conn index config] :as state}]
   (when conn
+    (es-index/delete-template! conn (str index "*"))
     (es-index/delete! conn (str index "*"))))
 
 (s/defn close-cm!

@@ -182,7 +182,7 @@
                                                 (boolean? wait_for) (str "&wait_for=" wait_for))
                                          es-index-uri-pattern (re-pattern (format ".*_delete_by_query.*(%s){0}"
                                                                                   (UUID/randomUUID)))]
-                                     (with-global-fake-routes {es-index-uri-pattern (simple-handler "{:deleted 1}")}
+                                     (with-global-fake-routes {es-index-uri-pattern (simple-handler "{\"deleted\": 1}")}
                                        (DELETE app
                                                path
                                                :headers headers))

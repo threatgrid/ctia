@@ -115,8 +115,6 @@
                         " DO NOT FORGET TO SET THAT TO FALSE AFTER EACH DELETION"
                         " IF YOU INTEND TO USE THAT ROUTE MULTIPLE TIMES."))}))
 
-(clojure.pprint/pprint FeedDeleteSearchParams)
-
 (def FeedGetParams FeedFieldsParam)
 
 (s/defschema FeedListQueryParams
