@@ -339,7 +339,6 @@
       (delete-doc app entity id-1)
       (delete-doc app entity id-2))))
 
-
 (defn test-delete-search
   [app entity bundle-key example]
   (let [docs (->> (dissoc example :id)
@@ -362,7 +361,8 @@
         filter-red {:tlp "red"}]
     (POST-bulk app {bundle-key docs})
     (is (= 403
-           (:status (delete-search app entity {:REALLY_DELETE_ALL_THOSE_ENTITIES true}))))
+           (:status (delete-search app entity {:REALLY_DELETE_ALL_THOSE_ENTITIES true})))
+        "at least one search filter must be provided.")
     (assert (= (count green-docs)
                (count-fn filter-green)))
     (assert (= (count amber-docs)
