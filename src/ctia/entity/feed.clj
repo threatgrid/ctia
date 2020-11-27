@@ -39,7 +39,8 @@
                        read-record
                        update-record
                        query-string-count
-                       query-string-search]]
+                       query-string-search
+                       delete-search]]
    [ctia.stores.es
     [mapping :as em]
     [store :refer [def-es-store]]]
@@ -48,6 +49,7 @@
    [ring.util.http-response :refer [no-content
                                     not-found
                                     ok
+                                    forbidden
                                     unauthorized]]
    [schema-tools.core :as st]
    [schema.core :as s]))
@@ -84,7 +86,7 @@
   {(s/optional-key :fields) [feed-sort-fields]})
 
 
-(s/defschema FeedCountParams
+(s/defschema FeedSearchFilters
   (st/merge
    BaseEntityFilterParams
    FeedFieldsParam
@@ -93,7 +95,7 @@
 
 (s/defschema FeedSearchParams
   (st/merge
-   FeedCountParams
+   FeedSearchFilters
    PagingParams
    {(s/optional-key :sort_by) feed-sort-fields}))
 
@@ -268,9 +270,7 @@
             first
             un-store
             (decrypt-feed services)
-            created)))
-
-    (let [capabilities :create-feed]
+            created))
       (PUT "/:id" []
         :return Feed
         :body [entity-update NewFeed {:description "an updated Feed"}]
@@ -325,44 +325,8 @@
             (page-with-long-id services)
             un-store-page
             (decrypt-feed-page services)
-            paginated-ok)))
+            paginated-ok))
 
-    (let [capabilities :search-feed]
-      (GET "/search" []
-        :return PartialFeedList
-        :summary "Search for a Feed using a Lucene/ES query string"
-        :query [params FeedSearchParams]
-        :description (routes.common/capabilities->description capabilities)
-        :capabilities capabilities
-        :auth-identity identity
-        :identity-map identity-map
-        (-> (read-store
-             :feed
-             query-string-search
-             (search-query :created params)
-             identity-map
-             (select-keys params search-options))
-            (page-with-long-id services)
-            un-store-page
-            (decrypt-feed-page services)
-            paginated-ok)))
-
-    (let [capabilities :search-feed]
-      (GET "/search/count" []
-           :return s/Int
-           :summary "Count Feed entities matching given search filters."
-           :query [params FeedCountParams]
-           :description (routes.common/capabilities->description capabilities)
-           :capabilities capabilities
-           :auth-identity identity
-           :identity-map identity-map
-           (ok (read-store
-                :feed
-                query-string-count
-                (search-query :created params)
-                identity-map))))
-
-    (let [capabilities :read-feed]
       (GET "/:id" []
         :return (s/maybe PartialFeed)
         :summary "Gets a Feed by ID"
@@ -383,6 +347,78 @@
               (decrypt-feed services)
               ok)
           (not-found))))
+
+    (let [capabilities :search-feed]
+      (GET "/search" []
+        :return PartialFeedList
+        :summary "Search for a Feed using a Lucene/ES query string"
+        :query [params FeedSearchParams]
+        :description (routes.common/capabilities->description capabilities)
+        :capabilities capabilities
+        :auth-identity identity
+        :identity-map identity-map
+        (-> (read-store
+             :feed
+             query-string-search
+             (search-query :created params)
+             identity-map
+             (select-keys params search-options))
+            (page-with-long-id services)
+            un-store-page
+            (decrypt-feed-page services)
+            paginated-ok))
+      (GET "/search/count" []
+        :return s/Int
+        :summary "Count Feed entities matching given search filters."
+        :query [params FeedSearchFilters]
+        :description (routes.common/capabilities->description capabilities)
+        :capabilities capabilities
+        :auth-identity identity
+        :identity-map identity-map
+        (ok (read-store
+             :feed
+             query-string-count
+             (search-query :created params)
+             identity-map))))
+    (let [capabilities #{:search-feed :delete-feed}]
+      (DELETE "/search" []
+        :capabilities capabilities
+        :description (routes.common/capabilities->description capabilities)
+        :return s/Int
+        :summary (format "Delete Feed entities matching given Lucene/ES query string or/and field filters")
+        :auth-identity identity
+        :identity-map identity-map
+        :query [params (st/merge FeedSearchFilters
+                                 {(s/optional-key :wait_for)
+                                  (describe s/Bool "wait for matched entity to be deleted")
+                                  (s/optional-key :REALLY_DELETE_ALL_THOSE_ENTITIES)
+                                  (describe s/Bool
+                                            (str
+                                             " If you do not set this value or set it to false"
+                                             " this route will perform a dry run."
+                                             " Set this value to true to perform the deletion."
+                                             " You MUST confirm you will fix the mess after"
+                                             " the inevitable disaster that will occur after"
+                                             " you perform that operation."
+                                             " DO NOT FORGET TO SET THAT TO FALSE AFTER EACH DELETION"
+                                             " IF YOU INTEND TO USE THAT ROUTE MULTIPLE TIMES."))})]
+        (let [query (->> (dissoc params :wait_for :REALLY_DELETE_ALL_THOSE_ENTITIES)
+                         (search-query :created))]
+          (if (empty? query)
+            (forbidden {:error "you must provide at least one of from, to, query or any field filter."})
+            (ok
+             (if (:REALLY_DELETE_ALL_THOSE_ENTITIES params)
+               (write-store
+                :feed
+                delete-search
+                query
+                identity-map
+                (wait_for->refresh (:wait_for params)))
+               (read-store
+                :feed
+                query-string-count
+                query
+                identity-map)))))))
 
     (let [capabilities :delete-feed]
       (DELETE "/:id" []

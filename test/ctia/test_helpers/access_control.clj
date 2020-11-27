@@ -65,44 +65,29 @@
            player-2-expected-entity-list
            player-3-expected-entity-list]}]
   (let [;; searches
-       {player-1-entity-search :parsed-body}
-       (GET app
-            (format "ctia/%s/search" entity)
-            :query-params {:query list-query}
-            :headers {"Authorization" "player-1-token"})
+        search (fn [token]
+                 (:parsed-body
+                  (GET app
+                       (format "ctia/%s/search" entity)
+                       :query-params {:query list-query}
+                       :headers {"Authorization" token})))
+        player-1-entity-search (search "player-1-token")
+        player-2-entity-search (search "player-2-token")
+        player-3-entity-search (search "player-3-token")
 
-       {player-2-entity-search :parsed-body}
-       (GET app
-            (format "ctia/%s/search" entity)
-            :query-params {:query list-query}
-            :headers {"Authorization" "player-2-token"})
+        ;; counts
+        search-count (fn [token]
+                       (:parsed-body
+                        (GET app
+                             (format "ctia/%s/search/count" entity)
+                             :query-params {:query list-query}
+                             :headers {"Authorization" token})))
+        player-1-entity-count-1 (search-count "player-1-token")
+        player-2-entity-count-1 (search-count "player-2-token")
+        player-3-entity-count-1 (search-count "player-3-token")
 
-       {player-3-entity-search :parsed-body}
-       (GET app
-            (format "ctia/%s/search" entity)
-            :query-params {:query list-query}
-            :headers {"Authorization" "player-3-token"})
 
-       ;; counts
-       {player-1-entity-count-1 :parsed-body}
-       (GET app
-            (format "ctia/%s/search/count" entity)
-            :query-params {:query list-query}
-            :headers {"Authorization" "player-1-token"})
-
-       {player-2-entity-count-1 :parsed-body}
-       (GET app
-            (format "ctia/%s/search/count" entity)
-            :query-params {:query list-query}
-            :headers {"Authorization" "player-2-token"})
-
-       {player-3-entity-count-1 :parsed-body}
-       (GET app
-            (format "ctia/%s/search/count" entity)
-            :query-params {:query list-query}
-            :headers {"Authorization" "player-3-token"})
-
-       ;; delete-searches
+        ;; delete-searches
        {player-2-entity-delete-search :body}
        (DELETE app
                (format "ctia/%s/search" entity)
@@ -112,24 +97,9 @@
                :headers {"Authorization" "player-2-token"})
 
         ;; re-count
-        {player-1-entity-count-2 :parsed-body}
-        (GET app
-             (format "ctia/%s/search/count" entity)
-             :query-params {:query list-query}
-             :headers {"Authorization" "player-1-token"})
-
-        {player-2-entity-count-2 :parsed-body}
-        (GET app
-             (format "ctia/%s/search/count" entity)
-             :query-params {:query list-query}
-             :headers {"Authorization" "player-2-token"})
-
-        {player-3-entity-count-2 :parsed-body}
-        (GET app
-             (format "ctia/%s/search/count" entity)
-             :query-params {:query list-query}
-             :headers {"Authorization" "player-3-token"})]
-    (println player-2-entity-delete-search)
+        player-1-entity-count-2 (search-count "player-1-token")
+        player-2-entity-count-2 (search-count "player-2-token")
+        player-3-entity-count-2 (search-count "player-3-token")]
 
     (testing "search and count should only match visible entities"
       ;; check search

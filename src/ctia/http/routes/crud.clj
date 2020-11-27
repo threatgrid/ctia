@@ -348,7 +348,6 @@
              :description (capabilities->description delete-search-capabilities)
              :return s/Int
              :summary (format "Delete %s entities matching given Lucene/ES query string or/and field filters" capitalized)
-
              :query [params (into search-filters
                                   {(s/optional-key :wait_for)
                                    (describe s/Bool "wait for matched entity to be deleted")
