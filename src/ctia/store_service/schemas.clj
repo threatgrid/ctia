@@ -12,7 +12,7 @@
                        (csu/select-all-keys [:request-fn]))})
 
 (s/defschema StoresAtom 
-  (s/pred #(instance? clojure.lang.IAtom2 %)))
+  (s/pred #(instance? clojure.lang.IAtom2 %) 'atom?))
 
 (s/defschema Context
   {:services Services
