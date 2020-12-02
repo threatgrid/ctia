@@ -27,10 +27,11 @@
                                          "foouser"
                                          "foogroup"
                                          "user")
-     (entity-crud-test {:app app
-                        :entity "coa"
-                        :example new-coa-maximal
-                        :headers {:Authorization "45c1f5e3f05d0"}}))))
+     (entity-crud-test
+      (into sut/coa-entity
+            {:app app
+             :example new-coa-maximal
+             :headers {:Authorization "45c1f5e3f05d0"}})))))
 
 (deftest test-coa-pagination-field-selection
   (test-for-each-store-with-app

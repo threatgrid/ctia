@@ -33,10 +33,10 @@
                                          "foogroup"
                                          "user")
      (entity-crud-test
-      {:app app
-       :entity "actor"
-       :example new-actor-maximal
-       :headers {:Authorization "45c1f5e3f05d0"}}))))
+      (into sut/actor-entity
+            {:app app
+             :example new-actor-maximal
+             :headers {:Authorization "45c1f5e3f05d0"}})))))
 
 (deftest test-actor-pagination-field-selection
   (test-for-each-store-with-app

@@ -28,10 +28,11 @@
                                          "foogroup"
                                          "user")
 
-     (entity-crud-test {:app app
-                        :entity "campaign"
-                        :example (assoc new-campaign-maximal :tlp "green")
-                        :headers {:Authorization "45c1f5e3f05d0"}}))))
+     (entity-crud-test
+      (into sut/campaign-entity
+            {:app app
+             :example (assoc new-campaign-maximal :tlp "green")
+             :headers {:Authorization "45c1f5e3f05d0"}})))))
 
 (deftest test-campaign-pagination-field-selection
   (test-for-each-store-with-app

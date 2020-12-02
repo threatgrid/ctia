@@ -39,7 +39,8 @@
                        read-record
                        update-record
                        query-string-count
-                       query-string-search]]
+                       query-string-search
+                       delete-search]]
    [ctia.stores.es
     [mapping :as em]
     [store :refer [def-es-store]]]
@@ -48,6 +49,7 @@
    [ring.util.http-response :refer [no-content
                                     not-found
                                     ok
+                                    forbidden
                                     unauthorized]]
    [schema-tools.core :as st]
    [schema.core :as s]))
@@ -96,6 +98,22 @@
    FeedCountParams
    PagingParams
    {(s/optional-key :sort_by) feed-sort-fields}))
+
+(s/defschema FeedDeleteSearchParams
+  (st/merge FeedCountParams
+            {(s/optional-key :wait_for)
+             (describe s/Bool "wait for matched entity to be deleted")
+             (s/optional-key :REALLY_DELETE_ALL_THESE_ENTITIES)
+             (describe s/Bool
+                       (str
+                        " If you do not set this value or set it to false"
+                        " this route will perform a dry run."
+                        " Set this value to true to perform the deletion."
+                        " You MUST confirm you will fix the mess after"
+                        " the inevitable disaster that will occur after"
+                        " you perform that operation."
+                        " DO NOT FORGET TO SET THAT TO FALSE AFTER EACH DELETION"
+                        " IF YOU INTEND TO USE THAT ROUTE MULTIPLE TIMES."))}))
 
 (def FeedGetParams FeedFieldsParam)
 
@@ -361,6 +379,34 @@
                 query-string-count
                 (search-query :created params)
                 identity-map))))
+
+
+    (let [capabilities #{:search-feed :delete-feed}]
+      (DELETE "/search" []
+        :capabilities capabilities
+        :description (routes.common/capabilities->description capabilities)
+        :return s/Int
+        :summary (format "Delete Feed entities matching given Lucene/ES query string or/and field filters")
+        :auth-identity identity
+        :identity-map identity-map
+        :query [params FeedDeleteSearchParams]
+        (let [query (->> (dissoc params :wait_for :REALLY_DELETE_ALL_THESE_ENTITIES)
+                         (search-query :created))]
+          (if (empty? query)
+            (forbidden {:error "you must provide at least one of from, to, query or any field filter."})
+            (ok
+             (if (:REALLY_DELETE_ALL_THESE_ENTITIES params)
+               (write-store
+                :feed
+                delete-search
+                query
+                identity-map
+                (wait_for->refresh (:wait_for params)))
+               (read-store
+                :feed
+                query-string-count
+                query
+                identity-map)))))))
 
     (let [capabilities :read-feed]
       (GET "/:id" []

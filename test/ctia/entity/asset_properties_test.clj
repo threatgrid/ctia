@@ -2,7 +2,7 @@
   (:require [clj-momo.lib.clj-time.coerce :as tc]
             [clj-momo.test-helpers.core :as mth]
             [clojure.test :refer [deftest is are join-fixtures testing use-fixtures]]
-            [ctia.entity.asset-properties :as asset-properties]
+            [ctia.entity.asset-properties :as sut]
             [ctia.test-helpers.aggregate :as aggregate]
             [ctia.test-helpers.auth :as auth]
             [ctia.test-helpers.core :as helpers]
@@ -55,19 +55,19 @@
      (helpers/set-capabilities! app "foouser" ["foogroup"] "user" auth/all-capabilities)
      (whoami-helpers/set-whoami-response app http/api-key "foouser" "foogroup" "user")
      (entity-crud-test
-      {:app                app
-       :entity             "asset-properties"
-       :example            new-asset-properties-maximal
-       :invalid-tests?     true
-       :invalid-test-field :asset_ref
-       :update-tests?      true
-       :update-field       :source
-       :search-tests?      true
-       :search-field       :source
-       :search-value       "cisco:unified_connect"
-       :additional-tests   additional-tests
-       :headers            {:Authorization "45c1f5e3f05d0"}
-       :revoke-tests?      asset-properties/asset-properties-can-revoke?}))))
+      (into sut/asset-properties-entity
+            {:app                app
+             :example            new-asset-properties-maximal
+             :invalid-tests?     true
+             :invalid-test-field :asset_ref
+             :update-tests?      true
+             :update-field       :source
+             :search-tests?      true
+             :search-field       :source
+             :search-value       "cisco:unified_connect"
+             :additional-tests   additional-tests
+             :headers            {:Authorization "45c1f5e3f05d0"}
+             :revoke-tests?      sut/asset-properties-can-revoke?})))))
 
 (deftest asset-properties-pagination-test
   (store/test-for-each-store-with-app
@@ -91,18 +91,18 @@
         ["ctia/asset-properties/search?query=*"
          (http/doc-id->rel-url (first ids))]
         {"Authorization" "45c1f5e3f05d0"}
-        asset-properties/asset-properties-fields)
+        sut/asset-properties-fields)
 
        (pagination/pagination-test
         app
         "ctia/asset-properties/search?query=*"
         {"Authorization" "45c1f5e3f05d0"}
-        asset-properties/asset-properties-fields)))))
+        sut/asset-properties-fields)))))
 
 (deftest asset-properties-metric-routes-test
   (aggregate/test-metric-routes
-   (into asset-properties/asset-properties-entity
+   (into sut/asset-properties-entity
          {:plural            :asset_properties
           :entity-minimal    new-asset-properties-minimal
-          :enumerable-fields asset-properties/asset-properties-enumerable-fields
-          :date-fields       asset-properties/asset-properties-histogram-fields})))
+          :enumerable-fields sut/asset-properties-enumerable-fields
+          :date-fields       sut/asset-properties-histogram-fields})))
