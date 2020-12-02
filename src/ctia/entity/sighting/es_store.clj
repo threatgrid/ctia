@@ -6,7 +6,7 @@
             [ctia.schemas.core :refer [Observable]]
             [ctia.store :refer [IQueryStringSearchableStore ISightingStore IStore]]
             [ctia.stores.es
-             [store :refer [close-cm!]]
+             [store :refer [close-connections!]]
              [crud :as crud]
              [mapping :as em]
              [schemas :refer [ESConnState]]]
@@ -163,7 +163,7 @@
     (handle-delete state id ident params))
   (list-records [_ filter-map ident params]
     (handle-list state filter-map ident params))
-  (close [_] (close-cm! state))
+  (close [_] (close-connections! state))
   ISightingStore
   (list-sightings-by-observables [_ observables ident params]
     (handle-list-by-observables state observables ident params))

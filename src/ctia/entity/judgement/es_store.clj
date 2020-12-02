@@ -8,7 +8,7 @@
             [ctia.schemas.core :refer [Verdict]]
             [ctia.store :refer [IJudgementStore IQueryStringSearchableStore IStore]]
             [ctia.stores.es
-             [store :refer [close-cm!]]
+             [store :refer [close-connections!]]
              [crud :as crud]
              [mapping :as em]
              [query :refer [active-judgements-by-observable-query find-restriction-query-part]]
@@ -114,7 +114,7 @@
     (handle-update state id judgement ident params))
   (list-records [_ filter-map ident params]
     (handle-list state filter-map ident params))
-  (close [_] (close-cm! state))
+  (close [_] (close-connections! state))
 
   IJudgementStore
   (list-judgements-by-observable [this observable ident params]

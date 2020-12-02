@@ -103,7 +103,7 @@
   (st/merge FeedCountParams
             {(s/optional-key :wait_for)
              (describe s/Bool "wait for matched entity to be deleted")
-             (s/optional-key :REALLY_DELETE_ALL_THOSE_ENTITIES)
+             (s/optional-key :REALLY_DELETE_ALL_THESE_ENTITIES)
              (describe s/Bool
                        (str
                         " If you do not set this value or set it to false"
@@ -390,12 +390,12 @@
         :auth-identity identity
         :identity-map identity-map
         :query [params FeedDeleteSearchParams]
-        (let [query (->> (dissoc params :wait_for :REALLY_DELETE_ALL_THOSE_ENTITIES)
+        (let [query (->> (dissoc params :wait_for :REALLY_DELETE_ALL_THESE_ENTITIES)
                          (search-query :created))]
           (if (empty? query)
             (forbidden {:error "you must provide at least one of from, to, query or any field filter."})
             (ok
-             (if (:REALLY_DELETE_ALL_THOSE_ENTITIES params)
+             (if (:REALLY_DELETE_ALL_THESE_ENTITIES params)
                (write-store
                 :feed
                 delete-search

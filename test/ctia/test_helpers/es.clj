@@ -259,11 +259,10 @@
            (testing (format "%s (ES version: %s).\n" msg#  ~'version)
              (when clean-fn#
                (clean-fn# ~'conn))
-             (h/with-properties*
+             (h/with-properties
                ["ctia.store.es.default.port" ~'es-port
                 "ctia.store.es.default.version" ~'version]
-               (fn []
-                 ~@body)))
+               ~@body))
            (finally
              (when clean-fn#
                (clean-fn# ~'conn))

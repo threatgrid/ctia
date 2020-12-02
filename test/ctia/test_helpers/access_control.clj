@@ -92,7 +92,7 @@
        (DELETE app
                (format "ctia/%s/search" entity)
                :query-params {:query list-query
-                              :REALLY_DELETE_ALL_THOSE_ENTITIES true
+                              :REALLY_DELETE_ALL_THESE_ENTITIES true
                               :wait_for true}
                :headers {"Authorization" "player-2-token"})
 

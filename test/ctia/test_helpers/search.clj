@@ -350,8 +350,7 @@
         count-fn #(:parsed-body (count-raw app entity %))
         delete-search-fn (fn [q confirm?]
                            (let [query (if (boolean? confirm?)
-                                         (assoc q :REALLY_DELETE_ALL_THOSE_ENTITIES
-                                                confirm?)
+                                         (assoc q :REALLY_DELETE_ALL_THESE_ENTITIES confirm?)
                                          q)]
                              (-> (delete-search app entity query)
                                  :body
@@ -361,7 +360,7 @@
         filter-red {:tlp "red"}]
     (POST-bulk app {bundle-key docs})
     (is (= 403
-           (:status (delete-search app entity {:REALLY_DELETE_ALL_THOSE_ENTITIES true})))
+           (:status (delete-search app entity {:REALLY_DELETE_ALL_THESE_ENTITIES true})))
         "at least one search filter must be provided.")
     (assert (= (count green-docs)
                (count-fn filter-green)))
@@ -369,7 +368,7 @@
                (count-fn filter-amber)))
     (assert (= (count red-docs)
                (count-fn filter-red)))
-    (testing "delete with :REALLY_DELETE_ALL_THOSE_ENTITIES set to false or nil must not delete entities but return the actual number of matched entities"
+    (testing "delete with :REALLY_DELETE_ALL_THESE_ENTITIES set to false or nil must not delete entities but return the actual number of matched entities"
       (is (= (count green-docs)
              (delete-search-fn filter-green false)
              (delete-search-fn filter-green nil)
@@ -382,7 +381,7 @@
              (delete-search-fn filter-red false)
              (delete-search-fn filter-red nil)
              (count-fn filter-red))))
-    (testing "delete with :REALLY_DELETE_ALL_THOSE_ENTITIES set to true must really delete entities"
+    (testing "delete with :REALLY_DELETE_ALL_THESE_ENTITIES set to true must really delete entities"
       (is (= (count green-docs)
              (delete-search-fn filter-green true)))
       (is (= (count amber-docs)

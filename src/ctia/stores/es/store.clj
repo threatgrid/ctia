@@ -13,7 +13,7 @@
     (es-index/delete-template! conn (str index "*"))
     (es-index/delete! conn (str index "*"))))
 
-(s/defn close-cm!
+(s/defn close-connections!
   [{:keys [conn]}]
   (es-conn/close conn))
 
@@ -45,7 +45,7 @@
       ((crud/handle-find ~partial-stored-schema)
        ~(symbol "state") filter-map# ident# params#))
      (~(symbol "close") [_#]
-      (close-cm! ~(symbol "state")))
+      (close-connections! ~(symbol "state")))
      IQueryStringSearchableStore
      (~(symbol "query-string-search") [_# search-query# ident# params#]
       ((crud/handle-query-string-search ~partial-stored-schema)

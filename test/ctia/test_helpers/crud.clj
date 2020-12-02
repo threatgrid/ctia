@@ -177,7 +177,7 @@
     (when delete-search-tests?
       (testing "testing wait_for values on delete search"
         (let [test-delete-search (fn [wait_for msg]
-                                   (let [ctia-path (format "ctia/%s/search?REALLY_DELETE_ALL_THOSE_ENTITIES=true&from=2020-01-01" entity-str)
+                                   (let [ctia-path (format "ctia/%s/search?REALLY_DELETE_ALL_THESE_ENTITIES=true&from=2020-01-01" entity-str)
                                          path (cond-> ctia-path
                                                 (boolean? wait_for) (str "&wait_for=" wait_for))
                                          es-index-uri-pattern (re-pattern (format ".*_delete_by_query.*(%s){0}"
