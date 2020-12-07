@@ -81,5 +81,6 @@
                 identity-map
                 query-params))]
       (if-let [next-params (:next paging)]
-        (recur next-params (into results data))
+        (recur (into query-params next-params)
+               (into results data))
         (into results data)))))
