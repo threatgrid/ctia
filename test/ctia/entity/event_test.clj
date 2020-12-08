@@ -185,10 +185,9 @@
                 (testing "event timeline should contain all actions by user, with respect to their visibility"
 
                   (is (= '(1 3) (map :count timeline1-body)))
-                  (is (every? #(= "user1" (:owner %))
-                              timeline1-body))
-                  (is (every? #(= "user1" (:owner %))
-                              timeline2-body))
+                  (is (= (->> timeline1-body (map :owner) count)
+                         (->> timeline1-body (map :owner) set count))
+                      "owners should differ")
                   (is (empty? timeline3-body))
                   (is (empty? timeline4-body))
                   (is (every? #(= "user3" (:owner %))
@@ -241,7 +240,7 @@
                                      port),
                              :type "event",
                              :event_type :record-created}
-                            {:owner "user1",
+                            {:owner "user2",
                              :groups ["group1"],
                              :timestamp #inst "2042-01-02T00:00:00.000-00:00",
                              :tlp "amber"
@@ -260,7 +259,7 @@
                               :tlp "amber",
                               :groups ["group1"],
                               :confidence "High",
-                              :owner "user1"},
+                              :owner "user2"},
                              :id
                              (format "http://localhost:%s/ctia/event/event-00000000-0000-0000-0000-111111111116"
                                      port),
@@ -276,7 +275,10 @@
                                :action "modified",
                                :change
                                {:before "2042-01-01T00:00:00.000Z",
-                                :after "2042-01-02T00:00:00.000Z"}}]}
+                                :after "2042-01-02T00:00:00.000Z"}}
+                              {:field  :owner,
+                               :action "modified",
+                               :change {:before "user1", :after "user2"}}]}
                             {:owner "user1",
                              :groups ["group1"],
                              :timestamp #inst "2042-01-01T00:00:00.000-00:00",
