@@ -20,7 +20,7 @@
 
 (s/defschema APIHandlerServices
   "Maps of services available to routes"
-  {:ConfigService                             {:get-config    (s/=> s/Any s/Any)
+  {:ConfigService                             {:get-config    (s/=> s/Any)
                                                :get-in-config (s/=>* s/Any
                                                                      [[s/Any]]
                                                                      [[s/Any] s/Any])}
@@ -38,7 +38,7 @@
    :IEncryption                               {:encrypt (s/=> s/Any s/Any)
                                                :decrypt (s/=> s/Any s/Any)}
    :FeaturesService                           {:enabled?      (s/=> s/Bool s/Keyword)
-                                               :feature-flags (s/=> [s/Str] s/Any)}})
+                                               :feature-flags (s/=> [s/Str])}})
 
 (s/defschema HTTPShowServices
   {:ConfigService {:get-in-config (s/=>* s/Any
