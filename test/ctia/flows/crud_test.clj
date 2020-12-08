@@ -87,7 +87,7 @@
 (deftest create-events-test
   (testing "flow-type :update should update the owner"
     (let [updated-entities (atom [])
-          flow-map         {:services        {:ConfigService {:get-in-config (fn [_] true)}}
+          flow-map         {:services        {:ConfigService {:get-in-config (constantly true)}}
                             :create-event-fn (fn [entity _ _] (swap! updated-entities conj entity))
                             :identity        (map->Identity {:login "test-user"})
                             :flow-type       :update
