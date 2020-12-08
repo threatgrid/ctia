@@ -177,8 +177,8 @@
                 (testing "event timeline should contain all actions by user, with respect to their visibility"
 
                   (is (= '(1 3) (map :count timeline1-body)))
-                  (is (= (->> timeline1-body (map :owner) count)
-                         (->> timeline1-body (map :owner) set count))
+                  (is (= #{"user1" "user2"}
+                         (set (map :owner timeline1-body)))
                       "owners should differ")
                   (is (empty? timeline3-body))
                   (is (empty? timeline4-body))
