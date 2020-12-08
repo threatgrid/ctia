@@ -2,7 +2,7 @@
   (:require [clj-momo.lib.map :refer [deep-merge-with]]
             [clojure.test :refer [deftest testing is]]
             [ctia.auth.threatgrid :refer [map->Identity]]
-            [ctia.flows.crud :as crud]
+            [ctia.flows.crud :as flows.crud]
             [ctia.lib.collection :as coll]))
 
 (deftest deep-merge-with-add-colls-test
@@ -50,14 +50,14 @@
                 :error "msg"}
                {:id "4"}]
               :enveloped-result? true}
-             (crud/preserve-errors {:entities entities
+             (flows.crud/preserve-errors {:entities entities
                                    :enveloped-result? true}
                                   f)))))
   (testing "without enveloped result"
     (is (= {:entities
             [{:id "1"
               :title "title"}]}
-           (crud/preserve-errors
+           (flows.crud/preserve-errors
             {:entities [{:id "1"}]}
             (fn [_]
               {:entities
@@ -78,10 +78,10 @@
                                               {:type :fake
                                                :id 2}))]
     (is (= flow-empty-entities
-           (crud/apply-create-store-fn flow-empty-entities))
+           (flows.crud/apply-create-store-fn flow-empty-entities))
         "when entities are empty, apply-create-store-fn should not apply store-fn")
     (is (every? #(:applied-store-create %)
-                (:entities (crud/apply-create-store-fn flow-with-entities)))
+                (:entities (flows.crud/apply-create-store-fn flow-with-entities)))
         "store-fn shall be applied to every entities")))
 
 (deftest create-events-test
@@ -94,5 +94,5 @@
                             :entities        [{:one 1 :owner "Huey"}
                                               {:two 2 :owner "Dewey"}
                                               {:three 3 :owner "Louie"}]}]
-     (#'crud/create-events flow-map)
+     (#'flows.crud/create-events flow-map)
      (is (every? #(-> % :owner (= "test-user")) @updated-entities)))))
