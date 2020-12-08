@@ -2,21 +2,30 @@
   (:require [clojure.string :as str]
             [ctia.properties :as p]
             [ctia.store :refer [empty-stores close]]
-            [ctia.stores.es.init :as es-init]))
+            [ctia.store-service.schemas :refer [Store StoresAtom StoreID StoreServiceCtx]]
+            [ctia.stores.es.init :as es-init]
+            [schema.core :as s]
+            [schema-tools.core :as st]))
 
-(defn init [context]
+(s/defn init :- StoreServiceCtx
+  [context :- (st/optional-keys StoreServiceCtx)]
   (assoc context
          :stores-atom (atom empty-stores)))
 
-(defn all-stores [{:keys [stores-atom]}]
+(s/defn all-stores :- StoresAtom
+  [{:keys [stores-atom]} :- StoreServiceCtx]
   @stores-atom)
 
-(defn write-store [ctx store write-fn]
-  {:pre [(keyword? store)]}
+(s/defn write-store [ctx :- StoreServiceCtx
+                     store :- StoreID
+                     write-fn :- (s/=> Store Store)]
   (first (doall (map write-fn (store (all-stores ctx))))))
 
-(defn read-store [ctx store read-fn]
-  {:pre [(keyword? store)]}
+(s/defn read-store :- (s/named s/Any 'read-fn-result)
+  [ctx :- StoreServiceCtx
+   store :- StoreID
+   read-fn :- (s/=> (s/named s/Any 'read-fn-result)
+                    Store)]
   (let [stores (all-stores ctx)
         [s :as ss] (get stores store)
         _ (assert (seq ss)
@@ -24,16 +33,23 @@
         _ (assert s [store (find store stores) stores read-fn])]
     (read-fn s)))
 
-(defn- get-store-types [store-kw get-in-config]
+(s/defn ^:private get-store-types
+  [store-kw :- StoreID
+   get-in-config]
   (or (some-> (get-in-config [:ctia :store store-kw])
               (str/split #","))
       []))
 
-(defn- build-store [store-kw get-in-config store-type]
+(s/defn ^:private build-store
+  [store-kw :- StoreID
+   get-in-config
+   store-type]
   (case store-type
     "es" (es-init/init-store! store-kw {:ConfigService {:get-in-config get-in-config}})))
 
-(defn- init-store-service! [stores-atom get-in-config]
+(s/defn ^:private init-store-service!
+  [stores-atom :- StoresAtom
+   get-in-config]
   (reset! stores-atom
           (->> (keys empty-stores)
                (map (fn [store-kw]
@@ -42,12 +58,14 @@
                (into {})
                (merge-with into empty-stores))))
 
-(defn start [{:keys [stores-atom] :as context} get-in-config]
+(s/defn start :- StoreServiceCtx
+  [{:keys [stores-atom] :as context} :- StoreServiceCtx
+   get-in-config]
   (init-store-service! stores-atom get-in-config)
   context)
 
-(defn stop
-  [ctx]
+(s/defn stop :- (st/optional-keys StoreServiceCtx)
+  [ctx :- StoreServiceCtx]
   (doseq [[kw [s]] (all-stores ctx)]
     (close s))
   ctx)

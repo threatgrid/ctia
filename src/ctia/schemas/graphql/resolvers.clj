@@ -15,6 +15,7 @@
                                 list-sightings-by-observables
                                 query-string-search
                                 read-fn]]
+            [ctia.store-service.helpers :as store-svc.hlp]
             [schema.core :as s]))
 
 ;; Default fields that must always be retrieved
@@ -41,7 +42,8 @@
                                                 field-selection)))]
     (log/debugf "Search entity %s graphql args %s" entity-type args)
 
-    (some-> (read-store
+    (some-> (store-svc.hlp/invoke-varargs
+             read-store
              entity-type
              query-string-search
              {:query-string query
@@ -80,7 +82,8 @@
                 entity-type-kw
                 id
                 field-selection)
-    (some-> (read-store entity-type-kw
+    (some-> (store-svc.hlp/invoke-varargs
+             read-store entity-type-kw
                         read-fn
                         id
                         ident
@@ -110,7 +113,8 @@
                  field-selection (assoc :fields
                                         (concat default-fields field-selection)))]
     (log/debug "Search feedback for entity id: " entity-id)
-    (some-> (read-store :feedback
+    (some-> (store-svc.hlp/invoke-varargs
+             read-store :feedback
                         list-records
                         {:all-of {:entity_id entity-id}}
                         (:ident context)
@@ -133,7 +137,8 @@
         params (cond-> (select-keys paging-params [:limit :offset :sort_by])
                  field-selection (assoc :fields
                                         (concat default-fields field-selection)))]
-    (some-> (read-store :judgement
+    (some-> (store-svc.hlp/invoke-varargs
+             read-store :judgement
                         list-judgements-by-observable
                         observable
                         (:ident context)
@@ -157,7 +162,8 @@
         params (cond-> (select-keys paging-params [:limit :offset :sort_by])
                  field-selection (assoc :fields
                                         (concat default-fields field-selection)))]
-    (some-> (read-store :sighting
+    (some-> (store-svc.hlp/invoke-varargs
+             read-store :sighting
                         list-sightings-by-observables
                         [observable]
                         (:ident context)

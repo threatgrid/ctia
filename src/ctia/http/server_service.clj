@@ -2,7 +2,6 @@
   (:require [ctia.http.server-service-core :as core]
             [ctia.properties :as p]
             [ctia.flows.hooks-service :as hooks-svc]
-            [ctia.store-service :as store-svc]
             [puppetlabs.trapperkeeper.core :as tk]
             [puppetlabs.trapperkeeper.services :refer [service-context]]))
 
@@ -30,8 +29,7 @@
                                                        hooks-svc/lift-hooks-service-fns)
                                      :StoreService (-> StoreService 
                                                        (select-keys [:read-store
-                                                                     :write-store])
-                                                       store-svc/lift-store-service-fns)
+                                                                     :write-store]))
                                      :IAuth IAuth
                                      :GraphQLNamedTypeRegistryService GraphQLNamedTypeRegistryService
                                      :IEncryption IEncryption

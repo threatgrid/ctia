@@ -9,6 +9,7 @@
             [ctia.schemas.core :refer [APIHandlerServices]]
             [ctia.schemas.sorting :as sorting]
             [ctia.store :refer [list-records]]
+            [ctia.store-service.helpers :as store-svc.hlp]
             [ctia.stores.es
              [mapping :as em]
              [store :refer [def-es-store]]]
@@ -65,7 +66,8 @@
          :capabilities :read-feedback
          :auth-identity identity
          :identity-map identity-map
-         (-> (read-store :feedback
+         (-> (store-svc.hlp/invoke-varargs
+              read-store :feedback
                          list-records
                          {:all-of (select-keys params [:entity_id])}
                          identity-map

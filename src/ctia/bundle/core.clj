@@ -1,5 +1,4 @@
 (ns ctia.bundle.core
-  (:refer-clojure :exclude [identity])
   (:require
    [clj-momo.lib.map :refer [deep-merge-with]]
    [clojure
@@ -18,6 +17,8 @@
     [BundleImportData BundleImportResult EntityImportData FindByExternalIdsServices]]
    [ctia.domain.entities :as ent :refer [with-long-id]]
    [ctia.schemas.core :refer [APIHandlerServices HTTPShowServices NewBundle TempIDs]]
+   [ctia.store-service.helpers :as store-svc.hlp]
+   [ctia.store-service.schemas :refer [ReadStoreFn]]
    [ctim.domain.id :as id]
    [schema.core :as s]))
 
@@ -76,13 +77,17 @@
 
 (s/defn all-pages
   "Retrieves all external ids using pagination."
-  [entity-type external-ids auth-identity read-store :- (s/pred ifn?)]
+  [entity-type
+   external-ids
+   auth-identity
+   read-store :- ReadStoreFn]
   (loop [ext-ids external-ids
          entities []]
     (let [query {:all-of {:external_ids ext-ids}}
           paging {:limit find-by-external-ids-limit}
           {results :data
-           {next-page :next} :paging} (read-store entity-type
+           {next-page :next} :paging} (store-svc.hlp/invoke-varargs
+                                       read-store entity-type
                                                   list-fn
                                                   query
                                                   (auth/ident->map auth-identity)
@@ -385,7 +390,8 @@
   (let [filter-map (relationships-filters id filters)
         max-relationships (get-in-config [:ctia :http :bundle :export :max-relationships]
                                                       1000)]
-    (some-> (:data (read-store :relationship
+    (some-> (:data (store-svc.hlp/invoke-varargs
+                    read-store :relationship
                                list-fn
                                filter-map
                                identity-map
@@ -400,7 +406,8 @@
    {{:keys [read-store]} :StoreService
     :as services} :- APIHandlerServices]
   (when-let [entity-type (ent/id->entity-type id services)]
-    (read-store (keyword entity-type)
+    (store-svc.hlp/invoke-varargs
+     read-store (keyword entity-type)
                 read-fn
                 id
                 identity-map

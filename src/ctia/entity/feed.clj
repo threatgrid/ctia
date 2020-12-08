@@ -41,6 +41,7 @@
                        query-string-count
                        query-string-search
                        delete-search]]
+   [ctia.store-service.helpers :as store-svc.hlp]
    [ctia.stores.es
     [mapping :as em]
     [store :refer [def-es-store]]]
@@ -169,7 +170,8 @@
                    owner
                    groups]
             :as feed}
-           (read-store :feed
+           (store-svc.hlp/invoke-varargs
+            read-store :feed
                        read-record
                        id
                        identity-map
@@ -195,7 +197,8 @@
                              :limit fetch-limit}
                             services)
                            (keep :source_ref)
-                           (map #(read-store :judgement
+                           (map #(store-svc.hlp/invoke-varargs
+                                  read-store :judgement
                                              read-record
                                              %
                                              feed-identity
@@ -273,7 +276,8 @@
              :services services
              :entity-type :feed
              :realize-fn realize-feed
-             :store-fn #(write-store :feed
+             :store-fn #(store-svc.hlp/invoke-varargs
+                         write-store :feed
                                      create-record
                                      %
                                      identity-map
@@ -302,13 +306,15 @@
         (if-let [updated-rec
                  (-> (flows/update-flow
                       :services services
-                      :get-fn #(read-store :feed
+                      :get-fn #(store-svc.hlp/invoke-varargs
+                                read-store :feed
                                            read-record
                                            %
                                            identity-map
                                            {})
                       :realize-fn realize-feed
-                      :update-fn #(write-store :feed
+                      :update-fn #(store-svc.hlp/invoke-varargs
+                                   write-store :feed
                                                update-record
                                                (:id %)
                                                %
@@ -335,7 +341,8 @@
         :capabilities capabilities
         :auth-identity identity
         :identity-map identity-map
-        (-> (read-store :feed
+        (-> (store-svc.hlp/invoke-varargs
+             read-store :feed
                         list-records
                         {:all-of {:external_ids external_id}}
                         identity-map
@@ -354,7 +361,8 @@
         :capabilities capabilities
         :auth-identity identity
         :identity-map identity-map
-        (-> (read-store
+        (-> (store-svc.hlp/invoke-varargs
+             read-store
              :feed
              query-string-search
              (search-query :created params)
@@ -374,7 +382,8 @@
            :capabilities capabilities
            :auth-identity identity
            :identity-map identity-map
-           (ok (read-store
+           (ok (store-svc.hlp/invoke-varargs
+                read-store
                 :feed
                 query-string-count
                 (search-query :created params)
@@ -396,13 +405,15 @@
             (forbidden {:error "you must provide at least one of from, to, query or any field filter."})
             (ok
              (if (:REALLY_DELETE_ALL_THESE_ENTITIES params)
-               (write-store
+               (store-svc.hlp/invoke-varargs
+                write-store
                 :feed
                 delete-search
                 query
                 identity-map
                 (wait_for->refresh (:wait_for params)))
-               (read-store
+               (store-svc.hlp/invoke-varargs
+                read-store
                 :feed
                 query-string-count
                 query
@@ -418,7 +429,8 @@
         :capabilities capabilities
         :auth-identity identity
         :identity-map identity-map
-        (if-let [rec (read-store :feed
+        (if-let [rec (store-svc.hlp/invoke-varargs
+                      read-store :feed
                                  read-record
                                  id
                                  identity-map
@@ -442,12 +454,14 @@
         :identity-map identity-map
         (if (flows/delete-flow
              :services services
-             :get-fn #(read-store :feed
+             :get-fn #(store-svc.hlp/invoke-varargs
+                       read-store :feed
                                   read-record
                                   %
                                   identity-map
                                   {})
-             :delete-fn #(write-store :feed
+             :delete-fn #(store-svc.hlp/invoke-varargs
+                          write-store :feed
                                       delete-record
                                       %
                                       identity-map

@@ -6,6 +6,7 @@
              [auth :as auth]
              [properties :as p]
              [store :as store]]
+            [ctia.store-service.helpers :as store-svc.hlp]
             [ctia.domain.entities :as ent :refer [with-long-id]]
             [ctia.entity.entities :refer [all-entities]]
             [ctia.flows.crud :as flows]
@@ -42,9 +43,9 @@
 (s/defn create-fn
   "return the create function provided an entity type key"
   [k auth-identity params
-   {{:keys [write-store]} :StoreService
-    :as _services_} :- APIHandlerServices]
-  #(write-store
+   {{:keys [write-store]} :StoreService} :- APIHandlerServices]
+  #(store-svc.hlp/invoke-varargs
+    write-store
     k store/create-record
     % (auth/ident->map auth-identity) params))
 
@@ -58,9 +59,9 @@
 (s/defn read-fn
   "return the create function provided an entity type key"
   [k auth-identity params
-   {{:keys [read-store]} :StoreService
-    :as _services_} :- ReadFnServices]
-  #(read-store
+   {{:keys [read-store]} :StoreService} :- ReadFnServices]
+  #(store-svc.hlp/invoke-varargs
+    read-store
     k store/read-record
     % (auth/ident->map auth-identity) params))
 

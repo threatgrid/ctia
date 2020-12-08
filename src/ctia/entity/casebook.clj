@@ -24,6 +24,7 @@
             [ctia.stores.es
              [mapping :as em]
              [store :refer [def-es-store]]]
+            [ctia.store-service.helpers :as store-svc.hlp]
             [ctim.schemas.casebook :as cs]
             [flanders.utils :as fu]
             [ring.swagger.schema :refer [describe]]
@@ -145,13 +146,15 @@
              :identity-map identity-map
              (if-let [res (flows/patch-flow
                             :services services
-                            :get-fn #(read-store :casebook
+                            :get-fn #(store-svc.hlp/invoke-varargs
+                                      read-store :casebook
                                                  read-record
                                                  %
                                                  identity-map
                                                  {})
                             :realize-fn realize-casebook
-                            :update-fn #(write-store :casebook
+                            :update-fn #(store-svc.hlp/invoke-varargs
+                                         write-store :casebook
                                                      update-record
                                                      (:id %)
                                                      %
@@ -181,13 +184,15 @@
                      :identity-map identity-map
                      (if-let [res (flows/patch-flow
                                     :services services
-                                    :get-fn #(read-store :casebook
+                                    :get-fn #(store-svc.hlp/invoke-varargs
+                                              read-store :casebook
                                                          read-record
                                                          %
                                                          identity-map
                                                          {})
                                     :realize-fn realize-casebook
-                                    :update-fn #(write-store :casebook
+                                    :update-fn #(store-svc.hlp/invoke-varargs
+                                                 write-store :casebook
                                                              update-record
                                                              (:id %)
                                                              %
@@ -218,13 +223,15 @@
                      :identity-map identity-map
                      (if-let [res (flows/patch-flow
                                     :services services
-                                    :get-fn #(read-store :casebook
+                                    :get-fn #(store-svc.hlp/invoke-varargs
+                                              read-store :casebook
                                                          read-record
                                                          %
                                                          identity-map
                                                          {})
                                     :realize-fn realize-casebook
-                                    :update-fn #(write-store :casebook
+                                    :update-fn #(store-svc.hlp/invoke-varargs
+                                                 write-store :casebook
                                                              update-record
                                                              (:id %)
                                                              %
@@ -255,13 +262,15 @@
                      :identity-map identity-map
                      (if-let [res (flows/patch-flow
                                    :services services
-                                   :get-fn #(read-store :casebook
+                                   :get-fn #(store-svc.hlp/invoke-varargs
+                                             read-store :casebook
                                                         read-record
                                                         %
                                                         identity-map
                                                         {})
                                    :realize-fn realize-casebook
-                                   :update-fn #(write-store :casebook
+                                   :update-fn #(store-svc.hlp/invoke-varargs
+                                                write-store :casebook
                                                             update-record
                                                             (:id %)
                                                             %

@@ -5,9 +5,15 @@
             [schema.core :as s]))
 
 (defprotocol StoreService
-  (all-stores [this] "Returns a map of current stores")
-  (write-store [this store write-fn])
-  (read-store [this store read-fn]))
+  (all-stores [this] "Returns a map of current stores.
+
+                     See also: ctia.store-service.schemas/AllStoresFn")
+  (write-store [this store-id write-fn] "Updates store at store-id using write-fn.
+
+                                        See also: ctia.store-service.schemas/WriteStoreFn")
+  (read-store [this store-id read-fn] "Returns the result of passing store with store-id to read-fn.
+
+                                      See also: ctia.store-service.schemas/ReadStoreFn"))
 
 (tk/defservice store-service
   "A service to manage the central storage area for all stores."
@@ -27,23 +33,3 @@
   (read-store [this store read-fn]
               (core/read-store (service-context this)
                                store read-fn)))
-
-(s/defn store-service-fn->varargs
-  "Given a 2-argument write-store or read-store function (eg., from defservice),
-  lifts the function to support variable arguments."
-  [store-svc-fn :- (s/=> s/Any
-                         (s/named s/Any 
-                                  'store)
-                         (s/named (s/=> s/Any s/Any)
-                                  'f))]
-  {:pre [store-svc-fn]}
-  (fn [store f & args]
-    (store-svc-fn store #(apply f % args))))
-
-(defn lift-store-service-fns
-  "Given a map of StoreService services (via defservice), lift
-  them to support variable arguments."
-  [services]
-  (cond-> services
-    (:read-store services) (update :read-store store-service-fn->varargs)
-    (:write-store services) (update :write-store store-service-fn->varargs)))

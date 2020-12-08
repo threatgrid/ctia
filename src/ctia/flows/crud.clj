@@ -9,6 +9,7 @@
             [ctia
              [auth :as auth]
              [store :as store]]
+            [ctia.store-service.helpers :as store-svc.hlp]
             [ctia.domain
              [access-control :refer [allowed-tlp? allowed-tlps]]
              [entities :refer [un-store]]]
@@ -263,7 +264,8 @@
   (if (seq events)
     (assoc fm
            :events
-           (write-store :event store/create-events events))
+           (store-svc.hlp/invoke-varargs
+            write-store :event store/create-events events))
     fm))
 
 (s/defn remove-errors :- FlowMap

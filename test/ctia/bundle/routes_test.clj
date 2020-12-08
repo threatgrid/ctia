@@ -9,7 +9,6 @@
              [test :as t :refer [deftest is join-fixtures testing use-fixtures]]]
             [ctia.bulk.core :as bulk]
             [ctia.bundle.core :as core]
-            [ctia.store-service :as store-svc]
             [ctia.properties :as p]
             [ctia.auth.capabilities :refer [all-capabilities]]
             [ctia.test-helpers
@@ -18,7 +17,8 @@
              [store :refer [test-for-each-store-with-app]]]
             [ctim.domain.id :as id]
             [ctia.auth :as auth :refer [IIdentity]]
-            [ctim.examples.bundles :refer [bundle-maximal]]))
+            [ctim.examples.bundles :refer [bundle-maximal]]
+            [puppetlabs.trapperkeeper.app :as app]))
 
 (defn fixture-properties [t]
   (helpers/with-properties ["ctia.http.bulk.max-size" 1000
@@ -461,9 +461,7 @@
                                          "foouser"
                                          "foogroup"
                                          "user")
-     (let [read-store (-> (helpers/get-service-map app :StoreService)
-                          :read-store
-                          store-svc/store-service-fn->varargs)
+     (let [{{:keys [read-store]} :StoreService} (app/service-graph app)
 
            duplicated-indicators (->> (mk-indicator 0)
                                       (repeat (* 10 core/find-by-external-ids-limit))

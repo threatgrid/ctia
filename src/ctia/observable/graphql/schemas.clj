@@ -14,6 +14,7 @@
     [pagination :as pagination]
     [resolvers :as resolvers]]
    [ctia.store :refer [calculate-verdict]]
+   [ctia.store-service.helpers :as store-svc.hlp]
    [ctia.verdict.graphql.schemas :as verdict]
    [ctim.schemas.common :as ctim-common-schema]
    [flanders.utils :as fu]
@@ -27,7 +28,8 @@
      {:keys [read-store]} :StoreService
      :as services}
     :services} :- GraphQLRuntimeContext]
-  (some-> (read-store :judgement
+  (some-> (store-svc.hlp/invoke-varargs
+           read-store :judgement
                       calculate-verdict
                       {:type observable-type :value observable-value}
                       ident)

@@ -2,7 +2,8 @@
   (:require [schema.core :as s]
             [schema-tools.core :as st]
             [ctia.schemas.core :as csc]
-            [ctia.entity.entities :refer [all-entities]]))
+            [ctia.entity.entities :refer [all-entities]]
+            [ctia.store-service.schemas :refer [ReadStoreFn]]))
 
 (s/defschema EntityImportResult
   (st/optional-keys
@@ -54,6 +55,6 @@
          BundleExportOptions))
 
 (s/defschema FindByExternalIdsServices
-  {:StoreService {:read-store (s/pred ifn?)
+  {:StoreService {:read-store ReadStoreFn
                   s/Keyword s/Any}
    s/Keyword s/Any})

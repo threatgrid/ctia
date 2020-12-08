@@ -19,6 +19,7 @@
               list-judgements-by-observable
               list-records
               list-sightings-by-observables]]
+            [ctia.store-service.helpers :as store-svc.hlp]
             [ctim.domain.id :as id]
             [ductile.pagination :as pag]
             [ring.swagger.schema :refer [describe]]
@@ -46,7 +47,8 @@
         :capabilities capabilities
         :auth-identity identity
         :identity-map identity-map
-        (or (some-> (read-store :judgement
+        (or (some-> (store-svc.hlp/invoke-varargs
+                     read-store :judgement
                                 calculate-verdict
                                 {:type observable_type
                                  :value observable_value}
@@ -67,7 +69,8 @@
         :capabilities capabilities
         :auth-identity identity
         :identity-map identity-map
-        (-> (read-store :judgement
+        (-> (store-svc.hlp/invoke-varargs
+             read-store :judgement
                         list-judgements-by-observable
                         {:type observable_type
                          :value observable_value}
@@ -92,7 +95,8 @@
         :identity-map identity-map
         (paginated-ok
          (let [http-show (p/get-http-show services)
-               judgements (:data (read-store
+               judgements (:data (store-svc.hlp/invoke-varargs
+                                  read-store
                                   :judgement
                                   list-judgements-by-observable
                                   {:type observable_type
@@ -103,7 +107,8 @@
                                   (map :id)
                                   (map #(id/short-id->id :judgement % http-show))
                                   (map id/long-id))
-               relationships (:data (read-store
+               relationships (:data (store-svc.hlp/invoke-varargs
+                                     read-store
                                      :relationship
                                      list-records
                                      {:all-of {:source_ref judgement-ids}}
@@ -132,7 +137,8 @@
         :identity-map identity-map
         :return PartialSightingList
         :summary "Returns Sightings associated with the specified observable."
-        (-> (read-store :sighting
+        (-> (store-svc.hlp/invoke-varargs
+             read-store :sighting
                         list-sightings-by-observables
                         [{:type observable_type
                           :value observable_value}]
@@ -157,7 +163,8 @@
         :identity-map identity-map
         (paginated-ok
          (let [http-show (p/get-http-show services)
-               sightings (:data (read-store :sighting
+               sightings (:data (store-svc.hlp/invoke-varargs
+                                 read-store :sighting
                                             list-sightings-by-observables
                                             [{:type observable_type
                                               :value observable_value}]
@@ -167,7 +174,8 @@
                                  (map :id)
                                  (map #(id/short-id->id :sighting % http-show))
                                  (map id/long-id))
-               relationships (:data (read-store
+               relationships (:data (store-svc.hlp/invoke-varargs
+                                     read-store
                                      :relationship
                                      list-records
                                      {:all-of {:source_ref sighting-ids}}
@@ -199,7 +207,8 @@
         :identity-map identity-map
         (paginated-ok
          (let [http-show (p/get-http-show services)
-               sightings (:data (read-store :sighting
+               sightings (:data (store-svc.hlp/invoke-varargs
+                                 read-store :sighting
                                             list-sightings-by-observables
                                             [{:type observable_type
                                               :value observable_value}]
@@ -209,7 +218,8 @@
                                  (map :id)
                                  (map #(id/short-id->id :sighting % http-show))
                                  (map id/long-id))
-               relationships (:data (read-store
+               relationships (:data (store-svc.hlp/invoke-varargs
+                                     read-store
                                      :relationship
                                      list-records
                                      {:all-of {:source_ref sighting-ids}}

@@ -29,6 +29,7 @@
             [ctia.stores.es
              [mapping :as em]
              [store :refer [def-es-store]]]
+            [ctia.store-service.helpers :as store-svc.hlp]
             [ctim.schemas
              [incident :as is]
              [vocabularies :as vocs]]
@@ -112,13 +113,15 @@
                        (un-store
                         (flows/patch-flow
                          :services services
-                         :get-fn #(read-store :incident
+                         :get-fn #(store-svc.hlp/invoke-varargs
+                                   read-store :incident
                                               read-record
                                               %
                                               identity-map
                                               {})
                          :realize-fn realize-incident
-                         :update-fn #(write-store :incident
+                         :update-fn #(store-svc.hlp/invoke-varargs
+                                      write-store :incident
                                                   update-record
                                                   (:id %)
                                                   %

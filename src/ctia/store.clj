@@ -1,5 +1,6 @@
 (ns ctia.store
   (:require [ctia.schemas.core :refer [APIHandlerServices]]
+            [ctia.store-service.helpers :as store-svc.hlp]
             [schema.core :as s]))
 
 (defprotocol IStore
@@ -70,13 +71,13 @@
    filters
    identity-map
    params
-   {{:keys [read-store]} :StoreService
-    :as _services_} :- APIHandlerServices]
+   {{:keys [read-store]} :StoreService} :- APIHandlerServices]
   (loop [query-params params
          results []]
     (let [{:keys [data
                   paging]}
-          (read-store entity
+          (store-svc.hlp/invoke-varargs
+           read-store entity
                       list-fn
                       filters
                       identity-map

@@ -30,6 +30,7 @@
                        update-record
                        list-records
                        delete-search]]
+   [ctia.store-service.helpers :as store-svc.hlp]
    [ctia.schemas.search-agg :refer [HistogramParams
                                     CardinalityParams
                                     TopnParams
@@ -72,13 +73,15 @@
            (flows/patch-flow
             :services services
             :get-fn (fn [_]
-                      (read-store entity
+                      (store-svc.hlp/invoke-varargs
+                       read-store entity
                                   read-record
                                   id
                                   identity-map
                                   {}))
             :realize-fn realize-fn
-            :update-fn #(write-store entity
+            :update-fn #(store-svc.hlp/invoke-varargs
+                         write-store entity
                                      update-record
                                      (:id %)
                                      (cond-> %
@@ -201,7 +204,8 @@
                     :services services
                     :entity-type entity
                     :realize-fn realize-fn
-                    :store-fn #(write-store entity
+                    :store-fn #(store-svc.hlp/invoke-varargs
+                                write-store entity
                                             create-record
                                             %
                                             identity-map
@@ -229,13 +233,15 @@
               (if-let [updated-rec
                        (-> (flows/update-flow
                             :services services
-                            :get-fn #(read-store entity
+                            :get-fn #(store-svc.hlp/invoke-varargs
+                                      read-store entity
                                                  read-record
                                                  %
                                                  identity-map
                                                  {})
                             :realize-fn realize-fn
-                            :update-fn #(write-store entity
+                            :update-fn #(store-svc.hlp/invoke-varargs
+                                         write-store entity
                                                      update-record
                                                      (:id %)
                                                      %
@@ -265,13 +271,15 @@
                 (if-let [updated-rec
                          (-> (flows/patch-flow
                               :services services
-                              :get-fn #(read-store entity
+                              :get-fn #(store-svc.hlp/invoke-varargs
+                                        read-store entity
                                                    read-record
                                                    %
                                                    identity-map
                                                    {})
                               :realize-fn realize-fn
-                              :update-fn #(write-store entity
+                              :update-fn #(store-svc.hlp/invoke-varargs
+                                           write-store entity
                                                        update-record
                                                        (:id %)
                                                        %
@@ -301,7 +309,8 @@
               :capabilities capabilities
               :auth-identity identity
               :identity-map identity-map
-              (-> (read-store entity
+              (-> (store-svc.hlp/invoke-varargs
+                   read-store entity
                               list-records
                               {:all-of {:external_ids external_id}}
                               identity-map
@@ -323,7 +332,8 @@
              :description (capabilities->description search-capabilities)
              :capabilities search-capabilities
              :query [params search-q-params]
-             (-> (read-store
+             (-> (store-svc.hlp/invoke-varargs
+                  read-store
                   entity
                   query-string-search
                   (search-query date-field params)
@@ -338,7 +348,8 @@
              :description (capabilities->description search-capabilities)
              :capabilities search-capabilities
              :query [params search-filters]
-             (ok (read-store
+             (ok (store-svc.hlp/invoke-varargs
+                  read-store
                   entity
                   query-string-count
                   (search-query date-field params)
@@ -368,13 +379,15 @@
                  (forbidden {:error "you must provide at least one of from, to, query or any field filter."})
                  (ok
                   (if (:REALLY_DELETE_ALL_THESE_ENTITIES params)
-                    (write-store
+                    (store-svc.hlp/invoke-varargs
+                     write-store
                      entity
                      delete-search
                      query
                      identity-map
                      (wait_for->refresh (:wait_for params)))
-                    (read-store
+                    (store-svc.hlp/invoke-varargs
+                     read-store
                      entity
                      query-string-count
                      query
@@ -396,7 +409,8 @@
                                                     coerce-date-range)
                              agg-q (st/assoc (st/select-schema params HistogramParams)
                                              :agg-type :histogram)]
-                         (-> (read-store
+                         (-> (store-svc.hlp/invoke-varargs
+                              read-store
                               entity
                               aggregate
                               search-q
@@ -414,7 +428,8 @@
                                                     coerce-date-range)
                              agg-q (st/assoc (st/select-schema params TopnParams)
                                              :agg-type :topn)]
-                         (-> (read-store
+                         (-> (store-svc.hlp/invoke-varargs
+                              read-store
                               entity
                               aggregate
                               search-q
@@ -432,7 +447,8 @@
                                                     coerce-date-range)
                              agg-q (st/assoc (st/select-schema params CardinalityParams)
                                              :agg-type :cardinality)]
-                         (-> (read-store
+                         (-> (store-svc.hlp/invoke-varargs
+                              read-store
                               entity
                               aggregate
                               search-q
@@ -450,7 +466,8 @@
             :capabilities capabilities
             :auth-identity identity
             :identity-map identity-map
-            (if-let [rec (read-store entity
+            (if-let [rec (store-svc.hlp/invoke-varargs
+                          read-store entity
                                      read-record
                                      id
                                      identity-map
@@ -473,12 +490,14 @@
                :identity-map identity-map
                (if (flows/delete-flow
                     :services services
-                    :get-fn #(read-store entity
+                    :get-fn #(store-svc.hlp/invoke-varargs
+                              read-store entity
                                          read-record
                                          %
                                          identity-map
                                          {})
-                    :delete-fn #(write-store entity
+                    :delete-fn #(store-svc.hlp/invoke-varargs
+                                 write-store entity
                                              delete-record
                                              %
                                              identity-map

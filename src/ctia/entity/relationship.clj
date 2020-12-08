@@ -14,6 +14,7 @@
             [ctia.schemas
              [core :refer [APIHandlerServices Reference TLP]]
              [sorting :as sorting]]
+            [ctia.store-service.helpers :as store-svc.hlp]
             [ctia.stores.es
              [mapping :as em]
              [store :refer [def-es-store]]]
@@ -143,7 +144,8 @@
                                      :source-type-kw source-type-kw})))
                 _ (require-capability! additional-required-capabilities
                                        identity)
-                incident (read-store :incident
+                incident (store-svc.hlp/invoke-varargs
+                          read-store :incident
                                      read-record
                                      id
                                      identity-map
@@ -156,7 +158,8 @@
                                   :casebook_id :casebook
                                   :investigation_id :investigation)
                 source (when source-short-id
-                         (read-store source-store-kw
+                         (store-svc.hlp/invoke-varargs
+                          read-store source-store-kw
                                      read-record
                                      source-short-id
                                      identity-map
@@ -186,7 +189,8 @@
                          :services services
                          :entity-type :relationship
                          :realize-fn rs/realize-relationship
-                         :store-fn #(write-store :relationship
+                         :store-fn #(store-svc.hlp/invoke-varargs
+                                     write-store :relationship
                                                  create-record
                                                  %
                                                  identity-map
