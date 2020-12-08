@@ -33,23 +33,23 @@
   (:import java.util.UUID))
 
 (s/defschema FlowMap
-  {:create-event-fn (s/pred fn?)
-   :entities [{s/Keyword s/Any}]
-   :entity-type s/Keyword
-   (s/optional-key :events) [{s/Keyword s/Any}]
-   :flow-type (s/enum :create :update :delete)
-   :services APIHandlerServices
-   :identity (s/protocol auth/IIdentity)
-   (s/optional-key :long-id-fn) (s/maybe (s/=> s/Any s/Any))
-   (s/optional-key :prev-entity) (s/maybe {s/Keyword s/Any})
-   (s/optional-key :partial-entity) (s/maybe {s/Keyword s/Any})
-   (s/optional-key :patch-operation) (s/enum :add :remove :replace)
-   (s/optional-key :realize-fn) RealizeFn
-   (s/optional-key :results) [s/Bool]
-   (s/optional-key :spec) (s/maybe s/Keyword)
-   (s/optional-key :tempids) (s/maybe TempIDs)
+  {:create-event-fn                    (s/pred fn?)
+   :entities                           [{s/Keyword s/Any}]
+   :entity-type                        s/Keyword
+   (s/optional-key :events)            [{s/Keyword s/Any}]
+   :flow-type                          (s/enum :create :update :delete)
+   :services                           APIHandlerServices
+   :identity                           (s/protocol auth/IIdentity)
+   (s/optional-key :long-id-fn)        (s/maybe (s/=> s/Any s/Any))
+   (s/optional-key :prev-entity)       (s/maybe {s/Keyword s/Any})
+   (s/optional-key :partial-entity)    (s/maybe {s/Keyword s/Any})
+   (s/optional-key :patch-operation)   (s/enum :add :remove :replace)
+   (s/optional-key :realize-fn)        RealizeFn
+   (s/optional-key :results)           [s/Bool]
+   (s/optional-key :spec)              (s/maybe s/Keyword)
+   (s/optional-key :tempids)           (s/maybe TempIDs)
    (s/optional-key :enveloped-result?) (s/maybe s/Bool)
-   :store-fn (s/=> s/Any s/Any)})
+   :store-fn                           (s/=> s/Any s/Any)})
 
 (defn- find-id
   "Lookup an ID in a given entity.  Parse it, because it might be a
@@ -243,8 +243,9 @@
                (map (fn [entity]
                       (try
                         (if (= :update flow-type)
-                          (create-event-fn entity prev-entity
-                                           (make-id "event"))
+                          (-> entity
+                              (assoc :owner (auth/login identity))
+                              (create-event-fn prev-entity (make-id "event")))
                           (create-event-fn entity (make-id "event")))
                         (catch Throwable e
                           (log/error "Could not create event" e)
