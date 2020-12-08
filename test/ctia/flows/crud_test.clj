@@ -1,5 +1,6 @@
 (ns ctia.flows.crud-test
   (:require [clj-momo.lib.map :refer [deep-merge-with]]
+            [clj-momo.test-helpers.core]
             [clojure.test :refer [deftest testing is]]
             [ctia.auth.threatgrid :refer [map->Identity]]
             [ctia.flows.crud :as flows.crud]
