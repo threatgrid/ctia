@@ -12,7 +12,7 @@
   (assoc context
          :stores-atom (atom empty-stores)))
 
-(s/defn all-stores :- StoresAtom
+(s/defn all-stores :- Stores
   [{:keys [stores-atom]} :- StoreServiceCtx]
   @stores-atom)
 
