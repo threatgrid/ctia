@@ -41,14 +41,12 @@
                                                 field-selection)))]
     (log/debugf "Search entity %s graphql args %s" entity-type args)
 
-    (some-> (store-svc.hlp/invoke-varargs
-             read-store
-             entity-type
-             query-string-search
-             {:query-string query
-              :filter-map (remove-map-empty-values filtermap)}
-             ident
-             params)
+    (some-> (read-store entity-type)
+            (query-string-search
+              {:query-string query
+               :filter-map (remove-map-empty-values filtermap)}
+              ident
+              params)
             with-long-id-fn
             un-store-page
             (pagination/result->connection-response paging-params))))
@@ -81,12 +79,11 @@
                 entity-type-kw
                 id
                 field-selection)
-    (some-> (store-svc.hlp/invoke-varargs
-             read-store entity-type-kw
-                        read-fn
-                        id
-                        ident
-                        {:fields (concat default-fields field-selection)})
+    (some-> (read-store entity-type-kw)
+            (read-fn
+              id
+              ident
+              {:fields (concat default-fields field-selection)})
             (with-long-id services)
             un-store)))
 
@@ -112,12 +109,11 @@
                  field-selection (assoc :fields
                                         (concat default-fields field-selection)))]
     (log/debug "Search feedback for entity id: " entity-id)
-    (some-> (store-svc.hlp/invoke-varargs
-             read-store :feedback
-                        list-records
-                        {:all-of {:entity_id entity-id}}
-                        (:ident context)
-                        params)
+    (some-> (read-store :feedback)
+            (list-records
+              {:all-of {:entity_id entity-id}}
+              (:ident context)
+              params)
             un-store-page
             (pagination/result->connection-response paging-params)))))
 
@@ -136,12 +132,11 @@
         params (cond-> (select-keys paging-params [:limit :offset :sort_by])
                  field-selection (assoc :fields
                                         (concat default-fields field-selection)))]
-    (some-> (store-svc.hlp/invoke-varargs
-             read-store :judgement
-                        list-judgements-by-observable
-                        observable
-                        (:ident context)
-                        params)
+    (some-> (read-store :judgement)
+            (list-judgements-by-observable
+              observable
+              (:ident context)
+              params)
             (page-with-long-id services)
             un-store
             (pagination/result->connection-response paging-params)))))
@@ -161,12 +156,11 @@
         params (cond-> (select-keys paging-params [:limit :offset :sort_by])
                  field-selection (assoc :fields
                                         (concat default-fields field-selection)))]
-    (some-> (store-svc.hlp/invoke-varargs
-             read-store :sighting
-                        list-sightings-by-observables
-                        [observable]
-                        (:ident context)
-                        params)
+    (some-> (read-store :sighting)
+            (list-sightings-by-observables
+              [observable]
+              (:ident context)
+              params)
             (page-with-long-id services)
             un-store
             (pagination/result->connection-response paging-params)))))
