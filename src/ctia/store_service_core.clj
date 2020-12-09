@@ -30,7 +30,7 @@
         [s :as ss] (get stores store)
         _ (assert (seq ss)
                   (str "No stores in " store ", only: " (-> stores keys sort vec)))
-        _ (assert s [store (find store stores) stores read-fn])]
+        _ (assert s [store (find store stores) stores])]
     s))
 
 (s/defn ^:private get-store-types
