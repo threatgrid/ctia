@@ -15,7 +15,7 @@
 
 (s/defschema Stores
   "A map of stores with various backends indexed by their identifiers.
-  Currently, the the vals of this map are always length 1: the ES store."
+  Currently, the vals of this map are always length 1: the ES store."
   {StoreID [Store]})
 
 (s/defschema AllStoresFn
