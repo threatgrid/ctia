@@ -386,14 +386,15 @@
     {:keys [read-store]} :StoreService} :- APIHandlerServices]
   (let [filter-map (relationships-filters id filters)
         max-relationships (get-in-config [:ctia :http :bundle :export :max-relationships]
-                                                      1000)]
-    (some-> (:data (-> (read-store :relationship)
-                       (list-fn
-                         filter-map
-                         identity-map
-                         {:limit max-relationships
-                          :sort_by "timestamp"
-                          :sort_order "desc"})))
+                                         1000)]
+    (some-> (read-store :relationship)
+            (list-fn
+              filter-map
+              identity-map
+              {:limit max-relationships
+               :sort_by "timestamp"
+               :sort_order "desc"})
+            :data
             ent/un-store-all)))
 
 (s/defn fetch-record
