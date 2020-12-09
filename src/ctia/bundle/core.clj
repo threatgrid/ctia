@@ -17,7 +17,6 @@
     [BundleImportData BundleImportResult EntityImportData FindByExternalIdsServices]]
    [ctia.domain.entities :as ent :refer [with-long-id]]
    [ctia.schemas.core :refer [APIHandlerServices HTTPShowServices NewBundle TempIDs]]
-   [ctia.store-service.helpers :as store-svc.hlp]
    [ctia.store-service.schemas :refer [ReadStoreFn]]
    [ctim.domain.id :as id]
    [schema.core :as s]))
@@ -86,12 +85,11 @@
     (let [query {:all-of {:external_ids ext-ids}}
           paging {:limit find-by-external-ids-limit}
           {results :data
-           {next-page :next} :paging} (store-svc.hlp/invoke-varargs
-                                       read-store entity-type
-                                                  list-fn
-                                                  query
-                                                  (auth/ident->map auth-identity)
-                                                  paging)
+           {next-page :next} :paging} (-> (read-store entity-type)
+                                          (list-fn
+                                            query
+                                            (auth/ident->map auth-identity)
+                                            paging))
           acc-entities (into entities results)
           matched-ext-ids (into #{} (mapcat :external_ids results))
           remaining-ext-ids (remove matched-ext-ids ext-ids)]
@@ -192,7 +190,7 @@
 
 (s/defschema WithExistingEntitiesServices
   {:StoreService {;; for `find-by-external-ids`
-                  :read-store (s/pred ifn?)
+                  :read-store ReadStoreFn
                   s/Keyword s/Any}
    :CTIAHTTPServerService {;; for `with-existing-entity`
                            :get-port (s/=> (s/constrained s/Int pos?))
@@ -385,19 +383,17 @@
    identity-map
    filters
    {{:keys [get-in-config]} :ConfigService
-    {:keys [read-store]} :StoreService
-    :as _services_} :- APIHandlerServices]
+    {:keys [read-store]} :StoreService} :- APIHandlerServices]
   (let [filter-map (relationships-filters id filters)
         max-relationships (get-in-config [:ctia :http :bundle :export :max-relationships]
                                                       1000)]
-    (some-> (:data (store-svc.hlp/invoke-varargs
-                    read-store :relationship
-                               list-fn
-                               filter-map
-                               identity-map
-                               {:limit max-relationships
-                                :sort_by "timestamp"
-                                :sort_order "desc"}))
+    (some-> (:data (-> (read-store :relationship)
+                       (list-fn
+                         filter-map
+                         identity-map
+                         {:limit max-relationships
+                          :sort_by "timestamp"
+                          :sort_order "desc"})))
             ent/un-store-all)))
 
 (s/defn fetch-record
@@ -406,12 +402,11 @@
    {{:keys [read-store]} :StoreService
     :as services} :- APIHandlerServices]
   (when-let [entity-type (ent/id->entity-type id services)]
-    (store-svc.hlp/invoke-varargs
-     read-store (keyword entity-type)
-                read-fn
-                id
-                identity-map
-                {})))
+    (-> (read-store (keyword entity-type))
+        (read-fn
+          id
+          identity-map
+          {}))))
 
 (s/defn export-entities
   "Given an entity id, export it along

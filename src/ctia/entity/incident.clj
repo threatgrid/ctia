@@ -113,12 +113,11 @@
                        (un-store
                         (flows/patch-flow
                          :services services
-                         :get-fn #(store-svc.hlp/invoke-varargs
-                                   read-store :incident
-                                              read-record
-                                              %
-                                              identity-map
-                                              {})
+                         :get-fn #(-> (read-store :incident)
+                                      (read-record
+                                        %
+                                        identity-map
+                                        {}))
                          :realize-fn realize-incident
                          :update-fn #(store-svc.hlp/invoke-varargs
                                       write-store :incident

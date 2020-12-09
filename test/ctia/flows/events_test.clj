@@ -83,15 +83,14 @@
       (is (= 201 judgement-2-status))
       (is (= 201 judgement-3-status))
 
-      (let [events (:data (store-svc.hlp/invoke-varargs
-                           read-store :event
-                                            store/list-events
-                                            {:all-of {:owner "Unknown"}}
-                                            {:login "Unknown"
-                                             :groups ["Administrators"]}
-                                            {:sort_by :timestamp
-                                             :sort_order :asc}))]
-
+      (let [events (-> (read-store :event)
+                       (store/list-events
+                         {:all-of {:owner "Unknown"}}
+                         {:login "Unknown"
+                          :groups ["Administrators"]}
+                         {:sort_by :timestamp
+                          :sort_order :asc})
+                       :data)]
         (testing "variable event fields have correct type"
           (doseq [event events]
             (is (str/starts-with? (:id event) "event-"))

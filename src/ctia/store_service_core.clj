@@ -2,7 +2,8 @@
   (:require [clojure.string :as str]
             [ctia.properties :as p]
             [ctia.store :refer [empty-stores close]]
-            [ctia.store-service.schemas :refer [Store Stores StoresAtom StoreID StoreServiceCtx]]
+            [ctia.store-service.schemas :refer [Store Stores StoresAtom StoreID
+                                                StoreServiceCtx WriteStoreFnOptions]]
             [ctia.stores.es.init :as es-init]
             [schema.core :as s]
             [schema-tools.core :as st]))
@@ -18,14 +19,13 @@
 
 (s/defn write-store [ctx :- StoreServiceCtx
                      store :- StoreID
-                     write-fn :- (s/=> Store Store)]
-  (first (doall (map write-fn (store (all-stores ctx))))))
+                     write-fn :- (s/=> Store Store)
+                     opt :- WriteStoreFnOptions]
+  (first (doall (map #(apply write-fn % (:args opt)) (store (all-stores ctx))))))
 
-(s/defn read-store :- (s/named s/Any 'read-fn-result)
+(s/defn read-store
   [ctx :- StoreServiceCtx
-   store :- StoreID
-   read-fn :- (s/=> (s/named s/Any 'read-fn-result)
-                    Store)]
+   store :- StoreID]
   (let [stores (all-stores ctx)
         [s :as ss] (get stores store)
         _ (assert (seq ss)

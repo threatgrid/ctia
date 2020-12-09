@@ -76,12 +76,11 @@
          results []]
     (let [{:keys [data
                   paging]}
-          (store-svc.hlp/invoke-varargs
-           read-store entity
-                      list-fn
-                      filters
-                      identity-map
-                      query-params)]
+          (-> (read-store entity)
+              (list-fn
+                filters
+                identity-map
+                query-params))]
       (if-let [next-params (:next paging)]
         (recur next-params (into results data))
         (into results data)))))

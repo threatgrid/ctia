@@ -66,12 +66,11 @@
          :capabilities :read-feedback
          :auth-identity identity
          :identity-map identity-map
-         (-> (store-svc.hlp/invoke-varargs
-              read-store :feedback
-                         list-records
-                         {:all-of (select-keys params [:entity_id])}
-                         identity-map
-                         (dissoc params :entity_id))
+         (-> (read-store :feedback)
+             (list-records
+               {:all-of (select-keys params [:entity_id])}
+               identity-map
+               (dissoc params :entity_id))
              (page-with-long-id services)
              un-store-page
              paginated-ok))))

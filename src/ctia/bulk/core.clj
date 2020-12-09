@@ -60,10 +60,8 @@
   "return the create function provided an entity type key"
   [k auth-identity params
    {{:keys [read-store]} :StoreService} :- ReadFnServices]
-  #(store-svc.hlp/invoke-varargs
-    read-store
-    k store/read-record
-    % (auth/ident->map auth-identity) params))
+  #(-> (read-store k)
+       (store/read-record % (auth/ident->map auth-identity) params))) 
 
 (s/defn create-entities
   "Create many entities provided their type and returns a list of ids"

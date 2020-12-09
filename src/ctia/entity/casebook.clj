@@ -146,12 +146,11 @@
              :identity-map identity-map
              (if-let [res (flows/patch-flow
                             :services services
-                            :get-fn #(store-svc.hlp/invoke-varargs
-                                      read-store :casebook
-                                                 read-record
-                                                 %
-                                                 identity-map
-                                                 {})
+                            :get-fn #(-> (read-store :casebook)
+                                         (read-record
+                                           %
+                                           identity-map
+                                           {}))
                             :realize-fn realize-casebook
                             :update-fn #(store-svc.hlp/invoke-varargs
                                          write-store :casebook
@@ -184,12 +183,11 @@
                      :identity-map identity-map
                      (if-let [res (flows/patch-flow
                                     :services services
-                                    :get-fn #(store-svc.hlp/invoke-varargs
-                                              read-store :casebook
-                                                         read-record
-                                                         %
-                                                         identity-map
-                                                         {})
+                                    :get-fn #(-> (read-store :casebook)
+                                                 (read-record
+                                                   %
+                                                   identity-map
+                                                   {}))
                                     :realize-fn realize-casebook
                                     :update-fn #(store-svc.hlp/invoke-varargs
                                                  write-store :casebook
@@ -223,12 +221,11 @@
                      :identity-map identity-map
                      (if-let [res (flows/patch-flow
                                     :services services
-                                    :get-fn #(store-svc.hlp/invoke-varargs
-                                              read-store :casebook
-                                                         read-record
-                                                         %
-                                                         identity-map
-                                                         {})
+                                    :get-fn #(-> (read-store :casebook)
+                                                 (read-record
+                                                   %
+                                                   identity-map
+                                                   {}))
                                     :realize-fn realize-casebook
                                     :update-fn #(store-svc.hlp/invoke-varargs
                                                  write-store :casebook
@@ -262,12 +259,11 @@
                      :identity-map identity-map
                      (if-let [res (flows/patch-flow
                                    :services services
-                                   :get-fn #(store-svc.hlp/invoke-varargs
-                                             read-store :casebook
-                                                        read-record
-                                                        %
-                                                        identity-map
-                                                        {})
+                                   :get-fn #(-> (read-store :casebook)
+                                                (read-record
+                                                  %
+                                                  identity-map
+                                                  {}))
                                    :realize-fn realize-casebook
                                    :update-fn #(store-svc.hlp/invoke-varargs
                                                 write-store :casebook

@@ -73,12 +73,11 @@
            (flows/patch-flow
             :services services
             :get-fn (fn [_]
-                      (store-svc.hlp/invoke-varargs
-                       read-store entity
-                                  read-record
-                                  id
-                                  identity-map
-                                  {}))
+                      (-> (read-store entity)
+                          (read-record
+                            id
+                            identity-map
+                            {})))
             :realize-fn realize-fn
             :update-fn #(store-svc.hlp/invoke-varargs
                          write-store entity
@@ -233,12 +232,11 @@
               (if-let [updated-rec
                        (-> (flows/update-flow
                             :services services
-                            :get-fn #(store-svc.hlp/invoke-varargs
-                                      read-store entity
-                                                 read-record
-                                                 %
-                                                 identity-map
-                                                 {})
+                            :get-fn #(-> (read-store entity)
+                                         (read-record
+                                           %
+                                           identity-map
+                                           {}))
                             :realize-fn realize-fn
                             :update-fn #(store-svc.hlp/invoke-varargs
                                          write-store entity
@@ -271,12 +269,11 @@
                 (if-let [updated-rec
                          (-> (flows/patch-flow
                               :services services
-                              :get-fn #(store-svc.hlp/invoke-varargs
-                                        read-store entity
-                                                   read-record
-                                                   %
-                                                   identity-map
-                                                   {})
+                              :get-fn #(-> (read-store entity)
+                                           (read-record
+                                             %
+                                             identity-map
+                                             {}))
                               :realize-fn realize-fn
                               :update-fn #(store-svc.hlp/invoke-varargs
                                            write-store entity
@@ -309,12 +306,11 @@
               :capabilities capabilities
               :auth-identity identity
               :identity-map identity-map
-              (-> (store-svc.hlp/invoke-varargs
-                   read-store entity
-                              list-records
-                              {:all-of {:external_ids external_id}}
-                              identity-map
-                              q)
+              (-> (read-store entity)
+                  (list-records
+                    {:all-of {:external_ids external_id}}
+                    identity-map
+                    q)
                   (page-with-long-id services)
                   un-store-page
                   paginated-ok))))
@@ -332,13 +328,11 @@
              :description (capabilities->description search-capabilities)
              :capabilities search-capabilities
              :query [params search-q-params]
-             (-> (store-svc.hlp/invoke-varargs
-                  read-store
-                  entity
-                  query-string-search
-                  (search-query date-field params)
-                  identity-map
-                  (select-keys params search-options))
+             (-> (read-store entity)
+                 (query-string-search
+                   (search-query date-field params)
+                   identity-map
+                   (select-keys params search-options))
                  (page-with-long-id services)
                  un-store-page
                  paginated-ok))
@@ -348,12 +342,10 @@
              :description (capabilities->description search-capabilities)
              :capabilities search-capabilities
              :query [params search-filters]
-             (ok (store-svc.hlp/invoke-varargs
-                  read-store
-                  entity
-                  query-string-count
-                  (search-query date-field params)
-                  identity-map)))
+             (ok (-> (read-store entity)
+                     (query-string-count
+                       (search-query date-field params)
+                       identity-map))))
            (DELETE "/" []
              :capabilities delete-search-capabilities
              :description (capabilities->description delete-search-capabilities)
@@ -386,12 +378,10 @@
                      query
                      identity-map
                      (wait_for->refresh (:wait_for params)))
-                    (store-svc.hlp/invoke-varargs
-                     read-store
-                     entity
-                     query-string-count
-                     query
-                     identity-map)))))))))
+                    (-> (read-store entity)
+                        (query-string-count
+                          query
+                          identity-map))))))))))
      (when can-aggregate?
        (let [capabilities search-capabilities]
          (context "/metric" []
@@ -409,13 +399,11 @@
                                                     coerce-date-range)
                              agg-q (st/assoc (st/select-schema params HistogramParams)
                                              :agg-type :histogram)]
-                         (-> (store-svc.hlp/invoke-varargs
-                              read-store
-                              entity
-                              aggregate
-                              search-q
-                              agg-q
-                              identity-map)
+                         (-> (read-store entity)
+                             (aggregate
+                               search-q
+                               agg-q
+                               identity-map)
                              (format-agg-result :histogram aggregate-on search-q)
                              ok)))
                   (GET "/topn" []
@@ -428,13 +416,11 @@
                                                     coerce-date-range)
                              agg-q (st/assoc (st/select-schema params TopnParams)
                                              :agg-type :topn)]
-                         (-> (store-svc.hlp/invoke-varargs
-                              read-store
-                              entity
-                              aggregate
-                              search-q
-                              agg-q
-                              identity-map)
+                         (-> (read-store entity)
+                             (aggregate
+                               search-q
+                               agg-q
+                               identity-map)
                              (format-agg-result :topn aggregate-on search-q)
                              ok)))
                   (GET "/cardinality" []
@@ -447,13 +433,11 @@
                                                     coerce-date-range)
                              agg-q (st/assoc (st/select-schema params CardinalityParams)
                                              :agg-type :cardinality)]
-                         (-> (store-svc.hlp/invoke-varargs
-                              read-store
-                              entity
-                              aggregate
-                              search-q
-                              agg-q
-                              identity-map)
+                         (-> (read-store entity)
+                             (aggregate
+                               search-q
+                               agg-q
+                               identity-map)
                              (format-agg-result :cardinality aggregate-on search-q)
                              ok))))))
      (let [capabilities get-capabilities]
@@ -466,12 +450,11 @@
             :capabilities capabilities
             :auth-identity identity
             :identity-map identity-map
-            (if-let [rec (store-svc.hlp/invoke-varargs
-                          read-store entity
-                                     read-record
-                                     id
-                                     identity-map
-                                     params)]
+            (if-let [rec (-> (read-store entity)
+                             (read-record
+                               id
+                               identity-map
+                               params))]
               (-> rec
                   (with-long-id services)
                   un-store
@@ -490,12 +473,11 @@
                :identity-map identity-map
                (if (flows/delete-flow
                     :services services
-                    :get-fn #(store-svc.hlp/invoke-varargs
-                              read-store entity
-                                         read-record
-                                         %
-                                         identity-map
-                                         {})
+                    :get-fn #(-> (read-store entity)
+                                 (read-record
+                                   %
+                                   identity-map
+                                   {}))
                     :delete-fn #(store-svc.hlp/invoke-varargs
                                  write-store entity
                                              delete-record

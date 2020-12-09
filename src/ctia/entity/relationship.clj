@@ -144,12 +144,11 @@
                                      :source-type-kw source-type-kw})))
                 _ (require-capability! additional-required-capabilities
                                        identity)
-                incident (store-svc.hlp/invoke-varargs
-                          read-store :incident
-                                     read-record
-                                     id
-                                     identity-map
-                                     {})
+                incident (-> (read-store :incident)
+                             (read-record
+                               id
+                               identity-map
+                               {}))
                 source-short-id (-> link-req
                                     source-type-kw
                                     long-id->id
@@ -158,12 +157,11 @@
                                   :casebook_id :casebook
                                   :investigation_id :investigation)
                 source (when source-short-id
-                         (store-svc.hlp/invoke-varargs
-                          read-store source-store-kw
-                                     read-record
-                                     source-short-id
-                                     identity-map
-                                     {}))
+                         (-> (read-store source-store-kw)
+                             (read-record
+                               source-short-id
+                               identity-map
+                               {})))
                 target-ref (short-id->long-id id services)]
             (cond
               (or (not incident)

@@ -28,11 +28,10 @@
      {:keys [read-store]} :StoreService
      :as services}
     :services} :- GraphQLRuntimeContext]
-  (some-> (store-svc.hlp/invoke-varargs
-           read-store :judgement
-                      calculate-verdict
-                      {:type observable-type :value observable-value}
-                      ident)
+  (some-> (read-store :judgement)
+          (calculate-verdict
+            {:type observable-type :value observable-value}
+            ident)
           (update :judgement_id ctia-entities/short-id->long-id services)))
 
 (def observable-fields

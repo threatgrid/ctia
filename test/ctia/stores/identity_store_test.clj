@@ -22,6 +22,5 @@
                                                     :groups ["foogroup"]
                                                     :capabilities #{:read-actor}
                                                     :role "admin"})))
-       (is (nil? (read-store :identity
-                             (fn [store]
-                               (store/read-identity store "foo"))))))))))
+       (is (nil? (-> (read-store :identity)
+                     (store/read-identity "foo")))))))))

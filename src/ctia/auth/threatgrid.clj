@@ -9,7 +9,6 @@
     [set :as set]
     [string :as str]]
    [clojure.core.memoize :as memo]
-   [ctia.store-service.helpers :as store-svc.hlp]
    [ctia.store-service.schemas :refer [ReadStoreFn]]
    [ctia
     [auth :as auth]
@@ -58,8 +57,8 @@
 (s/defn lookup-stored-identity
   [login
    read-store :- ReadStoreFn]
-  (store-svc.hlp/invoke-varargs
-   read-store :identity store/read-identity login))
+  (-> (read-store :identity)
+      (store/read-identity login))) 
 
 (defprotocol ThreatgridAuthWhoAmIURLService
   (get-whoami-url [this] "Return the current WhoAmI URL"))
