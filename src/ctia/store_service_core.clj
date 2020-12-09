@@ -31,7 +31,7 @@
         _ (assert (seq ss)
                   (str "No stores in " store ", only: " (-> stores keys sort vec)))
         _ (assert s [store (find store stores) stores read-fn])]
-    (read-fn s)))
+    s))
 
 (s/defn ^:private get-store-types
   [store-kw :- StoreID
