@@ -257,7 +257,7 @@
          :unauthorized (unauthorized "wrong secret")
          (ok (dissoc feed :output)))))))
 
-(s/defn feed-routes [{{:keys [read-store write-store]} :StoreService
+(s/defn feed-routes [{{:keys [read-store]} :StoreService
                       :as services} :- APIHandlerServices]
   (routes
     (let [capabilities :create-feed]
@@ -274,12 +274,11 @@
              :services services
              :entity-type :feed
              :realize-fn realize-feed
-             :store-fn #(store-svc.hlp/invoke-varargs
-                         write-store :feed
-                                     create-record
-                                     %
-                                     identity-map
-                                     (wait_for->refresh wait_for))
+             :store-fn #(-> (read-store :feed)
+                            (create-record
+                              %
+                              identity-map
+                              (wait_for->refresh wait_for)))
              :long-id-fn #(with-long-id % services)
              :entity-type :feed
              :identity identity
@@ -310,13 +309,12 @@
                                      identity-map
                                      {}))
                       :realize-fn realize-feed
-                      :update-fn #(store-svc.hlp/invoke-varargs
-                                   write-store :feed
-                                               update-record
-                                               (:id %)
-                                               %
-                                               identity-map
-                                               (wait_for->refresh wait_for))
+                      :update-fn #(-> (read-store :feed)
+                                      (update-record
+                                        (:id %)
+                                        %
+                                        identity-map
+                                        (wait_for->refresh wait_for)))
                       :long-id-fn #(with-long-id % services)
                       :entity-type :feed
                       :entity-id id
@@ -397,13 +395,11 @@
             (forbidden {:error "you must provide at least one of from, to, query or any field filter."})
             (ok
              (if (:REALLY_DELETE_ALL_THESE_ENTITIES params)
-               (store-svc.hlp/invoke-varargs
-                write-store
-                :feed
-                delete-search
-                query
-                identity-map
-                (wait_for->refresh (:wait_for params)))
+               (-> (read-store :feed)
+                   (delete-search
+                     query
+                     identity-map
+                     (wait_for->refresh (:wait_for params))))
                (-> (read-store :feed)
                    (query-string-count
                      query
@@ -448,12 +444,11 @@
                             %
                             identity-map
                             {}))
-             :delete-fn #(store-svc.hlp/invoke-varargs
-                          write-store :feed
-                                      delete-record
-                                      %
-                                      identity-map
-                                      (wait_for->refresh wait_for))
+             :delete-fn #(-> (read-store :feed)
+                             (delete-record
+                               %
+                               identity-map
+                               (wait_for->refresh wait_for)))
              :entity-type :feed
              :long-id-fn #(with-long-id % services)
              :entity-id id

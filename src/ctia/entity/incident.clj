@@ -93,7 +93,7 @@
     (cond-> {:status status}
       verb (assoc :incident_time {verb t}))))
 
-(s/defn incident-additional-routes [{{:keys [read-store write-store]} :StoreService
+(s/defn incident-additional-routes [{{:keys [read-store]} :StoreService
                                      :as services} :- APIHandlerServices]
   (routes
     (let [capabilities :create-incident]
@@ -119,13 +119,12 @@
                                         identity-map
                                         {}))
                          :realize-fn realize-incident
-                         :update-fn #(store-svc.hlp/invoke-varargs
-                                      write-store :incident
-                                                  update-record
-                                                  (:id %)
-                                                  %
-                                                  identity-map
-                                                  (wait_for->refresh wait_for))
+                         :update-fn #(-> (read-store :incident)
+                                         (update-record
+                                           (:id %)
+                                           %
+                                           identity-map
+                                           (wait_for->refresh wait_for)))
                          :long-id-fn #(with-long-id % services)
                          :entity-type :incident
                          :entity-id id

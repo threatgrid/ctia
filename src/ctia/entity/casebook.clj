@@ -130,7 +130,7 @@
     :delete-casebook
     :search-casebook})
 
-(s/defn casebook-operation-routes [{{:keys [read-store write-store]} :StoreService
+(s/defn casebook-operation-routes [{{:keys [read-store]} :StoreService
                                     :as services} :- APIHandlerServices]
   (routes
     (let [capabilities :create-casebook]
@@ -152,13 +152,12 @@
                                            identity-map
                                            {}))
                             :realize-fn realize-casebook
-                            :update-fn #(store-svc.hlp/invoke-varargs
-                                         write-store :casebook
-                                                     update-record
-                                                     (:id %)
-                                                     %
-                                                     identity-map
-                                                     (wait_for->refresh wait_for))
+                            :update-fn #(-> (read-store :casebook)
+                                            (update-record
+                                              (:id %)
+                                              %
+                                              identity-map
+                                              (wait_for->refresh wait_for)))
                             :long-id-fn #(with-long-id % services)
                             :entity-type :casebook
                             :entity-id id
@@ -189,13 +188,12 @@
                                                    identity-map
                                                    {}))
                                     :realize-fn realize-casebook
-                                    :update-fn #(store-svc.hlp/invoke-varargs
-                                                 write-store :casebook
-                                                             update-record
-                                                             (:id %)
-                                                             %
-                                                             identity-map
-                                                             (wait_for->refresh wait_for))
+                                    :update-fn #(-> (read-store :casebook)
+                                                    (update-record
+                                                      (:id %)
+                                                      %
+                                                      identity-map
+                                                      (wait_for->refresh wait_for)))
                                     :long-id-fn #(with-long-id % services)
                                     :entity-type :casebook
                                     :entity-id id
@@ -227,13 +225,12 @@
                                                    identity-map
                                                    {}))
                                     :realize-fn realize-casebook
-                                    :update-fn #(store-svc.hlp/invoke-varargs
-                                                 write-store :casebook
-                                                             update-record
-                                                             (:id %)
-                                                             %
-                                                             identity-map
-                                                             (wait_for->refresh wait_for))
+                                    :update-fn #(-> (read-store :casebook)
+                                                    (update-record
+                                                      (:id %)
+                                                      %
+                                                      identity-map
+                                                      (wait_for->refresh wait_for)))
                                     :long-id-fn #(with-long-id % services)
                                     :entity-type :casebook
                                     :entity-id id
@@ -265,13 +262,12 @@
                                                   identity-map
                                                   {}))
                                    :realize-fn realize-casebook
-                                   :update-fn #(store-svc.hlp/invoke-varargs
-                                                write-store :casebook
-                                                            update-record
-                                                            (:id %)
-                                                            %
-                                                            identity-map
-                                                            (wait_for->refresh wait_for))
+                                   :update-fn #(-> (read-store :casebook)
+                                                   (update-record
+                                                     (:id %)
+                                                     %
+                                                     identity-map
+                                                     (wait_for->refresh wait_for)))
                                    :long-id-fn #(with-long-id % services)
                                    :entity-type :casebook
                                    :entity-id id

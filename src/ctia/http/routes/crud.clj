@@ -50,8 +50,7 @@
   requirements (which must be provided at compile-time with
   POST)."
   [req :- (s/pred map?)
-   {{:keys [read-store
-            write-store]} :StoreService
+   {{:keys [read-store]} :StoreService
     :as services} :- APIHandlerServices
    {:keys [entity
            new-spec
@@ -79,15 +78,14 @@
                             identity-map
                             {})))
             :realize-fn realize-fn
-            :update-fn #(store-svc.hlp/invoke-varargs
-                         write-store entity
-                                     update-record
-                                     (:id %)
-                                     (cond-> %
-                                       true (assoc-in [:valid_time :end_time] (time/internal-now))
-                                       revocation-update-fn (revocation-update-fn {:req req}))
-                                     identity-map
-                                     (wait_for->refresh wait_for))
+            :update-fn #(-> (read-store entity)
+                            (update-record
+                              (:id %)
+                              (cond-> %
+                                true (assoc-in [:valid_time :end_time] (time/internal-now))
+                                revocation-update-fn (revocation-update-fn {:req req}))
+                              identity-map
+                              (wait_for->refresh wait_for)))
             :long-id-fn #(with-long-id % services)
             :entity-type entity
             :entity-id id
@@ -163,7 +161,7 @@
          date-field :created
          histogram-fields [:created]}
     :as entity-crud-config}]
- (s/fn [{{:keys [write-store read-store]} :StoreService
+ (s/fn [{{:keys [read-store]} :StoreService
          :as services} :- APIHandlerServices]
   (let [capitalized (capitalize-entity entity)
         search-filters (st/dissoc search-q-params
@@ -203,12 +201,11 @@
                     :services services
                     :entity-type entity
                     :realize-fn realize-fn
-                    :store-fn #(store-svc.hlp/invoke-varargs
-                                write-store entity
-                                            create-record
-                                            %
-                                            identity-map
-                                            (wait_for->refresh wait_for))
+                    :store-fn #(-> (read-store entity)
+                                   (create-record
+                                     %
+                                     identity-map
+                                     (wait_for->refresh wait_for)))
                     :long-id-fn #(with-long-id % services)
                     :entity-type entity
                     :identity identity
@@ -238,13 +235,12 @@
                                            identity-map
                                            {}))
                             :realize-fn realize-fn
-                            :update-fn #(store-svc.hlp/invoke-varargs
-                                         write-store entity
-                                                     update-record
-                                                     (:id %)
-                                                     %
-                                                     identity-map
-                                                     (wait_for->refresh wait_for))
+                            :update-fn #(-> (read-store entity)
+                                            (update-record
+                                              (:id %)
+                                              %
+                                              identity-map
+                                              (wait_for->refresh wait_for)))
                             :long-id-fn #(with-long-id % services)
                             :entity-type entity
                             :entity-id id
@@ -275,13 +271,12 @@
                                              identity-map
                                              {}))
                               :realize-fn realize-fn
-                              :update-fn #(store-svc.hlp/invoke-varargs
-                                           write-store entity
-                                                       update-record
-                                                       (:id %)
-                                                       %
-                                                       identity-map
-                                                       (wait_for->refresh wait_for))
+                              :update-fn #(-> (read-store entity)
+                                              (update-record
+                                                (:id %)
+                                                %
+                                                identity-map
+                                                (wait_for->refresh wait_for)))
                               :long-id-fn #(with-long-id % services)
                               :entity-type entity
                               :entity-id id
@@ -371,13 +366,11 @@
                  (forbidden {:error "you must provide at least one of from, to, query or any field filter."})
                  (ok
                   (if (:REALLY_DELETE_ALL_THESE_ENTITIES params)
-                    (store-svc.hlp/invoke-varargs
-                     write-store
-                     entity
-                     delete-search
-                     query
-                     identity-map
-                     (wait_for->refresh (:wait_for params)))
+                    (-> (read-store entity)
+                        (delete-search
+                          query
+                          identity-map
+                          (wait_for->refresh (:wait_for params))))
                     (-> (read-store entity)
                         (query-string-count
                           query
@@ -478,12 +471,11 @@
                                    %
                                    identity-map
                                    {}))
-                    :delete-fn #(store-svc.hlp/invoke-varargs
-                                 write-store entity
-                                             delete-record
-                                             %
-                                             identity-map
-                                             (wait_for->refresh wait_for))
+                    :delete-fn #(-> (read-store entity)
+                                    (delete-record
+                                      %
+                                      identity-map
+                                      (wait_for->refresh wait_for)))
                     :entity-type entity
                     :long-id-fn #(with-long-id % services)
                     :entity-id id

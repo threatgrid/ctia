@@ -17,21 +17,14 @@
   [{:keys [stores-atom]} :- StoreServiceCtx]
   @stores-atom)
 
-(s/defn write-store [ctx :- StoreServiceCtx
-                     store :- StoreID
-                     write-fn :- (s/=> Store Store)
-                     opt :- WriteStoreFnOptions]
-  (first (doall (map #(apply write-fn % (:args opt)) (store (all-stores ctx))))))
-
-(s/defn read-store
+(s/defn read-store :- Store
   [ctx :- StoreServiceCtx
-   store :- StoreID]
-  (let [stores (all-stores ctx)
-        [s :as ss] (get stores store)
-        _ (assert (seq ss)
-                  (str "No stores in " store ", only: " (-> stores keys sort vec)))
-        _ (assert s [store (find store stores) stores])]
-    s))
+   store-id :- StoreID]
+  (let [stores (-> ctx all-stores store-id)
+        _ (when-not (= 1 (count stores))
+            (throw (ex-info (format "Expected one store for %s, found %s." store-id (count stores))
+                            {})))]
+    (first stores)))
 
 (s/defn ^:private get-store-types
   [store-kw :- StoreID

@@ -13,14 +13,12 @@
 (deftest test-read-identity
   (test-for-each-store-with-app
    (fn [app]
-    (let [{{:keys [read-store write-store]} :StoreService} (app/service-graph app)]
+    (let [{{:keys [read-store]} :StoreService} (app/service-graph app)]
      (testing "Reading not-found identity returns nil"
-
-       (write-store :identity
-                    (fn [store]
-                      (store/create-identity store {:login "bar"
-                                                    :groups ["foogroup"]
-                                                    :capabilities #{:read-actor}
-                                                    :role "admin"})))
+       (-> (read-store :identity)
+           (store/create-identity {:login "bar"
+                                   :groups ["foogroup"]
+                                   :capabilities #{:read-actor}
+                                   :role "admin"}))
        (is (nil? (-> (read-store :identity)
                      (store/read-identity "foo")))))))))

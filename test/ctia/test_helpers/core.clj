@@ -348,13 +348,12 @@
 
 (defn set-capabilities!
   [app login groups role caps]
-  (let [{{:keys [write-store]} :StoreService} (app/service-graph app)]
-    (write-store :identity
-                 (fn [store]
-                   (store/create-identity store {:login login
-                                                 :groups groups
-                                                 :role role
-                                                 :capabilities caps})))))
+  (let [{{:keys [read-store]} :StoreService} (app/service-graph app)]
+    (-> (read-store :identity)
+        (store/create-identity {:login login
+                                :groups groups
+                                :role role
+                                :capabilities caps}))))
 
 (defmacro deftest-for-each-fixture-with-app [test-name fixture-map app & body]
   (assert (simple-symbol? app) (pr-str app))

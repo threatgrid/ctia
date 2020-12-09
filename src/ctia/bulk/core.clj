@@ -43,11 +43,12 @@
 (s/defn create-fn
   "return the create function provided an entity type key"
   [k auth-identity params
-   {{:keys [write-store]} :StoreService} :- APIHandlerServices]
-  #(store-svc.hlp/invoke-varargs
-    write-store
-    k store/create-record
-    % (auth/ident->map auth-identity) params))
+   {{:keys [read-store]} :StoreService} :- APIHandlerServices]
+  #(-> (read-store k)
+       (store/create-record
+         %
+         (auth/ident->map auth-identity)
+         params)))
 
 (s/defschema ReadFnServices
   {:StoreService (-> APIHandlerServices

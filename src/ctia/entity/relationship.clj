@@ -90,7 +90,7 @@
           incident-link-source-types)
     IncidentLinkRequestOptional))
 
-(s/defn incident-link-route [{{:keys [read-store write-store]} :StoreService
+(s/defn incident-link-route [{{:keys [read-store]} :StoreService
                               :as services} :- APIHandlerServices]
   (let [;; a request may contain at most of these fields in the body.
         ;; the corresponding capability is required for a successful response.
@@ -187,12 +187,11 @@
                          :services services
                          :entity-type :relationship
                          :realize-fn rs/realize-relationship
-                         :store-fn #(store-svc.hlp/invoke-varargs
-                                     write-store :relationship
-                                                 create-record
-                                                 %
-                                                 identity-map
-                                                 {})
+                         :store-fn #(-> (read-store :relationship)
+                                        (create-record
+                                          %
+                                          identity-map
+                                          {}))
                          :long-id-fn #(with-long-id % services)
                          :entity-type :relationship
                          :identity identity

@@ -260,13 +260,13 @@
     fm))
 
 (s/defn ^:private write-events :- FlowMap
-  [{{{:keys [write-store]} :StoreService} :services
+  [{{{:keys [read-store]} :StoreService} :services
     :keys [events] :as fm} :- FlowMap]
   (if (seq events)
     (assoc fm
            :events
-           (store-svc.hlp/invoke-varargs
-            write-store :event store/create-events events))
+           (-> (read-store :event)
+               (store/create-events events)))
     fm))
 
 (s/defn remove-errors :- FlowMap
