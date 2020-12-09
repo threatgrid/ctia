@@ -133,9 +133,7 @@
   (assert batch-size "Please specify a batch size")
   (log/info "checking all ES Stores")
   (try
-    (let [app (setup)
-          store-svc (app/get-service app :StoreService)
-          all-stores (partial store-svc/all-stores store-svc)]
+    (let [{{:keys [all-stores]} :StoreService} (app/service-graph (setup))]
       (when-let [errors (seq (check-store-indexes batch-size all-stores))]
         (log/errorf "Schema errors found during check: %s"
                     (pr-str errors))
