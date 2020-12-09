@@ -81,12 +81,12 @@
 (s/defschema CasebookObservablesUpdate
   (st/merge
    {:operation (s/enum :add :remove :replace)}
-   (st/select-keys Casebook [:observables])))
+   (csu/select-all-keys Casebook [:observables])))
 
 (s/defschema CasebookTextsUpdate
   (st/merge
    {:operation (s/enum :add :remove :replace)}
-   (st/select-keys Casebook [:texts])))
+   (csu/select-all-keys Casebook [:texts])))
 
 (s/defschema CasebookBundleUpdate
   {:operation (s/enum :add :remove :replace)

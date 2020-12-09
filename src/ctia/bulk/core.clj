@@ -10,6 +10,7 @@
             [ctia.entity.entities :refer [all-entities]]
             [ctia.flows.crud :as flows]
             [ctia.schemas.core :refer [APIHandlerServices]]
+            [ctia.schemas.utils :as csu]
             [ring.util.http-response :refer [bad-request]]
             [schema.core :as s]
             [schema-tools.core :as st]))
@@ -52,7 +53,7 @@
 (s/defschema ReadFnServices
   {:StoreService (-> APIHandlerServices
                      (st/get-in [:StoreService])
-                     (st/select-keys [:read-store])
+                     (csu/select-all-keys [:read-store])
                      (st/assoc s/Keyword s/Any))
    s/Keyword s/Any})
 
@@ -86,11 +87,11 @@
 (s/defschema ReadEntitiesServices
   {:ConfigService (-> APIHandlerServices
                       (st/get-in [:ConfigService])
-                      (st/select-keys [:get-in-config])
+                      (csu/select-all-keys [:get-in-config])
                       (st/assoc s/Keyword s/Any))
    :StoreService (-> APIHandlerServices
                      (st/get-in [:StoreService])
-                     (st/select-keys [:read-store])
+                     (csu/select-all-keys [:read-store])
                      (st/assoc s/Keyword s/Any))
    s/Keyword s/Any})
 
