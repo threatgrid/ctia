@@ -24,8 +24,8 @@
   (stop [this context]
         (core/stop context))
 
-  (all-stores [this] (core/all-stores (service-context this)))
-  (read-store [this store read-fn]
+  (all-stores [this]
+              (core/all-stores (service-context this)))
+  (read-store [this store-id]
               (core/read-store (service-context this)
-                               store
-                               read-fn)))
+                               store-id)))
