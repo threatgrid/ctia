@@ -14,7 +14,6 @@
     [pagination :as pagination]
     [resolvers :as resolvers]]
    [ctia.store :refer [calculate-verdict]]
-   [ctia.store-service.helpers :as store-svc.hlp]
    [ctia.verdict.graphql.schemas :as verdict]
    [ctim.schemas.common :as ctim-common-schema]
    [flanders.utils :as fu]

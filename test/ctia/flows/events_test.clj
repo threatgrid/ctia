@@ -5,7 +5,6 @@
              [test :refer [is join-fixtures testing use-fixtures]]]
             [ctia.domain.entities :refer [schema-version]]
             [ctia.store :as store]
-            [ctia.store-service.helpers :as store-svc.hlp]
             [ctia.test-helpers
              [core :as test-helpers :refer [deftest-for-each-fixture-with-app POST]]
              [es :as es-helpers]]

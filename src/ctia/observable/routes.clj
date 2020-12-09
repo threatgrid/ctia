@@ -19,9 +19,6 @@
               list-judgements-by-observable
               list-records
               list-sightings-by-observables]]
-            [ctia.store-service.helpers :as store-svc.hlp]
-            [ctim.domain.id :as id]
-            [ductile.pagination :as pag]
             [ring.swagger.schema :refer [describe]]
             [ring.util.http-response :refer [not-found ok]]
             [schema-tools.core :as st]

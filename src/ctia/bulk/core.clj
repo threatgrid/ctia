@@ -6,7 +6,6 @@
              [auth :as auth]
              [properties :as p]
              [store :as store]]
-            [ctia.store-service.helpers :as store-svc.hlp]
             [ctia.domain.entities :as ent :refer [with-long-id]]
             [ctia.entity.entities :refer [all-entities]]
             [ctia.flows.crud :as flows]

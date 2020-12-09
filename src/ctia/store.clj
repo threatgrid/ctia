@@ -1,6 +1,5 @@
 (ns ctia.store
   (:require [ctia.schemas.core :refer [APIHandlerServices]]
-            [ctia.store-service.helpers :as store-svc.hlp]
             [schema.core :as s]))
 
 (defprotocol IStore

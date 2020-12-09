@@ -29,7 +29,6 @@
             [ctia.stores.es
              [mapping :as em]
              [store :refer [def-es-store]]]
-            [ctia.store-service.helpers :as store-svc.hlp]
             [ctim.schemas
              [incident :as is]
              [vocabularies :as vocs]]

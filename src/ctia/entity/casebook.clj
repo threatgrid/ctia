@@ -24,7 +24,6 @@
             [ctia.stores.es
              [mapping :as em]
              [store :refer [def-es-store]]]
-            [ctia.store-service.helpers :as store-svc.hlp]
             [ctim.schemas.casebook :as cs]
             [flanders.utils :as fu]
             [ring.swagger.schema :refer [describe]]

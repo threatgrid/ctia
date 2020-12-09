@@ -15,7 +15,6 @@
                                 list-sightings-by-observables
                                 query-string-search
                                 read-fn]]
-            [ctia.store-service.helpers :as store-svc.hlp]
             [schema.core :as s]))
 
 ;; Default fields that must always be retrieved

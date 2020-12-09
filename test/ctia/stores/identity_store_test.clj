@@ -2,7 +2,6 @@
   (:require [clj-momo.test-helpers.core :as mth]
             [clojure.test :refer [deftest is testing use-fixtures]]
             [ctia.store :as store]
-            [ctia.store-service.helpers :as store-svc.hlp]
             [ctia.test-helpers
              [core :as helpers]
              [store :refer [test-for-each-store-with-app]]]

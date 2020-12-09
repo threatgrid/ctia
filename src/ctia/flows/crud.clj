@@ -9,7 +9,6 @@
             [ctia
              [auth :as auth]
              [store :as store]]
-            [ctia.store-service.helpers :as store-svc.hlp]
             [ctia.domain
              [access-control :refer [allowed-tlp? allowed-tlps]]
              [entities :refer [un-store]]]

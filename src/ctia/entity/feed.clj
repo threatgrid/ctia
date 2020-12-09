@@ -41,7 +41,6 @@
                        query-string-count
                        query-string-search
                        delete-search]]
-   [ctia.store-service.helpers :as store-svc.hlp]
    [ctia.stores.es
     [mapping :as em]
     [store :refer [def-es-store]]]

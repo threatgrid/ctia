@@ -14,7 +14,6 @@
             [ctia.schemas
              [core :refer [APIHandlerServices Reference TLP]]
              [sorting :as sorting]]
-            [ctia.store-service.helpers :as store-svc.hlp]
             [ctia.stores.es
              [mapping :as em]
              [store :refer [def-es-store]]]

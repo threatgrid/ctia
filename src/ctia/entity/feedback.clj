@@ -9,7 +9,6 @@
             [ctia.schemas.core :refer [APIHandlerServices]]
             [ctia.schemas.sorting :as sorting]
             [ctia.store :refer [list-records]]
-            [ctia.store-service.helpers :as store-svc.hlp]
             [ctia.stores.es
              [mapping :as em]
              [store :refer [def-es-store]]]

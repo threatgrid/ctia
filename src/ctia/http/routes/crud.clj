@@ -30,7 +30,6 @@
                        update-record
                        list-records
                        delete-search]]
-   [ctia.store-service.helpers :as store-svc.hlp]
    [ctia.schemas.search-agg :refer [HistogramParams
                                     CardinalityParams
                                     TopnParams
