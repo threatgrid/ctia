@@ -259,12 +259,13 @@
     fm))
 
 (s/defn ^:private write-events :- FlowMap
-  [{{{:keys [write-store]} :StoreService} :services
+  [{{{:keys [get-store]} :StoreService} :services
     :keys [events] :as fm} :- FlowMap]
   (if (seq events)
     (assoc fm
            :events
-           (write-store :event store/create-events events))
+           (-> (get-store :event)
+               (store/create-events events)))
     fm))
 
 (s/defn remove-errors :- FlowMap

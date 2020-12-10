@@ -160,7 +160,7 @@
 
 (s/defn fetch-feed [id s
                     {{:keys [decrypt]} :IEncryption
-                     {:keys [read-store]} :StoreService
+                     {:keys [get-store]} :StoreService
                      :as services} :- APIHandlerServices]
   (if-let [{:keys [indicator_id
                    secret
@@ -169,11 +169,11 @@
                    owner
                    groups]
             :as feed}
-           (read-store :feed
-                       read-record
-                       id
-                       identity-map
-                       {})]
+           (-> (get-store :feed)
+               (read-record
+                 id
+                 identity-map
+                 {}))]
     (cond
       (not feed) :not-found
       (not (valid-lifetime? lifetime)) :not-found
@@ -195,11 +195,11 @@
                              :limit fetch-limit}
                             services)
                            (keep :source_ref)
-                           (map #(read-store :judgement
-                                             read-record
-                                             %
-                                             feed-identity
-                                             {}))
+                           (map #(-> (get-store :judgement)
+                                     (read-record
+                                       %
+                                       feed-identity
+                                       {})))
                            (remove nil?)
                            (map #(with-long-id % services)))]
               (cond-> {}
@@ -256,7 +256,7 @@
          :unauthorized (unauthorized "wrong secret")
          (ok (dissoc feed :output)))))))
 
-(s/defn feed-routes [{{:keys [read-store write-store]} :StoreService
+(s/defn feed-routes [{{:keys [get-store]} :StoreService
                       :as services} :- APIHandlerServices]
   (routes
     (let [capabilities :create-feed]
@@ -273,11 +273,11 @@
              :services services
              :entity-type :feed
              :realize-fn realize-feed
-             :store-fn #(write-store :feed
-                                     create-record
-                                     %
-                                     identity-map
-                                     (wait_for->refresh wait_for))
+             :store-fn #(-> (get-store :feed)
+                            (create-record
+                              %
+                              identity-map
+                              (wait_for->refresh wait_for)))
              :long-id-fn #(with-long-id % services)
              :entity-type :feed
              :identity identity
@@ -302,18 +302,18 @@
         (if-let [updated-rec
                  (-> (flows/update-flow
                       :services services
-                      :get-fn #(read-store :feed
-                                           read-record
-                                           %
-                                           identity-map
-                                           {})
+                      :get-fn #(-> (get-store :feed)
+                                   (read-record
+                                     %
+                                     identity-map
+                                     {}))
                       :realize-fn realize-feed
-                      :update-fn #(write-store :feed
-                                               update-record
-                                               (:id %)
-                                               %
-                                               identity-map
-                                               (wait_for->refresh wait_for))
+                      :update-fn #(-> (get-store :feed)
+                                      (update-record
+                                        (:id %)
+                                        %
+                                        identity-map
+                                        (wait_for->refresh wait_for)))
                       :long-id-fn #(with-long-id % services)
                       :entity-type :feed
                       :entity-id id
@@ -335,11 +335,11 @@
         :capabilities capabilities
         :auth-identity identity
         :identity-map identity-map
-        (-> (read-store :feed
-                        list-records
-                        {:all-of {:external_ids external_id}}
-                        identity-map
-                        q)
+        (-> (get-store :feed)
+            (list-records
+              {:all-of {:external_ids external_id}}
+              identity-map
+              q)
             (page-with-long-id services)
             un-store-page
             (decrypt-feed-page services)
@@ -354,12 +354,11 @@
         :capabilities capabilities
         :auth-identity identity
         :identity-map identity-map
-        (-> (read-store
-             :feed
-             query-string-search
-             (search-query :created params)
-             identity-map
-             (select-keys params search-options))
+        (-> (get-store :feed)
+            (query-string-search
+              (search-query :created params)
+              identity-map
+              (select-keys params search-options))
             (page-with-long-id services)
             un-store-page
             (decrypt-feed-page services)
@@ -374,11 +373,10 @@
            :capabilities capabilities
            :auth-identity identity
            :identity-map identity-map
-           (ok (read-store
-                :feed
-                query-string-count
-                (search-query :created params)
-                identity-map))))
+           (ok (-> (get-store :feed)
+                   (query-string-count
+                     (search-query :created params)
+                     identity-map)))))
 
 
     (let [capabilities #{:search-feed :delete-feed}]
@@ -396,17 +394,15 @@
             (forbidden {:error "you must provide at least one of from, to, query or any field filter."})
             (ok
              (if (:REALLY_DELETE_ALL_THESE_ENTITIES params)
-               (write-store
-                :feed
-                delete-search
-                query
-                identity-map
-                (wait_for->refresh (:wait_for params)))
-               (read-store
-                :feed
-                query-string-count
-                query
-                identity-map)))))))
+               (-> (get-store :feed)
+                   (delete-search
+                     query
+                     identity-map
+                     (wait_for->refresh (:wait_for params))))
+               (-> (get-store :feed)
+                   (query-string-count
+                     query
+                     identity-map))))))))
 
     (let [capabilities :read-feed]
       (GET "/:id" []
@@ -418,11 +414,11 @@
         :capabilities capabilities
         :auth-identity identity
         :identity-map identity-map
-        (if-let [rec (read-store :feed
-                                 read-record
-                                 id
-                                 identity-map
-                                 params)]
+        (if-let [rec (-> (get-store :feed)
+                         (read-record
+                           id
+                           identity-map
+                           params))]
           (-> rec
               (with-long-id services)
               un-store
@@ -442,16 +438,16 @@
         :identity-map identity-map
         (if (flows/delete-flow
              :services services
-             :get-fn #(read-store :feed
-                                  read-record
-                                  %
-                                  identity-map
-                                  {})
-             :delete-fn #(write-store :feed
-                                      delete-record
-                                      %
-                                      identity-map
-                                      (wait_for->refresh wait_for))
+             :get-fn #(-> (get-store :feed)
+                          (read-record
+                            %
+                            identity-map
+                            {}))
+             :delete-fn #(-> (get-store :feed)
+                             (delete-record
+                               %
+                               identity-map
+                               (wait_for->refresh wait_for)))
              :entity-type :feed
              :long-id-fn #(with-long-id % services)
              :entity-id id

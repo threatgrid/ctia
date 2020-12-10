@@ -9,13 +9,14 @@
     [set :as set]
     [string :as str]]
    [clojure.core.memoize :as memo]
+   [ctia.store-service.schemas :refer [GetStoreFn]]
    [ctia
     [auth :as auth]
     [properties :as p]
-    [store :as store]
-    [store-service :as store-svc]]
+    [store :as store]]
    [puppetlabs.trapperkeeper.core :as tk]
-   [puppetlabs.trapperkeeper.services :refer [service-context]]))
+   [puppetlabs.trapperkeeper.services :refer [service-context]]
+   [schema.core :as s]))
 
 (declare make-auth-service)
 
@@ -53,8 +54,11 @@
         (json/parse-string
          (:body response))))))
 
-(defn lookup-stored-identity [login read-store]
-  (read-store :identity store/read-identity login))
+(s/defn lookup-stored-identity
+  [login
+   get-store :- GetStoreFn]
+  (-> (get-store :identity)
+      (store/read-identity login))) 
 
 (defprotocol ThreatgridAuthWhoAmIURLService
   (get-whoami-url [this] "Return the current WhoAmI URL"))
@@ -67,12 +71,10 @@
 (tk/defservice threatgrid-auth-service
   auth/IAuth
   [[:ConfigService get-in-config]
-   [:StoreService read-store]
+   [:StoreService get-store]
    [:ThreatgridAuthWhoAmIURLService get-whoami-url]]
   (init [_ context]
-        (let [read-store (-> read-store
-                             store-svc/store-service-fn->varargs)
-              lookup-stored-identity #(lookup-stored-identity % read-store)]
+        (let [lookup-stored-identity #(lookup-stored-identity % get-store)]
           (into context
                 (make-auth-service get-in-config lookup-stored-identity get-whoami-url))))
 

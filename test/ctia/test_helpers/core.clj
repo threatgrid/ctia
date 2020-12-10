@@ -13,8 +13,7 @@
              [auth :as auth]
              [init :as init]
              [properties :as p :refer [PropertiesSchema]]
-             [store :as store]
-             [store-service :as store-svc]]
+             [store :as store]]
             [ctia.auth.allow-all :as aa]
             [ctia.encryption :as encryption]
             [ctia.flows.crud :as crud]
@@ -349,12 +348,12 @@
 
 (defn set-capabilities!
   [app login groups role caps]
-  (let [{:keys [write-store]} (-> (get-service-map app :StoreService)
-                                  store-svc/lift-store-service-fns)]
-    (write-store :identity store/create-identity {:login login
-                                                  :groups groups
-                                                  :role role
-                                                  :capabilities caps})))
+  (let [{{:keys [get-store]} :StoreService} (app/service-graph app)]
+    (-> (get-store :identity)
+        (store/create-identity {:login login
+                                :groups groups
+                                :role role
+                                :capabilities caps}))))
 
 (defmacro deftest-for-each-fixture-with-app [test-name fixture-map app & body]
   (assert (simple-symbol? app) (pr-str app))

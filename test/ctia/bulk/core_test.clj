@@ -14,5 +14,5 @@
                                  :judgement
                                  identity-singleton
                                  {:ConfigService {:get-in-config get-in-config}
-                                  :StoreService {:read-store (constantly nil)}})]
+                                  :StoreService {:get-store (constantly nil)}})]
       (is (= [nil] res)))))

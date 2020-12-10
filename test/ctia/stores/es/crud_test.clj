@@ -221,10 +221,8 @@
 
 (defn sighting-conn-state
   [app]
-  (let [{:keys [all-stores]} (helpers/get-service-map app :StoreService)]
-    (-> (all-stores)
-        :sighting
-        first
+  (let [{:keys [get-store]} (helpers/get-service-map app :StoreService)]
+    (-> (get-store :sighting)
         :state
         (update :props assoc :default_operator "AND"))))
 
