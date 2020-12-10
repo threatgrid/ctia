@@ -23,7 +23,7 @@
                                     es-helpers/fixture-delete-store-indexes])}
   app
   (testing "Events are published to es"
-    (let [{{:keys [read-store]} :StoreService} (app/service-graph app)
+    (let [{{:keys [get-store]} :StoreService} (app/service-graph app)
           {{judgement-1-long-id :id
             :as judgement-1} :parsed-body
            judgement-1-status :status}
@@ -82,7 +82,7 @@
       (is (= 201 judgement-2-status))
       (is (= 201 judgement-3-status))
 
-      (let [events (-> (read-store :event)
+      (let [events (-> (get-store :event)
                        (store/list-events
                          {:all-of {:owner "Unknown"}}
                          {:login "Unknown"

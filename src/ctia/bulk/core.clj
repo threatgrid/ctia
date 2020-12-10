@@ -43,8 +43,8 @@
 (s/defn create-fn
   "return the create function provided an entity type key"
   [k auth-identity params
-   {{:keys [read-store]} :StoreService} :- APIHandlerServices]
-  #(-> (read-store k)
+   {{:keys [get-store]} :StoreService} :- APIHandlerServices]
+  #(-> (get-store k)
        (store/create-record
          %
          (auth/ident->map auth-identity)
@@ -53,15 +53,15 @@
 (s/defschema ReadFnServices
   {:StoreService (-> APIHandlerServices
                      (st/get-in [:StoreService])
-                     (csu/select-all-keys [:read-store])
+                     (csu/select-all-keys [:get-store])
                      (st/assoc s/Keyword s/Any))
    s/Keyword s/Any})
 
 (s/defn read-fn
   "return the create function provided an entity type key"
   [k auth-identity params
-   {{:keys [read-store]} :StoreService} :- ReadFnServices]
-  #(-> (read-store k)
+   {{:keys [get-store]} :StoreService} :- ReadFnServices]
+  #(-> (get-store k)
        (store/read-record % (auth/ident->map auth-identity) params))) 
 
 (s/defn create-entities
@@ -91,7 +91,7 @@
                       (st/assoc s/Keyword s/Any))
    :StoreService (-> APIHandlerServices
                      (st/get-in [:StoreService])
-                     (csu/select-all-keys [:read-store])
+                     (csu/select-all-keys [:get-store])
                      (st/assoc s/Keyword s/Any))
    s/Keyword s/Any})
 

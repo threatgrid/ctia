@@ -348,8 +348,8 @@
 
 (defn set-capabilities!
   [app login groups role caps]
-  (let [{{:keys [read-store]} :StoreService} (app/service-graph app)]
-    (-> (read-store :identity)
+  (let [{{:keys [get-store]} :StoreService} (app/service-graph app)]
+    (-> (get-store :identity)
         (store/create-identity {:login login
                                 :groups groups
                                 :role role

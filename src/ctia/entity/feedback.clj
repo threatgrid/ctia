@@ -54,7 +54,7 @@
      JudgementFieldsParam
      {(s/optional-key :sort_by) feedback-sort-fields})))
 
-(s/defn feedback-by-entity-route [{{:keys [read-store]} :StoreService
+(s/defn feedback-by-entity-route [{{:keys [get-store]} :StoreService
                                    :as services} :- APIHandlerServices]
   (let [capabilites :read-feedback]
     (GET "/" []
@@ -65,7 +65,7 @@
          :capabilities :read-feedback
          :auth-identity identity
          :identity-map identity-map
-         (-> (read-store :feedback)
+         (-> (get-store :feedback)
              (list-records
                {:all-of (select-keys params [:entity_id])}
                identity-map

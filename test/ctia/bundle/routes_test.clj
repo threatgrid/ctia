@@ -461,7 +461,7 @@
                                          "foouser"
                                          "foogroup"
                                          "user")
-     (let [{{:keys [read-store]} :StoreService} (app/service-graph app)
+     (let [{{:keys [get-store]} :StoreService} (app/service-graph app)
 
            duplicated-indicators (->> (mk-indicator 0)
                                       (repeat (* 10 core/find-by-external-ids-limit))
@@ -478,7 +478,7 @@
                                  :body bundle
                                  :headers {"Authorization" "45c1f5e3f05d0"})
            ident (FakeIdentity. "foouser" ["foogroup"])
-           matched-entities (core/all-pages :indicator all-external-ids ident read-store)
+           matched-entities (core/all-pages :indicator all-external-ids ident get-store)
            max-matched (+ core/find-by-external-ids-limit
                           (count more-indicators))]
        (assert (= 200 (:status response-create)))

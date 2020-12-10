@@ -160,7 +160,7 @@
 
 (s/defn fetch-feed [id s
                     {{:keys [decrypt]} :IEncryption
-                     {:keys [read-store]} :StoreService
+                     {:keys [get-store]} :StoreService
                      :as services} :- APIHandlerServices]
   (if-let [{:keys [indicator_id
                    secret
@@ -169,7 +169,7 @@
                    owner
                    groups]
             :as feed}
-           (-> (read-store :feed)
+           (-> (get-store :feed)
                (read-record
                  id
                  identity-map
@@ -195,7 +195,7 @@
                              :limit fetch-limit}
                             services)
                            (keep :source_ref)
-                           (map #(-> (read-store :judgement)
+                           (map #(-> (get-store :judgement)
                                      (read-record
                                        %
                                        feed-identity
@@ -256,7 +256,7 @@
          :unauthorized (unauthorized "wrong secret")
          (ok (dissoc feed :output)))))))
 
-(s/defn feed-routes [{{:keys [read-store]} :StoreService
+(s/defn feed-routes [{{:keys [get-store]} :StoreService
                       :as services} :- APIHandlerServices]
   (routes
     (let [capabilities :create-feed]
@@ -273,7 +273,7 @@
              :services services
              :entity-type :feed
              :realize-fn realize-feed
-             :store-fn #(-> (read-store :feed)
+             :store-fn #(-> (get-store :feed)
                             (create-record
                               %
                               identity-map
@@ -302,13 +302,13 @@
         (if-let [updated-rec
                  (-> (flows/update-flow
                       :services services
-                      :get-fn #(-> (read-store :feed)
+                      :get-fn #(-> (get-store :feed)
                                    (read-record
                                      %
                                      identity-map
                                      {}))
                       :realize-fn realize-feed
-                      :update-fn #(-> (read-store :feed)
+                      :update-fn #(-> (get-store :feed)
                                       (update-record
                                         (:id %)
                                         %
@@ -335,7 +335,7 @@
         :capabilities capabilities
         :auth-identity identity
         :identity-map identity-map
-        (-> (read-store :feed)
+        (-> (get-store :feed)
             (list-records
               {:all-of {:external_ids external_id}}
               identity-map
@@ -354,7 +354,7 @@
         :capabilities capabilities
         :auth-identity identity
         :identity-map identity-map
-        (-> (read-store :feed)
+        (-> (get-store :feed)
             (query-string-search
               (search-query :created params)
               identity-map
@@ -373,7 +373,7 @@
            :capabilities capabilities
            :auth-identity identity
            :identity-map identity-map
-           (ok (-> (read-store :feed)
+           (ok (-> (get-store :feed)
                    (query-string-count
                      (search-query :created params)
                      identity-map)))))
@@ -394,12 +394,12 @@
             (forbidden {:error "you must provide at least one of from, to, query or any field filter."})
             (ok
              (if (:REALLY_DELETE_ALL_THESE_ENTITIES params)
-               (-> (read-store :feed)
+               (-> (get-store :feed)
                    (delete-search
                      query
                      identity-map
                      (wait_for->refresh (:wait_for params))))
-               (-> (read-store :feed)
+               (-> (get-store :feed)
                    (query-string-count
                      query
                      identity-map))))))))
@@ -414,7 +414,7 @@
         :capabilities capabilities
         :auth-identity identity
         :identity-map identity-map
-        (if-let [rec (-> (read-store :feed)
+        (if-let [rec (-> (get-store :feed)
                          (read-record
                            id
                            identity-map
@@ -438,12 +438,12 @@
         :identity-map identity-map
         (if (flows/delete-flow
              :services services
-             :get-fn #(-> (read-store :feed)
+             :get-fn #(-> (get-store :feed)
                           (read-record
                             %
                             identity-map
                             {}))
-             :delete-fn #(-> (read-store :feed)
+             :delete-fn #(-> (get-store :feed)
                              (delete-record
                                %
                                identity-map

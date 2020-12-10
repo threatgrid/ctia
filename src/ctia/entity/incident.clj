@@ -92,7 +92,7 @@
     (cond-> {:status status}
       verb (assoc :incident_time {verb t}))))
 
-(s/defn incident-additional-routes [{{:keys [read-store]} :StoreService
+(s/defn incident-additional-routes [{{:keys [get-store]} :StoreService
                                      :as services} :- APIHandlerServices]
   (routes
     (let [capabilities :create-incident]
@@ -112,13 +112,13 @@
                        (un-store
                         (flows/patch-flow
                          :services services
-                         :get-fn #(-> (read-store :incident)
+                         :get-fn #(-> (get-store :incident)
                                       (read-record
                                         %
                                         identity-map
                                         {}))
                          :realize-fn realize-incident
-                         :update-fn #(-> (read-store :incident)
+                         :update-fn #(-> (get-store :incident)
                                          (update-record
                                            (:id %)
                                            %

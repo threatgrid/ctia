@@ -34,7 +34,7 @@
                                 :get-graphql]
         :HooksService [:apply-hooks
                        :apply-event-hooks ]
-        :StoreService [:read-store]
+        :StoreService [:get-store]
         :IAuth [:identity-for-token]
         :GraphQLNamedTypeRegistryService [:get-or-update-named-type-registry]
         :IEncryption [:encrypt 

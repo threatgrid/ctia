@@ -28,7 +28,7 @@
                                                                      :apply-event-hooks])
                                                        hooks-svc/lift-hooks-service-fns)
                                      :StoreService (-> StoreService 
-                                                       (select-keys [:read-store]))
+                                                       (select-keys [:get-store]))
                                      :IAuth IAuth
                                      :GraphQLNamedTypeRegistryService GraphQLNamedTypeRegistryService
                                      :IEncryption IEncryption

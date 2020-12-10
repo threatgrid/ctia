@@ -70,12 +70,12 @@
    filters
    identity-map
    params
-   {{:keys [read-store]} :StoreService} :- APIHandlerServices]
+   {{:keys [get-store]} :StoreService} :- APIHandlerServices]
   (loop [query-params params
          results []]
     (let [{:keys [data
                   paging]}
-          (-> (read-store entity)
+          (-> (get-store entity)
               (list-fn
                 filters
                 identity-map

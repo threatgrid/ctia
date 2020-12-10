@@ -24,10 +24,10 @@
     observable-value :value}
    ident
    {{{:keys [get-in-config]} :ConfigService
-     {:keys [read-store]} :StoreService
+     {:keys [get-store]} :StoreService
      :as services}
     :services} :- GraphQLRuntimeContext]
-  (some-> (read-store :judgement)
+  (some-> (get-store :judgement)
           (calculate-verdict
             {:type observable-type :value observable-value}
             ident)

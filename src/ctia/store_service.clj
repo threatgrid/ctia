@@ -8,10 +8,10 @@
   (all-stores [this] "Returns a map of current stores.
 
                      See also: ctia.store-service.schemas/AllStoresFn")
-  (read-store [this store-id]
+  (get-store [this store-id]
               "Returns the identified store.
 
-              See also: ctia.store-service.schemas/ReadStoreFn"))
+              See also: ctia.store-service.schemas/GetStoreFn"))
 
 (tk/defservice store-service
   "A service to manage the central storage area for all stores."
@@ -26,6 +26,6 @@
 
   (all-stores [this]
               (core/all-stores (service-context this)))
-  (read-store [this store-id]
-              (core/read-store (service-context this)
+  (get-store [this store-id]
+              (core/get-store (service-context this)
                                store-id)))

@@ -17,7 +17,7 @@
     [BundleImportData BundleImportResult EntityImportData FindByExternalIdsServices]]
    [ctia.domain.entities :as ent :refer [with-long-id]]
    [ctia.schemas.core :refer [APIHandlerServices HTTPShowServices NewBundle TempIDs]]
-   [ctia.store-service.schemas :refer [ReadStoreFn]]
+   [ctia.store-service.schemas :refer [GetStoreFn]]
    [ctim.domain.id :as id]
    [schema.core :as s]))
 
@@ -79,13 +79,13 @@
   [entity-type
    external-ids
    auth-identity
-   read-store :- ReadStoreFn]
+   get-store :- GetStoreFn]
   (loop [ext-ids external-ids
          entities []]
     (let [query {:all-of {:external_ids ext-ids}}
           paging {:limit find-by-external-ids-limit}
           {results :data
-           {next-page :next} :paging} (-> (read-store entity-type)
+           {next-page :next} :paging} (-> (get-store entity-type)
                                           (list-fn
                                             query
                                             (auth/ident->map auth-identity)
@@ -99,14 +99,14 @@
 
 (s/defn find-by-external-ids
   [import-data entity-type auth-identity
-   {{:keys [read-store]} :StoreService} :- FindByExternalIdsServices]
+   {{:keys [get-store]} :StoreService} :- FindByExternalIdsServices]
   (let [external-ids (mapcat :external_ids import-data)]
     (log/debugf "Searching %s matching these external_ids %s"
                 entity-type
                 (pr-str external-ids))
     (if (seq external-ids)
       (debug (format "Results for %s:" (pr-str external-ids))
-             (all-pages entity-type external-ids auth-identity read-store))
+             (all-pages entity-type external-ids auth-identity get-store))
       [])))
 
 (defn by-external-id
@@ -190,7 +190,7 @@
 
 (s/defschema WithExistingEntitiesServices
   {:StoreService {;; for `find-by-external-ids`
-                  :read-store ReadStoreFn
+                  :get-store GetStoreFn
                   s/Keyword s/Any}
    :CTIAHTTPServerService {;; for `with-existing-entity`
                            :get-port (s/=> (s/constrained s/Int pos?))
@@ -383,11 +383,11 @@
    identity-map
    filters
    {{:keys [get-in-config]} :ConfigService
-    {:keys [read-store]} :StoreService} :- APIHandlerServices]
+    {:keys [get-store]} :StoreService} :- APIHandlerServices]
   (let [filter-map (relationships-filters id filters)
         max-relationships (get-in-config [:ctia :http :bundle :export :max-relationships]
                                          1000)]
-    (some-> (read-store :relationship)
+    (some-> (get-store :relationship)
             (list-fn
               filter-map
               identity-map
@@ -400,10 +400,10 @@
 (s/defn fetch-record
   "Fetch a record by ID guessing its type"
   [id identity-map
-   {{:keys [read-store]} :StoreService
+   {{:keys [get-store]} :StoreService
     :as services} :- APIHandlerServices]
   (when-let [entity-type (ent/id->entity-type id services)]
-    (-> (read-store (keyword entity-type))
+    (-> (get-store (keyword entity-type))
         (read-fn
           id
           identity-map

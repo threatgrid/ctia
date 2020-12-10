@@ -9,7 +9,7 @@
     [set :as set]
     [string :as str]]
    [clojure.core.memoize :as memo]
-   [ctia.store-service.schemas :refer [ReadStoreFn]]
+   [ctia.store-service.schemas :refer [GetStoreFn]]
    [ctia
     [auth :as auth]
     [properties :as p]
@@ -56,8 +56,8 @@
 
 (s/defn lookup-stored-identity
   [login
-   read-store :- ReadStoreFn]
-  (-> (read-store :identity)
+   get-store :- GetStoreFn]
+  (-> (get-store :identity)
       (store/read-identity login))) 
 
 (defprotocol ThreatgridAuthWhoAmIURLService
@@ -71,10 +71,10 @@
 (tk/defservice threatgrid-auth-service
   auth/IAuth
   [[:ConfigService get-in-config]
-   [:StoreService read-store]
+   [:StoreService get-store]
    [:ThreatgridAuthWhoAmIURLService get-whoami-url]]
   (init [_ context]
-        (let [lookup-stored-identity #(lookup-stored-identity % read-store)]
+        (let [lookup-stored-identity #(lookup-stored-identity % get-store)]
           (into context
                 (make-auth-service get-in-config lookup-stored-identity get-whoami-url))))
 

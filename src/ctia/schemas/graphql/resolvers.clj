@@ -33,7 +33,7 @@
    ident
    field-selection
    with-long-id-fn
-   {{{:keys [read-store]} :StoreService} :services} :- GraphQLRuntimeContext]
+   {{{:keys [get-store]} :StoreService} :services} :- GraphQLRuntimeContext]
   (let [paging-params (pagination/connection-params->paging-params args)
         params (cond-> (select-keys paging-params [:limit :offset :sort_by])
                  field-selection (assoc :fields
@@ -41,7 +41,7 @@
                                                 field-selection)))]
     (log/debugf "Search entity %s graphql args %s" entity-type args)
 
-    (some-> (read-store entity-type)
+    (some-> (get-store entity-type)
             (query-string-search
               {:query-string query
                :filter-map (remove-map-empty-values filtermap)}
@@ -72,14 +72,14 @@
    ident
    field-selection :- (s/maybe [s/Keyword])]
   (delayed/fn :- GraphQLValue
-    [{{{:keys [read-store]} :StoreService
+    [{{{:keys [get-store]} :StoreService
        :as services}
       :services} :- GraphQLRuntimeContext]
     (log/debugf "Retrieve %s (id:%s, fields:%s)"
                 entity-type-kw
                 id
                 field-selection)
-    (some-> (read-store entity-type-kw)
+    (some-> (get-store entity-type-kw)
             (read-fn
               id
               ident
@@ -103,13 +103,13 @@
    args :- {s/Keyword s/Any}
    field-selection :- (s/maybe [s/Keyword])]
  (delayed/fn :- GraphQLValue
-  [{{{:keys [read-store]} :StoreService} :services} :- GraphQLRuntimeContext]
+  [{{{:keys [get-store]} :StoreService} :services} :- GraphQLRuntimeContext]
   (let [paging-params (pagination/connection-params->paging-params args)
         params (cond-> (select-keys paging-params [:limit :offset :sort_by])
                  field-selection (assoc :fields
                                         (concat default-fields field-selection)))]
     (log/debug "Search feedback for entity id: " entity-id)
-    (some-> (read-store :feedback)
+    (some-> (get-store :feedback)
             (list-records
               {:all-of {:entity_id entity-id}}
               (:ident context)
@@ -125,14 +125,14 @@
    args :- {s/Keyword s/Any}
    field-selection :- (s/maybe [s/Keyword])]
  (delayed/fn :- pagination/Connection
-  [{{{:keys [read-store]} :StoreService
+  [{{{:keys [get-store]} :StoreService
      :as services}
     :services} :- GraphQLRuntimeContext]
   (let [paging-params (pagination/connection-params->paging-params args)
         params (cond-> (select-keys paging-params [:limit :offset :sort_by])
                  field-selection (assoc :fields
                                         (concat default-fields field-selection)))]
-    (some-> (read-store :judgement)
+    (some-> (get-store :judgement)
             (list-judgements-by-observable
               observable
               (:ident context)
@@ -149,14 +149,14 @@
    args :- {s/Keyword s/Any}
    field-selection :- (s/maybe [s/Keyword])]
  (delayed/fn :- pagination/Connection
-  [{{{:keys [read-store]} :StoreService
+  [{{{:keys [get-store]} :StoreService
      :as services}
     :services} :- GraphQLRuntimeContext]
   (let [paging-params (pagination/connection-params->paging-params args)
         params (cond-> (select-keys paging-params [:limit :offset :sort_by])
                  field-selection (assoc :fields
                                         (concat default-fields field-selection)))]
-    (some-> (read-store :sighting)
+    (some-> (get-store :sighting)
             (list-sightings-by-observables
               [observable]
               (:ident context)

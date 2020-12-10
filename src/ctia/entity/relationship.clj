@@ -89,7 +89,7 @@
           incident-link-source-types)
     IncidentLinkRequestOptional))
 
-(s/defn incident-link-route [{{:keys [read-store]} :StoreService
+(s/defn incident-link-route [{{:keys [get-store]} :StoreService
                               :as services} :- APIHandlerServices]
   (let [;; a request may contain at most of these fields in the body.
         ;; the corresponding capability is required for a successful response.
@@ -143,7 +143,7 @@
                                      :source-type-kw source-type-kw})))
                 _ (require-capability! additional-required-capabilities
                                        identity)
-                incident (-> (read-store :incident)
+                incident (-> (get-store :incident)
                              (read-record
                                id
                                identity-map
@@ -156,7 +156,7 @@
                                   :casebook_id :casebook
                                   :investigation_id :investigation)
                 source (when source-short-id
-                         (-> (read-store source-store-kw)
+                         (-> (get-store source-store-kw)
                              (read-record
                                source-short-id
                                identity-map
@@ -186,7 +186,7 @@
                          :services services
                          :entity-type :relationship
                          :realize-fn rs/realize-relationship
-                         :store-fn #(-> (read-store :relationship)
+                         :store-fn #(-> (get-store :relationship)
                                         (create-record
                                           %
                                           identity-map

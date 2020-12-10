@@ -129,7 +129,7 @@
     :delete-casebook
     :search-casebook})
 
-(s/defn casebook-operation-routes [{{:keys [read-store]} :StoreService
+(s/defn casebook-operation-routes [{{:keys [get-store]} :StoreService
                                     :as services} :- APIHandlerServices]
   (routes
     (let [capabilities :create-casebook]
@@ -145,13 +145,13 @@
              :identity-map identity-map
              (if-let [res (flows/patch-flow
                             :services services
-                            :get-fn #(-> (read-store :casebook)
+                            :get-fn #(-> (get-store :casebook)
                                          (read-record
                                            %
                                            identity-map
                                            {}))
                             :realize-fn realize-casebook
-                            :update-fn #(-> (read-store :casebook)
+                            :update-fn #(-> (get-store :casebook)
                                             (update-record
                                               (:id %)
                                               %
@@ -181,13 +181,13 @@
                      :identity-map identity-map
                      (if-let [res (flows/patch-flow
                                     :services services
-                                    :get-fn #(-> (read-store :casebook)
+                                    :get-fn #(-> (get-store :casebook)
                                                  (read-record
                                                    %
                                                    identity-map
                                                    {}))
                                     :realize-fn realize-casebook
-                                    :update-fn #(-> (read-store :casebook)
+                                    :update-fn #(-> (get-store :casebook)
                                                     (update-record
                                                       (:id %)
                                                       %
@@ -218,13 +218,13 @@
                      :identity-map identity-map
                      (if-let [res (flows/patch-flow
                                     :services services
-                                    :get-fn #(-> (read-store :casebook)
+                                    :get-fn #(-> (get-store :casebook)
                                                  (read-record
                                                    %
                                                    identity-map
                                                    {}))
                                     :realize-fn realize-casebook
-                                    :update-fn #(-> (read-store :casebook)
+                                    :update-fn #(-> (get-store :casebook)
                                                     (update-record
                                                       (:id %)
                                                       %
@@ -255,13 +255,13 @@
                      :identity-map identity-map
                      (if-let [res (flows/patch-flow
                                    :services services
-                                   :get-fn #(-> (read-store :casebook)
+                                   :get-fn #(-> (get-store :casebook)
                                                 (read-record
                                                   %
                                                   identity-map
                                                   {}))
                                    :realize-fn realize-casebook
-                                   :update-fn #(-> (read-store :casebook)
+                                   :update-fn #(-> (get-store :casebook)
                                                    (update-record
                                                      (:id %)
                                                      %

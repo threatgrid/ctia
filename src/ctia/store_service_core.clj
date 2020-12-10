@@ -16,7 +16,7 @@
   [{:keys [stores-atom]} :- StoreServiceCtx]
   @stores-atom)
 
-(s/defn read-store :- Store
+(s/defn get-store :- Store
   [ctx :- StoreServiceCtx
    store-id :- StoreID]
   (let [stores (-> ctx all-stores store-id)

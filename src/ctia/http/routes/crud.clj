@@ -49,7 +49,7 @@
   requirements (which must be provided at compile-time with
   POST)."
   [req :- (s/pred map?)
-   {{:keys [read-store]} :StoreService
+   {{:keys [get-store]} :StoreService
     :as services} :- APIHandlerServices
    {:keys [entity
            new-spec
@@ -71,13 +71,13 @@
            (flows/patch-flow
             :services services
             :get-fn (fn [_]
-                      (-> (read-store entity)
+                      (-> (get-store entity)
                           (read-record
                             id
                             identity-map
                             {})))
             :realize-fn realize-fn
-            :update-fn #(-> (read-store entity)
+            :update-fn #(-> (get-store entity)
                             (update-record
                               (:id %)
                               (cond-> %
@@ -160,7 +160,7 @@
          date-field :created
          histogram-fields [:created]}
     :as entity-crud-config}]
- (s/fn [{{:keys [read-store]} :StoreService
+ (s/fn [{{:keys [get-store]} :StoreService
          :as services} :- APIHandlerServices]
   (let [capitalized (capitalize-entity entity)
         search-filters (st/dissoc search-q-params
@@ -200,7 +200,7 @@
                     :services services
                     :entity-type entity
                     :realize-fn realize-fn
-                    :store-fn #(-> (read-store entity)
+                    :store-fn #(-> (get-store entity)
                                    (create-record
                                      %
                                      identity-map
@@ -228,13 +228,13 @@
               (if-let [updated-rec
                        (-> (flows/update-flow
                             :services services
-                            :get-fn #(-> (read-store entity)
+                            :get-fn #(-> (get-store entity)
                                          (read-record
                                            %
                                            identity-map
                                            {}))
                             :realize-fn realize-fn
-                            :update-fn #(-> (read-store entity)
+                            :update-fn #(-> (get-store entity)
                                             (update-record
                                               (:id %)
                                               %
@@ -264,13 +264,13 @@
                 (if-let [updated-rec
                          (-> (flows/patch-flow
                               :services services
-                              :get-fn #(-> (read-store entity)
+                              :get-fn #(-> (get-store entity)
                                            (read-record
                                              %
                                              identity-map
                                              {}))
                               :realize-fn realize-fn
-                              :update-fn #(-> (read-store entity)
+                              :update-fn #(-> (get-store entity)
                                               (update-record
                                                 (:id %)
                                                 %
@@ -300,7 +300,7 @@
               :capabilities capabilities
               :auth-identity identity
               :identity-map identity-map
-              (-> (read-store entity)
+              (-> (get-store entity)
                   (list-records
                     {:all-of {:external_ids external_id}}
                     identity-map
@@ -322,7 +322,7 @@
              :description (capabilities->description search-capabilities)
              :capabilities search-capabilities
              :query [params search-q-params]
-             (-> (read-store entity)
+             (-> (get-store entity)
                  (query-string-search
                    (search-query date-field params)
                    identity-map
@@ -336,7 +336,7 @@
              :description (capabilities->description search-capabilities)
              :capabilities search-capabilities
              :query [params search-filters]
-             (ok (-> (read-store entity)
+             (ok (-> (get-store entity)
                      (query-string-count
                        (search-query date-field params)
                        identity-map))))
@@ -365,12 +365,12 @@
                  (forbidden {:error "you must provide at least one of from, to, query or any field filter."})
                  (ok
                   (if (:REALLY_DELETE_ALL_THESE_ENTITIES params)
-                    (-> (read-store entity)
+                    (-> (get-store entity)
                         (delete-search
                           query
                           identity-map
                           (wait_for->refresh (:wait_for params))))
-                    (-> (read-store entity)
+                    (-> (get-store entity)
                         (query-string-count
                           query
                           identity-map))))))))))
@@ -391,7 +391,7 @@
                                                     coerce-date-range)
                              agg-q (st/assoc (st/select-schema params HistogramParams)
                                              :agg-type :histogram)]
-                         (-> (read-store entity)
+                         (-> (get-store entity)
                              (aggregate
                                search-q
                                agg-q
@@ -408,7 +408,7 @@
                                                     coerce-date-range)
                              agg-q (st/assoc (st/select-schema params TopnParams)
                                              :agg-type :topn)]
-                         (-> (read-store entity)
+                         (-> (get-store entity)
                              (aggregate
                                search-q
                                agg-q
@@ -425,7 +425,7 @@
                                                     coerce-date-range)
                              agg-q (st/assoc (st/select-schema params CardinalityParams)
                                              :agg-type :cardinality)]
-                         (-> (read-store entity)
+                         (-> (get-store entity)
                              (aggregate
                                search-q
                                agg-q
@@ -442,7 +442,7 @@
             :capabilities capabilities
             :auth-identity identity
             :identity-map identity-map
-            (if-let [rec (-> (read-store entity)
+            (if-let [rec (-> (get-store entity)
                              (read-record
                                id
                                identity-map
@@ -465,12 +465,12 @@
                :identity-map identity-map
                (if (flows/delete-flow
                     :services services
-                    :get-fn #(-> (read-store entity)
+                    :get-fn #(-> (get-store entity)
                                  (read-record
                                    %
                                    identity-map
                                    {}))
-                    :delete-fn #(-> (read-store entity)
+                    :delete-fn #(-> (get-store entity)
                                     (delete-record
                                       %
                                       identity-map

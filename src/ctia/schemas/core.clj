@@ -11,7 +11,7 @@
              [schema :as f-schema]
              [spec :as f-spec]]
             [schema-tools.core :as st]
-            [ctia.store-service.schemas :refer [ReadStoreFn]]
+            [ctia.store-service.schemas :refer [GetStoreFn]]
             [schema.core :as s :refer [Bool Str]]))
 
 (s/defschema Port
@@ -28,7 +28,7 @@
                                                :get-graphql (s/=> graphql.GraphQL)}
    :HooksService                              {:apply-hooks       (s/pred ifn?) ;;keyword varargs
                                                :apply-event-hooks (s/=> s/Any s/Any)}
-   :StoreService                              {:read-store ReadStoreFn}
+   :StoreService                              {:get-store GetStoreFn}
    :IAuth                                     {:identity-for-token (s/=> s/Any s/Any)}
    :GraphQLNamedTypeRegistryService           {:get-or-update-named-type-registry
                                                (s/=> graphql.schema.GraphQLType
@@ -66,7 +66,7 @@
                                          [[s/Any]]
                                          [[s/Any] s/Any])}
    :CTIAHTTPServerService {:get-port (s/=> Port)}
-   :StoreService {:read-store ReadStoreFn}
+   :StoreService {:get-store GetStoreFn}
    :GraphQLNamedTypeRegistryService
    {:get-or-update-named-type-registry
     (s/=> graphql.schema.GraphQLType
@@ -82,7 +82,7 @@
     services
     :ConfigService [:get-in-config]
     :CTIAHTTPServerService [:get-port]
-    :StoreService [:read-store]
+    :StoreService [:get-store]
     :GraphQLNamedTypeRegistryService [:get-or-update-named-type-registry]
     :IEncryption [:decrypt :encrypt]))
 

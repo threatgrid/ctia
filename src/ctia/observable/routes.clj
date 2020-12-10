@@ -31,7 +31,7 @@
             (s/optional-key :sort_by)
             (describe (s/enum :id) "Sort result on a field")))
 
-(s/defn observable-routes [{{:keys [read-store]} :StoreService
+(s/defn observable-routes [{{:keys [get-store]} :StoreService
                             :as services} :- APIHandlerServices]
   (routes
     (let [capabilities :read-verdict]
@@ -46,7 +46,7 @@
         :capabilities capabilities
         :auth-identity identity
         :identity-map identity-map
-        (or (some-> (read-store :judgement)
+        (or (some-> (get-store :judgement)
                     (calculate-verdict
                       {:type observable_type
                        :value observable_value}
@@ -67,7 +67,7 @@
         :capabilities capabilities
         :auth-identity identity
         :identity-map identity-map
-        (-> (read-store :judgement)
+        (-> (get-store :judgement)
             (list-judgements-by-observable
               {:type observable_type
                :value observable_value}
@@ -92,7 +92,7 @@
         :identity-map identity-map
         (paginated-ok
          (let [http-show (p/get-http-show services)
-               judgements (-> (read-store :judgement)
+               judgements (-> (get-store :judgement)
                               (list-judgements-by-observable
                                 {:type observable_type
                                  :value observable_value}
@@ -103,7 +103,7 @@
                                   (map :id)
                                   (map #(id/short-id->id :judgement % http-show))
                                   (map id/long-id))
-               relationships (-> (read-store :relationship)
+               relationships (-> (get-store :relationship)
                                  (list-records
                                    {:all-of {:source_ref judgement-ids}}
                                    identity-map
@@ -132,7 +132,7 @@
         :identity-map identity-map
         :return PartialSightingList
         :summary "Returns Sightings associated with the specified observable."
-        (-> (read-store :sighting)
+        (-> (get-store :sighting)
             (list-sightings-by-observables
               [{:type observable_type
                 :value observable_value}]
@@ -157,7 +157,7 @@
         :identity-map identity-map
         (paginated-ok
          (let [http-show (p/get-http-show services)
-               sightings (-> (read-store :sighting)
+               sightings (-> (get-store :sighting)
                              (list-sightings-by-observables
                                [{:type observable_type
                                  :value observable_value}]
@@ -168,7 +168,7 @@
                                  (map :id)
                                  (map #(id/short-id->id :sighting % http-show))
                                  (map id/long-id))
-               relationships (-> (read-store :relationship)
+               relationships (-> (get-store :relationship)
                                  (list-records
                                    {:all-of {:source_ref sighting-ids}}
                                    identity-map
@@ -200,7 +200,7 @@
         :identity-map identity-map
         (paginated-ok
          (let [http-show (p/get-http-show services)
-               sightings (-> (read-store :sighting)
+               sightings (-> (get-store :sighting)
                              (list-sightings-by-observables
                                [{:type observable_type
                                  :value observable_value}]
@@ -211,7 +211,7 @@
                                  (map :id)
                                  (map #(id/short-id->id :sighting % http-show))
                                  (map id/long-id))
-               relationships (-> (read-store :relationship)
+               relationships (-> (get-store :relationship)
                                  (list-records
                                    {:all-of {:source_ref sighting-ids}}
                                    identity-map

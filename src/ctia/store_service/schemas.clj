@@ -8,8 +8,8 @@
 (s/defschema Store
   (s/pred map?))
 
-(s/defschema ReadStoreFn
-  "ctia.store-service/read-store in the service graph."
+(s/defschema GetStoreFn
+  "ctia.store-service/get-store in the service graph."
   (s/=> Store
         (s/named StoreID 'store-id)))
 
