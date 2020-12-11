@@ -101,7 +101,7 @@
                       "ctia.store.es.default.replicas" 1
                       "ctia.store.es.default.refresh" "true"
                       "ctia.store.es.default.refresh_interval" "1s"
-                      "ctia.store.es.default.port" "9205"
+                      "ctia.store.es.default.port" 9205
                       "ctia.store.es.default.indexname" "test_ctia"
                       "ctia.store.es.default.default_operator" "AND"
                       "ctia.store.es.default.aliased" true

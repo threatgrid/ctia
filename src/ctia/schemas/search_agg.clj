@@ -22,8 +22,8 @@
   (s/enum :histogram :topn :cardinality))
 
 (s/defschema AggCommonParams
-  (st/merge
-   {:aggregate-on s/Str}))
+  {:aggregate-on s/Str
+   (s/optional-key :agg-key) s/Keyword})
 
 (s/defschema Timezone
   (let [positives (map #(format "+%02d:00" %) (range 12))
