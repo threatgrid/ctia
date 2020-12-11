@@ -2,9 +2,8 @@
   (:require [ctia.store :as sut]
             [ctia.test-helpers.http :refer [app->APIHandlerServices]]
             [ctia.test-helpers.fixtures :as fixt]
-            [ctia.test-helpers.core :as helpers :refer [GET POST PATCH]]
+            [ctia.test-helpers.core :as helpers]
             [ctim.examples.incidents :refer [incident-minimal]]
-            [ctia.store-service :as store-svc]
             [clojure.test :refer [deftest testing is]]))
 
 (def admin-ident {:login "johndoe"
