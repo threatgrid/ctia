@@ -7,7 +7,7 @@
             [ctia.store-service :as store-svc]
             [clojure.test :refer [deftest testing is]]))
 
-(def ident {:login "johndoe"
+(def admin-ident {:login "johndoe"
             :groups ["Administators"]})
 
 (deftest list-all-pages-test
@@ -26,19 +26,19 @@
              (count (sut/list-all-pages :incident
                                         sut/list-fn
                                         {:query "*"}
-                                        ident
+                                        admin-ident
                                         {}
                                         services))
              (count (sut/list-all-pages :incident
                                         sut/list-fn
                                         {:query "*"}
-                                        ident
+                                        admin-ident
                                         {:limit 2}
                                         services))
              (count (sut/list-all-pages :incident
                                         sut/list-fn
                                         {:query "*"}
-                                        ident
+                                        admin-ident
                                         {:limit 3}
                                         services)))
           "paging parameters shall not alter the number of retrieved entities.")
@@ -47,13 +47,13 @@
              (count (sut/list-all-pages :incident
                                         sut/list-fn
                                         {:query "*"}
-                                        ident
+                                        admin-ident
                                         {}
                                         services))
              (count (sut/list-all-pages :event
                                         sut/list-events
                                         {:query "*"}
-                                        ident
+                                        admin-ident
                                         {}
                                         services)))
           "all store shall be properly listed.")
@@ -61,7 +61,7 @@
                 (count (sut/list-all-pages :incident
                                            sut/list-fn
                                            {:one-of {:source "incident-2-source"}}
-                                           ident
+                                           admin-ident
                                            {}
                                            services)))
              "entities shall be properly filtered."))))))
