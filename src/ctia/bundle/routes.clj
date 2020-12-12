@@ -78,7 +78,7 @@
     [(-> plural kw->snake-case-str keyword)
      (-> entity kw->snake-case-str (str "_refs") keyword)]))
 
-(s/defn prep-bundle-schema :- s/Schema
+(s/defn prep-bundle-schema :- s/Any
   [{{:keys [enabled?]} :FeaturesService} :- APIHandlerServices]
   (let [to-remove (->> (entities/all-entities)
                        keys

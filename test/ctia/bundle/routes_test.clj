@@ -415,6 +415,37 @@
            ;; reopen index to enable cleaning
            (es-index/open! (:conn indicator-store-state) indexname)))))))
 
+(deftest bundle-import-should-not-allow-disabled-entities
+  (testing "Attempts to import bundle with disabled entities should fail"
+    (let [disable [:asset :asset-properties :actor :sighting]]
+     (helpers/with-config-transformer
+       #(assoc-in
+         % [:ctia :features :disable]
+         (->> disable (map name) (str/join ",")))
+       (test-for-each-store-with-app
+        (fn [app]
+          (helpers/set-capabilities! app "foouser" ["foogroup"] "user" (all-capabilities))
+          (whoami-helpers/set-whoami-response app
+                                              "45c1f5e3f05d0"
+                                              "foouser"
+                                              "foogroup"
+                                              "user")
+          (let [new-bundle               (deep-dissoc-entity-ids bundle-maximal)
+                resp                     (POST app "ctia/bundle/import"
+                                           :body new-bundle
+                                           :headers {"Authorization" "45c1f5e3f05d0"})
+                disallowed-keys-expected (->> disable
+                                              (mapcat #'bundle.routes/entity->bundle-keys)
+                                              set)
+                disallowed-keys-res      (->> resp
+                                              :body
+                                              edn/read-string
+                                              :errors
+                                              (filter (fn [[_ v]] (= v 'disallowed-key)))
+                                              (map first)
+                                              set)]
+            (is (= disallowed-keys-expected disallowed-keys-res)))))))))
+
 (deftest bundle-import-errors-test
   (test-for-each-store-with-app
    (fn [app]
