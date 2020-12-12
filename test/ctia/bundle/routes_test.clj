@@ -1,23 +1,24 @@
 (ns ctia.bundle.routes-test
-  (:require [ctim.schemas.common :refer [ctim-schema-version]]
-            [ductile.index :as es-index]
-            [clj-momo.test-helpers
-             [core :as mth]
-             [http :refer [encode]]]
-            [clojure
-             [set :as set]
-             [test :as t :refer [deftest is join-fixtures testing use-fixtures]]]
+  (:require [clj-momo.test-helpers.core :as mth]
+            [clj-momo.test-helpers.http :refer [encode]]
+            [clojure.edn :as edn]
+            [clojure.set :as set]
+            [clojure.string :as str]
+            [clojure.test :as t :refer [deftest is join-fixtures testing use-fixtures]]
+            [ctia.auth :as auth :refer [IIdentity]]
+            [ctia.auth.capabilities :refer [all-capabilities]]
             [ctia.bulk.core :as bulk]
             [ctia.bundle.core :as core]
+            [ctia.bundle.routes :as bundle.routes]
             [ctia.properties :as p]
-            [ctia.auth.capabilities :refer [all-capabilities]]
-            [ctia.test-helpers
-             [core :as helpers :refer [deep-dissoc-entity-ids GET POST DELETE]]
-             [fake-whoami-service :as whoami-helpers]
-             [store :refer [test-for-each-store-with-app]]]
+            [ctia.test-helpers.core :as helpers
+             :refer [deep-dissoc-entity-ids GET POST DELETE]]
+            [ctia.test-helpers.fake-whoami-service :as whoami-helpers]
+            [ctia.test-helpers.store :refer [test-for-each-store-with-app]]
             [ctim.domain.id :as id]
-            [ctia.auth :as auth :refer [IIdentity]]
             [ctim.examples.bundles :refer [bundle-maximal]]
+            [ctim.schemas.common :refer [ctim-schema-version]]
+            [ductile.index :as es-index]
             [puppetlabs.trapperkeeper.app :as app]))
 
 (defn fixture-properties [t]
