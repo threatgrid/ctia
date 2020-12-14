@@ -16,10 +16,15 @@
             [ctia.test-helpers.fake-whoami-service :as whoami-helpers]
             [ctia.test-helpers.store :refer [test-for-each-store-with-app]]
             [ctim.domain.id :as id]
+            [ctim.examples.asset-properties :refer [asset-properties-maximal]]
+            [ctim.examples.assets :refer [asset-maximal]]
             [ctim.examples.bundles :refer [bundle-maximal]]
+            [ctim.examples.incidents :refer [incident-maximal]]
+            [ctim.examples.target-records :refer [target-record-maximal]]
             [ctim.schemas.common :refer [ctim-schema-version]]
             [ductile.index :as es-index]
-            [puppetlabs.trapperkeeper.app :as app]))
+            [puppetlabs.trapperkeeper.app :as app]
+            [schema.core :as s]))
 
 (defn fixture-properties [t]
   (helpers/with-properties ["ctia.http.bulk.max-size" 1000
@@ -416,35 +421,55 @@
            (es-index/open! (:conn indicator-store-state) indexname)))))))
 
 (deftest bundle-import-should-not-allow-disabled-entities
+  (testing "disabled entities should be removed from Bundle schema"
+    (let [selected-keys    #{:asset :target-record :asset-properties}
+          set-of           (fn [model] (set (repeat 3 model)))
+          fake-bundle      {:id                    "http://ex.tld/ctia/bundle/bundle-5023697b-3857-4652-9b53-ccda297f9c3e"
+                            :source                "source"
+                            :type                  "bundle"
+                            :assets                (set-of asset-maximal)
+                            :asset_refs            #{"http://ex.tld/ctia/asset/asset-5023697b-3857-4652-9b53-ccda297f9c3e"}
+                            :asset_properties      (set-of asset-properties-maximal)
+                            :asset_properties_refs #{"http://ex.tld/ctia/asset-properties/asset-properties-5023697b-3857-4652-9b53-ccda297f9c3e"}
+                            :target_record_refs    #{"http://ex.tld/ctia/target-record/target-record-5023697b-3857-4652-9b53-ccda297f9c3e"}
+                            :target_records        (set-of target-record-maximal)}
+          api-handler-svcs {:FeaturesService {:enabled? #(contains? selected-keys %)}}]
+      (s/set-fn-validation! false)    ;; otherwise it fails for incomplete APIHandlerServices passed into `prep-bundle-schema`
+      (is (map? (s/validate (bundle.routes/prep-bundle-schema api-handler-svcs) fake-bundle)))
+      (is (thrown? Exception
+                   (s/validate
+                    (bundle.routes/prep-bundle-schema api-handler-svcs)
+                    (assoc fake-bundle :incidents (set-of incident-maximal))))
+          "Bundle schema with a key that's not explicitly allowed shouldn't validate")))
   (testing "Attempts to import bundle with disabled entities should fail"
     (let [disable [:asset :asset-properties :actor :sighting]]
-     (helpers/with-config-transformer
-       #(assoc-in
-         % [:ctia :features :disable]
-         (->> disable (map name) (str/join ",")))
-       (test-for-each-store-with-app
-        (fn [app]
-          (helpers/set-capabilities! app "foouser" ["foogroup"] "user" (all-capabilities))
-          (whoami-helpers/set-whoami-response app
-                                              "45c1f5e3f05d0"
-                                              "foouser"
-                                              "foogroup"
-                                              "user")
-          (let [new-bundle               (deep-dissoc-entity-ids bundle-maximal)
-                resp                     (POST app "ctia/bundle/import"
-                                           :body new-bundle
-                                           :headers {"Authorization" "45c1f5e3f05d0"})
-                disallowed-keys-expected (->> disable
-                                              (mapcat #'bundle.routes/entity->bundle-keys)
-                                              set)
-                disallowed-keys-res      (->> resp
-                                              :body
-                                              edn/read-string
-                                              :errors
-                                              (filter (fn [[_ v]] (= v 'disallowed-key)))
-                                              (map first)
-                                              set)]
-            (is (= disallowed-keys-expected disallowed-keys-res)))))))))
+      (helpers/with-config-transformer
+        #(assoc-in
+          % [:ctia :features :disable]
+          (->> disable (map name) (str/join ",")))
+        (test-for-each-store-with-app
+         (fn [app]
+           (helpers/set-capabilities! app "foouser" ["foogroup"] "user" (all-capabilities))
+           (whoami-helpers/set-whoami-response app
+                                               "45c1f5e3f05d0"
+                                               "foouser"
+                                               "foogroup"
+                                               "user")
+           (let [new-bundle               (deep-dissoc-entity-ids bundle-maximal)
+                 resp                     (POST app "ctia/bundle/import"
+                                            :body new-bundle
+                                            :headers {"Authorization" "45c1f5e3f05d0"})
+                 disallowed-keys-expected (->> disable
+                                               (mapcat #'bundle.routes/entity->bundle-keys)
+                                               set)
+                 disallowed-keys-res      (->> resp
+                                               :body
+                                               edn/read-string
+                                               :errors
+                                               (filter (fn [[_ v]] (= v 'disallowed-key)))
+                                               (map first)
+                                               set)]
+             (is (= disallowed-keys-expected disallowed-keys-res)))))))))
 
 (deftest bundle-import-errors-test
   (test-for-each-store-with-app
