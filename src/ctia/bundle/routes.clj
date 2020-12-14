@@ -67,24 +67,22 @@
     :read-casebook
     :list-casebooks})
 
-(defn- keyword->str [key] (str (if (namespace key) "/" "") (name key)))
-
 (defn- entity->bundle-keys
   "For given entity key returns corresponding keys that may be present in Bundle schema.
   e.g. :asset => [:assets :asset_refs]"
   [entity-key]
   (let [{:keys [entity plural]} (get (entities/all-entities) entity-key)
-        kw->snake-case-str      (fn [kw] (-> kw keyword->str (str/replace #"-" "_")))]
+        kw->snake-case-str      (fn [kw] (-> kw name (str/replace #"-" "_")))]
     [(-> plural kw->snake-case-str keyword)
      (-> entity kw->snake-case-str (str "_refs") keyword)]))
 
 (s/defn prep-bundle-schema :- s/Any
   [{{:keys [enabled?]} :FeaturesService} :- APIHandlerServices]
-  (let [to-remove (->> (entities/all-entities)
-                       keys
-                       (filter (comp not enabled?))
-                       (mapcat entity->bundle-keys))]
-    (apply st/dissoc NewBundle to-remove)))
+  (->> (entities/all-entities)
+       keys
+       (remove enabled?)
+       (mapcat entity->bundle-keys)
+       (apply st/dissoc NewBundle)))
 
 (s/defn bundle-routes [{{:keys [get-in-config]} :ConfigService
                         :as services} :- APIHandlerServices]
