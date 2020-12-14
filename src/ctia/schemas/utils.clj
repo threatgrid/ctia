@@ -35,7 +35,16 @@
   [schema]
   (st/optional-keys-schema schema))
 
-(s/defn service-subgraph
+;; cyclic deps prevent moving these schemas to ctia.schemas.core
+(s/defschema AnyServiceGraphNode
+  "Describes the vals of the return values of app/service-graph"
+  {(s/pred simple-keyword?) (s/pred ifn?)})
+
+(s/defschema AnyServiceGraph
+  "Describes all return values of app/service-graph"
+  {(s/pred simple-keyword?) AnyServiceGraphNode})
+
+(s/defn service-subgraph :- AnyServiceGraph
   "Returns a subgraph of a Trapperkeeper service graph. If
   any levels are missing, throws an exception.
   
@@ -50,7 +59,7 @@
   ;=> {:ConfigService {:get-config <...>}
   ;    :FooService {:f2 <...>}}
   "
-  [graph :- (s/pred map?)
+  [graph :- AnyServiceGraph
    selectors :- {(s/pred simple-keyword?)
                  #{(s/pred simple-keyword?)}}]
   {:pre [(map? graph)]}
@@ -75,7 +84,7 @@
             (transient {})
             selectors)))
 
-(s/defn service-subgraph-from-schema :- (s/pred map?)
+(s/defn service-subgraph-from-schema :- AnyServiceGraph
   "Given a schema describing a Trapperkeeper graph,
   returns just the elements in graph mentioned
   in the schema as 'explicit keys' using service-subgraph.
@@ -94,10 +103,9 @@
   ;    :FooService {:f1 (fn [...] ...)
   ;                 :f2 (fn [...] ...)}}
   "
-  [graph
+  [graph :- AnyServiceGraph
    schema :- s/Schema]
-  {:pre [(map? graph)
-         (map? schema)]}
+  {:pre [(map? schema)]}
   (service-subgraph
     graph
     (into {}
@@ -157,26 +165,27 @@
 ;; TODO behavioral unit test
 (s/defn open-service-schema :- s/Schema
   "Given a schema shaped like a Trapperkeeper service graph, 
-  conjoins {(s/pred simple-keyword?) (s/pred map?)} to the first layer
-  and {(s/pred simple-keyword?) (s/pred ifn?)} to the second layers.
+  s/merge's AnyServiceGraph to the first layer
+  and AnyServiceGraphNode to the second layers.
 
   (open-service-schema
     {:ConfigService {:get-in-config (s/=> ...)}
      :FooService {:f1 (s/=> ...)}})
-  ;=> {:ConfigService {:get-in-config (s/=> ...)
-  ;                    (s/pred simple-keyword?) (s/pred ifn?)}
-  ;    :FooService {:f1 (s/=> ...)
-  ;                 (s/pred simple-keyword?) (s/pred ifn?)}
-  ;    (s/pred simple-keyword?) (s/pred map?)}
+  ;=> (s/merge {:ConfigService (s/merge {:get-in-config (s/=> ...)}
+  ;                                     AnyServiceGraphNode)
+  ;             :FooService (s/merge {:f1 (s/=> ...)}
+  ;                                  AnyServiceGraphNode)}
+  ;            AnyServiceGraph)
   "
   [s :- s/Schema]
   {:pre [(map? s)]}
   (-> (into {}
             (map (fn [[k v]]
-                   {:pre [(map? v)]}
-                   [k (conj v {(s/pred simple-keyword?) (s/pred ifn?)})]))
+                   {:pre [(s/specific-key? k)
+                          (map? v)]}
+                   [k (s/merge v AnyServiceGraphNode)]))
             s)
-      (conj {(s/pred simple-keyword?) (s/pred map?)})))
+      (s/merge AnyServiceGraph)))
 
 (defn select-all-keys
   "Like st/select-keys but throws an exception if any keys are missing."
