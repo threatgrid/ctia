@@ -73,10 +73,10 @@
    (fn [app]
      (establish-user! app)
      (entity-crud-test
-      {:app app
-       :entity "relationship"
-       :example new-relationship
-       :headers {:Authorization "45c1f5e3f05d0"}}))))
+      (into sut/relationship-entity
+            {:app app
+             :example new-relationship
+             :headers {:Authorization "45c1f5e3f05d0"}})))))
 
 (deftest test-relationship-pagination-field-selection
   (test-for-each-store-with-app

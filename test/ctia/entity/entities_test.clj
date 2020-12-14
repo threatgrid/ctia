@@ -32,7 +32,7 @@
         realize-fn-services (service-subgraph
                               (app/service-graph app)
                               :ConfigService [:get-in-config]
-                              :StoreService [:read-store]
+                              :StoreService [:get-store]
                               :GraphQLNamedTypeRegistryService
                               [:get-or-update-named-type-registry]
                               :IEncryption [:decrypt :encrypt])

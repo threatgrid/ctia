@@ -9,7 +9,6 @@
              [test :as t :refer [deftest is join-fixtures testing use-fixtures]]]
             [ctia.bulk.core :as bulk]
             [ctia.bundle.core :as core]
-            [ctia.store-service :as store-svc]
             [ctia.properties :as p]
             [ctia.auth.capabilities :refer [all-capabilities]]
             [ctia.test-helpers
@@ -18,7 +17,8 @@
              [store :refer [test-for-each-store-with-app]]]
             [ctim.domain.id :as id]
             [ctia.auth :as auth :refer [IIdentity]]
-            [ctim.examples.bundles :refer [bundle-maximal]]))
+            [ctim.examples.bundles :refer [bundle-maximal]]
+            [puppetlabs.trapperkeeper.app :as app]))
 
 (defn fixture-properties [t]
   (helpers/with-properties ["ctia.http.bulk.max-size" 1000
@@ -210,7 +210,7 @@
                                          "foouser"
                                          "foogroup"
                                          "user")
-     (let [{:keys [all-stores]} (helpers/get-service-map app :StoreService)
+     (let [{:keys [get-store]} (helpers/get-service-map app :StoreService)
 
            indicators [(mk-indicator 0)
                        (mk-indicator 1)]
@@ -377,7 +377,7 @@
                        (map :result (:results bundle-result-update)))
                "All existing entities are not updated")))
        (testing "Partial results with errors"
-         (let [indicator-store-state (-> (all-stores) :indicator first :state)
+         (let [indicator-store-state (-> (get-store :indicator) :state)
                indexname (:index indicator-store-state)
                ;; close indicator index to produce ES errors on that store
                _ (es-index/close! (:conn indicator-store-state) indexname)
@@ -461,9 +461,7 @@
                                          "foouser"
                                          "foogroup"
                                          "user")
-     (let [read-store (-> (helpers/get-service-map app :StoreService)
-                          :read-store
-                          store-svc/store-service-fn->varargs)
+     (let [{{:keys [get-store]} :StoreService} (app/service-graph app)
 
            duplicated-indicators (->> (mk-indicator 0)
                                       (repeat (* 10 core/find-by-external-ids-limit))
@@ -480,7 +478,7 @@
                                  :body bundle
                                  :headers {"Authorization" "45c1f5e3f05d0"})
            ident (FakeIdentity. "foouser" ["foogroup"])
-           matched-entities (core/all-pages :indicator all-external-ids ident read-store)
+           matched-entities (core/all-pages :indicator all-external-ids ident get-store)
            max-matched (+ core/find-by-external-ids-limit
                           (count more-indicators))]
        (assert (= 200 (:status response-create)))

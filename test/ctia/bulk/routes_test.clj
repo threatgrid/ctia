@@ -504,9 +504,9 @@
                                          "foogroup"
                                          "user")
 
-     (let [{:keys [all-stores]} (helpers/get-service-map app :StoreService)
+     (let [{:keys [get-store]} (helpers/get-service-map app :StoreService)
 
-           {:keys [index conn]} (-> (all-stores) :tool first :state)
+           {:keys [index conn]} (-> (get-store :tool) :state)
        ;; close tool index to produce ES errors on that store
            _ (es-index/close! conn index)
            tools (->> [(mk-new-tool 1)

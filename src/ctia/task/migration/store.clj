@@ -60,7 +60,7 @@
 (defonce migration-es-conn (atom nil))
 
 (s/defschema MigrationStoreServices
-  {:ConfigService {:get-config (s/=> s/Any s/Any)
+  {:ConfigService {:get-config (s/=> s/Any)
                    :get-in-config (s/=>* s/Any
                                          [(s/named [s/Any] 'path)]
                                          [(s/named [s/Any] 'path)

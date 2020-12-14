@@ -31,7 +31,7 @@
             (s/optional-key :sort_by)
             (describe (s/enum :id) "Sort result on a field")))
 
-(s/defn observable-routes [{{:keys [read-store]} :StoreService
+(s/defn observable-routes [{{:keys [get-store]} :StoreService
                             :as services} :- APIHandlerServices]
   (routes
     (let [capabilities :read-verdict]
@@ -46,11 +46,11 @@
         :capabilities capabilities
         :auth-identity identity
         :identity-map identity-map
-        (or (some-> (read-store :judgement
-                                calculate-verdict
-                                {:type observable_type
-                                 :value observable_value}
-                                identity-map)
+        (or (some-> (get-store :judgement)
+                    (calculate-verdict
+                      {:type observable_type
+                       :value observable_value}
+                      identity-map)
                     (update :judgement_id short-id->long-id services)
                     ok)
             (not-found {:message "no verdict currently available for the supplied observable"}))))
@@ -67,12 +67,12 @@
         :capabilities capabilities
         :auth-identity identity
         :identity-map identity-map
-        (-> (read-store :judgement
-                        list-judgements-by-observable
-                        {:type observable_type
-                         :value observable_value}
-                        identity-map
-                        params)
+        (-> (get-store :judgement)
+            (list-judgements-by-observable
+              {:type observable_type
+               :value observable_value}
+              identity-map
+              params)
             (page-with-long-id services)
             un-store-page
             paginated-ok)))
@@ -92,23 +92,23 @@
         :identity-map identity-map
         (paginated-ok
          (let [http-show (p/get-http-show services)
-               judgements (:data (read-store
-                                  :judgement
-                                  list-judgements-by-observable
-                                  {:type observable_type
-                                   :value observable_value}
-                                  identity-map
-                                  {:fields [:id]}))
+               judgements (-> (get-store :judgement)
+                              (list-judgements-by-observable
+                                {:type observable_type
+                                 :value observable_value}
+                                identity-map
+                                {:fields [:id]})
+                              :data)
                judgement-ids (->> judgements
                                   (map :id)
                                   (map #(id/short-id->id :judgement % http-show))
                                   (map id/long-id))
-               relationships (:data (read-store
-                                     :relationship
-                                     list-records
-                                     {:all-of {:source_ref judgement-ids}}
-                                     identity-map
-                                     {:fields [:target_ref]}))
+               relationships (-> (get-store :relationship)
+                                 (list-records
+                                   {:all-of {:source_ref judgement-ids}}
+                                   identity-map
+                                   {:fields [:target_ref]})
+                                 :data)
                indicator-ids (->> (map :target_ref relationships)
                                   (map #(id/long-id->id %))
                                   (filter #(= "indicator" (:type %)))
@@ -132,12 +132,12 @@
         :identity-map identity-map
         :return PartialSightingList
         :summary "Returns Sightings associated with the specified observable."
-        (-> (read-store :sighting
-                        list-sightings-by-observables
-                        [{:type observable_type
-                          :value observable_value}]
-                        identity-map
-                        params)
+        (-> (get-store :sighting)
+            (list-sightings-by-observables
+              [{:type observable_type
+                :value observable_value}]
+              identity-map
+              params)
             (page-with-long-id services)
             un-store-page
             paginated-ok)))
@@ -157,22 +157,23 @@
         :identity-map identity-map
         (paginated-ok
          (let [http-show (p/get-http-show services)
-               sightings (:data (read-store :sighting
-                                            list-sightings-by-observables
-                                            [{:type observable_type
-                                              :value observable_value}]
-                                            identity-map
-                                            {:fields [:id]}))
+               sightings (-> (get-store :sighting)
+                             (list-sightings-by-observables
+                               [{:type observable_type
+                                 :value observable_value}]
+                               identity-map
+                               {:fields [:id]})
+                             :data)
                sighting-ids (->> sightings
                                  (map :id)
                                  (map #(id/short-id->id :sighting % http-show))
                                  (map id/long-id))
-               relationships (:data (read-store
-                                     :relationship
-                                     list-records
-                                     {:all-of {:source_ref sighting-ids}}
-                                     identity-map
-                                     {:fields [:target_ref]}))
+               relationships (-> (get-store :relationship)
+                                 (list-records
+                                   {:all-of {:source_ref sighting-ids}}
+                                   identity-map
+                                   {:fields [:target_ref]})
+                                 :data)
                indicator-ids (->> (map :target_ref relationships)
                                   (map #(id/long-id->id %))
                                   (filter #(= "indicator" (:type %)))
@@ -199,22 +200,23 @@
         :identity-map identity-map
         (paginated-ok
          (let [http-show (p/get-http-show services)
-               sightings (:data (read-store :sighting
-                                            list-sightings-by-observables
-                                            [{:type observable_type
-                                              :value observable_value}]
-                                            identity-map
-                                            {:fields [:id]}))
+               sightings (-> (get-store :sighting)
+                             (list-sightings-by-observables
+                               [{:type observable_type
+                                 :value observable_value}]
+                               identity-map
+                               {:fields [:id]})
+                             :data)
                sighting-ids (->> sightings
                                  (map :id)
                                  (map #(id/short-id->id :sighting % http-show))
                                  (map id/long-id))
-               relationships (:data (read-store
-                                     :relationship
-                                     list-records
-                                     {:all-of {:source_ref sighting-ids}}
-                                     identity-map
-                                     {:fields [:target_ref]}))
+               relationships (-> (get-store :relationship)
+                                 (list-records
+                                   {:all-of {:source_ref sighting-ids}}
+                                   identity-map
+                                   {:fields [:target_ref]})
+                                 :data)
                incident-ids (->> (map :target_ref relationships)
                                  (map #(id/long-id->id %))
                                  (filter #(= "incident" (:type %)))

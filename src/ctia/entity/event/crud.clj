@@ -30,3 +30,5 @@
 (def handle-event-query-string-count crud/handle-query-string-count)
 
 (def handle-aggregate crud/handle-aggregate)
+
+(def handle-delete-search crud/handle-delete-search)

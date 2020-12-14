@@ -28,12 +28,13 @@
                        delete-record
                        read-record
                        update-record
-                       list-records]]
+                       list-records
+                       delete-search]]
    [ctia.schemas.search-agg :refer [HistogramParams
                                     CardinalityParams
                                     TopnParams
                                     MetricResult]]
-   [ring.util.http-response :refer [no-content not-found ok]]
+   [ring.util.http-response :refer [no-content not-found ok forbidden]]
    [ring.swagger.schema :refer [describe]]
    [schema.core :as s]
    [schema-tools.core :as st]))
@@ -48,8 +49,7 @@
   requirements (which must be provided at compile-time with
   POST)."
   [req :- (s/pred map?)
-   {{:keys [read-store
-            write-store]} :StoreService
+   {{:keys [get-store]} :StoreService
     :as services} :- APIHandlerServices
    {:keys [entity
            new-spec
@@ -71,20 +71,20 @@
            (flows/patch-flow
             :services services
             :get-fn (fn [_]
-                      (read-store entity
-                                  read-record
-                                  id
-                                  identity-map
-                                  {}))
+                      (-> (get-store entity)
+                          (read-record
+                            id
+                            identity-map
+                            {})))
             :realize-fn realize-fn
-            :update-fn #(write-store entity
-                                     update-record
-                                     (:id %)
-                                     (cond-> %
-                                       true (assoc-in [:valid_time :end_time] (time/internal-now))
-                                       revocation-update-fn (revocation-update-fn {:req req}))
-                                     identity-map
-                                     (wait_for->refresh wait_for))
+            :update-fn #(-> (get-store entity)
+                            (update-record
+                              (:id %)
+                              (cond-> %
+                                true (assoc-in [:valid_time :end_time] (time/internal-now))
+                                revocation-update-fn (revocation-update-fn {:req req}))
+                              identity-map
+                              (wait_for->refresh wait_for)))
             :long-id-fn #(with-long-id % services)
             :entity-type entity
             :entity-id id
@@ -160,7 +160,7 @@
          date-field :created
          histogram-fields [:created]}
     :as entity-crud-config}]
- (s/fn [{{:keys [write-store read-store]} :StoreService
+ (s/fn [{{:keys [get-store]} :StoreService
          :as services} :- APIHandlerServices]
   (let [capitalized (capitalize-entity entity)
         search-filters (st/dissoc search-q-params
@@ -200,11 +200,11 @@
                     :services services
                     :entity-type entity
                     :realize-fn realize-fn
-                    :store-fn #(write-store entity
-                                            create-record
-                                            %
-                                            identity-map
-                                            (wait_for->refresh wait_for))
+                    :store-fn #(-> (get-store entity)
+                                   (create-record
+                                     %
+                                     identity-map
+                                     (wait_for->refresh wait_for)))
                     :long-id-fn #(with-long-id % services)
                     :entity-type entity
                     :identity identity
@@ -228,18 +228,18 @@
               (if-let [updated-rec
                        (-> (flows/update-flow
                             :services services
-                            :get-fn #(read-store entity
-                                                 read-record
-                                                 %
-                                                 identity-map
-                                                 {})
+                            :get-fn #(-> (get-store entity)
+                                         (read-record
+                                           %
+                                           identity-map
+                                           {}))
                             :realize-fn realize-fn
-                            :update-fn #(write-store entity
-                                                     update-record
-                                                     (:id %)
-                                                     %
-                                                     identity-map
-                                                     (wait_for->refresh wait_for))
+                            :update-fn #(-> (get-store entity)
+                                            (update-record
+                                              (:id %)
+                                              %
+                                              identity-map
+                                              (wait_for->refresh wait_for)))
                             :long-id-fn #(with-long-id % services)
                             :entity-type entity
                             :entity-id id
@@ -264,18 +264,18 @@
                 (if-let [updated-rec
                          (-> (flows/patch-flow
                               :services services
-                              :get-fn #(read-store entity
-                                                   read-record
-                                                   %
-                                                   identity-map
-                                                   {})
+                              :get-fn #(-> (get-store entity)
+                                           (read-record
+                                             %
+                                             identity-map
+                                             {}))
                               :realize-fn realize-fn
-                              :update-fn #(write-store entity
-                                                       update-record
-                                                       (:id %)
-                                                       %
-                                                       identity-map
-                                                       (wait_for->refresh wait_for))
+                              :update-fn #(-> (get-store entity)
+                                              (update-record
+                                                (:id %)
+                                                %
+                                                identity-map
+                                                (wait_for->refresh wait_for)))
                               :long-id-fn #(with-long-id % services)
                               :entity-type entity
                               :entity-id id
@@ -300,44 +300,80 @@
               :capabilities capabilities
               :auth-identity identity
               :identity-map identity-map
-              (-> (read-store entity
-                              list-records
-                              {:all-of {:external_ids external_id}}
-                              identity-map
-                              q)
+              (-> (get-store entity)
+                  (list-records
+                    {:all-of {:external_ids external_id}}
+                    identity-map
+                    q)
                   (page-with-long-id services)
                   un-store-page
                   paginated-ok))))
 
      (when can-search?
-       (let [capabilities search-capabilities]
+       (let [delete-search-capabilities (->> [search-capabilities delete-capabilities]
+                                             (map #(if (coll? %) % [%]))
+                                             (reduce into #{}))]
          (context "/search" []
-                  :description (capabilities->description search-capabilities)
-                  :capabilities search-capabilities
-                  :auth-identity identity
-                  :identity-map identity-map
-                  (GET "/" []
-                       :return search-schema
-                       :summary (format "Search for %s entities using a Lucene/ES query string and field filters" capitalized)
-                       :query [params search-q-params]
-                       (-> (read-store
-                            entity
-                            query-string-search
-                            (search-query date-field params)
-                            identity-map
-                            (select-keys params search-options))
-                           (page-with-long-id services)
-                           un-store-page
-                           paginated-ok))
-                  (GET "/count" []
-                       :return s/Int
-                       :summary (format "Count %s matching a Lucene/ES query string and field filters" capitalized)
-                       :query [params search-filters]
-                       (ok (read-store
-                            entity
-                            query-string-count
-                            (search-query date-field params)
-                            identity-map))))))
+           :auth-identity identity
+           :identity-map identity-map
+           (GET "/" []
+             :return search-schema
+             :summary (format "Search for %s entities using a Lucene/ES query string and field filters" capitalized)
+             :description (capabilities->description search-capabilities)
+             :capabilities search-capabilities
+             :query [params search-q-params]
+             (-> (get-store entity)
+                 (query-string-search
+                   (search-query date-field params)
+                   identity-map
+                   (select-keys params search-options))
+                 (page-with-long-id services)
+                 un-store-page
+                 paginated-ok))
+           (GET "/count" []
+             :return s/Int
+             :summary (format "Count %s matching a Lucene/ES query string and field filters" capitalized)
+             :description (capabilities->description search-capabilities)
+             :capabilities search-capabilities
+             :query [params search-filters]
+             (ok (-> (get-store entity)
+                     (query-string-count
+                       (search-query date-field params)
+                       identity-map))))
+           (DELETE "/" []
+             :capabilities delete-search-capabilities
+             :description (capabilities->description delete-search-capabilities)
+             :return s/Int
+             :summary (format "Delete %s entities matching given Lucene/ES query string or/and field filters" capitalized)
+             :query [params (into search-filters
+                                  {(s/optional-key :wait_for)
+                                   (describe s/Bool "wait for matched entity to be deleted")
+                                   (s/optional-key :REALLY_DELETE_ALL_THESE_ENTITIES)
+                                   (describe s/Bool
+                                             (str
+                                              " If you do not set this value or set it to false"
+                                              " this route will perform a dry run."
+                                              " Set this value to true to perform the deletion."
+                                              " You MUST confirm you will fix the mess after"
+                                              " the inevitable disaster that will occur after"
+                                              " you perform that operation."
+                                              " DO NOT FORGET TO SET THAT TO FALSE AFTER EACH DELETION"
+                                              " IF YOU INTEND TO USE THAT ROUTE MULTIPLE TIMES."))})]
+             (let [query (->> (dissoc params :wait_for :REALLY_DELETE_ALL_THESE_ENTITIES)
+                              (search-query date-field))]
+               (if (empty? query)
+                 (forbidden {:error "you must provide at least one of from, to, query or any field filter."})
+                 (ok
+                  (if (:REALLY_DELETE_ALL_THESE_ENTITIES params)
+                    (-> (get-store entity)
+                        (delete-search
+                          query
+                          identity-map
+                          (wait_for->refresh (:wait_for params))))
+                    (-> (get-store entity)
+                        (query-string-count
+                          query
+                          identity-map))))))))))
      (when can-aggregate?
        (let [capabilities search-capabilities]
          (context "/metric" []
@@ -355,12 +391,11 @@
                                                     coerce-date-range)
                              agg-q (st/assoc (st/select-schema params HistogramParams)
                                              :agg-type :histogram)]
-                         (-> (read-store
-                              entity
-                              aggregate
-                              search-q
-                              agg-q
-                              identity-map)
+                         (-> (get-store entity)
+                             (aggregate
+                               search-q
+                               agg-q
+                               identity-map)
                              (format-agg-result :histogram aggregate-on search-q)
                              ok)))
                   (GET "/topn" []
@@ -373,12 +408,11 @@
                                                     coerce-date-range)
                              agg-q (st/assoc (st/select-schema params TopnParams)
                                              :agg-type :topn)]
-                         (-> (read-store
-                              entity
-                              aggregate
-                              search-q
-                              agg-q
-                              identity-map)
+                         (-> (get-store entity)
+                             (aggregate
+                               search-q
+                               agg-q
+                               identity-map)
                              (format-agg-result :topn aggregate-on search-q)
                              ok)))
                   (GET "/cardinality" []
@@ -391,12 +425,11 @@
                                                     coerce-date-range)
                              agg-q (st/assoc (st/select-schema params CardinalityParams)
                                              :agg-type :cardinality)]
-                         (-> (read-store
-                              entity
-                              aggregate
-                              search-q
-                              agg-q
-                              identity-map)
+                         (-> (get-store entity)
+                             (aggregate
+                               search-q
+                               agg-q
+                               identity-map)
                              (format-agg-result :cardinality aggregate-on search-q)
                              ok))))))
      (let [capabilities get-capabilities]
@@ -409,11 +442,11 @@
             :capabilities capabilities
             :auth-identity identity
             :identity-map identity-map
-            (if-let [rec (read-store entity
-                                     read-record
-                                     id
-                                     identity-map
-                                     params)]
+            (if-let [rec (-> (get-store entity)
+                             (read-record
+                               id
+                               identity-map
+                               params))]
               (-> rec
                   (with-long-id services)
                   un-store
@@ -432,16 +465,16 @@
                :identity-map identity-map
                (if (flows/delete-flow
                     :services services
-                    :get-fn #(read-store entity
-                                         read-record
-                                         %
-                                         identity-map
-                                         {})
-                    :delete-fn #(write-store entity
-                                             delete-record
-                                             %
-                                             identity-map
-                                             (wait_for->refresh wait_for))
+                    :get-fn #(-> (get-store entity)
+                                 (read-record
+                                   %
+                                   identity-map
+                                   {}))
+                    :delete-fn #(-> (get-store entity)
+                                    (delete-record
+                                      %
+                                      identity-map
+                                      (wait_for->refresh wait_for)))
                     :entity-type entity
                     :long-id-fn #(with-long-id % services)
                     :entity-id id

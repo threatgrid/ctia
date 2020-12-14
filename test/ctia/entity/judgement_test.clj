@@ -196,17 +196,17 @@
                                          "user")
 
      (entity-crud-test
-      {:app app
-       :entity "judgement"
-       :example new-judgement
-       :update-tests? true
-       :update-field :source
-       :invalid-tests? false
-       :search-tests? false
-       :additional-tests additional-tests
-       :revoke-tests? true
-       :revoke-tests-extra-query-params {"reason" "(some reason)"}
-       :headers {:Authorization "45c1f5e3f05d0"}}))))
+      (into sut/judgement-entity
+            {:app app
+             :example new-judgement
+             :update-tests? true
+             :update-field :source
+             :invalid-tests? false
+             :search-tests? false
+             :additional-tests additional-tests
+             :revoke-tests? true
+             :revoke-tests-extra-query-params {"reason" "(some reason)"}
+             :headers {:Authorization "45c1f5e3f05d0"}})))))
 
 (deftest test-judgement-metric-routes
   (test-metric-routes (into sut/judgement-entity

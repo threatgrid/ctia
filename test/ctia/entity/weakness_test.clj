@@ -33,10 +33,10 @@
                                          "foogroup"
                                          "user")
      (entity-crud-test
-      {:app app
-       :entity "weakness"
-       :example new-weakness-maximal
-       :headers {:Authorization "45c1f5e3f05d0"}}))))
+      (into sut/weakness-entity
+            {:app app
+             :example new-weakness-maximal
+             :headers {:Authorization "45c1f5e3f05d0"}})))))
 
 (deftest test-weakness-pagination-field-selection
   (test-for-each-store-with-app

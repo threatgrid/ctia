@@ -4,7 +4,7 @@
             [ductile.document :refer [create-doc get-doc delete-doc]]
             [ctia.store :refer [IIdentityStore IStore]]
             [ctia.stores.es
-             [store :refer [close-cm!]]
+             [store :refer [close-connections!]]
              [crud :as crud]
              [mapping :as em]
              [schemas :refer [ESConnState]]]))
@@ -88,7 +88,7 @@
 (defrecord IdentityStore [state]
   IStore
   (close [this]
-    (close-cm! (:state this)))
+    (close-connections! (:state this)))
   IIdentityStore
   (read-identity [_ login]
     (handle-read state login))

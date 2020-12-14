@@ -45,10 +45,10 @@
                                          "foogroup"
                                          "user")
      (entity-crud-test
-      {:app app
-       :entity "sighting"
-       :example new-sighting-maximal
-       :headers {:Authorization "45c1f5e3f05d0"}}))))
+      (into sut/sighting-entity
+            {:app app
+             :example new-sighting-maximal
+             :headers {:Authorization "45c1f5e3f05d0"}})))))
 
 (deftest test-sighting-metric-routes
   (test-metric-routes (into sut/sighting-entity
