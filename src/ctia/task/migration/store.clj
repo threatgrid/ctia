@@ -6,7 +6,7 @@
             [clojure.tools.logging :as log]
             [ctia.init :refer [log-properties]]
             [ctia.lib.collection :refer [fmap]]
-            [ctia.lib.utils :refer [service-subgraph-from-schema]]
+            [ctia.schemas.utils :refer [service-subgraph-from-schema]]
             [ctia.store :as store]
             [ctia.stores.es.crud :as crud]
             [ctia.stores.es.init :as es.init]
