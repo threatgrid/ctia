@@ -38,42 +38,21 @@
   {:pre [(vector? int->v)
          (>= 5 (count int->v))
          (apply distinct? int->v)]}
-  (is (= (service-subgraph {:a {:b (int->v 1)}})
+  (is (= (service-subgraph {:a {:b (int->v 1)}}
+                           {})
          {}))
   (is (= (service-subgraph
            {:a {:b (int->v 1) :c (int->v 2)}
             :d {:e (int->v 3) :f (int->v 4)}}
-           :a [:b])
+           {:a #{:b}})
          {:a {:b (int->v 1)}}))
   (is (= (service-subgraph
            {:a {:b (int->v 1) :c (int->v 2)}
             :d {:e (int->v 3) :f (int->v 4)}}
-           :a [:b]
-           :d [:e])
+           {:a #{:b}
+            :d #{:e}})
          {:a {:b (int->v 1)}
-          :d {:e (int->v 3)}}))
-  (testing "throws on uneven args"
-    (is (thrown-with-msg?
-          AssertionError
-          #"Uneven number of selectors"
-          (service-subgraph
-            {}
-            :b)))
-    (is (thrown-with-msg?
-          AssertionError
-          #"Uneven number of selectors"
-          (service-subgraph
-            {}
-            :b [:c]
-            :d))))
-  (testing "throws when selections clobber"
-    (is (thrown?
-          AssertionError
-          #"Repeated key :a"
-          (service-subgraph
-            {:a {:b (int->v 1)}}
-            :a [:b]
-            :a [:b])))))
+          :d {:e (int->v 3)}})))
 
 (deftest service-subgraph-test
   (service-subgraph-test*

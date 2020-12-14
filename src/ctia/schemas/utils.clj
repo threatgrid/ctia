@@ -108,7 +108,8 @@
                         (->> service-fns
                              keys
                              (filter s/specific-key?)
-                             (map s/explicit-schema-key))])))
+                             (map s/explicit-schema-key)
+                             set)])))
           schema)))
 
 (s/defn service-subschema :- s/Schema
