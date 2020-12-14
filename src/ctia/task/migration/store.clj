@@ -6,7 +6,7 @@
             [clojure.tools.logging :as log]
             [ctia.init :refer [log-properties]]
             [ctia.lib.collection :refer [fmap]]
-            [ctia.lib.utils :refer [service-subgraph]]
+            [ctia.lib.utils :refer [service-subgraph-from-schema]]
             [ctia.store :as store]
             [ctia.stores.es.crud :as crud]
             [ctia.stores.es.init :as es.init]
@@ -69,9 +69,9 @@
 (s/defn MigrationStoreServices->ESConnServices
   :- ESConnServices
   [services :- MigrationStoreServices]
-  (service-subgraph
+  (service-subgraph-from-schema
     services
-    :ConfigService [:get-in-config]))
+    ESConnServices))
 
 (defn prefixed-index [index prefix]
   (let [version-trimmed (string/replace index #"^v[^_]*_" "")]

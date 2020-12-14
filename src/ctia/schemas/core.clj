@@ -1,6 +1,5 @@
 (ns ctia.schemas.core
-  (:require [ctia.lib.utils :refer [service-subgraph]]
-            [ctia.graphql.delayed :as delayed]
+  (:require [ctia.graphql.delayed :as delayed]
             [ctia.schemas.utils :as csutils]
             [ctim.schemas
              [bundle :as bundle]
@@ -40,13 +39,11 @@
                                                :feature-flags (s/=> [s/Str])}})
 
 (s/defschema HTTPShowServices
-  {:ConfigService {:get-in-config (s/=>* s/Any
-                                         [[s/Any]]
-                                         [[s/Any] s/Any])
-                   s/Keyword s/Any}
-   :CTIAHTTPServerService {:get-port (s/=> Port)
-                           s/Keyword s/Any}
-   s/Keyword s/Any})
+  (-> APIHandlerServices
+      (csutils/service-subschema
+        {:ConfigService #{:get-in-config}
+         :CTIAHTTPServerService #{:get-port}})
+      csutils/open-service-schema))
 
 (s/defschema DelayedRoutes
   "Function taking a map of services and returning routes
@@ -62,29 +59,21 @@
 
 (s/defschema RealizeFnServices
   "Maps of service functions available for realize-fns"
-  {:ConfigService {:get-in-config (s/=>* s/Any
-                                         [[s/Any]]
-                                         [[s/Any] s/Any])}
-   :CTIAHTTPServerService {:get-port (s/=> Port)}
-   :StoreService {:get-store GetStoreFn}
-   :GraphQLNamedTypeRegistryService
-   {:get-or-update-named-type-registry
-    (s/=> graphql.schema.GraphQLType
-          s/Str
-          (s/=> graphql.schema.GraphQLType))}
-   :IEncryption {:encrypt (s/=> s/Any s/Any)
-                 :decrypt (s/=> s/Any s/Any)}})
+  (-> APIHandlerServices
+      (csutils/service-subschema
+        {:ConfigService #{:get-in-config}
+         :CTIAHTTPServerService #{:get-port}
+         :StoreService #{:get-store}
+         :GraphQLNamedTypeRegistryService #{:get-or-update-named-type-registry}
+         :IEncryption #{:decrypt
+                        :encrypt}})))
 
 (s/defn APIHandlerServices->RealizeFnServices
   :- RealizeFnServices
   [services :- APIHandlerServices]
-  (service-subgraph
+  (csutils/service-subgraph-from-schema
     services
-    :ConfigService [:get-in-config]
-    :CTIAHTTPServerService [:get-port]
-    :StoreService [:get-store]
-    :GraphQLNamedTypeRegistryService [:get-or-update-named-type-registry]
-    :IEncryption [:decrypt :encrypt]))
+    RealizeFnServices))
 
 (s/defschema GraphQLRuntimeContext
   "A context map to resolve a DelayedGraphQLValue"
