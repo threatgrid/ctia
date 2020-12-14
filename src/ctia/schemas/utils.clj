@@ -165,26 +165,26 @@
 ;; TODO behavioral unit test
 (s/defn open-service-schema :- s/Schema
   "Given a schema shaped like a Trapperkeeper service graph, 
-  s/merge's AnyServiceGraph to the first layer
+  st/merge's AnyServiceGraph to the first layer
   and AnyServiceGraphNode to the second layers.
 
   (open-service-schema
     {:ConfigService {:get-in-config (s/=> ...)}
      :FooService {:f1 (s/=> ...)}})
-  ;=> (s/merge {:ConfigService (s/merge {:get-in-config (s/=> ...)}
-  ;                                     AnyServiceGraphNode)
-  ;             :FooService (s/merge {:f1 (s/=> ...)}
-  ;                                  AnyServiceGraphNode)}
-  ;            AnyServiceGraph)
+  ;=> (st/merge {:ConfigService (st/merge {:get-in-config (s/=> ...)}
+  ;                                       AnyServiceGraphNode)
+  ;              :FooService (st/merge {:f1 (s/=> ...)}
+  ;                                    AnyServiceGraphNode)}
+  ;             AnyServiceGraph)
   "
   [s :- s/Schema]
   {:pre [(map? s)]}
   (-> (into {}
             (map (fn [[k v]]
                    {:pre [(map? v)]}
-                   [k (s/merge v AnyServiceGraphNode)]))
+                   [k (st/merge v AnyServiceGraphNode)]))
             s)
-      (s/merge AnyServiceGraph)))
+      (st/merge AnyServiceGraph)))
 
 (defn select-all-keys
   "Like st/select-keys but throws an exception if any keys are missing."
