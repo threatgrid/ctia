@@ -4,7 +4,9 @@
 
 (defprotocol DuctileService
   (request-fn [this req] "Ignoring `this`, implements the same interface as the 1-argument
-                         arity of clj-http.client/request."))
+                         arity of clj-http.client/request.
+                         
+                         See also: ctia.ductile-service.schemas/RequestFn"))
 
 (tk/defservice ductile-service
   "A service to configure interactions with ductile."

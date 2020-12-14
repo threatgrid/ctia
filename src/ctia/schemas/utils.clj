@@ -132,25 +132,26 @@
    selectors :- {(s/pred simple-keyword?)
                  #{(s/pred simple-keyword?)}}]
   {:pre [(map? graph)]}
-  (reduce (fn [out [service-kw fn-kws]]
-            (assert (keyword? service-kw)
-                    (pr-str service-kw))
-            (assert (set? fn-kws))
-            (let [service-fns (some-> (st/get-in graph [service-kw])
-                                      (st/select-keys fn-kws))]
-              (when (not= (count service-fns)
-                          (count fn-kws))
-                (throw (ex-info (str "Missing service functions for "
-                                     service-kw ": "
-                                     (set/difference
-                                       (set fn-kws)
-                                       (->> service-fns keys (map s/explicit-schema-key))))
-                                {})))
-              (cond-> out
-                service-fns
-                (update service-kw (constantly service-fns)))))
-          {}
-          selectors))
+  (persistent!
+    (reduce (fn [out [service-kw fn-kws]]
+              (assert (keyword? service-kw)
+                      (pr-str service-kw))
+              (assert (set? fn-kws))
+              (let [service-fns (some-> (st/get-in graph [service-kw])
+                                        (st/select-keys fn-kws))]
+                (when (not= (count service-fns)
+                            (count fn-kws))
+                  (throw (ex-info (str "Missing service functions for "
+                                       service-kw ": "
+                                       (set/difference
+                                         (set fn-kws)
+                                         (->> service-fns keys (map s/explicit-schema-key))))
+                                  {})))
+                (cond-> out
+                  service-fns
+                  (assoc! service-kw service-fns))))
+            (transient {})
+            selectors)))
 
 ;; TODO behavioral unit test
 (s/defn open-service-schema :- s/Schema
