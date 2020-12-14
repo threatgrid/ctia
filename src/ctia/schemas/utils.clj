@@ -46,8 +46,7 @@
                   :f2 <...>}
      :BarService {:b1 <...>}}
     {:ConfigService #{:get-config}
-     :FooService #{:f2 :f3}
-     :MissingService #{:m1}})
+     :FooService #{:f2 :f3}})
   ;=> {:ConfigService {:get-config <...>}
   ;    :FooService {:f2 <...>}}
   "
