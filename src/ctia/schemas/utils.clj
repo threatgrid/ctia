@@ -181,8 +181,7 @@
   {:pre [(map? s)]}
   (-> (into {}
             (map (fn [[k v]]
-                   {:pre [(s/specific-key? k)
-                          (map? v)]}
+                   {:pre [(map? v)]}
                    [k (s/merge v AnyServiceGraphNode)]))
             s)
       (s/merge AnyServiceGraph)))
