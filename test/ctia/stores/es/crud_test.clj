@@ -305,7 +305,40 @@
            {:field "observable.value"
             :precision_threshold 10000}}}
          (sut/make-aggregation {:agg-type :cardinality
-                                :aggregate-on "observable.value"}))))
+                                :aggregate-on "observable.value"})))
+  (is (= {:custom
+          {:cardinality
+           {:field "observable.value"
+            :precision_threshold 10000}}}
+         (sut/make-aggregation {:agg-type :cardinality
+                                :agg-key :custom
+                                :aggregate-on "observable.value"})))
+  (is (= {:top-sources
+          {:terms
+           {:field "sources"
+            :size 20
+            :order {:_count :desc}}}
+          :aggs {:by-month
+                 {:date_histogram
+                  {:field "created"
+                   :interval :month
+                   :time_zone "+00:00"}}
+                 :aggs {:nb-orgs
+                        {:cardinality
+                         {:field "groups"
+                          :precision_threshold 10000}}}}}
+         (sut/make-aggregation {:agg-type :topn
+                                :agg-key :top-sources
+                                :aggregate-on "sources"
+                                :limit 20
+                                :sort_order :desc
+                                :aggs {:agg-type :histogram
+                                       :agg-key :by-month
+                                       :aggregate-on "created"
+                                       :granularity :month
+                                       :aggs {:agg-type :cardinality
+                                              :agg-key :nb-orgs
+                                              :aggregate-on "groups"}}}))))
 
 (defn generate-sightings
   [nb confidence title timestamp]
