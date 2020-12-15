@@ -318,7 +318,7 @@ It returns the documents with full hits meta data including the real index in wh
 (s/defn make-search-query
   [{{:keys [default_operator]} :props
     {{:keys [get-in-config]} :ConfigService} :services} :- ESConnState
-   {:keys [query-string filter-map date-range]} :- SearchQuery
+   {:keys [admin query-string filter-map date-range]} :- SearchQuery
    ident]
   (let [es-query-string {:query_string (into {:query query-string}
                                              (when default_operator
@@ -326,10 +326,12 @@ It returns the documents with full hits meta data including the real index in wh
         date-range-query (when date-range
                            {:range date-range})
         filter-terms (-> (ensure-document-id-in-map filter-map)
-                         q/prepare-terms)]
+                         q/prepare-terms)
+        restriction (find-restriction-query-part ident get-in-config)]
     {:bool
      {:filter
-      (cond-> [(find-restriction-query-part ident get-in-config)]
+      (cond-> []
+        (not admin) restriction
         (seq filter-map) (into filter-terms)
         (seq date-range) (conj date-range-query)
         (seq query-string) (conj es-query-string))}}))
@@ -408,32 +410,41 @@ It returns the documents with full hits meta data including the real index in wh
                  :precision_threshold 10000}})
 
 (s/defn make-aggregation
-  [{:keys [agg-type] :as agg-query} :- AggQuery]
-  (let [agg-fn
+  [{:keys [agg-type agg-key aggs]
+    :or {agg-key :metric}
+    :as agg-query} :- AggQuery]
+  (let [root-agg (dissoc agg-query :aggs)
+        agg-fn
         (case agg-type
           :topn make-topn
           :cardinality make-cardinality
           :histogram make-histogram
           (throw (ex-info "invalid aggregation type" agg-type)))]
-    {:metric (agg-fn agg-query)}))
+    (cond-> {agg-key (agg-fn root-agg)}
+      (seq aggs) (assoc :aggs (make-aggregation aggs)))))
 
 (defn format-agg-result
-  [agg-type
-   {:keys [value buckets] :as _metric-res}]
-  (case agg-type
-    :cardinality value
-    :topn (map #(array-map :key (:key %)
-                           :value (:doc_count %))
-               buckets)
-    :histogram (map #(array-map :key (:key_as_string %)
-                                :value (:doc_count %))
-                    buckets)))
+  [{:keys [agg-type agg-key] :as agg-q}
+   agg-res]
+  (let [{:keys [value buckets]} (get agg-res agg-key)
+        {sub-agg-key :agg-key :as sub-agg-q} (:aggs agg-q)
+        format-bucket (fn [{:keys [doc_count key_as_string]
+                            :as bucket}]
+                        (cond-> {:key (or key_as_string (:key bucket))
+                                 :value doc_count}
+                          (seq sub-agg-q) (into (format-agg-result sub-agg-q
+                                                                   (select-keys bucket [sub-agg-key])))))
+        res (case agg-type
+              :cardinality value
+              :topn (mapv format-bucket buckets)
+              :histogram (mapv format-bucket buckets))]
+    {agg-key res}))
 
 (s/defn handle-aggregate
   "Generate an ES aggregation handler for given schema"
   [{:keys [conn index] :as es-conn-state} :- ESConnState
-   {:keys [filter-map] :as search-query} :- SearchQuery
-   {:keys [agg-type] :as agg-query} :- AggQuery
+   search-query :- SearchQuery
+   {:keys [agg-type agg-key] :as agg-query} :- AggQuery
    ident]
   (let [query (make-search-query es-conn-state search-query ident)
         agg (make-aggregation agg-query)
@@ -442,5 +453,5 @@ It returns the documents with full hits meta data including the real index in wh
                                   query
                                   agg
                                   {:limit 0})]
-    (format-agg-result agg-type
-                       (get-in es-res [:aggs :metric]))))
+    (format-agg-result agg-query
+                       (get-in es-res [:aggs]))))
