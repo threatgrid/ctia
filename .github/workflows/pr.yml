@@ -188,6 +188,27 @@ jobs:
           java-version: ${{ env.JAVA_VERSION }}
       - run: java -version
 
+      # install lein using cache to avoid extra download and startup time
+      - name: Leiningen Cache
+        uses: actions/cache@v2
+        id: lein-cache
+        with:
+          # note: this should coincide with ${BIN_PATH}/lein. unclear
+          # if variables can be used here
+          path: ~/bin/lein
+          key: ctia-lein-cache-${{ env.LEIN_VERSION }}
+      - name: Install Leiningen
+        # why doesn't this work!? using an if statement instead
+        #if: steps.lein-cache.cache-hit != 'true'
+        run: |
+          if ! command -v lein
+          then
+            cd "${BIN_PATH}"
+            curl -sLO https://raw.githubusercontent.com/technomancy/leiningen/${LEIN_VERSION}/bin/lein
+            chmod a+x lein
+            lein version
+          fi
+
       - name: Run CTIA tests
         run: ./build/run-tests.sh
         env:
