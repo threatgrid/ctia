@@ -7,19 +7,19 @@
             [clojure.test :refer [deftest testing is]]))
 
 (def admin-ident {:login "johndoe"
-            :groups ["Administators"]})
+                  :groups ["Administators"]})
 
 (deftest list-all-pages-test
   (testing "list all pages shall properly list all results for given entity and parameters. "
     (helpers/fixture-ctia-with-app
      (fn [app]
-       (let [{:keys [StoreService] :as services} (app->APIHandlerServices app)
+       (let [services (app->APIHandlerServices app)
              incidents-1 (fixt/n-doc incident-minimal 10)
              incidents-2 (->> (fixt/n-doc incident-minimal 10)
                               (map #(assoc % :source "incident-2-source")))
              incidents (concat incidents-1 incidents-2)
              bulk-result (helpers/POST-bulk app {:incidents incidents})]
-         (Thread/sleep 1000) ;; ensure index refresh
+         (Thread/sleep 1500) ;; ensure index refresh
          (is
           (= (count incidents)
              (count (sut/list-all-pages :incident
