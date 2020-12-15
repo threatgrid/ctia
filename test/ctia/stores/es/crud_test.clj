@@ -338,9 +338,84 @@
                                        :granularity :month
                                        :aggs {:agg-type :cardinality
                                               :agg-key :nb-orgs
-                                              :aggregate-on "groups"}}})))
+                                              :aggregate-on "groups"}}}))))
+
+(deftest format-agg-result
+  (testing "format agg result shall properly format aggregation results"
+    (let [nested-agg {:agg-type :topn
+                                :agg-key :top-sources
+                                :aggregate-on "sources"
+                                :limit 3
+                                :sort_order :desc
+                                :aggs {:agg-type :histogram
+                                       :agg-key :by-month
+                                       :aggregate-on "created"
+                                       :granularity :month
+                                       :aggs {:agg-type :cardinality
+                                              :agg-key :nb-orgs
+                                              :aggregate-on "groups"}}}
+          simple-agg-rest {:aggs  }])
+                    "key": "bc662064-05ea-4107-a086-e7a4217b48e9",
+                    "doc_count": 21142857,
+    )
+
+
+
+        "top-orgs": {
+            "doc_count_error_upper_bound": 91677,
+            "sum_other_doc_count": 21403848,
+            "buckets": [
+                {
+                    "key": "bc662064-05ea-4107-a086-e7a4217b48e9",
+                    "doc_count": 21142857,
+                    "top-sources": {
+                        "doc_count_error_upper_bound": 0,
+                        "sum_other_doc_count": 0,
+                        "buckets": [
+                            {
+                                "key": "ngfw_ips_event_service",
+                                "doc_count": 14228617
+                            },
+                            {
+                                "key": "ngfw event service",
+                                "doc_count": 5797548
+                            },
+                            {
+                                "key": "cisco stealthwatch enterprise",
+                                "doc_count": 805930
+                            },
+                            {
+                                "key": "ngfw_event_service",
+                                "doc_count": 310758
+                            }
+                        ]
+                    }
+                },
+                {
+                    "key": "threatgrid:76001",
+                    "doc_count": 14734589,
+                    "top-sources": {
+                        "doc_count_error_upper_bound": 0,
+                        "sum_other_doc_count": 0,
+                        "buckets": [
+                            {
+                                "key": "cisco stealthwatch enterprise",
+                                "doc_count": 14734520
+                            },
+                            {
+                                "key": "ngfw event service",
+                                "doc_count": 64
+                            },
+                            {
+                                "key": "ngfw_ips_event_service",
+                                "doc_count": 5
+                            }
+                        ]
+                    }
+                },
 
   )
+
 
 (defn generate-sightings
   [nb confidence title timestamp]

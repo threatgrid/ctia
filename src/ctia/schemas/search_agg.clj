@@ -13,7 +13,8 @@
   "components of a search query:
    - query-string: free text search, with lucene syntax enabled"
   (st/optional-keys
-   {:query-string s/Str
+   {:admin s/Bool
+    :query-string s/Str
     :filter-map {s/Keyword s/Any}
     :date-range DateRange}))
 
