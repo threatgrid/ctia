@@ -150,7 +150,8 @@ install:
     - rvm use 2.2
 
 before_script:
-    - $COMPOSE_BIN -f containers/dev/docker-compose.yml up --memory 4g --memory-swap 10g -d > $COMPOSE_LOG
+    # unlimited swap
+    - $COMPOSE_BIN -f containers/dev/docker-compose.yml up --memory 4g --memory-swap -1 -d > $COMPOSE_LOG
     # Wait ES
     - until curl http://127.0.0.1:9205/; do sleep 1; done
     - until curl http://127.0.0.1:9207/; do sleep 1; done
