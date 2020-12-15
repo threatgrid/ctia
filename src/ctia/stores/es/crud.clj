@@ -424,21 +424,21 @@ It returns the documents with full hits meta data including the real index in wh
       (seq aggs) (assoc :aggs (make-aggregation aggs)))))
 
 (defn format-agg-result
-  [{:keys [agg-type agg-key]
-    nested-agg :aggs}
+  [{:keys [agg-type agg-key] :as agg-q}
    agg-res]
   (let [{:keys [value buckets]} (get agg-res agg-key)
+        {sub-agg-key :agg-key :as sub-agg-q} (:aggs agg-q)
+        format-bucket (fn [{:keys [doc_count key_as_string]
+                            :as bucket}]
+                        (cond-> {:key (or key_as_string (:key bucket))
+                                 :value doc_count}
+                          (seq sub-agg-q) (into (format-agg-result sub-agg-q
+                                                                   (select-keys bucket [sub-agg-key])))))
         res (case agg-type
               :cardinality value
-              :topn (map #(array-map :key (:key %)
-                                     :value (:doc_count %))
-                         buckets)
-              :histogram (map #(array-map :key (:key_as_string %)
-                                          :value (:doc_count %))
-                              buckets))
-        {:keys [agg-type]} nested-aggs]
-    res
-    ))
+              :topn (mapv format-bucket buckets)
+              :histogram (mapv format-bucket buckets))]
+    {agg-key res}))
 
 (s/defn handle-aggregate
   "Generate an ES aggregation handler for given schema"

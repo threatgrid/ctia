@@ -354,67 +354,84 @@
                                        :aggs {:agg-type :cardinality
                                               :agg-key :nb-orgs
                                               :aggregate-on "groups"}}}
-          simple-agg-rest {:aggs  }])
-                    "key": "bc662064-05ea-4107-a086-e7a4217b48e9",
-                    "doc_count": 21142857,
-    )
+          nested-res {:top-sources {:doc_count_error_upper_bound 0
+                                    :sum_other_doc_count 0
+                                    :buckets [{:key "cisco stealthwatch enterprise"
+                                               :doc_count 121455801
+                                               :by-month {:buckets[{:key_as_string "2020-10-01T00:00:00.000Z"
+                                                                     :key 1601510400000
+                                                                     :doc_count 15677820
+                                                                     :nb-orgs {:value 263}
+                                                                     }
+                                                                    {:key_as_string "2020-11-01T00:00:00.000Z"
+                                                                     :key 1604188800000
+                                                                     :doc_count 16557873
+                                                                     :nb-orgs {:value 240}
+                                                                    }
+                                                                    {:key_as_string "2020-12-01T00:00:00.000Z"
+                                                                     :key 1606780800000
+                                                                     :doc_count 5292010
+                                                                     :nb-orgs {:value 222}
+                                                                    }]}}
+                                              {:key "ngfw event service"
+                                               :doc_count 59299588
+                                               :by-month {:buckets[{:key_as_string "2020-11-01T00:00:00.000Z"
+                                                                     :key 1604188800000
+                                                                     :doc_count 14852850
+                                                                     :nb-orgs {:value 533}
+                                                                     }
+                                                                    {:key_as_string "2020-12-01T00:00:00.000Z"
+                                                                     :key 1606780800000
+                                                                     :doc_count 5839115
+                                                                     :nb-orgs {:value 476}
+                                                                     }]}}
+                                              {:key "ao"
+                                               :doc_count 1152
+                                               :by-month {:buckets[{:key_as_string "2020-12-01T00:00:00.000Z"
+                                                                     :key 1606780800000
+                                                                     :doc_count 3
+                                                                     :nb-orgs {:value 1}
+                                                                     }]}
+                                               }]}}
+          expected-format {:top-sources
+                           [{:key "cisco stealthwatch enterprise"
+                             :value 121455801
+                             :by-month [{
+                                          :key "2020-10-01T00:00:00.000Z"
+                                          :value 15677820
+                                          :nb-orgs 263
+                                          }
+                                         {
+                                          :key "2020-11-01T00:00:00.000Z"
+                                          :value 16557873
+                                          :nb-orgs 240
+                                          }
+                                         {
+                                          :key "2020-12-01T00:00:00.000Z"
+                                          :value 5292010
+                                          :nb-orgs 222
+                                          }]}
+                            {:key "ngfw event service"
+                             :value 59299588
+                             :by-month [{:key "2020-11-01T00:00:00.000Z"
+                                          :value 14852850
+                                          :nb-orgs 533
+                                          }
+                                         {
+                                          :key "2020-12-01T00:00:00.000Z"
+                                          :value 5839115
+                                          :nb-orgs 476
+                                          }]}
+                            {:key "ao"
+                             :value 1152
+                             :by-month [{:key "2020-12-01T00:00:00.000Z"
+                                          :value 3
+                                          :nb-orgs 1
+                                          }]}]}]
+      (clojure.pprint/pprint (sut/format-agg-result nested-agg nested-res))
+      (is (= expected-format (sut/format-agg-result nested-agg nested-res)))
 
-
-
-        "top-orgs": {
-            "doc_count_error_upper_bound": 91677,
-            "sum_other_doc_count": 21403848,
-            "buckets": [
-                {
-                    "key": "bc662064-05ea-4107-a086-e7a4217b48e9",
-                    "doc_count": 21142857,
-                    "top-sources": {
-                        "doc_count_error_upper_bound": 0,
-                        "sum_other_doc_count": 0,
-                        "buckets": [
-                            {
-                                "key": "ngfw_ips_event_service",
-                                "doc_count": 14228617
-                            },
-                            {
-                                "key": "ngfw event service",
-                                "doc_count": 5797548
-                            },
-                            {
-                                "key": "cisco stealthwatch enterprise",
-                                "doc_count": 805930
-                            },
-                            {
-                                "key": "ngfw_event_service",
-                                "doc_count": 310758
-                            }
-                        ]
-                    }
-                },
-                {
-                    "key": "threatgrid:76001",
-                    "doc_count": 14734589,
-                    "top-sources": {
-                        "doc_count_error_upper_bound": 0,
-                        "sum_other_doc_count": 0,
-                        "buckets": [
-                            {
-                                "key": "cisco stealthwatch enterprise",
-                                "doc_count": 14734520
-                            },
-                            {
-                                "key": "ngfw event service",
-                                "doc_count": 64
-                            },
-                            {
-                                "key": "ngfw_ips_event_service",
-                                "doc_count": 5
-                            }
-                        ]
-                    }
-                },
-
-  )
+      )))
 
 
 (defn generate-sightings
