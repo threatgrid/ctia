@@ -67,3 +67,17 @@
        (optional-keys x)
        x))
    schema))
+
+(defn select-all-keys
+  "Like st/select-keys but throws an exception if any keys are missing."
+  [schema ks]
+  (let [res (st/select-keys schema ks)
+        missing-keys (into #{}
+                           ;; Note: st/key-in-schema is private but would be more direct
+                           (remove #(st/get-in res [%]))
+                           ks)]
+    (when (seq missing-keys)
+      (throw (ex-info (str "Missing keys: " (vec (sort missing-keys)))
+                      {:missing-keys missing-keys
+                       :res res})))
+    res))

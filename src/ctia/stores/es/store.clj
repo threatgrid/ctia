@@ -2,6 +2,7 @@
   (:require [schema.core :as s]
             [schema-tools.core :as st]
             [ductile
+             [conn :as es-conn]
              [index :as es-index]
              [schemas :refer [ESConn]]]
             [ctia.store :refer [IStore IQueryStringSearchableStore]]
@@ -9,7 +10,12 @@
 
 (defn delete-state-indexes [{:keys [conn index config] :as state}]
   (when conn
+    (es-index/delete-template! conn (str index "*"))
     (es-index/delete! conn (str index "*"))))
+
+(s/defn close-connections!
+  [{:keys [conn]}]
+  (es-conn/close conn))
 
 (defmacro def-es-store
   [store-name
@@ -38,6 +44,8 @@
      (~(symbol "list-records") [_# filter-map# ident# params#]
       ((crud/handle-find ~partial-stored-schema)
        ~(symbol "state") filter-map# ident# params#))
+     (~(symbol "close") [_#]
+      (close-connections! ~(symbol "state")))
      IQueryStringSearchableStore
      (~(symbol "query-string-search") [_# search-query# ident# params#]
       ((crud/handle-query-string-search ~partial-stored-schema)
@@ -47,7 +55,10 @@
        ~(symbol "state") search-query# ident#))
      (~(symbol "aggregate") [_# search-query# agg-query# ident#]
       (crud/handle-aggregate
-       ~(symbol "state") search-query# agg-query# ident#))))
+       ~(symbol "state") search-query# agg-query# ident#))
+     (~(symbol "delete-search") [_# search-query# ident# params#]
+      (crud/handle-delete-search
+       ~(symbol "state") search-query# ident# params#))))
 
 (s/defschema StoreMap
   {:conn ESConn
@@ -57,7 +68,6 @@
    :settings s/Any
    :config s/Any
    :props {s/Any s/Any}})
-
 
 (s/defn store-state->map :- StoreMap
   "transform a store state

@@ -1,6 +1,7 @@
 (ns ctia.test-helpers.core-test
   (:require [clojure.test :refer [deftest is testing]]
-            [ctia.test-helpers.core :as sut])
+            [ctia.test-helpers.core :as sut]
+            [schema.core :as s])
   (:import [clojure.lang ExceptionInfo]
            [java.util UUID]))
 
@@ -9,8 +10,29 @@
            "a.b.c")
          [:a :b :c])))
 
+(defn naive-longest-common-suffix
+  "O(|strs| * shortest string)"
+  [strs]
+  (when-not (seq strs)
+    (throw (ex-info "non-empty strs needed" {})))
+  (let [shortest-str-count (count (apply min-key count strs))]
+    (reduce (fn [so-far i]
+              (let [suffixes (map #(subs % (- (count %) i)) strs)]
+                (if (apply = suffixes)
+                  (first suffixes)
+                  (reduced so-far))))
+            ""
+            (range 1 (inc shortest-str-count)))))
+
+(deftest naive-longest-common-suffix-test
+  (is (thrown? clojure.lang.ExceptionInfo (naive-longest-common-suffix [])))
+  (is (= "" (naive-longest-common-suffix [""])))
+  (is (= "13" (naive-longest-common-suffix ["a113" "b13"])))
+  (is (= "" (naive-longest-common-suffix ["a" "b"])))
+  (is (= "a" (naive-longest-common-suffix ["a" "a"]))))
+
 (deftest build-transformed-init-config-test
-  (assert (empty? @#'sut/*config-transformers*))
+  (assert (not (thread-bound? #'sut/*config-transformers*)))
   (assert (not (thread-bound? #'sut/*properties-overrides*)))
   ;; TODO generate paths and vals from PropertiesSchema
   (testing "defaults to ctia-default.properties values"
@@ -24,6 +46,19 @@
         (is (= (get-in (sut/build-transformed-init-config)
                        ctia-path)
                ctia-val)))))
+  (testing "defaults to randomized indices"
+    (let [gen-non-empty-suffix (fn []
+                                 (let [config (sut/build-transformed-init-config)
+                                       es (get-in config [:ctia :store :es])
+                                       indices (for [[_ {:keys [indexname]}] es
+                                                     :when indexname]
+                                                 indexname)
+                                       _ (assert (seq indices))
+                                       _ (assert (every? string? indices))
+                                       suffix (naive-longest-common-suffix indices)]
+                                   (assert (seq suffix))
+                                   suffix))]
+      (is (apply distinct? (repeatedly 5 gen-non-empty-suffix)))))
   (testing "overrides using with-properties"
     (doseq [:let [test-cases [{:ctia-property "ctia.auth.type"
                                :foobar-str "foobar"}]]
@@ -45,7 +80,11 @@
         (sut/with-config-transformer*
           #(assoc-in % ctia-path foobar-kw)
           #(is (= (get-in (sut/build-transformed-init-config) ctia-path)
-                  foobar-kw))))))
+                  foobar-kw)))
+        (sut/with-config-transformer
+          #(assoc-in % ctia-path foobar-kw)
+          (is (= (get-in (sut/build-transformed-init-config) ctia-path)
+                 foobar-kw))))))
   (testing "overrides using with-properties and with-config-transformer*"
     (testing "both change config when called with different paths"
       (doseq [:let [test-cases [{:ctia-property1 "ctia.auth.type"
@@ -68,7 +107,14 @@
                  (is (= (get-in config ctia-path1)
                         foobar1-kw))
                  (is (= (get-in config ctia-path2)
-                        foobar2-kw))))))))
+                        foobar2-kw))))
+            (sut/with-config-transformer
+              #(assoc-in % ctia-path2 foobar2-kw)
+              (let [config (sut/build-transformed-init-config)]
+                (is (= (get-in config ctia-path1)
+                       foobar1-kw))
+                (is (= (get-in config ctia-path2)
+                       foobar2-kw))))))))
     (testing "with-config-transformer* wins with conflicting paths"
       (doseq [:let [test-cases [{:ctia-property "ctia.auth.type" 
                                  :foobar1-str "foobar1"
@@ -84,7 +130,12 @@
               #(assoc-in % ctia-path foobar2-kw)
               #(is (= (get-in (sut/build-transformed-init-config)
                               ctia-path)
-                      foobar2-kw))))))))
+                      foobar2-kw)))
+            (sut/with-config-transformer
+              #(assoc-in % ctia-path foobar2-kw)
+              (is (= (get-in (sut/build-transformed-init-config)
+                             ctia-path)
+                     foobar2-kw))))))))
   (testing "properties are corced to PropertiesSchema"
     (doseq [:let [test-cases [{:ctia-bad-path "obviously.wrong.path"
                                :foobar-str "val"}]]

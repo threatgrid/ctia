@@ -7,7 +7,8 @@
   (read-record [this id ident params])
   (update-record [this id record ident params])
   (delete-record [this id ident params])
-  (list-records [this filtermap ident params]))
+  (list-records [this filtermap ident params])
+  (close [this]))
 
 (defprotocol IJudgementStore
   (calculate-verdict [this observable ident])
@@ -29,7 +30,8 @@
 (defprotocol IQueryStringSearchableStore
   (query-string-search [this search-query ident params])
   (query-string-count [this search-query ident])
-  (aggregate [this search-query agg-query ident]))
+  (aggregate [this search-query agg-query ident])
+  (delete-search [this search-query ident params]))
 
 (def empty-stores
   {:judgement []
@@ -68,17 +70,17 @@
    filters
    identity-map
    params
-   {{:keys [read-store]} :StoreService
-    :as _services_} :- APIHandlerServices]
+   {{:keys [get-store]} :StoreService} :- APIHandlerServices]
   (loop [query-params params
          results []]
     (let [{:keys [data
                   paging]}
-          (read-store entity
-                      list-fn
-                      filters
-                      identity-map
-                      query-params)]
+          (-> (get-store entity)
+              (list-fn
+                filters
+                identity-map
+                query-params))]
       (if-let [next-params (:next paging)]
-        (recur next-params (into results data))
+        (recur (into query-params next-params)
+               (into results data))
         (into results data)))))

@@ -4,11 +4,13 @@
    [ctia.domain.entities :refer [default-realize-fn]]
    [ctia.entity.relationship.graphql-schemas :as relationship]
    [ctia.http.routes
-    [common :refer [BaseEntityFilterParams PagingParams SourcableEntityFilterParams]]
-    [crud :refer [entity-crud-routes]]]
+    [common :refer [BaseEntityFilterParams PagingParams SourcableEntityFilterParams]
+     :as routes.common]
+    [crud :refer [services->entity-crud-routes]]]
    [ctia.schemas
     [utils :as csu]
-    [core :refer [def-stored-schema
+    [core :refer [APIHandlerServices
+                  def-stored-schema
                   CTIAEntity]]
     [sorting :as sorting]]
    [ctia.schemas.graphql
@@ -144,8 +146,9 @@
 (s/defschema IndicatorsByExternalIdQueryParams
   IndicatorsListQueryParams)
 
-(def indicator-routes
-  (entity-crud-routes
+(s/defn indicator-routes [services :- APIHandlerServices]
+  (services->entity-crud-routes
+   services
    {:entity :indicator
     :new-schema NewIndicator
     :entity-schema Indicator
@@ -212,5 +215,6 @@
    :realize-fn realize-indicator
    :es-store ->IndicatorStore
    :es-mapping indicator-mapping
-   :services->routes indicator-routes
+   :services->routes (routes.common/reloadable-function
+                       indicator-routes)
    :capabilities capabilities})

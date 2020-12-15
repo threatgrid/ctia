@@ -7,8 +7,9 @@
             [ctia.entity.relationship.schemas :as rs]
             [ctia.flows.crud :as flows]
             [ctia.http.routes
-             [common :refer [BaseEntityFilterParams created PagingParams SourcableEntityFilterParams]]
-             [crud :refer [entity-crud-routes]]]
+             [common :refer [BaseEntityFilterParams created PagingParams SourcableEntityFilterParams]
+              :as routes.common]
+             [crud :refer [services->entity-crud-routes]]]
             [ctia.http.middleware.auth :refer [require-capability!]]
             [ctia.schemas
              [core :refer [APIHandlerServices Reference TLP]]
@@ -88,100 +89,116 @@
           incident-link-source-types)
     IncidentLinkRequestOptional))
 
-(s/defn incident-link-route [{{:keys [read-store write-store]} :StoreService
+(s/defn incident-link-route [{{:keys [get-store]} :StoreService
                               :as services} :- APIHandlerServices]
-  (POST "/:id/link" []
-        :return rs/Relationship
-        :body [link-req IncidentLinkRequest
-               {:description "an Incident Link request"}]
-        :summary "Link an Incident to a Casebook or Investigation"
-        :path-params [id :- s/Str]
+  (let [;; a request may contain at most of these fields in the body.
+        ;; the corresponding capability is required for a successful response.
+        additional-field->capabilities {:casebook_id :read-casebook
+                                        :investigation_id :read-investigation}
         ;; :read-<source-type> is checked while processing the body
-        :capabilities #{:read-incident
-                        :read-relationship
-                        :create-relationship}
-        :auth-identity identity
-        :identity-map identity-map
-        (let [source-type-kw (let [one-of-kws [:casebook_id
-                                               :investigation_id]
-                                   provided-types (select-keys link-req one-of-kws)]
-                               (when-not (= 1 (count provided-types))
-                                 (bad-request!
-                                   {:error
-                                    (str "Please provide exactly one of the following fields: "
-                                         (str/join ", " (->> one-of-kws (map name) sort))
-                                         "\n"
-                                         (if-let [given-str (when (seq provided-types)
-                                                              (->> provided-types
-                                                                   keys
-                                                                   (map name)
-                                                                   sort
-                                                                   (str/join ", ")))]
-                                           (str "Provided: " given-str)
-                                           "None provided."))}))
-                               (-> provided-types first key))
-              additional-required-capabilities
-              (case source-type-kw
-                :casebook_id #{:read-casebook}
-                :investigation_id #{:read-investigation})
-              _ (require-capability! additional-required-capabilities
-                                     identity)
-              incident (read-store :incident
-                                   read-record
-                                   id
-                                   identity-map
-                                   {})
-              source-short-id (-> link-req
-                                  source-type-kw
-                                  long-id->id
-                                  :short-id)
-              source-store-kw (case source-type-kw
-                                :casebook_id :casebook
-                                :investigation_id :investigation)
-              source (when source-short-id
-                       (read-store source-store-kw
-                                   read-record
-                                   source-short-id
-                                   identity-map
-                                   {}))
-              target-ref (short-id->long-id id services)]
-          (cond
-            (or (not incident)
-                (not target-ref))
-            (not-found {:error "Invalid Incident id"})
-            (not source)
-            (bad-request {:error (str "Invalid "
-                                      (case source-type-kw
-                                        :casebook_id "Casebook"
-                                        :investigation_id "Investigation")
-                                      " id")})
-            :else
-            (let [{source-id source-type-kw
-                   :keys [tlp]
-                   :or {tlp "amber"}} link-req
-                  new-relationship
-                  {:source_ref source-id
-                   :target_ref target-ref
-                   :relationship_type "related-to"
-                   :tlp tlp}
-                  stored-relationship
-                  (-> (flows/create-flow
-                       :services services
-                       :entity-type :relationship
-                       :realize-fn rs/realize-relationship
-                       :store-fn #(write-store :relationship
-                                               create-record
-                                               %
-                                               identity-map
-                                               {})
-                       :long-id-fn #(with-long-id % services)
-                       :entity-type :relationship
-                       :identity identity
-                       :entities [new-relationship]
-                       :spec :new-relationship/map)
-                      first
-                      un-store)]
-              (created stored-relationship))))))
+        capabilities #{:read-incident
+                       :read-relationship
+                       :create-relationship}]
+    (POST "/:id/link" []
+          :return rs/Relationship
+          :body [link-req IncidentLinkRequest
+                 {:description "an Incident Link request"}]
+          :summary "Link an Incident to a Casebook or Investigation"
+          :path-params [id :- s/Str]
+          :description (str (routes.common/capabilities->description capabilities)
+                            "\n\n"
+                            "Additionally, "
+                            (str/join ", "
+                                      (for [[additional-field capability] (sort additional-field->capabilities)]
+                                        (str (name additional-field)
+                                             " requires "
+                                             (routes.common/capabilities->string capability))))
+                            ".")
+          :capabilities capabilities
+          :auth-identity identity
+          :identity-map identity-map
+          (let [source-type-kw (let [provided-types (select-keys link-req (keys additional-field->capabilities))]
+                                 (when-not (= 1 (count provided-types))
+                                   (bad-request!
+                                     {:error
+                                      (str "Please provide exactly one of the following fields: "
+                                           (str/join ", " (->> additional-field->capabilities
+                                                               keys
+                                                               (map name)
+                                                               sort))
+                                           "\n"
+                                           (if-let [given-str (when (seq provided-types)
+                                                                (->> provided-types
+                                                                     keys
+                                                                     (map name)
+                                                                     sort
+                                                                     (str/join ", ")))]
+                                             (str "Provided: " given-str)
+                                             "None provided."))}))
+                                 (-> provided-types first key))
+                additional-required-capabilities (additional-field->capabilities source-type-kw)
+                _ (when-not additional-required-capabilities
+                    (throw (ex-info (str "Missing capability check for " source-type-kw)
+                                    {:additional-required-capabilities additional-required-capabilities
+                                     :source-type-kw source-type-kw})))
+                _ (require-capability! additional-required-capabilities
+                                       identity)
+                incident (-> (get-store :incident)
+                             (read-record
+                               id
+                               identity-map
+                               {}))
+                source-short-id (-> link-req
+                                    source-type-kw
+                                    long-id->id
+                                    :short-id)
+                source-store-kw (case source-type-kw
+                                  :casebook_id :casebook
+                                  :investigation_id :investigation)
+                source (when source-short-id
+                         (-> (get-store source-store-kw)
+                             (read-record
+                               source-short-id
+                               identity-map
+                               {})))
+                target-ref (short-id->long-id id services)]
+            (cond
+              (or (not incident)
+                  (not target-ref))
+              (not-found {:error "Invalid Incident id"})
+              (not source)
+              (bad-request {:error (str "Invalid "
+                                        (case source-type-kw
+                                          :casebook_id "Casebook"
+                                          :investigation_id "Investigation")
+                                        " id")})
+              :else
+              (let [{source-id source-type-kw
+                     :keys [tlp]
+                     :or {tlp "amber"}} link-req
+                    new-relationship
+                    {:source_ref source-id
+                     :target_ref target-ref
+                     :relationship_type "related-to"
+                     :tlp tlp}
+                    stored-relationship
+                    (-> (flows/create-flow
+                         :services services
+                         :entity-type :relationship
+                         :realize-fn rs/realize-relationship
+                         :store-fn #(-> (get-store :relationship)
+                                        (create-record
+                                          %
+                                          identity-map
+                                          {}))
+                         :long-id-fn #(with-long-id % services)
+                         :entity-type :relationship
+                         :identity identity
+                         :entities [new-relationship]
+                         :spec :new-relationship/map)
+                        first
+                        un-store)]
+                (created stored-relationship)))))))
 
 (def relationship-histogram-fields
   [:timestamp])
@@ -190,8 +207,9 @@
   [:source
    :relationship_type])
 
-(def relationship-routes
-  (entity-crud-routes
+(s/defn relationship-routes [services :- APIHandlerServices]
+  (services->entity-crud-routes
+   services
    {:entity :relationship
     :new-schema rs/NewRelationship
     :entity-schema rs/Relationship
@@ -235,5 +253,6 @@
    :realize-fn rs/realize-relationship
    :es-store ->RelationshipStore
    :es-mapping relationship-mapping
-   :services->routes relationship-routes
+   :services->routes (routes.common/reloadable-function
+                       relationship-routes)
    :capabilities capabilities})

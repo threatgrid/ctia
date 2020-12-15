@@ -226,7 +226,7 @@
                       #(wrap-version % get-in-config)
                       ;; always last
                       (metrics/wrap-metrics "ctia" api-routes/get-routes)]
-           documentation-routes
+           (documentation-routes)
            (graphql-ui-routes services)
            (context
                "/ctia" []
@@ -238,11 +238,11 @@
              (version-routes services)
              (middleware [wrap-authenticated]
                (->>
-                entities/entities
+                (entities/all-entities)
                 vals
                 (map (partial mark-disabled-entities services))
                 (entities-routes services))
-               status-routes
+               (status-routes)
                (context
                    "/bulk" []
                  :tags ["Bulk"]
@@ -253,7 +253,7 @@
                  (incident-link-route services))
                (bundle-routes services)
                (observable-routes services)
-               metrics-routes
+               (metrics-routes)
                (properties-routes services)
                (graphql-routes services))))
          (undocumented

@@ -16,6 +16,7 @@
              [store :as es-store]
              [schemas :refer [ESConnServices]]]
             [ctia.test-helpers.core :as h]
+            [puppetlabs.trapperkeeper.app :as app]
             [schema.core :as s]))
 
 (s/defn app->ESConnServices
@@ -68,40 +69,31 @@
       (finally
         (delete-store-indexes false all-stores get-in-config)))))
 
-(s/defn purge-index [entity
-                     {{:keys [get-in-config]} :ConfigService
-                      :as services} :- ESConnServices]
+(s/defn purge-index-and-template [entity
+                                  {{:keys [get-in-config]} :ConfigService
+                                   :as services} :- ESConnServices]
   (let [{:keys [conn index]} (es-init/init-store-conn
                               (es-init/get-store-properties entity get-in-config)
                               services)]
     (when conn
-      (es-index/delete! conn (str index "*")))))
+      (doto (str index "*")
+        #(es-index/delete! conn %)
+        #(es-index/delete-template! conn %)))))
 
-(defn fixture-purge-event-indexes
-  "walk through all producers and delete their index"
+(defn fixture-purge-event-indices-and-templates
+  "walk through all producers and delete their indices and templates"
   [t]
   (let [app (h/get-current-app)
         services (app->ESConnServices app)]
-    (purge-index :event services)
+    (purge-index-and-template :event services)
     (try
       (t)
       (finally
-        (purge-index :event services)))))
+        (purge-index-and-template :event services)))))
 
-(defn purge-indexes [all-stores get-in-config]
+(defn purge-indices-and-templates [all-stores get-in-config]
   (doseq [entity (keys (all-stores))]
-    (purge-index entity get-in-config)))
-
-(defn fixture-purge-indexes
-  "walk through all producers and delete their index"
-  [t]
-  (let [app (h/get-current-app)
-        {:keys [get-in-config]} (h/get-service-map app :ConfigService)
-        {:keys [all-stores]} (h/get-service-map app :StoreService)]
-    (purge-indexes all-stores get-in-config)
-    (try
-      (t)
-      (finally (purge-indexes all-stores get-in-config)))))
+    (purge-index-and-template entity {:ConfigService {:get-in-config get-in-config}})))
 
 (defn fixture-properties:es-store [t]
   ;; Note: These properties may be overwritten by ENV variables
@@ -195,12 +187,30 @@
   [str-doc]
   (json/parse-string str-doc true))
 
+(defn get-indexname [app entity]
+  {:pre [(simple-keyword? entity)]
+   :post [(string? %)]}
+  (let [{{:keys [get-in-config]} :ConfigService} (app/service-graph app)
+        indexname (get-in-config [:ctia :store :es entity :indexname])]
+    (when-not indexname
+      (throw (ex-info (str "No indexname for " entity) {})))
+    indexname))
+
+(defn get-migration-indexname [app entity]
+  {:pre [(simple-keyword? entity)]
+   :post [(string? %)]}
+  (let [{{:keys [get-in-config]} :ConfigService} (app/service-graph app)
+        indexname (get-in-config [:ctia :migration :store :es entity :indexname])]
+    (when-not indexname
+      (throw (ex-info (str "No migration indexname for " entity) {})))
+    indexname))
+
 (defn prepare-bulk-ops
-  [str-doc]
+  [app str-doc]
   (let [{:keys [_type _id _index _source]} (str->doc str-doc)]
     (assoc _source
            :_type _type
-           :_index _index
+           :_index (get-indexname app (keyword _type))
            :_id _id)))
 
 (defn load-bulk
@@ -212,10 +222,10 @@
                            {:refresh refresh?})))
 
 (defn load-file-bulk
-  [es-conn filepath]
+  [app es-conn filepath]
   (with-open [rdr (io/reader filepath)]
     (load-bulk es-conn
-               (map prepare-bulk-ops
+               (map (partial prepare-bulk-ops app)
                     (line-seq rdr)))))
 
 (defn get-cat-indices [{:keys [uri] :as _conn}]
@@ -235,7 +245,7 @@
   - expose anaphoric `version`, `es-port` and `conn` to use in body
   - wrap body with a `testing` block with with `msg` formatted with `version`
   - call `clean` fn if not `nil` before and after body (takes conn as parameter)."
-  {:style/indent 3}
+  {:style/indent 2}
   [msg versions clean & body]
   `(let [;; avoid version and the other explicitly bound locals will to be captured
          clean-fn# ~clean
@@ -246,13 +256,17 @@
                                       :port ~'es-port
                                       :version ~'version})]
          (try
-           (testing (format "%s (ES version: %s)." msg#  ~'version)
+           (testing (format "%s (ES version: %s).\n" msg#  ~'version)
              (when clean-fn#
                (clean-fn# ~'conn))
-             ~@body
+             (h/with-properties
+               ["ctia.store.es.default.port" ~'es-port
+                "ctia.store.es.default.version" ~'version]
+               ~@body))
+           (finally
              (when clean-fn#
-               (clean-fn# ~'conn)))
-           (finally (es-conn/close ~'conn)))))))
+               (clean-fn# ~'conn))
+             (es-conn/close ~'conn)))))))
 
 (defn build-mappings
   [base-mappings entity-type version]

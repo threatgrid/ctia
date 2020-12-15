@@ -7,13 +7,15 @@
              [properties :as p]
              [store :as store]]
             [ctia.domain.entities :as ent :refer [with-long-id]]
-            [ctia.entity.entities :refer [entities]]
+            [ctia.entity.entities :refer [all-entities]]
             [ctia.flows.crud :as flows]
             [ctia.schemas.core :refer [APIHandlerServices]]
+            [ctia.schemas.utils :as csu]
             [ring.util.http-response :refer [bad-request]]
             [schema.core :as s]
             [schema-tools.core :as st]))
 
+;; TODO def => defn
 (def bulk-entity-mapping
   (into {}
         (map (fn [{:keys [entity plural]}]
@@ -21,7 +23,7 @@
                            name
                            (str/replace #"-" "_")
                            keyword)})
-             (vals entities))))
+             (vals (all-entities)))))
 
 (def inverted-bulk-entity-mapping
   (set/map-invert bulk-entity-mapping))
@@ -41,55 +43,55 @@
 (s/defn create-fn
   "return the create function provided an entity type key"
   [k auth-identity params
-   {{:keys [write-store]} :StoreService
-    :as _services_} :- APIHandlerServices]
-  #(write-store
-    k store/create-record
-    % (auth/ident->map auth-identity) params))
+   {{:keys [get-store]} :StoreService} :- APIHandlerServices]
+  #(-> (get-store k)
+       (store/create-record
+         %
+         (auth/ident->map auth-identity)
+         params)))
 
 (s/defschema ReadFnServices
   {:StoreService (-> APIHandlerServices
                      (st/get-in [:StoreService])
-                     (st/select-keys [:read-store])
+                     (csu/select-all-keys [:get-store])
                      (st/assoc s/Keyword s/Any))
    s/Keyword s/Any})
 
 (s/defn read-fn
   "return the create function provided an entity type key"
   [k auth-identity params
-   {{:keys [read-store]} :StoreService
-    :as _services_} :- ReadFnServices]
-  #(read-store
-    k store/read-record
-    % (auth/ident->map auth-identity) params))
+   {{:keys [get-store]} :StoreService} :- ReadFnServices]
+  #(-> (get-store k)
+       (store/read-record % (auth/ident->map auth-identity) params))) 
 
 (s/defn create-entities
   "Create many entities provided their type and returns a list of ids"
   [new-entities entity-type tempids auth-identity params
    services :- APIHandlerServices]
   (when (seq new-entities)
-    (update (flows/create-flow
-             :services services
-             :entity-type entity-type
-             :realize-fn (-> entities entity-type :realize-fn)
-             :store-fn (create-fn entity-type auth-identity params services)
-             :long-id-fn #(with-long-id % services)
-             :enveloped-result? true
-             :identity auth-identity
-             :entities new-entities
-             :tempids tempids
-             :spec (-> entities entity-type :new-spec))
-            :data (partial map (fn [{:keys [error id] :as result}]
-                                 (if error result id))))))
+    (let [entities (all-entities)]
+      (update (flows/create-flow
+                :services services
+                :entity-type entity-type
+                :realize-fn (-> entities entity-type :realize-fn)
+                :store-fn (create-fn entity-type auth-identity params services)
+                :long-id-fn #(with-long-id % services)
+                :enveloped-result? true
+                :identity auth-identity
+                :entities new-entities
+                :tempids tempids
+                :spec (-> entities entity-type :new-spec))
+              :data (partial map (fn [{:keys [error id] :as result}]
+                                   (if error result id)))))))
 
 (s/defschema ReadEntitiesServices
   {:ConfigService (-> APIHandlerServices
                       (st/get-in [:ConfigService])
-                      (st/select-keys [:get-in-config])
+                      (csu/select-all-keys [:get-in-config])
                       (st/assoc s/Keyword s/Any))
    :StoreService (-> APIHandlerServices
                      (st/get-in [:StoreService])
-                     (st/select-keys [:read-store])
+                     (csu/select-all-keys [:get-store])
                      (st/assoc s/Keyword s/Any))
    s/Keyword s/Any})
 

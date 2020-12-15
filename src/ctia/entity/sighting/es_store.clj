@@ -6,6 +6,7 @@
             [ctia.schemas.core :refer [Observable]]
             [ctia.store :refer [IQueryStringSearchableStore ISightingStore IStore]]
             [ctia.stores.es
+             [store :refer [close-connections!]]
              [crud :as crud]
              [mapping :as em]
              [schemas :refer [ESConnState]]]
@@ -57,6 +58,7 @@
 (def handle-query-string-search (crud/handle-query-string-search ESPartialStoredSighting))
 (def handle-query-string-count crud/handle-query-string-count)
 (def handle-aggregate crud/handle-aggregate)
+(def handle-delete-search crud/handle-delete-search)
 
 (s/defn observable->observable-hash :- s/Str
   "transform an observable to a hash of the form type:value"
@@ -161,6 +163,7 @@
     (handle-delete state id ident params))
   (list-records [_ filter-map ident params]
     (handle-list state filter-map ident params))
+  (close [_] (close-connections! state))
   ISightingStore
   (list-sightings-by-observables [_ observables ident params]
     (handle-list-by-observables state observables ident params))
@@ -170,4 +173,6 @@
   (query-string-count [_ search-query ident]
     (handle-query-string-count state search-query ident))
   (aggregate [_ search-query agg-query ident]
-    (handle-aggregate state search-query agg-query ident)))
+    (handle-aggregate state search-query agg-query ident))
+  (delete-search [_ search-query ident params]
+    (handle-delete-search state search-query ident params)))

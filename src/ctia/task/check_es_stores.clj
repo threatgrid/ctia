@@ -11,9 +11,10 @@
     [init :refer [start-ctia!*]]
     [properties :as p]
     [store-service :as store-svc]]
-   [ctia.entity.entities :refer [entities]]
+   [ctia.entity.entities :as entities]
    [ctia.entity.sighting.schemas :refer [StoredSighting]]
    [ctia.stores.es.crud :refer [coerce-to-fn]]
+   [ctia.store-service.schemas :refer [AllStoresFn]]
    [puppetlabs.trapperkeeper.app :as app]
    [schema-tools.core :as st]
    [schema.core :as s]))
@@ -21,10 +22,11 @@
 (def default-batch-size 100)
 (def timeout (* 5 60000))
 
+;; TODO def => defn
 (def all-types
   (assoc (into {}
                (map (fn [[_ {:keys [entity stored-schema]}]]
-                      {entity stored-schema}) entities))
+                      {entity stored-schema}) (entities/all-entities)))
          :sighting (st/merge StoredSighting
                              {(s/optional-key :observables_hash) s/Any})))
 
@@ -111,9 +113,10 @@
           message)
         (throw e)))))
 
-(defn check-store-indexes
+(s/defn check-store-indexes
   "check all new es store indexes"
-  [batch-size all-stores]
+  [batch-size
+   all-stores :- AllStoresFn]
   (let [current-stores (all-stores)
         batch-size (or batch-size default-batch-size)]
     (log/infof "checking stores: %s" (keys current-stores))
@@ -130,9 +133,7 @@
   (assert batch-size "Please specify a batch size")
   (log/info "checking all ES Stores")
   (try
-    (let [app (setup)
-          store-svc (app/get-service app :StoreService)
-          all-stores (partial store-svc/all-stores store-svc)]
+    (let [{{:keys [all-stores]} :StoreService} (app/service-graph (setup))]
       (when-let [errors (seq (check-store-indexes batch-size all-stores))]
         (log/errorf "Schema errors found during check: %s"
                     (pr-str errors))

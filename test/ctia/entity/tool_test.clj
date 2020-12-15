@@ -35,12 +35,12 @@
                                          "foogroup"
                                          "user")
      (entity-crud-test
-      {:app app
-       :entity "tool"
-       :example new-tool-maximal
-       :invalid-test-field :name
-       :update-field :description
-       :headers {:Authorization "45c1f5e3f05d0"}}))))
+      (into sut/tool-entity
+            {:app app
+             :example new-tool-maximal
+             :invalid-test-field :name
+             :update-field :description
+             :headers {:Authorization "45c1f5e3f05d0"}})))))
 
 (deftest test-tool-pagination-field-selection
   (test-for-each-store-with-app

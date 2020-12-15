@@ -2,7 +2,7 @@
   (:require [ctia.http.routes.common :as sut]
             [clj-momo.lib.clj-time.coerce :as tc]
             [clj-momo.lib.clj-time.core :as t]
-            [clojure.test :refer [is deftest testing]]))
+            [clojure.test :refer [are is deftest testing]]))
 
 (deftest coerce-date-range
   (with-redefs [sut/now (constantly (tc/from-string "2020-12-31"))]
@@ -160,3 +160,21 @@
   (is (= {:refresh "wait_for"} (sut/wait_for->refresh true)))
   (is (= {:refresh "false"} (sut/wait_for->refresh false)))
   (is (= {} (sut/wait_for->refresh nil))))
+
+(deftest capabilities->description-test
+  (testing "empty capabilities throws"
+    (are [v] (thrown-with-msg?
+               clojure.lang.ExceptionInfo
+               #"Missing capabilities!"
+               (sut/capabilities->description v))
+         nil
+         #{})))
+
+(deftest capabilities->string-test
+  (testing "empty capabilities throws"
+    (are [v] (thrown-with-msg?
+               clojure.lang.ExceptionInfo
+               #"Missing capabilities!"
+               (sut/capabilities->string v))
+         nil
+         #{})))

@@ -2,7 +2,7 @@
   (:require
    [ctia.entity.event.store
     :refer [->EventStore]]
-   [compojure.api.sweet :refer [GET routes]]
+   [compojure.api.core :refer [GET routes]]
    [ring.util.http-response :refer [ok]]
    [schema-tools.core :as st]
    [schema.core :as s]
@@ -10,7 +10,8 @@
    [ctia.entity.event.schemas
     :refer [Event PartialEvent PartialEventList EventBucket]]
    [ctia.http.routes
-    [common :refer [BaseEntityFilterParams PagingParams]]
+    [common :refer [BaseEntityFilterParams PagingParams]
+     :as routes.common]
     [crud :refer [services->entity-crud-routes]]]
    [ctia.lib.pagination :refer [list-response-schema]]
    [ctia.schemas.core :refer [APIHandlerServices]]
@@ -66,8 +67,6 @@
    EventFieldsParam))
 
 (def EventGetParams EventFieldsParam)
-
-(def EventTimelineParams PagingParams)
 
 (s/defn same-bucket? :- s/Bool
   [bucket :- EventBucket
@@ -130,20 +129,21 @@
 (s/defn event-history-routes [{{:keys [get-in-config]} :ConfigService
                                :as services} :- APIHandlerServices]
   (routes
-   (GET "/history/:entity_id" []
-        :return [EventBucket]
-        :query [q EventTimelineParams]
-        :path-params [entity_id :- s/Str]
-        :summary "Timeline history of an entity"
-        :capabilities :search-event
-        :auth-identity identity
-        :identity-map identity-map
-        (let [res (fetch-related-events entity_id
-                                        identity-map
-                                        (into q {:sort_by :timestamp :sort_order :desc})
-                                        services)
-              timeline (bucketize-events res get-in-config)]
-          (ok timeline)))))
+    (let [capabilities :search-event]
+      (GET "/history/:entity_id" []
+           :return [EventBucket]
+           :path-params [entity_id :- s/Str]
+           :summary "Timeline history of an entity"
+           :description (routes.common/capabilities->description capabilities)
+           :capabilities capabilities
+           :auth-identity identity
+           :identity-map identity-map
+           (let [res (fetch-related-events entity_id
+                                           identity-map
+                                           {:sort_by :timestamp :sort_order :desc}
+                                           services)
+                 timeline (bucketize-events res get-in-config)]
+             (ok timeline))))))
 
 (s/defn event-routes [services :- APIHandlerServices]
   (routes
@@ -181,4 +181,5 @@
    :plural :events
    :es-store ->EventStore
    :es-mapping event-mapping
-   :services->routes event-routes})
+   :services->routes (routes.common/reloadable-function
+                       event-routes)})

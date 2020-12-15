@@ -1,7 +1,6 @@
 (ns ctia.init
   (:require
    [ctia.encryption.default :as encryption-default]
-   [ctia.entity.entities :refer [validate-entities]]
    [clj-momo.properties :as mp]
    [clojure.tools.logging :as log]
    [ctia.lib.metrics
@@ -88,7 +87,6 @@
   "Lower-level Trapperkeeper booting function for
   custom services and config."
   [{:keys [services config]}]
-  (validate-entities)
   (log-properties config)
   (-> (tk/boot-services-with-config services config)
       app/check-for-errors!))

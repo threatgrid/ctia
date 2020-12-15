@@ -1,9 +1,7 @@
 (ns ctia.entity.asset-mapping-test
-  (:require [clj-momo.lib.clj-time.coerce :as tc]
-            [clj-momo.lib.clj-time.core :as t]
-            [clj-momo.test-helpers.core :as mth]
+  (:require [clj-momo.test-helpers.core :as mth]
             [clojure.test :refer [deftest is are join-fixtures testing use-fixtures]]
-            [ctia.entity.asset-mapping :as asset-mapping]
+            [ctia.entity.asset-mapping :as sut]
             [ctia.test-helpers.aggregate :as aggregate]
             [ctia.test-helpers.auth :as auth]
             [ctia.test-helpers.core :as helpers]
@@ -43,20 +41,7 @@
         (str "asset_ref:\"" (:asset-ref asset-mapping-sample) "\"")
         #(-> % :parsed-body first :asset-ref)
         (:asset-ref asset-mapping-sample)
-        "Searching Asset Mapping by asset-ref"))))
-
-  (testing "Expire 'valid-time' field"
-    (let [fixed-now (-> "2020-12-31" tc/from-string tc/to-date)]
-      (helpers/fixture-with-fixed-time
-       fixed-now
-       (fn []
-         (let [response (helpers/POST
-                         app
-                         (str "ctia/asset-mapping/expire/" short-id)
-                         :headers {"Authorization" "45c1f5e3f05d0"})]
-           (is (= 200 (:status response)) "POST asset-mapping/expire succeeds")
-           (is (= fixed-now (-> response :parsed-body :valid_time :end_time))
-               ":valid_time properly reset")))))))
+        "Searching Asset Mapping by asset-ref")))))
 
 (deftest asset-mapping-routes-test
   (store/test-for-each-store-with-app
@@ -64,18 +49,19 @@
      (helpers/set-capabilities! app "foouser" ["foogroup"] "user" auth/all-capabilities)
      (whoami-helpers/set-whoami-response app http/api-key "foouser" "foogroup" "user")
      (entity-crud-test
-      {:app                app
-       :entity             "asset-mapping"
-       :example            new-asset-mapping-maximal
-       :invalid-tests?     true
-       :invalid-test-field :asset_ref
-       :update-tests?      true
-       :search-tests?      true
-       :search-field       :confidence
-       :search-value       "High"
-       :update-field       :source
-       :additional-tests   additional-tests
-       :headers            {:Authorization "45c1f5e3f05d0"}}))))
+      (into sut/asset-mapping-entity
+            {:app                app
+             :example            new-asset-mapping-maximal
+             :invalid-tests?     true
+             :invalid-test-field :asset_ref
+             :update-tests?      true
+             :search-tests?      true
+             :search-field       :confidence
+             :search-value       "High"
+             :update-field       :source
+             :additional-tests   additional-tests
+             :revoke-tests?      sut/asset-mapping-can-revoke?
+             :headers            {:Authorization "45c1f5e3f05d0"}})))))
 
 (deftest asset-mapping-pagination-test
   (store/test-for-each-store-with-app
@@ -99,18 +85,18 @@
         ["ctia/asset-mapping/search?query=*"
          (http/doc-id->rel-url (first ids))]
         {"Authorization" "45c1f5e3f05d0"}
-        asset-mapping/asset-mapping-fields)
+        sut/asset-mapping-fields)
 
        (pagination/pagination-test
         app
         "ctia/asset-mapping/search?query=*"
         {"Authorization" "45c1f5e3f05d0"}
-        asset-mapping/asset-mapping-fields)))))
+        sut/asset-mapping-fields)))))
 
 (deftest asset-mapping-metric-routes-test
   (aggregate/test-metric-routes
-   (into asset-mapping/asset-mapping-entity
+   (into sut/asset-mapping-entity
          {:plural            :asset_mappings
           :entity-minimal    new-asset-mapping-minimal
-          :enumerable-fields asset-mapping/asset-mapping-enumerable-fields
-          :date-fields       asset-mapping/asset-mapping-histogram-fields})))
+          :enumerable-fields sut/asset-mapping-enumerable-fields
+          :date-fields       sut/asset-mapping-histogram-fields})))

@@ -1,8 +1,5 @@
 (ns ctia.entity.asset-mapping
-  (:require [clj-momo.lib.clj-time.core :as time]
-            [compojure.api.sweet :refer [POST routes]]
-            [ctia.domain.entities :as entities]
-            [ctia.flows.crud :as flows]
+  (:require [ctia.domain.entities :as entities]
             [ctia.http.routes.common :as routes.common]
             [ctia.http.routes.crud :refer [services->entity-crud-routes]]
             [ctia.schemas.core :refer [def-acl-schema def-stored-schema APIHandlerServices]]
@@ -105,45 +102,10 @@
    :valid_time.start_time
    :valid_time.end_time])
 
-(s/defn additional-routes [{{:keys [read-store write-store]} :StoreService
-                            :as                              services} :- APIHandlerServices]
-  (routes
-   (POST "/expire/:id" []
-     :return         AssetMapping
-     :path-params    [id :- s/Str]
-     :summary        "Expire Asset Mapping's valid-time property"
-     :capabilities   :create-asset-mapping
-     :auth-identity  identity
-     :identity-map   identity-map
-     (if-let [updated
-              (flows/patch-flow
-               :services services
-               :get-fn (fn [_] (read-store :asset-mapping
-                                           ctia.store/read-record
-                                           id
-                                           identity-map
-                                           {}))
-               :realize-fn realize-asset-mapping
-               :update-fn #(write-store :asset-mapping
-                                        ctia.store/update-record
-                                        (:id %)
-                                        (assoc-in % [:valid_time :end_time] (time/internal-now))
-                                        identity-map
-                                        {})
-               :long-id-fn #(entities/with-long-id % services)
-               :entity-type :asset-mapping
-               :entity-id id
-               :identity identity
-               :patch-operation :replace
-               :partial-entity {}
-               :spec :new-asset-mapping/map)]
-       (http-response/ok (entities/un-store updated))
-       (http-response/not-found {:error "asset-mapping not found"})))))
+(def asset-mapping-can-revoke? true)
 
 (s/defn asset-mapping-routes [services :- APIHandlerServices]
-  (routes
-   (additional-routes services)
-   (services->entity-crud-routes
+  (services->entity-crud-routes
     services
     {:entity                   :asset-mapping
      :new-schema               NewAssetMapping
@@ -164,7 +126,8 @@
      :external-id-capabilities :read-asset-mapping
      :can-aggregate?           true
      :histogram-fields         asset-mapping-histogram-fields
-     :enumerable-fields        asset-mapping-enumerable-fields})))
+     :enumerable-fields        asset-mapping-enumerable-fields
+     :can-revoke?              asset-mapping-can-revoke?}))
 
 (def capabilities
   #{:create-asset-mapping
@@ -187,5 +150,6 @@
    :realize-fn            realize-asset-mapping
    :es-store              ->AssetMappingStore
    :es-mapping            asset-mapping-mapping
-   :services->routes      asset-mapping-routes
+   :services->routes      (routes.common/reloadable-function
+                            asset-mapping-routes)
    :capabilities          capabilities})

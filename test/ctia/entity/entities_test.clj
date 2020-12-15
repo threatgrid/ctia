@@ -32,7 +32,7 @@
         realize-fn-services (service-subgraph
                               (app/service-graph app)
                               :ConfigService [:get-in-config]
-                              :StoreService [:read-store]
+                              :StoreService [:get-store]
                               :GraphQLNamedTypeRegistryService
                               [:get-or-update-named-type-registry]
                               :IEncryption [:decrypt :encrypt])
@@ -41,7 +41,7 @@
         ;; properties to dissoc to get a valid entity when
         ;; using the spec generator
         to-dissoc [:disposition]
-        entities-with-realize-fn (filter (comp :realize-fn val) sut/entities)]
+        entities-with-realize-fn (filter (comp :realize-fn val) (sut/all-entities))]
     (assert (seq entities-with-realize-fn)
             "There should really be a :realize-fn somewhere!")
     (doseq [[_ entity] entities-with-realize-fn

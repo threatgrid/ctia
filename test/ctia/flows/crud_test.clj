@@ -1,10 +1,10 @@
 (ns ctia.flows.crud-test
-  (:require [ctia.flows.crud :as sut]
-            [ctia.lib.collection :as coll]
-            [clj-momo.test-helpers
-             [core :as mth]]
-            [clj-momo.lib.map :refer [deep-merge-with]]
-            [clojure.test :refer [deftest testing is]]))
+  (:require [clj-momo.lib.map :refer [deep-merge-with]]
+            [clj-momo.test-helpers.core]
+            [clojure.test :refer [deftest testing is]]
+            [ctia.auth.threatgrid :refer [map->Identity]]
+            [ctia.flows.crud :as flows.crud]
+            [ctia.lib.collection :as coll]))
 
 (deftest deep-merge-with-add-colls-test
   (let [fixture {:foo {:bar ["one" "two" "three"]
@@ -51,14 +51,14 @@
                 :error "msg"}
                {:id "4"}]
               :enveloped-result? true}
-             (sut/preserve-errors {:entities entities
+             (flows.crud/preserve-errors {:entities entities
                                    :enveloped-result? true}
                                   f)))))
   (testing "without enveloped result"
     (is (= {:entities
             [{:id "1"
               :title "title"}]}
-           (sut/preserve-errors
+           (flows.crud/preserve-errors
             {:entities [{:id "1"}]}
             (fn [_]
               {:entities
@@ -79,8 +79,21 @@
                                               {:type :fake
                                                :id 2}))]
     (is (= flow-empty-entities
-           (sut/apply-create-store-fn flow-empty-entities))
+           (flows.crud/apply-create-store-fn flow-empty-entities))
         "when entities are empty, apply-create-store-fn should not apply store-fn")
     (is (every? #(:applied-store-create %)
-                (:entities (sut/apply-create-store-fn flow-with-entities)))
+                (:entities (flows.crud/apply-create-store-fn flow-with-entities)))
         "store-fn shall be applied to every entities")))
+
+(deftest create-events-test
+  (testing "flow-type :update should update the owner"
+    (let [updated-entities (atom [])
+          flow-map         {:services        {:ConfigService {:get-in-config (constantly true)}}
+                            :create-event-fn (fn [entity _ _] (swap! updated-entities conj entity))
+                            :identity        (map->Identity {:login "test-user"})
+                            :flow-type       :update
+                            :entities        [{:one 1 :owner "Huey"}
+                                              {:two 2 :owner "Dewey"}
+                                              {:three 3 :owner "Louie"}]}]
+     (#'flows.crud/create-events flow-map)
+     (is (every? #(-> % :owner (= "test-user")) @updated-entities)))))

@@ -8,12 +8,12 @@
             [puppetlabs.trapperkeeper.core :as tk]
             [puppetlabs.trapperkeeper.services :refer [service-context]]))
 
-(def ^:private write-capabilities
-  (set/difference all-capabilities
+(defn ^:private write-capabilities []
+  (set/difference (all-capabilities)
                   #{:specify-id}))
 
-(def ^:private read-only-capabilities
-  (set/difference (->> all-capabilities
+(defn ^:private read-only-capabilities []
+  (set/difference (->> (all-capabilities)
                        (remove (fn [cap]
                                  (some #(str/starts-with? (name cap) %)
                                        ["create" "delete"])))
@@ -31,10 +31,10 @@
   (groups [_]
     (remove nil? [guid]))
   (allowed-capabilities [_]
-    write-capabilities)
+    (write-capabilities))
   (capable? [this required-capabilities]
     (set/subset? (as-set required-capabilities)
-                 write-capabilities))
+                 (write-capabilities)))
   (rate-limit-fn [_ _]))
 
 (defrecord ReadOnlyIdentity []
@@ -46,10 +46,10 @@
   (groups [_]
     (remove nil? auth/not-logged-in-groups))
   (allowed-capabilities [_]
-    read-only-capabilities)
+    (read-only-capabilities))
   (capable? [this required-capabilities]
     (set/subset? (as-set required-capabilities)
-                 read-only-capabilities))
+                 (read-only-capabilities)))
   (rate-limit-fn [_ _]))
 
 (tk/defservice static-auth-service

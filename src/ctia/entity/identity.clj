@@ -2,8 +2,9 @@
   (:require [schema.core :as s]
             [schema-tools.core :as st]
             [ductile.document :refer [create-doc get-doc delete-doc]]
-            [ctia.store :refer [IIdentityStore]]
+            [ctia.store :refer [IIdentityStore IStore]]
             [ctia.stores.es
+             [store :refer [close-connections!]]
              [crud :as crud]
              [mapping :as em]
              [schemas :refer [ESConnState]]]))
@@ -85,6 +86,9 @@
      :groups em/token}}})
 
 (defrecord IdentityStore [state]
+  IStore
+  (close [this]
+    (close-connections! (:state this)))
   IIdentityStore
   (read-identity [_ login]
     (handle-read state login))

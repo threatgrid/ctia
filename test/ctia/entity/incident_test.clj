@@ -83,12 +83,12 @@
    (fn [app]
      (helpers/set-capabilities! app "foouser" ["foogroup"] "user" all-capabilities)
      (whoami-helpers/set-whoami-response app "45c1f5e3f05d0" "foouser" "foogroup" "user")
-     (let [parameters {:app app
-                       :entity "incident"
-                       :patch-tests? true
-                       :example new-incident-maximal
-                       :headers {:Authorization "45c1f5e3f05d0"}
-                       :additional-tests partial-operations-tests}]
+     (let [parameters (into sut/incident-entity
+                            {:app app
+                             :patch-tests? true
+                             :example new-incident-maximal
+                             :headers {:Authorization "45c1f5e3f05d0"}
+                             :additional-tests partial-operations-tests})]
        (entity-crud-test parameters)))))
 
 (deftest test-incident-metric-routes

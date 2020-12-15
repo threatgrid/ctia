@@ -16,13 +16,12 @@
 
 (tk/defservice features-service
   FeaturesService
-  [[:ConfigService get-config get-in-config]]
+  [[:ConfigService get-in-config]]
   (feature-flags [this]
-    (-> (get-config) :ctia :features))
+    (get-in-config [:ctia :features]))
   (enabled?
    [this key]
-   (as-> [:ctia :features :disable] x
-     (get-in-config x)
+   (as-> (get-in-config [:ctia :features :disable]) x
      (str x)
      (string/split x #",")
      (map keyword x)

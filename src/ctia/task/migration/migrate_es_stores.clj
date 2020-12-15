@@ -5,7 +5,7 @@
             [clojure.string :as string]
             [clojure.tools.cli :refer [parse-opts]]
             [clojure.tools.logging :as log]
-            [ctia.entity.entities :refer [entities]]
+            [ctia.entity.entities :as entities]
             [ctia.entity.sighting.schemas :refer [StoredSighting]]
             [ctia.properties :as p]
             [ctia.stores.es.crud :refer [coerce-to-fn]]
@@ -19,8 +19,9 @@
 (def default-batch-size 100)
 (def default-buffer-size 3)
 
+;; TODO def => defn
 (def all-types
-  (assoc (->> (vals entities)
+  (assoc (->> (vals (entities/all-entities))
               (map (fn [{:keys [entity stored-schema]}]
                      {entity stored-schema}))
               (into {}))

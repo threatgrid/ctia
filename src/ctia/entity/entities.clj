@@ -1,5 +1,4 @@
 (ns ctia.entity.entities
-  (:refer-clojure :exclude [identity])
   (:require
    ;; !!! Order Matters !!!
    [clojure.tools.logging :as log]
@@ -32,7 +31,10 @@
     [investigation :refer [investigation-entity]]]
    [schema.core :as s]))
 
-(def entities
+(s/defschema AllEntities 
+  {(s/pred simple-keyword?) Entity})
+
+(s/defn all-entities :- AllEntities []
   {:actor              actor-entity
    :asset              asset-entity
    :asset-mapping      asset-mapping-entity
@@ -58,20 +60,3 @@
    :tool               tool-entity
    :vulnerability      vulnerability-entity
    :weakness           weakness-entity})
-
-(defn validate-entities []
-  (doseq [[entity entity-map] entities]
-    (try
-      (s/validate Entity entity-map)
-      (catch Exception e
-        (if-let [errors (some->> (ex-data e)
-                                 :error
-                                 (remove nil?))]
-          (let [message
-                (format (str "%s definition is invalid, "
-                             "errors: %s")
-                        entity
-                        (pr-str errors))]
-            (log/error message)
-            message)
-          (throw e))))))

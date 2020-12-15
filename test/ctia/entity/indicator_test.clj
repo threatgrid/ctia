@@ -53,18 +53,18 @@
 (deftest test-indicator-crud-routes
   (test-for-each-store-with-app
    (fn [app]
-     (helpers/set-capabilities! app "foouser" ["foogroup"] "user" caps/all-capabilities)
+     (helpers/set-capabilities! app "foouser" ["foogroup"] "user" (caps/all-capabilities))
      (whoami-helpers/set-whoami-response app
                                          "45c1f5e3f05d0"
                                          "foouser"
                                          "foogroup"
                                          "user")
      (entity-crud-test
-      {:app app
-       :entity "indicator"
-       :example new-indicator-maximal
-       :additional-tests search-tests
-       :headers {:Authorization "45c1f5e3f05d0"}}))))
+      (into sut/indicator-entity
+            {:app app
+             :example new-indicator-maximal
+             :additional-tests search-tests
+             :headers {:Authorization "45c1f5e3f05d0"}})))))
 
 (deftest test-indicator-routes-access-control
   (access-control-test "indicator"

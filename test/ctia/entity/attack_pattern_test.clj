@@ -34,12 +34,13 @@
                                          "foogroup"
                                          "user")
 
-     (entity-crud-test {:app app
-                        :entity "attack-pattern"
-                        :example new-attack-pattern-maximal
-                        :headers {:Authorization "45c1f5e3f05d0"}
-                        :update-field :name
-                        :invalid-test-field :name}))))
+     (entity-crud-test
+      (into sut/attack-pattern-entity
+            {:app app
+             :example new-attack-pattern-maximal
+             :headers {:Authorization "45c1f5e3f05d0"}
+             :update-field :name
+             :invalid-test-field :name})))))
 
 (deftest test-attack-pattern-pagination-field-selection
   (test-for-each-store-with-app

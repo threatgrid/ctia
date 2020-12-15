@@ -33,7 +33,7 @@
   (:import clojure.lang.ExceptionInfo
            java.lang.AssertionError
            java.text.SimpleDateFormat
-           java.util.Date))
+           [java.util Date UUID]))
 
 (defn fixture-setup! [f]
   (let [app (helpers/get-current-app)
@@ -152,21 +152,25 @@
                           :confirm? true
                           :restart? false}]
     (testing "misconfigured migration"
-      (with-each-fixtures #(-> %
-                               (assoc-in [:ctia :store :es :investigation :indexname]
-                                         "v1.2.0_ctia_investigation")
-                               (assoc-in [:malware 0 :state :props :indexname]
-                                         "v1.2.0_ctia_malware"))
-        app
-        (let [{:keys [get-in-config]} (helpers/get-service-map app :ConfigService)]
-          (let [v (get-in-config [:ctia :store :es :investigation :indexname])]
-            (assert (= v "v1.2.0_ctia_investigation") v))
-          (let [v (get-in-config [:malware 0 :state :props :indexname])]
-            (assert (= v "v1.2.0_ctia_malware") v))
-          (is (thrown? AssertionError
-                       (sut/check-migration-params migration-params
-                                                   get-in-config))
-              "source and target store must be different")))
+      (let [investigation-indexname (str "v1.2.0_ctia_investigation" (UUID/randomUUID))
+            malware-indexname (str "v1.2.0_ctia_malware" (UUID/randomUUID))]
+        (with-each-fixtures #(-> %
+                                 (assoc-in [:ctia :store :es :investigation :indexname]
+                                           investigation-indexname)
+                                 (assoc-in [:malware 0 :state :props :indexname]
+                                           malware-indexname))
+          app
+          (let [{:keys [get-in-config]} (helpers/get-service-map app :ConfigService)]
+            (let [v (get-in-config [:ctia :store :es :investigation :indexname])]
+              (assert (= v investigation-indexname)
+                      [v investigation-indexname]))
+            (let [v (get-in-config [:malware 0 :state :props :indexname])]
+              (assert (= v malware-indexname)
+                      [v malware-indexname]))
+            (is (thrown? AssertionError
+                         (sut/check-migration-params migration-params
+                                                     get-in-config))
+                "source and target store must be different")))
       (with-each-fixtures identity app
         (let [{:keys [get-in-config]} (helpers/get-service-map app :ConfigService)]
           (is (thrown? ExceptionInfo
@@ -179,7 +183,7 @@
       (with-each-fixtures identity app
         (let [{:keys [get-in-config]} (helpers/get-service-map app :ConfigService)]
           (is (sut/check-migration-params migration-params
-                                          get-in-config)))))))
+                                          get-in-config))))))))
 
 (deftest prepare-params-test
   (let [migration-props {:buffer-size 3,
@@ -257,13 +261,13 @@
       (let [{:keys [get-in-config]} (helpers/get-service-map app :ConfigService)
             conn (es-conn get-in-config)
             storemap {:conn conn
-                      :indexname "ctia_relationship"
+                      :indexname (es-helpers/get-indexname app :relationship)
                       :mapping "relationship"
-                      :props {:write-index "ctia_relationship"}
+                      :props {:write-index (es-helpers/get-indexname app :relationship)}
                       :type "relationship"
                       :settings {}
                       :config {}}
-            docs (map es-helpers/prepare-bulk-ops
+            docs (map (partial es-helpers/prepare-bulk-ops app)
                       (line-seq rdr))
             _ (es-helpers/load-bulk conn docs)
             no-meta-docs (map #(dissoc % :_index :_type :_id)
@@ -349,7 +353,7 @@
             services (app->MigrationStoreServices app)
 
             prefix "0.0.1"
-            indexname "v0.0.1_ctia_relationship"
+            indexname (str "v0.0.1_" (es-helpers/get-indexname app :relationship))
             conn (es-conn get-in-config)
             storemap {:conn conn
                       :indexname indexname
@@ -450,7 +454,7 @@
             conn (es-conn get-in-config)
             {wo-modified true
              w-modified false} (->> (line-seq rdr)
-                                    (map es-helpers/prepare-bulk-ops)
+                                    (map (partial es-helpers/prepare-bulk-ops app))
                                     (group-by #(nil? (:modified %))))
             sorted-w-modified (sort-by :modified w-modified)
             bulk-1 (concat wo-modified (take 500 sorted-w-modified))
@@ -473,7 +477,8 @@
                                                    "migration-test-4"
                                                    {})
             target-count-1 (ductile.doc/count-docs conn
-                                                   "v0.0.0_ctia_relationship"
+                                                   (str "v0.0.0_"
+                                                        (es-helpers/get-indexname app :relationship))
                                                    nil)
             _ (es-helpers/load-bulk conn bulk-2)
             _ (with-atom-logger logger-1
@@ -487,7 +492,8 @@
                                             :restart?     true}
                                            services))
             target-count-2 (ductile.doc/count-docs conn
-                                                   "v0.0.0_ctia_relationship"
+                                                   (str "v0.0.0_"
+                                                        (es-helpers/get-indexname app :relationship))
                                                    nil)
             migration-state-2 (ductile.doc/get-doc conn
                                                    (migration-index get-in-config)
@@ -647,7 +653,7 @@
         (testing "shall produce valid logs"
           (let [messages (set @logger)]
             (is (contains? messages "set batch size: 10"))
-            (is (clojure.set/subset?
+            (is (set/subset?
                  #{"campaign - finished migrating 100 documents"
                    "indicator - finished migrating 100 documents"
                    (format "event - finished migrating %s documents"
@@ -695,9 +701,13 @@
                 (get-in-config [:ctia :store :es])
                 date (Date.)
                 index-date (.format (SimpleDateFormat. "yyyy.MM.dd") date)
-                expected-event-indices {(format "v0.0.0_ctia_event-%s-000001" index-date)
+                expected-event-indices {(format "v0.0.0_%s-%s-000001"
+                                                (es-helpers/get-indexname app :event)
+                                                index-date)
                                         1000
-                                        (format "v0.0.0_ctia_event-%s-000002" index-date)
+                                        (format "v0.0.0_%s-%s-000002"
+                                                (es-helpers/get-indexname app :event)
+                                                index-date)
                                         (+ 900 updates-nb)}
                 expected-indices
                 (->> #{relationship
@@ -717,9 +727,9 @@
                        vulnerability
                        weakness}
                      (map (fn [k]
-                            {(format  "v0.0.0_%s-%s-000001" (:indexname k) index-date) 50
-                             (format  "v0.0.0_%s-%s-000002" (:indexname k) index-date) 50
-                             (format  "v0.0.0_%s-%s-000003" (:indexname k) index-date) 0}))
+                            {(format "v0.0.0_%s-%s-000001" (:indexname k) index-date) 50
+                             (format "v0.0.0_%s-%s-000002" (:indexname k) index-date) 50
+                             (format "v0.0.0_%s-%s-000003" (:indexname k) index-date) 0}))
                      (into expected-event-indices)
                      keywordize-keys)
                 _ (es-index/refresh! conn)
@@ -742,13 +752,14 @@
         (testing "restart migration shall properly handle inserts, updates and deletes"
           (let [;; retrieve the first 2 source indices for sighting store
                 {:keys [host port]} (get-in-config [:ctia :store :es :default])
-                [sighting-index-1 sighting-index-2]
+                [sighting-index-1 sighting-index-2 :as sighting-indices]
                 (->> (es-helpers/get-cat-indices conn)
                      keys
                      (map name)
                      (filter #(.contains ^String % "sighting"))
                      sort
                      (take 2))
+                _ (assert (= 2 (count sighting-indices)) sighting-indices)
 
                 ;; retrieve source entity to update, in first position of first index
                 es-sighting0 (-> (ductile.doc/query conn
@@ -768,9 +779,8 @@
                                  first)
 
                 ;; prepare new malwares
-                new-malwares (->> (fixt/n-examples :malware 3 false)
-                                  (map #(assoc % :description "INSERTED"))
-                                  (hash-map :malwares))
+                new-malwares {:malwares (->> (fixt/n-examples :malware 3 false)
+                                             (map #(assoc % :description "INSERTED")))}
 
                 ;; retrieve 5 source entities to delete, in last positions of first index
                 es-sightings-1 (-> (ductile.doc/query conn
@@ -797,19 +807,25 @@
             ;; insert new entities in source store
             (POST-bulk app new-malwares)
             ;; modify entities in first and second source indices
-            (PUT app
-                 (format "ctia/sighting/%s" sighting0-id)
-                 :body updated-sighting-body
-                 :headers {"Authorization" "45c1f5e3f05d0"})
-            (PUT app
-                 (format "ctia/sighting/%s" sighting1-id)
-                 :body updated-sighting-body
-                 :headers {"Authorization" "45c1f5e3f05d0"})
+            (let [response (PUT app
+                                (format "ctia/sighting/%s" sighting0-id)
+                                :body updated-sighting-body
+                                :headers {"Authorization" "45c1f5e3f05d0"})]
+              (is (= 200 (:status response))
+                  response))
+            (let [response (PUT app
+                                (format "ctia/sighting/%s" sighting1-id)
+                                :body updated-sighting-body
+                                :headers {"Authorization" "45c1f5e3f05d0"})]
+              (is (= 200 (:status response))
+                  response))
             ;; delete entities from first and second source indices
             (doseq [sighting-id sighting-ids]
-              (DELETE app
-                      (format "ctia/sighting/%s" sighting-id)
-                      :headers {"Authorization" "45c1f5e3f05d0"}))
+              (let [response (DELETE app
+                                     (format "ctia/sighting/%s" sighting-id)
+                                     :headers {"Authorization" "45c1f5e3f05d0"})]
+                (is (= 204 (:status response))
+                    response)))
             (sut/migrate-store-indexes {:migration-id "test-2"
                                         :prefix       "0.0.0"
                                         :migrations   [:__test]
@@ -847,45 +863,49 @@
 (defn load-test-fn
   [app maximal?]
   ;; insert 20000 docs per entity-type
-  (doseq [bundle (repeatedly 20 #(fixt/bundle 1000 maximal?))]
-    (POST-bulk app bundle))
-  (doseq [batch-size [1000 3000 6000 10000]]
-    (let [{:keys [get-in-config]} (helpers/get-service-map app :ConfigService)
-          services (app->MigrationStoreServices app)
-          conn (es-conn get-in-config)
-          total-docs (* (count @example-types) 20000)
-          _ (println (format "===== migrating %s documents with batch size %s"
-                             total-docs
-                             batch-size))
-          migration-id (format "test-load-%s" batch-size)
-          prefix (format "test_load_%s" batch-size)
-          start (System/currentTimeMillis)
-          _ (sut/migrate-store-indexes {:migration-id migration-id
-                                        :prefix       prefix
-                                        :migrations   [:__test]
-                                        :store-keys   (into [] example-types)
-                                        :batch-size   batch-size
-                                        :buffer-size  3
-                                        :confirm?     true
-                                        :restart?     false}
-                                       services)
-          end (System/currentTimeMillis)
-          total (/ (- end start) 1000)
-          doc-per-sec (/ total-docs total)
-          migration-state (ductile.doc/get-doc conn
-                                               (migration-index get-in-config)
-                                               "migration"
-                                               migration-id
-                                               {})]
-      (println "total: " (float total))
-      (println "documents per seconds: " (float doc-per-sec))
-      (doseq [[_ state] (:stores migration-state)]
-        (is (= 20000
-               (get-in state [:source :total])
-               (get-in state [:target :migrated]))))
-      (es-index/delete! conn (format "v%s*" prefix))
-      (ductile.doc/delete-doc conn "migration" migration-id {:refresh "true"})))
-  (es-index/delete! (es-conn (helpers/current-get-in-config-fn app)) "ctia_*"))
+  (try
+    (doseq [bundle (repeatedly 20 #(fixt/bundle 1000 maximal?))]
+      (POST-bulk app bundle))
+    (doseq [batch-size [1000 3000 6000 10000]
+            :let [{:keys [get-in-config]} (helpers/get-service-map app :ConfigService)
+                  services (app->MigrationStoreServices app)
+                  conn (es-conn get-in-config)
+                  migration-id (format "test-load-%s" batch-size)
+                  prefix (format "test_load_%s" batch-size)]]
+      (try
+        (let [total-docs (* (count @example-types) 20000)
+              _ (println (format "===== migrating %s documents with batch size %s"
+                                 total-docs
+                                 batch-size))
+              start (System/currentTimeMillis)
+              _ (sut/migrate-store-indexes {:migration-id migration-id
+                                            :prefix       prefix
+                                            :migrations   [:__test]
+                                            :store-keys   (into [] example-types)
+                                            :batch-size   batch-size
+                                            :buffer-size  3
+                                            :confirm?     true
+                                            :restart?     false}
+                                           services)
+              end (System/currentTimeMillis)
+              total (/ (- end start) 1000)
+              doc-per-sec (/ total-docs total)
+              migration-state (ductile.doc/get-doc conn
+                                                   (migration-index get-in-config)
+                                                   "migration"
+                                                   migration-id
+                                                   {})]
+          (println "total: " (float total))
+          (println "documents per seconds: " (float doc-per-sec))
+          (doseq [[_ state] (:stores migration-state)]
+            (is (= 20000
+                   (get-in state [:source :total])
+                   (get-in state [:target :migrated])))))
+        (finally
+          (es-index/delete! conn (format "v%s*" prefix))
+          (ductile.doc/delete-doc conn "migration" migration-id {:refresh "true"}))))
+    (finally
+      (es-index/delete! (es-conn (helpers/current-get-in-config-fn app)) "ctia_*"))))
 
 ;;(deftest ^:integration minimal-load-test
 ;; (with-each-fixtures identity app

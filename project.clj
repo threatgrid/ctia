@@ -57,7 +57,7 @@
                  [metosin/schema-tools "0.12.2"]
                  [threatgrid/flanders "0.1.23"]
 
-                 [threatgrid/ctim "1.0.22"]
+                 [threatgrid/ctim "1.0.23"]
                  [threatgrid/clj-momo "0.3.5"]
                  [threatgrid/ductile "0.2.0"]
 
@@ -151,7 +151,8 @@
                                   [clj-http-fake ~clj-http-fake-version]
                                   [prismatic/schema-generators ~schema-generators-version]
                                   [circleci/circleci.test "0.4.3"]
-                                  [org.clojure/math.combinatorics "0.1.6"]]
+                                  [org.clojure/math.combinatorics "0.1.6"]
+                                  [org.clojure/data.priority-map "1.0.0"]]
                    :pedantic? :warn
 
                    :resource-paths ["test/resources"]
@@ -202,7 +203,9 @@
                                " (go)    => start or restart CTIA"
                                " (start) => start CTIA, if not already started"
                                " (stop)  => stop CTIA, if not already stopped"
-                               " (current-app) => get current app, or nil"]))}
+                               " (current-app) => get current app, or nil"]))
+                 ;2m
+                 :repl-timeout 120000}
   :middleware [lein-git-down.plugin/inject-properties]
   ;; lein-git-down config
   :repositories [["public-github" {:url "git://github.com"}]

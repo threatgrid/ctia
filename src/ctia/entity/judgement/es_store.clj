@@ -8,6 +8,7 @@
             [ctia.schemas.core :refer [Verdict]]
             [ctia.store :refer [IJudgementStore IQueryStringSearchableStore IStore]]
             [ctia.stores.es
+             [store :refer [close-connections!]]
              [crud :as crud]
              [mapping :as em]
              [query :refer [active-judgements-by-observable-query find-restriction-query-part]]
@@ -49,6 +50,7 @@
 (def handle-query-string-search (crud/handle-query-string-search PartialStoredJudgement))
 (def handle-query-string-count crud/handle-query-string-count)
 (def handle-aggregate crud/handle-aggregate)
+(def handle-delete-search crud/handle-delete-search)
 
 (defn list-active-by-observable
   [state observable ident get-in-config]
@@ -112,6 +114,7 @@
     (handle-update state id judgement ident params))
   (list-records [_ filter-map ident params]
     (handle-list state filter-map ident params))
+  (close [_] (close-connections! state))
 
   IJudgementStore
   (list-judgements-by-observable [this observable ident params]
@@ -126,4 +129,6 @@
   (query-string-count [_ search-query ident]
     (handle-query-string-count state search-query ident))
   (aggregate [_ search-query agg-query ident]
-    (handle-aggregate state search-query agg-query ident)))
+    (handle-aggregate state search-query agg-query ident))
+  (delete-search [_ search-query ident params]
+    (handle-delete-search state search-query ident params)))

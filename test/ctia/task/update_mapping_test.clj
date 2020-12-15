@@ -54,7 +54,7 @@
   {:pre [(boolean? aliased?)]}
   (es-helpers/for-each-es-version
    "update-mapping store should apply valid updates (field addition). for aliased stores, all indices must be updated"
-   [5] ;; TODO compatbility with ES7
+   [5] ;; TODO compatibility with ES7
    #(ductile.index/delete! % "ctia_*")
    (helpers/with-properties*
      ["ctia.store.es.default.port" es-port
@@ -65,7 +65,7 @@
           (let [services (es-helpers/app->ESConnServices app)
                 ;; set up connection
                 store-properties (cond-> {:entity :incident
-                                          :indexname "ctia_incident"
+                                          :indexname (es-helpers/get-indexname app :incident)
                                           :host "localhost"
                                           :port es-port
                                           :aliased aliased?
@@ -73,8 +73,8 @@
                                    ;; cheap trick to rollover store without adding docs
                                    aliased? (assoc :rollover {:max_docs 0}))
 
-                index-names (cond-> ["ctia_incident"]
-                              aliased? (conj "ctia_incident-write"))
+                index-names (cond-> [(es-helpers/get-indexname app :incident)]
+                              aliased? (conj (str (es-helpers/get-indexname app :incident) "-write")))
 
                                         ; minimal store (same shape as `(all-stores)`)
                 stores (let [state (init/init-es-conn! store-properties

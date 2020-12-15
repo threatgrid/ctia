@@ -1,7 +1,7 @@
 (ns ctia.entity.target-record-test
   (:require [clj-momo.test-helpers.core :as mth]
             [clojure.test :refer [deftest is are join-fixtures testing use-fixtures]]
-            [ctia.entity.target-record :as target-record]
+            [ctia.entity.target-record :as sut]
             [ctia.test-helpers.aggregate :as aggregate]
             [ctia.test-helpers.auth :as auth]
             [ctia.test-helpers.core :as helpers]
@@ -56,15 +56,15 @@
      (helpers/set-capabilities! app "foouser" ["foogroup"] "user" auth/all-capabilities)
      (whoami-helpers/set-whoami-response app http/api-key "foouser" "foogroup" "user")
      (entity-crud-test
-      {:app              app
-       :entity           "target-record"
-       :example          new-target-record-maximal
-       :invalid-tests?   true
-       :update-tests?    true
-       :update-field     :source
-       :search-tests?    true
-       :additional-tests additional-tests
-       :headers          {:Authorization "45c1f5e3f05d0"}}))))
+      (into sut/target-record-entity
+            {:app              app
+             :example          new-target-record-maximal
+             :invalid-tests?   true
+             :update-tests?    true
+             :update-field     :source
+             :search-tests?    true
+             :additional-tests additional-tests
+             :headers          {:Authorization "45c1f5e3f05d0"}})))))
 
 (deftest target-record-pagination-test
   (store/test-for-each-store-with-app
@@ -88,18 +88,18 @@
         ["ctia/target-record/search?query=*"
          (http/doc-id->rel-url (first ids))]
         {"Authorization" "45c1f5e3f05d0"}
-        target-record/target-record-fields)
+        sut/target-record-fields)
 
        (pagination/pagination-test
         app
         "ctia/target-record/search?query=*"
         {"Authorization" "45c1f5e3f05d0"}
-        target-record/target-record-fields)))))
+        sut/target-record-fields)))))
 
 (deftest target-record-metric-routes-test
   (aggregate/test-metric-routes
-   (into target-record/target-record-entity
+   (into sut/target-record-entity
          {:plural            :target_records
           :entity-minimal    new-target-record-minimal
-          :enumerable-fields target-record/target-record-enumerable-fields
-          :date-fields       target-record/target-record-histogram-fields})))
+          :enumerable-fields sut/target-record-enumerable-fields
+          :date-fields       sut/target-record-histogram-fields})))

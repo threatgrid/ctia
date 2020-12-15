@@ -1,11 +1,11 @@
 (ns ctia.status.routes
   (:require
-   [compojure.api.sweet :refer :all]
+   [compojure.api.core :refer [context GET]]
    [schema.core :as s]
    [ctia.schemas.core :refer [StatusInfo]]
    [ring.util.http-response :refer [ok]]))
 
-(defroutes status-routes
+(defn status-routes []
   (context "/status" []
            :tags ["Status"]
            (GET "/" []
