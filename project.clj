@@ -172,7 +172,9 @@
                        :main ctia.main
                        :uberjar-name "ctia.jar"
                        :uberjar-exclusions [#"ctia\.properties"]}
-             :test {:jvm-opts ["-Dlog.console.threshold=WARN"]
+             :test {:jvm-opts ~(cond-> ["-Dlog.console.threshold=WARN"]
+                                 ; https://docs.travis-ci.com/user/enterprise/worker-configuration/#configuring-jobs-allowed-memory-usage
+                                 (System/getProperty "TRAVIS_CI") (conj "-Xmx2g"))
                     :dependencies [[clj-http-fake ~clj-http-fake-version]
                                    [com.gfredericks/test.chuck ~test-chuck-version]
                                    [org.clojure/test.check ~test-check-version]

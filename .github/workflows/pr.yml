@@ -145,9 +145,8 @@ jobs:
       # fails, the split-test test runner will timeout in a reasonable amount
       # of time and throw an error.
       - name: Docker (async)
-        # unlimited swap
         # depends on LOG_PATH and actions/checkout@v2
-        run: docker-compose -f containers/dev/docker-compose.yml up --memory 4g --memory-swap -1 -d &> "${LOG_PATH}/docker-compose.log" &
+        run: docker-compose -f containers/dev/docker-compose.yml up -d &> "${LOG_PATH}/docker-compose.log" &
       - name: Download test timings
         uses: actions/download-artifact@v2
         with:
