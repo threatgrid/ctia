@@ -428,10 +428,7 @@
                                           :value 3
                                           :nb-orgs 1
                                           }]}]}]
-      (clojure.pprint/pprint (sut/format-agg-result nested-agg nested-res))
-      (is (= expected-format (sut/format-agg-result nested-agg nested-res)))
-
-      )))
+      (is (= expected-format (sut/format-agg-result nested-agg nested-res))))))
 
 
 (defn generate-sightings
@@ -543,7 +540,8 @@
                           ident
                           {:refresh "true"})
              aggregate (fn [search-query agg-query]
-                         (aggregate-fn es-conn-state search-query agg-query ident))]
+                         (:metric
+                          (aggregate-fn es-conn-state search-query agg-query ident)))]
          (testing "cardinality"
            (is (= 3 (aggregate {:query-string "*"}
                                {:agg-type :cardinality

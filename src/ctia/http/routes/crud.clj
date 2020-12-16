@@ -397,6 +397,7 @@
                                agg-q
                                identity-map)
                              (format-agg-result :histogram aggregate-on search-q)
+                             :metric
                              ok)))
                   (GET "/topn" []
                        :return MetricResult
@@ -414,6 +415,7 @@
                                agg-q
                                identity-map)
                              (format-agg-result :topn aggregate-on search-q)
+                             :metric
                              ok)))
                   (GET "/cardinality" []
                        :return MetricResult
@@ -431,6 +433,7 @@
                                agg-q
                                identity-map)
                              (format-agg-result :cardinality aggregate-on search-q)
+                             :metric
                              ok))))))
      (let [capabilities get-capabilities]
        (GET "/:id" []

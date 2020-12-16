@@ -331,7 +331,7 @@ It returns the documents with full hits meta data including the real index in wh
     {:bool
      {:filter
       (cond-> []
-        (not admin) restriction
+        (not admin) (conj restriction)
         (seq filter-map) (into filter-terms)
         (seq date-range) (conj date-range-query)
         (seq query-string) (conj es-query-string))}}))
@@ -424,7 +424,8 @@ It returns the documents with full hits meta data including the real index in wh
       (seq aggs) (assoc :aggs (make-aggregation aggs)))))
 
 (defn format-agg-result
-  [{:keys [agg-type agg-key] :as agg-q}
+  [{:keys [agg-type agg-key]
+    :or {agg-key :metric} :as agg-q}
    agg-res]
   (let [{:keys [value buckets]} (get agg-res agg-key)
         {sub-agg-key :agg-key :as sub-agg-q} (:aggs agg-q)
@@ -444,7 +445,7 @@ It returns the documents with full hits meta data including the real index in wh
   "Generate an ES aggregation handler for given schema"
   [{:keys [conn index] :as es-conn-state} :- ESConnState
    search-query :- SearchQuery
-   {:keys [agg-type agg-key] :as agg-query} :- AggQuery
+   agg-query :- AggQuery
    ident]
   (let [query (make-search-query es-conn-state search-query ident)
         agg (make-aggregation agg-query)

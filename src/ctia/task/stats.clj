@@ -1,5 +1,9 @@
 (ns ctia.task.stats
-  (:require [ctia.store :refer [aggregate]]
+  (:require [ctia.task.stats.csv :as csv]
+            [ctia.store :refer [aggregate]]
+            [clojure.set :as set]
+            [ctia.stores.es.crud :as crud]
+            [clojure.data.json :as json]
             [clojure.string :as string]
             [clojure.pprint :as pp]
             [clj-http.client :as http]
@@ -9,7 +13,6 @@
             [ctia.store-service :as store-svc]
             [clojure.edn :as edn]
             [ctia.properties :as p]
-            [schema.core :as s]
             [puppetlabs.trapperkeeper.app :as app]))
 
 (defn topn-orgs
@@ -31,6 +34,12 @@
   (let [sources-agg (topn-sources nb-sources)
         orgs-agg (topn-orgs nb-orgs)]
     (assoc sources-agg :aggs orgs-agg)))
+
+(defn topn-orgs-top-sources
+  [nb-sources nb-orgs]
+  (let [sources-agg (topn-sources nb-sources)
+        orgs-agg (topn-orgs nb-orgs)]
+    (assoc orgs-agg :aggs sources-agg)))
 
 (def nb-orgs
   {:agg-type :cardinality
@@ -73,20 +82,36 @@
     (when (= 200 status)
       (edn/read-string body))))
 
-(defn resolve-orgs
-  [agg-result options]
-  (clojure.pprint/pprint (get-org options "000d193f-e42f-4321-1234-123456123456")))
+(defn enrich-org-bucket
+  [iroh-opts
+   {org-id :key :as bucket}]
+  (assoc bucket
+         :org
+         (get-org iroh-opts org-id)))
+
+(defn enrich-org-buckets
+  [iroh-opts
+   buckets]
+  (map (partial enrich-org-bucket iroh-opts) buckets))
+
+(defn deep-enrich-top-orgs
+  [iroh-opts agg-res]
+  (let [enrich (partial enrich-org-buckets iroh-opts)
+        change (fn [node]
+                 (cond-> node
+                   (:top-orgs node) (update :top-orgs enrich)))]
+    (clojure.walk/postwalk change agg-res)))
 
 (defn extract-metrics
   [{:keys [get-store] :as store-svc}
-   options]
-  (let [res (-> (get-store :incident)
+   iroh-opts]
+  (let [format-fn (partial deep-enrich-top-orgs iroh-opts)
+        res (-> (get-store :incident)
                 (aggregate
                  {:admin true}
                  (topn-sources 3)
-                 admin-ident))]
-    (clojure.pprint/pprint res)
-    (resolve-orgs res options)
+                 admin-ident)
+                format-fn)]
     {:data res
      :nb-errors 0}))
 
@@ -106,8 +131,22 @@
         (System/exit 0)))
     (catch Throwable e
       (log/error e "Unknown error")
-    (System/exit 2))))
+      (System/exit 2))))
 
+(defn top-orgs-to-csv [top-orgs output-file]
+  (->> (:top-orgs top-orgs)
+       (map (fn [bucket]
+              (update bucket
+                      :org
+                      #(dissoc % :activation-metas :address))))
+       csv/to-csv
+       (spit output-file)))
+
+(defn format-raw-es
+  [iroh-opts raw-es agg-q]
+  (let [{:keys [aggregations]} (json/read-str raw-es  :key-fn keyword)
+        formatted (crud/format-agg-result agg-q aggregations)]
+    (deep-enrich-top-orgs iroh-opts formatted)))
 
 (def cli-options
   ;; An option with a required argument
