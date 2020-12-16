@@ -172,7 +172,20 @@
                        :main ctia.main
                        :uberjar-name "ctia.jar"
                        :uberjar-exclusions [#"ctia\.properties"]}
-             :test {:jvm-opts ["-Dlog.console.threshold=WARN"]
+             :test {:jvm-opts ~(cond-> ["-Dlog.console.threshold=WARN"]
+                                 ; we have 7.5GB RAM on Travis.
+                                 ; docker reserves 4GB. here's how to customize it:
+                                 ; - https://docs.travis-ci.com/user/enterprise/worker-configuration/#configuring-jobs-allowed-memory-usage
+                                 ; this reserves 3GB jvm
+                                 (System/getProperty "TRAVIS") (into ["-Xms3g"
+                                                                      "-Xmx3g"])
+                                 ; we have 7GB RAM on Actions
+                                 ; - https://docs.github.com/en/free-pro-team@latest/actions/reference/specifications-for-github-hosted-runners#supported-runners-and-hardware-resources
+                                 ; docker reserves an unknown amount of RAM.
+                                 ; reserving 3GB for jvm -- this might need tweaking as we learn
+                                 ; more about docker on actions.
+                                 (System/getProperty "GITHUB_ACTIONS") (into ["-Xms3g"
+                                                                              "-Xmx3g"]))
                     :dependencies [[clj-http-fake ~clj-http-fake-version]
                                    [com.gfredericks/test.chuck ~test-chuck-version]
                                    [org.clojure/test.check ~test-check-version]
