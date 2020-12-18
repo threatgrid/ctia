@@ -285,4 +285,6 @@
                      (shutdown-agents)
                      (System/exit 1)))]
      (shutdown-agents)
-     (System/exit (+ (:error summary) (:fail summary))))))
+     (System/exit (min 1
+                       (+ (:error summary)
+                          (:fail summary)))))))
