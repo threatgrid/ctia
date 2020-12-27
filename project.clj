@@ -153,7 +153,8 @@
                                   [prismatic/schema-generators ~schema-generators-version]
                                   [circleci/circleci.test "0.4.3"]
                                   [org.clojure/math.combinatorics "0.1.6"]
-                                  [org.clojure/data.priority-map "1.0.0"]]
+                                  [org.clojure/data.priority-map "1.0.0"]
+                                  [org.clojure/tools.namespace "1.1.0"]]
                    :pedantic? :warn
                    :resource-paths ["test/resources"]
                    :source-paths ["dev"]}
@@ -196,7 +197,7 @@
                                  [lein-bikeshed "0.3.0"]]}}
 
   :ci {:pedantic? :abort
-        :global-vars {*warn-on-reflection* true}}
+       :global-vars {*warn-on-reflection* true}}
   
   :perforate {:environments [{:name :actor
                               :namespaces [ctia.entity.actor-bench]}
