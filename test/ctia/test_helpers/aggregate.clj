@@ -1,5 +1,6 @@
 (ns ctia.test-helpers.aggregate
-  (:require [clj-momo.lib.clj-time.core :as time]
+  (:require [java-time :as jt]
+            [clj-momo.lib.clj-time.core :as time]
             [clj-momo.lib.time :refer [format-date-time]]
             [clj-momo.lib.clj-time.coerce :as tc]
             [clj-momo.lib.clj-time.format :as tf]
@@ -12,7 +13,6 @@
             [clojure.string :as string]
             [clojure.pprint :refer [pprint]]
             [schema-generators.generators :as g]
-            [ctia.http.routes.common :refer [now]]
             [schema-tools.core :as st]
             [clojure.walk :refer [keywordize-keys]]
             [clojure.test :refer [is testing]]
@@ -181,8 +181,11 @@
                        examples
                        (keep #(es-get-in % parsed))
                        flatten)
-          from-str    "2020-03-01T00:00:00.000Z"
-          to-str      "2020-10-01T00:00:00.000Z"
+          now         (jt/instant)
+          from        (jt/minus now (jt/days 300))
+          to          (jt/minus now (jt/days 60))
+          from-str    (str from)
+          to-str      (str to)
           date-values (vals->date-vals from-str to-str values)
           _           (assert (seq? date-values))
           res-days    (map #(to-granularity-first-day granularity %)
@@ -210,14 +213,15 @@
 
 (defn generate-date
   [k]
-  (let [month (inc (case k
-                     :start_time (rand-int 6)
-                     :end_time (+ 6 (rand-int 6))
-                     (rand-int 11)))]
-    (format "2020-%02d-%02dT%02d:00:00.000Z"
-            month
-            (inc (rand-int 28))
-            (rand-int 24))))
+  (let [now (jt/instant)
+        nb-days-ago (inc
+                     (case k
+                      :start_time (+ 178 (rand-int 177))
+                      :end_time (rand-int 177)
+                      (rand-int 355)))
+        date (jt/minus (jt/instant)
+                       (jt/days nb-days-ago))]
+    (str date)))
 
 (defn append-date-field
   [doc field]
@@ -269,14 +273,10 @@
         (let [_ (helpers.core/set-capabilities! app "foouser" ["foogroup"] "user" all-capabilities)
               _ (helpers.whoami/set-whoami-response app "45c1f5e3f05d0" "foouser" "foogroup" "user")
               docs (generate-n-entity metric-params 100)]
-          (with-redefs [;; ensure from coercion in proper one year range
-                        now (-> (tc/from-string "2020-12-31")
-                                tc/to-date
-                                constantly)]
-            (POST-bulk app {plural docs})
-            (doseq [field enumerable-fields]
-              (test-cardinality app docs entity field)
-              (test-topn app docs entity field 3))
-            (doseq [field date-fields]
-              (test-histogram app docs entity field :day)
-              (test-histogram app docs entity field :month))))))))
+          (POST-bulk app {plural docs})
+          (doseq [field enumerable-fields]
+            (test-cardinality app docs entity field)
+            (test-topn app docs entity field 3))
+          (doseq [field date-fields]
+            (test-histogram app docs entity field :day)
+            (test-histogram app docs entity field :month)))))))

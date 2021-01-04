@@ -4,7 +4,6 @@
              [core :as jwt]
              [key :as jwt-key]]
             [clj-momo.lib.clj-time.core :as time]
-            [clj-momo.test-helpers.core :as mth]
             [clj-time.core :as t]
             [clojure.data.json :as json]
             [clojure.test :refer [deftest is testing use-fixtures join-fixtures]]
