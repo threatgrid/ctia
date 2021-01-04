@@ -1,7 +1,8 @@
 (ns ctia.logger-test
   (:require [ctia.test-helpers
              [core :as test-helpers]
-             [es :as es-helpers]]
+             [es :as es-helpers]
+             [http :refer [app->APIHanderServices]]]
             [ctia.entity.event.obj-to-event :as o2e]
             [clojure.test :refer [deftest is use-fixtures]]
             [schema.test :as st]
@@ -17,6 +18,8 @@
 (deftest test-logged
   (let [app (test-helpers/get-current-app)
         {:keys [send-event]} (test-helpers/get-service-map app :EventsService)
+        services (app->APIHandlerServices app)
+        
         sb (StringBuilder.)
         patched-log (fn [logger
                          level
@@ -26,21 +29,23 @@
                       (.append sb "\n"))]
     (with-redefs [log/log* patched-log]
       (send-event (o2e/to-create-event
-                     {:owner "tester"
-                      :groups ["foo"]
-                      :id "test-1"
-                      :type :test
-                      :tlp "green"
-                      :data 1}
-                     "test-1"))
+                    services
+                    {:owner "tester"
+                     :groups ["foo"]
+                     :id "test-1"
+                     :type :test
+                     :tlp "green"
+                     :data 1}
+                    "test-1"))
       (send-event (o2e/to-create-event
-                     {:owner "tester"
-                      :groups ["foo"]
-                      :id "test-2"
-                      :type :test
-                      :tlp "green"
-                      :data 2}
-                     "test-2"))
+                    services
+                    {:owner "tester"
+                     :groups ["foo"]
+                     :id "test-2"
+                     :type :test
+                     :tlp "green"
+                     :data 2}
+                    "test-2"))
       (Thread/sleep 100)   ;; wait until the go loop is done
       (let [scrubbed (-> (str sb)
                          (str/replace #"#inst \"[^\"]*\"" "#inst \"\"")

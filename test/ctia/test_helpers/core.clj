@@ -19,13 +19,15 @@
             [ctia.flows.crud :as crud]
             [ctia.schemas.core :refer [HTTPShowServices Port]]
             [ctim.domain.id :as id]
+            [ctia.http.routes.common :refer [CTIATimeService default-now-fn]]
             [ctim.generators.common :as cgc]
             [flanders
              [spec :as fs]
              [utils :as fu]]
             [puppetlabs.trapperkeeper.app :as app]
-            [schema.core :as s])
-  (:import [java.util UUID]))
+            [puppetlabs.trapperkeeper.core :refer [defservice]]
+            [puppetlabs.trapperkeeper.services :refer [service-context]]
+            [schema.core :as s]))
 
 (def ^:dynamic ^:private *current-app*)
 
@@ -252,6 +254,31 @@
        (get-service-map :ConfigService)
        :get-in-config)))
 
+(defprotocol CTIATestingTimeService
+  (get-now-fn [this])
+  ;; testing only
+  (fixture-with-time-fn [this time-fn f]))
+
+(defservice ctia-testing-time-service
+  CTIATestingTimeService
+  []
+  (init [_ _] {:now-fn-atom (atom default-now-fn)})
+  (get-now-fn [this]
+    (let [{:keys [now-fn-atom]} (service-context this)]
+      @now-fn-atom))
+  (fixture-with-time-fn [this time-fn f]
+    (let [{:keys [now-fn-atom]} (service-context this)
+          [old-time-fn] (swap-vals! now-fn-atom (constantly time-fn))]
+      (try
+        (f)
+        (finally
+          (reset! now-fn-atom old-time-fn))))))
+
+(defservice ctia-time-service
+  CTIATimeService
+  [[:CTIATestingTimeService get-now-fn]]
+  (now [_] ((get-now-fn))))
+
 ;; workaround cycle with this namespace
 (def ^:private purge-indices-and-templates (delay (requiring-resolve 'ctia.test-helpers.es/purge-indices-and-templates)))
 
@@ -286,6 +313,8 @@
                        "ctia.http.show.port" http-port]
        (let [config (build-transformed-init-config)
              services-map (cond-> (init/default-services-map config)
+                            true (assoc :CTIATimeService ctia-time-service
+                                        :CTIATestingTimeService ctia-testing-time-service)
                             (#{:threatgrid} (get-in config [:ctia :auth :type]))
                             ;; dynamic requires can be removed when #'with-properties is phased out or moved
                             (assoc
@@ -337,14 +366,16 @@
                       "ctia.auth.static.group" name]
       (f))))
 
-(defn fixture-with-fixed-time [time f]
-  (with-redefs [clj-momo.lib.clj-time.core/now
-                (fn [] time)
-                clj-momo.lib.time/now
-                (fn [] time)
-                clj-momo.lib.clj-time.core/internal-now
-                (fn [] (clj-momo.lib.clj-time.coerce/to-date time))]
-    (f)))
+(s/defn with-fixed-time* [app
+                          time
+                          f :- (s/=> s/Any)]
+  (let [{{:keys [fixture-with-time-fn]} :CTIATestingTimeService} (app/service-graph app)]
+    (fixture-with-time-fn
+      (constantly time)
+      f)))
+
+(defmacro with-fixed-time [app time & body]
+  `(with-fixed-time* ~app ~time #(do ~@body)))
 
 (defn set-capabilities!
   [app login groups role caps]
@@ -480,16 +511,22 @@
             "ID must be 8 chars or less")
     (str entity-name "-" id-str (subs zero-uuid id-cnt))))
 
+(defn with-atom-logger*
+  [atom-logger f]
+  (let [patched-log
+        (fn [logger
+             level
+             throwable
+             message]
+          (swap! atom-logger conj message))]
+    (with-redefs [clojure.tools.logging/log* patched-log]
+      (f))))
+
 (defmacro with-atom-logger
   [atom-logger & body]
-  `(let [patched-log#
-         (fn [logger#
-              level#
-              throwable#
-              message#]
-           (swap! ~atom-logger conj message#))]
-     (with-redefs [clojure.tools.logging/log* patched-log#]
-       ~@body)))
+  `(with-atom-logger*
+     ~atom-logger
+     #(do ~@body)))
 
 (defn deep-dissoc-entity-ids
   "Dissoc all entity ID in the given map recursively"
@@ -501,13 +538,14 @@
               %)
            m))
 
-(defn with-sequential-uuid [f]
+(defn with-sequential-uuid* [f]
   (let [uuid-counter-start 111111111111
         uuid-counter (atom uuid-counter-start)]
     (with-redefs [crud/gen-random-uuid
                   (fn []
                     (swap! uuid-counter inc)
                     (str "00000000-0000-0000-0000-" @uuid-counter))]
-      (f)
-      (reset! uuid-counter
-              uuid-counter-start))))
+      (f))))
+
+(defmacro with-sequential-uuid [& body]
+  `(with-sequential-uuid* #(do ~@body)))

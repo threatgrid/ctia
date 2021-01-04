@@ -9,6 +9,7 @@
              [http-response :as http-res]
              [http-status :refer [ok]]]
             [ctia.schemas.search-agg :refer [SearchQuery MetricResult]]
+            [puppetlabs.trapperkeeper.core :refer [defservice]]
             [schema.core :as s]))
 
 (def search-options [:sort_by
@@ -82,18 +83,34 @@
   [{:keys [id] :as resource}]
   (http-res/created id resource))
 
-(defn now [] (java.util.Date.))
+(s/defschema CoerceDateRangeServices
+  {:CTIATimeService
+   {:now (s/=> s/Inst)
+    s/Keyword s/Any}
+   s/Keyword s/Any})
 
 (s/defn coerce-date-range :- {:gte s/Inst
                               :lt s/Inst}
   "coerce from to limit interval querying to one year"
-  [from :- s/Inst
+  [{{:keys [now]} :CTIATimeService} :- CoerceDateRangeServices
+   from :- s/Inst
    to :- (s/maybe s/Inst)]
   (let [to-or-now (or to (now))
         to-minus-one-year (t/minus to-or-now (t/years 1))
         from (t/latest from to-minus-one-year)]
     {:gte from
      :lt to-or-now}))
+
+(defn default-now-fn [] (java.util.Date.))
+
+(defprotocol CTIATimeService
+  (now [this]))
+
+;; TODO unit test me
+(defservice ctia-time-service
+  CTIATimeService
+  []
+  (now [this] (default-now-fn)))
 
 (s/defn search-query :- SearchQuery
   ([date-field search-params]

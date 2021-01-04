@@ -1,6 +1,5 @@
 (ns ctia.entity.asset-properties
-  (:require [clj-momo.lib.clj-time.core :as time]
-            [compojure.api.sweet :refer [POST routes]]
+  (:require [compojure.api.core :refer [POST routes]]
             [ctia.domain.entities :refer [default-realize-fn]]
             [ctia.flows.crud :as flows]
             [ctia.http.routes.common :as routes.common]
@@ -8,7 +7,6 @@
             [ctia.schemas.core :refer [def-acl-schema def-stored-schema APIHandlerServices]]
             [ctia.schemas.sorting :as sorting]
             [ctia.schemas.utils :as csu]
-            [ctia.store]
             [ctia.stores.es.mapping :as em]
             [ctia.stores.es.store :refer [def-es-store]]
             [ctim.schemas.asset-properties :as asset-properties-schema]

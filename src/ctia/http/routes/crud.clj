@@ -49,7 +49,8 @@
   requirements (which must be provided at compile-time with
   POST)."
   [req :- (s/pred map?)
-   {{:keys [get-store]} :StoreService
+   {{:keys [now]} :CTIATimeService
+    {:keys [get-store]} :StoreService
     :as services} :- APIHandlerServices
    {:keys [entity
            new-spec
@@ -81,7 +82,7 @@
                             (update-record
                               (:id %)
                               (cond-> %
-                                true (assoc-in [:valid_time :end_time] (time/internal-now))
+                                true (assoc-in [:valid_time :end_time] (now))
                                 revocation-update-fn (revocation-update-fn {:req req}))
                               identity-map
                               (wait_for->refresh wait_for)))

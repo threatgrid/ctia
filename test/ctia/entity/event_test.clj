@@ -7,7 +7,7 @@
    [ctia.auth.capabilities :refer [all-capabilities]]
    [ctia.entity.event :as ev]
    [ctia.test-helpers.core :as helpers
-    :refer [DELETE POST PUT GET fixture-with-fixed-time with-sequential-uuid]]
+    :refer [DELETE POST PUT GET with-fixed-time with-sequential-uuid]]
    [ctia.test-helpers.fake-whoami-service :as whoami-helpers]
    [ctia.test-helpers.store :refer [test-for-each-store-with-app]]
    [ctim.domain.id :as id]
@@ -59,122 +59,118 @@
 
      (testing "simulate Incident activity"
        (with-sequential-uuid
-         (fn []
-           (fixture-with-fixed-time
-            (time/timestamp "2042-01-01")
-            (fn []
-              (let [app (helpers/get-current-app)
-                    {{:keys [get-port]} :CTIAHTTPServerService} (app/service-graph app)
+         (with-fixed-time
+          app
+          (time/timestamp "2042-01-01")
+          (let [{{:keys [get-port]} :CTIAHTTPServerService} (app/service-graph app)
 
-                    port (get-port)
-                    {incident :parsed-body
-                     incident-status :status}
-                    (POST app
-                          (str "ctia/incident")
-                          :body (assoc new-incident-minimal
-                                       :tlp "amber"
-                                       :description "my description"
-                                       :incident_time
-                                       {:opened (time/timestamp "2042-01-01")})
-                          :headers {"Authorization" "user1"})
+                port (get-port)
+                {incident :parsed-body
+                 incident-status :status}
+                (POST app
+                      (str "ctia/incident")
+                      :body (assoc new-incident-minimal
+                                   :tlp "amber"
+                                   :description "my description"
+                                   :incident_time
+                                   {:opened (time/timestamp "2042-01-01")})
+                      :headers {"Authorization" "user1"})
 
-                    {incident-user-3 :parsed-body
-                     incident-user-3-status :status}
-                    (POST app
-                          (str "ctia/incident")
-                          :body (assoc new-incident-minimal
-                                       :tlp "amber"
-                                       :description "my description")
-                          :headers {"Authorization" "user3"})
-                    {updated-incident :parsed-body
-                     updated-incident-status :status}
-                    (fixture-with-fixed-time
-                     (time/timestamp "2042-01-02")
-                     (fn []
-                       (PUT app
-                            (format "ctia/%s/%s"
-                                    "incident"
-                                    (-> (:id incident)
-                                        id/long-id->id
-                                        :short-id))
-                            :body (assoc incident
-                                         :description "changed description")
-                            :headers {"Authorization" "user2"})))
+                {incident-user-3 :parsed-body
+                 incident-user-3-status :status}
+                (POST app
+                      (str "ctia/incident")
+                      :body (assoc new-incident-minimal
+                                   :tlp "amber"
+                                   :description "my description")
+                      :headers {"Authorization" "user3"})
+                {updated-incident :parsed-body
+                 updated-incident-status :status}
+                (with-fixed-time app (time/timestamp "2042-01-02")
+                  (PUT app
+                       (format "ctia/%s/%s"
+                               "incident"
+                               (-> (:id incident)
+                                   id/long-id->id
+                                   :short-id))
+                       :body (assoc incident
+                                    :description "changed description")
+                       :headers {"Authorization" "user2"}))
 
-                    {casebook :parsed-body
-                     casebook-status :status}
-                    (POST app
-                          (str "ctia/casebook")
-                          :body (assoc new-casebook-minimal
-                                       :tlp "amber")
-                          :headers {"Authorization" "user1"})
+                {casebook :parsed-body
+                 casebook-status :status}
+                (POST app
+                      (str "ctia/casebook")
+                      :body (assoc new-casebook-minimal
+                                   :tlp "amber")
+                      :headers {"Authorization" "user1"})
 
-                    {incident-casebook-link :parsed-body
-                     incident-casebook-link-status :status}
-                    (POST app
-                          (format "ctia/%s/%s/link"
-                                  "incident"
-                                  (-> (:id incident)
-                                      id/long-id->id
-                                      :short-id))
-                          :body {:casebook_id (:id casebook)}
-                          :headers {"Authorization" "user1"})
-                    {incident-delete-body :parsed-body
-                     incident-delete-status :status}
-                    (DELETE app
-                            (format "ctia/%s/%s"
-                                    "incident"
-                                    (-> (:id incident)
-                                        id/long-id->id
-                                        :short-id))
-                            :headers {"Authorization" "user1"})
-                    uri-timeline-incident-user1
-                    (->> (:id incident)
-                         uri/uri-encode
-                         (str "ctia/event/history/"))
-                    uri-timeline-incident-user3
-                    (->> (:id incident-user-3)
-                         uri/uri-encode
-                         (str "ctia/event/history/"))
-                    {timeline1-body :parsed-body
-                     timeline1-status :status}
-                    (GET app
-                         uri-timeline-incident-user1
-                         :headers {"Authorization" "user1"})
-                    {timeline2-body :parsed-body
-                     timeline2-status :status}
-                    (GET app
-                         uri-timeline-incident-user1
-                         :headers {"Authorization" "user2"})
-                    {timeline3-body :parsed-body
-                     timeline3-status :status}
-                    (GET app
-                         uri-timeline-incident-user1
-                         :headers {"Authorization" "user3"})
-                    {timeline4-body :parsed-body
-                     timeline4-status :status}
-                    (GET app
-                         uri-timeline-incident-user3
-                         :headers {"Authorization" "user1"})
-                    {timeline5-body :parsed-body
-                     timeline5-status :status}
-                    (GET app
-                         uri-timeline-incident-user3
-                         :headers {"Authorization" "user3"})]
+                {incident-casebook-link :parsed-body
+                 incident-casebook-link-status :status}
+                (POST app
+                      (format "ctia/%s/%s/link"
+                              "incident"
+                              (-> (:id incident)
+                                  id/long-id->id
+                                  :short-id))
+                      :body {:casebook_id (:id casebook)}
+                      :headers {"Authorization" "user1"})
+                {incident-delete-body :parsed-body
+                 incident-delete-status :status}
+                (DELETE app
+                        (format "ctia/%s/%s"
+                                "incident"
+                                (-> (:id incident)
+                                    id/long-id->id
+                                    :short-id))
+                        :headers {"Authorization" "user1"})
+                uri-timeline-incident-user1
+                (->> (:id incident)
+                     uri/uri-encode
+                     (str "ctia/event/history/"))
+                uri-timeline-incident-user3
+                (->> (:id incident-user-3)
+                     uri/uri-encode
+                     (str "ctia/event/history/"))
+                {timeline1-body :parsed-body
+                 timeline1-status :status}
+                (GET app
+                     uri-timeline-incident-user1
+                     :headers {"Authorization" "user1"})
+                {timeline2-body :parsed-body
+                 timeline2-status :status}
+                (GET app
+                     uri-timeline-incident-user1
+                     :headers {"Authorization" "user2"})
+                {timeline3-body :parsed-body
+                 timeline3-status :status}
+                (GET app
+                     uri-timeline-incident-user1
+                     :headers {"Authorization" "user3"})
+                {timeline4-body :parsed-body
+                 timeline4-status :status}
+                (GET app
+                     uri-timeline-incident-user3
+                     :headers {"Authorization" "user1"})
+                {timeline5-body :parsed-body
+                 timeline5-status :status}
+                (GET app
+                     uri-timeline-incident-user3
+                     :headers {"Authorization" "user3"})]
 
-                (is (= 201 incident-status))
-                (is (= 201 incident-user-3-status))
-                (is (= 200 updated-incident-status))
-                (is (= 201 casebook-status))
-                (is (= 201 incident-casebook-link-status))
-                (is (= 204 incident-delete-status))
-                (is (= 200 timeline1-status))
-                (is (= 200 timeline2-status))
-                (is (= 200 timeline3-status))
-                (is (= 200 timeline4-status))
-                (is (= 200 timeline5-status))
+            (is (= 201 incident-status))
+            (is (= 201 incident-user-3-status))
+            (is (= 200 updated-incident-status))
+            (is (= 201 casebook-status))
+            (is (= 201 incident-casebook-link-status))
+            (is (= 204 incident-delete-status))
+            (is (= 200 timeline1-status))
+            (is (= 200 timeline2-status))
+            (is (= 200 timeline3-status))
+            (is (= 200 timeline4-status))
+            (is (= 200 timeline5-status))
 
-                (testing "event timeline should contain all actions by user, with respect to their visibility"
+            (testing "event timeline should contain all actions by user, with respect to their visibility"
 
                   (is (= '(1 3) (map :count timeline1-body)))
                   (is (= #{"user1" "user2"}
@@ -323,7 +319,7 @@
                                      port),
                              :type "event",
                              :event_type :record-deleted}]
-                           results)))))))))))))
+                           results)))))))))))
 
 (defn get-event [owner event_type timestamp]
   {:owner owner
@@ -408,79 +404,76 @@
      ;; test for https://github.com/threatgrid/iroh/issues/3551
      (testing "Diff events for Incidents"
        (with-sequential-uuid
-         (fn []
-           (fixture-with-fixed-time
-            (time/timestamp "2042-01-01")
-            (fn []
-              (let [initial-incident
-                    (POST app
-                          (str "ctia/incident")
-                          :body new-incident-minimal
-                          :headers {"Authorization" "user1"})
-                    _ (is (= 201 (:status initial-incident)) initial-incident)
+         (with-fixed-time app (time/timestamp "2042-01-01")
+           (let [initial-incident
+                 (POST app
+                       (str "ctia/incident")
+                       :body new-incident-minimal
+                       :headers {"Authorization" "user1"})
+                 _ (is (= 201 (:status initial-incident)) initial-incident)
 
-                    ;; add new :assignees field
-                    added-assignees-incident
-                    (PUT app
-                         (format "ctia/%s/%s"
-                                 "incident"
-                                 (-> (get-in initial-incident [:parsed-body :id])
-                                     id/long-id->id
-                                     :short-id))
-                         :body (-> initial-incident
-                                   :parsed-body
-                                   (assoc :assignees ["1"]))
-                         :headers {"Authorization" "user1"})
-                    _ (is (= 200 (:status added-assignees-incident))
-                          added-assignees-incident)
+                 ;; add new :assignees field
+                 added-assignees-incident
+                 (PUT app
+                      (format "ctia/%s/%s"
+                              "incident"
+                              (-> (get-in initial-incident [:parsed-body :id])
+                                  id/long-id->id
+                                  :short-id))
+                      :body (-> initial-incident
+                                :parsed-body
+                                (assoc :assignees ["1"]))
+                      :headers {"Authorization" "user1"})
+                 _ (is (= 200 (:status added-assignees-incident))
+                       added-assignees-incident)
 
-                    ;; update existing :assignees field
-                    modified-assignees-incident
-                    (PUT app
-                         (format "ctia/%s/%s"
-                                 "incident"
-                                 (-> (get-in added-assignees-incident [:parsed-body :id])
-                                     id/long-id->id
-                                     :short-id))
-                         :body (-> added-assignees-incident
-                                   :parsed-body
-                                   (assoc-in [:assignees 1] "2"))
-                         :headers {"Authorization" "user1"})
-                    _ (is (= 200 (:status modified-assignees-incident))
-                          modified-assignees-incident)
+                 ;; update existing :assignees field
+                 modified-assignees-incident
+                 (PUT app
+                      (format "ctia/%s/%s"
+                              "incident"
+                              (-> (get-in added-assignees-incident [:parsed-body :id])
+                                  id/long-id->id
+                                  :short-id))
+                      :body (-> added-assignees-incident
+                                :parsed-body
+                                (assoc-in [:assignees 1] "2"))
+                      :headers {"Authorization" "user1"})
+                 _ (is (= 200 (:status modified-assignees-incident))
+                       modified-assignees-incident)
 
-                    ;; delete existing :assignees field
-                    deleted-assignees-incident
-                    (PUT app
-                         (format "ctia/%s/%s"
-                                 "incident"
-                                 (-> (get-in modified-assignees-incident [:parsed-body :id])
-                                     id/long-id->id
-                                     :short-id))
-                         :body (-> modified-assignees-incident
-                                   :parsed-body
-                                   (dissoc :assignees))
-                         :headers {"Authorization" "user1"})
-                    _ (is (= 200 (:status deleted-assignees-incident))
-                          deleted-assignees-incident)]
+                 ;; delete existing :assignees field
+                 deleted-assignees-incident
+                 (PUT app
+                      (format "ctia/%s/%s"
+                              "incident"
+                              (-> (get-in modified-assignees-incident [:parsed-body :id])
+                                  id/long-id->id
+                                  :short-id))
+                      :body (-> modified-assignees-incident
+                                :parsed-body
+                                (dissoc :assignees))
+                      :headers {"Authorization" "user1"})
+                 _ (is (= 200 (:status deleted-assignees-incident))
+                       deleted-assignees-incident)]
 
-                (testing ":fields are correctly set"
-                  (let [initial-id (get-in initial-incident [:parsed-body :id])
-                        q (uri/uri-encode
-                            (format "entity.id:\"%s\"" initial-id))
-                        results (map :fields
-                                     (:parsed-body (GET app
-                                                        (str "ctia/event/search?sort_by=timestamp&query=" q)
-                                                        :content-type :json
-                                                        :headers {"Authorization" "user1"})))]
-                    (is (= [nil
-                            [{:field :assignees
-                              :action "added"
-                              :change {:after ["1"]}}]
-                            [{:field :assignees
-                              :action "modified"
-                              :change {:before ["1"], :after ["1" "2"]}}]
-                            [{:field :assignees
-                              :action "deleted"
-                              :change {:before ["1" "2"]}}]]
-                           results)))))))))))))
+             (testing ":fields are correctly set"
+               (let [initial-id (get-in initial-incident [:parsed-body :id])
+                     q (uri/uri-encode
+                         (format "entity.id:\"%s\"" initial-id))
+                     results (map :fields
+                                  (:parsed-body (GET app
+                                                     (str "ctia/event/search?sort_by=timestamp&query=" q)
+                                                     :content-type :json
+                                                     :headers {"Authorization" "user1"})))]
+                 (is (= [nil
+                         [{:field :assignees
+                           :action "added"
+                           :change {:after ["1"]}}]
+                         [{:field :assignees
+                           :action "modified"
+                           :change {:before ["1"], :after ["1" "2"]}}]
+                         [{:field :assignees
+                           :action "deleted"
+                           :change {:before ["1" "2"]}}]]
+                        results)))))))))))

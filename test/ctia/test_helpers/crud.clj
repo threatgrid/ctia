@@ -303,9 +303,9 @@
             (when revoke-tests?
               (testing (format "POST /ctia/%s/:id/expire revokes" entity-str)
                 (let [fixed-now (-> "2020-12-31" tc/from-string tc/to-date)]
-                  (helpers/fixture-with-fixed-time
+                  (helpers/with-fixed-time app
                    fixed-now
-                   (fn []
+                   (do
                      (let [response (apply helpers/POST
                                            app
                                            (format "ctia/%s/%s/expire" entity-str (:short-id record-id))

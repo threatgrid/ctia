@@ -5,7 +5,6 @@
             [ctia.schemas.core :refer [def-acl-schema def-stored-schema APIHandlerServices]]
             [ctia.schemas.sorting :as sorting]
             [ctia.schemas.utils :as csu]
-            [ctia.store]
             [ctia.stores.es.mapping :as em]
             [ctia.stores.es.store :refer [def-es-store]]
             [ctim.schemas.asset-mapping :as asset-mapping-schema]

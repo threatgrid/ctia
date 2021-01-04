@@ -76,9 +76,13 @@
 (s/defschema IncidentStatusUpdate
   {:status IncidentStatus})
 
-(defn make-status-update
-  [{:keys [status]}]
-  (let [t (time/internal-now)
+(s/defn ^:private make-status-update
+  [{:keys [status]}
+   {{:keys [now]} :CTIATimeService} :- (-> APIHandlerServices
+                                           (csu/service-subschema
+                                             {:CTIATimeService #{:now}})
+                                           csu/open-service-schema)]
+  (let [t (now)
         verb (case status
                "New" nil
                "Stalled" nil
@@ -107,7 +111,7 @@
             :capabilities :create-incident
             :auth-identity identity
             :identity-map identity-map
-            (let [status-update (make-status-update update)]
+            (let [status-update (make-status-update update services)]
               (if-let [updated
                        (un-store
                         (flows/patch-flow

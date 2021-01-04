@@ -170,7 +170,7 @@
                          :feed_view_url)))
 
           (let [feed-view-url (:feed_view_url updated-feed)
-                valid-response  (with-redefs [sut/fetch-limit 19] ;; < |judgements| and not a multipe of nb shards (5).
+                valid-response  (with-redefs [sut/fetch-limit 19] ;; < |judgements| and not a multiple of nb shards (5).
                                   (client/get feed-view-url
                                               {:as :json}))
                 valid-response-body (:body valid-response)]
