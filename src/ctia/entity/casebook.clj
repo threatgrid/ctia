@@ -81,12 +81,12 @@
 (s/defschema CasebookObservablesUpdate
   (st/merge
    {:operation (s/enum :add :remove :replace)}
-   (st/select-keys Casebook [:observables])))
+   (csu/select-all-keys Casebook [:observables])))
 
 (s/defschema CasebookTextsUpdate
   (st/merge
    {:operation (s/enum :add :remove :replace)}
-   (st/select-keys Casebook [:texts])))
+   (csu/select-all-keys Casebook [:texts])))
 
 (s/defschema CasebookBundleUpdate
   {:operation (s/enum :add :remove :replace)
@@ -129,7 +129,7 @@
     :delete-casebook
     :search-casebook})
 
-(s/defn casebook-operation-routes [{{:keys [read-store write-store]} :StoreService
+(s/defn casebook-operation-routes [{{:keys [get-store]} :StoreService
                                     :as services} :- APIHandlerServices]
   (routes
     (let [capabilities :create-casebook]
@@ -145,18 +145,18 @@
              :identity-map identity-map
              (if-let [res (flows/patch-flow
                             :services services
-                            :get-fn #(read-store :casebook
-                                                 read-record
-                                                 %
-                                                 identity-map
-                                                 {})
+                            :get-fn #(-> (get-store :casebook)
+                                         (read-record
+                                           %
+                                           identity-map
+                                           {}))
                             :realize-fn realize-casebook
-                            :update-fn #(write-store :casebook
-                                                     update-record
-                                                     (:id %)
-                                                     %
-                                                     identity-map
-                                                     (wait_for->refresh wait_for))
+                            :update-fn #(-> (get-store :casebook)
+                                            (update-record
+                                              (:id %)
+                                              %
+                                              identity-map
+                                              (wait_for->refresh wait_for)))
                             :long-id-fn #(with-long-id % services)
                             :entity-type :casebook
                             :entity-id id
@@ -181,18 +181,18 @@
                      :identity-map identity-map
                      (if-let [res (flows/patch-flow
                                     :services services
-                                    :get-fn #(read-store :casebook
-                                                         read-record
-                                                         %
-                                                         identity-map
-                                                         {})
+                                    :get-fn #(-> (get-store :casebook)
+                                                 (read-record
+                                                   %
+                                                   identity-map
+                                                   {}))
                                     :realize-fn realize-casebook
-                                    :update-fn #(write-store :casebook
-                                                             update-record
-                                                             (:id %)
-                                                             %
-                                                             identity-map
-                                                             (wait_for->refresh wait_for))
+                                    :update-fn #(-> (get-store :casebook)
+                                                    (update-record
+                                                      (:id %)
+                                                      %
+                                                      identity-map
+                                                      (wait_for->refresh wait_for)))
                                     :long-id-fn #(with-long-id % services)
                                     :entity-type :casebook
                                     :entity-id id
@@ -218,18 +218,18 @@
                      :identity-map identity-map
                      (if-let [res (flows/patch-flow
                                     :services services
-                                    :get-fn #(read-store :casebook
-                                                         read-record
-                                                         %
-                                                         identity-map
-                                                         {})
+                                    :get-fn #(-> (get-store :casebook)
+                                                 (read-record
+                                                   %
+                                                   identity-map
+                                                   {}))
                                     :realize-fn realize-casebook
-                                    :update-fn #(write-store :casebook
-                                                             update-record
-                                                             (:id %)
-                                                             %
-                                                             identity-map
-                                                             (wait_for->refresh wait_for))
+                                    :update-fn #(-> (get-store :casebook)
+                                                    (update-record
+                                                      (:id %)
+                                                      %
+                                                      identity-map
+                                                      (wait_for->refresh wait_for)))
                                     :long-id-fn #(with-long-id % services)
                                     :entity-type :casebook
                                     :entity-id id
@@ -255,18 +255,18 @@
                      :identity-map identity-map
                      (if-let [res (flows/patch-flow
                                    :services services
-                                   :get-fn #(read-store :casebook
-                                                        read-record
-                                                        %
-                                                        identity-map
-                                                        {})
+                                   :get-fn #(-> (get-store :casebook)
+                                                (read-record
+                                                  %
+                                                  identity-map
+                                                  {}))
                                    :realize-fn realize-casebook
-                                   :update-fn #(write-store :casebook
-                                                            update-record
-                                                            (:id %)
-                                                            %
-                                                            identity-map
-                                                            (wait_for->refresh wait_for))
+                                   :update-fn #(-> (get-store :casebook)
+                                                   (update-record
+                                                     (:id %)
+                                                     %
+                                                     identity-map
+                                                     (wait_for->refresh wait_for)))
                                    :long-id-fn #(with-long-id % services)
                                    :entity-type :casebook
                                    :entity-id id

@@ -57,7 +57,7 @@
                  [metosin/schema-tools "0.12.2"]
                  [threatgrid/flanders "0.1.23"]
 
-                 [threatgrid/ctim "1.0.22"]
+                 [threatgrid/ctim "1.0.23"]
                  [threatgrid/clj-momo "0.3.5"]
                  [threatgrid/ductile "0.2.0"]
 
@@ -172,7 +172,20 @@
                        :main ctia.main
                        :uberjar-name "ctia.jar"
                        :uberjar-exclusions [#"ctia\.properties"]}
-             :test {:jvm-opts ["-Dlog.console.threshold=WARN"]
+             :test {:jvm-opts ~(cond-> ["-Dlog.console.threshold=WARN"]
+                                 ; we have 7.5GB RAM on Travis.
+                                 ; docker reserves 4GB. here's how to customize it:
+                                 ; - https://docs.travis-ci.com/user/enterprise/worker-configuration/#configuring-jobs-allowed-memory-usage
+                                 ; this reserves 3GB jvm
+                                 (System/getProperty "TRAVIS") (into ["-Xms3g"
+                                                                      "-Xmx3g"])
+                                 ; we have 7GB RAM on Actions
+                                 ; - https://docs.github.com/en/free-pro-team@latest/actions/reference/specifications-for-github-hosted-runners#supported-runners-and-hardware-resources
+                                 ; docker reserves an unknown amount of RAM.
+                                 ; reserving 3GB for jvm -- this might need tweaking as we learn
+                                 ; more about docker on actions.
+                                 (System/getProperty "GITHUB_ACTIONS") (into ["-Xms3g"
+                                                                              "-Xmx3g"]))
                     :dependencies [[clj-http-fake ~clj-http-fake-version]
                                    [com.gfredericks/test.chuck ~test-chuck-version]
                                    [org.clojure/test.check ~test-check-version]
@@ -204,7 +217,9 @@
                                " (go)    => start or restart CTIA"
                                " (start) => start CTIA, if not already started"
                                " (stop)  => stop CTIA, if not already stopped"
-                               " (current-app) => get current app, or nil"]))}
+                               " (current-app) => get current app, or nil"]))
+                 ;2m
+                 :repl-timeout 120000}
   :middleware [lein-git-down.plugin/inject-properties]
   ;; lein-git-down config
   :repositories [["public-github" {:url "git://github.com"}]

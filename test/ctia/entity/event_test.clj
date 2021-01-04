@@ -1,27 +1,19 @@
 (ns ctia.entity.event-test
   (:require
-   [ctim.schemas.common :refer [ctim-schema-version]]
-   [ctim.domain.id :refer [str->short-id]]
-   [clojure
-    [string :as str]
-    [test :refer [is testing]]]
-   [clj-momo.lib.time :as time]
-   [clj-momo.lib.clj-time.core :as t]
-   [clojure.test :refer [deftest use-fixtures]]
-   [ctim.domain.id :as id]
-   [ctia.entity.event :as ev]
-   [ctia.test-helpers
-    [auth :refer [all-capabilities]]
-    [core :as helpers
-     :refer [DELETE POST PUT GET with-fixed-time
-             with-sequential-uuid]]
-    [fake-whoami-service :as whoami-helpers]
-    [store :refer [test-for-each-store-with-app]]]
-   [ctim.examples.incidents :refer [new-incident-minimal]]
-   [ctim.examples.casebooks :refer [new-casebook-minimal]]
-   [ctim.domain.id :as id]
    [cemerick.uri :as uri]
-   [ctia.test-helpers.es :as es-helpers]
+   [clj-momo.lib.clj-time.core :as t]
+   [clj-momo.lib.time :as time]
+   [clojure.test :refer [is testing deftest use-fixtures]]
+   [ctia.auth.capabilities :refer [all-capabilities]]
+   [ctia.entity.event :as ev]
+   [ctia.test-helpers.core :as helpers
+    :refer [DELETE POST PUT GET with-fixed-time with-sequential-uuid]]
+   [ctia.test-helpers.fake-whoami-service :as whoami-helpers]
+   [ctia.test-helpers.store :refer [test-for-each-store-with-app]]
+   [ctim.domain.id :as id]
+   [ctim.examples.casebooks :refer [new-casebook-minimal]]
+   [ctim.examples.incidents :refer [new-incident-minimal]]
+   [ctim.schemas.common :refer [ctim-schema-version]]
    [puppetlabs.trapperkeeper.app :as app]
    [schema.test :refer [validate-schemas]]))
 
@@ -36,7 +28,7 @@
                                 "user1"
                                 ["group1"]
                                 "user1"
-                                all-capabilities)
+                                (all-capabilities))
      (whoami-helpers/set-whoami-response app
                                          "user1"
                                          "user1"
@@ -47,7 +39,7 @@
                                 "user2"
                                 ["group1"]
                                 "user2"
-                                all-capabilities)
+                                (all-capabilities))
      (whoami-helpers/set-whoami-response app
                                          "user2"
                                          "user2"
@@ -58,7 +50,7 @@
                                 "user3"
                                 ["group2"]
                                 "user3"
-                                all-capabilities)
+                                (all-capabilities))
      (whoami-helpers/set-whoami-response app
                                          "user3"
                                          "user3"
@@ -180,153 +172,154 @@
 
             (testing "event timeline should contain all actions by user, with respect to their visibility"
 
-              (is (= '(1 3) (map :count timeline1-body)))
-              (is (every? #(= "user1" (:owner %))
-                          timeline1-body))
-              (is (every? #(= "user1" (:owner %))
-                          timeline2-body))
-              (is (empty? timeline3-body))
-              (is (empty? timeline4-body))
-              (is (every? #(= "user3" (:owner %))
-                          timeline5-body))
-              (is (= '(1) (map :count timeline5-body))))
+                  (is (= '(1 3) (map :count timeline1-body)))
+                  (is (= #{"user1" "user2"}
+                         (set (map :owner timeline1-body)))
+                      "owners should differ")
+                  (is (empty? timeline3-body))
+                  (is (empty? timeline4-body))
+                  (is (every? #(= "user3" (:owner %))
+                              timeline5-body))
+                  (is (= '(1) (map :count timeline5-body))))
 
-            (testing "should be able to list all related incident events filtered with Access control"
+                (testing "should be able to list all related incident events filtered with Access control"
+                  (let [q (uri/uri-encode
+                           (format "entity.id:\"%s\" OR entity.source_ref:\"%s\" OR entity.target_ref:\"%s\""
+                                   (:id incident)
+                                   (:id incident)
+                                   (:id incident)))
+                        results (:parsed-body (GET app
+                                                   (str "ctia/event/search?query=" q)
+                                                   :content-type :json
+                                                   :headers {"Authorization" "user1"}))
+                        event-id (-> results
+                                     first
+                                     :id
+                                     id/long-id->id
+                                     :short-id)]
+                    (testing "should be able to GET an event"
+                      (is (= 200 (:status (GET app
+                                               (str "ctia/event/" event-id)
+                                               :headers {"Authorization" "user1"})))))
 
-              (let [q (uri/uri-encode
-                       (format "entity.id:\"%s\" OR entity.source_ref:\"%s\" OR entity.target_ref:\"%s\""
-                               (:id incident)
-                               (:id incident)
-                               (:id incident)))
-                    results (:parsed-body (GET app
-                                               (str "ctia/event/search?query=" q)
-                                               :content-type :json
-                                               :headers {"Authorization" "user1"}))
-                    event-id (-> results
-                                 first
-                                 :id
-                                 id/long-id->id
-                                 :short-id)]
-                (testing "should be able to GET an event"
-                  (is (= 200 (:status (GET app
-                                           (str "ctia/event/" event-id)
-                                           :headers {"Authorization" "user1"})))))
-
-                (is (= [{:owner "user1",
-                         :groups ["group1"],
-                         :timestamp #inst "2042-01-01T00:00:00.000-00:00",
-                         :tlp "amber"
-                         :entity
-                         {:description "my description",
-                          :schema_version ctim-schema-version,
-                          :type "incident",
-                          :created "2042-01-01T00:00:00.000Z",
-                          :modified "2042-01-01T00:00:00.000Z",
-                          :timestamp "2042-01-01T00:00:00.000Z",
-                          :incident_time {:opened "2042-01-01T00:00:00.000Z"},
-                          :status "Open",
-                          :id
-                          (format "http://localhost:%s/ctia/incident/incident-00000000-0000-0000-0000-111111111112"
-                                  port),
-                          :tlp "amber",
-                          :groups ["group1"],
-                          :confidence "High",
-                          :owner "user1"},
-                         :id
-                         (format "http://localhost:%s/ctia/event/event-00000000-0000-0000-0000-111111111113"
-                                 port),
-                         :type "event",
-                         :event_type :record-created}
-                        {:owner "user1",
-                         :groups ["group1"],
-                         :timestamp #inst "2042-01-02T00:00:00.000-00:00",
-                         :tlp "amber"
-                         :entity
-                         {:description "changed description",
-                          :schema_version ctim-schema-version,
-                          :type "incident",
-                          :created "2042-01-01T00:00:00.000Z",
-                          :modified "2042-01-02T00:00:00.000Z",
-                          :timestamp "2042-01-01T00:00:00.000Z",
-                          :incident_time {:opened "2042-01-01T00:00:00.000Z"},
-                          :status "Open",
-                          :id
-                          (format "http://localhost:%s/ctia/incident/incident-00000000-0000-0000-0000-111111111112"
-                                  port),
-                          :tlp "amber",
-                          :groups ["group1"],
-                          :confidence "High",
-                          :owner "user1"},
-                         :id
-                         (format "http://localhost:%s/ctia/event/event-00000000-0000-0000-0000-111111111116"
-                                 port),
-                         :type "event",
-                         :event_type :record-updated,
-                         :fields
-                         [{:field :description,
-                           :action "modified",
-                           :change
-                           {:before "my description",
-                            :after "changed description"}}
-                          {:field :modified,
-                           :action "modified",
-                           :change
-                           {:before "2042-01-01T00:00:00.000Z",
-                            :after "2042-01-02T00:00:00.000Z"}}]}
-                        {:owner "user1",
-                         :groups ["group1"],
-                         :timestamp #inst "2042-01-01T00:00:00.000-00:00",
-                         :tlp "amber"
-                         :entity
-                         {:schema_version ctim-schema-version,
-                          :target_ref
-                          (format "http://localhost:%s/ctia/incident/incident-00000000-0000-0000-0000-111111111112"
-                                  port),
-                          :type "relationship",
-                          :created "2042-01-01T00:00:00.000Z",
-                          :modified "2042-01-01T00:00:00.000Z",
-                          :timestamp "2042-01-01T00:00:00.000Z",
-                          :source_ref
-                          (format "http://localhost:%s/ctia/casebook/casebook-00000000-0000-0000-0000-111111111117"
-                                  port),
-                          :id
-                          (format "http://localhost:%s/ctia/relationship/relationship-00000000-0000-0000-0000-111111111119"
-                                  port),
-                          :tlp "amber",
-                          :groups ["group1"],
-                          :owner "user1",
-                          :relationship_type "related-to"},
-                         :id
-                         (format "http://localhost:%s/ctia/event/event-00000000-0000-0000-0000-111111111120"
-                                 port),
-                         :type "event",
-                         :event_type :record-created}
-                        {:owner "user1",
-                         :groups ["group1"],
-                         :timestamp #inst "2042-01-01T00:00:00.000-00:00",
-                         :tlp "amber"
-                         :entity
-                         {:description "changed description",
-                          :schema_version ctim-schema-version,
-                          :type "incident",
-                          :created "2042-01-01T00:00:00.000Z",
-                          :modified "2042-01-02T00:00:00.000Z",
-                          :timestamp "2042-01-01T00:00:00.000Z",
-                          :incident_time {:opened "2042-01-01T00:00:00.000Z"},
-                          :status "Open",
-                          :id
-                          (format "http://localhost:%s/ctia/incident/incident-00000000-0000-0000-0000-111111111112"
-                                  port),
-                          :tlp "amber",
-                          :groups ["group1"],
-                          :confidence "High",
-                          :owner "user1"},
-                         :id
-                         (format "http://localhost:%s/ctia/event/event-00000000-0000-0000-0000-111111111121"
-                                 port),
-                         :type "event",
-                         :event_type :record-deleted}]
-                       results)))))))))))
+                    (is (= [{:owner "user1",
+                             :groups ["group1"],
+                             :timestamp #inst "2042-01-01T00:00:00.000-00:00",
+                             :tlp "amber"
+                             :entity
+                             {:description "my description",
+                              :schema_version ctim-schema-version,
+                              :type "incident",
+                              :created "2042-01-01T00:00:00.000Z",
+                              :modified "2042-01-01T00:00:00.000Z",
+                              :timestamp "2042-01-01T00:00:00.000Z",
+                              :incident_time {:opened "2042-01-01T00:00:00.000Z"},
+                              :status "Open",
+                              :id
+                              (format "http://localhost:%s/ctia/incident/incident-00000000-0000-0000-0000-111111111112"
+                                      port),
+                              :tlp "amber",
+                              :groups ["group1"],
+                              :confidence "High",
+                              :owner "user1"},
+                             :id
+                             (format "http://localhost:%s/ctia/event/event-00000000-0000-0000-0000-111111111113"
+                                     port),
+                             :type "event",
+                             :event_type :record-created}
+                            {:owner "user2",
+                             :groups ["group1"],
+                             :timestamp #inst "2042-01-02T00:00:00.000-00:00",
+                             :tlp "amber"
+                             :entity
+                             {:description "changed description",
+                              :schema_version ctim-schema-version,
+                              :type "incident",
+                              :created "2042-01-01T00:00:00.000Z",
+                              :modified "2042-01-02T00:00:00.000Z",
+                              :timestamp "2042-01-01T00:00:00.000Z",
+                              :incident_time {:opened "2042-01-01T00:00:00.000Z"},
+                              :status "Open",
+                              :id
+                              (format "http://localhost:%s/ctia/incident/incident-00000000-0000-0000-0000-111111111112"
+                                      port),
+                              :tlp "amber",
+                              :groups ["group1"],
+                              :confidence "High",
+                              :owner "user2"},
+                             :id
+                             (format "http://localhost:%s/ctia/event/event-00000000-0000-0000-0000-111111111116"
+                                     port),
+                             :type "event",
+                             :event_type :record-updated,
+                             :fields
+                             [{:field :description,
+                               :action "modified",
+                               :change
+                               {:before "my description",
+                                :after "changed description"}}
+                              {:field :modified,
+                               :action "modified",
+                               :change
+                               {:before "2042-01-01T00:00:00.000Z",
+                                :after "2042-01-02T00:00:00.000Z"}}
+                              {:field  :owner,
+                               :action "modified",
+                               :change {:before "user1", :after "user2"}}]}
+                            {:owner "user1",
+                             :groups ["group1"],
+                             :timestamp #inst "2042-01-01T00:00:00.000-00:00",
+                             :tlp "amber"
+                             :entity
+                             {:schema_version ctim-schema-version,
+                              :target_ref
+                              (format "http://localhost:%s/ctia/incident/incident-00000000-0000-0000-0000-111111111112"
+                                      port),
+                              :type "relationship",
+                              :created "2042-01-01T00:00:00.000Z",
+                              :modified "2042-01-01T00:00:00.000Z",
+                              :timestamp "2042-01-01T00:00:00.000Z",
+                              :source_ref
+                              (format "http://localhost:%s/ctia/casebook/casebook-00000000-0000-0000-0000-111111111117"
+                                      port),
+                              :id
+                              (format "http://localhost:%s/ctia/relationship/relationship-00000000-0000-0000-0000-111111111119"
+                                      port),
+                              :tlp "amber",
+                              :groups ["group1"],
+                              :owner "user1",
+                              :relationship_type "related-to"},
+                             :id
+                             (format "http://localhost:%s/ctia/event/event-00000000-0000-0000-0000-111111111120"
+                                     port),
+                             :type "event",
+                             :event_type :record-created}
+                            {:owner "user1",
+                             :groups ["group1"],
+                             :timestamp #inst "2042-01-01T00:00:00.000-00:00",
+                             :tlp "amber"
+                             :entity
+                             {:description "changed description",
+                              :schema_version ctim-schema-version,
+                              :type "incident",
+                              :created "2042-01-01T00:00:00.000Z",
+                              :modified "2042-01-02T00:00:00.000Z",
+                              :timestamp "2042-01-01T00:00:00.000Z",
+                              :incident_time {:opened "2042-01-01T00:00:00.000Z"},
+                              :status "Open",
+                              :id
+                              (format "http://localhost:%s/ctia/incident/incident-00000000-0000-0000-0000-111111111112"
+                                      port),
+                              :tlp "amber",
+                              :groups ["group1"],
+                              :confidence "High",
+                              :owner "user1"},
+                             :id
+                             (format "http://localhost:%s/ctia/event/event-00000000-0000-0000-0000-111111111121"
+                                     port),
+                             :type "event",
+                             :event_type :record-deleted}]
+                           results)))))))))))
 
 (defn get-event [owner event_type timestamp]
   {:owner owner
@@ -402,7 +395,7 @@
                                 "user1"
                                 ["group1"]
                                 "user1"
-                                all-capabilities)
+                                (all-capabilities))
      (whoami-helpers/set-whoami-response app
                                          "user1"
                                          "user1"

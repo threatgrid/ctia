@@ -361,6 +361,19 @@ It returns the documents with full hits meta data including the real index in wh
                                            ident
                                            get-in-config))))))
 
+(s/defn handle-delete-search
+  "ES delete by query handler"
+  [{:keys [conn index] :as es-conn-state} :- ESConnState
+   {:keys [filter-map] :as search-query} :- SearchQuery
+   ident
+   es-params]
+  (let [query (make-search-query es-conn-state search-query ident)]
+    (:deleted
+     (ductile.doc/delete-by-query conn
+                                  [index]
+                                  query
+                                  (prepare-opts es-conn-state es-params)))))
+
 (s/defn handle-query-string-count :- (s/pred nat-int?)
   "ES count handler"
   [{conn :conn
@@ -395,14 +408,18 @@ It returns the documents with full hits meta data including the real index in wh
                  :precision_threshold 10000}})
 
 (s/defn make-aggregation
-  [{:keys [agg-type] :as agg-query} :- AggQuery]
-  (let [agg-fn
+  [{:keys [agg-type agg-key aggs]
+    :or {agg-key :metric}
+    :as agg-query} :- AggQuery]
+  (let [root-agg (dissoc agg-query :aggs)
+        agg-fn
         (case agg-type
           :topn make-topn
           :cardinality make-cardinality
           :histogram make-histogram
           (throw (ex-info "invalid aggregation type" agg-type)))]
-    {:metric (agg-fn agg-query)}))
+    (cond-> {agg-key (agg-fn root-agg)}
+      (seq aggs) (assoc :aggs (make-aggregation aggs)))))
 
 (defn format-agg-result
   [agg-type
@@ -423,7 +440,7 @@ It returns the documents with full hits meta data including the real index in wh
    {:keys [agg-type] :as agg-query} :- AggQuery
    ident]
   (let [query (make-search-query es-conn-state search-query ident)
-        agg (make-aggregation agg-query)
+        agg (make-aggregation (assoc agg-query :agg-key :metric))
         es-res (ductile.doc/query conn
                                   index
                                   query

@@ -89,7 +89,7 @@
           incident-link-source-types)
     IncidentLinkRequestOptional))
 
-(s/defn incident-link-route [{{:keys [read-store write-store]} :StoreService
+(s/defn incident-link-route [{{:keys [get-store]} :StoreService
                               :as services} :- APIHandlerServices]
   (let [;; a request may contain at most of these fields in the body.
         ;; the corresponding capability is required for a successful response.
@@ -143,11 +143,11 @@
                                      :source-type-kw source-type-kw})))
                 _ (require-capability! additional-required-capabilities
                                        identity)
-                incident (read-store :incident
-                                     read-record
-                                     id
-                                     identity-map
-                                     {})
+                incident (-> (get-store :incident)
+                             (read-record
+                               id
+                               identity-map
+                               {}))
                 source-short-id (-> link-req
                                     source-type-kw
                                     long-id->id
@@ -156,11 +156,11 @@
                                   :casebook_id :casebook
                                   :investigation_id :investigation)
                 source (when source-short-id
-                         (read-store source-store-kw
-                                     read-record
-                                     source-short-id
-                                     identity-map
-                                     {}))
+                         (-> (get-store source-store-kw)
+                             (read-record
+                               source-short-id
+                               identity-map
+                               {})))
                 target-ref (short-id->long-id id services)]
             (cond
               (or (not incident)
@@ -186,11 +186,11 @@
                          :services services
                          :entity-type :relationship
                          :realize-fn rs/realize-relationship
-                         :store-fn #(write-store :relationship
-                                                 create-record
-                                                 %
-                                                 identity-map
-                                                 {})
+                         :store-fn #(-> (get-store :relationship)
+                                        (create-record
+                                          %
+                                          identity-map
+                                          {}))
                          :long-id-fn #(with-long-id % services)
                          :entity-type :relationship
                          :identity identity

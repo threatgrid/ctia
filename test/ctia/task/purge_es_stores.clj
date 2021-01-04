@@ -3,6 +3,7 @@
             [ctia
              [init :refer [start-ctia!*]]
              [properties :as p]]
+            [schema.core :as s]
             [ctia.store-service :as store-svc]
             [ctia.stores.es.store :refer [delete-state-indexes]]
             [puppetlabs.trapperkeeper.app :as app]))

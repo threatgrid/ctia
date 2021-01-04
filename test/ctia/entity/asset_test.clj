@@ -1,7 +1,7 @@
 (ns ctia.entity.asset-test
   (:require [clj-momo.test-helpers.core :as mth]
             [clojure.test :refer [deftest is are join-fixtures testing use-fixtures]]
-            [ctia.entity.asset :as asset]
+            [ctia.entity.asset :as sut]
             [ctia.test-helpers.aggregate :as aggregate]
             [ctia.test-helpers.auth :as auth]
             [ctia.test-helpers.core :as helpers]
@@ -37,15 +37,15 @@
      (helpers/set-capabilities! app "foouser" ["foogroup"] "user" auth/all-capabilities)
      (whoami-helpers/set-whoami-response app http/api-key "foouser" "foogroup" "user")
      (entity-crud-test
-      {:app              app
-       :entity           "asset"
-       :example          new-asset-maximal
-       :invalid-tests?   true
-       :update-tests?    true
-       :search-tests?    true
-       :update-field     :source
-       :additional-tests additional-tests
-       :headers          {:Authorization "45c1f5e3f05d0"}}))))
+      (into sut/asset-entity
+            {:app              app
+             :example          new-asset-maximal
+             :invalid-tests?   true
+             :update-tests?    true
+             :search-tests?    true
+             :update-field     :source
+             :additional-tests additional-tests
+             :headers          {:Authorization "45c1f5e3f05d0"}})))))
 
 (deftest asset-pagination-test
   (store/test-for-each-store-with-app
@@ -69,18 +69,18 @@
         ["ctia/asset/search?query=*"
          (http/doc-id->rel-url (first ids))]
         {"Authorization" "45c1f5e3f05d0"}
-        asset/asset-fields)
+        sut/asset-fields)
 
        (pagination/pagination-test
         app
         "ctia/asset/search?query=*"
         {"Authorization" "45c1f5e3f05d0"}
-        asset/asset-fields)))))
+        sut/asset-fields)))))
 
 (deftest asset-metric-routes-test
   (aggregate/test-metric-routes
-   (into asset/asset-entity
+   (into sut/asset-entity
          {:plural            :assets
           :entity-minimal    new-asset-minimal
-          :enumerable-fields asset/asset-enumerable-fields
-          :date-fields       asset/asset-histogram-fields})))
+          :enumerable-fields sut/asset-enumerable-fields
+          :date-fields       sut/asset-histogram-fields})))

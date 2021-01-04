@@ -1,5 +1,6 @@
 (ns ctia.entity.feedback-test
-  (:require [clj-momo.test-helpers.core :as mth]
+  (:require [ctia.entity.feedback :as sut]
+            [clj-momo.test-helpers.core :as mth]
             [clojure.test :refer [deftest is join-fixtures testing use-fixtures]]
             [ctia.domain.entities :refer [schema-version]]
             [ctia.test-helpers
@@ -54,12 +55,13 @@
                                          "user")
 
      (entity-crud-test
-      {:app app
-       :entity "feedback"
-       :example new-feedback
-       :update-tests? false
-       :invalid-tests? false
-       :search-tests? false
-       :additional-tests feedback-by-entity-id-test
-       :headers {:Authorization "45c1f5e3f05d0"}}))))
+      (into sut/feedback-entity
+            {:app app
+             :example new-feedback
+             :update-tests? false
+             :invalid-tests? false
+             :search-tests? false
+             :delete-search-tests? false
+             :additional-tests feedback-by-entity-id-test
+             :headers {:Authorization "45c1f5e3f05d0"}})))))
 

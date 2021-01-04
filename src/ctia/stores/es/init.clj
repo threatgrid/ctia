@@ -78,7 +78,7 @@
 
 (defn system-exit-error
   []
-  (log/error (str "IGNORE THIS LOG UNTIL MIGRATION"
+  (log/error (str "IGNORE THIS LOG UNTIL MIGRATION -- "
                   "CTIA tried to start with an invalid configuration: \n"
                   "- invalid mapping\n"
                   "- ambiguous index names"))

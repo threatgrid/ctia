@@ -10,6 +10,7 @@
              [schema :as f-schema]
              [spec :as f-spec]]
             [schema-tools.core :as st]
+            [ctia.store-service.schemas :refer [GetStoreFn]]
             [schema.core :as s :refer [Bool Str]]))
 
 (s/defschema Port
@@ -18,26 +19,25 @@
 
 (s/defschema APIHandlerServices
   "Maps of services available to routes"
-  {:ConfigService {:get-config (s/=> s/Any s/Any)
-                   :get-in-config (s/=>* s/Any
-                                         [[s/Any]]
-                                         [[s/Any] s/Any])}
+  {:ConfigService                             {:get-config    (s/=> s/Any)
+                                               :get-in-config (s/=>* s/Any
+                                                                     [[s/Any]]
+                                                                     [[s/Any] s/Any])}
    :CTIATimeService {:now (s/=> s/Inst)}
-   :CTIAHTTPServerService {:get-port (s/=> Port)
-                           :get-graphql (s/=> graphql.GraphQL)}
-   :HooksService {:apply-hooks (s/pred ifn?) ;;keyword varargs
-                  :apply-event-hooks (s/=> s/Any s/Any)}
-   :StoreService {:read-store (s/pred ifn?) ;;varags
-                  :write-store (s/pred ifn?)} ;;varags
-   :IAuth {:identity-for-token (s/=> s/Any s/Any)}
-   :GraphQLNamedTypeRegistryService {:get-or-update-named-type-registry
-                                     (s/=> graphql.schema.GraphQLType
-                                           s/Str
-                                           (s/=> graphql.schema.GraphQLType))}
-   :IEncryption {:encrypt (s/=> s/Any s/Any)
-                 :decrypt (s/=> s/Any s/Any)}
-   :FeaturesService {:enabled? (s/=> s/Keyword s/Bool)
-                     :feature-flags (s/=> s/Any [s/Str])}})
+   :CTIAHTTPServerService                     {:get-port    (s/=> Port)
+                                               :get-graphql (s/=> graphql.GraphQL)}
+   :HooksService                              {:apply-hooks       (s/pred ifn?) ;;keyword varargs
+                                               :apply-event-hooks (s/=> s/Any s/Any)}
+   :StoreService                              {:get-store GetStoreFn}
+   :IAuth                                     {:identity-for-token (s/=> s/Any s/Any)}
+   :GraphQLNamedTypeRegistryService           {:get-or-update-named-type-registry
+                                               (s/=> graphql.schema.GraphQLType
+                                                     s/Str
+                                                     (s/=> graphql.schema.GraphQLType))}
+   :IEncryption                               {:encrypt (s/=> s/Any s/Any)
+                                               :decrypt (s/=> s/Any s/Any)}
+   :FeaturesService                           {:enabled?      (s/=> s/Bool s/Keyword)
+                                               :feature-flags (s/=> [s/Str])}})
 
 (s/defschema HTTPShowServices
   (-> APIHandlerServices

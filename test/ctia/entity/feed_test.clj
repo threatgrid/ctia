@@ -228,16 +228,17 @@
            "we successfully have an indicator id to test the view")
 
        (entity-crud-test
-        {:app app
-         :entity "feed"
-         :example (assoc new-feed-maximal
-                         :indicator_id
-                         indicator-id)
-         :search-field :title
-         :update-field :title
-         :invalid-test-field :title
-         :headers {:Authorization "45c1f5e3f05d0"}
-         :additional-tests feed-view-tests})))))
+        (into sut/feed-entity
+              {:app app
+               :example (assoc new-feed-maximal
+                               :indicator_id
+                               indicator-id)
+               :search-field :title
+               :update-field :title
+               :invalid-test-field :title
+               :delete-search-tests? false
+               :headers {:Authorization "45c1f5e3f05d0"}
+               :additional-tests feed-view-tests}))))))
 
 (deftest test-feed-pagination-field-selection
   (test-for-each-store-with-app
