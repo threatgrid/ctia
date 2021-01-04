@@ -167,7 +167,11 @@
         example-nses (-> example-timings keys sort vec)]
     (doseq [nsplits (range 1 15)]
       (let [all-splits (for [id (range nsplits)]
-                         (binding [*out* (java.io.PrintWriter. "/dev/null")]
+                         (binding [*out* (java.io.PrintWriter. (proxy [java.io.OutputStream] []
+                                                                 (write
+                                                                   ([a])
+                                                                   ([a b c])
+                                                                   ([a b c d e]))))]
                            (this-split-using-scheduling-with-full-knowledge
                              example-timings
                              [id nsplits]
