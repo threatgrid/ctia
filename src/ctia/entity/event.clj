@@ -68,8 +68,6 @@
 
 (def EventGetParams EventFieldsParam)
 
-(def EventTimelineParams PagingParams)
-
 (s/defn same-bucket? :- s/Bool
   [bucket :- EventBucket
    event :- Event
@@ -134,7 +132,6 @@
     (let [capabilities :search-event]
       (GET "/history/:entity_id" []
            :return [EventBucket]
-           :query [q EventTimelineParams]
            :path-params [entity_id :- s/Str]
            :summary "Timeline history of an entity"
            :description (routes.common/capabilities->description capabilities)
@@ -143,7 +140,7 @@
            :identity-map identity-map
            (let [res (fetch-related-events entity_id
                                            identity-map
-                                           (into q {:sort_by :timestamp :sort_order :desc})
+                                           {:sort_by :timestamp :sort_order :desc}
                                            services)
                  timeline (bucketize-events res get-in-config)]
              (ok timeline))))))

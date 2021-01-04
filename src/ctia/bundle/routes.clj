@@ -1,24 +1,24 @@
 (ns ctia.bundle.routes
   (:refer-clojure :exclude [identity])
   (:require
+   [clojure.string :as str]
    [compojure.api.core :refer [GET POST context routes]]
-   [ctia.bundle
-    [core :refer [bundle-max-size
-                  bundle-size
-                  import-bundle
-                  export-bundle]]
-    [schemas :refer [BundleImportResult
-                     NewBundleExport
-                     BundleExportIds
-                     BundleExportOptions
-                     BundleExportQuery]]]
+   [ctia.bundle.core :refer [bundle-max-size
+                             bundle-size
+                             import-bundle
+                             export-bundle]]
+   [ctia.bundle.schemas :refer [BundleImportResult
+                                NewBundleExport
+                                BundleExportIds
+                                BundleExportOptions
+                                BundleExportQuery]]
+   [ctia.entity.entities :as entities]
    [ctia.http.routes.common :as common]
    [ctia.schemas.core :refer [APIHandlerServices NewBundle]]
    [ring.swagger.json-schema :refer [describe]]
    [ring.util.http-response :refer [ok bad-request]]
-   [schema.core :as s]
-   [schema-tools.core :as st]))
-
+   [schema-tools.core :as st]
+   [schema.core :as s]))
 
 (def export-capabilities
   #{:list-campaigns
@@ -67,9 +67,26 @@
     :read-casebook
     :list-casebooks})
 
+(defn- entity->bundle-keys
+  "For given entity key returns corresponding keys that may be present in Bundle schema.
+  e.g. :asset => [:assets :asset_refs]"
+  [entity-key]
+  (let [{:keys [entity plural]} (get (entities/all-entities) entity-key)
+        kw->snake-case-str      (fn [kw] (-> kw name (str/replace #"-" "_")))]
+    [(-> plural kw->snake-case-str keyword)
+     (-> entity kw->snake-case-str (str "_refs") keyword)]))
+
+(s/defn prep-bundle-schema :- s/Any
+  [{{:keys [enabled?]} :FeaturesService} :- APIHandlerServices]
+  (->> (entities/all-entities)
+       keys
+       (remove enabled?)
+       (mapcat entity->bundle-keys)
+       (apply st/dissoc NewBundle)))
+
 (s/defn bundle-routes [{{:keys [get-in-config]} :ConfigService
                         :as services} :- APIHandlerServices]
- (routes 
+ (routes
   (context "/bundle" []
            :tags ["Bundle"]
            (let [capabilities export-capabilities]
@@ -127,7 +144,9 @@
                                 :import-bundle}]
              (POST "/import" []
                    :return BundleImportResult
-                   :body [bundle NewBundle {:description "a Bundle to import"}]
+                   :body [bundle
+                          (prep-bundle-schema services)
+                          {:description "a Bundle to import"}]
                    :query-params
                    [{external-key-prefixes
                      :- (describe s/Str "Comma separated list of external key prefixes")
