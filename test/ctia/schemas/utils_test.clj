@@ -34,6 +34,63 @@
       (is (seq @found-leaves))
       (is (every? #(= "java.lang.String" %) @found-leaves)))))
 
+(deftest service-subgraph-test
+  (let [int->v (vec (range 5))]
+    (is (= (sut/service-subgraph {:a {:b (int->v 1)}}
+                                 {})
+           {}))
+    (is (= (sut/service-subgraph
+             {:a {:b (int->v 1) :c (int->v 2)}
+              :d {:e (int->v 3) :f (int->v 4)}}
+             {:a #{:b}})
+           {:a {:b (int->v 1)}}))
+    (is (= (sut/service-subgraph
+             {:a {:b (int->v 1) :c (int->v 2)}
+              :d {:e (int->v 3) :f (int->v 4)}}
+             {:a #{:b}
+              :d #{:e}})
+           {:a {:b (int->v 1)}
+            :d {:e (int->v 3)}}))))
+
+(deftest service-subschema-test
+  (let [int->v (let [;; distinct with stable ordering
+                     ps [int? boolean? map? vector? set?]]
+                 (assert (apply distinct? ps))
+                 (mapv s/pred ps))]
+    (is (= (sut/service-subschema {:a {:b (int->v 1)}}
+                                  {})
+           {}))
+    (is (= (sut/service-subschema
+             {:a {:b (int->v 1) :c (int->v 2)}
+              :d {:e (int->v 3) :f (int->v 4)}}
+             {:a #{:b}})
+           {:a {:b (int->v 1)}}))
+    (is (= (sut/service-subschema
+             {:a {:b (int->v 1) :c (int->v 2)}
+              :d {:e (int->v 3) :f (int->v 4)}}
+             {:a #{:b}
+              :d #{:e}})
+           {:a {:b (int->v 1)}
+            :d {:e (int->v 3)}}))))
+
+(deftest service-subgraph-from-schema-test
+  (let [int->v (vec (range 5))]
+    (is (= (sut/service-subgraph-from-schema {:a {:b (int->v 1)}}
+                                             {})
+           {}))
+    (is (= (sut/service-subgraph-from-schema
+             {:a {:b (int->v 1) :c (int->v 2)}
+              :d {:e (int->v 3) :f (int->v 4)}}
+             {:a {:b s/Any}})
+           {:a {:b (int->v 1)}}))
+    (is (= (sut/service-subgraph-from-schema
+             {:a {:b (int->v 1) :c (int->v 2)}
+              :d {:e (int->v 3) :f (int->v 4)}}
+             {:a {(s/optional-key :b) s/Any}
+              (s/optional-key :d) {:e s/Any}})
+           {:a {:b (int->v 1)}
+            :d {:e (int->v 3)}}))))
+
 (deftest select-all-keys-test
   (testing "behaves like st/select-keys with present keys"
     (is (= {}

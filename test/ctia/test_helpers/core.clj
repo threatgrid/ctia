@@ -269,32 +269,43 @@
       all-stores
       get-in-config)))
 
+(defn default-test-services-map [config]
+  (cond-> (init/default-services-map config)
+    (#{:threatgrid} (get-in config [:ctia :auth :type]))
+    ;; dynamic requires can be removed when #'with-properties is phased out or moved
+    (assoc
+      :ThreatgridAuthWhoAmIURLService
+      @(requiring-resolve
+         'ctia.test-helpers.fake-whoami-service/fake-threatgrid-auth-whoami-url-service)
+      :IFakeWhoAmIServer
+      @(requiring-resolve
+         'ctia.test-helpers.fake-whoami-service/fake-whoami-service))))
+
 (s/defn fixture-ctia-with-app
   "Note: ES indices are unique, use `with-config-transformer`
-  to make them explicit."
+  to make them explicit.
+  
+  Options:
+  :disable-http   if true, set ctia.http.enabled to false
+  :config         custom trapperkeeper config map
+  :services-map   custom services map from service keyword to TK service"
   ([t-with-app :- (s/=> s/Any
                         (s/named s/Any 'app))]
-   (fixture-ctia-with-app t-with-app true))
-  ([t-with-app :- (s/=> s/Any
-                        (s/named s/Any 'app))
-    enable-http?]
+   (fixture-ctia-with-app {} t-with-app))
+  ([{:keys [disable-http] :as opt}
+    t-with-app :- (s/=> s/Any
+                        (s/named s/Any 'app))]
    ;; Start CTIA
    ;; This starts the server on an available port (if enabled)
    (let [http-port 0]
-     (with-properties ["ctia.http.enabled" enable-http?
+     (with-properties ["ctia.http.enabled" (not disable-http)
                        "ctia.http.port" http-port
                        "ctia.http.show.port" http-port]
-       (let [config (build-transformed-init-config)
-             services-map (cond-> (init/default-services-map config)
-                            (#{:threatgrid} (get-in config [:ctia :auth :type]))
-                            ;; dynamic requires can be removed when #'with-properties is phased out or moved
-                            (assoc
-                              :ThreatgridAuthWhoAmIURLService
-                              @(requiring-resolve
-                                 'ctia.test-helpers.fake-whoami-service/fake-threatgrid-auth-whoami-url-service)
-                              :IFakeWhoAmIServer
-                              @(requiring-resolve
-                                 'ctia.test-helpers.fake-whoami-service/fake-whoami-service)))
+       (let [config (or (:config opt)
+                        (build-transformed-init-config))
+             services-map (or (:services-map opt)
+                              (default-test-services-map config))
+             _ (assert (map? services-map))
              app (init/start-ctia!*
                    {:services (vals services-map)
                     :config config})]
@@ -314,10 +325,11 @@
    (fixture-ctia t true))
   ([t :- (s/=> s/Any)
     enable-http?]
-   (fixture-ctia-with-app (fn [_app_]
-                            ;; app bound thread-locally
-                            (t))
-                          enable-http?)))
+   (fixture-ctia-with-app
+     {:disable-http (not enable-http?)}
+     (fn [_app_]
+       ;; app bound thread-locally
+       (t)))))
 
 (s/defn fixture-ctia-fast
   "Note: ES indices are unique, use `with-config-transformer`

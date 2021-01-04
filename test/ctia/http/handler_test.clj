@@ -29,6 +29,7 @@
 
 (deftest api-handler-swagger-test
   (helpers/fixture-ctia-with-app
+    {:disable-http true}
     (fn [app]
       (let [;; these routes don't have descriptions (yet)
             expected-no-doc #{"/swagger.json"
@@ -56,6 +57,4 @@
                        "\n\n"))
                 (when (seq extra-docs)
                   (str "Expected no :description on these routes, but found some: "
-                       (str/join ", " extra-docs))))))))
-    ;; disable http
-    false))
+                       (str/join ", " extra-docs))))))))))
