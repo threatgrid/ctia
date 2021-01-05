@@ -1,6 +1,6 @@
 (ns ctia.entity.judgement
   (:require [clj-momo.lib.clj-time.core :as time]
-            [compojure.api.core :refer [context POST routes]]
+            [ctia.lib.compojure.api.core :refer [context POST routes]]
             [compojure.api.resource :refer [resource]]
             [ctia.domain.entities :refer [un-store with-long-id]]
             [ctia.entity.feedback.graphql-schemas :as feedback]
@@ -9,8 +9,6 @@
              [schemas :as js]]
             [ctia.entity.relationship.graphql-schemas :as relationship]
             [ctia.flows.crud :as flows]
-            ;; do not delete, defmethod side effects
-            [ctia.http.middleware.auth]
             [ctia.http.routes
              [common :refer [BaseEntityFilterParams
                              PagingParams

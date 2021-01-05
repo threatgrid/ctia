@@ -3,7 +3,7 @@
    [clj-momo.lib.clj-time.core :as time]
    [clojure.string :as str]
    [ctia.http.middleware.auth]
-   [compojure.api.core :refer [context DELETE GET POST PUT PATCH routes]]
+   [ctia.lib.compojure.api.core :refer [context DELETE GET POST PUT PATCH routes]]
    [ctia.domain.entities
     :refer
     [page-with-long-id

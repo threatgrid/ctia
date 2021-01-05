@@ -1,6 +1,6 @@
 (ns ctia.entity.incident
   (:require [clj-momo.lib.clj-time.core :as time]
-            [compojure.api.sweet :refer [POST routes]]
+            [ctia.lib.compojure.api.core :refer [POST routes]]
             [ctia.domain.entities
              :refer [default-realize-fn un-store with-long-id]]
             [ctia.entity.feedback.graphql-schemas :as feedback]

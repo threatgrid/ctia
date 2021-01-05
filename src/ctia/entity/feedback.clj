@@ -1,5 +1,5 @@
 (ns ctia.entity.feedback
-  (:require [compojure.api.core :refer [GET routes]]
+  (:require [ctia.lib.compojure.api.core :refer [GET routes]]
             [ctia.domain.entities :refer [page-with-long-id un-store-page]]
             [ctia.entity.feedback.schemas :as fs]
             [ctia.http.routes

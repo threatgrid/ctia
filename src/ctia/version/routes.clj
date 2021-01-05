@@ -1,6 +1,6 @@
 (ns ctia.version.routes
   (:require
-   [compojure.api.core :refer [context GET routes]]
+   [ctia.lib.compojure.api.core :refer [context GET routes]]
    [ctia.schemas.core :refer [APIHandlerServices VersionInfo]]
    [ctia.version :refer [version-data]]
    [ring.util.http-response :refer [ok]]

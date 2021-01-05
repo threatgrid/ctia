@@ -1,6 +1,6 @@
 (ns ctia.documentation.routes
   (:require
-   [compojure.api.core :refer [context GET]]
+   [ctia.lib.compojure.api.core :refer [context GET]]
    [clojure.core.memoize :as memo]
    [clojure.java.io :as io]
    [hiccup.page :as page]

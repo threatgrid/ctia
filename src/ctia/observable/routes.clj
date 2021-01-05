@@ -1,5 +1,5 @@
 (ns ctia.observable.routes
-  (:require [compojure.api.core :refer [GET routes]]
+  (:require [ctia.lib.compojure.api.core :refer [GET routes]]
             [ctia.domain.entities
              :refer
              [page-with-long-id short-id->long-id un-store-page]]

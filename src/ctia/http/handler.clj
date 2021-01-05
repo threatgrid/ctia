@@ -5,10 +5,9 @@
             [ctia.entity.feed :refer [feed-view-routes]]
             [ctia.entity.relationship :refer [incident-link-route]]
             [ctia.schemas.core :refer [APIHandlerServices Entity]]
-            [compojure.api
-             [core :refer [middleware]]
-             [routes :as api-routes]
-             [sweet :refer  [routes api context undocumented]]]
+            [ctia.lib.compojure.api.core :refer [context middleware routes undocumented]]
+            [compojure.api.api :refer [api]]
+            [compojure.api.routes :as api-routes]
             [compojure.route :as rt]
             [ctia.bundle.routes :refer [bundle-routes]]
             [ctia.bulk.routes :refer [bulk-routes]]

@@ -1,6 +1,6 @@
 (ns ctia.entity.relationship
   (:require [clojure.string :as str]
-            [compojure.api.core :refer [POST]]
+            [ctia.lib.compojure.api.core :refer [POST]]
             [ctia.store :refer [create-record
                                 read-record]]
             [ctia.domain.entities :refer [long-id->id short-id->long-id un-store with-long-id]]

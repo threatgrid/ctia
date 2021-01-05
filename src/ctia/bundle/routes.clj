@@ -2,7 +2,7 @@
   (:refer-clojure :exclude [identity])
   (:require
    [clojure.string :as str]
-   [compojure.api.core :refer [GET POST context routes]]
+   [ctia.lib.compojure.api.core :refer [GET POST context routes]]
    [ctia.bundle.core :refer [bundle-max-size
                              bundle-size
                              import-bundle
