@@ -142,7 +142,7 @@
                                   (:out (clojure.java.shell/sh
                                          "git" "symbolic-ref" "--short" "HEAD")))})}]
 
-  :global-vars {*warn-on-reflection* true}
+  
   :profiles {:dev {:dependencies [[puppetlabs/trapperkeeper ~trapperkeeper-version
                                    :classifier "test"]
                                   [puppetlabs/kitchensink ~trapperkeeper-version
@@ -153,9 +153,9 @@
                                   [prismatic/schema-generators ~schema-generators-version]
                                   [circleci/circleci.test "0.4.3"]
                                   [org.clojure/math.combinatorics "0.1.6"]
-                                  [org.clojure/data.priority-map "1.0.0"]]
+                                  [org.clojure/data.priority-map "1.0.0"]
+                                  [org.clojure/tools.namespace "1.1.0"]]
                    :pedantic? :warn
-
                    :resource-paths ["test/resources"]
                    :source-paths ["dev"]}
              :jmx {:jvm-opts ["-Dcom.sun.management.jmxremote"
@@ -191,12 +191,14 @@
                                    [com.gfredericks/test.chuck ~test-chuck-version]
                                    [org.clojure/test.check ~test-check-version]
                                    [prismatic/schema-generators ~schema-generators-version]]
-                    :pedantic? :abort
                     :resource-paths ["test/resources"]}
 
-             :dev-test {:pedantic? :warn}
              :prepush {:plugins [[yogsototh/lein-kibit "0.1.6-SNAPSHOT"]
                                  [lein-bikeshed "0.3.0"]]}}
+
+  :ci {:pedantic? :abort
+       :global-vars {*warn-on-reflection* true}}
+  
   :perforate {:environments [{:name :actor
                               :namespaces [ctia.entity.actor-bench]}
                              {:name :campaign
@@ -218,8 +220,8 @@
                                " (start) => start CTIA, if not already started"
                                " (stop)  => stop CTIA, if not already stopped"
                                " (current-app) => get current app, or nil"]))
-                 ;2m
-                 :repl-timeout 120000}
+                 ;10m
+                 :repl-timeout 600000}
   :middleware [lein-git-down.plugin/inject-properties]
   ;; lein-git-down config
   :repositories [["public-github" {:url "git://github.com"}]
@@ -238,8 +240,7 @@
   #_:git-down #_{threatgrid/ctim {:coordinates frenchy64/ctim}
                  threatgrid/clj-momo {:coordinates frenchy64/clj-momo}
                  threatgrid/ring-jwt-middleware {:coordinates frenchy64/ring-jwt-middleware}}
-  :aliases {"dev-test" ["with-profile" "test,dev-test" "test"]
-            "kibit" ["with-profile" "prepush" "kibit"]
+  :aliases {"kibit" ["with-profile" "prepush" "kibit"]
             "bikeshed" ["with-profile" "prepush" "bikeshed" "-m" "100"]
 
             "prepush" ^{:doc "Check code quality before pushing"}
@@ -248,7 +249,7 @@
             "bench" ^{:doc (str "Launch benchmarks"
                                 "; use `lein bench actor` to only launch"
                                 " actor related benchmarks")}
-            ["with-profile" "test,dev-test" "perforate"]
+            ["with-profile" "test" "perforate"]
 
             "init-properties" ^{:doc (str "create an initial `ctia.properties`"
                                           " using docker machine ip")}
@@ -257,8 +258,8 @@
             ; circleci.test
             ;"test" ["run" "-m" "circleci.test/dir" :project/test-paths]
             "split-test" ["trampoline"
-                          "with-profile" "+test" ;https://github.com/circleci/circleci.test/issues/13
+                          "with-profile" "+test,+ci" ;https://github.com/circleci/circleci.test/issues/13
                           "run" "-m" "ctia.dev.split-tests/dir" :project/test-paths]
-            "tests" ["run" "-m" "circleci.test"]
+            "tests" ["with-profile" "+ci" "run" "-m" "circleci.test"]
             ;"retest" ["run" "-m" "circleci.test.retest"]
             })

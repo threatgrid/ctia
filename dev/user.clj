@@ -1,14 +1,16 @@
 (ns user
-  (:require [cheshire.core :as json]
-            [clj-http.client :as http]
-            [clj-momo.lib.time :as time]
-            [ctia.init :as init]
-            [ctia.properties :as p]
-            [ctim.schemas.vocabularies :as vocab]
-            [puppetlabs.trapperkeeper.app :as app]
-            [schema.core :as s]))
+  (:require
+   [clojure.tools.namespace.repl :refer [clear refresh refresh-dirs set-refresh-dirs]]
+   [cheshire.core :as json]
+   [clj-http.client :as http]
+   [clj-momo.lib.time :as time]
+   [ctia.init :as init]
+   [ctia.properties :as p]
+   [ctim.schemas.vocabularies :as vocab]
+   [puppetlabs.trapperkeeper.app :as app]
+   [schema.core :as s]))
 
-(set! *warn-on-reflection* true)
+(set-refresh-dirs "src" "dev" "test")
 
 ;;;;;;;;;;;;;;;;;;;;;;;
 ;; Lifecycle management
