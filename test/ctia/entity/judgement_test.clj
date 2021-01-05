@@ -9,9 +9,7 @@
              [judgement-fields
               judgement-sort-fields
               judgement-enumerable-fields
-              judgement-histogram-fields
-              NewJudgement]]
-            [ctia.properties :as p]
+              judgement-histogram-fields]]
             [ctia.test-helpers
              [access-control :refer [access-control-test]]
              [auth :refer [all-capabilities]]
@@ -330,7 +328,7 @@
               (dissoc judgement
                       :id)))))
 
-     (testing "POST a judgement with mismatching disposition/disposition_name"
+     (testing "POST a judgement with mismatched disposition/disposition_name"
        (let [{status :status
               judgement :parsed-body}
              (POST app
@@ -347,7 +345,7 @@
                    :headers {"Authorization" "45c1f5e3f05d0"})]
          (is (= 400 status))
          (is (=
-              {:error "Mismatching disposition and dispositon_name for judgement",
+              {:error "Mismatched disposition and dispositon_name for judgement",
                :judgement {:observable {:value "1.2.3.4"
                                         :type "ip"}
                            :disposition 1
@@ -359,7 +357,7 @@
                            :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"}}}
               judgement))))
 
-     (testing "POST a judgement with mismatching disposition/disposition_name"
+     (testing "POST a judgement with mismatched disposition/disposition_name"
        (let [{status :status
               judgement :parsed-body}
              (POST app
@@ -375,7 +373,7 @@
                           :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"}}
                    :headers {"Authorization" "45c1f5e3f05d0"})]
          (is (= 400 status))
-         (is (= {:error "Mismatching disposition and dispositon_name for judgement",
+         (is (= {:error "Mismatched disposition and dispositon_name for judgement",
                  :judgement {:observable {:value "1.2.3.4"
                                           :type "ip"}
                              :disposition 1
