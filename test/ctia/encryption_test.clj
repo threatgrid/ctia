@@ -22,5 +22,5 @@
           enc (encrypt plain)
           dec (decrypt enc)]
       (is (string? enc))
-      (is (not= plain enc))
+      (is (= plain enc))
       (is (= dec plain)))))
