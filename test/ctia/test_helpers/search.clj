@@ -73,7 +73,6 @@
         capital-word (unique-word "CAPITAL")
         base-possessive-word "possessive"
         possessive-word (str base-possessive-word "'s")
-        base-possessive-word (str/replace possessive-word "'s" "")
         base-domain (unique-word "cisco")
         domain-word (format "www.%s.com" base-domain)
         url-word (unique-word (format "http://%s/" domain-word))
