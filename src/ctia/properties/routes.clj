@@ -1,5 +1,5 @@
 (ns ctia.properties.routes
-  (:require [compojure.api.core :refer [context GET]]
+  (:require [ctia.lib.compojure.api.core :refer [context GET]]
             [ctia.http.routes.common :as routes.common]
             [ctia.schemas.core :refer [APIHandlerServices]]
             [ring.util.http-response :refer [ok]]

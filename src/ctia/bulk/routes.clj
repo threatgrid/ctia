@@ -1,6 +1,6 @@
 (ns ctia.bulk.routes
   (:require
-   [compojure.api.core :refer [GET POST routes]]
+   [ctia.lib.compojure.api.core :refer [GET POST routes]]
    [ctia.bulk
     [core :refer [bulk-size create-bulk fetch-bulk get-bulk-max-size]]
     [schemas :refer [Bulk BulkRefs NewBulk]]]

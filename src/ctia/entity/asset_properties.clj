@@ -1,6 +1,6 @@
 (ns ctia.entity.asset-properties
   (:require [clj-momo.lib.clj-time.core :as time]
-            [compojure.api.sweet :refer [POST routes]]
+            [ctia.lib.compojure.api.core :refer [POST routes]]
             [ctia.domain.entities :refer [default-realize-fn]]
             [ctia.flows.crud :as flows]
             [ctia.http.routes.common :as routes.common]

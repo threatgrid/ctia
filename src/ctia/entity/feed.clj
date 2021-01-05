@@ -3,7 +3,7 @@
    [clojure.string :as string]
    [ctia.http.routes.crud :as crud]
    [ctia.schemas.core :refer [APIHandlerServices]]
-   [compojure.api.core :refer [DELETE GET POST PUT routes]]
+   [ctia.lib.compojure.api.core :refer [DELETE GET POST PUT routes]]
    [ctia.domain.entities
     :refer
     [page-with-long-id un-store un-store-page with-long-id]]

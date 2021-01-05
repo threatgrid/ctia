@@ -1,5 +1,5 @@
 (ns ctia.entity.casebook
-  (:require [compojure.api.sweet :refer [context POST PATCH routes]]
+  (:require [ctia.lib.compojure.api.core :refer [context POST PATCH routes]]
             [ctia.domain.entities :refer [default-realize-fn un-store with-long-id]]
             [ctia.flows.crud :as flows]
             [ctia.http.routes

@@ -6,7 +6,7 @@
             [clojure.set :as set]
             [clojure.test :refer [deftest is testing]]
             [compojure.api.api :refer [api]]
-            [compojure.api.core :refer [GET]]
+            [ctia.lib.compojure.api.core :refer [GET]]
             [compojure.api.routes :as routes]
             [compojure.api.swagger :as swagger]))
 

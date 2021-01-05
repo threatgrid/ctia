@@ -2,7 +2,7 @@
   (:require
    [ctia.entity.event.store
     :refer [->EventStore]]
-   [compojure.api.core :refer [GET routes]]
+   [ctia.lib.compojure.api.core :refer [GET routes]]
    [ring.util.http-response :refer [ok]]
    [schema-tools.core :as st]
    [schema.core :as s]

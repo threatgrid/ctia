@@ -1,6 +1,6 @@
 (ns ctia.graphql.routes
   (:require [clojure.tools.logging :as log]
-            [compojure.api.core :as c :refer [POST routes]]
+            [ctia.lib.compojure.api.core :as c :refer [POST routes]]
             [ctia.http.routes.common :as common]
             [ctia.graphql.schemas :as gql]
             [ctia.schemas.core :refer [APIHandlerServices]]

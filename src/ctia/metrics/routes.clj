@@ -1,6 +1,6 @@
 (ns ctia.metrics.routes
   (:require
-   [compojure.api.core :refer [context GET]]
+   [ctia.lib.compojure.api.core :refer [context GET]]
    [ctia.http.routes.common :as routes.common]
    [metrics
     [core :refer [default-registry]]
