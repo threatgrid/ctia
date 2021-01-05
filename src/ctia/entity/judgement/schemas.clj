@@ -1,6 +1,5 @@
 (ns ctia.entity.judgement.schemas
-  (:require [clj-momo.lib.time :as time]
-            [ctia.domain
+  (:require [ctia.domain
              [entities :refer [default-realize-fn]]]
             [ctia.graphql.delayed :as delayed]
             [ctia.schemas
@@ -16,10 +15,7 @@
              [common :refer [determine-disposition-id disposition-map]]
              [judgement :as js]]
             [flanders.utils :as fu]
-            [ring.util.http-response :as http-response]
-            [schema-tools.core :as st]
             [schema.core :as s]
-            [ctim.schemas.incident :as is]
             [ctia.flows.schemas :refer [with-error]]))
 
 (def-acl-schema Judgement
@@ -70,7 +66,7 @@
      (catch clojure.lang.ExceptionInfo e
        (let [{error-type :type} (ex-data e)]
          (if (= error-type :ctim.schemas.common/disposition-missing)
-           {:error "Mismatching disposition and dispositon_name for judgement"
+           {:error "Mismatched disposition and dispositon_name for judgement"
             :id id
             :type :realize-entity-error
             :judgement new-judgement}

@@ -1,9 +1,5 @@
 (ns ctia.test-helpers.aggregate
   (:require [java-time :as jt]
-            [clj-momo.lib.clj-time.core :as time]
-            [clj-momo.lib.time :refer [format-date-time]]
-            [clj-momo.lib.clj-time.coerce :as tc]
-            [clj-momo.lib.clj-time.format :as tf]
             [clj-momo.lib.map :refer [deep-merge-with]]
             [ctia.test-helpers
              [auth :refer [all-capabilities]]
@@ -90,13 +86,12 @@
 
 (defn- check-from-to
   [from-str to-str]
-  (let [from (tc/from-string from-str)
-        to (tc/from-string to-str)]
+  (let [from (jt/offset-date-time from-str)
+        to (jt/offset-date-time  to-str)]
     (testing "should be applied only on non empty date"
       (is (some? from))
       (is (some? to)))
-    (is (<= (time/in-years
-             (time/interval from to))
+    (is (<= (jt/time-between from to :years)
             1)
         "[from to[ should not exceed one year")))
 
@@ -148,29 +143,34 @@
 
 (defn- to-granularity-first-day
   [granularity date]
-  (let [first-day (cond-> date
-                    (= :month granularity) time/first-day-of-the-month)]
-    (time/date-time (time/year first-day)
-                    (time/month first-day)
-                    (time/day first-day))))
+  (cond-> (jt/truncate-to date :days)
+    (= :month granularity) (jt/adjust :first-day-of-month)))
 
 (defn- make-histogram-res
   [dates]
   (->> (frequencies dates)
        (sort-by key)
        (map (fn [[k v]]
-              {:key (str k) :value v}))))
+              {:key k;;(jt/format :iso-instant k)
+               :value v}))))
 
 (defn- vals->date-vals [from-str to-str values]
-  (let [from  (tf/parse from-str)
-        to    (tf/parse to-str)
+  (let [from  (jt/zoned-date-time from-str)
+        to    (jt/zoned-date-time to-str)
         parse (fn [d] (cond-> d
-                        (inst? d) format-date-time
-                        d tf/parse))]
+                        (inst? d) (-> jt/instant
+                                      (.atZone (jt/zone-id)))
+                        d jt/zoned-date-time))
+        interval (jt/interval from to)] ;; [from, to[
     (->> values
          (map parse)
-         (filter #(and (time/within? from to %)
-                       (time/before? % to))))))
+         (filter #(jt/contains? interval %)))))
+
+(defn format-ctia-histogram
+  [field res]
+  (->> (es-get-in (:data res) field)
+       (filter #(pos? (:value %)))
+       (map #(update % :key jt/zoned-date-time))))
 
 (defn- test-histogram
   "test one field histogram, examples are already created"
@@ -200,8 +200,7 @@
                                {:aggregate-on (name field)
                                 :granularity  (name granularity)})]
       (is (= expected
-             (->> (es-get-in (:data res) parsed)
-                  (filter #(pos? (:value %)))))
+             (format-ctia-histogram parsed res))
           (format "test-histogram on: %s %s" entity field))
       (check-from-to from to))))
 
@@ -213,8 +212,7 @@
 
 (defn generate-date
   [k]
-  (let [now (jt/instant)
-        nb-days-ago (inc
+  (let [nb-days-ago (inc
                      (case k
                       :start_time (+ 178 (rand-int 177))
                       :end_time (rand-int 177)
