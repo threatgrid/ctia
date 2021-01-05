@@ -107,9 +107,9 @@ matrix: #note: don't use "jobs:" introduces an extra build
     - name: "JDK 11 + Clojure next"
       if: type = cron
       env: CLOJURE_VERSION=$CLOJURE_NEXT
-    - name: "JDK 14 + Clojure next"
+    - name: "JDK 15 + Clojure next"
       if: type = cron
-      jdk: openjdk14
+      jdk: openjdk15
       env: CLOJURE_VERSION=$CLOJURE_NEXT
 
     # Deploy
