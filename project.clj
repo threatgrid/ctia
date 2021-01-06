@@ -262,5 +262,7 @@
                           "with-profile" "+test,+ci" ;https://github.com/circleci/circleci.test/issues/13
                           "run" "-m" "ctia.dev.split-tests/dir" :project/test-paths]
             "tests" ["with-profile" "+ci" "run" "-m" "circleci.test"]
+
+            "ci-run-tests" ["with-profile" "-dev,+ci" "do" "clean," "javac," "split-test" ":no-gen"]
             ;"retest" ["run" "-m" "circleci.test.retest"]
             })
