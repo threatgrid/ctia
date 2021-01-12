@@ -5,7 +5,7 @@
             [ctia.flows.hook-protocol :as prot]
             [ctia.schemas.services :refer [ConfigServiceFns]]
             [ctia.flows.hooks-service.schemas
-             :refer [ApplyHooksOptions Context HookType HooksMap]]
+             :refer [ApplyHooksOptions Context EntityOrEvent HookType HooksMap]]
             [schema.core :as s]
             [schema-tools.core :as st]))
 
@@ -82,7 +82,7 @@
 
 (s/defn apply-event-hooks
   [context :- Context
-   event]
+   event :- EntityOrEvent]
   (apply-hooks context
                {:hook-type :event
                 :entity event
