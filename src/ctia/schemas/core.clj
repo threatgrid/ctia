@@ -24,14 +24,14 @@
   "Maps of services available to routes"
   {:ConfigService                             (-> external-svc-fns/ConfigServiceFns
                                                   (csutils/select-all-keys
-                                                    [:get-config
-                                                     :get-in-config]))
+                                                    #{:get-config
+                                                      :get-in-config}))
    :CTIAHTTPServerService                     {:get-port    (s/=> Port)
                                                :get-graphql (s/=> graphql.GraphQL)}
    :HooksService                              (-> hooks-schemas/ServiceFns
                                                   (csutils/select-all-keys
-                                                    [:apply-hooks
-                                                     :apply-event-hooks]))
+                                                    #{:apply-event-hooks
+                                                      :apply-hooks}))
    :StoreService                              {:get-store GetStoreFn}
    :IAuth                                     {:identity-for-token (s/=> s/Any s/Any)}
    :GraphQLNamedTypeRegistryService           {:get-or-update-named-type-registry
@@ -48,7 +48,7 @@
   ;;      of inner maps (or updating code to use closed maps).
   {:ConfigService (-> external-svc-fns/ConfigServiceFns
                       (csutils/select-all-keys
-                        [:get-in-config])
+                        #{:get-in-config})
                       (st/assoc s/Keyword s/Any))
    :CTIAHTTPServerService {:get-port (s/=> Port)
                            s/Keyword s/Any}
@@ -71,7 +71,7 @@
   ;; TODO describe in terms of APIHandlerServices
   {:ConfigService (-> external-svc-fns/ConfigServiceFns
                       (csutils/select-all-keys
-                        [:get-in-config]))
+                        #{:get-in-config}))
    :CTIAHTTPServerService {:get-port (s/=> Port)}
    :StoreService {:get-store GetStoreFn}
    :GraphQLNamedTypeRegistryService
