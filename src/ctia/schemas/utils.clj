@@ -73,7 +73,7 @@
   [schema ks]
   (let [res (st/select-keys schema ks)
         missing-keys (into #{}
-                           ;; Note: st/key-in-schema is private but would be more direct
+                           ;; Note: st/key-in-schema would be more direct, but it's private
                            (remove #(st/get-in res [%]))
                            ks)]
     (when (seq missing-keys)

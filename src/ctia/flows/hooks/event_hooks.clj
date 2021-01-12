@@ -6,11 +6,14 @@
    [ctia.lib.kafka :as lk]
    [ctia.entity.event.schemas :refer [CreateEventType
                                       DeleteEventType]]
+   [ctia.flows.hooks-service.schemas :refer [HooksMap]]
+   [ctia.schemas.services :refer [ConfigServiceFns]]
    [redismq.core :as rmq]
    [onyx.kafka.helpers :as okh]
    [onyx.plugin.kafka :as opk]
    [cheshire.core :refer [generate-string]]
-   [schema.core :as s])
+   [schema.core :as s]
+   [schema-tools.core :as st])
   (:import [org.apache.kafka.clients.producer KafkaProducer]))
 
 (defrecord KafkaEventPublisher [^KafkaProducer producer kafka-config]
@@ -43,13 +46,15 @@
         (log/error e "Unable to push an event to Redis")))
     event))
 
-(defn redis-event-publisher [get-in-config]
+(s/defn redis-event-publisher
+  [get-in-config :- (st/get-in ConfigServiceFns [:get-in-config])]
   (let [{:keys [channel-name] :as redis-config}
         (get-in-config [:ctia :hook :redis])]
     (->RedisEventPublisher (lr/server-connection redis-config)
                            channel-name)))
 
-(defn kafka-event-publisher [get-in-config]
+(s/defn kafka-event-publisher
+  [get-in-config :- (st/get-in ConfigServiceFns [:get-in-config])]
   (let [kafka-props (get-in-config [:ctia :hook :kafka])]
 
     (log/warn "Ensure Kafka topic creation")
@@ -75,7 +80,8 @@
         (log/error e "Unable to push an event to Redis")))
     event))
 
-(defn redismq-publisher [get-in-config]
+(s/defn redismq-publisher
+  [get-in-config :- (st/get-in ConfigServiceFns [:get-in-config])]
   (let [{:keys [queue-name host port timeout-ms max-depth enabled
                 password ssl]
          :as config
@@ -88,21 +94,11 @@
                                         conn-spec
                                         {:max-depth max-depth}))))
 
-(defn- judgement?
-  [{{t :type} :entity :as _event_}]
-  (= "judgement" t))
-
-(defn- create-event?
-  [{type :type :as _event_}]
-  (= type CreateEventType))
-
-(defn- delete-event?
-  [{type :type :as _event_}]
-  (= type DeleteEventType))
-
-(s/defn register-hooks :- {s/Keyword [(s/protocol Hook)]}
-  [hooks-m :- {s/Keyword [(s/protocol Hook)]}
-   get-in-config]
+(s/defn register-hooks :- HooksMap
+  "Append hooks from ctia.hook.* configuration to
+  first argument."
+  [hooks-m :- HooksMap
+   get-in-config :- (st/get-in ConfigServiceFns [:get-in-config])]
   (let [{{redis? :enabled} :redis
          {redismq? :enabled} :redismq
          {kafka? :enabled} :kafka}
@@ -112,4 +108,4 @@
           redis?   (assoc :redis (redis-event-publisher get-in-config))
           redismq? (assoc :redismq (redismq-publisher get-in-config))
           kafka?   (assoc :kafka (kafka-event-publisher get-in-config)))]
-    (update hooks-m :event concat (vals all-event-hooks))))
+    (update hooks-m :event into (vals all-event-hooks))))
