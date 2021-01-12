@@ -1,6 +1,6 @@
 (ns ctia.flows.hooks-service.schemas
   (:require [ctia.flows.hook-protocol :refer [Hook]]
-            [schemas.core :as s]))
+            [schema.core :as s]))
 
 (s/defschema HookType
   (s/enum :before-create
