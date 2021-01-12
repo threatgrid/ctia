@@ -3,7 +3,10 @@
   (:require [clojure.tools.logging :as log]
             [ctia.flows.hooks.event-hooks :as event-hooks]
             [ctia.flows.hook-protocol :as prot]
-            [ctia.flows.hooks-service.schemas :refer [Context HookType HooksMap]]))
+            [ctia.schemas.services :refer [ConfigServiceFns]]
+            [ctia.flows.hooks-service.schemas :refer [Context HookType HooksMap]]
+            [schema.core :as s]
+            [schema-tools.core :as st]))
 
 (defn- doc-list [& s]
   (with-meta [] {:doc (apply str s)}))
@@ -22,7 +25,7 @@
 
 (s/defn reset-hooks! :- HooksMap
   [{:keys [hooks]} :- Context
-   get-in-config]
+   get-in-config :- (st/get-in ConfigServiceFns [:get-in-config])]
   (reset! hooks
           (-> (empty-hooks)
               (event-hooks/register-hooks get-in-config))))
@@ -97,7 +100,7 @@
 (s/defn start :- Context
   "Initialize all hooks"
   [{:keys [hooks] :as context} :- Context
-   get-in-config]
+   get-in-config :- (st/get-in ConfigServiceFns [:get-in-config])]
   (reset-hooks! context get-in-config)
   (init-hooks! context)
   (log/info "Hooks Initialized: " (pr-str @hooks))

@@ -7,7 +7,7 @@
   "The built-in Trapperkeeper configuration service.
 
   https://github.com/puppetlabs/trapperkeeper/blob/master/documentation/Built-in-Configuration-Service.md#trapperkeepers-built-in-configuration-service"
-  {:get-config    (s/=> s/Any)
+  {:get-config (s/=> s/Any)
    :get-in-config (s/=>* s/Any
                          [[s/Any]]
                          [[s/Any] s/Any])})

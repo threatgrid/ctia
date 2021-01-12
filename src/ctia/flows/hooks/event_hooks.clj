@@ -7,11 +7,13 @@
    [ctia.entity.event.schemas :refer [CreateEventType
                                       DeleteEventType]]
    [ctia.flows.hooks-service.schemas :refer [HooksMap]]
+   [ctia.schemas.services :refer [ConfigServiceFns]]
    [redismq.core :as rmq]
    [onyx.kafka.helpers :as okh]
    [onyx.plugin.kafka :as opk]
    [cheshire.core :refer [generate-string]]
-   [schema.core :as s])
+   [schema.core :as s]
+   [schema-tools.core :as st])
   (:import [org.apache.kafka.clients.producer KafkaProducer]))
 
 (defrecord KafkaEventPublisher [^KafkaProducer producer kafka-config]
@@ -44,13 +46,15 @@
         (log/error e "Unable to push an event to Redis")))
     event))
 
-(defn redis-event-publisher [get-in-config]
+(s/defn redis-event-publisher
+  [get-in-config :- (st/get-in ConfigServiceFns [:get-in-config])]
   (let [{:keys [channel-name] :as redis-config}
         (get-in-config [:ctia :hook :redis])]
     (->RedisEventPublisher (lr/server-connection redis-config)
                            channel-name)))
 
-(defn kafka-event-publisher [get-in-config]
+(s/defn kafka-event-publisher
+  [get-in-config :- (st/get-in ConfigServiceFns [:get-in-config])]
   (let [kafka-props (get-in-config [:ctia :hook :kafka])]
 
     (log/warn "Ensure Kafka topic creation")
@@ -76,7 +80,8 @@
         (log/error e "Unable to push an event to Redis")))
     event))
 
-(defn redismq-publisher [get-in-config]
+(s/defn redismq-publisher
+  [get-in-config :- (st/get-in ConfigServiceFns [:get-in-config])]
   (let [{:keys [queue-name host port timeout-ms max-depth enabled
                 password ssl]
          :as config
@@ -93,7 +98,7 @@
   "Append hooks from ctia.hook.* configuration to
   first argument."
   [hooks-m :- HooksMap
-   get-in-config]
+   get-in-config :- (st/get-in ConfigServiceFns [:get-in-config])]
   (let [{{redis? :enabled} :redis
          {redismq? :enabled} :redismq
          {kafka? :enabled} :kafka}
