@@ -21,14 +21,13 @@
   (start [this context] (core/start context
                                     ((:get-in-config ConfigService) [:ctia :http])
                                     {:ConfigService (-> ConfigService
-                                                        (select-keys [:get-config
-                                                                      :get-in-config]))
+                                                        (select-keys #{:get-config
+                                                                       :get-in-config}))
                                      :HooksService (-> HooksService 
-                                                       (select-keys [:apply-hooks
-                                                                     :apply-event-hooks])
-                                                       hooks-svc/lift-hooks-service-fns)
+                                                       (select-keys #{:apply-event-hooks
+                                                                      :apply-hooks}))
                                      :StoreService (-> StoreService 
-                                                       (select-keys [:get-store]))
+                                                       (select-keys #{:get-store}))
                                      :IAuth IAuth
                                      :GraphQLNamedTypeRegistryService GraphQLNamedTypeRegistryService
                                      :IEncryption IEncryption
