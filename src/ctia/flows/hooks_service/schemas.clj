@@ -13,7 +13,7 @@
 
 (s/defschema HooksMap
   "Map from hook type to registered hooks of that type."
-  {HookType (s/both (schema/pred vector?)
+  {HookType (s/both (s/pred vector?)
                     [(s/protocol Hook)])})
 
 (s/defschema Context
