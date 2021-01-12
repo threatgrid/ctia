@@ -4,7 +4,8 @@
             [ctia.flows.hooks.event-hooks :as event-hooks]
             [ctia.flows.hook-protocol :as prot]
             [ctia.schemas.services :refer [ConfigServiceFns]]
-            [ctia.flows.hooks-service.schemas :refer [Context HookType HooksMap]]
+            [ctia.flows.hooks-service.schemas
+             :refer [ApplyHooksOptions Context HookType HooksMap]]
             [schema.core :as s]
             [schema-tools.core :as st]))
 
