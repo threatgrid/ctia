@@ -12,10 +12,12 @@
           :event))
 
 (s/defschema HooksMap
+  "Map from hook type to registered hooks of that type."
   {HookType (s/both (schema/pred vector?)
                     [(s/protocol Hook)])})
 
 (s/defschema Context
+  "Context for default implementation of HooksService"
   {:hooks (s/atom HooksMap)})
 
 (s/defschema EntityOrEvent
@@ -24,6 +26,7 @@
   s/Any)
 
 (s/defschema ApplyHooksOptions
+  "Options argument of apply-hooks."
   {:hook-type HookType
    :entity EntityOrEvent
    (s/optional-key :prev-entity) s/Any
