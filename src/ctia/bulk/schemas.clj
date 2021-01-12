@@ -1,7 +1,7 @@
 (ns ctia.bulk.schemas
   (:require [clojure.string :as str]
             [ctia.entity.entities :as entities]
-            [ctia.schemas.core :refer [TempIDs Reference]]
+            [ctia.schemas.core :refer [TempIDs Reference APIHandlerServices]]
             [schema-tools.core :as st]
             [schema.core :as s]))
 
@@ -42,6 +42,8 @@
    (entities-bulk-schema (entities/all-entities) [(s/maybe Reference)])
    (s/optional-key :tempids) TempIDs))
 
-; TODO def => defn
-(s/defschema NewBulk
-  (entities-bulk-schema (entities/all-entities) :new-schema))
+(s/defn NewBulk :- s/Any
+  "Returns NewBulk schema without disabled entities"
+  [{{:keys [enabled?]} :FeaturesService} :- APIHandlerServices]
+  (let [ents (->> (entities/all-entities) (filter (fn [[k _]] (enabled? k))))]
+    (entities-bulk-schema ents :new-schema)))

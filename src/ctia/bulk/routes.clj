@@ -1,10 +1,9 @@
 (ns ctia.bulk.routes
   (:require
-   [ctia.lib.compojure.api.core :refer [GET POST routes]]
-   [ctia.bulk
-    [core :refer [bulk-size create-bulk fetch-bulk get-bulk-max-size]]
-    [schemas :refer [Bulk BulkRefs NewBulk]]]
+   [ctia.bulk.core :refer [bulk-size create-bulk fetch-bulk get-bulk-max-size]]
+   [ctia.bulk.schemas :refer [Bulk BulkRefs NewBulk]]
    [ctia.http.routes.common :as common]
+   [ctia.lib.compojure.api.core :refer [GET POST routes]]
    [ctia.schemas.core :refer [APIHandlerServices Reference]]
    [ring.swagger.json-schema :refer [describe]]
    [ring.util.http-response :refer [bad-request ok]]
@@ -37,7 +36,7 @@
       (POST "/" []
             :return BulkRefs
             :query-params [{wait_for :- (describe s/Bool "wait for created entities to be available for search") nil}]
-            :body [bulk NewBulk {:description "a new Bulk object"}]
+            :body [bulk (NewBulk services) {:description "a new Bulk object"}]
             :summary "POST many new entities using a single HTTP call"
             :auth-identity login
             :description (common/capabilities->description capabilities)
