@@ -2,12 +2,14 @@
   "Handle hooks ([Cf. #159](https://github.com/threatgrid/ctia/issues/159))."
   (:require [clojure.tools.logging :as log]
             [ctia.flows.hooks.event-hooks :as event-hooks]
-            [ctia.flows.hook-protocol :as prot]))
+            [ctia.flows.hook-protocol :as prot]
+            [ctia.flows.hooks-service.schemas :refer [Context HookType HooksMap]]))
 
 (defn- doc-list [& s]
   (with-meta [] {:doc (apply str s)}))
 
-(def empty-hooks
+(s/defn ^:private empty-hooks :- HooksMap
+  []
   {:before-create (doc-list "`before-create` hooks are triggered on"
                             " create routes before the entity is saved in the DB.")
    :after-create (doc-list "`after-create` hooks are called after an entity was created.")
@@ -18,45 +20,52 @@
    :after-delete (doc-list "`after-delete` hooks are called after an entity is deleted.")
    :event (doc-list "`event` hooks are called with an event during any CRUD activity.")})
 
-(defn reset-hooks! [{:keys [hooks] :as _context_} get-in-config]
+(s/defn reset-hooks! :- HooksMap
+  [{:keys [hooks]} :- Context
+   get-in-config]
   (reset! hooks
-          (-> empty-hooks
+          (-> (empty-hooks)
               (event-hooks/register-hooks get-in-config))))
 
-(defn add-hook!
+(s/defn add-hook! :- HooksMap
   "Add a `Hook` for the hook `hook-type`"
-  [{:keys [hooks] :as _context_} hook-type hook]
+  [{:keys [hooks]} :- Context
+   hook-type :- HookType
+   hook :- (s/protocol prot/Hook)]
   (swap! hooks update hook-type conj hook))
 
-(defn add-hooks!
+(s/defn add-hooks! :- HooksMap
   "Add a list of `Hook` for the hook `hook-type`"
-  [{:keys [hooks] :as _context_} hook-type hook-list]
+  [{:keys [hooks]} :- Context
+   hook-type :- HookType
+   hook-list :- [(s/protocol prot/Hook)]]
   (swap! hooks update hook-type into hook-list))
 
-(defn init-hooks!
+(s/defn init-hooks! :- HooksMap
   "Initialize all hooks"
-  [{:keys [hooks] :as _context_}]
+  [{:keys [hooks]} :- Context]
   (doseq [hook-list (vals @hooks)
           hook hook-list]
     (prot/init hook))
   @hooks)
 
-(defn destroy-hooks!
+(s/defn destroy-hooks!
   "Should call all destructor for each hook in reverse order."
-  [{:keys [hooks] :as _context_}]
+  [{:keys [hooks]} :- Context]
   (doseq [hook-list (vals @hooks)
           hook (reverse hook-list)]
     (prot/destroy hook)))
-(defn apply-hooks
+
+(s/defn apply-hooks
   "Apply the registered hooks for a given hook-type to the passed in data.
    Data may be an entity (or an event) and a previous entity.  Accepts
   read-only?, in which case the result of the hooks do not change the result.
-  In any hook returns nil, the result is ignored and the input entity is kept."
-  [{:keys [hooks] :as context}
+  In any hook that returns nil, the result is ignored and the input entity is kept."
+  [{:keys [hooks]} :- Context
    {:keys [hook-type
            entity
            prev-entity
-           read-only?]}]
+           read-only?]} :- ApplyHooksOptions]
   (loop [[hook & more-hooks :as hooks] (get @hooks hook-type)
          result entity]
     (if (empty? hooks)
@@ -67,31 +76,35 @@
           (recur more-hooks result)
           (recur more-hooks handle-result))))))
 
-(defn apply-event-hooks [context event]
+(s/defn apply-event-hooks
+  [context :- Context
+   event]
   (apply-hooks context
                {:hook-type :event
                 :entity event
                 :read-only? true}))
 
-(defn shutdown!
+(s/defn shutdown!
   "Normally this should not be called directly since init! registers a
   shutdown hook"
-  [context]
+  [context :- Context]
   (destroy-hooks! context))
 
-(defn init [context]
-  (assoc context :hooks (atom empty-hooks)))
+(s/defn init :- Context
+  [context]
+  (assoc context :hooks (atom (empty-hooks))))
 
-(defn start
+(s/defn start :- Context
   "Initialize all hooks"
-  [{:keys [hooks] :as context} get-in-config]
+  [{:keys [hooks] :as context} :- Context
+   get-in-config]
   (reset-hooks! context get-in-config)
   (init-hooks! context)
   (log/info "Hooks Initialized: " (pr-str @hooks))
   context)
 
-(defn stop
+(s/defn stop
   "Should call all destructor for each hook in reverse order."
-  [context]
+  [context :- Context]
   (shutdown! context)
   (dissoc context :hooks))

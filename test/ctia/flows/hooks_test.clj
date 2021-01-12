@@ -1,10 +1,10 @@
 (ns ctia.flows.hooks-test
-  (:require [ctia.flows.hooks-service :as hooks-svc]
-            [ctia.flows.hook-protocol :refer [Hook]]
+  (:require [ctia.flows.hook-protocol :refer [Hook]]
             [ctia.test-helpers
              [core :as helpers]
              [es :as es-helpers]]
             [clojure.test :as t]
+            [puppetlabs.trapperkeeper.app :as app]
             [schema.test :refer [validate-schemas]]))
 
 (t/use-fixtures :each
@@ -32,33 +32,31 @@
 
 (t/deftest check-dummy-hook-order
   (let [app (helpers/get-current-app)
-        {:keys [add-hook! apply-hooks init-hooks!]} (-> (helpers/get-service-map app :HooksService)
-                                                        hooks-svc/lift-hooks-service-fns)]
+        {{:keys [add-hook! apply-hooks init-hooks!]} :HooksService} (app/service-graph app)]
     (test-adding-dummy-hooks add-hook!)
     (init-hooks!)
-    (t/is (= (apply-hooks :entity obj
-                          :hook-type  :before-create)
+    (t/is (= (apply-hooks {:entity obj
+                           :hook-type :before-create})
              (into obj {:dummy "hook1 - hook2 - hook3"})))
-    (t/is (= (apply-hooks :entity obj
-                          :hook-type  :after-create)
+    (t/is (= (apply-hooks {:entity obj
+                           :hook-type :after-create})
              obj))))
 
 (t/deftest check-dummy-hook-read-only
   (let [app (helpers/get-current-app)
-        {:keys [add-hook! apply-hooks init-hooks!
-                shutdown! reset-hooks!]} (-> (helpers/get-service-map app :HooksService)
-                                             hooks-svc/lift-hooks-service-fns)]
+        {{:keys [add-hook! apply-hooks init-hooks!
+                 shutdown! reset-hooks!]} :HooksService} (app/service-graph app)]
     (shutdown!)
     (reset-hooks!)
     (test-adding-dummy-hooks add-hook!)
     (init-hooks!)
-    (t/is (= (apply-hooks :entity   obj
-                          :hook-type   :before-create
-                          :read-only?  true)
+    (t/is (= (apply-hooks {:entity obj
+                           :hook-type :before-create
+                           :read-only? true})
              obj))
-    (t/is (= (apply-hooks :entity obj
-                          :hook-type   :after-create
-                          :read-only?  true)
+    (t/is (= (apply-hooks {:entity obj
+                           :hook-type :after-create
+                           :read-only? true})
              obj))))
 
 ;; -----------------------------------------------------------------------------
@@ -76,18 +74,17 @@
 
 (t/deftest check-nil-hook
   (let [app (helpers/get-current-app)
-        {:keys [add-hook! apply-hooks init-hooks!
-                shutdown! reset-hooks!]} (-> (helpers/get-service-map app :HooksService)
-                                             hooks-svc/lift-hooks-service-fns)]
+        {{:keys [add-hook! apply-hooks init-hooks!
+                 shutdown! reset-hooks!]} :HooksService} (app/service-graph app)]
     (shutdown!)
     (reset-hooks!)
     (test-adding-nil-hooks add-hook!)
     (init-hooks!)
-    (t/is (= (apply-hooks :entity obj
-                          :hook-type :before-create)
+    (t/is (= (apply-hooks {:entity obj
+                           :hook-type :before-create})
              obj))
-    (t/is (= (apply-hooks :entity obj
-                          :hook-type :after-create)
+    (t/is (= (apply-hooks {:entity obj
+                           :hook-type :after-create})
              obj))))
 
 ;; -----------------------------------------------------------------------------
@@ -107,19 +104,18 @@
 
 (t/deftest check-memory-hook
   (let [app (helpers/get-current-app)
-        {:keys [add-hook! apply-hooks init-hooks!
-                shutdown! reset-hooks!]} (-> (helpers/get-service-map app :HooksService)
-                                             hooks-svc/lift-hooks-service-fns)
+        {{:keys [add-hook! apply-hooks init-hooks!
+                 shutdown! reset-hooks!]} :HooksService} (app/service-graph app)
         memory {:y "y"}]
     (shutdown!)
     (reset-hooks!)
     (test-adding-memory-hooks add-hook!)
     (init-hooks!)
-    (t/is (= (apply-hooks :entity obj
-                          :prev-entity memory
-                          :hook-type :before-create)
+    (t/is (= (apply-hooks {:entity obj
+                           :prev-entity memory
+                           :hook-type :before-create})
              (into obj {:previous {:y "y"}})))
-    (t/is (= (apply-hooks :entity obj
-                          :prev-entity memory
-                          :hook-type   :after-create)
+    (t/is (= (apply-hooks {:entity obj
+                           :prev-entity memory
+                           :hook-type :after-create})
              obj))))

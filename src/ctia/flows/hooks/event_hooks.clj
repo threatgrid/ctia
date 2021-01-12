@@ -6,6 +6,7 @@
    [ctia.lib.kafka :as lk]
    [ctia.entity.event.schemas :refer [CreateEventType
                                       DeleteEventType]]
+   [ctia.flows.hooks-service.schemas :refer [HooksMap]]
    [redismq.core :as rmq]
    [onyx.kafka.helpers :as okh]
    [onyx.plugin.kafka :as opk]
@@ -88,20 +89,10 @@
                                         conn-spec
                                         {:max-depth max-depth}))))
 
-(defn- judgement?
-  [{{t :type} :entity :as _event_}]
-  (= "judgement" t))
-
-(defn- create-event?
-  [{type :type :as _event_}]
-  (= type CreateEventType))
-
-(defn- delete-event?
-  [{type :type :as _event_}]
-  (= type DeleteEventType))
-
-(s/defn register-hooks :- {s/Keyword [(s/protocol Hook)]}
-  [hooks-m :- {s/Keyword [(s/protocol Hook)]}
+(s/defn register-hooks :- HooksMap
+  "Append hooks from ctia.hook.* configuration to
+  first argument."
+  [hooks-m :- HooksMap
    get-in-config]
   (let [{{redis? :enabled} :redis
          {redismq? :enabled} :redismq
@@ -112,4 +103,4 @@
           redis?   (assoc :redis (redis-event-publisher get-in-config))
           redismq? (assoc :redismq (redismq-publisher get-in-config))
           kafka?   (assoc :kafka (kafka-event-publisher get-in-config)))]
-    (update hooks-m :event concat (vals all-event-hooks))))
+    (update hooks-m :event into (vals all-event-hooks))))

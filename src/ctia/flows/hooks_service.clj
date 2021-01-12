@@ -4,6 +4,7 @@
             [puppetlabs.trapperkeeper.services :refer [service-context]]))
 
 (defprotocol HooksService
+  "See ctia.flows.hooks-service.schemas/ServiceFns for schemas."
   (add-hook! [this hook-type hook]
              "Add a `Hook` for the hook `hook-type`")
   (add-hooks! [this hook-type hook-list]
@@ -46,14 +47,3 @@
   (reset-hooks! [this] (core/reset-hooks!
                          (service-context this)
                          get-in-config)))
-
-(defn lift-hooks-service-fns
-  "Given a map of HooksService services (via defservice), lift
-  them to support variable arguments.
-  
-  apply-hooks   - hook-options becomes keyword arguments"
-  [services]
-  (cond-> services
-    (:apply-hooks services) (update :apply-hooks (fn [apply-hooks]
-                                                   (fn [& {:as args}]
-                                                     (apply-hooks args))))))

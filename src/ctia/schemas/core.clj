@@ -12,6 +12,7 @@
              [spec :as f-spec]]
             [schema-tools.core :as st]
             [ctia.store-service.schemas :refer [GetStoreFn]]
+            [ctia.flows.hooks-service.schemas :as hooks-schemas]
             [schema.core :as s :refer [Bool Str]]))
 
 (s/defschema Port
@@ -26,8 +27,10 @@
                                                                      [[s/Any] s/Any])}
    :CTIAHTTPServerService                     {:get-port    (s/=> Port)
                                                :get-graphql (s/=> graphql.GraphQL)}
-   :HooksService                              {:apply-hooks       (s/pred ifn?) ;;keyword varargs
-                                               :apply-event-hooks (s/=> s/Any s/Any)}
+   :HooksService                              (csutils/select-all-keys
+                                                hooks-schemas/ServiceFns
+                                                [:apply-hooks
+                                                 :apply-event-hooks])
    :StoreService                              {:get-store GetStoreFn}
    :IAuth                                     {:identity-for-token (s/=> s/Any s/Any)}
    :GraphQLNamedTypeRegistryService           {:get-or-update-named-type-registry
