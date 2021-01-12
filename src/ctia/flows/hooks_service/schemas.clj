@@ -29,7 +29,7 @@
   "Options argument of apply-hooks."
   {:hook-type HookType
    :entity EntityOrEvent
-   :prev-entity (s/maybe EntityOrEvent)
+   (s/optional-key :prev-entity) (s/maybe EntityOrEvent)
    (s/optional-key :read-only?) s/Bool})
 
 (s/defschema ServiceFns
