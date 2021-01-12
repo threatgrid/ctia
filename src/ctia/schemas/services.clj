@@ -1,6 +1,7 @@
 (ns ctia.schemas.services
   "Schemas for functions in our Trapperkeeper service
-  graph that are provided by external libraries")
+  graph that are provided by external libraries"
+  (:require [schema.core :as s]))
 
 (s/defschema ConfigServiceFns
   "The built-in Trapperkeeper configuration service.
