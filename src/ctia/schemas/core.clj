@@ -2,6 +2,7 @@
   (:require [ctia.lib.utils :refer [service-subgraph]]
             [ctia.graphql.delayed :as delayed]
             [ctia.schemas.utils :as csutils]
+            [ctia.schemas.services :as external-svc-fns]
             [ctim.schemas
              [bundle :as bundle]
              [common :as cos]
@@ -21,16 +22,16 @@
 
 (s/defschema APIHandlerServices
   "Maps of services available to routes"
-  {:ConfigService                             {:get-config    (s/=> s/Any)
-                                               :get-in-config (s/=>* s/Any
-                                                                     [[s/Any]]
-                                                                     [[s/Any] s/Any])}
+  {:ConfigService                             (-> external-svc-fns/ConfigServiceFns
+                                                  (csutils/select-all-keys
+                                                    [:get-config
+                                                     :get-in-config]))
    :CTIAHTTPServerService                     {:get-port    (s/=> Port)
                                                :get-graphql (s/=> graphql.GraphQL)}
-   :HooksService                              (csutils/select-all-keys
-                                                hooks-schemas/ServiceFns
-                                                [:apply-hooks
-                                                 :apply-event-hooks])
+   :HooksService                              (-> hooks-schemas/ServiceFns
+                                                  (csutils/select-all-keys
+                                                    [:apply-hooks
+                                                     :apply-event-hooks]))
    :StoreService                              {:get-store GetStoreFn}
    :IAuth                                     {:identity-for-token (s/=> s/Any s/Any)}
    :GraphQLNamedTypeRegistryService           {:get-or-update-named-type-registry
@@ -43,10 +44,12 @@
                                                :feature-flags (s/=> [s/Str])}})
 
 (s/defschema HTTPShowServices
-  {:ConfigService {:get-in-config (s/=>* s/Any
-                                         [[s/Any]]
-                                         [[s/Any] s/Any])
-                   s/Keyword s/Any}
+  ;; TODO describe in terms of APIHandlerServices, while preserving openness
+  ;;      of inner maps (or updating code to use closed maps).
+  {:ConfigService (-> external-svc-fns/ConfigServiceFns
+                      (csutils/select-all-keys
+                        [:get-in-config])
+                      (st/assoc s/Keyword s/Any))
    :CTIAHTTPServerService {:get-port (s/=> Port)
                            s/Keyword s/Any}
    s/Keyword s/Any})
@@ -65,9 +68,10 @@
 
 (s/defschema RealizeFnServices
   "Maps of service functions available for realize-fns"
-  {:ConfigService {:get-in-config (s/=>* s/Any
-                                         [[s/Any]]
-                                         [[s/Any] s/Any])}
+  ;; TODO describe in terms of APIHandlerServices
+  {:ConfigService (-> external-svc-fns/ConfigServiceFns
+                      (csutils/select-all-keys
+                        [:get-in-config]))
    :CTIAHTTPServerService {:get-port (s/=> Port)}
    :StoreService {:get-store GetStoreFn}
    :GraphQLNamedTypeRegistryService
@@ -120,17 +124,17 @@
   :- (s/protocol s/Schema)
   [return :- (s/protocol s/Schema)]
   (s/=>* return
-         [s/Any  ;; new-object
-          s/Any  ;; id
-          s/Any  ;; tempids
-          s/Any  ;; owner
-          s/Any] ;; groups
-         [s/Any  ;; new-object
-          s/Any  ;; id
-          s/Any  ;; tempids
-          s/Any  ;; owner
-          s/Any  ;; groups
-          s/Any])) ;; prev-object
+         [(s/named s/Any 'new-object)
+          (s/named s/Any 'id)
+          (s/named s/Any 'tempids)
+          (s/named s/Any 'owner)
+          (s/named s/Any 'groups)]
+         [(s/named s/Any 'new-object)
+          (s/named s/Any 'id)
+          (s/named s/Any 'tempids)
+          (s/named s/Any 'owner)
+          (s/named s/Any 'groups)
+          (s/named s/Any 'prev-object)]))
 
 (s/defschema GraphQLValue
   (s/pred
