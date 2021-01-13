@@ -28,7 +28,7 @@
   "Error related to one entity of the bulk"
   {:error s/Any})
 
-(s/defn get-entities :- [s/Keyword]
+(s/defn get-entities :- [s/Any]
   "Returns list of enabled entities"
   [{{:keys [enabled?]} :FeaturesService} :- APIHandlerServices]
   (->> (entities/all-entities) (filter (fn [[k _]] (enabled? k)))))
@@ -37,10 +37,6 @@
   "Returns Bulk schema without disabled entities"
   [services :- APIHandlerServices]
   (entities-bulk-schema (get-entities services) :schema))
-
-; TODO def => defn
-(s/defschema StoredBulk
-  (entities-bulk-schema (entities/all-entities) :stored-schema))
 
 (s/defn BulkRefs :- s/Any
   [services :- APIHandlerServices]
