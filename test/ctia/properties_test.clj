@@ -1,5 +1,6 @@
 (ns ctia.properties-test
   (:require [ctia.properties :as sut]
+            [ductile.schemas :refer [AuthParams]]
             [clojure.test :refer [deftest is testing]]
             [ductile.schemas :refer [Refresh]]
             [schema.core :as s]))
@@ -22,7 +23,8 @@
             "ctia.store.es.malware.version" s/Num
             "ctia.store.es.malware.update-mappings" s/Bool
             "ctia.store.es.malware.update-settings" s/Bool
-            "ctia.store.es.malware.timeout" s/Num}
+            "ctia.store.es.malware.timeout" s/Num
+            "ctia.store.es.malware.auth" AuthParams}
            (sut/es-store-impl-properties "ctia.store.es." "malware")))
 
     (is (= {"prefix.sighting.host" s/Str
@@ -41,5 +43,6 @@
             "prefix.sighting.version" s/Num
             "prefix.sighting.update-mappings" s/Bool
             "prefix.sighting.update-settings" s/Bool
-            "prefix.sighting.timeout" s/Num}
+            "prefix.sighting.timeout" s/Num
+            "prefix.sighting.auth" AuthParams}
            (sut/es-store-impl-properties "prefix." "sighting")))))

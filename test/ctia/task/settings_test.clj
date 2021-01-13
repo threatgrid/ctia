@@ -1,6 +1,5 @@
 (ns ctia.task.settings-test
   (:require [clojure.test :refer [deftest is testing join-fixtures use-fixtures]]
-            [ctia.properties :as p]
             [ctia.task.settings :as sut]
             [ctia.stores.es.init :as init]
             [ductile

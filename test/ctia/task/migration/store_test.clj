@@ -2,7 +2,6 @@
   (:require [clj-momo.lib.clj-time.coerce :as time-coerce]
             [clj-momo.lib.clj-time.core :as time]
             [ductile
-             [conn :refer [connect]]
              [index :as ductile.index]
              [document :as es-doc]]
             [clojure.java.io :as io]
@@ -13,7 +12,6 @@
             [ctia.task.rollover :refer [rollover-stores]]
             [ctia.test-helpers.core :as helpers :refer [GET DELETE POST-bulk PUT]]
             [ctia.test-helpers.es :as es-helpers]
-            [ctia.test-helpers.fake-whoami-service :as whoami-helpers]
             [ctia.test-helpers.fixtures :as fixt]
             [ctia.test-helpers.migration :refer [app->MigrationStoreServices]]
             [ctim.domain.id :refer [long-id->id]]
@@ -265,8 +263,7 @@
        (helpers/fixture-ctia-with-app
         (fn [app]
           (with-open [rdr (io/reader "./test/data/indices/sample-relationships-1000.json")]
-            (let [{:keys [get-in-config]} (helpers/get-service-map app :ConfigService)
-                  services (app->MigrationStoreServices app)
+            (let [services (app->MigrationStoreServices app)
                   storename (es-helpers/get-indexname app :relationship)
                   write-alias (str storename "-write")
                   max-docs 40

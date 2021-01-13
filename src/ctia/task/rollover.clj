@@ -16,7 +16,7 @@
      conditions :rollover} :props} :- ESConnState]
   (when (and aliased (seq conditions))
     (let [{rolledover? :rolled_over :as response}
-          (ductile.index/rollover! conn write-index conditions)]
+          (ductile.index/rollover! conn write-index conditions {})]
       (when rolledover?
         (log/info "rolled over: " (pr-str response)))
       response)))

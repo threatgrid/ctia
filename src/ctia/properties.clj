@@ -4,7 +4,7 @@
             alternative properties file on the classpath or by\n
             setting system properties."}
     ctia.properties
-  (:require [ductile.schemas :refer [Refresh]]
+  (:require [ductile.schemas :refer [Refresh AuthParams]]
             [clj-momo.lib.schema :as mls]
             [clj-momo.properties :as mp]
             [ctia.store :as store]
@@ -38,7 +38,8 @@
    (str prefix store ".timeout") s/Num
    (str prefix store ".version") s/Num
    (str prefix store ".update-mappings")  s/Bool
-   (str prefix store ".update-settings")  s/Bool})
+   (str prefix store ".update-settings")  s/Bool
+   (str prefix store ".auth")  AuthParams})
 
 (s/defschema StorePropertiesSchema
   "All entity store properties for every implementation"

@@ -1,12 +1,12 @@
 (ns ctia.stores.es.init-test
-  (:require [ctia.stores.es.init :as sut]
+  (:require [clojure.string :as string]
+            [ctia.stores.es.init :as sut]
             [ctia.test-helpers.core :as helpers]
-            [ctia.test-helpers.es :refer [->ESConnServices for-each-es-version]]
-            [clj-http.client :as http]
+            [ctia.test-helpers.es :refer [->ESConnServices for-each-es-version basic-auth]]
             [ctia.stores.es.mapping :as m]
-            [ductile
-             [index :as index]
-             [conn :as conn]]
+            [ductile.index :as index]
+            [ductile.conn :as conn]
+            [ductile.auth.api-key :refer [create-api-key!]]
             [clojure.test :refer [deftest testing is are]])
   (:import [java.util UUID]))
 
@@ -29,7 +29,8 @@
    :aliased true
    :update-mappings true
    :update-settings true
-   :version 7})
+   :version 7
+   :auth basic-auth})
 
 (defn props-not-aliased [indexname]
   {:entity :sighting
@@ -42,14 +43,16 @@
    :aliased false
    :update-mappings true
    :update-settings true
-   :version 7})
+   :version 7
+   :auth basic-auth})
 
 (deftest init-store-conn-test
  (let [services (->ESConnServices)]
    (testing "init store conn should return a proper conn state with unaliased conf"
      (let [indexname (gen-indexname)
+           base-props (props-not-aliased indexname)
            {:keys [index props config conn]}
-           (sut/init-store-conn (props-not-aliased indexname) services)]
+           (sut/init-store-conn base-props services)]
        (is (= index indexname))
        (is (= (:write-index props) indexname))
        (is (= "http://localhost:9207" (:uri conn)))
@@ -110,7 +113,8 @@
                          :shards 5
                          :replicas 2
                          :refresh_interval "1s"
-                         :version version}
+                         :version version
+                         :auth basic-auth}
           ;; create index
           {:keys [conn]} (sut/init-es-conn! initial-props services)]
       (try
@@ -189,8 +193,7 @@
 
 (deftest init-es-conn!-test
   (let [indexname (gen-indexname)
-        clean-template (fn [{:keys [uri] :as c}]
-                         (http/delete (format "%s/_template/%s*" uri indexname)))
+        clean-template #(index/delete-template! % indexname)
         clean-index #(index/delete! % (str indexname "*"))
         clean-all #(do (clean-index %) (clean-template %))
         prepare-props (fn [props version]
@@ -324,3 +327,27 @@
       (test-fn (assoc (props-aliased indexname)
                       :update-mappings update-mappings?
                       :update-settings update-settings?)))))
+
+(deftest api-key-auth-test
+  (for-each-es-version
+   "init-es-conn! should return a conn state with given auth properties"
+   [7] ;; auth only available on ES7 docker, use this macro to easily test future major versions
+   nil
+   (let [;; create API Key
+         {key-id :id :keys [api_key]} (create-api-key! conn {:name "my-api-key"})
+         auth-params {:type :api-key
+                      :params {:id key-id :api-key api_key}}]
+     ;; check ES conn init with API Key auth properties
+     (helpers/with-properties
+       ["ctia.store.es.default.auth" auth-params]
+       (helpers/fixture-ctia-with-app
+        (fn [app]
+          (let [{:keys [all-stores]} (helpers/get-service-map app :StoreService)]
+            (doseq [[_ store] (all-stores)]
+              (let [conn (-> store first :state :conn)]
+                (is (map? (index/get-template conn "*")))
+                (is (-> conn
+                        :auth
+                        :headers
+                        :authorization
+                        (string/starts-with? "ApiKey "))))))))))))
