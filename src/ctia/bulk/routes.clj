@@ -73,7 +73,7 @@
                         :read-vulnerability
                         :read-weakness}]
      (GET "/" []
-          :return (s/maybe Bulk)
+          :return (s/maybe (Bulk services))
           :summary "GET many entities at once"
           :query-params [{actors              :- [Reference] []}
                          {asset_mappings      :- [Reference] []}
