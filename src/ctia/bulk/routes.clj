@@ -34,7 +34,7 @@
                          :create-vulnerability
                          :create-weakness}]
       (POST "/" []
-            :return BulkRefs
+            :return (BulkRefs services)
             :query-params [{wait_for :- (describe s/Bool "wait for created entities to be available for search") nil}]
             :body [bulk (NewBulk services) {:description "a new Bulk object"}]
             :summary "POST many new entities using a single HTTP call"

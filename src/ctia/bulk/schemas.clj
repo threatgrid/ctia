@@ -42,10 +42,10 @@
 (s/defschema StoredBulk
   (entities-bulk-schema (entities/all-entities) :stored-schema))
 
-; TODO def => defn
-(s/defschema BulkRefs
+(s/defn BulkRefs :- s/Any
+  [services :- APIHandlerServices]
   (st/assoc
-   (entities-bulk-schema (entities/all-entities) [(s/maybe Reference)])
+   (entities-bulk-schema (get-entities services) [(s/maybe Reference)])
    (s/optional-key :tempids) TempIDs))
 
 (s/defn NewBulk :- s/Any
