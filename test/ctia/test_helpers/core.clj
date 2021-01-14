@@ -506,3 +506,11 @@
       (f)
       (reset! uuid-counter
               uuid-counter-start))))
+
+(s/defn app->ConfigurationServices :- ConfigurationServices
+  [app]
+  (-> app
+      app/service-graph
+      (utils/service-subgraph
+       :FeaturesService [:enabled? :feature-flags]
+       :ConfigService [:get-in-config :get-in-config])))

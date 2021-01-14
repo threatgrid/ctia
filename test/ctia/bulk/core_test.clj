@@ -33,14 +33,13 @@
 
 (deftest bulk-schema-excludes-disabled-test
   (testing "ensure NewBulk schema includes only enabled entities"
-    (s/set-fn-validation! false) ;; otherwise it fails for incomplete :APIHandlerServices (we only need :FeaturesService for the test)
     (with-app-with-config app
       [features-svc/features-service] {:ctia {:features {}}}
-      (let [bulk-schema (NewBulk (app/service-graph app))]
+      (let [bulk-schema (NewBulk (helpers/app->ConfigurationServices app))]
         (schema->keys bulk-schema)
         (is (true? (set/subset? #{:assets :actors} (schema->keys bulk-schema))))))
     (with-app-with-config app
       [features-svc/features-service]
       {:ctia {:features {:disable "asset,actor"}}}
-      (let [bulk-schema (NewBulk (app/service-graph app))]
+      (let [bulk-schema (NewBulk (helpers/app->ConfigurationServices app))]
         (is (false? (set/subset? #{:assets :actors} (schema->keys bulk-schema))))))))
