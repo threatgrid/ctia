@@ -35,18 +35,18 @@
   [{{:keys [enabled?]} :FeaturesService} :- ConfigurationServices]
   (->> (entities/all-entities) (filter (fn [[k _]] (enabled? k)))))
 
-(s/defn Bulk :- s/Any
+(s/defn Bulk :- (s/protocol s/Schema)
   "Returns Bulk schema without disabled entities"
   [services :- ConfigurationServices]
   (entities-bulk-schema (get-entities services) :schema))
 
-(s/defn BulkRefs :- s/Any
+(s/defn BulkRefs :- (s/protocol s/Schema)
   [services :- ConfigurationServices]
   (st/assoc
    (entities-bulk-schema (get-entities services) [(s/maybe Reference)])
    (s/optional-key :tempids) TempIDs))
 
-(s/defn NewBulk :- s/Any
+(s/defn NewBulk :- (s/protocol s/Schema)
   "Returns NewBulk schema without disabled entities"
   [services :- ConfigurationServices]
   (entities-bulk-schema (get-entities services) :new-schema))
