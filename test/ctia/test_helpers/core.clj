@@ -12,7 +12,7 @@
             [ctia.init :as init]
             [ctia.lib.utils :as utils]
             [ctia.properties :as p :refer [PropertiesSchema]]
-            [ctia.schemas.core :refer [ConfigurationServices HTTPShowServices Port]]
+            [ctia.schemas.core :refer [GetEntitiesServices HTTPShowServices Port]]
             [ctia.store :as store]
             [ctim.domain.id :as id]
             [ctim.generators.common :as cgc]
@@ -507,10 +507,9 @@
       (reset! uuid-counter
               uuid-counter-start))))
 
-(s/defn app->ConfigurationServices :- ConfigurationServices
+(s/defn app->GetEntitiesServices :- GetEntitiesServices
   [app]
   (-> app
       app/service-graph
       (utils/service-subgraph
-       :FeaturesService [:enabled? :feature-flags]
-       :ConfigService [:get-in-config :get-in-config])))
+       :FeaturesService [:enabled?])))

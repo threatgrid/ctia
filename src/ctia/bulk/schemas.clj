@@ -1,9 +1,7 @@
 (ns ctia.bulk.schemas
   (:require [clojure.string :as str]
             [ctia.entity.entities :as entities]
-            [ctia.schemas.core :refer [TempIDs Reference APIHandlerServices
-                                       ConfigurationServices
-                                       ]]
+            [ctia.schemas.core :refer [TempIDs Reference GetEntitiesServices]]
             [schema-tools.core :as st]
             [schema.core :as s]))
 
@@ -32,21 +30,21 @@
 
 (s/defn get-entities :- [s/Any]
   "Returns list of enabled entities"
-  [{{:keys [enabled?]} :FeaturesService} :- ConfigurationServices]
+  [{{:keys [enabled?]} :FeaturesService} :- GetEntitiesServices]
   (->> (entities/all-entities) (filter (fn [[k _]] (enabled? k)))))
 
 (s/defn Bulk :- (s/protocol s/Schema)
   "Returns Bulk schema without disabled entities"
-  [services :- ConfigurationServices]
+  [services :- GetEntitiesServices]
   (entities-bulk-schema (get-entities services) :schema))
 
 (s/defn BulkRefs :- (s/protocol s/Schema)
-  [services :- ConfigurationServices]
+  [services :- GetEntitiesServices]
   (st/assoc
    (entities-bulk-schema (get-entities services) [(s/maybe Reference)])
    (s/optional-key :tempids) TempIDs))
 
 (s/defn NewBulk :- (s/protocol s/Schema)
   "Returns NewBulk schema without disabled entities"
-  [services :- ConfigurationServices]
+  [services :- GetEntitiesServices]
   (entities-bulk-schema (get-entities services) :new-schema))

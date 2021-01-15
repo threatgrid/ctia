@@ -35,11 +35,10 @@
   (testing "ensure NewBulk schema includes only enabled entities"
     (with-app-with-config app
       [features-svc/features-service] {:ctia {:features {}}}
-      (let [bulk-schema (NewBulk (helpers/app->ConfigurationServices app))]
-        (schema->keys bulk-schema)
-        (is (true? (set/subset? #{:assets :actors} (schema->keys bulk-schema))))))
+      (let [bulk-schema (NewBulk (helpers/app->GetEntitiesServices app))]
+        (is (set/subset? #{:assets :actors} (schema->keys bulk-schema)))))
     (with-app-with-config app
       [features-svc/features-service]
       {:ctia {:features {:disable "asset,actor"}}}
-      (let [bulk-schema (NewBulk (helpers/app->ConfigurationServices app))]
+      (let [bulk-schema (NewBulk (helpers/app->GetEntitiesServices app))]
         (is (false? (set/subset? #{:assets :actors} (schema->keys bulk-schema))))))))

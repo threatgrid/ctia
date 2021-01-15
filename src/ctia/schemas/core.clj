@@ -324,11 +324,7 @@
   vocs/ObservableTypeIdentifier
   "vocab.observable-type-id")
 
-(s/defschema ConfigurationServices
-  {:ConfigService   {:get-in-config (s/=>* s/Any
-                                           [[s/Any]]
-                                           [[s/Any] s/Any])
-                     s/Keyword      s/Any}
-   :FeaturesService {:enabled?      (s/=> s/Bool s/Keyword)
-                     :feature-flags (s/=> [s/Str])}
+(s/defschema GetEntitiesServices
+  {:FeaturesService {:enabled? (s/=> s/Bool s/Keyword)
+                     s/Keyword s/Any}
    s/Keyword        s/Any})
