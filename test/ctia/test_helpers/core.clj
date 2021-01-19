@@ -1,28 +1,23 @@
 (ns ctia.test-helpers.core
   (:require [clj-momo.properties :refer [coerce-properties read-property-files]]
             [clj-momo.test-helpers.http :as mthh]
-            [clojure
-             [walk :refer [prewalk]]]
             [clojure.spec.alpha :as cs]
             [clojure.string :as str]
             [clojure.test :as test]
             [clojure.test.check.generators :as gen]
             [clojure.tools.logging :as log]
             [clojure.tools.logging.test :as tlog]
-            [ctia
-             [auth :as auth]
-             [init :as init]
-             [properties :as p :refer [PropertiesSchema]]
-             [store :as store]]
-            [ctia.auth.allow-all :as aa]
-            [ctia.encryption :as encryption]
+            [clojure.walk :refer [prewalk]]
             [ctia.flows.crud :as crud]
-            [ctia.schemas.core :refer [HTTPShowServices Port]]
+            [ctia.init :as init]
+            [ctia.lib.utils :as utils]
+            [ctia.properties :as p :refer [PropertiesSchema]]
+            [ctia.schemas.core :refer [GetEntitiesServices HTTPShowServices Port]]
+            [ctia.store :as store]
             [ctim.domain.id :as id]
             [ctim.generators.common :as cgc]
-            [flanders
-             [spec :as fs]
-             [utils :as fu]]
+            [flanders.spec :as fs]
+            [flanders.utils :as fu]
             [puppetlabs.trapperkeeper.app :as app]
             [schema.core :as s])
   (:import [java.util UUID]))
@@ -511,3 +506,10 @@
       (f)
       (reset! uuid-counter
               uuid-counter-start))))
+
+(s/defn app->GetEntitiesServices :- GetEntitiesServices
+  [app]
+  (-> app
+      app/service-graph
+      (utils/service-subgraph
+       :FeaturesService [:enabled?])))

@@ -323,3 +323,8 @@
 (defschema ObservableTypeIdentifier
   vocs/ObservableTypeIdentifier
   "vocab.observable-type-id")
+
+(s/defschema GetEntitiesServices
+  {:FeaturesService {:enabled? (s/=> s/Bool s/Keyword)
+                     s/Keyword s/Any}
+   s/Keyword        s/Any})

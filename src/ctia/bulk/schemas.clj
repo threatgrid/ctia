@@ -1,7 +1,7 @@
 (ns ctia.bulk.schemas
   (:require [clojure.string :as str]
             [ctia.entity.entities :as entities]
-            [ctia.schemas.core :refer [TempIDs Reference]]
+            [ctia.schemas.core :refer [TempIDs Reference GetEntitiesServices]]
             [schema-tools.core :as st]
             [schema.core :as s]))
 
@@ -28,20 +28,23 @@
   "Error related to one entity of the bulk"
   {:error s/Any})
 
-; TODO def => defn
-(s/defschema Bulk
-  (entities-bulk-schema (entities/all-entities) :schema))
+(s/defn get-entities :- [s/Any]
+  "Returns list of enabled entities"
+  [{{:keys [enabled?]} :FeaturesService} :- GetEntitiesServices]
+  (->> (entities/all-entities) (filter (fn [[k _]] (enabled? k)))))
 
-; TODO def => defn
-(s/defschema StoredBulk
-  (entities-bulk-schema (entities/all-entities) :stored-schema))
+(s/defn Bulk :- (s/protocol s/Schema)
+  "Returns Bulk schema without disabled entities"
+  [services :- GetEntitiesServices]
+  (entities-bulk-schema (get-entities services) :schema))
 
-; TODO def => defn
-(s/defschema BulkRefs
+(s/defn BulkRefs :- (s/protocol s/Schema)
+  [services :- GetEntitiesServices]
   (st/assoc
-   (entities-bulk-schema (entities/all-entities) [(s/maybe Reference)])
+   (entities-bulk-schema (get-entities services) [(s/maybe Reference)])
    (s/optional-key :tempids) TempIDs))
 
-; TODO def => defn
-(s/defschema NewBulk
-  (entities-bulk-schema (entities/all-entities) :new-schema))
+(s/defn NewBulk :- (s/protocol s/Schema)
+  "Returns NewBulk schema without disabled entities"
+  [services :- GetEntitiesServices]
+  (entities-bulk-schema (get-entities services) :new-schema))
