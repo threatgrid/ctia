@@ -111,8 +111,21 @@
     :external-id-capabilities :read-asset
     :can-aggregate?           true
     :histogram-fields         asset-histogram-fields
-    :enumerable-fields        asset-enumerable-fields
-    }))
+    :enumerable-fields        asset-enumerable-fields}))
+
+(def AssetType
+  (let [{:keys [fields name description]}
+        (flanders/->graphql
+         (fu/optionalize-all asset-schema/Asset)
+         {})]
+    (g/new-object
+     name
+     description
+     []
+     (merge fields
+            feedback/feedback-connection-field
+            relationship-graphql/relatable-entity-fields
+            go/graphql-ownership-fields))))
 
 (def capabilities
   #{:create-asset
