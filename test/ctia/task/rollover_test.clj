@@ -66,7 +66,7 @@
            (is (= 3 (count-indices)))))))))
 
 (deftest rollover-stores-error-test
-  (with-redefs [es-index/rollover! (fn [_ alias _ _]
+  (with-redefs [es-index/rollover! (fn [_ alias _]
                                      (if (string/starts-with? alias "ok_index")
                                        {:rolled_over (rand-nth [true false])}
                                        (throw (ex-info "that's baaaaaaaddd"
@@ -76,7 +76,7 @@
       ["ctia.auth.type" "allow-all"
        "ctia.store.es.default.port" 9207
        "ctia.store.es.default.version" 7
-      "ctia.store.es.default.auth" es-helpers/basic-auth]
+       "ctia.store.es.default.auth" es-helpers/basic-auth]
       #(helpers/fixture-ctia-with-app
         (fn [app]
           (let [services (es-helpers/app->ESConnServices app)

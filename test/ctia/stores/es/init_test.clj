@@ -6,9 +6,11 @@
             [ctia.stores.es.mapping :as m]
             [ductile.index :as index]
             [ductile.conn :as conn]
+            [ductile.auth :as auth]
             [ductile.auth.api-key :refer [create-api-key!]]
             [clojure.test :refer [deftest testing is are]])
-  (:import [java.util UUID]))
+  (:import [java.util UUID]
+           [clojure.lang ExceptionInfo]))
 
 (defn gen-indexname []
   (str "ctia_init_test_sighting"
@@ -328,26 +330,44 @@
                       :update-mappings update-mappings?
                       :update-settings update-settings?)))))
 
-(deftest api-key-auth-test
+(deftest es-auth-properties-test
   (for-each-es-version
-   "init-es-conn! should return a conn state with given auth properties"
+   "init-es-conn! should return a conn state in respect with given auth properties."
    [7] ;; auth only available on ES7 docker, use this macro to easily test future major versions
-   nil
+   #(index/delete! % "ctia*")
    (let [;; create API Key
          {key-id :id :keys [api_key]} (create-api-key! conn {:name "my-api-key"})
-         auth-params {:type :api-key
-                      :params {:id key-id :api-key api_key}}]
-     ;; check ES conn init with API Key auth properties
-     (helpers/with-properties
-       ["ctia.store.es.default.auth" auth-params]
-       (helpers/fixture-ctia-with-app
-        (fn [app]
-          (let [{:keys [all-stores]} (helpers/get-service-map app :StoreService)]
-            (doseq [[_ store] (all-stores)]
-              (let [conn (-> store first :state :conn)]
-                (is (map? (index/get-template conn "*")))
-                (is (-> conn
-                        :auth
-                        :headers
-                        :authorization
-                        (string/starts-with? "ApiKey "))))))))))))
+         api-key-params {:id key-id :api-key api_key}
+         ok-api-key-auth-params {:type :api-key
+                                 :params api-key-params}
+         ko-api-key-auth-params {:type :api-key
+                                 :params (assoc api-key-params :id "invalid id")}
+
+         header-params (:headers (auth/api-key-auth api-key-params))
+         ok-header-auth-params {:type :headers
+                                :params header-params}
+
+         ko-header-auth-params {:type :headers
+                                :params {:authorization "invalid key"}}
+         try-store (fn [store] (-> store first :state :conn
+                                   (index/get-template "*")
+                                   map?))
+         try-auth-params (fn [auth-params]
+                           (helpers/with-properties
+                             ["ctia.store.es.default.auth" auth-params]
+                             (helpers/fixture-ctia-with-app
+                              (fn [app]
+                                (let [{:keys [all-stores]} (helpers/get-service-map app :StoreService)]
+                                  (doseq [[_ store] (all-stores)]
+                                    (is (try-store store))))))))]
+     (doseq [[auth-params authorized?] [[basic-auth true]
+                                        [ok-api-key-auth-params true]
+                                        [ok-header-auth-params true]
+                                        [ko-api-key-auth-params false]
+                                        [ko-header-auth-params false]]]
+       (testing (format "auth-params: %s, authorized?: %s" auth-params authorized?)
+         (try
+           (try-auth-params auth-params)
+           (catch ExceptionInfo e
+             (is (not authorized?))
+             (is (string/starts-with? (.getMessage e) "Unauthorized ES Request")))))))))
