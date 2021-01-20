@@ -1,46 +1,23 @@
 (ns ctia.graphql.schemas
   (:require
-   [ctia.schemas.graphql
-    [common :as common]
-    [helpers :as g]
-    [pagination :as p]
-    [resolvers :as res]]
-   [ctia.entity.attack-pattern :as attack-pattern
-    :refer [AttackPatternConnectionType
-            AttackPatternType]]
-   [ctia.entity.incident :as incident
-    :refer [IncidentConnectionType
-            IncidentType]]
-   [ctia.entity.indicator :as indicator
-    :refer [IndicatorConnectionType
-            IndicatorType]]
-   [ctia.entity.investigation.graphql-schemas :as investigation
-    :refer [InvestigationConnectionType
-            InvestigationType]]
-   [ctia.entity.casebook :as casebook
-    :refer [CasebookConnectionType
-            CasebookType]]
-   [ctia.entity.judgement
-    :as judgement
-    :refer [JudgementConnectionType
-            JudgementType]]
-   [ctia.entity.malware :as malware
-    :refer [MalwareConnectionType
-            MalwareType]]
-   [ctia.observable.graphql.schemas :as observable
-    :refer [ObservableType]]
-   [ctia.entity.sighting.graphql-schemas
-    :as sighting
-    :refer [SightingConnectionType
-            SightingType]]
-   [ctia.entity.tool.graphql-schemas :as tool
-    :refer [ToolConnectionType ToolType]]
-   [ctia.entity.vulnerability :as vulnerability
-    :refer [VulnerabilityConnectionType VulnerabilityType]]
-   [ctia.entity.weakness :as weakness
-    :refer [WeaknessConnectionType WeaknessType]]
-   [ctia.schemas.core :refer [APIHandlerServices
-                              RealizeFnResult]]
+   [ctia.entity.asset :as asset :refer [AssetType]]
+   [ctia.entity.attack-pattern :as attack-pattern :refer [AttackPatternConnectionType AttackPatternType]]
+   [ctia.entity.casebook :as casebook :refer [CasebookConnectionType CasebookType]]
+   [ctia.entity.incident :as incident :refer [IncidentConnectionType IncidentType]]
+   [ctia.entity.indicator :as indicator :refer [IndicatorConnectionType IndicatorType]]
+   [ctia.entity.investigation.graphql-schemas :as investigation :refer [InvestigationConnectionType InvestigationType]]
+   [ctia.entity.judgement :as judgement :refer [JudgementConnectionType JudgementType]]
+   [ctia.entity.malware :as malware :refer [MalwareConnectionType MalwareType]]
+   [ctia.entity.sighting.graphql-schemas :as sighting :refer [SightingConnectionType SightingType]]
+   [ctia.entity.tool.graphql-schemas :as tool :refer [ToolConnectionType ToolType]]
+   [ctia.entity.vulnerability :as vulnerability :refer [VulnerabilityConnectionType VulnerabilityType]]
+   [ctia.entity.weakness :as weakness :refer [WeaknessConnectionType WeaknessType]]
+   [ctia.observable.graphql.schemas :as observable :refer [ObservableType]]
+   [ctia.schemas.core :refer [APIHandlerServices RealizeFnResult]]
+   [ctia.schemas.graphql.common :as common]
+   [ctia.schemas.graphql.helpers :as g]
+   [ctia.schemas.graphql.pagination :as p]
+   [ctia.schemas.graphql.resolvers :as res]
    [schema.core :as s])
   (:import [graphql GraphQL Scalars]
            [graphql.schema
