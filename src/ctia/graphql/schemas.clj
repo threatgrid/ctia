@@ -1,6 +1,6 @@
 (ns ctia.graphql.schemas
   (:require
-   [ctia.entity.asset :as asset :refer [AssetType AssetConnectionType]]
+   [ctia.entity.asset.graphql-schemas :as asset :refer [AssetType AssetConnectionType]]
    [ctia.entity.attack-pattern :as attack-pattern :refer [AttackPatternConnectionType AttackPatternType]]
    [ctia.entity.casebook :as casebook :refer [CasebookConnectionType CasebookType]]
    [ctia.entity.incident :as incident :refer [IncidentConnectionType IncidentType]]
