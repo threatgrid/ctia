@@ -341,27 +341,40 @@ Rate limit related configuration
 Set ES Store implementation settings, 
 one can set defaults for all ES stores using =default= as entity
 
-| Property                                 | Description                                                          | Possible values |
-|------------------------------------------+----------------------------------------------------------------------+-----------------|
-| ctia.store.es.[entity].host              | ES instance host                                                     | string          |
-| ctia.store.es.[entity].port              | ES instance port                                                     | port            |
-| ctia.store.es.[entity].indexname         | ES index name to use                                                 | string          |
-| ctia.store.es.[entity].refresh           | control when changes made by this request are made visible to search | string          |
-| ctia.store.es.[entity].replicas          | how many replicas to setup at index creation                         | number          |
-| ctia.store.es.[entity].shards            | how many shards to setup at index creation                           | number          |
-| ctia.store.es.[entity].default_operator  | default operator for free text search                                | "AND" / "OR"    |
-| ctia.store.es.[entity].aliased           | should the index be aliased                                          | boolean         |
-| ctia.store.es.[entity].rollover.max_docs | trigger rollover when store size exceeds that value                  | integer         |
-| ctia.store.es.[entity].rollover.max_age  | trigger rollover when store age exceeds that period (ex: 2m, 1y)     | string          |
+| Property                                 | Description                                                          | Possible values            |
+|------------------------------------------+----------------------------------------------------------------------+----------------------------|
+| ctia.store.es.[entity].host              | ES instance host                                                     | string                     |
+| ctia.store.es.[entity].port              | ES instance port                                                     | port                       |
+| ctia.store.es.[entity].indexname         | ES index name to use                                                 | string                     |
+| ctia.store.es.[entity].refresh           | control when changes made by this request are made visible to search | string                     |
+| ctia.store.es.[entity].replicas          | how many replicas to setup at index creation                         | number                     |
+| ctia.store.es.[entity].shards            | how many shards to setup at index creation                           | number                     |
+| ctia.store.es.[entity].default_operator  | default operator for free text search                                | "AND" / "OR"               |
+| ctia.store.es.[entity].aliased           | should the index be aliased                                          | boolean                    |
+| ctia.store.es.[entity].rollover.max_docs | trigger rollover when store size exceeds that value                  | integer                    |
+| ctia.store.es.[entity].rollover.max_age  | trigger rollover when store age exceeds that period (ex: 2m, 1y)     | string                     |
+| ctia.store.es.[entity].version           | major version of used Elasticsearch                                  | integer                    |
+| ctia.store.es.[entity].update-mappings   | if true, automatically updates index mappings at startup             | boolean                    |
+| ctia.store.es.[entity].update-settings   | if true, automatically updates index settings at startup             | boolean                    |
+| ctia.store.es.[entity].auth              | authentication parameters for ES, see [[https://github.com/threatgrid/ductile][ductile documentation]]          | ductile.schemas/AuthParams |
 
 ** Migration
 
-ES Migration related settings
+ES Migration related settings (see [[migration.md][./migration.md]] for more details)
 
-| Property                     | Description                                                                                                | Possible values |
-|------------------------------+------------------------------------------------------------------------------------------------------------+-----------------|
-| ctia.migration.optimizations | Speed up the migration process disabling indexing and replicas while migrating,                            |boolean          |
-|                              | settings are reverted to their actual values when the process is complete, this should be considered safe. |                 |
+*** base properties
+
+| Property                    | description                                      | example      | default value |
+|-----------------------------+--------------------------------------------------+--------------+---------------|
+| ctia.migration.migration-id | id of the migration state to create or restart   | migration-1  | required      |
+| ctia.migration.prefix       | prefix of the newly created indices              | 1.1.0        | required      |
+| ctia.migration.migrations   | a comma separated list of migration ids to apply | 0.4.28,1.0.0 | required      |
+| ctia.migration.batch-size   | number of migrated documents per batch           | 1000         | required      |
+| ctia.migration.buffer-size  | max batches in buffer between source and target  | 10           | required      |
+| ctia.migration.stores       | comma separated list of stores to migrate        | tool,malware | required      |
+
+*** target store properties
+The generated stores can have different properties than the source store and can be configured with the same properties by using the format `ctia.migration.store.es.<store>.<property>`.
 
 ** Versions
 

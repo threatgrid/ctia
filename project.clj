@@ -61,7 +61,7 @@
 
                  [threatgrid/ctim "1.0.23"]
                  [threatgrid/clj-momo "0.3.5"]
-                 [threatgrid/ductile "0.2.0"]
+                 [threatgrid/ductile "0.3.0"]
 
                  [com.arohner/uri "0.1.2"]
 

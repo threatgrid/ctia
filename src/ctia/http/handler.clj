@@ -17,7 +17,7 @@
             [ctia.http.exceptions :as ex]
             [ctia.http.middleware
              [ratelimit :refer [wrap-rate-limit]]
-             [auth :refer :all]
+             [auth :refer [wrap-authenticated]]
              [cache-control :refer [wrap-cache-control]]
              [unknown :as unk]
              [version :refer [wrap-version]]]
@@ -26,7 +26,6 @@
             [ctia.properties :as p
              :refer [get-http-swagger]]
             [ctia.properties.routes :refer [properties-routes]]
-            [ctia.schemas.core :refer [APIHandlerServices]]
             [ctia.version :refer [current-version]]
             [ctia.version.routes :refer [version-routes]]
             [ctia.status.routes :refer [status-routes]]
@@ -107,7 +106,7 @@
   {:compojure.api.exception/request-parsing ex/request-parsing-handler
    :compojure.api.exception/request-validation ex/request-validation-handler
    :compojure.api.exception/response-validation ex/response-validation-handler
-   :ductile.conn/es-query-parsing-error ex/es-query-parsing-error-handler
+   :ductile.conn/invalid-request ex/es-invalid-request
    :access-control-error ex/access-control-error-handler
    :invalid-tlp-error ex/invalid-tlp-error-handler
    :realize-entity-error ex/realize-entity-error-handler

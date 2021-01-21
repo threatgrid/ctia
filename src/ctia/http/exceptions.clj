@@ -42,7 +42,7 @@
       exception-data
       (assoc :ex-data exception-data))))
 
-(defn es-query-parsing-error-handler
+(defn es-invalid-request
   "Handle ES query parsing error"
   [^Exception e data request]
   (logging/log! :error e (es-ex-data e data request))
@@ -53,7 +53,7 @@
                            (json/read-str :key-fn keyword))]
 
     (bad-request
-     {:type "ES query parsing error"
+     {:type "ES Invalid Request"
       :message (some-> es-message
                        :error
                        :root_cause
@@ -63,7 +63,7 @@
 
 (defn access-control-error-handler
   "Handle access control error"
-  [^Exception e data request]
+  [^Exception e _data _request]
   (logging/log! :info e (ex-message-and-data e))
   (forbidden
    {:error "Access Control validation Client Error"
@@ -73,7 +73,7 @@
 
 (defn spec-validation-error-handler
   "Handle spec validation error"
-  [^Exception e data request]
+  [^Exception e _data _request]
   (logging/log! :info e (ex-message-and-data e))
   (bad-request
    (let [entity (:entity (ex-data e))]
@@ -85,7 +85,7 @@
 
 (defn invalid-tlp-error-handler
   "Handle access control error"
-  [^Exception e data request]
+  [^Exception e _data _request]
   (logging/log! :info e (ex-message-and-data e))
   (bad-request
    (let [entity (:entity (ex-data e))]
@@ -96,7 +96,7 @@
 
 (defn realize-entity-error-handler
   "Handle error at the realize step"
-  [^Exception e data request]
+  [^Exception e _data _request]
   (logging/log! :info e (ex-message-and-data e))
   (bad-request
    (let [data (ex-data e)]
@@ -104,7 +104,7 @@
 
 (defn default-error-handler
   "Handle default error"
-  [^Exception e data request]
+  [^Exception e _data _request]
   (logging/log! :error e (ex-message-and-data e))
   (internal-server-error {:type "unknown-exception"
                           :class (.getName (class e))}))

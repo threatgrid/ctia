@@ -751,7 +751,6 @@
                             docs))))))
         (testing "restart migration shall properly handle inserts, updates and deletes"
           (let [;; retrieve the first 2 source indices for sighting store
-                {:keys [host port]} (get-in-config [:ctia :store :es :default])
                 [sighting-index-1 sighting-index-2 :as sighting-indices]
                 (->> (es-helpers/get-cat-indices conn)
                      keys

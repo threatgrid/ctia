@@ -2,14 +2,11 @@
   "ES test helpers"
   (:require [clojure.test :refer [testing]]
             [cheshire.core :as json]
-            [clj-http.client :as http]
             [ductile
              [index :as es-index]
              [conn :as es-conn]
              [document :as es-doc]]
             [clojure.java.io :as io]
-            [ctia
-             [store :as store]]
             [clojure.walk :as walk]
             [ctia.stores.es
              [init :as es-init]
@@ -32,11 +29,6 @@
   []
   (let [get-in-config (h/build-get-in-config-fn)]
     {:ConfigService {:get-in-config get-in-config}}))
-
-(defn refresh-indices [entity get-in-config]
-  (let [{:keys [host port]}
-        (es-init/get-store-properties entity get-in-config)]
-    (http/post (format "http://%s:%s/_refresh" host port))))
 
 (defn delete-store-indexes
   ([restore-conn?]
@@ -107,7 +99,8 @@
                       "ctia.store.es.default.aliased" true
                       "ctia.store.es.default.rollover.max_docs" 50
                       "ctia.store.es.default.version" 5
-
+                      "ctia.store.es.default.auth" {:type :basic-auth
+                                                    :params {:user "elastic" :pwd "ductile"}}
                       "ctia.store.es.actor.indexname" "ctia_actor"
                       "ctia.store.es.actor.default_operator" "OR"
                       "ctia.store.es.asset.indexname" "ctia_assets"
@@ -228,16 +221,15 @@
                (map (partial prepare-bulk-ops app)
                     (line-seq rdr)))))
 
-(defn get-cat-indices [{:keys [uri] :as _conn}]
-  (let [url (str uri "/_cat/indices?format=json&pretty=true")
-        {:keys [body]} (http/get url {:as :json})]
-    (->> body
-         (map (fn [{:keys [index]
-                    :as entry}]
-                {index (read-string
-                        (:docs.count entry))}))
-         (into {})
-         walk/keywordize-keys)))
+(defn get-cat-indices [conn]
+  (->> (es-index/cat-indices conn)
+       (map (fn [{:keys [index] docs_count :docs.count}]
+              {(keyword index) docs_count}))
+       (into {})))
+
+(def basic-auth
+  {:type :basic-auth
+   :params {:user "elastic" :pwd "ductile"}})
 
 (defmacro for-each-es-version
   "for each given ES version:
@@ -254,7 +246,8 @@
        (let [~'es-port (+ 9200 ~'version)
              ~'conn (es-conn/connect {:host "localhost"
                                       :port ~'es-port
-                                      :version ~'version})]
+                                      :version ~'version
+                                      :auth basic-auth})]
          (try
            (testing (format "%s (ES version: %s).\n" msg#  ~'version)
              (when clean-fn#

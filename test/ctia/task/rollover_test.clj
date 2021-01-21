@@ -1,12 +1,11 @@
 (ns ctia.task.rollover-test
   (:require [ductile.index :as es-index]
             [clojure.string :as string]
-            [clojure.test :refer [deftest testing is]]
+            [clojure.test :refer [deftest is]]
             [ctia.stores.es.init :as init]
             [ctia.task.rollover :as sut]
             [ctia.test-helpers.core :as helpers]
             [ctia.test-helpers.es :as es-helpers]
-            [ctia.test-helpers.fake-whoami-service :as whoami-helpers]
             [ctia.test-helpers.fixtures :as fixt]))
 
 (deftest rollover-aliased-test
@@ -17,6 +16,7 @@
    (helpers/with-properties
      ["ctia.store.es.default.port" es-port
       "ctia.store.es.default.version" version
+      "ctia.store.es.default.auth" es-helpers/basic-auth
       "ctia.auth.type" "allow-all"]
      (helpers/fixture-ctia-with-app
        (fn [app]
@@ -29,7 +29,8 @@
                                   :indexname (es-helpers/get-indexname app :malware)
                                   :host "localhost"
                                   :port es-port
-                                  :version version}
+                                  :version version
+                                  :auth es-helpers/basic-auth}
                state-not-aliased (init/init-es-conn! props-not-aliased services)
                rollover-not-aliased (sut/rollover-store state-not-aliased)
                props-aliased {:entity :sighting
@@ -39,17 +40,18 @@
                               :aliased true
                               :rollover {:max_docs 3}
                               :refresh "true"
-                              :version version}
+                              :version version
+                              :auth es-helpers/basic-auth}
                state-aliased (init/init-es-conn! props-aliased services)
                rollover-aliased (sut/rollover-store state-aliased)
                count-indices (fn []
                                (->> (str (:index state-aliased) "*")
-                                    (es-index/get (:conn state-aliased))
+                                    (es-index/get conn)
                                     count))
                post-bulk-fn (fn []
-                              (let [examples (fixt/bundle 100 false)
-                                    {:keys [error message]} (helpers/POST-bulk app examples true)]
-                                (es-index/refresh! (:conn state-aliased))))]
+                              (let [examples (fixt/bundle 100 false)]
+                                (helpers/POST-bulk app examples true)
+                                (es-index/refresh! conn)))]
            (is (nil? rollover-not-aliased))
            (is (seq rollover-aliased))
            (is (false? (:rolled_over rollover-aliased)))
@@ -73,7 +75,8 @@
     (helpers/with-properties*
       ["ctia.auth.type" "allow-all"
        "ctia.store.es.default.port" 9207
-       "ctia.store.es.default.version" 7]
+       "ctia.store.es.default.version" 7
+       "ctia.store.es.default.auth" es-helpers/basic-auth]
       #(helpers/fixture-ctia-with-app
         (fn [app]
           (let [services (es-helpers/app->ESConnServices app)
