@@ -8,6 +8,8 @@
             [ctia.schemas.graphql.flanders :as flanders]
             [ctia.schemas.graphql.helpers :as g]
             [ctia.schemas.graphql.ownership :as go]
+            [ctia.schemas.graphql.pagination :as pagination]
+            [ctia.schemas.graphql.sorting :as graphql-sorting]
             [ctia.schemas.sorting :as sorting]
             [ctia.schemas.utils :as csu]
             [ctia.stores.es.mapping :as em]
@@ -126,6 +128,17 @@
             feedback/feedback-connection-field
             relationship-graphql/relatable-entity-fields
             go/graphql-ownership-fields))))
+
+(def asset-order-arg
+  (graphql-sorting/order-by-arg
+   "AssetOrder"
+   "assets"
+   (into {}
+         (map (juxt graphql-sorting/sorting-kw->enum-name name)
+              asset-fields))))
+
+(def AssetConnectionType
+  (pagination/new-connection AssetType))
 
 (def capabilities
   #{:create-asset
