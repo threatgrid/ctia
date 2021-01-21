@@ -48,10 +48,7 @@
 (def realize-attack-pattern
   (default-realize-fn "attack-pattern" NewAttackPattern StoredAttackPattern))
 
-(def attack-pattern-fields
-  (concat sorting/base-entity-sort-fields
-          sorting/sourcable-entity-sort-fields
-          [:name]))
+(def attack-pattern-fields sorting/default-entity-sort-fields)
 
 (def attack-pattern-sort-fields
   (apply s/enum attack-pattern-fields))
@@ -63,10 +60,9 @@
     (merge
      em/base-entity-mapping
      em/sourcable-entity-mapping
+     em/describable-entity-mapping
      em/stored-entity-mapping
      {:abstraction_level em/token
-      :name em/token
-      :description em/text
       :kill_chain_phases em/kill-chain-phase
       :x_mitre_data_sources em/token
       :x_mitre_platforms em/token

@@ -21,19 +21,19 @@
                   app
                   "tool"
                   (-> new-tool-maximal
-                      (assoc :name "Tool 1")
+                      (assoc :title "Tool 1")
                       (dissoc :id)))
         entity-2 (gh/create-object
                   app
                   "tool"
                   (-> new-tool-maximal
-                      (assoc :name "Tool 2")
+                      (assoc :title "Tool 2")
                       (dissoc :id)))
         entity-3 (gh/create-object
                   app
                   "tool"
                   (-> new-tool-maximal
-                      (assoc :name "Tool 3")
+                      (assoc :title "Tool 3")
                       (dissoc :id)))
         f1 (gh/create-object app "feedback" (gh/feedback-1 (:id entity-1) #inst "2042-01-01T00:00:00.000Z"))
         f2 (gh/create-object app "feedback" (gh/feedback-2 (:id entity-1) #inst "2042-01-01T00:00:00.000Z")) ]
@@ -156,10 +156,10 @@
              (let [{:keys [data errors status]}
                    (gh/query app
                              graphql-queries
-                             {:query (format "name:\"%s\""
+                             {:query (format "title:\"%s\""
                                              (get-in
                                               datamap
-                                              [:tool-1 :name]))}
+                                              [:tool-1 :title]))}
                              "ToolsQueryTest")]
                (is (= 200 status))
                (is (empty? errors) "No errors")

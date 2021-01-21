@@ -29,7 +29,4 @@
 (def realize-tool
   (default-realize-fn "tool" NewTool StoredTool))
 
-(def tool-fields
-  (concat sorting/base-entity-sort-fields
-          sorting/sourcable-entity-sort-fields
-          [:name]))
+(def tool-fields sorting/default-entity-sort-fields)

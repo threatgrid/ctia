@@ -23,19 +23,19 @@
              app
              "attack-pattern"
              (-> new-attack-pattern-maximal
-                 (assoc :name "Attack Pattern 1")
+                 (assoc :title "Attack Pattern 1")
                  (dissoc :id)))
         ap2 (gh/create-object
              app
              "attack-pattern"
              (-> new-attack-pattern-maximal
-                 (assoc :name "Attack Pattern 2")
+                 (assoc :title "Attack Pattern 2")
                  (dissoc :id)))
         ap3 (gh/create-object
              app
              "attack-pattern"
              (-> new-attack-pattern-maximal
-                 (assoc :name "Attack Pattern 3")
+                 (assoc :title "Attack Pattern 3")
                  (dissoc :id)))
         f1 (gh/create-object app
                              "feedback"
@@ -182,10 +182,10 @@
              (let [{:keys [data errors status]}
                    (gh/query app
                              graphql-queries
-                             {:query (format "name:\"%s\""
+                             {:query (format "title:\"%s\""
                                              (get-in
                                               datamap
-                                              [:attack-pattern-1 :name]))}
+                                              [:attack-pattern-1 :title]))}
                              "AttackPatternsQueryTest")]
                (is (= 200 status))
                (is (empty? errors) "No errors")

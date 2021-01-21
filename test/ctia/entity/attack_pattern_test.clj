@@ -39,8 +39,8 @@
             {:app app
              :example new-attack-pattern-maximal
              :headers {:Authorization "45c1f5e3f05d0"}
-             :update-field :name
-             :invalid-test-field :name})))))
+             :update-field :title
+             :invalid-test-field :title})))))
 
 (deftest test-attack-pattern-pagination-field-selection
   (test-for-each-store-with-app

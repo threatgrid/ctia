@@ -38,7 +38,7 @@
       (into sut/tool-entity
             {:app app
              :example new-tool-maximal
-             :invalid-test-field :name
+             :invalid-test-field :title
              :update-field :description
              :headers {:Authorization "45c1f5e3f05d0"}})))))
 

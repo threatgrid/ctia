@@ -85,8 +85,9 @@ fragment attackPatternFields on AttackPattern {
   tlp
   source
   source_uri
-  name
+  title
   description
+  short_description
   kill_chain_phases {
     ...killChainPhaseFields
   }
