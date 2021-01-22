@@ -51,7 +51,7 @@
                       :args    (merge common/lucene-query-arguments
                                       asset/asset-order-arg
                                       p/connection-arguments)
-                      :resolve (res/search-entity-resolver :attack-pattern)}
+                      :resolve (res/search-entity-resolver :asset)}
     :attack_pattern  {:type    AttackPatternType
                       :args    search-by-id-args
                       :resolve (res/entity-by-id-resolver :attack-pattern)}
