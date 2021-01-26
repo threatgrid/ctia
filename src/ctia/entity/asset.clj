@@ -1,16 +1,17 @@
 (ns ctia.entity.asset
-  (:require [ctia.domain.entities :refer [default-realize-fn]]
-            [ctia.http.routes.common :as routes.common]
-            [ctia.http.routes.crud :refer [services->entity-crud-routes]]
-            [ctia.schemas.core :refer [APIHandlerServices def-acl-schema def-stored-schema]]
-            [ctia.schemas.sorting :as sorting]
-            [ctia.schemas.utils :as csu]
-            [ctia.stores.es.mapping :as em]
-            [ctia.stores.es.store :refer [def-es-store]]
-            [ctim.schemas.asset :as asset-schema]
-            [flanders.utils :as fu]
-            [schema-tools.core :as st]
-            [schema.core :as s]))
+  (:require
+   [ctia.domain.entities :refer [default-realize-fn]]
+   [ctia.http.routes.common :as routes.common]
+   [ctia.http.routes.crud :refer [services->entity-crud-routes]]
+   [ctia.schemas.core :refer [APIHandlerServices def-acl-schema def-stored-schema]]
+   [ctia.schemas.sorting :as sorting]
+   [ctia.schemas.utils :as csu]
+   [ctia.stores.es.mapping :as em]
+   [ctia.stores.es.store :refer [def-es-store]]
+   [ctim.schemas.asset :as asset-schema]
+   [flanders.utils :as fu]
+   [schema-tools.core :as st]
+   [schema.core :as s]))
 
 (def-acl-schema Asset
   asset-schema/Asset

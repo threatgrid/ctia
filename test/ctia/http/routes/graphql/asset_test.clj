@@ -1,14 +1,15 @@
 (ns ctia.http.routes.graphql.asset-test
-  (:require [clj-momo.test-helpers.core :as mth]
-            [clojure.test :refer [deftest is join-fixtures testing use-fixtures]]
-            [ctia.entity.asset :as asset]
-            [ctia.test-helpers.auth :refer [all-capabilities]]
-            [ctia.test-helpers.core :as helpers]
-            [ctia.test-helpers.fake-whoami-service :as whoami-helpers]
-            [ctia.test-helpers.fixtures :as fixt]
-            [ctia.test-helpers.graphql :as gh]
-            [ctia.test-helpers.store :refer [test-for-each-store-with-app]]
-            [ctim.examples.assets :refer [asset-maximal]]))
+  (:require
+   [clj-momo.test-helpers.core :as mth]
+   [clojure.test :refer [deftest is join-fixtures testing use-fixtures]]
+   [ctia.entity.asset :as asset]
+   [ctia.test-helpers.auth :refer [all-capabilities]]
+   [ctia.test-helpers.core :as helpers]
+   [ctia.test-helpers.fake-whoami-service :as whoami-helpers]
+   [ctia.test-helpers.fixtures :as fixt]
+   [ctia.test-helpers.graphql :as gh]
+   [ctia.test-helpers.store :refer [test-for-each-store-with-app]]
+   [ctim.examples.assets :refer [asset-maximal]]))
 
 (use-fixtures :once (join-fixtures [mth/fixture-schema-validation
                                     whoami-helpers/fixture-server]))

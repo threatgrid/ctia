@@ -1,24 +1,25 @@
 (ns ctia.entity.attack-pattern
-  (:require [ctia.domain.entities :refer [default-realize-fn]]
-            [ctia.entity.feedback.graphql-schemas :as feedback]
-            [ctia.entity.relationship.graphql-schemas :as relationship-graphql]
-            [ctia.http.routes.common :as routes.common
-             :refer [BaseEntityFilterParams PagingParams SourcableEntityFilterParams] ]
-            [ctia.http.routes.crud :refer [services->entity-crud-routes]]
-            [ctia.schemas.core :refer [APIHandlerServices def-acl-schema def-stored-schema]]
-            [ctia.schemas.graphql.flanders :as flanders]
-            [ctia.schemas.graphql.helpers :as g]
-            [ctia.schemas.graphql.ownership :as go]
-            [ctia.schemas.graphql.pagination :as pagination]
-            [ctia.schemas.graphql.sorting :as graphql-sorting]
-            [ctia.schemas.sorting :as sorting]
-            [ctia.schemas.utils :as csu]
-            [ctia.stores.es.mapping :as em]
-            [ctia.stores.es.store :refer [def-es-store]]
-            [ctim.schemas.attack-pattern :as attack]
-            [flanders.utils :as fu]
-            [schema-tools.core :as st]
-            [schema.core :as s]))
+  (:require
+   [ctia.domain.entities :refer [default-realize-fn]]
+   [ctia.entity.feedback.graphql-schemas :as feedback]
+   [ctia.entity.relationship.graphql-schemas :as relationship-graphql]
+   [ctia.http.routes.common :as routes.common
+    :refer [BaseEntityFilterParams PagingParams SourcableEntityFilterParams] ]
+   [ctia.http.routes.crud :refer [services->entity-crud-routes]]
+   [ctia.schemas.core :refer [APIHandlerServices def-acl-schema def-stored-schema]]
+   [ctia.schemas.graphql.flanders :as flanders]
+   [ctia.schemas.graphql.helpers :as g]
+   [ctia.schemas.graphql.ownership :as go]
+   [ctia.schemas.graphql.pagination :as pagination]
+   [ctia.schemas.graphql.sorting :as graphql-sorting]
+   [ctia.schemas.sorting :as sorting]
+   [ctia.schemas.utils :as csu]
+   [ctia.stores.es.mapping :as em]
+   [ctia.stores.es.store :refer [def-es-store]]
+   [ctim.schemas.attack-pattern :as attack]
+   [flanders.utils :as fu]
+   [schema-tools.core :as st]
+   [schema.core :as s]))
 
 (def-acl-schema AttackPattern
   attack/AttackPattern
