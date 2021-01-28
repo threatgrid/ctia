@@ -42,19 +42,6 @@
            asset-properties2  (prepare-result
                                (gh/create-object app "asset-properties" asset-properties-2))
            graphql-queries (slurp "test/data/asset_properties.graphql")]
-
-       (testing "asset properties query"
-         (let [{:keys [data
-                       errors
-                       status]} (gh/query
-                                 app graphql-queries
-                                 {:id (:id asset-properties1)}
-                                 "AssetPropertyQueryTest")]
-
-           (is (= 200 status))
-           (is (empty? errors) "No errors")
-
-           (testing "the asset-properties" (is (= asset-properties1 (:asset_property data))))))
        (testing "asset-propertiess query"
          (testing "asset-propertiess connection"
            (gh/connection-test

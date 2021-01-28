@@ -58,10 +58,3 @@ query AssetPropertiesQueryTest($query: String, $after: String, $first: Int, $sor
     }
   }
 }
-
-
-query AssetPropertyQueryTest($id: String!) {
-  asset_property(id: $id) {
-    ...assetPropertiesFields
-  }
-}
