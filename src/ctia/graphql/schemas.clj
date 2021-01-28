@@ -63,9 +63,6 @@
                                        asset-mapping/asset-mapping-order-arg
                                        p/connection-arguments)
                        :resolve (res/search-entity-resolver :asset-mapping)}
-    :asset_property   {:type    AssetPropertiesType
-                       :args    search-by-id-args
-                       :resolve (res/entity-by-id-resolver :asset-properties)}
     :asset_properties {:type    AssetPropertiesConnectionType
                        :args    (merge common/lucene-query-arguments
                                        asset-properties/asset-properties-order-arg
