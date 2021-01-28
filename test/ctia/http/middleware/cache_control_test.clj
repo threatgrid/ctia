@@ -35,6 +35,7 @@
                 "ctia/actor"
                 :body {:title "actor"
                        :description "description"
+                       :short_description "short description"
                        :actor_type "Hacker"
                        :source "a source"
                        :confidence "High"
