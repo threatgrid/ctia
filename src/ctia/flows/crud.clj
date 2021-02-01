@@ -6,6 +6,7 @@
             [clojure.set :refer [index]]
             [clojure.spec.alpha :as cs]
             [clojure.tools.logging :as log]
+            [ctia.entity.event.schemas :refer [Event]]
             [ctia
              [auth :as auth]
              [store :as store]]
@@ -27,8 +28,7 @@
               to-delete-event
               to-update-event]]
             [ring.util.http-response :as http-response]
-            [schema.core :as s]
-            [schema-tools.core :as st])
+            [schema.core :as s])
   (:import java.util.UUID))
 
 (s/defschema FlowMap
@@ -231,29 +231,30 @@
   fm)
 
 (s/defn ^:private create-events :- FlowMap
-  [{:keys [create-event-fn entities flow-type identity prev-entity]
+  [{:keys [create-event-fn flow-type identity prev-entity entities]
     {{:keys [get-in-config]} :ConfigService}
     :services
     :as fm} :- FlowMap]
   (if (get-in-config [:ctia :events :enabled])
-    (let [events
-          (->> entities
-               (filter #(nil? (:error %)))
-               (map (fn [entity]
-                      (try
-                        (if (= :update flow-type)
-                          (-> entity
-                              (assoc :owner (auth/login identity))
-                              (create-event-fn prev-entity (make-id "event")))
-                          (create-event-fn entity (make-id "event")))
-                        (catch Throwable e
-                          (log/error "Could not create event" e)
-                          (throw (ex-info "Could not create event"
-                                          {:flow-type flow-type
-                                           :login (auth/login identity)
-                                           :entity entity
-                                           :prev-entity prev-entity}))))))
-               doall)]
+    (let [login (auth/login identity)
+          create-event (fn [entity]
+                         (let [event-id (make-id "event")]
+                           (try
+                             (case flow-type
+                               :create (create-event-fn entity event-id)
+                               :update (create-event-fn entity prev-entity event-id login)
+                               :delete (create-event-fn entity event-id login))
+                             (catch Throwable e
+                               (log/error "Could not create event" e)
+                               (throw (ex-info "Could not create event"
+                                               {:flow-type flow-type
+                                                :login login
+                                                :entity entity
+                                                :prev-entity prev-entity}))))))
+          events (->> entities
+                      (filter #(nil? (:error %)))
+                      (map create-event)
+                      doall)]
       (cond-> fm
         (seq events) (assoc :events events)))
     fm))
@@ -291,7 +292,7 @@
     (f fm)))
 
 (s/defn apply-create-store-fn
-  [{:keys [entities store-fn enveloped-result? tempids] :as fm} :- FlowMap]
+  [{:keys [entities store-fn enveloped-result?] :as fm} :- FlowMap]
   (if (seq entities)
     (try
       (assoc fm
