@@ -11,6 +11,7 @@
    [ctia.entity.judgement :as judgement :refer [JudgementConnectionType JudgementType]]
    [ctia.entity.malware :as malware :refer [MalwareConnectionType MalwareType]]
    [ctia.entity.sighting.graphql-schemas :as sighting :refer [SightingConnectionType SightingType]]
+   [ctia.entity.target-record.graphql-schemas :as target-record :refer [TargetRecordType TargetRecordConnectionType]]
    [ctia.entity.tool.graphql-schemas :as tool :refer [ToolConnectionType ToolType]]
    [ctia.entity.vulnerability :as vulnerability :refer [VulnerabilityConnectionType VulnerabilityType]]
    [ctia.entity.weakness :as weakness :refer [WeaknessConnectionType WeaknessType]]
@@ -135,6 +136,14 @@
                                        sighting/sighting-order-arg
                                        p/connection-arguments)
                        :resolve (res/search-entity-resolver :sighting)}
+    :target_record    {:type    TargetRecordType
+                       :args    search-by-id-args
+                       :resolve (res/entity-by-id-resolver :target-record)}
+    :target_records   {:type    TargetRecordConnectionType
+                       :args    (merge common/lucene-query-arguments
+                                       target-record/target-record-order-arg
+                                       p/connection-arguments)
+                       :resolve (res/search-entity-resolver :target-record)}
     :tool             {:type    ToolType
                        :args    search-by-id-args
                        :resolve (res/entity-by-id-resolver :tool)}
