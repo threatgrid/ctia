@@ -1,6 +1,7 @@
 (ns ctia.task.migration.migrations.describe-test
   (:require  [ctia.task.migration.migrations.describe :as sut]
-             [clojure.test :refer [deftest testing is]]))
+             [clojure.test :refer [deftest testing is]]
+             [clojure.math.combinatorics :as combo]))
 
 ;; describibable source entities
 (def actor
@@ -117,28 +118,35 @@
       "field not related to entity description shall be preserved."))
 
 (defn mutate-fn
-  [mutated-fields]
-  (fn [entity]
-    (let [properties (shuffle mutated-fields)
-          nb-mutations (-> (count mutated-fields)
-                           inc
-                           rand-int)]
-      (->> (take nb-mutations properties)
-           (apply (partial dissoc entity))))))
+  [fields]
+  (fn [entity] (apply dissoc entity fields)))
 
 (defn mutant-generator
   [mutated-fields]
-  (let [mutate (mutate-fn mutated-fields)]
-    (fn [n entity] (repeatedly n #(mutate entity)))))
+  (let [subsets (combo/subsets mutated-fields)
+        mutate-fns (map mutate-fn subsets)]
+    (fn [entity]
+      (map #(% entity) mutate-fns))))
+
+(defn has-mutation?
+  [entity [field has?]]
+  (= has? (contains? entity field)))
+
+(defn is-mutant?
+  [mutations entity]
+  (every? #(has-mutation? entity %) mutations))
 
 (deftest migrate-non-describable-test
   (testing "describe shall properly migrate non describable entities of type attack-pattern, malware and tool"
     (let [gen-mutants (mutant-generator [:name :description])
-          source-entities (mapcat #(gen-mutants 5 %) [attack-pattern malware tool])
-          target-entities (map sut/describe source-entities)]
+          source-entities (mapcat #(gen-mutants %) [attack-pattern malware tool])
+          target-entities (map sut/describe source-entities)
+          w-name-wo-desc? (partial is-mutant? {:name true :description false})
+          wo-name-wo-desc? (partial is-mutant? {:name false :description false})]
+      (assert (some w-name-wo-desc? source-entities))
+      (assert (some wo-name-wo-desc? source-entities))
       (doseq [[source migrated] (zipmap source-entities target-entities)]
-        (let [{src-name :name
-               src-desc :description} source
+        (let [{src-name :name} source
 
               {migrated-name :name
                migrated-title :title
@@ -156,11 +164,11 @@
             (is (= "No title provided" migrated-title)
                 "missing name on corrupted data should be fixed."))
 
-          (when (and (seq src-name) (nil? src-desc))
+          (when (w-name-wo-desc? source)
             (is (= migrated-title migrated-short-desc)
                 "when provided, the title should be used as short_description on non describable entities"))
 
-          (when (and (nil? src-name) (nil? src-desc))
+          (when (wo-name-wo-desc? source)
             (is (= "No description provided" migrated-desc migrated-short-desc)))
 
           (check-unchanged-fields source migrated))))))
@@ -168,8 +176,21 @@
 (deftest migrate-describable-test
   (testing "describe shall properly migrate describable entities"
     (let [gen-mutants (mutant-generator [:title :description :short_description])
-          source-entities (mapcat #(gen-mutants 10 %) [actor campaign])
-          target-entities (map sut/describe source-entities)]
+          source-entities (mapcat #(gen-mutants %) [actor campaign])
+          target-entities (map sut/describe source-entities)
+          w-title? (partial is-mutant? {:title true})
+          wo-title? (partial is-mutant? {:title false})
+          w-desc? (partial is-mutant? {:description true})
+          w-short-desc? (partial is-mutant? {:short_description true})
+          w-title-wo-desc-wo-short-desc? (partial is-mutant? {:title true
+                                                              :description false
+                                                              :short_description false})]
+      (assert (some w-title? source-entities))
+      (assert (some wo-title? source-entities))
+      (assert (some w-desc? source-entities))
+      (assert (some w-short-desc? source-entities))
+      (assert (some w-title-wo-desc-wo-short-desc? source-entities))
+
       (doseq [[source migrated] (zipmap source-entities target-entities)]
         (let [{src-title :title
                src-desc :description
@@ -183,20 +204,20 @@
           (is (seq migrated-desc))
           (is (seq migrated-short-desc))
 
-          (when (seq src-title)
+          (when (w-title? source)
             (is (= src-title migrated-title)))
 
-          (when (seq src-desc)
+          (when (w-desc? source)
             (is (= src-desc migrated-desc)))
 
-          (when (seq src-short-desc)
+          (when (w-short-desc? source)
             (is (= src-short-desc migrated-short-desc)))
 
-          (when (nil? src-title)
+          (when (wo-title? source)
             (is (= "No title provided" migrated-title)
                 "missing name on corrupted data should be fixed."))
 
-          (when (and (seq src-title) (nil? src-desc) (nil? src-short-desc))
+          (when (w-title-wo-desc-wo-short-desc? source)
             (is (= migrated-title migrated-short-desc)
                 "when provided, the title should be used as short_description on non describable entities"))
 

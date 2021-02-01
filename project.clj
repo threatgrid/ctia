@@ -48,6 +48,7 @@
                  [org.clojure/tools.logging "1.1.0"]
                  [org.clojure/tools.cli "1.0.194"]
                  [pandect "0.6.1"]
+                 [org.clojure/math.combinatorics "0.1.6"]
 
                  ;; Trapperkeeper
                  [puppetlabs/trapperkeeper ~trapperkeeper-version]
