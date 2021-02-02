@@ -9,6 +9,7 @@
    [ctia.schemas.graphql.helpers :as g]
    [ctia.schemas.graphql.ownership :as go]
    [ctia.schemas.graphql.pagination :as pagination]
+   [ctia.schemas.graphql.refs :as refs]
    [ctia.schemas.graphql.resolvers :as resolvers]
    [ctia.schemas.graphql.sorting :as sorting]
    [ctim.schemas.asset :as asset-schema]
@@ -18,10 +19,14 @@
 
 (def AssetMappingRefType
   (let [{:keys [fields name description]}
-        (flanders/->graphql (fu/optionalize-all ctim-asset-mapping/AssetMapping))]
-    (g/new-object name description []
-                  (merge fields
-                         go/graphql-ownership-fields))))
+        (flanders/->graphql
+         (fu/optionalize-all ctim-asset-mapping/AssetMapping)
+         {refs/observable-type-name refs/ObservableTypeRef})]
+    (g/new-object
+     name description []
+     (merge
+      fields
+      go/graphql-ownership-fields))))
 
 (def AssetRefAssetMappingConnectionType
   (pagination/new-connection AssetMappingRefType))
