@@ -184,3 +184,49 @@
                      (concat field-selection [:target_ref :source_ref])
                      #(page-with-long-id % services)
                      rt-ctx))))
+
+;;--- AssetMapping
+
+(s/defn search-asset-mappings-by-asset-ref :- (RealizeFnResult GraphQLValue)
+  [asset-ref :- s/Str
+   context :- {s/Keyword s/Any}
+   args :- {s/Keyword s/Any}
+   field-selection :- (s/maybe [s/Keyword])]
+  (delayed/fn
+    :- GraphQLValue
+    [{{{:keys [get-store]} :StoreService} :services} :- GraphQLRuntimeContext]
+    (let [paging-params (pagination/connection-params->paging-params args)
+          params        (cond-> (select-keys paging-params [:limit :offset :sort_by])
+                          field-selection (assoc :fields
+                                                 (concat default-fields field-selection)))]
+      (log/debug "Search for AssetMappings for asset-ref: " asset-ref)
+      (some-> (get-store :asset-mapping)
+              (list-records
+               {:all-of {:asset_ref asset-ref}}
+               (:ident context)
+               params)
+              un-store-page
+              (pagination/result->connection-response paging-params)))))
+
+;;--- AssetProperties
+
+(s/defn search-asset-properties-by-asset-ref :- (RealizeFnResult GraphQLValue)
+  [asset-ref :- s/Str
+   context :- {s/Keyword s/Any}
+   args :- {s/Keyword s/Any}
+   field-selection :- (s/maybe [s/Keyword])]
+  (delayed/fn
+    :- GraphQLValue
+    [{{{:keys [get-store]} :StoreService} :services} :- GraphQLRuntimeContext]
+    (let [paging-params (pagination/connection-params->paging-params args)
+          params        (cond-> (select-keys paging-params [:limit :offset :sort_by])
+                          field-selection (assoc :fields
+                                                 (concat default-fields field-selection)))]
+      (log/debug "Search for AssetProperties for asset-ref: " asset-ref)
+      (some-> (get-store :asset-properties)
+              (list-records
+               {:all-of {:asset_ref asset-ref}}
+               (:ident context)
+               params)
+              un-store-page
+              (pagination/result->connection-response paging-params)))))
