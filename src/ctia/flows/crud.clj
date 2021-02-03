@@ -328,7 +328,7 @@
   "Builds a mapping table between short and long IDs"
   [entities long-id-fn]
   (->> entities
-       (filter #(nil? (:error %)))
+       (remove :error)
        (map (fn [{:keys [_ id] :as entity}]
               [id (:id (long-id-fn entity))]))
        (into {})))

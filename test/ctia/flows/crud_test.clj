@@ -87,14 +87,19 @@
 
 (deftest create-events-test
   (testing "flow-type :update should preserve the entity owner"
-    (let [updated-entities (atom [])
-          flow-map         {:services        {:ConfigService {:get-in-config (constantly true)}}
-                            :create-event-fn (fn [entity _ _ _] (swap! updated-entities conj entity))
-                            :identity        (map->Identity {:login "test-user"})
-                            :flow-type       :update
-                            :entities        [{:one 1 :owner "Huey"}
-                                              {:two 2 :owner "Dewey"}
-                                              {:three 3 :owner "Louie"}]}]
-     (#'flows.crud/create-events flow-map)
-     (is (= #{"Huey" "Dewey" "Louie"}
-            (set (map :owner @updated-entities)))))))
+    (let [create-update-event (fn [entity _ _ owner]
+                                {:owner owner
+                                 :entity entity})
+          entities [{:one 1 :owner "Huey"}
+                    {:two 2 :owner "Dewey"}
+                    {:three 3 :owner "Louie"}]
+          login "test-user"
+          flow-map {:services        {:ConfigService {:get-in-config (constantly true)}}
+                    :create-event-fn create-update-event
+                    :identity        (map->Identity {:login login})
+                    :flow-type       :update
+                    :entities        entities}
+          expected-events (map #(array-map :owner login :entity %)
+                               entities)]
+      (is (= (assoc flow-map :events expected-events)
+             (#'flows.crud/create-events flow-map))))))
