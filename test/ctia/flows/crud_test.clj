@@ -86,20 +86,40 @@
         "store-fn shall be applied to every entities")))
 
 (deftest create-events-test
-  (testing "flow-type :update should preserve the entity owner"
-    (let [create-update-event (fn [entity _ _ owner]
-                                {:owner owner
-                                 :entity entity})
-          entities [{:one 1 :owner "Huey"}
-                    {:two 2 :owner "Dewey"}
-                    {:three 3 :owner "Louie"}]
-          login "test-user"
-          flow-map {:services        {:ConfigService {:get-in-config (constantly true)}}
-                    :create-event-fn create-update-event
-                    :identity        (map->Identity {:login login})
-                    :flow-type       :update
-                    :entities        entities}
-          expected-events (map #(array-map :owner login :entity %)
-                               entities)]
-      (is (= (assoc flow-map :events expected-events)
-             (#'flows.crud/create-events flow-map))))))
+  (testing "create-events shall filter errored entities and return passed flow with corresponding events owned by current user"
+    (let [login "test-user"
+          ident (map->Identity {:login login})
+          fake-event (fn [entity]
+                       {:owner login
+                        :entity entity})
+          to-create-event (fn [entity _ _]
+                            (fake-event entity))
+          to-update-event (fn [entity _ _ _]
+                            (fake-event entity))
+          to-delete-event (fn [entity _ _]
+                            (fake-event entity))
+          valid-entities [{:one 1 :owner "Huey"}
+                          {:two 2 :owner "Dewey"}
+                          {:three 3 :owner "Louie"}]
+          entities-with-error (conj valid-entities {:error "something bad happened"})
+          base-flow-map {:services {:ConfigService {:get-in-config (constantly true)}}
+                         :identity ident
+                         :entities entities-with-error}
+          create-flow-map (assoc base-flow-map
+                                 :flow-type :create
+                                 :create-event-fn to-create-event)
+          update-flow-map (assoc base-flow-map
+                                 :flow-type :update
+                                 :create-event-fn to-update-event)
+          delete-flow-map (assoc base-flow-map
+                                 :flow-type :delete
+                                 :create-event-fn to-delete-event)
+          expected-events (map fake-event valid-entities)]
+
+      (doseq [flow-map [create-flow-map
+                        update-flow-map
+                        delete-flow-map]]
+          (is (= (assoc flow-map :events expected-events)
+                 (#'flows.crud/create-events flow-map))
+              (format "create-events shall properly handle %s flow type"
+                      (:flow-type flow-map)))))))

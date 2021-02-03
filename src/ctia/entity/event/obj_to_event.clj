@@ -6,8 +6,8 @@
 
 (s/defn to-create-event :- vs/Event
   "Create a CreateEvent from a StoredX object"
-  [object id]
-  {:owner (:owner object)
+  [object id owner]
+  {:owner owner
    :groups (:groups object)
    :entity object
    :timestamp (t/internal-now)

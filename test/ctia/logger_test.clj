@@ -18,9 +18,9 @@
   (let [app (test-helpers/get-current-app)
         {:keys [send-event]} (test-helpers/get-service-map app :EventsService)
         sb (StringBuilder.)
-        patched-log (fn [logger
-                         level
-                         throwable
+        patched-log (fn [_logger
+                         _level
+                         _throwable
                          message]
                       (.append sb message)
                       (.append sb "\n"))]
@@ -32,7 +32,8 @@
                       :type :test
                       :tlp "green"
                       :data 1}
-                     "test-1"))
+                     "test-1"
+                     "tester"))
       (send-event (o2e/to-create-event
                      {:owner "tester"
                       :groups ["foo"]
@@ -40,7 +41,8 @@
                       :type :test
                       :tlp "green"
                       :data 2}
-                     "test-2"))
+                     "test-2"
+                     "tester"))
       (Thread/sleep 100)   ;; wait until the go loop is done
       (let [scrubbed (-> (str sb)
                          (str/replace #"#inst \"[^\"]*\"" "#inst \"\"")

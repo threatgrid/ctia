@@ -240,10 +240,9 @@
           create-event (fn [entity]
                          (let [event-id (make-id "event")]
                            (try
-                             (case flow-type
-                               :create (create-event-fn entity event-id)
-                               :update (create-event-fn entity prev-entity event-id login)
-                               :delete (create-event-fn entity event-id login))
+                             (if (= flow-type :update)
+                               (create-event-fn entity prev-entity event-id login)
+                               (create-event-fn entity event-id login))
                              (catch Throwable e
                                (log/error "Could not create event" e)
                                (throw (ex-info "Could not create event"
