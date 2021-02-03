@@ -42,22 +42,124 @@ fragment assetFields on Asset {
 query AssetsQueryTest($query: String, $after: String, $first: Int, $sort_field:AssetOrderField = ID, $sort_direction: OrderDirection = asc) {
   assets(first: $first, after: $after, query: $query, orderBy: [{field: $sort_field, direction: $sort_direction}, {field: ID, direction: $sort_direction}]) {
     totalCount
-    pageInfo {
-      ...pageInfoFields
-    }
-    nodes {
-      ...assetFields
-    }
-    edges {
-      node {
-        ...assetFields
-      }
-    }
+    pageInfo { ...pageInfoFields }
+    nodes { ...assetFields }
+    edges { node { ...assetFields }}
   }
 }
 
 query AssetQueryTest($id: String!) {
   asset(id: $id) {
     ...assetFields
+  }
+}
+
+
+fragment validTimeFields on ValidTime {
+  start_time
+  end_time
+}
+
+fragment observableBaseFields on Observable {
+  type
+  value
+}
+
+################
+# AssetMapping #
+################
+
+fragment assetMappingFields on AssetMapping {
+  asset_ref
+  asset_type
+  confidence
+  external_ids
+  external_references { ...externalReferenceFields}
+  id
+  language
+  observable { ...observableBaseFields}
+  revision
+  schema_version
+  source
+  source_uri
+  specificity
+  stability
+  timestamp
+  tlp
+  type
+  valid_time { ...validTimeFields}
+  owner
+  groups
+}
+
+
+query AssetMappingsQueryTest($query: String, $after: String, $first: Int, $sort_field:AssetMappingOrderField = ID, $sort_direction: OrderDirection = asc) {
+  asset_mappings(first: $first, after: $after, query: $query, orderBy: [{field: $sort_field, direction: $sort_direction}, {field: ID, direction: $sort_direction}]) {
+    totalCount
+    pageInfo { ...pageInfoFields }
+    nodes { ...assetMappingFields }
+    edges { node { ...assetMappingFields }}
+  }
+}
+
+query AssetMappingQueryTest($id: String!) {
+  asset_mapping(id: $id) {
+    ...assetMappingFields
+  }
+}
+
+
+###################
+# AssetProperties #
+###################
+
+fragment propertiesFields on AssetProperty {
+  name
+  value
+}
+
+fragment assetPropertiesFields on AssetProperties {
+  asset_ref
+  external_ids
+  external_references { ...externalReferenceFields}
+  id
+  language
+  properties { ...propertiesFields}
+  revision
+  schema_version
+  source
+  source_uri
+  timestamp
+  tlp
+  type
+  valid_time { ...validTimeFields}
+  owner
+  groups
+}
+
+query AssetPropertiesQueryTest($query: String, $after: String, $first: Int, $sort_field:AssetPropertiesOrderField = ID, $sort_direction: OrderDirection = asc) {
+  asset_properties(first: $first, after: $after, query: $query, orderBy: [{field: $sort_field, direction: $sort_direction}, {field: ID, direction: $sort_direction}]) {
+    totalCount
+    pageInfo { ...pageInfoFields}
+    nodes { ...assetPropertiesFields}
+    edges { node {...assetPropertiesFields }
+    }
+  }
+}
+
+query AssetRefQueryTest($id: String!, $first: Int, $after: String) {
+  asset(id: $id) {
+    asset_mappings(first: $first, after: $after) {
+      totalCount
+      pageInfo {...pageInfoFields}
+      nodes {...assetMappingFields}
+      edges { node {...assetMappingFields}}
+    }
+    asset_properties(first: $first, after: $after) {
+      totalCount
+      pageInfo { ...pageInfoFields }
+      nodes { ...assetPropertiesFields}
+      edges { node {...assetPropertiesFields}}
+    }
   }
 }
