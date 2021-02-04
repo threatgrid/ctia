@@ -147,19 +147,36 @@ query AssetPropertiesQueryTest($query: String, $after: String, $first: Int, $sor
   }
 }
 
-query AssetRefQueryTest($id: String!, $first: Int, $after: String) {
+query AssetRefQueryTest($id: String!) {
   asset(id: $id) {
-    asset_mappings(first: $first, after: $after) {
+    id
+    asset_mappings {
       totalCount
-      pageInfo {...pageInfoFields}
-      nodes {...assetMappingFields}
-      edges { node {...assetMappingFields}}
+      pageInfo {
+        ...pageInfoFields
+      }
+      nodes {
+        ...assetMappingFields
+      }
+      edges {
+        node {
+          ...assetMappingFields
+        }
+      }
     }
-    asset_properties(first: $first, after: $after) {
+    asset_properties {
       totalCount
-      pageInfo { ...pageInfoFields }
-      nodes { ...assetPropertiesFields}
-      edges { node {...assetPropertiesFields}}
+      pageInfo {
+        ...pageInfoFields
+      }
+      nodes {
+        ...assetPropertiesFields
+      }
+      edges {
+        node {
+          ...assetPropertiesFields
+        }
+      }
     }
   }
 }
