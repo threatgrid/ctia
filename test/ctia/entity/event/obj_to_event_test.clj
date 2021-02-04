@@ -12,19 +12,22 @@
            (:fields
              (o2e/to-update-event
                (assoc old :new "bar") old
-               "foo"))))
+               "foo"
+               "john-doe"))))
     (is (= [{:field :data, :action "deleted", :change {:before 2}}]
            (:fields
              (o2e/to-update-event
                (dissoc old :data) old
-               "foo"))))
+               "foo"
+               "john-doe"))))
     (is (= [{:field :data, :action "modified",
              :change {:before 2
                       :after 3}}]
            (:fields
              (o2e/to-update-event
                (assoc old :data 3) old
-               "foo"))))
+               "foo"
+               "john-doe"))))
     (is (= [{:field :data,
              :action "modified",
              :change {:before [1], :after [1 2]}}]
@@ -32,7 +35,8 @@
              (o2e/to-update-event
                (assoc old :data [1 2])
                (assoc old :data [1])
-               "foo"))))
+               "foo"
+               "john-doe"))))
     (is (= [{:action "added"
              :field :added
              :change {:after 1}}
@@ -50,4 +54,5 @@
                           :added 1)
                    (dissoc :removed))
                (assoc old :data {} :removed 1)
-               "foo"))))))
+               "foo"
+               "john-doe"))))))

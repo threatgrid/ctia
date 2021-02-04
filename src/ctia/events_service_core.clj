@@ -2,10 +2,8 @@
   (:require [clj-momo.lib.time :as time]
             [ctia.lib.async :as la]
             [ctia.entity.event.schemas :as es]
-            [ctim.schemas.common :as c]
             [clojure.core.async :as a :refer [go-loop alt! chan tap]]
-            [schema.core :as s]
-            [schema-tools.core :as st])
+            [schema.core :as s])
   (:import [clojure.core.async.impl.protocols Channel]
            [java.util Map]))
 
@@ -28,7 +26,7 @@
    (send-event context central-channel event))
   ([_context_
     {ch :chan :as echan} :- la/ChannelData
-    {:keys [owner timestamp http-params] :as event} :- es/Event]
+    {:keys [owner timestamp] :as event} :- es/Event]
    (assert owner "Events cannot be registered without user info")
    (let [event (if timestamp event (assoc event :timestamp (time/now)))]
      (a/>!! ch event))))

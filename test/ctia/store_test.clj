@@ -18,7 +18,7 @@
              incidents-2 (->> (fixt/n-doc incident-minimal 10)
                               (map #(assoc % :source "incident-2-source")))
              incidents (concat incidents-1 incidents-2)
-             bulk-result (helpers/POST-bulk app {:incidents incidents})]
+             _ (helpers/POST-bulk app {:incidents incidents})]
          (Thread/sleep 1500) ;; ensure index refresh
          (is
           (= (count incidents)
