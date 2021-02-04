@@ -1,0 +1,77 @@
+fragment pageInfoFields on PageInfo {
+  hasNextPage
+  hasPreviousPage
+  startCursor
+  endCursor
+}
+
+fragment externalReferenceFields on ExternalReference {
+  source_name
+  external_id
+  url
+  description
+  hashes
+}
+
+fragment observedTimeFields on ObservedTime {
+  start_time
+  end_time
+}
+
+fragment observableBaseFields on Observable {
+  type
+  value
+}
+
+fragment targetsFields on Target {
+  internal
+  observables { ...observableBaseFields}
+  observed_time { ...observedTimeFields}
+  os
+  sensor
+  source_uri
+  type
+}
+
+fragment targetRecordFields on TargetRecord {
+  description
+  external_ids
+  external_references { ...externalReferenceFields}
+  id
+  language
+  revision
+  schema_version
+  short_description
+  source
+  source_uri
+  targets { ...targetsFields}
+  timestamp
+  title
+  tlp
+  type
+  owner
+  groups
+}
+
+query TargetRecordsQueryTest($query: String, $after: String, $first: Int, $sort_field:TargetRecordOrderField = ID, $sort_direction: OrderDirection = asc) {
+  target_records(first: $first, after: $after, query: $query, orderBy: [{field: $sort_field, direction: $sort_direction}, {field: ID, direction: $sort_direction}]) {
+    totalCount
+    pageInfo {
+      ...pageInfoFields
+    }
+    nodes {
+      ...targetRecordFields
+    }
+    edges {
+      node {
+        ...targetRecordFields
+      }
+    }
+  }
+}
+
+query TargetRecordQueryTest($id: String!) {
+  target_record(id: $id) {
+    ...targetRecordFields
+  }
+}
