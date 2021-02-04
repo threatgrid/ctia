@@ -1,7 +1,7 @@
 (ns ctia.http.routes.graphql.asset-mapping-test
   (:require
    [clj-momo.test-helpers.core :as mth]
-   [clojure.test :refer [deftest is join-fixtures testing use-fixtures]]
+   [clojure.test :refer [deftest is are join-fixtures testing use-fixtures]]
    [ctia.entity.asset-mapping :as asset-mapping]
    [ctia.test-helpers.auth :refer [all-capabilities]]
    [ctia.test-helpers.core :as helpers]
@@ -37,9 +37,9 @@
                                          "foogroup"
                                          "user")
      (let [asset-mapping1  (prepare-result
-                           (gh/create-object app "asset-mapping" asset-mapping-1))
+                            (gh/create-object app "asset-mapping" asset-mapping-1))
            asset-mapping2  (prepare-result
-                           (gh/create-object app "asset-mapping" asset-mapping-2))
+                            (gh/create-object app "asset-mapping" asset-mapping-2))
            graphql-queries (slurp "test/data/asset_mapping.graphql")]
 
        (testing "asset mapping query"
@@ -73,15 +73,21 @@
               [:asset_mappings]
               asset-mapping/asset-mapping-fields)))
          (testing "query argument"
-           (let [{:keys [data errors status]}
-                 (gh/query app
-                           graphql-queries
-                           {:query "source:\"ngfw\""}
-                           "AssetMappingsQueryTest")]
-             (is (= 200 status))
-             (is (empty? errors) "No errors")
-             (is (= 1 (get-in data [:asset_mappings :totalCount]))
-                 "Only one asset-mapping matches the query")
-             (is (= [asset-mapping2]
-                    (get-in data [:asset_mappings :nodes]))
-                 "The asset-mapping matches the search query"))))))))
+           (are [query data-vec expected] (let [{:keys [data errors status]}
+                                                (gh/query
+                                                 app
+                                                 graphql-queries
+                                                 {:query query}
+                                                 "AssetMappingsQueryTest")]
+                                            (is (= 200 status))
+                                            (is (empty? errors) "No errors")
+                                            (is (= expected (get-in data data-vec))
+                                                (format "make sure data at '%s' matches the expected" data-vec))
+                                            true)
+             "source:\"ngfw\"" [:asset_mappings :totalCount] 1
+             "source:\"ngfw\"" [:asset_mappings :nodes] [asset-mapping2]
+
+             (format "observable.type:\"%s\""
+                     (-> asset-mapping2 :observable :type))
+             [:asset_mappings :nodes 0 :observable :value]
+             (-> asset-mapping2 :observable :value))))))))
