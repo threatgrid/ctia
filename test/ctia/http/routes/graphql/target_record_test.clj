@@ -27,8 +27,6 @@
   [target-record]
   (dissoc target-record :search-txt))
 
-;; (require '[hashp.core])
-
 (deftest target-record-graphql-test
   (test-for-each-store-with-app
    (fn [app]
