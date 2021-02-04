@@ -188,7 +188,7 @@
 ;;--- AssetMapping
 
 (s/defn search-asset-mappings-by-asset-ref :- (RealizeFnResult GraphQLValue)
-  [asset-ref :- s/Str
+  [entity-id :- s/Str
    context :- {s/Keyword s/Any}
    args :- {s/Keyword s/Any}
    field-selection :- (s/maybe [s/Keyword])]
@@ -199,10 +199,10 @@
           params        (cond-> (select-keys paging-params [:limit :offset :sort_by])
                           field-selection (assoc :fields
                                                  (concat default-fields field-selection)))]
-      (log/debug "Search for AssetMappings for asset-ref: " asset-ref)
+      (log/debug "Search for AssetMappings for asset-ref: " entity-id)
       (some-> (get-store :asset-mapping)
               (list-records
-               {:all-of {:asset_ref asset-ref}}
+               {:all-of {:asset_ref entity-id}}
                (:ident context)
                params)
               un-store-page
@@ -211,7 +211,7 @@
 ;;--- AssetProperties
 
 (s/defn search-asset-properties-by-asset-ref :- (RealizeFnResult GraphQLValue)
-  [asset-ref :- s/Str
+  [entity-id :- s/Str
    context :- {s/Keyword s/Any}
    args :- {s/Keyword s/Any}
    field-selection :- (s/maybe [s/Keyword])]
@@ -222,10 +222,10 @@
           params        (cond-> (select-keys paging-params [:limit :offset :sort_by])
                           field-selection (assoc :fields
                                                  (concat default-fields field-selection)))]
-      (log/debug "Search for AssetProperties for asset-ref: " asset-ref)
+      (log/debug "Search for AssetProperties for asset-ref: " entity-id)
       (some-> (get-store :asset-properties)
               (list-records
-               {:all-of {:asset_ref asset-ref}}
+               {:all-of {:asset_ref entity-id}}
                (:ident context)
                params)
               un-store-page
