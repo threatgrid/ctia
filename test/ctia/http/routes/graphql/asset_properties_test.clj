@@ -41,7 +41,7 @@
                               (gh/create-object app "asset-properties" asset-properties-1))
            asset-properties2  (prepare-result
                                (gh/create-object app "asset-properties" asset-properties-2))
-           graphql-queries (slurp "test/data/asset_properties.graphql")]
+           graphql-queries (slurp "test/data/asset.graphql")]
        (testing "asset-propertiess query"
          (testing "asset-propertiess connection"
            (gh/connection-test

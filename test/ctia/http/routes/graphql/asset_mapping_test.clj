@@ -40,8 +40,7 @@
                             (gh/create-object app "asset-mapping" asset-mapping-1))
            asset-mapping2  (prepare-result
                             (gh/create-object app "asset-mapping" asset-mapping-2))
-           graphql-queries (slurp "test/data/asset_mapping.graphql")]
-
+           graphql-queries (slurp "test/data/asset.graphql")]
        (testing "asset mapping query"
          (let [{:keys [data
                        errors
