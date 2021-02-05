@@ -89,8 +89,8 @@
                  "The asset matches the search query"))))))))
 
 (defn- rand-btw
-  "Generates random int between two numbers"
-  [a n] (+ a (rand-int (- (inc n) a))))
+  "Generates random int from start (inclusive) to end (exclusive)."
+  [a n] (+ a (rand-int (- n a))))
 
 (defn- create-random-objects
   "Creates specified number of GraphQL objects"
@@ -111,7 +111,7 @@
         (fn [{:keys [id]}]
           (create-random-objects
            app
-           (rand-btw 1 3)
+           (rand-btw 1 4)
            (-> example
                (dissoc :id)
                (assoc :asset_ref id)))))
@@ -126,7 +126,7 @@
        ;; create a few Assets, then per each Asset create a few AssetMappings
        ;; and AssetProperties then check for every asset_ref in AssetMappings
        ;; and AssetProperties to be the correct AssetId
-       (let [assets           (create-random-objects app (rand-btw 3 5) (dissoc asset-maximal :id))
+       (let [assets           (create-random-objects app (rand-btw 3 6) (dissoc asset-maximal :id))
              asset-mappings   (create-asset-relation-objects app assets asset-mapping-maximal)
              asset-properties (create-asset-relation-objects app assets asset-properties-maximal)
              graphql-queries  (slurp "test/data/asset.graphql")]
