@@ -60,7 +60,7 @@
                  [metosin/schema-tools "0.12.2"]
                  [threatgrid/flanders "0.1.23"]
 
-                 [threatgrid/ctim "1.1.0"]
+                 [threatgrid/ctim "1.1.2-SNAPSHOT"]
                  [threatgrid/clj-momo "0.3.5"]
                  [threatgrid/ductile "0.3.0"]
 

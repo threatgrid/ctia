@@ -3,7 +3,7 @@
              [coerce :as time-coerce]
              [core :as time-core]]
             [clojure.set :as set]
-            [ctia.task.migration.migrations.describe :refer [describe]]
+            [ctia.task.migration.migrations.describe :refer [migrate-describe]]
             [ctia.task.migration.migrations.investigation-actions :refer [migrate-action-data]]))
 
 (def add-groups
@@ -169,4 +169,4 @@
    :investigation-actions (comp (append-version "1.1.0")
                                 migrate-action-data)
    :describe (comp (append-version "1.1.0")
-                   describe)})
+                   migrate-describe)})
