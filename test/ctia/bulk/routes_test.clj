@@ -37,6 +37,7 @@
   {:id (str "transient:actor-" n)
    :title (str "actor-" n)
    :description (str "description: actor-" n)
+   :short_description (str "short_description: actor-" n)
    :actor_type "Hacker"
    :source "a source"
    :confidence "High"
@@ -45,13 +46,15 @@
 
 (defn mk-new-attack-pattern [n]
   {:id (str "transient:attack-pattern-" n)
-   :name (str "attack-pattern-" n)
-   :description (str "description: attack-pattern-" n)})
+   :title (str "attack-pattern-" n)
+   :description (str "description: attack-pattern-" n)
+   :short_description (str "short_description: attack-pattern-" n)})
 
 (defn mk-new-campaign [n]
   {:id (str "transient:campaign-" n)
    :title (str "campaign" n)
    :description "description"
+   :short_description "short_description"
    :campaign_type "anything goes here"
    :intended_effect ["Theft"]
    :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
@@ -112,7 +115,9 @@
 
 (defn mk-new-malware [n]
   {:id (str "transient:malware-" n)
-   :name (str "malware-" n)
+   :title (str "malware-" n)
+   :description (str "description: malware-" n)
+   :short_description (str "short_description: malware-" n)
    :labels [(str "malware-label-" n)]})
 
 (defn mk-new-relationship [n source_ref target_ref]
@@ -150,7 +155,9 @@
 
 (defn mk-new-tool [n]
   {:id (str "transient:tool-" n)
-   :name (str "tool-" n)
+   :title (str "tool-" n)
+   :description (str "description: tool-" n)
+   :short_description (str "short_description: tool-" n)
    :labels [(str "tool-label-" n)]})
 
 (defn mk-new-vulnerability [n]
@@ -446,9 +453,9 @@
            stored-tool-2 (get-entity tools source_ref)]
        (is (= 201 status-create) "The bulk create should be successfull")
        (is (= 200 status-get) "All entities should be retrieved")
-       (is (= (:name tool1) (:name stored-tool-1))
+       (is (= (:title tool1) (:title stored-tool-1))
            "The target ref should be the ID of the stored entity")
-       (is (= (:name tool2) (:name stored-tool-2))
+       (is (= (:title tool2) (:title stored-tool-2))
            "The source ref should be the ID of the stored entity")
        (is (= (hash-map (:id tool1) (:id stored-tool-1)
                         (:id tool2) (:id stored-tool-2)

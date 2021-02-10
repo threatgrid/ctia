@@ -1,6 +1,5 @@
 (ns ctia.entity.tool
   (:require [ctia.entity.tool.schemas :as ts]
-            [ctia.entity.tool.graphql-schemas :as tgs]
             [ctia.http.routes
              [common :refer [BaseEntityFilterParams PagingParams SourcableEntityFilterParams]
               :as routes.common]
@@ -18,11 +17,10 @@
     :properties
     (merge
      em/base-entity-mapping
+     em/describable-entity-mapping
      em/sourcable-entity-mapping
      em/stored-entity-mapping
-     {:name em/token
-      :description em/text
-      :labels em/token
+     {:labels em/token
       :kill_chain_phases em/kill-chain-phase
       :tool_version em/token
       :x_mitre_aliases em/token})}})

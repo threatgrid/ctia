@@ -42,13 +42,11 @@
 
   (testing "POST /ctia/casebook/:id/observables :add on non existing casebook"
     (let [new-observables [{:type "ip" :value "42.42.42.42"}]
-          expected-entity (update casebook :observables concat new-observables)
           response (POST app
                          (str "ctia/casebook/" (str (:short-id casebook-id) "42") "/observables")
                          :body {:operation :add
                                 :observables new-observables}
-                         :headers {"Authorization" "45c1f5e3f05d0"})
-          updated-casebook (:parsed-body response)]
+                         :headers {"Authorization" "45c1f5e3f05d0"})]
       (is (= 404 (:status response)))))
 
   (testing "POST /ctia/casebook/:id/observables :remove"
@@ -68,13 +66,11 @@
   (testing "POST /ctia/casebook/:id/observables :remove on non existing casebook"
     (let [deleted-observables [{:value "85:28:cb:6a:21:41" :type "mac_address"}
                                {:value "42.42.42.42" :type "ip"}]
-          expected-entity (update casebook :observables #(remove (set deleted-observables) %))
           response (POST app
                          (str "ctia/casebook/" (:short-id casebook-id) "z" "/observables")
                          :body {:operation :remove
                                 :observables deleted-observables}
-                         :headers {"Authorization" "45c1f5e3f05d0"})
-          updated-casebook (:parsed-body response)]
+                         :headers {"Authorization" "45c1f5e3f05d0"})]
       (is (= 404 (:status response)))))
 
   (testing "POST /ctia/casebook/:id/observables :replace"
@@ -105,13 +101,11 @@
 
   (testing "POST /ctia/casebook/:id/observables :replace on non existing casebook"
     (let [observables (:observables new-casebook-maximal)
-          expected-entity (assoc casebook :observables observables)
           response (POST app
                          (str "ctia/casebook/" (:short-id casebook-id) "z" "/observables")
                          :body {:operation :replace
                                 :observables observables}
-                         :headers {"Authorization" "45c1f5e3f05d0"})
-          updated-casebook (:parsed-body response)]
+                         :headers {"Authorization" "45c1f5e3f05d0"})]
       (is (= 404 (:status response)))))
   ;; texts
   (testing "POST /ctia/casebook/:id/texts :add"
@@ -130,13 +124,11 @@
 
   (testing "POST /ctia/casebook/:id/texts :add on non existing casebook"
     (let [new-texts [{:type "some" :text "text"}]
-          expected-entity (update casebook :texts concat new-texts)
           response (POST app
                          (str "ctia/casebook/" (:short-id casebook-id) "z" "/texts")
                          :body {:operation :add
                                 :texts new-texts}
-                         :headers {"Authorization" "45c1f5e3f05d0"})
-          updated-casebook (:parsed-body response)]
+                         :headers {"Authorization" "45c1f5e3f05d0"})]
       (is (= 404 (:status response)))))
 
   (testing "POST /ctia/casebook/:id/texts :remove"
@@ -153,13 +145,11 @@
 
   (testing "POST /ctia/casebook/:id/texts :remove on non existing casebook"
     (let [deleted-texts [{:type "some" :text "text"}]
-          expected-entity (update casebook :texts #(remove (set deleted-texts) %))
           response (POST app
                          (str "ctia/casebook/" (:short-id casebook-id) "z" "/texts")
                          :body {:operation :remove
                                 :texts deleted-texts}
-                         :headers {"Authorization" "45c1f5e3f05d0"})
-          updated-casebook (:parsed-body response)]
+                         :headers {"Authorization" "45c1f5e3f05d0"})]
       (is (= 404 (:status response)))))
 
   (testing "POST /ctia/casebook/:id/texts :replace"
@@ -190,107 +180,80 @@
                          (str "ctia/casebook/" (:short-id casebook-id) "z" "/texts")
                          :body {:operation :replace
                                 :texts texts}
-                         :headers {"Authorization" "45c1f5e3f05d0"})
-          updated-casebook (:parsed-body response)]
+                         :headers {"Authorization" "45c1f5e3f05d0"})]
       (is (= 404 (:status response)))))
 
   ;; bundle
-  (testing "POST /ctia/casebook/:id/bundle :add"
-    (let [new-bundle-entities {:malwares #{{:id "transient:616608f4-7658-49f1-8728-d9a3dde849d5"
+  (let [bundle-entities {:malwares #{{:id "transient:616608f4-7658-49f1-8728-d9a3dde849d5"
                                             :type "malware"
                                             :schema_version ctim-schema-version
-                                            :name "TEST"
-                                            :labels ["malware"]}}}
-          response (POST app
-                         (str "ctia/casebook/" (:short-id casebook-id) "/bundle")
-                         :body {:operation :add
-                                :bundle new-bundle-entities}
-                         :headers {"Authorization" "45c1f5e3f05d0"})
-          updated-casebook (:parsed-body response)]
+                                            :title "TEST"
+                                            :description "description"
+                                            :short_description "short_description"
+                                            :labels ["malware"]}}}]
+    (testing "POST /ctia/casebook/:id/bundle :add"
+      (let [response (POST app
+                           (str "ctia/casebook/" (:short-id casebook-id) "/bundle")
+                           :body {:operation :add
+                                  :bundle bundle-entities}
+                           :headers {"Authorization" "45c1f5e3f05d0"})
+            updated-casebook (:parsed-body response)]
 
-      (is (= 200 (:status response)))
-      (is (not= (:malwares updated-casebook)
-                (:malwares new-bundle-entities)))
-      (is (subset? (set (:malwares new-bundle-entities))
-                   (set (-> updated-casebook :bundle :malwares))))))
+        (is (= 200 (:status response)))
+        (is (not= (:malwares updated-casebook)
+                  (:malwares bundle-entities)))
+        (is (subset? (set (:malwares bundle-entities))
+                     (set (-> updated-casebook :bundle :malwares))))))
 
-  (testing "POST /ctia/casebook/:id/bundle :add on non existing casebook"
-    (let [new-bundle-entities {:malwares #{{:id "transient:616608f4-7658-49f1-8728-d9a3dde849d5"
-                                            :type "malware"
-                                            :schema_version ctim-schema-version
-                                            :name "TEST"
-                                            :labels ["malware"]}}}
-          response (POST app
-                         (str "ctia/casebook/" (:short-id casebook-id) "z" "/bundle")
-                         :body {:operation :add
-                                :bundle new-bundle-entities}
-                         :headers {"Authorization" "45c1f5e3f05d0"})
-          updated-casebook (:parsed-body response)]
-      (is (= 404 (:status response)))))
+    (testing "POST /ctia/casebook/:id/bundle :add on non existing casebook"
+      (let [response (POST app
+                           (str "ctia/casebook/" (:short-id casebook-id) "z" "/bundle")
+                           :body {:operation :add
+                                  :bundle bundle-entities}
+                           :headers {"Authorization" "45c1f5e3f05d0"})]
+        (is (= 404 (:status response)))))
 
-  (testing "POST /ctia/casebook/:id/bundle :remove"
-    (let [deleted-bundle-entities {:malwares #{{:id "transient:616608f4-7658-49f1-8728-d9a3dde849d5"
-                                                :type "malware"
-                                                :schema_version ctim-schema-version
-                                                :name "TEST"
-                                                :labels ["malware"]}}}
-          response (POST app
-                         (str "ctia/casebook/" (:short-id casebook-id) "/bundle")
-                         :body {:operation :remove
-                                :bundle deleted-bundle-entities}
-                         :headers {"Authorization" "45c1f5e3f05d0"})
-          updated-casebook (:parsed-body response)]
-      (is (= 200 (:status response)))
-      (is (deep= (update casebook :bundle dissoc :malwares)
-                 (update updated-casebook :bundle dissoc :malwares)))
-      (is (not (subset? (set (:malwares deleted-bundle-entities))
-                        (set (-> updated-casebook :bundle :malwares)))))))
+    (testing "POST /ctia/casebook/:id/bundle :remove"
+      (let [response (POST app
+                           (str "ctia/casebook/" (:short-id casebook-id) "/bundle")
+                           :body {:operation :remove
+                                  :bundle bundle-entities}
+                           :headers {"Authorization" "45c1f5e3f05d0"})
+            updated-casebook (:parsed-body response)]
+        (is (= 200 (:status response)))
+        (is (deep= (update casebook :bundle dissoc :malwares)
+                   (update updated-casebook :bundle dissoc :malwares)))
+        (is (not (subset? (set (:malwares bundle-entities))
+                          (set (-> updated-casebook :bundle :malwares)))))))
 
-  (testing "POST /ctia/casebook/:id/bundle :remove on non existing casebook"
-    (let [deleted-bundle-entities {:malwares #{{:id "transient:616608f4-7658-49f1-8728-d9a3dde849d5"
-                                                :type "malware"
-                                                :schema_version ctim-schema-version
-                                                :name "TEST"
-                                                :labels ["malware"]}}}
-          response (POST app
-                         (str "ctia/casebook/" (:short-id casebook-id) "z" "/bundle")
-                         :body {:operation :remove
-                                :bundle deleted-bundle-entities}
-                         :headers {"Authorization" "45c1f5e3f05d0"})
-          updated-casebook (:parsed-body response)]
-      (is (= 404 (:status response)))))
+    (testing "POST /ctia/casebook/:id/bundle :remove on non existing casebook"
+      (let [response (POST app
+                           (str "ctia/casebook/" (:short-id casebook-id) "z" "/bundle")
+                           :body {:operation :remove
+                                  :bundle bundle-entities}
+                           :headers {"Authorization" "45c1f5e3f05d0"})]
+        (is (= 404 (:status response)))))
 
-  (testing "POST /ctia/casebook/:id/bundle :replace"
-    (let [bundle-entities {:malwares #{{:id "transient:616608f4-7658-49f1-8728-d9a3dde849d5"
-                                        :type "malware"
-                                        :schema_version ctim-schema-version
-                                        :name "TEST"
-                                        :labels ["malware"]}}}
-          response (POST app
-                         (str "ctia/casebook/" (:short-id casebook-id) "/bundle")
-                         :body {:operation :replace
-                                :bundle bundle-entities}
-                         :headers {"Authorization" "45c1f5e3f05d0"})
-          updated-casebook (:parsed-body response)]
-      (is (= 200 (:status response)))
-      (is (deep= (update casebook :bundle dissoc :malwares)
-                 (update updated-casebook :bundle dissoc :malwares)))
-      (is (= (:malwares bundle-entities)
-             (-> updated-casebook :bundle :malwares)))))
+    (testing "POST /ctia/casebook/:id/bundle :replace"
+      (let [response (POST app
+                           (str "ctia/casebook/" (:short-id casebook-id) "/bundle")
+                           :body {:operation :replace
+                                  :bundle bundle-entities}
+                           :headers {"Authorization" "45c1f5e3f05d0"})
+            updated-casebook (:parsed-body response)]
+        (is (= 200 (:status response)))
+        (is (deep= (update casebook :bundle dissoc :malwares)
+                   (update updated-casebook :bundle dissoc :malwares)))
+        (is (= (:malwares bundle-entities)
+               (-> updated-casebook :bundle :malwares)))))
 
-  (testing "POST /ctia/casebook/:id/bundle :replace on non existing casebook"
-    (let [bundle-entities {:malwares #{{:id "transient:616608f4-7658-49f1-8728-d9a3dde849d5"
-                                        :type "malware"
-                                        :schema_version ctim-schema-version
-                                        :name "TEST"
-                                        :labels ["malware"]}}}
-          response (POST app
-                         (str "ctia/casebook/" (:short-id casebook-id) "z" "/bundle")
-                         :body {:operation :replace
-                                :bundle bundle-entities}
-                         :headers {"Authorization" "45c1f5e3f05d0"})
-          updated-casebook (:parsed-body response)]
-      (is (= 404 (:status response)))))
+    (testing "POST /ctia/casebook/:id/bundle :replace on non existing casebook"
+      (let [response (POST app
+                           (str "ctia/casebook/" (:short-id casebook-id) "z" "/bundle")
+                           :body {:operation :replace
+                                  :bundle bundle-entities}
+                           :headers {"Authorization" "45c1f5e3f05d0"})]
+        (is (= 404 (:status response))))))
 
   (testing "schema_version changes with PATCH"
     (testing "Test setup: PATCH /ctia/casebook/:id redefing schema_version"
