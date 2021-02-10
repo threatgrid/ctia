@@ -1,8 +1,10 @@
 (ns ctia.features-service-test
-  (:require  [clojure.test :refer [deftest are is testing use-fixtures]]
-             [ctia.test-helpers
-              [core :as th]
-              [es :as es-helpers]]))
+  (:require
+   [clojure.set :as set]
+   [clojure.test :refer [deftest are is testing use-fixtures]]
+   [ctia.entity.entities :as entities]
+   [ctia.test-helpers.core :as th]
+   [ctia.test-helpers.es :as es-helpers]))
 
 (use-fixtures :each es-helpers/fixture-properties:es-store)
 
@@ -17,7 +19,12 @@
            (testing "Incident, Indicator entities are enabled"
              (is (every? enabled? [:incident :indicator])))
            (testing "It should not return `true` for non-existing entity keys"
-             (is (not (enabled? :lorem-ipsum))))))))))
+             (is (not (enabled? :lorem-ipsum))))
+           (testing "It should return all enabled entities when no key argument is used"
+             (is (= #{:asset :actor :sighting}
+                    (set/difference
+                     (-> (entities/all-entities) keys set)
+                     (set (enabled?))))))))))))
 
 (deftest routes-for-disabled-entities-test
   (let [try-route (fn [app entity]

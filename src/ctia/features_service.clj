@@ -13,8 +13,11 @@
   would not be visible in Swagger console."
   (feature-flags [this]
     "Returns all feature flags defined in the config")
-  (enabled? [this key]
-    "Returns `true` unless entity key is marked as Disabled in properties config"))
+  (enabled?
+    [this]
+    [this key]
+    "When called with no provided key - returns all entities except those that are explicitly disabled in properties config.
+     If the entity key argument used, it returns `true` unless the entity marked as disabled in properties config."))
 
 (tk/defservice features-service
   FeaturesService
@@ -33,4 +36,9 @@
        (map keyword x)
        (set x)
        (contains? x key)
-       (not x)))))
+       (not x))))
+  (enabled?
+   [this]
+   (->> (entities/all-entities)
+        keys
+        (filter (partial enabled? this)))))
