@@ -25,6 +25,11 @@
   (feature-flags [this]
     (get-in-config [:ctia :features]))
   (enabled?
+   [this]
+   (->> (entities/all-entities)
+        keys
+        (filter (partial enabled? this))))
+  (enabled?
    [this key]
    (when (-> (entities/all-entities)
              keys
@@ -36,9 +41,4 @@
        (map keyword x)
        (set x)
        (contains? x key)
-       (not x))))
-  (enabled?
-   [this]
-   (->> (entities/all-entities)
-        keys
-        (filter (partial enabled? this)))))
+       (not x)))))
