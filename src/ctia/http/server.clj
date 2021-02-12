@@ -122,6 +122,17 @@
         (update :headers (fn [response-headers]
                            (into headers response-headers)))))))
 
+(defn wrap-txt-accept-header
+  "Enforces the `accept` request header to `text/plain` when the
+   uri ends with `.txt`. Mainly used by the `/feed/{id}/view.txt` endpoint"
+  [handler]
+  (fn [{:keys [uri] :as request}]
+    (let [new-request
+          (cond-> request
+            (string/ends-with? uri ".txt")
+            (assoc-in [:headers "accept"] "text/plain"))]
+      (handler new-request))))
+
 (defn build-csp
   "Build the Content Security Policy header from the http configuration"
   [{:keys [swagger] :as http-config}]
@@ -189,6 +200,8 @@
                                           {}))}))
             (when-let [lifetime (:lifetime-in-sec jwt)]
               {:jwt-max-lifetime-in-sec lifetime}))))
+
+         true wrap-txt-accept-header
 
          access-control-allow-origin
          (wrap-cors :access-control-allow-origin

@@ -31,7 +31,10 @@
             [ctia.status.routes :refer [status-routes]]
             [ring.middleware.not-modified :refer [wrap-not-modified]]
             [ring.util.http-response :refer [ok]]
-            [schema.core :as s]))
+            [schema.core :as s]
+            [compojure.api.middleware :refer [api-middleware-defaults]]
+            [ring.middleware.format-response :refer [make-encoder]]
+            [compojure.api.middleware :refer [->mime-types]]))
 
 (def api-description
   "A Threat Intelligence API service
@@ -188,11 +191,23 @@
   (cond-> entity-map
     (not (enabled? entity)) (assoc :no-api? true)))
 
+(defn make-text-plain-format-encoder
+  "Make a simple format encoder for the text/plain
+   mime-type. It stringifies the response body.
+   See the `ring.middleware.format-response/wrap-restful-response`
+   middleware used by compojure API for more details"
+  []
+  (make-encoder (fn [body] (str body)) "text/plain"))
+
 (s/defn api-handler [{{:keys [get-in-config]} :ConfigService
                       :as services} :- APIHandlerServices]
   (let [{:keys [oauth2]}
-        (get-http-swagger get-in-config)]
+        (get-http-swagger get-in-config)
+        default-formats (get-in api-middleware-defaults [:format :formats])
+        formats (conj default-formats (make-text-plain-format-encoder))
+        swagger-mime-types (->mime-types default-formats)]
     (api {:exceptions {:handlers exception-handlers}
+          :format {:formats formats}
           :swagger
           (cond-> {:ui "/"
                    :spec "/swagger.json"
@@ -207,6 +222,11 @@
                                            :url "http://github.com/threatgrid/ctia"
                                            :email "cisco-intel-api-support@cisco.com"}
                                  :description api-description}
+                          ;; consumes and produces are set to the default values
+                          ;; to remove text/plain which is automatically set
+                          ;; from the `formats` property by `compojure.api.middleware/api-middleware`
+                          :consumes swagger-mime-types
+                          :produces swagger-mime-types
                           :security [{"JWT" []}]
                           :securityDefinitions
                           {"JWT" {:type "apiKey"
