@@ -248,8 +248,8 @@
      :query-params [s :- (describe s/Str "The feed share token")]
      (let [feed (fetch-feed id s services)]
        (case feed
-         :not-found (not-found {:a "feed not found"})
-         :unauthorized (unauthorized "wrong secret")
+         :not-found (not-found {:error "feed not found"})
+         :unauthorized (unauthorized {:error "wrong secret"})
          (ok (dissoc feed :output)))))))
 
 (s/defn feed-routes [{{:keys [get-store]} :StoreService
