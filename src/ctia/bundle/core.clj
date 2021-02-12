@@ -451,6 +451,8 @@
    ident
    params
    services :- APIHandlerServices]
-  (->> (map #(export-entities % identity-map ident params services) ids)
-       (reduce #(deep-merge-with coll/add-colls %1 %2))
-       (into empty-bundle)))
+  (if (seq ids)
+    (->> (map #(export-entities % identity-map ident params services) ids)
+         (reduce #(deep-merge-with coll/add-colls %1 %2))
+         (into empty-bundle))
+    empty-bundle))

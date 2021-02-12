@@ -692,6 +692,14 @@
                                         sighting-id-2]
                                   :related_to ["target_ref" "source_ref"]}
                    :headers {"Authorization" "45c1f5e3f05d0"}))
+
+             bundle-post-res-empty-ids
+             (:parsed-body
+              (POST app
+                   "ctia/bundle/export"
+                   :body {:ids nil}
+                   :headers {"Authorization" "45c1f5e3f05d0"}))
+
              bundle-post-res
              (:parsed-body
               (POST app
@@ -720,8 +728,10 @@
          (is (= bundle-get-res-3 bundle-get-res-5)
              "default related_to value should be [:source_ref :target_ref]")
          (is (= bundle-get-res-5 bundle-post-res)
-             "POST and GET bundle/export routes must return the same results"))))))
-
+             "POST and GET bundle/export routes must return the same results")
+         (is (= {:type "bundle"
+                 :source "ctia"} bundle-post-res-empty-ids)
+             "POST bundle/export with an empty ids list should return an empty bundle"))))))
 (deftest bundle-export-with-unreachable-entities
   (testing "external and deleted entities in fetched relationships should be ignored"
     (test-for-each-store-with-app
