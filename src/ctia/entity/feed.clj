@@ -231,8 +231,7 @@
      :responses {404 {:schema s/Str}
                  401 {:schema s/Str}}
      :query-params [s :- (describe s/Str "The feed share token")]
-     (ok "hello")
-     #_(let [{:keys [output]
+     (let [{:keys [output]
             :as feed} (fetch-feed id s services)]
        (case feed
          :not-found (not-found "feed not found")
