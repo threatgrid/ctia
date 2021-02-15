@@ -1,6 +1,8 @@
 (ns ctia.features-service
-  (:require [puppetlabs.trapperkeeper.core :as tk]
-            [clojure.string :as string]))
+  (:require
+   [clojure.string :as string]
+   [ctia.entity.entities :as entities]
+   [puppetlabs.trapperkeeper.core :as tk]))
 
 (defprotocol FeaturesService
   "Service to read configuration properties under [:ctia :features] key in config.
@@ -21,10 +23,14 @@
     (get-in-config [:ctia :features]))
   (enabled?
    [this key]
-   (as-> (get-in-config [:ctia :features :disable]) x
-     (str x)
-     (string/split x #",")
-     (map keyword x)
-     (set x)
-     (contains? x key)
-     (not x))))
+   (when (-> (entities/all-entities)
+             keys
+             set
+             (contains? key))
+     (as-> (get-in-config [:ctia :features :disable]) x
+       (str x)
+       (string/split x #",")
+       (map keyword x)
+       (set x)
+       (contains? x key)
+       (not x)))))
