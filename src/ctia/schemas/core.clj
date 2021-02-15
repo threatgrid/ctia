@@ -40,7 +40,7 @@
                                            (s/=> graphql.schema.GraphQLType))}
    :IEncryption                     {:encrypt (s/=> s/Any s/Any)
                                      :decrypt (s/=> s/Any s/Any)}
-   :FeaturesService                 {:enabled?      (s/=> s/Keyword s/Bool)
+   :FeaturesService                 {:enabled?      (s/=> s/Bool s/Keyword)
                                      :feature-flags (s/=> [s/Str])}})
 
 (s/defschema HTTPShowServices
@@ -325,6 +325,6 @@
   "vocab.observable-type-id")
 
 (s/defschema GetEntitiesServices
-  {:FeaturesService {:enabled? (s/=> s/Keyword s/Bool)
+  {:FeaturesService {:enabled? (s/=> s/Bool s/Keyword)
                      s/Keyword s/Any}
    s/Keyword        s/Any})

@@ -19,12 +19,7 @@
            (testing "Incident, Indicator entities are enabled"
              (is (every? enabled? [:incident :indicator])))
            (testing "It should not return `true` for non-existing entity keys"
-             (is (not (enabled? :lorem-ipsum))))
-           (testing "It should return all enabled entities when no key argument is used"
-             (is (= #{:asset :actor :sighting}
-                    (set/difference
-                     (-> (entities/all-entities) keys set)
-                     (set (enabled?))))))))))))
+             (is (not (enabled? :lorem-ipsum))))))))))
 
 (deftest routes-for-disabled-entities-test
   (let [try-route (fn [app entity]
