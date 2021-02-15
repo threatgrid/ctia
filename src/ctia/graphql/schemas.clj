@@ -179,12 +179,22 @@
        keys
        (filter #(not (enabled? %)))))
 
+(defn- entities+plural-forms
+  "Gets map of entity keys with their plural forms."
+  []
+  (let [ents (entities/all-entities)]
+    (->> ents
+         vals
+         (map :plural)
+         (zipmap (keys ents)))))
+
 (defn- remove-disabled
   "Removes GraphQl fields of keys of disabled entities."
   [services graphql-fields]
-  (let [+plurals (reduce
+  (let [ents     (entities+plural-forms)
+        +plurals (reduce
                   (fn [a n] (let [k      (dash->underscore n)
-                                  plural (-> k name (str "s") keyword)]
+                                  plural (-> ents n dash->underscore)]
                               (into a [k plural])))
                   []
                   (disabled-entities services))]

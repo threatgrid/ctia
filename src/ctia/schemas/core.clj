@@ -22,26 +22,26 @@
 
 (s/defschema APIHandlerServices
   "Maps of services available to routes"
-  {:ConfigService                             (-> external-svc-fns/ConfigServiceFns
+  {:ConfigService                   (-> external-svc-fns/ConfigServiceFns
                                                   (csutils/select-all-keys
-                                                    #{:get-config
-                                                      :get-in-config}))
-   :CTIAHTTPServerService                     {:get-port    (s/=> Port)
-                                               :get-graphql (s/=> graphql.GraphQL)}
-   :HooksService                              (-> hooks-schemas/ServiceFns
+                                                   #{:get-config
+                                                     :get-in-config}))
+   :CTIAHTTPServerService           {:get-port    (s/=> Port)
+                                     :get-graphql (s/=> graphql.GraphQL)}
+   :HooksService                    (-> hooks-schemas/ServiceFns
                                                   (csutils/select-all-keys
-                                                    #{:apply-event-hooks
-                                                      :apply-hooks}))
-   :StoreService                              {:get-store GetStoreFn}
-   :IAuth                                     {:identity-for-token (s/=> s/Any s/Any)}
-   :GraphQLNamedTypeRegistryService           {:get-or-update-named-type-registry
-                                               (s/=> graphql.schema.GraphQLType
-                                                     s/Str
-                                                     (s/=> graphql.schema.GraphQLType))}
-   :IEncryption                               {:encrypt (s/=> s/Any s/Any)
-                                               :decrypt (s/=> s/Any s/Any)}
-   :FeaturesService                           {:enabled?      (s/=> s/Bool s/Keyword)
-                                               :feature-flags (s/=> [s/Str])}})
+                                                   #{:apply-event-hooks
+                                                     :apply-hooks}))
+   :StoreService                    {:get-store GetStoreFn}
+   :IAuth                           {:identity-for-token (s/=> s/Any s/Any)}
+   :GraphQLNamedTypeRegistryService {:get-or-update-named-type-registry
+                                     (s/=> graphql.schema.GraphQLType
+                                           s/Str
+                                           (s/=> graphql.schema.GraphQLType))}
+   :IEncryption                     {:encrypt (s/=> s/Any s/Any)
+                                     :decrypt (s/=> s/Any s/Any)}
+   :FeaturesService                 {:enabled?      (s/=> s/Keyword s/Bool)
+                                     :feature-flags (s/=> [s/Str])}})
 
 (s/defschema HTTPShowServices
   ;; TODO describe in terms of APIHandlerServices, while preserving openness
@@ -325,6 +325,6 @@
   "vocab.observable-type-id")
 
 (s/defschema GetEntitiesServices
-  {:FeaturesService {:enabled? (s/=> s/Bool s/Keyword)
+  {:FeaturesService {:enabled? (s/=> s/Keyword s/Bool)
                      s/Keyword s/Any}
    s/Keyword        s/Any})
