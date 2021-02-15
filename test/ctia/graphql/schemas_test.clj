@@ -32,4 +32,11 @@
                             graphql-keys)))
                (is (set/subset?
                     #{:asset_properties :indicator :indicators}
-                    graphql-keys))))))))))
+                    graphql-keys))))))))
+    (testing "entities+plural-forms"
+      (let [ents (#'schemas/entities+plural-forms)]
+        (are [ent-key plural-form] (= plural-form (get ents ent-key))
+          :asset            :assets
+          :asset-mapping    :asset-mappings
+          :asset-properties :asset-properties
+          :weakness         :weaknesses)))))
