@@ -1,10 +1,10 @@
 (ns ctia.http.server-test
-  (:require [schema.test :refer [validate-schemas]]
+  (:require [clojure.test :refer [deftest is testing use-fixtures]]
             [ctia.http.server :as sut]
             [ctia.test-helpers
              [core :as helpers :refer [GET with-properties]]
              [es :as es-helpers]]
-            [clojure.test :refer [deftest is testing use-fixtures]]))
+            [schema.test :refer [validate-schemas]]))
 
 (use-fixtures :each
   es-helpers/fixture-properties:es-store
@@ -21,14 +21,14 @@
        :data
        {:bad-string
         "IROH DEV:https://visibility.int.iroh.site/iroh/session/status,IROH TEST/https://visibility.test.iroh.site/iroh/session/status"}}
-    (try
-      (sut/parse-external-endpoints
-       (str
-        "IROH DEV:https://visibility.int.iroh.site/iroh/session/status,"
-        "IROH TEST/https://visibility.test.iroh.site/iroh/session/status"))
-      (catch Exception e
-        {:msg (.getMessage e)
-         :data (ex-data e)}))))
+      (try
+        (sut/parse-external-endpoints
+         (str
+          "IROH DEV:https://visibility.int.iroh.site/iroh/session/status,"
+          "IROH TEST/https://visibility.test.iroh.site/iroh/session/status"))
+        (catch Exception e
+          {:msg (.getMessage e)
+           :data (ex-data e)}))))
 
   (is
    (=
@@ -45,7 +45,7 @@
      (fn [app]
        (let [{:keys [headers]}
              (GET app
-                  "ctia/version")]
+                 "ctia/version")]
          (is (nil? (get headers "Server")))))))
 
   (testing "Server should not be sent if disabled"
@@ -54,7 +54,7 @@
        (fn [app]
          (let [{:keys [headers]}
                (GET app
-                    "ctia/version")]
+                   "ctia/version")]
            (is (nil? (get headers "Server"))))))))
 
   (testing "Server should be sent if enabled"
@@ -63,7 +63,7 @@
        (fn [app]
          (let [{:keys [headers]}
                (GET app
-                    "ctia/version")]
+                   "ctia/version")]
            (is (get headers "Server"))))))))
 
 (deftest build-csp-test
@@ -87,3 +87,28 @@
            {:oauth2
             {:token-url "https://visibility.int.iroh.site/iroh/oauth2/token"
              :refresh-url "https://visibility.int.iroh.site/iroh/oauth2/refresh"}}}))))
+
+(deftest wrap-txt-accept-header-test
+  (let [wrapped-echo (sut/wrap-txt-accept-header identity)]
+    (testing "uri with .txt suffix"
+      (is (= {"accept" "text/plain"}
+             (-> (wrapped-echo {:uri "/view.txt"
+                                :headers {}})
+                 :headers))
+          "header is set when not already defined")
+      (is (= {"accept" "text/plain"}
+             (-> (wrapped-echo {:uri "/view.txt"
+                                :headers {"accept" "*/*"}})
+                 :headers))
+          "headers is set when */* (all MIME types) is already set")
+      (is (= {"accept" "application/json"}
+             (-> (wrapped-echo {:uri "/view.txt"
+                                :headers {"accept" "application/json"}})
+                 :headers))
+          "Not modified if the accept header is already set"))
+    (testing "uri without .txt suffix"
+      (is (= {}
+             (-> (wrapped-echo {:uri "/view"
+                                :headers {}})
+                 :headers))
+          "header not set when the .txt suffix is not detected"))))
