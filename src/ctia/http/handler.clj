@@ -197,7 +197,11 @@
    See the `ring.middleware.format-response/wrap-restful-response`
    middleware used by compojure API for more details"
   []
-  (make-encoder (fn [body] (str body)) "text/plain"))
+  (make-encoder (fn text-plain-encoder [body]
+                  (if (string? body)
+                    body
+                    (pr-str body)))
+                "text/plain"))
 
 (s/defn api-handler [{{:keys [get-in-config]} :ConfigService
                       :as services} :- APIHandlerServices]
