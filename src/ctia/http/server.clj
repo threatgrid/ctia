@@ -1,7 +1,8 @@
 (ns ctia.http.server
-  (:require [clojure.string :as string]
+  (:require [clj-http.client :as http]
+            [clojure.core.memoize :as memo]
+            [clojure.string :as string]
             [clojure.tools.logging :as log]
-            [clj-http.client :as http]
             [ctia.auth.jwt :as auth-jwt]
             [ctia.http.handler :as handler]
             [ctia.http.middleware.auth :as auth]
@@ -13,12 +14,10 @@
              [cors :refer [wrap-cors]]
              [params :refer [wrap-params]]
              [reload :refer [wrap-reload]]]
-            [schema.core :as s]
-            [clojure.core.memoize :as memo])
-  (:import org.eclipse.jetty.server.Server
-           (java.util.concurrent TimeoutException)
-           (java.net UnknownHostException
-                     SocketTimeoutException)))
+            [schema.core :as s])
+  (:import [java.net SocketTimeoutException UnknownHostException]
+           java.util.concurrent.TimeoutException
+           org.eclipse.jetty.server.Server))
 
 (defn- allow-origin-regexps
   "take a CORS allowed origin config string
@@ -82,8 +81,8 @@
                    check-jwt-url)
         [])
       (catch UnknownHostException e
-          (log/errorf "The server for checking JWT seems down: %s"
-                      check-jwt-url)
+        (log/errorf "The server for checking JWT seems down: %s"
+                    check-jwt-url)
         [])
       (catch Exception e
         (log/warnf e "Couldn't check jwt status due to an error calling %s"
@@ -122,6 +121,21 @@
         (update :headers (fn [response-headers]
                            (into headers response-headers)))))))
 
+(defn wrap-txt-accept-header
+  "Set the `accept` request header to `text/plain` when the
+   uri ends with `.txt`. It applies only if the header is not already
+   set or set with `*/*` (Any MIME type).
+   Mainly used by the `/feed/{id}/view.txt` endpoint."
+  [handler]
+  (fn [{:keys [uri headers] :as request}]
+    (let [accept (get headers "accept" "*/*")
+          new-request
+          (cond-> request
+            (and (= accept "*/*")
+                 (string/ends-with? uri ".txt"))
+            (assoc-in [:headers "accept"] "text/plain"))]
+      (handler new-request))))
+
 (defn build-csp
   "Build the Content Security Policy header from the http configuration"
   [{:keys [swagger] :as http-config}]
@@ -151,10 +165,14 @@
     :as http-config}
    {{:keys [identity-for-token]} :IAuth
     {:keys [get-in-config]} :ConfigService
-     :as services} :- APIHandlerServices]
+    :as services} :- APIHandlerServices]
   (doto
       (jetty/run-jetty
        (cond-> (handler/api-handler services)
+
+         ;; After compojure api middleawares
+         true wrap-txt-accept-header
+
          true (auth/wrap-authentication identity-for-token)
 
          (:enabled jwt)
@@ -178,7 +196,7 @@
              :no-jwt-handler rjwt/authorize-no-jwt-header-strategy}
 
             (let [{:keys [endpoints timeout cache-ttl]}
-                       (:http-check jwt)]
+                  (:http-check jwt)]
               (when-let [external-endpoints (parse-external-endpoints endpoints)]
                 {:jwt-check-fn (partial check-external-endpoints
                                         (http-get-fn (or cache-ttl 5000))

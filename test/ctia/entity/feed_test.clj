@@ -156,6 +156,15 @@
       (is (= "wrong secret"
              response-body-txt-wrong-secret))
 
+      (testing "bad request"
+        (let [url-with-invalid-query-params
+              (string/replace feed-view-url-txt #"s=" "invalid=")
+              {:keys [body headers status]}
+              (client/get url-with-invalid-query-params {:throw-exceptions false})]
+          (is (= 400 status))
+          (is (string/starts-with? (get headers "Content-Type") "text/plain"))
+          (is (= "{:errors {:s missing-required-key}}" body))))
+
       (testing "feed output judgements"
         (let [feed-update (assoc feed :output :judgements)
               updated-feed-response
