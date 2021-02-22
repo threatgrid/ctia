@@ -39,24 +39,43 @@
     (is (instance? ctia.auth.jwt.JWTIdentity
                    (get-in response-jwt [:body :identity])))))
 
+(deftest assets-scope-test
+  (testing "Assets scope and capabilities"
+    (helpers/with-properties ["ctia.auth.entities.scope" "global-intel"
+                              "ctia.auth.assets.scope" "asset-intel"]
+      (helpers/fixture-ctia-with-app
+       (fn [app]
+         (let [{:keys [get-in-config]} (helpers/get-service-map app :ConfigService)]
+           (is (= "global-intel" (sut/entity-root-scope get-in-config)))
+           (is (= #{:create-asset :create-asset-mapping :create-asset-properties
+                    :create-target-record :delete-asset :delete-asset-mapping
+                    :delete-asset-properties :delete-target-record :list-asset-mappings
+                    :list-asset-properties :list-assets :list-target-records :read-asset
+                    :read-asset-mapping :read-asset-properties :read-target-record :search-asset
+                    :search-asset-mapping :search-asset-properties :search-target-record}
+                  (sut/scope-to-capabilities (sut/assets-root-scope get-in-config) get-in-config))
+               "By default asset capabilities enabled on global-intel scope")))))
+    (testing "Asset capabilities explicitly disabled"
+      (helpers/with-properties ["ctia.auth.entities.scope" "global-intel"
+                                "ctia.auth.assets.scope" "no-asset-intel"]
+        (helpers/fixture-ctia-with-app
+         (fn [app]
+           (let [{:keys [get-in-config]} (helpers/get-service-map app :ConfigService)]
+             (is (= "global-intel" (sut/entity-root-scope get-in-config)))
+             (is (empty? (sut/scope-to-capabilities (sut/assets-root-scope get-in-config) get-in-config))))))))))
+
 (deftest scopes-to-capabilities-test
   (testing "scope defaults"
     (are [root-scope-fn def-val] (= def-val (root-scope-fn get-in-config))
       sut/entity-root-scope   "private-intel"
       sut/casebook-root-scope "casebook"
-      sut/assets-root-scope   "asset-intel"))
+      sut/assets-root-scope   "no-asset-intel"))
   (is (= #{:search-casebook :create-casebook :list-casebooks :read-casebook
            :delete-casebook}
          (sut/scope-to-capabilities (sut/casebook-root-scope get-in-config) get-in-config))
       "Check the casebook capabilities from the casebook scope")
-  (is (= #{:create-asset :create-asset-mapping :create-asset-properties
-           :create-target-record :delete-asset :delete-asset-mapping
-           :delete-asset-properties :delete-target-record :list-asset-mappings
-           :list-asset-properties :list-assets :list-target-records :read-asset
-           :read-asset-mapping :read-asset-properties :read-target-record :search-asset
-           :search-asset-mapping :search-asset-properties :search-target-record}
-         (sut/scope-to-capabilities (sut/assets-root-scope get-in-config) get-in-config))
-      "Check the Asset capabilities from the asset-intel scope")
+  (is (empty? (sut/scope-to-capabilities (sut/assets-root-scope get-in-config) get-in-config))
+      "No Asset capabilities on private-intel scope")
   (is (= #{:developer :specify-id}
          (set/difference (caps/all-capabilities)
                          (sut/scopes-to-capabilities #{(sut/entity-root-scope get-in-config)

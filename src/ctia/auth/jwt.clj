@@ -1,18 +1,17 @@
 (ns ctia.auth.jwt
   (:refer-clojure :exclude [identity])
-  (:require [cheshire.core :as json]
-            [clj-jwt.key :refer [public-key]]
-            [clj-momo.lib.set :refer [as-set]]
-            [clojure.set :as set]
-            [clojure.string :as string]
-            [clojure.tools.logging :as log]
-            [ctia.auth :as auth :refer [IIdentity]]
-            [ctia.auth.capabilities
-             :refer
-             [all-entities gen-capabilities-for-entity-and-accesses]]
-            [ctia.properties :as p]
-            [ring.util.http-response :as resp]
-            [scopula.core :as scopula]))
+  (:require
+   [cheshire.core :as json]
+   [clj-jwt.key :refer [public-key]]
+   [clj-momo.lib.set :refer [as-set]]
+   [clojure.set :as set]
+   [clojure.string :as string]
+   [clojure.tools.logging :as log]
+   [ctia.auth :as auth :refer [IIdentity]]
+   [ctia.auth.capabilities :refer
+    [all-entities gen-capabilities-for-entity-and-accesses]]
+   [ring.util.http-response :as resp]
+   [scopula.core :as scopula]))
 
 (defn load-public-key
   [path]
@@ -64,7 +63,9 @@
                               "casebook"))
 
 (defn assets-root-scope [get-in-config]
-  (get-in-config [:ctia :auth :assets :scope] "asset-intel"))
+  (if (= "private-intel" (entity-root-scope get-in-config))
+    "no-asset-intel"
+    (get-in-config [:ctia :auth :assets :scope] "asset-intel")))
 
 (defn claim-prefix [get-in-config]
   (get-in-config [:ctia :http :jwt :claim-prefix]
@@ -114,12 +115,14 @@
 (defn gen-assets-capabilities
   "Generate capabilities for the root-scope 'asset-intel'."
   [scope-repr]
-  (->> [:asset :asset-mapping :asset-properties :target-record]
-       (select-keys (all-entities))
-       vals
-       (map #(gen-capabilities-for-entity-and-accesses
-              % (:access scope-repr)))
-       unionize))
+  (if (= "asset-intel" (first (:path scope-repr)))
+    (->> [:asset :asset-mapping :asset-properties :target-record]
+         (select-keys (all-entities))
+         vals
+         (map #(gen-capabilities-for-entity-and-accesses
+                % (:access scope-repr)))
+         unionize)
+    #{}))
 
 (defn scope-to-capabilities
   "given a scope generate capabilities"
