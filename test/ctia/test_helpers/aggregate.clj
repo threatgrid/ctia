@@ -4,7 +4,7 @@
             [ctia.test-helpers
              [auth :refer [all-capabilities]]
              [fake-whoami-service :as helpers.whoami]
-             [core :as helpers.core :refer [GET POST-bulk]]
+             [core :as helpers.core :refer [GET POST-bulk fixture-ctia-with-app]]
              [store :refer [test-selected-stores-with-app]]]
             [clojure.string :as string]
             [clojure.pprint :refer [pprint]]
@@ -261,12 +261,12 @@
            plural
            enumerable-fields
            date-fields] :as metric-params}]
+
   ;; enforce 1 shard to avoid ES terms approximation used by topn which is not simulated here by the manual aggregation here.
   ;; see ES details: https://www.elastic.co/guide/en/elasticsearch/reference/5.6/search-aggregations-bucket-terms-aggregation.html#search-aggregations-bucket-terms-aggregation-approximate-counts
-  (helpers.core/with-config-transformer*
+  (helpers.core/with-config-transformer
     #(assoc-in % [:ctia :store :es :default :shards] 1)
-    #(test-selected-stores-with-app
-      #{:es-store}
+    (fixture-ctia-with-app
       (fn [app]
         (let [_ (helpers.core/set-capabilities! app "foouser" ["foogroup"] "user" all-capabilities)
               _ (helpers.whoami/set-whoami-response app "45c1f5e3f05d0" "foouser" "foogroup" "user")

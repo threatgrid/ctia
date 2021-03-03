@@ -1,7 +1,6 @@
 (ns ctia.schemas.utils
   (:require [clojure.set :as set]
             [schema-tools.walk :as sw]
-            [schema-tools.util :as stu]
             [schema-tools.core :as st]
             [schema.core :as s]))
 

@@ -3,7 +3,6 @@
             [clojure.math.combinatorics :as comb]
             [clojure.string :as str]
             [clojure.test :refer [deftest is join-fixtures testing use-fixtures]]
-            [ctia.entity.relationship.schemas :as rs]
             [ctia.entity.relationship :as sut]
             [ctia.test-helpers
              [access-control :refer [access-control-test]]

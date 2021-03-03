@@ -2,6 +2,8 @@
   (:require
    [clj-momo.test-helpers.core :as mth]
    [clj-momo.test-helpers.http :refer [encode]]
+   [clj-http.client :as client]
+   [cheshire.core :as json]
    [clojure.edn :as edn]
    [clojure.set :as set]
    [clojure.string :as str]
@@ -24,7 +26,8 @@
    [ctim.schemas.common :refer [ctim-schema-version]]
    [ductile.index :as es-index]
    [puppetlabs.trapperkeeper.app :as app]
-   [schema.core :as s]))
+   [schema.core :as s])
+  (:import java.io.ByteArrayInputStream))
 
 (defn fixture-properties [t]
   (helpers/with-properties ["ctia.http.bulk.max-size" 1000
@@ -622,6 +625,12 @@
      :sightings (set sightings)
      :relationships (set relationships)}))
 
+(defn string->input-stream
+  [^String s]
+  (-> s
+      (.getBytes)
+      (ByteArrayInputStream.)))
+
 (deftest bundle-export-test
   (test-for-each-store-with-app
    (fn [app]
@@ -632,30 +641,32 @@
                                          "foogroup"
                                          "user")
      (testing "filtering on entities ids"
-       (let [bundle-res-1
-             (:parsed-body (POST app
-                                 "ctia/bundle/import"
-                                 :body bundle-fixture-1
-                                 :headers {"Authorization" "45c1f5e3f05d0"}))
-             bundle-res-2
-             (:parsed-body (POST app
-                                 "ctia/bundle/import"
-                                 :body bundle-fixture-2
-                                 :headers {"Authorization" "45c1f5e3f05d0"}))
-             sighting-id-1
-             (some->> bundle-res-1
-                      :results
-                      (group-by :type)
-                      :sighting
-                      first
-                      :id)
-             sighting-id-2
-             (some->> bundle-res-2
-                      :results
-                      (group-by :type)
-                      :sighting
-                      first
-                      :id)
+       (let [import-url (format "http://localhost:%d/ctia/bundle/import?wait_for=true"
+                                (helpers/get-http-port app))
+             _ (println import-url)
+             post-bundle
+             (fn [bundle-fixture]
+               (:body (client/post import-url
+                                   {:body (-> bundle-fixture
+                                              (json/generate-string {:pretty false})
+                                              string->input-stream)
+                                    :content-type :json
+                                    :as :json
+                                    :throw-exceptions false
+                                    :headers {"Authorization" "45c1f5e3f05d0"}})))
+             bundle-res-1 (post-bundle bundle-fixture-1)
+             bundle-res-2 (post-bundle bundle-fixture-2)
+             first-sighting-id (fn [bundle-res]
+                                 (some->> bundle-res
+                                          :results
+                                          (group-by :type)
+                                          (#(get % "sighting"))
+                                          first
+                                          :id))
+             sighting-id-1 (first-sighting-id bundle-res-1)
+             sighting-id-2 (first-sighting-id bundle-res-2)
+             _ (println "sighting-id-1 => " sighting-id-1)
+             _ (println "sighting-id-2 => " sighting-id-2)
              bundle-get-res-1
              (:parsed-body
               (GET app
@@ -698,7 +709,6 @@
                    "ctia/bundle/export"
                    :body {:ids nil}
                    :headers {"Authorization" "45c1f5e3f05d0"}))
-
              bundle-post-res
              (:parsed-body
               (POST app
