@@ -16,7 +16,7 @@
             [ctia.test-helpers
              [es :as es-helpers]
              [auth :refer [all-capabilities]]
-             [core :as helpers :refer [GET POST]]
+             [core :as helpers :refer [GET POST DELETE]]
              [fake-whoami-service :as whoami-helpers]
              [http :refer [app->HTTPShowServices]]
              [store :refer [test-for-each-store-with-app
@@ -269,9 +269,7 @@
                                          "foogroup"
                                          "user")
      (testing "POST /ctia/bulk"
-       (let [{:keys [get-in-config]} (helpers/get-service-map app :ConfigService)
-
-             nb 7
+       (let [nb 7
              indicators (map mk-new-indicator (range nb))
              judgements (map mk-new-judgement (range nb))
              new-bulk {:actors (map mk-new-actor (range nb))
@@ -318,7 +316,38 @@
                    (is (= (:hostname id)         (:hostname show-props)))
                    (is (= (:protocol id)         (:protocol show-props)))
                    (is (= (:port id)             (:port show-props)))
-                   (is (= (:path-prefix id) (seq (:path-prefix show-props))))))))))))))
+                   (is (= (:path-prefix id) (seq (:path-prefix show-props)))))))))
+
+         (testing "DELETE /ctia/bulk"
+           ;; edge cases are tested in bulk/core-test
+           (let [deleted-bulk-ids (into {}
+                                        (map (fn [[k ids]]
+                                               {k (take 2 ids)}))
+                                        (dissoc bulk-ids :tempids))
+                 expected-delete-res (into {}
+                                        (map (fn [[k ids]]
+                                               {k {:deleted ids}}))
+                                        deleted-bulk-ids)
+                 {status :status delete-res :parsed-body :as res}
+                 (DELETE app
+                         (str "ctia/bulk?"
+                              (make-get-query-str-from-bulkrefs deleted-bulk-ids))
+                         :headers {"Authorization" "45c1f5e3f05d0"})
+                 {get-res :parsed-body}
+                 (GET app
+                      (str "ctia/bulk?"
+                           (make-get-query-str-from-bulkrefs bulk-ids))
+                      :headers {"Authorization" "45c1f5e3f05d0"})]
+             (clojure.pprint/pprint res)
+             (is (= 200 status))
+             (doseq [[k res] delete-res]
+               (is (= (-> (get expected-delete-res k)
+                          :deleted
+                          set)
+                      (set (:deleted res)))))
+             (doseq [[_k entity-res] (dissoc get-res :tempids)]
+               (is (= [nil nil] (take 2 entity-res))
+                   "the deleted entities must not be found")))))))))
 
 (deftest get-bulk-max-size-test
   (let [nb 10

@@ -1,22 +1,19 @@
 (ns ctia.entity.identity-assertion-test
-  (:require [clj-momo.test-helpers.core :as mth]
-            [clojure.test :refer [deftest is testing join-fixtures use-fixtures]]
+  (:require [clojure.test :refer [deftest is join-fixtures testing use-fixtures]]
             [ctia.entity.identity-assertion :as sut]
-            [ctia.properties :as p]
-            [ctia.test-helpers
-             [auth :refer [all-capabilities]]
-             [core :as helpers :refer [POST-entity-bulk]]
-             [crud :refer [entity-crud-test]]
-             [aggregate :refer [test-metric-routes]]
-             [fake-whoami-service :as whoami-helpers]
-             [http :refer [api-key]]
-             [core :as helpers :refer [GET]]
-             [store :refer [test-for-each-store-with-app]]]
+            [ctia.test-helpers.aggregate :refer [test-metric-routes]]
+            [ctia.test-helpers.auth :refer [all-capabilities]]
+            [ctia.test-helpers.core :as helpers :refer [GET]]
+            [ctia.test-helpers.crud :refer [entity-crud-test]]
+            [ctia.test-helpers.fake-whoami-service :as whoami-helpers]
+            [ctia.test-helpers.http :refer [api-key]]
+            [ctia.test-helpers.store :refer [test-for-each-store-with-app]]
             [ctim.examples.identity-assertions
              :refer
-             [new-identity-assertion-maximal new-identity-assertion-minimal]]))
+             [new-identity-assertion-maximal new-identity-assertion-minimal]]
+            [schema.test :refer [validate-schemas]]))
 
-(use-fixtures :once (join-fixtures [mth/fixture-schema-validation
+(use-fixtures :once (join-fixtures [validate-schemas
                                     whoami-helpers/fixture-server]))
 
 (def new-identity-assertion
