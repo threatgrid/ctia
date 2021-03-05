@@ -7,8 +7,7 @@
             [clojure.test :refer [deftest is use-fixtures]]
             [schema.test :as st]
             [clojure.tools.logging :as log]
-            [clojure.string :as str])
-  (:import [java.io PushbackReader]))
+            [clojure.string :as str]))
 
 (use-fixtures :each
   es-helpers/fixture-properties:es-store
@@ -19,13 +18,14 @@
 (deftest test-logged
   (let [app (test-helpers/get-current-app)
         {:keys [send-event]} (test-helpers/get-service-map app :EventsService)
-        events-atom (atom [])]
-    (with-redefs [log/log* (fn [_logger
-                                _level
-                                _throwable
-                                ^String message]
-                             (when (.startsWith message logging-prefix)
-                               (swap! events-atom conj (read-string (subs message (count logging-prefix))))))]
+        events-atom (atom [])
+        patched-log (fn [_logger
+                         _level
+                         _throwable
+                         ^String message]
+                      (when (.startsWith message logging-prefix)
+                        (swap! events-atom conj (read-string (subs message (count logging-prefix))))))]
+    (with-redefs [log/log* patched-log]
       (send-event (o2e/to-create-event
                      {:owner "tester"
                       :groups ["foo"]
