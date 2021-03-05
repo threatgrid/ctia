@@ -24,6 +24,7 @@
                          _throwable
                          ^String message]
                       (when (.startsWith message logging-prefix)
+                        ;; grab the edn after the logging-prefix
                         (swap! events-atom conj (read-string (subs message (count logging-prefix))))))]
     (with-redefs [log/log* patched-log]
       (send-event (o2e/to-create-event
