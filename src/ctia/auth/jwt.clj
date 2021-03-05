@@ -55,14 +55,15 @@
              (throw (ex-info err-msg {:jwt-pubkey-map txt})))))))
 
 
-(defn jwt-error-handler
+(defn ->jwt-error-handler
   "Return an `unauthorized` HTTP response
   and log the error along debug infos"
-  [error-msg infos]
-  (let [err {:error :invalid_jwt
-             :error_description error-msg}]
-    (log/info error-msg (pr-str (into infos err)))
-    (resp/unauthorized (json/generate-string err))))
+  [request]
+  (fn [error-msg infos]
+    (let [err {:error :invalid_jwt
+               :error_description error-msg}]
+      (log/info error-msg (pr-str (into infos err)))
+      (resp/unauthorized (json/generate-string err)))))
 
 (defn entity-root-scope [get-in-config]
   (get-in-config [:ctia :auth :entities :scope]
