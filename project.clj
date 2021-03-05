@@ -155,8 +155,7 @@
                                   [circleci/circleci.test "0.4.3"]
                                   [org.clojure/math.combinatorics "0.1.6"]
                                   [org.clojure/data.priority-map "1.0.0"]
-                                  [org.clojure/tools.namespace "1.1.0"]
-                                  [org.clojure/tools.reader "1.3.4"]]
+                                  [org.clojure/tools.namespace "1.1.0"]]
                    :pedantic? :warn
                    :resource-paths ["test/resources"]
                    :source-paths ["dev"]}
