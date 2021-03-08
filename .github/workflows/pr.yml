@@ -6,7 +6,6 @@ on:
 # Note: see BIN_PATH for how to set an env variable that depends on
 # other env variables.
 env:
-  LEIN_ROOT: 1
   LEIN_VERSION: 2.9.4
   CTIA_MAJOR_VERSION: 1
   # number of test-matrix builds
