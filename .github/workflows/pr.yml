@@ -14,6 +14,9 @@ on:
 env:
   # number of times to try possibly-flaky commands in this file
   ACTIONS_RETRY_TIMES: 10
+  # workaround https://github.com/actions/cache/issues/2
+  # to "delete" caches, increment this version
+  ACTIONS_CACHE_VERSION: v1
   # avoid the (somehow) default /usr/local/lib/lein/
   LEIN_HOME: ~/.lein
   LEIN_ROOT: 1
@@ -64,11 +67,11 @@ jobs:
             target/test-results/all-test-timings.edn
           # cache will never match, will always restore from 'restore-keys'.
           # this is so we pick up timing information from the most recent build.
-          key: writeonly-ctia-all-test-timings-${{ github.ref }}-${{ github.sha }}
+          key: writeonly-ctia-all-test-timings-${{ env.ACTIONS_CACHE_VERSION }}-${{ github.ref }}-${{ github.sha }}
           # cache should match test timings from previous runs, if they exist
           restore-keys: |
-            ctia-timings-${{ github.ref }}-
-            ctia-timings-
+            ctia-timings-${{ env.ACTIONS_CACHE_VERSION }}-${{ github.ref }}-
+            ctia-timings-${{ env.ACTIONS_CACHE_VERSION }}-
       - run: |
           if [ -f target/test-results/all-test-timings.edn ]; then
             echo "Found new timings"
@@ -104,10 +107,10 @@ jobs:
         uses: actions/cache@v2
         with:
           path: ~/.m2/repository
-          key: ctia-m2-cache-${{ hashFiles('project.clj') }}
+          key: ctia-m2-cache-${{ env.ACTIONS_CACHE_VERSION }}-${{ hashFiles('project.clj') }}
           # these will be considered a cache-miss by `cache_hit`
           restore-keys: |
-            ctia-m2-cache-
+            ctia-m2-cache-${{ env.ACTIONS_CACHE_VERSION }}-
       - name: Setup Java
         if: steps.maven-cache.outputs.cache-hit != 'true'
         uses: actions/setup-java@v1
@@ -125,7 +128,7 @@ jobs:
           path: |
             ~/bin/lein
             ~/.lein
-          key: ctia-lein-cache-${{ env.LEIN_VERSION }}
+          key: ctia-lein-cache-${{ env.ACTIONS_CACHE_VERSION }}-${{ env.LEIN_VERSION }}
       - name: Install Leiningen
         if: steps.maven-cache.outputs.cache-hit != 'true' && steps.lein-cache.outputs.cache-hit != 'true'
         run: |
@@ -193,9 +196,9 @@ jobs:
         uses: actions/cache@v2
         with:
           path: ~/.m2/repository
-          key: ctia-m2-cache-${{ hashFiles('project.clj') }}
+          key: ctia-m2-cache-${{ env.ACTIONS_CACHE_VERSION }}-${{ hashFiles('project.clj') }}
           restore-keys: |
-            ctia-m2-cache-
+            ctia-m2-cache-${{ env.ACTIONS_CACHE_VERSION }}-
 
       - uses: actions/setup-java@v1
         with:
@@ -212,7 +215,7 @@ jobs:
           path: |
             ~/bin/lein
             ~/.lein
-          key: ctia-lein-cache-${{ env.LEIN_VERSION }}
+          key: ctia-lein-cache-${{ env.ACTIONS_CACHE_VERSION }}-${{ env.LEIN_VERSION }}
       - name: Install Leiningen
         if: steps.lein-cache.outputs.cache-hit != 'true'
         run: |
@@ -257,13 +260,13 @@ jobs:
         uses: actions/cache@v2
         with:
           path: ${{ env.BIN_PATH }}
-          key: ctia-all-pr-checks-bin-${{ env.BB_VERSION }}
+          key: ctia-all-pr-checks-bin-${{ env.ACTIONS_CACHE_VERSION }}-${{ env.BB_VERSION }}
       - name: Timing results Cache
         uses: actions/cache@v2
         with:
           path: target/test-results/all-test-timings.edn
           # cache should never hit
-          key: ctia-timings-${{ github.ref }}-${{ github.sha }}
+          key: ctia-timings-${{ env.ACTIONS_CACHE_VERSION }}-${{ github.ref }}-${{ github.sha }}
 
       - name: Install babashka
         run: |
