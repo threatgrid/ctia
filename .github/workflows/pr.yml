@@ -88,42 +88,32 @@ jobs:
       - name: Run shellcheck
         run: ./scripts/shellcheck-build.sh
 
-      # note: this slows the setup build considerably. the cache-hit
-      #       logic does not seem to work, so steps are run even when
-      #       not needed.
-      ### - name: Maven Cache
-      ###   id: maven-cache
-      ###   uses: actions/cache@v2
-      ###   with:
-      ###     path: ~/.m2/repository
-      ###     key: ctia-m2-cache-${{ hashFiles('project.clj') }}
-      ###     restore-keys: |
-      ###       ctia-m2-cache-
-      ### # warm maven dependency cache if needed
-      ### - name: Setup Java
-      ###   if: steps.maven-cache.cache-hit != 'true'
-      ###   uses: actions/setup-java@v1
-      ###   with:
-      ###     java-version: ${{ env.JAVA_VERSION }}
-      ### - run: java -version
-      ### # install lein using cache to avoid extra download and startup time
-      ### - name: Cache Leiningen
-      ###   if: steps.maven-cache.cache-hit != 'true'
-      ###   uses: actions/cache@v2
-      ###   id: lein-cache
-      ###   with:
-      ###     path: ${{ env.BIN_PATH }}/lein
-      ###     key: ctia-lein-cache-${{ env.LEIN_VERSION }}
-      ### - name: Install Leiningen
-      ###   if: steps.lein-cache.cache-hit != 'true' && steps.maven-cache.cache-hit != 'true'
-      ###   run: |
-      ###     cd "${BIN_PATH}"
-      ###     curl -sLO "https://raw.githubusercontent.com/technomancy/leiningen/${LEIN_VERSION}/bin/lein"
-      ###     chmod a+x lein
-      ###     lein version
-      ### - name: Warm dependency cache
-      ###   if: steps.maven-cache.cache-hit != 'true'
-      ###   run: lein deps
+      # warm dependency cache on project.clj change
+      - name: Maven Cache
+        id: maven-cache
+        uses: actions/cache@v2
+        with:
+          path: ~/.m2/repository
+          key: ctia-m2-cache-${{ hashFiles('project.clj') }}
+          restore-keys: |
+            ctia-m2-cache-
+      - name: Setup Java
+        if: steps.maven-cache.outputs.cache-hit != 'true'
+        uses: actions/setup-java@v1
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+      - run: java -version
+        if: steps.maven-cache.outputs.cache-hit != 'true'
+      - name: Install Leiningen
+        if: steps.maven-cache.outputs.cache-hit != 'true'
+        run: |
+          cd "${BIN_PATH}"
+          curl -sLO "https://raw.githubusercontent.com/technomancy/leiningen/${LEIN_VERSION}/bin/lein"
+          chmod a+x lein
+          lein version
+      - name: Warm dependency cache
+        if: steps.maven-cache.outputs.cache-hit != 'true'
+        run: lein deps :tree
   test-matrix:
     runs-on: ubuntu-18.04
     needs: [setup]
@@ -197,16 +187,12 @@ jobs:
           path: ~/bin/lein
           key: ctia-lein-cache-${{ env.LEIN_VERSION }}
       - name: Install Leiningen
-        # why doesn't this work!? using an if statement instead
-        #if: steps.lein-cache.cache-hit != 'true'
+        if: steps.lein-cache.outputs.cache-hit != 'true'
         run: |
-          if ! command -v lein
-          then
-            cd "${BIN_PATH}"
-            curl -sLO https://raw.githubusercontent.com/technomancy/leiningen/${LEIN_VERSION}/bin/lein
-            chmod a+x lein
-            lein version
-          fi
+          cd "${BIN_PATH}"
+          curl -sLO https://raw.githubusercontent.com/technomancy/leiningen/${LEIN_VERSION}/bin/lein
+          chmod a+x lein
+          lein version
 
       - name: Run CTIA tests
         run: ./build/run-tests.sh
