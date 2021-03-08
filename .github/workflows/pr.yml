@@ -6,6 +6,8 @@ on:
 # Note: see BIN_PATH for how to set an env variable that depends on
 # other env variables.
 env:
+  # avoid the (somehow) default /usr/local/lib/lein/
+  LEIN_HOME: ~/.lein
   LEIN_ROOT: 1
   LEIN_VERSION: 2.9.4
   CTIA_MAJOR_VERSION: 1
@@ -111,7 +113,7 @@ jobs:
           pwd
           curl -sLO "https://raw.githubusercontent.com/technomancy/leiningen/${LEIN_VERSION}/bin/lein"
           chmod a+x lein
-          sudo lein version
+          lein version
       - name: Warm dependency cache
         if: steps.maven-cache.outputs.cache-hit != 'true'
         run: lein deps :tree
