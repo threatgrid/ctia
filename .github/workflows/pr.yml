@@ -1,7 +1,7 @@
 # Note: the first time a build is run for a particular branch, all
 # caches will be missing. In practice, this means:
 # 1. maven dependencies must be downloaded
-# 2. auto-balanced tests will be disabled
+# 2. auto-balancing tests will be disabled
 #
 # This is because Actions only looks for
 # caches in upstream branches which never have caches in CTIA since
