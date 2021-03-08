@@ -108,7 +108,7 @@ jobs:
         if: steps.maven-cache.outputs.cache-hit != 'true'
         run: |
           cd "${BIN_PATH}"
-          curl -sLO "https://raw.githubusercontent.com/technomancy/leiningen/${LEIN_VERSION}/bin/lein"
+          sudo curl -sLO "https://raw.githubusercontent.com/technomancy/leiningen/${LEIN_VERSION}/bin/lein"
           chmod a+x lein
           lein version
       - name: Warm dependency cache
@@ -190,7 +190,7 @@ jobs:
         if: steps.lein-cache.outputs.cache-hit != 'true'
         run: |
           cd "${BIN_PATH}"
-          curl -sLO https://raw.githubusercontent.com/technomancy/leiningen/${LEIN_VERSION}/bin/lein
+          sudo curl -sLO https://raw.githubusercontent.com/technomancy/leiningen/${LEIN_VERSION}/bin/lein
           chmod a+x lein
           lein version
 
