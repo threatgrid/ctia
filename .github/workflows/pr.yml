@@ -125,11 +125,11 @@ jobs:
           curl -sLO "https://raw.githubusercontent.com/technomancy/leiningen/${LEIN_VERSION}/bin/lein"
           chmod a+x lein
           # poor man's travis_retry
-          lein version || lein version || lein version
+          for i in {1..5}; do lein version && break; done
       - name: Warm dependency cache
         if: steps.maven-cache.outputs.cache-hit != 'true'
         # poor man's travis_retry
-        run: lein with-profile +test deps :tree || lein with-profile +test deps :tree || lein with-profile +test deps :tree
+        run: for i in {1..5}; do lein with-profile +test deps :tree && break; done
   test-matrix:
     runs-on: ubuntu-18.04
     needs: [setup]
@@ -211,8 +211,7 @@ jobs:
           curl -sLO https://raw.githubusercontent.com/technomancy/leiningen/${LEIN_VERSION}/bin/lein
           chmod a+x lein
           # poor man's travis_retry
-          lein version || lein version || lein version
-
+          for i in {1..5}; do lein version && break; done
       - name: Run CTIA tests
         run: ./build/run-tests.sh
         env:
