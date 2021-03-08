@@ -2,6 +2,8 @@
 # caches will be missing. This is because Actions only looks for
 # caches in upstream branches which never have caches in CTIA since
 # master is built with TravisCI only.
+# To work around this, try to hit the network only in the `setup` job,
+# and use the ACTIONS_RETRY_TIMES variable to retry network-related commands
 name: GitHub Actions Pull Request
 
 on:
