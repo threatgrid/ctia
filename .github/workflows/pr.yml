@@ -6,6 +6,8 @@ on:
 # Note: see BIN_PATH for how to set an env variable that depends on
 # other env variables.
 env:
+  # number of times to retry possibly-flaky commands in this file
+  ACTIONS_RETRY_TIMES: 10
   # avoid the (somehow) default /usr/local/lib/lein/
   LEIN_HOME: ~/.lein
   LEIN_ROOT: 1
@@ -125,11 +127,11 @@ jobs:
           curl -sLO "https://raw.githubusercontent.com/technomancy/leiningen/${LEIN_VERSION}/bin/lein"
           chmod a+x lein
           # poor man's travis_retry
-          for i in {1..5}; do lein version && break; done
+          for i in {1..${ACTIONS_RETRY_TIMES}}; do lein version && break; done
       - name: Warm dependency cache
         if: steps.maven-cache.outputs.cache-hit != 'true'
         # poor man's travis_retry
-        run: for i in {1..5}; do lein with-profile +test deps :tree && break; done
+        run: for i in {1..${ACTIONS_RETRY_TIMES}}; do lein with-profile +test deps :tree && break; done
   test-matrix:
     runs-on: ubuntu-18.04
     needs: [setup]
@@ -211,7 +213,7 @@ jobs:
           curl -sLO https://raw.githubusercontent.com/technomancy/leiningen/${LEIN_VERSION}/bin/lein
           chmod a+x lein
           # poor man's travis_retry
-          for i in {1..5}; do lein version && break; done
+          for i in {1..${ACTIONS_RETRY_TIMES}}; do lein version && break; done
       - name: Run CTIA tests
         run: ./build/run-tests.sh
         env:
