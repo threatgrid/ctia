@@ -122,7 +122,8 @@
                (dotimes [_ 4] (call app))
                (let [response (call app)]
                  (is (= 429 (:status response)))
-                 (is (= "3600" (get-in response [:headers "Retry-After"])))
+                 (is (#{"3599" "3600"} ;; avoid flakyness on slow test server.
+                      (get-in response [:headers "Retry-After"])))
                  (is (= "{\"error\": \"Too Many Requests\"}"
                         (:body response)))))))))
       (testing "Custom group limits"
