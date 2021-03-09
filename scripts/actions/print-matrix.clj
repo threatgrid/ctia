@@ -34,7 +34,8 @@
 
 (defn edn-matrix []
   {:post [(seq %)]}
-  (if (= "schedule" (System/getenv "GITHUB_EVENT_NAME"))
+  ;; FIXME: just to test the cron job in this PR
+  (if true #_(= "schedule" (System/getenv "GITHUB_EVENT_NAME"))
     (cron-matrix)
     (non-cron-matrix)))
 
