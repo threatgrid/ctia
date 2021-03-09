@@ -1,5 +1,6 @@
 #!/usr/bin/env bb
 
+(def default-clojure-version "") ;; set in project.clj
 (def default-java-version "11.0.9")
 (def java-15-version "15")
 (def clojure-next "1.10.2-rc1")
@@ -16,16 +17,16 @@
   (map (fn [this-split]
          {:this_split this-split
           :total_splits non-cron-ctia-nsplits
-          :clojure_version ""
+          :clojure_version default-clojure-version
           :java_version default-java-version})
        (range non-cron-ctia-nsplits)))
 
 (defn cron-matrix
   "Actions matrix for cron builds"
   []
-  (for [[clojure-version java-version] [["" default-java-version]
+  (for [[clojure-version java-version] [[default-clojure-version default-java-version]
                                         [clojure-next default-java-version]
-                                        [clojure-next "15"]]
+                                        [clojure-next java-15-version]]
         this-split (range cron-ctia-nsplits)]
     {:this_split this-split
      :total_splits cron-ctia-nsplits
