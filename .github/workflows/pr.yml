@@ -10,8 +10,8 @@ on:
       - master
   # automatically uses master https://stackoverflow.com/a/58800550
   schedule:
-    # At the end of every day
-    - cron: "0 0 * * *"
+    # daily, 3am UTC
+    - cron: "0 3 * * *"
 
 # Note: see BIN_PATH for how to set an env variable that depends on
 # other env variables.
