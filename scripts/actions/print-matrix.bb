@@ -14,12 +14,11 @@
 (defn non-cron-matrix
   "Actions matrix for non cron builds"
   []
-  (map (fn [this-split]
-         {:this_split this-split
-          :total_splits non-cron-ctia-nsplits
-          :clojure_version default-clojure-version
-          :java_version default-java-version})
-       (range non-cron-ctia-nsplits)))
+  (for [this-split (range non-cron-ctia-nsplits)]
+    {:this_split this-split
+     :total_splits non-cron-ctia-nsplits
+     :clojure_version default-clojure-version
+     :java_version default-java-version}))
 
 (defn cron-matrix
   "Actions matrix for cron builds"
