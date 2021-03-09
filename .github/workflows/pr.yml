@@ -271,6 +271,6 @@ jobs:
         with:
           retention-days: 30
           name: all-test-timings
-          path: target/test-results/all-test-timings.edn
+          path: target/test-results/*.edn
 
       - run: echo "All tests pass!"
