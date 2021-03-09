@@ -39,7 +39,7 @@
                      (:done nil) (throw (ex-info (str "end-test-ns called without begin-test-ns: " nsym)
                                                  (or timing {}))))))]
       (-> out-dir File. .mkdirs)
-      (spit (str out-dir "/ns-timing-" nsym ".edn")
+      (spit (str out-dir "/ns-timing-" (gensym nsym) ".edn")
             {nsym {:elapsed-ns elapsed-ns}})
       (with-test-out
         (println (format "\n%3.0f%s for %s"
@@ -50,6 +50,9 @@
   (begin-test-var [this m])
 
   (end-test-var [this {:keys [elapsed] var-ref :var}]
+    (-> out-dir File. .mkdirs)
+    (spit (str out-dir "/var-timing-" (gensym (munge (symbol var-ref))) ".edn")
+          {(symbol var-ref) {:elapsed-ns elapsed}})
     (with-test-out
       (println (format "%5.0f%s for %s."
                        elapsed

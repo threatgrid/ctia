@@ -220,7 +220,7 @@ jobs:
         with:
           retention-days: 1
           name: test-timing
-          path: target/test-results/ns-timing-*.edn
+          path: target/test-results/*.edn
       - name: Upload docker compose
         uses: actions/upload-artifact@v2
         with:
