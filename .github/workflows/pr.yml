@@ -51,7 +51,7 @@ jobs:
         run: ./scripts/actions/install-bb.sh
       - name: Setup test matrix splits
         id: set-matrix
-        run: ./scripts/actions/print-matrix.bb
+        run: ./scripts/actions/print-matrix.clj
       # Setup previous timing information
       - name: Timing Cache
         id: get-timing
