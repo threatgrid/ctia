@@ -8,6 +8,10 @@ on:
   push:
     branches:
       - master
+  # automatically uses master https://stackoverflow.com/a/58800550
+  schedule:
+    # At the end of every day
+    - cron: "0 0 * * *"
 
 # Note: see BIN_PATH for how to set an env variable that depends on
 # other env variables.
@@ -22,14 +26,9 @@ env:
   LEIN_ROOT: 1
   LEIN_VERSION: 2.9.4
   CTIA_MAJOR_VERSION: 1
-  # number of test-matrix builds
-  # 1 setup + 10 test jobs + 1 for fan-in
-  # allows 2 commits to build simultaneously, since one build
-  # will take at most 10 builds at any one time
-  CTIA_NSPLITS: 10
   SHELLCHECK_VERSION: v0.7.1 # "stable" or "v0.4.7", or "latest"
   BB_VERSION: 0.2.3
-  JAVA_VERSION: 11.0.9
+  DEFAULT_JAVA_VERSION: 11.0.9
 
 jobs:
   setup:
@@ -43,21 +42,16 @@ jobs:
           mkdir -p "${BIN_PATH}"
           echo "${BIN_PATH}" >> $GITHUB_PATH
       - uses: actions/checkout@v2
-      - uses: actions/setup-node@v1
+      - name: Binary Cache
+        uses: actions/cache@v2
         with:
-          node-version: '12'
+          path: ${{ env.BIN_PATH }}
+          key: ctia-bin-${{ env.ACTIONS_CACHE_VERSION }}-${{ env.BB_VERSION }}
+      - name: Install babashka
+        run: ./scripts/actions/install-bb.sh
       - name: Setup test matrix splits
         id: set-matrix
-        run: |
-          set +x
-          mkdir -p tmp 
-          cd tmp 
-          # ensure positive splits
-          node -e "process.exit(0 < ${CTIA_NSPLITS} ? 0 : 1)"
-          # calculate (range ${CTIA_NSPLITS})
-          node -e "console.log(JSON.stringify([...Array(${CTIA_NSPLITS}).keys()]))" > splits.json
-          # send splits to 'matrix' output variable for the test-matrix job
-          echo "::set-output name=matrix::$( cat splits.json )"
+        run: echo "::set-output name=matrix::$( ./scripts/print-actions-matrix.bb )"
       # Setup previous timing information
       - name: Timing Cache
         id: get-timing
@@ -115,7 +109,7 @@ jobs:
         if: steps.maven-cache.outputs.cache-hit != 'true'
         uses: actions/setup-java@v1
         with:
-          java-version: ${{ env.JAVA_VERSION }}
+          java-version: ${{ env.DEFAULT_JAVA_VERSION }}
       - run: java -version
         if: steps.maven-cache.outputs.cache-hit != 'true'
       - name: Leiningen Cache
@@ -131,13 +125,7 @@ jobs:
           key: ctia-lein-cache-${{ env.ACTIONS_CACHE_VERSION }}-${{ env.LEIN_VERSION }}
       - name: Install Leiningen
         if: steps.maven-cache.outputs.cache-hit != 'true' && steps.lein-cache.outputs.cache-hit != 'true'
-        run: |
-          cd "${BIN_PATH}"
-          # poor man's travis_retry
-          for i in {1..${ACTIONS_RETRY_TIMES}}; do curl -sLO "https://raw.githubusercontent.com/technomancy/leiningen/${LEIN_VERSION}/bin/lein" && break; done
-          chmod a+x lein
-          # poor man's travis_retry
-          for i in {1..${ACTIONS_RETRY_TIMES}}; do lein version && break; done
+        run: ./scripts/actions/install-lein.sh
       - name: Warm dependency cache
         if: steps.maven-cache.outputs.cache-hit != 'true'
         # poor man's travis_retry
@@ -149,7 +137,10 @@ jobs:
       matrix:
         this-split: ${{fromJson(needs.setup.outputs.matrix)}}
     env:
-      CTIA_THIS_SPLIT: ${{ matrix.this-split }}
+      CTIA_THIS_SPLIT: ${{ matrix.this-split.this_split }}
+      CTIA_NSPLITS: ${{ matrix.this-split.total_splits }}
+      CLOJURE_VERSION: ${{ matrix.this-split.clojure_version }}
+      JAVA_VERSION: ${{ matrix.this-split.java_version }}
     steps:
       - run: echo "BIN_PATH=${HOME}/bin" >> $GITHUB_ENV
       - run: echo "LOG_PATH=${HOME}/log" >> $GITHUB_ENV
@@ -218,13 +209,7 @@ jobs:
           key: ctia-lein-cache-${{ env.ACTIONS_CACHE_VERSION }}-${{ env.LEIN_VERSION }}
       - name: Install Leiningen
         if: steps.lein-cache.outputs.cache-hit != 'true'
-        run: |
-          cd "${BIN_PATH}"
-          # poor man's travis_retry
-          for i in {1..${ACTIONS_RETRY_TIMES}}; do curl -sLO "https://raw.githubusercontent.com/technomancy/leiningen/${LEIN_VERSION}/bin/lein" && break; done
-          chmod a+x lein
-          # poor man's travis_retry
-          for i in {1..${ACTIONS_RETRY_TIMES}}; do lein version && break; done
+        run: ./scripts/actions/install-lein.sh
       - name: Run CTIA tests
         run: ./build/run-tests.sh
         env:
@@ -260,7 +245,7 @@ jobs:
         uses: actions/cache@v2
         with:
           path: ${{ env.BIN_PATH }}
-          key: ctia-all-pr-checks-bin-${{ env.ACTIONS_CACHE_VERSION }}-${{ env.BB_VERSION }}
+          key: ctia-bin-${{ env.ACTIONS_CACHE_VERSION }}-${{ env.BB_VERSION }}
       - name: Timing results Cache
         uses: actions/cache@v2
         with:
@@ -269,16 +254,7 @@ jobs:
           key: ctia-timings-${{ env.ACTIONS_CACHE_VERSION }}-${{ github.ref }}-${{ github.sha }}
 
       - name: Install babashka
-        run: |
-          if ! command -v bb &> /dev/null || ! bb --version | grep "^babashka v${BB_VERSION}$"
-          then
-            mkdir -p tmp
-            cd tmp
-            curl -sLO https://raw.githubusercontent.com/borkdude/babashka/master/install
-            chmod +x install
-            ./install --dir "${BIN_PATH}" --version 0.2.3
-          fi
-          bb --version
+        run: ./scripts/actions/install-bb.sh
 
       - name: Download test timings
         uses: actions/download-artifact@v2
