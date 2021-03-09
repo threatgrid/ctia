@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -ex
+set -Eeuxo pipefail
 
 cd "${BIN_PATH}"
 # poor man's travis_retry

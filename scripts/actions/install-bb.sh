@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -ex
+set -Eeuxo pipefail
 
 if ! command -v bb &> /dev/null || ! bb --version | grep "^babashka v${BB_VERSION}$"
 then
