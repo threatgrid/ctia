@@ -51,9 +51,7 @@ jobs:
         run: ./scripts/actions/install-bb.sh
       - name: Setup test matrix splits
         id: set-matrix
-        run: |
-          set +xe
-          echo "::set-output name=matrix::$( ./scripts/print-actions-matrix.bb )"
+        run: ./scripts/actions/print-matrix.bb
       # Setup previous timing information
       - name: Timing Cache
         id: get-timing

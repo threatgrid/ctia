@@ -38,4 +38,4 @@
     (cron-matrix)
     (non-cron-matrix)))
 
-(println (json/generate-string (edn-matrix) {:pretty true}))
+(println "::set-output name=matrix::" (json/generate-string (edn-matrix) {:pretty false}))
