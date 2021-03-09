@@ -49,13 +49,14 @@
 
   (begin-test-var [this m])
 
-  (end-test-var [this {:keys [elapsed] var-ref :var}]
+  (end-test-var [this {elapsed-s :elapsed var-ref :var}]
     (-> out-dir File. .mkdirs)
-    (spit (str out-dir "/var-timing-" (gensym (munge (symbol var-ref))) ".edn")
-          {(symbol var-ref) {:elapsed-ns elapsed}})
+    (let [elapsed-ns (* elapsed-s 1e+9)]
+      (spit (str out-dir "/var-timing-" (gensym (munge (symbol var-ref))) ".edn")
+            {(symbol var-ref) {:elapsed-ns elapsed-ns}}))
     (with-test-out
       (println (format "%5.0f%s for %s."
-                       elapsed
+                       elapsed-s
                        "s"
                        (symbol var-ref))))))
 
