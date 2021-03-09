@@ -1,19 +1,19 @@
 (ns ctia.bulk.core
-  (:require [clojure.string :as str]
-            [clojure.set :as set]
-            [clojure.tools.logging :as log]
-            [ctia
-             [auth :as auth]
-             [properties :as p]
-             [store :as store]]
-            [ctia.domain.entities :as ent :refer [with-long-id]]
-            [ctia.entity.entities :refer [all-entities]]
-            [ctia.flows.crud :as flows]
-            [ctia.schemas.core :refer [APIHandlerServices]]
-            [ctia.schemas.utils :as csu]
-            [ring.util.http-response :refer [bad-request]]
-            [schema.core :as s]
-            [schema-tools.core :as st]))
+  (:require
+   [clojure.set :as set]
+   [clojure.string :as str]
+   [clojure.tools.logging :as log]
+   [ctia.auth :as auth]
+   [ctia.domain.entities :as ent :refer [with-long-id]]
+   [ctia.entity.entities :refer [all-entities]]
+   [ctia.flows.crud :as flows]
+   [ctia.properties :as p]
+   [ctia.schemas.core :refer [APIHandlerServices]]
+   [ctia.schemas.utils :as csu]
+   [ctia.store :as store]
+   [ring.util.http-response :refer [bad-request]]
+   [schema-tools.core :as st]
+   [schema.core :as s]))
 
 ;; TODO def => defn
 (def bulk-entity-mapping
