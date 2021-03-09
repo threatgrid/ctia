@@ -3,6 +3,7 @@
             [clojure.core.memoize :as memo]
             [clojure.string :as string]
             [clojure.tools.logging :as log]
+            [compojure.api.middleware :refer [api-middleware]]
             [ctia.auth.jwt :as auth-jwt]
             [ctia.http.handler :as handler]
             [ctia.http.middleware.auth :as auth]
@@ -210,7 +211,16 @@
               (fn [request]
                 (((rjwt/wrap-jwt-auth-fn
                     (assoc jwt-opts-without-error-handler
-                           :error-handler (auth-jwt/->jwt-error-handler request)))
+                           ;; content negotiation is done "after" this jwt check via
+                           ;; handler/api-handler, so we manually handle the request to
+                           ;; generate a reasonable response.
+                           :error-handler (comp
+                                            (fn [resp]
+                                              ((api-middleware
+                                                 (fn [_req] resp)
+                                                 {:format {:formats (handler/->formats)}})
+                                               request))
+                                            rjwt/default-error-handler)))
                   handler)
                  request)))))
 

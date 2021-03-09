@@ -298,7 +298,8 @@
                                              (helpers/get-http-port app)
                                              "/ctia/judgement/"
                                              (:short-id judgement-id))
-                                        {:headers {"Authorization" (str "Bearer " jwt)}
+                                        {:headers {"Authorization" (str "Bearer " jwt)
+                                                   "Accept" "application/json"}
                                          :throw-exceptions false
                                          :as :json})]
                                    (:status response)))]
@@ -348,7 +349,8 @@
                                (let [{:keys [status] :as response}
                                      (GET app
                                           (str "ctia/judgement/" (:short-id judgement-id))
-                                          :headers {"Authorization" (str "Bearer " jwt)})]
+                                          :headers {"Authorization" (str "Bearer " jwt)
+                                                    "Accept" "application/json"})]
                                  response))
                ctx (assoc jwts :get-judgement get-judgement)]
            (is (= 201 status))

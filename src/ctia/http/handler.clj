@@ -32,9 +32,8 @@
             [ring.middleware.not-modified :refer [wrap-not-modified]]
             [ring.util.http-response :refer [ok]]
             [schema.core :as s]
-            [compojure.api.middleware :refer [api-middleware-defaults]]
-            [ring.middleware.format-response :refer [make-encoder]]
-            [compojure.api.middleware :refer [->mime-types]]))
+            [compojure.api.middleware :refer [->mime-types api-middleware-defaults]]
+            [ring.middleware.format-response :refer [make-encoder]]))
 
 (def api-description
   "A Threat Intelligence API service
@@ -203,12 +202,17 @@
                     (pr-str body)))
                 "text/plain"))
 
+(def default-formats
+  (get-in api-middleware-defaults [:format :formats]))
+
+(defn ->formats []
+  (conj default-formats (make-text-plain-format-encoder)))
+
 (s/defn api-handler [{{:keys [get-in-config]} :ConfigService
                       :as services} :- APIHandlerServices]
   (let [{:keys [oauth2]}
         (get-http-swagger get-in-config)
-        default-formats (get-in api-middleware-defaults [:format :formats])
-        formats (conj default-formats (make-text-plain-format-encoder))
+        formats (->formats)
         swagger-mime-types (->mime-types default-formats)]
     (api {:exceptions {:handlers exception-handlers}
           :format {:formats formats}
