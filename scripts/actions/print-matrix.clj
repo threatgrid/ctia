@@ -8,7 +8,7 @@
   "Job parallelism for non cron tests."
   10)
 (def cron-ctia-nsplits
-  "Job parallelism for non tests."
+  "Job parallelism for cron tests."
   2)
 
 (defn non-cron-matrix
