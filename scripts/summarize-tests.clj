@@ -13,9 +13,9 @@
                                  ;; TODO throw on overlapping keys
                                  (apply merge)))
         ns-timing (timing-for-prefix "ns-timing")
-        sorted-ns-timing (reverse (sort-by (comp :elapsed-ns val) ns-timing))
+        sorted-ns-timing (sort-by (comp :elapsed-ns val) > ns-timing)
         var-timing (timing-for-prefix "var-timing")
-        sorted-var-timing (reverse (sort-by (comp :elapsed-ns val) var-timing))]
+        sorted-var-timing (sort-by (comp :elapsed-ns val) > var-timing)]
     (when-some [expected (let [f (File. "dev-resources/ctia_test_timings.edn")]
                            (when (.exists f)
                              (-> f
