@@ -157,6 +157,28 @@
     [:ctia :store :bulk-refresh]
     "false"))
 
+(s/defn create-asset-ref-entities
+  "Creates AssetMapping and AssetProperties entities, rectifying transient IDs in the process"
+  [bulk temp-ids login refresh
+   services :- APIHandlerServices]
+  (let [bulk' (select-keys bulk [:asset_mappings :asset_properties])
+        ;; replace :asset_ref fields with non-transient IDs
+        ents (zipmap
+              (keys bulk')
+              (->> bulk'
+                   vals
+                   (map
+                    (partial
+                     map #(assoc % :asset_ref (get temp-ids (:asset_ref %)))))))]
+    ;; create asset-mapping and asset-properties entities
+    (gen-bulk-from-fn
+     create-entities
+     ents
+     temp-ids
+     login
+     {:refresh refresh}
+     services)))
+
 (s/defn create-bulk
   "Creates entities in bulk. To define relationships between entities,
    transient IDs can be used. They are automatically converted into
@@ -167,16 +189,28 @@
   ([bulk login services :- APIHandlerServices] (create-bulk bulk {} login {} services))
   ([bulk tempids login params {{:keys [get-in-config]} :ConfigService :as services} :- APIHandlerServices]
    (let [{:keys [refresh] :as params
-          :or {refresh (bulk-refresh? get-in-config)}} params
+          :or   {refresh (bulk-refresh? get-in-config)}} params
          new-entities (gen-bulk-from-fn
                        create-entities
-                       (dissoc bulk :relationships)
+                       (dissoc
+                        bulk
+                        :relationships
+                        ;; AssetMapping and AssetProperties have asset-ref field
+                        ;; that needs to be resolved, so we delay the creation
+                        ;; of these entities to be after we create Assets
+                        :asset_mappings :asset_properties)
                        tempids
                        login
                        {:refresh refresh}
                        services)
          entities-tempids (into tempids
                                 (merge-tempids new-entities))
+         new-asset-ref-ents (create-asset-ref-entities
+                             bulk
+                             entities-tempids
+                             login
+                             refresh
+                             services)
          new-relationships (gen-bulk-from-fn
                             create-entities
                             (select-keys bulk [:relationships])
@@ -185,8 +219,9 @@
                             {:refresh refresh}
                             services)
          all-tempids (merge entities-tempids
+                            (merge-tempids new-asset-ref-ents)
                             (merge-tempids new-relationships))
-         all-entities (into new-entities new-relationships)
+         all-entities (merge new-entities new-relationships new-asset-ref-ents)
          ;; Extracting data from the enveloped flow result
          ;; {:entity-type {:data [] :tempids {}}
          bulk-refs (->> all-entities
