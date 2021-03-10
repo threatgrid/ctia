@@ -17,7 +17,7 @@
              [fake-whoami-service :as whoami-helpers]
              [field-selection :refer [field-selection-tests]]
              [http :refer [api-key doc-id->rel-url]]
-             [pagination :refer [pagination-test]]
+             [pagination :refer [pagination-sample-size pagination-test]]
              [store :refer [test-for-each-store-with-app]]]
             [ctim.examples.sightings
              :refer
@@ -69,7 +69,7 @@
                 app
                 new-sighting-maximal
                 :sightings
-                30
+                pagination-sample-size
                 {"Authorization" "45c1f5e3f05d0"})
 
            sample (dissoc new-sighting-maximal :id)

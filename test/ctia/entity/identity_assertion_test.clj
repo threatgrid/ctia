@@ -11,7 +11,7 @@
              [fake-whoami-service :as whoami-helpers]
              [field-selection :refer [field-selection-tests]]
              [http :refer [api-key doc-id->rel-url]]
-             [pagination :refer [pagination-test]]
+             [pagination :refer [pagination-sample-size pagination-test]]
              [core :as helpers :refer [GET]]
              [store :refer [test-for-each-store-with-app]]]
             [ctim.examples.identity-assertions
@@ -96,7 +96,7 @@
                 app
                 new-identity-assertion-maximal
                 :identity_assertions
-                30
+                pagination-sample-size
                 {"Authorization" "45c1f5e3f05d0"})]
 
        (field-selection-tests

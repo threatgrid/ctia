@@ -5,6 +5,13 @@
             [ctia.test-helpers.aggregate :as aggregate]
             [ctia.test-helpers.core :as helpers :refer [GET]]))
 
+(def pagination-sample-size 15)
+
+(assert (pos? pagination-sample-size)
+        "Many tests assume non-empty sample size")
+(assert (<= 3 pagination-sample-size )
+        "Is pagination-sample-size too low to exercise pagination?")
+
 (defn total->limit
   "make a limit from a full list total and offset"
   [total offset]

@@ -56,7 +56,7 @@
                 app
                 new-attack-pattern-maximal
                 :attack_patterns
-                30
+                pagination/pagination-sample-size
                 {"Authorization" "45c1f5e3f05d0"})]
        (pagination-test
         app

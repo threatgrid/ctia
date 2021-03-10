@@ -80,7 +80,7 @@
                 app
                 new-target-record-maximal
                 :target_records
-                30
+                pagination/pagination-sample-size
                 {"Authorization" "45c1f5e3f05d0"})]
 
        (field-selection/field-selection-tests

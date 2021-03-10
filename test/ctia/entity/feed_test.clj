@@ -17,7 +17,7 @@
     [fake-whoami-service :as whoami-helpers]
     [field-selection :refer [field-selection-tests]]
     [http :refer [doc-id->rel-url]]
-    [pagination :refer [pagination-test]]
+    [pagination :refer [pagination-sample-size pagination-test]]
     [store :refer [test-for-each-store-with-app]]]))
 
 (def new-feed-maximal
@@ -258,8 +258,9 @@
                                          "foouser"
                                          "foogroup"
                                          "user")
-     (let [entities (repeat 345 (assoc new-feed-maximal
-                                       :title "foo"))
+     (let [entities (repeat pagination-sample-size
+                            (assoc new-feed-maximal
+                                   :title "foo"))
            ids (->> (doall (map #(POST app
                                        "/ctia/feed"
                                        :body (dissoc % :id)

@@ -11,7 +11,7 @@
              [fake-whoami-service :as whoami-helpers]
              [field-selection :refer [field-selection-tests]]
              [http :refer [doc-id->rel-url]]
-             [pagination :refer [pagination-test]]
+             [pagination :refer [pagination-sample-size pagination-test]]
              [store :refer [test-for-each-store-with-app]]]
             [ctia.entity.investigation.examples :refer
              [new-investigation-maximal
@@ -52,7 +52,7 @@
                 app
                 (assoc new-investigation-maximal :title "foo")
                 :investigations
-                30
+                pagination-sample-size
                 {"Authorization" "45c1f5e3f05d0"})]
        (pagination-test
         app

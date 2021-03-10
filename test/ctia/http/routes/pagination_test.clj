@@ -26,47 +26,48 @@
            observable {:type "ip"
                        :value "1.2.3.4"}
            title "test"
-           new-indicators (->> (csg/sample (cs/gen :new-indicator/map 5))
+           sample-size 3
+           new-indicators (->> (csg/sample (cs/gen :new-indicator/map sample-size))
                                (map #(assoc % :title title))
                                (map #(assoc % :id (url-id :indicator (app->HTTPShowServices app)))))
            created-indicators (map #(assert-post app "ctia/indicator" %)
                                    new-indicators)
-           new-judgements (->> (csg/sample (cs/gen :new-judgement/map) 5)
+           new-judgements (->> (csg/sample (cs/gen :new-judgement/map) sample-size)
                                (map #(assoc %
                                             :observable observable
                                             :disposition 5
                                             :disposition_name "Unknown"))
                                (map #(assoc % :id (url-id :judgement (app->HTTPShowServices app)))))
-           new-sightings (->> (csg/sample (cs/gen :new-sighting/map) 5)
+           new-sightings (->> (csg/sample (cs/gen :new-sighting/map) sample-size)
                               (map #(-> (assoc %
                                                :observables [observable])
-                                        (dissoc % :relations :data)))
+                                        (dissoc :relations :data)))
                               (map #(assoc % :id (url-id :sighting (app->HTTPShowServices app)))))
            route-pref (str "ctia/" (:type observable) "/" (:value observable))]
 
        (testing "setup: create sightings and their relationships with indicators"
          (doseq [new-sighting new-sightings
                  :let [{id :id} (assert-post app "ctia/sighting" new-sighting)
-                       sighting-id (id/->id :sighting id http-show)]]
-           (doseq [{id :id} created-indicators
-                   :let [indicator-id (id/->id :indicator id http-show)]]
-             (assert-post app
-                          "ctia/relationship"
-                          {:source_ref (id/long-id sighting-id)
-                           :relationship_type "indicates"
-                           :target_ref (id/long-id indicator-id)}))))
+                       sighting-id (id/->id :sighting id http-show)]
+                 {id :id} created-indicators
+                 :let [indicator-id (id/->id :indicator id http-show)]]
+           (assert-post app
+                        "ctia/relationship"
+                        {:source_ref (id/long-id sighting-id)
+                         :relationship_type "indicates"
+                         :target_ref (id/long-id indicator-id)})))
 
        (testing "setup: create judgements and their relationships with indicators"
          (doseq [new-judgement new-judgements
                  :let [{id :id} (assert-post app "ctia/judgement" new-judgement)
-                       judgement-id (id/->id :judgement id http-show)]]
-           (doseq [{id :id} created-indicators
-                   :let [indicator-id (id/->id :indicator id http-show)]]
-             (assert-post app
-                          "ctia/relationship"
-                          {:source_ref (id/long-id judgement-id)
-                           :relationship_type "observable-of"
-                           :target_ref (id/long-id indicator-id)}))))
+                       judgement-id (id/->id :judgement id http-show)]
+                 {id :id} created-indicators
+                 :let [indicator-id (id/->id :indicator id http-show)]]
+           (assert-post app
+                        "ctia/relationship"
+                        {:source_ref (id/long-id judgement-id)
+                         :relationship_type "observable-of"
+                         :target_ref (id/long-id indicator-id)})))
 
        (testing "indicators with query (ES only)"
          (when (= "es" (get-in-config [:ctia :store :indicator]))
