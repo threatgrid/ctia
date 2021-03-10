@@ -19,13 +19,13 @@
       (println (str "Expected test duration: "
                     (/ (apply + (map :elapsed-ns (vals expected)))
                        1e9)
-                    " seconds"))
-      (println (str "Actual test duration: "
-                    (/ (apply + (map :elapsed-ns (vals timing)))
-                       1e9)
                     " seconds")))
+    (println (str "Actual test duration: "
+                  (/ (apply + (map :elapsed-ns (vals timing)))
+                     1e9)
+                  " seconds"))
     (println "Test summary:")
-    (pp/pprint timing)
+    (pp/pprint (sort-by (comp :elapsed-ns val) > timing))
     (-> (File. "target/test-results")
         .mkdirs)
     (spit "target/test-results/all-test-timings.edn" timing)))
