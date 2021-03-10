@@ -26,7 +26,7 @@
            observable {:type "ip"
                        :value "1.2.3.4"}
            title "test"
-           sample-size 3
+           sample-size 5
            new-indicators (->> (csg/sample (cs/gen :new-indicator/map sample-size))
                                (map #(assoc % :title title))
                                (map #(assoc % :id (url-id :indicator (app->HTTPShowServices app)))))
