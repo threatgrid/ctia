@@ -11,7 +11,7 @@
              [fake-whoami-service :as whoami-helpers]
              [field-selection :refer [field-selection-tests]]
              [http :refer [doc-id->rel-url]]
-             [pagination :refer [pagination-test]]
+             [pagination :refer [pagination-sample-size pagination-test]]
              [store :refer [test-for-each-store-with-app]]]
             [ctim.examples.attack-patterns
              :refer
@@ -56,7 +56,7 @@
                 app
                 new-attack-pattern-maximal
                 :attack_patterns
-                pagination/pagination-sample-size
+                pagination-sample-size
                 {"Authorization" "45c1f5e3f05d0"})]
        (pagination-test
         app
