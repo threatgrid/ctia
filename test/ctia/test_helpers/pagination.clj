@@ -5,7 +5,7 @@
             [ctia.test-helpers.aggregate :as aggregate]
             [ctia.test-helpers.core :as helpers :refer [GET]]))
 
-(def pagination-sample-size 15)
+(def pagination-sample-size 10)
 
 (assert (pos? pagination-sample-size)
         "Many tests assume non-empty sample size")
