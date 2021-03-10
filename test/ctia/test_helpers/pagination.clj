@@ -30,6 +30,7 @@
 
                  total (count full-res)
                  limit (total->limit total 0)
+                 _ (assert (pos? limit))
 
                  {limited-status :status
                   limited-res :parsed-body
@@ -91,6 +92,7 @@
 
           total (count full-res)
           limit (total->limit total offset)
+          _ (assert (pos? limit))
           last-record (nth full-res (- (+ limit offset) 1))
           search-after-id (when-let [last-id (:id last-record)]
                             (id/short-id
