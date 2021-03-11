@@ -8,7 +8,7 @@
              [codec :as codec]
              [http-response :as http-res]
              [http-status :refer [ok]]]
-            [ctia.schemas.search-agg :refer [SearchQuery MetricResult]]
+            [ctia.schemas.search-agg :refer [DateRangeQueryOpt SearchQuery MetricResult]]
             [schema.core :as s]))
 
 (def search-options [:sort_by
@@ -82,7 +82,9 @@
   [{:keys [id] :as resource}]
   (http-res/created id resource))
 
-(defn now [] (java.util.Date.))
+(s/defn now :- s/Inst
+  []
+  (java.util.Date.))
 
 (s/defn coerce-date-range :- {:gte s/Inst
                               :lt s/Inst}
@@ -99,13 +101,17 @@
   ([date-field search-params]
    (search-query date-field
                  search-params
-                 (fn [from to]
+                 (s/fn :- DateRangeQueryOpt
+                   [from :- (s/maybe s/Inst)
+                    to :- (s/maybe s/Inst)]
                    (cond-> {}
                      from (assoc :gte from)
                      to (assoc :lt to)))))
   ([date-field
     {:keys [query from to] :as search-params}
-    make-date-range-fn]
+    make-date-range-fn :- (s/=> DateRangeQueryOpt
+                                (s/named (s/maybe s/Inst) 'from)
+                                (s/named (s/maybe s/Inst) 'to))]
    (let [filter-map (apply dissoc search-params filter-map-search-options)
          date-range (make-date-range-fn from to)]
      (cond-> {}
