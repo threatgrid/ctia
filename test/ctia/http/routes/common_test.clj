@@ -1,19 +1,31 @@
 (ns ctia.http.routes.common-test
-  (:require [ctia.http.routes.common :as sut]
-            [clj-momo.lib.clj-time.coerce :as tc]
-            [clj-momo.lib.clj-time.core :as t]
-            [clojure.test :refer [are is deftest testing]]))
+  (:require [clj-momo.test-helpers.core :as mth]
+            [clojure.instant :as inst]
+            [clojure.test :refer [are is deftest testing use-fixtures]]
+            [ctia.auth.capabilities :refer [all-capabilities]]
+            [ctia.entity.incident :refer [incident-entity]]
+            [ctia.http.routes.common :as sut]
+            [ctia.test-helpers.core :as helpers]
+            [ctia.test-helpers.crud :refer [crud-wait-for-test]]
+            [ctia.test-helpers.store :refer [test-selected-stores-with-app]]
+            [ctia.test-helpers.fake-whoami-service :as whoami-helpers]
+            [ctim.examples.incidents :refer [new-incident-maximal]]
+            [puppetlabs.trapperkeeper.app :as app]))
+
+(use-fixtures :once
+              mth/fixture-schema-validation
+              whoami-helpers/fixture-server)
 
 (deftest coerce-date-range
-  (with-redefs [sut/now (constantly (tc/from-string "2020-12-31"))]
-    (let [from (tc/from-string "2020-04-01")
-          to (tc/from-string "2020-06-01")]
-      (is (= {:gte (tc/from-string "2019-12-31")
+  (with-redefs [sut/now (constantly #inst "2020-12-31")]
+    (let [from #inst "2020-04-01"
+          to #inst "2020-06-01"]
+      (is (= {:gte #inst "2019-12-31"
               :lt (sut/now)}
-             (sut/coerce-date-range (tc/from-string "2019-12-30") nil)))
-      (is (= {:gte (tc/from-string "2019-06-01")
+             (sut/coerce-date-range #inst "2019-12-30" nil)))
+      (is (= {:gte #inst "2019-06-01"
               :lt to}
-             (sut/coerce-date-range (tc/from-string "2019-06-1") to)))
+             (sut/coerce-date-range #inst "2019-06-01" to)))
       (is (= {:gte from
               :lt (sut/now)}
              (sut/coerce-date-range from nil)))
@@ -22,9 +34,9 @@
              (sut/coerce-date-range from to))))))
 
 (deftest search-query-test
-  (with-redefs [sut/now (constantly (tc/from-string "2020-12-31"))]
-    (let [from (tc/from-string "2020-04-01")
-          to (tc/from-string "2020-06-01")]
+  (with-redefs [sut/now (constantly #inst "2020-12-31")]
+    (let [from #inst "2020-04-01"
+          to #inst "2020-06-01"]
       (is (= {:query-string "bad-domain"}
              (sut/search-query :created {:query "bad-domain"})))
       (is (= {:date-range {:created
@@ -79,18 +91,18 @@
                                          :sort_order :desc})))
       (testing "make-date-range-fn should be properly called"
         (is (= {:date-range {:timestamp
-                             {:gte (tc/from-string "2050-01-01")
-                              :lt "2100-01-01"}}}
+                             {:gte #inst "2050-01-01"
+                              :lt #inst "2100-01-01"}}}
                 (sut/search-query :timestamp
                                   {:from from
                                    :to to}
                                   (fn [from to]
-                                    {:gte (tc/from-string "2050-01-01")
-                                     :lt "2100-01-01"}))))))))
+                                    {:gte #inst "2050-01-01"
+                                     :lt #inst "2100-01-01"}))))))))
 
 (deftest format-agg-result-test
-  (let [from (tc/from-string "2019-01-01")
-        to (tc/from-string "2020-12-31")
+  (let [from #inst "2019-01-01"
+        to #inst "2020-12-31"
         cardinality 5
         topn [{:key "Open" :value 8}
               {:key "New" :value 4}
@@ -178,3 +190,20 @@
                (sut/capabilities->string v))
          nil
          #{})))
+
+;; we choose incidents to test wait_for because it supports patches and
+;; thus achieves full coverage of crud-wait-for-test
+(deftest test-wait_for
+  (test-selected-stores-with-app
+    #{:es-store}
+    (fn [app]
+      (helpers/set-capabilities! app "foouser" ["foogroup"] "user" (all-capabilities))
+      (whoami-helpers/set-whoami-response app "45c1f5e3f05d0" "foouser" "foogroup" "user")
+      (let [{{:keys [get-in-config]} :ConfigService} (app/service-graph app)
+            {:keys [entity] :as parameters} (into incident-entity
+                                                  {:app app
+                                                   :example new-incident-maximal
+                                                   :headers {:Authorization "45c1f5e3f05d0"}})
+            entity-store (get-in-config [:ctia :store entity])]
+        (assert (= "es" entity-store) (pr-str entity-store))
+        (crud-wait-for-test parameters)))))

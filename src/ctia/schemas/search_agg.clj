@@ -2,12 +2,14 @@
   (:require [schema.core :as s]
             [schema-tools.core :as st]))
 
+(s/defschema DateRangeQueryOpt
+  (st/optional-keys
+    {:gte s/Inst
+     :lt s/Inst}))
+
 (s/defschema DateRange
   "Date range query, includes lowerfrom and excludes to"
-  {s/Keyword
-   (st/optional-keys
-    {:gte s/Inst
-     :lt s/Inst})})
+  {s/Keyword DateRangeQueryOpt})
 
 (s/defschema SearchQuery
   "components of a search query:
