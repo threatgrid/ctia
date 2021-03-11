@@ -75,7 +75,8 @@
    :vulnerabilities  (n-doc vulnerability-minimal fixtures-nb)
    :weaknesses       (n-doc weakness-minimal fixtures-nb)})
 
-(deftest test-check-store-indexes
+;; TODO: re-enable after fixing https://github.com/threatgrid/ctim/issues/334
+#_(deftest test-check-store-indexes
   (let [app (helpers/get-current-app)
         {:keys [get-in-config]} (helpers/get-service-map app :ConfigService)
         {:keys [all-stores]} (helpers/get-service-map app :StoreService)
