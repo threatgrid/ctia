@@ -1,6 +1,5 @@
 (ns ctia.http.routes.common-test
-  (:require [clj-momo.lib.clj-time.coerce :as tc]
-            [clj-momo.test-helpers.core :as mth]
+  (:require [clj-momo.test-helpers.core :as mth]
             [clojure.instant :as inst]
             [clojure.test :refer [are is deftest testing use-fixtures]]
             [ctia.auth.capabilities :refer [all-capabilities]]
@@ -18,15 +17,15 @@
               whoami-helpers/fixture-server)
 
 (deftest coerce-date-range
-  (with-redefs [sut/now (constantly (tc/to-date "2020-12-31"))]
-    (let [from (tc/to-date "2020-04-01")
-          to (tc/to-date "2020-06-01")]
-      (is (= {:gte (tc/to-date "2019-12-31")
+  (with-redefs [sut/now (constantly #inst "2020-12-31")]
+    (let [from #inst "2020-04-01"
+          to #inst "2020-06-01"]
+      (is (= {:gte #inst "2019-12-31"
               :lt (sut/now)}
-             (sut/coerce-date-range (tc/to-date "2019-12-30") nil)))
-      (is (= {:gte (tc/to-date "2019-06-01")
+             (sut/coerce-date-range #inst "2019-12-30" nil)))
+      (is (= {:gte #inst "2019-06-01"
               :lt to}
-             (sut/coerce-date-range (tc/to-date "2019-06-1") to)))
+             (sut/coerce-date-range #inst "2019-06-01" to)))
       (is (= {:gte from
               :lt (sut/now)}
              (sut/coerce-date-range from nil)))
@@ -35,9 +34,9 @@
              (sut/coerce-date-range from to))))))
 
 (deftest search-query-test
-  (with-redefs [sut/now (constantly (tc/to-date "2020-12-31"))]
-    (let [from (tc/to-date "2020-04-01")
-          to (tc/to-date "2020-06-01")]
+  (with-redefs [sut/now (constantly #inst "2020-12-31")]
+    (let [from #inst "2020-04-01"
+          to #inst "2020-06-01"]
       (is (= {:query-string "bad-domain"}
              (sut/search-query :created {:query "bad-domain"})))
       (is (= {:date-range {:created
@@ -92,14 +91,14 @@
                                          :sort_order :desc})))
       (testing "make-date-range-fn should be properly called"
         (is (= {:date-range {:timestamp
-                             {:gte (tc/to-date "2050-01-01")
-                              :lt (tc/to-date "2100-01-01")}}}
+                             {:gte #inst "2050-01-01"
+                              :lt #inst "2100-01-01"}}}
                 (sut/search-query :timestamp
                                   {:from from
                                    :to to}
                                   (fn [from to]
-                                    {:gte (tc/to-date "2050-01-01")
-                                     :lt (tc/to-date "2100-01-01")}))))))))
+                                    {:gte #inst "2050-01-01"
+                                     :lt #inst "2100-01-01"}))))))))
 
 (deftest format-agg-result-test
   (let [from #inst "2019-01-01"
