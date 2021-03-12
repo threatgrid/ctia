@@ -152,4 +152,5 @@
    :es-mapping campaign-mapping
    :services->routes (routes.common/reloadable-function
                        campaign-routes)
-   :capabilities capabilities})
+   :capabilities capabilities
+   :fields campaign-fields})

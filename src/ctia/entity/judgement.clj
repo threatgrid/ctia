@@ -194,4 +194,5 @@
    :es-mapping j-store/judgement-mapping-def
    :services->routes (routes.common/reloadable-function
                        judgement-routes)
-   :capabilities capabilities})
+   :capabilities capabilities
+   :fields judgement-fields})

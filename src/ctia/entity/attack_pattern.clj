@@ -164,4 +164,5 @@
    :es-mapping attack-pattern-mapping
    :services->routes (routes.common/reloadable-function
                        attack-pattern-routes)
-   :capabilities capabilities})
+   :capabilities capabilities
+   :fields attack-pattern-fields})

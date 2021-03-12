@@ -291,4 +291,5 @@
    :es-mapping incident-mapping
    :services->routes (routes.common/reloadable-function
                        incident-routes)
-   :capabilities capabilities})
+   :capabilities capabilities
+   :fields incident-fields})

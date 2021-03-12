@@ -150,4 +150,5 @@
    :es-mapping            target-record-mapping
    :services->routes      (routes.common/reloadable-function
                             target-record-routes)
-   :capabilities          capabilities})
+   :capabilities          capabilities
+   :fields                target-record-fields})

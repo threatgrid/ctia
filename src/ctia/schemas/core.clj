@@ -197,7 +197,8 @@
     :es-store s/Any
     :es-mapping {s/Any s/Any}}
    (st/optional-keys
-    {:new-schema (s/protocol s/Schema)
+    {:fields [s/Keyword]
+     :new-schema (s/protocol s/Schema)
      :route-context s/Str
      :services->routes DelayedRoutes
      :tags [s/Str]

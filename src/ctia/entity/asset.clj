@@ -132,4 +132,5 @@
    :es-mapping            asset-mapping
    :services->routes      (routes.common/reloadable-function
                             asset-routes)
-   :capabilities          capabilities})
+   :capabilities          capabilities
+   :fields                asset-fields})

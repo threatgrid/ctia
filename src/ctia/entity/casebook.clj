@@ -361,4 +361,5 @@
    :es-mapping casebook-mapping
    :services->routes (routes.common/reloadable-function
                        casebook-routes)
-   :capabilities casebook-capabilities})
+   :capabilities casebook-capabilities
+   :fields casebook-fields})

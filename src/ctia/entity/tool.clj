@@ -111,4 +111,5 @@
    :es-mapping tool-mapping
    :services->routes (routes.common/reloadable-function
                        tool-routes)
-   :capabilities capabilities})
+   :capabilities capabilities
+   :fields ts/tool-fields})

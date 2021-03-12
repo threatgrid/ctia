@@ -121,13 +121,15 @@
                                          "foogroup"
                                          "user")
 
-     (let [[entity {:keys [route-context plural]} :as test-case]
-           (-> (select-keys (entities/entities) [:target-record])
+     (let [[entity {:keys [fields route-context plural]} :as test-case]
+           (-> (into {}
+                     (remove (comp :no-api? val))
+                     (entities/entities))
+               ;; TODO
+               (select-keys [:target-record])
                vec
                rand-nth)
-           ;; TODO generate these to allow more entities
-           fields (case entity
-                    :target-record target-record-fields)
+           _ (assert (seq fields))
            new-maximal (case entity
                          :target-record new-target-record-maximal)]
        (testing test-case
