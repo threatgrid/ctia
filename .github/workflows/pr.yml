@@ -8,7 +8,9 @@ on:
   push:
     branches:
       - master
-  # automatically uses master https://stackoverflow.com/a/58800550
+  # Cron job: runs a matrix of JVM and Clojure versions, which can
+  # be configured in the `cron-matrix` function in ./scripts/actions/print-matrix.clj
+  # Note: automatically uses master branch https://stackoverflow.com/a/58800550
   schedule:
     # daily, 3am UTC
     - cron: "0 3 * * *"

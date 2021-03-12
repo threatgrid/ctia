@@ -4,7 +4,7 @@
   (:import [java.io File]
            [java.util UUID]))
 
-(deftype TimeReporter [out-dir ns-timing id]
+(deftype TimeReporter [^String out-dir ns-timing id]
   TestReporter
   (default [this m])
 
@@ -39,7 +39,7 @@
                      (:done nil) (throw (ex-info (str "end-test-ns called without begin-test-ns: " nsym)
                                                  (or timing {}))))))]
       (-> out-dir File. .mkdirs)
-      (spit (str out-dir "/ns-timing-" (gensym (munge nsym)) ".edn")
+      (spit (File. out-dir (str "ns-timing-" (gensym (munge nsym)) ".edn"))
             {nsym {:elapsed-ns elapsed-ns}})
       (with-test-out
         (println (format "\n%3.0f%s for %s"
@@ -52,7 +52,7 @@
   (end-test-var [this {elapsed-s :elapsed var-ref :var}]
     (-> out-dir File. .mkdirs)
     (let [elapsed-ns (* elapsed-s 1e+9)]
-      (spit (str out-dir "/var-timing-" (gensym (munge (symbol var-ref))) ".edn")
+      (spit (File. out-dir (str "var-timing-" (gensym (munge (symbol var-ref))) ".edn"))
             {(symbol var-ref) {:elapsed-ns elapsed-ns}}))
     (with-test-out
       (println (format "%5.0f%s for %s."
