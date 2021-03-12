@@ -476,4 +476,5 @@
    :services->routes (routes.common/reloadable-function
                       feed-routes)
    :capabilities capabilities
-   :fields feed-fields})
+   :fields sort-restricted-feed-fields
+   :sort-fields sort-restricted-feed-fields})

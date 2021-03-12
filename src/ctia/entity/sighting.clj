@@ -94,4 +94,5 @@
    :services->routes (routes.common/reloadable-function
                        sighting-routes)
    :capabilities capabilities
-   :fields sighting-fields})
+   :fields ss/sighting-fields
+   :sort-fields ss/sighting-sort-fields})

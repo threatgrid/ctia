@@ -184,6 +184,11 @@
         (resolve-with-rt-ctx
           rt-ctx))))
 
+(s/defschema Field
+  (s/conditional
+    keyword? s/Keyword
+    :else s/Str))
+
 (s/defschema Entity
   (st/merge
    {:entity s/Keyword
@@ -197,7 +202,8 @@
     :es-store s/Any
     :es-mapping {s/Any s/Any}}
    (st/optional-keys
-    {:fields [s/Keyword]
+    {:fields [Field]
+     :sort-fields [Field]
      :new-schema (s/protocol s/Schema)
      :route-context s/Str
      :services->routes DelayedRoutes

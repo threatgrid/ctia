@@ -195,4 +195,5 @@
    :services->routes (routes.common/reloadable-function
                        judgement-routes)
    :capabilities capabilities
-   :fields judgement-fields})
+   :fields js/judgement-fields
+   :sort-fields js/judgement-sort-fields})

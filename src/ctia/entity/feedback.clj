@@ -120,4 +120,5 @@
    :services->routes (routes.common/reloadable-function
                        feedback-routes)
    :capabilities capabilities
-   :fields fs/feedback-fields})
+   :fields fs/feedback-fields
+   :sort-fields fs/feedback-fields})

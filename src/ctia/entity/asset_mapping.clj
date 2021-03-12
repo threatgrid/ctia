@@ -153,4 +153,5 @@
    :services->routes      (routes.common/reloadable-function
                             asset-mapping-routes)
    :capabilities          capabilities
-   :fields                asset-mapping-fields})
+   :fields                asset-mapping-fields
+   :sort-fields           asset-mapping-fields})

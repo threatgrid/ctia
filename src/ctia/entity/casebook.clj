@@ -362,4 +362,5 @@
    :services->routes (routes.common/reloadable-function
                        casebook-routes)
    :capabilities casebook-capabilities
-   :fields casebook-fields})
+   :fields casebook-fields
+   :sort-fields casebook-fields})

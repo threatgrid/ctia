@@ -124,4 +124,5 @@
    :services->routes (routes.common/reloadable-function
                        investigation-routes)
    :capabilities capabilities
-   :fields investigation-fields})
+   :fields investigation-fields
+   :sort-fields investigation-fields})

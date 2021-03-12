@@ -165,4 +165,5 @@
    :services->routes (routes.common/reloadable-function
                        attack-pattern-routes)
    :capabilities capabilities
-   :fields attack-pattern-fields})
+   :fields attack-pattern-fields
+   :sort-fields attack-pattern-fields})

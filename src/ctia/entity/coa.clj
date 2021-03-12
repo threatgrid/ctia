@@ -161,4 +161,5 @@
    :services->routes (routes.common/reloadable-function
                        coa-routes)
    :capabilities capabilities
-   :fields coa-fields})
+   :fields coa-fields
+   :sort-fields coa-fields})

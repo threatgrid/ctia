@@ -7,9 +7,8 @@
             [ctia.http.routes.common :as sut]
             [ctia.test-helpers.core :as helpers]
             [ctia.test-helpers.crud :refer [crud-wait-for-test]]
-            [ctia.test-helpers.gen :as gen]
             [ctia.test-helpers.http :as http]
-            [ctia.test-helpers.store :as store :refer [test-selected-stores-with-app]]
+            [ctia.test-helpers.store :refer [test-selected-stores-with-app]]
             [ctia.test-helpers.fake-whoami-service :as whoami-helpers]
             [ctim.examples.incidents :refer [new-incident-maximal]]
             [puppetlabs.trapperkeeper.app :as app]))

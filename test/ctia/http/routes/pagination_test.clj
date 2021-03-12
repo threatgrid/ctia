@@ -1,5 +1,6 @@
 (ns ctia.http.routes.pagination-test
   (:require [clj-momo.test-helpers.core :as mth]
+            [clojure.string :as str]
             [clojure.spec.alpha :as cs]
             [clojure.spec.gen.alpha :as csg]
             [clojure.test :refer [deftest testing use-fixtures]]
@@ -7,20 +8,23 @@
             [ctia.entity.target-record :refer [target-record-fields]]
             [ctia.properties :as p]
             [ctia.entity.entities :as entities]
+            [ctia.entity.feed-test :refer [new-feed-maximal]]
+            [ctia.test-helpers.fake-whoami-service :as whoami-helpers]
             [ctia.test-helpers.field-selection :as field-selection]
             [ctia.test-helpers
              [core :as helpers :refer [url-id]]
-             [http :refer [app->HTTPShowServices assert-post]]
+             [http :as http :refer [app->HTTPShowServices assert-post]]
              [pagination :as pagination
               :refer [pagination-test
                       pagination-test-no-sort]]
-             [store :refer [test-for-each-store-with-app]]]
+             [store :as store :refer [test-for-each-store-with-app]]]
             [ctim.domain.id :as id]
             [ctim.examples.target-records :refer [new-target-record-maximal]]))
 
 (use-fixtures :once
   mth/fixture-schema-validation
-  helpers/fixture-allow-all-auth)
+  helpers/fixture-allow-all-auth
+  whoami-helpers/fixture-server)
 
 (deftest ^:slow test-pagination-lists
   "generate an observable and many records of all listable entities"
@@ -111,6 +115,24 @@
                                   (str route-pref "/judgements/indicators")
                                   {"Authorization" "45c1f5e3f05d0"}))))))
 
+(defn new-maximal-by-entity []
+  (into {}
+        (comp 
+          (remove (comp #{:identity :event} key))
+          (map (fn [[entity {:keys [plural]}]]
+                 [entity (case entity
+                           :feed new-feed-maximal
+                           @(requiring-resolve
+                              (symbol (format "ctim.examples.%s/new-%s-maximal"
+                                              (name plural)
+                                              (name entity)))))])))
+        (entities/all-entities)))
+
+(def test-all-entities-for-pagination+field-selection?
+  "If false, a random entity will be used to check pagination
+  and field selection. If true, tests all relevant entities serially."
+  true)
+
 (deftest pagination+field-selection-test
   (store/test-for-each-store-with-app
    (fn [app]
@@ -121,34 +143,79 @@
                                          "foogroup"
                                          "user")
 
-     (let [[entity {:keys [fields route-context plural]} :as test-case]
-           (-> (into {}
-                     (remove (comp :no-api? val))
-                     (entities/entities))
-               ;; TODO
-               (select-keys [:target-record])
-               vec
-               rand-nth)
-           _ (assert (seq fields))
-           new-maximal (case entity
-                         :target-record new-target-record-maximal)]
-       (testing test-case
-         (let [ids (helpers/POST-entity-bulk
-                     app
-                     maximal
-                     plural
-                     30
-                     {"Authorization" "45c1f5e3f05d0"})]
+     (let [test-cases (vec (cond->> (-> (into []
+                                              (remove (some-fn
+                                                        (comp #{:event :feedback} key)
+                                                        (comp :no-api? val)))
+                                              (entities/all-entities))
+                                        shuffle)
+                             test-all-entities-for-pagination+field-selection? (take 1)))
+           _ (assert (seq test-cases) test-cases)
+           _ (assert (every? vector? test-cases) test-cases)]
+       (doseq [[entity {:keys [fields plural route-context sort-fields]} :as test-case] test-cases
+               :let [_ (assert (seq fields) entity)
+                     _ (assert (seq sort-fields) entity)
+                     new-maximal (get (new-maximal-by-entity) entity)
+                     _ (assert (map? new-maximal) entity)
+                     new-maximal (cond-> new-maximal
+                                   (#{:actor :campaign :casebook :feed :incident
+                                      :investigation :vulnerability :weakness}
+                                     entity)
+                                   (assoc :title "foo")
 
-           (field-selection/field-selection-tests
-             app
-             [(format "ctia/%s/search?query=*" route-context)
-              (http/doc-id->rel-url (first ids))]
-             {"Authorization" "45c1f5e3f05d0"}
-             fields)
+                                   (= :judgement entity)
+                                   (assoc :observable {:value "1.2.3.4", :type "ip"}))
+                     ;; prepare to use bulk api
+                     snake-plural (keyword (str/replace (name plural) \- \_))
+                     sample-size (+ 30 (rand-int 10))]]
+         (testing [sample-size test-case snake-plural new-maximal]
+           (let [headers {"Authorization" "45c1f5e3f05d0"}
+                 ids (case entity 
+                       :feed (mapv #(-> (helpers/POST
+                                          app
+                                          "/ctia/feed"
+                                          :body (dissoc % :id)
+                                          :headers headers)
+                                        :parsed-body
+                                        :id)
+                                   (repeat sample-size new-maximal))
+                       (helpers/POST-entity-bulk
+                         app
+                         new-maximal
+                         snake-plural
+                         30
+                         headers))
+                 _ (case entity
+                     :sighting (let [sample (dissoc new-maximal :id)
+                                     first-sighting (-> sample
+                                                        (assoc-in [:observed_time :start_time]
+                                                                  #inst "2016-01-01T01:01:01.000Z"))
+                                     second-sighting (-> sample
+                                                         (assoc-in [:observed_time :start_time]
+                                                                   #inst "2016-01-02T01:01:01.000Z"))
+                                     third-sighting (-> sample
+                                                        (assoc :timestamp
+                                                               #inst "2016-01-03T01:01:01.000Z")
+                                                        (assoc-in [:observed_time :start_time]
+                                                                  #inst "2016-01-02T01:01:01.000Z"))
+                                     custom-samples (helpers/POST-bulk
+                                                      app
+                                                      {:sightings [first-sighting
+                                                                   second-sighting
+                                                                   third-sighting]})])
+                     nil)
+                 endpoint (format "ctia%s/search?query=*"
+                                  ;; includes leading slash
+                                  route-context)]
+             (field-selection/field-selection-tests
+               app
+               [endpoint
+                (http/doc-id->rel-url (first ids))]
+               headers
+               fields)
 
-           (pagination/pagination-test
-             app
-             (format "ctia/%s/search?query=*" route-context)
-             {"Authorization" "45c1f5e3f05d0"}
-             fields)))))))
+             (pagination/pagination-test
+               app
+               endpoint
+               headers
+               sort-fields))))))))

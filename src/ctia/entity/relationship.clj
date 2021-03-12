@@ -256,4 +256,5 @@
    :services->routes (routes.common/reloadable-function
                        relationship-routes)
    :capabilities capabilities
-   :fields relationship-fields})
+   :fields relationship-fields
+   :sort-fields relationship-fields})

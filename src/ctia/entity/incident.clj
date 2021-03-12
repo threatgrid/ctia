@@ -292,4 +292,5 @@
    :services->routes (routes.common/reloadable-function
                        incident-routes)
    :capabilities capabilities
-   :fields incident-fields})
+   :fields incident-fields
+   :sort-fields incident-fields})

@@ -1,7 +1,6 @@
 (ns ctia.entity.tool-test
   (:require [clj-momo.test-helpers.core :as mth]
             [clojure.test :refer [deftest join-fixtures use-fixtures]]
-            [ctia.entity.tool.schemas :as ts]
             [ctia.entity.tool :as sut]
             [ctia.test-helpers
              [access-control :refer [access-control-test]]

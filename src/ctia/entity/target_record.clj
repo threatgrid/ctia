@@ -151,4 +151,5 @@
    :services->routes      (routes.common/reloadable-function
                             target-record-routes)
    :capabilities          capabilities
-   :fields                target-record-fields})
+   :fields                target-record-fields
+   :sort-fields           target-record-fields})
