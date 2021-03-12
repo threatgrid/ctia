@@ -26,10 +26,19 @@
   helpers/fixture-allow-all-auth
   whoami-helpers/fixture-server)
 
+(defn establish-user! []
+  (helpers/set-capabilities! app "foouser" ["foogroup"] "user" (all-capabilities))
+  (whoami-helpers/set-whoami-response app
+                                      "45c1f5e3f05d0"
+                                      "foouser"
+                                      "foogroup"
+                                      "user"))
+
 (deftest ^:slow test-pagination-lists
   "generate an observable and many records of all listable entities"
   (test-for-each-store-with-app
    (fn [app]
+     (establish-user!)
      (let [{:keys [get-in-config]} (helpers/get-service-map app :ConfigService)
 
            http-show (p/get-http-show (app->HTTPShowServices app))
@@ -139,13 +148,7 @@
 (deftest pagination+field-selection-test
   (store/test-for-each-store-with-app
    (fn [app]
-     (helpers/set-capabilities! app "foouser" ["foogroup"] "user" (all-capabilities))
-     (whoami-helpers/set-whoami-response app
-                                         "45c1f5e3f05d0"
-                                         "foouser"
-                                         "foogroup"
-                                         "user")
-
+     (establish-user!)
      (let [test-cases (vec (cond->> (-> (into []
                                               ;; skip these entities for this test
                                               (remove (some-fn
@@ -160,8 +163,7 @@
            _ (assert (seq test-cases) test-cases)
            _ (assert (every? vector? test-cases) test-cases)]
        (doseq [[entity {:keys [fields plural route-context sort-fields]} :as test-case] test-cases
-               :let [_ (when-not (true? test-all-entities-for-pagination+field-selection?)
-                         (println "Testing entity" entity))
+               :let [_ (println "Testing entity" entity)
                      _ (assert (seq fields) entity)
                      _ (assert (seq sort-fields) entity)
                      new-maximal (get (new-maximal-by-entity) entity)
