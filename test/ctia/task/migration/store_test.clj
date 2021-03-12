@@ -250,6 +250,11 @@
 (def fixtures-nb 100)
 (def examples (fixt/bundle fixtures-nb false))
 
+(def sample-relationships-1000
+  "1000 real realtionships extracted from INT with ES doc meta"
+  (with-open [rdr (io/reader "./test/data/indices/sample-relationships-1000.json")]
+    (doall (line-seq rdr))))
+
 (deftest rollover-test
   (es-helpers/for-each-es-version
    "rollover should refresh write index and trigger rollover when index size is strictly bigger than max-docs"
@@ -262,69 +267,68 @@
      (fn []
        (helpers/fixture-ctia-with-app
         (fn [app]
-          (with-open [rdr (io/reader "./test/data/indices/sample-relationships-1000.json")]
-            (let [services (app->MigrationStoreServices app)
-                  storename (es-helpers/get-indexname app :relationship)
-                  write-alias (str storename "-write")
-                  max-docs 40
-                  batch-size 4
-                  storemap {:conn conn
-                            :indexname storename
-                            :mapping "relationship"
-                            :props {:aliased true
-                                    :write-index write-alias
-                                    :rollover {:max_docs max-docs}}
-                            :type "relationship"
-                            :settings {}
-                            :config {}}
-                  docs-all (->> (line-seq rdr)
-                                 (map (partial es-helpers/prepare-bulk-ops app))
-                                 (map #(assoc % :_index write-alias)))
-                  batch-sizes (repeatedly 300 #(inc (rand-int batch-size)))
-                  test-fn (fn [{:keys [source-docs
-                                       migrated-count
-                                       current-index-size]
-                                :as state}
-                               nb]
-                            (let [rollover? (<= max-docs (+ current-index-size nb))
-                                  cat-before (es-helpers/get-cat-indices conn)
-                                  indices-before (set (keys cat-before))
-                                  _ (es-helpers/load-bulk conn
-                                                          (take nb source-docs)
-                                                          "false")
-                                  res (when rollover?
-                                        (sut/rollover storemap
-                                                      batch-size
-                                                      (+ nb migrated-count)
-                                                      services))
-                                  cat-after (es-helpers/get-cat-indices conn)
-                                  indices-after (set (keys cat-after))
-                                  total-after (reduce + (vals cat-after))]
-                              (when rollover?
-                                (is (true? (:rolled_over res)))
-                                (is (< (count indices-before)
-                                       (count indices-after)))
-                                (is (= (+ nb migrated-count)
-                                       total-after)))
-                              (when-not rollover?
-                                (is (= indices-before indices-after)))
+          (let [services (app->MigrationStoreServices app)
+                storename (es-helpers/get-indexname app :relationship)
+                write-alias (str storename "-write")
+                max-docs 40
+                max-batch-size 10
+                storemap {:conn conn
+                          :indexname storename
+                          :mapping "relationship"
+                          :props {:aliased true
+                                  :write-index write-alias
+                                  :rollover {:max_docs max-docs}}
+                          :type "relationship"
+                          :settings {}
+                          :config {}}
+                docs-all (->> sample-relationships-1000
+                              (map (partial es-helpers/prepare-bulk-ops app))
+                              (map #(assoc % :_index write-alias)))
+                batch-sizes (repeatedly 100 #(inc (rand-int max-batch-size)))
+                test-fn (fn [{:keys [source-docs
+                                     migrated-count
+                                     current-index-size]
+                              :as state}
+                             nb]
+                          (let [rollover? (<= max-docs (+ current-index-size nb))
+                                cat-before (es-helpers/get-cat-indices conn)
+                                indices-before (set (keys cat-before))
+                                _ (es-helpers/load-bulk conn
+                                                        (take nb source-docs)
+                                                        "false")
+                                res (when rollover?
+                                      (sut/rollover storemap
+                                                    max-batch-size
+                                                    (+ nb migrated-count)
+                                                    services))
+                                cat-after (es-helpers/get-cat-indices conn)
+                                indices-after (set (keys cat-after))
+                                total-after (reduce + (vals cat-after))]
+                            (when rollover?
+                              (is (true? (:rolled_over res)))
+                              (is (< (count indices-before)
+                                     (count indices-after)))
+                              (is (= (+ nb migrated-count)
+                                     total-after)))
+                            (when-not rollover?
+                              (is (= indices-before indices-after)))
 
-                              (cond-> (update state :migrated-count + nb)
-                                true (assoc :source-docs (drop nb source-docs))
-                                rollover? (assoc :current-index-size 0)
-                                (not rollover?) (update :current-index-size + nb))))]
-              (reduce test-fn
-                      {:source-docs docs-all
-                       :migrated-count 0
-                       :current-index-size 0}
-                      batch-sizes)
+                            (cond-> (update state :migrated-count + nb)
+                              true (assoc :source-docs (drop nb source-docs))
+                              rollover? (assoc :current-index-size 0)
+                              (not rollover?) (update :current-index-size + nb))))]
+            (reduce test-fn
+                    {:source-docs docs-all
+                     :migrated-count 0
+                     :current-index-size 0}
+                    batch-sizes)
 
-              (is (every? #(<= % (+ max-docs batch-size))
-                          (->> (es-helpers/get-cat-indices conn)
-                               (keep (fn [[k v]]
-                                       (when (str/starts-with? (name k) storename)
-                                         v)))))
-                  "All the indices should be smaller than max-docs + batch-size")))))))))
+            (is (every? #(<= % (+ max-docs max-batch-size))
+                        (->> (es-helpers/get-cat-indices conn)
+                             (keep (fn [[k v]]
+                                     (when (str/starts-with? (name k) storename)
+                                       v)))))
+                "All the indices should be smaller than max-docs + max-batch-size"))))))))
 
 (deftest sliced-queries-test
   (es-helpers/for-each-es-version
@@ -343,7 +347,9 @@
                          :type "relationship"
                          :settings {}
                          :config {}}
-               _ (es-helpers/load-file-bulk app conn "./test/data/indices/sample-relationships-1000.json")
+               _ (->>  sample-relationships-1000
+                       (map (partial es-helpers/prepare-bulk-ops app))
+                       (es-helpers/load-bulk conn))
                expected-queries [missing-modified-query
                                  {:bool
                                   {:filter
@@ -835,8 +841,7 @@
       "ctia.auth.type" "allow-all"]
      (helpers/fixture-ctia-with-app
        (fn [app]
-         (let [{:keys [get-in-config]} (helpers/get-service-map app :ConfigService)
-               services (app->MigrationStoreServices app)
+         (let [services (app->MigrationStoreServices app)
 
                _ (POST-bulk app examples true)
                _ (ductile.index/refresh! conn) ;; ensure indices refresh
