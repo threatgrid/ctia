@@ -60,7 +60,8 @@
                        "s"
                        (symbol var-ref))))))
 
-(defn time-reporter [config]
-  (->TimeReporter (:test-results-dir config)
+(defn time-reporter [{:keys [test-results-dir] :as config}]
+  (assert test-results-dir "Must provide :test-results-dir")
+  (->TimeReporter test-results-dir
                   (atom {})
                   (str (UUID/randomUUID))))
