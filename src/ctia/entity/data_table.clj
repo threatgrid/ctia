@@ -127,5 +127,4 @@
    :es-mapping data-table-mapping
    :services->routes (routes.common/reloadable-function
                        data-table-routes)
-   :capabilities capabilities
-   :fields datatable-fields})
+   :capabilities capabilities})

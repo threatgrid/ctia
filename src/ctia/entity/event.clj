@@ -182,6 +182,4 @@
    :es-store ->EventStore
    :es-mapping event-mapping
    :services->routes (routes.common/reloadable-function
-                       event-routes)
-   :fields event-fields
-   :sort-fields event-fields})
+                       event-routes)})

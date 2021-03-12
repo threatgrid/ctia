@@ -128,10 +128,13 @@
                                               (name entity)))))])))
         (entities/all-entities)))
 
+;; should usually be set to false. use a set to reproduce a failure for
+;; a specific entity, eg., for :sighting, set to #{:sighting}
 (def test-all-entities-for-pagination+field-selection?
   "If false, a random entity will be used to check pagination
-  and field selection. If true, tests all relevant entities serially."
-  true)
+  and field selection. If true, tests all relevant entities serially.
+  If a set, just tests the entities in the set"
+  false)
 
 (deftest pagination+field-selection-test
   (store/test-for-each-store-with-app
@@ -144,16 +147,22 @@
                                          "user")
 
      (let [test-cases (vec (cond->> (-> (into []
+                                              ;; skip these entities for this test
                                               (remove (some-fn
-                                                        (comp #{:event :feedback} key)
+                                                        (comp #{:data-table :event :feedback :identity :indicator} key)
                                                         (comp :no-api? val)))
                                               (entities/all-entities))
+                                        ;; shuffle *before* selection
                                         shuffle)
-                             test-all-entities-for-pagination+field-selection? (take 1)))
+                             (true? test-all-entities-for-pagination+field-selection?) (take 1)
+                             (set? test-all-entities-for-pagination+field-selection?) (filter (comp test-all-entities-for-pagination+field-selection?
+                                                                                                    key))))
            _ (assert (seq test-cases) test-cases)
            _ (assert (every? vector? test-cases) test-cases)]
        (doseq [[entity {:keys [fields plural route-context sort-fields]} :as test-case] test-cases
-               :let [_ (assert (seq fields) entity)
+               :let [_ (when-not (true? test-all-entities-for-pagination+field-selection?)
+                         (println "Testing entity" entity))
+                     _ (assert (seq fields) entity)
                      _ (assert (seq sort-fields) entity)
                      new-maximal (get (new-maximal-by-entity) entity)
                      _ (assert (map? new-maximal) entity)
@@ -202,7 +211,9 @@
                                                       app
                                                       {:sightings [first-sighting
                                                                    second-sighting
-                                                                   third-sighting]})])
+                                                                   third-sighting]}
+                                                      true
+                                                      headers)])
                      nil)
                  endpoint (format "ctia%s/search?query=*"
                                   ;; includes leading slash

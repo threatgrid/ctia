@@ -378,13 +378,14 @@
 
 (defn POST-bulk
   ([app examples] (POST-bulk app examples true))
-  ([app examples check?]
+  ([app examples check?] (POST-bulk app examples check? {"Authorization" "45c1f5e3f05d0"}))
+  ([app examples check? headers]
    (let [{{:keys [error message] :as bulk-res} :parsed-body}
          (POST app
                "ctia/bulk"
                :body examples
                :socket-timeout (* 5 60000)
-               :headers {"Authorization" "45c1f5e3f05d0"})]
+               :headers headers)]
      (when check?
        (assert (nil? error)
                (format "POST-bulk error: %s, message: \"%s\"" error message)))
