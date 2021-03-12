@@ -26,19 +26,21 @@
   helpers/fixture-allow-all-auth
   whoami-helpers/fixture-server)
 
-(defn establish-user! []
+(defn establish-user! [app]
   (helpers/set-capabilities! app "foouser" ["foogroup"] "user" (all-capabilities))
   (whoami-helpers/set-whoami-response app
-                                      "45c1f5e3f05d0"
+                                      http/api-key
                                       "foouser"
                                       "foogroup"
                                       "user"))
+
+(def headers {"Authorization" http/api-key})
 
 (deftest ^:slow test-pagination-lists
   "generate an observable and many records of all listable entities"
   (test-for-each-store-with-app
    (fn [app]
-     (establish-user!)
+     (establish-user! app)
      (let [{:keys [get-in-config]} (helpers/get-service-map app :ConfigService)
 
            http-show (p/get-http-show (app->HTTPShowServices app))
@@ -91,13 +93,13 @@
          (when (= "es" (get-in-config [:ctia :store :indicator]))
            (pagination-test app
                             (str "/ctia/indicator/search?query=" title)
-                            {"Authorization" "45c1f5e3f05d0"}
+                            headers
                             [:id :title])))
 
        (testing "sightings by observable"
          (pagination-test app
                           (str route-pref "/sightings")
-                          {"Authorization" "45c1f5e3f05d0"}
+                          headers
                           [:id
                            :timestamp
                            :confidence
@@ -106,12 +108,12 @@
        (testing "sightings/indicators by observable"
          (pagination-test-no-sort app
                                   (str route-pref "/sightings/indicators")
-                                  {"Authorization" "45c1f5e3f05d0"}))
+                                  headers))
 
        (testing "judgements by observable"
          (pagination-test app
                           (str route-pref "/judgements")
-                          {"Authorization" "45c1f5e3f05d0"}
+                          headers
                           [:id
                            :disposition
                            :priority
@@ -122,7 +124,7 @@
        (testing "judgements/indicators by observable"
          (pagination-test-no-sort app
                                   (str route-pref "/judgements/indicators")
-                                  {"Authorization" "45c1f5e3f05d0"}))))))
+                                  headers))))))
 
 (defn new-maximal-by-entity []
   (into {}
@@ -148,7 +150,7 @@
 (deftest pagination+field-selection-test
   (store/test-for-each-store-with-app
    (fn [app]
-     (establish-user!)
+     (establish-user! app)
      (let [test-cases (vec (cond->> (-> (into []
                                               ;; skip these entities for this test
                                               (remove (some-fn
@@ -180,8 +182,7 @@
                      snake-plural (keyword (str/replace (name plural) \- \_))
                      sample-size (+ 30 (rand-int 10))]]
          (testing [sample-size test-case snake-plural new-maximal]
-           (let [headers {"Authorization" "45c1f5e3f05d0"}
-                 ids (case entity 
+           (let [ids (case entity 
                        :feed (mapv #(-> (helpers/POST
                                           app
                                           "/ctia/feed"
@@ -214,8 +215,7 @@
                                                       {:sightings [first-sighting
                                                                    second-sighting
                                                                    third-sighting]}
-                                                      true
-                                                      headers)])
+                                                      true)])
                      nil)
                  endpoint (format "ctia%s/search?query=*"
                                   ;; includes leading slash
