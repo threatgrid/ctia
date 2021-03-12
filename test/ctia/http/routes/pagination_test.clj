@@ -154,7 +154,7 @@
                                               (entities/all-entities))
                                         ;; shuffle *before* selection
                                         shuffle)
-                             (true? test-all-entities-for-pagination+field-selection?) (take 1)
+                             (false? test-all-entities-for-pagination+field-selection?) (take 1)
                              (set? test-all-entities-for-pagination+field-selection?) (filter (comp test-all-entities-for-pagination+field-selection?
                                                                                                     key))))
            _ (assert (seq test-cases) test-cases)
