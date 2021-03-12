@@ -9,9 +9,6 @@
              [crud :refer [entity-crud-test]]
              [aggregate :refer [test-metric-routes]]
              [fake-whoami-service :as whoami-helpers]
-             [field-selection :refer [field-selection-tests]]
-             [http :refer [doc-id->rel-url]]
-             [pagination :refer [pagination-test]]
              [store :refer [test-for-each-store-with-app]]]
             [ctim.examples.coas :refer [new-coa-maximal new-coa-minimal]]))
 
@@ -32,34 +29,6 @@
             {:app app
              :example new-coa-maximal
              :headers {:Authorization "45c1f5e3f05d0"}})))))
-
-(deftest test-coa-pagination-field-selection
-  (test-for-each-store-with-app
-   (fn [app]
-     (helpers/set-capabilities! app "foouser" ["foogroup"] "user" all-capabilities)
-     (whoami-helpers/set-whoami-response app
-                                         "45c1f5e3f05d0"
-                                         "foouser"
-                                         "foogroup"
-                                         "user")
-     (let [ids (POST-entity-bulk
-                app
-                new-coa-maximal
-                :coas
-                30
-                {"Authorization" "45c1f5e3f05d0"})]
-       (pagination-test
-        app
-        "ctia/coa/search?query=*"
-        {"Authorization" "45c1f5e3f05d0"}
-        sut/coa-fields)
-
-       (field-selection-tests
-        app
-        ["ctia/coa/search?query=*"
-         (doc-id->rel-url (first ids))]
-        {"Authorization" "45c1f5e3f05d0"}
-        sut/coa-fields)))))
 
 (deftest test-coa-routes-access-control
   (access-control-test "coa"

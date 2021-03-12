@@ -3,14 +3,20 @@
             [clojure.spec.alpha :as cs]
             [clojure.spec.gen.alpha :as csg]
             [clojure.test :refer [deftest testing use-fixtures]]
+            [ctia.auth.capabilities :refer [all-capabilities]]
+            [ctia.entity.target-record :refer [target-record-fields]]
             [ctia.properties :as p]
+            [ctia.entity.entities :as entities]
+            [ctia.test-helpers.field-selection :as field-selection]
             [ctia.test-helpers
              [core :as helpers :refer [url-id]]
              [http :refer [app->HTTPShowServices assert-post]]
-             [pagination :refer [pagination-test
-                                 pagination-test-no-sort]]
+             [pagination :as pagination
+              :refer [pagination-test
+                      pagination-test-no-sort]]
              [store :refer [test-for-each-store-with-app]]]
-            [ctim.domain.id :as id]))
+            [ctim.domain.id :as id]
+            [ctim.examples.target-records :refer [new-target-record-maximal]]))
 
 (use-fixtures :once
   mth/fixture-schema-validation
@@ -104,3 +110,43 @@
          (pagination-test-no-sort app
                                   (str route-pref "/judgements/indicators")
                                   {"Authorization" "45c1f5e3f05d0"}))))))
+
+(deftest pagination+field-selection-test
+  (store/test-for-each-store-with-app
+   (fn [app]
+     (helpers/set-capabilities! app "foouser" ["foogroup"] "user" (all-capabilities))
+     (whoami-helpers/set-whoami-response app
+                                         "45c1f5e3f05d0"
+                                         "foouser"
+                                         "foogroup"
+                                         "user")
+
+     (let [[entity {:keys [route-context plural]} :as test-case]
+           (-> (select-keys (entities/entities) [:target-record])
+               vec
+               rand-nth)
+           ;; TODO generate these to allow more entities
+           fields (case entity
+                    :target-record target-record-fields)
+           new-maximal (case entity
+                         :target-record new-target-record-maximal)]
+       (testing test-case
+         (let [ids (helpers/POST-entity-bulk
+                     app
+                     maximal
+                     plural
+                     30
+                     {"Authorization" "45c1f5e3f05d0"})]
+
+           (field-selection/field-selection-tests
+             app
+             [(format "ctia/%s/search?query=*" route-context)
+              (http/doc-id->rel-url (first ids))]
+             {"Authorization" "45c1f5e3f05d0"}
+             fields)
+
+           (pagination/pagination-test
+             app
+             (format "ctia/%s/search?query=*" route-context)
+             {"Authorization" "45c1f5e3f05d0"}
+             fields)))))))

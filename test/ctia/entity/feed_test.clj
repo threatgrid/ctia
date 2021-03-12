@@ -12,12 +12,9 @@
    [ctia.test-helpers
     [access-control :refer [access-control-test]]
     [auth :refer [all-capabilities]]
-    [core :as helpers :refer [POST]]
+    [core :as helpers]
     [crud :refer [entity-crud-test]]
     [fake-whoami-service :as whoami-helpers]
-    [field-selection :refer [field-selection-tests]]
-    [http :refer [doc-id->rel-url]]
-    [pagination :refer [pagination-test]]
     [store :refer [test-for-each-store-with-app]]]))
 
 (def new-feed-maximal
@@ -248,37 +245,6 @@
                :delete-search-tests? false
                :headers {:Authorization "45c1f5e3f05d0"}
                :additional-tests feed-view-tests}))))))
-
-(deftest test-feed-pagination-field-selection
-  (test-for-each-store-with-app
-   (fn [app]
-     (helpers/set-capabilities! app "foouser" ["foogroup"] "user" all-capabilities)
-     (whoami-helpers/set-whoami-response app
-                                         "45c1f5e3f05d0"
-                                         "foouser"
-                                         "foogroup"
-                                         "user")
-     (let [entities (repeat 345 (assoc new-feed-maximal
-                                       :title "foo"))
-           ids (->> (doall (map #(POST app
-                                       "/ctia/feed"
-                                       :body (dissoc % :id)
-                                       :headers {"Authorization"
-                                                 "45c1f5e3f05d0"})
-                                entities))
-                    (map :parsed-body)
-                    (map :id))]
-       (field-selection-tests
-        app
-        ["ctia/feed/search?query=*"
-         (doc-id->rel-url (first ids))]
-        {"Authorization" "45c1f5e3f05d0"}
-        sort-restricted-feed-fields)
-       (pagination-test
-        app
-        "ctia/feed/search?query=*"
-        {"Authorization" "45c1f5e3f05d0"}
-        sort-restricted-feed-fields)))))
 
 (deftest test-feed-routes-access-control
   (access-control-test "feed"

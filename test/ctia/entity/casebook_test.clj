@@ -13,9 +13,6 @@
     [crud :refer [entity-crud-test]]
     [aggregate :refer [test-metric-routes]]
     [fake-whoami-service :as whoami-helpers]
-    [field-selection :refer [field-selection-tests]]
-    [http :refer [doc-id->rel-url]]
-    [pagination :refer [pagination-test]]
     [store :refer [test-for-each-store-with-app]]]
    [ctim.examples.casebooks
     :refer
@@ -304,36 +301,6 @@
              :headers {:Authorization "45c1f5e3f05d0"}
              :patch-tests? true
              :additional-tests partial-operations-tests})))))
-
-(deftest test-casebook-pagination-field-selection
-  (test-for-each-store-with-app
-   (fn [app]
-     (helpers/set-capabilities! app "foouser" ["foogroup"] "user" all-capabilities)
-     (whoami-helpers/set-whoami-response app
-                                         "45c1f5e3f05d0"
-                                         "foouser"
-                                         "foogroup"
-                                         "user")
-
-     (let [ids (POST-entity-bulk
-                app
-                (assoc new-casebook-maximal :title "foo")
-                :casebooks
-                30
-                {"Authorization" "45c1f5e3f05d0"})]
-
-       (pagination-test
-        app
-        "ctia/casebook/search?query=*"
-        {"Authorization" "45c1f5e3f05d0"}
-        sut/casebook-fields)
-
-       (field-selection-tests
-        app
-        ["ctia/casebook/search?query=*"
-         (doc-id->rel-url (first ids))]
-        {"Authorization" "45c1f5e3f05d0"}
-        sut/casebook-fields)))))
 
 (deftest test-casebook-routes-access-control
   (access-control-test "casebook"

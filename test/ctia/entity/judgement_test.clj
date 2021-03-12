@@ -13,7 +13,7 @@
             [ctia.test-helpers
              [access-control :refer [access-control-test]]
              [auth :refer [all-capabilities]]
-             [core :as helpers :refer [GET POST POST-entity-bulk]]
+             [core :as helpers :refer [GET POST]]
              [crud :refer [entity-crud-test]]
              [aggregate :refer [test-metric-routes]]
              [fake-whoami-service :as whoami-helpers]
@@ -384,39 +384,6 @@
                              :confidence "Low"
                              :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"}}}
                 judgement)))))))
-
-(deftest test-judgement-pagination-field-selection
-  (test-for-each-store-with-app
-   (fn [app]
-     (helpers/set-capabilities! app "foouser" ["foogroup"] "user" all-capabilities)
-     (whoami-helpers/set-whoami-response app
-                                         "45c1f5e3f05d0"
-                                         "foouser"
-                                         "foogroup"
-                                         "user")
-
-     (let [new-judgement
-           (assoc ex/new-judgement-maximal
-                  :observable
-                  {:value "1.2.3.4", :type "ip"})
-           ids (POST-entity-bulk
-                app
-                new-judgement
-                :judgements
-                30
-                {"Authorization" "45c1f5e3f05d0"})]
-       (pagination-test
-        app
-        "ctia/ip/1.2.3.4/judgements"
-        {"Authorization" "45c1f5e3f05d0"}
-        judgement-sort-fields)
-
-       (field-selection-tests
-        app
-        ["ctia/ip/1.2.3.4/judgements"
-         (doc-id->rel-url (first ids))]
-        {"Authorization" "45c1f5e3f05d0"}
-        judgement-fields)))))
 
 (deftest test-judgement-routes-access-control
   (access-control-test "judgement"
