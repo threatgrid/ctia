@@ -19,8 +19,7 @@
   (:import [java.util UUID]))
 
 (defn crud-wait-for-test
-  [{::keys [get-in-config]
-    :keys [app
+  [{:keys [app
            entity
            example
            headers
@@ -32,10 +31,11 @@
            revoke-tests-extra-query-params]
     :or {update-field :title
          update-tests? true
-         patch-tests? false
+         patch-tests? true
          delete-search-tests? true}}]
   (assert app)
-  (let [entity-str (name entity)
+  (let [get-in-config (helpers/current-get-in-config-fn app)
+        entity-str (name entity)
         new-record (dissoc example :id)
         es-params (volatile! nil)
         simple-handler (fn [body]
@@ -411,9 +411,4 @@
             (is (= status 400))
             (is (re-find (re-pattern
                           (str "error.*in.*" (name invalid-test-field)))
-                         (string/lower-case body))))))
-
-      (when (= "es"
-               (get-in-config
-                [:ctia :store entity]))
-        (crud-wait-for-test (assoc params ::get-in-config get-in-config))))))
+                         (string/lower-case body)))))))))
