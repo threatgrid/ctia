@@ -24,14 +24,14 @@
       (println (str "Expected test duration: "
                     (/ (apply + (map :elapsed-ns (vals expected)))
                        1e9)
-                    " seconds"))
-      (println (str "Actual test duration: "
-                    (/ (apply + (map :elapsed-ns (vals ns-timing)))
-                       1e9)
                     " seconds")))
-    (println "Test namespace summary (slowest to fastest):")
+    (println (str "Actual test duration: "
+                  (/ (apply + (map :elapsed-ns (vals ns-timing)))
+                     1e9)
+                  " seconds"))
+    (println "\nTest namespace summary (slowest to fastest):")
     (pp/pprint sorted-ns-timing)
-    (println "Test var summary (slowest to fastest):")
+    (println "\nTest var summary (slowest to fastest):")
     (pp/pprint sorted-var-timing)
     (-> (File. "target/test-results") .mkdirs)
     (spit "target/test-results/all-test-var-timings.edn" var-timing)
