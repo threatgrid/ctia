@@ -25,7 +25,6 @@
   "all field selection related tests for given routes and fields"
   [app route headers fields]
   (testing (str "field selection tests for: " route)
-    ;; TODO ensure non-empty
     (let [fields (testable-fields fields)]
       (assert (seq fields) route)
       (doseq [field fields]
