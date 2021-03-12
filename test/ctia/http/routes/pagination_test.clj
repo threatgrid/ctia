@@ -68,26 +68,26 @@
        (testing "setup: create sightings and their relationships with indicators"
          (doseq [new-sighting new-sightings
                  :let [{id :id} (assert-post app "ctia/sighting" new-sighting)
-                       sighting-id (id/->id :sighting id http-show)]]
-           (doseq [{id :id} created-indicators
-                   :let [indicator-id (id/->id :indicator id http-show)]]
-             (assert-post app
-                          "ctia/relationship"
-                          {:source_ref (id/long-id sighting-id)
-                           :relationship_type "indicates"
-                           :target_ref (id/long-id indicator-id)}))))
+                       sighting-id (id/->id :sighting id http-show)]
+                 {id :id} created-indicators
+                 :let [indicator-id (id/->id :indicator id http-show)]]
+           (assert-post app
+                        "ctia/relationship"
+                        {:source_ref (id/long-id sighting-id)
+                         :relationship_type "indicates"
+                         :target_ref (id/long-id indicator-id)})))
 
        (testing "setup: create judgements and their relationships with indicators"
          (doseq [new-judgement new-judgements
                  :let [{id :id} (assert-post app "ctia/judgement" new-judgement)
-                       judgement-id (id/->id :judgement id http-show)]]
-           (doseq [{id :id} created-indicators
-                   :let [indicator-id (id/->id :indicator id http-show)]]
-             (assert-post app
-                          "ctia/relationship"
-                          {:source_ref (id/long-id judgement-id)
-                           :relationship_type "observable-of"
-                           :target_ref (id/long-id indicator-id)}))))
+                       judgement-id (id/->id :judgement id http-show)]
+                 {id :id} created-indicators
+                 :let [indicator-id (id/->id :indicator id http-show)]]
+           (assert-post app
+                        "ctia/relationship"
+                        {:source_ref (id/long-id judgement-id)
+                         :relationship_type "observable-of"
+                         :target_ref (id/long-id indicator-id)})))
 
        (testing "indicators with query (ES only)"
          (when (= "es" (get-in-config [:ctia :store :indicator]))
