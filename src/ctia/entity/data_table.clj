@@ -43,10 +43,8 @@
 (def realize-data-table
   (default-realize-fn "data-table" NewDataTable StoredDataTable))
 
-(def datatable-fields default-entity-sort-fields)
-
 (def datatable-sort-fields
-  (apply s/enum datatable-fields))
+  (apply s/enum default-entity-sort-fields))
 
 (s/defschema DataTableFieldsParam
   {(s/optional-key :fields) [datatable-sort-fields]})
