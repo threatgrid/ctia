@@ -19,7 +19,8 @@
                       pagination-test-no-sort]]
              [store :as store :refer [test-for-each-store-with-app]]]
             [ctim.domain.id :as id]
-            [ctim.examples.target-records :refer [new-target-record-maximal]]))
+            [ctim.examples.target-records :refer [new-target-record-maximal]]
+            [schema.core :as s]))
 
 (use-fixtures :once
   mth/fixture-schema-validation
@@ -126,7 +127,9 @@
                                   (str route-pref "/judgements/indicators")
                                   headers))))))
 
-(defn new-maximal-by-entity []
+(s/defn new-maximal-by-entity :- {(s/pred simple-keyword?) (s/pred map?)}
+  "Returns a map from entity name to new-*-maximal for those entities that have one."
+  []
   (into {}
         (comp 
           (remove (comp #{:identity :event} key))
@@ -145,7 +148,7 @@
   "If false, a random entity will be used to check pagination
   and field selection. If true, tests all relevant entities serially.
   If a set, just tests the entities in the set"
-  false)
+  (= "true" (System/getProperty "ctia.dev.cron")))
 
 (deftest pagination+field-selection-test
   (store/test-for-each-store-with-app
