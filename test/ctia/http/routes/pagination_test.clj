@@ -199,8 +199,9 @@
                          app
                          new-maximal
                          snake-plural
-                         30
+                         sample-size
                          headers))
+                 _ (assert (seq ids))
                  _ (case entity
                      :sighting (let [sample (dissoc new-maximal :id)
                                      first-sighting (-> sample
