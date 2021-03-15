@@ -1,34 +1,31 @@
 (ns ctia.flows.crud
   "This namespace handle all necessary flows for creating, updating
   and deleting entities."
-  (:require [clj-momo.lib.map :refer [deep-merge-with]]
-            [clojure.string :as str]
-            [clojure.set :refer [index]]
-            [clojure.spec.alpha :as cs]
-            [clojure.tools.logging :as log]
-            [ctia.entity.event.schemas :refer [Event]]
-            [ctia
-             [auth :as auth]
-             [store :as store]]
-            [ctia.domain
-             [access-control :refer [allowed-tlp? allowed-tlps]]
-             [entities :refer [un-store]]]
-            [ctia.properties :as p]
-            [ctia.schemas.core :refer [APIHandlerServices
-                                       APIHandlerServices->RealizeFnServices
-                                       HTTPShowServices
-                                       RealizeFn
-                                       lift-realize-fn-with-context
-                                       TempIDs]]
-            [ctim.domain.id :as id]
-            [ctia.lib.collection :as coll]
-            [ctia.entity.event.obj-to-event
-             :refer
-             [to-create-event
-              to-delete-event
-              to-update-event]]
-            [ring.util.http-response :as http-response]
-            [schema.core :as s])
+  (:require
+   [clj-momo.lib.map :refer [deep-merge-with]]
+   [clojure.set :refer [index]]
+   [clojure.spec.alpha :as cs]
+   [clojure.string :as str]
+   [clojure.tools.logging :as log]
+   [ctia.auth :as auth]
+   [ctia.domain.access-control :refer [allowed-tlp? allowed-tlps]]
+   [ctia.domain.entities :refer [un-store]]
+   [ctia.entity.event.obj-to-event :refer
+    [to-create-event to-delete-event to-update-event]]
+   [ctia.entity.event.schemas :refer [Event]]
+   [ctia.lib.collection :as coll]
+   [ctia.properties :as p]
+   [ctia.schemas.core :as schemas :refer
+    [APIHandlerServices
+     APIHandlerServices->RealizeFnServices
+     HTTPShowServices
+     RealizeFn
+     lift-realize-fn-with-context
+     TempIDs]]
+   [ctia.store :as store]
+   [ctim.domain.id :as id]
+   [ring.util.http-response :as http-response]
+   [schema.core :as s])
   (:import java.util.UUID))
 
 (s/defschema FlowMap
@@ -143,7 +140,7 @@
   (let [newtempids
         (->> entities
              (keep (fn [{:keys [id]}]
-                     (when (and id (re-matches id/transient-id-re id))
+                     (when (and id (schemas/transient-id? id))
                        [id (make-id entity-type)])))
              (into {}))]
     (update fm :tempids (fnil into {}) newtempids)))
