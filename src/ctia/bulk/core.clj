@@ -8,7 +8,7 @@
    [ctia.entity.entities :refer [all-entities]]
    [ctia.flows.crud :as flows]
    [ctia.properties :as p]
-   [ctia.schemas.core :refer [APIHandlerServices]]
+   [ctia.schemas.core :as schemas :refer [APIHandlerServices]]
    [ctia.schemas.utils :as csu]
    [ctia.store :as store]
    [ring.util.http-response :refer [bad-request]]
@@ -163,13 +163,16 @@
    services :- APIHandlerServices]
   (let [bulk' (select-keys bulk [:asset_mappings :asset_properties])
         ;; replace :asset_ref fields with non-transient IDs
+        set-ref (fn [{:keys [asset_ref] :as m}]
+                  (if (schemas/transient-id? asset_ref)
+                    ;; TODO: add the check described in https://github.com/threatgrid/iroh/issues/4917
+                    (assoc m :asset_ref (get temp-ids asset_ref))
+                    m))
         ents (zipmap
               (keys bulk')
               (->> bulk'
                    vals
-                   (map
-                    (partial
-                     map #(assoc % :asset_ref (get temp-ids (:asset_ref %)))))))]
+                   (map (partial map set-ref))))]
     ;; create asset-mapping and asset-properties entities
     (gen-bulk-from-fn
      create-entities
