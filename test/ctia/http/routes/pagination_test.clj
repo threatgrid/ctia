@@ -163,6 +163,7 @@
                                         ;; shuffle *before* selection
                                         shuffle)
                              (false? test-all-entities-for-pagination+field-selection?) (take 1)
+                             (true? test-all-entities-for-pagination+field-selection?) (take 5)
                              (set? test-all-entities-for-pagination+field-selection?) (filter (comp test-all-entities-for-pagination+field-selection?
                                                                                                     key))))
            _ (assert (seq test-cases) test-cases)
