@@ -16,99 +16,16 @@
    [ctia.test-helpers.auth :as auth]
    [ctia.test-helpers.core :as th]
    [ctia.test-helpers.fake-whoami-service :as whoami-helpers]
+   [ctim.examples.bundles :refer [bundle-maximal]]
    [puppetlabs.trapperkeeper.app :as app]))
 
 (def bundle-ents
   "Sample Bundle Map for testing."
-  {:asset_mappings
-   #{{:asset_ref           "transient:asset-1"
-      :asset_type          "device"
-      :confidence          "High"
-      :external_ids        ["d2dcbd00e9bb49719d3fa0a59b1ddfdf"]
-      :external_references [{:description "Description text"
-                             :external_id "T1061"
-                             :hashes      ["#section1"]
-                             :source_name "source"
-                             :url         "https://ex.tld/wiki/T1061"}]
-      :language            "language"
-      :observable          {:type "email" :value "tester@test.com"}
-      :revision            1
-      :schema_version      "1.0"
-      :source              "cisco:unified_connect"
-      :source_uri          "http://example.com/asset-mapping-2"
-      :specificity         "Unique"
-      :stability           "Managed"
-      :timestamp           #inst "2016-02-11T00:40:48.000-00:00"
-      :tlp                 "green"
-      :type                "asset-mapping"
-      :valid_time          {:end_time   #inst "2525-01-01T00:00:00.000-00:00"
-                            :start_time #inst "2020-01-11T00:40:48.000-00:00"}}
-     {:asset_ref           "transient:asset-1"
-      :asset_type          "device"
-      :confidence          "High"
-      :external_ids        ["d2dcbd00e9bb49719d3fa0a59b1ddfdf"]
-      :external_references [{:description "Description text"
-                             :external_id "T1061"
-                             :hashes      ["#section1"]
-                             :source_name "source"
-                             :url         "https://ex.tld/wiki/T1061"}]
-      :language            "language"
-      :observable          {:type "ip" :value "100.213.110.122"}
-      :revision            1
-      :schema_version      "1.0"
-      :source              "cisco:unified_connect"
-      :source_uri          "http://example.com/asset-mapping-1"
-      :specificity         "Unique"
-      :stability           "Managed"
-      :timestamp           #inst "2016-02-11T00:40:48.000-00:00"
-      :tlp                 "green"
-      :type                "asset-mapping"
-      :valid_time          {:end_time   #inst "2525-01-01T00:00:00.000-00:00"
-                            :start_time #inst "2020-01-11T00:40:48.000-00:00"}}}
-
-   :asset_properties
-   #{{:properties          [{:name "cisco:securex:posture:score", :value "23"}
-                            {:name "asus:router:model", :value "RT-AC68U"}],
-      :valid_time          {:start_time #inst "2020-01-11T00:40:48.000-00:00",
-                            :end_time   #inst "2525-01-01T00:00:00.000-00:00"},
-      :schema_version      "1.0",
-      :revision            1,
-      :asset_ref           "transient:asset-1",
-      :type                "asset-properties",
-      :source              "cisco:unified_connect",
-      :external_ids        ["29a4b476-a187-4160-8b36-81f7a0dbf137"],
-      :external_references [{:source_name "source",
-                             :external_id "T1061",
-                             :url         "https://ex.tld/wiki/T1061",
-                             :hashes      ["#section1"],
-                             :description "Description text"}],
-      :source_uri          "http://example.com/asset-properties",
-      :language            "language",
-      :tlp                 "green",
-      :timestamp           #inst "2016-02-11T00:40:48.000-00:00"}}
-
-   :assets
-   #{{:asset_type          "device"
-      :description         "asus router"
-      :external_ids        ["61884b14e2734930a5ffdcce69207724"]
-      :external_references [{:description "doesn't matter"
-                             :external_id "T1061"
-                             :hashes      ["#section1"]
-                             :source_name "source"
-                             :url         "https://ex.tld/wiki/T1061"}]
-      :id                  "transient:asset-1"
-      :language            "EN"
-      :revision            1
-      :schema_version      "1.0"
-      :short_description   "awesome router"
-      :source              "source"
-      :source_uri          "http://example.com/asset/asus-router-1"
-      :timestamp           #inst "2020-02-11T00:40:48.000-00:00"
-      :title               "ASUS-ROUTER"
-      :tlp                 "green"
-      :type                "asset"
-      :valid_time          {:end_time   #inst "2525-01-01T00:00:00.000-00:00"
-                            :start_time #inst "2020-01-11T00:40:48.000-00:00"}}}})
+  (select-keys
+   bundle-maximal
+   [:assets :asset_refs
+    :asset_mappings :asset_mapping_refs
+    :asset_properties :asset_properties_refs]))
 
 (deftest bulk-for-asset-related-entities
   (testing "delay creation of :asset-mapping and :asset-properties, until all
@@ -117,15 +34,9 @@
      (fn [app]
        (let [services (app/service-graph app)
              login (map->Identity {:login  "foouser"
-                                   :groups ["foogroup"]})
-             bundle-import-data (bundle/prepare-import bundle-ents nil login services)
-             bulk (bundle/prepare-bulk bundle-import-data)
-             tempids (->> bundle-import-data
-                          (map (fn [[_ entities-import-data]]
-                                 (bundle/entities-import-data->tempids entities-import-data)))
-                          (apply merge {}))]
-         (testing "Bundle import initially, should skip the creation of
-                   AssetMappings and AssetProperties objects"
+                                   :groups ["foogroup"]})]
+         (testing "Passing a Bundle with Assets with transient IDs, should skip
+                   the creation of AssetMappings and AssetProperties (initially)"
           (with-redefs [bulk/gen-bulk-from-fn
                         (fn [_ bulk _ _ _ _]
                           (is (empty?
@@ -138,15 +49,13 @@
                           ;; with non-transient IDs), we achieved the goal of
                           ;; this test.
                           (throw (Exception. "stopped intentionally")))]
-            (is
-             (thrown-with-msg?
-              Exception #"stopped intentionally"
-              (bulk/create-bulk
-               bulk
-               tempids
-               login
-               {}
-               services))))))))))
+            (is (thrown-with-msg?
+                 Exception #"stopped intentionally"
+                 (bundle/import-bundle
+                  bundle-ents
+                  nil         ;; external-key-prefixes
+                  login
+                  services))))))))))
 
 (use-fixtures :once
   (join-fixtures
