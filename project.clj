@@ -160,7 +160,6 @@
                    :resource-paths ["test/resources"]
                    :source-paths ["dev"]}
              :ci {:pedantic? :abort
-                  :jvm-opts ["-Dctia.dev.cron=true"]
                   :global-vars {*warn-on-reflection* true}}
              :cron {:jvm-opts ["-Dctia.dev.cron=true"]}
              :jmx {:jvm-opts ["-Dcom.sun.management.jmxremote"
