@@ -1,20 +1,20 @@
 (ns ctia.schemas.core
-  (:require [ctia.lib.utils :refer [service-subgraph]]
-            [ctia.graphql.delayed :as delayed]
-            [ctia.schemas.utils :as csutils]
-            [ctia.schemas.services :as external-svc-fns]
-            [ctim.schemas
-             [bundle :as bundle]
-             [common :as cos]
-             [verdict :as vs]
-             [vocabularies :as vocs]]
-            [flanders
-             [schema :as f-schema]
-             [spec :as f-spec]]
-            [schema-tools.core :as st]
-            [ctia.store-service.schemas :refer [GetStoreFn]]
-            [ctia.flows.hooks-service.schemas :as hooks-schemas]
-            [schema.core :as s :refer [Bool Str]]))
+  (:require
+   [ctia.flows.hooks-service.schemas :as hooks-schemas]
+   [ctia.graphql.delayed :as delayed]
+   [ctia.lib.utils :refer [service-subgraph]]
+   [ctia.schemas.services :as external-svc-fns]
+   [ctia.schemas.utils :as csutils]
+   [ctia.store-service.schemas :refer [GetStoreFn]]
+   [ctim.domain.id :as id]
+   [ctim.schemas.bundle :as bundle]
+   [ctim.schemas.common :as cos]
+   [ctim.schemas.verdict :as vs]
+   [ctim.schemas.vocabularies :as vocs]
+   [flanders.schema :as f-schema]
+   [flanders.spec :as f-spec]
+   [schema-tools.core :as st]
+   [schema.core :as s :refer [Bool Str]]))
 
 (s/defschema Port
   "A port number"
@@ -335,3 +335,7 @@
   {:FeaturesService {:enabled? (s/=> s/Bool s/Keyword)
                      s/Keyword s/Any}
    s/Keyword        s/Any})
+
+(defn transient-id?
+  [id]
+  (and id (some? (re-matches id/transient-id-re id))))
