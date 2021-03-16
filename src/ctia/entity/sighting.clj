@@ -93,4 +93,6 @@
    :es-mapping s-store/sighting-mapping
    :services->routes (routes.common/reloadable-function
                        sighting-routes)
-   :capabilities capabilities})
+   :capabilities capabilities
+   :fields ss/sighting-fields
+   :sort-fields ss/sighting-sort-fields})

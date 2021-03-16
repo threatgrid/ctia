@@ -123,4 +123,6 @@
    :es-mapping investigation-mapping
    :services->routes (routes.common/reloadable-function
                        investigation-routes)
-   :capabilities capabilities})
+   :capabilities capabilities
+   :fields investigation-fields
+   :sort-fields investigation-fields})

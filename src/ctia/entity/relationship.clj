@@ -255,4 +255,6 @@
    :es-mapping relationship-mapping
    :services->routes (routes.common/reloadable-function
                        relationship-routes)
-   :capabilities capabilities})
+   :capabilities capabilities
+   :fields relationship-fields
+   :sort-fields relationship-fields})

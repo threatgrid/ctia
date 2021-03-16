@@ -217,4 +217,6 @@
    :es-mapping indicator-mapping
    :services->routes (routes.common/reloadable-function
                        indicator-routes)
-   :capabilities capabilities})
+   :capabilities capabilities
+   :fields indicator-fields
+   :sort-fields indicator-fields})

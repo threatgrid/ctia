@@ -7,6 +7,7 @@
             [ctia.http.routes.common :as sut]
             [ctia.test-helpers.core :as helpers]
             [ctia.test-helpers.crud :refer [crud-wait-for-test]]
+            [ctia.test-helpers.http :as http]
             [ctia.test-helpers.store :refer [test-selected-stores-with-app]]
             [ctia.test-helpers.fake-whoami-service :as whoami-helpers]
             [ctim.examples.incidents :refer [new-incident-maximal]]
@@ -193,7 +194,7 @@
 
 ;; we choose incidents to test wait_for because it supports patches and
 ;; thus achieves full coverage of crud-wait-for-test
-(deftest test-wait_for
+(deftest wait_for-test
   (test-selected-stores-with-app
     #{:es-store}
     (fn [app]

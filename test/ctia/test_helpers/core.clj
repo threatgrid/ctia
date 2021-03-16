@@ -395,14 +395,18 @@
         (for [y (range 0 x)]
           (-> example
               (dissoc :id)
-              (assoc :revision y)))]
-    (-> (POST app
-              "ctia/bulk"
-              :body {plural new-records}
-              :headers headers
-              :socket-timeout (* 5 60000))
-        :parsed-body
-        plural)))
+              (assoc :revision y)))
+        resp (POST app
+                   "ctia/bulk"
+                   :body {plural new-records}
+                   :headers headers
+                   :socket-timeout (* 5 60000))
+        ids (-> resp
+                :parsed-body
+                plural)]
+    (assert (= x (count ids))
+            [x (count ids) plural resp])
+    ids))
 
 (s/defn DELETE [app path :- s/Str & kw-options]
   (apply (mthh/with-port-fn (partial get-http-port app) mthh/delete)

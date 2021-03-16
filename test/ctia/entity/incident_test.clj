@@ -8,13 +8,10 @@
             [ctia.test-helpers
              [access-control :refer [access-control-test]]
              [auth :refer [all-capabilities]]
-             [core :as helpers :refer [PATCH POST POST-entity-bulk]]
+             [core :as helpers :refer [PATCH POST]]
              [crud :refer [entity-crud-test]]
              [aggregate :refer [test-metric-routes]]
              [fake-whoami-service :as whoami-helpers]
-             [field-selection :refer [field-selection-tests]]
-             [http :refer [doc-id->rel-url]]
-             [pagination :refer [pagination-test]]
              [store :refer [test-for-each-store-with-app]]]
             [ctim.examples.incidents
              :refer
@@ -96,34 +93,6 @@
                             {:entity-minimal new-incident-minimal
                              :enumerable-fields sut/incident-enumerable-fields
                              :date-fields sut/incident-histogram-fields})))
-
-(deftest test-incident-pagination-field-selection
-  (test-for-each-store-with-app
-   (fn [app]
-     (helpers/set-capabilities! app "foouser" ["foogroup"] "user" all-capabilities)
-     (whoami-helpers/set-whoami-response app
-                                         "45c1f5e3f05d0"
-                                         "foouser"
-                                         "foogroup"
-                                         "user")
-     (let [ids (POST-entity-bulk
-                app
-                (assoc new-incident-maximal :title "foo")
-                :incidents
-                30
-                {"Authorization" "45c1f5e3f05d0"})]
-       (pagination-test
-        app
-        "ctia/incident/search?query=*"
-        {"Authorization" "45c1f5e3f05d0"}
-        sut/incident-fields)
-
-       (field-selection-tests
-        app
-        ["ctia/incident/search?query=*"
-         (doc-id->rel-url (first ids))]
-        {"Authorization" "45c1f5e3f05d0"}
-        sut/incident-fields)))))
 
 (deftest test-incident-routes-access-control
   (access-control-test "incident"

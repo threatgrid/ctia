@@ -9,9 +9,7 @@
              [crud :refer [entity-crud-test]]
              [aggregate :refer [test-metric-routes]]
              [fake-whoami-service :as whoami-helpers]
-             [field-selection :refer [field-selection-tests]]
-             [http :refer [api-key doc-id->rel-url]]
-             [pagination :refer [pagination-test]]
+             [http :refer [api-key]]
              [core :as helpers :refer [GET]]
              [store :refer [test-for-each-store-with-app]]]
             [ctim.examples.identity-assertions
@@ -81,37 +79,6 @@
              :update-field :source
              :additional-tests additional-tests
              :headers {:Authorization "45c1f5e3f05d0"}})))))
-
-(deftest test-identity-assertion-pagination-field-selection
-  (test-for-each-store-with-app
-   (fn [app]
-     (helpers/set-capabilities! app "foouser" ["foogroup"] "user" all-capabilities)
-     (whoami-helpers/set-whoami-response app
-                                         "45c1f5e3f05d0"
-                                         "foouser"
-                                         "foogroup"
-                                         "user")
-
-     (let [ids (POST-entity-bulk
-                app
-                new-identity-assertion-maximal
-                :identity_assertions
-                30
-                {"Authorization" "45c1f5e3f05d0"})]
-
-       (field-selection-tests
-        app
-        ["ctia/identity-assertion/search?query=*"
-         (doc-id->rel-url (first ids))]
-        {"Authorization" "45c1f5e3f05d0"}
-        sut/identity-assertion-fields)
-
-
-       (pagination-test
-        app
-        "ctia/identity-assertion/search?query=*"
-        {"Authorization" "45c1f5e3f05d0"}
-        sut/identity-assertion-fields)))))
 
 (deftest test-identity-assertion-metric-routes
   (test-metric-routes (into sut/identity-assertion-entity

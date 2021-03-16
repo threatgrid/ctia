@@ -1,18 +1,14 @@
 (ns ctia.entity.tool-test
   (:require [clj-momo.test-helpers.core :as mth]
             [clojure.test :refer [deftest join-fixtures use-fixtures]]
-            [ctia.entity.tool.schemas :as ts]
             [ctia.entity.tool :as sut]
             [ctia.test-helpers
              [access-control :refer [access-control-test]]
              [auth :refer [all-capabilities]]
-             [core :as helpers :refer [POST-entity-bulk]]
+             [core :as helpers]
              [crud :refer [entity-crud-test]]
              [aggregate :refer [test-metric-routes]]
              [fake-whoami-service :as whoami-helpers]
-             [field-selection :refer [field-selection-tests]]
-             [http :refer [doc-id->rel-url]]
-             [pagination :refer [pagination-test]]
              [store :refer [test-for-each-store-with-app]]]
             [ctim.examples.tools :refer [new-tool-maximal
                                          new-tool-minimal]]
@@ -41,34 +37,6 @@
              :invalid-test-field :title
              :update-field :description
              :headers {:Authorization "45c1f5e3f05d0"}})))))
-
-(deftest test-tool-pagination-field-selection
-  (test-for-each-store-with-app
-   (fn [app]
-     (helpers/set-capabilities! app "foouser" ["foogroup"] "user" all-capabilities)
-     (whoami-helpers/set-whoami-response app
-                                         "45c1f5e3f05d0"
-                                         "foouser"
-                                         "foogroup"
-                                         "user")
-     (let [ids (POST-entity-bulk
-                app
-                new-tool-maximal
-                :tools
-                30
-                {"Authorization" "45c1f5e3f05d0"})]
-       (pagination-test
-        app
-        "ctia/tool/search?query=*"
-        {"Authorization" "45c1f5e3f05d0"}
-        ts/tool-fields)
-
-       (field-selection-tests
-        app
-        ["ctia/tool/search?query=*"
-         (doc-id->rel-url (first ids))]
-        {"Authorization" "45c1f5e3f05d0"}
-        ts/tool-fields)))))
 
 (deftest test-tool-routes-access-control
   (access-control-test "tool"

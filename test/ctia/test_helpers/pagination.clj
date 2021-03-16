@@ -1,6 +1,7 @@
 (ns ctia.test-helpers.pagination
   (:require [clojure.string :as str]
             [clojure.test :refer [is testing]]
+            [clojure.walk :as walk]
             [ctim.domain.id :as id]
             [ctia.test-helpers.aggregate :as aggregate]
             [ctia.test-helpers.core :as helpers :refer [GET]]))
@@ -8,6 +9,7 @@
 (defn total->limit
   "make a limit from a full list total and offset"
   [total offset]
+  {:post [(pos? %)]}
   (-> (/ total 2)
       Math/ceil
       Math/round
@@ -120,7 +122,7 @@
               :X-Next expected-x-next}
 
              (-> limited-headers
-                 clojure.walk/keywordize-keys
+                 walk/keywordize-keys
                  (select-keys [:X-Total-Hits :X-Previous :X-Next])))))))
 
 (defn- sort-by-fn
@@ -140,7 +142,7 @@
 
 (defn- grab-vals [field coll]
   (map
-   #(aggregate/es-get-in % ( aggregate/parse-field field))
+   #(aggregate/es-get-in % (aggregate/parse-field field))
    coll))
 
 (defn sort-test
