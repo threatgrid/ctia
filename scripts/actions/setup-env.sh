@@ -2,8 +2,12 @@
 
 set -e
 
-echo "BIN_PATH=${HOME}/bin" >> $GITHUB_ENV
-echo "LOG_PATH=${HOME}/log" >> $GITHUB_ENV
+# for visibility inside this script
+BIN_PATH="${HOME}/bin"
+LOG_PATH="${HOME}/log"
+
+echo "BIN_PATH=${BIN_PATH}" >> $GITHUB_ENV
+echo "LOG_PATH=${LOG_PATH}" >> $GITHUB_ENV
 
 echo "Setup PATH and directories"
 
