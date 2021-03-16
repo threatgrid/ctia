@@ -11,7 +11,6 @@
              :refer
              [all-entities gen-capabilities-for-entity-and-accesses]]
             [ctia.properties :as p]
-            [ring-jwt-middleware.core :as rjwt]
             [ring.util.http-response :as resp]
             [scopula.core :as scopula]))
 
