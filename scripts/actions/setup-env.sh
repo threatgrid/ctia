@@ -15,7 +15,7 @@ mkdir -p "${BIN_PATH}"
 echo "${BIN_PATH}" >> $GITHUB_PATH
 
 mkdir -p "${LOG_PATH}"
-echo "${BIN_PATH}" >> $GITHUB_PATH
+echo "${LOG_PATH}" >> $GITHUB_PATH
 
 if [[ "$GITHUB_EVENT_NAME" == "schedule" || "$TRAVIS_EVENT_TYPE" == "cron" ]]; then
   echo "CTIA_TEST_SUITE=cron" >> $GITHUB_ENV

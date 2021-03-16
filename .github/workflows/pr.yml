@@ -15,7 +15,7 @@ on:
     # daily, 3am UTC
     - cron: "0 3 * * *"
 
-# Note: see BIN_PATH for how to set an env variable that depends on
+# Note: see ./scripts/actions/setup-env.sh for how to set an env variable that depends on
 # other env variables.
 env:
   # number of times to try possibly-flaky commands in this file
