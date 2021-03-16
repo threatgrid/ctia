@@ -186,51 +186,31 @@
          (rie/wrap-request-logs "API response time ms" get-in-config)
 
          (:enabled jwt)
-         ((fn [handler]
-            (let [jwt-opts-without-error-handler
-                  (merge
-                    {:pubkey-fn ;; if :public-key-map is nil, will use just :public-key
-                     (when-let [pubkey-for-issuer-map
-                                (auth-jwt/parse-jwt-pubkey-map (:public-key-map jwt))]
-                       (fn [{:keys [iss] :as claims}]
-                         (get pubkey-for-issuer-map iss)))
-                     :pubkey-path (:public-key-path jwt)
-                     :no-jwt-handler rjwt/authorize-no-jwt-header-strategy}
+         ((rjwt/wrap-jwt-auth-fn
+           (merge
+            {:pubkey-fn ;; if :public-key-map is nil, will use just :public-key
+             (when-let [pubkey-for-issuer-map
+                        (auth-jwt/parse-jwt-pubkey-map (:public-key-map jwt))]
+               (fn [{:keys [iss] :as claims}]
+                 (get pubkey-for-issuer-map iss)))
+             :pubkey-path (:public-key-path jwt)
+             :no-jwt-handler rjwt/authorize-no-jwt-header-strategy}
 
-                    (let [{:keys [endpoints timeout cache-ttl]}
-                          (:http-check jwt)]
-                      (when-let [external-endpoints (parse-external-endpoints endpoints)]
-                        {:jwt-check-fn (partial check-external-endpoints
-                                                (http-get-fn (or cache-ttl 5000))
-                                                external-endpoints
-                                                (if timeout
-                                                  {:socket-timeout timeout
-                                                   :connection-timeout timeout}
-                                                  {}))}))
-                    (when-let [lifetime (:lifetime-in-sec jwt)]
-                      {:jwt-max-lifetime-in-sec lifetime}))]
-              (fn [request]
-                (((rjwt/wrap-jwt-auth-fn
-                    (assoc jwt-opts-without-error-handler
-                           ;; content negotiation is done "after" this jwt check via
-                           ;; handler/api-handler, so we manually handle the request to
-                           ;; generate a reasonable response.
-                           :error-handler (comp
-                                            (fn [resp]
-                                              ((wrap-restful-response
-                                                 (fn [_req] resp)
-                                                 (handler/->format-options))
-                                               request))
-                                            ;; unfortunately, ring-jwt-middleware does not
-                                            ;; pass the request to error handlers.
-                                            ;; this is why this code is wrapped in
-                                            ;;   (fn [handler] (fn [request] (((rjwt/wrap-jwt-auth-fn ...) handler) request)))
-                                            ;; otherwise, the higher-order function juggling could be replaced with
-                                            ;;   (rjwt/wrap-jwt-auth-fn
-                                            ;;     {... :error-handler (fn [_ {:keys [request]}]} ...)}).
-                                            rjwt/default-error-handler)))
-                  handler)
-                 request)))))
+            (let [{:keys [endpoints timeout cache-ttl]}
+                  (:http-check jwt)]
+              (when-let [external-endpoints (parse-external-endpoints endpoints)]
+                {:jwt-check-fn (partial check-external-endpoints
+                                        (http-get-fn (or cache-ttl 5000))
+                                        external-endpoints
+                                        (if timeout
+                                          {:socket-timeout timeout
+                                           :connection-timeout timeout}
+                                          {}))}))
+            (when-let [lifetime (:lifetime-in-sec jwt)]
+              {:jwt-max-lifetime-in-sec lifetime}))))
+
+         ;; encode error responses from ring-jwt-middleware
+         (:enabled jwt) (wrap-restful-response (handler/->format-options))
 
          access-control-allow-origin
          (wrap-cors :access-control-allow-origin
