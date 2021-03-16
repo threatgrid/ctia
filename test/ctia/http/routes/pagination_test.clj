@@ -226,7 +226,8 @@
        "pagination for any entity"
        {;; :seed ...
         :num-tests 5}
-       [[entity {:keys [fields plural endpoint new-maximal snake-plural sort-fields]}] (gen/elements (sort (pagination+field-selection-test-cases)))
+       [;; note: may check same entity multiple times
+        [entity {:keys [fields plural endpoint new-maximal snake-plural sort-fields]}] (gen/elements (sort (pagination+field-selection-test-cases)))
         sample-size (gen/large-integer* {:min 30 :max 345})]
        ;; progress reporting for slow test
        (println (str "Testing pagination: " entity))
