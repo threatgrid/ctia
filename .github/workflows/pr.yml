@@ -38,8 +38,8 @@ jobs:
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
     steps:
-      - run: ./scripts/actions/setup-env.sh
       - uses: actions/checkout@v2
+      - run: ./scripts/actions/setup-env.sh
       - name: Binary Cache
         uses: actions/cache@v2
         with:
@@ -145,8 +145,8 @@ jobs:
       CLOJURE_VERSION: ${{ matrix.this-split.clojure_version }}
       JAVA_VERSION: ${{ matrix.this-split.java_version }}
     steps:
-      - run: ./scripts/actions/setup-env.sh
       - uses: actions/checkout@v2
+      - run: ./scripts/actions/setup-env.sh
       # run docker as early as possible asynchronously. if this command
       # fails, the split-test test runner will timeout in a reasonable amount
       # of time and throw an error.
@@ -232,8 +232,8 @@ jobs:
     runs-on: ubuntu-18.04
     needs: [test-matrix]
     steps:
-      - run: ./scripts/actions/setup-env.sh
       - uses: actions/checkout@v2
+      - run: ./scripts/actions/setup-env.sh
       - name: Binary Cache
         uses: actions/cache@v2
         with:
