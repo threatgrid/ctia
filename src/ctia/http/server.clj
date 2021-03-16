@@ -225,6 +225,12 @@
                                                    resp)
                                                  (handler/->format-options))
                                                request))
+                                            ;; unfortunately, ring-jwt-middleware does not
+                                            ;; pass the error handler the original request,
+                                            ;; which is why this form is wrapped in
+                                            ;; a (fn [handler] (fn [request] ...)).
+                                            ;; otherwise, all the higher-order function juggling could be replaced with
+                                            ;; (rjwt/wrap-jwt-auth-fn {... :error-handler (fn [_ {:keys [request]}]} ...)}).
                                             rjwt/default-error-handler)))
                   handler)
                  request)))))
