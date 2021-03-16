@@ -142,7 +142,7 @@
 
 (defn- grab-vals [field coll]
   (map
-   #(aggregate/es-get-in % ( aggregate/parse-field field))
+   #(aggregate/es-get-in % (aggregate/parse-field field))
    coll))
 
 (defn sort-test
