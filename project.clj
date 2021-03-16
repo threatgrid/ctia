@@ -161,7 +161,6 @@
                    :source-paths ["dev"]}
              :ci {:pedantic? :abort
                   :global-vars {*warn-on-reflection* true}}
-             :cron {:jvm-opts ["-Dctia.dev.cron=true"]}
              :jmx {:jvm-opts ["-Dcom.sun.management.jmxremote"
                               "-Dcom.sun.management.jmxremote.port=9010"
                               "-Dcom.sun.management.jmxremote.local.only=false"
@@ -264,5 +263,6 @@
             "tests" ["with-profile" "+ci" "run" "-m" "circleci.test"]
 
             "ci-run-tests" ["with-profile" "-dev,+ci" "do" "clean," "javac," "split-test" ":no-gen"]
+            "cron-run-tests" ["with-profile" "-dev,+ci" "do" "clean," "javac," "split-test" ":all"]
             ;"retest" ["run" "-m" "circleci.test.retest"]
             })

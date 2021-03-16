@@ -8,6 +8,7 @@
 (defn total->limit
   "make a limit from a full list total and offset"
   [total offset]
+  {:post [(pos? %)]}
   (-> (/ total 2)
       Math/ceil
       Math/round

@@ -4,11 +4,14 @@
             [clojure.spec.alpha :as cs]
             [clojure.spec.gen.alpha :as csg]
             [clojure.test :refer [deftest testing use-fixtures]]
+            [clojure.test.check.generators :as gen]
+            [com.gfredericks.test.chuck.clojure-test :refer [checking]]
             [ctia.auth.capabilities :refer [all-capabilities]]
             [ctia.entity.target-record :refer [target-record-fields]]
             [ctia.properties :as p]
             [ctia.entity.entities :as entities]
             [ctia.entity.feed-test :refer [new-feed-maximal]]
+            [ctia.schemas.core :refer [Entity]]
             [ctia.test-helpers.fake-whoami-service :as whoami-helpers]
             [ctia.test-helpers.field-selection :as field-selection]
             [ctia.test-helpers
@@ -20,7 +23,8 @@
              [store :as store :refer [test-for-each-store-with-app]]]
             [ctim.domain.id :as id]
             [ctim.examples.target-records :refer [new-target-record-maximal]]
-            [schema.core :as s]))
+            [schema.core :as s]
+            [schema-tools.core :as st]))
 
 (use-fixtures :once
   mth/fixture-schema-validation
@@ -142,89 +146,62 @@
                                               (name entity)))))])))
         (entities/all-entities)))
 
-;; should usually be set to false. use a set to reproduce a failure for
-;; a specific entity, eg., for :sighting, set to #{:sighting}
-(def test-all-entities-for-pagination+field-selection?
-  "If false, a random entity will be used to check pagination
-  and field selection. If true, tests all relevant entities serially.
-  If a set, just tests the entities in the set"
-  (= "true" (System/getProperty "ctia.dev.cron")))
+(s/defn pagination+field-selection-test-cases
+  :- {(s/pred simple-keyword?) (st/assoc Entity
+                                         :endpoint s/Str
+                                         :new-maximal (s/pred map?)
+                                         :snake-plural s/Keyword)}
+  []
+  {:post [(seq %)]}
+  (into {}
+        ;; skip these entities for this test
+        (comp (remove (some-fn
+                        (comp #{:data-table :event :feedback :identity} key)
+                        (comp :no-api? val)))
+              (map (fn [[entity {:keys [fields plural route-context sort-fields] :as test-case}]]
+                     (let [_ (assert (seq fields) (str entity " missing :fields"))
+                           _ (assert (seq sort-fields) (str entity " missing :sort-fields"))
+                           new-maximal (get (new-maximal-by-entity) entity)
+                           _ (assert (map? new-maximal) (str entity " missing maximal"))
+                           new-maximal (cond-> new-maximal
+                                         (#{:actor :campaign :casebook :feed :incident
+                                            :investigation :vulnerability :weakness}
+                                           entity)
+                                         (assoc :title "foo")
+
+                                         (= :judgement entity)
+                                         (assoc :observable {:value "1.2.3.4", :type "ip"}))]
+                       [entity (assoc test-case
+                                      :endpoint (format "ctia%s/search?query=*"
+                                                        ;; includes leading slash
+                                                        route-context)
+                                      :new-maximal new-maximal
+                                      :snake-plural (keyword (str/replace (name plural) \- \_)))]))))
+        (entities/all-entities)))
 
 (deftest pagination+field-selection-test
   (store/test-for-each-store-with-app
    (fn [app]
      (establish-user! app)
-     (let [test-cases (vec (cond->> (-> (into []
-                                              ;; skip these entities for this test
-                                              (remove (some-fn
-                                                        (comp #{:data-table :event :feedback :identity :indicator} key)
-                                                        (comp :no-api? val)))
-                                              (entities/all-entities))
-                                        ;; shuffle *before* selection
-                                        shuffle)
-                             (false? test-all-entities-for-pagination+field-selection?) (take 1)
-                             (true? test-all-entities-for-pagination+field-selection?) (take 5)
-                             (set? test-all-entities-for-pagination+field-selection?) (filter (comp test-all-entities-for-pagination+field-selection?
-                                                                                                    key))))
-           _ (assert (seq test-cases) test-cases)
-           _ (assert (every? vector? test-cases) test-cases)]
-       (doseq [[entity {:keys [fields plural route-context sort-fields]} :as test-case] test-cases
-               :let [_ (println "Testing entity" entity)
-                     _ (assert (seq fields) entity)
-                     _ (assert (seq sort-fields) entity)
-                     new-maximal (get (new-maximal-by-entity) entity)
-                     _ (assert (map? new-maximal) entity)
-                     new-maximal (cond-> new-maximal
-                                   (#{:actor :campaign :casebook :feed :incident
-                                      :investigation :vulnerability :weakness}
-                                     entity)
-                                   (assoc :title "foo")
-
-                                   (= :judgement entity)
-                                   (assoc :observable {:value "1.2.3.4", :type "ip"}))
-                     ;; prepare to use bulk api
-                     snake-plural (keyword (str/replace (name plural) \- \_))
-                     sample-size (+ 30 (rand-int 10))]]
-         (testing [sample-size test-case snake-plural new-maximal]
-           (let [ids (case entity 
-                       :feed (mapv #(-> (helpers/POST
-                                          app
-                                          "/ctia/feed"
-                                          :body (dissoc % :id)
-                                          :headers headers)
-                                        :parsed-body
-                                        :id)
-                                   (repeat sample-size new-maximal))
-                       (helpers/POST-entity-bulk
-                         app
-                         new-maximal
-                         snake-plural
-                         sample-size
-                         headers))
-                 _ (assert (seq ids))
-                 _ (case entity
-                     :sighting (let [sample (dissoc new-maximal :id)
-                                     first-sighting (-> sample
-                                                        (assoc-in [:observed_time :start_time]
-                                                                  #inst "2016-01-01T01:01:01.000Z"))
-                                     second-sighting (-> sample
-                                                         (assoc-in [:observed_time :start_time]
-                                                                   #inst "2016-01-02T01:01:01.000Z"))
-                                     third-sighting (-> sample
-                                                        (assoc :timestamp
-                                                               #inst "2016-01-03T01:01:01.000Z")
-                                                        (assoc-in [:observed_time :start_time]
-                                                                  #inst "2016-01-02T01:01:01.000Z"))
-                                     custom-samples (helpers/POST-bulk
-                                                      app
-                                                      {:sightings [first-sighting
-                                                                   second-sighting
-                                                                   third-sighting]}
-                                                      true)])
-                     nil)
-                 endpoint (format "ctia%s/search?query=*"
-                                  ;; includes leading slash
-                                  route-context)]
+     (let [test-cases (-> (pagination+field-selection-test-cases)
+                          ;; these entities have non-default search fields
+                          (select-keys #{:judgement
+                                         :indicator
+                                         :asset-properties})
+                          sort)
+           _ (assert (= 3 (count test-cases))
+                     (mapv first test-cases))]
+       (doseq [[entity {:keys [fields plural endpoint new-maximal snake-plural sort-fields]} :as test-case] test-cases]
+         ;; progress reporting for slow test
+         (println (str "Testing pagination: " entity))
+         (testing test-case
+           (let [sample-size 30
+                 ids (helpers/POST-entity-bulk
+                       app
+                       new-maximal
+                       snake-plural
+                       sample-size
+                       headers)]
              (field-selection/field-selection-tests
                app
                [endpoint
@@ -237,3 +214,64 @@
                endpoint
                headers
                sort-fields))))))))
+
+(deftest ^:generative generative-pagination+field-selection-test
+  (store/test-for-each-store-with-app
+   (fn [app]
+     (establish-user! app)
+     (checking
+       "pagination for any entity"
+       {;; :seed ...
+        :num-tests 5}
+       [[entity {:keys [fields plural endpoint new-maximal snake-plural sort-fields]}] (gen/elements (sort (pagination+field-selection-test-cases)))
+        sample-size (gen/large-integer* {:min 30 :max 345})]
+       ;; progress reporting for slow test
+       (println (str "Testing pagination: " entity))
+       (let [ids (case entity
+                   :feed (mapv #(-> (helpers/POST
+                                      app
+                                      "/ctia/feed"
+                                      :body (dissoc % :id)
+                                      :headers headers)
+                                    :parsed-body
+                                    :id)
+                               (repeat sample-size new-maximal))
+                   (helpers/POST-entity-bulk
+                     app
+                     new-maximal
+                     snake-plural
+                     sample-size
+                     headers))
+             _ (assert (= sample-size (count ids)) [sample-size (count ids)])
+             _ (case entity
+                 :sighting (let [sample (dissoc new-maximal :id)
+                                 first-sighting (-> sample
+                                                    (assoc-in [:observed_time :start_time]
+                                                              #inst "2016-01-01T01:01:01.000Z"))
+                                 second-sighting (-> sample
+                                                     (assoc-in [:observed_time :start_time]
+                                                               #inst "2016-01-02T01:01:01.000Z"))
+                                 third-sighting (-> sample
+                                                    (assoc :timestamp
+                                                           #inst "2016-01-03T01:01:01.000Z")
+                                                    (assoc-in [:observed_time :start_time]
+                                                              #inst "2016-01-02T01:01:01.000Z"))
+                                 custom-samples (helpers/POST-bulk
+                                                  app
+                                                  {:sightings [first-sighting
+                                                               second-sighting
+                                                               third-sighting]}
+                                                  true)])
+                 nil)]
+         (field-selection/field-selection-tests
+           app
+           [endpoint
+            (http/doc-id->rel-url (first ids))]
+           headers
+           fields)
+
+         (pagination/pagination-test
+           app
+           endpoint
+           headers
+           sort-fields))))))

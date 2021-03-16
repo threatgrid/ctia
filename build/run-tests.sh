@@ -2,8 +2,8 @@
 
 set -ex
 
-if [[ "$GITHUB_EVENT_NAME" == "schedule" ]]; then
-  lein with-profile +cron ci-run-tests
+if [[ "$GITHUB_EVENT_NAME" == "schedule" || "$TRAVIS_EVENT_TYPE" == "cron" ]]; then
+  lein cron-run-tests
 else
   lein ci-run-tests
 fi
