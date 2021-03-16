@@ -475,4 +475,6 @@
    :es-mapping feed-mapping
    :services->routes (routes.common/reloadable-function
                       feed-routes)
-   :capabilities capabilities})
+   :capabilities capabilities
+   :fields sort-restricted-feed-fields
+   :sort-fields sort-restricted-feed-fields})

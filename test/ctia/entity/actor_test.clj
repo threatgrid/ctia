@@ -9,9 +9,6 @@
              [crud :refer [entity-crud-test]]
              [aggregate :refer [test-metric-routes]]
              [fake-whoami-service :as whoami-helpers]
-             [field-selection :refer [field-selection-tests]]
-             [http :refer [doc-id->rel-url]]
-             [pagination :refer [pagination-test]]
              [store :refer [test-for-each-store-with-app]]]
             [ctim.examples.actors :refer [new-actor-maximal new-actor-minimal]]))
 
@@ -37,35 +34,6 @@
             {:app app
              :example new-actor-maximal
              :headers {:Authorization "45c1f5e3f05d0"}})))))
-
-(deftest test-actor-pagination-field-selection
-  (test-for-each-store-with-app
-   (fn [app]
-     (helpers/set-capabilities! app "foouser" ["foogroup"] "user" all-capabilities)
-     (whoami-helpers/set-whoami-response app
-                                         "45c1f5e3f05d0"
-                                         "foouser"
-                                         "foogroup"
-                                         "user")
-     (let [ids (POST-entity-bulk
-                app
-                (assoc new-actor-maximal :title "foo")
-                :actors
-                345
-                {"Authorization" "45c1f5e3f05d0"})]
-
-       (field-selection-tests
-        app
-        ["ctia/actor/search?query=*"
-         (doc-id->rel-url (first ids))]
-        {"Authorization" "45c1f5e3f05d0"}
-        sut/actor-fields))
-
-     (pagination-test
-      app
-      "ctia/actor/search?query=*"
-      {"Authorization" "45c1f5e3f05d0"}
-      sut/actor-fields))))
 
 (deftest test-actor-routes-access-control
   (access-control-test "actor"

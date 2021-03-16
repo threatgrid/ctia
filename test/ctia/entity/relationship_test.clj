@@ -8,13 +8,10 @@
             [ctia.test-helpers
              [access-control :refer [access-control-test]]
              [auth :refer [all-capabilities]]
-             [core :as helpers :refer [POST POST-entity-bulk]]
+             [core :as helpers :refer [POST]]
              [crud :refer [entity-crud-test]]
              [aggregate :refer [test-metric-routes]]
              [fake-whoami-service :as whoami-helpers]
-             [field-selection :refer [field-selection-tests]]
-             [http :refer [doc-id->rel-url]]
-             [pagination :refer [pagination-test]]
              [store :refer [test-for-each-store-with-app]]]
             [ctim.domain.id :refer [long-id->id]]
             [ctim.examples
@@ -77,28 +74,6 @@
             {:app app
              :example new-relationship
              :headers {:Authorization "45c1f5e3f05d0"}})))))
-
-(deftest test-relationship-pagination-field-selection
-  (test-for-each-store-with-app
-   (fn [app]
-     (establish-user! app)
-     (let [ids (POST-entity-bulk
-                app
-                new-relationship-maximal
-                :relationships
-                30
-                {"Authorization" "45c1f5e3f05d0"})]
-       (pagination-test
-        app
-        "ctia/relationship/search?query=*"
-        {"Authorization" "45c1f5e3f05d0"}
-        sut/relationship-fields)
-       (field-selection-tests
-        app
-        ["ctia/relationship/search?query=*"
-         (doc-id->rel-url (first ids))]
-        {"Authorization" "45c1f5e3f05d0"}
-        sut/relationship-fields)))))
 
 (deftest test-relationship-routes-access-control
   (access-control-test "relationship"

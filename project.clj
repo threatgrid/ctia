@@ -263,5 +263,6 @@
             "tests" ["with-profile" "+ci" "run" "-m" "circleci.test"]
 
             "ci-run-tests" ["with-profile" "-dev,+ci" "do" "clean," "javac," "split-test" ":no-gen"]
+            "cron-run-tests" ["with-profile" "-dev,+ci" "do" "clean," "javac," "split-test" ":all"]
             ;"retest" ["run" "-m" "circleci.test.retest"]
             })

@@ -30,13 +30,6 @@
            10
            {"tg:1" 20 "tg:2" 30}))))
 
-(some-> ["tg:3" "tg:2" "tg:1"]
-        (sut/with-limit
-          10
-          {"tg:1" 20 "tg:2" 30})
-        sut/sort-group-limits
-        first)
-
 (deftest parse-group-limits
   (is (= {"tg:1" 20
           "tg:2" 30}

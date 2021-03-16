@@ -119,4 +119,6 @@
    :es-mapping feedback-mapping
    :services->routes (routes.common/reloadable-function
                        feedback-routes)
-   :capabilities capabilities})
+   :capabilities capabilities
+   :fields fs/feedback-fields
+   :sort-fields fs/feedback-fields})

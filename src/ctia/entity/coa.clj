@@ -160,4 +160,6 @@
    :es-mapping coa-mapping
    :services->routes (routes.common/reloadable-function
                        coa-routes)
-   :capabilities capabilities})
+   :capabilities capabilities
+   :fields coa-fields
+   :sort-fields coa-fields})

@@ -2,7 +2,7 @@
 
 ;; These are the fields that are sortable, per entity.  We place them
 ;; here since they are used by more than one entity's routes.  For
-;; isntance, the indicator route needs to know how to sort sightings
+;; instance, the indicator route needs to know how to sort sightings
 ;; for the `ctia/indicator/:ID/sighting` handler
 ;;
 (def base-entity-sort-fields [:id :schema_version :revision

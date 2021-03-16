@@ -9,9 +9,6 @@
              [crud :refer [entity-crud-test]]
              [aggregate :refer [test-metric-routes]]
              [fake-whoami-service :as whoami-helpers]
-             [field-selection :refer [field-selection-tests]]
-             [http :refer [doc-id->rel-url]]
-             [pagination :refer [pagination-test]]
              [store :refer [test-for-each-store-with-app]]]
             [ctim.examples.attack-patterns
              :refer
@@ -41,35 +38,6 @@
              :headers {:Authorization "45c1f5e3f05d0"}
              :update-field :title
              :invalid-test-field :title})))))
-
-(deftest test-attack-pattern-pagination-field-selection
-  (test-for-each-store-with-app
-   (fn [app]
-     (helpers/set-capabilities! app "foouser" ["foogroup"] "user" all-capabilities)
-     (whoami-helpers/set-whoami-response app
-                                         "45c1f5e3f05d0"
-                                         "foouser"
-                                         "foogroup"
-                                         "user")
-
-     (let [ids (POST-entity-bulk
-                app
-                new-attack-pattern-maximal
-                :attack_patterns
-                30
-                {"Authorization" "45c1f5e3f05d0"})]
-       (pagination-test
-        app
-        "ctia/attack-pattern/search?query=*"
-        {"Authorization" "45c1f5e3f05d0"}
-        sut/attack-pattern-fields)
-
-       (field-selection-tests
-        app
-        ["ctia/attack-pattern/search?query=*"
-         (doc-id->rel-url (first ids))]
-        {"Authorization" "45c1f5e3f05d0"}
-        sut/attack-pattern-fields)))))
 
 (deftest attack-pattern-routes-access-control
   (access-control-test "attack-pattern"

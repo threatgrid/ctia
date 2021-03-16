@@ -157,4 +157,6 @@
    :es-mapping actor-mapping
    :services->routes (routes.common/reloadable-function
                        actor-routes)
-   :capabilities capabilities})
+   :capabilities capabilities
+   :fields actor-fields
+   :sort-fields actor-fields})

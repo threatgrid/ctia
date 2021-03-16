@@ -7,9 +7,7 @@
             [ctia.test-helpers.core :as helpers]
             [ctia.test-helpers.crud :refer [entity-crud-test]]
             [ctia.test-helpers.fake-whoami-service :as whoami-helpers]
-            [ctia.test-helpers.field-selection :as field-selection]
             [ctia.test-helpers.http :as http]
-            [ctia.test-helpers.pagination :as pagination]
             [ctia.test-helpers.store :as store]
             [ctim.examples.target-records :refer [new-target-record-minimal
                                                   new-target-record-maximal]]))
@@ -65,36 +63,6 @@
              :search-tests?    true
              :additional-tests additional-tests
              :headers          {:Authorization "45c1f5e3f05d0"}})))))
-
-(deftest target-record-pagination-test
-  (store/test-for-each-store-with-app
-   (fn [app]
-     (helpers/set-capabilities! app "foouser" ["foogroup"] "user" auth/all-capabilities)
-     (whoami-helpers/set-whoami-response app
-                                         "45c1f5e3f05d0"
-                                         "foouser"
-                                         "foogroup"
-                                         "user")
-
-     (let [ids (helpers/POST-entity-bulk
-                app
-                new-target-record-maximal
-                :target_records
-                30
-                {"Authorization" "45c1f5e3f05d0"})]
-
-       (field-selection/field-selection-tests
-        app
-        ["ctia/target-record/search?query=*"
-         (http/doc-id->rel-url (first ids))]
-        {"Authorization" "45c1f5e3f05d0"}
-        sut/target-record-fields)
-
-       (pagination/pagination-test
-        app
-        "ctia/target-record/search?query=*"
-        {"Authorization" "45c1f5e3f05d0"}
-        sut/target-record-fields)))))
 
 (deftest target-record-metric-routes-test
   (aggregate/test-metric-routes

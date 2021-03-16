@@ -185,4 +185,6 @@
    :es-mapping weakness-mapping
    :services->routes (routes.common/reloadable-function
                        weakness-routes)
-   :capabilities capabilities})
+   :capabilities capabilities
+   :fields weakness-fields
+   :sort-fields weakness-fields})

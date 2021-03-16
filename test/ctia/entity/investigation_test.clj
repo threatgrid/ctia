@@ -5,13 +5,10 @@
             [ctia.test-helpers
              [access-control :refer [access-control-test]]
              [auth :refer [all-capabilities]]
-             [core :as helpers :refer [POST-entity-bulk]]
+             [core :as helpers]
              [crud :refer [entity-crud-test]]
              [aggregate :refer [test-metric-routes]]
              [fake-whoami-service :as whoami-helpers]
-             [field-selection :refer [field-selection-tests]]
-             [http :refer [doc-id->rel-url]]
-             [pagination :refer [pagination-test]]
              [store :refer [test-for-each-store-with-app]]]
             [ctia.entity.investigation.examples :refer
              [new-investigation-maximal
@@ -38,34 +35,6 @@
              :invalid-tests? false
              :delete-search-tests? false
              :headers {:Authorization "45c1f5e3f05d0"}})))))
-
-(deftest test-investigation-pagination-field-selection
-  (test-for-each-store-with-app
-   (fn [app]
-     (helpers/set-capabilities! app "foouser" ["foogroup"] "user" all-capabilities)
-     (whoami-helpers/set-whoami-response app
-                                         "45c1f5e3f05d0"
-                                         "foouser"
-                                         "foogroup"
-                                         "user")
-     (let [ids (POST-entity-bulk
-                app
-                (assoc new-investigation-maximal :title "foo")
-                :investigations
-                30
-                {"Authorization" "45c1f5e3f05d0"})]
-       (pagination-test
-        app
-        "ctia/investigation/search?query=*"
-        {"Authorization" "45c1f5e3f05d0"}
-        sut/investigation-fields)
-
-       (field-selection-tests
-        app
-        ["ctia/investigation/search?query=*"
-         (doc-id->rel-url (first ids))]
-        {"Authorization" "45c1f5e3f05d0"}
-        sut/investigation-fields)))))
 
 (deftest test-investigation-routes-access-control
   (access-control-test "investigation"
