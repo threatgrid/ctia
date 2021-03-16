@@ -1,6 +1,7 @@
 (ns ctia.test-helpers.pagination
   (:require [clojure.string :as str]
             [clojure.test :refer [is testing]]
+            [clojure.walk :as walk]
             [ctim.domain.id :as id]
             [ctia.test-helpers.aggregate :as aggregate]
             [ctia.test-helpers.core :as helpers :refer [GET]]))
@@ -121,7 +122,7 @@
               :X-Next expected-x-next}
 
              (-> limited-headers
-                 clojure.walk/keywordize-keys
+                 walk/keywordize-keys
                  (select-keys [:X-Total-Hits :X-Previous :X-Next])))))))
 
 (defn- sort-by-fn
