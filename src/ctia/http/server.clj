@@ -218,11 +218,7 @@
                            :error-handler (comp
                                             (fn [resp]
                                               ((wrap-restful-response
-                                                 (fn [req]
-                                                   ;(prn "req" (-> req
-                                                   ;               (select-keys #{:headers :uri :request-method})
-                                                   ;               (update :headers select-keys #{"accept"})))
-                                                   resp)
+                                                 (fn [_req] resp)
                                                  (handler/->format-options))
                                                request))
                                             ;; unfortunately, ring-jwt-middleware does not
