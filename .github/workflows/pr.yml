@@ -38,11 +38,7 @@ jobs:
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
     steps:
-      - run: echo "BIN_PATH=${HOME}/bin" >> $GITHUB_ENV
-      - name: Setup PATH and directories
-        run: |
-          mkdir -p "${BIN_PATH}"
-          echo "${BIN_PATH}" >> $GITHUB_PATH
+      - run: ./scripts/actions/setup-env.sh
       - uses: actions/checkout@v2
       - name: Binary Cache
         uses: actions/cache@v2
@@ -63,12 +59,15 @@ jobs:
             target/test-results/all-test-timings.edn
           # cache will never match, will always restore from 'restore-keys'.
           # this is so we pick up timing information from the most recent build.
-          key: writeonly-ctia-all-test-timings-${{ env.ACTIONS_CACHE_VERSION }}-${{ github.event_name }}-${{ github.ref }}-${{ github.sha }}
-          # cache should match test timings from previous runs, if they exist
-          # don't share timings between pull requests and cron
+          key: writeonly-ctia-all-test-timings-${{ env.ACTIONS_CACHE_VERSION }}-${{ env.CTIA_TEST_SUITE }}-${{ github.ref }}-${{ github.sha }}
+          # cache should match test timings from previous runs, if they exist.
+          # pr's and pushes share timings via the "ci" setting of env.CTIA_TEST_SUITE,
+          # and cron is separate as "cron".
+          # timings shared between pull requests and cron only as last resort.
           restore-keys: |
-            ctia-timings-${{ env.ACTIONS_CACHE_VERSION }}-${{ github.event_name }}-${{ github.ref }}-
-            ctia-timings-${{ env.ACTIONS_CACHE_VERSION }}-${{ github.event_name }}-
+            ctia-timings-${{ env.ACTIONS_CACHE_VERSION }}-${{ env.CTIA_TEST_SUITE }}-${{ github.ref }}-
+            ctia-timings-${{ env.ACTIONS_CACHE_VERSION }}-${{ env.CTIA_TEST_SUITE }}-
+            ctia-timings-${{ env.ACTIONS_CACHE_VERSION }}-
       - run: |
           if [ -f target/test-results/all-test-timings.edn ]; then
             echo "Found new timings"
@@ -146,13 +145,7 @@ jobs:
       CLOJURE_VERSION: ${{ matrix.this-split.clojure_version }}
       JAVA_VERSION: ${{ matrix.this-split.java_version }}
     steps:
-      - run: echo "BIN_PATH=${HOME}/bin" >> $GITHUB_ENV
-      - run: echo "LOG_PATH=${HOME}/log" >> $GITHUB_ENV
-      - name: Setup PATH and folders
-        run: |
-          mkdir -p "${BIN_PATH}"
-          mkdir -p "${LOG_PATH}"
-          echo "${BIN_PATH}" >> $GITHUB_PATH
+      - run: ./scripts/actions/setup-env.sh
       - uses: actions/checkout@v2
       # run docker as early as possible asynchronously. if this command
       # fails, the split-test test runner will timeout in a reasonable amount
@@ -239,11 +232,7 @@ jobs:
     runs-on: ubuntu-18.04
     needs: [test-matrix]
     steps:
-      - run: echo "BIN_PATH=${HOME}/bin" >> $GITHUB_ENV
-      - name: Setup PATH
-        run: |
-          mkdir -p "${BIN_PATH}"
-          echo "${BIN_PATH}" >> $GITHUB_PATH
+      - run: ./scripts/actions/setup-env.sh
       - uses: actions/checkout@v2
       - name: Binary Cache
         uses: actions/cache@v2
@@ -255,7 +244,7 @@ jobs:
         with:
           path: target/test-results/all-test-timings.edn
           # cache should never hit
-          key: ctia-timings-${{ env.ACTIONS_CACHE_VERSION }}-${{ github.event_name }}-${{ github.ref }}-${{ github.sha }}
+          key: ctia-timings-${{ env.ACTIONS_CACHE_VERSION }}-${{ env.CTIA_TEST_SUITE }}-${{ github.ref }}-${{ github.sha }}
 
       - name: Install babashka
         run: ./scripts/actions/install-bb.sh
