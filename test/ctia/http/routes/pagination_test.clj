@@ -195,8 +195,8 @@
          ;; progress reporting for slow test
          (println (str "Testing pagination: " entity))
          ;; ensure good coverage via non-default fields
-         (assert (some #{:title :asset_ref} fields) [entity fields])
-         (assert (some #{:title :asset_ref} sort-fields) [entity sort-fields])
+         (assert (some #{:reason :title :asset_ref} fields) [entity fields])
+         (assert (some #{:reason :title :asset_ref} sort-fields) [entity sort-fields])
          (testing test-case
            (let [sample-size 30
                  ids (helpers/POST-entity-bulk
