@@ -346,12 +346,10 @@
                                "origin" "http://external.cisco.com"})
                judgement-id (id/long-id->id (:id judgement))
                get-judgement (fn [jwt]
-                               (let [{:keys [status] :as response}
-                                     (GET app
-                                          (str "ctia/judgement/" (:short-id judgement-id))
-                                          :headers {"Authorization" (str "Bearer " jwt)
-                                                    "Accept" "application/json"})]
-                                 response))
+                               (GET app
+                                    (str "ctia/judgement/" (:short-id judgement-id))
+                                    :headers {"Authorization" (str "Bearer " jwt)
+                                              "Accept" "application/json"}))
                ctx (assoc jwts :get-judgement get-judgement)]
            (is (= 201 status))
            (tst-fn ctx)))))))
@@ -412,8 +410,7 @@
                        :error_description
                        (str "(56bb5f8c-cc4e-4ed3-a91a-c6604287fe32) SERVER ERROR DESCRIPTION: Bearer "
                             jwt-1)}
-                      (json/read-str (:body (get-judgement jwt-1))
-                                     :key-fn keyword))
+                      (:body (get-judgement jwt-1)))
                    "The error should use the description returned by the server and we check the server get the correct header")))))))))
 
 (deftest jwt-http-checks-server-slow-test

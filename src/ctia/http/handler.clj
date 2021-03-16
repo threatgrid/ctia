@@ -205,17 +205,18 @@
 (def default-formats
   (get-in api-middleware-defaults [:format :formats]))
 
-(defn ->formats []
-  (conj default-formats (make-text-plain-format-encoder)))
+(defn ->format-options
+  "Options for ring-middleware-format"
+  []
+  {:formats (conj default-formats (make-text-plain-format-encoder))})
 
 (s/defn api-handler [{{:keys [get-in-config]} :ConfigService
                       :as services} :- APIHandlerServices]
   (let [{:keys [oauth2]}
         (get-http-swagger get-in-config)
-        formats (->formats)
         swagger-mime-types (->mime-types default-formats)]
     (api {:exceptions {:handlers exception-handlers}
-          :format {:formats formats}
+          :format (->format-options)
           :swagger
           (cond-> {:ui "/"
                    :spec "/swagger.json"

@@ -11,6 +11,7 @@
             [ctia.schemas.core :refer [APIHandlerServices]]
             [ring-jwt-middleware.core :as rjwt]
             [ring.adapter.jetty :as jetty]
+            [ring.middleware.format-response :refer [wrap-restful-response]]
             [ring.middleware
              [cors :refer [wrap-cors]]
              [params :refer [wrap-params]]
@@ -216,9 +217,11 @@
                            ;; generate a reasonable response.
                            :error-handler (comp
                                             (fn [resp]
-                                              ((api-middleware
-                                                 (fn [_req] resp)
-                                                 {:format {:formats (handler/->formats)}})
+                                              ((wrap-restful-response
+                                                 (fn [req]
+                                                   ;(prn "req" req)
+                                                   resp)
+                                                 (handler/->format-options))
                                                request))
                                             rjwt/default-error-handler)))
                   handler)
