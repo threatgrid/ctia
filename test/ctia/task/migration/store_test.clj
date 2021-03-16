@@ -252,8 +252,9 @@
 
 (def sample-relationships-1000
   "1000 real realtionships extracted from INT with ES doc meta"
-  (with-open [rdr (io/reader "./test/data/indices/sample-relationships-1000.json")]
-    (doall (line-seq rdr))))
+  (delay
+    (with-open [rdr (io/reader "./test/data/indices/sample-relationships-1000.json")]
+      (doall (line-seq rdr)))))
 
 (deftest rollover-test
   (es-helpers/for-each-es-version
@@ -281,7 +282,7 @@
                           :type "relationship"
                           :settings {}
                           :config {}}
-                docs-all (->> sample-relationships-1000
+                docs-all (->> @sample-relationships-1000
                               (map (partial es-helpers/prepare-bulk-ops app))
                               (map #(assoc % :_index write-alias)))
                 batch-sizes (repeatedly 100 #(inc (rand-int max-batch-size)))
@@ -347,7 +348,7 @@
                          :type "relationship"
                          :settings {}
                          :config {}}
-               _ (->>  sample-relationships-1000
+               _ (->>  @sample-relationships-1000
                        (map (partial es-helpers/prepare-bulk-ops app))
                        (es-helpers/load-bulk conn))
                expected-queries [missing-modified-query
@@ -842,7 +843,6 @@
      (helpers/fixture-ctia-with-app
        (fn [app]
          (let [services (app->MigrationStoreServices app)
-
                _ (POST-bulk app examples true)
                _ (ductile.index/refresh! conn) ;; ensure indices refresh
                [sighting1 sighting2] (:parsed-body (GET app
