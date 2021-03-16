@@ -6,7 +6,6 @@
             [schema.test :refer [validate-schemas]]
             [ctia.auth :as auth :refer [IIdentity]]
             [ctia.test-helpers.core :as helpers]
-            [ctia.test-helpers.fake-whoami-service :as whoami-helpers]
             [ctia.test-helpers.es :as es-helpers]
             [taoensso.carmine :as car]
             [clj-momo.lib.clj-time.core :as time]))
@@ -122,7 +121,10 @@
                (dotimes [_ 4] (call app))
                (let [response (call app)]
                  (is (= 429 (:status response)))
-                 (is (= "3600" (get-in response [:headers "Retry-After"])))
+                 (is (contains? (->> (range 3590 3601) ;; avoid flakyness on slow test server.
+                                     (map str)
+                                     set)
+                                (get-in response [:headers "Retry-After"])))
                  (is (= "{\"error\": \"Too Many Requests\"}"
                         (:body response)))))))))
       (testing "Custom group limits"

@@ -92,7 +92,7 @@
         (is (= 201 judgement-2-status))
         (is (= 201 judgement-3-status))
 
-        (is (.await finish-signal 10 TimeUnit/SECONDS)
+        (is (.await finish-signal 30 TimeUnit/SECONDS)
             "Unexpected timeout waiting for subscriptions")
         (is (= [{:owner "Unknown"
                  :groups ["Administrators"]

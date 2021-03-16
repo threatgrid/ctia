@@ -39,6 +39,7 @@ cache:
     - $HOME/bin
     - $HOME/.m2
     - $HOME/.cache/pip
+    - docker_images
 
 # default jdk for testing and (always) deployment.
 # others tested in cron job.
@@ -104,13 +105,13 @@ matrix: #note: don't use "jobs:" introduces an extra build
     # - we deploy (also) during cron jobs in the 'deploy' stage
     - name: "JDK 11"
       if: type = cron
-    - name: "JDK 11 + Clojure next"
-      if: type = cron
-      env: CLOJURE_VERSION=$CLOJURE_NEXT
-    - name: "JDK 15 + Clojure next"
-      if: type = cron
-      jdk: openjdk15
-      env: CLOJURE_VERSION=$CLOJURE_NEXT
+    #- name: "JDK 11 + Clojure next"
+    #  if: type = cron
+    #  env: CLOJURE_VERSION=$CLOJURE_NEXT
+    #- name: "JDK 15 + Clojure next"
+    #  if: type = cron
+    #  jdk: openjdk15
+    #  env: CLOJURE_VERSION=$CLOJURE_NEXT
 
     # Deploy
     # ======
@@ -140,6 +141,9 @@ before_install:
     #https://github.com/travis-ci/travis-ci/issues/5227
     - echo "127.0.0.1 "`hostname` | sudo tee /etc/hosts
 
+    # load docker cache
+    - docker load -i docker_images/images.tar || true
+
     # install docker-compose if not in cache
     - if [ ! -f $COMPOSE_BIN ]; then curl -L {$COMPOSE_URI}/docker-compose-`uname -s`-`uname -m` > $COMPOSE_BIN; fi
     - chmod +x $COMPOSE_BIN
@@ -148,6 +152,9 @@ before_install:
 install:
     - source $HOME/.rvm/scripts/rvm
     - rvm use 2.2
+
+before_cache:
+  - docker save -o docker_images/images.tar $(docker images -a -q)
 
 before_script:
     - $COMPOSE_BIN -f containers/dev/docker-compose.yml up -d> $COMPOSE_LOG
