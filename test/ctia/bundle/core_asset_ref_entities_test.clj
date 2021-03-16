@@ -70,37 +70,31 @@
                                          "foouser"
                                          "foogroup"
                                          "user")
-     (let [services (app/service-graph app)
-
-           {{:keys [get-store]} :StoreService} services
-
-           login              (map->Identity {:login  "foouser"
-                                              :groups ["foogroup"]})
-           bundle-import-data (bundle/prepare-import bundle-ents nil login services)
-           bulk               (bundle/prepare-bulk bundle-import-data)
-           tempids            (->> bundle-import-data
-                                   (map (fn [[_ entities-import-data]]
-                                          (bundle/entities-import-data->tempids
-                                           entities-import-data)))
-                                   (apply merge {}))
-           {:keys [tempids]}  (bulk/create-bulk
-                               bulk
-                               tempids
-                               login
-                               {:refresh true}
-                               services)
-           get-records        (fn [store]
-                                (-> (get-store store)
-                                    (store/list-records
-                                     {:query "*"}
-                                     {:login  "foouser"
-                                      :groups ["foogroup"]} {})
-                                    :data))
-           expected-asset-ref (get tempids (-> bundle-ents :assets first :id))]
-       (testing "every AssetMapping and AssetProperties have proper
+     (testing "every AssetMapping and AssetProperties have proper
                  non-transient :asset-ref"
-        (are [store] (every?
-                      (partial = expected-asset-ref)
-                      (->> store get-records (map :asset_ref)))
-          :asset-mapping
-          :asset-properties))))))
+       (let [services          (app/service-graph app)
+             login             (map->Identity {:login  "foouser"
+                                               :groups ["foogroup"]})
+             {:keys [results]} (bundle/import-bundle
+                                bundle-ents
+                                nil         ;; external-key-prefixes
+                                login
+                                services)
+             get-records       (fn [store]
+                                 (let [{{:keys [get-store]} :StoreService} services]
+                                   (-> (get-store store)
+                                       (store/list-records
+                                        {:query "*"}
+                                        {:login  "foouser"
+                                         :groups ["foogroup"]} {})
+                                       :data)))
+             asset-refs        (->> results
+                                    (filter #(-> % :result (= "created")))
+                                    (filter #(-> % :type (= :asset)))
+                                    (map :id)
+                                    set)]
+         (are [store] (every?
+                       (partial contains? asset-refs)
+                       (->> store get-records (map :asset_ref)))
+           :asset-mapping
+           :asset-properties))))))
