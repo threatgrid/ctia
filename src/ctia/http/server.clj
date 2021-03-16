@@ -219,9 +219,9 @@
                                             (fn [resp]
                                               ((wrap-restful-response
                                                  (fn [req]
-                                                   (prn "req" (-> req
-                                                                  (select-keys #{:headers :uri :request-method})
-                                                                  (update :headers select-keys #{"accept"})))
+                                                   ;(prn "req" (-> req
+                                                   ;               (select-keys #{:headers :uri :request-method})
+                                                   ;               (update :headers select-keys #{"accept"})))
                                                    resp)
                                                  (handler/->format-options))
                                                request))

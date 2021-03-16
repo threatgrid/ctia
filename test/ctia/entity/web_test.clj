@@ -345,12 +345,9 @@
                              "origin" "http://external.cisco.com"})
              judgement-id (id/long-id->id (:id judgement))
              get-judgement (fn [jwt]
-                             (let [response
-                                   (GET app
-                                        (str "ctia/judgement/" (:short-id judgement-id))
-                                        :headers {"Authorization" (str "Bearer " jwt)})]
-                               (prn "get-judgement" response)
-                               response))
+                             (GET app
+                                  (str "ctia/judgement/" (:short-id judgement-id))
+                                  :headers {"Authorization" (str "Bearer " jwt)}))
              ctx (assoc jwts :get-judgement get-judgement)]
            (is (= 201 status))
            (tst-fn ctx))))))
