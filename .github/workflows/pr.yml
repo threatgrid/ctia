@@ -227,6 +227,8 @@ jobs:
       - name: Run CTIA tests
         run: ./build/run-tests.sh
         env:
+          # offline to catch issues where `lein warm-ci-deps` doesn't download all
+          # dependencies we need to run tests.
           LEIN_OFFLINE: true
           CTIA_WAIT_DOCKER: 1
 
