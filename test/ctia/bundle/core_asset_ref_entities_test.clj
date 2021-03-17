@@ -21,11 +21,12 @@
 
 (def bundle-ents
   "Sample Bundle Map for testing."
-  (select-keys
-   bundle-maximal
-   [:assets :asset_refs
-    :asset_mappings :asset_mapping_refs
-    :asset_properties :asset_properties_refs]))
+  (-> bundle-maximal
+      (select-keys
+       [:assets :asset_refs
+        :asset_mappings :asset_mapping_refs
+        :asset_properties :asset_properties_refs])
+      th/deep-dissoc-entity-ids))
 
 (deftest bulk-for-asset-related-entities
   (testing "delay creation of :asset-mapping and :asset-properties, until all
