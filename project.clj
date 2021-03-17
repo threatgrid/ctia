@@ -258,6 +258,7 @@
             ; circleci.test
             ;"test" ["run" "-m" "circleci.test/dir" :project/test-paths]
             "split-test" ["trampoline"
+                          ;; FIXME can we use -dev here?
                           "with-profile" "+test,+ci" ;https://github.com/circleci/circleci.test/issues/13
                           "run" "-m" "ctia.dev.split-tests/dir" :project/test-paths]
             "tests" ["with-profile" "+ci" "run" "-m" "circleci.test"]

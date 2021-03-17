@@ -20,7 +20,7 @@ env:
   ACTIONS_RETRY_TIMES: 10
   # workaround https://github.com/actions/cache/issues/2
   # to "delete" caches, increment this version
-  ACTIONS_CACHE_VERSION: v4
+  ACTIONS_CACHE_VERSION: v5
   BIN_PATH: ${{github.workspace}}/bin
   LOG_PATH: ${{github.workspace}}/log
   # avoid the (somehow) default /usr/local/lib/lein/
@@ -101,15 +101,19 @@ jobs:
       - name: Run shellcheck
         run: ./scripts/shellcheck-build.sh
 
+
       # warm dependency cache on project.clj change (ie., when cache-hit is not true).
       # FIXME: take CLOJURE_VERSION into consideration
+      - name: Get current date
+        id: date
+        run: echo "::set-output name=date::$(date +'%Y-%m-%d')"
       - name: Maven Cache
         id: maven-cache
         uses: actions/cache@v2
         with:
           path: ~/.m2/repository
           key: ctia-m2-cache-${{ env.ACTIONS_CACHE_VERSION }}-${{ hashFiles('project.clj') }}
-          # these will be considered a cache-miss by `cache_hit`
+          # these will be considered a cache-miss by `cache-hit`
           restore-keys: |
             ctia-m2-cache-${{ env.ACTIONS_CACHE_VERSION }}-
       - name: Setup Java
@@ -132,7 +136,7 @@ jobs:
       - name: Warm dependency cache
         if: steps.maven-cache.outputs.cache-hit != 'true'
         # poor man's travis_retry
-        run: for i in {1..${ACTIONS_RETRY_TIMES}}; do lein with-profile -dev,+test,+ci deps :tree && break; done
+        run: for i in {1..${ACTIONS_RETRY_TIMES}}; do lein with-profile +test deps :tree && break; done
   test-matrix:
     runs-on: ubuntu-18.04
     needs: [setup]
@@ -192,6 +196,7 @@ jobs:
         run: sudo sysctl -w vm.max_map_count=262144
 
       - name: Maven Cache
+        id: maven-cache
         uses: actions/cache@v2
         with:
           path: ~/.m2/repository
@@ -214,10 +219,24 @@ jobs:
       - name: Install Leiningen
         if: steps.lein-cache.outputs.cache-hit != 'true'
         run: ./scripts/actions/install-lein.sh
+
+
+      # we should "always" get a cache hit from maven here.
+      # sometimes, leiningen still tries to hit the network searching
+      # for old versions of dependencies that we override. to prevent
+      # that, we run the test with LEIN_OFFLINE and in the unlikely
+      # event we don't have a maven cache hit, we warm it below for this specific
+      # job only.
+      - name: Warm dependency cache
+        if: steps.maven-cache.outputs.cache-hit != 'true'
+        # poor man's travis_retry
+        run: for i in {1..${ACTIONS_RETRY_TIMES}}; do lein with-profile +test deps :tree && break; done
       - name: Run CTIA tests
         run: ./build/run-tests.sh
         env:
+          LEIN_OFFLINE: true
           CTIA_WAIT_DOCKER: 1
+
       - name: Upload test timing
         uses: actions/upload-artifact@v2
         with:
