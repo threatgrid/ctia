@@ -20,7 +20,7 @@ env:
   ACTIONS_RETRY_TIMES: 10
   # workaround https://github.com/actions/cache/issues/2
   # to "delete" caches, increment this version
-  ACTIONS_CACHE_VERSION: v5
+  ACTIONS_CACHE_VERSION: v6
   BIN_PATH: ${{github.workspace}}/bin
   LOG_PATH: ${{github.workspace}}/log
   # avoid the (somehow) default /usr/local/lib/lein/
@@ -136,7 +136,7 @@ jobs:
       - name: Warm dependency cache
         if: steps.maven-cache.outputs.cache-hit != 'true'
         # poor man's travis_retry
-        run: for i in {1..${ACTIONS_RETRY_TIMES}}; do lein with-profile +test deps :tree && break; done
+        run: for i in {1..${ACTIONS_RETRY_TIMES}}; do lein with-profile +test do deps :tree, deps :plugin-tree && break; done
   test-matrix:
     runs-on: ubuntu-18.04
     needs: [setup]
@@ -220,7 +220,6 @@ jobs:
         if: steps.lein-cache.outputs.cache-hit != 'true'
         run: ./scripts/actions/install-lein.sh
 
-
       # we should "always" get a cache hit from maven here.
       # sometimes, leiningen still tries to hit the network searching
       # for old versions of dependencies that we override. to prevent
@@ -230,7 +229,7 @@ jobs:
       - name: Warm dependency cache
         if: steps.maven-cache.outputs.cache-hit != 'true'
         # poor man's travis_retry
-        run: for i in {1..${ACTIONS_RETRY_TIMES}}; do lein with-profile +test deps :tree && break; done
+        run: for i in {1..${ACTIONS_RETRY_TIMES}}; do lein with-profile +test do deps :tree, deps :plugin-tree && break; done
       - name: Run CTIA tests
         run: ./build/run-tests.sh
         env:
