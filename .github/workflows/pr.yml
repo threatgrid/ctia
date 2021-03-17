@@ -217,9 +217,8 @@ jobs:
         if: steps.lein-cache.outputs.cache-hit != 'true'
         run: ./scripts/actions/install-lein.sh
 
-      # we should "always" get a cache hit from maven here.
-      # in the unlikely event we don't,
-      # we download deps below for this specific job only.
+      # we should get a cache hit from maven here, since the `setup` job only succeeds if it exists.
+      # in the unlikely event we don't, download deps for this specific job only.
       - name: Warm dependency cache
         if: steps.maven-cache.outputs.cache-hit != 'true'
         # poor man's travis_retry
