@@ -218,11 +218,8 @@ jobs:
         run: ./scripts/actions/install-lein.sh
 
       # we should "always" get a cache hit from maven here.
-      # sometimes, leiningen still tries to hit the network searching
-      # for old versions of dependencies that we override. to prevent
-      # that, we run tests with LEIN_OFFLINE=true and in the unlikely
-      # event we don't have a maven cache hit, we warm it below for this specific
-      # job only.
+      # in the unlikely event we don't,
+      # we download deps below for this specific job only.
       - name: Warm dependency cache
         if: steps.maven-cache.outputs.cache-hit != 'true'
         # poor man's travis_retry

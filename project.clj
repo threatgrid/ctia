@@ -267,6 +267,6 @@
 
             "ci-run-tests" ["with-profile" ~ci-profiles "do" "clean," "javac," "split-test" ":no-gen"]
             "cron-run-tests" ["with-profile" ~ci-profiles "do" "clean," "javac," "split-test" ":all"]
-            "warm-ci-deps" ["with-profile" ~ci-profiles "do" "deps :tree," "deps :plugin-tree"]
+            "warm-ci-deps" ["with-profile" ~ci-profiles "do" "deps" ":tree," "deps" ":plugin-tree"]
             ;"retest" ["run" "-m" "circleci.test.retest"]
             })
