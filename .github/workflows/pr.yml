@@ -20,7 +20,7 @@ env:
   ACTIONS_RETRY_TIMES: 10
   # workaround https://github.com/actions/cache/issues/2
   # to "delete" caches, increment this version
-  ACTIONS_CACHE_VERSION: v2
+  ACTIONS_CACHE_VERSION: v3
   BIN_PATH: ${{github.workspace}}/bin
   LOG_PATH: ${{github.workspace}}/log
   # avoid the (somehow) default /usr/local/lib/lein/
@@ -124,11 +124,7 @@ jobs:
         uses: actions/cache@v2
         id: lein-cache
         with:
-          # note: these should coincide with ${BIN_PATH}/lein and ${LEIN_HOME}. unclear
-          # if variables can be used here
-          path: |
-            ~/bin/lein
-            ~/.lein
+          path: ${{env.LEIN_HOME}}
           key: ctia-lein-cache-${{ env.ACTIONS_CACHE_VERSION }}-${{ env.LEIN_VERSION }}
       - name: Install Leiningen
         if: steps.maven-cache.outputs.cache-hit != 'true' && steps.lein-cache.outputs.cache-hit != 'true'
@@ -213,11 +209,7 @@ jobs:
         uses: actions/cache@v2
         id: lein-cache
         with:
-          # note: these should coincide with ${BIN_PATH}/lein and ${LEIN_HOME}. unclear
-          # if variables can be used here
-          path: |
-            ~/bin/lein
-            ~/.lein
+          path: ${{env.LEIN_HOME}}
           key: ctia-lein-cache-${{ env.ACTIONS_CACHE_VERSION }}-${{ env.LEIN_VERSION }}
       - name: Install Leiningen
         if: steps.lein-cache.outputs.cache-hit != 'true'
