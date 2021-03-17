@@ -15,8 +15,6 @@ on:
     # daily, 3am UTC
     - cron: "0 3 * * *"
 
-# Note: see ./scripts/actions/setup-env.sh for how to set an env variable that depends on
-# other env variables.
 env:
   # number of times to try possibly-flaky commands in this file
   ACTIONS_RETRY_TIMES: 10
@@ -24,6 +22,8 @@ env:
   # to "delete" caches, increment this version
   ACTIONS_CACHE_VERSION: v1
   # avoid the (somehow) default /usr/local/lib/lein/
+  BIN_PATH: ~/bin
+  LOG_PATH: ~/log
   LEIN_HOME: ~/.lein
   LEIN_ROOT: 1
   LEIN_VERSION: 2.9.4
@@ -39,14 +39,15 @@ jobs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
     steps:
       - uses: actions/checkout@v2
-      - run: ./scripts/actions/setup-env.sh
       - name: Binary Cache
         uses: actions/cache@v2
         with:
           path: ${{ env.BIN_PATH }}
           key: ctia-bin-${{ env.ACTIONS_CACHE_VERSION }}-${{ env.BB_VERSION }}
+      - run: mkdir -p "${BIN_PATH}"
       - name: Install babashka
         run: ./scripts/actions/install-bb.sh
+      - run: ./scripts/actions/setup-env.clj
       - name: Setup test matrix splits
         id: set-matrix
         run: ./scripts/actions/print-matrix.clj
@@ -146,7 +147,15 @@ jobs:
       JAVA_VERSION: ${{ matrix.this-split.java_version }}
     steps:
       - uses: actions/checkout@v2
-      - run: ./scripts/actions/setup-env.sh
+      - name: Binary Cache
+        uses: actions/cache@v2
+        with:
+          path: ${{ env.BIN_PATH }}
+          key: ctia-bin-${{ env.ACTIONS_CACHE_VERSION }}-${{ env.BB_VERSION }}
+      - run: mkdir -p "${BIN_PATH}"
+      - name: Install babashka
+        run: ./scripts/actions/install-bb.sh
+      - run: ./scripts/actions/setup-env.clj
       # run docker as early as possible asynchronously. if this command
       # fails, the split-test test runner will timeout in a reasonable amount
       # of time and throw an error.
@@ -233,21 +242,21 @@ jobs:
     needs: [test-matrix]
     steps:
       - uses: actions/checkout@v2
-      - run: ./scripts/actions/setup-env.sh
       - name: Binary Cache
         uses: actions/cache@v2
         with:
           path: ${{ env.BIN_PATH }}
           key: ctia-bin-${{ env.ACTIONS_CACHE_VERSION }}-${{ env.BB_VERSION }}
+      - run: mkdir -p "${BIN_PATH}"
+      - name: Install babashka
+        run: ./scripts/actions/install-bb.sh
+      - run: ./scripts/actions/setup-env.clj
       - name: Timing results Cache
         uses: actions/cache@v2
         with:
           path: target/test-results/all-test-timings.edn
           # cache should never hit
           key: ctia-timings-${{ env.ACTIONS_CACHE_VERSION }}-${{ env.CTIA_TEST_SUITE }}-${{ github.ref }}-${{ github.sha }}
-
-      - name: Install babashka
-        run: ./scripts/actions/install-bb.sh
 
       - name: Download test timings
         uses: actions/download-artifact@v2
