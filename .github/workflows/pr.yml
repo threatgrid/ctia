@@ -44,7 +44,10 @@ jobs:
         with:
           path: ${{ env.BIN_PATH }}
           key: ctia-bin-${{ env.ACTIONS_CACHE_VERSION }}-${{ env.BB_VERSION }}
-      - run: mkdir -p "${BIN_PATH}"
+      - name: Setup PATH and directories
+        run: |
+          mkdir -p "${BIN_PATH}"
+          echo "${BIN_PATH}" >> $GITHUB_PATH
       - name: Install babashka
         run: ./scripts/actions/install-bb.sh
       - run: ./scripts/actions/setup-env.clj
@@ -152,7 +155,10 @@ jobs:
         with:
           path: ${{ env.BIN_PATH }}
           key: ctia-bin-${{ env.ACTIONS_CACHE_VERSION }}-${{ env.BB_VERSION }}
-      - run: mkdir -p "${BIN_PATH}"
+      - name: Setup PATH and directories
+        run: |
+          mkdir -p "${BIN_PATH}"
+          echo "${BIN_PATH}" >> $GITHUB_PATH
       - name: Install babashka
         run: ./scripts/actions/install-bb.sh
       - run: ./scripts/actions/setup-env.clj
@@ -247,7 +253,10 @@ jobs:
         with:
           path: ${{ env.BIN_PATH }}
           key: ctia-bin-${{ env.ACTIONS_CACHE_VERSION }}-${{ env.BB_VERSION }}
-      - run: mkdir -p "${BIN_PATH}"
+      - name: Setup PATH and directories
+        run: |
+          mkdir -p "${BIN_PATH}"
+          echo "${BIN_PATH}" >> $GITHUB_PATH
       - name: Install babashka
         run: ./scripts/actions/install-bb.sh
       - run: ./scripts/actions/setup-env.clj
