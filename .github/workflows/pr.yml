@@ -21,10 +21,10 @@ env:
   # workaround https://github.com/actions/cache/issues/2
   # to "delete" caches, increment this version
   ACTIONS_CACHE_VERSION: v1
+  BIN_PATH: ${{env.HOME}}/bin
+  LOG_PATH: ${{env.HOME}}/log
   # avoid the (somehow) default /usr/local/lib/lein/
-  BIN_PATH: ~/bin
-  LOG_PATH: ~/log
-  LEIN_HOME: ~/.lein
+  LEIN_HOME: ${{env.HOME}}/.lein
   LEIN_ROOT: 1
   LEIN_VERSION: 2.9.4
   CTIA_MAJOR_VERSION: 1
