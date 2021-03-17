@@ -104,9 +104,6 @@ jobs:
 
       # warm dependency cache on project.clj change (ie., when cache-hit is not true).
       # FIXME: take CLOJURE_VERSION into consideration
-      - name: Get current date
-        id: date
-        run: echo "::set-output name=date::$(date +'%Y-%m-%d')"
       - name: Maven Cache
         id: maven-cache
         uses: actions/cache@v2
