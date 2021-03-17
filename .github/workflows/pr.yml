@@ -136,7 +136,7 @@ jobs:
       - name: Warm dependency cache
         if: steps.maven-cache.outputs.cache-hit != 'true'
         # poor man's travis_retry
-        run: for i in {1..${ACTIONS_RETRY_TIMES}}; do lein trampoline with-profile +test do clean, javac, deps :tree, deps :plugin-tree && break; done
+        run: for i in {1..${ACTIONS_RETRY_TIMES}}; do lein with-profile +test do clean, javac, deps :tree, deps :plugin-tree && break; done
   test-matrix:
     runs-on: ubuntu-18.04
     needs: [setup]
@@ -229,7 +229,7 @@ jobs:
       - name: Warm dependency cache
         if: steps.maven-cache.outputs.cache-hit != 'true'
         # poor man's travis_retry
-        run: for i in {1..${ACTIONS_RETRY_TIMES}}; do lein trampoline with-profile +test do clean, javac, deps :tree, deps :plugin-tree && break; done
+        run: for i in {1..${ACTIONS_RETRY_TIMES}}; do lein with-profile +test do clean, javac, deps :tree, deps :plugin-tree && break; done
       - name: Run CTIA tests
         run: ./build/run-tests.sh
         env:
