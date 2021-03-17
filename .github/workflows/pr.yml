@@ -224,7 +224,7 @@ jobs:
       # we should "always" get a cache hit from maven here.
       # sometimes, leiningen still tries to hit the network searching
       # for old versions of dependencies that we override. to prevent
-      # that, we run the test with LEIN_OFFLINE and in the unlikely
+      # that, we run tests with LEIN_OFFLINE=true and in the unlikely
       # event we don't have a maven cache hit, we warm it below for this specific
       # job only.
       - name: Warm dependency cache
@@ -248,7 +248,7 @@ jobs:
         with:
           retention-days: 1
           name: docker-compose.log
-          path: ~/log/docker-compose.log
+          path: ${{env.LOG_PATH}}/docker-compose.log
   # fan-in tests so there's a single job we can add to protected branches.
   # otherwise, we'll have add all (range ${CTIA_NSPLITS}) jobs, and keep
   # them up to date
