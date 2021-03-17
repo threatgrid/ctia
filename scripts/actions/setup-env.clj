@@ -10,7 +10,7 @@
         (str k "=" v "\n")
         :append true))
 
-(-> (getenv "LOG_PATH") v File. .mkdirs)
+(-> (getenv "LOG_PATH") File. .mkdirs)
 
 (assert (not (System/getenv "TRAVIS_EVENT_TYPE"))
         "Actions only")
