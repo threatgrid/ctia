@@ -12,7 +12,7 @@
         (str k "=" v "\n")
         :append true))
 
-(io/make-parents (getenv "LOG_PATH"))
+(-> (getenv "LOG_PATH") File. .mkdirs assert)
 
 (assert (not (getenv "TRAVIS_EVENT_TYPE"))
         "Actions only")
