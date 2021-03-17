@@ -258,12 +258,13 @@
             ; circleci.test
             ;"test" ["run" "-m" "circleci.test/dir" :project/test-paths]
             "split-test" ["trampoline"
-                          ;; FIXME can we use -dev here?
+                          ;; TODO -dev
                           "with-profile" "+test,+ci" ;https://github.com/circleci/circleci.test/issues/13
                           "run" "-m" "ctia.dev.split-tests/dir" :project/test-paths]
             "tests" ["with-profile" "+ci" "run" "-m" "circleci.test"]
 
-            "ci-run-tests" ["with-profile" "-dev,+ci" "do" "clean," "javac," "split-test" ":no-gen"]
-            "cron-run-tests" ["with-profile" "-dev,+ci" "do" "clean," "javac," "split-test" ":all"]
+            ;; TODO -dev (note split-test has its own with-profile call)
+            "ci-run-tests" ["with-profile" "+test,+ci" "do" "clean," "javac," "split-test" ":no-gen"]
+            "cron-run-tests" ["with-profile" "+test,+ci" "do" "clean," "javac," "split-test" ":all"]
             ;"retest" ["run" "-m" "circleci.test.retest"]
             })
