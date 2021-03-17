@@ -261,12 +261,12 @@
             ; circleci.test
             ;"test" ["run" "-m" "circleci.test/dir" :project/test-paths]
             "split-test" ["trampoline"
-                          "with-profile" ci-profiles ;https://github.com/circleci/circleci.test/issues/13
+                          "with-profile" ~ci-profiles ;https://github.com/circleci/circleci.test/issues/13
                           "run" "-m" "ctia.dev.split-tests/dir" :project/test-paths]
-            "tests" ["with-profile" "+ci" "run" "-m" "circleci.test"]
+            "tests" ["with-profile" ~ci-profiles "run" "-m" "circleci.test"]
 
-            "ci-run-tests" ["with-profile" ci-profiles "do" "clean," "javac," "split-test" ":no-gen"]
-            "cron-run-tests" ["with-profile" ci-profiles "do" "clean," "javac," "split-test" ":all"]
-            "warm-ci-deps" ["with-profile" ci-profiles "do" "deps :tree," "deps :plugin-tree"]
+            "ci-run-tests" ["with-profile" ~ci-profiles "do" "clean," "javac," "split-test" ":no-gen"]
+            "cron-run-tests" ["with-profile" ~ci-profiles "do" "clean," "javac," "split-test" ":all"]
+            "warm-ci-deps" ["with-profile" ~ci-profiles "do" "deps :tree," "deps :plugin-tree"]
             ;"retest" ["run" "-m" "circleci.test.retest"]
             })
