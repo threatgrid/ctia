@@ -1,9 +1,7 @@
 #!/usr/bin/env bb
 
-(def default-clojure-version "") ;; set in project.clj
 (def default-java-version "11.0.9")
 (def java-15-version "15")
-(def clojure-next "1.10.2-rc1")
 (def non-cron-ctia-nsplits
   "Job parallelism for non cron tests."
   10)
@@ -17,20 +15,22 @@
   (for [this-split (range non-cron-ctia-nsplits)]
     {:this_split this-split
      :total_splits non-cron-ctia-nsplits
-     :clojure_version default-clojure-version
+     :ci_profiles "default"
      :java_version default-java-version}))
 
 (defn cron-matrix
   "Actions matrix for cron builds"
   []
-  (for [[clojure-version java-version] [[default-clojure-version default-java-version]
-                                        [clojure-next default-java-version]
-                                        [clojure-next java-15-version]]
+  (for [base [{:ci_profiles "default"
+               :java_version default-java-version}
+              {:ci_profiles "next-clojure"
+               :java_version default-java-version}
+              {:ci_profiles "next-clojure"
+               :java_version java-15-version}]
         this-split (range cron-ctia-nsplits)]
-    {:this_split this-split
-     :total_splits cron-ctia-nsplits
-     :clojure_version clojure-version
-     :java_version java-version}))
+    (assoc base
+           :this_split this-split
+           :total_splits cron-ctia-nsplits)))
 
 (defn edn-matrix []
   {:post [(seq %)]}

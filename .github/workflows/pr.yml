@@ -143,7 +143,7 @@ jobs:
     env:
       CTIA_THIS_SPLIT: ${{ matrix.this-split.this_split }}
       CTIA_NSPLITS: ${{ matrix.this-split.total_splits }}
-      CLOJURE_VERSION: ${{ matrix.this-split.clojure_version }}
+      CTIA_CI_PROFILES: ${{ matrix.this-split.ci_profiles }}
       JAVA_VERSION: ${{ matrix.this-split.java_version }}
     steps:
       - uses: actions/checkout@v2
