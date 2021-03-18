@@ -14,7 +14,7 @@
    :post [(= (range nsplits)
              (map :this_split %))
           (= #{nsplits}
-             (into #{} (map :total_splits %)))]}
+             (into #{} (map :total_splits) %))]}
   (for [this-split (range nsplits)]
     (assoc base
            :this_split this-split
