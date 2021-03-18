@@ -1,5 +1,6 @@
 (def cheshire-version "5.10.0")
 (def clj-http-fake-version "1.0.3")
+(def clj-version "1.10.1")
 (def metrics-clojure-version "2.10.0")
 (def perforate-version "0.3.4")
 (def ring-version "1.8.0")
@@ -54,7 +55,7 @@
   ;; use `lein pom; mvn dependency:tree -Dverbose -Dexcludes=org.clojure:clojure`
   ;; to inspect conflicts.
 
-  :dependencies [[org.clojure/clojure "1.10.1"]
+  :dependencies [[org.clojure/clojure ~clj-version]
                  [clj-time "0.15.2"]
                  [org.threeten/threeten-extra "1.2"]
                  [clojure.java-time "0.3.2"]
@@ -213,6 +214,7 @@
                               :namespaces [ctia.tasks.migrate-es-stores-bench]}]}
   ;; use `lein deps :plugins-tree` to inspect conflicts
   :plugins [[lein-shell "0.5.0"]
+            [org.clojure/clojure ~clj-version] ;override perforate
             [perforate ~perforate-version]
             [reifyhealth/lein-git-down "0.3.5"]]
   :repl-options {:welcome (println
