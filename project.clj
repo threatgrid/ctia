@@ -264,7 +264,10 @@
             ;; warm cache deps for all permutations of the build
             "warm-ci-deps" ["do"
                             ~(mapv (fn [p]
-                                     ["with-profile" p ["do" ["deps" ":tree"] ["deps" ":plugin-tree"]]])
+                                     ["with-profile" p ["do"
+                                                        ["shell" "echo" (str "\n\nCI profile:" p)]
+                                                        ["deps" ":tree"]
+                                                        ["deps" ":plugin-tree"]]])
                                    (vals all-ci-profiles))]
             ;"retest" ["run" "-m" "circleci.test.retest"]
             })
