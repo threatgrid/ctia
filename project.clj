@@ -12,9 +12,12 @@
 ;; TODO we could add -dev here when it works
 (def base-ci-profiles "+test,+ci")
 (def all-ci-profiles
-  "All the permutations of CI profiles to reliably centralize dependency
-  caches across all builds. Frees us to use LEIN_OFFLINE=true to automatically
-  catch errors in the dep caching logic.
+  "All the permutations of CI profiles. This helps download dependencies
+  for all build configurations on demand, to minimize the load we
+  put on Maven repositories.
+
+  By centralizing all build configurations here, we can use LEIN_OFFLINE=true
+  when running tests to automatically catch errors in the dep caching logic.
   
   To add a new build, add an entry here and use CTIA_CI_PROFILES to select it."
   {:next-clojure (str base-ci-profiles ",+next-clojure")
@@ -270,7 +273,7 @@
             "ci-run-tests" ["with-profile" ~ci-profiles "do" "clean," "javac," "split-test" ":no-gen"]
             "cron-run-tests" ["with-profile" ~ci-profiles "do" "clean," "javac," "split-test" ":all"]
             "all-ci-profiles" ["shell" "echo" ~(pr-str all-ci-profiles)]
-            ;; warm cache deps for all permutations of the build
+            ;; warm deps cache for all permutations of the build
             "warm-ci-deps" ["do"
                             ~(mapv (fn [p]
                                      ["with-profile" p ["do"
