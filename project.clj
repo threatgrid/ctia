@@ -277,7 +277,7 @@
             "warm-ci-deps" ["do"
                             ~(mapv (fn [p]
                                      ["with-profile" p ["do"
-                                                        ["shell" "echo" (str "\n\nlein with-profile " p "...")]
+                                                        ["shell" "echo" (str "\n\nlein with-profile " p " ...")]
                                                         ["deps" ":tree"]
                                                         ["deps" ":plugin-tree"]]])
                                    (vals all-ci-profiles))]
