@@ -1,5 +1,13 @@
 #!/usr/bin/env bb
 
+;; determines the build matrix for the GitHub Actions build. 
+;; try it locally:
+;;   # normal builds
+;;   $ GITHUB_EVENT_NAME=pull_request ./scripts/actions/print-matrix.clj
+;;   $ GITHUB_EVENT_NAME=push ./scripts/actions/print-matrix.clj
+;;   # cron build
+;;   $ GITHUB_EVENT_NAME=schedule ./scripts/actions/print-matrix.clj
+
 (def default-java-version "11.0.9")
 (def java-15-version "15")
 (def non-cron-ctia-nsplits
