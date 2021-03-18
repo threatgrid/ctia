@@ -30,8 +30,6 @@ env:
       # travis allows 5 concurrent builds for open source plans
       # across org
       - CTIA_NSPLITS=5
-      # test future clojure releases
-      - CLOJURE_NEXT=1.10.2-rc1
       - CTIA_TEST_SUITE=ci
 
 # Cache our Maven deps to be kind to clojars, github, docker images

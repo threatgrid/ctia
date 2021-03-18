@@ -103,7 +103,6 @@ jobs:
 
 
       # warm dependency cache on project.clj change (ie., when cache-hit is not true).
-      # FIXME: take CLOJURE_VERSION into consideration
       - name: Maven Cache
         id: maven-cache
         uses: actions/cache@v2
