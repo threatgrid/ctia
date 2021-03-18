@@ -210,6 +210,11 @@
               {:jwt-max-lifetime-in-sec lifetime}))))
 
          ;; encode error responses from ring-jwt-middleware
+         ;; Note that handler/api-handler already uses wrap-restful-response, and we
+         ;; use the same configuration options in both places.
+         ;; It's safe to use wrap-restful-response here because it's documented
+         ;; as idempotent for string/binary encoded responses, and 
+         ;; handler/api-handler always encodes responses before they reach here.
          (:enabled jwt) (wrap-restful-response (handler/->format-options))
 
          access-control-allow-origin
