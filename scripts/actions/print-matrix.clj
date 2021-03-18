@@ -31,12 +31,12 @@
   "Actions matrix for cron builds"
   []
   (mapcat #(splits-for % cron-ctia-nsplits)
-          [{:ci_profiles "default"
-            :java_version default-java-version}
-           {:ci_profiles "next-clojure"
-            :java_version default-java-version}
-           {:ci_profiles "next-clojure"
-            :java_version java-15-version}]))
+          (concat
+            [{:ci_profiles "default"
+              :java_version default-java-version}]
+            (map #(into {:ci_profiles "next-clojure"} %)
+                 [{:java_version default-java-version}
+                  {:java_version java-15-version}]))))
 
 (defn edn-matrix []
   {:post [(seq %)]}
