@@ -1,6 +1,6 @@
 #!/usr/bin/env bb
 
-;; warm cache deps for all permutations of the build
+;; warm deps cache for all permutations of the build
 
 (require '[clojure.java.shell :as sh])
 
@@ -19,6 +19,6 @@
 
 (doseq [p (vals all-ci-profiles)]
   (println (str "CI profile: " p))
-  ;; combining with-profile calls with `lein do` does not seem to isolate
+  ;; combining with-profile calls with `lein do with-profile .., with-profile ..` does not seem to isolate
   ;; the profiles in each call, using separate lein calls seems more reliable.
   (sh "lein" "with-profile" p "do" "deps" ":tree," "deps" ":plugin-tree"))
