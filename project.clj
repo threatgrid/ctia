@@ -10,6 +10,9 @@
 (def test-chuck-version "0.2.10")
 (def trapperkeeper-version "3.1.0")
 
+;; TODO -dev
+(def ci-profiles "+test,+ci")
+
 ;; On avoiding dependency overrides:
 ;; - :pedantic? should be set to :abort; Use "lein deps :tree" to resolve
 ;;   conflicts.  Do not change this in master.
@@ -258,11 +261,12 @@
             ; circleci.test
             ;"test" ["run" "-m" "circleci.test/dir" :project/test-paths]
             "split-test" ["trampoline"
-                          "with-profile" "+test,+ci" ;https://github.com/circleci/circleci.test/issues/13
+                          "with-profile" ~ci-profiles ;https://github.com/circleci/circleci.test/issues/13
                           "run" "-m" "ctia.dev.split-tests/dir" :project/test-paths]
-            "tests" ["with-profile" "+ci" "run" "-m" "circleci.test"]
+            "tests" ["with-profile" ~ci-profiles "run" "-m" "circleci.test"]
 
-            "ci-run-tests" ["with-profile" "-dev,+ci" "do" "clean," "javac," "split-test" ":no-gen"]
-            "cron-run-tests" ["with-profile" "-dev,+ci" "do" "clean," "javac," "split-test" ":all"]
+            "ci-run-tests" ["with-profile" ~ci-profiles "do" "clean," "javac," "split-test" ":no-gen"]
+            "cron-run-tests" ["with-profile" ~ci-profiles "do" "clean," "javac," "split-test" ":all"]
+            "warm-ci-deps" ["with-profile" ~ci-profiles "do" "deps" ":tree," "deps" ":plugin-tree"]
             ;"retest" ["run" "-m" "circleci.test.retest"]
             })
