@@ -9,28 +9,34 @@
   "Job parallelism for cron tests."
   2)
 
+(defn splits-for [base nsplits]
+  {:post [(= (range nsplits)
+             (map :this_split %))
+          (= #{nsplits}
+             (into #{} (map :total_splits %)))]}
+  (for [this-split (range nsplits)]
+    (assoc base
+           :this_split this-split
+           :total_splits nsplits)))
+
 (defn non-cron-matrix
   "Actions matrix for non cron builds"
   []
-  (for [this-split (range non-cron-ctia-nsplits)]
-    {:this_split this-split
-     :total_splits non-cron-ctia-nsplits
-     :ci_profiles "default"
-     :java_version default-java-version}))
+  (splits-for
+    {:ci_profiles "default"
+     :java_version default-java-version}
+    non-cron-ctia-nsplits))
 
 (defn cron-matrix
   "Actions matrix for cron builds"
   []
-  (for [base [{:ci_profiles "default"
-               :java_version default-java-version}
-              {:ci_profiles "next-clojure"
-               :java_version default-java-version}
-              {:ci_profiles "next-clojure"
-               :java_version java-15-version}]
-        this-split (range cron-ctia-nsplits)]
-    (assoc base
-           :this_split this-split
-           :total_splits cron-ctia-nsplits)))
+  (mapcat #(splits-for % cron-ctia-nsplits)
+          [{:ci_profiles "default"
+            :java_version default-java-version}
+           {:ci_profiles "next-clojure"
+            :java_version default-java-version}
+           {:ci_profiles "next-clojure"
+            :java_version java-15-version}]))
 
 (defn edn-matrix []
   {:post [(seq %)]}
