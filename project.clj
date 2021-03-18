@@ -267,13 +267,6 @@
 
             "ci-run-tests" ["with-profile" ~ci-profiles "do" "clean," "javac," "split-test" ":no-gen"]
             "cron-run-tests" ["with-profile" ~ci-profiles "do" "clean," "javac," "split-test" ":all"]
-            ;; warm cache deps for all permutations of the build
-            "warm-ci-deps" ["do"
-                            ~(mapv (fn [p]
-                                     ["with-profile" p ["do"
-                                                        ["shell" "echo" (str "\n\nCI profile:" p)]
-                                                        ["deps" ":tree"]
-                                                        ["deps" ":plugin-tree"]]])
-                                   (vals all-ci-profiles))]
+            "all-ci-profiles" ["shell" "echo" ~(pr-str all-ci-profiles)]
             ;"retest" ["run" "-m" "circleci.test.retest"]
             })
