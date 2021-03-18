@@ -10,8 +10,14 @@
 
 ;; TODO we could add -dev here when it works
 (def base-ci-profiles "+test,+ci")
-(def all-ci-profiles {:next-clojure (str base-ci-profiles ",+next-clojure")
-                      :default base-ci-profiles})
+(def all-ci-profiles
+  "All the permutations of CI profiles to reliably centralize dependency
+  caches across all builds. Frees us to use LEIN_OFFLINE=true to automatically
+  catch errors in the dep caching logic.
+  
+  To add a new build, add an entry here and use CTIA_CI_PROFILES to select it."
+  {:next-clojure (str base-ci-profiles ",+next-clojure")
+   :default base-ci-profiles})
 (def ci-profiles
   (get all-ci-profiles
        (or (some-> (System/getenv "CTIA_CI_PROFILES")
