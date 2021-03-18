@@ -19,4 +19,6 @@
 
 (doseq [p (vals all-ci-profiles)]
   (println (str "CI profile: " p))
+  ;; combining with-profile calls with `lein do` does not seem to isolate
+  ;; the profiles in each call, using separate lein calls seems more reliable.
   (sh "lein" "with-profile" p "do" "deps" ":tree," "deps" ":plugin-tree"))
