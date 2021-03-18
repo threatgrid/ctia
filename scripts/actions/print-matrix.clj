@@ -10,7 +10,8 @@
   2)
 
 (defn splits-for [base nsplits]
-  {:post [(= (range nsplits)
+  {:pre [(pos? nsplits)]
+   :post [(= (range nsplits)
              (map :this_split %))
           (= #{nsplits}
              (into #{} (map :total_splits %)))]}
