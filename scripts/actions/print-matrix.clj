@@ -17,9 +17,21 @@
   "Job parallelism for cron tests."
   2)
 
+(defn valid-split? [{:keys [this_split total_splits
+                            java_version ci_profiles] :as m}]
+  (and (= #{:this_split :total_splits
+            :java_version :ci_profiles} (set (keys m)))
+       (nat-int? this_split)
+       ((every-pred nat-int? pos?) total_splits)
+       (<= 0 this_split)
+       (< this_split total_splits)
+       ((every-pred string? seq) java_version)
+       ((every-pred string? seq) ci_profiles)))
+
 (defn splits-for [base nsplits]
   {:pre [(pos? nsplits)]
-   :post [(= (range nsplits)
+   :post [(every? valid-split? %)
+          (= (range nsplits)
              (map :this_split %))
           (= #{nsplits}
              (into #{} (map :total_splits) %))]}
@@ -31,6 +43,8 @@
 (defn non-cron-matrix
   "Actions matrix for non cron builds"
   []
+  {:post [(every? valid-split? %)
+          (zero? (mod (count %) non-cron-ctia-nsplits))]}
   (splits-for
     {:ci_profiles "default"
      :java_version default-java-version}
@@ -39,6 +53,8 @@
 (defn cron-matrix
   "Actions matrix for cron builds"
   []
+  {:post [(every? valid-split? %)
+          (zero? (mod (count %) cron-ctia-nsplits))]}
   (mapcat #(splits-for % cron-ctia-nsplits)
           (concat
             [{:ci_profiles "default"
