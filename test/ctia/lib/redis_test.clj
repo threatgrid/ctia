@@ -48,7 +48,7 @@
       (a/thread (lr/publish server-connection event-channel-name {:message 1}))
       (a/thread (lr/publish server-connection event-channel-name {:message 2}))
       (a/thread (lr/publish server-connection event-channel-name {:message 3}))
-      (is (.await finish-signal 10 TimeUnit/SECONDS)
+      (is (.await finish-signal 30 TimeUnit/SECONDS)
           "Timeout waiting for redis to publish")
       (is (= #{["subscribe" event-channel-name 1]
                ["message"   event-channel-name {:message 1}]
