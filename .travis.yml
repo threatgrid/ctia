@@ -30,8 +30,6 @@ env:
       # travis allows 5 concurrent builds for open source plans
       # across org
       - CTIA_NSPLITS=5
-      # test future clojure releases
-      - CLOJURE_NEXT=1.10.2-rc1
       - CTIA_TEST_SUITE=ci
 
 # Cache our Maven deps to be kind to clojars, github, docker images
@@ -107,13 +105,6 @@ matrix: #note: don't use "jobs:" introduces an extra build
     - name: "JDK 11"
       if: type = cron
       env: CTIA_TEST_SUITE=cron
-    #- name: "JDK 11 + Clojure next"
-    #  if: type = cron
-    #  env: CLOJURE_VERSION=$CLOJURE_NEXT
-    #- name: "JDK 15 + Clojure next"
-    #  if: type = cron
-    #  jdk: openjdk15
-    #  env: CLOJURE_VERSION=$CLOJURE_NEXT
 
     # Deploy
     # ======

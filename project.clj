@@ -1,7 +1,6 @@
 (def cheshire-version "5.10.0")
 (def clj-http-fake-version "1.0.3")
-(def clj-version (or (not-empty (System/getenv "CLOJURE_VERSION"))
-                     "1.10.1"))
+(def clj-version "1.10.1")
 (def metrics-clojure-version "2.10.0")
 (def perforate-version "0.3.4")
 (def ring-version "1.8.0")
@@ -10,8 +9,26 @@
 (def test-chuck-version "0.2.10")
 (def trapperkeeper-version "3.1.0")
 
-;; TODO -dev
-(def ci-profiles "+test,+ci")
+;; TODO we could add -dev here when it works
+(def base-ci-profiles "+test,+ci")
+(def all-ci-profiles
+  "All the permutations of CI profiles. This helps download dependencies
+  for all build configurations on demand, to minimize the load we
+  put on Maven repositories.
+
+  By centralizing all build configurations here, we can use LEIN_OFFLINE=true
+  when running tests to automatically catch errors in the dep caching logic.
+  
+  To add a new build, add an entry here and use CTIA_CI_PROFILES to select it."
+  {:next-clojure (str base-ci-profiles ",+next-clojure")
+   :default base-ci-profiles})
+(def ci-profiles
+  (get all-ci-profiles
+       (or (some-> (System/getenv "CTIA_CI_PROFILES")
+                   not-empty
+                   keyword)
+           :default)))
+(assert ci-profiles (pr-str (System/getenv "CTIA_CI_PROFILES")))
 
 ;; On avoiding dependency overrides:
 ;; - :pedantic? should be set to :abort; Use "lein deps :tree" to resolve
@@ -164,6 +181,7 @@
                    :source-paths ["dev"]}
              :ci {:pedantic? :abort
                   :global-vars {*warn-on-reflection* true}}
+             :next-clojure {:dependencies [[org.clojure/clojure "1.10.2-rc1"]]}
              :jmx {:jvm-opts ["-Dcom.sun.management.jmxremote"
                               "-Dcom.sun.management.jmxremote.port=9010"
                               "-Dcom.sun.management.jmxremote.local.only=false"
@@ -179,20 +197,7 @@
                        :main ctia.main
                        :uberjar-name "ctia.jar"
                        :uberjar-exclusions [#"ctia\.properties"]}
-             :test {:jvm-opts ~(cond-> ["-Dlog.console.threshold=WARN"]
-                                 ; we have 7.5GB RAM on Travis.
-                                 ; docker reserves 4GB. here's how to customize it:
-                                 ; - https://docs.travis-ci.com/user/enterprise/worker-configuration/#configuring-jobs-allowed-memory-usage
-                                 ; this reserves 3GB jvm
-                                 (System/getProperty "TRAVIS") (into ["-Xms3g"
-                                                                      "-Xmx3g"])
-                                 ; we have 7GB RAM on Actions
-                                 ; - https://docs.github.com/en/free-pro-team@latest/actions/reference/specifications-for-github-hosted-runners#supported-runners-and-hardware-resources
-                                 ; docker reserves an unknown amount of RAM.
-                                 ; reserving 3GB for jvm -- this might need tweaking as we learn
-                                 ; more about docker on actions.
-                                 (System/getProperty "GITHUB_ACTIONS") (into ["-Xms3g"
-                                                                              "-Xmx3g"]))
+             :test {:jvm-opts ["-Dlog.console.threshold=WARN"]
                     :dependencies [[clj-http-fake ~clj-http-fake-version]
                                    [com.gfredericks/test.chuck ~test-chuck-version]
                                    [org.clojure/test.check ~test-check-version]
@@ -267,6 +272,15 @@
 
             "ci-run-tests" ["with-profile" ~ci-profiles "do" "clean," "javac," "split-test" ":no-gen"]
             "cron-run-tests" ["with-profile" ~ci-profiles "do" "clean," "javac," "split-test" ":all"]
-            "warm-ci-deps" ["with-profile" ~ci-profiles "do" "deps" ":tree," "deps" ":plugin-tree"]
+            "all-ci-profiles" ["shell" "echo" ~(pr-str all-ci-profiles)]
+            ;; warm deps cache for all permutations of the build
+            "warm-ci-deps" ["do"
+                            ~(mapv (fn [p]
+                                     ["with-profile" p ["do"
+                                                        ["shell" "echo" (str "\n\nlein with-profile " p " ...")]
+                                                        ["deps" ":tree"]
+                                                        ["deps" ":plugin-tree"]]])
+                                   (vals all-ci-profiles))]
+
             ;"retest" ["run" "-m" "circleci.test.retest"]
             })
