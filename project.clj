@@ -5,7 +5,7 @@
 (def perforate-version "0.3.4")
 (def ring-version "1.8.0")
 (def schema-generators-version "0.1.3")
-(def test-check-version "1.0.0")
+(def test-check-version "1.1.0")
 (def test-chuck-version "0.2.10")
 (def trapperkeeper-version "3.1.0")
 
@@ -270,7 +270,9 @@
                           "run" "-m" "ctia.dev.split-tests/dir" :project/test-paths]
             "tests" ["with-profile" ~ci-profiles "run" "-m" "circleci.test"]
 
-            "ci-run-tests" ["with-profile" ~ci-profiles "do" "clean," "javac," "split-test" ":no-gen"]
+            "ci-run-tests" ["with-profile" ~ci-profiles "do" "clean," "javac," "split-test"
+                            ;; TEMPORARY just to validate iroh #4990
+                            ":all"]
             "cron-run-tests" ["with-profile" ~ci-profiles "do" "clean," "javac," "split-test" ":all"]
             "all-ci-profiles" ["shell" "echo" ~(pr-str all-ci-profiles)]
             ;; warm deps cache for all permutations of the build

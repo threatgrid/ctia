@@ -14,8 +14,7 @@
   esh/fixture-delete-store-indexes
   ;; The spec definitions below set all fields to be required
   ;; which we use to prove our ES mappings are complete
-  th/fixture-spec-validation
-  th/fixture-fast-gen)
+  th/fixture-spec-validation)
 
 (defspec ^:generative api-for-actor-routes-es-store
   prop/api-for-actor-routes)
@@ -59,6 +58,7 @@
   prop/api-for-judgement-routes)
 
 (defspec ^:generative api-for-sighting-routes-es-store
+;  {:seed 1616133759541}
   prop/api-for-sighting-routes)
 
 (defspec ^:generative api-for-identity-assertion-routes-es-store
@@ -75,5 +75,5 @@
 
 ;; TODO this test is disabled for now as this entity contains
 ;; data-table which triggers a StackOverflow Exception, find a wat to enable it again
-#_(defspec ^:disabled api-for-casebook-routes-es-store
-    prop/api-for-casebook-routes)
+(defspec ^:generative api-for-casebook-routes-es-store
+  prop/api-for-casebook-routes)

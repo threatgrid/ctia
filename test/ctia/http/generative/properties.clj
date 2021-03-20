@@ -2,6 +2,9 @@
   (:require [clj-momo.test-helpers
              [core :refer [common=]]
              [http :refer [encode]]]
+            [clj-momo.lib.map :refer [keys-in-all]]
+            [clojure.data :as data]
+            [clojure.set :as set]
             [clojure.spec.alpha :as cs]
             [clojure.test.check.generators :as tcg]
             [clojure.test.check.properties :refer [for-all]]
@@ -36,11 +39,518 @@
              [spec :as fs]
              [utils :as fu]]))
 
+(defn freq-diff
+  "Returns a map from vals in s1 and s2 to difference
+  of the number of occurrences in s1 to s2."
+  [s1 s2]
+  (let [all0 (zipmap (concat s1 s2) (repeat 0))]
+    (into {}
+          (remove (comp zero? val))
+          (->> [s1 s2]
+               (map #(into all0 (frequencies %)))
+               (apply merge-with -)))))
+
+(defn check-differences-in-common-key-paths! [id->m]
+  {:pre [(seq id->m)]}
+  (when-not (apply common= (vals id->m))
+    (throw
+      (ex-info
+        (str "Unexpected difference in common key paths. :differences "
+             "is a list of pairs of (different) common key paths to a map with keys:\n"
+             " - :just-with-path  all maps with just this key path isolated\n"
+             " - :freq-diff  if different values are sequential, the relative frequencies of their values\n"
+             " - :set-diff  if different values are sequential, the set differences of their values")
+        {:differences
+         ;; lazy-seq to (hopefully) delay computation until final :shrunk report
+         (lazy-seq
+           (let [common-key-paths (apply keys-in-all (vals id->m))
+                 id->m-at-path (fn [key-path]
+                                 (into {}
+                                       (map (fn [[id m]]
+                                              [id (get-in m key-path)]))
+                                       id->m))
+                 different-common-key-paths (->> common-key-paths
+                                                 (remove
+                                                   #(apply = (vals (id->m-at-path %))))
+                                                 ;; longest paths first
+                                                 (sort-by count >))]
+             (map (fn [path]
+                    (let [vals-at-path (id->m-at-path path)]
+                      [path (cond-> {:vals-at-path vals-at-path}
+                              ;; more information for non-map diffs
+                              (or (every? sequential? (vals vals-at-path))
+                                  (every? set? (vals vals-at-path)))
+                              (assoc :freq-diff (into {}
+                                                      (for [[k1 v1] vals-at-path
+                                                            [k2 v2] vals-at-path
+                                                            :when (not= k1 k2)
+                                                            :let [d (freq-diff v1 v2)]
+                                                            :when (seq d)]
+                                                        {(keyword (str (name k1) "_minus_" (name k2)))
+                                                         d}))
+                                     :set-diff (into {}
+                                                     (for [[k1 v1] vals-at-path
+                                                           [k2 v2] vals-at-path
+                                                           :when (not= k1 k2)
+                                                           :let [d (set/difference (set v1) (set v2))]
+                                                           :when (seq d)]
+                                                       {(keyword (str (name k1) "_minus_" (name k2)))
+                                                        d}))))]))
+                  different-common-key-paths)))}))))
+
+(comment
+ (def diff-data
+   {:differences
+    '([[:data :rows]
+      {:just-with-path
+       {:new-entity
+        {:data
+         {:rows
+          [[nil
+            nil
+            nil
+            nil
+            [:R/G]
+            {}
+            nil
+            nil
+            #uuid "98eb5bb8-96b2-400f-b631-a30879eebd80"]
+           [nil [:j 0N "" \* 0N K/Q]]
+           [#{}
+            nil
+            nil
+            #{}
+            nil
+            ()
+            {}
+            #{}
+            [I 0 ""]
+            #{}
+            nil
+            nil
+            ()
+            #{}
+            #{}
+            ()
+            nil
+            ()]
+           [()
+            nil
+            nil
+            #{}
+            [\l A]
+            []
+            [#uuid "9ba5bd1d-50f8-47ab-96bb-086bedbae36c"]]
+           [nil [] () #{} [""] () {}]
+           [nil]
+           [() nil nil #{}]
+           [nil
+            nil
+            #{}
+            [0N]
+            ()
+            nil
+            nil
+            ()
+            {}
+            #{}
+            nil
+            #{}
+            nil
+            {}
+            nil
+            ()
+            nil
+            nil]
+           [#{}
+            nil
+            #{}
+            nil
+            nil
+            nil
+            nil
+            nil
+            nil
+            nil
+            ()
+            nil
+            nil
+            ()
+            :D/n
+            nil
+            {}]
+           [!
+            #{}
+            nil
+            nil
+            {}
+            #{}
+            nil
+            ["" 0 B/a]
+            [""]
+            ()
+            {}
+            ()
+            nil
+            #{}
+            nil
+            [\V
+             #uuid "4eb6c3b3-2b36-4cf1-8b5a-e7536c8e8e62"
+             \"
+             #uuid "99b3a577-3f90-4df7-afc0-3a687b5066cb"]
+            nil
+            nil
+            nil]
+           [nil {} nil {} nil]
+           [nil {} nil #{} [0] () #{} nil nil nil]
+           [{}
+            [\s]
+            nil
+            nil
+            nil
+            nil
+            nil
+            {}
+            {}
+            {}
+            nil
+            []
+            ()
+            nil
+            []
+            nil
+            nil
+            nil
+            ()
+            ()]
+[nil [] nil nil nil [0 B/U :*/l] {}]
+[nil {} nil {} #{} () [] {} #{} nil [k/+] nil nil nil nil]
+[nil
+ nil
+ nil
+ #{}
+ ()
+ []
+ nil
+ nil
+ #{}
+ #{}
+ nil
+ nil
+ ()
+ nil
+ {}
+ nil
+ nil]
+[[true] nil nil nil {} () nil nil () nil () nil]
+[{}]]}},
+:post-entity
+{:data
+ {:rows
+  [[nil
+    nil
+    nil
+    nil
+    [:R/G]
+    {}
+    nil
+    nil
+    #uuid "98eb5bb8-96b2-400f-b631-a30879eebd80"]
+   [nil [:j 0N "" \* 0N K/Q]]
+   [#{}
+    nil
+    nil
+    #{}
+    nil
+    ()
+    {}
+    #{}
+    [I 0 ""]
+    #{}
+    nil
+    nil
+    ()
+    #{}
+    #{}
+    ()
+    nil
+    ()]
+   [()
+    nil
+    nil
+    #{}
+    [\l A]
+    []
+    [#uuid "9ba5bd1d-50f8-47ab-96bb-086bedbae36c"]]
+   [nil [] () #{} [""] () {}]
+   [nil]
+   [() nil nil #{}]
+   [nil
+    nil
+    #{}
+    [0N]
+    ()
+    nil
+    nil
+    ()
+    {}
+    #{}
+    nil
+    #{}
+    nil
+    {}
+    nil
+    ()
+    nil
+    nil]
+   [#{}
+    nil
+    #{}
+    nil
+    nil
+    nil
+    nil
+    nil
+    nil
+    nil
+    ()
+    nil
+    nil
+    ()
+    :D/n
+    nil
+         {}]
+        [!
+         #{}
+         nil
+         nil
+         {}
+         #{}
+         nil
+         ["" 0 B/a]
+         [""]
+         ()
+         {}
+         ()
+         nil
+         #{}
+         nil
+         [\V
+          #uuid "4eb6c3b3-2b36-4cf1-8b5a-e7536c8e8e62"
+          \"
+          #uuid "99b3a577-3f90-4df7-afc0-3a687b5066cb"]
+         nil
+         nil
+         nil]
+        [nil {} nil {} nil]
+        [nil {} nil #{} [0] () #{} nil nil nil]
+        [{}
+         [\s]
+         nil
+         nil
+         nil
+         nil
+         nil
+         {}
+         {}
+         {}
+         nil
+         []
+         ()
+         nil
+         []
+         nil
+         nil
+         nil
+         ()
+         ()]
+        [nil [] nil nil nil [0 B/U :*/l] {}]
+        [nil {} nil {} #{} () [] {} #{} nil [k/+] nil nil nil nil]
+        [nil
+         nil
+         nil
+         #{}
+         ()
+         []
+         nil
+         nil
+         #{}
+         #{}
+         nil
+         nil
+         ()
+         nil
+         {}
+         nil
+         nil]
+        [[true] nil nil nil {} () nil nil () nil () nil]
+        [{}]]}},
+     :get-entity
+     {:data
+      {:rows
+       [[nil
+         nil
+         nil
+         nil
+         ["R/G"]
+         {}
+         nil
+         nil
+         "98eb5bb8-96b2-400f-b631-a30879eebd80"]
+        [nil ["j" 0 "" "*" 0 "K/Q"]]
+        [[]
+         nil
+         nil
+         []
+         nil
+         []
+         {}
+         []
+         ["I" 0 ""]
+         []
+         nil
+         nil
+         []
+         []
+         []
+         []
+         nil
+         []]
+        [[]
+         nil
+         nil
+         []
+         ["l" "A"]
+         []
+         ["9ba5bd1d-50f8-47ab-96bb-086bedbae36c"]]
+        [nil [] [] [] [""] [] {}]
+        [nil]
+        [[] nil nil []]
+        [nil
+         nil
+         []
+         [0]
+         []
+         nil
+         nil
+         []
+         {}
+         []
+         nil
+         []
+         nil
+         {}
+         nil
+         []
+         nil
+         nil]
+        [[]
+         nil
+         []
+         nil
+         nil
+         nil
+         nil
+         nil
+         nil
+         nil
+         []
+         nil
+         nil
+         []
+         "D/n"
+         nil
+         {}]
+        ["!"
+         []
+         nil
+         nil
+         {}
+         []
+         nil
+         ["" 0 "B/a"]
+         [""]
+         []
+         {}
+         []
+         nil
+         []
+         nil
+         ["V"
+          "4eb6c3b3-2b36-4cf1-8b5a-e7536c8e8e62"
+          "\""
+          "99b3a577-3f90-4df7-afc0-3a687b5066cb"]
+         nil
+         nil
+         nil]
+        [nil {} nil {} nil]
+        [nil {} nil [] [0] [] [] nil nil nil]
+        [{}
+         ["s"]
+         nil
+         nil
+         nil
+         nil
+         nil
+         {}
+         {}
+         {}
+         nil
+         []
+         []
+         nil
+         []
+         nil
+         nil
+         nil
+         []
+         []]
+        [nil [] nil nil nil [0 "B/U" "*/l"] {}]
+        [nil {} nil {} [] [] [] {} [] nil ["k/+"] nil nil nil nil]
+        [nil nil nil [] [] [] nil nil [] [] nil nil [] nil {} nil nil]
+        [[true] nil nil nil {} [] nil nil [] nil [] nil]
+        [{}]]}}}}])})
+
+  (map (fn [[path {:keys [just-with-path]}]]
+         (let [] path))
+       (:differences diff-data))
+  )
+
 (defn api-for-route [model-type entity-gen]
   (for-all
     [new-entity entity-gen]
     (let [app (helpers/get-current-app)
-          {:keys [get-in-config]} (helpers/get-service-map app :ConfigService)
+          sighting-workaround #(dissoc % :data)
+          datatable-workaround #(-> %
+                                    ;; sets seem to get coerced to vectors in rows after a GET
+                                    (assoc :rows ())
+                                    (dissoc :row_count))
+          new-entity (case model-type
+                       ;; FIXME data table generator needs refinement and/or behavior needs investigation:
+                       ;; https://github.com/threatgrid/ctim/blob/9fff33b81c705c649ad8ea8d9331fa091102f121/src/ctim/schemas/sighting.cljc#L34
+                       ;; - :row_count and :rows should probably agree.
+                       ;; - unclear if sets are allowed as Datum in a row. they get coerced to vectors
+                       ;;   when using GET.
+                       ;;   - eg., for sighting with {:data {:rows [[[] #{}]]}} in {new,post}-entity,
+                       ;;     get-entity is {:data {:rows [[[] []]]}}
+                       ;;     - to reproduce, remove this workaround and run 
+                       ;;        lein test :only ctia.http.generative.es-store-spec/api-for-sighting-routes-es-store
+                       ;;       with {:seed 1616133759541}
+                       ;;       - shrunk args: [{:description "", :schema_version "1.1.3", :revision 0, :relations [], :sensor_coordinates {:type "endpoint.sensor", :observables [], :os ""}, :observables [], :type "sighting", :source "", :external_ids [], :targets [], :short_description "", :title "", :resolution "", :internal false, :external_references [], :source_uri "http://0/", :language "", :count 0, :severity "Medium", :tlp "white", :timestamp #inst "2010-01-01T00:00:00.000-00:00", :confidence "Medium", :observed_time {:start_time #inst "2017-01-01T00:00:00.000-00:00", :end_time #inst "2017-01-01T00:00:00.000-00:00"}, :sensor "endpoint.sensor", :data {:columns [], :rows [[[:A]]], :row_count 0}}]
+                       (sighting) (sighting-workaround new-entity)
+                       (casebook) (cond-> new-entity
+                                    (get-in new-entity [:bundle :data_tables])
+                                    (update-in [:bundle :data_tables]
+                                               #(into #{}
+                                                      (map datatable-workaround)
+                                                      %))
+
+                                    (get-in new-entity [:bundle :sightings])
+                                    (update-in [:bundle :sightings]
+                                               #(into #{}
+                                                      (map sighting-workaround)
+                                                      %)))
+                       new-entity)
 
           {post-status :status
            {id :id
@@ -50,7 +560,7 @@
                 (str "ctia/" (name model-type))
                 :body new-entity)]
 
-      (if (not= 201 post-status)
+      (when (not= 201 post-status)
         (throw (ex-info "POST did not return status 201"
                         post-entity)))
 
@@ -65,16 +575,21 @@
             (GET app
                  (str "ctia/" type "/" url-id))]
 
-        (if (not= 200 get-status)
+        (when (not= 200 get-status)
           (throw (ex-info "GET did not return status 200"
                           response)))
 
-        (if-not (empty? (keys new-entity))
-          (common= new-entity
-                   post-entity
-                   (dissoc get-entity :id))
-          (common= post-entity
-                   (dissoc get-entity :id)))))))
+        (check-differences-in-common-key-paths!
+          (cond-> {:post-entity post-entity
+                   :get-entity (dissoc get-entity :id)}
+            (seq (keys new-entity))
+            (assoc :new-entity new-entity)))
+        ;; FIXME exceptions provide more detail on failure, but there's 
+        ;; a big problem: clojure.test seems to report the *first* failure
+        ;; not the :shrunk failure. using test.chuck's `checking` might
+        ;; help here, but we'd have to rearrange these properties for
+        ;; deftest instead of defspec.
+        true))))
 
 (doseq [[entity kw-ns]
         [[NewActor "max-new-actor"]
@@ -96,10 +611,7 @@
          [NewTool "max-new-tool"]
          [NewVulnerability "max-new-vulnerability"]
          [NewWeakness "max-new-weakness"]
-         ;; TODO enable again once casebook/bundle/data_table
-         ;;does not trigger StackOverFlow Exception
-         ;;[NewCasebook "max-new-casebook"]
-         ]]
+         [NewCasebook "max-new-casebook"]]]
   (fs/->spec (fu/require-all entity)
              kw-ns))
 
@@ -179,7 +691,6 @@
   (api-for-route 'weakness
                  (spec-gen "max-new-weakness")))
 
-;; TODO: uncomment that when we figure out why generative tests fail on data-table
-#_(def api-for-casebook-routes
-    (api-for-route 'casebook
-                   (spec-gen "max-new-casebook")))
+(def api-for-casebook-routes
+  (api-for-route 'casebook
+                 (spec-gen "max-new-casebook")))
