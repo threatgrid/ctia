@@ -8,7 +8,8 @@
   These tests are to ensure that such a relationship is observed when these
   types of objects when they created via Bundle Import"
   (:require
-   [clojure.test :refer [deftest is are testing use-fixtures join-fixtures]]
+   [clojure.test :refer [deftest is testing use-fixtures join-fixtures]]
+   [clojure.walk :as walk]
    [ctia.auth.threatgrid :refer [map->Identity]]
    [ctia.bulk.core :as bulk]
    [ctia.bundle.core :as bundle]
@@ -19,14 +20,20 @@
    [ctim.examples.bundles :refer [bundle-maximal]]
    [puppetlabs.trapperkeeper.app :as app]))
 
+(defn- set-transient-asset-refs [m]
+  (walk/prewalk #(if (and (map? %)
+                          (contains? % :asset_ref))
+                   (assoc % :asset_ref "transient:asset-1")
+                   %) m))
+
 (def bundle-ents
   "Sample Bundle Map for testing."
   (-> bundle-maximal
       (select-keys
-       [:assets :asset_refs
-        :asset_mappings :asset_mapping_refs
-        :asset_properties :asset_properties_refs])
-      th/deep-dissoc-entity-ids))
+       [:assets :asset_mappings :asset_properties ])
+      th/deep-dissoc-entity-ids
+      ;; in order to test association of Asset to AssetMappings/AssetProperties
+      set-transient-asset-refs))
 
 (deftest bulk-for-asset-related-entities
   (testing "delay creation of :asset-mapping and :asset-properties, until all
@@ -66,11 +73,6 @@
   (th/fixture-ctia-with-app
    (fn [app]
      (th/set-capabilities! app "foouser" ["foogroup"] "user" auth/all-capabilities)
-     (whoami-helpers/set-whoami-response app
-                                         "45c1f5e3f05d0"
-                                         "foouser"
-                                         "foogroup"
-                                         "user")
      (testing "every AssetMapping and AssetProperties have proper
                  non-transient :asset-ref"
        (let [services          (app/service-graph app)
@@ -90,12 +92,11 @@
                                          :groups ["foogroup"]} {})
                                        :data)))
              asset-refs        (->> results
-                                    (filter #(-> % :result (= "created")))
-                                    (filter #(-> % :type (= :asset)))
-                                    (map :id)
-                                    set)]
-         (are [store] (every?
-                       (partial contains? asset-refs)
-                       (->> store get-records (map :asset_ref)))
-           :asset-mapping
-           :asset-properties))))))
+                                  (filter #(-> % :result (= "created")))
+                                  (filter #(-> % :type (= :asset)))
+                                  (map :id)
+                                  set)]
+         (doseq [store [:asset-mapping :asset-properties]]
+           (is (every?
+                (partial contains? asset-refs)
+                (->> store get-records (map :asset_ref))))))))))
