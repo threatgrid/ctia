@@ -65,53 +65,6 @@
           (str (prn-str common-key-path)
                (pr-str id->vals-at-path))))))
 
-(defn new-entity-workarounds
-  "Returns a massaged new-entity that works around
-  unresolved problems in the generators."
-  [new-entity model-type]
-  (let [;; sets seem to get coerced to vectors in rows after a GET
-        rows-workaround #(walk/postwalk
-                           (fn [v]
-                             (cond
-                               (set? v) (vec v)
-                               ((some-fn uuid? char?) v) (str v)
-                               (ratio? v) (double v)
-                               ((some-fn keyword? symbol?) v) (str (some-> (namespace v) (str "/")) (name v))
-                               :else v))
-                           %)
-        sighting-workaround #(cond-> %
-                               (:data %) (update-in [:data :rows] rows-workaround))
-        datatable-workaround #(-> %
-                                  ;; these are huge for some reason
-                                  (assoc :rows ())
-                                  (dissoc :row_count))]
-    (case model-type
-      ;; FIXME data table generator needs refinement and/or behavior needs investigation:
-      ;; https://github.com/threatgrid/ctim/blob/9fff33b81c705c649ad8ea8d9331fa091102f121/src/ctim/schemas/sighting.cljc#L34
-      ;; - :row_count and :rows should probably agree.
-      ;; - unclear if sets are allowed as Datum in a row. they get coerced to vectors
-      ;;   when using GET.
-      ;;   - eg., for sighting with {:data {:rows [[[] #{}]]}} in {new,post}-entity,
-      ;;     get-entity is {:data {:rows [[[] []]]}}
-      ;;     - to reproduce, remove this workaround and run 
-      ;;        lein test :only ctia.http.generative.es-store-spec/api-for-sighting-routes-es-store
-      ;;       with {:seed 1616133759541}
-      ;;       - shrunk args: [{:description "", :schema_version "1.1.3", :revision 0, :relations [], :sensor_coordinates {:type "endpoint.sensor", :observables [], :os ""}, :observables [], :type "sighting", :source "", :external_ids [], :targets [], :short_description "", :title "", :resolution "", :internal false, :external_references [], :source_uri "http://0/", :language "", :count 0, :severity "Medium", :tlp "white", :timestamp #inst "2010-01-01T00:00:00.000-00:00", :confidence "Medium", :observed_time {:start_time #inst "2017-01-01T00:00:00.000-00:00", :end_time #inst "2017-01-01T00:00:00.000-00:00"}, :sensor "endpoint.sensor", :data {:columns [], :rows [[[:A]]], :row_count 0}}]
-      (sighting) (sighting-workaround new-entity)
-      (casebook) (cond-> new-entity
-                   (get-in new-entity [:bundle :data_tables])
-                   (update-in [:bundle :data_tables]
-                              #(into #{}
-                                     (map datatable-workaround)
-                                     %))
-
-                   (get-in new-entity [:bundle :sightings])
-                   (update-in [:bundle :sightings]
-                              #(into #{}
-                                     (map sighting-workaround)
-                                     %)))
-      new-entity)))
-
 (defn api-for-route
   "Returns a function that performs"
   [model-type entity-gen]
@@ -123,7 +76,6 @@
        checking-options
        [new-entity entity-gen]
        (let [app (helpers/get-current-app)
-             new-entity (new-entity-workarounds new-entity model-type)
 
              {post-status :status
               {id :id
@@ -182,9 +134,26 @@
   (fs/->spec (fu/require-all entity)
              kw-ns))
 
+(comment
+  (-> (into {} (filter (fn [[k]] (.contains (str k) "max-new-sighting"))) (clojure.spec.alpha/registry))
+      clojure.pprint/pprint)
+  (-> (into {} (filter (fn [[k]] (.contains (str k) "max-new-casebook"))) (clojure.spec.alpha/registry))
+      sort
+      clojure.pprint/pprint)
+  (-> (into {} (filter (fn [[k]] (.contains (str k) "data-table"))) (clojure.spec.alpha/registry))
+      sort
+      clojure.pprint/pprint)
+  )
+
 (defn spec-gen [kw-ns]
   (tcg/fmap #(dissoc % :id)
-            (cs/gen (keyword kw-ns "map"))))
+            (cs/gen (keyword kw-ns "map")
+                    (let [;; override data-table Datum, originally `any?` which is
+                          ;; a documented underapproximation.
+                          gen-datum (constantly tcg/string-ascii)]
+                      {:max-new-casebook.bundle.sightings.set-of.data.rows.seq-of/seq-of gen-datum
+                       :max-new-casebook.bundle.data_tables.set-of.rows.seq-of/seq-of gen-datum
+                       :max-new-sighting.data.rows.seq-of/seq-of gen-datum}))))
 
 (def api-for-actor-routes
   (api-for-route 'actor
