@@ -76,4 +76,6 @@
 ;; TODO this test is disabled for now as this entity contains
 ;; data-table which triggers a StackOverflow Exception, find a wat to enable it again
 (defspec ^:generative api-for-casebook-routes-es-store
+  ;; TODO this test consumes heap space at a high rate. 
+  {:num-tests 10}
   prop/api-for-casebook-routes)
