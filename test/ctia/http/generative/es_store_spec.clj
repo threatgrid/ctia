@@ -83,8 +83,9 @@
     100))
 
 (deftest ^:generative api-for-vulnerability-routes-es-store
+  ;; TODO why is this 4x slower than other entities?
   (prop/api-for-vulnerability-routes
-    100))
+    25))
 
 (deftest ^:generative api-for-weakness-routes-es-store
   (prop/api-for-weakness-routes
