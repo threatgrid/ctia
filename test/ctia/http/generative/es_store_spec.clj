@@ -94,4 +94,4 @@
   ;; TODO identify why this is slow
   (prop/api-for-casebook-routes
     {:max-size 1
-     :num-tests 2}))
+     :num-tests 1}))
