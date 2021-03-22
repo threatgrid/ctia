@@ -58,7 +58,6 @@
   prop/api-for-judgement-routes)
 
 (defspec ^:generative api-for-sighting-routes-es-store
-;  {:seed 1616133759541}
   prop/api-for-sighting-routes)
 
 (defspec ^:generative api-for-identity-assertion-routes-es-store
