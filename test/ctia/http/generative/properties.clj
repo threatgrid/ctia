@@ -8,6 +8,7 @@
             [clojure.spec.alpha :as cs]
             [clojure.test.check.generators :as tcg]
             [clojure.test.check.properties :refer [for-all]]
+            [clojure.walk :as walk]
             [ctia.properties :refer [get-http-show]]
             [ctia.schemas.core] ;; for spec side-effects
             [ctia.test-helpers.core
@@ -520,9 +521,17 @@
   (for-all
     [new-entity entity-gen]
     (let [app (helpers/get-current-app)
-          sighting-workaround #(dissoc % :data)
+          ;; sets seem to get coerced to vectors in rows after a GET
+          rows-workaround #(walk/postwalk
+                             (fn [v]
+                               (if (set? v)
+                                 (vec v)
+                                 v))
+                             %)
+          sighting-workaround #(cond-> %
+                                 (:data %) (update-in [:data :rows] rows-workaround))
           datatable-workaround #(-> %
-                                    ;; sets seem to get coerced to vectors in rows after a GET
+                                    ;; these are huge for some reason
                                     (assoc :rows ())
                                     (dissoc :row_count))
           new-entity (case model-type
