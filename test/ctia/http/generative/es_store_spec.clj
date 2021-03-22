@@ -90,7 +90,7 @@
   (prop/api-for-weakness-routes
     100))
 
-(deftest ^:generative api-for-casebook-routes-es-store
+(deftest ^:disabled api-for-casebook-routes-es-store
   ;; TODO identify why this is slow
   (prop/api-for-casebook-routes
     {:max-size 1
