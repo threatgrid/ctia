@@ -4,10 +4,12 @@
              [http :refer [encode]]]
             [clj-momo.lib.map :refer [keys-in-all]]
             [clojure.data :as data]
+            [clojure.pprint :as pp]
             [clojure.set :as set]
             [clojure.spec.alpha :as cs]
+            [clojure.test :refer [is testing]]
+            [com.gfredericks.test.chuck.clojure-test :refer [checking]]
             [clojure.test.check.generators :as tcg]
-            [clojure.test.check.properties :refer [for-all]]
             [clojure.walk :as walk]
             [ctia.properties :refer [get-http-show]]
             [ctia.schemas.core] ;; for spec side-effects
@@ -40,67 +42,28 @@
              [spec :as fs]
              [utils :as fu]]))
 
-(defn freq-diff
-  "Returns a map from vals in s1 and s2 to difference
-  of the number of occurrences in s1 to s2."
-  [s1 s2]
-  (let [all0 (zipmap (concat s1 s2) (repeat 0))]
-    (into {}
-          (remove (comp zero? val))
-          (->> [s1 s2]
-               (map #(into all0 (frequencies %)))
-               (apply merge-with -)))))
-
-(defn check-differences-in-common-key-paths!
+(defn check-differences-in-common-key-paths
   "More detailed error messages when large sequentials or sets
   are unexpectedly not equal."
   [id->m]
   {:pre [(seq id->m)]}
-  (when-not (apply common= (vals id->m))
-    (throw
-      (ex-info
-        (str "Unexpected difference in common key paths. :differences "
-             "is a list of pairs of (different) common key paths to a map with keys:\n"
-             " - :just-with-path  all maps with just this key path isolated\n"
-             " - :freq-diff  if different values are sequential, the relative frequencies of their values\n"
-             " - :set-diff  if different values are sequential, the set differences of their values")
-        {:differences
-         ;; lazy-seq to (hopefully) delay computation until final :shrunk report
-         (lazy-seq
-           (let [common-key-paths (apply keys-in-all (vals id->m))
-                 id->m-at-path (fn [key-path]
-                                 (into {}
-                                       (map (fn [[id m]]
-                                              [id (get-in m key-path)]))
-                                       id->m))
-                 different-common-key-paths (->> common-key-paths
-                                                 (remove
-                                                   #(apply = (vals (id->m-at-path %))))
-                                                 ;; longest paths first
-                                                 (sort-by count >))]
-             (map (fn [path]
-                    (let [vals-at-path (id->m-at-path path)]
-                      [path (cond-> {:vals-at-path vals-at-path}
-                              ;; more information for non-map diffs
-                              (or (every? sequential? (vals vals-at-path))
-                                  (every? set? (vals vals-at-path)))
-                              (assoc :freq-diff (into {}
-                                                      (for [[k1 v1] vals-at-path
-                                                            [k2 v2] vals-at-path
-                                                            :when (not= k1 k2)
-                                                            :let [d (freq-diff v1 v2)]
-                                                            :when (seq d)]
-                                                        {(keyword (str (name k1) "_minus_" (name k2)))
-                                                         d}))
-                                     :set-diff (into {}
-                                                     (for [[k1 v1] vals-at-path
-                                                           [k2 v2] vals-at-path
-                                                           :when (not= k1 k2)
-                                                           :let [d (set/difference (set v1) (set v2))]
-                                                           :when (seq d)]
-                                                       {(keyword (str (name k1) "_minus_" (name k2)))
-                                                        d}))))]))
-                  different-common-key-paths)))}))))
+  (let [id->m-at-path (fn [key-path]
+                        (into {}
+                              (map (fn [[id m]]
+                                     [id (get-in m key-path)]))
+                              id->m))
+        common-key-paths (->> (vals id->m)
+                              (apply keys-in-all)
+                              ;; report longest paths first
+                              (sort-by count >))]
+    (assert (seq common-key-paths))
+    (doseq [common-key-path common-key-paths
+            :let [id->vals-at-path (id->m-at-path common-key-path)]]
+      (is (apply = (vals id->vals-at-path))
+          ;; `testing` doesn't seem to be recognized by `checking`, so
+          ;; put debugging helpers here
+          (str (prn-str common-key-path)
+               (pr-str id->vals-at-path))))))
 
 (defn new-entity-workarounds
   "Returns a massaged new-entity that works around
@@ -109,9 +72,12 @@
   (let [;; sets seem to get coerced to vectors in rows after a GET
         rows-workaround #(walk/postwalk
                            (fn [v]
-                             (if (set? v)
-                               (vec v)
-                               v))
+                             (cond
+                               (set? v) (vec v)
+                               ((some-fn uuid? char?) v) (str v)
+                               (ratio? v) (double v)
+                               ((some-fn keyword? symbol?) v) (str (some-> (namespace v) (str "/")) (name v))
+                               :else v))
                            %)
         sighting-workaround #(cond-> %
                                (:data %) (update-in [:data :rows] rows-workaround))
@@ -146,50 +112,51 @@
                                      %)))
       new-entity)))
 
-(defn api-for-route [model-type entity-gen]
-  (for-all
-    [new-entity entity-gen]
-    (let [app (helpers/get-current-app)
-          new-entity (new-entity-workarounds new-entity model-type)
+(defn api-for-route
+  "Returns a function that performs"
+  [model-type entity-gen]
+  (fn this
+    ([] (this 100))
+    ([checking-options]
+     (checking
+       model-type
+       checking-options
+       [new-entity entity-gen]
+       (let [app (helpers/get-current-app)
+             new-entity (new-entity-workarounds new-entity model-type)
 
-          {post-status :status
-           {id :id
-            type :type
-            :as post-entity} :parsed-body}
-          (POST app
-                (str "ctia/" (name model-type))
-                :body new-entity)]
+             {post-status :status
+              {id :id
+               type :type
+               :as post-entity} :parsed-body}
+             (POST app
+                   (str "ctia/" (name model-type))
+                   :body new-entity)]
 
-      (when (not= 201 post-status)
-        (throw (ex-info "POST did not return status 201"
-                        post-entity)))
+         (when (not= 201 post-status)
+           (throw (ex-info "POST did not return status 201"
+                           post-entity)))
 
-      (let [url-id
-            (-> (id/->id type id (get-http-show (app->HTTPShowServices app)))
-                :short-id
-                encode)
+         (let [url-id
+               (-> (id/->id type id (get-http-show (app->HTTPShowServices app)))
+                   :short-id
+                   encode)
 
-            {get-status :status
-             get-entity :parsed-body
-             :as response}
-            (GET app
-                 (str "ctia/" type "/" url-id))]
+               {get-status :status
+                get-entity :parsed-body
+                :as response}
+               (GET app
+                    (str "ctia/" type "/" url-id))]
 
-        (when (not= 200 get-status)
-          (throw (ex-info "GET did not return status 200"
-                          response)))
+           (when (not= 200 get-status)
+             (throw (ex-info "GET did not return status 200"
+                             response)))
 
-        (check-differences-in-common-key-paths!
-          (cond-> {:post-entity post-entity
-                   :get-entity (dissoc get-entity :id)}
-            (seq (keys new-entity))
-            (assoc :new-entity new-entity)))
-        ;; FIXME exceptions provide more detail on failure, but there's 
-        ;; a big problem: clojure.test seems to report the *first* failure
-        ;; not the :shrunk failure. using test.chuck's `checking` might
-        ;; help here, but we'd have to rearrange these properties for
-        ;; deftest instead of defspec.
-        true))))
+           (check-differences-in-common-key-paths
+             (cond-> {:post-entity post-entity
+                      :get-entity (dissoc get-entity :id)}
+               (seq (keys new-entity))
+               (assoc :new-entity new-entity)))))))))
 
 (doseq [[entity kw-ns]
         [[NewActor "max-new-actor"]
