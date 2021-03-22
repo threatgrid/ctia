@@ -73,10 +73,10 @@
 (defspec ^:generative api-for-weakness-routes-es-store
   prop/api-for-weakness-routes)
 
-;; TODO this test is disabled for now as this entity contains
-;; data-table which triggers a StackOverflow Exception, find a wat to enable it again
 (defspec ^:generative api-for-casebook-routes-es-store
-  ;; TODO this test consumes heap space at a high rate. 
+  ;; FIXME examples are unexpectedly huge, especially given
+  ;; the smallest max-size. make them smaller and increase these
+  ;; parameters.
   {:max-size 1
    :num-tests 1}
   prop/api-for-casebook-routes)
