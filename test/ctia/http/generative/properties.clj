@@ -43,8 +43,8 @@
              [utils :as fu]]))
 
 (defn check-differences-in-common-key-paths
-  "More detailed error messages when large sequentials or sets
-  are unexpectedly not equal."
+  "Like (apply common= (vals id->m)) but
+  with more specific error messages."
   [id->m]
   {:pre [(seq id->m)]}
   (let [id->m-at-path (fn [key-path]
@@ -133,17 +133,6 @@
          [NewCasebook "max-new-casebook"]]]
   (fs/->spec (fu/require-all entity)
              kw-ns))
-
-(comment
-  (-> (into {} (filter (fn [[k]] (.contains (str k) "max-new-sighting"))) (clojure.spec.alpha/registry))
-      clojure.pprint/pprint)
-  (-> (into {} (filter (fn [[k]] (.contains (str k) "max-new-casebook"))) (clojure.spec.alpha/registry))
-      sort
-      clojure.pprint/pprint)
-  (-> (into {} (filter (fn [[k]] (.contains (str k) "data-table"))) (clojure.spec.alpha/registry))
-      sort
-      clojure.pprint/pprint)
-  )
 
 (defn spec-gen [kw-ns]
   (tcg/fmap #(dissoc % :id)
