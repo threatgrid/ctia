@@ -286,12 +286,30 @@
       (log/warn error)))
   response)
 
+(defn validate-asset-refs
+  "Bundle with transient :asset_ref fields should have corresponding Asset(s) with
+  the same IDs"
+  [bundle]
+  (let [asset-ids (->> bundle :assets (map :id) set)
+        asset-refs (->> bundle vals
+                        (mapcat (partial keep :asset_ref))
+                        (filter schemas/transient-id?)
+                        set)]
+    (when-not (every?
+               (partial contains? asset-ids)
+               asset-refs)
+      (throw (ex-info
+              "Invalid Bundle. For every transient asset_ref there must be a
+               corresponding Asset with the same id."
+              {:bundle bundle})))))
+
 (s/defn import-bundle :- BundleImportResult
   [bundle :- NewBundle
    external-key-prefixes :- (s/maybe s/Str)
    auth-identity :- (s/protocol auth/IIdentity)
    {{:keys [get-in-config]} :ConfigService
     :as services} :- APIHandlerServices]
+  (validate-asset-refs bundle)
   (let [bundle-entities (select-keys bundle bundle-entity-keys)
         bundle-import-data (prepare-import bundle-entities
                                            external-key-prefixes
