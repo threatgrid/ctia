@@ -2,9 +2,15 @@
   (:require [clj-momo.test-helpers
              [core :refer [common=]]
              [http :refer [encode]]]
+            [clj-momo.lib.map :refer [keys-in-all]]
+            [clojure.data :as data]
+            [clojure.pprint :as pp]
+            [clojure.set :as set]
             [clojure.spec.alpha :as cs]
+            [clojure.test :refer [is testing]]
+            [com.gfredericks.test.chuck.clojure-test :refer [checking]]
             [clojure.test.check.generators :as tcg]
-            [clojure.test.check.properties :refer [for-all]]
+            [clojure.walk :as walk]
             [ctia.properties :refer [get-http-show]]
             [ctia.schemas.core] ;; for spec side-effects
             [ctia.test-helpers.core
@@ -36,45 +42,73 @@
              [spec :as fs]
              [utils :as fu]]))
 
-(defn api-for-route [model-type entity-gen]
-  (for-all
-    [new-entity entity-gen]
-    (let [app (helpers/get-current-app)
-          {:keys [get-in-config]} (helpers/get-service-map app :ConfigService)
+(defn check-differences-in-common-key-paths
+  "Like (apply common= (vals id->m)) but
+  with more specific error messages."
+  [id->m]
+  {:pre [(seq id->m)]}
+  (let [id->m-at-path (fn [key-path]
+                        (into {}
+                              (map (fn [[id m]]
+                                     [id (get-in m key-path)]))
+                              id->m))
+        common-key-paths (->> (vals id->m)
+                              (apply keys-in-all)
+                              ;; report longest paths first
+                              (sort-by count >))]
+    (assert (seq common-key-paths))
+    (doseq [common-key-path common-key-paths
+            :let [id->vals-at-path (id->m-at-path common-key-path)]]
+      (is (apply = (vals id->vals-at-path))
+          ;; `testing` doesn't seem to be recognized by `checking`, so
+          ;; put debugging helpers here
+          (str (prn-str common-key-path)
+               (pr-str id->vals-at-path))))))
 
-          {post-status :status
-           {id :id
-            type :type
-            :as post-entity} :parsed-body}
-          (POST app
-                (str "ctia/" (name model-type))
-                :body new-entity)]
+(defn api-for-route
+  "Returns a function that performs"
+  [model-type entity-gen]
+  (fn this
+    ([] (this 100))
+    ([checking-options]
+     (checking
+       model-type
+       checking-options
+       [new-entity entity-gen]
+       (let [app (helpers/get-current-app)
 
-      (if (not= 201 post-status)
-        (throw (ex-info "POST did not return status 201"
-                        post-entity)))
+             {post-status :status
+              {id :id
+               type :type
+               :as post-entity} :parsed-body}
+             (POST app
+                   (str "ctia/" (name model-type))
+                   :body new-entity)]
 
-      (let [url-id
-            (-> (id/->id type id (get-http-show (app->HTTPShowServices app)))
-                :short-id
-                encode)
+         (when (not= 201 post-status)
+           (throw (ex-info "POST did not return status 201"
+                           post-entity)))
 
-            {get-status :status
-             get-entity :parsed-body
-             :as response}
-            (GET app
-                 (str "ctia/" type "/" url-id))]
+         (let [url-id
+               (-> (id/->id type id (get-http-show (app->HTTPShowServices app)))
+                   :short-id
+                   encode)
 
-        (if (not= 200 get-status)
-          (throw (ex-info "GET did not return status 200"
-                          response)))
+               {get-status :status
+                get-entity :parsed-body
+                :as response}
+               (GET app
+                    (str "ctia/" type "/" url-id))]
 
-        (if-not (empty? (keys new-entity))
-          (common= new-entity
-                   post-entity
-                   (dissoc get-entity :id))
-          (common= post-entity
-                   (dissoc get-entity :id)))))))
+           (when (not= 200 get-status)
+             (throw (ex-info "GET did not return status 200"
+                             response)))
+
+           (check-differences-in-common-key-paths
+             (cond-> {:post-entity post-entity
+                      :get-entity (dissoc get-entity :id)}
+               (seq (keys new-entity))
+               (assoc :new-entity new-entity)))))))))
 
 (doseq [[entity kw-ns]
         [[NewActor "max-new-actor"]
@@ -96,16 +130,20 @@
          [NewTool "max-new-tool"]
          [NewVulnerability "max-new-vulnerability"]
          [NewWeakness "max-new-weakness"]
-         ;; TODO enable again once casebook/bundle/data_table
-         ;;does not trigger StackOverFlow Exception
-         ;;[NewCasebook "max-new-casebook"]
-         ]]
+         [NewCasebook "max-new-casebook"]]]
   (fs/->spec (fu/require-all entity)
              kw-ns))
 
 (defn spec-gen [kw-ns]
   (tcg/fmap #(dissoc % :id)
-            (cs/gen (keyword kw-ns "map"))))
+            (cs/gen (keyword kw-ns "map")
+                    (let [;; override data-table Datum, originally `any?` which is
+                          ;; a documented underapproximation and generates huge examples
+                          ;; which don't end up round-tripping via GET anyway.
+                          gen-datum (constantly tcg/string-ascii)]
+                      {:max-new-casebook.bundle.sightings.set-of.data.rows.seq-of/seq-of gen-datum
+                       :max-new-casebook.bundle.data_tables.set-of.rows.seq-of/seq-of gen-datum
+                       :max-new-sighting.data.rows.seq-of/seq-of gen-datum}))))
 
 (def api-for-actor-routes
   (api-for-route 'actor
@@ -179,7 +217,6 @@
   (api-for-route 'weakness
                  (spec-gen "max-new-weakness")))
 
-;; TODO: uncomment that when we figure out why generative tests fail on data-table
-#_(def api-for-casebook-routes
-    (api-for-route 'casebook
-                   (spec-gen "max-new-casebook")))
+(def api-for-casebook-routes
+  (api-for-route 'casebook
+                 (spec-gen "max-new-casebook")))

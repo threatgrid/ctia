@@ -440,10 +440,6 @@
 (defn fixture-max-spec [node-to-spec ns]
   (fixture-spec (fu/require-all node-to-spec) ns))
 
-(defn fixture-fast-gen [t]
-  (with-redefs [gen/vector cgc/vector]
-    (t)))
-
 (s/defn make-id
   "Make a long style ID using CTIA code (eg with a random UUID).
   Returns an ID object."
