@@ -43,14 +43,16 @@
       ;; in order to test association of Asset to AssetMappings/AssetProperties
       set-transient-asset-refs))
 
+(def ^:private login
+  (map->Identity {:login  "foouser"
+                  :groups ["foogroup"]}))
+
 (deftest bulk-for-asset-related-entities
   (testing "delay creation of :asset-mapping and :asset-properties, until all
   transient IDs for :asset are resolved"
     (th/fixture-ctia-with-app
      (fn [app]
-       (let [services (app/service-graph app)
-             login (map->Identity {:login  "foouser"
-                                   :groups ["foogroup"]})]
+       (let [services (app/service-graph app)]
          (testing "Passing a Bundle with Assets with transient IDs, should skip
                    the creation of AssetMappings and AssetProperties (initially)"
           (with-redefs [bulk/gen-bulk-from-fn
@@ -84,8 +86,6 @@
      (testing "every AssetMapping and AssetProperties have proper
                  non-transient :asset-ref"
        (let [services          (app/service-graph app)
-             login             (map->Identity {:login  "foouser"
-                                               :groups ["foogroup"]})
              {:keys [results]} (bundle/import-bundle
                                 bundle-ents
                                 nil         ;; external-key-prefixes
@@ -108,3 +108,44 @@
            (is (every?
                 (partial contains? asset-refs)
                 (->> store get-records (map :asset_ref))))))))))
+
+(deftest validate-asset-refs-test
+  (testing "Bundle with asset_refs that have no correspoding Asset"
+    (let [bundle (walk/prewalk
+                  #(if (and (map? %)
+                            (-> % :type (= "asset")))
+                     (assoc % :id "http://ex.tld/ctia/asset/asset-61884b14-e273-4930-a5ff-dcce69207724")
+                     %)
+                  bundle-ents)]
+      (th/fixture-ctia-with-app
+       (fn [app]
+         (let [services (app/service-graph app)]
+           (is
+            (thrown-with-msg?
+             Exception #"Invalid Bundle"
+             (bundle/import-bundle
+              bundle
+              nil         ;; external-key-prefixes
+              login
+              services))))))))
+  (testing "Bundle with asset_refs that aren't transient"
+    (let [bundle (walk/prewalk
+                  #(if (and (map? %)
+                            (contains? % :asset_ref))
+                     (assoc % :asset_ref "http://ex.tld/ctia/asset/asset-61884b14-e273-4930-a5ff-dcce69207724")
+                     %)
+                  bundle-ents)]
+      (th/fixture-ctia-with-app
+       (fn [app]
+         (let [services          (app/service-graph app)
+               {:keys [results]} (bundle/import-bundle
+                                  bundle
+                                  nil         ;; external-key-prefixes
+                                  login
+                                  services)
+               num-created (->> results
+                                (map :result)
+                                (keep (partial = "created"))
+                                count)]
+           (is (= (count bundle-ents)
+                  num-created))))))))
