@@ -6,7 +6,7 @@
 (def ring-version "1.8.0")
 (def schema-generators-version "0.1.3")
 (def test-check-version "1.1.0")
-(def test-chuck-version "0.2.10")
+(def test-chuck-version "2a8b5fa10d45de70114647c9cb8a34fdd9f2e200")
 (def trapperkeeper-version "3.1.0")
 
 ;; TODO we could add -dev here when it works
@@ -245,9 +245,11 @@
   ;;
 
   ;; uncomment and change during dev
-  #_:git-down #_{threatgrid/ctim {:coordinates frenchy64/ctim}
-                 threatgrid/clj-momo {:coordinates frenchy64/clj-momo}
-                 threatgrid/ring-jwt-middleware {:coordinates frenchy64/ring-jwt-middleware}}
+  :git-down {com.gfredericks/test.chuck {:coordinates frenchy64/test.chuck}
+             ;threatgrid/ctim {:coordinates frenchy64/ctim}
+             ;threatgrid/clj-momo {:coordinates frenchy64/clj-momo}
+             ;threatgrid/ring-jwt-middleware {:coordinates frenchy64/ring-jwt-middleware}
+             }
   :aliases {"kibit" ["with-profile" "prepush" "kibit"]
             "bikeshed" ["with-profile" "prepush" "bikeshed" "-m" "100"]
 
@@ -270,7 +272,9 @@
                           "run" "-m" "ctia.dev.split-tests/dir" :project/test-paths]
             "tests" ["with-profile" ~ci-profiles "run" "-m" "circleci.test"]
 
-            "ci-run-tests" ["with-profile" ~ci-profiles "do" "clean," "javac," "split-test" ":no-gen"]
+            "ci-run-tests" ["with-profile" ~ci-profiles "do" "clean," "javac," "split-test"
+                            ;; TEMPORARY!!! do not merge
+                            ":all"]
             "cron-run-tests" ["with-profile" ~ci-profiles "do" "clean," "javac," "split-test" ":all"]
             "all-ci-profiles" ["shell" "echo" ~(pr-str all-ci-profiles)]
             ;; warm deps cache for all permutations of the build
