@@ -230,8 +230,7 @@
                               (range)
                               indicators
                               sightings)]
-       ;; TODO: re-enable after fixing https://github.com/threatgrid/ctim/issues/334
-       #_(testing "Import bundle with all entity types"
+       (testing "Import bundle with all entity types"
          (let [new-bundle (deep-dissoc-entity-ids bundle-maximal)
                response (POST app
                               "ctia/bundle/import"
