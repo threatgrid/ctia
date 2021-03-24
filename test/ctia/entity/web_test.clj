@@ -8,6 +8,7 @@
             [clojure.data.json :as json]
             [clojure.test :refer [deftest is testing use-fixtures join-fixtures]]
             [clojure.tools.logging.test :as tlog]
+            [clojure.walk :as walk]
             [ctia.domain.entities :refer [schema-version]]
             [ctia.test-helpers
              [auth :refer [all-capabilities]]
@@ -336,23 +337,29 @@
       "ctia.http.jwt.http-check.timeout" test-timeout
       "ctia.http.jwt.http-check.cache-ttl" test-cache-ttl]
      (fn [app]
-       (let [jwts (gen-jwts)]
-         (let [{judgement :parsed-body status :status}
-               (POST app
-                     "ctia/judgement"
-                     :body new-judgement-1
-                     :headers {"Authorization" "45c1f5e3f05d0"
-                               "origin" "http://external.cisco.com"})
-               judgement-id (id/long-id->id (:id judgement))
-               get-judgement (fn [jwt]
-                               (let [{:keys [status] :as response}
-                                     (GET app
-                                          (str "ctia/judgement/" (:short-id judgement-id))
-                                          :headers {"Authorization" (str "Bearer " jwt)})]
-                                 response))
-               ctx (assoc jwts :get-judgement get-judgement)]
+       (let [jwts (gen-jwts)
+             {judgement :parsed-body status :status}
+             (POST app
+                   "ctia/judgement"
+                   :body new-judgement-1
+                   :headers {"Authorization" "45c1f5e3f05d0"
+                             "origin" "http://external.cisco.com"})
+             judgement-id (id/long-id->id (:id judgement))
+             get-judgement (fn get-judgement
+                             ([jwt] (get-judgement jwt {}))
+                             ([jwt get-opts]
+                              (client/get
+                                (str "http://localhost:"
+                                     (helpers/get-http-port app)
+                                     "/ctia/judgement/"
+                                     (:short-id judgement-id))
+                                (into {:throw-exceptions false
+                                       :as :json}
+                                      (-> get-opts
+                                          (update :headers #(into {"Authorization" (str "Bearer " jwt)} %)))))))
+             ctx (assoc jwts :get-judgement get-judgement)]
            (is (= 201 status))
-           (tst-fn ctx)))))))
+           (tst-fn ctx))))))
 
 (defn with-server
   "Start tst-fn function while handler is started as a server.
@@ -403,16 +410,29 @@
           (jwt-http-checks-test
            url-1
            url-2
-           (fn [{:keys [get-judgement jwt-1 jwt-2]}]
+           (fn [{:keys [get-judgement jwt-1]}]
              (testing "Check URL server returns 401"
-               (is (= 401 (:status (get-judgement jwt-1))))
-               (is (= {:error "invalid_jwt"
-                       :error_description
-                       (str "(56bb5f8c-cc4e-4ed3-a91a-c6604287fe32) SERVER ERROR DESCRIPTION: Bearer "
-                            jwt-1)}
-                      (json/read-str (:body (get-judgement jwt-1))
-                                     :key-fn keyword))
-                   "The error should use the description returned by the server and we check the server get the correct header")))))))))
+               (doseq [;; regression tests for https://github.com/threatgrid/iroh/issues/4541
+                       as [:json :edn]
+                       :let [{:keys [status body] :as response} (get-judgement jwt-1
+                                                                               {:as as
+                                                                                :headers {"Accept"
+                                                                                          (case as
+                                                                                            :json "application/json"
+                                                                                            :edn "application/edn")}})]]
+                 (testing (prn-str as)
+                   (is (= 401 status) response)
+                   (testing (prn-str body)
+                     (is (= {:error ((case as :json name :edn identity) :invalid_jwt)
+                             :error_description
+                             (str "(56bb5f8c-cc4e-4ed3-a91a-c6604287fe32) SERVER ERROR DESCRIPTION: Bearer "
+                                  jwt-1)}
+                            ;; regression test
+                            ((case as
+                               :json (comp walk/keywordize-keys json/read-str)
+                               :edn read-string)
+                             body))
+                         "The error should use the description returned by the server and we check the server get the correct header"))))))))))))
 
 (deftest jwt-http-checks-server-slow-test
   (let [slow-handler (fn [req]
@@ -430,7 +450,7 @@
           (jwt-http-checks-test
            url-1
            url-2
-           (fn [{:keys [get-judgement jwt-1 jwt-2]}]
+           (fn [{:keys [get-judgement jwt-1]}]
              (testing "Check URL server too long to answer"
                (is (= 200 (:status (get-judgement jwt-1)))
                    "JWT is accepted if the server timeout")

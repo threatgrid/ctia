@@ -87,7 +87,8 @@
 
                  ;; Web server
                  [metosin/compojure-api "1.1.13" ]
-                 ;; optional dep for compojure-api's dep ring-middleware-format
+                 [ring-middleware-format "0.7.4"]
+                 ;; optional ring-middleware-format dep (Note: ring-middleware-format is also a transitive dep for compojure-api)
                  ;; see: https://github.com/ngrunwald/ring-middleware-format/issues/74
                  [com.ibm.icu/icu4j "65.1"]
                  [metosin/ring-swagger "0.26.2"]
@@ -102,6 +103,7 @@
                  [threatgrid/ring-turnstile-middleware "0.1.1"]
                  [threatgrid/ring-jwt-middleware "1.0.1"]
                  [scopula "0.1.4"]
+                 [org.clojure/tools.reader "1.3.4"] ;; org.clojure/tools.namespace > ring-middleware-format
 
                  ;; clients
                  [clj-http "3.10.1"]
