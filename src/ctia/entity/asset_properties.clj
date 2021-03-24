@@ -57,16 +57,11 @@
     (let [new-asset-ref
           (if (schemas/transient-id? asset_ref)
             (get tempids asset_ref)
-            asset_ref)
-
-          e (-> asset-properties-default-realize
-                (schemas/lift-realize-fn-with-context rt-ctx)
-                (apply new-entity id tempids rest-args)
-                (assoc :asset_ref new-asset-ref))]
-      ;; TODO: implement a check described in
-      ;; https://github.com/threatgrid/iroh/issues/4917
-
-      e)))
+            asset_ref)]
+      (-> asset-properties-default-realize
+          (schemas/lift-realize-fn-with-context rt-ctx)
+          (apply new-entity id tempids rest-args)
+          (assoc :asset_ref new-asset-ref)))))
 
 (def asset-properties-mapping
   {"asset-properties"

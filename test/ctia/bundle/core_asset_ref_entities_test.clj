@@ -20,6 +20,10 @@
    [ctim.examples.bundles :refer [bundle-maximal]]
    [puppetlabs.trapperkeeper.app :as app]))
 
+(def ^:private login
+  (map->Identity {:login  "foouser"
+                  :groups ["foogroup"]}))
+
 (defn- set-transient-asset-refs [x]
   (walk/prewalk
    (fn [m]
@@ -48,9 +52,7 @@
   transient IDs for :asset are resolved"
     (th/fixture-ctia-with-app
      (fn [app]
-       (let [services (app/service-graph app)
-             login (map->Identity {:login  "foouser"
-                                   :groups ["foogroup"]})]
+       (let [services (app/service-graph app)]
          (testing "Passing a Bundle with Assets with transient IDs, should skip
                    the creation of AssetMappings and AssetProperties (initially)"
           (with-redefs [bulk/gen-bulk-from-fn
@@ -73,10 +75,6 @@
                   login
                   services))))))))))
 
-(use-fixtures :once
-  (join-fixtures
-   [whoami-helpers/fixture-server]))
-
 (deftest asset-refs-test
   (th/fixture-ctia-with-app
    (fn [app]
@@ -84,8 +82,6 @@
      (testing "every AssetMapping and AssetProperties have proper
                  non-transient :asset-ref"
        (let [services          (app/service-graph app)
-             login             (map->Identity {:login  "foouser"
-                                               :groups ["foogroup"]})
              {:keys [results]} (bundle/import-bundle
                                 bundle-ents
                                 nil         ;; external-key-prefixes
@@ -108,3 +104,46 @@
            (is (every?
                 (partial contains? asset-refs)
                 (->> store get-records (map :asset_ref))))))))))
+
+(deftest validate-asset-refs-test
+  (testing "Bundle with asset_refs that have no correspoding Asset"
+    (let [;; assign non-transient ID to the asset in the Bundle,
+          ;; leaving :asset_refs pointing to a transient ID that would never resolve
+          bundle (walk/prewalk
+                  #(if (and (map? %)
+                            (-> % :type (= "asset")))
+                     (assoc % :id "http://ex.tld/ctia/asset/asset-61884b14-e273-4930-a5ff-dcce69207724")
+                     %)
+                  bundle-ents)]
+      (th/fixture-ctia-with-app
+       (fn [app]
+         (let [services (app/service-graph app)]
+           (is
+            (thrown? Exception
+             (bundle/import-bundle
+              bundle
+              nil         ;; external-key-prefixes
+              login
+              services))))))))
+  (testing "Bundle with asset_refs that aren't transient"
+    (let [;; :asset_refs that are non-transient should still be allowed
+          bundle (walk/prewalk
+                  #(if (and (map? %)
+                            (contains? % :asset_ref))
+                     (assoc % :asset_ref "http://ex.tld/ctia/asset/asset-61884b14-e273-4930-a5ff-dcce69207724")
+                     %)
+                  bundle-ents)]
+      (th/fixture-ctia-with-app
+       (fn [app]
+         (let [services          (app/service-graph app)
+               {:keys [results]} (bundle/import-bundle
+                                  bundle
+                                  nil         ;; external-key-prefixes
+                                  login
+                                  services)
+               num-created (->> results
+                                (map :result)
+                                (keep (partial = "created"))
+                                count)]
+           (is (= (count bundle-ents)
+                  num-created))))))))
