@@ -157,31 +157,6 @@
     [:ctia :store :bulk-refresh]
     "false"))
 
-(s/defn create-asset-ref-entities
-  "Creates AssetMapping and AssetProperties entities, rectifying transient IDs in the process"
-  [bulk temp-ids login refresh
-   services :- APIHandlerServices]
-  (let [bulk' (select-keys bulk [:asset_mappings :asset_properties])
-        ;; replace :asset_ref fields with non-transient IDs
-        set-ref (fn [{:keys [asset_ref] :as m}]
-                  (if (schemas/transient-id? asset_ref)
-                    ;; TODO: add the check described in https://github.com/threatgrid/iroh/issues/4917
-                    (assoc m :asset_ref (get temp-ids asset_ref))
-                    m))
-        ents (zipmap
-              (keys bulk')
-              (->> bulk'
-                   vals
-                   (map (partial map set-ref))))]
-    ;; create asset-mapping and asset-properties entities
-    (gen-bulk-from-fn
-     create-entities
-     ents
-     temp-ids
-     login
-     {:refresh refresh}
-     services)))
-
 (s/defn create-bulk
   "Creates entities in bulk. To define relationships between entities,
    transient IDs can be used. They are automatically converted into
