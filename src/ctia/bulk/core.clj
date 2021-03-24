@@ -206,25 +206,20 @@
                        login
                        {:refresh refresh}
                        services)
-         entities-tempids (into tempids
-                                (merge-tempids new-entities))
-         new-asset-ref-ents (create-asset-ref-entities
-                             bulk
-                             entities-tempids
-                             login
-                             refresh
-                             services)
-         new-relationships (gen-bulk-from-fn
-                            create-entities
-                            (select-keys bulk [:relationships])
-                            entities-tempids
-                            login
-                            {:refresh refresh}
-                            services)
-         all-tempids (merge entities-tempids
-                            (merge-tempids new-asset-ref-ents)
-                            (merge-tempids new-relationships))
-         all-entities (merge new-entities new-relationships new-asset-ref-ents)
+         entities-tempids (into tempids (merge-tempids new-entities))
+         new-linked-ents (gen-bulk-from-fn
+                          create-entities
+                          (select-keys
+                           bulk
+                           [:relationships
+                            :asset_mappings
+                            :asset_properties])
+                          entities-tempids
+                          login
+                          {:refresh refresh}
+                          services)
+         all-tempids (merge entities-tempids (merge-tempids new-linked-ents))
+         all-entities (merge new-entities new-linked-ents)
          ;; Extracting data from the enveloped flow result
          ;; {:entity-type {:data [] :tempids {}}
          bulk-refs (->> all-entities

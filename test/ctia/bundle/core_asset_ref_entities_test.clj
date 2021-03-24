@@ -20,11 +20,19 @@
    [ctim.examples.bundles :refer [bundle-maximal]]
    [puppetlabs.trapperkeeper.app :as app]))
 
-(defn- set-transient-asset-refs [m]
-  (walk/prewalk #(if (and (map? %)
-                          (contains? % :asset_ref))
-                   (assoc % :asset_ref "transient:asset-1")
-                   %) m))
+(defn- set-transient-asset-refs [x]
+  (walk/prewalk
+   (fn [m]
+     (cond
+       (not (map? m)) m
+
+       (contains? m :asset_ref)
+       (assoc m :asset_ref "transient:asset-1")
+
+       (-> m :type (= "asset"))
+       (assoc m :id "transient:asset-1")
+
+       :else m)) x))
 
 (def bundle-ents
   "Sample Bundle Map for testing."
