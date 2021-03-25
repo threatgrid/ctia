@@ -1,15 +1,11 @@
 (ns ctia.task.migration.migrations.investigation-actions
-  (:require [cheshire.core :as json]))
-
-
-;; TODO: replace with ctia.schemas.core/transient-id?
-(defn transient-id? [id]
-  (and (string? id)
-       (re-find #"\Atransient" (str id))))
+  (:require
+   [cheshire.core :as json]
+   [ctia.schemas.core :as schemas]))
 
 (defn object-id [doc]
   (let [id (get doc :id)]
-    (when (not (transient-id? id))
+    (when (not (schemas/transient-id? id))
       id)))
 
 (defn read-actions [investigation]
