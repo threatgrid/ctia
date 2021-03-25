@@ -16,7 +16,6 @@
    [ctia.store :as store]
    [ctia.test-helpers.auth :as auth]
    [ctia.test-helpers.core :as th]
-   [ctia.test-helpers.fake-whoami-service :as whoami-helpers]
    [ctim.examples.bundles :refer [bundle-maximal]]
    [puppetlabs.trapperkeeper.app :as app]))
 
@@ -100,10 +99,11 @@
                                   (filter #(-> % :type (= :asset)))
                                   (map :id)
                                   set)]
-         (doseq [store [:asset-mapping :asset-properties]]
-           (is (every?
-                (partial contains? asset-refs)
-                (->> store get-records (map :asset_ref))))))))))
+         (assert (seq asset-refs))
+         (doseq [store [:asset-mapping :asset-properties]
+                 :let [refs (->> store get-records (map :asset_ref))]]
+           (assert (seq refs))
+           (is (every? (partial contains? asset-refs) refs))))))))
 
 (deftest validate-asset-refs-test
   (testing "Bundle with asset_refs that have no correspoding Asset"
