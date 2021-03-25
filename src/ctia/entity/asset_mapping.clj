@@ -1,18 +1,21 @@
 (ns ctia.entity.asset-mapping
-  (:require [ctia.domain.entities :as entities]
-            [ctia.http.routes.common :as routes.common]
-            [ctia.http.routes.crud :refer [services->entity-crud-routes]]
-            [ctia.schemas.core :refer [def-acl-schema def-stored-schema APIHandlerServices]]
-            [ctia.schemas.sorting :as sorting]
-            [ctia.schemas.utils :as csu]
-            [ctia.store]
-            [ctia.stores.es.mapping :as em]
-            [ctia.stores.es.store :refer [def-es-store]]
-            [ctim.schemas.asset-mapping :as asset-mapping-schema]
-            [flanders.utils :as fu]
-            [ring.util.http-response :as http-response]
-            [schema-tools.core :as st]
-            [schema.core :as s]))
+  (:require
+   [ctia.domain.entities :as entities]
+   [ctia.flows.schemas :refer [with-error]]
+   [ctia.graphql.delayed :as delayed]
+   [ctia.http.routes.common :as routes.common]
+   [ctia.http.routes.crud :refer [services->entity-crud-routes]]
+   [ctia.schemas.core :as schemas :refer
+    [RealizeFnResult GraphQLRuntimeContext APIHandlerServices def-acl-schema]]
+   [ctia.schemas.sorting :as sorting]
+   [ctia.schemas.utils :as csu]
+   [ctia.store]
+   [ctia.stores.es.mapping :as em]
+   [ctia.stores.es.store :refer [def-es-store]]
+   [ctim.schemas.asset-mapping :as asset-mapping-schema]
+   [flanders.utils :as fu]
+   [schema-tools.core :as st]
+   [schema.core :as s]))
 
 (def-acl-schema AssetMapping
   asset-mapping-schema/AssetMapping
@@ -29,7 +32,7 @@
   asset-mapping-schema/NewAssetMapping
   "new-asset-mapping")
 
-(def-stored-schema StoredAssetMapping AssetMapping)
+(schemas/def-stored-schema StoredAssetMapping AssetMapping)
 
 (s/defschema PartialNewAssetMapping
   (csu/optional-keys-schema NewAssetMapping))
@@ -37,8 +40,24 @@
 (s/defschema PartialStoredAssetMapping
   (csu/optional-keys-schema StoredAssetMapping))
 
-(def realize-asset-mapping
+(def asset-mapping-default-realize
   (entities/default-realize-fn "asset-mapping" NewAssetMapping StoredAssetMapping))
+
+(s/defn realize-asset-mapping
+  :- (RealizeFnResult (with-error StoredAssetMapping))
+  [{:keys [asset_ref]
+    :as   new-entity}
+   id tempids & rest-args]
+  (delayed/fn :- (with-error StoredAssetMapping)
+    [rt-ctx :- GraphQLRuntimeContext]
+    (let [new-asset-ref
+          (if (schemas/transient-id? asset_ref)
+            (get tempids asset_ref)
+            asset_ref)]
+      (-> asset-mapping-default-realize
+          (schemas/lift-realize-fn-with-context rt-ctx)
+          (apply new-entity id tempids rest-args)
+          (assoc :asset_ref new-asset-ref)))))
 
 (def asset-mapping-mapping
   {"asset-mapping"

@@ -77,6 +77,7 @@
      (-> entity kw->snake-case-str (str "_refs") keyword)]))
 
 (s/defn prep-bundle-schema :- s/Any
+  "Remove keys of disabled entities from Bundle schema"
   [{{:keys [enabled?]} :FeaturesService} :- APIHandlerServices]
   (->> (entities/all-entities)
        keys

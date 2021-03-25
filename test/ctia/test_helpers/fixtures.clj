@@ -53,22 +53,30 @@
 
 (defn bundle
   [fixtures-nb maximal?]
-  {:actors           (n-examples :actor fixtures-nb maximal?)
-   :assets           (n-examples :asset fixtures-nb maximal?)
-   :asset_mappings   (n-examples :asset-mapping fixtures-nb maximal?)
-   :asset_properties (n-examples :asset-properties fixtures-nb maximal?)
-   :attack_patterns  (n-examples :attack-pattern fixtures-nb maximal?)
-   :campaigns        (n-examples :campaign fixtures-nb maximal?)
-   :coas             (n-examples :coa fixtures-nb maximal?)
-   :incidents        (n-examples :incident fixtures-nb maximal?)
-   :indicators       (n-examples :indicator fixtures-nb maximal?)
-   :investigations   (n-examples :investigation fixtures-nb maximal?)
-   :judgements       (n-examples :judgement fixtures-nb maximal?)
-   :malwares         (n-examples :malware fixtures-nb maximal?)
-   :relationships    (n-examples :relationship fixtures-nb maximal?)
-   :casebooks        (n-examples :casebook fixtures-nb maximal?)
-   :sightings        (n-examples :sighting fixtures-nb maximal?)
-   :target_records   (n-examples :target-record fixtures-nb maximal?)
-   :tools            (n-examples :tool fixtures-nb maximal?)
-   :vulnerabilities  (n-examples :vulnerability fixtures-nb maximal?)
-   :weaknesses       (n-examples :weakness fixtures-nb maximal?)})
+  (let [;; it is important to set relationship between Assets and
+        ;; AssetMappings/AssetProperties via :asset-ref field
+        assets             (vec (n-examples :asset fixtures-nb maximal?))
+        gen+set-asset-refs (fn [entity-key]
+                             (->> (n-examples entity-key fixtures-nb maximal?)
+                                  (map-indexed #(assoc
+                                                 %2 :asset_ref
+                                                 (-> assets (get %1) :id)))))]
+    {:actors           (n-examples :actor fixtures-nb maximal?)
+     :assets           assets
+     :asset_mappings   (gen+set-asset-refs :asset-mapping)
+     :asset_properties (gen+set-asset-refs :asset-properties)
+     :attack_patterns  (n-examples :attack-pattern fixtures-nb maximal?)
+     :campaigns        (n-examples :campaign fixtures-nb maximal?)
+     :coas             (n-examples :coa fixtures-nb maximal?)
+     :incidents        (n-examples :incident fixtures-nb maximal?)
+     :indicators       (n-examples :indicator fixtures-nb maximal?)
+     :investigations   (n-examples :investigation fixtures-nb maximal?)
+     :judgements       (n-examples :judgement fixtures-nb maximal?)
+     :malwares         (n-examples :malware fixtures-nb maximal?)
+     :relationships    (n-examples :relationship fixtures-nb maximal?)
+     :casebooks        (n-examples :casebook fixtures-nb maximal?)
+     :sightings        (n-examples :sighting fixtures-nb maximal?)
+     :target_records   (n-examples :target-record fixtures-nb maximal?)
+     :tools            (n-examples :tool fixtures-nb maximal?)
+     :vulnerabilities  (n-examples :vulnerability fixtures-nb maximal?)
+     :weaknesses       (n-examples :weakness fixtures-nb maximal?)}))
