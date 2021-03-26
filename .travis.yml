@@ -104,7 +104,16 @@ matrix: #note: don't use "jobs:" introduces an extra build
     # - we deploy (also) during cron jobs in the 'deploy' stage
     - name: "JDK 11"
       if: type = cron
-      env: CTIA_TEST_SUITE=cron
+      env:
+        - CTIA_TEST_SUITE=cron
+        - CTIA_THIS_SPLIT=0
+        - CTIA_NSPLITS=2
+    - name: "JDK 11"
+      if: type = cron
+      env:
+        - CTIA_TEST_SUITE=cron
+        - CTIA_THIS_SPLIT=1
+        - CTIA_NSPLITS=2
 
     # Deploy
     # ======
