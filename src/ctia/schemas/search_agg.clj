@@ -19,7 +19,7 @@
   (st/optional-keys
    {:query-string s/Str         ;; TODO change as described: https://github.com/threatgrid/iroh/issues/4959#issuecomment-810815287
     :filter-map {s/Keyword s/Any}
-    :range RangeQuery}))
+    :date-range RangeQuery}))
 
 (s/defschema AggType
   "supported aggregation types"
