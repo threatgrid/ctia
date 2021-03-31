@@ -8,7 +8,7 @@
              [codec :as codec]
              [http-response :as http-res]
              [http-status :refer [ok]]]
-            [ctia.schemas.search-agg :refer [DateRangeQueryOpt SearchQuery MetricResult]]
+            [ctia.schemas.search-agg :refer [RangeQueryOpt SearchQuery MetricResult]]
             [schema.core :as s]))
 
 (def search-options [:sort_by
@@ -101,7 +101,7 @@
   ([date-field search-params]
    (search-query date-field
                  search-params
-                 (s/fn :- DateRangeQueryOpt
+                 (s/fn :- RangeQueryOpt
                    [from :- (s/maybe s/Inst)
                     to :- (s/maybe s/Inst)]
                    (cond-> {}
@@ -109,7 +109,7 @@
                      to (assoc :lt to)))))
   ([date-field
     {:keys [query from to] :as search-params}
-    make-date-range-fn :- (s/=> DateRangeQueryOpt
+    make-date-range-fn :- (s/=> RangeQueryOpt
                                 (s/named (s/maybe s/Inst) 'from)
                                 (s/named (s/maybe s/Inst) 'to))]
    (let [filter-map (apply dissoc search-params filter-map-search-options)
