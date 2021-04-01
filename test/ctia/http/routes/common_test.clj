@@ -40,22 +40,21 @@
           to #inst "2020-06-01"]
       (is (= {:query-string "bad-domain"}
              (sut/search-query :created {:query "bad-domain"})))
-      (is (= {:date-range {:created
-                           {:gte from
-                            :lt to}}}
+      (is (= {:range {:created
+                      {:gte from
+                       :lt  to}}}
              (sut/search-query :created {:from from
                                          :to to})))
-
-      (is (= {:date-range {:timestamp
-                           {:gte from
-                            :lt to}}}
+      (is (= {:range {:timestamp
+                      {:gte from
+                       :lt  to}}}
              (sut/search-query :timestamp {:from from
                                            :to to})))
-      (is (= {:date-range {:created
-                           {:lt to}}}
+      (is (= {:range {:created
+                      {:lt to}}}
              (sut/search-query :created {:to to})))
-      (is (= {:date-range {:created
-                           {:gte from}}}
+      (is (= {:range {:created
+                      {:gte from}}}
              (sut/search-query :created {:from from})))
       (is (= {:filter-map {:title "firefox exploit"
                            :disposition 2}}
@@ -77,9 +76,9 @@
                                          :sort_by "disposition"
                                          :sort_order :desc})))
       (is (= {:query-string "bad-domain"
-              :date-range {:created
-                           {:gte from
-                            :lt to}}
+              :range {:created
+                      {:gte from
+                       :lt to}}
               :filter-map {:title "firefox exploit"
                            :disposition 2}}
              (sut/search-query :created {:query "bad-domain"
@@ -91,9 +90,9 @@
                                          :sort_by "disposition"
                                          :sort_order :desc})))
       (testing "make-date-range-fn should be properly called"
-        (is (= {:date-range {:timestamp
-                             {:gte #inst "2050-01-01"
-                              :lt #inst "2100-01-01"}}}
+        (is (= {:range {:timestamp
+                        {:gte #inst "2050-01-01"
+                         :lt  #inst "2100-01-01"}}}
                 (sut/search-query :timestamp
                                   {:from from
                                    :to to}
@@ -124,7 +123,7 @@
              (sut/format-agg-result cardinality
                                     :cardinality
                                     "observable.type"
-                                    {:date-range
+                                    {:range
                                      {:timestamp {:gte from
                                                   :lt to}}
                                      :query-string "baddomain*"
@@ -139,7 +138,7 @@
              (sut/format-agg-result cardinality
                                     :cardinality
                                     "observable.type"
-                                    {:date-range
+                                    {:range
                                      {:timestamp {:gte from
                                                   :lt to}}
                                      :filter-map {:field1 "value1"
@@ -153,7 +152,7 @@
              (sut/format-agg-result topn
                                     :topn
                                     "status"
-                                    {:date-range
+                                    {:range
                                      {:timestamp {:gte from
                                                   :lt to}}
                                      :query-string "android"})))
@@ -164,7 +163,7 @@
              (sut/format-agg-result histogram
                                     :histogram
                                     "timestamp"
-                                    {:date-range
+                                    {:range
                                      {:incident_time.closed
                                       {:gte from
                                        :lt to}}}))))))

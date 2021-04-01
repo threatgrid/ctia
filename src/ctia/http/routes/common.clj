@@ -115,7 +115,7 @@
    (let [filter-map (apply dissoc search-params filter-map-search-options)
          date-range (make-date-range-fn from to)]
      (cond-> {}
-       (seq date-range) (assoc-in [:date-range date-field] date-range)
+       (seq date-range) (assoc-in [:range date-field] date-range)
        (seq filter-map) (assoc :filter-map filter-map)
        query (assoc :query-string query)))))
 
@@ -123,10 +123,10 @@
   [result
    agg-type
    aggregate-on
-   {:keys [date-range query-string filter-map]} :- SearchQuery]
+   {:keys [range query-string filter-map]} :- SearchQuery]
   (let [nested-fields (map keyword
                             (str/split (name aggregate-on) #"\."))
-        {from :gte to :lt} (-> date-range first val)
+        {from :gte to :lt} (-> range first val)
         filters (cond-> {:from from :to to}
                   (seq filter-map) (into filter-map)
                   (seq query-string) (assoc :query-string query-string))]
