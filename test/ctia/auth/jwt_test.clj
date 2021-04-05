@@ -69,64 +69,69 @@
     (are [root-scope-fn def-val] (= def-val (root-scope-fn get-in-config))
       sut/entity-root-scope   "private-intel"
       sut/casebook-root-scope "casebook"
-      sut/assets-root-scope   "no-asset-intel"))
-  (is (= #{:search-casebook :create-casebook :list-casebooks :read-casebook
-           :delete-casebook}
-         (sut/scope-to-capabilities (sut/casebook-root-scope get-in-config) get-in-config))
-      "Check the casebook capabilities from the casebook scope")
-  (is (empty? (sut/scope-to-capabilities (sut/assets-root-scope get-in-config) get-in-config))
-      "No Asset capabilities on private-intel scope")
-  (is (= #{:developer :specify-id}
-         (set/difference (caps/all-capabilities)
-                         (sut/scopes-to-capabilities #{(sut/entity-root-scope get-in-config)
-                                                       (sut/casebook-root-scope get-in-config)}
-                                                     get-in-config)))
-      "with all scopes you should have most capabilities except some very
+      sut/assets-root-scope   "asset-intel")
+    (is (= #{:search-casebook :create-casebook :list-casebooks :read-casebook
+             :delete-casebook}
+           (sut/scope-to-capabilities (sut/casebook-root-scope get-in-config) get-in-config))
+        "Check the casebook capabilities from the casebook scope")
+    (is (= #{:developer :specify-id}
+           (set/difference (caps/all-capabilities)
+                           (sut/scopes-to-capabilities #{(sut/entity-root-scope get-in-config)
+                                                         (sut/casebook-root-scope get-in-config)}
+                                                       get-in-config)))
+        "with all scopes you should have most capabilities except some very
        specific ones")
 
-  (is (set/subset?
-       (sut/scopes-to-capabilities #{(sut/casebook-root-scope get-in-config)}
-                                   get-in-config)
-       (sut/scopes-to-capabilities #{(sut/entity-root-scope get-in-config)}
-                                   get-in-config))
-      "casebook capabilities are a subset of all entity caps")
-
-  (is (= #{:import-bundle}
-         (sut/scopes-to-capabilities
-          #{(str (sut/entity-root-scope get-in-config) "/import-bundle")}
-          get-in-config)))
-  (is (= #{}
-         (sut/scopes-to-capabilities
-          #{(str (sut/entity-root-scope get-in-config) "/import-bundle:read")}
-          get-in-config)))
-  (is (contains? (sut/scopes-to-capabilities #{(str (sut/entity-root-scope get-in-config) ":write")}
-                                             get-in-config)
-                 :import-bundle))
-  (is (not (contains? (sut/scopes-to-capabilities #{(str (sut/entity-root-scope get-in-config) ":read")}
-                                                  get-in-config)
-                      :import-bundle)))
-  (is (= #{:read-sighting :list-sightings :search-sighting :create-sighting
-           :delete-sighting}
-         (sut/scopes-to-capabilities
-          #{(str (sut/entity-root-scope get-in-config) "/sighting")}
-          get-in-config))
-      "Scopes can be limited to some entity")
-  (is (= #{:create-sighting :delete-sighting}
-         (sut/scopes-to-capabilities
-          #{(str (sut/entity-root-scope get-in-config) "/sighting:write")}
-          get-in-config))
-      "Scopes can be limited to some entity and for write-only")
-  (is (= #{:read-sighting :list-sightings :search-sighting}
-         (sut/scopes-to-capabilities
-          #{(str (sut/entity-root-scope get-in-config) "/sighting:read")}
-          get-in-config))
-      "Scopes can be limited to some entity and for read-only")
-  (is (= #{:search-casebook :read-sighting :list-sightings :search-sighting
-           :list-casebooks :read-casebook}
-         (sut/scopes-to-capabilities #{(str (sut/entity-root-scope get-in-config) "/sighting:read")
-                                       (str (sut/casebook-root-scope get-in-config) ":read")}
+    (is (set/subset?
+         (sut/scopes-to-capabilities #{(sut/casebook-root-scope get-in-config)}
+                                     get-in-config)
+         (sut/scopes-to-capabilities #{(sut/entity-root-scope get-in-config)}
                                      get-in-config))
-      "Scopes can compose"))
+        "casebook capabilities are a subset of all entity caps")
+
+    (is (= #{:import-bundle}
+           (sut/scopes-to-capabilities
+            #{(str (sut/entity-root-scope get-in-config) "/import-bundle")}
+            get-in-config)))
+    (is (= #{}
+           (sut/scopes-to-capabilities
+            #{(str (sut/entity-root-scope get-in-config) "/import-bundle:read")}
+            get-in-config)))
+    (is (contains? (sut/scopes-to-capabilities #{(str (sut/entity-root-scope get-in-config) ":write")}
+                                               get-in-config)
+                   :import-bundle))
+    (is (not (contains? (sut/scopes-to-capabilities #{(str (sut/entity-root-scope get-in-config) ":read")}
+                                                    get-in-config)
+                        :import-bundle)))
+    (is (= #{:read-sighting :list-sightings :search-sighting :create-sighting
+             :delete-sighting}
+           (sut/scopes-to-capabilities
+            #{(str (sut/entity-root-scope get-in-config) "/sighting")}
+            get-in-config))
+        "Scopes can be limited to some entity")
+    (is (= #{:create-sighting :delete-sighting}
+           (sut/scopes-to-capabilities
+            #{(str (sut/entity-root-scope get-in-config) "/sighting:write")}
+            get-in-config))
+        "Scopes can be limited to some entity and for write-only")
+    (is (= #{:read-sighting :list-sightings :search-sighting}
+           (sut/scopes-to-capabilities
+            #{(str (sut/entity-root-scope get-in-config) "/sighting:read")}
+            get-in-config))
+        "Scopes can be limited to some entity and for read-only")
+    (is (= #{:search-casebook :read-sighting :list-sightings :search-sighting
+             :list-casebooks :read-casebook}
+           (sut/scopes-to-capabilities #{(str (sut/entity-root-scope get-in-config) "/sighting:read")
+                                         (str (sut/casebook-root-scope get-in-config) ":read")}
+                                       get-in-config))
+        "Scopes can compose"))
+  (testing "asset-intel disabled in the config"
+    (helpers/with-properties ["ctia.auth.assets.scope" "no-asset-intel"]
+      (helpers/fixture-ctia-with-app
+       (fn [app]
+         (let [{:keys [get-in-config]} (helpers/get-service-map app :ConfigService)]
+           (is (empty? (sut/scope-to-capabilities (sut/assets-root-scope get-in-config) get-in-config))
+               "No Asset capabilities when assets-intel explicitly disabled")))))))
 
 (deftest parse-jwt-pubkey-map-test
   (is (= ["APP ONE"]

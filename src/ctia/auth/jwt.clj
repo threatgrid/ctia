@@ -63,9 +63,7 @@
                               "casebook"))
 
 (defn assets-root-scope [get-in-config]
-  (if (= "private-intel" (entity-root-scope get-in-config))
-    "no-asset-intel"
-    (get-in-config [:ctia :auth :assets :scope] "asset-intel")))
+  (get-in-config [:ctia :auth :assets :scope] "asset-intel"))
 
 (defn claim-prefix [get-in-config]
   (get-in-config [:ctia :http :jwt :claim-prefix]
