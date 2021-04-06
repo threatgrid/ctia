@@ -13,13 +13,18 @@
   see: https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl-range-query.html"
   {s/Keyword RangeQueryOpt})
 
+(s/defschema FullTextQuery
+  {:query s/Str
+   :mode (s/enum :multi_match :simple_query_string :query_string)})
+
 (s/defschema SearchQuery
   "components of a search query:
    - query-string: free text search, with lucene syntax enabled"
   (st/optional-keys
-   {:query-string s/Str         ;; TODO change as described: https://github.com/threatgrid/iroh/issues/4959#issuecomment-810815287
-    :filter-map {s/Keyword s/Any}
-    :range RangeQuery}))
+   {:query-string s/Str ;; TODO change as described: https://github.com/threatgrid/iroh/issues/4959#issuecomment-810815287
+    :filter-map   {s/Keyword s/Any}
+    :range        RangeQuery
+    :full-text    FullTextQuery}))
 
 (s/defschema AggType
   "supported aggregation types"
