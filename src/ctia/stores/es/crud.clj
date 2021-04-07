@@ -318,20 +318,20 @@ It returns the documents with full hits meta data including the real index in wh
 (s/defn make-search-query
   [{{:keys [default_operator]} :props
     {{:keys [get-in-config]} :ConfigService} :services} :- ESConnState
-   {:keys [query-string filter-map date-range]} :- SearchQuery
+   {:keys [query-string filter-map range]} :- SearchQuery
    ident]
   (let [es-query-string {:query_string (into {:query query-string}
                                              (when default_operator
                                                {:default_operator default_operator}))}
-        date-range-query (when date-range
-                           {:range date-range})
+        date-range-query (when range
+                           {:range range})
         filter-terms (-> (ensure-document-id-in-map filter-map)
                          q/prepare-terms)]
     {:bool
      {:filter
       (cond-> [(find-restriction-query-part ident get-in-config)]
         (seq filter-map) (into filter-terms)
-        (seq date-range) (conj date-range-query)
+        (seq range) (conj date-range-query)
         (seq query-string) (conj es-query-string))}}))
 
 (defn handle-query-string-search

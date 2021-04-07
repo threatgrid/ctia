@@ -264,7 +264,7 @@
            (is (= {:bool {:filter [simple-access-ctrl-query
                                    es-date-range]}}
                   (sut/make-search-query es-conn-state
-                                         {:date-range date-range}
+                                         {:range date-range}
                                          ident)))
            (is (= {:bool {:filter (into
                                    [simple-access-ctrl-query]
@@ -277,7 +277,7 @@
                                       (into [es-date-range es-query-string-AND]))}}
                   (sut/make-search-query es-conn-state
                                          {:query-string query-string
-                                          :date-range date-range
+                                          :range date-range
                                           :filter-map filter-map}
                                          ident))))))))))
 
@@ -406,7 +406,7 @@
                   (count-helper {:query-string query-string})))
            (is (= (count (concat high-t1-title1
                                  medium-t1-title1))
-                  (count (:data (search-helper {:date-range date-range}
+                  (count (:data (search-helper {:range date-range}
                                                {})))))
            (is (= (count (concat high-t1-title1
                                  high-t2-title2))
@@ -415,12 +415,12 @@
                   (count-helper {:filter-map filter-map})))
            (is (= (count high-t1-title1)
                   (count (:data (search-helper {:query-string query-string
-                                                :date-range date-range
+                                                :range date-range
                                                 :filter-map filter-map}
                                                {})))
 
                   (count-helper {:query-string query-string
-                                 :date-range date-range
+                                 :range date-range
                                  :filter-map filter-map}))))
          (testing "Properly handle search params"
            (let [search-page-0 (search-helper {:query-string query-string}
