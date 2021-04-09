@@ -14,8 +14,12 @@
   {s/Keyword RangeQueryOpt})
 
 (s/defschema FullTextQuery
-  {:query s/Str
-   :mode (s/enum :multi_match :simple_query_string :query_string)})
+  (st/merge
+   {:mode  (s/enum :multi_match :simple_query_string :query_string)
+    :query s/Str}
+   (st/optional-keys
+    {:fields [s/Str]
+     :default_operator s/Str})))
 
 (s/defschema SearchQuery
   "components of a search query:

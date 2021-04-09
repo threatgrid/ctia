@@ -316,51 +316,60 @@ It returns the documents with full hits meta data including the real index in wh
                                            ident
                                            get-in-config))))))
 
-(s/defn make-search-query
-  [{{:keys [default_operator]} :props
+(s/defn make-search-query :- {s/Keyword s/Any}
+  "Translate SearchQuery map into ES Query DSL map"
+  [{{:keys [default_operator]}               :props
     {{:keys [get-in-config]} :ConfigService} :services} :- ESConnState
-   {:keys [query-string filter-map range]} :- SearchQuery
+   {:keys [query-string
+           filter-map
+           range
+           full-text]} :- SearchQuery
    ident]
   (let [es-query-string {:query_string (into {:query query-string}
                                              (when default_operator
                                                {:default_operator default_operator}))}
-        date-range-query (when range
-                           {:range range})
-        filter-terms (-> (ensure-document-id-in-map filter-map)
-                         q/prepare-terms)]
+        range-query     (when range
+                          {:range range})
+        filter-terms    (-> (ensure-document-id-in-map filter-map)
+                            q/prepare-terms)
+        full-text-q     (when full-text
+                          {(:mode full-text)
+                           (dissoc full-text :mode)})]
     {:bool
      {:filter
       (cond-> [(find-restriction-query-part ident get-in-config)]
-        (seq filter-map) (into filter-terms)
-        (seq range) (conj date-range-query)
-        (seq query-string) (conj es-query-string))}}))
+        (seq filter-map)   (into filter-terms)
+        (seq range)        (conj range-query)
+        (seq query-string) (conj es-query-string)
+        (seq full-text)    (conj full-text-q))}}))
 
 (defn handle-query-string-search
   "Generate an ES query handler for given schema schema"
   [Model]
   (let [response-schema (list-response-schema Model)
-        coerce! (coerce-to-fn response-schema)]
+        coerce!         (coerce-to-fn response-schema)]
     (s/fn :- response-schema
-      [{conn :conn
-        index :index
-        {{:keys [get-in-config]} :ConfigService}
-        :services
-        :as es-conn-state} :- ESConnState
-       {:keys [filter-map] :as search-query} :- SearchQuery
-       ident
-       es-params]
-      (let [query (make-search-query es-conn-state search-query ident)]
-        (cond-> (coerce! (ductile.doc/query conn
-                                  index
-                                  query
-                                  (-> es-params
-                                      rename-sort-fields
-                                      with-default-sort-field
-                                      make-es-read-params)))
-          (restricted-read? ident) (update :data
-                                           access-control-filter-list
-                                           ident
-                                           get-in-config))))))
+      [es-conn-state :- ESConnState
+       search-query :- SearchQuery
+       ident es-params]
+      (let [{conn :conn, index :index
+             {{:keys [get-in-config]} :ConfigService}
+             :services} es-conn-state
+            query       (make-search-query es-conn-state search-query ident)]
+        (cond-> (coerce! (ductile.doc/query
+                          conn
+                          index
+                          query
+                          (-> es-params
+                              rename-sort-fields
+                              with-default-sort-field
+                              make-es-read-params)))
+
+          (restricted-read? ident) (update
+                                    :data
+                                    access-control-filter-list
+                                    ident
+                                    get-in-config))))))
 
 (s/defn handle-delete-search
   "ES delete by query handler"
