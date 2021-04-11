@@ -1,0 +1,147 @@
+#+TITLE: Search Vulnerabilities by CPE Match Strings
+#+AUTHOR: Cisco Threat Response Services
+#+PROPERTY: eval no
+
+* CPE
+  #+BEGIN_QUOTE
+  Common Platform Enumeration (CPE) is a standardized method of
+  describing and identifying classes of applications, operating
+  systems, and hardware devices present among an enterprise's
+  computing assets. IT management tools can collect information about
+  installed products, identifying these products using their CPE
+  names, and then use this standardized information to help make fully
+  or partially automated decisions regarding the assets.
+  #+END_QUOTE
+
+  Further information on CPE can be found at:
+  - [[https://nvd.nist.gov/products/cpe]]
+  - https://csrc.nist.gov/projects/security-content-automation-protocol/specifications/cpe
+  - [[https://nvlpubs.nist.gov/nistpubs/Legacy/IR/nistir7695.pdf][Common Platform Enumeration: Naming Specification Version 2.3]]
+  - [[https://nvlpubs.nist.gov/nistpubs/Legacy/IR/nistir7696.pdf][Common Platform Enumeration: Name Matching Specification Version 2.3]]
+
+* CPE Match Strings
+  CPE Match Strings consist of 13 colon delimited components. A
+  component may have a ~:~ in it, which would require [[Symbols Requiring Escapes][escaping]].
+
+  CPE Match Strings are of the form:
+  ~cpe:2.3:part:vendor:product:version:version_update:edition:lang:sw_edition:target_sw:target_hw:other~
+
+  Where the part component is a single letter represented by:
+  - ~a~ for application
+  - ~o~ for operating system
+  - ~h~ for hardware
+
+  A Component may be set to ~-~ to indicate ~Not Applicable~ or ~*~ to indicate ~ANY~
+
+  Additionally, components may make use of ~*~ as a multi-chracter
+  wildcard prefix or postfix operator and ~?~ as a single character
+  wildcard prefix or postfix operator. These wildcards may not be used
+  outside of prefix or postfix positions.
+
+  An example for Microsoft Internet Explorer 8.0.6001 beta:
+  ~cpe:2.3:a:microsoft:internet_explorer:8.0.6001:beta:*:*:*:*:*:*~
+
+* Performance Restrictions
+  For performance reasons, the vendor and product components must be
+  specified. They are utilized by the Elasticsearch query to narrow
+  the vulnerabilities to be examined. As a result, these components
+  may not be set to ~Not Applicable~ or ~ANY~.
+
+* Searching Vulnerabilities by CPE Match Strings
+  CTIA provides a way to query for vulnerabilities with configurations
+  that match combinations of CPE Match Strings.
+
+  The route is available through the endpoint ~GET
+  /ctia/vulnerability/cpe_match_strings~ and requires the query string
+  include an array of ~cpe23_match_strings~.
+
+  Many of the query string parameters documented in the endpoint [[file:search-metrics.org][~GET
+  /ctia/{entity-type}/search~]] are supported by ~GET
+  /ctia/vulnerability/cpe_match_strings~ with the following
+  exceptions:
+  - ~sort_by~
+  - ~sort_order~
+  - ~offset~
+
+  A user can retrieve vulnerabilities applicable to various
+  combinations of hardware and software. The following example URL
+  encodes an array of the CPE match strings:
+  - ~cpe:2.3:h:juniper:atp400:-:*:*:*:*:*:*:*~
+  - ~cpe:2.3:o:juniper:advanced_threat_prevention:5.0.3:*:*:*:*:*:*:*~
+
+  #+BEGIN_SRC http
+    GET http://localhost:3000/ctia/vulnerability/cpe_match_strings?fields=title&cpe23_match_strings=cpe%3A2.3%3Ah%3Ajuniper%3Aatp400%3A*%3A*%3A*%3A*%3A*%3A*%3A*%3A*&cpe23_match_strings=cpe%3A2.3%3Ao%3Ajuniper%3Aadvanced_threat_prevention%3A5.0.3%3A*%3A*%3A*%3A*%3A*%3A*%3A*
+    Content-Type: application/json
+  #+END_SRC
+
+  Results:
+  #+BEGIN_SRC http
+  [
+    {
+      "groups": [
+        "Administrators"
+      ],
+      "tlp": "green",
+      "id": "http://localhost:3000/ctia/vulnerability/vulnerability-6b383506-48bb-4f20-bb0a-9844f9655efd",
+      "title": "CVE-2019-0021",
+      "owner": "Unknown"
+    }
+  ]
+  #+END_SRC
+
+  Response Headers:
+  #+BEGIN_SRC http
+   content-length: 186
+   content-type: application/json;charset=utf-8
+   date: Tue, 16 Mar 2021 19:14:30 GMT
+   etag: "87d3bcdea05c36e0c220de815c65d16b4676b65d"
+   x-content-type-options: nosniff
+   x-ctia-config: local
+   x-ctia-version: 10d96bac39a4c059be99b730e9d6ebbec81bcdb8
+   isue-4744-match-strings
+   x-ctim-version: 1.1.3
+   x-sort: ["vulnerability-6b383506-48bb-4f20-bb0a-9844f9655efd"]  x-total-hits: 1
+  #+END_SRC
+
+
+* Paging
+  Set the ~search_after~ query parameter to the value of the ~x-sort~
+  response header to retrieve the next page. The size of the page can
+  be set using the ~limit~ query parameter.  When ~limit~ is not
+  specified, the system default is used.
+
+  The endpoint utilizes two separate Elasticsearch queries. The first
+  query lazily retrieves up to ~limit~ Vulnerability IDs that match
+  the CPE Match Strings. The second query then utilizes up to ~limit~
+  Vulnerability IDs from the lazy seq to retreive and deliver the
+  Vulnerabilities to the end user. Both queries are sorted by ~id~ in
+  ascending order to support paging using the ~search_after~ query
+  parameter. Due to this design, ~offset~, ~query~, and ~sort~ can not
+  be supported.
+
+
+* Symbols Requiring Escapes
+  The following systems are utilized by the endpoint, and have
+  different escaping conventions:
+  - Java String
+  - National Vulnerability Database (the source of the data)
+  - URL Encoding (As encoded by the web browser)
+  - Elasticsearch Database
+  - Lucene Query Syntax
+  - Regular Expressions
+
+  To accomodate these differences, CPEs containining symbols from the
+  following list must be escaped with ~\\~.
+
+  - ~:~
+  - ~(~
+  - ~)~
+  - ~+~
+  - ~!~
+  - ~/~
+
+For example the CPE
+~cpe:2.3:h:juniper:ex8200/vc_(xre):-:*:*:*:*:*:*:*~ from within a
+configuration in [[https://nvd.nist.gov/vuln/detail/CVE-2018-0034][CVE-2018-0034]], must be escaped before being passed
+into the endpoint as
+~cpe:2.3:h:juniper:ex8200\\/vc_\\(xre\\):-:*:*:*:*:*:*:*~
