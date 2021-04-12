@@ -54,15 +54,9 @@
                     :read-asset-mapping :read-asset-properties :read-target-record :search-asset
                     :search-asset-mapping :search-asset-properties :search-target-record}
                   (sut/scope-to-capabilities (sut/assets-root-scope get-in-config) get-in-config))
-               "By default asset capabilities enabled on global-intel scope")))))
-    (testing "Asset capabilities explicitly disabled"
-      (helpers/with-properties ["ctia.auth.entities.scope" "global-intel"
-                                "ctia.auth.assets.scope" "no-asset-intel"]
-        (helpers/fixture-ctia-with-app
-         (fn [app]
-           (let [{:keys [get-in-config]} (helpers/get-service-map app :ConfigService)]
-             (is (= "global-intel" (sut/entity-root-scope get-in-config)))
-             (is (empty? (sut/scope-to-capabilities (sut/assets-root-scope get-in-config) get-in-config))))))))))
+               "By default asset capabilities enabled on global-intel scope")
+           (is (empty? (sut/scope-to-capabilities "no-asset-intel" get-in-config))
+               "No asset capabilities, if scope doesn't allow it")))))))
 
 (deftest scopes-to-capabilities-test
   (testing "scope defaults"
@@ -124,14 +118,7 @@
            (sut/scopes-to-capabilities #{(str (sut/entity-root-scope get-in-config) "/sighting:read")
                                          (str (sut/casebook-root-scope get-in-config) ":read")}
                                        get-in-config))
-        "Scopes can compose"))
-  (testing "asset-intel disabled in the config"
-    (helpers/with-properties ["ctia.auth.assets.scope" "no-asset-intel"]
-      (helpers/fixture-ctia-with-app
-       (fn [app]
-         (let [{:keys [get-in-config]} (helpers/get-service-map app :ConfigService)]
-           (is (empty? (sut/scope-to-capabilities (sut/assets-root-scope get-in-config) get-in-config))
-               "No Asset capabilities when assets-intel explicitly disabled")))))))
+        "Scopes can compose")))
 
 (deftest parse-jwt-pubkey-map-test
   (is (= ["APP ONE"]

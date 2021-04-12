@@ -113,14 +113,12 @@
 (defn gen-assets-capabilities
   "Generate capabilities for the root-scope 'asset-intel'."
   [scope-repr]
-  (if (= "asset-intel" (first (:path scope-repr)))
-    (->> [:asset :asset-mapping :asset-properties :target-record]
-         (select-keys (all-entities))
-         vals
-         (map #(gen-capabilities-for-entity-and-accesses
-                % (:access scope-repr)))
-         unionize)
-    #{}))
+  (->> [:asset :asset-mapping :asset-properties :target-record]
+       (select-keys (all-entities))
+       vals
+       (map #(gen-capabilities-for-entity-and-accesses
+              % (:access scope-repr)))
+       unionize))
 
 (defn scope-to-capabilities
   "given a scope generate capabilities"
