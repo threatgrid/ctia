@@ -54,14 +54,20 @@
    id tempids & rest-args]
   (delayed/fn :- (with-error StoredAssetProperties)
     [rt-ctx :- GraphQLRuntimeContext]
-    (let [new-asset-ref
-          (if (schemas/transient-id? asset_ref)
-            (get tempids asset_ref)
-            asset_ref)]
+    (let [set-ref (fn [m]
+                    (if (schemas/transient-id? asset_ref)
+                      (if-let [new-ref (get tempids asset_ref)]
+                        (assoc m :asset_ref new-ref)
+                        (assoc m :error
+                               (format
+                                (str "Cannot resolve asset_ref for transient ID: %s, in AssetProperties %s."
+                                     "Maybe the associated Asset is missing in the Bundle?")
+                                asset_ref (:id m))))
+                      (assoc m :asset_ref asset_ref)))]
       (-> asset-properties-default-realize
           (schemas/lift-realize-fn-with-context rt-ctx)
           (apply new-entity id tempids rest-args)
-          (assoc :asset_ref new-asset-ref)))))
+          (set-ref)))))
 
 (def asset-properties-mapping
   {"asset-properties"
