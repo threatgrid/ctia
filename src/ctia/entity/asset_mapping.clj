@@ -1,6 +1,7 @@
 (ns ctia.entity.asset-mapping
   (:require
    [ctia.domain.entities :as entities]
+   [ctia.entity.asset :as asset]
    [ctia.flows.schemas :refer [with-error]]
    [ctia.graphql.delayed :as delayed]
    [ctia.http.routes.common :as routes.common]
@@ -49,15 +50,11 @@
     :as   new-entity}
    id tempids & rest-args]
   (delayed/fn :- (with-error StoredAssetMapping)
-    [rt-ctx :- GraphQLRuntimeContext]
-    (let [new-asset-ref
-          (if (schemas/transient-id? asset_ref)
-            (get tempids asset_ref)
-            asset_ref)]
-      (-> asset-mapping-default-realize
-          (schemas/lift-realize-fn-with-context rt-ctx)
-          (apply new-entity id tempids rest-args)
-          (assoc :asset_ref new-asset-ref)))))
+              [rt-ctx :- GraphQLRuntimeContext]
+              (-> asset-mapping-default-realize
+                  (schemas/lift-realize-fn-with-context rt-ctx)
+                  (apply new-entity id tempids rest-args)
+                  (asset/set-asset-ref tempids))))
 
 (def asset-mapping-mapping
   {"asset-mapping"
