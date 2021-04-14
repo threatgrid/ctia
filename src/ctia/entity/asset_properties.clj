@@ -1,6 +1,7 @@
 (ns ctia.entity.asset-properties
   (:require
    [ctia.domain.entities :refer [default-realize-fn]]
+   [ctia.entity.asset :as asset]
    [ctia.flows.schemas :refer [with-error]]
    [ctia.graphql.delayed :as delayed]
    [ctia.http.routes.common :as routes.common]
@@ -54,20 +55,10 @@
    id tempids & rest-args]
   (delayed/fn :- (with-error StoredAssetProperties)
     [rt-ctx :- GraphQLRuntimeContext]
-    (let [set-ref (fn [m]
-                    (if (schemas/transient-id? asset_ref)
-                      (if-let [new-ref (get tempids asset_ref)]
-                        (assoc m :asset_ref new-ref)
-                        (assoc m :error
-                               (format
-                                (str "Cannot resolve asset_ref for transient ID: %s, in AssetProperties %s."
-                                     "Maybe the associated Asset is missing in the Bundle?")
-                                asset_ref (:id m))))
-                      (assoc m :asset_ref asset_ref)))]
-      (-> asset-properties-default-realize
-          (schemas/lift-realize-fn-with-context rt-ctx)
-          (apply new-entity id tempids rest-args)
-          (set-ref)))))
+    (-> asset-properties-default-realize
+        (schemas/lift-realize-fn-with-context rt-ctx)
+        (apply new-entity id tempids rest-args)
+        (asset/set-asset-ref tempids))))
 
 (def asset-properties-mapping
   {"asset-properties"
