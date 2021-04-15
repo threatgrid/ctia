@@ -59,9 +59,20 @@
   /ctia/{entity-type}/search~]] are supported by ~GET
   /ctia/vulnerability/cpe_match_strings~ with the following
   exceptions:
+  - ~offset~
   - ~sort_by~
   - ~sort_order~
-  - ~offset~
+
+  To ensure high performance, a lazy sequence is used to query
+  elasticsearch one page at a time for matching Vulnerability
+  IDs. This lazy sequence is used within a secondary elasticsearch
+  query along with user provided query string parameters to retrieve
+  the final results. As the number of results from the first and
+  second queries are not gauranteed to be equal, we can not provide
+  [[Paging][paging]] to the user using ~offset~. As an alternative, we support
+  [[Paging][paging]] using ~search_after~. However, because ~search_after~ relies
+  upon consistent ordering of results, we must disallow user-specified
+  sorts.
 
   A user can retrieve vulnerabilities applicable to various
   combinations of hardware and software. The following example URL
@@ -109,16 +120,6 @@
   response header to retrieve the next page. The size of the page can
   be set using the ~limit~ query parameter.  When ~limit~ is not
   specified, the system default is used.
-
-  The endpoint utilizes two separate Elasticsearch queries. The first
-  query lazily retrieves up to ~limit~ Vulnerability IDs that match
-  the CPE Match Strings. The second query then utilizes up to ~limit~
-  Vulnerability IDs from the lazy seq to retreive and deliver the
-  Vulnerabilities to the end user. Both queries are sorted by ~id~ in
-  ascending order to support paging using the ~search_after~ query
-  parameter. Due to this design, ~offset~, ~query~, and ~sort~ can not
-  be supported.
-
 
 * Symbols Requiring Escapes
   The following systems are utilized by the endpoint, and have
