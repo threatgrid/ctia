@@ -253,12 +253,14 @@
            (is (= {:bool {:filter [simple-access-ctrl-query
                                    es-query-string-AND]}}
                   (sut/make-search-query es-conn-state
-                                         {:query-string query-string}
+                                         {:full-text {:query query-string
+                                                      :mode  :query_string}}
                                          ident)))
            (is (= {:bool {:filter [simple-access-ctrl-query
                                    es-query-string-no-op]}}
                   (sut/make-search-query (update es-conn-state :props dissoc :default_operator)
-                                         {:query-string query-string}
+                                         {:full-text {:query query-string
+                                                      :mode  :query_string}}
                                          ident)))
            (is (= {:bool {:filter [simple-access-ctrl-query
                                    es-date-range]}}
@@ -275,7 +277,8 @@
                                       (into es-terms)
                                       (into [es-date-range es-query-string-AND]))}}
                   (sut/make-search-query es-conn-state
-                                         {:query-string query-string
+                                         {:full-text {:query query-string
+                                                      :mode :query_string}
                                           :range date-range
                                           :filter-map filter-map}
                                          ident))))))))))
