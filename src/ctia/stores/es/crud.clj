@@ -320,15 +320,11 @@ It returns the documents with full hits meta data including the real index in wh
   "Translate SearchQuery map into ES Query DSL map"
   [{{:keys [default_operator]}               :props
     {{:keys [get-in-config]} :ConfigService} :services} :- ESConnState
-   {:keys [query-string
-           filter-map
+   {:keys [filter-map
            range
            full-text]} :- SearchQuery
    ident]
-  (let [es-query-string {:query_string (into {:query query-string}
-                                             (when default_operator
-                                               {:default_operator default_operator}))}
-        range-query     (when range
+  (let [range-query     (when range
                           {:range range})
         filter-terms    (-> (ensure-document-id-in-map filter-map)
                             q/prepare-terms)
@@ -340,7 +336,6 @@ It returns the documents with full hits meta data including the real index in wh
       (cond-> [(find-restriction-query-part ident get-in-config)]
         (seq filter-map)   (into filter-terms)
         (seq range)        (conj range-query)
-        (seq query-string) (conj es-query-string)
         (seq full-text)    (conj full-text-q))}}))
 
 (defn handle-query-string-search

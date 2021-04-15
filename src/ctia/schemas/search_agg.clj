@@ -25,8 +25,7 @@
   "components of a search query:
    - query-string: free text search, with lucene syntax enabled"
   (st/optional-keys
-   {:query-string s/Str ;; TODO change as described: https://github.com/threatgrid/iroh/issues/4959#issuecomment-810815287
-    :filter-map   {s/Keyword s/Any}
+   {:filter-map   {s/Keyword s/Any}
     :range        RangeQuery
     :full-text    FullTextQuery}))
 
