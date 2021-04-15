@@ -218,7 +218,6 @@
                                ident
                                {}))))))))
 
-
 (defn sighting-conn-state
   [app]
   (let [{:keys [get-store]} (helpers/get-service-map app :StoreService)]
@@ -451,24 +450,26 @@
              aggregate (fn [search-query agg-query]
                          (aggregate-fn es-conn-state search-query agg-query ident))]
          (testing "cardinality"
-           (is (= 3 (aggregate {:query-string "*"}
+           (is (= 3 (aggregate {:full-text {:query "*" :mode :query_string}}
                                {:agg-type :cardinality
                                 :aggregate-on "confidence"})))
-           (is (= 2 (aggregate {:query-string "confidence:(high OR medium)"}
+           (is (= 2 (aggregate {:full-text {:query "confidence:(high OR medium)"
+                                            :mode :query_string}}
                                {:agg-type :cardinality
                                 :aggregate-on "confidence"}))
                "query filters should be properly applied"))
          (testing "histogram"
            (is (= [{:key  "2020-03-01T00:00:00.000-01:00" :value 70}
                    {:key  "2020-04-01T00:00:00.000-01:00" :value 25}]
-                  (aggregate {:query-string "*"}
+                  (aggregate {:full-text {:query "*" :mode :query_string}}
                              {:agg-type :histogram
                               :aggregate-on "created"
                               :granularity :month
                               :timezone "-01:00"})))
            (is (= [{:key timestamp-1 :value 60}
                    {:key timestamp-2 :value 20}]
-                  (aggregate {:query-string "confidence:high"}
+                  (aggregate {:full-text {:query "confidence:high"
+                                          :mode :query_string}}
                              {:agg-type :histogram
                               :aggregate-on "created"
                               :granularity :month
@@ -476,11 +477,13 @@
                "query filters should be properly applied")
            (is (= [{:key  "2020-04-01T00:00:00.000Z" :value 70}
                    {:key  "2020-05-01T00:00:00.000Z" :value 25}]
-                  (aggregate {:query-string "*"}
-                             {:agg-type :histogram
+                  (aggregate {:full-text {:query "*"
+                                          :mode  :query_string}}
+                             {:agg-type     :histogram
                               :aggregate-on "created"
-                              :granularity :month})
-                  (aggregate {:query-string "*"}
+                              :granularity  :month})
+                  (aggregate {:full-text {:query "*"
+                                          :mode  :query_string}}
                              {:agg-type :histogram
                               :aggregate-on "created"
                               :granularity :month
@@ -489,30 +492,34 @@
          (testing "topn"
            (is (= [{:key "low":value 5}
                    {:key "medium" :value 10}]
-                  (aggregate {:query-string "*"}
-                             {:agg-type :topn
+                  (aggregate {:full-text {:query "*"
+                                          :mode  :query_string}}
+                             {:agg-type     :topn
                               :aggregate-on "confidence"
-                              :limit 2
-                              :sort_order :asc})))
+                              :limit        2
+                              :sort_order   :asc})))
            (is (= [{:key "high" :value 80}
                    {:key "medium" :value 10}
                    {:key "low":value 5}]
-                  (aggregate {:query-string "*"}
+                  (aggregate {:full-text {:query "*"
+                                          :mode  :query_string}}
                              {:agg-type :topn
                               :aggregate-on "confidence"})
-                  (aggregate {:query-string "*"}
+                  (aggregate {:full-text {:query "*"
+                                          :mode  :query_string}}
                              {:agg-type :topn
                               :aggregate-on "confidence"
                               :limit 10
                               :sort_order :desc}))
                "default limit is 10, default sort_order is desc")
            (is (= [{:key "high" :value 80}
-                   {:key "low" :value 5}])
-               (aggregate {:query-string "confidence:(high OR low)"}
-                          {:agg-type :topn
-                           :aggregate-on "confidence"
-                           :limit 10
-                           :sort_order :desc}))))))))
+                   {:key "low" :value 5}]
+                  (aggregate {:full-text {:query "confidence:(high OR low)"
+                                          :mode  :query_string}}
+                             {:agg-type     :topn
+                              :aggregate-on "confidence"
+                              :limit        10
+                              :sort_order   :desc})))))))))
 
 (deftest handle-delete-search
   (es-helpers/for-each-es-version
