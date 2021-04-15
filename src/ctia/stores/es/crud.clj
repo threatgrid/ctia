@@ -324,19 +324,22 @@ It returns the documents with full hits meta data including the real index in wh
            range
            full-text]} :- SearchQuery
    ident]
-  (let [range-query     (when range
-                          {:range range})
-        filter-terms    (-> (ensure-document-id-in-map filter-map)
+  (let [range-query  (when range
+                       {:range range})
+        filter-terms (-> (ensure-document-id-in-map filter-map)
                             q/prepare-terms)
-        full-text-q     (when full-text
-                          {(:mode full-text)
-                           (dissoc full-text :mode)})]
+        full-text-q  (when full-text
+                       {(:mode full-text)
+                        (merge
+                         (dissoc full-text :mode)
+                         (when default_operator
+                           {:default_operator default_operator}))})]
     {:bool
      {:filter
       (cond-> [(find-restriction-query-part ident get-in-config)]
-        (seq filter-map)   (into filter-terms)
-        (seq range)        (conj range-query)
-        (seq full-text)    (conj full-text-q))}}))
+        (seq filter-map) (into filter-terms)
+        (seq range)      (conj range-query)
+        (seq full-text)  (conj full-text-q))}}))
 
 (defn handle-query-string-search
   "Generate an ES query handler for given schema schema"
