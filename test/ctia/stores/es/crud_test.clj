@@ -400,9 +400,11 @@
            (assert (pos? (count high-t1-title1)))
            (is (= (count (concat high-t1-title1
                                  medium-t1-title1))
-                  (count (:data (search-helper {:query-string query-string}
+                  (count (:data (search-helper {:full-text {:query query-string
+                                                            :mode  :query_string}}
                                                {})))
-                  (count-helper {:query-string query-string})))
+                  (count-helper {:full-text {:query query-string
+                                             :mode  :query_string}})))
            (is (= (count (concat high-t1-title1
                                  medium-t1-title1))
                   (count (:data (search-helper {:range date-range}
@@ -413,18 +415,22 @@
                                                {})))
                   (count-helper {:filter-map filter-map})))
            (is (= (count high-t1-title1)
-                  (count (:data (search-helper {:query-string query-string
+                  (count (:data (search-helper {:full-text {:query query-string
+                                                            :mode  :query_string}
                                                 :range date-range
                                                 :filter-map filter-map}
                                                {})))
 
-                  (count-helper {:query-string query-string
+                  (count-helper {:full-text {:query query-string
+                                             :mode  :query_string}
                                  :range date-range
                                  :filter-map filter-map}))))
          (testing "Properly handle search params"
-           (let [search-page-0 (search-helper {:query-string query-string}
+           (let [search-page-0 (search-helper {:full-text {:query query-string
+                                                           :mode  :query_string}}
                                               {:limit 2})
-                 search-page-1 (search-helper {:query-string query-string}
+                 search-page-1 (search-helper {:full-text {:query query-string
+                                                           :mode  :query_string}}
                                               (get-in search-page-0 [:paging :next]))]
              (assert (some? (:data search-page-0)))
              (assert (some? (:data search-page-1)))
