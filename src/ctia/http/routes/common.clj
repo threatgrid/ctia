@@ -124,13 +124,13 @@
   [result
    agg-type
    aggregate-on
-   {:keys [range query-string filter-map]} :- SearchQuery]
+   {:keys [range full-text filter-map]} :- SearchQuery]
   (let [nested-fields (map keyword
                             (str/split (name aggregate-on) #"\."))
         {from :gte to :lt} (-> range first val)
         filters (cond-> {:from from :to to}
                   (seq filter-map) (into filter-map)
-                  (seq query-string) (assoc :query-string query-string))]
+                  (seq full-text)  (assoc :full-text full-text))]
     {:data (assoc-in {} nested-fields result)
      :type agg-type
      :filters filters}))
