@@ -562,7 +562,8 @@
 
             (check-fn
              {:msg "user can only delete the data they have access to."
-              :query {:query-string "title1"
+              :query {:full-text {:query "title1"
+                                  :mode  :query_string}
                       :filter-map {:confidence "High"}}
               :matched []
               :ident ident-2
@@ -570,7 +571,8 @@
 
             (check-fn
              {:msg "matched entities must be properly deleted"
-              :query {:query-string "title1"
+              :query {:full-text {:query "title1"
+                                  :mode  :query_string}
                       :filter-map {:confidence "High"}}
               :matched high-t1-title1
               :ident ident-1
