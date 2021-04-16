@@ -60,7 +60,6 @@
     (doseq [common-key-path common-key-paths
             :let [id->vals-at-path (id->m-at-path common-key-path)]]
       (testing (pr-str common-key-path)
-        (is nil)
         (is (apply = (vals id->vals-at-path))
             (pr-str id->vals-at-path))))))
 
