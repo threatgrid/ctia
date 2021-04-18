@@ -339,7 +339,7 @@
       (delete-doc app entity id-2))))
 
 (defn test-delete-search
-  [app entity bundle-key example]
+  [{:keys [app entity bundle-key example]}]
   (let [docs (->> (dissoc example :id)
                   (repeat 100)
                   (map #(assoc % :tlp (rand-nth ["green" "amber" "red"]))))
@@ -393,7 +393,7 @@
              (count-fn filter-red))))))
 
 (defn test-query-string-search
-  [app entity query query-field example get-in-config]
+  [{:keys [app entity query query-field example get-in-config]}]
   (let [{{full-id :id} :parsed-body} (create-doc app entity (dissoc example :id))]
     (if (= :description query-field)
       (test-describable-search app entity example get-in-config)

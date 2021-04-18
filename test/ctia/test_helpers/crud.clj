@@ -1,21 +1,19 @@
 (ns ctia.test-helpers.crud
-  (:require [cheshire.core :refer [parse-string]]
-            [clj-http.fake :refer [with-global-fake-routes]]
-            [clj-momo.lib.clj-time.coerce :as tc]
-            [clj-momo.test-helpers.http :refer [encode]]
-            [clojure
-             [string :as string]
-             [test :refer [is testing]]]
-            [clojure.java.io :as io]
-            [ctia.domain.entities :refer [schema-version]]
-            [ctia.properties :as p :refer [get-http-show]]
-            [ctia.test-helpers
-             [core :as helpers
-              :refer [DELETE entity->short-id GET PATCH POST PUT]]
-             [http :refer [app->HTTPShowServices]]
-             [search :refer [test-query-string-search
-                             test-delete-search]]]
-            [ctim.domain.id :as id])
+  (:require
+   [cheshire.core :refer [parse-string]]
+   [clj-http.fake :refer [with-global-fake-routes]]
+   [clj-momo.lib.clj-time.coerce :as tc]
+   [clj-momo.test-helpers.http :refer [encode]]
+   [clojure.java.io :as io]
+   [clojure.string :as string]
+   [clojure.test :refer [is testing]]
+   [ctia.domain.entities :refer [schema-version]]
+   [ctia.properties :as p :refer [get-http-show]]
+   [ctia.test-helpers.core :as helpers
+    :refer [DELETE entity->short-id GET PATCH POST PUT]]
+   [ctia.test-helpers.http :refer [app->HTTPShowServices]]
+   [ctia.test-helpers.search :as th.search]
+   [ctim.domain.id :as id])
   (:import [java.util UUID]))
 
 (defn crud-wait-for-test
@@ -358,18 +356,19 @@
               (is (= 404 (:status response)))))))
 
       (when search-tests?
-        (test-query-string-search app
-                                  entity-str
-                                  (or search-value
-                                      (name search-field))
-                                  search-field
-                                  example
-                                  get-in-config))
+        (th.search/test-query-string-search
+         {:app           app
+          :entity        entity-str
+          :query         (or search-value (name search-field))
+          :query-field   search-field
+          :example       example
+          :get-in-config get-in-config}))
       (when delete-search-tests?
-        (test-delete-search app
-                            entity-str
-                            (keyword (string/replace plural #"-" "_"))
-                            example))
+        (th.search/test-delete-search
+         {:app        app
+          :entity     entity-str
+          :bundle-key (keyword (string/replace plural #"-" "_"))
+          :example    example}))
       (when invalid-tests?
         (testing (format "POST invalid /ctia/%s :schema_version should be ignored" entity-str)
           (let [{status :status
