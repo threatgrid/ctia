@@ -2,8 +2,6 @@
   (:require
    [clj-momo.lib.clj-time.core :as time]
    [clojure.string :as str]
-   [ctia.http.middleware.auth]
-   [ctia.lib.compojure.api.core :refer [context DELETE GET POST PUT PATCH routes]]
    [ctia.domain.entities
     :refer
     [page-with-long-id
@@ -11,6 +9,7 @@
      un-store-page
      with-long-id]]
    [ctia.flows.crud :as flows]
+   [ctia.http.middleware.auth]
    [ctia.http.routes.common :refer [capabilities->description
                                     created
                                     filter-map-search-options
@@ -20,7 +19,13 @@
                                     search-query
                                     coerce-date-range
                                     format-agg-result]]
+   [ctia.lib.compojure.api.core :refer [context DELETE GET POST PUT PATCH routes]]
    [ctia.schemas.core :refer [APIHandlerServices DelayedRoutes]]
+   [ctia.schemas.search-agg :refer [HistogramParams
+                                    CardinalityParams
+                                    TopnParams
+                                    MetricResult
+                                    FullTextQueryMode]]
    [ctia.store :refer [query-string-search
                        query-string-count
                        aggregate
@@ -30,14 +35,10 @@
                        update-record
                        list-records
                        delete-search]]
-   [ctia.schemas.search-agg :refer [HistogramParams
-                                    CardinalityParams
-                                    TopnParams
-                                    MetricResult]]
-   [ring.util.http-response :refer [no-content not-found ok forbidden]]
    [ring.swagger.schema :refer [describe]]
-   [schema.core :as s]
-   [schema-tools.core :as st]))
+   [ring.util.http-response :refer [no-content not-found ok forbidden]]
+   [schema-tools.core :as st]
+   [schema.core :as s]))
 
 (s/defn capitalize-entity [entity :- (s/pred simple-keyword?)]
   (-> entity name str/capitalize))
@@ -163,6 +164,10 @@
  (s/fn [{{:keys [get-store]} :StoreService
          :as services} :- APIHandlerServices]
   (let [capitalized (capitalize-entity entity)
+        search-q-params* (st/merge
+                          search-q-params
+                          {(s/optional-key :query_mode)
+                           (describe FullTextQueryMode "Elasticsearch FullText Query Mode. Defaults to query_string")})
         search-filters (st/dissoc search-q-params
                                   :sort_by
                                   :sort_order
@@ -321,7 +326,7 @@
              :summary (format "Search for %s entities using a Lucene/ES query string and field filters" capitalized)
              :description (capabilities->description search-capabilities)
              :capabilities search-capabilities
-             :query [params search-q-params]
+             :query [params search-q-params*]
              (-> (get-store entity)
                  (query-string-search
                    (search-query date-field params)

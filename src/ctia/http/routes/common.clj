@@ -108,7 +108,7 @@
                      from (assoc :gte from)
                      to   (assoc :lt to)))))
   ([date-field
-    {:keys [query from to] :as search-params}
+    {:keys [query from to query_mode] :as search-params}
     make-date-range-fn :- (s/=> RangeQueryOpt
                                 (s/named (s/maybe s/Inst) 'from)
                                 (s/named (s/maybe s/Inst) 'to))]
@@ -118,7 +118,7 @@
        (seq date-range) (assoc-in [:range date-field] date-range)
        (seq filter-map) (assoc :filter-map filter-map)
        query            (assoc :full-text {:query query
-                                           :mode  :query_string})))))
+                                           :mode  (or query_mode :query_string)})))))
 
 (s/defn format-agg-result :- MetricResult
   [result
