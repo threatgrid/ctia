@@ -68,7 +68,8 @@
   [app entity text]
   (count-raw app entity {:query text}))
 
-(defn test-describable-search [app entity example get-in-config]
+(defn test-describable-search
+  [{:keys [app entity example get-in-config]}]
   (let [;; generate matched and unmatched terms / entities
         capital-word (unique-word "CAPITAL")
         base-possessive-word "possessive"
@@ -223,20 +224,18 @@
     (delete-doc app entity full-id)))
 
 (defn test-non-describable-search
-  [app entity value query-field]
+  [{:keys [app entity query query-field]}]
   (testing "search term filter"
-    (let [query (format "%s:\"%s\""
-                        (name query-field)
-                        value)]
+    (let [query-string (format "%s:\"%s\"" (name query-field) query)]
       (let [{search-status :status
-             search-body :parsed-body} (search-text app entity query)
+             search-body :parsed-body} (search-text app entity query-string)
             {count-status :status
-             count-body :parsed-body} (count-text app entity query)]
+             count-body :parsed-body} (count-text app entity query-string)]
         (is (= 200 search-status count-status))
         (is (pos? (count search-body)))
         (is (= (count search-body) count-body))
         (doseq [res search-body]
-          (is (= value (get res query-field))
+          (is (= query (get res query-field))
               "query term must properly match values")))
       (with-redefs [log* (fn [& _] nil)]
         ;; avoid unnecessary verbosity
@@ -244,8 +243,8 @@
               {count-status :status} (count-text app entity "2607:f0d0:1002:0051:0000:0000:0000:0004")]
           (is (= 400 search-status count-status))))
 
-      (let [query-params {"query" query
-                          "tlp" "red"}
+      (let [query-params {"query" query-string
+                          "tlp"   "red"}
             {search-status :status
              search-body :parsed-body} (search-raw app entity query-params)
             {count-status :status
@@ -254,14 +253,14 @@
         (is (= 0 (count search-body) count-body)
             "filters must be applied, and should discriminate"))
 
-      (let [query-params {:query query
+      (let [query-params {:query query-string
                           :tlp "green"}
             {search-status :status
              search-body :parsed-body} (search-raw app entity query-params)
             {count-status :status
              count-body :parsed-body} (count-raw app entity query-params)
             matched-fields {:tlp "green"
-                            (keyword query-field) value}]
+                            (keyword query-field) query}]
         (is (= 200 search-status count-status))
         (is (<= 1 (count search-body)))
         (is (= (count search-body) count-body))
@@ -396,12 +395,16 @@
   [{:keys [app entity query query-field example get-in-config]}]
   (let [{{full-id :id} :parsed-body} (create-doc app entity (dissoc example :id))]
     (if (= :description query-field)
-      (test-describable-search app entity example get-in-config)
+      (test-describable-search
+       {:app           app
+        :entity        entity
+        :example       example
+        :get-in-config get-in-config})
       (test-non-describable-search
-       app
-       entity
-       query
-       query-field))
+       {:app         app
+        :entity      entity
+        :query       query
+        :query-field query-field}))
     (test-filter-by-id app entity)
     (test-from-to app entity example)
     (delete-doc app entity full-id)))
