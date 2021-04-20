@@ -69,6 +69,7 @@
                  [org.clojure/tools.cli "1.0.194"]
                  [pandect "0.6.1"]
                  [org.clojure/math.combinatorics "0.1.6"]
+                 [version-clj "2.0.1"]
 
                  ;; Trapperkeeper
                  [puppetlabs/trapperkeeper ~trapperkeeper-version]
@@ -165,7 +166,7 @@
                                   (:out (clojure.java.shell/sh
                                          "git" "symbolic-ref" "--short" "HEAD")))})}]
 
-  
+
   :profiles {:dev {:dependencies [[puppetlabs/trapperkeeper ~trapperkeeper-version
                                    :classifier "test"]
                                   [puppetlabs/kitchensink ~trapperkeeper-version
@@ -264,7 +265,7 @@
             "init-properties" ^{:doc (str "create an initial `ctia.properties`"
                                           " using docker machine ip")}
             ["shell" "scripts/init-properties-for-docker.sh"]
-            
+
             ; circleci.test
             ;"test" ["run" "-m" "circleci.test/dir" :project/test-paths]
             "split-test" ["trampoline"

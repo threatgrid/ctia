@@ -50,7 +50,8 @@
   "Ensure a document ID in a given filter map"
   [{:keys [id] :as m}]
   (cond-> m
-    id (update :id ensure-document-id)))
+    (string? id) (update :id list)
+    id (update :id #(map ensure-document-id %))))
 
 (defn remove-es-actions
   "Removes the ES action level
