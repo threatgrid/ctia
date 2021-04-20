@@ -18,10 +18,10 @@
 
 (s/defschema FullTextQuery
   (st/merge
-   {:mode FullTextQueryMode
-    :query s/Str}
+   {:query s/Str}
    (st/optional-keys
-    {:fields [s/Str]
+    {:query_mode       FullTextQueryMode
+     :fields           [s/Str]
      :default_operator s/Str})))
 
 (s/defschema SearchQuery

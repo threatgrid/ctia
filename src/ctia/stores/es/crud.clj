@@ -329,9 +329,9 @@ It returns the documents with full hits meta data including the real index in wh
         filter-terms (-> (ensure-document-id-in-map filter-map)
                             q/prepare-terms)
         full-text-q  (when full-text
-                       {(:mode full-text)
+                       {(get full-text :query_mode :query_string) ;; if no :query-mode passed, use :query_string mode
                         (merge
-                         (dissoc full-text :mode)
+                         (dissoc full-text :query_mode)
                          (when default_operator
                            {:default_operator default_operator}))})]
     {:bool

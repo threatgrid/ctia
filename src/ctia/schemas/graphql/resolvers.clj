@@ -43,9 +43,8 @@
 
     (some-> (get-store entity-type)
             (query-string-search
-             {:full-text {:query query
-                          :mode :query_string}
-               :filter-map (remove-map-empty-values filtermap)}
+             {:full-text  {:query query}
+              :filter-map (remove-map-empty-values filtermap)}
               ident
               params)
             with-long-id-fn
