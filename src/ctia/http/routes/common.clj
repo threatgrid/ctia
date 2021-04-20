@@ -16,7 +16,8 @@
                      :offset
                      :limit
                      :fields
-                     :search_after])
+                     :search_after
+                     :query_mode])
 
 (def filter-map-search-options
   (conj search-options :query :from :to))
