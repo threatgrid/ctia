@@ -66,11 +66,11 @@
                                    :as services} :- ESConnServices]
   (let [{:keys [conn index]} (es-init/init-store-conn
                               (es-init/get-store-properties entity get-in-config)
-                              services)]
+                              services)
+        index-wildcard (str index "*")]
     (when conn
-      (doto (str index "*")
-        #(es-index/delete! conn %)
-        #(es-index/delete-template! conn %)))))
+        (es-index/delete! conn index-wildcard)
+        (es-index/delete-template! conn index-wildcard))))
 
 (defn fixture-purge-event-indices-and-templates
   "walk through all producers and delete their indices and templates"
@@ -207,7 +207,7 @@
            :_id _id)))
 
 (defn load-bulk
-  ([conn docs] (load-bulk conn docs "true"))
+  ([conn docs] (load-bulk conn docs "wait_for"))
   ([{:keys [version] :as conn} docs refresh?]
    (es-doc/bulk-create-doc conn
                            (cond->> docs
