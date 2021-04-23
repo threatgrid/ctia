@@ -11,7 +11,7 @@ addons:
 
 branches:
   only:
-  # INT is now deployed by GitHub Actions
+  # now deployed by GitHub Actions
   #- master
   - release
   - /^rel-[0-9]{4}(0[1-9]|1[0-2])(0[1-9]|[1-2][0-9]|3[0-1])$/
