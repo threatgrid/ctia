@@ -3,7 +3,7 @@
 #
 # Fails if run in non-deployment situations.
 #
-# Assumes awscli is setup with correct credentials.
+# Assumes awscli is set up with correct credentials.
 #
 # Requires secrets:
 # - CYBRIC_API_KEY
@@ -13,6 +13,11 @@ set -e
 
 if [[ "${GITHUB_EVENT_NAME}" != "push" ]];
   echo "./build/build-actions.sh currently supports push deployments only."
+  exit 1
+fi
+
+if [[ "${GITHUB_REPOSITORY}" != "threatgrid/ctia" ]];
+  echo "./build/build-actions.sh currently deploys only via the threatgrid/ctia repository."
   exit 1
 fi
 
