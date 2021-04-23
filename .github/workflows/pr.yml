@@ -1,13 +1,11 @@
-name: GitHub Actions Pull Request
+name: GitHub Actions Pull Request and Deployment
 
 on:
   pull_request:
-  # Actions only uses caches from upstream branches. since every PR
-  # is branched from master, building pushes to master is sufficient
-  # to seed PR's with caches.
   push:
     branches:
       - master
+      - /^v[0-9]+(.[0-9]+)+$/
   # Cron job: runs a matrix of JVM and Clojure versions, which can
   # be configured in the `cron-matrix` function in ./scripts/actions/print-matrix.clj
   # Note: automatically uses master branch https://stackoverflow.com/a/58800550
@@ -247,6 +245,7 @@ jobs:
   # them up to date
   # here's a GitHub Actions feature request that is relevant:
   # https://github.community/t/branch-protections-job-names-and-matrix-jobs/16317
+  # TODO rename this
   all-pr-checks:
     runs-on: ubuntu-18.04
     needs: [test-matrix]
@@ -288,3 +287,57 @@ jobs:
           path: target/test-results/*.edn
 
       - run: echo "All tests pass!"
+  deploy:
+    runs-on: ubuntu-18.04
+    needs: [all-pr-checks]
+    # see on.push.branches for which branches are built on push
+    if: github.event_name == 'push'
+    steps:
+      - uses: actions/checkout@v2
+      - name: Binary Cache
+        uses: actions/cache@v2
+        with:
+          path: ${{ env.BIN_PATH }}
+          key: ctia-bin-${{ env.ACTIONS_CACHE_VERSION }}-${{ env.BB_VERSION }}
+      - name: Setup PATH and directories
+        run: |
+          mkdir -p "${BIN_PATH}"
+          echo "${BIN_PATH}" >> $GITHUB_PATH
+      - name: Install babashka
+        run: ./scripts/actions/install-bb.sh
+      - run: ./scripts/actions/setup-env.clj
+      - name: Maven Cache
+        id: maven-cache
+        uses: actions/cache@v2
+        with:
+          path: ~/.m2/repository
+          key: ctia-m2-cache-${{ env.ACTIONS_CACHE_VERSION }}-${{ hashFiles('project.clj') }}
+          restore-keys: |
+            ctia-m2-cache-${{ env.ACTIONS_CACHE_VERSION }}-
+
+      - uses: actions/setup-java@v1
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+      - run: java -version
+
+      # install lein using cache to avoid extra download and startup time
+      - name: Leiningen Cache
+        uses: actions/cache@v2
+        id: lein-cache
+        with:
+          path: ${{env.LEIN_HOME}}
+          key: ctia-lein-cache-${{ env.ACTIONS_CACHE_VERSION }}-${{ env.LEIN_VERSION }}
+      - name: Install Leiningen
+        if: steps.lein-cache.outputs.cache-hit != 'true'
+        run: ./scripts/actions/install-lein.sh
+      # we should get a cache hit from maven here, since the `setup` job only succeeds if it exists.
+      # in the unlikely event we don't, download deps for this specific job only.
+      - name: Warm dependency cache
+        if: steps.maven-cache.outputs.cache-hit != 'true'
+        # poor man's travis_retry
+        run: for i in {1..${ACTIONS_RETRY_TIMES}}; do lein warm-ci-deps && break; done
+      - run: ./build/build-actions.sh
+        env:
+          # offline to catch issues where `lein warm-ci-deps` doesn't download all
+          # dependencies we need to run tests.
+          LEIN_OFFLINE: true

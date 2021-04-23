@@ -1,22 +1,35 @@
 #!/bin/bash
-# Travis CI deployment
+# GitHub Actions deployment
+# Fails if run in non-deployment situations.
 set -e
 
-echo "branch: ${TRAVIS_BRANCH}"
-echo "build number: ${TRAVIS_BUILD_NUMBER}"
-echo "pull request: ${TRAVIS_PULL_REQUEST}"
-echo "commit: ${TRAVIS_COMMIT}"
-echo "tag: ${TRAVIS_TAG}"
+if [[ "${GITHUB_EVENT_NAME}" != "push" ]];
+  echo "./build/build-actions.sh currently supports push deployments only."
+  exit 1
+fi
+
+# the current branch -- note: this doesn't work on PR's but we
+# don't deploy on PR's.
+# https://stackoverflow.com/a/58035262
+CTIA_BRANCH="${GITHUB_REF#refs/heads/}"
+# unique identifier for this build
+# https://docs.github.com/en/actions/reference/environment-variables#default-environment-variables
+CTIA_BUILD_NUMBER="${GITHUB_RUN_ID}-${GITHUB_RUN_NUMBER}"
+CTIA_COMMIT="${GITHUB_SHA}"
+
+echo "branch: ${CTIA_BRANCH}"
+echo "build number: ${CTIA_BUILD_NUMBER}"
+echo "commit: ${CTIA_COMMIT}"
 
 function build-and-publish-package {
   PKG_TYPE=$1
 
   echo "Building new $PKG_TYPE package"
   ( set -x && lein uberjar )
-  BUILD_NAME="${CTIA_MAJOR_VERSION}-${PKG_TYPE}-${TRAVIS_BUILD_NUMBER}-${TRAVIS_COMMIT:0:8}"
+  BUILD_NAME="${CTIA_MAJOR_VERSION}-${PKG_TYPE}-${CTIA_BUILD_NUMBER}-${CTIA_COMMIT:0:8}"
   echo "$BUILD_NAME"
   echo "Build: $BUILD_NAME"
-  echo "Commit: ${TRAVIS_COMMIT}"
+  echo "Commit: ${CTIA_COMMIT}"
   echo "Version: $BUILD_NAME"
 
   # Upload the jar directly to the artifacts S3 bucket
@@ -26,7 +39,7 @@ function build-and-publish-package {
     ARTIFACTS_BUCKET="372070498991-us-east-1-test-saltstack"
   fi
 
-  ARTIFACT_NAME="${TRAVIS_BUILD_NUMBER}-${TRAVIS_COMMIT:0:8}.jar"
+  ARTIFACT_NAME="${CTIA_BUILD_NUMBER}-${CTIA_COMMIT:0:8}.jar"
   ( set -x && pip3 install --upgrade --user awscli )
   export PATH=$PATH:$HOME/.local/bin
   ( set -x && aws s3 cp ./target/ctia.jar s3://${ARTIFACTS_BUCKET}/artifacts/ctia/"${ARTIFACT_NAME}" --sse aws:kms --sse-kms-key-id alias/kms-s3 )
@@ -42,32 +55,24 @@ function build-and-publish-package {
   fi
 }
 
-if [[ "${TRAVIS_PULL_REQUEST}" = "false" && "${TRAVIS_EVENT_TYPE}" != "cron" ]]; then
-  if [[ ${TRAVIS_BRANCH} == "master" ]]; then
+if [[ "${GITHUB_EVENT_NAME}" == "push" ]]; then
+  if [[ ${CTIA_BRANCH} == "master" ]]; then
     # non-pr builds on the master branch yield INT packages
     echo "OK: master branch detected"
     build-and-publish-package "int"
+    exit 0
 
-  elif [[ ${TRAVIS_BRANCH} == "release" ]]; then
-    # non-pr builds on 'release' branch yield REL packages
-    echo "OK: release branch detected using regex"
-    build-and-publish-package "rel"
-
-  elif [[ ${TRAVIS_BRANCH} =~ ^rel-[0-9]{4}(0[1-9]|1[0-2])(0[1-9]|[1-2][0-9]|3[0-1])$ ]]; then
-    # non-pr builds on 'rel-yyyymmdd' branches yield REL packages
-    # To be removed at a future date, depending on the success of the new method
-    echo "OK: release branch detected using regex"
-    build-and-publish-package "rel"
-
-  elif [[ ${TRAVIS_BRANCH} =~ ^v[0-9]+(.[0-9]+)+$ ]]; then
+  elif [[ ${CTIA_BRANCH} =~ ^v[0-9]+(.[0-9]+)+$ ]]; then
     # non-pr builds on 'v?.?' branches yield REL packages
-    # To be removed at a future date, once we're sure the process works.
     echo "OK: v branch detected using regex"
     build-and-publish-package "rel"
+    exit 0
 
   else
     echo "Not on master or release branch. Not building a package."
+    exit 1
   fi
 else
-  echo "Build is for a pull request or cron job.  Not building a package."
+  echo "Not building package on event ${GITHUB_EVENT_NAME}"
+  exit 1
 fi
