@@ -31,7 +31,7 @@ function build-and-publish-package {
   export PATH=$PATH:$HOME/.local/bin
   ( set -x && aws s3 cp ./target/ctia.jar s3://${ARTIFACTS_BUCKET}/artifacts/ctia/"${ARTIFACT_NAME}" --sse aws:kms --sse-kms-key-id alias/kms-s3 )
 
-  # Run Vulnerability Scan in the artifact using ZeroNorth - INT only
+  # Run Vulnerability Scan in the artifact using ZeroNorth - master only
   # WARNING: don't `set -x` here, exposes credentials
   if [ "${PKG_TYPE}" == "int" ]; then
     echo "$DOCKERHUB_PASSWORD" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
@@ -44,7 +44,7 @@ function build-and-publish-package {
 
 if [[ "${TRAVIS_PULL_REQUEST}" = "false" && "${TRAVIS_EVENT_TYPE}" != "cron" ]]; then
   if [[ ${TRAVIS_BRANCH} == "master" ]]; then
-    # non-pr builds on the master branch yield INT packages
+    # non-pr builds on the master branch yield master packages
     echo "OK: master branch detected"
     build-and-publish-package "int"
 

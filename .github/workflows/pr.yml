@@ -5,7 +5,7 @@ on:
   push:
     branches:
       - master
-      # let's trial this on INT before deploying elsewhere
+      # let's trial just master before deploying elsewhere
       #- /^v[0-9]+(.[0-9]+)+$/
   # Cron job: runs a matrix of JVM and Clojure versions, which can
   # be configured in the `cron-matrix` function in ./scripts/actions/print-matrix.clj
