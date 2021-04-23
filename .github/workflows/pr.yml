@@ -289,9 +289,10 @@ jobs:
       - run: echo "All tests pass!"
   deploy:
     runs-on: ubuntu-18.04
-    needs: [all-pr-checks]
+    # can run in parallel to all-pr-checks, only aggregates and uploads test results
+    needs: [test-matrix]
     # see on.push.branches for which branches are built on push
-    if: github.event_name == 'push'
+    if: github.event_name == 'push' && github.repository == 'threatgrid/ctia'
     steps:
       - uses: actions/checkout@v2
       - name: Binary Cache
