@@ -336,8 +336,15 @@ jobs:
         if: steps.maven-cache.outputs.cache-hit != 'true'
         # poor man's travis_retry
         run: for i in {1..${ACTIONS_RETRY_TIMES}}; do lein warm-ci-deps && break; done
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
       - run: ./build/build-actions.sh
         env:
           # offline to catch issues where `lein warm-ci-deps` doesn't download all
-          # dependencies we need to run tests.
+          # dependencies we need to deploy.
           LEIN_OFFLINE: true

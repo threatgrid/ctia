@@ -1,6 +1,14 @@
 #!/bin/bash
-# GitHub Actions deployment
+# # GitHub Actions deployment
+#
 # Fails if run in non-deployment situations.
+#
+# Assumes awscli is setup with correct credentials.
+#
+# Requires secrets:
+# - CYBRIC_API_KEY
+# - DOCKERHUB_PASSWORD
+# - DOCKERHUB_USERNAME
 set -e
 
 if [[ "${GITHUB_EVENT_NAME}" != "push" ]];
@@ -40,7 +48,6 @@ function build-and-publish-package {
   fi
 
   ARTIFACT_NAME="${CTIA_BUILD_NUMBER}-${CTIA_COMMIT:0:8}.jar"
-  ( set -x && pip3 install --upgrade --user awscli )
   export PATH=$PATH:$HOME/.local/bin
   ( set -x && aws s3 cp ./target/ctia.jar s3://${ARTIFACTS_BUCKET}/artifacts/ctia/"${ARTIFACT_NAME}" --sse aws:kms --sse-kms-key-id alias/kms-s3 )
 
