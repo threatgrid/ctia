@@ -271,6 +271,20 @@
                   (sut/make-search-query es-conn-state
                                          {:filter-map filter-map}
                                          ident)))
+           (is (= {:bool {:filter [simple-access-ctrl-query
+                                   {:simple_query_string {:query "*"
+                                                          :default_operator "AND"}}]}}
+                  (sut/make-search-query es-conn-state
+                                         {:full-text {:query query-string
+                                                      :query_mode :simple_query_string}}
+                                         ident)))
+           (is (= {:bool {:filter [simple-access-ctrl-query
+                                   {:multi_match {:query "*"}}]}}
+                  (sut/make-search-query es-conn-state
+                                         {:full-text {:query query-string
+                                                      :query_mode :multi_match}}
+                                         ident))
+               "multi_match queries don't support default_operator")
            (is (= {:bool {:filter (-> [simple-access-ctrl-query]
                                       (into es-terms)
                                       (into [es-date-range es-query-string-AND]))}}

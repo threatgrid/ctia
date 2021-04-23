@@ -332,7 +332,9 @@ It returns the documents with full hits meta data including the real index in wh
                        {(get full-text :query_mode :query_string) ;; if no :query-mode passed, use :query_string mode
                         (merge
                          (dissoc full-text :query_mode)
-                         (when default_operator
+                         (when (and default_operator
+                                    ;; multi_match queries in ES don't support default_operator
+                                    (not= :multi_match (:query_mode full-text)))
                            {:default_operator default_operator}))})]
     {:bool
      {:filter
