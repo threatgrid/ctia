@@ -27,7 +27,7 @@ fi
 CTIA_BRANCH="${GITHUB_REF#refs/heads/}"
 # unique identifier for this build
 # https://docs.github.com/en/actions/reference/environment-variables#default-environment-variables
-CTIA_BUILD_NUMBER="${GITHUB_RUN_ID}-${GITHUB_RUN_NUMBER}"
+CTIA_BUILD_NUMBER="${GITHUB_RUN_NUMBER}"
 CTIA_COMMIT="${GITHUB_SHA}"
 
 echo "branch: ${CTIA_BRANCH}"
