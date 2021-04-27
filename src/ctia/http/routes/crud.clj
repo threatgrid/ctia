@@ -164,10 +164,18 @@
  (s/fn [{{:keys [get-store]} :StoreService
          :as services} :- APIHandlerServices]
   (let [capitalized (capitalize-entity entity)
+        ;; Adding additional query params for ES Fulltext search
         search-q-params* (st/merge
                           search-q-params
                           {(s/optional-key :query_mode)
-                           (describe FullTextQueryMode "Elasticsearch FullText Query Mode. Defaults to query_string")})
+                           (describe FullTextQueryMode "Elasticsearch Fulltext Query Mode. Defaults to query_string")
+
+                           ;; We cannot name the parameter :fields, because we already have :fields (part
+                           ;; of search-q-params). That key is to select a subsets of fields of the
+                           ;; retrieved document and it gets passed to the `_source` parameter of
+                           ;; Elasticsearch. For more: www.elastic.co/guide/en/elasticsearch/reference/current/mapping-source-field.html
+                           (s/optional-key :es_query_fields)
+                           (describe (st/get-in search-q-params [:fields]) "'fields' key of Elasticsearch Fulltext Query.")})
         search-filters (st/dissoc search-q-params
                                   :sort_by
                                   :sort_order

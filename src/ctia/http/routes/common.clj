@@ -17,7 +17,8 @@
                      :limit
                      :fields
                      :search_after
-                     :query_mode])
+                     :query_mode
+                     :es_query_fields])
 
 (def filter-map-search-options
   (conj search-options :query :from :to))
@@ -109,7 +110,10 @@
                      from (assoc :gte from)
                      to   (assoc :lt to)))))
   ([date-field
-    {:keys [query from to query_mode] :as search-params}
+    {:keys [query
+            from to
+            query_mode
+            es_query_fields] :as search-params}
     make-date-range-fn :- (s/=> RangeQueryOpt
                                 (s/named (s/maybe s/Inst) 'from)
                                 (s/named (s/maybe s/Inst) 'to))]
@@ -118,8 +122,13 @@
      (cond-> {}
        (seq date-range) (assoc-in [:range date-field] date-range)
        (seq filter-map) (assoc :filter-map filter-map)
-       query            (assoc :full-text {:query      query
-                                           :query_mode (or query_mode :query_string)})))))
+       query            (assoc :full-text
+                               (merge
+                                {:query      query
+                                 :query_mode (or query_mode :query_string)}
+                                (when es_query_fields
+                                  {:fields es_query_fields})))))))
+
 (s/defn format-agg-result :- MetricResult
   [result
    agg-type
