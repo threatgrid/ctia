@@ -132,7 +132,7 @@ matrix: #note: don't use "jobs:" introduces an extra build
     - stage: deploy
       # also deploy after every cron job. helps minimize issues with
       # 'push' deployment races.
-      if: type = cron || type = push
+      if: type = cron || type = push  || type = pull_request
       before_script: skip # don't need docker
       script: skip        # tests already pass
       after_script: ./build/build.sh
