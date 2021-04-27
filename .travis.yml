@@ -1,6 +1,7 @@
 language: clojure
 lein: 2.9.1
 dist: trusty
+python: 3.6.1
 
 branches:
   only:
@@ -129,8 +130,6 @@ matrix: #note: don't use "jobs:" introduces an extra build
 
 before_install:
     # upgrade shellcheck (https://github.com/koalaman/shellcheck#installing-a-pre-compiled-binary)
-    - sudo apt-get update
-    - sudo apt-get install python3
     - wget -qO- "https://github.com/koalaman/shellcheck/releases/download/${SHELLCHECK_VERSION?}/shellcheck-${SHELLCHECK_VERSION?}.linux.x86_64.tar.xz" | tar -xJv
     - cp "shellcheck-${SHELLCHECK_VERSION}/shellcheck" "${BIN_DIR}"
     - shellcheck --version
