@@ -9,12 +9,12 @@ addons:
     packages:
       - python3-pip
 
-branches:
-  only:
-  - master
-  - release
-  - /^rel-[0-9]{4}(0[1-9]|1[0-2])(0[1-9]|[1-2][0-9]|3[0-1])$/
-  - /^v[0-9]+(.[0-9]+)+$/
+#branches:
+#  only:
+#  - master
+#  - release
+#  - /^rel-[0-9]{4}(0[1-9]|1[0-2])(0[1-9]|[1-2][0-9]|3[0-1])$/
+#  - /^v[0-9]+(.[0-9]+)+$/
 
 env:
     global:
@@ -60,13 +60,13 @@ stages:
 matrix: #note: don't use "jobs:" introduces an extra build
   include:
     # dummy build to ease transition to GitHub Actions
-    - stage: test
-      if: type = pull_request
-      before_install: skip
-      install: skip
-      before_script: skip
-      script: skip
-      after_script: skip
+ #   - stage: test
+ #     if: type = pull_request
+ #     before_install: skip
+ #     install: skip
+ #     before_script: skip
+ #     script: skip
+ #     after_script: skip
 
     # Main build
     # ==========
