@@ -1,6 +1,5 @@
 (ns ctia.http.generative.fulltext-search
   (:require
-   [clojure.spec.alpha :as spec]
    [clojure.test :refer [deftest testing is use-fixtures join-fixtures]]
    [clojure.test.check.generators :as gen]
    [ctia.auth.capabilities :as capabilities]
@@ -9,7 +8,6 @@
    [ctia.entity.entities :as entities]
    [ctia.http.generative.properties :as prop]
    [ctia.lib.utils :as utils]
-   [ctia.store :as store]
    [ctia.test-helpers.core :as helpers]
    [ctia.test-helpers.es :as es-helpers]
    [ctia.test-helpers.fake-whoami-service :as whoami-helpers]
@@ -34,31 +32,48 @@
    (mapcat #(-> % :key :values))
    (set)))
 
-(defn- bundle-gen-for
-  "Generator for a bundle that contains only given entity key(s)"
+(defn- entities-gen
+  "Generator for a map where each k/v represents entity-type/list of entities (of
+  that type)"
   [& entity-keys]
-  (gen/fmap
-   (fn [bundle]
-     ;; To generate a bundle that contains only given entity(ies), we're gonna need
-     ;; to generate a complete bundle and remove all other keys from it
-     (let [bundle-keys-to-remove (apply
-                                  disj bundle-entity-field-names
-                                  entity-keys)
-           new-bundle            (apply
-                                  dissoc
-                                  bundle
-                                  bundle-keys-to-remove)]
-       ;; let's remove :id from every entity
-       ;; so we can import the Bundle
-       (reduce
-        (fn [bundle ent-key]
-          (assoc bundle ent-key
-                 (apply utils/update-items
-                        (vec (get bundle ent-key))
-                        (repeat #(dissoc % :id)))))
-        new-bundle
-        entity-keys)))
-   (prop/spec-gen "max-new-bundle")))
+  (let [gens (map
+              (fn [e]
+                (->> e
+                     entities/entity-plural->entity
+                     ffirst
+                     name
+                     (str "max-new-")
+                     prop/spec-gen
+                     (gen/fmap #(dissoc % :id)) ;; remove IDs so it can be used it in Bundle import
+                     gen/vector))
+              entity-keys)]
+    (gen/bind
+     (apply gen/tuple gens)
+     (fn [entity-maps]
+       (gen/return
+        (zipmap entity-keys entity-maps))))))
+
+(defn- bundle-gen-for
+  "Generator for a bundle that contains only given entity key(s)
+  Example: (gen/generate (bundle-gen-for :assets :actors))"
+  [& entity-keys]
+  (gen/let [bundle (->
+                    bundle-maximal
+                    gen/return
+                    (gen/bind
+                     (fn [bundle]
+                       ;; To generate a bundle that contains only given entity(ies), we're gonna need
+                       ;; to generate a complete bundle and remove all other keys from it
+                       (let [bundle-keys-to-remove (apply
+                                                    disj bundle-entity-field-names
+                                                    entity-keys)
+                             new-bundle            (apply
+                                                    dissoc
+                                                    bundle
+                                                    bundle-keys-to-remove)]
+                         (gen/return new-bundle)))))
+            entities (apply entities-gen entity-keys)]
+    (merge bundle entities)))
 
 (defn test-cases []
   [{:query-params {:query_mode "query_string"
@@ -123,7 +138,7 @@
 
 (deftest fulltext-search-test
   (es-helpers/for-each-es-version
-      "Extended Fullquery search"
+      "Extended Fulltext query search"
       [#_5 7]
     #(es-index/delete! % "ctia_*")
     (helpers/fixture-ctia-with-app
