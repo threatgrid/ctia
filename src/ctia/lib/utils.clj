@@ -173,3 +173,13 @@
                           service-fns)))))
           {}
           (partition-all 2 selectors)))
+
+(defn update-items
+  "Updates items in a sequential coll by applying functions one by one to each
+  item. Each function takes an old value and returns a new value. The total
+  number of updated items always equals the number of functions passed, and the
+  total number of items in the resulting coll remains unchanged."
+  [coll & fs]
+  (if (sequential? coll)
+    (map #(% %2) (concat fs (repeat identity)) coll)
+    (throw (IllegalArgumentException. "Not a sequential collection."))))
