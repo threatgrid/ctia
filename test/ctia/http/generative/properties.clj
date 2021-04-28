@@ -1,46 +1,46 @@
 (ns ctia.http.generative.properties
-  (:require [clj-momo.test-helpers
-             [core :refer [common=]]
-             [http :refer [encode]]]
-            [clj-momo.lib.map :refer [keys-in-all]]
-            [clojure.data :as data]
-            [clojure.pprint :as pp]
-            [clojure.set :as set]
-            [clojure.spec.alpha :as cs]
-            [clojure.test :refer [is testing]]
-            [com.gfredericks.test.chuck.clojure-test :refer [checking]]
-            [clojure.test.check.generators :as tcg]
-            [clojure.walk :as walk]
-            [ctia.properties :refer [get-http-show]]
-            [ctia.schemas.core] ;; for spec side-effects
-            [ctia.test-helpers.core
-             :as helpers :refer [POST GET]]
-            [ctia.test-helpers.http :refer [app->HTTPShowServices]]
-            [ctim.domain.id :as id]
-            [ctim.schemas
-             [actor :refer [NewActor]]
-             [asset :refer [NewAsset]]
-             [asset-mapping :refer [NewAssetMapping]]
-             [asset-properties :refer [NewAssetProperties]]
-             [attack-pattern :refer [NewAttackPattern]]
-             [campaign :refer [NewCampaign]]
-             [coa :refer [NewCOA]]
-             [feedback :refer [NewFeedback]]
-             [incident :refer [NewIncident]]
-             [indicator :refer [NewIndicator]]
-             [judgement :refer [NewJudgement] :as csj]
-             [malware :refer [NewMalware]]
-             [relationship :refer [NewRelationship]]
-             [casebook :refer [NewCasebook]]
-             [sighting :refer [NewSighting]]
-             [identity-assertion :refer [NewIdentityAssertion]]
-             [tool :refer [NewTool]]
-             [target-record :refer [NewTargetRecord]]
-             [vulnerability :refer [NewVulnerability]]
-             [weakness :refer [NewWeakness]]]
-            [flanders
-             [spec :as fs]
-             [utils :as fu]]))
+  (:require
+   [clj-momo.lib.map :refer [keys-in-all]]
+   [clj-momo.test-helpers.core :refer [common=]]
+   [clj-momo.test-helpers.http :refer [encode]]
+   [clojure.data :as data]
+   [clojure.pprint :as pp]
+   [clojure.set :as set]
+   [clojure.spec.alpha :as cs]
+   [clojure.test :refer [is testing]]
+   [clojure.test.check.generators :as tcg]
+   [clojure.test.check.generators :as gen]
+   [clojure.walk :as walk]
+   [com.gfredericks.test.chuck.clojure-test :refer [checking]]
+   [ctia.properties :refer [get-http-show]]
+   [ctia.schemas.core] ;; for spec side-effects
+   [ctia.test-helpers.core :as helpers :refer [POST GET]]
+   [ctia.test-helpers.http :refer [app->HTTPShowServices]]
+   [ctim.domain.id :as id]
+   [ctim.schemas
+    [actor :refer [NewActor]]
+    [asset :refer [NewAsset]]
+    [asset-mapping :refer [NewAssetMapping]]
+    [asset-properties :refer [NewAssetProperties]]
+    [attack-pattern :refer [NewAttackPattern]]
+    [campaign :refer [NewCampaign]]
+    [coa :refer [NewCOA]]
+    [feedback :refer [NewFeedback]]
+    [incident :refer [NewIncident]]
+    [indicator :refer [NewIndicator]]
+    [judgement :refer [NewJudgement] :as csj]
+    [malware :refer [NewMalware]]
+    [relationship :refer [NewRelationship]]
+    [casebook :refer [NewCasebook]]
+    [sighting :refer [NewSighting]]
+    [identity-assertion :refer [NewIdentityAssertion]]
+    [tool :refer [NewTool]]
+    [target-record :refer [NewTargetRecord]]
+    [vulnerability :refer [NewVulnerability]]
+    [weakness :refer [NewWeakness]]
+    [bundle :refer [NewBundle]]]
+   [flanders.spec :as fs]
+   [flanders.utils :as fu]))
 
 (defn check-differences-in-common-key-paths
   "Like (apply common= (vals id->m)) but
@@ -110,27 +110,30 @@
                (seq (keys new-entity))
                (assoc :new-entity new-entity)))))))))
 
-(doseq [[entity kw-ns]
-        [[NewActor "max-new-actor"]
-         [NewAsset "max-new-asset"]
-         [NewAssetMapping "max-new-asset-mapping"]
-         [NewAssetProperties "max-new-asset-properties"]
-         [NewAttackPattern "max-new-attack-pattern"]
-         [NewCampaign "max-new-campaign"]
-         [NewCOA "max-new-coa"]
-         [NewFeedback "max-new-feedback"]
-         [NewIncident "max-new-incident"]
-         [NewIndicator "max-new-indicator"]
-         [NewJudgement "max-new-judgement"]
-         [NewMalware "max-new-malware"]
-         [NewRelationship "max-new-relationship"]
-         [NewSighting "max-new-sighting"]
-         [NewIdentityAssertion "max-new-identity-assertion"]
-         [NewTargetRecord "max-new-target-record"]
-         [NewTool "max-new-tool"]
-         [NewVulnerability "max-new-vulnerability"]
-         [NewWeakness "max-new-weakness"]
-         [NewCasebook "max-new-casebook"]]]
+(def entities
+  [[NewActor "max-new-actor"]
+   [NewAsset "max-new-asset"]
+   [NewAssetMapping "max-new-asset-mapping"]
+   [NewAssetProperties "max-new-asset-properties"]
+   [NewAttackPattern "max-new-attack-pattern"]
+   [NewCampaign "max-new-campaign"]
+   [NewCOA "max-new-coa"]
+   [NewFeedback "max-new-feedback"]
+   [NewIncident "max-new-incident"]
+   [NewIndicator "max-new-indicator"]
+   [NewJudgement "max-new-judgement"]
+   [NewMalware "max-new-malware"]
+   [NewRelationship "max-new-relationship"]
+   [NewSighting "max-new-sighting"]
+   [NewIdentityAssertion "max-new-identity-assertion"]
+   [NewTargetRecord "max-new-target-record"]
+   [NewTool "max-new-tool"]
+   [NewVulnerability "max-new-vulnerability"]
+   [NewWeakness "max-new-weakness"]
+   [NewCasebook "max-new-casebook"]
+   [NewBundle "max-new-bundle"]])
+
+(doseq [[entity kw-ns] entities]
   (fs/->spec (fu/require-all entity)
              kw-ns))
 
@@ -140,7 +143,7 @@
                     (let [;; override data-table Datum, originally `any?` which is
                           ;; a documented underapproximation and generates huge examples
                           ;; which don't end up round-tripping via GET anyway.
-                          gen-datum (constantly tcg/string-ascii)]
+                          gen-datum (constantly tcg/string-alphanumeric)]
                       {:max-new-casebook.bundle.sightings.set-of.data.rows.seq-of/seq-of gen-datum
                        :max-new-casebook.bundle.data_tables.set-of.rows.seq-of/seq-of gen-datum
                        :max-new-sighting.data.rows.seq-of/seq-of gen-datum}))))

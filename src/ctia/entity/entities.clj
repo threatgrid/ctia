@@ -60,3 +60,14 @@
    :tool               tool-entity
    :vulnerability      vulnerability-entity
    :weakness           weakness-entity})
+
+(defn entity-plural->entity
+  "Returns entity map for given plural form of the entity key"
+  [entity-key]
+  (reduce-kv
+   (fn [m k v]
+     (if (-> v :plural (= entity-key))
+       (assoc m k v)
+       m))
+   {}
+   (all-entities)))
