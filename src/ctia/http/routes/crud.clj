@@ -331,7 +331,7 @@
            :identity-map identity-map
            (GET "/" []
              :return search-schema
-             :summary (format "Search for %s entities using a Lucene/ES query string and field filters" capitalized)
+             :summary (format "Search for %s entities using a ES query syntax and field filters" capitalized)
              :description (capabilities->description search-capabilities)
              :capabilities search-capabilities
              :query [params search-q-params*]
