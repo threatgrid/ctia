@@ -1,13 +1,6 @@
 language: clojure
 lein: 2.9.1
 dist: trusty
-python: 3
-
-addons:
-  apt:
-    update: true
-    packages:
-      - python3-pip
 
 branches:
   only:
@@ -86,24 +79,22 @@ matrix: #note: don't use "jobs:" introduces an extra build
     #     https://github.com/threatgrid/tenzin/blob/master/nextgen/saltstack/srv/salt/openjdk/defaults.yml
     # - IMPORTANT! Must include split build id's from in (range ${CTIA_NSPLITS}).
     #    Nothing ensures this is actually true, so make sure it is!
-
-# TEMPORARY DISABLE
-#    - stage: test
-#      name: "JDK 11"
-#      if: type = push
-#      env: CTIA_THIS_SPLIT=0
-#    - name: "JDK 11"
-#      if: type = push
-#      env: CTIA_THIS_SPLIT=1
-#    - name: "JDK 11"
-#      if: type = push
-#      env: CTIA_THIS_SPLIT=2
-#    - name: "JDK 11"
-#      if: type = push
-#      env: CTIA_THIS_SPLIT=3
-#    - name: "JDK 11"
-#      if: type = push
-#      env: CTIA_THIS_SPLIT=4
+    - stage: test
+      name: "JDK 11"
+      if: type = push
+      env: CTIA_THIS_SPLIT=0
+    - name: "JDK 11"
+      if: type = push
+      env: CTIA_THIS_SPLIT=1
+    - name: "JDK 11"
+      if: type = push
+      env: CTIA_THIS_SPLIT=2
+    - name: "JDK 11"
+      if: type = push
+      env: CTIA_THIS_SPLIT=3
+    - name: "JDK 11"
+      if: type = push
+      env: CTIA_THIS_SPLIT=4
 
     # Cron jobs:
     # ==========
@@ -112,19 +103,18 @@ matrix: #note: don't use "jobs:" introduces an extra build
     # - they repeat around the same time as initially started
     # - we deploy (also) during cron jobs in the 'deploy' stage
     # - generative tests are disabled and are instead run in Actions
-# TEMPORARY DISABLE
-#    - name: "JDK 11"
-#      if: type = cron
-#      env:
-#        - CTIA_TEST_SUITE=ci
-#        - CTIA_THIS_SPLIT=0
-#        - CTIA_NSPLITS=2
-#    - name: "JDK 11"
-#      if: type = cron
-#      env:
-#        - CTIA_TEST_SUITE=ci
-#        - CTIA_THIS_SPLIT=1
-#        - CTIA_NSPLITS=2
+    - name: "JDK 11"
+      if: type = cron
+      env:
+        - CTIA_TEST_SUITE=ci
+        - CTIA_THIS_SPLIT=0
+        - CTIA_NSPLITS=2
+    - name: "JDK 11"
+      if: type = cron
+      env:
+        - CTIA_TEST_SUITE=ci
+        - CTIA_THIS_SPLIT=1
+        - CTIA_NSPLITS=2
 
     # Deploy
     # ======
@@ -138,13 +128,6 @@ matrix: #note: don't use "jobs:" introduces an extra build
       after_script: ./build/build.sh
 
 before_install:
-
-    # check pip3
-    - which pip3    || echo 'which pip3 command failed.'
-    - export PATH=$HOME/.local/bin:$PATH
-    - pip3 install --user $(whoami) --upgrade pip # not pip3
-    - which pip3    || echo 'which pip3 command failed.'
-
     # upgrade shellcheck (https://github.com/koalaman/shellcheck#installing-a-pre-compiled-binary)
     - wget -qO- "https://github.com/koalaman/shellcheck/releases/download/${SHELLCHECK_VERSION?}/shellcheck-${SHELLCHECK_VERSION?}.linux.x86_64.tar.xz" | tar -xJv
     - cp "shellcheck-${SHELLCHECK_VERSION}/shellcheck" "${BIN_DIR}"

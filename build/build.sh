@@ -26,7 +26,7 @@ function build-and-publish-package {
   fi
 
   ARTIFACT_NAME="${TRAVIS_BUILD_NUMBER}-${TRAVIS_COMMIT:0:8}.jar"
-  ( set -x && pip3 install --upgrade --user "$(whoami)" awscli )
+  ( set -x && pip install --upgrade --user awscli )
   export PATH=$PATH:$HOME/.local/bin
   ( set -x && aws s3 cp ./target/ctia.jar s3://${ARTIFACTS_BUCKET}/artifacts/ctia/"${ARTIFACT_NAME}" --sse aws:kms --sse-kms-key-id alias/kms-s3 )
 
