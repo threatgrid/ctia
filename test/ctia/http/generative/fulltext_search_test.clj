@@ -38,14 +38,15 @@
   [& entity-keys]
   (let [gens (map
               (fn [e]
-                (->> e
-                     entities/entity-plural->entity
-                     ffirst
-                     name
-                     (str "max-new-")
-                     prop/spec-gen
-                     (gen/fmap #(dissoc % :id)) ;; remove IDs so it can be used it in Bundle import
-                     gen/vector))
+                (-> (->> e
+                         entities/entity-plural->entity
+                         ffirst
+                         name
+                         (str "max-new-")
+                         prop/spec-gen
+                         ;; remove IDs so it can be used it in Bundle import
+                         (gen/fmap #(dissoc % :id)))
+                    (gen/vector 5 11)))
               entity-keys)]
     (gen/bind
      (apply gen/tuple gens)
