@@ -79,89 +79,87 @@
 
 ;; Every single query gets tested with its own set of generated Bundle
 ;; data. After the query gets sent, the response results are passed into :check
-;; function, together with original Bundle data
+;; function, together with the test-case map, entity key and the Bundle data
 (defn test-cases []
   (concat
    [{:test-description "Returns all the records when the wildcard used"
      :query-params     {:query_mode "query_string"
                         :query      "*"}
      :bundle-gen       (bundle-gen-for :incidents :assets)
-     :check            (fn [bundle res]
+     :check            (fn [_ entity bundle res]
                          (is (= (-> res :parsed-body count)
-                                (-> bundle (select-keys [:incidents :assets]) count))))}]
-
-   (let [bundle-w-incidents (gen/fmap
-                             (fn [bundle]
-                               (update
-                                bundle :incidents
-                                (fn [incidents]
-                                  (apply
-                                   utils/update-items incidents
-                                   (repeat 3 #(assoc % :title "nunc porta vulputate tellus"))))))
-                             (bundle-gen-for :incidents))
-         check-fn           (fn [bundle res]
-                              (let [matching (->> res
-                                                  :parsed-body
-                                                  (filter #(-> % :title (= "nunc porta vulputate tellus"))))]
-                                (is (= 3 (count matching)))))
-         no-res             (fn [_ res] (is (zero? (-> res :parsed-body count))))]
+                                (-> bundle (get entity) count))))}]
+   (let [bundle   (gen/fmap
+                   (fn [bundle]
+                     (update
+                      bundle :incidents
+                      (fn [incidents]
+                        (apply
+                         utils/update-items incidents
+                         (repeat 3 #(assoc % :title "nunc porta vulputate tellus"))))))
+                   (bundle-gen-for :incidents))
+         check-fn (fn [{:keys [test-description]} _ _ res]
+                    (let [matching (->> res
+                                        :parsed-body
+                                        (filter #(-> % :title (= "nunc porta vulputate tellus"))))]
+                      (is (= 3 (count matching)) test-description)))]
      [{:test-description "Multiple records with the same value in a given field. Lucene syntax"
        :query-params     {:query_mode "query_string"
                           :query      "title:nunc porta vulputate tellus"}
-       :bundle-gen       bundle-w-incidents
+       :bundle-gen       bundle
        :check            check-fn}
       {:test-description "Multiple records with the same value in a given field set in es_query_fields"
        :query-params     {:query_mode      "query_string"
                           :query           "nunc porta vulputate tellus"
                           :es_query_fields ["title"]}
-       :bundle-gen       bundle-w-incidents
+       :bundle-gen       bundle
        :check            check-fn}
-      {:test-description "Querying for non-existing value should yield no results"
+      {:test-description "Querying for non-existing value should yield no results. Lucene syntax."
        :query-params     {:query_mode "query_string"
                           :query      "title:0e1c9f6a-c3ac-4fd5-982e-4981f86df07a"}
-       :bundle-gen       bundle-w-incidents
-       :check            no-res}
-      {:test-description "Querying for non-existing field should yield no results. es_query_fields"
+       :bundle-gen       bundle
+       :check            (fn [_ _ _ res] (is (zero? (-> res :parsed-body count))))}
+      {:test-description "Querying for non-existing field with wildcard should yield no results. Lucene syntax."
+       :query-params     {:query_mode "query_string"
+                          :query      "74f93781-f370-46ea-bd53-3193db379e41:*"}
+       :bundle-gen       bundle
+       :check            (fn [_ _ _ res] (is (empty? (-> res :parsed-body))))}
+      {:test-description "Querying for non-existing field with wildcard should fail the schema validation. es_query_fields"
        :query-params     {:query_mode      "query_string"
                           :query           "*"
                           :es_query_fields ["512b8dce-0423-4e9a-aa63-d3c3b91eb8d8"]}
-       :bundle-gen       bundle-w-incidents
-       :check            no-res}
-      {:test-description "Querying for non-existing field should yield no results. Lucene syntax."
-       :query-params     {:query_mode "query_string"
-                          :query      "74f93781-f370-46ea-bd53-3193db379e41:*"}
-       :bundle-gen       bundle-w-incidents
-       :check            no-res}])
+       :bundle-gen       bundle
+       :check            (fn [_ _ _ res] (is (= 400 (-> res :status))))}])
 
    ;; Test `AND` (set two different fields that contain the same word in the same entity)
-   (let [bundle-w-incidents (gen/fmap
-                             (fn [bundle]
-                               (update
-                                bundle :incidents
-                                (fn [incidents]
-                                  (utils/update-items
-                                   incidents
-                                   #(assoc % :discovery_method "Log Review"
-                                           :title "title of test incident")))))
-                             (bundle-gen-for :incidents))
-         get-fields         (fn [res]
-                              (->> res
-                                   :parsed-body
-                                   (some #(and (-> % :discovery_method (= "Log Review"))
-                                               (-> % :title (= "title of test incident"))))))]
+   (let [bundle        (gen/fmap
+                        (fn [bundle]
+                          (update
+                           bundle :incidents
+                           (fn [incidents]
+                             (utils/update-items
+                              incidents
+                              #(assoc % :discovery_method "Log Review"
+                                      :title "title of test incident")))))
+                        (bundle-gen-for :incidents))
+         get-fields (fn [res]
+                      (->> res
+                           :parsed-body
+                           (some #(and (-> % :discovery_method (= "Log Review"))
+                                       (-> % :title (= "title of test incident"))))))]
      [{:test-description (str "Should NOT return anything, because query field is missing."
                               "Asking for multiple things in the query, but not providing all the fields.")
        :query-params     {:query_mode      "query_string"
                           :query           "(title of test incident) AND (Log Review)"
                           :es_query_fields ["title"]}
-       :bundle-gen       bundle-w-incidents
-       :check            (fn [_ res] (is (nil? (get-fields res))))}
+       :bundle-gen       bundle
+       :check            (fn [_ _ _ res] (is (nil? (get-fields res))))}
       {:test-description "Should return an entity where multiple fields match"
        :query-params     {:query_mode      "query_string"
                           :query           "(title of test incident) AND (Log Review)"
                           :es_query_fields ["title" "discovery_method"]}
-       :bundle-gen       bundle-w-incidents
-       :check            (fn [_ res] (is (get-fields res)))}])
+       :bundle-gen       bundle
+       :check            (fn [_ _ _ res] (is (get-fields res)))}])
 
    [{:test-description "multi_match - looking for the same value in different fields in multiple records"
      :query-params     {:query_mode      "multi_match"
@@ -178,7 +176,7 @@
                                       #(assoc % :title "Etiam vel neque bibendum dignissim"
                                               :assignees ["bibendum"]))))))
                         (bundle-gen-for :incidents))
-     :check            (fn [bundle res]
+     :check            (fn [_ _ _ res]
                          (let [matching (->> res
                                              :parsed-body
                                              (filter #(and (-> % :assignees (= ["bibendum"]))
@@ -190,7 +188,7 @@
    {:keys [query-params
            bundle-gen
            check
-           test-description]}]
+           test-description] :as test-case}]
   (let [services (app/service-graph app)
         bundle   (gen/generate bundle-gen)
         ent-keys (->> bundle
@@ -202,15 +200,17 @@
      login
      services)
 
-    (doseq [plural ent-keys
-            :let [entity (ffirst (entities/entity-plural->entity plural))
-                  search-res (th.search/search-raw app entity query-params)]]
-      (testing test-description (check bundle search-res)))))
+    (doseq [plural ent-keys]
+      (let [entity (ffirst (entities/entity-plural->entity plural))
+            search-res (th.search/search-raw app entity query-params)]
+       (testing test-description (check test-case plural bundle search-res))
+       (th.search/delete-search app entity {:query "*"
+                                            :REALLY_DELETE_ALL_THESE_ENTITIES true})))))
 
 (deftest fulltext-search-test
   (es-helpers/for-each-es-version
    "Extended Fulltext query search"
-   [#_5 7]
+   [5 7]
    #(es-index/delete! % "ctia_*")
    (helpers/fixture-ctia-with-app
     (fn [app]
