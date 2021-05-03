@@ -65,6 +65,7 @@
 
    (st/optional-keys {"ctia.auth.threatgrid.cache" s/Bool
                       "ctia.auth.entities.scope" s/Str
+                      "ctia.auth.assets.scope" s/Str
                       "ctia.auth.casebook.scope" s/Str
                       "ctia.auth.threatgrid.whoami-url" s/Str
                       "ctia.auth.static.secret" s/Str

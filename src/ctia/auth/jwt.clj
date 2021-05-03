@@ -1,18 +1,17 @@
 (ns ctia.auth.jwt
   (:refer-clojure :exclude [identity])
-  (:require [cheshire.core :as json]
-            [clj-jwt.key :refer [public-key]]
-            [clj-momo.lib.set :refer [as-set]]
-            [clojure.set :as set]
-            [clojure.string :as string]
-            [clojure.tools.logging :as log]
-            [ctia.auth :as auth :refer [IIdentity]]
-            [ctia.auth.capabilities
-             :refer
-             [all-entities gen-capabilities-for-entity-and-accesses]]
-            [ctia.properties :as p]
-            [ring.util.http-response :as resp]
-            [scopula.core :as scopula]))
+  (:require
+   [cheshire.core :as json]
+   [clj-jwt.key :refer [public-key]]
+   [clj-momo.lib.set :refer [as-set]]
+   [clojure.set :as set]
+   [clojure.string :as string]
+   [clojure.tools.logging :as log]
+   [ctia.auth :as auth :refer [IIdentity]]
+   [ctia.auth.capabilities :refer
+    [all-entities gen-capabilities-for-entity-and-accesses]]
+   [ring.util.http-response :as resp]
+   [scopula.core :as scopula]))
 
 (defn load-public-key
   [path]
@@ -63,6 +62,9 @@
   (get-in-config [:ctia :auth :casebook :scope]
                               "casebook"))
 
+(defn assets-root-scope [get-in-config]
+  (get-in-config [:ctia :auth :assets :scope] "asset-intel"))
+
 (defn claim-prefix [get-in-config]
   (get-in-config [:ctia :http :jwt :claim-prefix]
                               "https://schemas.cisco.com/iroh/identity/claims"))
@@ -108,6 +110,16 @@
    (:casebook (all-entities))
    (:access scope-repr)))
 
+(defn gen-assets-capabilities
+  "Generate capabilities for the root-scope 'asset-intel'."
+  [scope-repr]
+  (->> [:asset :asset-mapping :asset-properties :target-record]
+       (select-keys (all-entities))
+       vals
+       (map #(gen-capabilities-for-entity-and-accesses
+              % (:access scope-repr)))
+       unionize))
+
 (defn scope-to-capabilities
   "given a scope generate capabilities"
   [scope get-in-config]
@@ -115,6 +127,7 @@
     (condp = (first (:path scope-repr))
       (entity-root-scope get-in-config)   (gen-entity-capabilities scope-repr)
       (casebook-root-scope get-in-config) (gen-casebook-capabilities scope-repr)
+      (assets-root-scope get-in-config)   (gen-assets-capabilities scope-repr)
       #{})))
 
 (defn scopes-to-capabilities
