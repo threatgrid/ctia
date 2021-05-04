@@ -107,10 +107,10 @@
                           :query      "title:nunc porta vulputate tellus"}
        :bundle-gen       bundle
        :check            check-fn}
-      {:test-description "Multiple records with the same value in a given field set in es_query_fields"
+      {:test-description "Multiple records with the same value in a given field set in search_fields"
        :query-params     {:query_mode      "query_string"
                           :query           "nunc porta vulputate tellus"
-                          :es_query_fields ["title"]}
+                          :search_fields ["title"]}
        :bundle-gen       bundle
        :check            check-fn}
       {:test-description "Querying for non-existing value should yield no results. Lucene syntax."
@@ -123,10 +123,10 @@
                           :query      "74f93781-f370-46ea-bd53-3193db379e41:*"}
        :bundle-gen       bundle
        :check            (fn [_ _ _ res] (is (empty? (-> res :parsed-body))))}
-      {:test-description "Querying for non-existing field with wildcard should fail the schema validation. es_query_fields"
+      {:test-description "Querying for non-existing field with wildcard should fail the schema validation. search_fields"
        :query-params     {:query_mode      "query_string"
                           :query           "*"
-                          :es_query_fields ["512b8dce-0423-4e9a-aa63-d3c3b91eb8d8"]}
+                          :search_fields ["512b8dce-0423-4e9a-aa63-d3c3b91eb8d8"]}
        :bundle-gen       bundle
        :check            (fn [_ _ _ res] (is (= 400 (-> res :status))))}])
 
@@ -150,14 +150,14 @@
                               "Asking for multiple things in the query, but not providing all the fields.")
        :query-params     {:query_mode      "query_string"
                           :query           "(title of test incident) AND (Log Review)"
-                          :es_query_fields ["title"]}
+                          :search_fields ["title"]}
        :bundle-gen       bundle
        :check            (fn [_ _ _ res] (is (nil? (get-fields res))))}
 
       {:test-description "Should return an entity where multiple fields match"
        :query-params     {:query_mode      "query_string"
                           :query           "\"title of test incident\" AND \"Log Review\""
-                          :es_query_fields ["title" "discovery_method"]}
+                          :search_fields ["title" "discovery_method"]}
        :bundle-gen       bundle
        :check            (fn [_ _ _ res]
                            (is (= 1 (-> res :parsed-body count)))
@@ -166,7 +166,7 @@
    [{:test-description "multi_match - looking for the same value in different fields in multiple records"
      :query-params     {:query_mode      "multi_match"
                         :query           "bibendum"
-                        :es_query_fields ["assignees" "title"]}
+                        :search_fields ["assignees" "title"]}
      :bundle-gen       (gen/fmap
                         (fn [bundle]
                           (update
