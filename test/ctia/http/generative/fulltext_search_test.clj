@@ -155,13 +155,14 @@
        :bundle-gen       bundle
        :check            (fn [_ _ _ res] (is (nil? (get-fields res))))}
 
-      ;; TODO ES5 doesn't support `:fields`. Find a way to test and re-enable the test
-      #_{:test-description "Should return an entity where multiple fields match"
+      {:test-description "Should return an entity where multiple fields match"
        :query-params     {:query_mode      "query_string"
-                          :query           "(title of test incident) AND (Log Review)"
+                          :query           "\"title of test incident\" AND \"Log Review\""
                           :es_query_fields ["title" "discovery_method"]}
        :bundle-gen       bundle
-       :check            (fn [_ _ _ res] (is (get-fields res)))}])
+       :check            (fn [_ _ _ res]
+                           (is (= 1 (-> res :parsed-body count)))
+                           (is (get-fields res)))}])
 
    [{:test-description "multi_match - looking for the same value in different fields in multiple records"
      :query-params     {:query_mode      "multi_match"
