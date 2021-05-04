@@ -5,7 +5,6 @@
    [ctia.auth.capabilities :as capabilities]
    [ctia.auth.threatgrid :refer [map->Identity]]
    [ctia.bundle.core :as bundle]
-   [ctia.entity.entities :as entities]
    [ctia.http.generative.properties :as prop]
    [ctia.lib.utils :as utils]
    [ctia.test-helpers.core :as helpers]
@@ -39,7 +38,7 @@
   (let [gens (map
               (fn [e]
                 (-> (->> e
-                         entities/entity-plural->entity
+                         helpers/plural-key->entity
                          ffirst
                          name
                          (str "max-new-")
@@ -204,7 +203,7 @@
      services)
 
     (doseq [plural ent-keys]
-      (let [entity (ffirst (entities/entity-plural->entity plural))
+      (let [entity (ffirst (helpers/plural-key->entity plural))
             search-res (th.search/search-raw app entity query-params)]
        (testing test-description (check test-case plural bundle search-res))
        (th.search/delete-search app entity {:query "*"
