@@ -1,8 +1,6 @@
 language: clojure
 lein: 2.9.1
-# a dist that support a python 2 version supporting SNI
-# https://docs.travis-ci.com/user/languages/python/#python-versions
-dist: focal
+dist: trusty
 
 branches:
   only:
@@ -34,6 +32,7 @@ env:
       # across org
       - CTIA_NSPLITS=5
       - CTIA_TEST_SUITE=ci
+      # only used in deploy job
       - PYTHON_VERSION=2.7.18
 
 # Cache our Maven deps to be kind to clojars, github, docker images
@@ -153,7 +152,7 @@ before_install:
     - cp "shellcheck-${SHELLCHECK_VERSION}/shellcheck" "${BIN_DIR}"
     - shellcheck --version
     # run shellcheck
-    #- ./scripts/shellcheck-build.sh
+    - ./scripts/shellcheck-build.sh
 
     # ES5 needs this
     - sudo sysctl -w vm.max_map_count=262144
