@@ -127,7 +127,15 @@ matrix: #note: don't use "jobs:" introduces an extra build
       # also deploy after every cron job. helps minimize issues with
       # 'push' deployment races.
       if: type = cron || type = push
-      before_script: skip # don't need docker
+      # don't need docker, but let's install the python version we need to deploy
+      before_script:
+        # python with SNI suport
+        - pyenv versions
+        - pyenv install --list
+        - pyenv install -v 2.7.14
+        - pyenv global 2.7.14
+        - python --version
+
       script: skip        # tests already pass
       after_script: ./build/build.sh
 
@@ -138,13 +146,6 @@ before_install:
     - shellcheck --version
     # run shellcheck
     - ./scripts/shellcheck-build.sh
-
-    # python with SNI suport
-    - pyenv versions
-    - pyenv install --list
-    - pyenv install -v 2.7.14
-    - pyenv global 2.7.14
-    - python --version
 
     # ES5 needs this
     - sudo sysctl -w vm.max_map_count=262144
