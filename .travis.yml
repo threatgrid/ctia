@@ -152,7 +152,7 @@ before_install:
     - cp "shellcheck-${SHELLCHECK_VERSION}/shellcheck" "${BIN_DIR}"
     - shellcheck --version
     # run shellcheck
-    - ./scripts/shellcheck-build.sh
+    #- ./scripts/shellcheck-build.sh
 
     # ES5 needs this
     - sudo sysctl -w vm.max_map_count=262144
