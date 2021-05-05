@@ -1,6 +1,7 @@
 (ns ctia.schemas.utils-test
-  (:require [clojure.set :as set]
-            [clojure.test :refer [deftest is testing]]
+  (:require [clj-momo.test-helpers.core :as mth]
+            [clojure.set :as set]
+            [clojure.test :refer [deftest is testing use-fixtures]]
             [clojure.test.check.generators :as gen]
             [com.gfredericks.test.chuck.clojure-test :refer [checking]]
             [com.gfredericks.test.chuck.generators :as chuck.gen]
@@ -13,6 +14,8 @@
             [schema-tools.walk :refer [walk]])
   (:import [clojure.lang ExceptionInfo]
            [java.util.regex Pattern]))
+
+(use-fixtures :once mth/fixture-schema-validation)
 
 (defn collect-schema-version-leaves
   [collector m]
@@ -49,7 +52,7 @@
            {:a {:b (int->v 1) :c (int->v 2)}
             :d {:e (int->v 3) :f (int->v 4)}}
            {:a #{:b (s/optional-key :not-here)}
-            (s/optional-key #{:e}) #{:gone}})
+            (s/optional-key :e) #{:gone}})
          {:a {:b (int->v 1)}}))
   (is (= (service-subgraph
            {:a {:b (int->v 1) :c (int->v 2)}

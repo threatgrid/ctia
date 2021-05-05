@@ -35,7 +35,10 @@
   [schema]
   (st/optional-keys-schema schema))
 
-(s/defn service-subgraph
+(s/defschema SpecificKey
+  (s/pred s/specific-key?))
+
+(s/defn service-subgraph :- (s/pred map?)
   "Returns a subgraph of a Trapperkeeper service graph value.
   If any required levels are missing, throws an exception.
   
@@ -52,13 +55,14 @@
   ;    :FooService {:f2 <...>}}
   "
   [graph :- (s/pred map?)
-   selectors :- {(s/pred simple-keyword?)
-                 #{(s/pred simple-keyword?)}}]
+   selectors :- {SpecificKey #{SpecificKey}}]
   {:pre [(map? graph)]}
   (persistent!
     (reduce-kv (fn [out service-kw fn-kws]
                  (assert (s/specific-key? service-kw)
                          (pr-str service-kw))
+                 (assert (simple-keyword? (s/explicit-schema-key service-kw))
+                         (s/explicit-schema-key service-kw))
                  (assert (set? fn-kws))
                  (let [gval (get graph (s/explicit-schema-key service-kw))]
                    (if-not (map? gval)
@@ -67,6 +71,8 @@
                        (throw (ex-info (str "Missing service: " service-kw) {})))
                      (let [service-fns (persistent!
                                          (reduce (fn [out fn-kw]
+                                                   (assert (simple-keyword? (s/explicit-schema-key fn-kw))
+                                                           (s/explicit-schema-key fn-kw))
                                                    (if-some [svc-fn (get gval (s/explicit-schema-key fn-kw))]
                                                      (assoc! out (s/explicit-schema-key fn-kw) svc-fn)
                                                      (if (s/optional-key? fn-kw)
