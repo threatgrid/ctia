@@ -351,7 +351,8 @@ It returns the documents with full hits meta data including the real index in wh
     (s/fn :- response-schema
       [es-conn-state :- ESConnState
        search-query :- SearchQuery
-       ident es-params]
+       ident
+       es-params]
       (let [{conn :conn, index :index
              {{:keys [get-in-config]} :ConfigService}
              :services} es-conn-state

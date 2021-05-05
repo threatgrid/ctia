@@ -95,6 +95,7 @@
                       (fn [incidents]
                         (apply
                          utils/update-items incidents
+                         ;; update first 3 records, leave the rest unchanged
                          (repeat 3 #(assoc % :title "nunc porta vulputate tellus"))))))
                    (bundle-gen-for :incidents))
          check-fn (fn [{:keys [test-description]} _ _ res]
@@ -138,6 +139,7 @@
                            (fn [incidents]
                              (utils/update-items
                               incidents
+                              ;; update only the first, leave the rest unchanged
                               #(assoc % :discovery_method "Log Review"
                                       :title "title of test incident")))))
                         (bundle-gen-for :incidents))
@@ -174,7 +176,7 @@
                            (fn [incidents]
                              (apply
                               utils/update-items incidents
-                              (repeat 3
+                              (repeat 3 ;; update first 3, leave the rest unchanged
                                       #(assoc % :title "Etiam vel neque bibendum dignissim"
                                               :assignees ["bibendum"]))))))
                         (bundle-gen-for :incidents))
