@@ -139,7 +139,7 @@ before_install:
     - ./scripts/shellcheck-build.sh
 
     # python with SNI suport
-    - pyenv install --list
+    - pyenv install -v 2.7.18
     - python --version
 
     # ES5 needs this
