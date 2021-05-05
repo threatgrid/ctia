@@ -45,6 +45,11 @@
            {:a {:b (int->v 1) :c (int->v 2)}
             :d {:e (int->v 3) :f (int->v 4)}}
            {:a #{:b}})
+         (service-subgraph
+           {:a {:b (int->v 1) :c (int->v 2)}
+            :d {:e (int->v 3) :f (int->v 4)}}
+           {:a #{:b (s/optional-key :not-here)}
+            (s/optional-key #{:e}) #{:gone}})
          {:a {:b (int->v 1)}}))
   (is (= (service-subgraph
            {:a {:b (int->v 1) :c (int->v 2)}
@@ -57,7 +62,7 @@
     (is (thrown-with-msg?
           ExceptionInfo
           (Pattern/compile
-            "Missing service functions for :MissingService: [:foo]"
+            "Missing service: :MissingService"
             Pattern/LITERAL)
           (service-subgraph
             {}
@@ -65,12 +70,20 @@
     (is (thrown-with-msg?
           ExceptionInfo
           (Pattern/compile
-            "Missing service functions for :MissingService: [:bar :foo]"
+            "Missing service: :MissingService"
             Pattern/LITERAL)
           (service-subgraph
             {:PresentService {:present (constantly nil)}}
             {:MissingService #{:foo :bar}
-             :PresentService #{:present}})))))
+             :PresentService #{:present}})))
+    (is (thrown-with-msg?
+          ExceptionInfo
+          (Pattern/compile
+            "Missing :PresentService service function: :missing"
+            Pattern/LITERAL)
+          (service-subgraph
+            {:PresentService {:present (constantly nil)}}
+            {:PresentService #{:present :missing}})))))
 
 (deftest service-subgraph-test
   (service-subgraph-test*

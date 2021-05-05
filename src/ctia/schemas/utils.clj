@@ -36,8 +36,8 @@
   (st/optional-keys-schema schema))
 
 (s/defn service-subgraph
-  "Returns a subgraph of a Trapperkeeper service graph. If
-  any levels are missing, throws an exception.
+  "Returns a subgraph of a Trapperkeeper service graph value.
+  If any required levels are missing, throws an exception.
   
   (service-subgraph
     {:ConfigService {:get-in-config <...>
@@ -46,8 +46,8 @@
                   :f2 <...>}
      :BarService {:b1 <...>}}
     {:ConfigService #{:get-config}
-     :FooService #{:f2 :f3}
-     :MissingService #{:m1}})
+     :FooService #{:f2 (s/optional-key :f3)}
+     (s/optional-key :MissingService) #{:m1}})
   ;=> {:ConfigService {:get-config <...>}
   ;    :FooService {:f2 <...>}}
   "
@@ -56,27 +56,29 @@
                  #{(s/pred simple-keyword?)}}]
   {:pre [(map? graph)]}
   (persistent!
-    (reduce (fn [out [service-kw fn-kws]]
-              (assert (keyword? service-kw)
-                      (pr-str service-kw))
-              (assert (set? fn-kws))
-              (let [service-fns (some-> (get graph service-kw)
-                                        (select-keys fn-kws))]
-                (when (not= (count service-fns)
-                            (count fn-kws))
-                  (throw (ex-info (str "Missing service functions for "
-                                       service-kw ": "
-                                       (-> (set/difference
-                                             (set fn-kws)
-                                             (set (keys service-fns)))
-                                           sort
-                                           vec))
-                                  {})))
-                (cond-> out
-                  service-fns
-                  (assoc! service-kw service-fns))))
-            (transient {})
-            selectors)))
+    (reduce-kv (fn [out service-kw fn-kws]
+                 (assert (s/specific-key? service-kw)
+                         (pr-str service-kw))
+                 (assert (set? fn-kws))
+                 (let [gval (get graph (s/explicit-schema-key service-kw))]
+                   (if-not (map? gval)
+                     (if (s/optional-key? service-kw)
+                       out
+                       (throw (ex-info (str "Missing service: " service-kw) {})))
+                     (let [service-fns (persistent!
+                                         (reduce (fn [out fn-kw]
+                                                   (if-some [svc-fn (get gval (s/explicit-schema-key fn-kw))]
+                                                     (assoc! out (s/explicit-schema-key fn-kw) svc-fn)
+                                                     (if (s/optional-key? fn-kw)
+                                                       out
+                                                       (throw (ex-info (str "Missing " service-kw " service function: "
+                                                                            (s/explicit-schema-key fn-kw))
+                                                                       {})))))
+                                                 (transient {})
+                                                 fn-kws))]
+                       (assoc! out (s/explicit-schema-key service-kw) service-fns)))))
+               (transient {})
+               selectors)))
 
 (s/defn service-subgraph-from-schema :- (s/pred map?)
   "Given a schema describing a Trapperkeeper graph,
@@ -98,7 +100,7 @@
   ;                 :f2 (fn [...] ...)}}
   "
   [graph
-   schema :- s/Schema]
+   schema :- (s/protocol s/Schema)]
   {:pre [(map? graph)
          (map? schema)]}
   (service-subgraph
@@ -107,14 +109,13 @@
           (comp (filter (comp s/specific-key? key))
                 (map (fn [[service-kw service-fns]]
                        {:pre [(map? service-fns)]}
-                       [(s/explicit-schema-key service-kw)
-                        (->> service-fns
-                             keys
-                             (filter s/specific-key?)
-                             (map s/explicit-schema-key))])))
+                       [service-kw
+                        (into #{}
+                              (filter s/specific-key?)
+                              (keys service-fns))])))
           schema)))
 
-(s/defn service-subschema :- s/Schema
+(s/defn service-subschema :- (s/protocol s/Schema)
   "Given a schema shaped like a Trapperkeeper service graph, selects
   the specified services and their optionality from graph. Throws an
   exception on selected service functions that don't occur in graph.
@@ -127,37 +128,37 @@
      :BarService {:b1 (s/=> ...)}}
     {:ConfigService #{:get-config}
      :FooService #{:f2 :f3}
-     :MissingService #{:m1})
+     :MissingService #{:m1}})
   ;=> {:ConfigService {(s/optional-keys :get-config) (s/=> ...)}
   ;    (s/optional-key :FooService) {:f2 (s/=> ...)}}
   "
-  [graph :- s/Schema
+  [graph :- (s/protocol s/Schema)
    selectors :- {(s/pred simple-keyword?)
                  #{(s/pred simple-keyword?)}}]
   {:pre [(map? graph)]}
-  (reduce (fn [out [service-kw fn-kws]]
-            (assert (keyword? service-kw)
-                    (pr-str service-kw))
-            (assert (set? fn-kws))
-            (let [service-fns (some-> (st/get-in graph [service-kw])
-                                      (st/select-keys fn-kws))]
-              (when (not= (count service-fns)
-                          (count fn-kws))
-                (throw (ex-info (str "Missing service functions for "
-                                     service-kw ": "
-                                     (-> (set/difference
-                                           (set fn-kws)
-                                           (->> service-fns keys (map s/explicit-schema-key)))
-                                         sort
-                                         vec))
-                                {})))
-              (cond-> out
-                service-fns
-                (update service-kw (constantly service-fns)))))
-          {}
-          selectors))
+  (reduce-kv (fn [out service-kw fn-kws]
+               (assert (keyword? service-kw)
+                       (pr-str service-kw))
+               (assert (set? fn-kws))
+               (let [service-fns (some-> (st/get-in graph [service-kw])
+                                         (st/select-keys fn-kws))]
+                 (when (not= (count service-fns)
+                             (count fn-kws))
+                   (throw (ex-info (str "Missing service functions for "
+                                        service-kw ": "
+                                        (-> (set/difference
+                                              (set fn-kws)
+                                              (->> service-fns keys (map s/explicit-schema-key)))
+                                            sort
+                                            vec))
+                                   {})))
+                 (cond-> out
+                   service-fns
+                   (update service-kw (constantly service-fns)))))
+             {}
+             selectors))
 
-(s/defn open-service-schema :- s/Schema
+(s/defn open-service-schema :- (s/protocol s/Schema)
   "Given a schema shaped like a Trapperkeeper service graph, 
   conjoins (s/pred simple-keyword?) {(s/pred simple-keyword?) (s/pred ifn?)}
   to the first layer and {(s/pred simple-keyword?) (s/pred ifn?)} to the second layers.
@@ -171,7 +172,7 @@
   ;                 (s/pred simple-keyword?) (s/pred ifn?)}
   ;    (s/pred simple-keyword?) {(s/pred simple-keyword?) (s/pred ifn?)}}
   "
-  [s :- s/Schema]
+  [s :- (s/protocol s/Schema)]
   {:pre [(map? s)]}
   (let [open-service-fns {(s/pred simple-keyword?) (s/pred ifn?)}]
     (-> (into {}
