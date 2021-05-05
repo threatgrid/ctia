@@ -41,6 +41,7 @@ cache:
     - $HOME/bin
     - $HOME/.m2
     - $HOME/.cache/pip
+    - $HOME/.pyenv/versions
     - docker_images
 
 # default jdk for testing and (always) deployment.
