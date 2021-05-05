@@ -25,6 +25,8 @@ function build-and-publish-package {
     ARTIFACTS_BUCKET="asdf"
   fi
 
+  python --version
+
   ARTIFACT_NAME="${TRAVIS_BUILD_NUMBER}-${TRAVIS_COMMIT:0:8}.jar"
   ( set -x && pip install --upgrade --user awscli )
   export PATH=$PATH:$HOME/.local/bin
