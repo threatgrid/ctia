@@ -66,9 +66,11 @@
                             (count fn-kws))
                   (throw (ex-info (str "Missing service functions for "
                                        service-kw ": "
-                                       (set/difference
-                                         (set fn-kws)
-                                         (set (keys service-fns))))
+                                       (-> (set/difference
+                                             (set fn-kws)
+                                             (set (keys service-fns)))
+                                           sort
+                                           vec))
                                   {})))
                 (cond-> out
                   service-fns
@@ -114,8 +116,8 @@
 
 (s/defn service-subschema :- s/Schema
   "Given a schema shaped like a Trapperkeeper service graph, selects
-  the specified services and their optionality from graph. Any missing levels
-  in graph will throw an error.
+  the specified services and their optionality from graph. Throws an
+  exception on selected service functions that don't occur in graph.
   
   (service-subschema
     {:ConfigService {:get-in-config (s/=> ...)
@@ -143,9 +145,11 @@
                           (count fn-kws))
                 (throw (ex-info (str "Missing service functions for "
                                      service-kw ": "
-                                     (set/difference
-                                       (set fn-kws)
-                                       (->> service-fns keys (map s/explicit-schema-key))))
+                                     (-> (set/difference
+                                           (set fn-kws)
+                                           (->> service-fns keys (map s/explicit-schema-key)))
+                                         sort
+                                         vec))
                                 {})))
               (cond-> out
                 service-fns
@@ -153,11 +157,10 @@
           {}
           selectors))
 
-;; TODO behavioral unit test
 (s/defn open-service-schema :- s/Schema
   "Given a schema shaped like a Trapperkeeper service graph, 
-  conjoins {(s/pred simple-keyword?) (s/pred map?)} to the first layer
-  and {(s/pred simple-keyword?) (s/pred ifn?)} to the second layers.
+  conjoins (s/pred simple-keyword?) {(s/pred simple-keyword?) (s/pred ifn?)}
+  to the first layer and {(s/pred simple-keyword?) (s/pred ifn?)} to the second layers.
 
   (open-service-schema
     {:ConfigService {:get-in-config (s/=> ...)}
@@ -166,16 +169,17 @@
   ;                    (s/pred simple-keyword?) (s/pred ifn?)}
   ;    :FooService {:f1 (s/=> ...)
   ;                 (s/pred simple-keyword?) (s/pred ifn?)}
-  ;    (s/pred simple-keyword?) (s/pred map?)}
+  ;    (s/pred simple-keyword?) {(s/pred simple-keyword?) (s/pred ifn?)}}
   "
   [s :- s/Schema]
   {:pre [(map? s)]}
-  (-> (into {}
-            (map (fn [[k v]]
-                   {:pre [(map? v)]}
-                   [k (conj v {(s/pred simple-keyword?) (s/pred ifn?)})]))
-            s)
-      (conj {(s/pred simple-keyword?) (s/pred map?)})))
+  (let [open-service-fns {(s/pred simple-keyword?) (s/pred ifn?)}]
+    (-> (into {}
+              (map (fn [[k v]]
+                     {:pre [(map? v)]}
+                     [k (conj v open-service-fns)]))
+              s)
+        (conj {(s/pred simple-keyword?) open-service-fns}))))
 
 (defn select-all-keys
   "Like st/select-keys but throws an exception if any keys are missing."

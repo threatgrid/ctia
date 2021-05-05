@@ -38,42 +38,39 @@
   {:pre [(vector? int->v)
          (>= 5 (count int->v))
          (apply distinct? int->v)]}
-  (is (= (service-subgraph {:a {:b (int->v 1)}})
+  (is (= (service-subgraph {:a {:b (int->v 1)}}
+                           {})
          {}))
   (is (= (service-subgraph
            {:a {:b (int->v 1) :c (int->v 2)}
             :d {:e (int->v 3) :f (int->v 4)}}
-           :a [:b])
+           {:a #{:b}})
          {:a {:b (int->v 1)}}))
   (is (= (service-subgraph
            {:a {:b (int->v 1) :c (int->v 2)}
             :d {:e (int->v 3) :f (int->v 4)}}
-           :a [:b]
-           :d [:e])
+           {:a #{:b}
+            :d #{:e}})
          {:a {:b (int->v 1)}
           :d {:e (int->v 3)}}))
-  (testing "throws on uneven args"
+  (testing "missing service function throws"
     (is (thrown-with-msg?
-          AssertionError
-          #"Uneven number of selectors"
+          ExceptionInfo
+          (Pattern/compile
+            "Missing service functions for :MissingService: [:foo]"
+            Pattern/LITERAL)
           (service-subgraph
             {}
-            :b)))
+            {:MissingService #{:foo}})))
     (is (thrown-with-msg?
-          AssertionError
-          #"Uneven number of selectors"
+          ExceptionInfo
+          (Pattern/compile
+            "Missing service functions for :MissingService: [:bar :foo]"
+            Pattern/LITERAL)
           (service-subgraph
-            {}
-            :b [:c]
-            :d))))
-  (testing "throws when selections clobber"
-    (is (thrown?
-          AssertionError
-          #"Repeated key :a"
-          (service-subgraph
-            {:a {:b (int->v 1)}}
-            :a [:b]
-            :a [:b])))))
+            {:PresentService {:present (constantly nil)}}
+            {:MissingService #{:foo :bar}
+             :PresentService #{:present}})))))
 
 (deftest service-subgraph-test
   (service-subgraph-test*
@@ -151,3 +148,11 @@
           (sut/select-all-keys
             schema
             selection)))))
+
+(deftest open-service-schema-test
+  (is (= {(s/pred simple-keyword?) {(s/pred simple-keyword?) (s/pred ifn?)}}
+         (sut/open-service-schema {})))
+  (is (= {:ExampleService {:example-fn (s/=> s/Any)
+                           (s/pred simple-keyword?) (s/pred ifn?)}
+          (s/pred simple-keyword?) {(s/pred simple-keyword?) (s/pred ifn?)}}
+         (sut/open-service-schema {:ExampleService {:example-fn (s/=> s/Any)}}))))
