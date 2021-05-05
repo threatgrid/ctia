@@ -61,10 +61,9 @@
 (defonce migration-es-conn (atom nil))
 
 (s/defschema MigrationStoreServices
-  {:ConfigService (csu/select-all-keys
-                    external-svc-fns/ConfigServiceFns
-                    #{:get-config
-                      :get-in-config})})
+  {:ConfigService (-> external-svc-fns/ConfigServiceFns
+                      (csu/select-all-keys #{:get-config
+                                             :get-in-config}))})
 
 (s/defn MigrationStoreServices->ESConnServices
   :- ESConnServices

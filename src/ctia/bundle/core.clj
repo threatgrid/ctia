@@ -186,19 +186,14 @@
     entity-data))
 
 (s/defschema WithExistingEntitiesServices
-  {:StoreService {;; for `find-by-external-ids`
-                  :get-store GetStoreFn
-                  s/Keyword s/Any}
-   :CTIAHTTPServerService {;; for `with-existing-entity`
-                           :get-port (s/=> (s/constrained s/Int pos?))
-                           s/Keyword s/Any}
-   :ConfigService (-> (csu/select-all-keys
-                        external-svc-fns/ConfigServiceFns
-                        ;; for `with-existing-entity`
-                        #{:get-in-config})
-                      (st/merge
-                        {s/Keyword s/Any}))
-   s/Keyword s/Any})
+  (csu/open-service-schema
+    {;; for `find-by-external-ids`
+     :StoreService {:get-store GetStoreFn}
+     ;; for `with-existing-entity`
+     :CTIAHTTPServerService {:get-port (s/=> (s/constrained s/Int pos?))}
+     ;; for `with-existing-entity`
+     :ConfigService (-> external-svc-fns/ConfigServiceFns
+                        (csu/select-all-keys #{:get-in-config}))}))
 
 (s/defn with-existing-entities :- [EntityImportData]
   "Add existing entities to the import data map."
