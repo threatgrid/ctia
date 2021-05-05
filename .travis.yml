@@ -42,7 +42,7 @@ cache:
     - $HOME/bin
     - $HOME/.m2
     - $HOME/.cache/pip
-    - $HOME/.pyenv/versions
+    - $HOME/.cache/pyenv
     - docker_images
 
 # default jdk for testing and (always) deployment.
@@ -130,15 +130,22 @@ matrix: #note: don't use "jobs:" introduces an extra build
       if: type = cron || type = push
       # don't need docker, but let's install the python version we need to deploy
       before_script:
-        # python with SNI suport
-        - ls /opt/pyenv
-        - ls ~/.pyenv
-        - pyenv versions
-        - pyenv install --list
-        - pyenv install -v $PYTHON_VERSION
-        - pyenv global $PYTHON_VERSION
+        # https://github.com/diyan/pywinrm/blob/667703f3ddebc67cab72d86620315c739bfd7262/.travis.yml#L26-L39
+        # Always use latest pyenv but keep installed Python versions in cache
+        - rm -rf ~/.pyenv
+        - git clone https://github.com/pyenv/pyenv.git ~/.pyenv
+        - mkdir -p ~/.cache/pyenv/versions
+        - which pyenv
+        - printenv
+        - ln -s ~/.cache/pyenv/versions ~/.pyenv/versions
+        - export PATH="$HOME/.pyenv/shims:$HOME/.pyenv/bin:$PATH"
+        - export PYENV_ROOT="$HOME/.pyenv"
+        - pyenv --version
+        - pyenv install --skip-existing $PYENV
+        - pyenv global $PYENV
+        - pyenv rehash
         - python --version
-        - ls ~/.pyenv
+
       script: ./build/build.sh     # tests already pass
 
 before_install:
