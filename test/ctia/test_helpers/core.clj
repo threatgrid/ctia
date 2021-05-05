@@ -15,6 +15,7 @@
    [ctia.properties :as p :refer [PropertiesSchema]]
    [ctia.schemas.core :as schemas :refer
     [GetEntitiesServices HTTPShowServices Port]]
+   [ctia.schemas.utils :as csu]
    [ctia.store :as store]
    [ctim.domain.id :as id]
    [ctim.generators.common :as cgc]
@@ -514,5 +515,5 @@
   [app]
   (-> app
       app/service-graph
-      (utils/service-subgraph
-       :FeaturesService [:enabled?])))
+      (csu/service-subgraph
+        {:FeaturesService #{:enabled?}})))

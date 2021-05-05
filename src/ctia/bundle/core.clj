@@ -14,10 +14,13 @@
    [ctia.properties :as p]
    [ctia.schemas.core :as schemas :refer
     [APIHandlerServices HTTPShowServices NewBundle TempIDs]]
+   [ctia.schemas.services :as external-svc-fns]
+   [ctia.schemas.utils :as sutils]
    [ctia.store :refer [list-fn read-fn]]
    [ctia.store-service.schemas :refer [GetStoreFn]]
    [ctim.domain.id :as id]
-   [schema.core :as s]))
+   [schema.core :as s]
+   [schema-tools.core :as st]))
 
 (def find-by-external-ids-limit 200)
 
@@ -189,11 +192,12 @@
    :CTIAHTTPServerService {;; for `with-existing-entity`
                            :get-port (s/=> (s/constrained s/Int pos?))
                            s/Keyword s/Any}
-   :ConfigService {;; for `with-existing-entity`
-                   :get-in-config (s/=>* s/Any
-                                         [[s/Any]]
-                                         [[s/Any] s/Any])
-                   s/Keyword s/Any}
+   :ConfigService (-> (sutils/select-all-keys
+                        external-svc-fns/ConfigServiceFns
+                        ;; for `with-existing-entity`
+                        #{:get-in-config})
+                      (st/merge
+                        {s/Keyword s/Any}))
    s/Keyword s/Any})
 
 (s/defn with-existing-entities :- [EntityImportData]

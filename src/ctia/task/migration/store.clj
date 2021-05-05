@@ -6,7 +6,8 @@
             [clojure.tools.logging :as log]
             [ctia.init :refer [log-properties]]
             [ctia.lib.collection :refer [fmap]]
-            [ctia.lib.utils :refer [service-subgraph]]
+            [ctia.schemas.services :as external-svc-fns]
+            [ctia.schemas.utils :as csu :refer [service-subgraph-from-schema]]
             [ctia.store :as store]
             [ctia.stores.es.crud :as crud]
             [ctia.stores.es.init :as es.init]
@@ -60,18 +61,17 @@
 (defonce migration-es-conn (atom nil))
 
 (s/defschema MigrationStoreServices
-  {:ConfigService {:get-config (s/=> s/Any)
-                   :get-in-config (s/=>* s/Any
-                                         [(s/named [s/Any] 'path)]
-                                         [(s/named [s/Any] 'path)
-                                          (s/named s/Any 'default)])}})
+  {:ConfigService (csu/select-all-keys
+                    external-svc-fns/ConfigServiceFns
+                    #{:get-config
+                      :get-in-config})})
 
 (s/defn MigrationStoreServices->ESConnServices
   :- ESConnServices
   [services :- MigrationStoreServices]
-  (service-subgraph
+  (service-subgraph-from-schema
     services
-    :ConfigService [:get-in-config]))
+    ESConnServices))
 
 (defn prefixed-index [index prefix]
   (let [version-trimmed (string/replace index #"^v[^_]*_" "")]
