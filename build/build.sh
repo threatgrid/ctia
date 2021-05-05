@@ -19,11 +19,11 @@ function build-and-publish-package {
   echo "Version: $BUILD_NAME"
 
   # Upload the jar directly to the artifacts S3 bucket
-  if [ "${PKG_TYPE}" == "int" ]; then
-    ARTIFACTS_BUCKET="asdf"
-  elif [ "${PKG_TYPE}" == "rel" ]; then
-    ARTIFACTS_BUCKET="asdf"
-  fi
+  #if [ "${PKG_TYPE}" == "int" ]; then
+  #  ARTIFACTS_BUCKET="asdf"
+  #elif [ "${PKG_TYPE}" == "rel" ]; then
+  #  ARTIFACTS_BUCKET="asdf"
+  #fi
 
   python --version
 
