@@ -131,6 +131,7 @@ matrix: #note: don't use "jobs:" introduces an extra build
       # don't need docker, but let's install the python version we need to deploy
       before_script:
         # python with SNI suport
+        - ls /opt/pyenv
         - ls ~/.pyenv
         - pyenv versions
         - pyenv install --list
