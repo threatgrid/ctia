@@ -135,7 +135,6 @@ matrix: #note: don't use "jobs:" introduces an extra build
         - git clone https://github.com/pyenv/pyenv.git ~/.pyenv
         - mkdir -p ~/.cache/pyenv/versions
         - which pyenv
-        - printenv
         - ln -s ~/.cache/pyenv/versions ~/.pyenv/versions
         - export PATH="$HOME/.pyenv/shims:$HOME/.pyenv/bin:$PATH"
         - export PYENV_ROOT="$HOME/.pyenv"
