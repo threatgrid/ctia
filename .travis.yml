@@ -34,7 +34,7 @@ env:
       # across org
       - CTIA_NSPLITS=5
       - CTIA_TEST_SUITE=ci
-      - PYTHON_VERSION=2.7.14
+      - PYTHON_VERSION=2.7.18
 
 # Cache our Maven deps to be kind to clojars, github, docker images
 cache:
@@ -141,11 +141,10 @@ matrix: #note: don't use "jobs:" introduces an extra build
         - export PATH="$HOME/.pyenv/shims:$HOME/.pyenv/bin:$PATH"
         - export PYENV_ROOT="$HOME/.pyenv"
         - pyenv --version
-        - pyenv install --skip-existing $PYENV
-        - pyenv global $PYENV
+        - pyenv install --skip-existing $PYTHON_VERSION
+        - pyenv global $PYTHON_VERSION
         - pyenv rehash
         - python --version
-
       script: ./build/build.sh     # tests already pass
 
 before_install:
