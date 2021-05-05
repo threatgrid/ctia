@@ -57,34 +57,30 @@
   [graph :- (s/pred map?)
    selectors :- {SpecificKey #{SpecificKey}}]
   {:pre [(map? graph)]}
-  (persistent!
-    (reduce-kv (fn [out service-kw fn-kws]
-                 (assert (s/specific-key? service-kw)
-                         (pr-str service-kw))
-                 (assert (simple-keyword? (s/explicit-schema-key service-kw))
-                         (s/explicit-schema-key service-kw))
-                 (assert (set? fn-kws))
-                 (let [gval (get graph (s/explicit-schema-key service-kw))]
-                   (if-not (map? gval)
-                     (if (s/optional-key? service-kw)
-                       out
-                       (throw (ex-info (str "Missing service: " service-kw) {})))
-                     (let [service-fns (persistent!
-                                         (reduce (fn [out fn-kw]
-                                                   (assert (simple-keyword? (s/explicit-schema-key fn-kw))
-                                                           (s/explicit-schema-key fn-kw))
-                                                   (if-some [svc-fn (get gval (s/explicit-schema-key fn-kw))]
-                                                     (assoc! out (s/explicit-schema-key fn-kw) svc-fn)
-                                                     (if (s/optional-key? fn-kw)
-                                                       out
-                                                       (throw (ex-info (str "Missing " service-kw " service function: "
-                                                                            (s/explicit-schema-key fn-kw))
-                                                                       {})))))
-                                                 (transient {})
-                                                 fn-kws))]
-                       (assoc! out (s/explicit-schema-key service-kw) service-fns)))))
-               (transient {})
-               selectors)))
+  (into {}
+        (map (fn [[service-kw fn-kws]]
+               (assert (s/specific-key? service-kw)
+                       (pr-str service-kw))
+               (assert (simple-keyword? (s/explicit-schema-key service-kw))
+                       (s/explicit-schema-key service-kw))
+               (assert (set? fn-kws))
+               (let [gval (get graph (s/explicit-schema-key service-kw))]
+                 (if-not (map? gval)
+                   (when-not (s/optional-key? service-kw)
+                     (throw (ex-info (str "Missing service: " service-kw) {})))
+                   (let [service-fns (into {}
+                                           (map (fn [fn-kw]
+                                                  (assert (simple-keyword? (s/explicit-schema-key fn-kw))
+                                                          (s/explicit-schema-key fn-kw))
+                                                  (if-some [svc-fn (get gval (s/explicit-schema-key fn-kw))]
+                                                    {(s/explicit-schema-key fn-kw) svc-fn}
+                                                    (when-not (s/optional-key? fn-kw)
+                                                      (throw (ex-info (str "Missing " service-kw " service function: "
+                                                                           (s/explicit-schema-key fn-kw))
+                                                                      {}))))))
+                                           fn-kws)]
+                     {(s/explicit-schema-key service-kw) service-fns})))))
+        selectors))
 
 (s/defn service-subgraph-from-schema :- (s/pred map?)
   "Given a schema describing a Trapperkeeper graph,
@@ -111,6 +107,8 @@
          (map? schema)]}
   (service-subgraph
     graph
+    ;; this could be factored out a la schema.coerce/coercer for
+    ;; better performance.
     (into {}
           (comp (filter (comp s/specific-key? key))
                 (map (fn [[service-kw service-fns]]
@@ -142,7 +140,8 @@
    selectors :- {(s/pred simple-keyword?)
                  #{(s/pred simple-keyword?)}}]
   {:pre [(map? graph)]}
-  (reduce-kv (fn [out service-kw fn-kws]
+  (into {}
+        (map (fn [[service-kw fn-kws]]
                (assert (keyword? service-kw)
                        (pr-str service-kw))
                (assert (set? fn-kws))
@@ -158,11 +157,9 @@
                                             sort
                                             vec))
                                    {})))
-                 (cond-> out
-                   service-fns
-                   (update service-kw (constantly service-fns)))))
-             {}
-             selectors))
+                 (when service-fns
+                   {service-kw service-fns}))))
+        selectors))
 
 (s/defn open-service-schema :- (s/protocol s/Schema)
   "Given a schema shaped like a Trapperkeeper service graph, 

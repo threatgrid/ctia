@@ -6,9 +6,8 @@
             [schema-tools.core :as st]))
 
 (s/defschema ESConnServices
-  {:ConfigService (csu/select-all-keys
-                    external-svc-fns/ConfigServiceFns
-                    #{:get-in-config})})
+  {:ConfigService (-> external-svc-fns/ConfigServiceFns
+                      (csu/select-all-keys #{:get-in-config}))})
 
 (s/defschema ESConnState
   (st/merge
