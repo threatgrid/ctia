@@ -20,17 +20,15 @@ function build-and-publish-package {
 
   # Upload the jar directly to the artifacts S3 bucket
   if [ "${PKG_TYPE}" == "int" ]; then
-    ARTIFACTS_BUCKET="asdf"
+    ARTIFACTS_BUCKET="372070498991-us-east-1-int-saltstack"
   elif [ "${PKG_TYPE}" == "rel" ]; then
-    ARTIFACTS_BUCKET="asdf"
+    ARTIFACTS_BUCKET="372070498991-us-east-1-test-saltstack"
   fi
-
-  python --version
 
   ARTIFACT_NAME="${TRAVIS_BUILD_NUMBER}-${TRAVIS_COMMIT:0:8}.jar"
   ( set -x && pip install --upgrade --user awscli )
   export PATH=$PATH:$HOME/.local/bin
-  #( set -x && aws s3 cp ./target/ctia.jar s3://${ARTIFACTS_BUCKET}/artifacts/ctia/"${ARTIFACT_NAME}" --sse aws:kms --sse-kms-key-id alias/kms-s3 )
+  ( set -x && aws s3 cp ./target/ctia.jar s3://${ARTIFACTS_BUCKET}/artifacts/ctia/"${ARTIFACT_NAME}" --sse aws:kms --sse-kms-key-id alias/kms-s3 )
 
   # Run Vulnerability Scan in the artifact using ZeroNorth - INT only
   # WARNING: don't `set -x` here, exposes credentials
@@ -44,7 +42,7 @@ function build-and-publish-package {
 }
 
 if [[ "${TRAVIS_PULL_REQUEST}" = "false" && "${TRAVIS_EVENT_TYPE}" != "cron" ]]; then
-  if [[ ${TRAVIS_BRANCH} == "frenchy64-python-27-bump" ]]; then
+  if [[ ${TRAVIS_BRANCH} == "master" ]]; then
     # non-pr builds on the master branch yield INT packages
     echo "OK: master branch detected"
     build-and-publish-package "int"
