@@ -324,18 +324,20 @@ It returns the documents with full hits meta data including the real index in wh
            range
            full-text]} :- SearchQuery
    ident]
-  (let [range-query  (when range
-                       {:range range})
-        filter-terms (-> (ensure-document-id-in-map filter-map)
-                            q/prepare-terms)
-        full-text-q  (when full-text
-                       {(get full-text :query_mode :query_string) ;; if no :query-mode passed, use :query_string mode
-                        (merge
-                         (dissoc full-text :query_mode)
-                         (when (and default_operator
-                                    ;; multi_match queries in ES don't support default_operator
-                                    (not= :multi_match (:query_mode full-text)))
-                           {:default_operator default_operator}))})]
+  (let [range-query   (when range
+                        {:range range})
+        filter-terms  (-> (ensure-document-id-in-map filter-map)
+                          q/prepare-terms)
+        es-query-mode (get full-text :query_mode :query_string) ;; if no :query-mode passed, use :query_string mode
+        def-operator  (when (and default_operator
+                                ;; some query modes in ES don't support default_operator, e.g. :multi_match
+                                (contains? #{:simple_query_string :query_string} es-query-mode))
+                        {:default_operator default_operator})
+        full-text-q   (when full-text
+                        {es-query-mode
+                         (merge
+                          (dissoc full-text :query_mode)
+                          def-operator)})]
     {:bool
      {:filter
       (cond-> [(find-restriction-query-part ident get-in-config)]
