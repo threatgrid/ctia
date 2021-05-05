@@ -28,7 +28,7 @@ function build-and-publish-package {
   ARTIFACT_NAME="${TRAVIS_BUILD_NUMBER}-${TRAVIS_COMMIT:0:8}.jar"
   ( set -x && pip install --upgrade --user awscli )
   export PATH=$PATH:$HOME/.local/bin
-  ( set -x && aws s3 cp ./target/ctia.jar s3://${ARTIFACTS_BUCKET}/artifacts/ctia/"${ARTIFACT_NAME}" --sse aws:kms --sse-kms-key-id alias/kms-s3 )
+  #( set -x && aws s3 cp ./target/ctia.jar s3://${ARTIFACTS_BUCKET}/artifacts/ctia/"${ARTIFACT_NAME}" --sse aws:kms --sse-kms-key-id alias/kms-s3 )
 
   # Run Vulnerability Scan in the artifact using ZeroNorth - INT only
   # WARNING: don't `set -x` here, exposes credentials
