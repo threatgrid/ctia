@@ -2,7 +2,7 @@ language: clojure
 lein: 2.9.1
 # a dist that support a python 2 version supporting SNI
 # https://docs.travis-ci.com/user/languages/python/#python-versions
-dist: bionic
+dist: focal
 
 branches:
   only:
