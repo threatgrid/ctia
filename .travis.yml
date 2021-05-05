@@ -82,22 +82,22 @@ matrix: #note: don't use "jobs:" introduces an extra build
     #     https://github.com/threatgrid/tenzin/blob/master/nextgen/saltstack/srv/salt/openjdk/defaults.yml
     # - IMPORTANT! Must include split build id's from in (range ${CTIA_NSPLITS}).
     #    Nothing ensures this is actually true, so make sure it is!
-    - stage: test
-      name: "JDK 11"
-      if: type = push
-      env: CTIA_THIS_SPLIT=0
-    - name: "JDK 11"
-      if: type = push
-      env: CTIA_THIS_SPLIT=1
-    - name: "JDK 11"
-      if: type = push
-      env: CTIA_THIS_SPLIT=2
-    - name: "JDK 11"
-      if: type = push
-      env: CTIA_THIS_SPLIT=3
-    - name: "JDK 11"
-      if: type = push
-      env: CTIA_THIS_SPLIT=4
+    #- stage: test
+    #  name: "JDK 11"
+    #  if: type = push
+    #  env: CTIA_THIS_SPLIT=0
+    #- name: "JDK 11"
+    #  if: type = push
+    #  env: CTIA_THIS_SPLIT=1
+    #- name: "JDK 11"
+    #  if: type = push
+    #  env: CTIA_THIS_SPLIT=2
+    #- name: "JDK 11"
+    #  if: type = push
+    #  env: CTIA_THIS_SPLIT=3
+    #- name: "JDK 11"
+    #  if: type = push
+    #  env: CTIA_THIS_SPLIT=4
 
     # Cron jobs:
     # ==========
