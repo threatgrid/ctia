@@ -32,7 +32,8 @@ env:
       # across org
       - CTIA_NSPLITS=5
       - CTIA_TEST_SUITE=ci
-      # only used in deploy job
+      # only used in deploy job.
+      # must support SNI https://github.com/pypa/pypi-support/issues/978
       - PYTHON_VERSION=2.7.18
 
 # Cache our Maven deps to be kind to clojars, github, docker images
