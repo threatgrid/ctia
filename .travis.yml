@@ -2,7 +2,7 @@ language: clojure
 lein: 2.9.1
 # a dist that support a python 2 version supporting SNI
 # https://docs.travis-ci.com/user/languages/python/#python-versions
-dist: xenial
+dist: bionic
 
 branches:
   only:
@@ -47,10 +47,6 @@ cache:
 # others tested in cron job.
 jdk:
   - openjdk11
-
-# a version of python with SNI support
-python:
-  - "2.7.18"
 
 # define stage order
 stages:
@@ -142,6 +138,10 @@ before_install:
     # run shellcheck
     - ./scripts/shellcheck-build.sh
 
+    # python with SNI suport
+    - pyenv global 2.7.18
+    - python --version
+
     # ES5 needs this
     - sudo sysctl -w vm.max_map_count=262144
 
@@ -158,7 +158,6 @@ before_install:
     - if [ ! -f $COMPOSE_BIN ]; then curl -L {$COMPOSE_URI}/docker-compose-`uname -s`-`uname -m` > $COMPOSE_BIN; fi
     - chmod +x $COMPOSE_BIN
 
-    - python --version
 
 before_cache:
   - docker save -o docker_images/images.tar $(docker images -a -q)
