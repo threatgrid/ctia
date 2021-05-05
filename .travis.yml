@@ -139,6 +139,9 @@ before_install:
     - ./scripts/shellcheck-build.sh
 
     # python with SNI suport
+    - pyenv versions
+    - pyenv install --list
+    - pyenv install -v 2.7.14
     - pyenv global 2.7.14
     - python --version
 
