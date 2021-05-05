@@ -15,7 +15,7 @@
    [ctia.schemas.core :as schemas :refer
     [APIHandlerServices HTTPShowServices NewBundle TempIDs]]
    [ctia.schemas.services :as external-svc-fns]
-   [ctia.schemas.utils :as sutils]
+   [ctia.schemas.utils :as csu]
    [ctia.store :refer [list-fn read-fn]]
    [ctia.store-service.schemas :refer [GetStoreFn]]
    [ctim.domain.id :as id]
@@ -192,7 +192,7 @@
    :CTIAHTTPServerService {;; for `with-existing-entity`
                            :get-port (s/=> (s/constrained s/Int pos?))
                            s/Keyword s/Any}
-   :ConfigService (-> (sutils/select-all-keys
+   :ConfigService (-> (csu/select-all-keys
                         external-svc-fns/ConfigServiceFns
                         ;; for `with-existing-entity`
                         #{:get-in-config})

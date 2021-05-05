@@ -3,7 +3,7 @@
    [ctia.flows.hooks-service.schemas :as hooks-schemas]
    [ctia.graphql.delayed :as delayed]
    [ctia.schemas.services :as external-svc-fns]
-   [ctia.schemas.utils :as csutils]
+   [ctia.schemas.utils :as csu]
    [ctia.store-service.schemas :refer [GetStoreFn]]
    [ctim.domain.id :as id]
    [ctim.schemas.bundle :as bundle]
@@ -22,13 +22,13 @@
 (s/defschema APIHandlerServices
   "Maps of services available to routes"
   {:ConfigService                   (-> external-svc-fns/ConfigServiceFns
-                                        (csutils/select-all-keys
+                                        (csu/select-all-keys
                                           #{:get-config
                                             :get-in-config}))
    :CTIAHTTPServerService           {:get-port    (s/=> Port)
                                      :get-graphql (s/=> graphql.GraphQL)}
    :HooksService                    (-> hooks-schemas/ServiceFns
-                                        (csutils/select-all-keys
+                                        (csu/select-all-keys
                                           #{:apply-event-hooks
                                             :apply-hooks}))
    :StoreService                    {:get-store GetStoreFn}
@@ -44,10 +44,10 @@
 
 (s/defschema HTTPShowServices
   (-> APIHandlerServices
-      (csutils/service-subschema
+      (csu/service-subschema
         {:ConfigService #{:get-in-config}
          :CTIAHTTPServerService #{:get-port}})
-      csutils/open-service-schema))
+      csu/open-service-schema))
 
 (s/defschema DelayedRoutes
   "Function taking a map of services and returning routes
@@ -64,7 +64,7 @@
 (s/defschema RealizeFnServices
   "Maps of service functions available for realize-fns"
   (-> APIHandlerServices
-      (csutils/service-subschema
+      (csu/service-subschema
         {:ConfigService #{:get-in-config}
          :CTIAHTTPServerService #{:get-port}
          :StoreService #{:get-store}
@@ -75,7 +75,7 @@
 (s/defn APIHandlerServices->RealizeFnServices
   :- RealizeFnServices
   [services :- APIHandlerServices]
-  (csutils/service-subgraph-from-schema
+  (csu/service-subgraph-from-schema
     services
     RealizeFnServices))
 
@@ -225,7 +225,7 @@
   [name-sym sch]
   `(do
      (s/defschema ~name-sym
-       (csutils/recursive-open-schema-version
+       (csu/recursive-open-schema-version
         (st/merge
          ~sch
          CTIAStoredEntity)))))
@@ -236,7 +236,7 @@
                                            open?]}]
   `(do
      (s/defschema ~name-sym
-       (cond-> (csutils/recursive-open-schema-version
+       (cond-> (csu/recursive-open-schema-version
                 (st/merge
                  (f-schema/->schema ~ddl)
                  CTIAEntity))
@@ -268,11 +268,11 @@
 ;; Casebooks should be considered fully separate from CTIM
 (s/defschema NewBundle
   (st/dissoc
-   (csutils/recursive-open-schema-version CTIMNewBundle) :casebooks))
+   (csu/recursive-open-schema-version CTIMNewBundle) :casebooks))
 
 (s/defschema Bundle
   (st/dissoc
-   (csutils/recursive-open-schema-version CTIMBundle) :casebooks))
+   (csu/recursive-open-schema-version CTIMBundle) :casebooks))
 
 ;; common
 
