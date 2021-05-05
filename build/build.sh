@@ -20,9 +20,9 @@ function build-and-publish-package {
 
   # Upload the jar directly to the artifacts S3 bucket
   if [ "${PKG_TYPE}" == "int" ]; then
-    ARTIFACTS_BUCKET="372070498991-us-east-1-int-saltstack"
+    ARTIFACTS_BUCKET="asdf"
   elif [ "${PKG_TYPE}" == "rel" ]; then
-    ARTIFACTS_BUCKET="372070498991-us-east-1-test-saltstack"
+    ARTIFACTS_BUCKET="asdf"
   fi
 
   ARTIFACT_NAME="${TRAVIS_BUILD_NUMBER}-${TRAVIS_COMMIT:0:8}.jar"
@@ -42,7 +42,7 @@ function build-and-publish-package {
 }
 
 if [[ "${TRAVIS_PULL_REQUEST}" = "false" && "${TRAVIS_EVENT_TYPE}" != "cron" ]]; then
-  if [[ ${TRAVIS_BRANCH} == "master" ]]; then
+  if [[ ${TRAVIS_BRANCH} == "frenchy64-python-27-bump" ]]; then
     # non-pr builds on the master branch yield INT packages
     echo "OK: master branch detected"
     build-and-publish-package "int"
