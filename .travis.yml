@@ -31,6 +31,9 @@ env:
       # across org
       - CTIA_NSPLITS=5
       - CTIA_TEST_SUITE=ci
+      # only used in deploy job.
+      # must support SNI https://github.com/pypa/pypi-support/issues/978
+      - PYTHON_VERSION=2.7.18
 
 # Cache our Maven deps to be kind to clojars, github, docker images
 cache:
@@ -38,6 +41,7 @@ cache:
     - $HOME/bin
     - $HOME/.m2
     - $HOME/.cache/pip
+    - $HOME/.cache/pyenv
     - docker_images
 
 # default jdk for testing and (always) deployment.
@@ -123,9 +127,23 @@ matrix: #note: don't use "jobs:" introduces an extra build
       # also deploy after every cron job. helps minimize issues with
       # 'push' deployment races.
       if: type = cron || type = push
-      before_script: skip # don't need docker
-      script: skip        # tests already pass
-      after_script: ./build/build.sh
+      # don't need docker, but let's install the python version we need to deploy
+      before_script:
+        # https://github.com/diyan/pywinrm/blob/667703f3ddebc67cab72d86620315c739bfd7262/.travis.yml#L26-L39
+        # Always use latest pyenv but keep installed Python versions in cache
+        - rm -rf ~/.pyenv
+        - git clone https://github.com/pyenv/pyenv.git ~/.pyenv
+        - mkdir -p ~/.cache/pyenv/versions
+        - which pyenv
+        - ln -s ~/.cache/pyenv/versions ~/.pyenv/versions
+        - export PATH="$HOME/.pyenv/shims:$HOME/.pyenv/bin:$PATH"
+        - export PYENV_ROOT="$HOME/.pyenv"
+        - pyenv --version
+        - pyenv install --skip-existing $PYTHON_VERSION
+        - pyenv global $PYTHON_VERSION
+        - pyenv rehash
+        - python --version
+      script: ./build/build.sh     # tests already pass
 
 before_install:
     # upgrade shellcheck (https://github.com/koalaman/shellcheck#installing-a-pre-compiled-binary)
@@ -151,10 +169,6 @@ before_install:
     - if [ ! -f $COMPOSE_BIN ]; then curl -L {$COMPOSE_URI}/docker-compose-`uname -s`-`uname -m` > $COMPOSE_BIN; fi
     - chmod +x $COMPOSE_BIN
 
-# install any dependencies required
-install:
-    - source $HOME/.rvm/scripts/rvm
-    - rvm use 2.2
 
 before_cache:
   - docker save -o docker_images/images.tar $(docker images -a -q)
