@@ -34,6 +34,7 @@ env:
       # across org
       - CTIA_NSPLITS=5
       - CTIA_TEST_SUITE=ci
+      - PYTHON_VERSION=2.7.14
 
 # Cache our Maven deps to be kind to clojars, github, docker images
 cache:
@@ -130,14 +131,14 @@ matrix: #note: don't use "jobs:" introduces an extra build
       # don't need docker, but let's install the python version we need to deploy
       before_script:
         # python with SNI suport
+        - ls ~/.pyenv
         - pyenv versions
         - pyenv install --list
-        - pyenv install -v 2.7.14
-        - pyenv global 2.7.14
+        - pyenv install -v $PYTHON_VERSION
+        - pyenv global $PYTHON_VERSION
         - python --version
-
-      script: skip        # tests already pass
-      after_script: ./build/build.sh
+        - ls ~/.pyenv
+      script: ./build/build.sh     # tests already pass
 
 before_install:
     # upgrade shellcheck (https://github.com/koalaman/shellcheck#installing-a-pre-compiled-binary)
