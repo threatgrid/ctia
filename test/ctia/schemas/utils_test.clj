@@ -104,8 +104,8 @@
           (sut/select-all-keys {:b s/Any} [:a])))
     (is (thrown-with-msg?
           ExceptionInfo
-          (Pattern/compile "Missing keys: [:c]" Pattern/LITERAL)
-          (sut/select-all-keys {:a s/Any :b s/Any} [:a :b :c])))))
+          (Pattern/compile "Missing keys: [:c :d]" Pattern/LITERAL)
+          (sut/select-all-keys {:a s/Any :b s/Any} [:a :b :c :d])))))
 
 (deftest ^:generative generative-select-all-keys-test
   (checking "coincides with st/select-keys when all keys present" 100
