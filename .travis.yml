@@ -140,8 +140,8 @@ before_install:
 
     # python with SNI suport
     - pyenv update
-    - pyenv version --list
     - pyenv install --list
+    - pyenv versions
     - pyenv install -v 2.7.18
     - python --version
 
