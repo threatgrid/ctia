@@ -2,6 +2,9 @@ name: GitHub Actions Pull Request and Deployment
 
 on:
   pull_request:
+    #FIXME delete
+    branches:
+      - !iroh-5170-deploy-actions
   push:
     branches:
       - master
