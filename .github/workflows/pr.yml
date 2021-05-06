@@ -5,6 +5,8 @@ on:
   push:
     branches:
       - master
+      # FIXME delete
+      - iroh-5170-deploy-actions
       # let's trial just master before deploying elsewhere
       #- /^v[0-9]+(.[0-9]+)+$/
   # Cron job: runs a matrix of JVM and Clojure versions, which can
