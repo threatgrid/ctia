@@ -7,8 +7,8 @@ on:
       - master
       # let's trial just master before deploying elsewhere
       # Note: full regex not supported here, hardcoding vX.X and vX.X.X
-      #- v[0-9]+.[0-9]+
-      #- v[0-9]+.[0-9]+.[0-9]+
+      #- "v[0-9]+.[0-9]+"
+      #- "v[0-9]+.[0-9]+.[0-9]+"
   # Cron job: runs a matrix of JVM and Clojure versions, which can
   # be configured in the `cron-matrix` function in ./scripts/actions/print-matrix.clj
   # Note: automatically uses master branch https://stackoverflow.com/a/58800550
