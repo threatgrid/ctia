@@ -65,15 +65,16 @@ function build-and-publish-package {
   #aws s3 cp ./target/ctia.jar s3://${ARTIFACTS_BUCKET}/artifacts/ctia/"${ARTIFACT_NAME}" --sse aws:kms --sse-kms-key-id alias/kms-s3
 
   # Run Vulnerability Scan in the artifact using ZeroNorth - master only
-  # WARNING: don't `set -x` here, exposes credentials
-  set +x
   if [ "${PKG_TYPE}" == "int" ]; then
-    sudo docker pull zeronorth/owasp-5-job-runner
+    # FIXME uncomment
+    echo sudo docker pull zeronorth/owasp-5-job-runner
+    # WARNING: don't `set -x` here, exposes credentials
+    set +x
     sudo docker run -v "${PWD}"/target/ctia.jar:/code/ctia.jar -e CYBRIC_API_KEY="${CYBRIC_API_KEY}" -e POLICY_ID=IUkmdVdkSjms9CjeWK-Peg -e WORKSPACE="${PWD}"/target -v /var/run/docker.sock:/var/run/docker.sock --name zeronorth zeronorth/integration:latest python cybric.py
+    set -x
     echo "Waiting the ZeroNorth Vulnerability Scanner to finish..."
     while [[ -n $(docker ps -a --format "{{.ID}}" -f status=running -f ancestor=zeronorth/owasp-5-job-runner) ]]; do sleep 5; done
   fi
-  set -x
 }
 
 if [[ "${GITHUB_EVENT_NAME}" == "push" ]]; then
