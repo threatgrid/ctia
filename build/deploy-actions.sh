@@ -52,6 +52,9 @@ function build-and-publish-package {
     #FIXME use actual bucket
     #ARTIFACTS_BUCKET="372070498991-us-east-1-test-saltstack"
     ARTIFACTS_BUCKET="FAKE"
+  else
+    echo "Bad PKG_TYPE: ${PKG_TYPE}"
+    exit 1
   fi
 
   ARTIFACT_NAME="${CTIA_BUILD_NUMBER}-${CTIA_COMMIT:0:8}.jar"
