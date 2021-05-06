@@ -69,4 +69,5 @@
     (cron-matrix)
     (non-cron-matrix)))
 
-(println (str "::set-output name=matrix::" (json/generate-string (edn-matrix) {:pretty false})))
+;; FIXME revert
+(println (str "::set-output name=matrix::" (json/generate-string [] #_(edn-matrix) {:pretty false})))
