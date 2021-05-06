@@ -54,9 +54,8 @@
   ;=> {:ConfigService {:get-config <...>}
   ;    :FooService {:f2 <...>}}
   "
-  [graph :- (s/pred map?)
+  [graph-value :- (s/pred map?)
    selectors :- {SpecificKey #{SpecificKey}}]
-  {:pre [(map? graph)]}
   (into {}
         (map (fn [[service-kw fn-kws]]
                (assert (s/specific-key? service-kw)
@@ -64,7 +63,7 @@
                (assert (simple-keyword? (s/explicit-schema-key service-kw))
                        (s/explicit-schema-key service-kw))
                (assert (set? fn-kws))
-               (let [gval (get graph (s/explicit-schema-key service-kw))]
+               (let [gval (get graph-value (s/explicit-schema-key service-kw))]
                  (if-not (map? gval)
                    (when-not (s/optional-key? service-kw)
                      (throw (ex-info (str "Missing service: " service-kw) {})))
@@ -101,12 +100,11 @@
   ;    :FooService {:f1 (fn [...] ...)
   ;                 :f2 (fn [...] ...)}}
   "
-  [graph
+  [graph-value :- (s/pred map?)
    schema :- (s/protocol s/Schema)]
-  {:pre [(map? graph)
-         (map? schema)]}
+  {:pre [(map? schema)]}
   (service-subgraph
-    graph
+    graph-value
     ;; this could be factored out a la schema.coerce/coercer for
     ;; better performance.
     (into {}
@@ -136,16 +134,16 @@
   ;=> {:ConfigService {(s/optional-keys :get-config) (s/=> ...)}
   ;    (s/optional-key :FooService) {:f2 (s/=> ...)}}
   "
-  [graph :- (s/protocol s/Schema)
+  [graph-schema :- (s/protocol s/Schema)
    selectors :- {(s/pred simple-keyword?)
                  #{(s/pred simple-keyword?)}}]
-  {:pre [(map? graph)]}
+  {:pre [(map? graph-schema)]}
   (into {}
         (map (fn [[service-kw fn-kws]]
                (assert (keyword? service-kw)
                        (pr-str service-kw))
                (assert (set? fn-kws))
-               (let [service-fns (some-> (st/get-in graph [service-kw])
+               (let [service-fns (some-> (st/get-in graph-schema [service-kw])
                                          (st/select-keys fn-kws))]
                  (when (not= (count service-fns)
                              (count fn-kws))
