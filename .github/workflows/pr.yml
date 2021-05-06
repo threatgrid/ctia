@@ -1,6 +1,7 @@
 name: GitHub Actions Pull Request and Deployment
 
 on:
+  pull_request:
   push:
     branches:
       - master
