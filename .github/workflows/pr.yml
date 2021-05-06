@@ -4,7 +4,7 @@ on:
   pull_request:
     #FIXME delete
     branches:
-      - !iroh-5170-deploy-actions
+      - "!iroh-5170-deploy-actions"
   push:
     branches:
       - master
