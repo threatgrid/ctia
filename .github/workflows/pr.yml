@@ -227,7 +227,7 @@ jobs:
         # poor man's travis_retry
         run: for i in {1..${ACTIONS_RETRY_TIMES}}; do lein warm-ci-deps && break; done
       - name: Run CTIA tests
-        run: ./build/run-tests.sh
+        run: ls #./build/run-tests.sh
         env:
           # offline to catch issues where `lein warm-ci-deps` doesn't download all
           # dependencies we need to run tests.
@@ -324,7 +324,7 @@ jobs:
 
       - uses: actions/setup-java@v1
         with:
-          java-version: ${{ env.JAVA_VERSION }}
+          java-version: ${{ env.DEFAULT_JAVA_VERSION }}
       - run: java -version
 
       # install lein using cache to avoid extra download and startup time
