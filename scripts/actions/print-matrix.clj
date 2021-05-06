@@ -70,4 +70,8 @@
     (non-cron-matrix)))
 
 ;; FIXME revert
-(println (str "::set-output name=matrix::" (json/generate-string [] #_(edn-matrix) {:pretty false})))
+(println (str "::set-output name=matrix::" (json/generate-string [{:this_split 0
+                                                                   :total_splits 200
+                                                                   :java_version default-java-version
+                                                                   :ci_profiles "default"}]
+                                                                 #_(edn-matrix) {:pretty false})))
