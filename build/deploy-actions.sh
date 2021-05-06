@@ -7,7 +7,7 @@
 #
 # Requires secrets:
 # - CYBRIC_API_KEY
-set -e
+set -Eeuxo pipefail
 
 if [[ "${GITHUB_EVENT_NAME}" != "push" ]]; then
   echo "./build/build-actions.sh currently supports push deployments only."
@@ -36,7 +36,9 @@ function build-and-publish-package {
   PKG_TYPE=$1
 
   echo "Building new $PKG_TYPE package"
-  ( set -x && lein uberjar )
+
+  lein uberjar
+
   BUILD_NAME="${CTIA_MAJOR_VERSION}-${PKG_TYPE}-${CTIA_BUILD_NUMBER}-${CTIA_COMMIT:0:8}"
   echo "$BUILD_NAME"
   echo "Build: $BUILD_NAME"
@@ -58,7 +60,7 @@ function build-and-publish-package {
   fi
 
   ARTIFACT_NAME="${CTIA_BUILD_NUMBER}-${CTIA_COMMIT:0:8}.jar"
-  ( set -x && aws s3 cp ./target/ctia.jar s3://${ARTIFACTS_BUCKET}/artifacts/ctia/"${ARTIFACT_NAME}" --sse aws:kms --sse-kms-key-id alias/kms-s3 )
+  aws s3 cp ./target/ctia.jar s3://${ARTIFACTS_BUCKET}/artifacts/ctia/"${ARTIFACT_NAME}" --sse aws:kms --sse-kms-key-id alias/kms-s3
 
   # Run Vulnerability Scan in the artifact using ZeroNorth - master only
   # WARNING: don't `set -x` here, exposes credentials
