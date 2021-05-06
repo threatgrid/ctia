@@ -110,13 +110,13 @@
     ;; this could be factored out a la schema.coerce/coercer for
     ;; better performance.
     (into {}
-          (comp (filter (comp s/specific-key? key))
-                (map (fn [[service-kw service-fns]]
-                       {:pre [(map? service-fns)]}
-                       [service-kw
-                        (into #{}
-                              (filter s/specific-key?)
-                              (keys service-fns))])))
+          (map (fn [[service-kw service-fns]]
+                 {:pre [(map? service-fns)]}
+                 (when (s/specific-key? service-kw)
+                   {service-kw
+                    (into #{}
+                          (filter s/specific-key?)
+                          (keys service-fns))})))
           schema)))
 
 (s/defn service-subschema :- (s/protocol s/Schema)
