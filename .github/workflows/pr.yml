@@ -349,8 +349,8 @@ jobs:
         with:
           # matching buckets in ./build/deploy-actions.sh 
           aws-region: us-east-1
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-access-key-id: testkey #${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: testaccesskey #${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
       - run: ./build/build-actions.sh
         env:
