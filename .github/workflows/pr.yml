@@ -344,16 +344,25 @@ jobs:
         # poor man's travis_retry
         run: for i in {1..${ACTIONS_RETRY_TIMES}}; do lein warm-ci-deps && break; done
 
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v1
+     
+      #FIXME uncomment
+      #- name: Configure AWS Credentials
+      #  uses: aws-actions/configure-aws-credentials@v1
+      #  with:
+      #    # matching buckets in ./build/deploy-actions.sh 
+      #    aws-region: us-east-1
+      #    aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      #    aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v1
         with:
-          # matching buckets in ./build/deploy-actions.sh 
-          aws-region: us-east-1
-          aws-access-key-id: testkey #${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: testaccesskey #${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_PASSWORD }}
 
       - run: ./build/build-actions.sh
         env:
           # offline to catch issues where `lein warm-ci-deps` doesn't download all
           # dependencies we need to deploy.
           LEIN_OFFLINE: true
+          CYBRIC_API_KEY: FIXME #${{ secrets.CYBRIC_API_KEY }}

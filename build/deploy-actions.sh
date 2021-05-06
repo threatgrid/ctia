@@ -3,12 +3,10 @@
 #
 # Fails if run in non-deployment situations.
 #
-# Assumes awscli is set up with correct credentials.
+# Assumes awscli and dockerhub is set up with correct credentials.
 #
 # Requires secrets:
 # - CYBRIC_API_KEY
-# - DOCKERHUB_PASSWORD
-# - DOCKERHUB_USERNAME
 set -e
 
 if [[ "${GITHUB_EVENT_NAME}" != "push" ]]; then
@@ -57,13 +55,11 @@ function build-and-publish-package {
   fi
 
   ARTIFACT_NAME="${CTIA_BUILD_NUMBER}-${CTIA_COMMIT:0:8}.jar"
-  export PATH=$PATH:$HOME/.local/bin
   ( set -x && aws s3 cp ./target/ctia.jar s3://${ARTIFACTS_BUCKET}/artifacts/ctia/"${ARTIFACT_NAME}" --sse aws:kms --sse-kms-key-id alias/kms-s3 )
 
   # Run Vulnerability Scan in the artifact using ZeroNorth - master only
   # WARNING: don't `set -x` here, exposes credentials
   if [ "${PKG_TYPE}" == "int" ]; then
-    echo "$DOCKERHUB_PASSWORD" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
     sudo docker pull zeronorth/owasp-5-job-runner
     sudo docker run -v "${PWD}"/target/ctia.jar:/code/ctia.jar -e CYBRIC_API_KEY="${CYBRIC_API_KEY}" -e POLICY_ID=IUkmdVdkSjms9CjeWK-Peg -e WORKSPACE="${PWD}"/target -v /var/run/docker.sock:/var/run/docker.sock --name zeronorth zeronorth/integration:latest python cybric.py
     echo "Waiting the ZeroNorth Vulnerability Scanner to finish..."
