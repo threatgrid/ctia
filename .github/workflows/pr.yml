@@ -366,4 +366,4 @@ jobs:
           # offline to catch issues where `lein warm-ci-deps` doesn't download all
           # dependencies we need to deploy.
           LEIN_OFFLINE: true
-          CYBRIC_API_KEY: FIXME #${{ secrets.CYBRIC_API_KEY }}
+          CYBRIC_API_KEY: DELETEME-${{ secrets.CYBRIC_API_KEY }}
