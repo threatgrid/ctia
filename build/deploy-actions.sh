@@ -47,9 +47,13 @@ function build-and-publish-package {
 
   # Upload the jar directly to the artifacts S3 bucket
   if [ "${PKG_TYPE}" == "int" ]; then
-    ARTIFACTS_BUCKET="372070498991-us-east-1-int-saltstack"
+    #FIXME use actual bucket
+    #ARTIFACTS_BUCKET="372070498991-us-east-1-int-saltstack"
+    ARTIFACTS_BUCKET="FAKE"
   elif [ "${PKG_TYPE}" == "rel" ]; then
-    ARTIFACTS_BUCKET="372070498991-us-east-1-test-saltstack"
+    #FIXME use actual bucket
+    #ARTIFACTS_BUCKET="372070498991-us-east-1-test-saltstack"
+    ARTIFACTS_BUCKET="FAKE"
   fi
 
   ARTIFACT_NAME="${CTIA_BUILD_NUMBER}-${CTIA_COMMIT:0:8}.jar"
