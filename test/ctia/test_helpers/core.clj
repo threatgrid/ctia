@@ -1,5 +1,8 @@
 (ns ctia.test-helpers.core
   (:require
+   [clj-momo.lib.clj-time.coerce :as mcljtime-coerce]
+   [clj-momo.lib.clj-time.core :as mcljtime]
+   [clj-momo.lib.time :as mtime]
    [clj-momo.properties :refer [coerce-properties read-property-files]]
    [clj-momo.test-helpers.http :as mthh]
    [clojure.spec.alpha :as cs]
@@ -337,12 +340,12 @@
       (f))))
 
 (defn fixture-with-fixed-time [time f]
-  (with-redefs [clj-momo.lib.clj-time.core/now
+  (with-redefs [mcljtime/now
                 (fn [] time)
-                clj-momo.lib.time/now
+                mtime/now
                 (fn [] time)
-                clj-momo.lib.clj-time.core/internal-now
-                (fn [] (clj-momo.lib.clj-time.coerce/to-date time))]
+                mcljtime/internal-now
+                (fn [] (mcljtime-coerce/to-date time))]
     (f)))
 
 (defn set-capabilities!
