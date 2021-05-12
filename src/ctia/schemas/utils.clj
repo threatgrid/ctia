@@ -81,7 +81,7 @@
   ;    :FooService {:f2 <...>}}
 
   ;; map selector syntax (supports any heterogenous map schema)
-  (select-service-subgraph-from-schema
+  (select-service-subgraph
     {:ConfigService {:get-in-config (fn [...] ...)
                      :get-config (fn [...] ...)}
      :FooService {:f1 (fn [...] ...)
@@ -129,20 +129,6 @@
                                        :else (throw (ex-info (str "Unknown selector syntax: " (pr-str fn-kws)))))]
                      {(s/explicit-schema-key service-kw) service-fns})))))
         selectors))
-
-(s/defn select-service-subgraph-from-schema :- (s/pred map?)
-  "Given a schema describing a Trapperkeeper graph,
-  returns just the elements in graph mentioned
-  in the schema as 'explicit keys' using service-subgraph.
-  Throws an exception if any levels are missing.
-  
-  "
-  [graph-value :- (s/pred map?)
-   schema :- (s/protocol s/Schema)]
-  {:pre [(map? schema)]}
-  (select-service-subgraph
-    graph-value
-    schema))
 
 (s/defn select-service-subschema :- (s/protocol s/Schema)
   "Given a schema shaped like a Trapperkeeper service graph, selects

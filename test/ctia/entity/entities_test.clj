@@ -29,7 +29,7 @@
 
 (deftest entity-realize-fn-test
   (let [app (test-helpers/get-current-app)
-        realize-fn-services (csu/select-service-subgraph-from-schema
+        realize-fn-services (csu/select-service-subgraph
                               (app/service-graph app)
                               RealizeFnServices)
         properties [:id :type :owner :groups :schema_version

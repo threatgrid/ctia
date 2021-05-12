@@ -68,7 +68,7 @@
 (s/defn MigrationStoreServices->ESConnServices
   :- ESConnServices
   [services :- MigrationStoreServices]
-  (csu/select-service-subgraph-from-schema
+  (csu/select-service-subgraph
     services
     ESConnServices))
 

@@ -52,9 +52,9 @@
 (s/defn app->APIHandlerServices :- APIHandlerServices [app]
   (-> app
       app/service-graph
-      (csu/select-service-subgraph-from-schema APIHandlerServices)))
+      (csu/select-service-subgraph APIHandlerServices)))
 
 (s/defn app->HTTPShowServices :- HTTPShowServices [app]
   (-> app
       app/service-graph
-      (csu/select-service-subgraph-from-schema HTTPShowServices)))
+      (csu/select-service-subgraph HTTPShowServices)))

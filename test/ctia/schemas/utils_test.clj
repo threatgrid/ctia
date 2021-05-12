@@ -65,10 +65,18 @@
       sut/select-service-subgraph
       int->v)
     (testing "optional keys"
-      (is (= (sut/select-service-subgraph
+      (is (= ;; set syntax 
+             (sut/select-service-subgraph
                {:a {:b (int->v 1) :c (int->v 2)}
                 :d {:e (int->v 3) :f (int->v 4)}}
                {:a #{:b (s/optional-key :not-here)}
+                (s/optional-key :e) #{:gone}})
+             ;; map syntax
+             (sut/select-service-subgraph
+               {:a {:b (int->v 1) :c (int->v 2)}
+                :d {:e (int->v 3) :f (int->v 4)}}
+               {:a {:b (s/pred ifn?)
+                    (s/optional-key :not-here) (s/pred ifn?)}
                 (s/optional-key :e) #{:gone}})
              {:a {:b (int->v 1)}}))))
   (testing "missing service function throws"

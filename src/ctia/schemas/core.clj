@@ -75,7 +75,7 @@
 (s/defn APIHandlerServices->RealizeFnServices
   :- RealizeFnServices
   [services :- APIHandlerServices]
-  (csu/select-service-subgraph-from-schema
+  (csu/select-service-subgraph
     services
     RealizeFnServices))
 
