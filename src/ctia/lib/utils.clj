@@ -81,13 +81,14 @@
    If the resulting collection is empty, `::to-remove` is returned.
    The collection type is preserved."
   [c]
-  (let [cleaned (->> c
-                     (remove #(= % ::to-remove))
-                     (into (empty c)))]
+  (let [cleaned (into (empty c)
+                      (remove #(= % ::to-remove))
+                      c)]
     (cond
       (and (seq c)
            (empty? cleaned)) ::to-remove
-      (list? cleaned) (reverse cleaned) ;; into reverse the content of a list
+      (or (seq? cleaned)
+          (list? cleaned)) (reverse cleaned) ;; into reverses the content of a list
       :else cleaned)))
 
 ;; copied from iroh-core.core
@@ -95,7 +96,8 @@
   "filter generalized to maps"
   [f m]
   (into {}
-        (for [[k v] m :when (f v)] [k v])))
+        (filter (comp f val))
+        m))
 
 ;; copied from iroh-core.core
 (defn clean-map
