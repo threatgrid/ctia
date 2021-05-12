@@ -97,37 +97,39 @@
   [graph-value :- AnyServiceGraph
    selectors :- SelectorVal]
   (into {}
-        (map (s/fn :- (s/maybe AnyServiceGraph)
-               [[service-kw fn-kws] :- [(s/one SimpleKeywordSpecificKey 'service-kw)
-                                        (s/one SelectorVal 'fn-kws)]]
-               (let [gval (get graph-value (s/explicit-schema-key service-kw))
-                     service-provided? (map? gval)
-                     optional-service? (s/optional-key? service-kw)]
-                 (if-not service-provided?
-                   ;; if optional, it's safe to skip this entry, otherwise error
-                   (when-not optional-service?
-                     (throw (ex-info (str "Missing service: " service-kw) {})))
-                   (let [fn-kw->maybe-graph-fns (s/fn :- (s/maybe AnyServiceGraphFns)
-                                                  [fn-kw :- SimpleKeywordSpecificKey]
-                                                  (if-some [svc-fn (get gval (s/explicit-schema-key fn-kw))]
-                                                    {(s/explicit-schema-key fn-kw) svc-fn}
-                                                    (when-not (s/optional-key? fn-kw)
-                                                      (throw (ex-info (format "Missing %s service function: %s"
-                                                                              service-kw
-                                                                              (s/explicit-schema-key fn-kw))
-                                                                      {})))))
-                         service-fns (cond
-                                       (set? fn-kws) (into {}
-                                                           (map fn-kw->maybe-graph-fns)
-                                                           fn-kws)
-                                       ;; schema case. remove non-specific keys
-                                       (map? fn-kws) (into {}
-                                                           (comp (map key)
-                                                                 (filter s/specific-key?)
-                                                                 (map fn-kw->maybe-graph-fns))
-                                                           fn-kws)
-                                       :else (throw (ex-info (str "Unknown selector syntax: " (pr-str fn-kws)))))]
-                     {(s/explicit-schema-key service-kw) service-fns})))))
+        (comp
+          (filter (comp s/specific-key? key))
+          (map (s/fn :- (s/maybe AnyServiceGraph)
+                 [[service-kw fn-kws] :- [(s/one SimpleKeywordSpecificKey 'service-kw)
+                                          (s/one SelectorVal 'fn-kws)]]
+                 (let [gval (get graph-value (s/explicit-schema-key service-kw))
+                       service-provided? (map? gval)
+                       optional-service? (s/optional-key? service-kw)]
+                   (if-not service-provided?
+                     ;; if optional, it's safe to skip this entry, otherwise error
+                     (when-not optional-service?
+                       (throw (ex-info (str "Missing service: " service-kw) {})))
+                     (let [fn-kw->maybe-graph-fns (s/fn :- (s/maybe AnyServiceGraphFns)
+                                                    [fn-kw :- SimpleKeywordSpecificKey]
+                                                    (if-some [svc-fn (get gval (s/explicit-schema-key fn-kw))]
+                                                      {(s/explicit-schema-key fn-kw) svc-fn}
+                                                      (when-not (s/optional-key? fn-kw)
+                                                        (throw (ex-info (format "Missing %s service function: %s"
+                                                                                service-kw
+                                                                                (s/explicit-schema-key fn-kw))
+                                                                        {})))))
+                           service-fns (cond
+                                         (set? fn-kws) (into {}
+                                                             (map fn-kw->maybe-graph-fns)
+                                                             fn-kws)
+                                         ;; schema case. remove non-specific keys
+                                         (map? fn-kws) (into {}
+                                                             (comp (map key)
+                                                                   (filter s/specific-key?)
+                                                                   (map fn-kw->maybe-graph-fns))
+                                                             fn-kws)
+                                         :else (throw (ex-info (str "Unknown selector syntax: " (pr-str fn-kws)))))]
+                       {(s/explicit-schema-key service-kw) service-fns}))))))
         selectors))
 
 (s/defn select-service-subschema :- (s/protocol s/Schema)

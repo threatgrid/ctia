@@ -89,8 +89,8 @@ includes all the dependencies you need to run Docker containers.
   your Docker preferences.  This has been tested with a 4GB
   allocation.**
 
-We  provide a  default `containers/dev/docker-compose.yml`  which will
-bring up the  dependencies you need in containers. 
+We provide a default `containers/dev/docker-compose.yml`  which will
+bring up the dependencies you need in containers. 
 
 You can bring up a development environment:
 
