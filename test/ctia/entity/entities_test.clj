@@ -2,7 +2,7 @@
   (:require [clj-momo.test-helpers.core :as mth]
             [ctia.entity.entities :as sut]
             [ctia.schemas.core :refer [lift-realize-fn-with-context RealizeFnServices]]
-            [ctia.schemas.utils :refer [service-subgraph-from-schema]]
+            [ctia.schemas.utils :as csu]
             [ctia.test-helpers
              [core :as test-helpers]
              [es :as es-helpers]]
@@ -29,7 +29,7 @@
 
 (deftest entity-realize-fn-test
   (let [app (test-helpers/get-current-app)
-        realize-fn-services (service-subgraph-from-schema
+        realize-fn-services (csu/select-service-subgraph-from-schema
                               (app/service-graph app)
                               RealizeFnServices)
         properties [:id :type :owner :groups :schema_version

@@ -48,11 +48,6 @@
            {:a {:b (int->v 1) :c (int->v 2)}
             :d {:e (int->v 3) :f (int->v 4)}}
            {:a #{:b}})
-         (service-subgraph
-           {:a {:b (int->v 1) :c (int->v 2)}
-            :d {:e (int->v 3) :f (int->v 4)}}
-           {:a #{:b (s/optional-key :not-here)}
-            (s/optional-key :e) #{:gone}})
          {:a {:b (int->v 1)}}))
   (is (= (service-subgraph
            {:a {:b (int->v 1) :c (int->v 2)}
@@ -60,14 +55,27 @@
            {:a #{:b}
             :d #{:e}})
          {:a {:b (int->v 1)}
-          :d {:e (int->v 3)}}))
+          :d {:e (int->v 3)}})))
+
+(deftest service-subgraph-test
+  (let [int->v (vec (range 5))]
+    (service-subgraph-test*
+      sut/select-service-subgraph
+      (vec (range 5)))
+    (testing "optional keys"
+      (is (= (sut/select-service-subgraph
+               {:a {:b (int->v 1) :c (int->v 2)}
+                :d {:e (int->v 3) :f (int->v 4)}}
+               {:a #{:b (s/optional-key :not-here)}
+                (s/optional-key :e) #{:gone}})
+             {:a {:b (int->v 1)}}))))
   (testing "missing service function throws"
     (is (thrown-with-msg?
           ExceptionInfo
           (Pattern/compile
             "Missing service: :MissingService"
             Pattern/LITERAL)
-          (service-subgraph
+          (sut/select-service-subgraph
             {}
             {:MissingService #{:foo}})))
     (is (thrown-with-msg?
@@ -75,7 +83,7 @@
           (Pattern/compile
             "Missing service: :MissingService"
             Pattern/LITERAL)
-          (service-subgraph
+          (sut/select-service-subgraph
             {:PresentService {:present (constantly nil)}}
             {:MissingService #{:foo :bar}
              :PresentService #{:present}})))
@@ -84,22 +92,43 @@
           (Pattern/compile
             "Missing :PresentService service function: :missing"
             Pattern/LITERAL)
-          (service-subgraph
+          (sut/select-service-subgraph
             {:PresentService {:present (constantly nil)}}
             {:PresentService #{:present :missing}})))))
 
-(deftest service-subgraph-test
+(deftest select-service-subschema-test
   (service-subgraph-test*
-    sut/service-subgraph
-    (vec (range 5))))
-
-(deftest service-subschema-test
-  (service-subgraph-test*
-    sut/service-subgraph
+    sut/select-service-subschema
     (let [;; distinct with stable ordering
           ps [int? boolean? map? vector? set?]]
       (assert (apply distinct? ps))
-      (mapv s/pred ps))))
+      (mapv s/pred ps)))
+  (testing "missing service function throws"
+    (is (thrown-with-msg?
+          ExceptionInfo
+          (Pattern/compile
+            "Missing service: :MissingService"
+            Pattern/LITERAL)
+          (sut/select-service-subschema
+            {}
+            {:MissingService #{:foo}})))
+    (is (thrown-with-msg?
+          ExceptionInfo
+          (Pattern/compile
+            "Missing service: :MissingService"
+            Pattern/LITERAL)
+          (sut/select-service-subschema
+            {:PresentService {:present (constantly nil)}}
+            {:MissingService #{:foo :bar}
+             :PresentService #{:present}})))
+    (is (thrown-with-msg?
+          ExceptionInfo
+          (Pattern/compile
+            "Missing :PresentService service functions: [:missing]"
+            Pattern/LITERAL)
+          (sut/select-service-subschema
+            {:PresentService {:present (constantly nil)}}
+            {:PresentService #{:present :missing}})))))
 
 (deftest select-all-keys-test
   (testing "behaves like st/select-keys with present keys"

@@ -44,7 +44,7 @@
 
 (s/defschema HTTPShowServices
   (-> APIHandlerServices
-      (csu/service-subschema
+      (csu/select-service-subschema
         {:ConfigService #{:get-in-config}
          :CTIAHTTPServerService #{:get-port}})
       csu/open-service-schema))
@@ -64,7 +64,7 @@
 (s/defschema RealizeFnServices
   "Maps of service functions available for realize-fns"
   (-> APIHandlerServices
-      (csu/service-subschema
+      (csu/select-service-subschema
         {:ConfigService #{:get-in-config}
          :CTIAHTTPServerService #{:get-port}
          :StoreService #{:get-store}
@@ -75,7 +75,7 @@
 (s/defn APIHandlerServices->RealizeFnServices
   :- RealizeFnServices
   [services :- APIHandlerServices]
-  (csu/service-subgraph-from-schema
+  (csu/select-service-subgraph-from-schema
     services
     RealizeFnServices))
 

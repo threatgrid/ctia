@@ -5,7 +5,7 @@
    [clj-momo.test-helpers.http :refer [post]]
    [clj-momo.test-helpers.http-assert-1 :as mthh]
    [ctia.schemas.core :refer [APIHandlerServices HTTPShowServices]]
-   [ctia.schemas.utils :refer [service-subgraph-from-schema]]
+   [ctia.schemas.utils :as csu]
    [ctia.test-helpers.core :as th]
    [puppetlabs.trapperkeeper.app :as app]
    [schema.core :as s]))
@@ -52,9 +52,9 @@
 (s/defn app->APIHandlerServices :- APIHandlerServices [app]
   (-> app
       app/service-graph
-      (service-subgraph-from-schema APIHandlerServices)))
+      (csu/select-service-subgraph-from-schema APIHandlerServices)))
 
 (s/defn app->HTTPShowServices :- HTTPShowServices [app]
   (-> app
       app/service-graph
-      (service-subgraph-from-schema HTTPShowServices)))
+      (csu/select-service-subgraph-from-schema HTTPShowServices)))

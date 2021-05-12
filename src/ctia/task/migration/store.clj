@@ -7,7 +7,7 @@
             [ctia.init :refer [log-properties]]
             [ctia.lib.collection :refer [fmap]]
             [ctia.schemas.services :as external-svc-fns]
-            [ctia.schemas.utils :as csu :refer [service-subgraph-from-schema]]
+            [ctia.schemas.utils :as csu]
             [ctia.store :as store]
             [ctia.stores.es.crud :as crud]
             [ctia.stores.es.init :as es.init]
@@ -68,7 +68,7 @@
 (s/defn MigrationStoreServices->ESConnServices
   :- ESConnServices
   [services :- MigrationStoreServices]
-  (service-subgraph-from-schema
+  (csu/select-service-subgraph-from-schema
     services
     ESConnServices))
 

@@ -515,5 +515,5 @@
   [app]
   (-> app
       app/service-graph
-      (csu/service-subgraph
+      (csu/select-service-subgraph
         {:FeaturesService #{:enabled?}})))
