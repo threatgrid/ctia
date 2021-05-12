@@ -35,8 +35,12 @@
   [schema]
   (st/optional-keys-schema schema))
 
-(s/defschema SpecificKey
-  (s/pred s/specific-key?))
+(s/defschema SimpleKeywordSpecificKey
+  (s/pred (fn _SimpleKeywordSpecificKey
+            [k]
+            (and (s/specific-key? k)
+                 (simple-keyword? (s/explicit-schema-key k))))
+          'SimpleKeywordSpecificKey))
 
 (s/defn service-subgraph :- (s/pred map?)
   "Returns a subgraph of a Trapperkeeper service graph value.
@@ -55,22 +59,18 @@
   ;    :FooService {:f2 <...>}}
   "
   [graph-value :- (s/pred map?)
-   selectors :- {SpecificKey #{SpecificKey}}]
+   selectors :- {SimpleKeywordSpecificKey #{SimpleKeywordSpecificKey}}]
   (into {}
         (map (fn [[service-kw fn-kws]]
-               (assert (s/specific-key? service-kw)
-                       (pr-str service-kw))
-               (assert (simple-keyword? (s/explicit-schema-key service-kw))
-                       (s/explicit-schema-key service-kw))
-               (assert (set? fn-kws))
-               (let [gval (get graph-value (s/explicit-schema-key service-kw))]
-                 (if-not (map? gval)
-                   (when-not (s/optional-key? service-kw)
+               (let [gval (get graph-value (s/explicit-schema-key service-kw))
+                     service-provided? (map? gval)
+                     optional-service? (s/optional-key? service-kw)]
+                 (if-not service-provided?
+                   ;; if optional, it's safe to skip this entry, otherwise error
+                   (when-not optional-service?
                      (throw (ex-info (str "Missing service: " service-kw) {})))
                    (let [service-fns (into {}
                                            (map (fn [fn-kw]
-                                                  (assert (simple-keyword? (s/explicit-schema-key fn-kw))
-                                                          (s/explicit-schema-key fn-kw))
                                                   (if-some [svc-fn (get gval (s/explicit-schema-key fn-kw))]
                                                     {(s/explicit-schema-key fn-kw) svc-fn}
                                                     (when-not (s/optional-key? fn-kw)
@@ -140,9 +140,6 @@
   {:pre [(map? graph-schema)]}
   (into {}
         (map (fn [[service-kw fn-kws]]
-               (assert (keyword? service-kw)
-                       (pr-str service-kw))
-               (assert (set? fn-kws))
                (let [service-fns (some-> (st/get-in graph-schema [service-kw])
                                          (st/select-keys fn-kws))]
                  (when (not= (count service-fns)
