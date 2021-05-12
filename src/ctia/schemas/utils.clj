@@ -35,6 +35,9 @@
   [schema]
   (st/optional-keys-schema schema))
 
+(s/defschema SimpleKeyword
+  (s/pred simple-keyword?))
+
 (s/defschema SimpleKeywordSpecificKey
   (s/pred (fn _SimpleKeywordSpecificKey
             [k]
@@ -42,10 +45,29 @@
                  (simple-keyword? (s/explicit-schema-key k))))
           'SimpleKeywordSpecificKey))
 
-(s/defn select-service-subgraph :- (s/pred map?)
+(s/defschema AnyServiceGraphFns
+  {SimpleKeyword (s/pred ifn?)})
+
+(s/defschema AnyServiceGraph
+  {SimpleKeyword AnyServiceGraphFns})
+
+(s/defschema SelectorVal
+  (s/cond-pre
+    #{SimpleKeywordSpecificKey}
+    (s/constrained
+      (s/protocol s/Schema)
+      map?)))
+
+(s/defschema Selector
+  {SimpleKeywordSpecificKey
+   SelectorVal})
+
+(s/defn select-service-subgraph :- AnyServiceGraph
   "Returns a subgraph of a Trapperkeeper service graph value.
   If any required levels are missing, throws an exception.
+  Selector can be a map of sets or a map schema.
   
+  ;; set selector syntax
   (select-service-subgraph
     {:ConfigService {:get-in-config <...>
                      :get-config <...>}
@@ -57,37 +79,8 @@
      (s/optional-key :MissingService) #{:m1}})
   ;=> {:ConfigService {:get-config <...>}
   ;    :FooService {:f2 <...>}}
-  "
-  [graph-value :- (s/pred map?)
-   selectors :- {SimpleKeywordSpecificKey #{SimpleKeywordSpecificKey}}]
-  (into {}
-        (map (fn [[service-kw fn-kws]]
-               (let [gval (get graph-value (s/explicit-schema-key service-kw))
-                     service-provided? (map? gval)
-                     optional-service? (s/optional-key? service-kw)]
-                 (if-not service-provided?
-                   ;; if optional, it's safe to skip this entry, otherwise error
-                   (when-not optional-service?
-                     (throw (ex-info (str "Missing service: " service-kw) {})))
-                   (let [service-fns (into {}
-                                           (map (fn [fn-kw]
-                                                  (if-some [svc-fn (get gval (s/explicit-schema-key fn-kw))]
-                                                    {(s/explicit-schema-key fn-kw) svc-fn}
-                                                    (when-not (s/optional-key? fn-kw)
-                                                      (throw (ex-info (format "Missing %s service function: %s "
-                                                                              service-kw
-                                                                              (s/explicit-schema-key fn-kw))
-                                                                      {}))))))
-                                           fn-kws)]
-                     {(s/explicit-schema-key service-kw) service-fns})))))
-        selectors))
 
-(s/defn select-service-subgraph-from-schema :- (s/pred map?)
-  "Given a schema describing a Trapperkeeper graph,
-  returns just the elements in graph mentioned
-  in the schema as 'explicit keys' using service-subgraph.
-  Throws an exception if any levels are missing.
-  
+  ;; map selector syntax
   (select-service-subgraph-from-schema
     {:ConfigService {:get-in-config (fn [...] ...)
                      :get-config (fn [...] ...)}
@@ -101,22 +94,55 @@
   ;    :FooService {:f1 (fn [...] ...)
   ;                 :f2 (fn [...] ...)}}
   "
+  [graph-value :- AnyServiceGraph
+   selectors :- SelectorVal]
+  (into {}
+        (map (s/fn :- (s/maybe AnyServiceGraph)
+               [[service-kw fn-kws] :- [(s/one SimpleKeywordSpecificKey 'service-kw)
+                                        (s/one SelectorVal 'fn-kws)]]
+               (let [gval (get graph-value (s/explicit-schema-key service-kw))
+                     service-provided? (map? gval)
+                     optional-service? (s/optional-key? service-kw)]
+                 (if-not service-provided?
+                   ;; if optional, it's safe to skip this entry, otherwise error
+                   (when-not optional-service?
+                     (throw (ex-info (str "Missing service: " service-kw) {})))
+                   (let [fn-kw->graph-xf (map (s/fn :- (s/maybe AnyServiceGraphFns)
+                                                [fn-kw :- SimpleKeywordSpecificKey]
+                                                (if-some [svc-fn (get gval (s/explicit-schema-key fn-kw))]
+                                                  {(s/explicit-schema-key fn-kw) svc-fn}
+                                                  (when-not (s/optional-key? fn-kw)
+                                                    (throw (ex-info (format "Missing %s service function: %s"
+                                                                            service-kw
+                                                                            (s/explicit-schema-key fn-kw))
+                                                                    {}))))))
+                         service-fns (cond
+                                       (set? fn-kws) (into {}
+                                                           fn-kw->graph-xf
+                                                           fn-kws)
+                                       ;; schema case. remove non-specific keys
+                                       (map? fn-kws) (into {}
+                                                           (comp (map key)
+                                                                 (filter s/specific-key?)
+                                                                 fn-kw->graph-xf)
+                                                           fn-kws)
+                                       :else (throw (ex-info (str "Unknown selector syntax: " (pr-str fn-kws)))))]
+                     {(s/explicit-schema-key service-kw) service-fns})))))
+        selectors))
+
+(s/defn select-service-subgraph-from-schema :- (s/pred map?)
+  "Given a schema describing a Trapperkeeper graph,
+  returns just the elements in graph mentioned
+  in the schema as 'explicit keys' using service-subgraph.
+  Throws an exception if any levels are missing.
+  
+  "
   [graph-value :- (s/pred map?)
    schema :- (s/protocol s/Schema)]
   {:pre [(map? schema)]}
   (select-service-subgraph
     graph-value
-    ;; this could be factored out a la schema.coerce/coercer for
-    ;; better performance.
-    (into {}
-          (map (fn [[service-kw service-fns]]
-                 {:pre [(map? service-fns)]}
-                 (when (s/specific-key? service-kw)
-                   {service-kw
-                    (into #{}
-                          (filter s/specific-key?)
-                          (keys service-fns))})))
-          schema)))
+    schema))
 
 (s/defn select-service-subschema :- (s/protocol s/Schema)
   "Given a schema shaped like a Trapperkeeper service graph, selects

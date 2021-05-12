@@ -58,10 +58,12 @@
           :d {:e (int->v 3)}})))
 
 (deftest service-subgraph-test
-  (let [int->v (vec (range 5))]
+  (let [int->v (into []
+                     (take 5)
+                     (repeatedly #(constantly nil)))]
     (service-subgraph-test*
       sut/select-service-subgraph
-      (vec (range 5)))
+      int->v)
     (testing "optional keys"
       (is (= (sut/select-service-subgraph
                {:a {:b (int->v 1) :c (int->v 2)}
