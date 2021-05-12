@@ -1,7 +1,6 @@
 (ns ctia.entity.target-record
   (:require [ctia.domain.entities :refer [default-realize-fn]]
             [ctia.schemas.core :refer [APIHandlerServices def-acl-schema def-stored-schema]]
-            [ctia.schemas.utils :as csu]
             [ctia.schemas.sorting :as sorting]
             [ctia.stores.es.mapping :as em]
             [ctia.stores.es.store :refer [def-es-store]]
@@ -30,7 +29,7 @@
 (def-stored-schema StoredTargetRecord TargetRecord)
 
 (s/defschema PartialStoredTargetRecord
-  (csu/optional-keys-schema StoredTargetRecord))
+  (st/optional-keys-schema StoredTargetRecord))
 
 (def realize-target-record
   (default-realize-fn "target-record" NewTargetRecord StoredTargetRecord))

@@ -13,7 +13,6 @@
    [ctia.schemas.graphql.pagination :as pagination]
    [ctia.schemas.graphql.sorting :as graphql-sorting]
    [ctia.schemas.sorting :as sorting]
-   [ctia.schemas.utils :as csu]
    [ctia.stores.es.mapping :as em]
    [ctia.stores.es.store :refer [def-es-store]]
    [ctim.schemas.attack-pattern :as attack]
@@ -39,7 +38,7 @@
 (def-stored-schema StoredAttackPattern AttackPattern)
 
 (s/defschema PartialStoredAttackPattern
-  (csu/optional-keys-schema StoredAttackPattern))
+  (st/optional-keys-schema StoredAttackPattern))
 
 (def realize-attack-pattern
   (default-realize-fn "attack-pattern" NewAttackPattern StoredAttackPattern))

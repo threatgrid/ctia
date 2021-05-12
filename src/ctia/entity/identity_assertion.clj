@@ -5,7 +5,6 @@
               :as routes.common]
              [crud :refer [services->entity-crud-routes]]]
             [ctia.schemas
-             [utils :as csu]
              [core :refer [APIHandlerServices def-acl-schema def-stored-schema]]
              [sorting :as sorting]]
             [ctia.stores.es
@@ -34,7 +33,7 @@
 (def-stored-schema StoredIdentityAssertion IdentityAssertion)
 
 (s/defschema PartialStoredIdentityAssertion
-  (csu/optional-keys-schema StoredIdentityAssertion))
+  (st/optional-keys-schema StoredIdentityAssertion))
 
 (def realize-identity-assertion
   (default-realize-fn "identity-assertion" NewIdentityAssertion StoredIdentityAssertion))

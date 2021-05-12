@@ -3,7 +3,6 @@
             [ctia.domain
              [entities :refer [default-realize-fn]]]
             [ctia.schemas
-             [utils :as csu]
              [core :refer [def-acl-schema def-stored-schema TempIDs]]
              [sorting :as sorting]]
             [ctim.schemas.feedback :as feedbacks]
@@ -29,7 +28,7 @@
 (def-stored-schema StoredFeedback Feedback)
 
 (s/defschema PartialStoredFeedback
-  (csu/optional-keys-schema StoredFeedback))
+  (st/optional-keys-schema StoredFeedback))
 
 (def realize-feedback
   (default-realize-fn "feedback" NewFeedback StoredFeedback))

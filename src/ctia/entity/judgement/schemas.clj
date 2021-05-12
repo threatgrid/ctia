@@ -3,7 +3,6 @@
              [entities :refer [default-realize-fn]]]
             [ctia.graphql.delayed :as delayed]
             [ctia.schemas
-             [utils :as csu]
              [core :refer [def-acl-schema
                            def-stored-schema
                            GraphQLRuntimeContext
@@ -16,6 +15,7 @@
              [judgement :as js]]
             [flanders.utils :as fu]
             [schema.core :as s]
+            [schema-tools.core :as st]
             [ctia.flows.schemas :refer [with-error]]))
 
 (def-acl-schema Judgement
@@ -37,7 +37,7 @@
   Judgement)
 
 (s/defschema PartialStoredJudgement
-  (csu/optional-keys-schema StoredJudgement))
+  (st/optional-keys-schema StoredJudgement))
 
 (def judgement-default-realize
   (default-realize-fn "judgement" NewJudgement StoredJudgement))

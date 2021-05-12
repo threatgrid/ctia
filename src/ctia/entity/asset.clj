@@ -5,7 +5,6 @@
    [ctia.http.routes.crud :refer [services->entity-crud-routes]]
    [ctia.schemas.core :as schemas :refer [APIHandlerServices def-acl-schema def-stored-schema]]
    [ctia.schemas.sorting :as sorting]
-   [ctia.schemas.utils :as csu]
    [ctia.stores.es.mapping :as em]
    [ctia.stores.es.store :refer [def-es-store]]
    [ctim.schemas.asset :as asset-schema]
@@ -31,7 +30,7 @@
 (def-stored-schema StoredAsset Asset)
 
 (s/defschema PartialStoredAsset
-  (csu/optional-keys-schema StoredAsset))
+  (st/optional-keys-schema StoredAsset))
 
 (def realize-asset (default-realize-fn "asset" NewAsset StoredAsset))
 

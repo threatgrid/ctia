@@ -5,9 +5,9 @@
    [flanders.utils :as fu]
    [ctim.schemas.relationship :as rels]
    [schema.core :as s]
+   [schema-tools.core :as st]
    [ctia.graphql.delayed :as delayed]
    [ctia.schemas
-    [utils :as csu]
     [core :refer [def-acl-schema
                   def-stored-schema
                   GraphQLRuntimeContext
@@ -35,7 +35,7 @@
 (def-stored-schema StoredRelationship Relationship)
 
 (s/defschema PartialStoredRelationship
-  (csu/optional-keys-schema StoredRelationship))
+  (st/optional-keys-schema StoredRelationship))
 
 (def relationship-default-realize
   (default-realize-fn "relationship" NewRelationship StoredRelationship))

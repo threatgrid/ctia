@@ -5,7 +5,6 @@
               :as routes.common]
              [crud :refer [services->entity-crud-routes]]]
             [ctia.schemas
-             [utils :as csu]
              [core :refer [APIHandlerServices def-acl-schema def-stored-schema]]
              [sorting :refer [default-entity-sort-fields]]]
             [ctia.stores.es
@@ -34,7 +33,7 @@
 (def-stored-schema StoredCOA COA)
 
 (s/defschema PartialStoredCOA
-  (csu/optional-keys-schema StoredCOA))
+  (st/optional-keys-schema StoredCOA))
 
 (def realize-coa
   (default-realize-fn "coa" NewCOA StoredCOA))

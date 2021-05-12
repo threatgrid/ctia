@@ -14,20 +14,10 @@
      (if (and
           (instance? clojure.lang.IMapEntry x)
           (= :schema_version (:k (key x))))
-       [(key x) s/Str]
+       (assoc x 1 s/Str)
        (recursive-open-schema-version x)))
    identity
    s))
-
-;; fns below are backported from schema-tools master
-;; from https://github.com/metosin/schema-tools/blob/master/src/schema_tools/core.cljc#L266
-;; TODO those can be removed once we use 0.10.6
-
-;; TODO delete me
-(defn optional-keys-schema
-  "Walks a schema making all keys optional in Map Schemas."
-  [schema]
-  (st/optional-keys-schema schema))
 
 (s/defschema SimpleKeyword
   (s/pred simple-keyword?))

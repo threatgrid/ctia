@@ -58,7 +58,7 @@
 (def-stored-schema StoredCasebook Casebook)
 
 (s/defschema PartialStoredCasebook
-  (csu/optional-keys-schema StoredCasebook))
+  (st/optional-keys-schema StoredCasebook))
 
 (def realize-casebook
   (default-realize-fn "casebook" NewCasebook StoredCasebook))

@@ -2,7 +2,7 @@
   (:require
    [clj-momo.lib.clj-time.coerce :as mcljtime-coerce]
    [clj-momo.lib.clj-time.core :as mcljtime]
-   [clj-momo.lib.time :as mtime]
+   [clj-momo.lib.time :as time]
    [clj-momo.properties :refer [coerce-properties read-property-files]]
    [clj-momo.test-helpers.http :as mthh]
    [clojure.spec.alpha :as cs]
@@ -342,7 +342,7 @@
 (defn fixture-with-fixed-time [time f]
   (with-redefs [mcljtime/now
                 (fn [] time)
-                mtime/now
+                time/now
                 (fn [] time)
                 mcljtime/internal-now
                 (fn [] (mcljtime-coerce/to-date time))]

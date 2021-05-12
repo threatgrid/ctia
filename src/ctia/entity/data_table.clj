@@ -5,7 +5,6 @@
               :as routes.common]
              [crud :refer [services->entity-crud-routes]]]
             [ctia.schemas
-             [utils :as csu]
              [core :refer [APIHandlerServices def-acl-schema def-stored-schema]]
              [sorting :refer [default-entity-sort-fields]]]
             [ctia.stores.es
@@ -38,7 +37,7 @@
 (def-stored-schema StoredDataTable DataTable)
 
 (s/defschema PartialStoredDataTable
-  (csu/optional-keys-schema StoredDataTable))
+  (st/optional-keys-schema StoredDataTable))
 
 (def realize-data-table
   (default-realize-fn "data-table" NewDataTable StoredDataTable))

@@ -6,8 +6,7 @@
              [crud :refer [services->entity-crud-routes]]]
             [ctia.schemas
              [core :refer [APIHandlerServices def-acl-schema def-stored-schema]]
-             [sorting :as sorting]
-             [utils :as csu]]
+             [sorting :as sorting]]
             [ctia.stores.es
              [mapping :as em]
              [store :refer [def-es-store]]]
@@ -34,7 +33,7 @@
 (def-stored-schema StoredActor Actor)
 
 (s/defschema PartialStoredActor
-  (csu/optional-keys-schema StoredActor))
+  (st/optional-keys-schema StoredActor))
 
 (def realize-actor
   (default-realize-fn "actor" NewActor StoredActor))

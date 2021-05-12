@@ -10,7 +10,6 @@
     [RealizeFnResult GraphQLRuntimeContext APIHandlerServices
      def-acl-schema def-stored-schema]]
    [ctia.schemas.sorting :as sorting]
-   [ctia.schemas.utils :as csu]
    [ctia.store]
    [ctia.stores.es.mapping :as em]
    [ctia.stores.es.store :refer [def-es-store]]
@@ -37,7 +36,7 @@
 (def-stored-schema StoredAssetProperties AssetProperties)
 
 (s/defschema PartialStoredAssetProperties
-  (csu/optional-keys-schema StoredAssetProperties))
+  (st/optional-keys-schema StoredAssetProperties))
 
 (def asset-properties-default-realize
   (default-realize-fn "asset-properties" NewAssetProperties StoredAssetProperties))

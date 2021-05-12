@@ -18,8 +18,7 @@
              [core :refer [APIHandlerServices def-acl-schema def-stored-schema]]
              [sorting
               :refer [default-entity-sort-fields describable-entity-sort-fields
-                      sourcable-entity-sort-fields]]
-             [utils :as csu]]
+                      sourcable-entity-sort-fields]]]
             [ctia.schemas.graphql
              [flanders :as flanders]
              [helpers :as g]
@@ -62,10 +61,10 @@
   Incident)
 
 (s/defschema PartialNewIncident
-  (csu/optional-keys-schema NewIncident))
+  (st/optional-keys-schema NewIncident))
 
 (s/defschema PartialStoredIncident
-  (csu/optional-keys-schema StoredIncident))
+  (st/optional-keys-schema StoredIncident))
 
 (def realize-incident
   (default-realize-fn "incident" NewIncident StoredIncident))
