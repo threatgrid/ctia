@@ -134,3 +134,18 @@
 (def deep-remove-nils
   "Remove nil values from a deep nested map recursively"
   (partial deep-filter some?))
+
+(defn update-items
+  "Updates items in a sequential coll by applying functions one by one to each
+  item. Each function takes an old value and returns a new value. The total
+  number of updated items always equals the number of functions passed, and the
+  total number of items in the resulting coll remains unchanged."
+  {:example
+   '(
+     (update-items [2 1 3 4 5] dec inc) ;; => (1 2 3 4 5)
+     (update-items ["Foo" "bar" "zap" "zop"] clojure.string/upper-case (comp clojure.string/join reverse)) ;; => ("FOO" "rab" "zap" "zop")
+     )}
+  [coll & fs]
+  (if (sequential? coll)
+    (map #(% %2) (concat fs (repeat identity)) coll)
+    (throw (IllegalArgumentException. "Not a sequential collection."))))

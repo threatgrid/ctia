@@ -9,6 +9,7 @@
    [clojure.tools.logging :as log]
    [clojure.tools.logging.test :as tlog]
    [clojure.walk :refer [prewalk]]
+   [ctia.entity.entities :as entities]
    [ctia.flows.crud :as crud]
    [ctia.init :as init]
    [ctia.lib.utils :as utils]
@@ -517,3 +518,10 @@
       app/service-graph
       (csu/select-service-subgraph
         {:FeaturesService #{:enabled?}})))
+
+(defn plural-key->entity
+  "Returns entity map for given plural form of the entity key"
+  [entity-key]
+  (into {}
+        (filter (fn [e] (= entity-key (:plural (val e)))))
+        (entities/all-entities)))
