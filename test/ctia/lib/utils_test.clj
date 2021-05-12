@@ -37,44 +37,6 @@
          (with-out-str
            (sut/safe-pprint map-with-creds)))))
 
-(deftest service-subgraph-test
-  (is (= (sut/service-subgraph {:a {:b 1}})
-         {}))
-  (is (= (sut/service-subgraph
-           {:a {:b 1 :c 2}
-            :d {:e 3 :f 4}}
-           :a [:b])
-         {:a {:b 1}}))
-  (is (= (sut/service-subgraph
-           {:a {:b 1 :c 2}
-            :d {:e 3 :f 4}}
-           :a [:b]
-           :d [:e])
-         {:a {:b 1}
-          :d {:e 3}}))
-  (testing "throws on uneven args"
-    (is (thrown-with-msg?
-          AssertionError
-          #"Uneven number of selectors"
-          (sut/service-subgraph
-            {}
-            :b)))
-    (is (thrown-with-msg?
-          AssertionError
-          #"Uneven number of selectors"
-          (sut/service-subgraph
-            {}
-            :b [:c]
-            :d))))
-  (testing "throws when selections clobber"
-    (is (thrown?
-          AssertionError
-          #"Repeated key :a"
-          (sut/service-subgraph
-            {:a {:b 1}}
-            :a [:b]
-            :a [:b])))))
-
 (deftest update-items-test
   (is (= [2 4 7 3] (sut/update-items [1 5 6 3] inc dec inc))
       "works with vectors")

@@ -13,8 +13,8 @@
    (fn [x]
      (if (and
           (instance? clojure.lang.IMapEntry x)
-          (= :schema_version (:k (first x))))
-       [(first x) s/Str]
+          (= :schema_version (:k (key x))))
+       [(key x) s/Str]
        (recursive-open-schema-version x)))
    identity
    s))
@@ -22,12 +22,6 @@
 ;; fns below are backported from schema-tools master
 ;; from https://github.com/metosin/schema-tools/blob/master/src/schema_tools/core.cljc#L266
 ;; TODO those can be removed once we use 0.10.6
-
-;; TODO delete me
-(defn optional-keys
-  "Makes given map keys optional. Defaults to all keys."
-  ([m] (st/optional-keys m))
-  ([m ks] (st/optional-keys m ks)))
 
 ;; TODO delete me
 (defn optional-keys-schema
