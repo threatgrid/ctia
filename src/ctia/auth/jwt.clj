@@ -63,7 +63,7 @@
                               "casebook"))
 
 (defn assets-root-scope [get-in-config]
-  (get-in-config [:ctia :auth :assets :scope] "asset-intel"))
+  (get-in-config [:ctia :auth :assets :scope] "asset"))
 
 (defn claim-prefix [get-in-config]
   (get-in-config [:ctia :http :jwt :claim-prefix]
@@ -111,7 +111,7 @@
    (:access scope-repr)))
 
 (defn gen-assets-capabilities
-  "Generate capabilities for the root-scope 'asset-intel'."
+  "Generate capabilities for the root-scope 'asset'."
   [scope-repr]
   (->> [:asset :asset-mapping :asset-properties :target-record]
        (select-keys (all-entities))
