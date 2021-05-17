@@ -42,7 +42,7 @@
 (deftest assets-scope-test
   (testing "Assets scope and capabilities"
     (helpers/with-properties ["ctia.auth.entities.scope" "global-intel"
-                              "ctia.auth.assets.scope" "asset-intel"]
+                              "ctia.auth.assets.scope" "asset"]
       (helpers/fixture-ctia-with-app
        (fn [app]
          (let [{:keys [get-in-config]} (helpers/get-service-map app :ConfigService)]
@@ -63,7 +63,7 @@
     (are [root-scope-fn def-val] (= def-val (root-scope-fn get-in-config))
       sut/entity-root-scope   "private-intel"
       sut/casebook-root-scope "casebook"
-      sut/assets-root-scope   "asset-intel")
+      sut/assets-root-scope   "asset")
     (is (= #{:search-casebook :create-casebook :list-casebooks :read-casebook
              :delete-casebook}
            (sut/scope-to-capabilities (sut/casebook-root-scope get-in-config) get-in-config))
