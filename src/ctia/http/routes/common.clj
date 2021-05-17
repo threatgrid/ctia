@@ -1,15 +1,16 @@
 (ns ctia.http.routes.common
-  (:require [clj-http.headers :refer [canonicalize]]
-            [clojure.string :as str]
-            [ctia.schemas.sorting :as sorting]
-            [ring.swagger.schema :refer [describe]]
-            [clj-momo.lib.clj-time.core :as t]
-            [ring.util
-             [codec :as codec]
-             [http-response :as http-res]
-             [http-status :refer [ok]]]
-            [ctia.schemas.search-agg :refer [RangeQueryOpt SearchQuery MetricResult]]
-            [schema.core :as s]))
+  (:require
+   [clj-http.headers :refer [canonicalize]]
+   [clj-momo.lib.clj-time.core :as t]
+   [clojure.string :as str]
+   [ctia.schemas.search-agg :refer
+    [FullTextQueryMode MetricResult RangeQueryOpt SearchQuery]]
+   [ctia.schemas.sorting :as sorting]
+   [ring.swagger.schema :refer [describe]]
+   [ring.util.codec :as codec]
+   [ring.util.http-response :as http-res]
+   [ring.util.http-status :refer [ok]]
+   [schema.core :as s]))
 
 (def search-options [:sort_by
                      :sort_order
@@ -32,7 +33,10 @@
    (s/optional-key :tlp) s/Str})
 
 (s/defschema SourcableEntityFilterParams
-  {(s/optional-key :source) s/Str})
+  {(s/optional-key :source) s/Str
+
+   (s/optional-key :query_mode)
+   (describe FullTextQueryMode "Elasticsearch Fulltext Query Mode. Defaults to query_string")})
 
 (s/defschema PagingParams
   "A schema defining the accepted paging and sorting related query parameters."
