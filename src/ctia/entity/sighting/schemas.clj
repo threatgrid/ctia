@@ -4,7 +4,6 @@
              [entities :refer [default-realize-fn]]]
             [ctia.graphql.delayed :as delayed]
             [ctia.schemas
-             [utils :as csu]
              [core :refer [def-acl-schema
                            def-stored-schema
                            GraphQLRuntimeContext
@@ -35,7 +34,7 @@
 (def-stored-schema StoredSighting Sighting)
 
 (s/defschema PartialStoredSighting
-  (csu/optional-keys-schema StoredSighting))
+  (st/optional-keys-schema StoredSighting))
 
 (def sighting-default-realize
   (default-realize-fn "sighting" NewSighting StoredSighting))

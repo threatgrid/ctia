@@ -1,6 +1,7 @@
 (ns ctia.schemas.utils-test
-  (:require [clojure.set :as set]
-            [clojure.test :refer [deftest is testing]]
+  (:require [clj-momo.test-helpers.core :as mth]
+            [clojure.set :as set]
+            [clojure.test :refer [deftest is testing use-fixtures]]
             [clojure.test.check.generators :as gen]
             [com.gfredericks.test.chuck.clojure-test :refer [checking]]
             [com.gfredericks.test.chuck.generators :as chuck.gen]
@@ -13,6 +14,8 @@
             [schema-tools.walk :refer [walk]])
   (:import [clojure.lang ExceptionInfo]
            [java.util.regex Pattern]))
+
+(use-fixtures :once mth/fixture-schema-validation)
 
 (defn collect-schema-version-leaves
   [collector m]
@@ -34,6 +37,109 @@
       (is (seq @found-leaves))
       (is (every? #(= "java.lang.String" %) @found-leaves)))))
 
+(defn service-subgraph-test* [service-subgraph int->v]
+  {:pre [(vector? int->v)
+         (>= 5 (count int->v))
+         (apply distinct? int->v)]}
+  (is (= (service-subgraph {:a {:b (int->v 1)}}
+                           {})
+         {}))
+  (is (= (service-subgraph
+           {:a {:b (int->v 1) :c (int->v 2)}
+            :d {:e (int->v 3) :f (int->v 4)}}
+           {:a #{:b}})
+         {:a {:b (int->v 1)}}))
+  (is (= (service-subgraph
+           {:a {:b (int->v 1) :c (int->v 2)}
+            :d {:e (int->v 3) :f (int->v 4)}}
+           {:a #{:b}
+            :d #{:e}})
+         {:a {:b (int->v 1)}
+          :d {:e (int->v 3)}})))
+
+(deftest service-subgraph-test
+  (let [int->v (into []
+                     (take 5)
+                     (repeatedly #(constantly nil)))]
+    (service-subgraph-test*
+      sut/select-service-subgraph
+      int->v)
+    (testing "optional keys"
+      (is (= ;; set syntax 
+             (sut/select-service-subgraph
+               {:a {:b (int->v 1) :c (int->v 2)}
+                :d {:e (int->v 3) :f (int->v 4)}}
+               {:a #{:b (s/optional-key :not-here)}
+                (s/optional-key :e) #{:gone}})
+             ;; map syntax
+             (sut/select-service-subgraph
+               {:a {:b (int->v 1) :c (int->v 2)}
+                :d {:e (int->v 3) :f (int->v 4)}}
+               {:a {:b (s/pred ifn?)
+                    (s/optional-key :not-here) (s/pred ifn?)}
+                (s/optional-key :e) #{:gone}})
+             {:a {:b (int->v 1)}}))))
+  (testing "missing service function throws"
+    (is (thrown-with-msg?
+          ExceptionInfo
+          (Pattern/compile
+            "Missing service: :MissingService"
+            Pattern/LITERAL)
+          (sut/select-service-subgraph
+            {}
+            {:MissingService #{:foo}})))
+    (is (thrown-with-msg?
+          ExceptionInfo
+          (Pattern/compile
+            "Missing service: :MissingService"
+            Pattern/LITERAL)
+          (sut/select-service-subgraph
+            {:PresentService {:present (constantly nil)}}
+            {:MissingService #{:foo :bar}
+             :PresentService #{:present}})))
+    (is (thrown-with-msg?
+          ExceptionInfo
+          (Pattern/compile
+            "Missing :PresentService service function: :missing"
+            Pattern/LITERAL)
+          (sut/select-service-subgraph
+            {:PresentService {:present (constantly nil)}}
+            {:PresentService #{:present :missing}})))))
+
+(deftest select-service-subschema-test
+  (service-subgraph-test*
+    sut/select-service-subschema
+    (let [;; distinct with stable ordering
+          ps [int? boolean? map? vector? set?]]
+      (assert (apply distinct? ps))
+      (mapv s/pred ps)))
+  (testing "missing service function throws"
+    (is (thrown-with-msg?
+          ExceptionInfo
+          (Pattern/compile
+            "Missing service: :MissingService"
+            Pattern/LITERAL)
+          (sut/select-service-subschema
+            {}
+            {:MissingService #{:foo}})))
+    (is (thrown-with-msg?
+          ExceptionInfo
+          (Pattern/compile
+            "Missing service: :MissingService"
+            Pattern/LITERAL)
+          (sut/select-service-subschema
+            {:PresentService {:present (constantly nil)}}
+            {:MissingService #{:foo :bar}
+             :PresentService #{:present}})))
+    (is (thrown-with-msg?
+          ExceptionInfo
+          (Pattern/compile
+            "Missing :PresentService service functions: [:missing]"
+            Pattern/LITERAL)
+          (sut/select-service-subschema
+            {:PresentService {:present (constantly nil)}}
+            {:PresentService #{:present :missing}})))))
+
 (deftest select-all-keys-test
   (testing "behaves like st/select-keys with present keys"
     (is (= {}
@@ -53,8 +159,8 @@
           (sut/select-all-keys {:b s/Any} [:a])))
     (is (thrown-with-msg?
           ExceptionInfo
-          (Pattern/compile "Missing keys: [:c]" Pattern/LITERAL)
-          (sut/select-all-keys {:a s/Any :b s/Any} [:a :b :c])))))
+          (Pattern/compile "Missing keys: [:c :d]" Pattern/LITERAL)
+          (sut/select-all-keys {:a s/Any :b s/Any} [:a :b :c :d])))))
 
 (deftest ^:generative generative-select-all-keys-test
   (checking "coincides with st/select-keys when all keys present" 100
@@ -97,3 +203,11 @@
           (sut/select-all-keys
             schema
             selection)))))
+
+(deftest open-service-schema-test
+  (is (= {(s/pred simple-keyword?) {(s/pred simple-keyword?) (s/pred ifn?)}}
+         (sut/open-service-schema {})))
+  (is (= {:ExampleService {:example-fn (s/=> s/Any)
+                           (s/pred simple-keyword?) (s/pred ifn?)}
+          (s/pred simple-keyword?) {(s/pred simple-keyword?) (s/pred ifn?)}}
+         (sut/open-service-schema {:ExampleService {:example-fn (s/=> s/Any)}}))))

@@ -8,7 +8,6 @@
      :as routes.common]
     [crud :refer [services->entity-crud-routes]]]
    [ctia.schemas
-    [utils :as csu]
     [core :refer [APIHandlerServices
                   def-stored-schema
                   CTIAEntity]]
@@ -62,7 +61,7 @@
 (def-stored-schema StoredIndicator Indicator)
 
 (s/defschema PartialStoredIndicator
-  (csu/optional-keys-schema StoredIndicator))
+  (st/optional-keys-schema StoredIndicator))
 
 (def realize-indicator
   (default-realize-fn "indicator" NewIndicator StoredIndicator))

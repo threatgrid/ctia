@@ -1,5 +1,8 @@
 (ns ctia.test-helpers.core
   (:require
+   [clj-momo.lib.clj-time.coerce :as mcljtime-coerce]
+   [clj-momo.lib.clj-time.core :as mcljtime]
+   [clj-momo.lib.time :as time]
    [clj-momo.properties :refer [coerce-properties read-property-files]]
    [clj-momo.test-helpers.http :as mthh]
    [clojure.spec.alpha :as cs]
@@ -16,6 +19,7 @@
    [ctia.properties :as p :refer [PropertiesSchema]]
    [ctia.schemas.core :as schemas :refer
     [GetEntitiesServices HTTPShowServices Port]]
+   [ctia.schemas.utils :as csu]
    [ctia.store :as store]
    [ctim.domain.id :as id]
    [ctim.generators.common :as cgc]
@@ -336,12 +340,12 @@
       (f))))
 
 (defn fixture-with-fixed-time [time f]
-  (with-redefs [clj-momo.lib.clj-time.core/now
+  (with-redefs [mcljtime/now
                 (fn [] time)
-                clj-momo.lib.time/now
+                time/now
                 (fn [] time)
-                clj-momo.lib.clj-time.core/internal-now
-                (fn [] (clj-momo.lib.clj-time.coerce/to-date time))]
+                mcljtime/internal-now
+                (fn [] (mcljtime-coerce/to-date time))]
     (f)))
 
 (defn set-capabilities!
@@ -515,12 +519,12 @@
   [app]
   (-> app
       app/service-graph
-      (utils/service-subgraph
-       :FeaturesService [:enabled?])))
+      (csu/select-service-subgraph
+        {:FeaturesService #{:enabled?}})))
 
 (defn plural-key->entity
   "Returns entity map for given plural form of the entity key"
   [entity-key]
-  (->> (entities/all-entities)
-       (filter (fn [[_  v]] (= entity-key (:plural v))))
-       (into {})))
+  (into {}
+        (filter (fn [e] (= entity-key (:plural (val e)))))
+        (entities/all-entities)))

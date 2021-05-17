@@ -17,7 +17,6 @@
      :as routes.common]
     [crud :refer [services->entity-crud-routes]]]
    [ctia.schemas
-    [utils :as csu]
     [core :refer [APIHandlerServices def-acl-schema def-stored-schema]]
     [sorting :refer [default-entity-sort-fields]]]
    [ctia.stores.es.store :refer [def-es-store]]
@@ -45,7 +44,7 @@
 (def-stored-schema StoredWeakness Weakness)
 
 (s/defschema PartialStoredWeakness
-  (csu/optional-keys-schema StoredWeakness))
+  (st/optional-keys-schema StoredWeakness))
 
 (def realize-weakness
   (default-realize-fn "weakness" NewWeakness StoredWeakness))

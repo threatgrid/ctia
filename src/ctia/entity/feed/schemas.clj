@@ -13,14 +13,14 @@
                                    def-stored-schema
                                    GraphQLRuntimeContext
                                    RealizeFnResult
-                                   TempIDs]]
-    [utils :as csu]]
+                                   TempIDs]]]
    [ctim.schemas.common :as csc]
    [flanders
     [core :as f]
     [spec :as f-spec]
     [utils :as fu]]
-   [schema.core :as s]))
+   [schema.core :as s]
+   [schema-tools.core :as st]))
 
 (def type-identifier "feed")
 
@@ -69,7 +69,7 @@
 (f-spec/->spec NewFeedMapType "new-feed")
 
 (s/defschema PartialStoredFeed
-  (csu/optional-keys-schema StoredFeed))
+  (st/optional-keys-schema StoredFeed))
 
 (s/defschema PartialFeedList [PartialFeed])
 

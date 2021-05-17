@@ -3,11 +3,9 @@
    [ctia.entity.investigation.flanders-schemas :as f-inv]
    [ctia.domain.entities :refer [default-realize-fn]]
    [flanders.utils :as fu]
-   [ctia.schemas
-    [utils :as csu]
-    [core :refer [def-advanced-acl-schema
-                  def-stored-schema]]]
-   [schema.core :as s]))
+   [ctia.schemas.core :refer [def-advanced-acl-schema def-stored-schema]]
+   [schema.core :as s]
+   [schema-tools.core :as st]))
 
 (def-advanced-acl-schema
   {:name-sym Investigation
@@ -33,7 +31,7 @@
 (def-stored-schema StoredInvestigation Investigation)
 
 (s/defschema PartialStoredInvestigation
-  (csu/optional-keys-schema StoredInvestigation))
+  (st/optional-keys-schema StoredInvestigation))
 
 (def realize-investigation
   (default-realize-fn "investigation"

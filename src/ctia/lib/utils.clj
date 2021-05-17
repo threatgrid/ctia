@@ -81,13 +81,14 @@
    If the resulting collection is empty, `::to-remove` is returned.
    The collection type is preserved."
   [c]
-  (let [cleaned (->> c
-                     (remove #(= % ::to-remove))
-                     (into (empty c)))]
+  (let [cleaned (into (empty c)
+                      (remove #(= % ::to-remove))
+                      c)]
     (cond
       (and (seq c)
            (empty? cleaned)) ::to-remove
-      (list? cleaned) (reverse cleaned) ;; into reverse the content of a list
+      (or (seq? cleaned)
+          (list? cleaned)) (reverse cleaned) ;; into reverses the content of a list
       :else cleaned)))
 
 ;; copied from iroh-core.core
@@ -95,7 +96,8 @@
   "filter generalized to maps"
   [f m]
   (into {}
-        (for [[k v] m :when (f v)] [k v])))
+        (filter (comp f val))
+        m))
 
 ;; copied from iroh-core.core
 (defn clean-map
@@ -135,45 +137,6 @@
   "Remove nil values from a deep nested map recursively"
   (partial deep-filter some?))
 
-(defn service-subgraph
-  "Returns a subgraph of a Trapperkeeper service graph, omitting
-  any missing entries.
-  
-  (select-services
-    {:ConfigService {:get-in-config <...>
-                     :get-config <...>}
-     :FooService {:f1 <...>
-                  :f2 <...>}
-     :BarService {:b1 <...>}}
-    :ConfigService [:get-config]
-    :FooService [:f2 :f3]
-    :MissingService [:m1])
-  ;=> {:ConfigService {:get-config <...>}
-  ;    :FooService {:f2 <...>}}
-  "
-  [graph & selectors]
-  {:pre [(map? graph)]}
-  (reduce (fn [out [service-kw & [fn-kws :as is-even]]]
-            ;; the last partition of a `(partition-all 2)` may
-            ;; be of length 1. this check is equivalent to
-            ;; asserting `(even? (count selectors))` but avoids some extra sequence
-            ;; traversals.
-            (assert is-even
-                    (str "Uneven number of selectors: "
-                         (count selectors)))
-            (assert (keyword? service-kw)
-                    (pr-str service-kw))
-            (let [service-fns (some-> (get graph service-kw)
-                                      (select-keys fn-kws))]
-              (cond-> out
-                service-fns
-                (update service-kw
-                        (fn [old]
-                          (assert (nil? old) (str "Repeated key " service-kw))
-                          service-fns)))))
-          {}
-          (partition-all 2 selectors)))
-
 (defn update-items
   "Updates items in a sequential coll by applying functions one by one to each
   item. Each function takes an old value and returns a new value. The total
@@ -188,4 +151,3 @@
   (if (sequential? coll)
     (map #(% %2) (concat fs (repeat identity)) coll)
     (throw (IllegalArgumentException. "Not a sequential collection."))))
-

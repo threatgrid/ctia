@@ -4,8 +4,8 @@
    [clojure.string :as string]
    [clj-momo.test-helpers.http :refer [post]]
    [clj-momo.test-helpers.http-assert-1 :as mthh]
-   [ctia.lib.utils :refer [service-subgraph]]
    [ctia.schemas.core :refer [APIHandlerServices HTTPShowServices]]
+   [ctia.schemas.utils :as csu]
    [ctia.test-helpers.core :as th]
    [puppetlabs.trapperkeeper.app :as app]
    [schema.core :as s]))
@@ -52,25 +52,9 @@
 (s/defn app->APIHandlerServices :- APIHandlerServices [app]
   (-> app
       app/service-graph
-      ;; TODO use helper to select subgraph from schema
-      (service-subgraph
-        :ConfigService [:get-config
-                        :get-in-config]
-        :CTIAHTTPServerService [:get-port
-                                :get-graphql]
-        :HooksService [:apply-hooks
-                       :apply-event-hooks ]
-        :StoreService [:get-store]
-        :IAuth [:identity-for-token]
-        :GraphQLNamedTypeRegistryService [:get-or-update-named-type-registry]
-        :IEncryption [:encrypt 
-                      :decrypt]
-        :FeaturesService [:enabled? 
-                          :feature-flags])))
+      (csu/select-service-subgraph APIHandlerServices)))
 
 (s/defn app->HTTPShowServices :- HTTPShowServices [app]
   (-> app
       app/service-graph
-      (service-subgraph
-        :CTIAHTTPServerService [:get-port]
-        :ConfigService [:get-in-config])))
+      (csu/select-service-subgraph HTTPShowServices)))

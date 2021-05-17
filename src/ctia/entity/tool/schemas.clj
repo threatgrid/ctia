@@ -1,11 +1,11 @@
 (ns ctia.entity.tool.schemas
   (:require [ctia.domain.entities :refer [default-realize-fn]]
             [ctia.schemas.core :refer [def-acl-schema def-stored-schema]]
-            [ctia.schemas.utils :as csu]
             [ctim.schemas.tool :as tool]
             [ctia.schemas.sorting :as sorting]
             [flanders.utils :as fu]
-            [schema.core :as s]))
+            [schema.core :as s]
+            [schema-tools.core :as st]))
 
 (def-acl-schema Tool
   tool/Tool
@@ -24,7 +24,7 @@
 (def-stored-schema StoredTool Tool)
 
 (s/defschema PartialStoredTool
-  (csu/optional-keys-schema StoredTool))
+  (st/optional-keys-schema StoredTool))
 
 (def realize-tool
   (default-realize-fn "tool" NewTool StoredTool))

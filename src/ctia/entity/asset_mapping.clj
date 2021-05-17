@@ -9,7 +9,6 @@
    [ctia.schemas.core :as schemas :refer
     [RealizeFnResult GraphQLRuntimeContext APIHandlerServices def-acl-schema]]
    [ctia.schemas.sorting :as sorting]
-   [ctia.schemas.utils :as csu]
    [ctia.store]
    [ctia.stores.es.mapping :as em]
    [ctia.stores.es.store :refer [def-es-store]]
@@ -36,10 +35,10 @@
 (schemas/def-stored-schema StoredAssetMapping AssetMapping)
 
 (s/defschema PartialNewAssetMapping
-  (csu/optional-keys-schema NewAssetMapping))
+  (st/optional-keys-schema NewAssetMapping))
 
 (s/defschema PartialStoredAssetMapping
-  (csu/optional-keys-schema StoredAssetMapping))
+  (st/optional-keys-schema StoredAssetMapping))
 
 (def asset-mapping-default-realize
   (entities/default-realize-fn "asset-mapping" NewAssetMapping StoredAssetMapping))

@@ -5,7 +5,6 @@
               :as routes.common]
              [crud :refer [services->entity-crud-routes]]]
             [ctia.schemas
-             [utils :as csu]
              [core :refer [APIHandlerServices def-acl-schema def-stored-schema]]
              [sorting :as sorting :refer [default-entity-sort-fields]]]
             [ctia.stores.es
@@ -34,7 +33,7 @@
 (def-stored-schema StoredCampaign Campaign)
 
 (s/defschema PartialStoredCampaign
-  (csu/optional-keys-schema StoredCampaign))
+  (st/optional-keys-schema StoredCampaign))
 
 (def campaign-fields
   (concat default-entity-sort-fields
