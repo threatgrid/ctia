@@ -2,14 +2,19 @@
   (:require
    [clj-http.headers :refer [canonicalize]]
    [clj-momo.lib.clj-time.core :as t]
+   [clojure.set :as set]
    [clojure.string :as str]
    [ctia.schemas.search-agg :refer
     [FullTextQueryMode MetricResult RangeQueryOpt SearchQuery]]
    [ctia.schemas.sorting :as sorting]
+   [ctia.schemas.utils :as schemas.utils]
+   [ctia.stores.es.mapping :as em]
+   [ring.swagger.json-schema :as json-schema]
    [ring.swagger.schema :refer [describe]]
    [ring.util.codec :as codec]
    [ring.util.http-response :as http-res]
    [ring.util.http-status :refer [ok]]
+   [schema-tools.core :as st]
    [schema.core :as s]))
 
 (def search-options [:sort_by
@@ -102,6 +107,28 @@
         from (t/latest from to-minus-one-year)]
     {:gte from
      :lt to-or-now}))
+
+(defn prep-es-fields-schema
+  "Conjoins ES :fields onto search-parameters."
+  [search-query-params]
+  (let [fields-schema  (st/get-in search-query-params [:fields])
+        default-fields (-> fields-schema first :vs
+                           (set/difference (set (keys em/base-entity-mapping)))
+                           vec)]
+   (st/merge
+    search-query-params
+    {;; We cannot name the parameter :fields, because we already have :fields (part
+     ;; of search-query-params). That key is to select a subsets of fields of the
+     ;; retrieved document and it gets passed to the `_source` parameter of
+     ;; Elasticsearch. For more:
+     ;; www.elastic.co/guide/en/elasticsearch/reference/current/mapping-source-field.html
+     ;;
+     ;; For backward-compatibility we keep the old name and add new key with a different name
+     (s/optional-key :search_fields)
+     (json-schema/field
+      fields-schema
+      {:default     default-fields
+       :description "'fields' key of Elasticsearch Fulltext Query."})})))
 
 (s/defn search-query :- SearchQuery
   ([date-field search-params]

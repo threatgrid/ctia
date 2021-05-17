@@ -10,22 +10,22 @@
      with-long-id]]
    [ctia.flows.crud :as flows]
    [ctia.http.middleware.auth]
-   [ctia.http.routes.common :refer [capabilities->description
-                                    created
-                                    filter-map-search-options
-                                    paginated-ok
-                                    search-options
-                                    wait_for->refresh
-                                    search-query
-                                    coerce-date-range
-                                    format-agg-result]]
+   [ctia.http.routes.common :as routes.common
+    :refer [capabilities->description
+            created
+            filter-map-search-options
+            paginated-ok
+            search-options
+            wait_for->refresh
+            search-query
+            coerce-date-range
+            format-agg-result]]
    [ctia.lib.compojure.api.core :refer [context DELETE GET POST PUT PATCH routes]]
    [ctia.schemas.core :refer [APIHandlerServices DelayedRoutes]]
    [ctia.schemas.search-agg :refer [HistogramParams
                                     CardinalityParams
                                     TopnParams
-                                    MetricResult
-                                    FullTextQueryMode]]
+                                    MetricResult]]
    [ctia.store :refer [query-string-search
                        query-string-count
                        aggregate
@@ -165,14 +165,7 @@
          :as services} :- APIHandlerServices]
   (let [capitalized (capitalize-entity entity)
         ;; Adding additional query params for ES Fulltext search
-        search-q-params* (st/merge
-                          search-q-params
-                          {;; We cannot name the parameter :fields, because we already have :fields (part
-                           ;; of search-q-params). That key is to select a subsets of fields of the
-                           ;; retrieved document and it gets passed to the `_source` parameter of
-                           ;; Elasticsearch. For more: www.elastic.co/guide/en/elasticsearch/reference/current/mapping-source-field.html
-                           (s/optional-key :search_fields)
-                           (describe (st/get-in search-q-params [:fields]) "'fields' key of Elasticsearch Fulltext Query.")})
+        search-q-params* (routes.common/prep-es-fields-schema search-q-params)
         search-filters (st/dissoc search-q-params
                                   :sort_by
                                   :sort_order
