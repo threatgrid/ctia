@@ -237,6 +237,7 @@ jobs:
           name: test-timing
           path: target/test-results/*.edn
       - name: Upload docker compose
+        if: ${{ always() }}
         uses: actions/upload-artifact@v2
         with:
           retention-days: 1
