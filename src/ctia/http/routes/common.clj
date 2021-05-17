@@ -108,9 +108,9 @@
     {:gte from
      :lt to-or-now}))
 
-(defn prep-es-fields-schema
+(s/defn prep-es-fields-schema :- (s/protocol s/Schema)
   "Conjoins ES :fields onto search-parameters."
-  [search-query-params]
+  [search-query-params :- (s/maybe (s/protocol s/Schema))]
   (let [fields-schema  (st/get-in search-query-params [:fields])
         default-fields (-> fields-schema first :vs
                            (set/difference (set (keys em/base-entity-mapping)))
