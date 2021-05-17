@@ -1,19 +1,19 @@
 (ns ctia.bulk.core
-  (:require [clojure.string :as str]
-            [clojure.set :as set]
-            [clojure.tools.logging :as log]
-            [ctia
-             [auth :as auth]
-             [properties :as p]
-             [store :as store]]
-            [ctia.domain.entities :as ent :refer [with-long-id]]
-            [ctia.entity.entities :refer [all-entities]]
-            [ctia.flows.crud :as flows]
-            [ctia.schemas.core :refer [APIHandlerServices]]
-            [ctia.schemas.utils :as csu]
-            [ring.util.http-response :refer [bad-request]]
-            [schema.core :as s]
-            [schema-tools.core :as st]))
+  (:require
+   [clojure.set :as set]
+   [clojure.string :as str]
+   [clojure.tools.logging :as log]
+   [ctia.auth :as auth]
+   [ctia.domain.entities :as ent :refer [with-long-id]]
+   [ctia.entity.entities :refer [all-entities]]
+   [ctia.flows.crud :as flows]
+   [ctia.properties :as p]
+   [ctia.schemas.core :as schemas :refer [APIHandlerServices]]
+   [ctia.schemas.utils :as csu]
+   [ctia.store :as store]
+   [ring.util.http-response :refer [bad-request]]
+   [schema-tools.core :as st]
+   [schema.core :as s]))
 
 ;; TODO def => defn
 (def bulk-entity-mapping
@@ -167,26 +167,34 @@
   ([bulk login services :- APIHandlerServices] (create-bulk bulk {} login {} services))
   ([bulk tempids login params {{:keys [get-in-config]} :ConfigService :as services} :- APIHandlerServices]
    (let [{:keys [refresh] :as params
-          :or {refresh (bulk-refresh? get-in-config)}} params
+          :or   {refresh (bulk-refresh? get-in-config)}} params
          new-entities (gen-bulk-from-fn
                        create-entities
-                       (dissoc bulk :relationships)
+                       (dissoc
+                        bulk
+                        :relationships
+                        ;; AssetMapping and AssetProperties have asset-ref field
+                        ;; that needs to be resolved, so we delay the creation
+                        ;; of these entities to be after we create Assets
+                        :asset_mappings :asset_properties)
                        tempids
                        login
                        {:refresh refresh}
                        services)
-         entities-tempids (into tempids
-                                (merge-tempids new-entities))
-         new-relationships (gen-bulk-from-fn
-                            create-entities
-                            (select-keys bulk [:relationships])
-                            entities-tempids
-                            login
-                            {:refresh refresh}
-                            services)
-         all-tempids (merge entities-tempids
-                            (merge-tempids new-relationships))
-         all-entities (into new-entities new-relationships)
+         entities-tempids (into tempids (merge-tempids new-entities))
+         new-linked-ents (gen-bulk-from-fn
+                          create-entities
+                          (select-keys
+                           bulk
+                           [:relationships
+                            :asset_mappings
+                            :asset_properties])
+                          entities-tempids
+                          login
+                          {:refresh refresh}
+                          services)
+         all-tempids (merge entities-tempids (merge-tempids new-linked-ents))
+         all-entities (merge new-entities new-linked-ents)
          ;; Extracting data from the enveloped flow result
          ;; {:entity-type {:data [] :tempids {}}
          bulk-refs (->> all-entities

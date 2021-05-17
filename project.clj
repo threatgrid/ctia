@@ -69,6 +69,7 @@
                  [org.clojure/tools.cli "1.0.194"]
                  [pandect "0.6.1"]
                  [org.clojure/math.combinatorics "0.1.6"]
+                 [version-clj "2.0.1"]
 
                  ;; Trapperkeeper
                  [puppetlabs/trapperkeeper ~trapperkeeper-version]
@@ -79,7 +80,7 @@
                  [prismatic/schema "1.1.12"]
                  [metosin/schema-tools "0.12.2"]
                  [threatgrid/flanders "0.1.23"]
-                 [threatgrid/ctim "1.1.4"]
+                 [threatgrid/ctim "1.1.6"]
                  [threatgrid/clj-momo "0.3.5"]
                  [threatgrid/ductile "0.3.0"]
 
@@ -87,7 +88,8 @@
 
                  ;; Web server
                  [metosin/compojure-api "1.1.13" ]
-                 ;; optional dep for compojure-api's dep ring-middleware-format
+                 [ring-middleware-format "0.7.4"]
+                 ;; optional ring-middleware-format dep (Note: ring-middleware-format is also a transitive dep for compojure-api)
                  ;; see: https://github.com/ngrunwald/ring-middleware-format/issues/74
                  [com.ibm.icu/icu4j "65.1"]
                  [metosin/ring-swagger "0.26.2"]
@@ -102,6 +104,7 @@
                  [threatgrid/ring-turnstile-middleware "0.1.1"]
                  [threatgrid/ring-jwt-middleware "1.0.1"]
                  [scopula "0.1.4"]
+                 [org.clojure/tools.reader "1.3.4"] ;; org.clojure/tools.namespace > ring-middleware-format
 
                  ;; clients
                  [clj-http "3.10.1"]
@@ -163,7 +166,7 @@
                                   (:out (clojure.java.shell/sh
                                          "git" "symbolic-ref" "--short" "HEAD")))})}]
 
-  
+
   :profiles {:dev {:dependencies [[puppetlabs/trapperkeeper ~trapperkeeper-version
                                    :classifier "test"]
                                   [puppetlabs/kitchensink ~trapperkeeper-version
@@ -264,7 +267,7 @@
             "init-properties" ^{:doc (str "create an initial `ctia.properties`"
                                           " using docker machine ip")}
             ["shell" "scripts/init-properties-for-docker.sh"]
-            
+
             ; circleci.test
             ;"test" ["run" "-m" "circleci.test/dir" :project/test-paths]
             "split-test" ["trampoline"

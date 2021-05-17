@@ -103,4 +103,5 @@ fragment incidentFields on Incident {
   owner
   groups
   assignees
+  promotion_method
 }

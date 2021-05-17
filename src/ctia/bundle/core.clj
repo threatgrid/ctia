@@ -1,22 +1,20 @@
 (ns ctia.bundle.core
   (:require
    [clj-momo.lib.map :refer [deep-merge-with]]
-   [clojure
-    [set :as set]
-    [string :as string]]
+   [clojure.set :as set]
+   [clojure.string :as string]
    [clojure.tools.logging :as log]
-   [ctia
-    [auth :as auth]
-    [properties :as p]
-    [store :refer [list-fn
-                   read-fn]]]
-   [ctia.lib.collection :as coll :refer [fmap]]
+   [ctia.auth :as auth]
    [ctia.bulk.core :as bulk]
-   [ctia.bundle.schemas
-    :refer
-    [BundleImportData BundleImportResult EntityImportData FindByExternalIdsServices]]
+   [ctia.bundle.schemas :refer
+    [BundleImportData BundleImportResult
+     EntityImportData FindByExternalIdsServices]]
    [ctia.domain.entities :as ent :refer [with-long-id]]
-   [ctia.schemas.core :refer [APIHandlerServices HTTPShowServices NewBundle TempIDs]]
+   [ctia.lib.collection :as coll :refer [fmap]]
+   [ctia.properties :as p]
+   [ctia.schemas.core :as schemas :refer
+    [APIHandlerServices HTTPShowServices NewBundle TempIDs]]
+   [ctia.store :refer [list-fn read-fn]]
    [ctia.store-service.schemas :refer [GetStoreFn]]
    [ctim.domain.id :as id]
    [schema.core :as s]))
@@ -25,10 +23,6 @@
 
 (def bundle-entity-keys
   (set (vals bulk/bulk-entity-mapping)))
-
-(defn transient-id?
-  [id]
-  (and id (re-matches id/transient-id-re id)))
 
 (defn debug [msg v]
   (log/debug msg v)
@@ -71,7 +65,7 @@
       (log/warnf "No valid external ID has been provided (id:%s)" id))
     (cond-> {:new-entity entity
              :type entity-type}
-      (transient-id? id) (assoc :original_id id)
+      (schemas/transient-id? id) (assoc :original_id id)
       (seq filtered-ext-ids) (assoc :external_ids filtered-ext-ids))))
 
 (s/defn all-pages

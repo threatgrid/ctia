@@ -75,3 +75,17 @@
             {:a {:b 1}}
             :a [:b]
             :a [:b])))))
+
+(deftest update-items-test
+  (is (= [2 4 7 3] (sut/update-items [1 5 6 3] inc dec inc))
+      "works with vectors")
+  (is (= [2 4 7] (sut/update-items '(1 5 6) inc dec inc))
+      "works with lists")
+  (is (= [2 6 7 8] (apply sut/update-items '(1 5 6 7) (repeat inc)))
+      "works with repeat")
+  (is (= [2 4] (sut/update-items '(1 5) inc dec inc))
+      "doesn't care if more fns passed into")
+  (is (thrown? IllegalArgumentException (sut/update-items {:foo 1} inc))
+      "doesn't make sense for maps")
+  (is (thrown? IllegalArgumentException (sut/update-items #{4} inc))
+      "and doesn't make sense for sets either"))

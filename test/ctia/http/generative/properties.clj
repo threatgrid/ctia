@@ -138,7 +138,7 @@
                     (let [;; override data-table Datum, originally `any?` which is
                           ;; a documented underapproximation and generates huge examples
                           ;; which don't end up round-tripping via GET anyway.
-                          gen-datum (constantly tcg/string-ascii)]
+                          gen-datum (constantly tcg/string-alphanumeric)]
                       {:max-new-casebook.bundle.sightings.set-of.data.rows.seq-of/seq-of gen-datum
                        :max-new-casebook.bundle.data_tables.set-of.rows.seq-of/seq-of gen-datum
                        :max-new-sighting.data.rows.seq-of/seq-of gen-datum}))))

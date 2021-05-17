@@ -1,25 +1,28 @@
 (ns ctia.test-helpers.core
-  (:require [clj-momo.properties :refer [coerce-properties read-property-files]]
-            [clj-momo.test-helpers.http :as mthh]
-            [clojure.spec.alpha :as cs]
-            [clojure.string :as str]
-            [clojure.test :as test]
-            [clojure.test.check.generators :as gen]
-            [clojure.tools.logging :as log]
-            [clojure.tools.logging.test :as tlog]
-            [clojure.walk :refer [prewalk]]
-            [ctia.flows.crud :as crud]
-            [ctia.init :as init]
-            [ctia.lib.utils :as utils]
-            [ctia.properties :as p :refer [PropertiesSchema]]
-            [ctia.schemas.core :refer [GetEntitiesServices HTTPShowServices Port]]
-            [ctia.store :as store]
-            [ctim.domain.id :as id]
-            [ctim.generators.common :as cgc]
-            [flanders.spec :as fs]
-            [flanders.utils :as fu]
-            [puppetlabs.trapperkeeper.app :as app]
-            [schema.core :as s])
+  (:require
+   [clj-momo.properties :refer [coerce-properties read-property-files]]
+   [clj-momo.test-helpers.http :as mthh]
+   [clojure.spec.alpha :as cs]
+   [clojure.string :as str]
+   [clojure.test :as test]
+   [clojure.test.check.generators :as gen]
+   [clojure.tools.logging :as log]
+   [clojure.tools.logging.test :as tlog]
+   [clojure.walk :refer [prewalk]]
+   [ctia.entity.entities :as entities]
+   [ctia.flows.crud :as crud]
+   [ctia.init :as init]
+   [ctia.lib.utils :as utils]
+   [ctia.properties :as p :refer [PropertiesSchema]]
+   [ctia.schemas.core :as schemas :refer
+    [GetEntitiesServices HTTPShowServices Port]]
+   [ctia.store :as store]
+   [ctim.domain.id :as id]
+   [ctim.generators.common :as cgc]
+   [flanders.spec :as fs]
+   [flanders.utils :as fu]
+   [puppetlabs.trapperkeeper.app :as app]
+   [schema.core :as s])
   (:import [java.util UUID]))
 
 (def ^:dynamic ^:private *current-app*)
@@ -487,11 +490,12 @@
        ~@body)))
 
 (defn deep-dissoc-entity-ids
-  "Dissoc all entity ID in the given map recursively"
+  "Dissoc all non-tranisent entity IDs in the given map recursively"
   [m]
   (prewalk #(if (and (map? %)
                      ;; Do not remove the id of a nested openc2 coa
-                     (not= (:type %) "structured_coa"))
+                     (not= (:type %) "structured_coa")
+                     (not (schemas/transient-id? (:id %))))
               (dissoc % :id)
               %)
            m))
@@ -513,3 +517,10 @@
       app/service-graph
       (utils/service-subgraph
        :FeaturesService [:enabled?])))
+
+(defn plural-key->entity
+  "Returns entity map for given plural form of the entity key"
+  [entity-key]
+  (->> (entities/all-entities)
+       (filter (fn [[_  v]] (= entity-key (:plural v))))
+       (into {})))

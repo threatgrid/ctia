@@ -8,7 +8,7 @@
              [codec :as codec]
              [http-response :as http-res]
              [http-status :refer [ok]]]
-            [ctia.schemas.search-agg :refer [DateRangeQueryOpt SearchQuery MetricResult]]
+            [ctia.schemas.search-agg :refer [RangeQueryOpt SearchQuery MetricResult]]
             [schema.core :as s]))
 
 (def search-options [:sort_by
@@ -16,7 +16,9 @@
                      :offset
                      :limit
                      :fields
-                     :search_after])
+                     :search_after
+                     :query_mode
+                     :search_fields])
 
 (def filter-map-search-options
   (conj search-options :query :from :to))
@@ -101,37 +103,47 @@
   ([date-field search-params]
    (search-query date-field
                  search-params
-                 (s/fn :- DateRangeQueryOpt
+                 (s/fn :- RangeQueryOpt
                    [from :- (s/maybe s/Inst)
                     to :- (s/maybe s/Inst)]
                    (cond-> {}
                      from (assoc :gte from)
-                     to (assoc :lt to)))))
+                     to   (assoc :lt to)))))
   ([date-field
-    {:keys [query from to] :as search-params}
-    make-date-range-fn :- (s/=> DateRangeQueryOpt
+    {:keys [query
+            from to
+            query_mode
+            search_fields] :as search-params}
+    make-date-range-fn :- (s/=> RangeQueryOpt
                                 (s/named (s/maybe s/Inst) 'from)
                                 (s/named (s/maybe s/Inst) 'to))]
    (let [filter-map (apply dissoc search-params filter-map-search-options)
          date-range (make-date-range-fn from to)]
      (cond-> {}
-       (seq date-range) (assoc-in [:date-range date-field] date-range)
+       (seq date-range) (assoc-in [:range date-field] date-range)
        (seq filter-map) (assoc :filter-map filter-map)
-       query (assoc :query-string query)))))
+       query            (assoc :full-text
+                               (merge
+                                {:query      query
+                                 :query_mode (or query_mode :query_string)}
+                                (when search_fields
+                                  {:fields search_fields})))))))
 
 (s/defn format-agg-result :- MetricResult
   [result
    agg-type
    aggregate-on
-   {:keys [date-range query-string filter-map]} :- SearchQuery]
-  (let [nested-fields (map keyword
-                            (str/split (name aggregate-on) #"\."))
-        {from :gte to :lt} (-> date-range first val)
-        filters (cond-> {:from from :to to}
-                  (seq filter-map) (into filter-map)
-                  (seq query-string) (assoc :query-string query-string))]
-    {:data (assoc-in {} nested-fields result)
-     :type agg-type
+   {:keys [range full-text filter-map]} :- SearchQuery]
+  (let [full-text*         (assoc full-text :query_mode
+                                  (get full-text :query_mode :query_string))
+        nested-fields      (map keyword
+                                (str/split (name aggregate-on) #"\."))
+        {from :gte to :lt} (-> range first val)
+        filters            (cond-> {:from from :to to}
+                             (seq filter-map) (into filter-map)
+                             (seq full-text)  (assoc :full-text full-text*))]
+    {:data    (assoc-in {} nested-fields result)
+     :type    agg-type
      :filters filters}))
 
 (defn wait_for->refresh

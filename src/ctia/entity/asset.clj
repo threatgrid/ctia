@@ -3,7 +3,7 @@
    [ctia.domain.entities :refer [default-realize-fn]]
    [ctia.http.routes.common :as routes.common]
    [ctia.http.routes.crud :refer [services->entity-crud-routes]]
-   [ctia.schemas.core :refer [APIHandlerServices def-acl-schema def-stored-schema]]
+   [ctia.schemas.core :as schemas :refer [APIHandlerServices def-acl-schema def-stored-schema]]
    [ctia.schemas.sorting :as sorting]
    [ctia.schemas.utils :as csu]
    [ctia.stores.es.mapping :as em]
@@ -84,6 +84,21 @@
   [:timestamp
    :valid_time.start_time
    :valid_time.end_time])
+
+(s/defn set-asset-ref :- {s/Keyword s/Any}
+  "Resolves :asset_ref field for given entity (AssetMapping or AssetProperties),
+  transforming transient ID ref to a proper ID."
+  [{:keys [asset_ref] :as entity}
+   tempids]
+  (if (schemas/transient-id? asset_ref)
+    (if-let [new-ref (get tempids asset_ref)]
+      (assoc entity :asset_ref new-ref)
+      (assoc entity :error
+             (format
+              (str "Cannot resolve asset_ref for transient ID: '%s', in '%s'. "
+                   "Perhaps the associated Asset is missing in the Bundle?")
+              asset_ref (:id entity))))
+    (assoc entity :asset_ref asset_ref)))
 
 (s/defn asset-routes [services :- APIHandlerServices]
   (services->entity-crud-routes

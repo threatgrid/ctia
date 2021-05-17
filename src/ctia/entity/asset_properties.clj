@@ -1,21 +1,23 @@
 (ns ctia.entity.asset-properties
-  (:require [clj-momo.lib.clj-time.core :as time]
-            [ctia.lib.compojure.api.core :refer [POST routes]]
-            [ctia.domain.entities :refer [default-realize-fn]]
-            [ctia.flows.crud :as flows]
-            [ctia.http.routes.common :as routes.common]
-            [ctia.http.routes.crud :refer [services->entity-crud-routes]]
-            [ctia.schemas.core :refer [def-acl-schema def-stored-schema APIHandlerServices]]
-            [ctia.schemas.sorting :as sorting]
-            [ctia.schemas.utils :as csu]
-            [ctia.store]
-            [ctia.stores.es.mapping :as em]
-            [ctia.stores.es.store :refer [def-es-store]]
-            [ctim.schemas.asset-properties :as asset-properties-schema]
-            [flanders.utils :as fu]
-            [ring.util.http-response :as http-response]
-            [schema-tools.core :as st]
-            [schema.core :as s]))
+  (:require
+   [ctia.domain.entities :refer [default-realize-fn]]
+   [ctia.entity.asset :as asset]
+   [ctia.flows.schemas :refer [with-error]]
+   [ctia.graphql.delayed :as delayed]
+   [ctia.http.routes.common :as routes.common]
+   [ctia.http.routes.crud :refer [services->entity-crud-routes]]
+   [ctia.schemas.core :as schemas :refer
+    [RealizeFnResult GraphQLRuntimeContext APIHandlerServices
+     def-acl-schema def-stored-schema]]
+   [ctia.schemas.sorting :as sorting]
+   [ctia.schemas.utils :as csu]
+   [ctia.store]
+   [ctia.stores.es.mapping :as em]
+   [ctia.stores.es.store :refer [def-es-store]]
+   [ctim.schemas.asset-properties :as asset-properties-schema]
+   [flanders.utils :as fu]
+   [schema-tools.core :as st]
+   [schema.core :as s]))
 
 (def-acl-schema AssetProperties
   asset-properties-schema/AssetProperties
@@ -37,7 +39,7 @@
 (s/defschema PartialStoredAssetProperties
   (csu/optional-keys-schema StoredAssetProperties))
 
-(def realize-asset-properties
+(def asset-properties-default-realize
   (default-realize-fn "asset-properties" NewAssetProperties StoredAssetProperties))
 
 (def ^:private properties-mapping
@@ -45,6 +47,18 @@
    :properties
    {:name  em/token
     :value em/token}})
+
+(s/defn realize-asset-properties
+  :- (RealizeFnResult (with-error StoredAssetProperties))
+  [{:keys [asset_ref]
+    :as   new-entity}
+   id tempids & rest-args]
+  (delayed/fn :- (with-error StoredAssetProperties)
+    [rt-ctx :- GraphQLRuntimeContext]
+    (-> asset-properties-default-realize
+        (schemas/lift-realize-fn-with-context rt-ctx)
+        (apply new-entity id tempids rest-args)
+        (asset/set-asset-ref tempids))))
 
 (def asset-properties-mapping
   {"asset-properties"

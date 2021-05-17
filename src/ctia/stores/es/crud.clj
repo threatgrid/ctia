@@ -50,7 +50,8 @@
   "Ensure a document ID in a given filter map"
   [{:keys [id] :as m}]
   (cond-> m
-    id (update :id ensure-document-id)))
+    (string? id) (update :id list)
+    id (update :id #(map ensure-document-id %))))
 
 (defn remove-es-actions
   "Removes the ES action level
@@ -315,51 +316,63 @@ It returns the documents with full hits meta data including the real index in wh
                                            ident
                                            get-in-config))))))
 
-(s/defn make-search-query
-  [{{:keys [default_operator]} :props
+(s/defn make-search-query :- {s/Keyword s/Any}
+  "Translate SearchQuery map into ES Query DSL map"
+  [{{:keys [default_operator]}               :props
     {{:keys [get-in-config]} :ConfigService} :services} :- ESConnState
-   {:keys [query-string filter-map date-range]} :- SearchQuery
+   {:keys [filter-map
+           range
+           full-text]} :- SearchQuery
    ident]
-  (let [es-query-string {:query_string (into {:query query-string}
-                                             (when default_operator
-                                               {:default_operator default_operator}))}
-        date-range-query (when date-range
-                           {:range date-range})
-        filter-terms (-> (ensure-document-id-in-map filter-map)
-                         q/prepare-terms)]
+  (let [range-query   (when range
+                        {:range range})
+        filter-terms  (-> (ensure-document-id-in-map filter-map)
+                          q/prepare-terms)
+        es-query-mode (get full-text :query_mode :query_string) ;; if no :query-mode passed, use :query_string mode
+        def-operator  (when (and default_operator
+                                ;; some query modes in ES don't support default_operator, e.g. :multi_match
+                                (contains? #{:simple_query_string :query_string} es-query-mode))
+                        {:default_operator default_operator})
+        full-text-q   (when full-text
+                        {es-query-mode
+                         (merge
+                          (dissoc full-text :query_mode)
+                          def-operator)})]
     {:bool
      {:filter
       (cond-> [(find-restriction-query-part ident get-in-config)]
         (seq filter-map) (into filter-terms)
-        (seq date-range) (conj date-range-query)
-        (seq query-string) (conj es-query-string))}}))
+        (seq range)      (conj range-query)
+        (seq full-text)  (conj full-text-q))}}))
 
 (defn handle-query-string-search
   "Generate an ES query handler for given schema schema"
   [Model]
   (let [response-schema (list-response-schema Model)
-        coerce! (coerce-to-fn response-schema)]
+        coerce!         (coerce-to-fn response-schema)]
     (s/fn :- response-schema
-      [{conn :conn
-        index :index
-        {{:keys [get-in-config]} :ConfigService}
-        :services
-        :as es-conn-state} :- ESConnState
-       {:keys [filter-map] :as search-query} :- SearchQuery
+      [es-conn-state :- ESConnState
+       search-query :- SearchQuery
        ident
        es-params]
-      (let [query (make-search-query es-conn-state search-query ident)]
-        (cond-> (coerce! (ductile.doc/query conn
-                                  index
-                                  query
-                                  (-> es-params
-                                      rename-sort-fields
-                                      with-default-sort-field
-                                      make-es-read-params)))
-          (restricted-read? ident) (update :data
-                                           access-control-filter-list
-                                           ident
-                                           get-in-config))))))
+      (let [{conn :conn, index :index
+             {{:keys [get-in-config]} :ConfigService}
+             :services} es-conn-state
+            query       (make-search-query es-conn-state search-query ident)]
+        (cond-> (coerce! (ductile.doc/query
+                          conn
+                          index
+                          query
+                          (-> es-params
+                              rename-sort-fields
+                              with-default-sort-field
+                              make-es-read-params)))
+
+          (restricted-read? ident) (update
+                                    :data
+                                    access-control-filter-list
+                                    ident
+                                    get-in-config))))))
 
 (s/defn handle-delete-search
   "ES delete by query handler"

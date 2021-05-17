@@ -1,23 +1,36 @@
 (ns ctia.schemas.search-agg
-  (:require [schema.core :as s]
-            [schema-tools.core :as st]))
+  (:require
+   [schema.core :as s]
+   [schema-tools.core :as st]))
 
-(s/defschema DateRangeQueryOpt
+(s/defschema RangeQueryOpt
   (st/optional-keys
     {:gte s/Inst
      :lt s/Inst}))
 
-(s/defschema DateRange
-  "Date range query, includes lowerfrom and excludes to"
-  {s/Keyword DateRangeQueryOpt})
+(s/defschema RangeQuery
+  "Corresponds to Range Query of Elasticsearch Query DSL.
+  see: https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl-range-query.html"
+  {s/Keyword RangeQueryOpt})
+
+(s/defschema FullTextQueryMode
+  (s/enum :query_string :multi_match :simple_query_string))
+
+(s/defschema FullTextQuery
+  (st/merge
+   {:query s/Str}
+   (st/optional-keys
+    {:query_mode       FullTextQueryMode
+     :fields           [s/Str]
+     :default_operator s/Str})))
 
 (s/defschema SearchQuery
   "components of a search query:
    - query-string: free text search, with lucene syntax enabled"
   (st/optional-keys
-   {:query-string s/Str
-    :filter-map {s/Keyword s/Any}
-    :date-range DateRange}))
+   {:filter-map   {s/Keyword s/Any}
+    :range        RangeQuery
+    :full-text    FullTextQuery}))
 
 (s/defschema AggType
   "supported aggregation types"

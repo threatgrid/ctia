@@ -3,6 +3,7 @@
             [clojure.core.memoize :as memo]
             [clojure.string :as string]
             [clojure.tools.logging :as log]
+            [compojure.api.middleware :refer [api-middleware]]
             [ctia.auth.jwt :as auth-jwt]
             [ctia.http.handler :as handler]
             [ctia.http.middleware.auth :as auth]
@@ -10,6 +11,7 @@
             [ctia.schemas.core :refer [APIHandlerServices]]
             [ring-jwt-middleware.core :as rjwt]
             [ring.adapter.jetty :as jetty]
+            [ring.middleware.format-response :refer [wrap-restful-response]]
             [ring.middleware
              [cors :refer [wrap-cors]]
              [params :refer [wrap-params]]
@@ -191,7 +193,6 @@
                         (auth-jwt/parse-jwt-pubkey-map (:public-key-map jwt))]
                (fn [{:keys [iss] :as claims}]
                  (get pubkey-for-issuer-map iss)))
-             :error-handler auth-jwt/jwt-error-handler
              :pubkey-path (:public-key-path jwt)
              :no-jwt-handler rjwt/authorize-no-jwt-header-strategy}
 
@@ -207,6 +208,14 @@
                                           {}))}))
             (when-let [lifetime (:lifetime-in-sec jwt)]
               {:jwt-max-lifetime-in-sec lifetime}))))
+
+         ;; encode error responses from ring-jwt-middleware
+         ;; Note that handler/api-handler already uses wrap-restful-response, and we
+         ;; use the same configuration options in both places.
+         ;; It's safe to use wrap-restful-response here because it's documented
+         ;; as idempotent for string/binary encoded responses, and 
+         ;; handler/api-handler always encodes responses before they reach here.
+         (:enabled jwt) (wrap-restful-response (handler/->format-options))
 
          access-control-allow-origin
          (wrap-cors :access-control-allow-origin
