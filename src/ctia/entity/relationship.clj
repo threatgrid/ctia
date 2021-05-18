@@ -1,25 +1,21 @@
 (ns ctia.entity.relationship
-  (:require [clojure.string :as str]
-            [ctia.lib.compojure.api.core :refer [POST]]
-            [ctia.store :refer [create-record
-                                read-record]]
-            [ctia.domain.entities :refer [long-id->id short-id->long-id un-store with-long-id]]
-            [ctia.entity.relationship.schemas :as rs]
-            [ctia.flows.crud :as flows]
-            [ctia.http.routes
-             [common :refer [BaseEntityFilterParams created PagingParams SourcableEntityFilterParams]
-              :as routes.common]
-             [crud :refer [services->entity-crud-routes]]]
-            [ctia.http.middleware.auth :refer [require-capability!]]
-            [ctia.schemas
-             [core :refer [APIHandlerServices Reference TLP]]
-             [sorting :as sorting]]
-            [ctia.stores.es
-             [mapping :as em]
-             [store :refer [def-es-store]]]
-            [ring.util.http-response :refer [not-found bad-request bad-request!]]
-            [schema-tools.core :as st]
-            [schema.core :as s]))
+  (:require
+   [clojure.string :as str]
+   [ctia.domain.entities :refer [long-id->id short-id->long-id un-store with-long-id]]
+   [ctia.entity.relationship.schemas :as rs]
+   [ctia.flows.crud :as flows]
+   [ctia.http.middleware.auth :refer [require-capability!]]
+   [ctia.http.routes.common :as routes.common]
+   [ctia.http.routes.crud :refer [services->entity-crud-routes]]
+   [ctia.lib.compojure.api.core :refer [POST]]
+   [ctia.schemas.core :refer [APIHandlerServices Reference TLP]]
+   [ctia.schemas.sorting :as sorting]
+   [ctia.store :refer [create-record read-record]]
+   [ctia.stores.es.mapping :as em]
+   [ctia.stores.es.store :refer [def-es-store]]
+   [ring.util.http-response :refer [not-found bad-request bad-request!]]
+   [schema-tools.core :as st]
+   [schema.core :as s]))
 
 (def relationship-mapping
   {"relationship"
@@ -31,8 +27,8 @@
      em/sourcable-entity-mapping
      em/stored-entity-mapping
      {:relationship_type em/token
-      :source_ref em/token
-      :target_ref em/token})}})
+      :source_ref        em/token
+      :target_ref        em/token})}})
 
 (def-es-store RelationshipStore
   :relationship
@@ -55,22 +51,22 @@
 
 (s/defschema RelationshipSearchParams
   (st/merge
-   PagingParams
-   BaseEntityFilterParams
-   SourcableEntityFilterParams
+   routes.common/PagingParams
+   routes.common/BaseEntityFilterParams
+   routes.common/SourcableEntityFilterParams
+   routes.common/SearchEntityParams
    RelationshipFieldsParam
    (st/optional-keys
-    {:query s/Str
+    {:query             s/Str
      :relationship_type s/Str
-     :source_ref s/Str
-     :target_ref s/Str
-     :sort_by  relationship-sort-fields})))
+     :source_ref        s/Str
+     :target_ref        s/Str
+     :sort_by           relationship-sort-fields})))
 
 (s/defschema RelationshipGetParams RelationshipFieldsParam)
 
 (s/defschema RelationshipByExternalIdQueryParams
-  (st/merge PagingParams
-            RelationshipFieldsParam))
+  (st/merge routes.common/PagingParams RelationshipFieldsParam))
 
 (s/defschema IncidentLinkRequestOptional
   {(s/optional-key :tlp) TLP})
@@ -198,7 +194,7 @@
                          :spec :new-relationship/map)
                         first
                         un-store)]
-                (created stored-relationship)))))))
+                (routes.common/created stored-relationship)))))))
 
 (def relationship-histogram-fields
   [:timestamp])
@@ -210,26 +206,26 @@
 (s/defn relationship-routes [services :- APIHandlerServices]
   (services->entity-crud-routes
    services
-   {:entity :relationship
-    :new-schema rs/NewRelationship
-    :entity-schema rs/Relationship
-    :get-schema rs/PartialRelationship
-    :get-params RelationshipGetParams
-    :list-schema rs/PartialRelationshipList
-    :search-schema rs/PartialRelationshipList
-    :external-id-q-params RelationshipByExternalIdQueryParams
-    :search-q-params RelationshipSearchParams
-    :new-spec :new-relationship/map
-    :realize-fn rs/realize-relationship
-    :get-capabilities :read-relationship
-    :post-capabilities :create-relationship
-    :put-capabilities :create-relationship
-    :delete-capabilities :delete-relationship
-    :search-capabilities :search-relationship
+   {:entity                   :relationship
+    :new-schema               rs/NewRelationship
+    :entity-schema            rs/Relationship
+    :get-schema               rs/PartialRelationship
+    :get-params               RelationshipGetParams
+    :list-schema              rs/PartialRelationshipList
+    :search-schema            rs/PartialRelationshipList
+    :external-id-q-params     RelationshipByExternalIdQueryParams
+    :search-q-params          RelationshipSearchParams
+    :new-spec                 :new-relationship/map
+    :realize-fn               rs/realize-relationship
+    :get-capabilities         :read-relationship
+    :post-capabilities        :create-relationship
+    :put-capabilities         :create-relationship
+    :delete-capabilities      :delete-relationship
+    :search-capabilities      :search-relationship
     :external-id-capabilities :read-relationship
-    :can-aggregate? true
-    :histogram-fields relationship-histogram-fields
-    :enumerable-fields relationship-enumerable-fields}))
+    :can-aggregate?           true
+    :histogram-fields         relationship-histogram-fields
+    :enumerable-fields        relationship-enumerable-fields}))
 
 (def capabilities
   #{:create-relationship
@@ -239,22 +235,21 @@
     :search-relationship})
 
 (def relationship-entity
-  {:route-context "/relationship"
-   :tags ["Relationship"]
-   :entity :relationship
-   :plural :relationships
-   :new-spec :new-relationship/map
-   :schema rs/Relationship
-   :partial-schema rs/PartialRelationship
-   :partial-list-schema rs/PartialRelationshipList
-   :new-schema rs/NewRelationship
-   :stored-schema rs/StoredRelationship
+  {:route-context         "/relationship"
+   :tags                  ["Relationship"]
+   :entity                :relationship
+   :plural                :relationships
+   :new-spec              :new-relationship/map
+   :schema                rs/Relationship
+   :partial-schema        rs/PartialRelationship
+   :partial-list-schema   rs/PartialRelationshipList
+   :new-schema            rs/NewRelationship
+   :stored-schema         rs/StoredRelationship
    :partial-stored-schema rs/PartialStoredRelationship
-   :realize-fn rs/realize-relationship
-   :es-store ->RelationshipStore
-   :es-mapping relationship-mapping
-   :services->routes (routes.common/reloadable-function
-                       relationship-routes)
-   :capabilities capabilities
-   :fields relationship-fields
-   :sort-fields relationship-fields})
+   :realize-fn            rs/realize-relationship
+   :es-store              ->RelationshipStore
+   :es-mapping            relationship-mapping
+   :services->routes      (routes.common/reloadable-function relationship-routes)
+   :capabilities          capabilities
+   :fields                relationship-fields
+   :sort-fields           relationship-fields})

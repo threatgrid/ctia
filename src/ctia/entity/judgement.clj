@@ -1,36 +1,29 @@
 (ns ctia.entity.judgement
-  (:require [clj-momo.lib.clj-time.core :as time]
-            [ctia.lib.compojure.api.core :refer [context POST routes]]
-            [compojure.api.resource :refer [resource]]
-            [ctia.domain.entities :refer [un-store with-long-id]]
-            [ctia.entity.feedback.graphql-schemas :as feedback]
-            [ctia.entity.judgement
-             [es-store :as j-store]
-             [schemas :as js]]
-            [ctia.entity.relationship.graphql-schemas :as relationship]
-            [ctia.flows.crud :as flows]
-            [ctia.http.routes
-             [common :refer [BaseEntityFilterParams
-                             PagingParams
-                             SourcableEntityFilterParams]
-              :as routes.common]
-             [crud :refer [capitalize-entity
-                           revoke-request
-                           services->entity-crud-routes]]]
-            [ctia.schemas.core :refer [APIHandlerServices Entity]]
-            [ctia.schemas.graphql
-             [flanders :as f]
-             [helpers :as g]
-             [pagination :as pagination]
-             [refs :as refs]
-             [sorting :as graphql-sorting]]
-            [ctim.schemas.judgement :as judgement]
-            [flanders.utils :as fu]
-            [ring.swagger.schema :refer [describe]]
-            [ring.util.http-response :refer [not-found ok]]
-            [schema-tools.core :as st]
-            [schema.core :as s]
-            [ctia.schemas.graphql.ownership :as go]))
+  (:require
+   [clj-momo.lib.clj-time.core :as time]
+   [compojure.api.resource :refer [resource]]
+   [ctia.domain.entities :refer [un-store with-long-id]]
+   [ctia.entity.feedback.graphql-schemas :as feedback]
+   [ctia.entity.judgement.es-store :as j-store]
+   [ctia.entity.judgement.schemas :as js]
+   [ctia.entity.relationship.graphql-schemas :as relationship]
+   [ctia.flows.crud :as flows]
+   [ctia.http.routes.common :as routes.common]
+   [ctia.http.routes.crud :refer [capitalize-entity revoke-request services->entity-crud-routes]]
+   [ctia.lib.compojure.api.core :refer [context POST routes]]
+   [ctia.schemas.core :refer [APIHandlerServices Entity]]
+   [ctia.schemas.graphql.flanders :as f]
+   [ctia.schemas.graphql.helpers :as g]
+   [ctia.schemas.graphql.ownership :as go]
+   [ctia.schemas.graphql.pagination :as pagination]
+   [ctia.schemas.graphql.refs :as refs]
+   [ctia.schemas.graphql.sorting :as graphql-sorting]
+   [ctim.schemas.judgement :as judgement]
+   [flanders.utils :as fu]
+   [ring.swagger.schema :refer [describe]]
+   [ring.util.http-response :refer [not-found ok]]
+   [schema-tools.core :as st]
+   [schema.core :as s]))
 
 (def judgement-fields
   (apply s/enum
@@ -51,31 +44,32 @@
 
 (s/defschema JudgementsByObservableQueryParams
   (st/merge
-   PagingParams
+   routes.common/PagingParams
    JudgementFieldsParam
    {(s/optional-key :sort_by)
     judgements-by-observable-sort-fields}))
 
 (s/defschema JudgementSearchParams
   (st/merge
-   PagingParams
-   BaseEntityFilterParams
-   SourcableEntityFilterParams
+   routes.common/PagingParams
+   routes.common/BaseEntityFilterParams
+   routes.common/SourcableEntityFilterParams
+   routes.common/SearchEntityParams
    JudgementFieldsParam
    (st/optional-keys
-   {:query s/Str
-    :disposition_name s/Str
-    :disposition s/Int
-    :priority s/Int
-    :severity s/Str
-    :confidence s/Str
-    :sort_by judgement-sort-fields})))
+    {:query            s/Str
+     :disposition_name s/Str
+     :disposition      s/Int
+     :priority         s/Int
+     :severity         s/Str
+     :confidence       s/Str
+     :sort_by          judgement-sort-fields})))
 
 (def JudgementGetParams JudgementFieldsParam)
 
 (s/defschema JudgementsQueryParams
   (st/merge
-   PagingParams
+   routes.common/PagingParams
    JudgementFieldsParam
    {(s/optional-key :sort_by) judgement-sort-fields}))
 
@@ -178,22 +172,21 @@
   (pagination/new-connection JudgementType))
 
 (s/def judgement-entity :- Entity
-  {:route-context "/judgement"
-   :tags ["Judgement"]
-   :entity :judgement
-   :plural :judgements
-   :new-spec :new-judgement/map
-   :schema js/Judgement
-   :partial-schema js/PartialJudgement
-   :partial-list-schema js/PartialJudgementList
-   :new-schema js/NewJudgement
-   :stored-schema js/StoredJudgement
+  {:route-context         "/judgement"
+   :tags                  ["Judgement"]
+   :entity                :judgement
+   :plural                :judgements
+   :new-spec              :new-judgement/map
+   :schema                js/Judgement
+   :partial-schema        js/PartialJudgement
+   :partial-list-schema   js/PartialJudgementList
+   :new-schema            js/NewJudgement
+   :stored-schema         js/StoredJudgement
    :partial-stored-schema js/PartialStoredJudgement
-   :realize-fn js/realize-judgement
-   :es-store j-store/->JudgementStore
-   :es-mapping j-store/judgement-mapping-def
-   :services->routes (routes.common/reloadable-function
-                       judgement-routes)
-   :capabilities capabilities
-   :fields js/judgement-fields
-   :sort-fields js/judgement-sort-fields})
+   :realize-fn            js/realize-judgement
+   :es-store              j-store/->JudgementStore
+   :es-mapping            j-store/judgement-mapping-def
+   :services->routes      (routes.common/reloadable-function judgement-routes)
+   :capabilities          capabilities
+   :fields                js/judgement-fields
+   :sort-fields           js/judgement-sort-fields})

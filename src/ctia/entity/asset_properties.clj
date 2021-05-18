@@ -103,6 +103,7 @@
    routes.common/PagingParams
    routes.common/BaseEntityFilterParams
    routes.common/SourcableEntityFilterParams
+   routes.common/SearchEntityParams
    AssetPropertiesFieldsParam
    (st/optional-keys
     {:query     s/Str

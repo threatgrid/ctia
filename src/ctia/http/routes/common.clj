@@ -38,9 +38,10 @@
    (s/optional-key :tlp) s/Str})
 
 (s/defschema SourcableEntityFilterParams
-  {(s/optional-key :source) s/Str
+  {(s/optional-key :source) s/Str})
 
-   (s/optional-key :query_mode)
+(s/defschema SearchEntityParams
+  {(s/optional-key :query_mode)
    (describe FullTextQueryMode "Elasticsearch Fulltext Query Mode. Defaults to query_string")})
 
 (s/defschema PagingParams

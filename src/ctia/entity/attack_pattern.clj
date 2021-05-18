@@ -3,8 +3,7 @@
    [ctia.domain.entities :refer [default-realize-fn]]
    [ctia.entity.feedback.graphql-schemas :as feedback]
    [ctia.entity.relationship.graphql-schemas :as relationship-graphql]
-   [ctia.http.routes.common :as routes.common
-    :refer [BaseEntityFilterParams PagingParams SourcableEntityFilterParams] ]
+   [ctia.http.routes.common :as routes.common]
    [ctia.http.routes.crud :refer [services->entity-crud-routes]]
    [ctia.schemas.core :refer [APIHandlerServices def-acl-schema def-stored-schema]]
    [ctia.schemas.graphql.flanders :as flanders]
@@ -57,10 +56,10 @@
      em/sourcable-entity-mapping
      em/describable-entity-mapping
      em/stored-entity-mapping
-     {:abstraction_level em/token
-      :kill_chain_phases em/kill-chain-phase
+     {:abstraction_level    em/token
+      :kill_chain_phases    em/kill-chain-phase
       :x_mitre_data_sources em/token
-      :x_mitre_platforms em/token
+      :x_mitre_platforms    em/token
       :x_mitre_contributors em/token})}})
 
 (def-es-store AttackPatternStore :attack-pattern StoredAttackPattern PartialStoredAttackPattern)
@@ -70,20 +69,21 @@
 
 (s/defschema AttackPatternSearchParams
   (st/merge
-   PagingParams
-   BaseEntityFilterParams
-   SourcableEntityFilterParams
+   routes.common/PagingParams
+   routes.common/BaseEntityFilterParams
+   routes.common/SourcableEntityFilterParams
+   routes.common/SearchEntityParams
    AttackPatternFieldsParam
    (st/optional-keys
-    {:query s/Str
+    {:query                             s/Str
      :kill_chain_phases.kill_chain_name s/Str
-     :kill_chain_phases.phase_name s/Str
-     :sort_by attack-pattern-sort-fields})))
+     :kill_chain_phases.phase_name      s/Str
+     :sort_by                           attack-pattern-sort-fields})))
 
 (s/defschema AttackPatternGetParams AttackPatternFieldsParam)
 
 (s/defschema AttackPatternByExternalIdQueryParams
-  (st/merge PagingParams AttackPatternFieldsParam))
+  (st/merge routes.common/PagingParams AttackPatternFieldsParam))
 
 (def attack-pattern-enumerable-fields
   [:source])
@@ -94,26 +94,26 @@
 (s/defn attack-pattern-routes [services :- APIHandlerServices]
   (services->entity-crud-routes
    services
-   {:entity :attack-pattern
-    :new-schema NewAttackPattern
-    :entity-schema AttackPattern
-    :get-schema PartialAttackPattern
-    :get-params AttackPatternGetParams
-    :list-schema PartialAttackPatternList
-    :search-schema PartialAttackPatternList
-    :external-id-q-params AttackPatternByExternalIdQueryParams
-    :search-q-params AttackPatternSearchParams
-    :new-spec :new-attack-pattern/map
-    :realize-fn realize-attack-pattern
-    :get-capabilities :read-attack-pattern
-    :post-capabilities :create-attack-pattern
-    :put-capabilities :create-attack-pattern
-    :delete-capabilities :delete-attack-pattern
-    :search-capabilities :search-attack-pattern
+   {:entity                   :attack-pattern
+    :new-schema               NewAttackPattern
+    :entity-schema            AttackPattern
+    :get-schema               PartialAttackPattern
+    :get-params               AttackPatternGetParams
+    :list-schema              PartialAttackPatternList
+    :search-schema            PartialAttackPatternList
+    :external-id-q-params     AttackPatternByExternalIdQueryParams
+    :search-q-params          AttackPatternSearchParams
+    :new-spec                 :new-attack-pattern/map
+    :realize-fn               realize-attack-pattern
+    :get-capabilities         :read-attack-pattern
+    :post-capabilities        :create-attack-pattern
+    :put-capabilities         :create-attack-pattern
+    :delete-capabilities      :delete-attack-pattern
+    :search-capabilities      :search-attack-pattern
     :external-id-capabilities :read-attack-pattern
-    :can-aggregate? true
-    :histogram-fields attack-pattern-histogram-fields
-    :enumerable-fields attack-pattern-enumerable-fields}))
+    :can-aggregate?           true
+    :histogram-fields         attack-pattern-histogram-fields
+    :enumerable-fields        attack-pattern-enumerable-fields}))
 
 (def AttackPatternType
   (let [{:keys [fields name description]}
@@ -147,22 +147,22 @@
     :search-attack-pattern})
 
 (def attack-pattern-entity
-  {:route-context "/attack-pattern"
-   :tags ["Attack Pattern"]
-   :entity :attack-pattern
-   :plural :attack-patterns
-   :new-spec :new-attack-pattern/map
-   :schema AttackPattern
-   :partial-schema PartialAttackPattern
-   :partial-list-schema PartialAttackPatternList
-   :new-schema NewAttackPattern
-   :stored-schema StoredAttackPattern
+  {:route-context         "/attack-pattern"
+   :tags                  ["Attack Pattern"]
+   :entity                :attack-pattern
+   :plural                :attack-patterns
+   :new-spec              :new-attack-pattern/map
+   :schema                AttackPattern
+   :partial-schema        PartialAttackPattern
+   :partial-list-schema   PartialAttackPatternList
+   :new-schema            NewAttackPattern
+   :stored-schema         StoredAttackPattern
    :partial-stored-schema PartialStoredAttackPattern
-   :realize-fn realize-attack-pattern
-   :es-store ->AttackPatternStore
-   :es-mapping attack-pattern-mapping
-   :services->routes (routes.common/reloadable-function
-                       attack-pattern-routes)
-   :capabilities capabilities
-   :fields attack-pattern-fields
-   :sort-fields attack-pattern-fields})
+   :realize-fn            realize-attack-pattern
+   :es-store              ->AttackPatternStore
+   :es-mapping            attack-pattern-mapping
+   :services->routes      (routes.common/reloadable-function
+                      attack-pattern-routes)
+   :capabilities          capabilities
+   :fields                attack-pattern-fields
+   :sort-fields           attack-pattern-fields})

@@ -1,34 +1,28 @@
 (ns ctia.entity.indicator
   (:require
-   [ctia.entity.feedback.graphql-schemas :as feedback]
    [ctia.domain.entities :refer [default-realize-fn]]
+   [ctia.entity.feedback.graphql-schemas :as feedback]
    [ctia.entity.relationship.graphql-schemas :as relationship]
-   [ctia.http.routes
-    [common :refer [BaseEntityFilterParams PagingParams SourcableEntityFilterParams]
-     :as routes.common]
-    [crud :refer [services->entity-crud-routes]]]
-   [ctia.schemas
-    [core :refer [APIHandlerServices
-                  def-stored-schema
-                  CTIAEntity]]
-    [sorting :as sorting]]
-   [ctia.schemas.graphql
-    [sorting :as graphql-sorting]
-    [flanders :as f]
-    [helpers :as g]
-    [pagination :as pagination]
-    [refs :as refs]]
-   [ctia.stores.es
-    [mapping :as em]
-    [store :refer [def-es-store]]]
+   [ctia.http.routes.common :as routes.common]
+   [ctia.http.routes.crud :refer [services->entity-crud-routes]]
+   [ctia.schemas.core :refer [APIHandlerServices
+                              def-stored-schema
+                              CTIAEntity]]
+   [ctia.schemas.graphql.flanders :as f]
+   [ctia.schemas.graphql.helpers :as g]
+   [ctia.schemas.graphql.ownership :as go]
+   [ctia.schemas.graphql.pagination :as pagination]
+   [ctia.schemas.graphql.refs :as refs]
+   [ctia.schemas.graphql.sorting :as graphql-sorting]
+   [ctia.schemas.sorting :as sorting]
+   [ctia.stores.es.mapping :as em]
+   [ctia.stores.es.store :refer [def-es-store]]
    [ctim.schemas.indicator :as ins]
-   [flanders
-    [schema :as f-schema]
-    [spec :as f-spec]
-    [utils :as fu]]
+   [flanders.schema :as f-schema]
+   [flanders.spec :as f-spec]
+   [flanders.utils :as fu]
    [schema-tools.core :as st]
-   [schema.core :as s]
-   [ctia.schemas.graphql.ownership :as go]))
+   [schema.core :as s]))
 
 (s/defschema Indicator
   (st/merge
@@ -120,25 +114,26 @@
 
 (s/defschema IndicatorSearchParams
   (st/merge
-   PagingParams
-   BaseEntityFilterParams
-   SourcableEntityFilterParams
+   routes.common/PagingParams
+   routes.common/BaseEntityFilterParams
+   routes.common/SourcableEntityFilterParams
+   routes.common/SearchEntityParams
    IndicatorFieldsParam
    (st/optional-keys
-    {:query s/Str
-     :indicator_type s/Str
-     :tags s/Str
+    {:query             s/Str
+     :indicator_type    s/Str
+     :tags              s/Str
      :kill_chain_phases s/Str
-     :producer s/Str
-     :specification s/Str
-     :confidence s/Str
-     :sort_by indicator-sort-fields})))
+     :producer          s/Str
+     :specification     s/Str
+     :confidence        s/Str
+     :sort_by           indicator-sort-fields})))
 
 (def IndicatorGetParams IndicatorFieldsParam)
 
 (s/defschema IndicatorsListQueryParams
   (st/merge
-   PagingParams
+   routes.common/PagingParams
    IndicatorFieldsParam
    {(s/optional-key :sort_by) indicator-sort-fields}))
 
@@ -148,26 +143,26 @@
 (s/defn indicator-routes [services :- APIHandlerServices]
   (services->entity-crud-routes
    services
-   {:entity :indicator
-    :new-schema NewIndicator
-    :entity-schema Indicator
-    :get-schema PartialIndicator
-    :get-params IndicatorGetParams
-    :list-schema PartialIndicatorList
-    :search-schema PartialIndicatorList
-    :external-id-q-params IndicatorsByExternalIdQueryParams
-    :search-q-params IndicatorSearchParams
-    :new-spec :new-indicator/map
-    :realize-fn realize-indicator
-    :get-capabilities :read-indicator
-    :post-capabilities :create-indicator
-    :put-capabilities :create-indicator
-    :delete-capabilities :delete-indicator
-    :search-capabilities :search-indicator
+   {:entity                   :indicator
+    :new-schema               NewIndicator
+    :entity-schema            Indicator
+    :get-schema               PartialIndicator
+    :get-params               IndicatorGetParams
+    :list-schema              PartialIndicatorList
+    :search-schema            PartialIndicatorList
+    :external-id-q-params     IndicatorsByExternalIdQueryParams
+    :search-q-params          IndicatorSearchParams
+    :new-spec                 :new-indicator/map
+    :realize-fn               realize-indicator
+    :get-capabilities         :read-indicator
+    :post-capabilities        :create-indicator
+    :put-capabilities         :create-indicator
+    :delete-capabilities      :delete-indicator
+    :search-capabilities      :search-indicator
     :external-id-capabilities :read-indicator
-    :can-aggregate? true
-    :histogram-fields indicator-histogram-fields
-    :enumerable-fields indicator-enumerable-fields}))
+    :can-aggregate?           true
+    :histogram-fields         indicator-histogram-fields
+    :enumerable-fields        indicator-enumerable-fields}))
 
 (def capabilities
   #{:read-indicator
@@ -200,22 +195,21 @@
   (pagination/new-connection IndicatorType))
 
 (def indicator-entity
-  {:route-context "/indicator"
-   :tags ["Indicator"]
-   :entity :indicator
-   :plural :indicators
-   :new-spec :new-indicator/map
-   :schema Indicator
-   :partial-schema PartialIndicator
-   :partial-list-schema PartialIndicatorList
-   :new-schema NewIndicator
-   :stored-schema StoredIndicator
+  {:route-context         "/indicator"
+   :tags                  ["Indicator"]
+   :entity                :indicator
+   :plural                :indicators
+   :new-spec              :new-indicator/map
+   :schema                Indicator
+   :partial-schema        PartialIndicator
+   :partial-list-schema   PartialIndicatorList
+   :new-schema            NewIndicator
+   :stored-schema         StoredIndicator
    :partial-stored-schema PartialStoredIndicator
-   :realize-fn realize-indicator
-   :es-store ->IndicatorStore
-   :es-mapping indicator-mapping
-   :services->routes (routes.common/reloadable-function
-                       indicator-routes)
-   :capabilities capabilities
-   :fields indicator-fields
-   :sort-fields indicator-fields})
+   :realize-fn            realize-indicator
+   :es-store              ->IndicatorStore
+   :es-mapping            indicator-mapping
+   :services->routes      (routes.common/reloadable-function indicator-routes)
+   :capabilities          capabilities
+   :fields                indicator-fields
+   :sort-fields           indicator-fields})

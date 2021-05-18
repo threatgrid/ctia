@@ -1,19 +1,16 @@
 (ns ctia.entity.coa
-  (:require [ctia.domain.entities :refer [default-realize-fn]]
-            [ctia.http.routes
-             [common :refer [BaseEntityFilterParams PagingParams SourcableEntityFilterParams]
-              :as routes.common]
-             [crud :refer [services->entity-crud-routes]]]
-            [ctia.schemas
-             [core :refer [APIHandlerServices def-acl-schema def-stored-schema]]
-             [sorting :refer [default-entity-sort-fields]]]
-            [ctia.stores.es
-             [mapping :as em]
-             [store :refer [def-es-store]]]
-            [ctim.schemas.coa :as coas]
-            [flanders.utils :as fu]
-            [schema-tools.core :as st]
-            [schema.core :as s]))
+  (:require
+   [ctia.domain.entities :refer [default-realize-fn]]
+   [ctia.http.routes.common :as routes.common]
+   [ctia.http.routes.crud :refer [services->entity-crud-routes]]
+   [ctia.schemas.core :refer [APIHandlerServices def-acl-schema def-stored-schema]]
+   [ctia.schemas.sorting :refer [default-entity-sort-fields]]
+   [ctia.stores.es.mapping :as em]
+   [ctia.stores.es.store :refer [def-es-store]]
+   [ctim.schemas.coa :as coas]
+   [flanders.utils :as fu]
+   [schema-tools.core :as st]
+   [schema.core :as s]))
 
 (def-acl-schema COA
   coas/COA
@@ -47,16 +44,16 @@
      em/describable-entity-mapping
      em/sourcable-entity-mapping
      em/stored-entity-mapping
-     {:valid_time em/valid-time
-      :stage em/token
-      :coa_type em/token
-      :objective em/text
-      :impact em/token
-      :cost em/token
-      :efficacy em/token
+     {:valid_time          em/valid-time
+      :stage               em/token
+      :coa_type            em/token
+      :objective           em/text
+      :impact              em/token
+      :cost                em/token
+      :efficacy            em/token
       :structured_coa_type em/token
-      :open_c2_coa em/open-c2-coa
-      :related_COAs em/related-coas})}})
+      :open_c2_coa         em/open-c2-coa
+      :related_COAs        em/related-coas})}})
 
 (def-es-store COAStore :coa StoredCOA PartialStoredCOA)
 
@@ -79,26 +76,27 @@
 
 (s/defschema COASearchParams
   (st/merge
-   PagingParams
-   BaseEntityFilterParams
-   SourcableEntityFilterParams
+   routes.common/PagingParams
+   routes.common/BaseEntityFilterParams
+   routes.common/SourcableEntityFilterParams
+   routes.common/SearchEntityParams
    COAFieldsParam
    (st/optional-keys
-    {:query s/Str
-     :stage s/Str
-     :coa_type s/Str
-     :impact s/Str
-     :objective s/Str
-     :cost s/Str
-     :efficacy s/Str
+    {:query               s/Str
+     :stage               s/Str
+     :coa_type            s/Str
+     :impact              s/Str
+     :objective           s/Str
+     :cost                s/Str
+     :efficacy            s/Str
      :structured_coa_type s/Str
-     :sort_by coa-sort-fields})))
+     :sort_by             coa-sort-fields})))
 
 (def COAGetParams COAFieldsParam)
 
 (s/defschema COAByExternalIdQueryParams
   (st/merge
-   PagingParams
+   routes.common/PagingParams
    COAFieldsParam))
 
 (def coa-histogram-fields
@@ -115,26 +113,26 @@
 (s/defn coa-routes [services :- APIHandlerServices]
   (services->entity-crud-routes
    services
-   {:entity :coa
-    :new-schema NewCOA
-    :entity-schema COA
-    :get-schema PartialCOA
-    :get-params COAGetParams
-    :list-schema PartialCOAList
-    :search-schema PartialCOAList
-    :external-id-q-params COAByExternalIdQueryParams
-    :search-q-params COASearchParams
-    :new-spec :new-coa/map
-    :realize-fn realize-coa
-    :get-capabilities :read-coa
-    :post-capabilities :create-coa
-    :put-capabilities :create-coa
-    :delete-capabilities :delete-coa
-    :search-capabilities :search-coa
+   {:entity                   :coa
+    :new-schema               NewCOA
+    :entity-schema            COA
+    :get-schema               PartialCOA
+    :get-params               COAGetParams
+    :list-schema              PartialCOAList
+    :search-schema            PartialCOAList
+    :external-id-q-params     COAByExternalIdQueryParams
+    :search-q-params          COASearchParams
+    :new-spec                 :new-coa/map
+    :realize-fn               realize-coa
+    :get-capabilities         :read-coa
+    :post-capabilities        :create-coa
+    :put-capabilities         :create-coa
+    :delete-capabilities      :delete-coa
+    :search-capabilities      :search-coa
     :external-id-capabilities :read-coa
-    :can-aggregate? true
-    :histogram-fields coa-histogram-fields
-    :enumerable-fields coa-enumerable-fields}))
+    :can-aggregate?           true
+    :histogram-fields         coa-histogram-fields
+    :enumerable-fields        coa-enumerable-fields}))
 
 (def capabilities
   #{:create-coa
@@ -143,22 +141,22 @@
     :search-coa})
 
 (def coa-entity
-  {:route-context "/coa"
-   :tags ["COA"]
-   :entity :coa
-   :plural :coas
-   :new-spec :new-coa/map
-   :schema COA
-   :partial-schema PartialCOA
-   :partial-list-schema PartialCOAList
-   :new-schema NewCOA
-   :stored-schema StoredCOA
+  {:route-context         "/coa"
+   :tags                  ["COA"]
+   :entity                :coa
+   :plural                :coas
+   :new-spec              :new-coa/map
+   :schema                COA
+   :partial-schema        PartialCOA
+   :partial-list-schema   PartialCOAList
+   :new-schema            NewCOA
+   :stored-schema         StoredCOA
    :partial-stored-schema PartialStoredCOA
-   :realize-fn realize-coa
-   :es-store ->COAStore
-   :es-mapping coa-mapping
-   :services->routes (routes.common/reloadable-function
-                       coa-routes)
-   :capabilities capabilities
-   :fields coa-fields
-   :sort-fields coa-fields})
+   :realize-fn            realize-coa
+   :es-store              ->COAStore
+   :es-mapping            coa-mapping
+   :services->routes      (routes.common/reloadable-function
+                      coa-routes)
+   :capabilities          capabilities
+   :fields                coa-fields
+   :sort-fields           coa-fields})
