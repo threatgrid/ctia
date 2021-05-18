@@ -59,11 +59,9 @@
     (assert (seq common-key-paths))
     (doseq [common-key-path common-key-paths
             :let [id->vals-at-path (id->m-at-path common-key-path)]]
-      (is (apply = (vals id->vals-at-path))
-          ;; `testing` doesn't seem to be recognized by `checking`, so
-          ;; put debugging helpers here
-          (str (prn-str common-key-path)
-               (pr-str id->vals-at-path))))))
+      (testing (pr-str common-key-path)
+        (is (apply = (vals id->vals-at-path))
+            (pr-str id->vals-at-path))))))
 
 (defn api-for-route
   "Returns a function that performs"

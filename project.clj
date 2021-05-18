@@ -6,7 +6,7 @@
 (def ring-version "1.8.0")
 (def schema-generators-version "0.1.3")
 (def test-check-version "1.1.0")
-(def test-chuck-version "0.2.10")
+(def test-chuck-version "0.2.11")
 (def trapperkeeper-version "3.1.0")
 
 ;; TODO we could add -dev here when it works
