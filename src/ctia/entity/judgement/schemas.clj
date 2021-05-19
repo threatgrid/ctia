@@ -86,8 +86,9 @@
            :observable.value]))
 
 (def judgement-sort-fields
-  (concat judgement-fields
-          ["valid_time.start_time,timestamp"]))
+  (conj judgement-fields
+        :valid_time.start_time
+        :timestamp))
 
 (def judgement-enumerable-fields
   [:disposition

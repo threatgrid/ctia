@@ -26,18 +26,15 @@
    [schema.core :as s]))
 
 (def judgement-fields
-  (apply s/enum
-         (map name js/judgement-fields)))
+  (apply s/enum js/judgement-fields))
 
 (def judgement-sort-fields
-  (apply s/enum
-         (map name js/judgement-sort-fields)))
+  (apply s/enum js/judgement-sort-fields))
 
 (def judgements-by-observable-sort-fields
   (apply s/enum
-         (map name
-              (concat js/judgements-by-observable-sort-fields
-                      js/judgement-sort-fields))))
+         (concat js/judgements-by-observable-sort-fields
+                 js/judgement-sort-fields)))
 
 (s/defschema JudgementFieldsParam
   {(s/optional-key :fields) [judgement-fields]})
@@ -109,27 +106,27 @@
                            :wait_for wait_for}))))
 
 (s/defn judgement-routes [services :- APIHandlerServices]
-  (let [entity-crud-config {:entity :judgement
-                            :new-schema js/NewJudgement
-                            :entity-schema js/Judgement
-                            :get-schema js/PartialJudgement
-                            :get-params JudgementGetParams
-                            :list-schema js/PartialJudgementList
-                            :search-schema js/PartialJudgementList
-                            :external-id-q-params JudgementsByExternalIdQueryParams
-                            :search-q-params JudgementSearchParams
-                            :new-spec :new-judgement/map
-                            :realize-fn js/realize-judgement
-                            :get-capabilities :read-judgement
-                            :post-capabilities :create-judgement
-                            :put-capabilities #{:create-judgement :developer}
-                            :delete-capabilities :delete-judgement
-                            :search-capabilities :search-judgement
+  (let [entity-crud-config {:entity                   :judgement
+                            :new-schema               js/NewJudgement
+                            :entity-schema            js/Judgement
+                            :get-schema               js/PartialJudgement
+                            :get-params               JudgementGetParams
+                            :list-schema              js/PartialJudgementList
+                            :search-schema            js/PartialJudgementList
+                            :external-id-q-params     JudgementsByExternalIdQueryParams
+                            :search-q-params          JudgementSearchParams
+                            :new-spec                 :new-judgement/map
+                            :realize-fn               js/realize-judgement
+                            :get-capabilities         :read-judgement
+                            :post-capabilities        :create-judgement
+                            :put-capabilities         #{:create-judgement :developer}
+                            :delete-capabilities      :delete-judgement
+                            :search-capabilities      :search-judgement
                             :external-id-capabilities :read-judgement
-                            :can-update? true
-                            :can-aggregate? true
-                            :histogram-fields js/judgement-histogram-fields
-                            :enumerable-fields js/judgement-enumerable-fields}]
+                            :can-update?              true
+                            :can-aggregate?           true
+                            :histogram-fields         js/judgement-histogram-fields
+                            :enumerable-fields        js/judgement-enumerable-fields}]
     (routes
       (services->entity-crud-routes
         services

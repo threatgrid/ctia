@@ -9,10 +9,10 @@
    [schema.core :as s]))
 
 (def sighting-sort-fields
-  (apply s/enum (map name ss/sighting-sort-fields)))
+  (apply s/enum ss/sighting-sort-fields))
 
 (def sighting-fields
-  (apply s/enum (map name ss/sighting-fields)))
+  (apply s/enum ss/sighting-fields))
 
 (s/defschema SightingFieldsParam
   {(s/optional-key :fields) [sighting-fields]})

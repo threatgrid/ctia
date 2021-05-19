@@ -78,4 +78,5 @@
 
 (def sighting-sort-fields
   (conj sighting-fields
-        "observed_time.start_time,timestamp"))
+        :observed_time.start_time
+        :timestamp))
