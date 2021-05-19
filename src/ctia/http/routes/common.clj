@@ -7,8 +7,6 @@
    [ctia.schemas.search-agg :refer
     [FullTextQueryMode MetricResult RangeQueryOpt SearchQuery]]
    [ctia.schemas.sorting :as sorting]
-   [ctia.schemas.utils :as schemas.utils]
-   [ctia.stores.es.mapping :as em]
    [ring.swagger.json-schema :as json-schema]
    [ring.swagger.schema :refer [describe]]
    [ring.util.codec :as codec]
@@ -28,6 +26,29 @@
 
 (def filter-map-search-options
   (conj search-options :query :from :to))
+
+(def insignificant-search-fields
+  "Fields to be ignored by default when searching"
+  #{:authorized_groups
+    :authorized_users
+    :created
+    :external_ids
+    :external_references
+    :from
+    :groups
+    :id
+    :language
+    :modified
+    :owner
+    :revision
+    :schema_version
+    :source
+    :source_ref
+    :source_uri
+    :timestamp
+    :tlp
+    :to
+    :type})
 
 (s/defschema BaseEntityFilterParams
   {(s/optional-key :id) s/Str
@@ -114,7 +135,7 @@
   [search-query-params :- (s/maybe (s/protocol s/Schema))]
   (let [fields-schema  (st/get-in search-query-params [:fields])
         default-fields (-> fields-schema first :vs
-                           (set/difference (set (keys em/base-entity-mapping)))
+                           (set/difference insignificant-search-fields)
                            vec)]
    (st/merge
     search-query-params
