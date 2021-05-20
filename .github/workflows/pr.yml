@@ -32,7 +32,6 @@ env:
   BB_VERSION: 0.4.3
   DEFAULT_JAVA_VERSION: 11.0.9
   JAVA_DISTRIBUTION: 'adopt'
-  CTIA_COMMIT_MESSAGE: ${{github.event.head_commit.message}}
 
 jobs:
   setup:
@@ -56,6 +55,8 @@ jobs:
       - name: Setup test matrix splits
         id: set-matrix
         run: ./scripts/actions/print-matrix.clj
+        env:
+          CTIA_COMMIT_MESSAGE: ${{github.event.head_commit.message}}
       # Setup previous timing information
       - name: Timing Cache
         id: get-timing
