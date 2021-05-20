@@ -17,5 +17,4 @@
 
   (assert (not (getenv "TRAVIS_EVENT_TYPE")) "Actions only"))
 
-(when (= *file* (System/getProperty "babashka.file"))
-  (-main))
+(when (= *file* (System/getProperty "babashka.file")) (-main))

@@ -33,10 +33,6 @@
                                     "schedule" :cron
                                     ("pull_request" "push") :pr)))))))
 
-(def build-config (parse-build-config))
-
-(println "build-config:" (pr-str build-config))
-
 (defn valid-split? [{:keys [this_split total_splits
                             java_version ci_profiles] :as m}]
   (and (= #{:this_split :total_splits
@@ -88,19 +84,25 @@
            [{:java_version default-java-version}
             {:java_version java-15-version}]))))
 
-(defn edn-matrix []
+(defn edn-matrix [build-config]
   {:post [(seq %)]}
   (case (:test-suite build-config)
     :cron (cron-matrix)
     :pr (non-cron-matrix)))
 
-;; inform ./build/run-tests.sh which test suite to run
-(add-env "CTIA_TEST_SUITE"
-         (case (:test-suite build-config)
-           :cron "cron"
-           :pr "ci"))
+(defn -main [& _args]
+  (let [;; inform ./build/run-tests.sh which test suite to run
+        _ (add-env "CTIA_TEST_SUITE"
+                   (case (:test-suite build-config)
+                     :cron "cron"
+                     :pr "ci"))
+        build-config (parse-build-config)
 
-(let [jstr (json/generate-string (edn-matrix) {:pretty false})]
-  ;; Actions does not print ::set-ouput commands to the build output
-  (println (str "DEBUG: " jstr))
-  (println (str "::set-output name=matrix::" jstr)))
+        _ (println "build-config:" (pr-str build-config))
+        jstr (json/generate-string (edn-matrix build-config)
+                                   {:pretty false})] 
+    ;; Actions does not print ::set-ouput commands to the build output
+    (println (str "DEBUG: " jstr))
+    (println (str "::set-output name=matrix::" jstr))))
+
+(when (= *file* (System/getProperty "babashka.file")) (-main))

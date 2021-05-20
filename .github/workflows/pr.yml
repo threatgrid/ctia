@@ -58,12 +58,12 @@ jobs:
           echo "${BIN_PATH}" >> $GITHUB_PATH
       - name: Install babashka
         run: ./scripts/actions/install-bb.sh
-      - run: ./scripts/actions/setup-env.clj
+      - run: ./scripts/actions/setup_env.clj
       - name: Setup test matrix splits
         id: set-matrix
         run: |
           echo "CTIA_COMMIT_MESSAGE=${CTIA_COMMIT_MESSAGE}"
-          ./scripts/actions/print-matrix.clj
+          ./scripts/actions/print_matrix.clj
         env:
           CTIA_COMMIT_MESSAGE: ${{steps.gh-project-context.outputs.commitMsg}}
       # Setup previous timing information
@@ -289,7 +289,7 @@ jobs:
           echo "${BIN_PATH}" >> $GITHUB_PATH
       - name: Install babashka
         run: ./scripts/actions/install-bb.sh
-      - run: ./scripts/actions/setup-env.clj
+      - run: ./scripts/actions/setup_env.clj
       - name: Timing results Cache
         uses: actions/cache@v2
         with:
