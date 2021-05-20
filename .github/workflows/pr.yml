@@ -262,25 +262,19 @@ jobs:
     needs: [test-matrix]
     steps:
       - uses: actions/checkout@v2
-        if: "!env.CTIA_SKIP_CI"
       - name: Binary Cache
-        if: "!env.CTIA_SKIP_CI"
         uses: actions/cache@v2
         with:
           path: ${{ env.BIN_PATH }}
           key: ctia-bin-${{ env.ACTIONS_CACHE_VERSION }}-${{ env.BB_VERSION }}
       - name: Setup PATH and directories
-        if: "!env.CTIA_SKIP_CI"
         run: |
           mkdir -p "${BIN_PATH}"
           echo "${BIN_PATH}" >> $GITHUB_PATH
       - name: Install babashka
-        if: "!env.CTIA_SKIP_CI"
         run: ./scripts/actions/install-bb.sh
       - run: ./scripts/actions/setup-env.clj
-        if: "!env.CTIA_SKIP_CI"
       - name: Timing results Cache
-        if: "!env.CTIA_SKIP_CI"
         uses: actions/cache@v2
         with:
           path: target/test-results/all-test-timings.edn
@@ -288,23 +282,30 @@ jobs:
           key: ctia-timings-${{ env.ACTIONS_CACHE_VERSION }}-${{ env.CTIA_TEST_SUITE }}-${{ github.ref }}-${{ github.sha }}
 
       - name: Download test timings
-        if: "!env.CTIA_SKIP_CI"
+        continue-on-error: true
         uses: actions/download-artifact@v2
         with:
           name: test-timing
           path: target/test-results
 
       - name: Print test timings
-        if: "!env.CTIA_SKIP_CI"
         run: ./scripts/summarize-tests.clj
 
       - name: Upload all test timings
-        if: "!env.CTIA_SKIP_CI"
         uses: actions/upload-artifact@v2
         with:
           retention-days: 60
           name: all-test-timings
           path: target/test-results/*.edn
 
-      - run: echo "All tests pass!"
-        if: "!env.CTIA_SKIP_CI"
+      - run: |
+          if [ ${{!failure()}}]; then
+            echo "All tests pass!"
+            exit 0
+          elif [ $CTIA_SKIP_CI ]; then
+            echo "CI was skipped -- failures in the download-artifact step are expected."
+            exit 0
+          else
+            echo "Unexpected failure -- see previous steps in this job."
+            exit 1
+          fi
