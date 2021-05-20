@@ -113,7 +113,9 @@ jobs:
         id: maven-cache
         uses: actions/cache@v2
         with:
-          path: ~/.m2/repository
+          path: |
+            ~/.m2/repository
+            ~/.gitlibs
           key: ctia-m2-cache-${{ env.ACTIONS_CACHE_VERSION }}-${{ hashFiles('project.clj') }}-${{ env.LEIN_VERSION }}
           # these will be considered a cache-miss by `cache-hit`
           restore-keys: |
@@ -204,7 +206,9 @@ jobs:
         id: maven-cache
         uses: actions/cache@v2
         with:
-          path: ~/.m2/repository
+          path: |
+            ~/.m2/repository
+            ~/.gitlibs
           key: ctia-m2-cache-${{ env.ACTIONS_CACHE_VERSION }}-${{ hashFiles('project.clj') }}-${{ env.LEIN_VERSION }}
           restore-keys: |
             ctia-m2-cache-${{ env.ACTIONS_CACHE_VERSION }}-${{ hashFiles('project.clj') }}-
