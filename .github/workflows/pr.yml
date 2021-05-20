@@ -109,9 +109,10 @@ jobs:
         uses: actions/cache@v2
         with:
           path: ~/.m2/repository
-          key: ctia-m2-cache-${{ env.ACTIONS_CACHE_VERSION }}-${{ hashFiles('project.clj') }}
+          key: ctia-m2-cache-${{ env.ACTIONS_CACHE_VERSION }}-${{ hashFiles('project.clj') }}-${{ env.LEIN_VERSION }}
           # these will be considered a cache-miss by `cache-hit`
           restore-keys: |
+            ctia-m2-cache-${{ env.ACTIONS_CACHE_VERSION }}-${{ hashFiles('project.clj') }}-
             ctia-m2-cache-${{ env.ACTIONS_CACHE_VERSION }}-
       - name: Setup Java
         if: steps.maven-cache.outputs.cache-hit != 'true'
@@ -198,8 +199,9 @@ jobs:
         uses: actions/cache@v2
         with:
           path: ~/.m2/repository
-          key: ctia-m2-cache-${{ env.ACTIONS_CACHE_VERSION }}-${{ hashFiles('project.clj') }}
+          key: ctia-m2-cache-${{ env.ACTIONS_CACHE_VERSION }}-${{ hashFiles('project.clj') }}-${{ env.LEIN_VERSION }}
           restore-keys: |
+            ctia-m2-cache-${{ env.ACTIONS_CACHE_VERSION }}-${{ hashFiles('project.clj') }}-
             ctia-m2-cache-${{ env.ACTIONS_CACHE_VERSION }}-
 
       - uses: actions/setup-java@v1
