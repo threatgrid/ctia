@@ -1,6 +1,6 @@
 #!/usr/bin/env bb
 
-(ns actions-helpers)
+(ns actions.actions-helpers)
 
 (defn getenv ^String [^String s] (System/getenv s))
 

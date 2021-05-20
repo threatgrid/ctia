@@ -1,7 +1,7 @@
 #!/usr/bin/env bb
 
-(ns setup-env
-  (:require [actions-helpers :refer [add-env getenv]]))
+(ns actions.setup-env
+  (:require [actions.actions-helpers :refer [add-env getenv]]))
 
 (-> (getenv "LOG_PATH") File. .mkdirs assert)
 

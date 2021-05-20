@@ -9,8 +9,8 @@
 ;;   $ GITHUB_ENV=$(mktemp) GITHUB_EVENT_NAME=schedule ./scripts/actions/print-matrix.clj
 ;;   $ GITHUB_ENV=$(mktemp) CTIA_COMMIT_MESSAGE='{:test-suite :cron} try cron build' GITHUB_EVENT_NAME=push ./scripts/actions/print-matrix.clj
 
-(ns print-matrix
-  (:require [actions-helpers :refer [add-env]]
+(ns actions.print-matrix
+  (:require [actions.actions-helpers :refer [add-env]]
             [clojure.string :as str]
             [cheshire.core :as json]))
 
@@ -89,6 +89,7 @@
     :cron (cron-matrix)
     :pr (non-cron-matrix)))
 
+;; inform ./build/run-tests.sh which test suite to run
 (add-env "CTIA_TEST_SUITE"
          (case (:test-suite build-config)
            :cron "cron"
