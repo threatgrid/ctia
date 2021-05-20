@@ -261,19 +261,25 @@ jobs:
     needs: [test-matrix]
     steps:
       - uses: actions/checkout@v2
+        if: "!contains(github.event.head_commit.message, 'skip ci')"
       - name: Binary Cache
+        if: "!contains(github.event.head_commit.message, 'skip ci')"
         uses: actions/cache@v2
         with:
           path: ${{ env.BIN_PATH }}
           key: ctia-bin-${{ env.ACTIONS_CACHE_VERSION }}-${{ env.BB_VERSION }}
       - name: Setup PATH and directories
+        if: "!contains(github.event.head_commit.message, 'skip ci')"
         run: |
           mkdir -p "${BIN_PATH}"
           echo "${BIN_PATH}" >> $GITHUB_PATH
       - name: Install babashka
+        if: "!contains(github.event.head_commit.message, 'skip ci')"
         run: ./scripts/actions/install-bb.sh
       - run: ./scripts/actions/setup-env.clj
+        if: "!contains(github.event.head_commit.message, 'skip ci')"
       - name: Timing results Cache
+        if: "!contains(github.event.head_commit.message, 'skip ci')"
         uses: actions/cache@v2
         with:
           path: target/test-results/all-test-timings.edn
@@ -281,15 +287,18 @@ jobs:
           key: ctia-timings-${{ env.ACTIONS_CACHE_VERSION }}-${{ env.CTIA_TEST_SUITE }}-${{ github.ref }}-${{ github.sha }}
 
       - name: Download test timings
+        if: "!contains(github.event.head_commit.message, 'skip ci')"
         uses: actions/download-artifact@v2
         with:
           name: test-timing
           path: target/test-results
 
       - name: Print test timings
+        if: "!contains(github.event.head_commit.message, 'skip ci')"
         run: ./scripts/summarize-tests.clj
 
       - name: Upload all test timings
+        if: "!contains(github.event.head_commit.message, 'skip ci')"
         uses: actions/upload-artifact@v2
         with:
           retention-days: 60
@@ -297,3 +306,4 @@ jobs:
           path: target/test-results/*.edn
 
       - run: echo "All tests pass!"
+        if: "!contains(github.event.head_commit.message, 'skip ci')"
