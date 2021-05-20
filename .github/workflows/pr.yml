@@ -251,19 +251,10 @@ jobs:
   # here's a GitHub Actions feature request that is relevant:
   # https://github.community/t/branch-protections-job-names-and-matrix-jobs/16317
   all-pr-checks:
-    if: ${{ always() }}
+    if: "!failure()"
     runs-on: ubuntu-18.04
     needs: [test-matrix]
     steps:
-      - run: |
-          if [ !$SKIPPED && $FAILED ]; then
-            echo "Tests failed"
-            exit 1
-          fi
-        env:
-          SKIPPED: ${{!contains(github.event.head_commit.message, 'skip ci')}}
-          FAILED: ${{failed()}}
-          CANCELLED: ${{cancelled()}}
       - uses: actions/checkout@v2
       - name: Binary Cache
         uses: actions/cache@v2
