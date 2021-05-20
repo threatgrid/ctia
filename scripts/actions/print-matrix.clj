@@ -101,5 +101,6 @@
            :pr "ci"))
 
 (let [jstr (json/generate-string (edn-matrix) {:pretty false})]
+  ;; Actions does not print ::set-ouput commands to the build output
   (println (str "DEBUG: " jstr))
   (println (str "::set-output name=matrix::" jstr)))
