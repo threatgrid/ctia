@@ -299,16 +299,4 @@ jobs:
           name: all-test-timings
           path: target/test-results/*.edn
 
-      - run: |
-          if [ !$FAILURE ]; then
-            echo "All tests pass!"
-            exit 0
-          elif [ $CTIA_SKIP_CI ]; then
-            echo "CI was skipped -- failures in the download-artifact step are expected."
-            exit 0
-          else
-            echo "Unexpected failure -- see previous steps in this job."
-            exit 1
-          fi
-        env:
-          FAILURE: ${{failure()}}
+      - run: echo "All tests pass!"
