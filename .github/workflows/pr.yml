@@ -31,11 +31,10 @@ env:
   SHELLCHECK_VERSION: v0.7.2 # "stable" or "v0.4.7", or "latest"
   BB_VERSION: 0.4.3
   DEFAULT_JAVA_VERSION: 11.0.9
-  CTIA_SKIP_CI: ${{startsWith(github.event.head_commit.message, '[skip ci]')}}
 
 jobs:
   setup:
-    if: "!env.CTIA_SKIP_CI"
+    if: "!startsWith(github.event.head_commit.message, '[skip ci]')"
     runs-on: ubuntu-18.04
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
@@ -137,7 +136,7 @@ jobs:
         # poor man's travis_retry
         run: for i in {1..${ACTIONS_RETRY_TIMES}}; do lein warm-ci-deps && break; done
   test-matrix:
-    if: "!env.CTIA_SKIP_CI"
+    if: "!startsWith(github.event.head_commit.message, '[skip ci]')"
     runs-on: ubuntu-18.04
     needs: [setup]
     strategy:
@@ -283,7 +282,7 @@ jobs:
 
       - name: Download test timings
         # this step fails if the tests skipped
-        continue-on-error: ${{env.CTIA_SKIP_CI}}
+        continue-on-error: ${{!startsWith(github.event.head_commit.message, '[skip ci]')}}
         uses: actions/download-artifact@v2
         with:
           name: test-timing
