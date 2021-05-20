@@ -174,7 +174,7 @@ jobs:
           echo "${BIN_PATH}" >> $GITHUB_PATH
       - name: Install babashka
         run: ./scripts/actions/install-bb.sh
-      - run: ./scripts/actions/setup-env.clj
+      - run: ./scripts/actions/setup_env.clj
       # run docker as early as possible asynchronously. if this command
       # fails, the split-test test runner will timeout in a reasonable amount
       # of time and throw an error. See `Upload docker compose` step below
