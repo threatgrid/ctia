@@ -132,6 +132,17 @@ For a REPL workflow, run `lein repl`. Use `(start)` to start CTIA,
 All PRs must pass `lein test` with no fails for PRs to be accepted.
 Any new code functionality/change should have tests accompanying it.
 
+PRs are built using GitHub Actions, and push builds via Travis CI.
+
+To skip CI on a PR commit, use ["[skip ci]"](https://github.blog/changelog/2021-02-08-github-actions-skip-pull-request-and-push-workflows-with-skip-ci/)
+in the commit message. Due to branch protection rules, once you are ready to
+merge your PR, a full build must be completed. When you choose the
+final commit message for your squashed PR, keep in mind that
+Travis also supports skipping CI--and thus--on certain commit messages.
+
+To run the more rigorous cron job (multi-JVM/Clojure matrix) on a PR, start commit messages
+with `[cron]`.
+
 ### Test balancing
 
 Continuous integration test runs are parallelized using

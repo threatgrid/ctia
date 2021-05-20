@@ -7,6 +7,9 @@
 ;;   $ GITHUB_EVENT_NAME=push ./scripts/actions/print-matrix.clj
 ;;   # cron build
 ;;   $ GITHUB_EVENT_NAME=schedule ./scripts/actions/print-matrix.clj
+;;   $ CTIA_COMMIT_MESSAGE='[cron] try cron build' GITHUB_EVENT_NAME=push ./scripts/actions/print-matrix.clj
+
+(require '[clojure.string :as str])
 
 (def default-java-version "11.0.9")
 (def java-15-version "15")
@@ -65,7 +68,9 @@
 
 (defn edn-matrix []
   {:post [(seq %)]}
-  (if (= "schedule" (System/getenv "GITHUB_EVENT_NAME"))
+  (if (or (= "schedule" (System/getenv "GITHUB_EVENT_NAME"))
+          (some-> (System/getenv "CTIA_COMMIT_MESSAGE")
+                  (str/starts-with? "[cron]")))
     (cron-matrix)
     (non-cron-matrix)))
 
