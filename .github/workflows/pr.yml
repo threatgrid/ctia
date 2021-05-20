@@ -226,6 +226,9 @@ jobs:
         if: steps.maven-cache.outputs.cache-hit != 'true'
         # poor man's travis_retry
         run: for i in {1..${ACTIONS_RETRY_TIMES}}; do lein warm-ci-deps && break; done
+      # Note: if this step fails because Leiningen is in offline mode, add more entries to the maven-cache key.
+      # Most likely, whatever was changed to cause the build to fail needs to be appended to the cache key.
+      # Note there are two Maven caches in this file, keep their keys synchronized.
       - name: Run CTIA tests
         run: ./build/run-tests.sh
         env:
