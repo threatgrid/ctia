@@ -156,6 +156,7 @@ jobs:
       matrix:
         this-split: ${{fromJson(needs.setup.outputs.matrix)}}
     env:
+      CTIA_TEST_SUITE: ${{ matrix.this-split.test_suite }}
       CTIA_THIS_SPLIT: ${{ matrix.this-split.this_split }}
       CTIA_NSPLITS: ${{ matrix.this-split.total_splits }}
       CTIA_CI_PROFILES: ${{ matrix.this-split.ci_profiles }}
