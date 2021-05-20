@@ -26,14 +26,15 @@ env:
   # avoid the (somehow) default /usr/local/lib/lein/
   LEIN_HOME: ${{github.workspace}}/.lein
   LEIN_ROOT: 1
-  LEIN_VERSION: 2.9.4
+  LEIN_VERSION: 2.9.6
   CTIA_MAJOR_VERSION: 1
-  SHELLCHECK_VERSION: v0.7.1 # "stable" or "v0.4.7", or "latest"
-  BB_VERSION: 0.2.3
+  SHELLCHECK_VERSION: v0.7.2 # "stable" or "v0.4.7", or "latest"
+  BB_VERSION: 0.4.3
   DEFAULT_JAVA_VERSION: 11.0.9
 
 jobs:
   setup:
+    if: "!contains(github.event.head_commit.message, 'skip ci')"
     runs-on: ubuntu-18.04
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
@@ -134,6 +135,7 @@ jobs:
         # poor man's travis_retry
         run: for i in {1..${ACTIONS_RETRY_TIMES}}; do lein warm-ci-deps && break; done
   test-matrix:
+    if: "!contains(github.event.head_commit.message, 'skip ci')"
     runs-on: ubuntu-18.04
     needs: [setup]
     strategy:
@@ -249,9 +251,19 @@ jobs:
   # here's a GitHub Actions feature request that is relevant:
   # https://github.community/t/branch-protections-job-names-and-matrix-jobs/16317
   all-pr-checks:
+    if: ${{ always() }}
     runs-on: ubuntu-18.04
     needs: [test-matrix]
     steps:
+      - run: |
+          if [ !$SKIPPED && $FAILED ]; then
+            echo "Tests failed"
+            exit 1
+          fi
+        env:
+          SKIPPED: ${{!contains(github.event.head_commit.message, 'skip ci')}}
+          FAILED: ${{failed()}}
+          CANCELLED: ${{cancelled()}}
       - uses: actions/checkout@v2
       - name: Binary Cache
         uses: actions/cache@v2

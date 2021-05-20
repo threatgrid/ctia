@@ -1,5 +1,5 @@
 language: clojure
-lein: 2.9.1
+lein: 2.9.6
 dist: trusty
 
 branches:
@@ -25,7 +25,7 @@ env:
       - CTIA_HOOK_ES_PORT=9200
       - CTIA_HOOK_ES_INDEXNAME=elasticsearch
       - CTIA_HOOK_REDIS_URI=redis://127.0.0.1:6379
-      - SHELLCHECK_VERSION=v0.7.1 # "stable" or "v0.4.7", or "latest"
+      - SHELLCHECK_VERSION=v0.7.2 # "stable" or "v0.4.7", or "latest"
       # https://stackoverflow.com/a/34809448
       # travis allows 5 concurrent builds for open source plans
       # across org
