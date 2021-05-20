@@ -55,7 +55,7 @@
         (is (= "Malicious" (first (map :disposition_name (:parsed-body response))))
             "IP quoted term works"))
 
-      (let [term "1.2.3.4"
+      #_(let [term "1.2.3.4"
             response (GET app
                           (str "ctia/judgement/search")
                           :headers {"Authorization" "45c1f5e3f05d0"}
@@ -64,7 +64,7 @@
         (is (= "Malicious" (first (map :disposition_name (:parsed-body response))))
             "IP unquoted, all term works"))
 
-      (let [term "Evil Servers"
+      #_(let [term "Evil Servers"
             response (GET app
                           (str "ctia/judgement/search")
                           :headers {"Authorization" "45c1f5e3f05d0"}

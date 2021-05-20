@@ -326,7 +326,7 @@
              :capabilities search-capabilities
              :query [params search-q-params*]
              (let [params* (routes.common/ensure-search-fields
-                            params search-q-params* entity-schema)]
+                            params entity-schema)]
                (-> (get-store entity)
                    (query-string-search
                     (search-query date-field params*)

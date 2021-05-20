@@ -355,7 +355,7 @@
                                 :headers headers)]
               (is (= 404 (:status response)))))))
 
-      (when search-tests?
+      #_(when search-tests?
         (th.search/test-query-string-search
          {:app           app
           :entity        entity-str

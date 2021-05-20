@@ -213,7 +213,6 @@
   instance. When :search_fields (internal name for ES fields) is empty, it uses
   'default' values."
   [{:keys [search_fields] :as query-params}
-   search-q-schema
    entity-schema]
   (if (seq search_fields)
     query-params
