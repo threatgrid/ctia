@@ -31,10 +31,11 @@ env:
   SHELLCHECK_VERSION: v0.7.2 # "stable" or "v0.4.7", or "latest"
   BB_VERSION: 0.4.3
   DEFAULT_JAVA_VERSION: 11.0.9
+  CTIA_SKIP_CI: ${{startsWith(github.event.head_commit.message, '[skip ci]')}}
 
 jobs:
   setup:
-    if: "!contains(github.event.head_commit.message, 'skip ci')"
+    if: "!env.CTIA_SKIP_CI"
     runs-on: ubuntu-18.04
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
@@ -136,7 +137,7 @@ jobs:
         # poor man's travis_retry
         run: for i in {1..${ACTIONS_RETRY_TIMES}}; do lein warm-ci-deps && break; done
   test-matrix:
-    if: "!contains(github.event.head_commit.message, 'skip ci')"
+    if: "!env.CTIA_SKIP_CI"
     runs-on: ubuntu-18.04
     needs: [setup]
     strategy:
@@ -259,29 +260,27 @@ jobs:
     if: "!failure()"
     runs-on: ubuntu-18.04
     needs: [test-matrix]
-    env:
-      SKIP_CI: ${{contains(github.event.head_commit.message, 'skip ci')}}
     steps:
       - uses: actions/checkout@v2
-        if: "!env.SKIP_CI"
+        if: "!env.CTIA_SKIP_CI"
       - name: Binary Cache
-        if: "!env.SKIP_CI"
+        if: "!env.CTIA_SKIP_CI"
         uses: actions/cache@v2
         with:
           path: ${{ env.BIN_PATH }}
           key: ctia-bin-${{ env.ACTIONS_CACHE_VERSION }}-${{ env.BB_VERSION }}
       - name: Setup PATH and directories
-        if: "!env.SKIP_CI"
+        if: "!env.CTIA_SKIP_CI"
         run: |
           mkdir -p "${BIN_PATH}"
           echo "${BIN_PATH}" >> $GITHUB_PATH
       - name: Install babashka
-        if: "!env.SKIP_CI"
+        if: "!env.CTIA_SKIP_CI"
         run: ./scripts/actions/install-bb.sh
       - run: ./scripts/actions/setup-env.clj
-        if: "!env.SKIP_CI"
+        if: "!env.CTIA_SKIP_CI"
       - name: Timing results Cache
-        if: "!env.SKIP_CI"
+        if: "!env.CTIA_SKIP_CI"
         uses: actions/cache@v2
         with:
           path: target/test-results/all-test-timings.edn
@@ -289,18 +288,18 @@ jobs:
           key: ctia-timings-${{ env.ACTIONS_CACHE_VERSION }}-${{ env.CTIA_TEST_SUITE }}-${{ github.ref }}-${{ github.sha }}
 
       - name: Download test timings
-        if: "!env.SKIP_CI"
+        if: "!env.CTIA_SKIP_CI"
         uses: actions/download-artifact@v2
         with:
           name: test-timing
           path: target/test-results
 
       - name: Print test timings
-        if: "!env.SKIP_CI"
+        if: "!env.CTIA_SKIP_CI"
         run: ./scripts/summarize-tests.clj
 
       - name: Upload all test timings
-        if: "!env.SKIP_CI"
+        if: "!env.CTIA_SKIP_CI"
         uses: actions/upload-artifact@v2
         with:
           retention-days: 60
@@ -308,4 +307,4 @@ jobs:
           path: target/test-results/*.edn
 
       - run: echo "All tests pass!"
-        if: "!env.SKIP_CI"
+        if: "!env.CTIA_SKIP_CI"
