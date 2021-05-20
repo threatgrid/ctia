@@ -10,7 +10,7 @@
 ;;   $ GITHUB_ENV=$(mktemp) CTIA_COMMIT_MESSAGE='{:test-suite :cron} try cron build' GITHUB_EVENT_NAME=push ./scripts/actions/print-matrix.clj
 
 (ns actions.print-matrix
-  (:require [actions.actions-helpers :refer [add-env]]
+  (:require [actions.actions-helpers :as h]
             [clojure.string :as str]
             [cheshire.core :as json]))
 
@@ -24,12 +24,12 @@
   2)
 
 (defn parse-build-config []
-  (let [m (try (read-string (System/getenv "CTIA_COMMIT_MESSAGE"))
-               (catch Exception _))] 
+  (let [m (try (read-string (h/getenv "CTIA_COMMIT_MESSAGE"))
+               (catch Exception _))]
     (-> (when (map? m) m)
         (update :test-suite (fn [test-suite]
                               (or test-suite
-                                  (case (System/getenv "GITHUB_EVENT_NAME")
+                                  (case (h/getenv "GITHUB_EVENT_NAME")
                                     "schedule" :cron
                                     ("pull_request" "push") :pr)))))))
 
@@ -85,7 +85,8 @@
             {:java_version java-15-version}]))))
 
 (defn edn-matrix [build-config]
-  {:post [(seq %)]}
+  {:post [(seq %)
+          (every? valid-split? %)]}
   (case (:test-suite build-config)
     :cron (cron-matrix)
     :pr (non-cron-matrix)))
@@ -94,14 +95,12 @@
   (let [build-config (parse-build-config)
         _ (println "build-config:" (pr-str build-config))
         ;; inform ./build/run-tests.sh which test suite to run
-        _ (add-env "CTIA_TEST_SUITE"
-                   (case (:test-suite build-config)
-                     :cron "cron"
-                     :pr "ci"))
+        _ (h/add-env "CTIA_TEST_SUITE"
+                     (case (:test-suite build-config)
+                       :cron "cron"
+                       :pr "ci"))
         jstr (json/generate-string (edn-matrix build-config)
                                    {:pretty false})] 
-    ;; Actions does not print ::set-ouput commands to the build output
-    (println (str "DEBUG: " jstr))
-    (println (str "::set-output name=matrix::" jstr))))
+    (h/print-set-output "matrix" jstr)))
 
 (when (= *file* (System/getProperty "babashka.file")) (-main))
