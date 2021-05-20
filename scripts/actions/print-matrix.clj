@@ -86,4 +86,6 @@
     :cron (cron-matrix)
     :pr (non-cron-matrix)))
 
-(println (str "::set-output name=matrix::" (json/generate-string (edn-matrix) {:pretty false})))
+(let [jstr (json/generate-string (edn-matrix) {:pretty false})]
+  (println (str "DEBUG: " jstr))
+  (println (str "::set-output name=matrix::" jstr)))
