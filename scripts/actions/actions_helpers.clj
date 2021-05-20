@@ -31,4 +31,4 @@
   {:getenv getenv
    :add-env add-env
    :set-output set-output
-   :set-json-output #(apply set-json-output utils %&)})
+   :set-json-output set-json-output})

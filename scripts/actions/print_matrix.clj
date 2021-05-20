@@ -23,13 +23,13 @@
   "Job parallelism for cron tests."
   2)
 
-(defn parse-build-config []
-  (let [m (try (read-string (h/getenv "CTIA_COMMIT_MESSAGE"))
+(defn parse-build-config [{:keys [getenv]}]
+  (let [m (try (read-string (getenv "CTIA_COMMIT_MESSAGE"))
                (catch Exception _))]
     (-> (when (map? m) m)
         (update :test-suite (fn [test-suite]
                               (or test-suite
-                                  (case (h/getenv "GITHUB_EVENT_NAME")
+                                  (case (getenv "GITHUB_EVENT_NAME")
                                     "schedule" :cron
                                     ("pull_request" "push") :pr)))))))
 
@@ -91,14 +91,17 @@
     :cron (cron-matrix)
     :pr (non-cron-matrix)))
 
-(defn -main [& _args]
-  (let [build-config (parse-build-config)
+(defn print-matrix [{:keys [add-env set-json-output] :as utils}]
+  (let [build-config (parse-build-config utils)
         _ (println "build-config:" (pr-str build-config))
         ;; inform ./build/run-tests.sh which test suite to run
-        _ (h/add-env "CTIA_TEST_SUITE"
-                     (case (:test-suite build-config)
-                       :cron "cron"
-                       :pr "ci"))] 
-    (h/set-json-output "matrix" (edn-matrix build-config))))
+        _ (add-env "CTIA_TEST_SUITE"
+                   (case (:test-suite build-config)
+                     :cron "cron"
+                     :pr "ci"))] 
+    (set-json-output utils "matrix" (edn-matrix build-config))))
+
+(defn -main [& _args]
+  (print-matrix h/utils))
 
 (when (= *file* (System/getProperty "babashka.file")) (-main))
