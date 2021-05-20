@@ -91,14 +91,13 @@
     :pr (non-cron-matrix)))
 
 (defn -main [& _args]
-  (let [;; inform ./build/run-tests.sh which test suite to run
+  (let [build-config (parse-build-config)
+        _ (println "build-config:" (pr-str build-config))
+        ;; inform ./build/run-tests.sh which test suite to run
         _ (add-env "CTIA_TEST_SUITE"
                    (case (:test-suite build-config)
                      :cron "cron"
                      :pr "ci"))
-        build-config (parse-build-config)
-
-        _ (println "build-config:" (pr-str build-config))
         jstr (json/generate-string (edn-matrix build-config)
                                    {:pretty false})] 
     ;; Actions does not print ::set-ouput commands to the build output
