@@ -46,6 +46,7 @@ jobs:
           fetch-depth: 2
       # for grabbing the current commit msg (suprisingly hard!)
       - uses: zero88/gh-project-context@26a3afdce1fe607734278e5ccec0851d50669ef5
+        id: gh-project-context
       - name: Binary Cache
         uses: actions/cache@v2
         with:
@@ -61,11 +62,10 @@ jobs:
       - name: Setup test matrix splits
         id: set-matrix
         run: |
-          CTIA_COMMIT_MESSAGE=$(git log --format=%B -n 1)
           echo "CTIA_COMMIT_MESSAGE=${CTIA_COMMIT_MESSAGE}"
           ./scripts/actions/print-matrix.clj
         env:
-          CTIA_COMMIT_MESSAGE: ${{github.event.head_commit.message}}
+          CTIA_COMMIT_MESSAGE: ${{steps.gh-project-context.outputs.commitMsg}}
       # Setup previous timing information
       - name: Timing Cache
         id: get-timing
