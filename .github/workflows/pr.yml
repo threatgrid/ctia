@@ -54,7 +54,9 @@ jobs:
       - run: ./scripts/actions/setup-env.clj
       - name: Setup test matrix splits
         id: set-matrix
-        run: ./scripts/actions/print-matrix.clj
+        run: |
+          CTIA_COMMIT_MESSAGE=$(git log --format=%B -n 1)
+          ./scripts/actions/print-matrix.clj
         env:
           CTIA_COMMIT_MESSAGE: ${{github.event.head_commit.message}}
       # Setup previous timing information

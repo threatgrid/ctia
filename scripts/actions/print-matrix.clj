@@ -7,7 +7,7 @@
 ;;   $ GITHUB_EVENT_NAME=push ./scripts/actions/print-matrix.clj
 ;;   # cron build
 ;;   $ GITHUB_EVENT_NAME=schedule ./scripts/actions/print-matrix.clj
-;;   $ CTIA_COMMIT_MESSAGE='[cron] try cron build' GITHUB_EVENT_NAME=push ./scripts/actions/print-matrix.clj
+;;   $ CTIA_COMMIT_MESSAGE='{:test-suite :cron} try cron build' GITHUB_EVENT_NAME=push ./scripts/actions/print-matrix.clj
 
 (require '[clojure.string :as str])
 
@@ -19,6 +19,20 @@
 (def cron-ctia-nsplits
   "Job parallelism for cron tests."
   2)
+
+(defn parse-build-config []
+  (let [m (try (read-string (System/getenv "CTIA_COMMIT_MESSAGE"))
+               (catch Exception _))] 
+    (-> (when (map? m) m)
+        (update :test-suite (fn [test-suite]
+                              (or test-suite
+                                  (case (System/getenv "GITHUB_EVENT_NAME")
+                                    "schedule" :cron
+                                    ("pull_request" "push") :pr)))))))
+
+(def build-config (parse-build-config))
+
+(println "build-config:" (pr-str build-config))
 
 (defn valid-split? [{:keys [this_split total_splits
                             java_version ci_profiles] :as m}]
@@ -68,10 +82,8 @@
 
 (defn edn-matrix []
   {:post [(seq %)]}
-  (if (or (= "schedule" (System/getenv "GITHUB_EVENT_NAME"))
-          (some-> (System/getenv "CTIA_COMMIT_MESSAGE")
-                  (str/starts-with? "[cron]")))
-    (cron-matrix)
-    (non-cron-matrix)))
+  (case (:test-suite build-config)
+    :cron (cron-matrix)
+    :pr (non-cron-matrix)))
 
 (println (str "::set-output name=matrix::" (json/generate-string (edn-matrix) {:pretty false})))

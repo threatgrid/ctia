@@ -141,7 +141,7 @@ final commit message for your squashed PR, keep in mind that
 Travis also supports skipping CI--and thus--on certain commit messages.
 
 To run the more rigorous cron job (multi-JVM/Clojure matrix) on a PR, start commit messages
-with `[cron]`.
+with `{:test-suite :cron}`.
 
 ### Test balancing
 
