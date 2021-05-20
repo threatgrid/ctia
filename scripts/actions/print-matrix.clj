@@ -3,13 +3,16 @@
 ;; determines the build matrix for the GitHub Actions build. 
 ;; try it locally:
 ;;   # normal builds
-;;   $ GITHUB_EVENT_NAME=pull_request ./scripts/actions/print-matrix.clj
-;;   $ GITHUB_EVENT_NAME=push ./scripts/actions/print-matrix.clj
+;;   $ GITHUB_ENV=$(mktemp) GITHUB_EVENT_NAME=pull_request ./scripts/actions/print-matrix.clj
+;;   $ GITHUB_ENV=$(mktemp) GITHUB_EVENT_NAME=push ./scripts/actions/print-matrix.clj
 ;;   # cron build
-;;   $ GITHUB_EVENT_NAME=schedule ./scripts/actions/print-matrix.clj
-;;   $ CTIA_COMMIT_MESSAGE='{:test-suite :cron} try cron build' GITHUB_EVENT_NAME=push ./scripts/actions/print-matrix.clj
+;;   $ GITHUB_ENV=$(mktemp) GITHUB_EVENT_NAME=schedule ./scripts/actions/print-matrix.clj
+;;   $ GITHUB_ENV=$(mktemp) CTIA_COMMIT_MESSAGE='{:test-suite :cron} try cron build' GITHUB_EVENT_NAME=push ./scripts/actions/print-matrix.clj
 
-(require '[clojure.string :as str])
+(ns print-matrix
+  (:require [actions-helpers :refer [add-env]]
+            [clojure.string :as str]
+            [cheshire.core :as json]))
 
 (def default-java-version "11.0.9")
 (def java-15-version "15")
@@ -85,6 +88,11 @@
   (case (:test-suite build-config)
     :cron (cron-matrix)
     :pr (non-cron-matrix)))
+
+(add-env "CTIA_TEST_SUITE"
+         (case (:test-suite build-config)
+           :cron "cron"
+           :pr "ci"))
 
 (let [jstr (json/generate-string (edn-matrix) {:pretty false})]
   (println (str "DEBUG: " jstr))
