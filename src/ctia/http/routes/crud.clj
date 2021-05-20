@@ -325,14 +325,16 @@
              :description (capabilities->description search-capabilities)
              :capabilities search-capabilities
              :query [params search-q-params*]
-             (-> (get-store entity)
-                 (query-string-search
-                   (search-query date-field params)
-                   identity-map
-                   (select-keys params search-options))
-                 (page-with-long-id services)
-                 un-store-page
-                 paginated-ok))
+             (let [params* (routes.common/ensure-search-fields
+                            params search-q-params*)]
+               (-> (get-store entity)
+                   (query-string-search
+                    (search-query date-field params*)
+                    identity-map
+                    (select-keys params* search-options))
+                   (page-with-long-id services)
+                   un-store-page
+                   paginated-ok)))
            (GET "/count" []
              :return s/Int
              :summary (format "Count %s matching a Lucene/ES query string and field filters" capitalized)

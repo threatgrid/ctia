@@ -185,7 +185,61 @@
                                              :parsed-body
                                              (filter #(and (-> % :assignees (= ["bibendum"]))
                                                            (-> % :title (= "Etiam vel neque bibendum dignissim")))))]
-                           (is (= 3 (count matching)))))}]))
+                           (is (= 3 (count matching)))))}]
+
+   [{:test-description ":search_fields defaults. Should include all fields, but ignore fields like :id, :tlp, :language, etc."
+     :query-params     {:query "bibendum"}
+     :bundle-gen       (gen/fmap
+                        (fn [bundle]
+                          (update
+                           bundle :incidents
+                           (fn [incidents]
+                             (utils/update-items
+                              incidents
+                              ;; set different fields in different Incidents
+                              #(assoc % :title "Etiam vel neque bibendum dignissim")
+                              #(assoc % :assignees ["bibendum"])
+                              #(assoc % :discovery_method "bibendum")))))
+                        (bundle-gen-for :incidents))
+     :check            (fn [_ _ _ res]
+                         (let [matching (->> res
+                                             :parsed-body
+                                             (filter #(or (-> % :title (= "Etiam vel neque bibendum dignissim"))
+                                                          (-> % :assignees (= ["bibendum"]))
+                                                          (-> % :discovery_method (= "bibendum")))))]
+                           (is (= 3 (count matching)))))}
+    {:test-description ":search_fields defaults. Should ignore fields like :id, :tlp, :language, etc."
+     :query-params     {:query "*bibendum*"}
+     :bundle-gen       (gen/fmap
+                        (fn [bundle]
+                          (update
+                           bundle :incidents
+                           (fn [incidents]
+                             (utils/update-items
+                              incidents
+                              #(assoc % :language "Etiam vel neque bibendum dignissim")))))
+                        (bundle-gen-for :incidents))
+     :check            (fn [_ _ _ res]
+                         ;; it shouldn't find anything, when :search_fields not
+                         ;; provided, it would only search in 'default' fields,
+                         ;; and the :language is excluded
+                         (is (-> res :parsed-body count zero?)))}
+    {:test-description ":search_fields explicitly set"
+     :query-params     {:query "*bibendum*"
+                        :search_fields ["language"]}
+     :bundle-gen       (gen/fmap
+                        (fn [bundle]
+                          (update
+                           bundle :incidents
+                           (fn [incidents]
+                             (utils/update-items
+                              incidents
+                              #(assoc % :language "Etiam vel neque bibendum dignissim")))))
+                        (bundle-gen-for :incidents))
+     :check            (fn [_ _ _ res]
+                         ;; since :search_fields was explicitly set, it should
+                         ;; find the Incident
+                         (is (= 1 (-> res :parsed-body count))))}]))
 
 (defn test-search-case
   [app

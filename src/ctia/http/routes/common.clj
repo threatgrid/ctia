@@ -130,17 +130,33 @@
     {:gte from
      :lt to-or-now}))
 
+(defn- extract-default-fields
+  "From Entity's search-params schema, extracts default fields that can be
+  passed into ES fields parameter. See:
+  www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl-query-string-query.html#query-string-multi-field"
+  [search-q-schema]
+  (let [normalized-fields (->> (st/get-in search-q-schema [:fields])
+                               first :vs
+                               ;; ES :fields doesn't seem to work with nested
+                               ;; fields, and for things like
+                               ;; `incident_time.reported` we need to extract
+                               ;; the part prior to the dot
+                               (map #(-> % name (str/split #"\.") first))
+                               set)]
+   (->> insignificant-search-fields
+        (map (comp name))
+        set
+        (set/difference normalized-fields)
+        vec)))
+
 (s/defn prep-es-fields-schema :- (s/protocol s/Schema)
-  "Conjoins ES :fields onto search-parameters."
-  [search-query-params :- (s/maybe (s/protocol s/Schema))]
-  (let [fields-schema  (st/get-in search-query-params [:fields])
-        default-fields (-> fields-schema first :vs
-                           (set/difference insignificant-search-fields)
-                           vec)]
+  "Conjoins ES :fields onto search-parameters schema."
+  [search-q-schema :- (s/maybe (s/protocol s/Schema))]
+  (let [fields-schema  (st/get-in search-q-schema [:fields])]
    (st/merge
-    search-query-params
+    search-q-schema
     {;; We cannot name the parameter :fields, because we already have :fields (part
-     ;; of search-query-params). That key is to select a subsets of fields of the
+     ;; of search-q-schema). That key is to select a subsets of fields of the
      ;; retrieved document and it gets passed to the `_source` parameter of
      ;; Elasticsearch. For more:
      ;; www.elastic.co/guide/en/elasticsearch/reference/current/mapping-source-field.html
@@ -149,8 +165,20 @@
      (s/optional-key :search_fields)
      (json-schema/field
       fields-schema
-      {:default     default-fields
+      {:default     (extract-default-fields search-q-schema)
        :description "'fields' key of Elasticsearch Fulltext Query."})})))
+
+(defn ensure-search-fields
+  "It gurantees that ES :fields is always passed into ES
+  instance. When :search_fields (internal name for ES fields) is empty, it uses
+  'default' values."
+  [{:keys [search_fields] :as query-params}
+   search-q-schema]
+  (if (seq search_fields)
+    query-params
+    (assoc query-params
+           :search_fields
+           (extract-default-fields search-q-schema))))
 
 (s/defn search-query :- SearchQuery
   ([date-field search-params]
