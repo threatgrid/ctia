@@ -256,7 +256,8 @@ jobs:
   # here's a GitHub Actions feature request that is relevant:
   # https://github.community/t/branch-protections-job-names-and-matrix-jobs/16317
   all-pr-checks:
-    if: "!failure()"
+    #if: "!failure()"
+    if: "always()"
     runs-on: ubuntu-18.04
     needs: [test-matrix]
     steps:
