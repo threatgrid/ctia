@@ -282,7 +282,8 @@ jobs:
           key: ctia-timings-${{ env.ACTIONS_CACHE_VERSION }}-${{ env.CTIA_TEST_SUITE }}-${{ github.ref }}-${{ github.sha }}
 
       - name: Download test timings
-        continue-on-error: true
+        # this step fails if the tests skipped
+        continue-on-error: ${{env.CTIA_SKIP_CI}}
         uses: actions/download-artifact@v2
         with:
           name: test-timing
@@ -299,7 +300,7 @@ jobs:
           path: target/test-results/*.edn
 
       - run: |
-          if [ ${{!failure()}}]; then
+          if [ !$FAILURE ]; then
             echo "All tests pass!"
             exit 0
           elif [ $CTIA_SKIP_CI ]; then
@@ -309,3 +310,5 @@ jobs:
             echo "Unexpected failure -- see previous steps in this job."
             exit 1
           fi
+        env:
+          FAILURE: ${{failure()}}
