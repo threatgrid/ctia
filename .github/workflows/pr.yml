@@ -56,6 +56,7 @@ jobs:
         id: set-matrix
         run: |
           CTIA_COMMIT_MESSAGE=$(git log --format=%B -n 1)
+          echo "CTIA_COMMIT_MESSAGE=${CTIA_COMMIT_MESSAGE}"
           ./scripts/actions/print-matrix.clj
         env:
           CTIA_COMMIT_MESSAGE: ${{github.event.head_commit.message}}
