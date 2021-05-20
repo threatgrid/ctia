@@ -98,9 +98,7 @@
         _ (h/add-env "CTIA_TEST_SUITE"
                      (case (:test-suite build-config)
                        :cron "cron"
-                       :pr "ci"))
-        jstr (json/generate-string (edn-matrix build-config)
-                                   {:pretty false})] 
-    (h/print-set-output "matrix" jstr)))
+                       :pr "ci"))] 
+    (h/set-json-output "matrix" (edn-matrix build-config))))
 
 (when (= *file* (System/getProperty "babashka.file")) (-main))
