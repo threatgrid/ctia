@@ -35,7 +35,7 @@ env:
 jobs:
   setup:
     if: "!startsWith(github.event.head_commit.message, '[skip ci]')"
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
     steps:
@@ -137,7 +137,7 @@ jobs:
         run: for i in {1..${ACTIONS_RETRY_TIMES}}; do lein warm-ci-deps && break; done
   test-matrix:
     if: "!startsWith(github.event.head_commit.message, '[skip ci]')"
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     needs: [setup]
     strategy:
       matrix:
@@ -258,7 +258,7 @@ jobs:
   all-pr-checks:
     #if: "!failure()"
     if: always()
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     needs: [test-matrix]
     steps:
       - uses: actions/checkout@v2
