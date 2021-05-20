@@ -248,8 +248,8 @@ jobs:
         uses: actions/upload-artifact@v2
         with:
           retention-days: 1
-          name: docker-compose.log
-          path: ${{env.LOG_PATH}}/docker-compose${{matrix.this-split.this_split}}.log
+          name: docker-compose${{matrix.this-split.this_split}}.log
+          path: ${{env.LOG_PATH}}/docker-compose.log
   # fan-in tests so there's a single job we can add to protected branches.
   # otherwise, we'll have add all (range ${CTIA_NSPLITS}) jobs, and keep
   # them up to date
