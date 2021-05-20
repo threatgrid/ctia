@@ -20,7 +20,7 @@ env:
   ACTIONS_RETRY_TIMES: 10
   # workaround https://github.com/actions/cache/issues/2
   # to "delete" caches, increment this version
-  ACTIONS_CACHE_VERSION: v13
+  ACTIONS_CACHE_VERSION: v14
   BIN_PATH: ${{github.workspace}}/bin
   LOG_PATH: ${{github.workspace}}/log
   # avoid the (somehow) default /usr/local/lib/lein/

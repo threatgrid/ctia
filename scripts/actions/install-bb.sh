@@ -8,6 +8,6 @@ then
   cd tmp
   curl -sLO https://raw.githubusercontent.com/borkdude/babashka/master/install
   chmod +x install
-  ./install --dir "${BIN_PATH}" --version 0.2.3
+  ./install --dir "${BIN_PATH}" --version ${BB_VERSION}
 fi
 bb --version
