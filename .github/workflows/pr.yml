@@ -34,7 +34,6 @@ env:
 
 jobs:
   setup:
-    #if: "!startsWith(github.event.head_commit.message, '[skip ci]')"
     runs-on: ubuntu-20.04
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
@@ -136,7 +135,6 @@ jobs:
         # poor man's travis_retry
         run: for i in {1..${ACTIONS_RETRY_TIMES}}; do lein warm-ci-deps && break; done
   test-matrix:
-    #if: "!startsWith(github.event.head_commit.message, '[skip ci]')"
     runs-on: ubuntu-20.04
     needs: [setup]
     strategy:
@@ -257,7 +255,6 @@ jobs:
   # here's a GitHub Actions feature request that is relevant:
   # https://github.community/t/branch-protections-job-names-and-matrix-jobs/16317
   all-pr-checks:
-    if: "!startsWith(github.event.head_commit.message, '[skip ci]')"
     runs-on: ubuntu-20.04
     needs: [test-matrix]
     steps:
@@ -282,8 +279,6 @@ jobs:
           key: ctia-timings-${{ env.ACTIONS_CACHE_VERSION }}-${{ env.CTIA_TEST_SUITE }}-${{ github.ref }}-${{ github.sha }}
 
       - name: Download test timings
-        # this step fails if the tests skipped
-        continue-on-error: ${{!startsWith(github.event.head_commit.message, '[skip ci]')}}
         uses: actions/download-artifact@v2
         with:
           name: test-timing
