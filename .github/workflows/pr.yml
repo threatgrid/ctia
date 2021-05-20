@@ -34,7 +34,7 @@ env:
 
 jobs:
   setup:
-    #if: "!startsWith(github.event.head_commit.message, '[skip ci]')"
+    if: "!startsWith(github.event.head_commit.message, '[skip ci]')"
     runs-on: ubuntu-20.04
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
@@ -257,8 +257,7 @@ jobs:
   # here's a GitHub Actions feature request that is relevant:
   # https://github.community/t/branch-protections-job-names-and-matrix-jobs/16317
   all-pr-checks:
-    #if: "!failure()"
-    #if: always()
+    if: "!startsWith(github.event.head_commit.message, '[skip ci]')"
     runs-on: ubuntu-20.04
     needs: [test-matrix]
     steps:
