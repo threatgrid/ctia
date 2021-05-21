@@ -21,3 +21,12 @@
         _ (is (= (slurp github-env-file)
                  "foo=bar\n"))
         ]))
+
+(deftest set-json-output-test
+  (let [{:keys [grab-history utils]} (th/mk-utils {})
+        _ (sut/set-json-output utils "foo" [:a :b :c])
+        _ (is (= (grab-history)
+                 [{:op :set-output
+                   :k "foo"
+                   :v "[\"a\",\"b\",\"c\"]"}]))
+        ]))

@@ -15,8 +15,9 @@
 
 (defn set-json-output
   "Create JSON 'output' `n` for this Actions step, accessible with ${{ fromJSON(<stepid>.outputs.<n>) }}."
-  [{:keys [set-output]} n v]
+  [{:keys [set-output] :as utils} n v]
   (set-output
+    utils
     n
     (json/generate-string v {:pretty false})))
 
