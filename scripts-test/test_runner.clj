@@ -5,7 +5,8 @@
   (:require [clojure.test :as t]))
 
 (def test-namespaces
-  '[actions.print-matrix-test])
+  '[actions.actions-helpers-test
+    actions.print-matrix-test])
 
 (apply require test-namespaces)                  
 

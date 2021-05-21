@@ -3,8 +3,6 @@
 (ns actions.actions-helpers
   (:require [cheshire.core :as json]))
 
-(defn getenv ^String [^String s] (System/getenv s))
-
 (defn add-env
   "Add env var k=v to future GitHub Actions steps in this job"
   [{:keys [getenv]} k v]
@@ -13,12 +11,7 @@
         (str k "=" v "\n")
         :append true))
 
-(defn set-output
-  "Create 'output' `n` for this Actions step, accessible with ${{ <stepid>.outputs.<n> }}."
-  [n s]
-  ;; Actions does not print ::set-output commands to the build output
-  (println (format "DEBUG: Setting output: %s %s" n s))
-  (println (format "::set-output name=%s::%s" n s)))
+(defn getenv ^String [^String s] (System/getenv s))
 
 (defn set-json-output
   "Create JSON 'output' `n` for this Actions step, accessible with ${{ fromJSON(<stepid>.outputs.<n>) }}."
@@ -26,6 +19,13 @@
   (set-output
     n
     (json/generate-string v {:pretty false})))
+
+(defn set-output
+  "Create 'output' `n` for this Actions step, accessible with ${{ <stepid>.outputs.<n> }}."
+  [n s]
+  ;; Actions does not print ::set-output commands to the build output
+  (println (format "DEBUG: Setting output: %s %s" n s))
+  (println (format "::set-output name=%s::%s" n s)))
 
 (def utils
   "Stateful things we'd want to stub in tests."
