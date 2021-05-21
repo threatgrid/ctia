@@ -1,7 +1,8 @@
 #!/usr/bin/env bb
 
 (ns actions.actions-helpers
-  (:require [cheshire.core :as json]))
+  (:require [cheshire.core :as json]
+            [clojure.java.shell :as sh]))
 
 (defn add-env
   "Add env var k=v to future GitHub Actions steps in this job"
@@ -28,9 +29,13 @@
   (println (format "DEBUG: Setting output: %s %s" n s))
   (println (format "::set-output name=%s::%s" n s)))
 
+(defn sh [& args]
+  (apply sh/sh args))
+
 (def utils
   "Stateful things we'd want to stub in tests."
-  {:getenv getenv
+  {:sh sh
+   :getenv getenv
    :add-env add-env
    :set-output set-output
    :set-json-output set-json-output})

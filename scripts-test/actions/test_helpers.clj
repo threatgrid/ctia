@@ -18,6 +18,8 @@
                                   :k k
                                   :v v})
                           nil)
+               :sh (fn [& args]
+                     (throw (Exception. (format "No default :sh stub (args: %s)" (pr-str args)))))
                :getenv (fn [k]
                          (get env-map k))
                :set-output (fn [k v]
