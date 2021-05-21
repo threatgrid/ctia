@@ -35,3 +35,13 @@
     (assert (= (set (keys utils))
                (set (keys h/utils))))
     (assoc state-m :utils utils)))
+
+(defn mk-utils+getenv-history [env-map]
+  (let [{:keys [state] :as m} (mk-utils env-map)]
+    (-> m
+        (assoc-in [:utils :getenv]
+                  (fn [k]
+                    (swap! state update :history conj
+                           {:op :getenv
+                            :k k})
+                    (get env-map k))))))

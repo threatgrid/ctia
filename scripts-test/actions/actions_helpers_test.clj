@@ -12,7 +12,8 @@
 
 (deftest add-env-test
   (let [github-env-file (File/createTempFile "github-env" nil)
-        {:keys [grab-history utils]} (th/mk-utils {"GITHUB_ENV" (.getPath github-env-file)})
+        {:keys [grab-history utils]} (th/mk-utils+getenv-history
+                                       {"GITHUB_ENV" (.getPath github-env-file)})
         _ (sut/add-env utils "foo" "bar")
         _ (is (= (grab-history)
                  [{:op :getenv
