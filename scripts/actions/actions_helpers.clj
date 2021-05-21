@@ -17,13 +17,13 @@
   "Create JSON 'output' `n` for this Actions step, accessible with ${{ fromJSON(<stepid>.outputs.<n>) }}."
   [{:keys [set-output] :as utils} n v]
   (set-output
-    utils
     n
     (json/generate-string v {:pretty false})))
 
 (defn set-output
   "Create 'output' `n` for this Actions step, accessible with ${{ <stepid>.outputs.<n> }}."
   [n s]
+  {:pre [(string? s)]}
   ;; Actions does not print ::set-output commands to the build output
   (println (format "DEBUG: Setting output: %s %s" n s))
   (println (format "::set-output name=%s::%s" n s)))

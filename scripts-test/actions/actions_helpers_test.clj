@@ -30,3 +30,10 @@
                    :k "foo"
                    :v "[\"a\",\"b\",\"c\"]"}]))
         ]))
+
+(deftest set-output-test
+  (is (.contains
+        (with-out-str
+          (sut/set-output "foo" "bar"))
+        "::set-output name=foo::bar\n"
+        )))

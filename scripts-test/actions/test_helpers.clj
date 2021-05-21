@@ -20,7 +20,7 @@
                           nil)
                :getenv (fn [k]
                          (get env-map k))
-               :set-output (fn [_ k v]
+               :set-output (fn [k v]
                              (swap! state update :history conj
                                     {:op :set-output
                                      :k k
