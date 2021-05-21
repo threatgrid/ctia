@@ -39,6 +39,8 @@
             _ (is (= (sut/edn-matrix {:test-suite :pr})
                      (sut/non-cron-matrix)
                      expected-matrix))
+            _ (is (= (sut/parse-build-config utils)
+                     {:test-suite :pr}))
             ]))))
 
 (deftest print-matrix-cron-test
@@ -77,7 +79,6 @@
             _ (is (= (sut/edn-matrix {:test-suite :cron})
                      (sut/cron-matrix)
                      expected-matrix))
+            _ (is (= (sut/parse-build-config utils)
+                     {:test-suite :cron}))
             ]))))
-
-(deftest parse-build-config-test
-  )
