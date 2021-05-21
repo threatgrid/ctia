@@ -14,12 +14,12 @@
             [clojure.string :as str]
             [cheshire.core :as json]))
 
-(def default-java-version "11.0.9")
-(def java-15-version "15")
-(def non-cron-ctia-nsplits
+(def ^:private default-java-version "11.0.9")
+(def ^:private java-15-version "15")
+(def ^:private non-cron-ctia-nsplits
   "Job parallelism for non cron tests."
   10)
-(def cron-ctia-nsplits
+(def ^:private cron-ctia-nsplits
   "Job parallelism for cron tests."
   2)
 
@@ -33,8 +33,8 @@
                                     "schedule" :cron
                                     ("pull_request" "push") :pr)))))))
 
-(defn valid-split? [{:keys [this_split total_splits
-                            java_version ci_profiles] :as m}]
+(defn- valid-split? [{:keys [this_split total_splits
+                             java_version ci_profiles] :as m}]
   (and (= #{:this_split :total_splits
             :java_version :ci_profiles
             :test_suite} (set (keys m)))
@@ -46,7 +46,7 @@
        ((every-pred string? seq) java_version)
        ((every-pred string? seq) ci_profiles)))
 
-(defn splits-for [base nsplits]
+(defn- splits-for [base nsplits]
   {:pre [(pos? nsplits)]
    :post [(= (range nsplits)
              (map :this_split %))
