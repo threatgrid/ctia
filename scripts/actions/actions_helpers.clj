@@ -7,7 +7,7 @@
 
 (defn add-env
   "Add env var k=v to future GitHub Actions steps in this job"
-  [k v]
+  [{:keys [getenv]} k v]
   (println (str "Adding env var: " k "=" v))
   (spit (getenv "GITHUB_ENV")
         (str k "=" v "\n")
@@ -28,6 +28,7 @@
     (json/generate-string v {:pretty false})))
 
 (def utils
+  "Stateful things we'd want to stub in tests."
   {:getenv getenv
    :add-env add-env
    :set-output set-output

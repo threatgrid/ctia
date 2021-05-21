@@ -95,10 +95,11 @@
   (let [build-config (parse-build-config utils)
         _ (println "build-config:" (pr-str build-config))
         ;; inform ./build/run-tests.sh which test suite to run
-        _ (add-env "CTIA_TEST_SUITE"
+        _ (add-env utils
+                   "CTIA_TEST_SUITE"
                    (case (:test-suite build-config)
                      :cron "cron"
-                     :pr "ci"))] 
+                     :pr "ci"))]
     (set-json-output utils "matrix" (edn-matrix build-config))))
 
 (defn -main [& _args]

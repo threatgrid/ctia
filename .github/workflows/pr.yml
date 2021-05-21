@@ -58,6 +58,8 @@ jobs:
           echo "${BIN_PATH}" >> $GITHUB_PATH
       - name: Install babashka
         run: ./scripts/actions/install-bb.sh
+      - name: Run tests for scripts
+        run: ./scripts-test/test_runner.clj
       - run: ./scripts/actions/setup_env.clj
       - name: Setup test matrix splits
         id: set-matrix

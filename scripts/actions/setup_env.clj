@@ -4,7 +4,7 @@
 ;; LOG_PATH=$(mktemp -d) ./scripts/actions/setup-env.clj
 
 (ns actions.setup-env
-  (:require [actions.actions-helpers :refer [add-env getenv]]
+  (:require [actions.actions-helpers :refer [getenv]]
             [clojure.java.shell :as sh]))
 
 (defn -main [& _args]

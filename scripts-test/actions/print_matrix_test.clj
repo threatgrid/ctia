@@ -1,3 +1,87 @@
 (ns actions.print-matrix-test
-  (:require [clojure.test :refer [deftest is]]
+  (:require [clojure.test :refer [deftest is testing]]
+            [actions.actions-helpers :as h]
             [actions.print-matrix :as sut]))
+
+(defn mk-state [init]
+  (let [state (atom {:history []})
+        grab-history (fn []
+                       (let [[{:keys [history]}]
+                             (swap-vals! state assoc :history [])]
+                         history))]
+    {:state state
+     :grab-history grab-history}))
+
+(defn mk-utils [env-map]
+  (let [{:keys [state] :as state-m} (mk-state {})
+        utils {:add-env (fn [_ k v]
+                          (swap! state update :history conj
+                                 {:op :add-env
+                                  :k k
+                                  :v v})
+                          nil)
+               :getenv (fn [k]
+                         (get env-map k))
+               :set-output (fn [_ k v]
+                             (swap! state update :history conj
+                                    {:op :set-output
+                                     :k k
+                                     :v v})
+                             nil)
+               :set-json-output (fn [_ k v]
+                                  (swap! state update :history conj
+                                         {:op :set-json-output
+                                          :k k
+                                          :v v})
+                                  nil)}]
+    (assert (= (set (keys utils))
+               (set (keys h/utils))))
+    (assoc state-m :utils utils)))
+
+(deftest print-matrix-pull-request-test
+  (doseq [env-map [{"CTIA_COMMIT_MESSAGE" ""
+                    "GITHUB_EVENT_NAME" "pull_request"}
+                   {"CTIA_COMMIT_MESSAGE" ""
+                    "GITHUB_EVENT_NAME" "push"}
+                   {"CTIA_COMMIT_MESSAGE" "{:test-suite :pr}"
+                    "GITHUB_EVENT_NAME" "schedule"}]]
+    (testing env-map
+      (let [{:keys [grab-history state utils]} (mk-utils env-map)
+            _ (sut/print-matrix utils)
+            _ (is (= (grab-history)
+                     [{:op :add-env, :k "CTIA_TEST_SUITE", :v "ci"}
+                      {:op :set-json-output
+                       :k "matrix"
+                       :v [{:ci_profiles "default", :java_version "11.0.9", :this_split 0, :total_splits 10, :test_suite :ci}
+                           {:ci_profiles "default", :java_version "11.0.9", :this_split 1, :total_splits 10, :test_suite :ci}
+                           {:ci_profiles "default", :java_version "11.0.9", :this_split 2, :total_splits 10, :test_suite :ci}
+                           {:ci_profiles "default", :java_version "11.0.9", :this_split 3, :total_splits 10, :test_suite :ci}
+                           {:ci_profiles "default", :java_version "11.0.9", :this_split 4, :total_splits 10, :test_suite :ci}
+                           {:ci_profiles "default", :java_version "11.0.9", :this_split 5, :total_splits 10, :test_suite :ci}
+                           {:ci_profiles "default", :java_version "11.0.9", :this_split 6, :total_splits 10, :test_suite :ci}
+                           {:ci_profiles "default", :java_version "11.0.9", :this_split 7, :total_splits 10, :test_suite :ci}
+                           {:ci_profiles "default", :java_version "11.0.9", :this_split 8, :total_splits 10, :test_suite :ci}
+                           {:ci_profiles "default", :java_version "11.0.9", :this_split 9, :total_splits 10, :test_suite :ci}]}]))
+            ]))))
+
+(deftest print-matrix-cron-test
+  (doseq [env-map [{"CTIA_COMMIT_MESSAGE" ""
+                    "GITHUB_EVENT_NAME" "schedule"}
+                   {"CTIA_COMMIT_MESSAGE" "{:test-suite :cron}"
+                    "GITHUB_EVENT_NAME" "push"}
+                   {"CTIA_COMMIT_MESSAGE" "{:test-suite :cron}"
+                    "GITHUB_EVENT_NAME" "pull_request"}]]
+    (testing env-map
+      (let [{:keys [grab-history state utils]} (mk-utils env-map)
+            _ (sut/print-matrix utils)
+            _ (is (= (grab-history)
+                     [{:op :add-env, :k "CTIA_TEST_SUITE", :v "cron"}
+                      {:op :set-json-output
+                       :k "matrix"
+                       :v [{:ci_profiles "default", :java_version "11.0.9", :this_split 0, :total_splits 2, :test_suite :cron}
+                           {:ci_profiles "default", :java_version "11.0.9", :this_split 1, :total_splits 2, :test_suite :cron}
+                           {:ci_profiles "next-clojure", :java_version "11.0.9", :this_split 0, :total_splits 2, :test_suite :cron}
+                           {:ci_profiles "next-clojure", :java_version "11.0.9", :this_split 1, :total_splits 2, :test_suite :cron}
+                           {:ci_profiles "next-clojure", :java_version "15", :this_split 0, :total_splits 2, :test_suite :cron}
+                           {:ci_profiles "next-clojure", :java_version "15", :this_split 1, :total_splits 2, :test_suite :cron}]}]))
+            ]))))
