@@ -28,6 +28,11 @@
                            {:ci_profiles "default", :java_version "11.0.9", :this_split 7, :total_splits 10, :test_suite :ci}
                            {:ci_profiles "default", :java_version "11.0.9", :this_split 8, :total_splits 10, :test_suite :ci}
                            {:ci_profiles "default", :java_version "11.0.9", :this_split 9, :total_splits 10, :test_suite :ci}]}]))
+            ;; convenient to test this here too
+            _ (is (= (sut/parse-build-config utils)
+                     {:test-suite :pr}))
+            _ (is (= (grab-history)
+                     []))
             ]))))
 
 (deftest print-matrix-cron-test
@@ -50,4 +55,12 @@
                            {:ci_profiles "next-clojure", :java_version "11.0.9", :this_split 1, :total_splits 2, :test_suite :cron}
                            {:ci_profiles "next-clojure", :java_version "15", :this_split 0, :total_splits 2, :test_suite :cron}
                            {:ci_profiles "next-clojure", :java_version "15", :this_split 1, :total_splits 2, :test_suite :cron}]}]))
+            ;; convenient to test this here too
+            _ (is (= (sut/parse-build-config utils)
+                     {:test-suite :cron}))
+            _ (is (= (grab-history)
+                     []))
             ]))))
+
+(deftest parse-build-config-test
+  )

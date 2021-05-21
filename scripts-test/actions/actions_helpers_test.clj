@@ -35,5 +35,4 @@
   (is (.contains
         (with-out-str
           (sut/set-output "foo" "bar"))
-        "::set-output name=foo::bar\n"
-        )))
+        "::set-output name=foo::bar\n")))
