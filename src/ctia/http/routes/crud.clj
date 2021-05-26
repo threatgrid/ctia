@@ -165,7 +165,7 @@
          :as services} :- APIHandlerServices]
   (let [capitalized (capitalize-entity entity)
         ;; Adding additional query params for ES Fulltext search
-        search-q-params* (routes.common/prep-es-fields-schema search-q-params)
+        search-q-params* (routes.common/prep-es-fields-schema search-q-params entity-schema)
         search-filters (st/dissoc search-q-params
                                   :sort_by
                                   :sort_order
@@ -326,7 +326,7 @@
              :capabilities search-capabilities
              :query [params search-q-params*]
              (let [params* (routes.common/ensure-search-fields
-                            params search-q-params*)]
+                            params search-q-params* entity-schema)]
                (-> (get-store entity)
                    (query-string-search
                     (search-query date-field params*)

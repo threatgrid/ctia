@@ -194,3 +194,9 @@
                       {:missing-keys missing-keys
                        :res res})))
     res))
+
+(defn schema->keys [schema]
+  (into #{}
+        (comp (filter s/specific-key?)
+              (map s/explicit-schema-key))
+        (keys schema)))

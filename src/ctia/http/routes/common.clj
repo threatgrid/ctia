@@ -7,6 +7,7 @@
    [ctia.schemas.search-agg :refer
     [FullTextQueryMode MetricResult RangeQueryOpt SearchQuery]]
    [ctia.schemas.sorting :as sorting]
+   [ctia.schemas.utils :as csu]
    [ring.swagger.json-schema :as json-schema]
    [ring.swagger.schema :refer [describe]]
    [ring.util.codec :as codec]
@@ -27,7 +28,7 @@
 (def filter-map-search-options
   (conj search-options :query :from :to))
 
-(def insignificant-search-fields
+(def unimportant-search-fields
   "Fields to be ignored by default when searching"
   #{:authorized_groups
     :authorized_users
@@ -130,29 +131,68 @@
     {:gte from
      :lt to-or-now}))
 
+(defn- schema->es-fields
+  "Sifts out the keys that can be used as :search_fields."
+  [schema]
+  (->>
+   schema
+   csu/schema->keys
+   (reduce
+    (fn [acc key]
+      (let [el         (st/get-in schema [key])
+            sub-fields (fn [s]
+                         (->> s schema->es-fields
+                              (map #(format "%s.%s" (name key) (name %)))
+                              set
+                              (set/union acc)))]
+        (cond
+          ;; There's a problem in Elasticsearch - using a field mapped for
+          ;; non-string values in :fields parameter, requires to use "coerseable"
+          ;; queries. For example, using a query like:
+          ;; {:query "foo" :fields ["revision"]}, would throw - "revision" is
+          ;; mapped to store integer values, and "foo" is not one.
+          ;; {:query "2" :fields ["revision"]} - would work though.
+          ;; For now we simply reject non-string fields
+          (or (isa? java.util.Date el)
+              (isa? java.lang.Boolean el)
+              (isa? java.lang.Integer el)) acc
+
+          (or (isa? java.lang.String el)
+              (isa? java.lang.String (first el))
+              (and (instance? ring.swagger.json_schema.FieldSchema el)
+                   (isa? java.lang.String (:schema el)))
+              (and (instance? schema.core.EnumSchema el)
+                   (->> el :vs (every? string?)))
+              (and (vector? el)
+                   (isa? java.lang.String (:schema (first el)))))
+          (conj acc (name key))
+
+          (and (vector? el) (map? (first el)))
+          (->> el first sub-fields)
+
+          (instance? schema.core.EnumSchema (:type el))
+          (sub-fields el)
+
+          :else acc)))
+    #{})))
+
 (defn- extract-default-fields
   "From Entity's search-params schema, extracts default fields that can be
   passed into ES fields parameter. See:
   www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl-query-string-query.html#query-string-multi-field"
-  [search-q-schema]
-  (let [normalized-fields (->> (st/get-in search-q-schema [:fields])
-                               first :vs
-                               ;; ES :fields doesn't seem to work with nested
-                               ;; fields, and for things like
-                               ;; `incident_time.reported` we need to extract
-                               ;; the part prior to the dot
-                               (map #(-> % name (str/split #"\.") first))
-                               set)]
-   (->> insignificant-search-fields
-        (map (comp name))
-        set
-        (set/difference normalized-fields)
-        vec)))
+  [entity-schema]
+  (->> unimportant-search-fields
+       (map (comp name))
+       set
+       (set/difference (schema->es-fields entity-schema))
+       vec))
 
 (s/defn prep-es-fields-schema :- (s/protocol s/Schema)
   "Conjoins ES :fields onto search-parameters schema."
-  [search-q-schema :- (s/maybe (s/protocol s/Schema))]
-  (let [fields-schema  (st/get-in search-q-schema [:fields])]
+  [search-q-schema :- (s/maybe (s/protocol s/Schema))
+   entity-schema]
+  (let [fields-schema (st/get-in search-q-schema [:fields])
+        default       (extract-default-fields entity-schema)]
    (st/merge
     search-q-schema
     {;; We cannot name the parameter :fields, because we already have :fields (part
@@ -164,8 +204,8 @@
      ;; For backward-compatibility we keep the old name and add new key with a different name
      (s/optional-key :search_fields)
      (json-schema/field
-      fields-schema
-      {:default     (extract-default-fields search-q-schema)
+      [(apply s/enum default)]
+      {:default     default
        :description "'fields' key of Elasticsearch Fulltext Query."})})))
 
 (defn ensure-search-fields
@@ -173,12 +213,14 @@
   instance. When :search_fields (internal name for ES fields) is empty, it uses
   'default' values."
   [{:keys [search_fields] :as query-params}
-   search-q-schema]
+   search-q-schema
+   entity-schema]
   (if (seq search_fields)
     query-params
-    (assoc query-params
-           :search_fields
-           (extract-default-fields search-q-schema))))
+    (assoc
+     query-params
+     :search_fields
+     (extract-default-fields entity-schema))))
 
 (s/defn search-query :- SearchQuery
   ([date-field search-params]
