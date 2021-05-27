@@ -27,5 +27,4 @@
                 #"Failed to create LOG_PATH"
                 (sut/setup-env (:utils (assoc-in (th/mk-utils {"LOG_PATH" "foo/bar"})
                                                  [:utils :sh]
-                                                 (constantly {:exit 1}))))))
-        ]))
+                                                 (constantly {:exit 1}))))))]))

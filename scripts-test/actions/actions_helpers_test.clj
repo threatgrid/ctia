@@ -19,8 +19,7 @@
                  [{:op :getenv
                    :k "GITHUB_ENV"}]))
         _ (is (= (slurp github-env-file)
-                 "foo=bar\n"))
-        ]))
+                 "foo=bar\n"))]))
 
 (deftest set-json-output-test
   (let [{:keys [grab-history utils]} (th/mk-utils {})
@@ -28,8 +27,7 @@
         _ (is (= (grab-history)
                  [{:op :set-output
                    :k "foo"
-                   :v "[\"a\",\"b\",\"c\"]"}]))
-        ]))
+                   :v "[\"a\",\"b\",\"c\"]"}]))]))
 
 (deftest set-output-test
   (is (.contains

@@ -40,8 +40,7 @@
                      (sut/non-cron-matrix)
                      expected-matrix))
             _ (is (= (sut/parse-build-config utils)
-                     {:test-suite :pr}))
-            ]))))
+                     {:test-suite :pr}))]))))
 
 (deftest print-matrix-cron-test
   (doseq [env-map [{"CTIA_COMMIT_MESSAGE" ""
@@ -80,5 +79,4 @@
                      (sut/cron-matrix)
                      expected-matrix))
             _ (is (= (sut/parse-build-config utils)
-                     {:test-suite :cron}))
-            ]))))
+                     {:test-suite :cron}))]))))
