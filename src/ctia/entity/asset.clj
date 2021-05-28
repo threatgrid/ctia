@@ -3,7 +3,8 @@
    [ctia.domain.entities :refer [default-realize-fn]]
    [ctia.http.routes.common :as routes.common]
    [ctia.http.routes.crud :refer [services->entity-crud-routes]]
-   [ctia.schemas.core :as schemas :refer [APIHandlerServices def-acl-schema def-stored-schema]]
+   [ctia.schemas.core :as schemas
+    :refer [APIHandlerServices def-acl-schema def-stored-schema]]
    [ctia.schemas.sorting :as sorting]
    [ctia.stores.es.mapping :as em]
    [ctia.stores.es.store :refer [def-es-store]]
@@ -73,6 +74,7 @@
    routes.common/PagingParams
    routes.common/BaseEntityFilterParams
    routes.common/SourcableEntityFilterParams
+   routes.common/SearchableEntityParams
    AssetFieldsParam
    (st/optional-keys
     {:query           s/Str
@@ -144,8 +146,7 @@
    :realize-fn            realize-asset
    :es-store              ->AssetStore
    :es-mapping            asset-mapping
-   :services->routes      (routes.common/reloadable-function
-                            asset-routes)
+   :services->routes      (routes.common/reloadable-function asset-routes)
    :capabilities          capabilities
    :fields                asset-fields
    :sort-fields           asset-fields})

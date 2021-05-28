@@ -1,20 +1,18 @@
 (ns ctia.entity.investigation
-  (:require [ctia.entity.investigation.schemas :as inv]
-            [ctia.http.routes.common
-             :refer
-             [BaseEntityFilterParams PagingParams SourcableEntityFilterParams]
-             :as routes.common]
-            [ctia.http.routes.crud :refer [services->entity-crud-routes]]
-            [ctia.schemas.core :refer [APIHandlerServices]]
-            [ctia.schemas.sorting :as sorting]
-            [ctia.stores.es.mapping :as em]
-            [ctia.stores.es.store :refer [def-es-store]]
-            [schema-tools.core :as st]
-            [schema.core :as s]))
+  (:require
+   [ctia.entity.investigation.schemas :as inv]
+   [ctia.http.routes.common :as routes.common]
+   [ctia.http.routes.crud :refer [services->entity-crud-routes]]
+   [ctia.schemas.core :refer [APIHandlerServices]]
+   [ctia.schemas.sorting :as sorting]
+   [ctia.stores.es.mapping :as em]
+   [ctia.stores.es.store :refer [def-es-store]]
+   [schema-tools.core :as st]
+   [schema.core :as s]))
 
 (def snapshot-action-fields-mapping
-  {:object_ids em/token
-   :targets em/sighting-target
+  {:object_ids               em/token
+   :targets                  em/sighting-target
    :investigated_observables em/text})
 
 (def investigation-mapping
@@ -56,9 +54,10 @@
 
 (s/defschema InvestigationSearchParams
   (st/merge
-   PagingParams
-   BaseEntityFilterParams
-   SourcableEntityFilterParams
+   routes.common/PagingParams
+   routes.common/BaseEntityFilterParams
+   routes.common/SourcableEntityFilterParams
+   routes.common/SearchableEntityParams
    InvestigationFieldsParam
    {(s/optional-key :query) s/Str}))
 
@@ -67,7 +66,7 @@
 (s/defschema InvestigationsByExternalIdQueryParams
   (st/merge
    InvestigationFieldsParam
-   PagingParams))
+   routes.common/PagingParams))
 
 (def investigation-enumerable-fields
   [:source])
@@ -78,26 +77,26 @@
 (s/defn investigation-routes [services :- APIHandlerServices]
   (services->entity-crud-routes
    services
-   {:entity :investigation
-    :new-schema inv/NewInvestigation
-    :entity-schema inv/Investigation
-    :get-schema inv/PartialInvestigation
-    :get-params InvestigationGetParams
-    :list-schema inv/PartialInvestigationList
-    :search-schema inv/PartialInvestigationList
-    :external-id-q-params InvestigationsByExternalIdQueryParams
-    :search-q-params InvestigationSearchParams
-    :new-spec :new-investigation/map
-    :realize-fn inv/realize-investigation
-    :get-capabilities :read-investigation
-    :post-capabilities :create-investigation
-    :put-capabilities :create-investigation
-    :delete-capabilities :delete-investigation
-    :search-capabilities :search-investigation
+   {:entity                   :investigation
+    :new-schema               inv/NewInvestigation
+    :entity-schema            inv/Investigation
+    :get-schema               inv/PartialInvestigation
+    :get-params               InvestigationGetParams
+    :list-schema              inv/PartialInvestigationList
+    :search-schema            inv/PartialInvestigationList
+    :external-id-q-params     InvestigationsByExternalIdQueryParams
+    :search-q-params          InvestigationSearchParams
+    :new-spec                 :new-investigation/map
+    :realize-fn               inv/realize-investigation
+    :get-capabilities         :read-investigation
+    :post-capabilities        :create-investigation
+    :put-capabilities         :create-investigation
+    :delete-capabilities      :delete-investigation
+    :search-capabilities      :search-investigation
     :external-id-capabilities :read-investigation
-    :can-aggregate? true
-    :histogram-fields investigation-histogram-fields
-    :enumerable-fields investigation-enumerable-fields}))
+    :can-aggregate?           true
+    :histogram-fields         investigation-histogram-fields
+    :enumerable-fields        investigation-enumerable-fields}))
 
 (def capabilities
   #{:read-investigation
@@ -107,22 +106,21 @@
     :delete-investigation})
 
 (def investigation-entity
-  {:route-context "/investigation"
-   :tags ["Investigation"]
-   :entity :investigation
-   :plural :investigations
-   :new-spec :new-investigation/map
-   :schema inv/Investigation
-   :partial-schema inv/PartialInvestigation
-   :partial-list-schema inv/PartialInvestigationList
-   :new-schema inv/NewInvestigation
-   :stored-schema inv/StoredInvestigation
+  {:route-context         "/investigation"
+   :tags                  ["Investigation"]
+   :entity                :investigation
+   :plural                :investigations
+   :new-spec              :new-investigation/map
+   :schema                inv/Investigation
+   :partial-schema        inv/PartialInvestigation
+   :partial-list-schema   inv/PartialInvestigationList
+   :new-schema            inv/NewInvestigation
+   :stored-schema         inv/StoredInvestigation
    :partial-stored-schema inv/PartialStoredInvestigation
-   :realize-fn inv/realize-investigation
-   :es-store ->InvestigationStore
-   :es-mapping investigation-mapping
-   :services->routes (routes.common/reloadable-function
-                       investigation-routes)
-   :capabilities capabilities
-   :fields investigation-fields
-   :sort-fields investigation-fields})
+   :realize-fn            inv/realize-investigation
+   :es-store              ->InvestigationStore
+   :es-mapping            investigation-mapping
+   :services->routes      (routes.common/reloadable-function investigation-routes)
+   :capabilities          capabilities
+   :fields                investigation-fields
+   :sort-fields           investigation-fields})

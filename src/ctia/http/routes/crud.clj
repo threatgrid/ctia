@@ -24,8 +24,7 @@
    [ctia.schemas.search-agg :refer [HistogramParams
                                     CardinalityParams
                                     TopnParams
-                                    MetricResult
-                                    FullTextQueryMode]]
+                                    MetricResult]]
    [ctia.store :refer [query-string-search
                        query-string-count
                        aggregate
@@ -38,7 +37,8 @@
    [ring.swagger.schema :refer [describe]]
    [ring.util.http-response :refer [no-content not-found ok forbidden]]
    [schema-tools.core :as st]
-   [schema.core :as s]))
+   [schema.core :as s]
+   [ctia.http.routes.common :as routes.common]))
 
 (s/defn capitalize-entity [entity :- (s/pred simple-keyword?)]
   (-> entity name str/capitalize))
@@ -164,13 +164,9 @@
  (s/fn [{{:keys [get-store]} :StoreService
          :as services} :- APIHandlerServices]
   (let [capitalized (capitalize-entity entity)
-        ;; Adding additional query params for ES Fulltext search
         search-q-params* (st/merge
                           search-q-params
-                          {(s/optional-key :query_mode)
-                           (describe FullTextQueryMode "Elasticsearch Fulltext Query Mode. Defaults to query_string")
-
-                           ;; We cannot name the parameter :fields, because we already have :fields (part
+                          {;; We cannot name the parameter :fields, because we already have :fields (part
                            ;; of search-q-params). That key is to select a subsets of fields of the
                            ;; retrieved document and it gets passed to the `_source` parameter of
                            ;; Elasticsearch. For more: www.elastic.co/guide/en/elasticsearch/reference/current/mapping-source-field.html

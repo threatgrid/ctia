@@ -1,19 +1,16 @@
 (ns ctia.entity.data-table
-  (:require [ctia.domain.entities :refer [default-realize-fn]]
-            [ctia.http.routes
-             [common :refer [BaseEntityFilterParams PagingParams SourcableEntityFilterParams]
-              :as routes.common]
-             [crud :refer [services->entity-crud-routes]]]
-            [ctia.schemas
-             [core :refer [APIHandlerServices def-acl-schema def-stored-schema]]
-             [sorting :refer [default-entity-sort-fields]]]
-            [ctia.stores.es
-             [mapping :as em]
-             [store :refer [def-es-store]]]
-            [ctim.schemas.data-table :as ds]
-            [flanders.utils :as fu]
-            [schema-tools.core :as st]
-            [schema.core :as s]))
+  (:require
+   [ctia.domain.entities :refer [default-realize-fn]]
+   [ctia.http.routes.common :as routes.common]
+   [ctia.http.routes.crud :refer [services->entity-crud-routes]]
+   [ctia.schemas.core :refer [APIHandlerServices def-acl-schema def-stored-schema]]
+   [ctia.schemas.sorting :refer [default-entity-sort-fields]]
+   [ctia.stores.es.mapping :as em]
+   [ctia.stores.es.store :refer [def-es-store]]
+   [ctim.schemas.data-table :as ds]
+   [flanders.utils :as fu]
+   [schema-tools.core :as st]
+   [schema.core :as s]))
 
 (def-acl-schema DataTable
   (fu/replace-either-with-any
@@ -50,9 +47,10 @@
 
 (s/defschema DataTableSearchParams
   (st/merge
-   PagingParams
-   BaseEntityFilterParams
-   SourcableEntityFilterParams
+   routes.common/PagingParams
+   routes.common/BaseEntityFilterParams
+   routes.common/SourcableEntityFilterParams
+   routes.common/SearchableEntityParams
    DataTableFieldsParam
    (st/optional-keys
     {:query s/Str
@@ -62,7 +60,7 @@
 
 (s/defschema DataTableByExternalIdQueryParams
   (st/merge
-   PagingParams
+   routes.common/PagingParams
    DataTableFieldsParam))
 
 (def data-table-mapping
@@ -75,9 +73,9 @@
      em/sourcable-entity-mapping
      em/stored-entity-mapping
      {:valid_time em/valid-time
-      :row_count em/long-type
-      :columns {:enabled false}
-      :rows {:enabled false}})}})
+      :row_count  em/long-type
+      :columns    {:enabled false}
+      :rows       {:enabled false}})}})
 
 (def-es-store DataTableStore :data-table StoredDataTable PartialStoredDataTable)
 
@@ -90,38 +88,37 @@
 (s/defn data-table-routes [services :- APIHandlerServices]
   (services->entity-crud-routes
    services
-   {:entity :data-table
-    :new-spec :new-data-table/map
-    :new-schema NewDataTable
-    :entity-schema DataTable
-    :get-schema PartialDataTable
-    :get-params DataTableGetParams
-    :list-schema PartialDataTableList
-    :external-id-q-params DataTableByExternalIdQueryParams
-    :search-q-params DataTableSearchParams
-    :realize-fn realize-data-table
-    :get-capabilities :read-data-table
-    :post-capabilities :create-data-table
-    :delete-capabilities :delete-data-table
+   {:entity                   :data-table
+    :new-spec                 :new-data-table/map
+    :new-schema               NewDataTable
+    :entity-schema            DataTable
+    :get-schema               PartialDataTable
+    :get-params               DataTableGetParams
+    :list-schema              PartialDataTableList
+    :external-id-q-params     DataTableByExternalIdQueryParams
+    :search-q-params          DataTableSearchParams
+    :realize-fn               realize-data-table
+    :get-capabilities         :read-data-table
+    :post-capabilities        :create-data-table
+    :delete-capabilities      :delete-data-table
     :external-id-capabilities :read-data-table
-    :can-update? false
-    :can-search? false}))
+    :can-update?              false
+    :can-search?              false}))
 
 (def data-table-entity
-  {:route-context "/data-table"
-   :tags ["DataTable"]
-   :entity :data-table
-   :plural :data-tables
-   :new-spec :new-data-table/map
-   :schema DataTable
-   :partial-schema PartialDataTable
-   :partial-list-schema PartialDataTableList
-   :new-schema NewDataTable
-   :stored-schema StoredDataTable
+  {:route-context         "/data-table"
+   :tags                  ["DataTable"]
+   :entity                :data-table
+   :plural                :data-tables
+   :new-spec              :new-data-table/map
+   :schema                DataTable
+   :partial-schema        PartialDataTable
+   :partial-list-schema   PartialDataTableList
+   :new-schema            NewDataTable
+   :stored-schema         StoredDataTable
    :partial-stored-schema PartialStoredDataTable
-   :realize-fn realize-data-table
-   :es-store ->DataTableStore
-   :es-mapping data-table-mapping
-   :services->routes (routes.common/reloadable-function
-                       data-table-routes)
-   :capabilities capabilities})
+   :realize-fn            realize-data-table
+   :es-store              ->DataTableStore
+   :es-mapping            data-table-mapping
+   :services->routes      (routes.common/reloadable-function data-table-routes)
+   :capabilities          capabilities})

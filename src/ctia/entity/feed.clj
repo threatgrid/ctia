@@ -1,55 +1,41 @@
 (ns ctia.entity.feed
-  (:require [clojure.string :as string]
-            [ctia.domain.entities
-             :refer
-             [page-with-long-id un-store un-store-page with-long-id]]
-            [ctia.entity.feed.schemas
-             :refer
-             [Feed
-              NewFeed
-              PartialFeed
-              PartialFeedList
-              PartialStoredFeed
-              realize-feed
-              StoredFeed]]
-            [ctia.entity.judgement.schemas :refer [Judgement]]
-            [ctia.flows.crud :as flows]
-            [ctia.http.routes.common
-             :as
-             routes.common
-             :refer
-             [BaseEntityFilterParams
-              created
-              paginated-ok
-              PagingParams
-              search-options
-              search-query
-              wait_for->refresh]]
-            [ctia.lib.compojure.api.core :refer [DELETE GET POST PUT routes]]
-            [ctia.schemas
-             [core :refer [APIHandlerServices Observable]]
-             [sorting :as sorting]]
-            [ctia.store
-             :refer
-             [create-record
-              delete-record
-              delete-search
-              list-all-pages
-              list-records
-              query-string-count
-              query-string-search
-              read-record
-              update-record]]
-            [ctia.stores.es
-             [mapping :as em]
-             [store :refer [def-es-store]]]
-            [ctim.domain.validity :as cdv]
-            [ring.swagger.schema :refer [describe]]
-            [ring.util.http-response
-             :refer
-             [forbidden no-content not-found ok unauthorized]]
-            [schema-tools.core :as st]
-            [schema.core :as s]))
+  (:require
+   [clojure.string :as string]
+   [ctia.domain.entities
+    :refer [page-with-long-id un-store un-store-page with-long-id]]
+   [ctia.entity.feed.schemas
+    :refer [Feed
+            NewFeed
+            PartialFeed
+            PartialFeedList
+            PartialStoredFeed
+            realize-feed
+            StoredFeed]]
+   [ctia.entity.judgement.schemas :refer [Judgement]]
+   [ctia.flows.crud :as flows]
+   [ctia.http.routes.common
+    :as routes.common]
+   [ctia.lib.compojure.api.core :refer [DELETE GET POST PUT routes]]
+   [ctia.schemas.core :refer [APIHandlerServices Observable]]
+   [ctia.schemas.sorting :as sorting]
+   [ctia.store
+    :refer [create-record
+            delete-record
+            delete-search
+            list-all-pages
+            list-records
+            query-string-count
+            query-string-search
+            read-record
+            update-record]]
+   [ctia.stores.es.mapping :as em]
+   [ctia.stores.es.store :refer [def-es-store]]
+   [ctim.domain.validity :as cdv]
+   [ring.swagger.schema :refer [describe]]
+   [ring.util.http-response
+    :refer [forbidden no-content not-found ok unauthorized]]
+   [schema-tools.core :as st]
+   [schema.core :as s]))
 
 (def feed-mapping
   {"feed"
@@ -57,12 +43,12 @@
     :properties
     (merge em/base-entity-mapping
            em/stored-entity-mapping
-           {:title em/text
-            :lifetime em/valid-time
-            :output em/token
-            :secret em/token
+           {:title         em/text
+            :lifetime      em/valid-time
+            :output        em/token
+            :secret        em/token
             :feed_view_url em/token
-            :indicator_id em/token})}})
+            :indicator_id  em/token})}})
 
 (def-es-store FeedStore :feed StoredFeed PartialStoredFeed)
 
@@ -82,10 +68,9 @@
 (s/defschema FeedFieldsParam
   {(s/optional-key :fields) [feed-sort-fields]})
 
-
 (s/defschema FeedCountParams
   (st/merge
-   BaseEntityFilterParams
+   routes.common/BaseEntityFilterParams
    FeedFieldsParam
    (st/optional-keys
     {:query s/Str})))
@@ -93,7 +78,8 @@
 (s/defschema FeedSearchParams
   (st/merge
    FeedCountParams
-   PagingParams
+   routes.common/PagingParams
+   routes.common/SearchableEntityParams
    {(s/optional-key :sort_by) feed-sort-fields}))
 
 (s/defschema FeedDeleteSearchParams
@@ -116,7 +102,7 @@
 
 (s/defschema FeedListQueryParams
   (st/merge
-   PagingParams
+   routes.common/PagingParams
    FeedFieldsParam
    {(s/optional-key :sort_by) feed-sort-fields}))
 
@@ -273,7 +259,7 @@
                            (create-record
                             %
                             identity-map
-                            (wait_for->refresh wait_for)))
+                            (routes.common/wait_for->refresh wait_for)))
             :long-id-fn #(with-long-id % services)
             :entity-type :feed
             :identity identity
@@ -282,7 +268,7 @@
            first
            un-store
            (decrypt-feed services)
-           created)))
+           routes.common/created)))
 
    (let [capabilities :create-feed]
      (PUT "/:id" []
@@ -309,7 +295,7 @@
                                       (:id %)
                                       %
                                       identity-map
-                                      (wait_for->refresh wait_for)))
+                                      (routes.common/wait_for->refresh wait_for)))
                      :long-id-fn #(with-long-id % services)
                      :entity-type :feed
                      :entity-id id
@@ -339,7 +325,7 @@
            (page-with-long-id services)
            un-store-page
            (decrypt-feed-page services)
-           paginated-ok)))
+           routes.common/paginated-ok)))
 
    (let [capabilities :search-feed]
      (GET "/search" []
@@ -352,13 +338,13 @@
        :identity-map identity-map
        (-> (get-store :feed)
            (query-string-search
-            (search-query :created params)
+            (routes.common/search-query :created params)
             identity-map
-            (select-keys params search-options))
+            (select-keys params routes.common/search-options))
            (page-with-long-id services)
            un-store-page
            (decrypt-feed-page services)
-           paginated-ok)))
+           routes.common/paginated-ok)))
 
    (let [capabilities :search-feed]
      (GET "/search/count" []
@@ -371,7 +357,7 @@
        :identity-map identity-map
        (ok (-> (get-store :feed)
                (query-string-count
-                (search-query :created params)
+                (routes.common/search-query :created params)
                 identity-map)))))
 
 
@@ -385,7 +371,7 @@
        :identity-map identity-map
        :query [params FeedDeleteSearchParams]
        (let [query (->> (dissoc params :wait_for :REALLY_DELETE_ALL_THESE_ENTITIES)
-                        (search-query :created))]
+                        (routes.common/search-query :created))]
          (if (empty? query)
            (forbidden {:error "you must provide at least one of from, to, query or any field filter."})
            (ok
@@ -394,7 +380,7 @@
                   (delete-search
                    query
                    identity-map
-                   (wait_for->refresh (:wait_for params))))
+                   (routes.common/wait_for->refresh (:wait_for params))))
               (-> (get-store :feed)
                   (query-string-count
                    query
@@ -443,7 +429,7 @@
                             (delete-record
                              %
                              identity-map
-                             (wait_for->refresh wait_for)))
+                             (routes.common/wait_for->refresh wait_for)))
             :entity-type :feed
             :long-id-fn #(with-long-id % services)
             :entity-id id
@@ -458,23 +444,23 @@
     :search-feed})
 
 (def feed-entity
-  {:route-context "/feed"
-   :tags ["Feed"]
-   :entity :feed
-   :plural :feeds
-   :new-spec :new-feed/map
-   :schema Feed
-   :partial-schema PartialFeed
-   :partial-list-schema PartialFeedList
-   :new-schema NewFeed
-   :no-bulk? true
-   :stored-schema StoredFeed
+  {:route-context         "/feed"
+   :tags                  ["Feed"]
+   :entity                :feed
+   :plural                :feeds
+   :new-spec              :new-feed/map
+   :schema                Feed
+   :partial-schema        PartialFeed
+   :partial-list-schema   PartialFeedList
+   :new-schema            NewFeed
+   :no-bulk?              true
+   :stored-schema         StoredFeed
    :partial-stored-schema PartialStoredFeed
-   :realize-fn realize-feed
-   :es-store ->FeedStore
-   :es-mapping feed-mapping
-   :services->routes (routes.common/reloadable-function
-                      feed-routes)
-   :capabilities capabilities
-   :fields sort-restricted-feed-fields
-   :sort-fields sort-restricted-feed-fields})
+   :realize-fn            realize-feed
+   :es-store              ->FeedStore
+   :es-mapping            feed-mapping
+   :services->routes      (routes.common/reloadable-function
+                           feed-routes)
+   :capabilities          capabilities
+   :fields                sort-restricted-feed-fields
+   :sort-fields           sort-restricted-feed-fields})

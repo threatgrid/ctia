@@ -1,15 +1,13 @@
 (ns ctia.entity.tool
-  (:require [ctia.entity.tool.schemas :as ts]
-            [ctia.http.routes
-             [common :refer [BaseEntityFilterParams PagingParams SourcableEntityFilterParams]
-              :as routes.common]
-             [crud :refer [services->entity-crud-routes]]]
-            [ctia.stores.es
-             [mapping :as em]
-             [store :refer [def-es-store]]]
-            [ctia.schemas.core :refer [APIHandlerServices]]
-            [schema-tools.core :as st]
-            [schema.core :as s]))
+  (:require
+   [ctia.entity.tool.schemas :as ts]
+   [ctia.http.routes.common :as routes.common]
+   [ctia.http.routes.crud :refer [services->entity-crud-routes]]
+   [ctia.schemas.core :refer [APIHandlerServices]]
+   [ctia.stores.es.mapping :as em]
+   [ctia.stores.es.store :refer [def-es-store]]
+   [schema-tools.core :as st]
+   [schema.core :as s]))
 
 (def tool-mapping
   {"tool"
@@ -20,10 +18,10 @@
      em/describable-entity-mapping
      em/sourcable-entity-mapping
      em/stored-entity-mapping
-     {:labels em/token
+     {:labels            em/token
       :kill_chain_phases em/kill-chain-phase
-      :tool_version em/token
-      :x_mitre_aliases em/token})}})
+      :tool_version      em/token
+      :x_mitre_aliases   em/token})}})
 
 (def-es-store
   ToolStore
@@ -39,17 +37,18 @@
 
 (s/defschema ToolSearchParams
   (st/merge
-   PagingParams
-   BaseEntityFilterParams
-   SourcableEntityFilterParams
+   routes.common/PagingParams
+   routes.common/BaseEntityFilterParams
+   routes.common/SourcableEntityFilterParams
+   routes.common/SearchableEntityParams
    ToolFieldsParam
    (st/optional-keys
-    {:query s/Str
-     :labels s/Str
+    {:query                             s/Str
+     :labels                            s/Str
      :kill_chain_phases.kill_chain_name s/Str
-     :kill_chain_phases.phase_name s/Str
-     :tool_version s/Str
-     :sort_by tool-sort-fields})))
+     :kill_chain_phases.phase_name      s/Str
+     :tool_version                      s/Str
+     :sort_by                           tool-sort-fields})))
 
 (def tool-histogram-fields
   [:timestamp])
@@ -61,8 +60,9 @@
 (s/defschema ToolGetParams ToolFieldsParam)
 
 (s/defschema ToolByExternalIdQueryParams
-  (st/merge PagingParams
-            ToolFieldsParam))
+  (st/merge
+   routes.common/PagingParams
+   ToolFieldsParam))
 
 (def capabilities
   #{:create-tool
@@ -73,44 +73,43 @@
 (s/defn tool-routes [services :- APIHandlerServices]
   (services->entity-crud-routes
    services
-   {:entity :tool
-    :new-schema ts/NewTool
-    :entity-schema ts/Tool
-    :get-schema ts/PartialTool
-    :get-params ToolGetParams
-    :list-schema ts/PartialToolList
-    :search-schema ts/PartialToolList
-    :external-id-q-params ToolByExternalIdQueryParams
-    :search-q-params ToolSearchParams
-    :new-spec :new-tool/map
-    :realize-fn ts/realize-tool
-    :get-capabilities :read-tool
-    :post-capabilities :create-tool
-    :put-capabilities :create-tool
-    :delete-capabilities :delete-tool
-    :search-capabilities :search-tool
+   {:entity                   :tool
+    :new-schema               ts/NewTool
+    :entity-schema            ts/Tool
+    :get-schema               ts/PartialTool
+    :get-params               ToolGetParams
+    :list-schema              ts/PartialToolList
+    :search-schema            ts/PartialToolList
+    :external-id-q-params     ToolByExternalIdQueryParams
+    :search-q-params          ToolSearchParams
+    :new-spec                 :new-tool/map
+    :realize-fn               ts/realize-tool
+    :get-capabilities         :read-tool
+    :post-capabilities        :create-tool
+    :put-capabilities         :create-tool
+    :delete-capabilities      :delete-tool
+    :search-capabilities      :search-tool
     :external-id-capabilities :read-tool
-    :can-aggregate? true
-    :histogram-fields tool-histogram-fields
-    :enumerable-fields tool-enumerable-fields}))
+    :can-aggregate?           true
+    :histogram-fields         tool-histogram-fields
+    :enumerable-fields        tool-enumerable-fields}))
 
 (def tool-entity
-  {:route-context "/tool"
-   :tags ["Tool"]
-   :entity :tool
-   :plural :tools
-   :new-spec :new-tool/map
-   :schema ts/Tool
-   :partial-schema ts/PartialTool
-   :partial-list-schema ts/PartialToolList
-   :new-schema ts/NewTool
-   :stored-schema ts/StoredTool
+  {:route-context         "/tool"
+   :tags                  ["Tool"]
+   :entity                :tool
+   :plural                :tools
+   :new-spec              :new-tool/map
+   :schema                ts/Tool
+   :partial-schema        ts/PartialTool
+   :partial-list-schema   ts/PartialToolList
+   :new-schema            ts/NewTool
+   :stored-schema         ts/StoredTool
    :partial-stored-schema ts/PartialStoredTool
-   :realize-fn ts/realize-tool
-   :es-store ->ToolStore
-   :es-mapping tool-mapping
-   :services->routes (routes.common/reloadable-function
-                       tool-routes)
-   :capabilities capabilities
-   :fields ts/tool-fields
-   :sort-fields ts/tool-fields})
+   :realize-fn            ts/realize-tool
+   :es-store              ->ToolStore
+   :es-mapping            tool-mapping
+   :services->routes      (routes.common/reloadable-function tool-routes)
+   :capabilities          capabilities
+   :fields                ts/tool-fields
+   :sort-fields           ts/tool-fields})

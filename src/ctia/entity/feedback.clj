@@ -1,17 +1,13 @@
 (ns ctia.entity.feedback
-  (:require [ctia.lib.compojure.api.core :refer [GET routes]]
-            [ctia.domain.entities :refer [page-with-long-id un-store-page]]
+  (:require [ctia.domain.entities :refer [page-with-long-id un-store-page]]
             [ctia.entity.feedback.schemas :as fs]
-            [ctia.http.routes
-             [common :refer [paginated-ok PagingParams]
-              :as routes.common]
-             [crud :refer [services->entity-crud-routes]]]
+            [ctia.http.routes.common :as routes.common]
+            [ctia.http.routes.crud :refer [services->entity-crud-routes]]
+            [ctia.lib.compojure.api.core :refer [GET routes]]
             [ctia.schemas.core :refer [APIHandlerServices]]
-            [ctia.schemas.sorting :as sorting]
             [ctia.store :refer [list-records]]
-            [ctia.stores.es
-             [mapping :as em]
-             [store :refer [def-es-store]]]
+            [ctia.stores.es.mapping :as em]
+            [ctia.stores.es.store :refer [def-es-store]]
             [schema-tools.core :as st]
             [schema.core :as s]))
 
@@ -38,7 +34,7 @@
 (s/defschema FeedbackQueryParams
   (st/merge
    FeedbackFieldsParam
-   PagingParams
+   routes.common/PagingParams
    {:entity_id s/Str
     (s/optional-key :sort_by) feedback-sort-fields}))
 
@@ -48,10 +44,12 @@
   (st/dissoc FeedbackQueryParams :entity_id))
 
 (comment
+  (require '[ctia.entity.judgement :as judgement])
+
   (s/defschema FeedbacksByJudgementQueryParams
     (st/merge
-     PagingParams
-     JudgementFieldsParam
+     routes.common/PagingParams
+     judgement/JudgementFieldsParam
      {(s/optional-key :sort_by) feedback-sort-fields})))
 
 (s/defn feedback-by-entity-route [{{:keys [get-store]} :StoreService
@@ -72,7 +70,7 @@
                (dissoc params :entity_id))
              (page-with-long-id services)
              un-store-page
-             paginated-ok))))
+             routes.common/paginated-ok))))
 
 (def capabilities
   #{:create-feedback
@@ -103,22 +101,22 @@
      :can-update? false})))
 
 (def feedback-entity
-  {:route-context "/feedback"
-   :tags ["Feedback"]
-   :entity :feedback
-   :plural :feedbacks
-   :new-spec :new-feedback/map
-   :schema fs/Feedback
-   :partial-schema fs/PartialFeedback
-   :partial-list-schema fs/PartialFeedbackList
-   :new-schema fs/NewFeedback
-   :stored-schema fs/StoredFeedback
+  {:route-context         "/feedback"
+   :tags                  ["Feedback"]
+   :entity                :feedback
+   :plural                :feedbacks
+   :new-spec              :new-feedback/map
+   :schema                fs/Feedback
+   :partial-schema        fs/PartialFeedback
+   :partial-list-schema   fs/PartialFeedbackList
+   :new-schema            fs/NewFeedback
+   :stored-schema         fs/StoredFeedback
    :partial-stored-schema fs/PartialStoredFeedback
-   :realize-fn fs/realize-feedback
-   :es-store ->FeedbackStore
-   :es-mapping feedback-mapping
-   :services->routes (routes.common/reloadable-function
-                       feedback-routes)
-   :capabilities capabilities
-   :fields fs/feedback-fields
-   :sort-fields fs/feedback-fields})
+   :realize-fn            fs/realize-feedback
+   :es-store              ->FeedbackStore
+   :es-mapping            feedback-mapping
+   :services->routes      (routes.common/reloadable-function
+                           feedback-routes)
+   :capabilities          capabilities
+   :fields                fs/feedback-fields
+   :sort-fields           fs/feedback-fields})
