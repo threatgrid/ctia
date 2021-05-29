@@ -1,16 +1,14 @@
 (ns ctia.entity.judgement
   (:require
-   [clj-momo.lib.clj-time.core :as time]
-   [compojure.api.resource :refer [resource]]
-   [ctia.domain.entities :refer [un-store with-long-id]]
    [ctia.entity.feedback.graphql-schemas :as feedback]
    [ctia.entity.judgement.es-store :as j-store]
    [ctia.entity.judgement.schemas :as js]
    [ctia.entity.relationship.graphql-schemas :as relationship]
-   [ctia.flows.crud :as flows]
    [ctia.http.routes.common :as routes.common]
-   [ctia.http.routes.crud :refer [capitalize-entity revoke-request services->entity-crud-routes]]
-   [ctia.lib.compojure.api.core :refer [context POST routes]]
+   [ctia.http.routes.crud
+    :refer
+    [capitalize-entity revoke-request services->entity-crud-routes]]
+   [ctia.lib.compojure.api.core :refer [POST routes]]
    [ctia.schemas.core :refer [APIHandlerServices Entity]]
    [ctia.schemas.graphql.flanders :as f]
    [ctia.schemas.graphql.helpers :as g]
@@ -21,7 +19,6 @@
    [ctim.schemas.judgement :as judgement]
    [flanders.utils :as fu]
    [ring.swagger.schema :refer [describe]]
-   [ring.util.http-response :refer [not-found ok]]
    [schema-tools.core :as st]
    [schema.core :as s]))
 
@@ -171,21 +168,23 @@
   (pagination/new-connection JudgementType))
 
 (s/def judgement-entity :- Entity
-  {:route-context "/judgement"
-   :tags ["Judgement"]
-   :entity :judgement
-   :plural :judgements
-   :new-spec :new-judgement/map
-   :schema js/Judgement
-   :partial-schema js/PartialJudgement
-   :partial-list-schema js/PartialJudgementList
-   :new-schema js/NewJudgement
-   :stored-schema js/StoredJudgement
+  {:route-context         "/judgement"
+   :tags                  ["Judgement"]
+   :entity                :judgement
+   :plural                :judgements
+   :new-spec              :new-judgement/map
+   :schema                js/Judgement
+   :partial-schema        js/PartialJudgement
+   :partial-list-schema   js/PartialJudgementList
+   :new-schema            js/NewJudgement
+   :stored-schema         js/StoredJudgement
    :partial-stored-schema js/PartialStoredJudgement
-   :realize-fn js/realize-judgement
-   :es-store j-store/->JudgementStore
-   :es-mapping j-store/judgement-mapping-def
-   :services->routes (routes.common/reloadable-function judgement-routes)
-   :capabilities capabilities
-   :fields js/judgement-fields
-   :sort-fields js/judgement-sort-fields})
+   :realize-fn            js/realize-judgement
+   :es-store              j-store/->JudgementStore
+   :es-mapping            j-store/judgement-mapping-def
+   :services->routes      (routes.common/reloadable-function judgement-routes)
+   :capabilities          capabilities
+   :fields                js/judgement-fields
+   :sort-fields           js/judgement-sort-fields
+   :searchable-fields     (routes.common/searchable-fields
+                           judgement-entity)})
