@@ -178,4 +178,6 @@
    :services->routes      (routes.common/reloadable-function weakness-routes)
    :capabilities          capabilities
    :fields                weakness-fields
-   :sort-fields           weakness-fields})
+   :sort-fields           weakness-fields
+   :searchable-fields     (routes.common/searchable-fields
+                           weakness-entity)})

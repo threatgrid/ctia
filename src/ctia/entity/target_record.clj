@@ -152,4 +152,6 @@
                             target-record-routes)
    :capabilities          capabilities
    :fields                target-record-fields
-   :sort-fields           target-record-fields})
+   :sort-fields           target-record-fields
+   :searchable-fields     (routes.common/searchable-fields
+                           target-record-entity)})

@@ -148,4 +148,5 @@
    :services->routes      (routes.common/reloadable-function asset-routes)
    :capabilities          capabilities
    :fields                asset-fields
-   :sort-fields           asset-fields})
+   :sort-fields           asset-fields
+   :searchable-fields     (routes.common/searchable-fields asset-entity)})

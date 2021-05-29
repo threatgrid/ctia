@@ -1,16 +1,18 @@
 (ns ctia.http.routes.common
-  (:require [clj-http.headers :refer [canonicalize]]
-            [clojure.string :as str]
-            [ctia.schemas.sorting :as sorting]
-            [ring.swagger.schema :refer [describe]]
-            [clj-momo.lib.clj-time.core :as t]
-            [ring.util
-             [codec :as codec]
-             [http-response :as http-res]
-             [http-status :refer [ok]]]
-            [ctia.schemas.search-agg :refer
-             [FullTextQueryMode MetricResult RangeQueryOpt SearchQuery]]
-            [schema.core :as s]))
+  (:require
+   [clj-http.headers :refer [canonicalize]]
+   [clj-momo.lib.clj-time.core :as t]
+   [clojure.set :as set]
+   [clojure.string :as str]
+   [ctia.schemas.search-agg
+    :refer
+    [FullTextQueryMode MetricResult RangeQueryOpt SearchQuery]]
+   [ctia.schemas.sorting :as sorting]
+   [ring.swagger.schema :refer [describe]]
+   [ring.util.codec :as codec]
+   [ring.util.http-response :as http-res]
+   [ring.util.http-status :refer [ok]]
+   [schema.core :as s]))
 
 (def search-options [:sort_by
                      :sort_order
@@ -49,6 +51,26 @@
    (s/optional-key :offset) (describe Long "Pagination Offset")
    (s/optional-key :search_after) (describe [s/Str] "Pagination stateless cursor")
    (s/optional-key :limit) (describe Long "Pagination Limit")})
+
+(def default-ignored-search-fields
+  #{:id
+    :language
+    :revision
+    :schema_version
+    :source
+    :source_uri
+    :timestamp
+    :tlp})
+
+(s/defn searchable-fields :- (s/protocol s/Schema)
+  [entity & additional-fields-to-ignore]
+  (let [ignore (set/union (set additional-fields-to-ignore)
+                          default-ignored-search-fields)]
+    (apply s/enum
+           (-> entity
+               :fields
+               set
+               (set/difference ignore)))))
 
 (def paging-param-keys
   "A list of the paging and sorting related parameters, we can use

@@ -154,4 +154,5 @@
    :services->routes      (routes.common/reloadable-function actor-routes)
    :capabilities          capabilities
    :fields                actor-fields
-   :sort-fields           actor-fields})
+   :sort-fields           actor-fields
+   :searchable-fields     (routes.common/searchable-fields actor-entity)})

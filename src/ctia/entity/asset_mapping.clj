@@ -169,4 +169,5 @@
                             asset-mapping-routes)
    :capabilities          capabilities
    :fields                asset-mapping-fields
-   :sort-fields           asset-mapping-fields})
+   :sort-fields           asset-mapping-fields
+   :searchable-fields     (routes.common/searchable-fields asset-mapping-entity)})
