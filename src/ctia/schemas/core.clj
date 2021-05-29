@@ -177,27 +177,28 @@
 
 (s/defschema Entity
   (st/merge
-   {:entity s/Keyword
-    :plural s/Keyword
-    :new-spec (s/either s/Keyword s/Any)
-    :schema (s/protocol s/Schema)
-    :partial-schema (s/protocol s/Schema)
-    :partial-list-schema (s/protocol s/Schema)
-    :stored-schema (s/protocol s/Schema)
+   {:entity                s/Keyword
+    :plural                s/Keyword
+    :new-spec              (s/either s/Keyword s/Any)
+    :schema                (s/protocol s/Schema)
+    :partial-schema        (s/protocol s/Schema)
+    :partial-list-schema   (s/protocol s/Schema)
+    :stored-schema         (s/protocol s/Schema)
     :partial-stored-schema (s/protocol s/Schema)
-    :es-store s/Any
-    :es-mapping {s/Any s/Any}}
+    :es-store              s/Any
+    :es-mapping            {s/Any s/Any}}
    (st/optional-keys
-    {:fields [Field]
-     :sort-fields [Field]
-     :new-schema (s/protocol s/Schema)
-     :route-context s/Str
-     :services->routes DelayedRoutes
-     :tags [s/Str]
-     :capabilities #{s/Keyword}
-     :no-bulk? s/Bool
-     :no-api? s/Bool
-     :realize-fn RealizeFn})))
+    {:fields            [Field]
+     :sort-fields       [Field]
+     :new-schema        (s/protocol s/Schema)
+     :route-context     s/Str
+     :services->routes  DelayedRoutes
+     :tags              [s/Str]
+     :capabilities      #{s/Keyword}
+     :no-bulk?          s/Bool
+     :no-api?           s/Bool
+     :realize-fn        RealizeFn
+     :searchable-fields (s/protocol s/Schema)})))
 
 (s/defschema OpenCTIMSchemaVersion
   {(s/optional-key :schema_version) s/Str})
