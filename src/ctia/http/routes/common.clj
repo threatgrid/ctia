@@ -89,14 +89,16 @@
                                :vs
                                (map name)
                                (apply s/enum))]
-   (st/merge
-    search-q-params
-    {;; We cannot name the parameter :fields, because we already have :fields (part
-     ;; of search-q-params). That key is to select a subsets of fields of the
-     ;; retrieved document and it gets passed to the `_source` parameter of
-     ;; Elasticsearch. For more: www.elastic.co/guide/en/elasticsearch/reference/current/mapping-source-field.html
-     (s/optional-key :search_fields)
-     (describe [default-fields-schema] "'fields' key of Elasticsearch Fulltext Query.")})))
+    (if searchable-fields
+     (st/merge
+      search-q-params
+      {;; We cannot name the parameter :fields, because we already have :fields (part
+       ;; of search-q-params). That key is to select a subsets of fields of the
+       ;; retrieved document and it gets passed to the `_source` parameter of
+       ;; Elasticsearch. For more: www.elastic.co/guide/en/elasticsearch/reference/current/mapping-source-field.html
+       (s/optional-key :search_fields)
+       (describe [default-fields-schema] "'fields' key of Elasticsearch Fulltext Query.")})
+     search-q-params)))
 
 (s/defn enforce-search-fields
   "Gurantees that ES fields parameter always passed to ES instance"
