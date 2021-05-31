@@ -65,7 +65,9 @@
     :search-capabilities      :search-sighting
     :can-aggregate?           true
     :histogram-fields         ss/sighting-histogram-fields
-    :enumerable-fields        ss/sighting-enumerable-fields}))
+    :enumerable-fields        ss/sighting-enumerable-fields
+    :searchable-fields        (routes.common/searchable-fields
+                               ss/sighting-fields)}))
 
 (def capabilities
   #{:create-sighting
@@ -92,6 +94,4 @@
    :services->routes      (routes.common/reloadable-function sighting-routes)
    :capabilities          capabilities
    :fields                ss/sighting-fields
-   :sort-fields           ss/sighting-sort-fields
-   :searchable-fields     (routes.common/searchable-fields
-                           sighting-entity)})
+   :sort-fields           ss/sighting-sort-fields})

@@ -152,7 +152,9 @@
     :external-id-capabilities :read-weakness
     :can-aggregate?           true
     :histogram-fields         weakness-histogram-fields
-    :enumerable-fields        weakness-enumerable-fields}))
+    :enumerable-fields        weakness-enumerable-fields
+    :searchable-fields        (routes.common/searchable-fields
+                               weakness-fields)}))
 
 (def capabilities
   #{:create-weakness
@@ -178,6 +180,4 @@
    :services->routes      (routes.common/reloadable-function weakness-routes)
    :capabilities          capabilities
    :fields                weakness-fields
-   :sort-fields           weakness-fields
-   :searchable-fields     (routes.common/searchable-fields
-                           weakness-entity)})
+   :sort-fields           weakness-fields})

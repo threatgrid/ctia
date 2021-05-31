@@ -197,8 +197,7 @@
      :capabilities      #{s/Keyword}
      :no-bulk?          s/Bool
      :no-api?           s/Bool
-     :realize-fn        RealizeFn
-     :searchable-fields (s/protocol s/Schema)})))
+     :realize-fn        RealizeFn})))
 
 (s/defschema OpenCTIMSchemaVersion
   {(s/optional-key :schema_version) s/Str})

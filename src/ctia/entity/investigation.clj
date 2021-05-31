@@ -95,7 +95,9 @@
     :external-id-capabilities :read-investigation
     :can-aggregate?           true
     :histogram-fields         investigation-histogram-fields
-    :enumerable-fields        investigation-enumerable-fields}))
+    :enumerable-fields        investigation-enumerable-fields
+    :searchable-fields        (routes.common/searchable-fields
+                               investigation-fields)}))
 
 (def capabilities
   #{:read-investigation
@@ -122,6 +124,4 @@
    :services->routes      (routes.common/reloadable-function investigation-routes)
    :capabilities          capabilities
    :fields                investigation-fields
-   :sort-fields           investigation-fields
-   :searchable-fields     (routes.common/searchable-fields
-                           investigation-entity)})
+   :sort-fields           investigation-fields})

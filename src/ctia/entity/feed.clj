@@ -463,6 +463,4 @@
                            feed-routes)
    :capabilities          capabilities
    :fields                sort-restricted-feed-fields
-   :sort-fields           sort-restricted-feed-fields
-   :searchable-fields     (routes.common/searchable-fields
-                           feed-entity)})
+   :sort-fields           sort-restricted-feed-fields})

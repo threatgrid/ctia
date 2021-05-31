@@ -12,6 +12,7 @@
    [ring.util.codec :as codec]
    [ring.util.http-response :as http-res]
    [ring.util.http-status :refer [ok]]
+   [schema-tools.core :as st]
    [schema.core :as s]))
 
 (def search-options [:sort_by
@@ -63,12 +64,11 @@
     :tlp})
 
 (s/defn searchable-fields :- (s/protocol s/Schema)
-  [entity & additional-fields-to-ignore]
+  [fields & additional-fields-to-ignore]
   (let [ignore (set/union (set additional-fields-to-ignore)
                           default-ignored-search-fields)]
     (apply s/enum
-           (-> entity
-               :fields
+           (-> fields
                set
                (set/difference ignore)))))
 

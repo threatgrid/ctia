@@ -224,7 +224,9 @@
     :external-id-capabilities :read-relationship
     :can-aggregate?           true
     :histogram-fields         relationship-histogram-fields
-    :enumerable-fields        relationship-enumerable-fields}))
+    :enumerable-fields        relationship-enumerable-fields
+    :searchable-fields        (routes.common/searchable-fields
+                               relationship-fields)}))
 
 (def capabilities
   #{:create-relationship
@@ -251,6 +253,4 @@
    :services->routes      (routes.common/reloadable-function relationship-routes)
    :capabilities          capabilities
    :fields                relationship-fields
-   :sort-fields           relationship-fields
-   :searchable-fields     (routes.common/searchable-fields
-                           relationship-entity)})
+   :sort-fields           relationship-fields})
