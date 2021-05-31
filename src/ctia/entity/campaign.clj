@@ -123,7 +123,9 @@
     :external-id-capabilities :read-campaign
     :can-aggregate?           true
     :histogram-fields         campaign-histogram-fields
-    :enumerable-fields        campaign-enumerable-fields}))
+    :enumerable-fields        campaign-enumerable-fields
+    :searchable-fields        (routes.common/searchable-fields
+                               campaign-fields)}))
 
 (def capabilities
   #{:create-campaign
@@ -149,6 +151,4 @@
    :services->routes      (routes.common/reloadable-function campaign-routes)
    :capabilities          capabilities
    :fields                campaign-fields
-   :sort-fields           campaign-fields
-   :searchable-fields     (routes.common/searchable-fields
-                           campaign-entity)})
+   :sort-fields           campaign-fields})

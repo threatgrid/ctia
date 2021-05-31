@@ -231,7 +231,9 @@
      :search-capabilities      :search-incident
      :external-id-capabilities :read-incident
      :histogram-fields         incident-histogram-fields
-     :enumerable-fields        incident-enumerable-fields})))
+     :enumerable-fields        incident-enumerable-fields
+     :searchable-fields        (routes.common/searchable-fields
+                                incident-fields)})))
 
 (def IncidentType
   (let [{:keys [fields name description]}
@@ -282,6 +284,4 @@
    :services->routes      (routes.common/reloadable-function incident-routes)
    :capabilities          capabilities
    :fields                incident-fields
-   :sort-fields           incident-fields
-   :searchable-fields     (routes.common/searchable-fields
-                           incident-entity)})
+   :sort-fields           incident-fields})

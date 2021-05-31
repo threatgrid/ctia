@@ -125,7 +125,9 @@
     :external-id-capabilities :read-target-record
     :can-aggregate?           true
     :histogram-fields         target-record-histogram-fields
-    :enumerable-fields        target-record-enumerable-fields}))
+    :enumerable-fields        target-record-enumerable-fields
+    :searchable-fields        (routes.common/searchable-fields
+                               target-record-fields)}))
 
 (def capabilities
   #{:create-target-record
@@ -152,6 +154,4 @@
                             target-record-routes)
    :capabilities          capabilities
    :fields                target-record-fields
-   :sort-fields           target-record-fields
-   :searchable-fields     (routes.common/searchable-fields
-                           target-record-entity)})
+   :sort-fields           target-record-fields})

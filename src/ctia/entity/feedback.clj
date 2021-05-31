@@ -82,23 +82,25 @@
    (feedback-by-entity-route services)
    (services->entity-crud-routes
     services
-    {:entity :feedback
-     :new-schema fs/NewFeedback
-     :entity-schema fs/Feedback
-     :get-schema fs/PartialFeedback
-     :get-params FeedbackGetParams
-     :list-schema fs/PartialFeedbackList
-     :external-id-q-params FeedbackByExternalIdQueryParams
-     :realize-fn fs/realize-feedback
-     :get-capabilities :read-feedback
-     :post-capabilities :create-feedback
-     :put-capabilities :create-feedback
-     :delete-capabilities :delete-feedback
+    {:entity                   :feedback
+     :new-schema               fs/NewFeedback
+     :entity-schema            fs/Feedback
+     :get-schema               fs/PartialFeedback
+     :get-params               FeedbackGetParams
+     :list-schema              fs/PartialFeedbackList
+     :external-id-q-params     FeedbackByExternalIdQueryParams
+     :realize-fn               fs/realize-feedback
+     :get-capabilities         :read-feedback
+     :post-capabilities        :create-feedback
+     :put-capabilities         :create-feedback
+     :delete-capabilities      :delete-feedback
      :external-id-capabilities :read-feedback
-     :spec :new-feedback/map
-     :can-search? false
-     :enumerable-fields []
-     :can-update? false})))
+     :spec                     :new-feedback/map
+     :can-search?              false
+     :enumerable-fields        []
+     :can-update?              false
+     :searchable-fields        (routes.common/searchable-fields
+                                fs/feedback-fields)})))
 
 (def feedback-entity
   {:route-context         "/feedback"
@@ -119,6 +121,4 @@
                            feedback-routes)
    :capabilities          capabilities
    :fields                fs/feedback-fields
-   :sort-fields           fs/feedback-fields
-   :searchable-fields     (routes.common/searchable-fields
-                           feedback-entity)})
+   :sort-fields           fs/feedback-fields})

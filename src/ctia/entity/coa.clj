@@ -131,7 +131,9 @@
     :external-id-capabilities :read-coa
     :can-aggregate?           true
     :histogram-fields         coa-histogram-fields
-    :enumerable-fields        coa-enumerable-fields}))
+    :enumerable-fields        coa-enumerable-fields
+    :searchable-fields        (routes.common/searchable-fields
+                               coa-fields)}))
 
 (def capabilities
   #{:create-coa
@@ -157,6 +159,4 @@
    :services->routes      (routes.common/reloadable-function coa-routes)
    :capabilities          capabilities
    :fields                coa-fields
-   :sort-fields           coa-fields
-   :searchable-fields     (routes.common/searchable-fields
-                           coa-entity)})
+   :sort-fields           coa-fields})

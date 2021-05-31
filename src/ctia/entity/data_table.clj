@@ -50,7 +50,6 @@
    routes.common/PagingParams
    routes.common/BaseEntityFilterParams
    routes.common/SourcableEntityFilterParams
-   routes.common/SearchableEntityParams
    DataTableFieldsParam
    (st/optional-keys
     {:sort_by datatable-sort-fields})))
@@ -120,6 +119,4 @@
    :es-store              ->DataTableStore
    :es-mapping            data-table-mapping
    :services->routes      (routes.common/reloadable-function data-table-routes)
-   :capabilities          capabilities
-   :searchable-fields     (routes.common/searchable-fields
-                           data-table-entity)})
+   :capabilities          capabilities})
