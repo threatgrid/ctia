@@ -32,7 +32,11 @@
                         vals first (map name)
                         (apply s/enum))
     :limit         s/Int
-    :sort_by       s/Str}))
+    :sort_by       s/Any
+    :from          s/Any
+    :to            s/Any
+    :id            s/Str
+    :tags          s/Any}))
 
 (s/defschema SearchQuery
   "components of a search query:

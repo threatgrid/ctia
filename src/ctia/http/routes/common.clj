@@ -54,14 +54,21 @@
    (s/optional-key :limit) (describe Long "Pagination Limit")})
 
 (def default-ignored-search-fields
-  #{:id
-    :language
+  #{:language
     :revision
     :schema_version
     :source
     :source_uri
     :timestamp
-    :tlp})
+    :tlp
+    :type})
+
+(def default-whitelisted-search-fields
+  #{:id
+    :title
+    :short_description
+    :description
+    :external_ids})
 
 (s/defn searchable-fields :- (s/protocol s/Schema)
   [fields & additional-fields-to-ignore]
@@ -70,6 +77,7 @@
     (apply s/enum
            (-> fields
                set
+               (set/union default-whitelisted-search-fields)
                (set/difference ignore)))))
 
 (s/defn prep-es-fields-schema :- (s/protocol s/Schema)
