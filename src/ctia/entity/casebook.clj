@@ -336,7 +336,8 @@
      :histogram-fields         casebook-histogram-fields
      :enumerable-fields        casebook-enumerable-fields
      :searchable-fields        (routes.common/searchable-fields
-                                casebook-fields)})))
+                                (concat casebook-fields
+                                        casebook-enumerable-fields))})))
 
 (def casebook-entity
   {:route-context         "/casebook"
