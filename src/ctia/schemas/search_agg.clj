@@ -24,9 +24,19 @@
      :fields           [s/Str]
      :default_operator s/Str})))
 
+(s/defschema RawSearchParams
+  (st/optional-keys
+   {:query         s/Str
+    :search_fields [s/Str]
+    :query_mode    (->> FullTextQueryMode
+                        vals first (map name)
+                        (apply s/enum))
+    :limit         s/Int
+    :sort_by       s/Str}))
+
 (s/defschema SearchQuery
   "components of a search query:
-   - query-string: free text search, with lucene syntax enabled"
+   - query-string: free text search"
   (st/optional-keys
    {:filter-map   {s/Keyword s/Any}
     :range        RangeQuery
