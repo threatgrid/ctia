@@ -6,7 +6,7 @@
    [clojure.string :as str]
    [ctia.schemas.search-agg
     :refer
-    [FullTextQueryMode MetricResult RangeQueryOpt SearchQuery]]
+    [FullTextQueryMode MetricResult RangeQueryOpt RawSearchParams SearchQuery]]
    [ctia.schemas.sorting :as sorting]
    [ring.swagger.schema :refer [describe]]
    [ring.util.codec :as codec]
@@ -71,6 +71,35 @@
            (-> fields
                set
                (set/difference ignore)))))
+
+(s/defn prep-es-fields-schema :- (s/protocol s/Schema)
+  "Conjoins Elasticsearch fields parameter into search-q-params schema"
+  [{:keys [search-q-params
+           searchable-fields] :as entity-crud-config}]
+  (let [default-fields-schema (->>
+                               searchable-fields
+                               :vs
+                               (map name)
+                               (apply s/enum))]
+   (st/merge
+    search-q-params
+    {;; We cannot name the parameter :fields, because we already have :fields (part
+     ;; of search-q-params). That key is to select a subsets of fields of the
+     ;; retrieved document and it gets passed to the `_source` parameter of
+     ;; Elasticsearch. For more: www.elastic.co/guide/en/elasticsearch/reference/current/mapping-source-field.html
+     (s/optional-key :search_fields)
+     (describe [default-fields-schema] "'fields' key of Elasticsearch Fulltext Query.")})))
+
+(s/defn enforce-search-fields :- RawSearchParams
+  "Gurantees that ES fields parameter always passed to ES instance"
+  [{:keys [search_fields] :as query-params}
+   searchable-fields]
+  (if (seq search_fields)
+    query-params
+    (assoc
+     query-params
+     :search_fields
+     (->> searchable-fields :vs (mapv name)))))
 
 (def paging-param-keys
   "A list of the paging and sorting related parameters, we can use
