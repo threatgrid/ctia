@@ -128,7 +128,11 @@
          :histogram-fields         js/judgement-histogram-fields
          :enumerable-fields        js/judgement-enumerable-fields
          :searchable-fields        (routes.common/searchable-fields
-                                    js/judgement-fields)}]
+                                    js/judgement-fields
+                                    :disposition
+                                    :valid_time.start_time
+                                    :valid_time.end_time
+                                    :priority)}]
     (routes
       (services->entity-crud-routes
         services
