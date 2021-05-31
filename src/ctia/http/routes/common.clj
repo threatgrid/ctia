@@ -98,7 +98,7 @@
      (s/optional-key :search_fields)
      (describe [default-fields-schema] "'fields' key of Elasticsearch Fulltext Query.")})))
 
-(s/defn enforce-search-fields :- RawSearchParams
+(s/defn enforce-search-fields
   "Gurantees that ES fields parameter always passed to ES instance"
   [{:keys [search_fields] :as query-params}
    searchable-fields]
