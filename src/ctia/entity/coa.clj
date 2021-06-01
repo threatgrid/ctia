@@ -82,8 +82,7 @@
    routes.common/SearchableEntityParams
    COAFieldsParam
    (st/optional-keys
-    {:query               s/Str
-     :stage               s/Str
+    {:stage               s/Str
      :coa_type            s/Str
      :impact              s/Str
      :objective           s/Str

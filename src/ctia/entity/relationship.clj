@@ -57,8 +57,7 @@
    routes.common/SearchableEntityParams
    RelationshipFieldsParam
    (st/optional-keys
-    {:query             s/Str
-     :relationship_type s/Str
+    {:relationship_type s/Str
      :source_ref        s/Str
      :target_ref        s/Str
      :sort_by           relationship-sort-fields})))

@@ -188,8 +188,7 @@
    routes.common/SearchableEntityParams
    IncidentFieldsParam
    (st/optional-keys
-    {:query            s/Str
-     :confidence       s/Str
+    {:confidence       s/Str
      :status           s/Str
      :discovery_method s/Str
      :intended_effect  s/Str

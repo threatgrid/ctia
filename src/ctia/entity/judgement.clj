@@ -57,8 +57,7 @@
    routes.common/SearchableEntityParams
    JudgementFieldsParam
    (st/optional-keys
-    {:query            s/Str
-     :disposition_name s/Str
+    {:disposition_name s/Str
      :disposition      s/Int
      :priority         s/Int
      :severity         s/Str

@@ -25,8 +25,7 @@
    routes.common/SearchableEntityParams
    SightingFieldsParam
    (st/optional-keys
-    {:query             s/Str
-     :sensor            s/Str
+    {:sensor            s/Str
      :observables.value s/Str
      :observables.type  s/Str
      :sort_by           sighting-sort-fields})))

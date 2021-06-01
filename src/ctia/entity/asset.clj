@@ -77,9 +77,8 @@
    routes.common/SearchableEntityParams
    AssetFieldsParam
    (st/optional-keys
-    {:query           s/Str
-     :asset_type      s/Str
-     :sort_by         asset-sort-fields})))
+    {:asset_type s/Str
+     :sort_by    asset-sort-fields})))
 
 (def asset-histogram-fields
   [:timestamp

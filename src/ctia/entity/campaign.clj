@@ -77,8 +77,7 @@
    routes.common/SearchableEntityParams
    CampaignFieldsParam
    (st/optional-keys
-    {:query         s/Str
-     :campaign_type s/Str
+    {:campaign_type s/Str
      :confidence    s/Str
      :activity      s/Str
      :sort_by       campaign-sort-fields})))

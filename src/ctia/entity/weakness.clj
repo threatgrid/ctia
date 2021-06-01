@@ -78,8 +78,7 @@
    routes.common/SearchableEntityParams
    WeaknessFieldsParam
    (st/optional-keys
-    {:query   s/Str
-     :sort_by weakness-sort-fields})))
+    {:sort_by weakness-sort-fields})))
 
 (def WeaknessGetParams WeaknessFieldsParam)
 

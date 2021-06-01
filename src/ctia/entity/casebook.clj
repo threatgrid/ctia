@@ -103,8 +103,7 @@
    routes.common/SearchableEntityParams
    CasebookFieldsParam
    (st/optional-keys
-    {:query      s/Str
-     :texts.text s/Str
+    {:texts.text s/Str
      :sort_by    casebook-sort-fields})))
 
 (def CasebookGetParams CasebookFieldsParam)

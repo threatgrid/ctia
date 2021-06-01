@@ -75,8 +75,7 @@
    routes.common/SearchableEntityParams
    AttackPatternFieldsParam
    (st/optional-keys
-    {:query                             s/Str
-     :kill_chain_phases.kill_chain_name s/Str
+    {:kill_chain_phases.kill_chain_name s/Str
      :kill_chain_phases.phase_name      s/Str
      :sort_by                           attack-pattern-sort-fields})))
 

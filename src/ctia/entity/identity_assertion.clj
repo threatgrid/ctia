@@ -69,12 +69,11 @@
    routes.common/SearchableEntityParams
    IdentityAssertionFieldsParam
    (st/optional-keys
-    {:query s/Str
-     :identity.observables.type s/Str
+    {:identity.observables.type  s/Str
      :identity.observables.value s/Str
-     :assertions.name s/Str
-     :assertions.value s/Str
-     :sort_by identity-assertion-sort-fields})))
+     :assertions.name            s/Str
+     :assertions.value           s/Str
+     :sort_by                    identity-assertion-sort-fields})))
 
 (def identity-assertion-histogram-fields
   [:timestamp

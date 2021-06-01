@@ -43,8 +43,7 @@
    routes.common/SearchableEntityParams
    ToolFieldsParam
    (st/optional-keys
-    {:query                             s/Str
-     :labels                            s/Str
+    {:labels                            s/Str
      :kill_chain_phases.kill_chain_name s/Str
      :kill_chain_phases.phase_name      s/Str
      :tool_version                      s/Str

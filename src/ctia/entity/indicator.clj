@@ -120,8 +120,7 @@
    routes.common/SearchableEntityParams
    IndicatorFieldsParam
    (st/optional-keys
-    {:query             s/Str
-     :indicator_type    s/Str
+    {:indicator_type    s/Str
      :tags              s/Str
      :kill_chain_phases s/Str
      :producer          s/Str

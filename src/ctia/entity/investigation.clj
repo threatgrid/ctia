@@ -58,8 +58,7 @@
    routes.common/BaseEntityFilterParams
    routes.common/SourcableEntityFilterParams
    routes.common/SearchableEntityParams
-   InvestigationFieldsParam
-   {(s/optional-key :query) s/Str}))
+   InvestigationFieldsParam))
 
 (def InvestigationGetParams InvestigationFieldsParam)
 

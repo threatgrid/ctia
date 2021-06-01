@@ -96,8 +96,7 @@
    routes.common/SearchableEntityParams
    TargetRecordFieldsParam
    (st/optional-keys
-    {:query           s/Str
-     :sort_by         target-record-sort-fields})))
+    {:sort_by target-record-sort-fields})))
 
 (def target-record-histogram-fields
   [:timestamp

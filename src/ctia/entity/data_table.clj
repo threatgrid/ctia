@@ -53,8 +53,7 @@
    routes.common/SearchableEntityParams
    DataTableFieldsParam
    (st/optional-keys
-    {:query s/Str
-     :sort_by datatable-sort-fields})))
+    {:sort_by datatable-sort-fields})))
 
 (def DataTableGetParams DataTableFieldsParam)
 

@@ -79,8 +79,7 @@
    routes.common/SearchableEntityParams
    ActorFieldsParam
    (st/optional-keys
-    {:query           s/Str
-     :actor_type      s/Str
+    {:actor_type      s/Str
      :motivation      s/Str
      :sophistication  s/Str
      :intended_effect s/Str
