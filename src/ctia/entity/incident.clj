@@ -233,13 +233,13 @@
      :histogram-fields         incident-histogram-fields
      :enumerable-fields        incident-enumerable-fields
      :searchable-fields        (routes.common/searchable-fields
-                                incident-fields
-                                :incident_time.remediated
-                                :incident_time.closed
-                                :incident_time.discovered
-                                :incident_time.reported
-                                :incident_time.opened
-                                :incident_time.rejected)})))
+                                {:fields incident-fields
+                                 :ignore [:incident_time.remediated
+                                          :incident_time.closed
+                                          :incident_time.discovered
+                                          :incident_time.reported
+                                          :incident_time.opened
+                                          :incident_time.rejected]})})))
 
 (def IncidentType
   (let [{:keys [fields name description]}

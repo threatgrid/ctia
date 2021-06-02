@@ -71,14 +71,15 @@
     :external_ids})
 
 (s/defn searchable-fields :- (s/protocol s/Schema)
-  [fields & additional-fields-to-ignore]
-  (let [ignore (set/union (set additional-fields-to-ignore)
-                          default-ignored-search-fields)]
+  [{:keys [fields ignore]}]
+  (let [ignored-fields (set/union
+                        (set ignore)
+                        default-ignored-search-fields)]
     (apply s/enum
            (-> fields
                set
                (set/union default-whitelisted-search-fields)
-               (set/difference ignore)))))
+               (set/difference ignored-fields)))))
 
 (s/defn prep-es-fields-schema :- (s/protocol s/Schema)
   "Conjoins Elasticsearch fields parameter into search-q-params schema"

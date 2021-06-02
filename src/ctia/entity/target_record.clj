@@ -127,8 +127,8 @@
     :histogram-fields         target-record-histogram-fields
     :enumerable-fields        target-record-enumerable-fields
     :searchable-fields        (routes.common/searchable-fields
-                               target-record-fields
-                               :targets.internal)}))
+                               {:fields target-record-fields
+                                :ignore [:targets.internal]})}))
 
 (def capabilities
   #{:create-target-record

@@ -125,10 +125,10 @@
     :histogram-fields         campaign-histogram-fields
     :enumerable-fields        campaign-enumerable-fields
     :searchable-fields        (routes.common/searchable-fields
-                               campaign-fields
-                               :valid_time.start_time
-                               :valid_time.end_time
-                               :activity.date_time)}))
+                               {:fields campaign-fields
+                                :ignore [:valid_time.start_time
+                                         :valid_time.end_time
+                                         :activity.date_time]})}))
 
 (def capabilities
   #{:create-campaign

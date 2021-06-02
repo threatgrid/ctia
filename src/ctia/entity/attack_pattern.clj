@@ -114,7 +114,7 @@
     :histogram-fields         attack-pattern-histogram-fields
     :enumerable-fields        attack-pattern-enumerable-fields
     :searchable-fields        (routes.common/searchable-fields
-                               attack-pattern-fields)}))
+                               {:fields attack-pattern-fields})}))
 
 (def AttackPatternType
   (let [{:keys [fields name description]}

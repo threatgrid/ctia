@@ -93,7 +93,7 @@
     :histogram-fields         tool-histogram-fields
     :enumerable-fields        tool-enumerable-fields
     :searchable-fields        (routes.common/searchable-fields
-                               ts/tool-fields)}))
+                               {:fields ts/tool-fields})}))
 
 (def tool-entity
   {:route-context         "/tool"

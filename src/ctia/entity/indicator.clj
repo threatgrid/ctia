@@ -163,7 +163,7 @@
     :histogram-fields         indicator-histogram-fields
     :enumerable-fields        indicator-enumerable-fields
     :searchable-fields        (routes.common/searchable-fields
-                               indicator-fields)}))
+                               {:fields indicator-fields})}))
 
 (def capabilities
   #{:read-indicator

@@ -144,7 +144,7 @@
     :enumerable-fields        asset-mapping-enumerable-fields
     :can-revoke?              asset-mapping-can-revoke?
     :searchable-fields        (routes.common/searchable-fields
-                               asset-mapping-fields)}))
+                               {:fields asset-mapping-fields})}))
 
 (def capabilities
   #{:create-asset-mapping
