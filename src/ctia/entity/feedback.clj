@@ -100,7 +100,7 @@
      :enumerable-fields        []
      :can-update?              false
      :searchable-fields        (routes.common/searchable-fields
-                                fs/feedback-fields)})))
+                                {:fields fs/feedback-fields})})))
 
 (def feedback-entity
   {:route-context         "/feedback"

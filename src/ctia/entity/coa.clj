@@ -133,9 +133,9 @@
     :histogram-fields         coa-histogram-fields
     :enumerable-fields        coa-enumerable-fields
     :searchable-fields        (routes.common/searchable-fields
-                               coa-fields
-                               :valid_time.start_time
-                               :valid_time.end_time)}))
+                               {:fields coa-fields
+                                :ignore [:valid_time.start_time
+                                         :valid_time.end_time]})}))
 
 (def capabilities
   #{:create-coa
