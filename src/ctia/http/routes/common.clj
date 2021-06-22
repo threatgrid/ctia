@@ -8,7 +8,8 @@
              [codec :as codec]
              [http-response :as http-res]
              [http-status :refer [ok]]]
-            [ctia.schemas.search-agg :refer [RangeQueryOpt SearchQuery MetricResult]]
+            [ctia.schemas.search-agg :refer
+             [FullTextQueryMode MetricResult RangeQueryOpt SearchQuery]]
             [schema.core :as s]))
 
 (def search-options [:sort_by
@@ -33,6 +34,12 @@
 
 (s/defschema SourcableEntityFilterParams
   {(s/optional-key :source) s/Str})
+
+(s/defschema SearchableEntityParams
+  {(s/optional-key :query) s/Str
+
+   (s/optional-key :query_mode)
+   (describe FullTextQueryMode "Elasticsearch Fulltext Query Mode. Defaults to query_string")})
 
 (s/defschema PagingParams
   "A schema defining the accepted paging and sorting related query parameters."

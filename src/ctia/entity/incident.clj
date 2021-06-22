@@ -1,44 +1,32 @@
 (ns ctia.entity.incident
-  (:require [clj-momo.lib.clj-time.core :as time]
-            [ctia.lib.compojure.api.core :refer [POST routes]]
-            [ctia.domain.entities
-             :refer [default-realize-fn un-store with-long-id]]
-            [ctia.entity.feedback.graphql-schemas :as feedback]
-            [ctia.entity.relationship.graphql-schemas :as relationship-graphql]
-            [ctia.flows.crud :as flows]
-            [ctia.http.routes
-             [common
-              :refer [BaseEntityFilterParams
-                      PagingParams
-                      SourcableEntityFilterParams
-                      wait_for->refresh]
-              :as routes.common]
-             [crud :refer [services->entity-crud-routes]]]
-            [ctia.schemas
-             [core :refer [APIHandlerServices def-acl-schema def-stored-schema]]
-             [sorting
-              :refer [default-entity-sort-fields describable-entity-sort-fields
-                      sourcable-entity-sort-fields]]]
-            [ctia.schemas.graphql
-             [flanders :as flanders]
-             [helpers :as g]
-             [pagination :as pagination]
-             [sorting :as graphql-sorting]]
-            [ctia.store :refer [read-record update-record]]
-            [ctia.stores.es
-             [mapping :as em]
-             [store :refer [def-es-store]]]
-            [ctim.schemas
-             [incident :as is]
-             [vocabularies :as vocs]]
-            [flanders
-             [schema :as fs]
-             [utils :as fu]]
-            [ring.swagger.schema :refer [describe]]
-            [ring.util.http-response :refer [not-found ok]]
-            [schema-tools.core :as st]
-            [schema.core :as s]
-            [ctia.schemas.graphql.ownership :as go]))
+  (:require
+   [clj-momo.lib.clj-time.core :as time]
+   [ctia.domain.entities
+    :refer [default-realize-fn un-store with-long-id]]
+   [ctia.entity.feedback.graphql-schemas :as feedback]
+   [ctia.entity.relationship.graphql-schemas :as relationship-graphql]
+   [ctia.flows.crud :as flows]
+   [ctia.http.routes.common :as routes.common]
+   [ctia.http.routes.crud :refer [services->entity-crud-routes]]
+   [ctia.lib.compojure.api.core :refer [POST routes]]
+   [ctia.schemas.core :refer [APIHandlerServices def-acl-schema def-stored-schema]]
+   [ctia.schemas.graphql.flanders :as flanders]
+   [ctia.schemas.graphql.helpers :as g]
+   [ctia.schemas.graphql.ownership :as go]
+   [ctia.schemas.graphql.pagination :as pagination]
+   [ctia.schemas.graphql.sorting :as graphql-sorting]
+   [ctia.schemas.sorting :refer [default-entity-sort-fields describable-entity-sort-fields sourcable-entity-sort-fields]]
+   [ctia.store :refer [read-record update-record]]
+   [ctia.stores.es.mapping :as em]
+   [ctia.stores.es.store :refer [def-es-store]]
+   [ctim.schemas.incident :as is]
+   [ctim.schemas.vocabularies :as vocs]
+   [flanders.schema :as fs]
+   [flanders.utils :as fu]
+   [ring.swagger.schema :refer [describe]]
+   [ring.util.http-response :refer [not-found ok]]
+   [schema-tools.core :as st]
+   [schema.core :as s]))
 
 (def incident-bundle-default-limit 1000)
 
@@ -122,7 +110,7 @@
                                            (:id %)
                                            %
                                            identity-map
-                                           (wait_for->refresh wait_for)))
+                                           (routes.common/wait_for->refresh wait_for)))
                          :long-id-fn #(with-long-id % services)
                          :entity-type :incident
                          :entity-id id
@@ -194,26 +182,26 @@
 
 (s/defschema IncidentSearchParams
   (st/merge
-   PagingParams
-   BaseEntityFilterParams
-   SourcableEntityFilterParams
+   routes.common/PagingParams
+   routes.common/BaseEntityFilterParams
+   routes.common/SourcableEntityFilterParams
+   routes.common/SearchableEntityParams
    IncidentFieldsParam
    (st/optional-keys
-    {:query s/Str
-     :confidence s/Str
-     :status s/Str
+    {:confidence       s/Str
+     :status           s/Str
      :discovery_method s/Str
-     :intended_effect s/Str
-     :categories s/Str
-     :sort_by incident-sort-fields
-     :assignees s/Str
+     :intended_effect  s/Str
+     :categories       s/Str
+     :sort_by          incident-sort-fields
+     :assignees        s/Str
      :promotion_method s/Str})))
 
 (def IncidentGetParams IncidentFieldsParam)
 
 (s/defschema IncidentByExternalIdQueryParams
   (st/merge
-   PagingParams
+   routes.common/PagingParams
    IncidentFieldsParam))
 
 (s/defn incident-routes [services :- APIHandlerServices]
@@ -221,29 +209,29 @@
    (incident-additional-routes services)
    (services->entity-crud-routes
     services
-    {:entity :incident
-     :new-schema NewIncident
-     :entity-schema Incident
-     :get-schema PartialIncident
-     :get-params IncidentGetParams
-     :list-schema PartialIncidentList
-     :search-schema PartialIncidentList
-     :patch-schema PartialNewIncident
-     :external-id-q-params IncidentByExternalIdQueryParams
-     :search-q-params IncidentSearchParams
-     :new-spec :new-incident/map
-     :can-patch? true
-     :can-aggregate? true
-     :realize-fn realize-incident
-     :get-capabilities :read-incident
-     :post-capabilities :create-incident
-     :put-capabilities :create-incident
-     :patch-capabilities :create-incident
-     :delete-capabilities :delete-incident
-     :search-capabilities :search-incident
+    {:entity                   :incident
+     :new-schema               NewIncident
+     :entity-schema            Incident
+     :get-schema               PartialIncident
+     :get-params               IncidentGetParams
+     :list-schema              PartialIncidentList
+     :search-schema            PartialIncidentList
+     :patch-schema             PartialNewIncident
+     :external-id-q-params     IncidentByExternalIdQueryParams
+     :search-q-params          IncidentSearchParams
+     :new-spec                 :new-incident/map
+     :can-patch?               true
+     :can-aggregate?           true
+     :realize-fn               realize-incident
+     :get-capabilities         :read-incident
+     :post-capabilities        :create-incident
+     :put-capabilities         :create-incident
+     :patch-capabilities       :create-incident
+     :delete-capabilities      :delete-incident
+     :search-capabilities      :search-incident
      :external-id-capabilities :read-incident
-     :histogram-fields incident-histogram-fields
-     :enumerable-fields incident-enumerable-fields})))
+     :histogram-fields         incident-histogram-fields
+     :enumerable-fields        incident-enumerable-fields})))
 
 (def IncidentType
   (let [{:keys [fields name description]}
@@ -277,22 +265,21 @@
     :search-incident})
 
 (def incident-entity
-  {:route-context "/incident"
-   :tags ["Incident"]
-   :entity :incident
-   :plural :incidents
-   :new-spec :new-incident/map
-   :schema Incident
-   :partial-schema PartialIncident
-   :partial-list-schema PartialIncidentList
-   :new-schema NewIncident
-   :stored-schema StoredIncident
+  {:route-context         "/incident"
+   :tags                  ["Incident"]
+   :entity                :incident
+   :plural                :incidents
+   :new-spec              :new-incident/map
+   :schema                Incident
+   :partial-schema        PartialIncident
+   :partial-list-schema   PartialIncidentList
+   :new-schema            NewIncident
+   :stored-schema         StoredIncident
    :partial-stored-schema PartialStoredIncident
-   :realize-fn realize-incident
-   :es-store ->IncidentStore
-   :es-mapping incident-mapping
-   :services->routes (routes.common/reloadable-function
-                       incident-routes)
-   :capabilities capabilities
-   :fields incident-fields
-   :sort-fields incident-fields})
+   :realize-fn            realize-incident
+   :es-store              ->IncidentStore
+   :es-mapping            incident-mapping
+   :services->routes      (routes.common/reloadable-function incident-routes)
+   :capabilities          capabilities
+   :fields                incident-fields
+   :sort-fields           incident-fields})

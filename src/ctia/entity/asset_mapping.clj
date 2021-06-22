@@ -106,10 +106,10 @@
    routes.common/PagingParams
    routes.common/BaseEntityFilterParams
    routes.common/SourcableEntityFilterParams
+   routes.common/SearchableEntityParams
    AssetMappingFieldsParam
    (st/optional-keys
-    {:query     s/Str
-     :sort_by   asset-mapping-sort-fields
+    {:sort_by   asset-mapping-sort-fields
      :asset_ref s/Str})))
 
 (def asset-mapping-histogram-fields

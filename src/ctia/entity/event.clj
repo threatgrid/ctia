@@ -1,48 +1,40 @@
 (ns ctia.entity.event
   (:require
-   [ctia.entity.event.store
-    :refer [->EventStore]]
+   [clj-momo.lib.clj-time.core :as t]
+   [ctia.domain.entities :as ent]
+   [ctia.entity.event.schemas
+    :refer
+    [Event EventBucket PartialEvent PartialEventList]]
+   [ctia.entity.event.store :refer [->EventStore]]
+   [ctia.http.routes.common :as routes.common]
+   [ctia.http.routes.crud :refer [services->entity-crud-routes]]
    [ctia.lib.compojure.api.core :refer [GET routes]]
+   [ctia.schemas.core :refer [APIHandlerServices]]
+   [ctia.store :refer [list-all-pages list-events]]
+   [ctia.stores.es.mapping :as em]
    [ring.util.http-response :refer [ok]]
    [schema-tools.core :as st]
-   [schema.core :as s]
-   [clj-momo.lib.clj-time.core :as t]
-   [ctia.entity.event.schemas
-    :refer [Event PartialEvent PartialEventList EventBucket]]
-   [ctia.http.routes
-    [common :refer [BaseEntityFilterParams PagingParams]
-     :as routes.common]
-    [crud :refer [services->entity-crud-routes]]]
-   [ctia.lib.pagination :refer [list-response-schema]]
-   [ctia.schemas.core :refer [APIHandlerServices]]
-   [ctia.schemas.sorting :as sorting]
-   [ctia.stores.es
-    [crud :as crud]
-    [mapping :as em]]
-   [ctia.store :refer [list-events list-all-pages]]
-   [ctia.domain.entities :as ent]
-   [ctia.properties :as p]
-   [clojure.set :as set]))
+   [schema.core :as s]))
 
 (def event-mapping
   {"event"
    {:dynamic false
     :properties
-    {:owner em/token
-     :groups em/token
-     :tlp em/token
-     :timestamp em/ts
-     :entity {:type "object"
-              :properties {:id em/token
-                           :source_ref em/token
-                           :target_ref em/token}}
-     :id em/token
-     :event_type em/token
+    {:owner       em/token
+     :groups      em/token
+     :tlp         em/token
+     :timestamp   em/ts
+     :entity      {:type "object"
+                   :properties {:id em/token
+                                :source_ref em/token
+                                :target_ref em/token}}
+     :id          em/token
+     :event_type  em/token
      :http-params {:enabled false
                    :type "object"}
-     :type em/token
-     :fields {:enabled false
-              :type "object"}}}})
+     :type        em/token
+     :fields      {:enabled false
+                   :type "object"}}}})
 
 (def event-fields
   [:owner
@@ -62,8 +54,9 @@
 (s/defschema EventSearchParams
   (st/merge
    {(s/optional-key :query) s/Str}
-   PagingParams
-   BaseEntityFilterParams
+   routes.common/PagingParams
+   routes.common/BaseEntityFilterParams
+   routes.common/SearchableEntityParams
    EventFieldsParam))
 
 (def EventGetParams EventFieldsParam)
@@ -168,18 +161,18 @@
      :date-field :timestamp})))
 
 (def event-entity
-  {:new-spec map?
-   :route-context "/event"
-   :tags ["Event"]
-   :schema Event
-   :stored-schema Event
-   :partial-schema PartialEvent
+  {:new-spec              map?
+   :route-context         "/event"
+   :tags                  ["Event"]
+   :schema                Event
+   :stored-schema         Event
+   :partial-schema        PartialEvent
    :partial-stored-schema PartialEvent
-   :partial-list-schema PartialEventList
-   :no-bulk? true
-   :entity :event
-   :plural :events
-   :es-store ->EventStore
-   :es-mapping event-mapping
-   :services->routes (routes.common/reloadable-function
-                       event-routes)})
+   :partial-list-schema   PartialEventList
+   :no-bulk?              true
+   :entity                :event
+   :plural                :events
+   :es-store              ->EventStore
+   :es-mapping            event-mapping
+   :services->routes      (routes.common/reloadable-function
+                           event-routes)})

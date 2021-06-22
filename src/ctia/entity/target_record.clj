@@ -1,15 +1,16 @@
 (ns ctia.entity.target-record
-  (:require [ctia.domain.entities :refer [default-realize-fn]]
-            [ctia.schemas.core :refer [APIHandlerServices def-acl-schema def-stored-schema]]
-            [ctia.schemas.sorting :as sorting]
-            [ctia.stores.es.mapping :as em]
-            [ctia.stores.es.store :refer [def-es-store]]
-            [ctim.schemas.target-record :as target-record-schema]
-            [schema-tools.core :as st]
-            [ctia.http.routes.crud :refer [services->entity-crud-routes]]
-            [ctia.http.routes.common :as routes.common]
-            [flanders.utils :as fu]
-            [schema.core :as s]))
+  (:require
+   [ctia.domain.entities :refer [default-realize-fn]]
+   [ctia.schemas.core :refer [APIHandlerServices def-acl-schema def-stored-schema]]
+   [ctia.schemas.sorting :as sorting]
+   [ctia.stores.es.mapping :as em]
+   [ctia.stores.es.store :refer [def-es-store]]
+   [ctim.schemas.target-record :as target-record-schema]
+   [schema-tools.core :as st]
+   [ctia.http.routes.crud :refer [services->entity-crud-routes]]
+   [ctia.http.routes.common :as routes.common]
+   [flanders.utils :as fu]
+   [schema.core :as s]))
 
 (def-acl-schema TargetRecord
   target-record-schema/TargetRecord
@@ -92,10 +93,10 @@
    routes.common/PagingParams
    routes.common/BaseEntityFilterParams
    routes.common/SourcableEntityFilterParams
+   routes.common/SearchableEntityParams
    TargetRecordFieldsParam
    (st/optional-keys
-    {:query           s/Str
-     :sort_by         target-record-sort-fields})))
+    {:sort_by target-record-sort-fields})))
 
 (def target-record-histogram-fields
   [:timestamp
