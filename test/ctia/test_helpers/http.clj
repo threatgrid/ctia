@@ -1,53 +1,112 @@
 (ns ctia.test-helpers.http
+  (:refer-clojure :exclude [get])
   (:require
-   [clojure.pprint :refer [pprint]]
    [clojure.string :as string]
-   [clj-momo.test-helpers.http :refer [post]]
-   [clj-momo.test-helpers.http-assert-1 :as mthh]
+   [cheshire.core :as json]
    [ctia.schemas.core :refer [APIHandlerServices HTTPShowServices]]
    [ctia.schemas.utils :as csu]
-   [ctia.test-helpers.core :as th]
+   [clj-http.client :as client]
    [puppetlabs.trapperkeeper.app :as app]
-   [schema.core :as s]))
+   [schema.core :as s])
+  (:import java.io.ByteArrayInputStream))
 
 (def api-key "45c1f5e3f05d0")
+
+(defn local-url [path port]
+  (format "http://localhost:%d/%s" port path))
+
+(defn string->input-stream
+  [^String s]
+  (-> s
+      (.getBytes)
+      (ByteArrayInputStream.)))
+
+(defn encode-body
+  [body]
+  (string->input-stream
+   (json/generate-string body)))
+
+(defn get [path port & {:as options}]
+  (let [options
+        (merge {:as :json
+                :throw-exceptions false
+                :socket-timeout 10000
+                :conn-timeout 10000}
+               options)
+
+        response
+        (client/get (local-url path port) options)]
+    ;; assoc parsed-body for backward compatibiity
+    (assoc response :parsed-body (:body response))))
+
+(defn post [path port & {:as opts}]
+  (let [{:keys [body] :as options}
+        (merge {:content-type :json
+                :as :json
+                :throw-exceptions false
+                :socket-timeout 10000
+                :conn-timeout 10000}
+               opts)
+        response
+        (client/post (local-url path port)
+                   (-> options
+                       (cond-> body (update :body encode-body))))]
+    ;; assoc parsed-body for backward compatibiity
+    (assoc response :parsed-body (:body response))))
+
+(defn delete [path port & {:as options}]
+  (client/delete (local-url path port)
+               (merge {:throw-exceptions false}
+                      options)))
+
+(defn put [path port & {:as options}]
+  (let [{:keys [body]
+         :as options}
+        (merge {:content-type :json
+                :as :json
+                :throw-exceptions false
+                :socket-timeout 10000
+                :conn-timeout 10000}
+               options)
+
+        response
+        (client/put (local-url path port)
+                  (-> options
+                      (cond-> body (update :body encode-body))))]
+    ;; assoc parsed-body for backward compatibiity
+    (assoc response :parsed-body (:body response))))
+
+(defn patch [path port & {:as options}]
+  (let [{:keys [body]
+         :as options}
+        (merge {:content-type :json
+                :as :json
+                :throw-exceptions false
+                :socket-timeout 10000
+                :conn-timeout 10000}
+               options)
+
+        response
+        (client/patch (local-url path port)
+                    (-> options
+                        (cond-> body (update :body encode-body))))]
+    (assoc response :parsed-body (:body response))))
+
+
+(defn with-port-fn
+  "Helper to compose a fn that knows how to lookup an HTTP port with
+  an HTTP method fn (from above)
+  Example:
+    (def post (http/with-port-fn get-http-port http/post))"
+  [port-fn http-fn]
+  (fn [path & options]
+    (apply (partial http-fn path (port-fn)) options)))
 
 (defn doc-id->rel-url
   "given a doc id (url) make a relative url for test queries"
   [doc-id]
   (when doc-id
     (string/replace doc-id #".*(?=ctia)" "")))
-
-;; copied from ctia.test-helpers.http/assert-post to use Authorization header
-;; instead of api-key
-(defn assert-post*
-  "Like test-post, but instead of using (is (= ...)), it only asserts
-   that the status is 200.  Useful when the post is for test setup and
-   the path is not the subject under test."
-  [path port api-key new-entity]
-  (let [{status :status
-         result :parsed-body
-         :as response}
-        (post path
-              port
-              :body new-entity
-              :headers {"Authorization" api-key})]
-    (when (not= 201 status)
-      (throw (ex-info (str "Expected status to be 201 but was " status
-                           " for " path ":\n"
-                           (with-out-str (pprint response)))
-                      {:path path
-                       :port port
-                       :new-entity new-entity
-                      :response response})))
-    result))
-
-(defn assert-post [app & args]
-  (apply (mthh/with-port-fn-and-api-key
-           (partial th/get-http-port app)
-           api-key
-           assert-post*)
-         args))
 
 (s/defn app->APIHandlerServices :- APIHandlerServices [app]
   (-> app

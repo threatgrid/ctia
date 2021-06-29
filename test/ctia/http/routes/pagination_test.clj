@@ -1,13 +1,11 @@
 (ns ctia.http.routes.pagination-test
-  (:require [clj-momo.test-helpers.core :as mth]
-            [clojure.string :as str]
+  (:require [clojure.string :as str]
             [clojure.spec.alpha :as cs]
             [clojure.spec.gen.alpha :as csg]
             [clojure.test :refer [deftest testing use-fixtures]]
             [clojure.test.check.generators :as gen]
             [com.gfredericks.test.chuck.clojure-test :refer [checking]]
             [ctia.auth.capabilities :refer [all-capabilities]]
-            [ctia.entity.target-record :refer [target-record-fields]]
             [ctia.properties :as p]
             [ctia.entity.entities :as entities]
             [ctia.entity.feed-test :refer [new-feed-maximal]]
@@ -15,19 +13,19 @@
             [ctia.test-helpers.fake-whoami-service :as whoami-helpers]
             [ctia.test-helpers.field-selection :as field-selection]
             [ctia.test-helpers
-             [core :as helpers :refer [url-id]]
-             [http :as http :refer [app->HTTPShowServices assert-post]]
+             [core :as helpers :refer [url-id assert-post]]
+             [http :as http :refer [app->HTTPShowServices]]
              [pagination :as pagination
               :refer [pagination-test
                       pagination-test-no-sort]]
              [store :as store :refer [test-for-each-store-with-app]]]
             [ctim.domain.id :as id]
-            [ctim.examples.target-records :refer [new-target-record-maximal]]
+            [schema.test :refer [validate-schemas]]
             [schema.core :as s]
             [schema-tools.core :as st]))
 
 (use-fixtures :once
-  mth/fixture-schema-validation
+  validate-schemas
   helpers/fixture-allow-all-auth
   whoami-helpers/fixture-server)
 
@@ -191,7 +189,7 @@
                           sort)
            _ (assert (= 3 (count test-cases))
                      (mapv first test-cases))]
-       (doseq [[entity {:keys [fields plural endpoint new-maximal snake-plural sort-fields]} :as test-case] test-cases]
+       (doseq [[entity {:keys [fields endpoint new-maximal snake-plural sort-fields]} :as test-case] test-cases]
          ;; progress reporting for slow test
          (println (str "Testing pagination: " entity))
          ;; ensure good coverage via non-default fields
@@ -227,10 +225,11 @@
        {;; :seed ...
         :num-tests 5}
        [;; note: may check same entity multiple times
-        [entity {:keys [fields plural endpoint new-maximal snake-plural sort-fields]}] (-> (pagination+field-selection-test-cases)
-                                                                                           sort
-                                                                                           gen/elements
-                                                                                           gen/no-shrink)
+        [entity {:keys [fields plural endpoint new-maximal snake-plural sort-fields]}]
+        (-> (pagination+field-selection-test-cases)
+            sort
+            gen/elements
+            gen/no-shrink)
         sample-size (gen/large-integer* {:min 30 :max 345})]
        ;; progress reporting for slow test
        (println (str "Testing pagination: " entity))

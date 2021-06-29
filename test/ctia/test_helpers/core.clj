@@ -1,28 +1,26 @@
 (ns ctia.test-helpers.core
   (:require
+   [clojure.pprint :refer [pprint]]
    [clj-momo.lib.clj-time.coerce :as mcljtime-coerce]
    [clj-momo.lib.clj-time.core :as mcljtime]
    [clj-momo.lib.time :as time]
    [clj-momo.properties :refer [coerce-properties read-property-files]]
-   [clj-momo.test-helpers.http :as mthh]
+   [ctia.test-helpers.http :as mthh]
    [clojure.spec.alpha :as cs]
    [clojure.string :as str]
    [clojure.test :as test]
-   [clojure.test.check.generators :as gen]
    [clojure.tools.logging :as log]
    [clojure.tools.logging.test :as tlog]
    [clojure.walk :refer [prewalk]]
    [ctia.entity.entities :as entities]
    [ctia.flows.crud :as crud]
    [ctia.init :as init]
-   [ctia.lib.utils :as utils]
    [ctia.properties :as p :refer [PropertiesSchema]]
    [ctia.schemas.core :as schemas :refer
     [GetEntitiesServices HTTPShowServices Port]]
    [ctia.schemas.utils :as csu]
    [ctia.store :as store]
    [ctim.domain.id :as id]
-   [ctim.generators.common :as cgc]
    [flanders.spec :as fs]
    [flanders.utils :as fu]
    [puppetlabs.trapperkeeper.app :as app]
@@ -528,3 +526,24 @@
   (into {}
         (filter (fn [e] (= entity-key (:plural (val e)))))
         (entities/all-entities)))
+
+(defn assert-post
+  "Like test-post, but instead of using (is (= ...)), it only asserts
+   that the status is 201.  Useful when the post is for test setup and
+   the path is not the subject under test."
+  [app path new-entity]
+  (let [{status :status
+         result :parsed-body
+         :as response}
+        (POST app
+              path
+              :body new-entity
+              :headers {"Authorization" mthh/api-key})]
+    (when (not= 201 status)
+      (throw (ex-info (str "Expected status to be 201 but was " status
+                           " for " path ":\n"
+                           (with-out-str (pprint response)))
+                      {:path path
+                       :new-entity new-entity
+                      :response response})))
+    result))
