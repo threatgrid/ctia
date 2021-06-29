@@ -1,6 +1,5 @@
 (ns ctia.http.handler.static-auth-test
-  (:require [clj-momo.test-helpers.core :as mth]
-            [ctia.domain.entities :refer [schema-version]]
+  (:require [ctia.domain.entities :refer [schema-version]]
             [ctia.test-helpers
              [core :as helpers :refer [POST GET]]
              [es :as es-helpers]]
@@ -73,7 +72,7 @@
                    (str "ctia/judgement/" (:short-id judgement-id))
                    :headers {"Authorization" "tearbending"})]
           (is (= 200 status))
-          (is (deep=
+          (is (=
                {:id (:id judgement)
                 :type "judgement"
                 :observable {:value "1.2.3.4"
@@ -81,7 +80,7 @@
                 :disposition 2
                 :disposition_name "Malicious"
                 :source "test"
-                :timestamp #inst "2042-01-01T00:00:00.000Z"
+                :timestamp "2042-01-01T00:00:00.000Z"
                 :tlp "green"
                 :schema_version schema-version
                 :priority 100
@@ -89,8 +88,8 @@
                 :confidence "Low"
                 :groups ["kitara"]
                 :owner "kitara"
-                :valid_time {:start_time #inst "2016-02-11T00:00:00.000-00:00"
-                             :end_time #inst "2016-03-11T00:00:00.000-00:00"}}
+                :valid_time {:start_time "2016-02-11T00:00:00.000Z"
+                             :end_time "2016-03-11T00:00:00.000Z"}}
                get-judgement)))
         (testing "fails with any key"
           (let [{status :status}
