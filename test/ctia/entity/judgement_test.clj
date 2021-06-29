@@ -6,21 +6,14 @@
             [ctia.entity.judgement :as sut]
             [ctia.entity.judgement.schemas
              :refer
-             [judgement-fields
-              judgement-sort-fields
-              judgement-enumerable-fields
-              judgement-histogram-fields]]
-            [ctia.test-helpers
-             [access-control :refer [access-control-test]]
-             [auth :refer [all-capabilities]]
-             [core :as helpers :refer [GET POST]]
-             [crud :refer [entity-crud-test]]
-             [aggregate :refer [test-metric-routes]]
-             [fake-whoami-service :as whoami-helpers]
-             [field-selection :refer [field-selection-tests]]
-             [http :refer [doc-id->rel-url]]
-             [pagination :refer [pagination-test]]
-             [store :refer [test-for-each-store-with-app]]]
+             [judgement-enumerable-fields judgement-histogram-fields]]
+            [ctia.test-helpers.access-control :refer [access-control-test]]
+            [ctia.test-helpers.aggregate :refer [test-metric-routes]]
+            [ctia.test-helpers.auth :refer [all-capabilities]]
+            [ctia.test-helpers.core :as helpers :refer [GET POST]]
+            [ctia.test-helpers.crud :refer [entity-crud-test]]
+            [ctia.test-helpers.fake-whoami-service :as whoami-helpers]
+            [ctia.test-helpers.store :refer [test-for-each-store-with-app]]
             [ctim.examples.judgements :as ex]))
 
 (use-fixtures :once (join-fixtures [mth/fixture-schema-validation
@@ -246,13 +239,13 @@
                :disposition_name "Malicious"
                :source "test"
                :priority 100
-               :timestamp #inst "2042-01-01T00:00:00.000Z"
+               :timestamp "2042-01-01T00:00:00.000Z"
                :severity "High"
                :confidence "Low"
                :tlp "green"
                :schema_version schema-version
-               :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
-                            :end_time #inst "2525-01-01T00:00:00.000-00:00"}}
+               :valid_time {:start_time "2016-02-11T00:40:48.212Zz"
+                            :end_time "2525-01-01T00:00:00.000Z"}}
               (dissoc judgement
                       :id
                       :groups ["foogroup"]
@@ -281,15 +274,15 @@
                  :disposition_name "Malicious"
                  :source "test"
                  :priority 100
-                 :timestamp #inst "2042-01-01T00:00:00.000Z"
+                 :timestamp "2042-01-01T00:00:00.000Z"
                  :severity "High"
                  :confidence "Low"
                  :tlp "green"
                  :schema_version schema-version
                  :owner "foouser"
                  :groups ["foogroup"]
-                 :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
-                              :end_time #inst "2525-01-01T00:00:00.000-00:00"}}
+                 :valid_time {:start_time "2016-02-11T00:40:48.212Z"
+                              :end_time "2525-01-01T00:00:00.000Z"}}
                 (dissoc judgement
                         :id)))))
 
@@ -316,15 +309,15 @@
                :disposition_name "Unknown"
                :source "test"
                :priority 100
-               :timestamp #inst "2042-01-01T00:00:00.000Z"
+               :timestamp "2042-01-01T00:00:00.000Z"
                :severity "High"
                :confidence "Low"
                :tlp "green"
                :owner "foouser"
                :groups ["foogroup"]
                :schema_version schema-version
-               :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
-                            :end_time #inst "2525-01-01T00:00:00.000-00:00"}}
+               :valid_time {:start_time "2016-02-11T00:40:48.212Z"
+                            :end_time "2525-01-01T00:00:00.000Z"}}
               (dissoc judgement
                       :id)))))
 
@@ -354,7 +347,7 @@
                            :priority 100
                            :severity "High"
                            :confidence "Low"
-                           :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"}}}
+                           :valid_time {:start_time "2016-02-11T00:40:48.212Z"}}}
               judgement))))
 
      (testing "POST a judgement with mismatched disposition/disposition_name"
@@ -382,7 +375,7 @@
                              :priority 100
                              :severity "High"
                              :confidence "Low"
-                             :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"}}}
+                             :valid_time {:start_time "2016-02-11T00:40:48.212Z"}}}
                 judgement)))))))
 
 (deftest test-judgement-routes-access-control
