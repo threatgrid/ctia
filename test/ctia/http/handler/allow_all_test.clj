@@ -1,6 +1,5 @@
 (ns ctia.http.handler.allow-all-test
-  (:require [clj-momo.test-helpers.core :as mth]
-            [ctia.domain.entities :refer [schema-version]]
+  (:require [ctia.domain.entities :refer [schema-version]]
             [ctia.test-helpers
              [core :as helpers :refer [POST GET]]
              [es :as es-helpers]]
@@ -34,8 +33,9 @@
 
           judgement-id
           (id/long-id->id (:id judgement))]
+      (clojure.pprint/pprint judgement)
       (is (= 201 status))
-      (is (deep=
+      (is (=
            {:type "judgement"
             :observable {:value "1.2.3.4"
                          :type "ip"}
@@ -45,13 +45,13 @@
             :tlp "green"
             :schema_version schema-version
             :priority 100
-            :timestamp #inst "2042-01-01T00:00:00.000Z"
+            :timestamp "2042-01-01T00:00:00.000Z"
             :severity "High"
             :confidence "Low"
             :groups ["Administrators"]
             :owner "Unknown"
-            :valid_time {:start_time #inst "2016-02-11T00:00:00.000-00:00"
-                         :end_time #inst "2016-03-11T00:00:00.000-00:00"}}
+            :valid_time {:start_time "2016-02-11T00:00:00.000Z"
+                         :end_time "2016-03-11T00:00:00.000Z"}}
            (dissoc judgement :id)))
 
       (testing "GET /ctia/judgement"
@@ -60,7 +60,7 @@
               (GET app
                    (str "ctia/judgement/" (:short-id judgement-id)))]
           (is (= 200 status))
-          (is (deep=
+          (is (=
                {:id (:id judgement)
                 :type "judgement"
                 :observable {:value "1.2.3.4"
@@ -71,11 +71,11 @@
                 :tlp "green"
                 :schema_version schema-version
                 :priority 100
-                :timestamp #inst "2042-01-01T00:00:00.000Z"
+                :timestamp "2042-01-01T00:00:00.000Z"
                 :severity "High"
                 :confidence "Low"
                 :groups ["Administrators"]
                 :owner "Unknown"
-                :valid_time {:start_time #inst "2016-02-11T00:00:00.000-00:00"
-                             :end_time #inst "2016-03-11T00:00:00.000-00:00"}}
+                :valid_time {:start_time "2016-02-11T00:00:00.000Z"
+                             :end_time "2016-03-11T00:00:00.000Z"}}
                get-judgement)))))))
