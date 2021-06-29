@@ -49,7 +49,9 @@
                                        get-in-config)
          {:ConfigService {:get-in-config get-in-config}})))))
 
-(defn fixture-delete-store-indexes
+(defn ^{:deprecated "1.1"
+        :superseded-by "ctia.test-helpers.core/stop-and-cleanup"}
+  fixture-delete-store-indexes
   "walk through all the es stores delete each store indexes"
   [t]
   (let [app (h/get-current-app)
