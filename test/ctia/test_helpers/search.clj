@@ -47,12 +47,13 @@
          :query-params query-params)))
 
 (defn search-text
-  [app entity text]
-  (search-raw app entity {:query text}))
+  [app entity text & [query-params]]
+  (search-raw app entity (merge {:query text}
+                                query-params)))
 
 (defn search-ids
-  [app entity query]
-  (->> (search-text app entity query)
+  [app entity query & [query-params]]
+  (->> (search-text app entity query query-params)
        :parsed-body
        (map :id)
        set))
@@ -152,7 +153,7 @@
       (is (empty? (search-ids app entity "wor"))))
 
     ;; test stop word filtering
-    #_(is (= matched-ids (search-ids app entity "the word"))
+    (is (= matched-ids (search-ids app entity "the word" {:search_fields ["description"]}))
         "\"the\" is not in text but should be filtered out from query as a stop word")
     (is (empty? (search-ids app entity "description:\"property that attack\""))
         "search_quote analyzer in describabble fields shall preserve stop words")
