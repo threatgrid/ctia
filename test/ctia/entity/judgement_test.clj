@@ -1,6 +1,5 @@
 (ns ctia.entity.judgement-test
   (:require [clj-momo.lib.clj-time.coerce :as tc]
-            [clj-momo.test-helpers.core :as mth]
             [clojure.test :refer [deftest is join-fixtures testing use-fixtures]]
             [ctia.domain.entities :refer [schema-version]]
             [ctia.entity.judgement :as sut]
@@ -14,9 +13,10 @@
             [ctia.test-helpers.crud :refer [entity-crud-test]]
             [ctia.test-helpers.fake-whoami-service :as whoami-helpers]
             [ctia.test-helpers.store :refer [test-for-each-store-with-app]]
-            [ctim.examples.judgements :as ex]))
+            [ctim.examples.judgements :as ex]
+            [schema.test :refer [validate-schemas]]))
 
-(use-fixtures :once (join-fixtures [mth/fixture-schema-validation
+(use-fixtures :once (join-fixtures [validate-schemas
                                     helpers/fixture-properties:cors
                                     whoami-helpers/fixture-server]))
 
@@ -108,7 +108,8 @@
     (testing "no Authorization"
       (let [{body :parsed-body status :status}
             (GET app
-                 (str "ctia/judgement/" (:short-id judgement-id)))]
+                 (str "ctia/judgement/" (:short-id judgement-id))
+                 :accept :edn)]
         (is (= 401 status))
         (is (= {:message "Only authenticated users allowed"
                 :error :not_authenticated}
@@ -118,6 +119,7 @@
       (let [{body :parsed-body status :status}
             (GET app
                  (str "ctia/judgement/" (:short-id judgement-id))
+                 :accept :edn
                  :headers {"Authorization" "1111111111111"})]
         (is (= 401 status))
         (is (= {:message "Only authenticated users allowed"
@@ -128,6 +130,7 @@
       (let [{body :parsed-body status :status}
             (GET app
                  (str "ctia/judgement/" (:short-id judgement-id))
+                 :accept :edn
                  :headers {"Authorization" "2222222222222"})]
         (is (= 403 status))
         (is (= {:message "Missing capability",
@@ -136,7 +139,8 @@
                 :error :missing_capability}
                body)))))
   (testing "POST /ctia/judgement/:id/expire revokes"
-    (let [fixed-now (-> "2020-12-31" tc/from-string tc/to-date)]
+    (let [fixed-now-str "2020-12-31T00:00:00.000Z"
+          fixed-now (tc/to-date fixed-now-str)]
       (helpers/fixture-with-fixed-time
         fixed-now
         (fn []
@@ -152,12 +156,12 @@
                   :headers {"Authorization" "45c1f5e3f05d0"})]
             (is (= 200 (:status response))
                 "POST ctia/judgement/:id/expire succeeds")
-            (is (= fixed-now (:end_time valid_time))
+            (is (= fixed-now-str (:end_time valid_time))
                 ":valid_time correctly reset")
             (is (.endsWith reason (str " " expiry-reason))
                 (str ":reason correctly appended: " (pr-str reason))))))))
   (testing "POST /ctia/judgement/:id/expire requires reason"
-    (let [fixed-now (-> "2020-12-31" tc/from-string tc/to-date)]
+    (let [fixed-now (tc/to-date "2020-12-31")]
       (helpers/fixture-with-fixed-time
         fixed-now
         (fn []
