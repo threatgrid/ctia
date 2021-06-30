@@ -5,16 +5,18 @@
             [ctia.entity.judgement :as sut]
             [ctia.entity.judgement.schemas
              :refer
-             [judgement-enumerable-fields judgement-histogram-fields]]
-            [ctia.test-helpers.access-control :refer [access-control-test]]
-            [ctia.test-helpers.aggregate :refer [test-metric-routes]]
-            [ctia.test-helpers.auth :refer [all-capabilities]]
-            [ctia.test-helpers.core :as helpers :refer [GET POST]]
-            [ctia.test-helpers.crud :refer [entity-crud-test]]
-            [ctia.test-helpers.fake-whoami-service :as whoami-helpers]
-            [ctia.test-helpers.store :refer [test-for-each-store-with-app]]
-            [ctim.examples.judgements :as ex]
-            [schema.test :refer [validate-schemas]]))
+             [judgement-enumerable-fields
+              judgement-histogram-fields]]
+            [ctia.test-helpers
+             [access-control :refer [access-control-test]]
+             [auth :refer [all-capabilities]]
+             [core :as helpers :refer [GET POST]]
+             [crud :refer [entity-crud-test]]
+             [aggregate :refer [test-metric-routes]]
+             [fake-whoami-service :as whoami-helpers]
+             [store :refer [test-for-each-store-with-app]]]
+            [schema.test :refer [validate-schemas]]
+            [ctim.examples.judgements :as ex]))
 
 (use-fixtures :once (join-fixtures [validate-schemas
                                     helpers/fixture-properties:cors
@@ -136,7 +138,7 @@
                 :error :missing_capability}
                body)))))
   (testing "POST /ctia/judgement/:id/expire revokes"
-    (let [fixed-now (tc/to-date "2020-12-31")]
+    (let [fixed-now (-> "2020-12-31" tc/from-string tc/to-date)]
       (helpers/fixture-with-fixed-time
         fixed-now
         (fn []
@@ -157,7 +159,7 @@
             (is (.endsWith reason (str " " expiry-reason))
                 (str ":reason correctly appended: " (pr-str reason))))))))
   (testing "POST /ctia/judgement/:id/expire requires reason"
-    (let [fixed-now (tc/to-date "2020-12-31")]
+    (let [fixed-now (-> "2020-12-31" tc/from-string tc/to-date)]
       (helpers/fixture-with-fixed-time
         fixed-now
         (fn []
@@ -185,6 +187,7 @@
                                          "baruser"
                                          "bargroup"
                                          "user")
+
      (entity-crud-test
       (into sut/judgement-entity
             {:app app
@@ -238,13 +241,13 @@
                :disposition_name "Malicious"
                :source "test"
                :priority 100
-               :timestamp "2042-01-01T00:00:00.000Z"
+               :timestamp #inst "2042-01-01T00:00:00.000Z"
                :severity "High"
                :confidence "Low"
                :tlp "green"
                :schema_version schema-version
-               :valid_time {:start_time "2016-02-11T00:40:48.212Zz"
-                            :end_time "2525-01-01T00:00:00.000Z"}}
+               :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
+                            :end_time #inst "2525-01-01T00:00:00.000-00:00"}}
               (dissoc judgement
                       :id
                       :groups ["foogroup"]
@@ -273,15 +276,15 @@
                  :disposition_name "Malicious"
                  :source "test"
                  :priority 100
-                 :timestamp "2042-01-01T00:00:00.000Z"
+                 :timestamp #inst "2042-01-01T00:00:00.000Z"
                  :severity "High"
                  :confidence "Low"
                  :tlp "green"
                  :schema_version schema-version
                  :owner "foouser"
                  :groups ["foogroup"]
-                 :valid_time {:start_time "2016-02-11T00:40:48.212Z"
-                              :end_time "2525-01-01T00:00:00.000Z"}}
+                 :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
+                              :end_time #inst "2525-01-01T00:00:00.000-00:00"}}
                 (dissoc judgement
                         :id)))))
 
@@ -308,15 +311,15 @@
                :disposition_name "Unknown"
                :source "test"
                :priority 100
-               :timestamp "2042-01-01T00:00:00.000Z"
+               :timestamp #inst "2042-01-01T00:00:00.000Z"
                :severity "High"
                :confidence "Low"
                :tlp "green"
                :owner "foouser"
                :groups ["foogroup"]
                :schema_version schema-version
-               :valid_time {:start_time "2016-02-11T00:40:48.212Z"
-                            :end_time "2525-01-01T00:00:00.000Z"}}
+               :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
+                            :end_time #inst "2525-01-01T00:00:00.000-00:00"}}
               (dissoc judgement
                       :id)))))
 
@@ -346,7 +349,7 @@
                            :priority 100
                            :severity "High"
                            :confidence "Low"
-                           :valid_time {:start_time "2016-02-11T00:40:48.212Z"}}}
+                           :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"}}}
               judgement))))
 
      (testing "POST a judgement with mismatched disposition/disposition_name"
@@ -374,7 +377,7 @@
                              :priority 100
                              :severity "High"
                              :confidence "Low"
-                             :valid_time {:start_time "2016-02-11T00:40:48.212Z"}}}
+                             :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"}}}
                 judgement)))))))
 
 (deftest test-judgement-routes-access-control
