@@ -2,12 +2,11 @@
   (:refer-clojure :exclude [get])
   (:require
    [clojure.string :as string]
-   [clojure.pprint :refer [pprint]]
    [clojure.edn :as edn]
    [cheshire.core :as json]
    [ctia.schemas.core :refer [APIHandlerServices HTTPShowServices]]
    [ctia.schemas.utils :as csu]
-   [clj-http.client :as client]
+   [clj-http.client :as http]
    [puppetlabs.trapperkeeper.app :as app]
    [schema.core :as s])
   (:import java.io.ByteArrayInputStream))
@@ -33,94 +32,72 @@
 
 (defn parse-body
   [{{content-type "Content-Type"} :headers
-    body :body
-    :as resp}]
-  (try
-    (cond
-      (edn? content-type) (edn/read-string body)
-      (json? content-type) (json/parse-string body)
-      :else body)
-    (catch Exception e
-      (binding [*out* *err*]
-        (println "------- BODY ----------")
-        (pprint body)
-        (println "------- EXCEPTION ----------")
-        (pprint e)))))
-
-(defn with-parsed-body
-  [{:keys [body] :as response}]
-  ;; assoc parsed-body for backward compatibiity
-  (assoc response
-         :parsed-body
-         (if (string? body)
-           (parse-body response)
-           body)))
+    body :body}]
+  (cond
+    (edn? content-type) (edn/read-string body)
+    (json? content-type) (json/parse-string body)
+    :else body))
 
 (defn encode-body
-  [body]
-  (string->input-stream
-   (json/generate-string body)))
+  [body content-type]
+;;  (string->input-stream
+   (cond
+     (edn? content-type) (pr-str body)
+     (json? content-type) (json/generate-string body)
+     :else body))
+
+(def base-opts
+  {:accept :edn
+   :content-type :edn
+   :throw-exceptions false
+   :socket-timeout 10000
+   :conn-timeout 10000})
 
 (defn get [path port & {:as opts}]
-  (let [options
-        (merge {:as :json
-                :throw-exceptions false
-                :socket-timeout 10000
-                :conn-timeout 10000}
-               opts)
+  (let [options (merge base-opts opts)
         response
-        (client/get (local-url path port) options)]
-    (with-parsed-body response)))
+        (http/get (local-url path port)
+                  options)]
+  ;; assoc parsed-body for backward compatibiity
+    (assoc response :parsed-body (parse-body response))))
 
 (defn post [path port & {:as opts}]
-  (let [{:keys [body] :as options}
-        (merge {:content-type :json
-                :as :json
-                :throw-exceptions false
-                :socket-timeout 10000
-                :conn-timeout 10000}
-               opts)
+  (let [{:keys [body content-type]
+         :as options}
+        (merge base-opts opts)
+
         response
-        (client/post (local-url path port)
+        (http/post (local-url path port)
                    (-> options
-                       (cond-> body (update :body encode-body))))]
-    (with-parsed-body response)))
+                       (cond-> body (assoc :body (encode-body body content-type)))))]
+    (assoc response :parsed-body (parse-body response))))
 
 (defn delete [path port & {:as opts}]
-  (client/delete (local-url path port)
-                 (merge {:throw-exceptions false}
-                        opts)))
+  (http/delete (local-url path port)
+               (merge {:throw-exceptions false}
+                      opts)))
 
 (defn put [path port & {:as opts}]
-  (let [{:keys [body]
+  (let [{:keys [body content-type]
          :as options}
-        (merge {:content-type :json
-                :as :json
-                :throw-exceptions false
-                :socket-timeout 10000
-                :conn-timeout 10000}
-               opts)
+        (merge base-opts opts)
 
         response
-        (client/put (local-url path port)
+        (http/put (local-url path port)
                   (-> options
-                      (cond-> body (update :body encode-body))))]
-    (with-parsed-body response)))
+                      (cond-> body (assoc :body (encode-body body content-type)))))]
+    (assoc response :parsed-body (parse-body response))))
 
 (defn patch [path port & {:as opts}]
-  (let [{:keys [body]
+  (let [{:keys [body content-type]
          :as options}
-        (merge {:content-type :json
-                :as :json
-                :throw-exceptions false
-                :socket-timeout 10000
-                :conn-timeout 10000}
-               opts)
+        (merge base-opts opts)
+
         response
-        (client/patch (local-url path port)
+        (http/patch (local-url path port)
                     (-> options
-                        (cond-> body (update :body encode-body))))]
-    (with-parsed-body response)))
+                        (cond-> body (assoc :body (encode-body body content-type)))))]
+    (assoc response :parsed-body (parse-body response))))
 
 (defn with-port-fn
   "Helper to compose a fn that knows how to lookup an HTTP port with

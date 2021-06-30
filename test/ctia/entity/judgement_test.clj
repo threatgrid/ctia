@@ -108,8 +108,7 @@
     (testing "no Authorization"
       (let [{body :parsed-body status :status}
             (GET app
-                 (str "ctia/judgement/" (:short-id judgement-id))
-                 :accept :edn)]
+                 (str "ctia/judgement/" (:short-id judgement-id)))]
         (is (= 401 status))
         (is (= {:message "Only authenticated users allowed"
                 :error :not_authenticated}
@@ -119,7 +118,6 @@
       (let [{body :parsed-body status :status}
             (GET app
                  (str "ctia/judgement/" (:short-id judgement-id))
-                 :accept :edn
                  :headers {"Authorization" "1111111111111"})]
         (is (= 401 status))
         (is (= {:message "Only authenticated users allowed"
@@ -130,7 +128,6 @@
       (let [{body :parsed-body status :status}
             (GET app
                  (str "ctia/judgement/" (:short-id judgement-id))
-                 :accept :edn
                  :headers {"Authorization" "2222222222222"})]
         (is (= 403 status))
         (is (= {:message "Missing capability",
@@ -139,8 +136,7 @@
                 :error :missing_capability}
                body)))))
   (testing "POST /ctia/judgement/:id/expire revokes"
-    (let [fixed-now-str "2020-12-31T00:00:00.000Z"
-          fixed-now (tc/to-date fixed-now-str)]
+    (let [fixed-now (tc/to-date "2020-12-31")]
       (helpers/fixture-with-fixed-time
         fixed-now
         (fn []
@@ -156,7 +152,7 @@
                   :headers {"Authorization" "45c1f5e3f05d0"})]
             (is (= 200 (:status response))
                 "POST ctia/judgement/:id/expire succeeds")
-            (is (= fixed-now-str (:end_time valid_time))
+            (is (= fixed-now (:end_time valid_time))
                 ":valid_time correctly reset")
             (is (.endsWith reason (str " " expiry-reason))
                 (str ":reason correctly appended: " (pr-str reason))))))))
@@ -189,7 +185,6 @@
                                          "baruser"
                                          "bargroup"
                                          "user")
-
      (entity-crud-test
       (into sut/judgement-entity
             {:app app

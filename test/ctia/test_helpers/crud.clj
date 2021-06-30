@@ -300,8 +300,7 @@
 
             (when revoke-tests?
               (testing (format "POST /ctia/%s/:id/expire revokes" entity-str)
-                (let [fixed-now-str "2020-12-31T00:00:00.000Z"
-                      fixed-now (tc/to-date fixed-now-str)]
+                (let [fixed-now (tc/to-date  "2020-12-31")]
                   (helpers/fixture-with-fixed-time
                    fixed-now
                    (fn []
@@ -313,7 +312,7 @@
                                              [:query-params revoke-tests-extra-query-params]))]
                        (is (= 200 (:status response))
                            (format "POST %s/:id/expire succeeds" entity-str))
-                       (is (= fixed-now-str (-> response :parsed-body :valid_time :end_time))
+                       (is (= fixed-now (-> response :parsed-body :valid_time :end_time))
                            ":valid_time properly reset")))))))
 
             ;; execute entity custom tests before deleting the fixture
