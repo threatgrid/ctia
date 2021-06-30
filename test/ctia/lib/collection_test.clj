@@ -14,5 +14,5 @@
 
 (deftest replace-colls-test
   (let [input [#{:a :b} [:c :d] nil [:e :f]]]
-    (is ( #{:e :f}
-         (apply sut/replace-colls input)))))
+    (is (= #{:e :f}
+           (apply sut/replace-colls input)))))

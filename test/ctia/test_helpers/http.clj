@@ -53,13 +53,17 @@
    :socket-timeout 10000
    :conn-timeout 10000})
 
+(defn with-parsed-body
+  [response]
+  ;; assoc parsed-body for backward compatibiity
+  (assoc response :parsed-body (parse-body response)))
+
 (defn get [path port & {:as opts}]
   (let [options (merge base-opts opts)
         response
         (http/get (local-url path port)
                   options)]
-  ;; assoc parsed-body for backward compatibiity
-    (assoc response :parsed-body (parse-body response))))
+    (with-parsed-body response)))
 
 (defn post [path port & {:as opts}]
   (let [{:keys [body content-type]
@@ -70,7 +74,7 @@
         (http/post (local-url path port)
                    (-> options
                        (cond-> body (assoc :body (encode-body body content-type)))))]
-    (assoc response :parsed-body (parse-body response))))
+    (with-parsed-body response)))
 
 (defn delete [path port & {:as opts}]
   (http/delete (local-url path port)
@@ -86,7 +90,7 @@
         (http/put (local-url path port)
                   (-> options
                       (cond-> body (assoc :body (encode-body body content-type)))))]
-    (assoc response :parsed-body (parse-body response))))
+    (with-parsed-body response)))
 
 (defn patch [path port & {:as opts}]
   (let [{:keys [body content-type]
@@ -97,7 +101,7 @@
         (http/patch (local-url path port)
                     (-> options
                         (cond-> body (assoc :body (encode-body body content-type)))))]
-    (assoc response :parsed-body (parse-body response))))
+    (with-parsed-body response)))
 
 (defn with-port-fn
   "Helper to compose a fn that knows how to lookup an HTTP port with
