@@ -40,11 +40,11 @@
 
 (defn encode-body
   [body content-type]
-;;  (string->input-stream
+  (string->input-stream
    (cond
      (edn? content-type) (pr-str body)
      (json? content-type) (json/generate-string body)
-     :else body))
+     :else body)))
 
 (def base-opts
   {:accept :edn
