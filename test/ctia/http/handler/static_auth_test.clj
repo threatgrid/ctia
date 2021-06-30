@@ -80,7 +80,7 @@
                 :disposition 2
                 :disposition_name "Malicious"
                 :source "test"
-                :timestamp "2042-01-01T00:00:00.000Z"
+                :timestamp #inst "2042-01-01T00:00:00.000Z"
                 :tlp "green"
                 :schema_version schema-version
                 :priority 100
@@ -88,8 +88,8 @@
                 :confidence "Low"
                 :groups ["kitara"]
                 :owner "kitara"
-                :valid_time {:start_time "2016-02-11T00:00:00.000Z"
-                             :end_time "2016-03-11T00:00:00.000Z"}}
+                :valid_time {:start_time #inst "2016-02-11T00:00:00.000-00:00"
+                             :end_time #inst "2016-03-11T00:00:00.000-00:00"}}
                get-judgement)))
         (testing "fails with any key"
           (let [{status :status}
