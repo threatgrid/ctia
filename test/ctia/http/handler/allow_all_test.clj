@@ -33,7 +33,6 @@
 
           judgement-id
           (id/long-id->id (:id judgement))]
-      (clojure.pprint/pprint judgement)
       (is (= 201 status))
       (is (=
            {:type "judgement"
@@ -45,13 +44,13 @@
             :tlp "green"
             :schema_version schema-version
             :priority 100
-            :timestamp "2042-01-01T00:00:00.000Z"
+            :timestamp #inst "2042-01-01T00:00:00.000Z"
             :severity "High"
             :confidence "Low"
             :groups ["Administrators"]
             :owner "Unknown"
-            :valid_time {:start_time "2016-02-11T00:00:00.000Z"
-                         :end_time "2016-03-11T00:00:00.000Z"}}
+            :valid_time {:start_time #inst "2016-02-11T00:00:00.000-00:00"
+                         :end_time #inst "2016-03-11T00:00:00.000-00:00"}}
            (dissoc judgement :id)))
 
       (testing "GET /ctia/judgement"
@@ -71,11 +70,11 @@
                 :tlp "green"
                 :schema_version schema-version
                 :priority 100
-                :timestamp "2042-01-01T00:00:00.000Z"
+                :timestamp #inst "2042-01-01T00:00:00.000Z"
                 :severity "High"
                 :confidence "Low"
                 :groups ["Administrators"]
                 :owner "Unknown"
-                :valid_time {:start_time "2016-02-11T00:00:00.000Z"
-                             :end_time "2016-03-11T00:00:00.000Z"}}
+                :valid_time {:start_time #inst "2016-02-11T00:00:00.000-00:00"
+                             :end_time #inst "2016-03-11T00:00:00.000-00:00"}}
                get-judgement)))))))
