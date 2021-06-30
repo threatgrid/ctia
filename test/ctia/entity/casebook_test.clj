@@ -35,7 +35,7 @@
                          :headers {"Authorization" "45c1f5e3f05d0"})
           updated-casebook (:parsed-body response)]
       (is (= 200 (:status response)))
-      (is (deep= expected-entity updated-casebook))))
+      (is (= expected-entity updated-casebook))))
 
   (testing "POST /ctia/casebook/:id/observables :add on non existing casebook"
     (let [new-observables [{:type "ip" :value "42.42.42.42"}]
@@ -57,7 +57,7 @@
                          :headers {"Authorization" "45c1f5e3f05d0"})
           updated-casebook (:parsed-body response)]
       (is (= 200 (:status response)))
-      (is (deep= expected-entity
+      (is (= expected-entity
                  updated-casebook))))
 
   (testing "POST /ctia/casebook/:id/observables :remove on non existing casebook"
@@ -80,7 +80,7 @@
                          :headers {"Authorization" "45c1f5e3f05d0"})
           updated-casebook (:parsed-body response)]
       (is (= 200 (:status response)))
-      (is (deep= expected-entity
+      (is (= expected-entity
                  updated-casebook))))
 
   (testing "POST /ctia/casebook/:id/observables :replace"
@@ -93,7 +93,7 @@
                          :headers {"Authorization" "45c1f5e3f05d0"})
           updated-casebook (:parsed-body response)]
       (is (= 200 (:status response)))
-      (is (deep= expected-entity
+      (is (= expected-entity
                  updated-casebook))))
 
   (testing "POST /ctia/casebook/:id/observables :replace on non existing casebook"
@@ -117,7 +117,7 @@
 
 
       (is (= 200 (:status response)))
-      (is (deep= expected-entity updated-casebook))))
+      (is (= expected-entity updated-casebook))))
 
   (testing "POST /ctia/casebook/:id/texts :add on non existing casebook"
     (let [new-texts [{:type "some" :text "text"}]
@@ -138,7 +138,7 @@
                          :headers {"Authorization" "45c1f5e3f05d0"})
           updated-casebook (:parsed-body response)]
       (is (= 200 (:status response)))
-      (is (deep= expected-entity updated-casebook))))
+      (is (= expected-entity updated-casebook))))
 
   (testing "POST /ctia/casebook/:id/texts :remove on non existing casebook"
     (let [deleted-texts [{:type "some" :text "text"}]
@@ -218,7 +218,7 @@
                            :headers {"Authorization" "45c1f5e3f05d0"})
             updated-casebook (:parsed-body response)]
         (is (= 200 (:status response)))
-        (is (deep= (update casebook :bundle dissoc :malwares)
+        (is (= (update casebook :bundle dissoc :malwares)
                    (update updated-casebook :bundle dissoc :malwares)))
         (is (not (subset? (set (:malwares bundle-entities))
                           (set (-> updated-casebook :bundle :malwares)))))))
@@ -239,10 +239,10 @@
                            :headers {"Authorization" "45c1f5e3f05d0"})
             updated-casebook (:parsed-body response)]
         (is (= 200 (:status response)))
-        (is (deep= (update casebook :bundle dissoc :malwares)
+        (is (= (update casebook :bundle dissoc :malwares)
                    (update updated-casebook :bundle dissoc :malwares)))
         (is (= (:malwares bundle-entities)
-               (-> updated-casebook :bundle :malwares)))))
+               (-> updated-casebook :bundle :malwares set)))))
 
     (testing "POST /ctia/casebook/:id/bundle :replace on non existing casebook"
       (let [response (POST app
@@ -263,7 +263,7 @@
                             :headers {"Authorization" "45c1f5e3f05d0"}))
             updated-casebook (:parsed-body response)]
         (is (= 200 (:status response)))
-        (is (deep= expected-entity updated-casebook))
+        (is (= expected-entity updated-casebook))
 
         (testing "Adding an observable should work and update the schema_version"
           (testing "POST /ctia/casebook/:id/observables :add"
@@ -278,7 +278,7 @@
                                  :headers {"Authorization" "45c1f5e3f05d0"})
                   final-casebook (:parsed-body response)]
               (is (= 200 (:status response)))
-              (is (deep= expected-entity final-casebook)))))))))
+              (is (= expected-entity final-casebook)))))))))
 
 (deftest test-casebook-routes
   (test-for-each-store-with-app

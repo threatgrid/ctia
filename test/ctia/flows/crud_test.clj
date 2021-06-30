@@ -1,6 +1,5 @@
 (ns ctia.flows.crud-test
   (:require [clj-momo.lib.map :refer [deep-merge-with]]
-            [clj-momo.test-helpers.core]
             [clojure.test :refer [deftest testing is]]
             [ctia.auth.threatgrid :refer [map->Identity]]
             [ctia.flows.crud :as flows.crud]
@@ -9,29 +8,29 @@
 (deftest deep-merge-with-add-colls-test
   (let [fixture {:foo {:bar ["one" "two" "three"]
                        :lorem ["ipsum" "dolor"]}}]
-    (is (deep= {:foo {:bar ["one" "two" "three" "four"]
-                      :lorem ["ipsum" "dolor"]}}
-               (deep-merge-with coll/add-colls
-                                fixture
-                                {:foo {:bar ["four"]}})))))
+    (is (= {:foo {:bar ["one" "two" "three" "four"]
+                  :lorem ["ipsum" "dolor"]}}
+           (deep-merge-with coll/add-colls
+                            fixture
+                            {:foo {:bar ["four"]}})))))
 
 (deftest deep-merge-with-remove-colls-test
   (let [fixture {:foo {:bar #{"one" "two" "three"}
                        :lorem ["ipsum" "dolor"]}}]
-    (is (deep= {:foo {:bar #{"one" "three"}
-                      :lorem ["ipsum" "dolor"]}}
-               (deep-merge-with coll/remove-colls
-                                fixture
-                                {:foo {:bar ["two"]}})))))
+    (is (= {:foo {:bar #{"one" "three"}
+                  :lorem ["ipsum" "dolor"]}}
+           (deep-merge-with coll/remove-colls
+                            fixture
+                            {:foo {:bar ["two"]}})))))
 
 (deftest deep-merge-with-replace-colls-test
   (let [fixture {:foo {:bar {:foo {:bar ["something" "or" "something" "else"]}}
                        :lorem ["ipsum" "dolor"]}}]
-    (is (deep= {:foo {:bar {:foo {:bar ["else"]}}
-                      :lorem ["ipsum" "dolor"]}}
-               (deep-merge-with coll/replace-colls
-                                fixture
-                                {:foo  {:bar {:foo {:bar #{"else"}}}}})))))
+    (is (= {:foo {:bar {:foo {:bar ["else"]}}
+                  :lorem ["ipsum" "dolor"]}}
+           (deep-merge-with coll/replace-colls
+                            fixture
+                            {:foo  {:bar {:foo {:bar #{"else"}}}}})))))
 
 (deftest preserve-errors-test
   (testing "with enveloped result"

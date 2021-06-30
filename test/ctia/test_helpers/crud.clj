@@ -300,7 +300,7 @@
 
             (when revoke-tests?
               (testing (format "POST /ctia/%s/:id/expire revokes" entity-str)
-                (let [fixed-now (-> "2020-12-31" tc/from-string tc/to-date)]
+                (let [fixed-now (tc/to-date  "2020-12-31")]
                   (helpers/fixture-with-fixed-time
                    fixed-now
                    (fn []

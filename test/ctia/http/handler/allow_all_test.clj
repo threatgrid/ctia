@@ -1,6 +1,5 @@
 (ns ctia.http.handler.allow-all-test
-  (:require [clj-momo.test-helpers.core :as mth]
-            [ctia.domain.entities :refer [schema-version]]
+  (:require [ctia.domain.entities :refer [schema-version]]
             [ctia.test-helpers
              [core :as helpers :refer [POST GET]]
              [es :as es-helpers]]
@@ -35,7 +34,7 @@
           judgement-id
           (id/long-id->id (:id judgement))]
       (is (= 201 status))
-      (is (deep=
+      (is (=
            {:type "judgement"
             :observable {:value "1.2.3.4"
                          :type "ip"}
@@ -60,7 +59,7 @@
               (GET app
                    (str "ctia/judgement/" (:short-id judgement-id)))]
           (is (= 200 status))
-          (is (deep=
+          (is (=
                {:id (:id judgement)
                 :type "judgement"
                 :observable {:value "1.2.3.4"

@@ -1,14 +1,11 @@
 (ns ctia.entity.judgement-test
   (:require [clj-momo.lib.clj-time.coerce :as tc]
-            [clj-momo.test-helpers.core :as mth]
             [clojure.test :refer [deftest is join-fixtures testing use-fixtures]]
             [ctia.domain.entities :refer [schema-version]]
             [ctia.entity.judgement :as sut]
             [ctia.entity.judgement.schemas
              :refer
-             [judgement-fields
-              judgement-sort-fields
-              judgement-enumerable-fields
+             [judgement-enumerable-fields
               judgement-histogram-fields]]
             [ctia.test-helpers
              [access-control :refer [access-control-test]]
@@ -17,13 +14,11 @@
              [crud :refer [entity-crud-test]]
              [aggregate :refer [test-metric-routes]]
              [fake-whoami-service :as whoami-helpers]
-             [field-selection :refer [field-selection-tests]]
-             [http :refer [doc-id->rel-url]]
-             [pagination :refer [pagination-test]]
              [store :refer [test-for-each-store-with-app]]]
+            [schema.test :refer [validate-schemas]]
             [ctim.examples.judgements :as ex]))
 
-(use-fixtures :once (join-fixtures [mth/fixture-schema-validation
+(use-fixtures :once (join-fixtures [validate-schemas
                                     helpers/fixture-properties:cors
                                     whoami-helpers/fixture-server]))
 
