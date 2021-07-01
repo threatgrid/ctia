@@ -190,7 +190,7 @@
 
    1. Creates all entities except Relationships
    2. Creates Relationships with mapping between transient and real IDs"
-  ([bulk login services](create-bulk bulk {} login {} services))
+  ([bulk login services :- APIHandlerServices] (create-bulk bulk {} login {} services)
   ([bulk tempids login params
     {{:keys [get-in-config]} :ConfigService :as services} :- APIHandlerServices]
    (let [{:keys [refresh]
