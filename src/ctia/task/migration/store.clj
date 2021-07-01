@@ -244,8 +244,7 @@
   and uses them to set :_index meta for these documents"
   [{:keys [mapping]
     {:keys [aliased write-index]} :props
-    {:keys [version]} :conn
-    :as store-map}
+     :as store-map}
    docs
    services :- MigrationStoreServices]
   (let [with-metas (map #(assoc %
@@ -271,7 +270,7 @@
               mapping
               (count batch))
   (retry es-max-retry
-         ductile.doc/bulk-create-doc
+         ductile.doc/bulk-index-docs
          conn
          (prepare-docs store-map batch services)
          {:refresh "false"}

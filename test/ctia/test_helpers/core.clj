@@ -85,6 +85,11 @@
     (assert (map? m) (str "No service " svc-kw ", found " (keys graph)))
     m))
 
+(defn get-store
+  [app store-kw]
+  ((:get-store (get-service-map app :StoreService))
+   store-kw))
+
 (s/defn with-config-transformer*
   "For use in a test fixture to dynamically transform a Trapperkeeper
   config before creating an app."
@@ -387,6 +392,7 @@
    (let [{{:keys [error message] :as bulk-res} :parsed-body}
          (POST app
                "ctia/bulk"
+               :query-params {:wait_for true}
                :body examples
                :socket-timeout (* 5 60000)
                :headers {"Authorization" "45c1f5e3f05d0"})]

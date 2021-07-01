@@ -21,26 +21,27 @@
 
 (s/defschema APIHandlerServices
   "Maps of services available to routes"
-  {:ConfigService                   (-> external-svc-fns/ConfigServiceFns
-                                        (csu/select-all-keys
+  (csu/open-service-schema
+   {:ConfigService                   (-> external-svc-fns/ConfigServiceFns
+                                         (csu/select-all-keys
                                           #{:get-config
                                             :get-in-config}))
-   :CTIAHTTPServerService           {:get-port    (s/=> Port)
-                                     :get-graphql (s/=> graphql.GraphQL)}
-   :HooksService                    (-> hooks-schemas/ServiceFns
-                                        (csu/select-all-keys
+    :CTIAHTTPServerService           {:get-port    (s/=> Port)
+                                      :get-graphql (s/=> graphql.GraphQL)}
+    :HooksService                    (-> hooks-schemas/ServiceFns
+                                         (csu/select-all-keys
                                           #{:apply-event-hooks
                                             :apply-hooks}))
-   :StoreService                    {:get-store GetStoreFn}
-   :IAuth                           {:identity-for-token (s/=> s/Any s/Any)}
-   :GraphQLNamedTypeRegistryService {:get-or-update-named-type-registry
-                                     (s/=> graphql.schema.GraphQLType
-                                           s/Str
-                                           (s/=> graphql.schema.GraphQLType))}
-   :IEncryption                     {:encrypt (s/=> s/Any s/Any)
-                                     :decrypt (s/=> s/Any s/Any)}
-   :FeaturesService                 {:enabled?      (s/=> s/Bool s/Keyword)
-                                     :feature-flags (s/=> [s/Str])}})
+    :StoreService                    {:get-store GetStoreFn}
+    :IAuth                           {:identity-for-token (s/=> s/Any s/Any)}
+    :GraphQLNamedTypeRegistryService {:get-or-update-named-type-registry
+                                      (s/=> graphql.schema.GraphQLType
+                                            s/Str
+                                            (s/=> graphql.schema.GraphQLType))}
+    :IEncryption                     {:encrypt (s/=> s/Any s/Any)
+                                      :decrypt (s/=> s/Any s/Any)}
+    :FeaturesService                 {:enabled?      (s/=> s/Bool s/Keyword)
+                                      :feature-flags (s/=> [s/Str])}}))
 
 (s/defschema HTTPShowServices
   (-> APIHandlerServices

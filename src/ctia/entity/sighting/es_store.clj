@@ -59,6 +59,7 @@
 (def handle-query-string-count crud/handle-query-string-count)
 (def handle-aggregate crud/handle-aggregate)
 (def handle-delete-search crud/handle-delete-search)
+(def handle-bulk-delete crud/bulk-delete)
 
 (s/defn observable->observable-hash :- s/Str
   "transform an observable to a hash of the form type:value"
@@ -163,6 +164,8 @@
     (handle-delete state id ident params))
   (list-records [_ filter-map ident params]
     (handle-list state filter-map ident params))
+  (bulk-delete [_ ids ident params]
+    (handle-bulk-delete state ids ident params))
   (close [_] (close-connections! state))
   ISightingStore
   (list-sightings-by-observables [_ observables ident params]

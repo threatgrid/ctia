@@ -1,7 +1,6 @@
 (ns ctia.entity.judgement.es-store
   (:require [ductile.document :refer [search-docs]]
             [clj-momo.lib.time :as time]
-            [ctia.domain.access-control :refer [allow-write?]]
             [ctia.entity.judgement.schemas
              :refer
              [PartialStoredJudgement StoredJudgement]]
@@ -47,6 +46,7 @@
 (def handle-read (crud/handle-read PartialStoredJudgement))
 (def handle-delete (crud/handle-delete :judgement))
 (def handle-list (crud/handle-find PartialStoredJudgement))
+(def handle-bulk-delete crud/bulk-delete)
 (def handle-query-string-search (crud/handle-query-string-search PartialStoredJudgement))
 (def handle-query-string-count crud/handle-query-string-count)
 (def handle-aggregate crud/handle-aggregate)
@@ -112,6 +112,8 @@
     (handle-delete state id ident params))
   (update-record [_ id judgement ident params]
     (handle-update state id judgement ident params))
+  (bulk-delete [_ ids ident params]
+    (handle-bulk-delete state ids ident params))
   (list-records [_ filter-map ident params]
     (handle-list state filter-map ident params))
   (close [_] (close-connections! state))

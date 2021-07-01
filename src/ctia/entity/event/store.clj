@@ -1,6 +1,5 @@
 (ns ctia.entity.event.store
   (:require
-   [ctia.entity.event.schemas :refer [PartialEvent]]
    [ctia.store :refer [IStore IQueryStringSearchableStore IEventStore]]
    [ctia.entity.event.crud :as crud]
    [ctia.stores.es.store :refer [close-connections!]]))

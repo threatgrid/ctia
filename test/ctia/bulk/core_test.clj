@@ -1,14 +1,19 @@
 (ns ctia.bulk.core-test
   (:require [clj-momo.test-helpers.core :as mth]
             [clojure.set :as set]
-            [clojure.test :refer [deftest testing is use-fixtures]]
+            [clojure.test :refer [deftest is testing use-fixtures]]
             [ctia.auth.allow-all :refer [identity-singleton]]
-            [ctia.bulk.core :as sut :refer [read-fn]]
+            [ctia.store :refer [read-record query-string-search]]
+            [ctia.bulk.core :as sut]
             [ctia.bulk.schemas :refer [NewBulk]]
             [ctia.features-service :as features-svc]
             [ctia.test-helpers.core :as helpers]
+            [ctia.test-helpers.fixtures :as fixt]
+            [ctia.auth.threatgrid :refer [map->Identity]]
             [puppetlabs.trapperkeeper.app :as app]
-            [puppetlabs.trapperkeeper.testutils.bootstrap :refer [with-app-with-config]]
+            [puppetlabs.trapperkeeper.testutils.bootstrap
+             :refer
+             [with-app-with-config]]
             [schema-tools.core :as st]
             [schema.core :as s]))
 
@@ -42,3 +47,52 @@
       {:ctia {:features {:disable "asset,actor"}}}
       (let [bulk-schema (NewBulk (helpers/app->GetEntitiesServices app))]
         (is (false? (set/subset? #{:assets :actors} (schema->keys bulk-schema))))))))
+
+(deftest bulk-create-delete
+  (helpers/fixture-ctia-with-app
+   (fn [app]
+     (let [services (app/service-graph app)
+
+           sighting-store (helpers/get-store app :sighting)
+           indicator-store (helpers/get-store app :indicator)
+           ident-map {:login "guigui"
+                      :groups ["ireaux"]}
+           ident (map->Identity ident-map)
+           ;;forein-ident ()
+           fixtures (select-keys (fixt/bundle 5 false) [:sightings :indicators])
+           with-errors (assoc fixtures
+                              :actors
+                              [{:a 1}])
+           {sighting-ids :sightings indicator-ids :indicators :keys [tempids]}
+           (sut/create-bulk with-errors
+                            {}
+                            ident
+                            {:refresh "true"} services)]
+       (testing "bulk-create shall properly create submitties entitites"
+         (is (= 5
+                (count sighting-ids)
+                (count indicator-ids)))
+         (is (= (set (vals tempids))
+                (into (set sighting-ids) (set indicator-ids))))
+         (doseq [sighting-id sighting-ids]
+           (is (some? (read-record sighting-store sighting-id ident-map {}))))
+         (doseq [indicator-id indicator-ids]
+           (is (some? (read-record indicator-store indicator-id ident-map {})))))
+
+       (testing "bulk-delete shall properly delete entities"
+         (let [{:keys [sightings indicators]}
+               (sut/delete-bulk {:sightings sighting-ids
+                                 :indicators (concat indicator-ids
+                                                     ["missing-1"
+                                                      "missing-2"])}
+                                ident
+                                {:refresh "true"}
+                                services)]
+           (is (= ["missing-1" "missing-2"] (get-in indicators [:errors :not-found])))
+           (is (nil? (:not-found sightings)))
+           (is (:deleted sightings))
+           (is (:deleted indicators))
+           (doseq [sighting-id (:deleted sightings)]
+             (is (nil? (read-record sighting-store sighting-id ident-map {}))))
+           (doseq [indicator-id (:deleted indicators)]
+             (is (nil? (read-record indicator-store indicator-id ident-map {}))))))))))

@@ -1,20 +1,19 @@
 (ns ctia.entity.attack-pattern-test
-  (:require [clj-momo.test-helpers.core :as mth]
-            [clojure.test :refer [deftest join-fixtures use-fixtures]]
+  (:require [clojure.test :refer [deftest join-fixtures use-fixtures]]
             [ctia.entity.attack-pattern :as sut]
-            [ctia.test-helpers
-             [access-control :refer [access-control-test]]
-             [auth :refer [all-capabilities]]
-             [core :as helpers :refer [POST-entity-bulk ]]
-             [crud :refer [entity-crud-test]]
-             [aggregate :refer [test-metric-routes]]
-             [fake-whoami-service :as whoami-helpers]
-             [store :refer [test-for-each-store-with-app]]]
+            [ctia.test-helpers.access-control :refer [access-control-test]]
+            [ctia.test-helpers.aggregate :refer [test-metric-routes]]
+            [ctia.test-helpers.auth :refer [all-capabilities]]
+            [ctia.test-helpers.core :as helpers]
+            [ctia.test-helpers.crud :refer [entity-crud-test]]
+            [ctia.test-helpers.fake-whoami-service :as whoami-helpers]
+            [ctia.test-helpers.store :refer [test-for-each-store-with-app]]
             [ctim.examples.attack-patterns
              :refer
-             [new-attack-pattern-maximal new-attack-pattern-minimal]]))
+             [new-attack-pattern-maximal new-attack-pattern-minimal]]
+            [schema.test :refer [validate-schemas]]))
 
-(use-fixtures :once (join-fixtures [mth/fixture-schema-validation
+(use-fixtures :once (join-fixtures [validate-schemas
                                     whoami-helpers/fixture-server]))
 
 (deftest test-attack-pattern-crud-routes

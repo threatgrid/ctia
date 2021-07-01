@@ -16,7 +16,8 @@
            (let [bulk-schema
                  (if (keyword? sch)
                    [(s/maybe
-                     (get entity sch))] sch)]
+                     (get entity sch))]
+                   sch)]
              {(-> plural
                   name
                   (str/replace #"-" "_")

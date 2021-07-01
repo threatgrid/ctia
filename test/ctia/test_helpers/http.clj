@@ -49,9 +49,7 @@
 (def base-opts
   {:accept :edn
    :content-type :edn
-   :throw-exceptions false
-   :socket-timeout 10000
-   :conn-timeout 10000})
+   :throw-exceptions false})
 
 (defn with-parsed-body
   [response]
@@ -69,7 +67,6 @@
   (let [{:keys [body content-type]
          :as options}
         (merge base-opts opts)
-
         response
         (http/post (local-url path port)
                    (-> options

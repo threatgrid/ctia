@@ -5,7 +5,6 @@
             [ctia.schemas.core :as ctia-schemas
              :refer [GraphQLRuntimeContext
                      HTTPShowServices
-                     RealizeFn
                      RealizeFnResult
                      TempIDs]]
             [ctim.domain.id :as id]
