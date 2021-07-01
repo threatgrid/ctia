@@ -420,16 +420,20 @@
        :identity-map identity-map
        (if (flows/delete-flow
             :services services
-            :get-fn #(-> (get-store :feed)
-                         (read-record
-                          %
-                          identity-map
-                          {}))
-            :delete-fn #(-> (get-store :feed)
-                            (delete-record
-                             %
-                             identity-map
-                             (routes.common/wait_for->refresh wait_for)))
+            :get-fn (fn [ids]
+                      (let [read-fn #(-> (get-store :feed)
+                                         (read-record
+                                          %
+                                          identity-map
+                                          {}))]
+                        (map read-fn ids)))
+            :delete-fn (fn [ids]
+                         (let [delete-fn #(-> (get-store :feed)
+                                              (delete-record
+                                               %
+                                               identity-map
+                                               (routes.common/wait_for->refresh wait_for)))]
+                           (map delete-fn ids)))
             :entity-type :feed
             :long-id-fn #(with-long-id % services)
             :entity-id id
