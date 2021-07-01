@@ -437,7 +437,7 @@
                             (map delete-fn ids)))
              :entity-type :feed
              :long-id-fn #(with-long-id % services)
-             :entity-id id
+             :entity-ids [id]
              :identity identity))
          (no-content)
          (not-found))))))
