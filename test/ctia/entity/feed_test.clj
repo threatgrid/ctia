@@ -6,8 +6,6 @@
    [clj-http.client :as client]
    [ctim.schemas.common :as c]
    [clojure.test :refer [deftest testing is join-fixtures use-fixtures]]
-   [ctia.entity.feed
-    :refer [sort-restricted-feed-fields]]
    [ctia.stores.es.crud :as es.crud]
    [ctia.test-helpers
     [access-control :refer [access-control-test]]
