@@ -123,4 +123,78 @@
                               :vulnerabilities     vulnerabilities
                               :weaknesses          weaknesses}]
             (ok (fetch-bulk entities-map auth-identity services)))))
-     ))
+
+    (let [capabilities #{:delete-actor
+                         :delete-asset
+                         :delete-asset-mapping
+                         :delete-asset-properties
+                         :delete-attack-pattern
+                         :delete-campaign
+                         :delete-coa
+                         :delete-data-table
+                         :delete-feedback
+                         :delete-incident
+                         :delete-investigation
+                         :delete-indicator
+                         :delete-judgement
+                         :delete-malware
+                         :delete-relationship
+                         :delete-casebook
+                         :delete-sighting
+                         :delete-identity-assertion
+                         :delete-target-record
+                         :delete-tool
+                         :delete-vulnerability
+                         :delete-weakness}]
+     (DELETE "/" []
+          :return s/Any;;(s/maybe (Bulk services))
+          :summary "DELETE many entities at once"
+          :query-params [{actors              :- [Reference] []}
+                         {asset_mappings      :- [Reference] []}
+                         {assets              :- [Reference] []}
+                         {asset_properties    :- [Reference] []}
+                         {attack_patterns     :- [Reference] []}
+                         {campaigns           :- [Reference] []}
+                         {casebooks           :- [Reference] []}
+                         {coas                :- [Reference] []}
+                         {data_tables         :- [Reference] []}
+                         {feedbacks           :- [Reference] []}
+                         {identity_assertions :- [Reference] []}
+                         {incidents           :- [Reference] []}
+                         {indicators          :- [Reference] []}
+                         {investigations      :- [Reference] []}
+                         {judgements          :- [Reference] []}
+                         {malwares            :- [Reference] []}
+                         {relationships       :- [Reference] []}
+                         {sightings           :- [Reference] []}
+                         {target_records      :- [Reference] []}
+                         {tools               :- [Reference] []}
+                         {vulnerabilities     :- [Reference] []}
+                         {weaknesses          :- [Reference] []}]
+          :description (common/capabilities->description capabilities)
+          :capabilities capabilities
+          :auth-identity auth-identity
+          (let [entities-map {:actors              actors
+                              :asset_mappings      asset_mappings
+                              :assets              assets
+                              :asset_properties    asset_properties
+                              :attack_patterns     attack_patterns
+                              :campaigns           campaigns
+                              :casebooks           casebooks
+                              :coas                coas
+                              :data_tables         data_tables
+                              :feedbacks           feedbacks
+                              :identity_assertions identity_assertions
+                              :incidents           incidents
+                              :indicators          indicators
+                              :investigations      investigations
+                              :judgements          judgements
+                              :malwares            malwares
+                              :relationships       relationships
+                              :sightings           sightings
+                              :target_records      target_records
+                              :tools               tools
+                              :vulnerabilities     vulnerabilities
+                              :weaknesses          weaknesses}]
+            (ok (delete-bulk entities-map auth-identity services))))
+     )))
