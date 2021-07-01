@@ -641,32 +641,24 @@
                                          "foogroup"
                                          "user")
      (testing "filtering on entities ids"
-       (let [import-url (format "http://localhost:%d/ctia/bundle/import?wait_for=true"
-                                (helpers/get-http-port app))
-             _ (println import-url)
-             post-bundle
+       (let [post-bundle
              (fn [bundle-fixture]
-               (:body (client/post import-url
-                                   {:body (-> bundle-fixture
-                                              (json/generate-string {:pretty false})
-                                              string->input-stream)
-                                    :content-type :json
-                                    :as :json
-                                    :throw-exceptions false
-                                    :headers {"Authorization" "45c1f5e3f05d0"}})))
+               (POST app
+                     "/ctia/bundle/import"
+                     :body bundle-fixture
+                     :headers {"Authorization" "45c1f5e3f05d0"}))
              bundle-res-1 (post-bundle bundle-fixture-1)
              bundle-res-2 (post-bundle bundle-fixture-2)
              first-sighting-id (fn [bundle-res]
                                  (some->> bundle-res
+                                          :parsed-body
                                           :results
                                           (group-by :type)
-                                          (#(get % "sighting"))
+                                          :sighting
                                           first
                                           :id))
              sighting-id-1 (first-sighting-id bundle-res-1)
              sighting-id-2 (first-sighting-id bundle-res-2)
-             _ (println "sighting-id-1 => " sighting-id-1)
-             _ (println "sighting-id-2 => " sighting-id-2)
              bundle-get-res-1
              (:parsed-body
               (GET app

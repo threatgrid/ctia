@@ -1,9 +1,8 @@
 (ns ctia.flows.crud-test
   (:require [clj-momo.lib.map :refer [deep-merge-with]]
-            [clj-momo.test-helpers.core]
             [ctim.examples.sightings :refer [sighting-minimal]]
             [clojure.test :refer [deftest testing is]]
-            [ctia.store :refer [query-string-search bulk-delete]]
+            [ctia.store :refer [query-string-search]]
             [ctia.auth.threatgrid :refer [map->Identity]]
             [ctia.test-helpers.core :as helpers]
             [puppetlabs.trapperkeeper.app :as app]
