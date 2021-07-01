@@ -2,7 +2,6 @@
   (:require
    [ctia.entity.feed :as sut]
    [clojure.string :as string]
-   [clj-momo.test-helpers.core :as mth]
    [clj-http.client :as client]
    [ctim.schemas.common :as c]
    [clojure.test :refer [deftest testing is join-fixtures use-fixtures]]
@@ -13,7 +12,8 @@
     [core :as helpers]
     [crud :refer [entity-crud-test]]
     [fake-whoami-service :as whoami-helpers]
-    [store :refer [test-for-each-store-with-app]]]))
+    [store :refer [test-for-each-store-with-app]]]
+   [schema.test :refer [validate-schemas]]))
 
 (def new-feed-maximal
   {:revision 0
@@ -124,7 +124,7 @@
    :relationships relationships})
 
 (use-fixtures :once
-  (join-fixtures [mth/fixture-schema-validation
+  (join-fixtures [validate-schemas
                   whoami-helpers/fixture-server]))
 
 (defn feed-view-tests [app feed-id feed]
