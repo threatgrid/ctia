@@ -392,7 +392,7 @@
    (let [{{:keys [error message] :as bulk-res} :parsed-body}
          (POST app
                "ctia/bulk"
-               :query-params {:wait_for true}
+               ;:query-params {:wait_for true}
                :body examples
                :socket-timeout (* 5 60000)
                :headers {"Authorization" "45c1f5e3f05d0"})]

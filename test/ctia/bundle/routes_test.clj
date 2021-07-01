@@ -1,9 +1,6 @@
 (ns ctia.bundle.routes-test
   (:require
-   [clj-momo.test-helpers.core :as mth]
    [clj-momo.test-helpers.http :refer [encode]]
-   [clj-http.client :as client]
-   [cheshire.core :as json]
    [clojure.edn :as edn]
    [clojure.set :as set]
    [clojure.string :as str]
@@ -26,7 +23,8 @@
    [ctim.schemas.common :refer [ctim-schema-version]]
    [ductile.index :as es-index]
    [puppetlabs.trapperkeeper.app :as app]
-   [schema.core :as s])
+   [schema.core :as s]
+   [schema.test :refer [validate-schemas]])
   (:import java.io.ByteArrayInputStream))
 
 (defn fixture-properties [t]
@@ -40,7 +38,7 @@
 
 (use-fixtures :once
   (join-fixtures
-   [mth/fixture-schema-validation
+   [validate-schemas
     fixture-properties
     fixture-find-by-external-ids-limit
     whoami-helpers/fixture-server]))
