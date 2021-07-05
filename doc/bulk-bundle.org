@@ -115,7 +115,7 @@ which returns
 
 
 ** export
-Bundle Export enables to retrieve entities
+Bundle Export enables us to retrieve many entities.
 
 Bulk Export Params
 #+begin_src clojure
@@ -326,8 +326,8 @@ returns
   ["http://localhost:3000/ctia/relationship/relationship-94b5d199-6353-490d-9b75-38bef7f2dc5a" "http://localhost:3000/ctia/relationship/relationship-eca9e3c6-1c32-484e-b8a5-685719142090"]}}
 #+end_src
 
-errors are handled per entities. If an entitiy is not visible to a user or does not exists, its id will be indicated as not found. If the user can read the entity but not delete it (ex: tlp green and max-record-visibility set to "everyone"), its id id will be indicated as not found.
-the example below shows a response with a mix of found, forbidden and deleted entities:
+Errors are handled per entities. If an entitiy is not visible to a user or does not exist, its id will be indicated as not found. If the user can read the entity but not delete it (ex: tlp green and max-record-visibility set to "everyone"), its id will be indicated as not found.
+The example below shows a response with a mix of not-found, forbidden and deleted entities:
 #+begin_src clojure
 {:incidents
  {:errors
