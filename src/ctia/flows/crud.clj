@@ -12,7 +12,6 @@
    [ctia.domain.entities :refer [un-store]]
    [ctia.entity.event.obj-to-event :refer
     [to-create-event to-delete-event to-update-event]]
-   [ctia.entity.event.schemas :refer [Event]]
    [ctia.lib.collection :as coll]
    [ctia.properties :as p]
    [ctia.schemas.core :as schemas :refer
@@ -41,10 +40,11 @@
    (s/optional-key :partial-entity)    (s/maybe {s/Keyword s/Any})
    (s/optional-key :patch-operation)   (s/enum :add :remove :replace)
    (s/optional-key :realize-fn)        RealizeFn
-   (s/optional-key :results)           [s/Bool]
+   (s/optional-key :results)           s/Any
    (s/optional-key :spec)              (s/maybe s/Keyword)
    (s/optional-key :tempids)           (s/maybe TempIDs)
    (s/optional-key :enveloped-result?) (s/maybe s/Bool)
+   (s/optional-key :entity-ids)        [s/Str]
    :store-fn                           (s/=> s/Any s/Any)})
 
 (defn- find-id
@@ -304,15 +304,16 @@
           (throw e))))
     fm))
 
+(s/defn apply-delete-store-fn
+  [{:keys [entity-ids store-fn] :as fm} :- FlowMap]
+  (let [results (store-fn entity-ids)]
+    (assoc fm :results results)))
+
 (s/defn ^:private apply-store-fn :- FlowMap
   [{:keys [entities flow-type store-fn] :as fm} :- FlowMap]
   (case flow-type
     :create (apply-create-store-fn fm)
-    :delete
-    (assoc fm :results
-           (doall
-            (for [{entity-id :id} entities]
-              (store-fn entity-id))))
+    :delete (apply-delete-store-fn fm)
     :update
     (assoc fm
            :entities
@@ -370,7 +371,7 @@
               (cond-> {:data entities}
                 (seq tempids) (assoc :tempids tempids))
               entities)
-    :delete (first results)
+    :delete results
     :update (first entities)))
 
 (s/defn patch-entities :- FlowMap
@@ -531,16 +532,16 @@
   [& {:keys [entity-type
              get-fn
              delete-fn
-             entity-id
+             entity-ids
              long-id-fn
              services
              identity]}]
-  (let [entity (get-fn entity-id)]
+  (let [entities (get-fn entity-ids)]
     (-> {:flow-type :delete
          :services services
          :entity-type entity-type
-         :entities (remove nil? [entity])
-         :prev-entity entity
+         :entities (remove nil? entities)
+         :entity-ids entity-ids
          :identity identity
          :long-id-fn long-id-fn
          :store-fn delete-fn

@@ -1,7 +1,5 @@
 (ns ctia.http.server-service
   (:require [ctia.http.server-service-core :as core]
-            [ctia.properties :as p]
-            [ctia.flows.hooks-service :as hooks-svc]
             [puppetlabs.trapperkeeper.core :as tk]
             [puppetlabs.trapperkeeper.services :refer [service-context]]))
 

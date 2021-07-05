@@ -1,22 +1,17 @@
 (ns ctia.auth.threatgrid
-  (:require
-   [ctia.auth.capabilities
-    :refer [default-capabilities]]
-   [cheshire.core :as json]
-   [clj-http.client :as http]
-   [clj-momo.lib.set :refer [as-set]]
-   [clojure
-    [set :as set]
-    [string :as str]]
-   [clojure.core.memoize :as memo]
-   [ctia.store-service.schemas :refer [GetStoreFn]]
-   [ctia
-    [auth :as auth]
-    [properties :as p]
-    [store :as store]]
-   [puppetlabs.trapperkeeper.core :as tk]
-   [puppetlabs.trapperkeeper.services :refer [service-context]]
-   [schema.core :as s]))
+  (:require [cheshire.core :as json]
+            [clj-http.client :as http]
+            [clj-momo.lib.set :refer [as-set]]
+            [clojure.core.memoize :as memo]
+            [clojure.set :as set]
+            [clojure.string :as str]
+            [ctia.auth :as auth]
+            [ctia.auth.capabilities :refer [default-capabilities]]
+            [ctia.store :as store]
+            [ctia.store-service.schemas :refer [GetStoreFn]]
+            [puppetlabs.trapperkeeper.core :as tk]
+            [puppetlabs.trapperkeeper.services :refer [service-context]]
+            [schema.core :as s]))
 
 (declare make-auth-service)
 

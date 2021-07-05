@@ -80,7 +80,7 @@
                                     filters
                                     opts)))]
      (index/create! conn indexname settings)
-     (doc/bulk-create-doc conn docs {:refresh "true"})
+     (doc/bulk-index-docs conn docs {:refresh "true"})
      (index/refresh! conn indexname)
      (testing "token should be matched with exact values, and can be directly used for aggregating and sorting on without fielddata"
        (let [res-doc0 (search nil

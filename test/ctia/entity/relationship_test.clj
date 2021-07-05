@@ -1,9 +1,7 @@
 (ns ctia.entity.relationship-test
-  (:require [clj-momo.test-helpers.core :as mth]
-            [clojure.math.combinatorics :as comb]
+  (:require [clojure.math.combinatorics :as comb]
             [clojure.string :as str]
             [clojure.test :refer [deftest is join-fixtures testing use-fixtures]]
-            [ctia.entity.relationship.schemas :as rs]
             [ctia.entity.relationship :as sut]
             [ctia.test-helpers
              [access-control :refer [access-control-test]]
@@ -18,10 +16,12 @@
              [casebooks :refer [new-casebook-minimal]]
              [incidents :refer [new-incident-minimal]]
              [investigations :refer [new-investigation-minimal]]
-             [relationships :refer [new-relationship-maximal new-relationship-minimal]]]))
+             [relationships :refer [new-relationship-maximal new-relationship-minimal]]]
+            [schema.test :refer [validate-schemas]]))
 
-(use-fixtures :once (join-fixtures [mth/fixture-schema-validation
-                                    whoami-helpers/fixture-server]))
+(use-fixtures :once
+  (join-fixtures [validate-schemas
+                  whoami-helpers/fixture-server]))
 
 (defn establish-user! [app]
   (helpers/set-capabilities! app "foouser" ["foogroup"] "user" all-capabilities)
@@ -57,8 +57,7 @@
                   ["http://ex.tld/ctia/relationship/relationship-123"
                    "http://ex.tld/ctia/relationship/relationship-456"])
                  (dissoc :id))
-             {status :status
-              {error :error} :parsed-body}
+             {status :status}
              (POST app
                    "ctia/relationship"
                    :body new-relationship

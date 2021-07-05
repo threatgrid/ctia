@@ -1,6 +1,5 @@
 (ns ctia.stores.es.store
   (:require [schema.core :as s]
-            [schema-tools.core :as st]
             [ductile
              [conn :as es-conn]
              [index :as es-index]
@@ -41,6 +40,8 @@
      (~(symbol "delete-record") [_# id# ident# params#]
       ((crud/handle-delete ~entity)
        ~(symbol "state") id# ident# params#))
+     (~(symbol "bulk-delete") [_# ids# ident# params#]
+      (crud/bulk-delete ~(symbol "state") ids# ident# params#))
      (~(symbol "list-records") [_# filter-map# ident# params#]
       ((crud/handle-find ~partial-stored-schema)
        ~(symbol "state") filter-map# ident# params#))

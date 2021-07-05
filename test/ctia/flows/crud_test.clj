@@ -1,7 +1,11 @@
 (ns ctia.flows.crud-test
   (:require [clj-momo.lib.map :refer [deep-merge-with]]
+            [ctim.examples.sightings :refer [sighting-minimal]]
             [clojure.test :refer [deftest testing is]]
+            [ctia.store :refer [query-string-search]]
             [ctia.auth.threatgrid :refer [map->Identity]]
+            [ctia.test-helpers.core :as helpers]
+            [puppetlabs.trapperkeeper.app :as app]
             [ctia.flows.crud :as flows.crud]
             [ctia.lib.collection :as coll]))
 
@@ -122,3 +126,113 @@
                  (#'flows.crud/create-events flow-map))
               (format "create-events shall properly handle %s flow type"
                       (:flow-type flow-map)))))))
+
+(defn search-events
+  [event-store ident entity-id]
+  (-> (query-string-search
+       event-store
+       {:filter-map {:entity.id entity-id}}
+       ident
+       {})
+      :data
+      first))
+
+(deftest delete-flow-test
+  (helpers/fixture-ctia-with-app
+   (fn [app]
+     (let [services (app/service-graph app)
+           store (atom {"sighting-1" (assoc sighting-minimal
+                                            :title "sighting one"
+                                            :id "sighting-1"
+                                            :tlp "green"
+                                            :groups ["groups1"])
+                        "sighting-2" (assoc sighting-minimal
+                                            :title "sighting two"
+                                            :id "sighting-2"
+                                            :tlp "green"
+                                            :groups ["groups1"])})
+           ident {:login "login"
+                  :groups ["group1"]}
+           event-store (helpers/get-store app :event)
+           get-fn (fn [ids] (vals (select-keys @store ids)))
+           delete-flow (fn [entity-id deleted?]
+                         (let [res
+                               (flows.crud/delete-flow
+                                :entity-type :sighting
+                                :get-fn get-fn
+                                :delete-fn (fn [[id]]
+                                             (not= @store
+                                                   (swap! store dissoc id)))
+                                :entity-ids [entity-id]
+                                :long-id-fn identity
+                                :services services
+                                :identity (map->Identity ident))
+                               _ (Thread/sleep 1000)
+                               deleted-event (search-events event-store
+                                                             ident
+                                                             entity-id)]
+                           (is (= deleted? res)
+                               (str "flow shall return " deleted?))
+                           (is (= deleted? (some? deleted-event))
+                               "delete flow shall create event only on successful delete")))]
+       (delete-flow "sighting-1" true)
+       (delete-flow "missing" false)))))
+
+
+(deftest bulk-delete-flow-test
+  (helpers/fixture-ctia-with-app
+   (fn [app]
+     (let [services (app/service-graph app)
+           store (atom {"sighting-1" (assoc sighting-minimal
+                                            :title "sighting one"
+                                            :id "sighting-1"
+                                            :tlp "green"
+                                            :groups ["groups1"])
+                        "sighting-2" (assoc sighting-minimal
+                                            :title "sighting two"
+                                            :id "sighting-2"
+                                            :tlp "green"
+                                            :groups ["groups1"])
+                        "sighting-3" (assoc sighting-minimal
+                                            :title "sighting three"
+                                            :id "sighting-3"
+                                            :tlp "green"
+                                            :groups ["groups1"])})
+           ident {:login "login"
+                  :groups ["group1"]}
+           event-store (helpers/get-store app :event)
+           get-fn (fn [ids] (vals (select-keys @store ids)))
+           delete-fn (fn [ids]
+                       (into {}
+                             (map #(array-map
+                                        %
+                                        (not= @store
+                                              (swap! store dissoc %))))
+                             ids))
+           delete-flow (fn [expected]
+                         (let [entity-ids (seq (keys expected))
+                               res
+                               (flows.crud/delete-flow
+                                :entity-type :sighting
+                                :get-fn get-fn
+                                :delete-fn delete-fn
+                                :entity-ids entity-ids
+                                :long-id-fn identity
+                                :services services
+                                :identity (map->Identity ident))
+                               _ (Thread/sleep 1000)
+                               deleted-events? (into {}
+                                                     (map #(->> (search-events event-store
+                                                                              ident
+                                                                              %)
+                                                                first
+                                                                some?
+                                                                (array-map %)))
+                                                     entity-ids)]
+                           (is (= expected
+                                  (into {} res)))
+                           (is (= expected deleted-events?)
+                               (str "flow shall return " expected))))]
+       (delete-flow {"sighting-1" true
+                     "sighting-2" true})
+       (delete-flow {"sighting-3" true "missing" false})))))
