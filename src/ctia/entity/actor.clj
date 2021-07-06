@@ -128,7 +128,11 @@
     :external-id-capabilities :read-actor
     :can-aggregate?           true
     :histogram-fields         actor-histogram-fields
-    :enumerable-fields        actor-enumerable-fields}))
+    :enumerable-fields        actor-enumerable-fields
+    :searchable-fields        (routes.common/searchable-fields
+                               {:fields actor-fields
+                                :ignore [:valid_time.start_time
+                                         :valid_time.end_time]})}))
 
 (def capabilities
   #{:create-actor

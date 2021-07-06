@@ -131,7 +131,11 @@
     :external-id-capabilities :read-coa
     :can-aggregate?           true
     :histogram-fields         coa-histogram-fields
-    :enumerable-fields        coa-enumerable-fields}))
+    :enumerable-fields        coa-enumerable-fields
+    :searchable-fields        (routes.common/searchable-fields
+                               {:fields coa-fields
+                                :ignore [:valid_time.start_time
+                                         :valid_time.end_time]})}))
 
 (def capabilities
   #{:create-coa

@@ -123,7 +123,12 @@
     :external-id-capabilities :read-campaign
     :can-aggregate?           true
     :histogram-fields         campaign-histogram-fields
-    :enumerable-fields        campaign-enumerable-fields}))
+    :enumerable-fields        campaign-enumerable-fields
+    :searchable-fields        (routes.common/searchable-fields
+                               {:fields campaign-fields
+                                :ignore [:valid_time.start_time
+                                         :valid_time.end_time
+                                         :activity.date_time]})}))
 
 (def capabilities
   #{:create-campaign

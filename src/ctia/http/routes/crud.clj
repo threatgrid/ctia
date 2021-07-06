@@ -1,44 +1,42 @@
 (ns ctia.http.routes.crud
-  (:require
-   [clj-momo.lib.clj-time.core :as time]
-   [clojure.string :as str]
-   [ctia.domain.entities
-    :refer
-    [page-with-long-id
-     un-store
-     un-store-page
-     with-long-id]]
-   [ctia.flows.crud :as flows]
-   [ctia.http.middleware.auth]
-   [ctia.http.routes.common :refer [capabilities->description
-                                    created
-                                    filter-map-search-options
-                                    paginated-ok
-                                    search-options
-                                    wait_for->refresh
-                                    search-query
-                                    coerce-date-range
-                                    format-agg-result]]
-   [ctia.lib.compojure.api.core :refer [context DELETE GET POST PUT PATCH routes]]
-   [ctia.schemas.core :refer [APIHandlerServices DelayedRoutes]]
-   [ctia.schemas.search-agg :refer [HistogramParams
-                                    CardinalityParams
-                                    TopnParams
-                                    MetricResult]]
-   [ctia.store :refer [query-string-search
-                       query-string-count
-                       aggregate
-                       create-record
-                       delete-record
-                       read-record
-                       update-record
-                       list-records
-                       delete-search]]
-   [ring.swagger.schema :refer [describe]]
-   [ring.util.http-response :refer [no-content not-found ok forbidden]]
-   [schema-tools.core :as st]
-   [schema.core :as s]
-   [ctia.http.routes.common :as routes.common]))
+  (:require [clj-momo.lib.clj-time.core :as time]
+            [clojure.string :as str]
+            [ctia.domain.entities
+             :refer
+             [page-with-long-id un-store un-store-page with-long-id]]
+            [ctia.flows.crud :as flows]
+            [ctia.http.routes.common
+             :as routes.common
+             :refer [capabilities->description
+                     coerce-date-range
+                     created
+                     format-agg-result
+                     paginated-ok
+                     search-options
+                     search-query
+                     wait_for->refresh]]
+            [ctia.lib.compojure.api.core
+             :refer
+             [context DELETE GET PATCH POST PUT routes]]
+            [ctia.schemas.core :refer [APIHandlerServices DelayedRoutes]]
+            [ctia.schemas.search-agg
+             :refer
+             [CardinalityParams HistogramParams MetricResult TopnParams]]
+            [ctia.store
+             :refer
+             [aggregate
+              create-record
+              delete-record
+              delete-search
+              list-records
+              query-string-count
+              query-string-search
+              read-record
+              update-record]]
+            [ring.swagger.schema :refer [describe]]
+            [ring.util.http-response :refer [forbidden no-content not-found ok]]
+            [schema-tools.core :as st]
+            [schema.core :as s]))
 
 (s/defn capitalize-entity [entity :- (s/pred simple-keyword?)]
   (-> entity name str/capitalize))
@@ -150,28 +148,22 @@
            can-get-by-external-id?
            date-field
            histogram-fields
-           enumerable-fields]
-    :or {hide-delete? false
-         can-post? true
-         can-update? true
-         can-patch? false
-         can-search? true
-         can-aggregate? false
+           enumerable-fields
+           searchable-fields]
+    :or {hide-delete?            false
+         can-post?               true
+         can-update?             true
+         can-patch?              false
+         can-search?             true
+         can-aggregate?          false
          can-get-by-external-id? true
-         date-field :created
-         histogram-fields [:created]}
+         date-field              :created
+         histogram-fields        [:created]}
     :as entity-crud-config}]
  (s/fn [{{:keys [get-store]} :StoreService
          :as services} :- APIHandlerServices]
   (let [capitalized (capitalize-entity entity)
-        search-q-params* (st/merge
-                          search-q-params
-                          {;; We cannot name the parameter :fields, because we already have :fields (part
-                           ;; of search-q-params). That key is to select a subsets of fields of the
-                           ;; retrieved document and it gets passed to the `_source` parameter of
-                           ;; Elasticsearch. For more: www.elastic.co/guide/en/elasticsearch/reference/current/mapping-source-field.html
-                           (s/optional-key :search_fields)
-                           (describe (st/get-in search-q-params [:fields]) "'fields' key of Elasticsearch Fulltext Query.")})
+        search-q-params* (routes.common/prep-es-fields-schema entity-crud-config)
         search-filters (st/dissoc search-q-params
                                   :sort_by
                                   :sort_order
@@ -331,14 +323,17 @@
              :description (capabilities->description search-capabilities)
              :capabilities search-capabilities
              :query [params search-q-params*]
-             (-> (get-store entity)
-                 (query-string-search
-                   (search-query date-field params)
+             (let [params* (routes.common/enforce-search-fields
+                            params
+                            searchable-fields)]
+              (-> (get-store entity)
+                  (query-string-search
+                   (search-query date-field params*)
                    identity-map
-                   (select-keys params search-options))
-                 (page-with-long-id services)
-                 un-store-page
-                 paginated-ok))
+                   (select-keys params* search-options))
+                  (page-with-long-id services)
+                  un-store-page
+                  paginated-ok)))
            (GET "/count" []
              :return s/Int
              :summary (format "Count %s matching a Lucene/ES query string and field filters" capitalized)

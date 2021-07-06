@@ -122,7 +122,9 @@
     :external-id-capabilities :read-asset
     :can-aggregate?           true
     :histogram-fields         asset-histogram-fields
-    :enumerable-fields        asset-enumerable-fields}))
+    :enumerable-fields        asset-enumerable-fields
+    :searchable-fields        (routes.common/searchable-fields
+                               {:fields asset-fields})}))
 
 (def capabilities
   #{:create-asset

@@ -50,7 +50,6 @@
    routes.common/PagingParams
    routes.common/BaseEntityFilterParams
    routes.common/SourcableEntityFilterParams
-   routes.common/SearchableEntityParams
    DataTableFieldsParam
    (st/optional-keys
     {:sort_by datatable-sort-fields})))

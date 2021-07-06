@@ -118,28 +118,30 @@
 
 (s/defn asset-properties-routes [services :- APIHandlerServices]
   (services->entity-crud-routes
-    services
-    {:entity                   :asset-properties
-     :new-schema               NewAssetProperties
-     :entity-schema            AssetProperties
-     :get-schema               PartialAssetProperties
-     :get-params               AssetPropertiesGetParams
-     :list-schema              PartialAssetPropertiesList
-     :search-schema            PartialAssetPropertiesList
-     :external-id-q-params     AssetPropertiesByExternalIdQueryParams
-     :search-q-params          AssetPropertiesSearchParams
-     :new-spec                 :new-asset-properties/map
-     :realize-fn               realize-asset-properties
-     :get-capabilities         :read-asset-properties
-     :post-capabilities        :create-asset-properties
-     :put-capabilities         :create-asset-properties
-     :delete-capabilities      :delete-asset-properties
-     :search-capabilities      :search-asset-properties
-     :external-id-capabilities :read-asset-properties
-     :can-aggregate?           true
-     :histogram-fields         asset-properties-histogram-fields
-     :enumerable-fields        asset-properties-enumerable-fields
-     :can-revoke?              asset-properties-can-revoke?}))
+   services
+   {:entity                   :asset-properties
+    :new-schema               NewAssetProperties
+    :entity-schema            AssetProperties
+    :get-schema               PartialAssetProperties
+    :get-params               AssetPropertiesGetParams
+    :list-schema              PartialAssetPropertiesList
+    :search-schema            PartialAssetPropertiesList
+    :external-id-q-params     AssetPropertiesByExternalIdQueryParams
+    :search-q-params          AssetPropertiesSearchParams
+    :new-spec                 :new-asset-properties/map
+    :realize-fn               realize-asset-properties
+    :get-capabilities         :read-asset-properties
+    :post-capabilities        :create-asset-properties
+    :put-capabilities         :create-asset-properties
+    :delete-capabilities      :delete-asset-properties
+    :search-capabilities      :search-asset-properties
+    :external-id-capabilities :read-asset-properties
+    :can-aggregate?           true
+    :histogram-fields         asset-properties-histogram-fields
+    :enumerable-fields        asset-properties-enumerable-fields
+    :can-revoke?              asset-properties-can-revoke?
+    :searchable-fields        (routes.common/searchable-fields
+                               {:fields asset-properties-fields})}))
 
 (def capabilities
   #{:create-asset-properties

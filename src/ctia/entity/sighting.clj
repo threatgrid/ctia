@@ -65,7 +65,12 @@
     :search-capabilities      :search-sighting
     :can-aggregate?           true
     :histogram-fields         ss/sighting-histogram-fields
-    :enumerable-fields        ss/sighting-enumerable-fields}))
+    :enumerable-fields        ss/sighting-enumerable-fields
+    :searchable-fields        (routes.common/searchable-fields
+                               {:fields ss/sighting-fields
+                                :ignore [:observed_time.start_time
+                                         :observed_time.end_time
+                                         :count]})}))
 
 (def capabilities
   #{:create-sighting

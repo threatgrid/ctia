@@ -1,16 +1,19 @@
 (ns ctia.http.routes.common
-  (:require [clj-http.headers :refer [canonicalize]]
-            [clojure.string :as str]
-            [ctia.schemas.sorting :as sorting]
-            [ring.swagger.schema :refer [describe]]
-            [clj-momo.lib.clj-time.core :as t]
-            [ring.util
-             [codec :as codec]
-             [http-response :as http-res]
-             [http-status :refer [ok]]]
-            [ctia.schemas.search-agg :refer
-             [FullTextQueryMode MetricResult RangeQueryOpt SearchQuery]]
-            [schema.core :as s]))
+  (:require
+   [clj-http.headers :refer [canonicalize]]
+   [clj-momo.lib.clj-time.core :as t]
+   [clojure.set :as set]
+   [clojure.string :as str]
+   [ctia.schemas.search-agg
+    :refer
+    [FullTextQueryMode MetricResult RangeQueryOpt RawSearchParams SearchQuery]]
+   [ctia.schemas.sorting :as sorting]
+   [ring.swagger.schema :refer [describe]]
+   [ring.util.codec :as codec]
+   [ring.util.http-response :as http-res]
+   [ring.util.http-status :refer [ok]]
+   [schema-tools.core :as st]
+   [schema.core :as s]))
 
 (def search-options [:sort_by
                      :sort_order
@@ -49,6 +52,65 @@
    (s/optional-key :offset) (describe Long "Pagination Offset")
    (s/optional-key :search_after) (describe [s/Str] "Pagination stateless cursor")
    (s/optional-key :limit) (describe Long "Pagination Limit")})
+
+(def default-ignored-search-fields
+  #{:language
+    :revision
+    :schema_version
+    :source
+    :source_uri
+    :timestamp
+    :tlp
+    :type})
+
+(def default-whitelisted-search-fields
+  #{:id
+    :title
+    :short_description
+    :description
+    :external_ids})
+
+(s/defn searchable-fields :- (s/protocol s/Schema)
+  [{:keys [fields ignore]}]
+  (let [ignored-fields (set/union
+                        (set ignore)
+                        default-ignored-search-fields)]
+    (apply s/enum
+           (-> fields
+               set
+               (set/union default-whitelisted-search-fields)
+               (set/difference ignored-fields)))))
+
+(s/defn prep-es-fields-schema :- (s/protocol s/Schema)
+  "Conjoins Elasticsearch fields parameter into search-q-params schema"
+  [{:keys [search-q-params
+           searchable-fields] :as entity-crud-config}]
+  (let [default-fields-schema (->>
+                               searchable-fields
+                               :vs
+                               (map name)
+                               (apply s/enum))]
+    (if searchable-fields
+     (st/merge
+      search-q-params
+      {;; We cannot name the parameter :fields, because we already have :fields (part
+       ;; of search-q-params). That key is to select a subsets of fields of the
+       ;; retrieved document and it gets passed to the `_source` parameter of
+       ;; Elasticsearch. For more: www.elastic.co/guide/en/elasticsearch/reference/current/mapping-source-field.html
+       (s/optional-key :search_fields)
+       (describe [default-fields-schema] "'fields' key of Elasticsearch Fulltext Query.")})
+     search-q-params)))
+
+(s/defn enforce-search-fields
+  "Gurantees that ES fields parameter always passed to ES instance"
+  [{:keys [search_fields] :as query-params}
+   searchable-fields]
+  (if (seq search_fields)
+    query-params
+    (assoc
+     query-params
+     :search_fields
+     (->> searchable-fields :vs (mapv name)))))
 
 (def paging-param-keys
   "A list of the paging and sorting related parameters, we can use

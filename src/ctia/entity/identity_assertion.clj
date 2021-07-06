@@ -112,7 +112,11 @@
     :external-id-capabilities :read-identity-assertion
     :can-aggregate?           true
     :enumerable-fields        identity-assertion-enumerable-fields
-    :histogram-fields         identity-assertion-histogram-fields}))
+    :histogram-fields         identity-assertion-histogram-fields
+    :searchable-fields        (routes.common/searchable-fields
+                               {:fields identity-assertion-fields
+                                :ignore [:valid_time.start_time
+                                         :valid_time.end_time]})}))
 
 (def capabilities
   #{:create-identity-assertion
