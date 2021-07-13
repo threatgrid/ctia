@@ -17,3 +17,4 @@ pom.xml
 .lsp/
 .clj-kondo/.cache
 .clj-kondo/cache
+.shadow-cljs/

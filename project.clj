@@ -60,10 +60,11 @@
   ;; to inspect conflicts.
 
   :dependencies [[org.clojure/clojure ~clj-version]
+                 [thheller/shadow-cljs "2.11.23"]
                  [clj-time "0.15.2"]
                  [org.threeten/threeten-extra "1.2"]
                  [clojure.java-time "0.3.2"]
-                 [org.clojure/core.async "1.0.567"]
+                 [org.clojure/core.async "1.3.618"]
                  [org.slf4j/slf4j-log4j12 "1.8.0-beta0"]
                  [org.clojure/core.memoize "1.0.236"]
                  [org.clojure/tools.logging "1.1.0"]
@@ -118,7 +119,7 @@
                  [metrics-clojure-ring ~metrics-clojure-version]
                  [clout "2.2.1"]
                  [slugger "1.0.1"]
-                 [com.google.guava/guava "20.0"];org.onyxplatform/onyx-kafka > threatgrid/ctim
+                 [com.google.guava/guava "30.1.1-jre"];org.onyxplatform/onyx-kafka > threatgrid/ctim
                  [io.netty/netty "3.10.6.Final"];org.onyxplatform/onyx-kafka > metrics-clojure-riemann, zookeeper-clj
                  [io.netty/netty-codec "4.1.42.Final"] ;org.apache.zookeeper/zookeeper > riemann-clojure-client
                  [io.netty/netty-resolver "4.1.42.Final"] ;riemann-clojure-client > org.apache.zookeeper/zookeeper
