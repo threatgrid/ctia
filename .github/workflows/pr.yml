@@ -1,7 +1,8 @@
 name: GitHub Actions Pull Request and Deployment
 
 on:
-  pull_request:
+  # TODO remove comment
+  #pull_request:
   push:
     branches:
       # TODO delete me
