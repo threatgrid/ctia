@@ -3,7 +3,7 @@
 #
 # Fails if run in non-deployment situations.
 #
-# Assumes awscli and dockerhub is set up with correct credentials for the
+# Assumes awscli and dockerhub are set up with correct credentials for the
 # current user.
 #
 # Requires secrets:
