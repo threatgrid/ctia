@@ -1,10 +1,10 @@
 {:lein   true
- :builds {:app {:output-dir "resources/public/js"
+ :builds {:app {:output-dir "resources/frontend/public/js"
                 :asset-path "/js"
                 :target     :browser
                 :modules    {:app {:entries [ctia.frontend.app]}}
-                :devtools   {:http-port    8080
-                             :http-root    "resources/public"
-                             :watch-dir    "resources/public"
-                             :after-load   ctia.frontend.app/reload!
+                :devtools   {:http-port    3030
+                             :http-root    "resources/frontend/public"
+                             :watch-dir    "resources/frontend/public"
+                             :after-load   ctia.frontend.app/render!
                              :repl-init-ns ctia.frontend.app}}}}

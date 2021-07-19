@@ -152,7 +152,11 @@
                  ;; GraphQL
                  [base64-clj "0.1.1"]
                  [threatgrid/ring-graphql-ui "0.1.1"]
-                 [com.graphql-java/graphql-java "9.7"]]
+                 [com.graphql-java/graphql-java "9.7"]
+
+                 ;; Front-end
+                 [reagent "1.1.0"]
+                 ]
 
   :resource-paths ["resources" "doc"]
   :classpath ".:resources"
