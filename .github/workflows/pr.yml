@@ -321,7 +321,7 @@ jobs:
       - run: echo "All tests pass!"
   deploy:
     runs-on: ubuntu-20.04
-    #needs: [all-pr-checks]
+    needs: [all-pr-checks]
     # see on.push.branches for which branches are built on push
     if: github.event_name == 'push' && github.repository == 'threatgrid/ctia'
     steps:
