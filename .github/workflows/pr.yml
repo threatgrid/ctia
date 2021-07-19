@@ -1,4 +1,4 @@
-name: CTIA Build
+name: CTIA
 
 on:
   # to enable pull requests from other repositories
