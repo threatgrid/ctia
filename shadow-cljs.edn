@@ -2,9 +2,11 @@
  :builds {:app {:output-dir "resources/frontend/public/js"
                 :asset-path "/js"
                 :target     :browser
-                :modules    {:app {:entries [ctia.frontend.app]}}
+                :modules    {:app {:init-fn ctia.frontend.app/init}}
                 :devtools   {:http-port    3030
                              :http-root    "resources/frontend/public"
                              :watch-dir    "resources/frontend/public"
                              :after-load   ctia.frontend.app/render!
-                             :repl-init-ns ctia.frontend.app}}}}
+                             :preloads [devtools.preload]
+                             :repl-init-ns ctia.frontend.app
+                             }}}}
