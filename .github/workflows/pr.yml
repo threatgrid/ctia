@@ -276,7 +276,6 @@ jobs:
   # them up to date
   # here's a GitHub Actions feature request that is relevant:
   # https://github.community/t/branch-protections-job-names-and-matrix-jobs/16317
-  # TODO rename this. requires coordination in protected branches settings.
   all-pr-checks:
     runs-on: ubuntu-20.04
     needs: [test-matrix]
@@ -320,8 +319,7 @@ jobs:
       - run: echo "All tests pass!"
   deploy:
     runs-on: ubuntu-20.04
-    # can run in parallel to all-pr-checks, which only aggregates and uploads test results
-    needs: [test-matrix]
+    needs: [all-pr-checks]
     # see on.push.branches for which branches are built on push
     if: github.event_name == 'push' && github.repository == 'threatgrid/ctia'
     steps:
