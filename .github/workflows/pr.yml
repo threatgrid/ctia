@@ -4,6 +4,8 @@ on:
   pull_request:
   push:
     branches:
+      # TODO delete me
+      - iroh-5170-deploy-actions
       - master
       # Note: full regex not supported here, hardcoding vX.X and vX.X.X
       # See https://docs.github.com/en/actions/reference/workflow-syntax-for-github-actions#filter-pattern-cheat-sheet
@@ -381,7 +383,7 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_PASSWORD }}
 
-      - run: ./build/deploy-actions.sh
+      - run: #./build/deploy-actions.sh
         env:
           # offline to catch issues where `lein warm-ci-deps` doesn't download all
           # dependencies we need to deploy.
