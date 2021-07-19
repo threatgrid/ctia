@@ -3,7 +3,8 @@
 #
 # Fails if run in non-deployment situations.
 #
-# Assumes awscli and dockerhub is set up with correct credentials.
+# Assumes awscli and dockerhub is set up with correct credentials for the
+# current user.
 #
 # Requires secrets:
 # - CYBRIC_API_KEY
@@ -56,9 +57,7 @@ function build-and-publish-package {
   fi
 
   ARTIFACT_NAME="${CTIA_BUILD_NUMBER}-${CTIA_COMMIT:0:8}.jar"
-  #TODO uncomment
-  #aws s3 cp ./target/ctia.jar s3://${ARTIFACTS_BUCKET}/artifacts/ctia/"${ARTIFACT_NAME}" --sse aws:kms --sse-kms-key-id alias/kms-s3
-  aws s3 ls s3://${ARTIFACTS_BUCKET}/artifacts/ctia | wc -l
+  aws s3 cp ./target/ctia.jar s3://${ARTIFACTS_BUCKET}/artifacts/ctia/"${ARTIFACT_NAME}" --sse aws:kms --sse-kms-key-id alias/kms-s3
 
   # Run Vulnerability Scan in the artifact using ZeroNorth - master only
   if [ "${PKG_TYPE}" == "int" ]; then
@@ -73,9 +72,7 @@ function build-and-publish-package {
 }
 
 if [[ "${GITHUB_EVENT_NAME}" == "push" ]]; then
-  if [[ # ${CTIA_BRANCH} == "master" #FIXME UNCOMMENT
-      ${CTIA_BRANCH} == "iroh-5170-deploy-actions"
-       ]]; then
+  if [[ ${CTIA_BRANCH} == "master" ]]; then
     # non-pr builds on the master branch yield master packages
     echo "OK: master branch detected"
     build-and-publish-package "int"
