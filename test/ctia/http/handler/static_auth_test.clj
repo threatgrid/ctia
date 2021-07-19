@@ -1,6 +1,5 @@
 (ns ctia.http.handler.static-auth-test
-  (:require [clj-momo.test-helpers.core :as mth]
-            [ctia.domain.entities :refer [schema-version]]
+  (:require [ctia.domain.entities :refer [schema-version]]
             [ctia.test-helpers
              [core :as helpers :refer [POST GET]]
              [es :as es-helpers]]
@@ -73,7 +72,7 @@
                    (str "ctia/judgement/" (:short-id judgement-id))
                    :headers {"Authorization" "tearbending"})]
           (is (= 200 status))
-          (is (deep=
+          (is (=
                {:id (:id judgement)
                 :type "judgement"
                 :observable {:value "1.2.3.4"

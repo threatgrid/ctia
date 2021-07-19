@@ -218,7 +218,6 @@
                                ident
                                {}))))))))
 
-
 (defn sighting-conn-state
   [app]
   (let [{:keys [get-store]} (helpers/get-service-map app :StoreService)]
@@ -254,12 +253,12 @@
            (is (= {:bool {:filter [simple-access-ctrl-query
                                    es-query-string-AND]}}
                   (sut/make-search-query es-conn-state
-                                         {:query-string query-string}
+                                         {:full-text {:query query-string}}
                                          ident)))
            (is (= {:bool {:filter [simple-access-ctrl-query
                                    es-query-string-no-op]}}
                   (sut/make-search-query (update es-conn-state :props dissoc :default_operator)
-                                         {:query-string query-string}
+                                         {:full-text {:query query-string}}
                                          ident)))
            (is (= {:bool {:filter [simple-access-ctrl-query
                                    es-date-range]}}
@@ -272,11 +271,25 @@
                   (sut/make-search-query es-conn-state
                                          {:filter-map filter-map}
                                          ident)))
+           (is (= {:bool {:filter [simple-access-ctrl-query
+                                   {:simple_query_string {:query "*"
+                                                          :default_operator "AND"}}]}}
+                  (sut/make-search-query es-conn-state
+                                         {:full-text {:query query-string
+                                                      :query_mode :simple_query_string}}
+                                         ident)))
+           (is (= {:bool {:filter [simple-access-ctrl-query
+                                   {:multi_match {:query "*"}}]}}
+                  (sut/make-search-query es-conn-state
+                                         {:full-text {:query query-string
+                                                      :query_mode :multi_match}}
+                                         ident))
+               "multi_match queries don't support default_operator")
            (is (= {:bool {:filter (-> [simple-access-ctrl-query]
                                       (into es-terms)
                                       (into [es-date-range es-query-string-AND]))}}
                   (sut/make-search-query es-conn-state
-                                         {:query-string query-string
+                                         {:full-text {:query query-string}
                                           :range date-range
                                           :filter-map filter-map}
                                          ident))))))))))
@@ -401,9 +414,9 @@
            (assert (pos? (count high-t1-title1)))
            (is (= (count (concat high-t1-title1
                                  medium-t1-title1))
-                  (count (:data (search-helper {:query-string query-string}
+                  (count (:data (search-helper {:full-text {:query query-string}}
                                                {})))
-                  (count-helper {:query-string query-string})))
+                  (count-helper {:full-text {:query query-string}})))
            (is (= (count (concat high-t1-title1
                                  medium-t1-title1))
                   (count (:data (search-helper {:range date-range}
@@ -414,18 +427,18 @@
                                                {})))
                   (count-helper {:filter-map filter-map})))
            (is (= (count high-t1-title1)
-                  (count (:data (search-helper {:query-string query-string
+                  (count (:data (search-helper {:full-text {:query query-string}
                                                 :range date-range
                                                 :filter-map filter-map}
                                                {})))
 
-                  (count-helper {:query-string query-string
+                  (count-helper {:full-text {:query query-string}
                                  :range date-range
                                  :filter-map filter-map}))))
          (testing "Properly handle search params"
-           (let [search-page-0 (search-helper {:query-string query-string}
+           (let [search-page-0 (search-helper {:full-text {:query query-string}}
                                               {:limit 2})
-                 search-page-1 (search-helper {:query-string query-string}
+                 search-page-1 (search-helper {:full-text {:query query-string}}
                                               (get-in search-page-0 [:paging :next]))]
              (assert (some? (:data search-page-0)))
              (assert (some? (:data search-page-1)))
@@ -451,24 +464,24 @@
              aggregate (fn [search-query agg-query]
                          (aggregate-fn es-conn-state search-query agg-query ident))]
          (testing "cardinality"
-           (is (= 3 (aggregate {:query-string "*"}
+           (is (= 3 (aggregate {:full-text {:query "*"}}
                                {:agg-type :cardinality
                                 :aggregate-on "confidence"})))
-           (is (= 2 (aggregate {:query-string "confidence:(high OR medium)"}
+           (is (= 2 (aggregate {:full-text {:query "confidence:(high OR medium)"}}
                                {:agg-type :cardinality
                                 :aggregate-on "confidence"}))
                "query filters should be properly applied"))
          (testing "histogram"
            (is (= [{:key  "2020-03-01T00:00:00.000-01:00" :value 70}
                    {:key  "2020-04-01T00:00:00.000-01:00" :value 25}]
-                  (aggregate {:query-string "*"}
+                  (aggregate {:full-text {:query "*"}}
                              {:agg-type :histogram
                               :aggregate-on "created"
                               :granularity :month
                               :timezone "-01:00"})))
            (is (= [{:key timestamp-1 :value 60}
                    {:key timestamp-2 :value 20}]
-                  (aggregate {:query-string "confidence:high"}
+                  (aggregate {:full-text {:query "confidence:high"}}
                              {:agg-type :histogram
                               :aggregate-on "created"
                               :granularity :month
@@ -476,11 +489,11 @@
                "query filters should be properly applied")
            (is (= [{:key  "2020-04-01T00:00:00.000Z" :value 70}
                    {:key  "2020-05-01T00:00:00.000Z" :value 25}]
-                  (aggregate {:query-string "*"}
-                             {:agg-type :histogram
+                  (aggregate {:full-text {:query "*"}}
+                             {:agg-type     :histogram
                               :aggregate-on "created"
-                              :granularity :month})
-                  (aggregate {:query-string "*"}
+                              :granularity  :month})
+                  (aggregate {:full-text {:query "*"}}
                              {:agg-type :histogram
                               :aggregate-on "created"
                               :granularity :month
@@ -489,30 +502,30 @@
          (testing "topn"
            (is (= [{:key "low":value 5}
                    {:key "medium" :value 10}]
-                  (aggregate {:query-string "*"}
-                             {:agg-type :topn
+                  (aggregate {:full-text {:query "*"}}
+                             {:agg-type     :topn
                               :aggregate-on "confidence"
-                              :limit 2
-                              :sort_order :asc})))
+                              :limit        2
+                              :sort_order   :asc})))
            (is (= [{:key "high" :value 80}
                    {:key "medium" :value 10}
                    {:key "low":value 5}]
-                  (aggregate {:query-string "*"}
+                  (aggregate {:full-text {:query "*"}}
                              {:agg-type :topn
                               :aggregate-on "confidence"})
-                  (aggregate {:query-string "*"}
+                  (aggregate {:full-text {:query "*"}}
                              {:agg-type :topn
                               :aggregate-on "confidence"
                               :limit 10
                               :sort_order :desc}))
                "default limit is 10, default sort_order is desc")
            (is (= [{:key "high" :value 80}
-                   {:key "low" :value 5}])
-               (aggregate {:query-string "confidence:(high OR low)"}
-                          {:agg-type :topn
-                           :aggregate-on "confidence"
-                           :limit 10
-                           :sort_order :desc}))))))))
+                   {:key "low" :value 5}]
+                  (aggregate {:full-text {:query "confidence:(high OR low)"}}
+                             {:agg-type     :topn
+                              :aggregate-on "confidence"
+                              :limit        10
+                              :sort_order   :desc})))))))))
 
 (deftest handle-delete-search
   (es-helpers/for-each-es-version
@@ -555,7 +568,7 @@
 
             (check-fn
              {:msg "user can only delete the data they have access to."
-              :query {:query-string "title1"
+              :query {:full-text {:query "title1"}
                       :filter-map {:confidence "High"}}
               :matched []
               :ident ident-2
@@ -563,7 +576,7 @@
 
             (check-fn
              {:msg "matched entities must be properly deleted"
-              :query {:query-string "title1"
+              :query {:full-text {:query "title1"}
                       :filter-map {:confidence "High"}}
               :matched high-t1-title1
               :ident ident-1

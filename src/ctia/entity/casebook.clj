@@ -1,36 +1,28 @@
 (ns ctia.entity.casebook
-  (:require [ctia.lib.compojure.api.core :refer [context POST PATCH routes]]
-            [ctia.domain.entities :refer [default-realize-fn un-store with-long-id]]
-            [ctia.flows.crud :as flows]
-            [ctia.http.routes
-             [common :refer [BaseEntityFilterParams
-                             PagingParams
-                             SourcableEntityFilterParams
-                             wait_for->refresh]
-              :as routes.common]
-             [crud :refer [services->entity-crud-routes]]]
-            [ctia.schemas
-             [utils :as csu]
-             [core :refer [APIHandlerServices Bundle def-acl-schema def-stored-schema]]
-             [sorting :as sorting]]
-            [ctia.schemas.graphql
-             [flanders :as flanders]
-             [helpers :as g]
-             [pagination :as pagination]
-             [sorting :as graphql-sorting]
-             [refs :as refs]]
-            [ctia.store :refer [read-record
-                                update-record]]
-            [ctia.stores.es
-             [mapping :as em]
-             [store :refer [def-es-store]]]
-            [ctim.schemas.casebook :as cs]
-            [flanders.utils :as fu]
-            [ring.swagger.schema :refer [describe]]
-            [ring.util.http-response :refer [ok not-found]]
-            [schema-tools.core :as st]
-            [schema.core :as s]
-            [ctia.schemas.graphql.ownership :as go]))
+  (:require
+   [ctia.domain.entities :refer [default-realize-fn un-store with-long-id]]
+   [ctia.flows.crud :as flows]
+   [ctia.http.routes.common :as routes.common]
+   [ctia.http.routes.crud :refer [services->entity-crud-routes]]
+   [ctia.lib.compojure.api.core :refer [context POST PATCH routes]]
+   [ctia.schemas.core :refer [APIHandlerServices Bundle def-acl-schema def-stored-schema]]
+   [ctia.schemas.graphql.flanders :as flanders]
+   [ctia.schemas.graphql.helpers :as g]
+   [ctia.schemas.graphql.ownership :as go]
+   [ctia.schemas.graphql.pagination :as pagination]
+   [ctia.schemas.graphql.refs :as refs]
+   [ctia.schemas.graphql.sorting :as graphql-sorting]
+   [ctia.schemas.sorting :as sorting]
+   [ctia.schemas.utils :as csu]
+   [ctia.store :refer [read-record update-record]]
+   [ctia.stores.es.mapping :as em]
+   [ctia.stores.es.store :refer [def-es-store]]
+   [ctim.schemas.casebook :as cs]
+   [flanders.utils :as fu]
+   [ring.swagger.schema :refer [describe]]
+   [ring.util.http-response :refer [ok not-found]]
+   [schema-tools.core :as st]
+   [schema.core :as s]))
 
 (def-acl-schema Casebook
   (fu/replace-either-with-any
@@ -58,7 +50,7 @@
 (def-stored-schema StoredCasebook Casebook)
 
 (s/defschema PartialStoredCasebook
-  (csu/optional-keys-schema StoredCasebook))
+  (st/optional-keys-schema StoredCasebook))
 
 (def realize-casebook
   (default-realize-fn "casebook" NewCasebook StoredCasebook))
@@ -105,21 +97,21 @@
 
 (s/defschema CasebookSearchParams
   (st/merge
-   PagingParams
-   BaseEntityFilterParams
-   SourcableEntityFilterParams
+   routes.common/PagingParams
+   routes.common/BaseEntityFilterParams
+   routes.common/SourcableEntityFilterParams
+   routes.common/SearchableEntityParams
    CasebookFieldsParam
    (st/optional-keys
-    {:query s/Str
-     :texts.text s/Str
-     :sort_by casebook-sort-fields})))
+    {:texts.text s/Str
+     :sort_by    casebook-sort-fields})))
 
 (def CasebookGetParams CasebookFieldsParam)
 
 
 (s/defschema CasebookByExternalIdQueryParams
   (st/merge
-   PagingParams
+   routes.common/PagingParams
    CasebookFieldsParam))
 
 (def casebook-capabilities
@@ -156,7 +148,7 @@
                                               (:id %)
                                               %
                                               identity-map
-                                              (wait_for->refresh wait_for)))
+                                              (routes.common/wait_for->refresh wait_for)))
                             :long-id-fn #(with-long-id % services)
                             :entity-type :casebook
                             :entity-id id
@@ -192,7 +184,7 @@
                                                       (:id %)
                                                       %
                                                       identity-map
-                                                      (wait_for->refresh wait_for)))
+                                                      (routes.common/wait_for->refresh wait_for)))
                                     :long-id-fn #(with-long-id % services)
                                     :entity-type :casebook
                                     :entity-id id
@@ -229,7 +221,7 @@
                                                       (:id %)
                                                       %
                                                       identity-map
-                                                      (wait_for->refresh wait_for)))
+                                                      (routes.common/wait_for->refresh wait_for)))
                                     :long-id-fn #(with-long-id % services)
                                     :entity-type :casebook
                                     :entity-id id
@@ -266,7 +258,7 @@
                                                      (:id %)
                                                      %
                                                      identity-map
-                                                     (wait_for->refresh wait_for)))
+                                                     (routes.common/wait_for->refresh wait_for)))
                                    :long-id-fn #(with-long-id % services)
                                    :entity-type :casebook
                                    :entity-id id
@@ -321,46 +313,45 @@
    (casebook-operation-routes services)
    (services->entity-crud-routes
     services
-    {:api-tags ["Casebook"]
-     :entity :casebook
-     :new-schema NewCasebook
-     :entity-schema Casebook
-     :get-schema PartialCasebook
-     :get-params CasebookGetParams
-     :list-schema PartialCasebookList
-     :search-schema PartialCasebookList
-     :external-id-q-params CasebookByExternalIdQueryParams
-     :search-q-params CasebookSearchParams
-     :new-spec :new-casebook/map
-     :realize-fn realize-casebook
-     :can-aggregate? true
-     :get-capabilities :read-casebook
-     :post-capabilities :create-casebook
-     :put-capabilities :create-casebook
-     :delete-capabilities :delete-casebook
-     :search-capabilities :search-casebook
+    {:api-tags                 ["Casebook"]
+     :entity                   :casebook
+     :new-schema               NewCasebook
+     :entity-schema            Casebook
+     :get-schema               PartialCasebook
+     :get-params               CasebookGetParams
+     :list-schema              PartialCasebookList
+     :search-schema            PartialCasebookList
+     :external-id-q-params     CasebookByExternalIdQueryParams
+     :search-q-params          CasebookSearchParams
+     :new-spec                 :new-casebook/map
+     :realize-fn               realize-casebook
+     :can-aggregate?           true
+     :get-capabilities         :read-casebook
+     :post-capabilities        :create-casebook
+     :put-capabilities         :create-casebook
+     :delete-capabilities      :delete-casebook
+     :search-capabilities      :search-casebook
      :external-id-capabilities :read-casebook
-     :hide-delete? false
-     :histogram-fields casebook-histogram-fields
-     :enumerable-fields casebook-enumerable-fields})))
+     :hide-delete?             false
+     :histogram-fields         casebook-histogram-fields
+     :enumerable-fields        casebook-enumerable-fields})))
 
 (def casebook-entity
-  {:route-context "/casebook"
-   :tags ["Casebook"]
-   :entity :casebook
-   :plural :casebooks
-   :new-spec :new-casebook/map
-   :schema Casebook
-   :partial-schema PartialCasebook
-   :partial-list-schema PartialCasebookList
-   :new-schema NewCasebook
-   :stored-schema StoredCasebook
+  {:route-context         "/casebook"
+   :tags                  ["Casebook"]
+   :entity                :casebook
+   :plural                :casebooks
+   :new-spec              :new-casebook/map
+   :schema                Casebook
+   :partial-schema        PartialCasebook
+   :partial-list-schema   PartialCasebookList
+   :new-schema            NewCasebook
+   :stored-schema         StoredCasebook
    :partial-stored-schema PartialStoredCasebook
-   :realize-fn realize-casebook
-   :es-store ->CasebookStore
-   :es-mapping casebook-mapping
-   :services->routes (routes.common/reloadable-function
-                       casebook-routes)
-   :capabilities casebook-capabilities
-   :fields casebook-fields
-   :sort-fields casebook-fields})
+   :realize-fn            realize-casebook
+   :es-store              ->CasebookStore
+   :es-mapping            casebook-mapping
+   :services->routes      (routes.common/reloadable-function casebook-routes)
+   :capabilities          casebook-capabilities
+   :fields                casebook-fields
+   :sort-fields           casebook-fields})

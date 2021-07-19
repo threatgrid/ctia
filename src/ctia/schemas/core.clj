@@ -2,9 +2,8 @@
   (:require
    [ctia.flows.hooks-service.schemas :as hooks-schemas]
    [ctia.graphql.delayed :as delayed]
-   [ctia.lib.utils :refer [service-subgraph]]
    [ctia.schemas.services :as external-svc-fns]
-   [ctia.schemas.utils :as csutils]
+   [ctia.schemas.utils :as csu]
    [ctia.store-service.schemas :refer [GetStoreFn]]
    [ctim.domain.id :as id]
    [ctim.schemas.bundle :as bundle]
@@ -23,15 +22,15 @@
 (s/defschema APIHandlerServices
   "Maps of services available to routes"
   {:ConfigService                   (-> external-svc-fns/ConfigServiceFns
-                                                  (csutils/select-all-keys
-                                                   #{:get-config
-                                                     :get-in-config}))
+                                        (csu/select-all-keys
+                                          #{:get-config
+                                            :get-in-config}))
    :CTIAHTTPServerService           {:get-port    (s/=> Port)
                                      :get-graphql (s/=> graphql.GraphQL)}
    :HooksService                    (-> hooks-schemas/ServiceFns
-                                                  (csutils/select-all-keys
-                                                   #{:apply-event-hooks
-                                                     :apply-hooks}))
+                                        (csu/select-all-keys
+                                          #{:apply-event-hooks
+                                            :apply-hooks}))
    :StoreService                    {:get-store GetStoreFn}
    :IAuth                           {:identity-for-token (s/=> s/Any s/Any)}
    :GraphQLNamedTypeRegistryService {:get-or-update-named-type-registry
@@ -44,15 +43,11 @@
                                      :feature-flags (s/=> [s/Str])}})
 
 (s/defschema HTTPShowServices
-  ;; TODO describe in terms of APIHandlerServices, while preserving openness
-  ;;      of inner maps (or updating code to use closed maps).
-  {:ConfigService (-> external-svc-fns/ConfigServiceFns
-                      (csutils/select-all-keys
-                        #{:get-in-config})
-                      (st/assoc s/Keyword s/Any))
-   :CTIAHTTPServerService {:get-port (s/=> Port)
-                           s/Keyword s/Any}
-   s/Keyword s/Any})
+  (-> APIHandlerServices
+      (csu/select-service-subschema
+        {:ConfigService #{:get-in-config}
+         :CTIAHTTPServerService #{:get-port}})
+      csu/open-service-schema))
 
 (s/defschema DelayedRoutes
   "Function taking a map of services and returning routes
@@ -68,30 +63,21 @@
 
 (s/defschema RealizeFnServices
   "Maps of service functions available for realize-fns"
-  ;; TODO describe in terms of APIHandlerServices
-  {:ConfigService (-> external-svc-fns/ConfigServiceFns
-                      (csutils/select-all-keys
-                        #{:get-in-config}))
-   :CTIAHTTPServerService {:get-port (s/=> Port)}
-   :StoreService {:get-store GetStoreFn}
-   :GraphQLNamedTypeRegistryService
-   {:get-or-update-named-type-registry
-    (s/=> graphql.schema.GraphQLType
-          s/Str
-          (s/=> graphql.schema.GraphQLType))}
-   :IEncryption {:encrypt (s/=> s/Any s/Any)
-                 :decrypt (s/=> s/Any s/Any)}})
+  (-> APIHandlerServices
+      (csu/select-service-subschema
+        {:ConfigService #{:get-in-config}
+         :CTIAHTTPServerService #{:get-port}
+         :StoreService #{:get-store}
+         :GraphQLNamedTypeRegistryService #{:get-or-update-named-type-registry}
+         :IEncryption #{:decrypt
+                        :encrypt}})))
 
 (s/defn APIHandlerServices->RealizeFnServices
   :- RealizeFnServices
   [services :- APIHandlerServices]
-  (service-subgraph
+  (csu/select-service-subgraph
     services
-    :ConfigService [:get-in-config]
-    :CTIAHTTPServerService [:get-port]
-    :StoreService [:get-store]
-    :GraphQLNamedTypeRegistryService [:get-or-update-named-type-registry]
-    :IEncryption [:decrypt :encrypt]))
+    RealizeFnServices))
 
 (s/defschema GraphQLRuntimeContext
   "A context map to resolve a DelayedGraphQLValue"
@@ -239,7 +225,7 @@
   [name-sym sch]
   `(do
      (s/defschema ~name-sym
-       (csutils/recursive-open-schema-version
+       (csu/recursive-open-schema-version
         (st/merge
          ~sch
          CTIAStoredEntity)))))
@@ -250,7 +236,7 @@
                                            open?]}]
   `(do
      (s/defschema ~name-sym
-       (cond-> (csutils/recursive-open-schema-version
+       (cond-> (csu/recursive-open-schema-version
                 (st/merge
                  (f-schema/->schema ~ddl)
                  CTIAEntity))
@@ -282,11 +268,11 @@
 ;; Casebooks should be considered fully separate from CTIM
 (s/defschema NewBundle
   (st/dissoc
-   (csutils/recursive-open-schema-version CTIMNewBundle) :casebooks))
+   (csu/recursive-open-schema-version CTIMNewBundle) :casebooks))
 
 (s/defschema Bundle
   (st/dissoc
-   (csutils/recursive-open-schema-version CTIMBundle) :casebooks))
+   (csu/recursive-open-schema-version CTIMBundle) :casebooks))
 
 ;; common
 

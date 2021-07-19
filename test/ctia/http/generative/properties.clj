@@ -59,11 +59,9 @@
     (assert (seq common-key-paths))
     (doseq [common-key-path common-key-paths
             :let [id->vals-at-path (id->m-at-path common-key-path)]]
-      (is (apply = (vals id->vals-at-path))
-          ;; `testing` doesn't seem to be recognized by `checking`, so
-          ;; put debugging helpers here
-          (str (prn-str common-key-path)
-               (pr-str id->vals-at-path))))))
+      (testing (pr-str common-key-path)
+        (is (apply = (vals id->vals-at-path))
+            (pr-str id->vals-at-path))))))
 
 (defn api-for-route
   "Returns a function that performs"
@@ -140,7 +138,7 @@
                     (let [;; override data-table Datum, originally `any?` which is
                           ;; a documented underapproximation and generates huge examples
                           ;; which don't end up round-tripping via GET anyway.
-                          gen-datum (constantly tcg/string-ascii)]
+                          gen-datum (constantly tcg/string-alphanumeric)]
                       {:max-new-casebook.bundle.sightings.set-of.data.rows.seq-of/seq-of gen-datum
                        :max-new-casebook.bundle.data_tables.set-of.rows.seq-of/seq-of gen-datum
                        :max-new-sighting.data.rows.seq-of/seq-of gen-datum}))))

@@ -1,20 +1,16 @@
 (ns ctia.entity.campaign
-  (:require [ctia.domain.entities :refer [default-realize-fn]]
-            [ctia.http.routes
-             [common :refer [BaseEntityFilterParams PagingParams SourcableEntityFilterParams]
-              :as routes.common]
-             [crud :refer [services->entity-crud-routes]]]
-            [ctia.schemas
-             [utils :as csu]
-             [core :refer [APIHandlerServices def-acl-schema def-stored-schema]]
-             [sorting :as sorting :refer [default-entity-sort-fields]]]
-            [ctia.stores.es
-             [mapping :as em]
-             [store :refer [def-es-store]]]
-            [ctim.schemas.campaign :as cs]
-            [flanders.utils :as fu]
-            [schema-tools.core :as st]
-            [schema.core :as s]))
+  (:require
+   [ctia.domain.entities :refer [default-realize-fn]]
+   [ctia.http.routes.common :as routes.common]
+   [ctia.http.routes.crud :refer [services->entity-crud-routes]]
+   [ctia.schemas.core :refer [APIHandlerServices def-acl-schema def-stored-schema]]
+   [ctia.schemas.sorting :as sorting :refer [default-entity-sort-fields]]
+   [ctia.stores.es.mapping :as em]
+   [ctia.stores.es.store :refer [def-es-store]]
+   [ctim.schemas.campaign :as cs]
+   [flanders.utils :as fu]
+   [schema-tools.core :as st]
+   [schema.core :as s]))
 
 (def-acl-schema Campaign
   cs/Campaign
@@ -34,7 +30,7 @@
 (def-stored-schema StoredCampaign Campaign)
 
 (s/defschema PartialStoredCampaign
-  (csu/optional-keys-schema StoredCampaign))
+  (st/optional-keys-schema StoredCampaign))
 
 (def campaign-fields
   (concat default-entity-sort-fields
@@ -60,13 +56,13 @@
      em/describable-entity-mapping
      em/sourcable-entity-mapping
      em/stored-entity-mapping
-     {:valid_time em/valid-time
-      :campaign_type em/token
-      :names em/token
+     {:valid_time      em/valid-time
+      :campaign_type   em/token
+      :names           em/token
       :intended_effect em/token
-      :status em/token
-      :confidence em/token
-      :activity em/activity})}})
+      :status          em/token
+      :confidence      em/token
+      :activity        em/activity})}})
 
 (def-es-store CampaignStore :campaign StoredCampaign PartialStoredCampaign)
 
@@ -75,16 +71,16 @@
 
 (s/defschema CampaignSearchParams
   (st/merge
-   PagingParams
-   BaseEntityFilterParams
-   SourcableEntityFilterParams
+   routes.common/PagingParams
+   routes.common/BaseEntityFilterParams
+   routes.common/SourcableEntityFilterParams
+   routes.common/SearchableEntityParams
    CampaignFieldsParam
    (st/optional-keys
-    {:query s/Str
-     :campaign_type s/Str
-     :confidence s/Str
-     :activity s/Str
-     :sort_by  campaign-sort-fields})))
+    {:campaign_type s/Str
+     :confidence    s/Str
+     :activity      s/Str
+     :sort_by       campaign-sort-fields})))
 
 (def campaign-histogram-fields
   [:timestamp
@@ -101,33 +97,33 @@
 
 (s/defschema CampaignByExternalIdQueryParams
   (st/merge
-   PagingParams
+   routes.common/PagingParams
    CampaignFieldsParam))
 
 (s/defn campaign-routes [services :- APIHandlerServices]
   (services->entity-crud-routes
    services
-   {:api-tags ["Campaign"]
-    :entity :campaign
-    :new-schema NewCampaign
-    :entity-schema Campaign
-    :get-schema PartialCampaign
-    :get-params CampaignGetParams
-    :list-schema PartialCampaignList
-    :search-schema PartialCampaignList
-    :external-id-q-params CampaignByExternalIdQueryParams
-    :search-q-params CampaignSearchParams
-    :new-spec :new-campaign/map
-    :realize-fn realize-campaign
-    :get-capabilities :read-campaign
-    :post-capabilities :create-campaign
-    :put-capabilities :create-campaign
-    :delete-capabilities :delete-campaign
-    :search-capabilities :search-campaign
+   {:api-tags                 ["Campaign"]
+    :entity                   :campaign
+    :new-schema               NewCampaign
+    :entity-schema            Campaign
+    :get-schema               PartialCampaign
+    :get-params               CampaignGetParams
+    :list-schema              PartialCampaignList
+    :search-schema            PartialCampaignList
+    :external-id-q-params     CampaignByExternalIdQueryParams
+    :search-q-params          CampaignSearchParams
+    :new-spec                 :new-campaign/map
+    :realize-fn               realize-campaign
+    :get-capabilities         :read-campaign
+    :post-capabilities        :create-campaign
+    :put-capabilities         :create-campaign
+    :delete-capabilities      :delete-campaign
+    :search-capabilities      :search-campaign
     :external-id-capabilities :read-campaign
-    :can-aggregate? true
-    :histogram-fields campaign-histogram-fields
-    :enumerable-fields campaign-enumerable-fields}))
+    :can-aggregate?           true
+    :histogram-fields         campaign-histogram-fields
+    :enumerable-fields        campaign-enumerable-fields}))
 
 (def capabilities
   #{:create-campaign
@@ -136,22 +132,21 @@
     :search-campaign})
 
 (def campaign-entity
-  {:route-context "/campaign"
-   :tags ["Campaign"]
-   :entity :campaign
-   :plural :campaigns
-   :new-spec :new-campaign/map
-   :schema Campaign
-   :partial-schema PartialCampaign
-   :partial-list-schema PartialCampaignList
-   :new-schema NewCampaign
-   :stored-schema StoredCampaign
+  {:route-context         "/campaign"
+   :tags                  ["Campaign"]
+   :entity                :campaign
+   :plural                :campaigns
+   :new-spec              :new-campaign/map
+   :schema                Campaign
+   :partial-schema        PartialCampaign
+   :partial-list-schema   PartialCampaignList
+   :new-schema            NewCampaign
+   :stored-schema         StoredCampaign
    :partial-stored-schema PartialStoredCampaign
-   :realize-fn realize-campaign
-   :es-store ->CampaignStore
-   :es-mapping campaign-mapping
-   :services->routes (routes.common/reloadable-function
-                       campaign-routes)
-   :capabilities capabilities
-   :fields campaign-fields
-   :sort-fields campaign-fields})
+   :realize-fn            realize-campaign
+   :es-store              ->CampaignStore
+   :es-mapping            campaign-mapping
+   :services->routes      (routes.common/reloadable-function campaign-routes)
+   :capabilities          capabilities
+   :fields                campaign-fields
+   :sort-fields           campaign-fields})

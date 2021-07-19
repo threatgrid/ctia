@@ -1,20 +1,16 @@
 (ns ctia.entity.actor
-  (:require [ctia.domain.entities :refer [default-realize-fn]]
-            [ctia.http.routes
-             [common :refer [BaseEntityFilterParams PagingParams SourcableEntityFilterParams]
-              :as routes.common]
-             [crud :refer [services->entity-crud-routes]]]
-            [ctia.schemas
-             [core :refer [APIHandlerServices def-acl-schema def-stored-schema]]
-             [sorting :as sorting]
-             [utils :as csu]]
-            [ctia.stores.es
-             [mapping :as em]
-             [store :refer [def-es-store]]]
-            [ctim.schemas.actor :as as]
-            [flanders.utils :as fu]
-            [schema-tools.core :as st]
-            [schema.core :as s]))
+  (:require
+   [ctia.domain.entities :refer [default-realize-fn]]
+   [ctia.http.routes.common :as routes.common]
+   [ctia.http.routes.crud :refer [services->entity-crud-routes]]
+   [ctia.schemas.core :refer [APIHandlerServices def-acl-schema def-stored-schema]]
+   [ctia.schemas.sorting :as sorting]
+   [ctia.stores.es.mapping :as em]
+   [ctia.stores.es.store :refer [def-es-store]]
+   [ctim.schemas.actor :as as]
+   [flanders.utils :as fu]
+   [schema-tools.core :as st]
+   [schema.core :as s]))
 
 (def-acl-schema Actor
   as/Actor
@@ -34,7 +30,7 @@
 (def-stored-schema StoredActor Actor)
 
 (s/defschema PartialStoredActor
-  (csu/optional-keys-schema StoredActor))
+  (st/optional-keys-schema StoredActor))
 
 (def realize-actor
   (default-realize-fn "actor" NewActor StoredActor))
@@ -48,15 +44,15 @@
      em/describable-entity-mapping
      em/sourcable-entity-mapping
      em/stored-entity-mapping
-     {:valid_time em/valid-time
-      :actor_type em/token
-      :identity em/tg-identity
-      :motivation em/token
-      :sophistication em/token
-      :intended_effect em/token
+     {:valid_time                       em/valid-time
+      :actor_type                       em/token
+      :identity                         em/tg-identity
+      :motivation                       em/token
+      :sophistication                   em/token
+      :intended_effect                  em/token
       :planning_and_operational_support em/token
-      :related_indicators em/related-indicators
-      :confidence em/token})}})
+      :related_indicators               em/related-indicators
+      :confidence                       em/token})}})
 
 (def-es-store ActorStore :actor StoredActor PartialStoredActor)
 
@@ -77,24 +73,24 @@
 
 (s/defschema ActorSearchParams
   (st/merge
-   PagingParams
-   BaseEntityFilterParams
-   SourcableEntityFilterParams
+   routes.common/PagingParams
+   routes.common/BaseEntityFilterParams
+   routes.common/SourcableEntityFilterParams
+   routes.common/SearchableEntityParams
    ActorFieldsParam
    (st/optional-keys
-    {:query s/Str
-     :actor_type s/Str
-     :motivation s/Str
-     :sophistication s/Str
+    {:actor_type      s/Str
+     :motivation      s/Str
+     :sophistication  s/Str
      :intended_effect s/Str
-     :confidence s/Str
-     :sort_by  actor-sort-fields})))
+     :confidence      s/Str
+     :sort_by         actor-sort-fields})))
 
 (def ActorGetParams ActorFieldsParam)
 
 (s/defschema ActorByExternalIdQueryParams
   (st/merge
-   PagingParams
+   routes.common/PagingParams
    ActorFieldsParam))
 
 (def actor-enumerable-fields
@@ -113,26 +109,26 @@
 (s/defn actor-routes [services :- APIHandlerServices]
   (services->entity-crud-routes
    services
-   {:entity :actor
-    :new-schema NewActor
-    :entity-schema Actor
-    :get-schema PartialActor
-    :get-params ActorGetParams
-    :list-schema PartialActorList
-    :search-schema PartialActorList
-    :external-id-q-params ActorByExternalIdQueryParams
-    :search-q-params ActorSearchParams
-    :new-spec :new-actor/map
-    :realize-fn realize-actor
-    :get-capabilities :read-actor
-    :post-capabilities :create-actor
-    :put-capabilities :create-actor
-    :delete-capabilities :delete-actor
-    :search-capabilities :search-actor
+   {:entity                   :actor
+    :new-schema               NewActor
+    :entity-schema            Actor
+    :get-schema               PartialActor
+    :get-params               ActorGetParams
+    :list-schema              PartialActorList
+    :search-schema            PartialActorList
+    :external-id-q-params     ActorByExternalIdQueryParams
+    :search-q-params          ActorSearchParams
+    :new-spec                 :new-actor/map
+    :realize-fn               realize-actor
+    :get-capabilities         :read-actor
+    :post-capabilities        :create-actor
+    :put-capabilities         :create-actor
+    :delete-capabilities      :delete-actor
+    :search-capabilities      :search-actor
     :external-id-capabilities :read-actor
-    :can-aggregate? true
-    :histogram-fields actor-histogram-fields
-    :enumerable-fields actor-enumerable-fields}))
+    :can-aggregate?           true
+    :histogram-fields         actor-histogram-fields
+    :enumerable-fields        actor-enumerable-fields}))
 
 (def capabilities
   #{:create-actor
@@ -141,22 +137,21 @@
     :search-actor})
 
 (def actor-entity
-  {:route-context "/actor"
-   :tags ["Actor"]
-   :entity :actor
-   :plural :actors
-   :new-spec :new-actor/map
-   :schema Actor
-   :partial-schema PartialActor
-   :partial-list-schema PartialActorList
-   :new-schema NewActor
-   :stored-schema StoredActor
+  {:route-context         "/actor"
+   :tags                  ["Actor"]
+   :entity                :actor
+   :plural                :actors
+   :new-spec              :new-actor/map
+   :schema                Actor
+   :partial-schema        PartialActor
+   :partial-list-schema   PartialActorList
+   :new-schema            NewActor
+   :stored-schema         StoredActor
    :partial-stored-schema PartialStoredActor
-   :realize-fn realize-actor
-   :es-store ->ActorStore
-   :es-mapping actor-mapping
-   :services->routes (routes.common/reloadable-function
-                       actor-routes)
-   :capabilities capabilities
-   :fields actor-fields
-   :sort-fields actor-fields})
+   :realize-fn            realize-actor
+   :es-store              ->ActorStore
+   :es-mapping            actor-mapping
+   :services->routes      (routes.common/reloadable-function actor-routes)
+   :capabilities          capabilities
+   :fields                actor-fields
+   :sort-fields           actor-fields})

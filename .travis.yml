@@ -1,13 +1,6 @@
 language: clojure
-lein: 2.9.1
+lein: 2.9.6
 dist: trusty
-python: 3
-
-addons:
-  apt:
-    update: true
-    packages:
-      - python3-pip
 
 branches:
   only:
@@ -33,12 +26,15 @@ env:
       - CTIA_HOOK_ES_PORT=9200
       - CTIA_HOOK_ES_INDEXNAME=elasticsearch
       - CTIA_HOOK_REDIS_URI=redis://127.0.0.1:6379
-      - SHELLCHECK_VERSION=v0.7.1 # "stable" or "v0.4.7", or "latest"
+      - SHELLCHECK_VERSION=v0.7.2
       # https://stackoverflow.com/a/34809448
       # travis allows 5 concurrent builds for open source plans
       # across org
       - CTIA_NSPLITS=5
       - CTIA_TEST_SUITE=ci
+      # only used in deploy job.
+      # must support SNI https://github.com/pypa/pypi-support/issues/978
+      - PYTHON_VERSION=2.7.18
 
 # Cache our Maven deps to be kind to clojars, github, docker images
 cache:
@@ -46,6 +42,7 @@ cache:
     - $HOME/bin
     - $HOME/.m2
     - $HOME/.cache/pip
+    - $HOME/.cache/pyenv
     - docker_images
 
 # default jdk for testing and (always) deployment.
@@ -87,24 +84,22 @@ matrix: #note: don't use "jobs:" introduces an extra build
     #     https://github.com/threatgrid/tenzin/blob/master/nextgen/saltstack/srv/salt/openjdk/defaults.yml
     # - IMPORTANT! Must include split build id's from in (range ${CTIA_NSPLITS}).
     #    Nothing ensures this is actually true, so make sure it is!
-
-# TEMPORARY DISABLE
-#    - stage: test
-#      name: "JDK 11"
-#      if: type = push
-#      env: CTIA_THIS_SPLIT=0
-#    - name: "JDK 11"
-#      if: type = push
-#      env: CTIA_THIS_SPLIT=1
-#    - name: "JDK 11"
-#      if: type = push
-#      env: CTIA_THIS_SPLIT=2
-#    - name: "JDK 11"
-#      if: type = push
-#      env: CTIA_THIS_SPLIT=3
-#    - name: "JDK 11"
-#      if: type = push
-#      env: CTIA_THIS_SPLIT=4
+    - stage: test
+      name: "JDK 11"
+      if: type = push
+      env: CTIA_THIS_SPLIT=0
+    - name: "JDK 11"
+      if: type = push
+      env: CTIA_THIS_SPLIT=1
+    - name: "JDK 11"
+      if: type = push
+      env: CTIA_THIS_SPLIT=2
+    - name: "JDK 11"
+      if: type = push
+      env: CTIA_THIS_SPLIT=3
+    - name: "JDK 11"
+      if: type = push
+      env: CTIA_THIS_SPLIT=4
 
     # Cron jobs:
     # ==========
@@ -113,19 +108,18 @@ matrix: #note: don't use "jobs:" introduces an extra build
     # - they repeat around the same time as initially started
     # - we deploy (also) during cron jobs in the 'deploy' stage
     # - generative tests are disabled and are instead run in Actions
-# TEMPORARY DISABLE
-#    - name: "JDK 11"
-#      if: type = cron
-#      env:
-#        - CTIA_TEST_SUITE=ci
-#        - CTIA_THIS_SPLIT=0
-#        - CTIA_NSPLITS=2
-#    - name: "JDK 11"
-#      if: type = cron
-#      env:
-#        - CTIA_TEST_SUITE=ci
-#        - CTIA_THIS_SPLIT=1
-#        - CTIA_NSPLITS=2
+    - name: "JDK 11"
+      if: type = cron
+      env:
+        - CTIA_TEST_SUITE=ci
+        - CTIA_THIS_SPLIT=0
+        - CTIA_NSPLITS=2
+    - name: "JDK 11"
+      if: type = cron
+      env:
+        - CTIA_TEST_SUITE=ci
+        - CTIA_THIS_SPLIT=1
+        - CTIA_NSPLITS=2
 
     # Deploy
     # ======
@@ -134,18 +128,25 @@ matrix: #note: don't use "jobs:" introduces an extra build
       # also deploy after every cron job. helps minimize issues with
       # 'push' deployment races.
       if: type = cron || type = push
-      before_script: skip # don't need docker
-      script: skip        # tests already pass
-      after_script: ./build/build.sh
+      # don't need docker, but let's install the python version we need to deploy
+      before_script:
+        # https://github.com/diyan/pywinrm/blob/667703f3ddebc67cab72d86620315c739bfd7262/.travis.yml#L26-L39
+        # Always use latest pyenv but keep installed Python versions in cache
+        - rm -rf ~/.pyenv
+        - git clone https://github.com/pyenv/pyenv.git ~/.pyenv
+        - mkdir -p ~/.cache/pyenv/versions
+        - which pyenv
+        - ln -s ~/.cache/pyenv/versions ~/.pyenv/versions
+        - export PATH="$HOME/.pyenv/shims:$HOME/.pyenv/bin:$PATH"
+        - export PYENV_ROOT="$HOME/.pyenv"
+        - pyenv --version
+        - pyenv install --skip-existing $PYTHON_VERSION
+        - pyenv global $PYTHON_VERSION
+        - pyenv rehash
+        - python --version
+      script: ./build/build.sh     # tests already pass
 
 before_install:
-
-    # check pip3
-    - which pip3    || echo 'which pip3 command failed.'
-    - export PATH=$HOME/.local/bin:$PATH
-    - pip3 install --user $(whoami) --upgrade pip # not pip3
-    - which pip3    || echo 'which pip3 command failed.'
-
     # upgrade shellcheck (https://github.com/koalaman/shellcheck#installing-a-pre-compiled-binary)
     - wget -qO- "https://github.com/koalaman/shellcheck/releases/download/${SHELLCHECK_VERSION?}/shellcheck-${SHELLCHECK_VERSION?}.linux.x86_64.tar.xz" | tar -xJv
     - cp "shellcheck-${SHELLCHECK_VERSION}/shellcheck" "${BIN_DIR}"
@@ -169,10 +170,6 @@ before_install:
     - if [ ! -f $COMPOSE_BIN ]; then curl -L {$COMPOSE_URI}/docker-compose-`uname -s`-`uname -m` > $COMPOSE_BIN; fi
     - chmod +x $COMPOSE_BIN
 
-# install any dependencies required
-install:
-    - source $HOME/.rvm/scripts/rvm
-    - rvm use 2.2
 
 before_cache:
   - docker save -o docker_images/images.tar $(docker images -a -q)

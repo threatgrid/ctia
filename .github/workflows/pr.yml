@@ -27,19 +27,27 @@ env:
   # avoid the (somehow) default /usr/local/lib/lein/
   LEIN_HOME: ${{github.workspace}}/.lein
   LEIN_ROOT: 1
-  LEIN_VERSION: 2.9.4
+  LEIN_VERSION: 2.9.6
   CTIA_MAJOR_VERSION: 1
-  SHELLCHECK_VERSION: v0.7.1 # "stable" or "v0.4.7", or "latest"
-  BB_VERSION: 0.2.3
+  SHELLCHECK_VERSION: v0.7.2
+  BB_VERSION: 0.4.3
   DEFAULT_JAVA_VERSION: 11.0.9
+  JAVA_DISTRIBUTION: 'adopt'
 
 jobs:
   setup:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
     steps:
       - uses: actions/checkout@v2
+        with:
+          # to read the latest commit message on a PR
+          # https://github.com/zero88/gh-project-context/blob/26a3afdce1fe607734278e5ccec0851d50669ef5/README.md#latest-commit-message
+          fetch-depth: 2
+      # for grabbing the current commit msg (suprisingly hard!)
+      - uses: zero88/gh-project-context@26a3afdce1fe607734278e5ccec0851d50669ef5
+        id: gh-project-context
       - name: Binary Cache
         uses: actions/cache@v2
         with:
@@ -51,10 +59,16 @@ jobs:
           echo "${BIN_PATH}" >> $GITHUB_PATH
       - name: Install babashka
         run: ./scripts/actions/install-bb.sh
-      - run: ./scripts/actions/setup-env.clj
+      - name: Run tests for scripts
+        run: ./scripts-test/test_runner.clj
+      - run: ./scripts/actions/setup_env.clj
       - name: Setup test matrix splits
         id: set-matrix
-        run: ./scripts/actions/print-matrix.clj
+        run: |
+          echo "CTIA_COMMIT_MESSAGE=${CTIA_COMMIT_MESSAGE}"
+          ./scripts/actions/print_matrix.clj
+        env:
+          CTIA_COMMIT_MESSAGE: ${{steps.gh-project-context.outputs.commitMsg}}
       # Setup previous timing information
       - name: Timing Cache
         id: get-timing
@@ -108,15 +122,19 @@ jobs:
         id: maven-cache
         uses: actions/cache@v2
         with:
-          path: ~/.m2/repository
-          key: ctia-m2-cache-${{ env.ACTIONS_CACHE_VERSION }}-${{ hashFiles('project.clj') }}
+          path: |
+            ~/.m2/repository
+            ~/.gitlibs
+          key: ctia-m2-cache-${{ env.ACTIONS_CACHE_VERSION }}-${{ hashFiles('project.clj') }}-${{ env.LEIN_VERSION }}
           # these will be considered a cache-miss by `cache-hit`
           restore-keys: |
+            ctia-m2-cache-${{ env.ACTIONS_CACHE_VERSION }}-${{ hashFiles('project.clj') }}-
             ctia-m2-cache-${{ env.ACTIONS_CACHE_VERSION }}-
       - name: Setup Java
         if: steps.maven-cache.outputs.cache-hit != 'true'
-        uses: actions/setup-java@v1
+        uses: actions/setup-java@v2
         with:
+          distribution: ${{ env.JAVA_DISTRIBUTION }}
           java-version: ${{ env.DEFAULT_JAVA_VERSION }}
       - run: java -version
         if: steps.maven-cache.outputs.cache-hit != 'true'
@@ -135,12 +153,13 @@ jobs:
         # poor man's travis_retry
         run: for i in {1..${ACTIONS_RETRY_TIMES}}; do lein warm-ci-deps && break; done
   test-matrix:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     needs: [setup]
     strategy:
       matrix:
         this-split: ${{fromJson(needs.setup.outputs.matrix)}}
     env:
+      CTIA_TEST_SUITE: ${{ matrix.this-split.test_suite }}
       CTIA_THIS_SPLIT: ${{ matrix.this-split.this_split }}
       CTIA_NSPLITS: ${{ matrix.this-split.total_splits }}
       CTIA_CI_PROFILES: ${{ matrix.this-split.ci_profiles }}
@@ -158,10 +177,11 @@ jobs:
           echo "${BIN_PATH}" >> $GITHUB_PATH
       - name: Install babashka
         run: ./scripts/actions/install-bb.sh
-      - run: ./scripts/actions/setup-env.clj
+      - run: ./scripts/actions/setup_env.clj
       # run docker as early as possible asynchronously. if this command
       # fails, the split-test test runner will timeout in a reasonable amount
-      # of time and throw an error.
+      # of time and throw an error. See `Upload docker compose` step below
+      # for retrieving this log after a build.
       - name: Docker (async)
         # depends on LOG_PATH and actions/checkout@v2
         run: docker-compose -f containers/dev/docker-compose.yml up -d &> "${LOG_PATH}/docker-compose.log" &
@@ -196,13 +216,17 @@ jobs:
         id: maven-cache
         uses: actions/cache@v2
         with:
-          path: ~/.m2/repository
-          key: ctia-m2-cache-${{ env.ACTIONS_CACHE_VERSION }}-${{ hashFiles('project.clj') }}
+          path: |
+            ~/.m2/repository
+            ~/.gitlibs
+          key: ctia-m2-cache-${{ env.ACTIONS_CACHE_VERSION }}-${{ hashFiles('project.clj') }}-${{ env.LEIN_VERSION }}
           restore-keys: |
+            ctia-m2-cache-${{ env.ACTIONS_CACHE_VERSION }}-${{ hashFiles('project.clj') }}-
             ctia-m2-cache-${{ env.ACTIONS_CACHE_VERSION }}-
 
-      - uses: actions/setup-java@v1
+      - uses: actions/setup-java@v2
         with:
+          distribution: ${{ env.JAVA_DISTRIBUTION }}
           java-version: ${{ env.JAVA_VERSION }}
       - run: java -version
 
@@ -223,6 +247,9 @@ jobs:
         if: steps.maven-cache.outputs.cache-hit != 'true'
         # poor man's travis_retry
         run: for i in {1..${ACTIONS_RETRY_TIMES}}; do lein warm-ci-deps && break; done
+      # Note: if this step fails because Leiningen is in offline mode, add more entries to the maven-cache key.
+      # Most likely, whatever was changed to cause the build to fail needs to be appended to the cache key.
+      # Note there are two Maven caches in this file, keep their keys synchronized.
       - name: Run CTIA tests
         run: ./build/run-tests.sh
         env:
@@ -238,10 +265,11 @@ jobs:
           name: test-timing
           path: target/test-results/*.edn
       - name: Upload docker compose
+        if: ${{ always() }}
         uses: actions/upload-artifact@v2
         with:
-          retention-days: 1
-          name: docker-compose.log
+          retention-days: 10
+          name: docker-compose${{matrix.this-split.this_split}}.log
           path: ${{env.LOG_PATH}}/docker-compose.log
   # fan-in tests so there's a single job we can add to protected branches.
   # otherwise, we'll have add all (range ${CTIA_NSPLITS}) jobs, and keep
@@ -250,7 +278,7 @@ jobs:
   # https://github.community/t/branch-protections-job-names-and-matrix-jobs/16317
   # TODO rename this. requires coordination in protected branches settings.
   all-pr-checks:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     needs: [test-matrix]
     steps:
       - uses: actions/checkout@v2
@@ -265,7 +293,7 @@ jobs:
           echo "${BIN_PATH}" >> $GITHUB_PATH
       - name: Install babashka
         run: ./scripts/actions/install-bb.sh
-      - run: ./scripts/actions/setup-env.clj
+      - run: ./scripts/actions/setup_env.clj
       - name: Timing results Cache
         uses: actions/cache@v2
         with:
