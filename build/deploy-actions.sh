@@ -73,7 +73,9 @@ function build-and-publish-package {
 }
 
 if [[ "${GITHUB_EVENT_NAME}" == "push" ]]; then
-  if [[ ${CTIA_BRANCH} == "master" ]]; then
+  if [[ # ${CTIA_BRANCH} == "master" #FIXME UNCOMMENT
+      ${CTIA_BRANCH} == "iroh-5170-deploy-actions"
+       ]]; then
     # non-pr builds on the master branch yield master packages
     echo "OK: master branch detected"
     build-and-publish-package "int"
