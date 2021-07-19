@@ -319,7 +319,7 @@ jobs:
 
       - run: echo "All tests pass!"
   deploy:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     # can run in parallel to all-pr-checks, which only aggregates and uploads test results
     needs: [test-matrix]
     # see on.push.branches for which branches are built on push
