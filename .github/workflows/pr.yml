@@ -385,12 +385,7 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_PASSWORD }}
 
-      - run: |
-          echo "DELETE ME"
-          lein uberjar
-          exit 1
-          # TODO uncomment
-          #./build/deploy-actions.sh
+      - run: ./build/deploy-actions.sh
         env:
           # offline to catch issues where `lein warm-ci-deps` doesn't download all
           # dependencies we need to deploy.
