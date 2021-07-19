@@ -156,7 +156,9 @@
 
                  ;; Front-end
                  [reagent "1.1.0"]
-                 ]
+                 [re-frame "1.2.0"]
+                 [day8.re-frame/http-fx "0.2.3"]
+                 [cljs-ajax "0.8.3"]]
 
   :resource-paths ["resources" "doc"]
   :classpath ".:resources"
@@ -184,7 +186,8 @@
                                   [circleci/circleci.test "0.4.3"]
                                   [org.clojure/math.combinatorics "0.1.6"]
                                   [org.clojure/data.priority-map "1.0.0"]
-                                  [org.clojure/tools.namespace "1.1.0"]]
+                                  [org.clojure/tools.namespace "1.1.0"]
+                                  [binaryage/devtools "1.0.3"]]
                    :pedantic? :warn
                    :resource-paths ["test/resources"]
                    :source-paths ["dev"]}
