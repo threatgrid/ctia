@@ -64,7 +64,6 @@ function build-and-publish-package {
   if [ "${PKG_TYPE}" == "int" ]; then
     # WARNING: don't `set -x` here -- exposes credentials
     set +x
-    echo "$DOCKERHUB_PASSWORD" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
     docker pull zeronorth/owasp-5-job-runner
     docker run -v "${PWD}"/target/ctia.jar:/code/ctia.jar -e CYBRIC_API_KEY="${CYBRIC_API_KEY}" -e POLICY_ID=IUkmdVdkSjms9CjeWK-Peg -e WORKSPACE="${PWD}"/target -v /var/run/docker.sock:/var/run/docker.sock --name zeronorth zeronorth/integration:latest python cybric.py
     set -x
