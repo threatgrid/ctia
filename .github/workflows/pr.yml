@@ -338,7 +338,7 @@ jobs:
           echo "${BIN_PATH}" >> $GITHUB_PATH
       - name: Install babashka
         run: ./scripts/actions/install-bb.sh
-      - run: ./scripts/actions/setup-env.clj
+      - run: ./scripts/actions/setup_env.clj
       - name: Maven Cache
         id: maven-cache
         uses: actions/cache@v2
