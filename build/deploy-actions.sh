@@ -82,7 +82,7 @@ if [[ "${GITHUB_EVENT_NAME}" == "push" ]]; then
     build-and-publish-package "int"
     exit 0
 
-  elif [[ ${CTIA_BRANCH} =~ ^v[0-9]+(.[0-9]+)+$ ]]; then
+  elif [[ ${CTIA_BRANCH} =~ ^v[0-9]+([.][0-9]+)+$ ]]; then
     # non-pr builds on 'v?.?' branches yield REL packages
     echo "OK: v branch detected using regex"
     build-and-publish-package "rel"
