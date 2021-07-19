@@ -18,3 +18,4 @@ pom.xml
 .clj-kondo/.cache
 .clj-kondo/cache
 .shadow-cljs/
+resources/frontend/public/js/
