@@ -56,7 +56,9 @@ function build-and-publish-package {
   fi
 
   ARTIFACT_NAME="${CTIA_BUILD_NUMBER}-${CTIA_COMMIT:0:8}.jar"
-  aws s3 cp ./target/ctia.jar s3://${ARTIFACTS_BUCKET}/artifacts/ctia/"${ARTIFACT_NAME}" --sse aws:kms --sse-kms-key-id alias/kms-s3
+  #TODO uncomment
+  #aws s3 cp ./target/ctia.jar s3://${ARTIFACTS_BUCKET}/artifacts/ctia/"${ARTIFACT_NAME}" --sse aws:kms --sse-kms-key-id alias/kms-s3
+  aws s3 ls s3://${ARTIFACTS_BUCKET}/artifacts/ctia --sse aws:kms --sse-kms-key-id alias/kms-s3 | wc -l
 
   # Run Vulnerability Scan in the artifact using ZeroNorth - master only
   if [ "${PKG_TYPE}" == "int" ]; then

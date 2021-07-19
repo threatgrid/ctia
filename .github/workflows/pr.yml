@@ -38,6 +38,7 @@ env:
   JAVA_DISTRIBUTION: 'adopt'
 
 jobs:
+  # TODO uncomment
   #  setup:
   #    runs-on: ubuntu-20.04
   #    outputs:
@@ -388,6 +389,7 @@ jobs:
           echo "DELETE ME"
           lein uberjar
           exit 1
+          # TODO uncomment
           #./build/deploy-actions.sh
         env:
           # offline to catch issues where `lein warm-ci-deps` doesn't download all
