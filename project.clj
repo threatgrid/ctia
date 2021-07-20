@@ -241,7 +241,8 @@
                                " (stop)  => stop CTIA, if not already stopped"
                                " (current-app) => get current app, or nil"]))
                  ;10m
-                 :repl-timeout 600000}
+                 :repl-timeout 600000
+                 :nrepl-middleware [shadow.cljs.devtools.server.nrepl/middleware]}
   :middleware [lein-git-down.plugin/inject-properties]
   ;; lein-git-down config
   :repositories [["public-github" {:url "git://github.com"}]
