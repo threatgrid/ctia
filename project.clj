@@ -158,7 +158,8 @@
                  [reagent "1.1.0"]
                  [re-frame "1.2.0"]
                  [day8.re-frame/http-fx "0.2.3"]
-                 [cljs-ajax "0.8.3"]]
+                 [cljs-ajax "0.8.3"]
+                 [cljs-bean "1.7.0"]]
 
   :resource-paths ["resources" "doc"]
   :classpath ".:resources"
