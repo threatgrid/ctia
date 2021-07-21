@@ -1,7 +1,9 @@
 (ns ctia.frontend.sample-chart
   (:require
+   ["react" :as React]
    ["recharts" :as charts]
    [ajax.core :as ajax]
+   [cljs-bean.core :refer [->clj ->js]]
    [day8.re-frame.http-fx]
    [re-frame.core :refer [dispatch
                           reg-event-fx
@@ -23,21 +25,36 @@
 (reg-event-db
  ::process-data
  (fn [db [_ result]]
-   (js/console.log "-----------> result" result)
    (assoc db ::data result)))
 
-(reg-sub
- ::data
- (fn [db _]
-   (get db ::data)))
+(reg-sub ::data (fn [db _] (get db ::data)))
 
 (reg-sub
  ::chart-data
- (fn [db _]
-   [{:name "Alex" :num 1000 :num2 5000}
-    {:name "Betty" :num 3000 :num2 5500}
-    {:name "Charlie" :num 1300 :num2 6000}
-    {:name "Dean" :num 1000 :num2 500}]))
+ :<- [::data]
+ (fn [data _]
+   (def alldata data)
+   (->> data :aggregations :org :buckets
+        (map :source)
+        (map :buckets)
+        (flatten)
+        (reduce
+         (fn [bkt nxt]
+           (conj
+            bkt
+            (->> nxt :titles :buckets
+                 (reduce
+                  (fn [a n]
+                    (assoc
+                     a
+                     (:key n)
+                     (+ (get a (:key n))
+                        (-> n :doc_count))))
+                  {}))))
+         [])
+        (apply merge)
+        (map #(hash-map :name (first %)
+                        :nb-docs (second %))))))
 
 (def BarChart (reagent/adapt-react-class charts/BarChart))
 (def CartesianGrid (reagent/adapt-react-class charts/CartesianGrid))
@@ -46,31 +63,63 @@
 (def Tooltip (reagent/adapt-react-class charts/Tooltip))
 (def Legend (reagent/adapt-react-class charts/Legend))
 (def Bar (reagent/adapt-react-class charts/Bar))
+(def Cell (reagent/adapt-react-class charts/Cell))
+
+(defn customized-axis-tick [props]
+  (let [{:keys [x y payload]} (->clj props)]
+    (reagent/as-element
+     [:g {:transform (str "translate(" (- x 12) "," y ")")}
+      [:text
+       {:x 0
+        :y 0
+        :dy 16
+        :textAnchor "end"
+        :transform "rotate(-55)"
+        :font-size "5pt"
+        :font-family "Helvetica"
+        :font-weight 200}
+       (:value payload)]])))
+
+(defn- random-color [x]
+  (str "#"
+       (-> 16777215
+           (* (js/Math.random))
+           (js/Math.floor)
+           (.toString 16)
+           (subs 0 4))))
 
 (defn bar-chart []
   (let [chart-data @(subscribe [::chart-data])]
-   [BarChart
-    {:width  800
-     :height 500
-     :margin {:top    20
-              :right  20
-              :left   20
-              :bottom 20}
-     :data   chart-data}
-    [CartesianGrid {:strokeDasharray "3 3"}]
-    [XAxis {:dataKey "name"}]
-    [YAxis]
-    [Tooltip]
-    [Legend]
-    [Bar {:dataKey "num" :stackId "a" :fill"#8884d8"}]
-    [Bar {:dataKey "num2" :stackId "b" :fill "#82ca9c"}]]))
+    [BarChart
+     {:width  800
+      :height 500
+      :margin {:top    20
+               :right  20
+               :left   20
+               :bottom 20}
+      :data   chart-data}
+     [CartesianGrid {:strokeDasharray "2 2"
+                     :stroke "#dcdcdc"}]
+     [XAxis {:dataKey  :name
+             :interval 0
+             :height   200
+             :tick     customized-axis-tick}]
+     [YAxis {:scale             :log
+             :domain            [0.01 :auto]
+             :allowDataOverflow true
+             :tick              {:font-family "Helvetica"}}]
+     [Tooltip {:formatter (fn [_ _ props]
+                            (js/Array (aget props "payload" "nb-docs")
+                                      "Number of docs"))}]
+     [Legend]
+     [Bar {:dataKey "nb-docs"
+           :stackId "a"}
+      (for [{:keys [nb-docs]} chart-data]
+        [Cell {:fill (random-color nb-docs)}])]]))
 
 (defn root []
   (dispatch [::fetch-data])
   (fn []
     [:div
-     [:h1 "CTIA Incidents"]
-     [bar-chart]
-     ]))
-
-(js/console.log "charts" charts)
+     [:h1 {:style {:font-family "Helvetica"}} "CTIA Incidents"]
+     [bar-chart]]))
