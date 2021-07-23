@@ -1,9 +1,9 @@
 (def cheshire-version "5.10.0")
 (def clj-http-fake-version "1.0.3")
-(def clj-version "1.10.1")
+(def clj-version "1.10.3")
 (def metrics-clojure-version "2.10.0")
 (def perforate-version "0.3.4")
-(def ring-version "1.8.0")
+(def ring-version "1.9.4")
 (def schema-generators-version "0.1.3")
 (def test-check-version "1.1.0")
 (def test-chuck-version "0.2.11")
@@ -55,12 +55,13 @@
   :jvm-opts ["-Djava.awt.headless=true"
              "-Dlog.console.threshold=INFO"
              "-server"]
-  :exclusions [org.slf4j/log4j-over-slf4j] ;; remove from trapperkeeper jars
+  :exclusions [org.slf4j/log4j-over-slf4j
+               org.clojure/clojure
+               ] ;; remove from trapperkeeper jars
   ;; use `lein pom; mvn dependency:tree -Dverbose -Dexcludes=org.clojure:clojure`
   ;; to inspect conflicts.
 
   :dependencies [[org.clojure/clojure ~clj-version]
-                 [thheller/shadow-cljs "2.11.23"]
                  [clj-time "0.15.2"]
                  [org.threeten/threeten-extra "1.2"]
                  [clojure.java-time "0.3.2"]
@@ -68,7 +69,7 @@
                  [org.slf4j/slf4j-log4j12 "1.8.0-beta0"]
                  [org.clojure/core.memoize "1.0.236"]
                  [org.clojure/tools.logging "1.1.0"]
-                 [org.clojure/tools.cli "1.0.194"]
+                 [org.clojure/tools.cli "1.0.206"]
                  [pandect "0.6.1"]
                  [org.clojure/math.combinatorics "0.1.6"]
                  [version-clj "2.0.1"]
@@ -93,20 +94,20 @@
                  [ring-middleware-format "0.7.4"]
                  ;; optional ring-middleware-format dep (Note: ring-middleware-format is also a transitive dep for compojure-api)
                  ;; see: https://github.com/ngrunwald/ring-middleware-format/issues/74
-                 [com.ibm.icu/icu4j "65.1"]
+                 [com.ibm.icu/icu4j "69.1"]
                  [metosin/ring-swagger "0.26.2"]
                  [metosin/ring-swagger-ui "3.24.3"]
                  [ring/ring-core ~ring-version] ;ring/ring-jetty-adapter > metosin/ring-swagger
                  [ring/ring-jetty-adapter ~ring-version]
                  [ring/ring-devel ~ring-version]
                  [ring-cors "0.1.13"]
-                 [commons-codec "1.12"] ;threatgrid/ctim, threatgrid/clj-momo, clj-http > ring/ring-codec
-                 [ring/ring-codec "1.1.2"]
+                 [commons-codec "1.15"] ;threatgrid/ctim, threatgrid/clj-momo, clj-http > ring/ring-codec
+                 [ring/ring-codec "1.1.3"]
                  [threatgrid/clj-jwt "0.3.1"]
                  [threatgrid/ring-turnstile-middleware "0.1.1"]
                  [threatgrid/ring-jwt-middleware "1.0.1"]
                  [scopula "0.1.4"]
-                 [org.clojure/tools.reader "1.3.4"] ;; org.clojure/tools.namespace > ring-middleware-format
+                 [org.clojure/tools.reader "1.3.6"] ;; org.clojure/tools.namespace > ring-middleware-format
 
                  ;; clients
                  [clj-http "3.10.1"]
@@ -155,11 +156,19 @@
                  [com.graphql-java/graphql-java "9.7"]
 
                  ;; Front-end
+                 [thheller/shadow-cljs "2.15.2"]
+                 [com.cognitect/transit-clj "1.0.324"]
+                 [org.clojure/spec.alpha "0.2.194"]
+                 [org.clojure/core.specs.alpha "0.2.56"]
+                 [thheller/shadow-undertow "0.1.0"]
+                 [org.apache.httpcomponents/httpcore "4.4.14"]
                  [reagent "1.1.0"]
                  [re-frame "1.2.0"]
                  [day8.re-frame/http-fx "0.2.3"]
                  [cljs-ajax "0.8.3"]
-                 [cljs-bean "1.7.0"]]
+                 [cljs-bean "1.7.0"]
+                 [org.clojure/data.json "2.4.0"]
+                 ]
 
   :resource-paths ["resources" "doc"]
   :classpath ".:resources"
@@ -186,9 +195,7 @@
                                   [prismatic/schema-generators ~schema-generators-version]
                                   [circleci/circleci.test "0.4.3"]
                                   [org.clojure/math.combinatorics "0.1.6"]
-                                  [org.clojure/data.priority-map "1.0.0"]
-                                  [org.clojure/tools.namespace "1.1.0"]
-                                  [binaryage/devtools "1.0.3"]]
+                                  [org.clojure/data.priority-map "1.0.0"]]
                    :pedantic? :warn
                    :resource-paths ["test/resources"]
                    :source-paths ["dev"]}
