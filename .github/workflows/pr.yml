@@ -1,13 +1,16 @@
-name: GitHub Actions Pull Request
+name: CTIA
 
 on:
+  # to enable pull requests from other repositories
   pull_request:
-  # Actions only uses caches from upstream branches. since every PR
-  # is branched from master, building pushes to master is sufficient
-  # to seed PR's with caches.
+  # for deployment only
   push:
     branches:
       - master
+      # Note: full regex not supported here, hardcoding vX.X and vX.X.X
+      # See https://docs.github.com/en/actions/reference/workflow-syntax-for-github-actions#filter-pattern-cheat-sheet
+      - "v[0-9]+.[0-9]+"
+      - "v[0-9]+.[0-9]+.[0-9]+"
   # Cron job: runs a matrix of JVM and Clojure versions, which can
   # be configured in the `cron-matrix` function in ./scripts/actions/print-matrix.clj
   # Note: automatically uses master branch https://stackoverflow.com/a/58800550
@@ -20,7 +23,7 @@ env:
   ACTIONS_RETRY_TIMES: 10
   # workaround https://github.com/actions/cache/issues/2
   # to "delete" caches, increment this version
-  ACTIONS_CACHE_VERSION: v14
+  ACTIONS_CACHE_VERSION: v15
   BIN_PATH: ${{github.workspace}}/bin
   LOG_PATH: ${{github.workspace}}/log
   # avoid the (somehow) default /usr/local/lib/lein/
@@ -316,3 +319,73 @@ jobs:
           path: target/test-results/*.edn
 
       - run: echo "All tests pass!"
+  deploy:
+    runs-on: ubuntu-20.04
+    needs: [all-pr-checks]
+    # see on.push.branches for which branches are built on push
+    if: github.event_name == 'push' && github.repository == 'threatgrid/ctia'
+    steps:
+      - uses: actions/checkout@v2
+      - name: Binary Cache
+        uses: actions/cache@v2
+        with:
+          path: ${{ env.BIN_PATH }}
+          key: ctia-bin-${{ env.ACTIONS_CACHE_VERSION }}-${{ env.BB_VERSION }}
+      - name: Setup PATH and directories
+        run: |
+          mkdir -p "${BIN_PATH}"
+          echo "${BIN_PATH}" >> $GITHUB_PATH
+      - name: Install babashka
+        run: ./scripts/actions/install-bb.sh
+      - run: ./scripts/actions/setup_env.clj
+      - name: Maven Cache
+        id: maven-cache
+        uses: actions/cache@v2
+        with:
+          path: ~/.m2/repository
+          key: ctia-m2-cache-${{ env.ACTIONS_CACHE_VERSION }}-${{ hashFiles('project.clj') }}
+          restore-keys: |
+            ctia-m2-cache-${{ env.ACTIONS_CACHE_VERSION }}-
+
+      - uses: actions/setup-java@v1
+        with:
+          java-version: ${{ env.DEFAULT_JAVA_VERSION }}
+      - run: java -version
+
+      # install lein using cache to avoid extra download and startup time
+      - name: Leiningen Cache
+        uses: actions/cache@v2
+        id: lein-cache
+        with:
+          path: ${{env.LEIN_HOME}}
+          key: ctia-lein-cache-${{ env.ACTIONS_CACHE_VERSION }}-${{ env.LEIN_VERSION }}
+      - name: Install Leiningen
+        if: steps.lein-cache.outputs.cache-hit != 'true'
+        run: ./scripts/actions/install-lein.sh
+      # we should get a cache hit from maven here, since the `setup` job only succeeds if it exists.
+      # in the unlikely event we don't, download deps for this specific job only.
+      - name: Warm dependency cache
+        if: steps.maven-cache.outputs.cache-hit != 'true'
+        # poor man's travis_retry
+        run: for i in {1..${ACTIONS_RETRY_TIMES}}; do lein warm-ci-deps && break; done
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          # region matching buckets in ./build/deploy-actions.sh 
+          aws-region: us-east-1
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_PASSWORD }}
+
+      - run: ./build/deploy-actions.sh
+        env:
+          # offline to catch issues where `lein warm-ci-deps` doesn't download all
+          # dependencies we need to deploy.
+          LEIN_OFFLINE: true
+          CYBRIC_API_KEY: ${{ secrets.CYBRIC_API_KEY }}
