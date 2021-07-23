@@ -158,17 +158,13 @@
                  ;; Front-end
                  [thheller/shadow-cljs "2.15.2"]
                  [com.cognitect/transit-clj "1.0.324"]
-                 [org.clojure/spec.alpha "0.2.194"]
-                 [org.clojure/core.specs.alpha "0.2.56"]
-                 [thheller/shadow-undertow "0.1.0"]
                  [org.apache.httpcomponents/httpcore "4.4.14"]
                  [reagent "1.1.0"]
                  [re-frame "1.2.0"]
                  [day8.re-frame/http-fx "0.2.3"]
                  [cljs-ajax "0.8.3"]
                  [cljs-bean "1.7.0"]
-                 [org.clojure/data.json "2.4.0"]
-                 ]
+                 [org.clojure/data.json "2.4.0"]]
 
   :resource-paths ["resources" "doc"]
   :classpath ".:resources"
