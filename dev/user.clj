@@ -1,6 +1,6 @@
 (ns user
   (:require
-   [clojure.tools.namespace.repl :refer [clear refresh refresh-dirs set-refresh-dirs]]
+   [clojure.tools.namespace.repl :refer [clear refresh set-refresh-dirs]]
    [cheshire.core :as json]
    [clj-http.client :as http]
    [clj-momo.lib.time :as time]
