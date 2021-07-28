@@ -190,8 +190,7 @@
       (if (= "AND" default_operator)
         (is (= matched-ids found-ids-escaped)
             "escaping reserved characters should avoid parsing errors and preserve behavior of AND")
-        #_(is (set/subset? (set/union matched-ids unmatched-ids)
-                         found-ids-escaped)
+        (is (set/subset? found-ids-escaped matched-ids)
             ;; OR could match other test documents matching "http"
             "escaping reserved characters should avoid parsing errors and preserve behavior of OR"))
       (is (= matched-ids
