@@ -41,14 +41,23 @@
 
 (s/defn BulkRefs :- (s/protocol s/Schema)
   [services :- GetEntitiesServices]
-  (st/assoc
-   (entities-bulk-schema (get-entities services) [(s/maybe Reference)])
-   (s/optional-key :tempids) TempIDs))
+  (entities-bulk-schema (get-entities services) [(s/maybe Reference)]))
+
+(s/defn BulkCreateRes :- (s/protocol s/Schema)
+  [services :- GetEntitiesServices]
+  (st/assoc (BulkRefs services)
+            (s/optional-key :tempids)
+            TempIDs))
 
 (s/defn NewBulk :- (s/protocol s/Schema)
   "Returns NewBulk schema without disabled entities"
   [services :- GetEntitiesServices]
   (entities-bulk-schema (get-entities services) :new-schema))
+
+(s/defn NewBulkDelete
+  "Returns NewBulk schema without disabled entities"
+  [services :- GetEntitiesServices]
+  (entities-bulk-schema (get-entities services) [(s/maybe Reference)]))
 
 (s/defschema BulkErrors
   (st/optional-keys

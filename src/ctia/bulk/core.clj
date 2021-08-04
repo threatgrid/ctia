@@ -105,8 +105,7 @@
              (some-> (read-entity id)
                      (with-long-id services))
              (catch Exception e
-               (do (log/error (pr-str e))
-                   nil))))
+               (log/error (pr-str e)))))
          ids)))
 
 (s/defn delete-fn
@@ -142,8 +141,17 @@
                            :entity-ids entity-ids
                            :get-fn get-fn
                            :delete-fn (delete-fn entity-type auth-identity params services)
-                           :long-id-fn #(with-long-id % services)
-                           :identity auth-identity)]
+                           :long-id-fn nil
+                           :identity auth-identity
+                           :get-success-entities (fn [{:keys [results entities] :as fm}]
+                                                   (let [deleted-long-ids
+                                                         (set
+                                                          (map #(short-id->long-id % services)
+                                                               (:deleted results)))
+                                                         filter-fn (fn [entity]
+                                                                     (contains? deleted-long-ids
+                                                                                (:id entity)))]
+                                                     (filter filter-fn entities))))]
       (format-bulk-flow-res delete-flow-res services))))
 
 (defn gen-bulk-from-fn
@@ -157,12 +165,12 @@
   [func bulk & args]
   (try
     (->> bulk
-         (pmap (fn [[bulk-k entities]]
-                 (let [entity-type (entity-type-from-bulk-key bulk-k)]
-                   [bulk-k
-                    (apply func
-                           entities
-                           entity-type args)])))
+         (map (fn [[bulk-k entities]]
+                (let [entity-type (entity-type-from-bulk-key bulk-k)]
+                  [bulk-k
+                   (apply func
+                          entities
+                          entity-type args)])))
          (into {}))
     (catch java.util.concurrent.ExecutionException e
       (throw (.getCause e)))))

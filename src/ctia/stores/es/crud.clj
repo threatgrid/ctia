@@ -87,12 +87,12 @@
                     (build-create-result model coerce-fn)))
                 (remove-es-actions items) models)}))
 
-(defn get-docs-with-indices
+(s/defn get-docs-with-indices
   "Retrieves a documents from a search \"ids\" query. It enables to retrieves
  documents from an alias that points to multiple indices.
 It returns the documents with full hits meta data including the real index in which is stored the document."
-  [{:keys [conn index] :as _conn-state}
-   ids
+  [{:keys [conn index] :as _conn-state} :- ESConnState
+   ids :- [s/Str]
    es-params]
   (let [ids-query (q/ids (map ensure-document-id ids))
         res (ductile.doc/query conn
@@ -146,13 +146,11 @@ It returns the documents with full hits meta data including the real index in wh
        _ident
        es-params]
       (let [prepare-doc (partial prepare-bulk-doc conn-state mapping)
-            prepared (doall
-                      (map prepare-doc docs))]
+            prepared (mapv prepare-doc docs)]
         (try
           (ductile.doc/bulk-index-docs conn
                                        prepared
-                                       (prepare-opts conn-state es-params)
-                                       50000)
+                                       (prepare-opts conn-state es-params))
           docs
           (catch Exception e
             (throw
@@ -222,9 +220,24 @@ It returns the documents with full hits meta data including the real index in wh
               :not-found [s/Str]
               :internal-error [s/Str]})}))
 
-(defn- format-bulk-res
-  [bulk-res]
-  (let [{:keys [deleted updated not_found] :as res}
+(s/defschema ESActionResult
+  (st/open-schema
+   {:_id s/Str
+    :_index s/Str
+    :status s/Int
+    :result s/Str}))
+
+;; TODO move it to ductile
+(s/defschema ESBulkRes
+  {:took s/Int
+   :errors s/Bool
+   :items [{ductile.doc/BulkOps ESActionResult}]})
+
+(s/defn ^:private format-bulk-res
+  "transform an elasticsearch bulk result into a CTIA Bulk Result.
+   ex: https://www.elastic.co/guide/en/elasticsearch/reference/7.x/docs-bulk.html#docs-bulk-api-example"
+  [bulk-res :- ESBulkRes]
+  (let [{:keys [deleted updated not_found]}
         (->> (:items bulk-res)
              (map (comp first vals))
              (group-by :result)
@@ -236,12 +249,19 @@ It returns the documents with full hits meta data including the real index in wh
       updated (assoc :updated updated)
       not_found (assoc-in [:errors :not-found] not_found))))
 
-(defn check-and-prepare-bulk
-  [{{{:keys [get-in-config]} :ConfigService} :services
-    :as conn-state}
-   ids
+(s/defn check-and-prepare-bulk
+  :- (st/assoc BulkResult
+               (s/optional-key :prepared)
+               [(s/pred map?)])
+  "prepare a bulk query:
+  - retrieve actual indices, deletion cannot be performed on the alias.
+  - filter out forbidden entitites
+  - forbidden and not_found errors are prepared for the response."
+  [conn-state :- ESConnState
+   ids :- [s/Str]
    ident]
-  (let [doc-ids (map ensure-document-id ids)
+  (let [get-in-config (get-in conn-state [:services :ConfigService])
+        doc-ids (map ensure-document-id ids)
         docs-with-indices (get-docs-with-indices conn-state doc-ids {})
         {authorized true forbidden-write false}
         (group-by #(allow-write? (:_source %) ident)
@@ -272,7 +292,8 @@ It returns the documents with full hits meta data including the real index in wh
                                                     prepared
                                                     (prepare-opts conn-state es-params)))
                      (catch Exception e
-                       (log/error (str "bulk delete failed: " (.getMessage e))
+                       (log/error e
+                                  (str "bulk delete failed: " (.getMessage e))
                                   (pr-str prepared))
                        {:errors {:internal-error (map :_id prepared)}})))]
     (cond-> bulk-res

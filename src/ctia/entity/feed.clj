@@ -436,6 +436,9 @@
                                                 (routes.common/wait_for->refresh wait_for)))]
                             (map delete-fn ids)))
              :entity-type :feed
+             :get-success-entities (fn [fm]
+                                     (when (first (:results fm))
+                                         (:entities fm)))
              :long-id-fn #(with-long-id % services)
              :entity-ids [id]
              :identity identity))

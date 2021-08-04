@@ -488,6 +488,9 @@
                                                         identity-map
                                                         (wait_for->refresh wait_for)))]
                                     (map delete-fn ids)))
+                     :get-success-entities (fn [fm]
+                                             (when (first (:results fm))
+                                                 (:entities fm)))
                      :entity-type entity
                      :long-id-fn #(with-long-id % services)
                      :entity-ids [id]

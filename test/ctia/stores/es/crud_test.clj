@@ -678,8 +678,11 @@
                      :groups ["group2"]}
 
              [docs-1 docs-2 docs-3] (partition-all (/ total 3) sightings)
+             ;; amber documents created and owned
              docs1-ident1 (map (partial with-owner ident1) docs-1)
+             ;; documents created but owned by someone else with amber tlp
              docs2-ident2 (map (partial with-owner ident2) docs-2)
+             ;; documents not created
              docs3-ident1 (map (partial with-owner ident1) docs-3)
              bulk-update-handler (sut/bulk-update ss/Sighting)
 
