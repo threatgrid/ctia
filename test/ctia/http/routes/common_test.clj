@@ -1,17 +1,17 @@
 (ns ctia.http.routes.common-test
   (:require [clj-momo.test-helpers.core :as mth]
-            [clojure.instant :as inst]
-            [clojure.test :refer [are is deftest testing use-fixtures]]
+            [clojure.set :as set]
+            [clojure.test :refer [are deftest is testing use-fixtures]]
             [ctia.auth.capabilities :refer [all-capabilities]]
             [ctia.entity.incident :refer [incident-entity]]
             [ctia.http.routes.common :as sut]
             [ctia.test-helpers.core :as helpers]
             [ctia.test-helpers.crud :refer [crud-wait-for-test]]
-            [ctia.test-helpers.http :as http]
-            [ctia.test-helpers.store :refer [test-selected-stores-with-app]]
             [ctia.test-helpers.fake-whoami-service :as whoami-helpers]
+            [ctia.test-helpers.store :refer [test-selected-stores-with-app]]
             [ctim.examples.incidents :refer [new-incident-maximal]]
-            [puppetlabs.trapperkeeper.app :as app]))
+            [puppetlabs.trapperkeeper.app :as app]
+            [schema.core :as s]))
 
 (use-fixtures :once
               mth/fixture-schema-validation
@@ -33,6 +33,18 @@
       (is (= {:gte from
               :lt to}
              (sut/coerce-date-range from to))))))
+
+(deftest full-text-search-schema-functions
+  (testing "searchable-fields"
+    (is (= (apply s/enum (set/union sut/default-whitelisted-search-fields #{:foo :bar}))
+           (sut/searchable-fields {:fields [:foo :bar]}))
+        "added fields + default whitelisted")
+    (is (= (apply s/enum sut/default-whitelisted-search-fields)
+           (sut/searchable-fields {:fields [:foo] :ignore [:foo]}))
+        "some of the added fields are ignored")
+    (is (thrown-with-msg?
+         clojure.lang.ExceptionInfo #"does not match schema"
+         (sut/searchable-fields {})))))
 
 (deftest search-query-test
   (with-redefs [sut/now (constantly #inst "2020-12-31")]

@@ -79,7 +79,17 @@
 ;; Every single query gets tested with its own set of generated Bundle
 ;; data. After the query gets sent, the response results are passed into :check
 ;; function, together with the test-case map, entity key and the Bundle data
-(defn test-cases []
+(defn test-cases
+  "Returns vector of test cases, where each map represents:
+
+  - a recipe for generating data
+  - a query
+  - a way to verify the response data
+
+  Test checker function (that would use this) is responsible for generating and
+  importing the data into the ES cluster, and then query and verify the
+  results"
+  []
   (concat
    [{:test-description "Returns all the records when the wildcard used"
      :query-params     {:query_mode "query_string"

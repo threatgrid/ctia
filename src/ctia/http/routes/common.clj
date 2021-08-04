@@ -70,8 +70,15 @@
     :description
     :external_ids})
 
+(def ^:private SearchableFieldsParams
+  {(s/required-key :fields) [s/Keyword]
+   (s/optional-key :ignore) [s/Keyword]})
+
 (s/defn searchable-fields :- (s/protocol s/Schema)
-  [{:keys [fields ignore]}]
+  "Takes the list of entity fields and (optionally) fields to ignore,
+   and spits out enum schema to be used for :search_fields parameter.
+   see also: `prep-es-fields-schema`"
+  [{:keys [fields ignore]} :- SearchableFieldsParams]
   (let [ignored-fields (set/union
                         (set ignore)
                         default-ignored-search-fields)]
