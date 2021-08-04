@@ -7,6 +7,6 @@
                              :http-root    "resources/frontend/public"
                              :watch-dir    "resources/frontend/public"
                              :after-load   ctia.frontend.app/render!
-                             :preloads     [devtools.preload]
+                             ;; :preloads     [devtools.preload]
                              :repl-init-ns ctia.frontend.app}}}
  :nrepl  {:port 8777}}

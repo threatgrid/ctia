@@ -33,7 +33,6 @@
  ::chart-data
  :<- [::data]
  (fn [data _]
-   (def alldata data)
    (->> data :aggregations :org :buckets
         (map :source)
         (map :buckets)
