@@ -11,6 +11,7 @@
             [ctia.test-helpers.store :refer [test-selected-stores-with-app]]
             [ctim.examples.incidents :refer [new-incident-maximal]]
             [puppetlabs.trapperkeeper.app :as app]
+            [schema-tools.core :as st]
             [schema.core :as s]))
 
 (use-fixtures :once
@@ -35,7 +36,7 @@
              (sut/coerce-date-range from to))))))
 
 (deftest full-text-search-schema-functions
-  (testing "searchable-fields"
+  (testing "ctia.http.routes.common/searchable-fields"
     (is (= (apply s/enum (set/union sut/default-whitelisted-search-fields #{:foo :bar}))
            (sut/searchable-fields {:fields [:foo :bar]}))
         "added fields + default whitelisted")
@@ -44,7 +45,22 @@
         "some of the added fields are ignored")
     (is (thrown-with-msg?
          clojure.lang.ExceptionInfo #"does not match schema"
-         (sut/searchable-fields {})))))
+         (sut/searchable-fields {}))))
+
+  (testing "ctia.http.routes.common/prep-es-fields-schema"
+    (let [enum->set (fn [enum-schema]
+                      (-> (->> enum-schema ffirst (apply hash-map) :vs)))]
+      (are [fields result]
+          (= result
+             (->
+              (sut/prep-es-fields-schema
+               {:search-q-params   {},
+                :searchable-fields fields})
+              (st/get-in [:search_fields])
+              enum->set
+              (set/intersection #{"foo" "description"})))
+        (sut/searchable-fields {:fields [:foo]})                #{"foo" "description"}
+        (sut/searchable-fields {:fields [:foo] :ignore [:foo]}) #{"description"}))))
 
 (deftest search-query-test
   (with-redefs [sut/now (constantly #inst "2020-12-31")]
