@@ -63,30 +63,36 @@
     :tlp
     :type})
 
-(def default-whitelisted-search-fields
-  #{:id
-    :title
-    :short_description
-    :description
-    :external_ids})
-
 (def ^:private SearchableFieldsParams
-  {(s/required-key :fields) [s/Keyword]
+  {(s/required-key :schema) (s/protocol s/Schema)
    (s/optional-key :ignore) [s/Keyword]})
 
+(s/defn schema->all-keys :- #{s/Keyword}
+  "Reads all the keys in the schema, optional and required."
+  [schema :- (s/protocol s/Schema)]
+  (let [all-ks (juxt st/required-keys st/optional-keys)]
+    (->>
+     schema
+     all-ks
+     (apply merge)
+     keys
+     (map #(or (:k %) (identity %)))
+     (filter keyword?)
+     set)))
+
 (s/defn searchable-fields :- (s/protocol s/Schema)
-  "Takes the list of entity fields and (optionally) fields to ignore,
-   and spits out enum schema to be used for :search_fields parameter.
+  "Takes an entity schema and (optionally) fields to ignore.
+   Spits out enum schema to be used for :search_fields parameter.
    see also: `prep-es-fields-schema`"
-  [{:keys [fields ignore]} :- SearchableFieldsParams]
-  (let [ignored-fields (set/union
+  [{:keys [schema ignore]} :- SearchableFieldsParams]
+  (let [all-fields (schema->all-keys schema)
+        ignored-fields (set/union
                         (set ignore)
                         default-ignored-search-fields)]
     (apply s/enum
-           (-> fields
-               set
-               (set/union default-whitelisted-search-fields)
-               (set/difference ignored-fields)))))
+           (set/difference
+            all-fields
+            ignored-fields))))
 
 (s/defn prep-es-fields-schema :- (s/protocol s/Schema)
   "Conjoins Elasticsearch fields parameter into search-q-params schema"

@@ -124,7 +124,7 @@
     :histogram-fields         asset-histogram-fields
     :enumerable-fields        asset-enumerable-fields
     :searchable-fields        (routes.common/searchable-fields
-                               {:fields asset-fields})}))
+                               {:schema Asset})}))
 
 (def capabilities
   #{:create-asset

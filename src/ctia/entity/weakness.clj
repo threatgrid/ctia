@@ -154,7 +154,7 @@
     :histogram-fields         weakness-histogram-fields
     :enumerable-fields        weakness-enumerable-fields
     :searchable-fields        (routes.common/searchable-fields
-                               {:fields weakness-fields})}))
+                               {:schema Weakness})}))
 
 (def capabilities
   #{:create-weakness

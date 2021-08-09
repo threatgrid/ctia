@@ -141,7 +141,7 @@
     :enumerable-fields        asset-properties-enumerable-fields
     :can-revoke?              asset-properties-can-revoke?
     :searchable-fields        (routes.common/searchable-fields
-                               {:fields asset-properties-fields})}))
+                               {:schema AssetProperties})}))
 
 (def capabilities
   #{:create-asset-properties

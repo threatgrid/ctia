@@ -127,7 +127,7 @@
     :histogram-fields         target-record-histogram-fields
     :enumerable-fields        target-record-enumerable-fields
     :searchable-fields        (routes.common/searchable-fields
-                               {:fields target-record-fields
+                               {:schema TargetRecord
                                 :ignore [:targets.internal]})}))
 
 (def capabilities

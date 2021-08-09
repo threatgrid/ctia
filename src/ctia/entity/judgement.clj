@@ -128,7 +128,7 @@
          :histogram-fields         js/judgement-histogram-fields
          :enumerable-fields        js/judgement-enumerable-fields
          :searchable-fields        (routes.common/searchable-fields
-                                    {:fields js/judgement-fields
+                                    {:schema js/Judgement
                                      :ignore [:disposition
                                               :valid_time.start_time
                                               :valid_time.end_time

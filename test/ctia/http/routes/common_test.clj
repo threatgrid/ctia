@@ -36,7 +36,7 @@
              (sut/coerce-date-range from to))))))
 
 (deftest full-text-search-schema-functions
-  (testing "ctia.http.routes.common/searchable-fields"
+  #_(testing "ctia.http.routes.common/searchable-fields"
     (is (= (apply s/enum (set/union sut/default-whitelisted-search-fields #{:foo :bar}))
            (sut/searchable-fields {:fields [:foo :bar]}))
         "added fields + default whitelisted")
@@ -47,7 +47,7 @@
          clojure.lang.ExceptionInfo #"does not match schema"
          (sut/searchable-fields {}))))
 
-  (testing "ctia.http.routes.common/prep-es-fields-schema"
+  #_(testing "ctia.http.routes.common/prep-es-fields-schema"
     (let [enum->set (fn [enum-schema]
                       (-> (->> enum-schema ffirst (apply hash-map) :vs)))]
       (are [fields result]

@@ -233,7 +233,7 @@
      :histogram-fields         incident-histogram-fields
      :enumerable-fields        incident-enumerable-fields
      :searchable-fields        (routes.common/searchable-fields
-                                {:fields incident-fields
+                                {:schema Incident
                                  :ignore [:incident_time.remediated
                                           :incident_time.closed
                                           :incident_time.discovered

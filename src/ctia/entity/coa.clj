@@ -133,7 +133,7 @@
     :histogram-fields         coa-histogram-fields
     :enumerable-fields        coa-enumerable-fields
     :searchable-fields        (routes.common/searchable-fields
-                               {:fields coa-fields
+                               {:schema COA
                                 :ignore [:valid_time.start_time
                                          :valid_time.end_time]})}))
 

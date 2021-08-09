@@ -97,7 +97,7 @@
     :histogram-fields         investigation-histogram-fields
     :enumerable-fields        investigation-enumerable-fields
     :searchable-fields        (routes.common/searchable-fields
-                               {:fields investigation-fields})}))
+                               {:schema inv/Investigation})}))
 
 (def capabilities
   #{:read-investigation

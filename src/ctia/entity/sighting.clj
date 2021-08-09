@@ -67,7 +67,7 @@
     :histogram-fields         ss/sighting-histogram-fields
     :enumerable-fields        ss/sighting-enumerable-fields
     :searchable-fields        (routes.common/searchable-fields
-                               {:fields ss/sighting-fields
+                               {:schema ss/Sighting
                                 :ignore [:observed_time.start_time
                                          :observed_time.end_time
                                          :count]})}))

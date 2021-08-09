@@ -10,7 +10,8 @@
    [ctim.schemas.actor :as as]
    [flanders.utils :as fu]
    [schema-tools.core :as st]
-   [schema.core :as s]))
+   [schema.core :as s]
+   [ctia.schemas.utils :as csu]))
 
 (def-acl-schema Actor
   as/Actor
@@ -130,7 +131,7 @@
     :histogram-fields         actor-histogram-fields
     :enumerable-fields        actor-enumerable-fields
     :searchable-fields        (routes.common/searchable-fields
-                               {:fields actor-fields
+                               {:schema Actor
                                 :ignore [:valid_time.start_time
                                          :valid_time.end_time]})}))
 
