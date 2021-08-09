@@ -54,14 +54,18 @@
    (s/optional-key :limit) (describe Long "Pagination Limit")})
 
 (def default-ignored-search-fields
-  #{:language
+  #{:authorized_groups
+    :authorized_users
+    :language
+    :owner
     :revision
     :schema_version
     :source
     :source_uri
     :timestamp
     :tlp
-    :type})
+    :type
+    :groups})
 
 (def ^:private SearchableFieldsParams
   {(s/required-key :schema) (s/protocol s/Schema)

@@ -70,7 +70,8 @@
                                {:schema ss/Sighting
                                 :ignore [:observed_time.start_time
                                          :observed_time.end_time
-                                         :count]})}))
+                                         :count
+                                         :internal]})}))
 
 (def capabilities
   #{:create-sighting
