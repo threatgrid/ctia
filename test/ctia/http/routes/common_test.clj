@@ -36,31 +36,31 @@
              (sut/coerce-date-range from to))))))
 
 (deftest full-text-search-schema-functions
-  #_(testing "ctia.http.routes.common/searchable-fields"
-    (is (= (apply s/enum (set/union sut/default-whitelisted-search-fields #{:foo :bar}))
-           (sut/searchable-fields {:fields [:foo :bar]}))
-        "added fields + default whitelisted")
-    (is (= (apply s/enum sut/default-whitelisted-search-fields)
-           (sut/searchable-fields {:fields [:foo] :ignore [:foo]}))
-        "some of the added fields are ignored")
-    (is (thrown-with-msg?
-         clojure.lang.ExceptionInfo #"does not match schema"
-         (sut/searchable-fields {}))))
+  (let [schema {(s/required-key :foo) s/Str
+                (s/optional-key :bar) s/Str
+                (s/optional-key (first sut/default-ignored-search-fields)) s/Str}]
+    (testing "ctia.http.routes.common/searchable-fields"
+      (is (= (apply s/enum [:foo :bar])
+             (sut/searchable-fields
+              {:schema schema}))
+          "Includes required and optional keys and ignores default-ignored")
+      (is (thrown-with-msg?
+           clojure.lang.ExceptionInfo #"does not match schema"
+           (sut/searchable-fields {}))))
 
-  #_(testing "ctia.http.routes.common/prep-es-fields-schema"
-    (let [enum->set (fn [enum-schema]
-                      (-> (->> enum-schema ffirst (apply hash-map) :vs)))]
-      (are [fields result]
-          (= result
-             (->
-              (sut/prep-es-fields-schema
-               {:search-q-params   {},
-                :searchable-fields fields})
-              (st/get-in [:search_fields])
-              enum->set
-              (set/intersection #{"foo" "description"})))
-        (sut/searchable-fields {:fields [:foo]})                #{"foo" "description"}
-        (sut/searchable-fields {:fields [:foo] :ignore [:foo]}) #{"description"}))))
+    (testing "ctia.http.routes.common/prep-es-fields-schema"
+      (let [enum->set (fn [enum-schema]
+                        (-> (->> enum-schema ffirst (apply hash-map) :vs)))]
+        (are [fields result]
+            (= result
+               (->
+                (sut/prep-es-fields-schema
+                 {:search-q-params {},
+                  :searchable-fields fields})
+                (st/get-in [:search_fields])
+                enum->set))
+          (sut/searchable-fields {:schema schema}) #{"foo" "bar"}
+          (sut/searchable-fields {:schema schema :ignore [:bar]}) #{"foo"})))))
 
 (deftest search-query-test
   (with-redefs [sut/now (constantly #inst "2020-12-31")]
