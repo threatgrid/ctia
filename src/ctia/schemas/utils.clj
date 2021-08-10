@@ -195,14 +195,36 @@
     res))
 
 (s/defn schema->all-keys :- #{s/Keyword}
-  "Reads all the keys in the schema, optional and required."
-  [schema :- (s/protocol s/Schema)]
-  (let [all-ks (juxt st/required-keys st/optional-keys)]
-    (->>
-     schema
-     all-ks
-     (apply merge)
-     keys
-     (map #(or (:k %) (identity %)))
-     (filter keyword?)
-     set)))
+  "Recursively reads all the keys in the schema, optional and required.
+ Returns keys where each nested path composed of keys delimited by a dot."
+  [schema]
+  (with-meta
+    (let [get-k #(name (or (:k %) %))
+          join-nested (fn [prefix ks]
+                        (map #(str (get-k prefix) "." (get-k %)) ks))
+          schema? #(or (instance? clojure.lang.PersistentVector %)
+                       (instance? clojure.lang.PersistentArrayMap %))
+          parsable-k? #(not (or (instance? schema.core.Predicate %)
+                                (instance? schema.core.AnythingSchema %)))]
+      (->> schema
+           (reduce-kv
+            (fn [acc k v]
+              (cond
+                (schema? v)
+                (cond
+                  (and (vector? v) (map? (first v)))
+                  (apply conj acc (join-nested k (schema->all-keys (first v))))
+
+                  (map? v)
+                  (apply conj acc (join-nested k (schema->all-keys v)))
+
+                  :else acc)
+
+                (parsable-k? k)
+                (conj acc (get-k k))
+
+                :else acc))
+            [])
+           (map keyword)
+           set))
+    (meta schema)))
