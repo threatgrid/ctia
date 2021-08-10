@@ -8,6 +8,7 @@
     :refer
     [FullTextQueryMode MetricResult RangeQueryOpt RawSearchParams SearchQuery]]
    [ctia.schemas.sorting :as sorting]
+   [ctia.schemas.utils :as csu]
    [ring.swagger.schema :refer [describe]]
    [ring.util.codec :as codec]
    [ring.util.http-response :as http-res]
@@ -56,6 +57,7 @@
 (def default-ignored-search-fields
   #{:authorized_groups
     :authorized_users
+    :groups
     :language
     :owner
     :revision
@@ -64,32 +66,18 @@
     :source_uri
     :timestamp
     :tlp
-    :type
-    :groups})
+    :type})
 
 (def ^:private SearchableFieldsParams
   {(s/required-key :schema) (s/protocol s/Schema)
    (s/optional-key :ignore) [s/Keyword]})
-
-(s/defn schema->all-keys :- #{s/Keyword}
-  "Reads all the keys in the schema, optional and required."
-  [schema :- (s/protocol s/Schema)]
-  (let [all-ks (juxt st/required-keys st/optional-keys)]
-    (->>
-     schema
-     all-ks
-     (apply merge)
-     keys
-     (map #(or (:k %) (identity %)))
-     (filter keyword?)
-     set)))
 
 (s/defn searchable-fields :- (s/protocol s/Schema)
   "Takes an entity schema and (optionally) fields to ignore.
    Spits out enum schema to be used for :search_fields parameter.
    see also: `prep-es-fields-schema`"
   [{:keys [schema ignore]} :- SearchableFieldsParams]
-  (let [all-fields (schema->all-keys schema)
+  (let [all-fields (csu/schema->all-keys schema)
         ignored-fields (set/union
                         (set ignore)
                         default-ignored-search-fields)]

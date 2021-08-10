@@ -193,3 +193,16 @@
                       {:missing-keys missing-keys
                        :res res})))
     res))
+
+(s/defn schema->all-keys :- #{s/Keyword}
+  "Reads all the keys in the schema, optional and required."
+  [schema :- (s/protocol s/Schema)]
+  (let [all-ks (juxt st/required-keys st/optional-keys)]
+    (->>
+     schema
+     all-ks
+     (apply merge)
+     keys
+     (map #(or (:k %) (identity %)))
+     (filter keyword?)
+     set)))
