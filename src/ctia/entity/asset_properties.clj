@@ -141,7 +141,9 @@
     :enumerable-fields        asset-properties-enumerable-fields
     :can-revoke?              asset-properties-can-revoke?
     :searchable-fields        (routes.common/searchable-fields
-                               {:schema AssetProperties})}))
+                               {:schema AssetProperties
+                                :ignore [:valid_time.start_time
+                                         :valid_time.end_time]})}))
 
 (def capabilities
   #{:create-asset-properties

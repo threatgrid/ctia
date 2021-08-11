@@ -128,7 +128,9 @@
     :enumerable-fields        target-record-enumerable-fields
     :searchable-fields        (routes.common/searchable-fields
                                {:schema TargetRecord
-                                :ignore [:targets.internal]})}))
+                                :ignore [:targets.internal
+                                         :targets.observed_time.end_time
+                                         :targets.observed_time.start_time]})}))
 
 (def capabilities
   #{:create-target-record

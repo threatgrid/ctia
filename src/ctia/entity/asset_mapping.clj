@@ -144,7 +144,9 @@
     :enumerable-fields        asset-mapping-enumerable-fields
     :can-revoke?              asset-mapping-can-revoke?
     :searchable-fields        (routes.common/searchable-fields
-                               {:schema AssetMapping})}))
+                               {:schema AssetMapping
+                                :ignore [:valid_time.end_time
+                                         :valid_time.start_time]})}))
 
 (def capabilities
   #{:create-asset-mapping
