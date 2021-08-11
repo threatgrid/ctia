@@ -175,7 +175,7 @@
                            (is (= 1 (-> res :parsed-body count)))
                            (is (get-fields res)))}])
 
-   [{:test-description "multi_match - looking for the same value in different fields in multiple records"
+   #_[{:test-description "multi_match - looking for the same value in different fields in multiple records"
      :query-params     {:query_mode      "multi_match"
                         :query           "bibendum"
                         :search_fields ["assignees" "title"]}
