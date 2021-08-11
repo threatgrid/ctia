@@ -163,7 +163,14 @@
     :histogram-fields         indicator-histogram-fields
     :enumerable-fields        indicator-enumerable-fields
     :searchable-fields        (routes.common/searchable-fields
-                               {:schema Indicator})}))
+                               {:schema Indicator
+                                :ignore [:composite_indicator_expression.indicator_ids.schema
+                                         :indicator_type.vs
+                                         :negate
+                                         :tags.schema
+                                         :test_mechanisms.schema
+                                         :valid_time.end_time
+                                         :valid_time.start_time]})}))
 
 (def capabilities
   #{:read-indicator

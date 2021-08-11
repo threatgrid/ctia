@@ -97,7 +97,9 @@
     :histogram-fields         investigation-histogram-fields
     :enumerable-fields        investigation-enumerable-fields
     :searchable-fields        (routes.common/searchable-fields
-                               {:schema inv/Investigation})}))
+                               {:schema inv/Investigation
+                                :ignore [:targets.observed_time.end_time
+                                         :targets.observed_time.start_time]})}))
 
 (def capabilities
   #{:read-investigation

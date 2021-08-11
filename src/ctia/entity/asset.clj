@@ -124,7 +124,10 @@
     :histogram-fields         asset-histogram-fields
     :enumerable-fields        asset-enumerable-fields
     :searchable-fields        (routes.common/searchable-fields
-                               {:schema Asset})}))
+                               {:schema Asset
+                                :ignore [:timestamp
+                                         :valid_time.end_time
+                                         :valid_time.start_time]})}))
 
 (def capabilities
   #{:create-asset

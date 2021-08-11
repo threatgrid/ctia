@@ -68,10 +68,14 @@
     :enumerable-fields        ss/sighting-enumerable-fields
     :searchable-fields        (routes.common/searchable-fields
                                {:schema ss/Sighting
-                                :ignore [:observed_time.start_time
+                                :ignore [:count
+                                         :data.columns.required
+                                         :data.row_count
+                                         :internal
                                          :observed_time.end_time
-                                         :count
-                                         :internal]})}))
+                                         :observed_time.start_time
+                                         :targets.observed_time.end_time
+                                         :targets.observed_time.start_time]})}))
 
 (def capabilities
   #{:create-sighting
