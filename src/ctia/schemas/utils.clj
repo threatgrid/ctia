@@ -212,13 +212,13 @@
               (cond
                 (schema? v)
                 (cond
-                  (and (vector? v) (map? (first v)))
+                  (and (vector? v) (instance? clojure.lang.PersistentArrayMap (first v)))
                   (apply conj acc (join-nested k (schema->all-keys (first v))))
 
                   (map? v)
                   (apply conj acc (join-nested k (schema->all-keys v)))
 
-                  :else acc)
+                  :else (conj acc (get-k k)))
 
                 (parsable-k? k)
                 (conj acc (get-k k))
