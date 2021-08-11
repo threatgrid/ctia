@@ -50,13 +50,9 @@
         (is (= "Malicious" (first (map :disposition_name (:parsed-body response))))
             "IP quoted term works"))
 
-      ;; TODO: this test no longer works, because apparently, in order to
-      ;; perform search for values within nested fields (without Lucene
-      ;; syntax), we're going to have to implement a way po pass nested fields, e.g.,:
-      ;; "query_string": {"query": "1.2.3.4", "fields": ["observable.*^1.0"] - note the asterisk
-      #_(let [term     "1.2.3.4"
-              response (GET app
-                           (str "ctia/judgement/search")
+      (let [term "1.2.3.4"
+            response (GET app
+                         (str "ctia/judgement/search")
                          :headers {"Authorization" "45c1f5e3f05d0"}
                          :query-params {"query" term})]
         (is (= 200 (:status response)))
