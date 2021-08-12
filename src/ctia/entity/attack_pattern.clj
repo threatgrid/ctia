@@ -114,10 +114,7 @@
     :histogram-fields         attack-pattern-histogram-fields
     :enumerable-fields        attack-pattern-enumerable-fields
     :searchable-fields        (routes.common/searchable-fields
-                               {:schema AttackPattern
-                                :ignore [:x_mitre_platforms.schema
-                                         :x_mitre_data_sources.schema
-                                         :x_mitre_contributors.schema]})}))
+                               {:schema AttackPattern})}))
 
 (def AttackPatternType
   (let [{:keys [fields name description]}

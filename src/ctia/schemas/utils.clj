@@ -194,37 +194,44 @@
                        :res res})))
     res))
 
-(s/defn schema->all-keys :- #{s/Keyword}
+(defn- map->paths
+  "Finds every path for nested keys in a map
+  Example: {:foo {:bar :zop}, :zap nil} => [\"foo.bar.zop\" \"zap\"]"
+  [m]
+  (reduce-kv
+   (fn [a k v]
+     (if (map? v)
+       (concat a (->> v map->paths (map #(str (name k) "." %))))
+       (conj a (name k))))
+   [] m))
+
+(s/defn schema->all-keys
   "Recursively reads all the keys in the schema, optional and required.
  Returns keys where each nested path composed of keys delimited by a dot."
-  [schema]
-  (with-meta
-    (let [get-k #(name (or (:k %) %))
-          join-nested (fn [prefix ks]
-                        (map #(str (get-k prefix) "." (get-k %)) ks))
-          schema? #(or (instance? clojure.lang.PersistentVector %)
-                       (instance? clojure.lang.PersistentArrayMap %))
-          parsable-k? #(not (or (instance? schema.core.Predicate %)
-                                (instance? schema.core.AnythingSchema %)))]
-      (->> schema
-           (reduce-kv
-            (fn [acc k v]
-              (cond
-                (schema? v)
-                (cond
-                  (and (vector? v) (instance? clojure.lang.PersistentArrayMap (first v)))
-                  (apply conj acc (join-nested k (schema->all-keys (first v))))
-
-                  (map? v)
-                  (apply conj acc (join-nested k (schema->all-keys v)))
-
-                  :else (conj acc (get-k k)))
-
-                (parsable-k? k)
-                (conj acc (get-k k))
-
-                :else acc))
-            [])
-           (map keyword)
-           set))
-    (meta schema)))
+  ([schema parents]
+   (let [get-k #(or (get % :k) %)]
+     (->> schema
+          (reduce-kv
+           (fn [acc key _]
+             (let [k (get-k key)
+                   path (conj parents k)
+                   el (some-> schema (st/get-in [k]))
+                   el* (cond
+                         (or (instance? clojure.lang.PersistentArrayMap el)
+                             (instance? clojure.lang.PersistentHashMap el))
+                         el
+                         (and (instance? clojure.lang.PersistentVector el)
+                              (instance? clojure.lang.PersistentArrayMap (first el)))
+                         (first el)
+                         :else nil)]
+               (if (not el*)
+                 (assoc acc k nil)
+                 (merge acc (assoc acc k (schema->all-keys el* path))))))
+           {}))))
+  ([schema]
+   (with-meta
+     (->> (schema->all-keys schema [])
+          map->paths
+          (map keyword)
+          set)
+     (meta schema))))

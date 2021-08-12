@@ -130,8 +130,6 @@
          :searchable-fields        (routes.common/searchable-fields
                                     {:schema js/Judgement
                                      :ignore [:disposition
-                                              :valid_time.start_time
-                                              :valid_time.end_time
                                               :priority]})}]
     (routes
       (services->entity-crud-routes

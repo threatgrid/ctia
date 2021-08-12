@@ -66,7 +66,9 @@
     :source_uri
     :timestamp
     :tlp
-    :type})
+    :type
+    :valid_time.end_time
+    :valid_time.start_time})
 
 (def ^:private SearchableFieldsParams
   {(s/required-key :schema) (s/protocol s/Schema)

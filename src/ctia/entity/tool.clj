@@ -94,9 +94,7 @@
     :enumerable-fields        tool-enumerable-fields
     :searchable-fields        (routes.common/searchable-fields
                                {:schema ts/Tool
-                                :ignore [:tool_version
-                                         :x_mitre_aliases.schema
-                                         :labels.schema]})}))
+                                :ignore [:tool_version]})}))
 
 (def tool-entity
   {:route-context         "/tool"
