@@ -134,8 +134,10 @@
     :enumerable-fields        coa-enumerable-fields
     :searchable-fields        (routes.common/searchable-fields
                                {:schema COA
-                                :ignore [:valid_time.start_time
-                                         :valid_time.end_time]})}))
+                                :ignore [:open_c2_coa.modifiers.delay
+                                         :open_c2_coa.modifiers.duration
+                                         :open_c2_coa.modifiers.time.end_time
+                                         :open_c2_coa.modifiers.time.start_time]})}))
 
 (def capabilities
   #{:create-coa
