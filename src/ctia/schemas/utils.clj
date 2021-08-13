@@ -209,7 +209,9 @@
   "Recursively reads all the keys in the schema, optional and required.
  Returns keys where each nested path composed of keys delimited by a dot."
   ([schema parents]
-   (let [get-k #(or (get % :k) %)]
+   (let [get-k (fn [k]
+                 (let [k' (get k :k k)]
+                   (when (keyword? k') k')))]
      (->> schema
           (reduce-kv
            (fn [acc key _]
@@ -224,9 +226,14 @@
                               (instance? clojure.lang.PersistentArrayMap (first el)))
                          (first el)
                          :else nil)]
-               (if (not el*)
-                 (assoc acc k nil)
-                 (merge acc (assoc acc k (schema->all-keys el* path))))))
+               (cond
+                 (not k) acc
+
+                 el*
+                 (merge acc (assoc acc k (schema->all-keys el* path)))
+
+                 :else
+                 (assoc acc k nil))))
            {}))))
   ([schema]
    (with-meta
