@@ -52,9 +52,9 @@
 
       (let [term "1.2.3.4"
             response (GET app
-                         (str "ctia/judgement/search")
-                         :headers {"Authorization" "45c1f5e3f05d0"}
-                         :query-params {"query" term})]
+                          (str "ctia/judgement/search")
+                          :headers {"Authorization" "45c1f5e3f05d0"}
+                          :query-params {"query" term})]
         (is (= 200 (:status response)))
         (is (= "Malicious" (first (map :disposition_name (:parsed-body response))))
             "IP unquoted, all term works"))
