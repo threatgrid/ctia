@@ -1,27 +1,22 @@
 (ns ctia.stores.es.crud
-  (:require [ductile
-             [document :as ductile.doc]
-             [query :as q]]
+  (:require [clojure.set :as set]
             [clojure.string :as string]
+            [clojure.tools.logging :as log]
             [ctia.domain.access-control
              :refer
-             [restricted-read?
-              acl-fields
-              allow-read?
-              allow-write?]]
+             [acl-fields allow-read? allow-write? restricted-read?]]
             [ctia.lib.pagination :refer [list-response-schema]]
-            [ctia.schemas.search-agg :refer [SearchQuery
-                                             HistogramQuery
-                                             TopnQuery
-                                             CardinalityQuery
-                                             AggQuery]]
+            [ctia.schemas.search-agg
+             :refer
+             [AggQuery CardinalityQuery HistogramQuery SearchQuery TopnQuery]]
             [ctia.stores.es.query :refer [find-restriction-query-part]]
             [ctia.stores.es.schemas :refer [ESConnState]]
+            [ductile.document :as ductile.doc]
+            [ductile.query :as q]
             [ring.swagger.coerce :as sc]
-            [schema
-             [coerce :as c]
-             [core :as s]]
-            [schema-tools.core :as st]))
+            [schema-tools.core :as st]
+            [schema.coerce :as c]
+            [schema.core :as s]))
 
 (defn make-es-read-params
   "Prepare ES Params for read operations, setting the _source field
@@ -83,7 +78,7 @@
     {:error \"Error message item2\"}
     {model3}]"
   [exception-data models coerce-fn]
-  (let [{{:keys [_errors items]}
+  (let [{{:keys [items]}
          :es-http-res-body} exception-data]
     {:data (map (fn [{:keys [error _id]} model]
                   (if error
@@ -92,12 +87,11 @@
                     (build-create-result model coerce-fn)))
                 (remove-es-actions items) models)}))
 
-
 (s/defn get-docs-with-indices
   "Retrieves a documents from a search \"ids\" query. It enables to retrieves
  documents from an alias that points to multiple indices.
 It returns the documents with full hits meta data including the real index in which is stored the document."
-  [{:keys [conn index]} :- ESConnState
+  [{:keys [conn index] :as _conn-state} :- ESConnState
    ids :- [s/Str]
    es-params]
   (let [ids-query (q/ids (map ensure-document-id ids))
@@ -105,6 +99,7 @@ It returns the documents with full hits meta data including the real index in wh
                                index
                                ids-query
                                (assoc (make-es-read-params es-params)
+                                      :limit (count ids)
                                       :full-hits?
                                       true))]
     (:data res)))
@@ -117,7 +112,6 @@ It returns the documents with full hits meta data including the real index in wh
    es-params]
   (first (get-docs-with-indices conn-state [_id] es-params)))
 
-
 (defn ^:private prepare-opts
   [{:keys [props]}
    {:keys [refresh]}]
@@ -125,24 +119,39 @@ It returns the documents with full hits meta data including the real index in wh
                 (:refresh props)
                 "false")})
 
+(s/defn bulk-schema
+  [Model :- (s/pred map?)]
+  (st/optional-keys
+   {:create [Model]
+    :index [Model]
+    :update [(st/optional-keys Model)]
+    :delete [s/Str]}))
+
+(s/defn ^:private prepare-bulk-doc
+  [{:keys [props]} :- ESConnState
+   mapping :- s/Keyword
+   doc :- (s/pred map?)]
+  (assoc doc
+         :_id (:id doc)
+         :_index (:write-index props)
+         :_type (name mapping)))
+
 (defn handle-create
   "Generate an ES create handler using some mapping and schema"
   [mapping Model]
   (let [coerce! (coerce-to-fn (s/maybe Model))]
     (s/fn :- (s/maybe [Model])
-      [{:keys [conn props] :as conn-state} :- ESConnState
+      [{:keys [conn] :as conn-state} :- ESConnState
        docs :- [Model]
        _ident
        es-params]
-      (let [prepare-doc #(assoc %
-                                :_id (:id %)
-                                :_index (:write-index props)
-                                :_type (name mapping))]
+      (let [prepare-doc (partial prepare-bulk-doc conn-state mapping)
+            prepared (mapv prepare-doc docs)]
         (try
-          (map #(build-create-result % coerce!)
-               (ductile.doc/bulk-create-doc conn
-                                            (map prepare-doc docs)
-                                            (prepare-opts conn-state es-params)))
+          (ductile.doc/bulk-index-docs conn
+                                       prepared
+                                       (prepare-opts conn-state es-params))
+          docs
           (catch Exception e
             (throw
              (if-let [ex-data (ex-data e)]
@@ -161,8 +170,8 @@ It returns the documents with full hits meta data including the real index in wh
        realized :- Model
        ident
        es-params]
-      (when-let [{index :_index current-doc :_source}
-                 (get-doc-with-index conn-state id {})]
+      (when-let [[{index :_index current-doc :_source}]
+                 (get-docs-with-indices conn-state [id] {})]
         (if (allow-write? current-doc ident)
           (let [update-doc (assoc realized
                                   :id (ensure-document-id id))]
@@ -202,16 +211,139 @@ It returns the documents with full hits meta data including the real index in wh
   [docs ident get-in-config]
   (filter #(allow-read? % ident get-in-config) docs))
 
+(s/defschema BulkResult
+  (st/optional-keys
+   {:deleted [s/Str]
+    :updated [s/Str]
+    :errors (st/optional-keys
+             {:forbidden [s/Str]
+              :not-found [s/Str]
+              :internal-error [s/Str]})}))
+
+(s/defschema ESActionResult
+  (st/open-schema
+   {:_id s/Str
+    :_index s/Str
+    :status s/Int
+    :result s/Str}))
+
+;; TODO move it to ductile
+(s/defschema ESBulkRes
+  {:took s/Int
+   :errors s/Bool
+   :items [{ductile.doc/BulkOps ESActionResult}]})
+
+(s/defn ^:private format-bulk-res
+  "transform an elasticsearch bulk result into a CTIA Bulk Result.
+   ex: https://www.elastic.co/guide/en/elasticsearch/reference/7.x/docs-bulk.html#docs-bulk-api-example"
+  [bulk-res :- ESBulkRes]
+  (let [{:keys [deleted updated not_found]}
+        (->> (:items bulk-res)
+             (map (comp first vals))
+             (group-by :result)
+             (into {}
+                   (map (fn [[result items]]
+                          {(keyword result) (map :_id items)}))))]
+    (cond-> {}
+      deleted (assoc :deleted deleted)
+      updated (assoc :updated updated)
+      not_found (assoc-in [:errors :not-found] not_found))))
+
+(s/defn check-and-prepare-bulk
+  :- (st/assoc BulkResult
+               (s/optional-key :prepared)
+               [(s/pred map?)])
+  "prepare a bulk query:
+  - retrieve actual indices, deletion cannot be performed on the alias.
+  - filter out forbidden entitites
+  - forbidden and not_found errors are prepared for the response."
+  [conn-state :- ESConnState
+   ids :- [s/Str]
+   ident]
+  (let [get-in-config (get-in conn-state [:services :ConfigService])
+        doc-ids (map ensure-document-id ids)
+        docs-with-indices (get-docs-with-indices conn-state doc-ids {})
+        {authorized true forbidden-write false}
+        (group-by #(allow-write? (:_source %) ident)
+                  docs-with-indices)
+        {forbidden true not-visible false}
+        (group-by #(allow-read? (:_source %) ident get-in-config)
+                  forbidden-write)
+        missing (set/difference (set doc-ids)
+                                (set (map :_id docs-with-indices)))
+        not-found (into (map :_id not-visible) missing)
+        prepared-docs (map #(select-keys % [:_index :_type :_id])
+                           authorized)]
+    (cond-> {}
+      forbidden (assoc-in [:errors :forbidden] (map :_id forbidden))
+      (seq not-found) (assoc-in [:errors :not-found] not-found)
+      authorized (assoc :prepared prepared-docs))))
+
+(s/defn bulk-delete :- BulkResult
+  [{:keys [conn] :as conn-state}
+   ids :- [s/Str]
+   ident
+   es-params]
+  (let [{:keys [prepared errors]} (check-and-prepare-bulk conn-state ids ident)
+        bulk-res (when prepared
+                   (try
+                     (format-bulk-res
+                      (ductile.doc/bulk-delete-docs conn
+                                                    prepared
+                                                    (prepare-opts conn-state es-params)))
+                     (catch Exception e
+                       (log/error e
+                                  (str "bulk delete failed: " (.getMessage e))
+                                  (pr-str prepared))
+                       {:errors {:internal-error (map :_id prepared)}})))]
+    (cond-> bulk-res
+      errors (update :errors
+                     #(merge-with concat errors %)))))
+
+(s/defn bulk-update
+  "Generate an ES bulk update handler using some mapping and schema"
+  [Model]
+  (s/fn :- BulkResult
+    [{:keys [conn] :as conn-state}
+     docs :- [Model]
+     ident
+     es-params]
+    (let [by-id (group-by :id docs)
+          ids (seq (keys by-id))
+          {:keys [prepared errors]} (check-and-prepare-bulk conn-state
+                                                            ids
+                                                            ident)
+
+          prepared-docs (map (fn [meta]
+                               (-> (:_id meta)
+                                   by-id
+                                   first
+                                   (into meta)))
+                             prepared)
+          bulk-res (when prepared
+                     (try
+                       (format-bulk-res
+                        (ductile.doc/bulk-index-docs conn
+                                                     prepared-docs
+                                                     (prepare-opts conn-state es-params)))
+                       (catch Exception e
+                         (log/error (str "bulk update failed: " (.getMessage e))
+                                    (pr-str prepared))
+                         {:errors {:internal-error (map :_id prepared)}})))]
+      (cond-> bulk-res
+        errors (update :errors
+                       #(merge-with concat errors %))))))
+
 (defn handle-delete
-  "Generate an ES delete handler using some mapping and schema"
+  "Generate an ES delete handler using some mapping"
   [mapping]
   (s/fn :- s/Bool
     [{:keys [conn] :as conn-state} :- ESConnState
      id :- s/Str
      ident
      es-params]
-    (when-let [{index :_index doc :_source}
-               (get-doc-with-index conn-state id {})]
+    (if-let [{index :_index doc :_source}
+             (get-doc-with-index conn-state id {})]
       (if (allow-write? doc ident)
         (ductile.doc/delete-doc conn
                                 index
@@ -219,7 +351,8 @@ It returns the documents with full hits meta data including the real index in wh
                                 (ensure-document-id id)
                                 (prepare-opts conn-state es-params))
         (throw (ex-info "You are not allowed to delete this document"
-                        {:type :access-control-error}))))))
+                        {:type :access-control-error})))
+      false)))
 
 (def default-sort-field "_doc,id")
 
@@ -288,8 +421,7 @@ It returns the documents with full hits meta data including the real index in wh
         coerce! (coerce-to-fn response-schema)]
     (s/fn :- response-schema
       [{{{:keys [get-in-config]} :ConfigService} :services
-        :keys [conn index]
-        :as conn-state} :- ESConnState
+        :keys [conn index]} :- ESConnState
        {:keys [all-of one-of query]
         :or {all-of {} one-of {}}} :- FilterSchema
        ident
@@ -377,7 +509,7 @@ It returns the documents with full hits meta data including the real index in wh
 (s/defn handle-delete-search
   "ES delete by query handler"
   [{:keys [conn index] :as es-conn-state} :- ESConnState
-   {:keys [filter-map] :as search-query} :- SearchQuery
+   search-query :- SearchQuery
    ident
    es-params]
   (let [query (make-search-query es-conn-state search-query ident)]
@@ -392,7 +524,7 @@ It returns the documents with full hits meta data including the real index in wh
   [{conn :conn
     index :index
     :as es-conn-state} :- ESConnState
-   {:keys [filter-map] :as search-query} :- SearchQuery
+   search-query :- SearchQuery
    ident]
   (let [query (make-search-query es-conn-state search-query ident)]
     (ductile.doc/count-docs conn
@@ -449,7 +581,7 @@ It returns the documents with full hits meta data including the real index in wh
 (s/defn handle-aggregate
   "Generate an ES aggregation handler for given schema"
   [{:keys [conn index] :as es-conn-state} :- ESConnState
-   {:keys [filter-map] :as search-query} :- SearchQuery
+   search-query :- SearchQuery
    {:keys [agg-type] :as agg-query} :- AggQuery
    ident]
   (let [query (make-search-query es-conn-state search-query ident)

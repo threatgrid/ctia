@@ -279,7 +279,12 @@ since "foogroup" and "bargroup" are marked as `authorized_groups` identities in 
    "authorized_groups": ["foogroup" "bargroup"]}
 ```
 
-## Bundle import
+## Bulk and Bundle
+
+CTIA provides Bulk and Bundle routes to help processing multiple entities.
+see [Bulk and Bundle documentation](doc/bulk-bundle.org)
+
+### Bundle import
 
 The `/bundle` API endpoint allows users with the correct permissions to POST a CTIM [bundle object](https://github.com/threatgrid/ctim/blob/master/src/ctim/schemas/bundle.cljc).
 
@@ -291,7 +296,7 @@ When a bundle is submitted:
 2. If they are identified by transient IDs, a mapping table between transient and stored IDs is built.
 3. Only new entities are created in the same way as the `/bulk` API endpoint with transient IDs resolutions. Existing entities are not modified.
 
-If more than one entity is referenced by the same external ID, an error is reported.
+If more than one entity is referenced by the same external ID, the first one which is retrieved is picked.
 
 Response of the bundle API endpoint:
 
@@ -303,13 +308,13 @@ Response of the bundle API endpoint:
             :error "An error occurs"}]
 ```
 
-|Field          |Description|
-|---------------|-----------|
-|`:id`          |The real ID|
-|`:original_id` |Provided ID if different from real ID (ex: transient ID) |
-|`:result`      |`error`, `created` or `exists` |
-|`:external_id` |External ID used to identify the entity|
-|`:error`       |Error message|
+| Field          | Description                                              |
+|----------------|----------------------------------------------------------|
+| `:id`          | The real ID                                              |
+| `:original_id` | Provided ID if different from real ID (ex: transient ID) |
+| `:result`      | `error`, `created` or `exists`                           |
+| `:external_id` | External ID used to identify the entity                  |
+| `:error`       | Error message                                            |
 
 
 ### Feeds

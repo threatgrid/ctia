@@ -9,7 +9,7 @@
    [ctia.test-helpers
     [access-control :refer [access-control-test]]
     [auth :refer [all-capabilities]]
-    [core :as helpers :refer [POST PUT POST-entity-bulk]]
+    [core :as helpers :refer [POST PUT]]
     [crud :refer [entity-crud-test]]
     [aggregate :refer [test-metric-routes]]
     [fake-whoami-service :as whoami-helpers]

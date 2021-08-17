@@ -1,6 +1,7 @@
 (ns ctia.stores.es.crud-test
   (:require [clj-momo.test-helpers.core :as mth]
             [clojure.instant :as inst]
+            [clojure.string :as string]
             [clojure.test :as t
              :refer
              [are deftest is testing use-fixtures]]
@@ -12,6 +13,8 @@
             [ctia.test-helpers.core :as helpers]
             [ctia.test-helpers.es :as es-helpers]
             [ductile.index :as es-index]
+            [ctia.entity.sighting.schemas :as ss]
+            [ctim.examples.sightings :refer [sighting-minimal sighting-maximal]]
             [schema.core :as s]))
 
 (use-fixtures :once mth/fixture-schema-validation)
@@ -82,6 +85,30 @@
                                                        "title.whole:ASC,"
                                                        "schema_version:DESC")))
 
+(deftest bulk-schema-test
+  (testing "bulk-schema shall generate a proper bulk schema"
+    (let [partial-sighting {:title "new title"
+                            :observables [{:type "ip" :value "8.8.8.8"}]}
+          schema (sut/bulk-schema ss/Sighting)
+          check-fn (fn [input valid?]
+                     (is (= valid?
+                            (nil? (s/check schema input)))))
+          ok-inputs [{:create [sighting-minimal]}
+                     {:update [partial-sighting]}
+                     {:index [sighting-minimal]}
+                     {:delete ["id1" "id2" "id3"]}
+                     {:create [sighting-minimal]
+                      :update [partial-sighting sighting-maximal]
+                      :index [sighting-minimal sighting-maximal]
+                      :delete ["id1" "id2" "id3"]}]
+          ko-inputs [{:index [partial-sighting]}
+                     {:delete [1 2 3]}
+                     {:delete [sighting-minimal]}]]
+      (doseq [tested ok-inputs]
+        (check-fn tested true))
+      (doseq [tested ko-inputs]
+        (check-fn tested false)))))
+
 (def create-fn (sut/handle-create :sighting s/Any))
 (def update-fn (sut/handle-update :sighting s/Any))
 (def read-fn (sut/handle-read s/Any))
@@ -112,6 +139,12 @@
    :port 9205
    :refresh "true"
    :version 5})
+
+(defn get-conn-state
+  [app store-kw]
+  (-> (helpers/get-store app store-kw)
+      :state
+      (update :props assoc :default_operator "AND")))
 
 (deftest crud-aliased-test
   (es-helpers/for-each-es-version
@@ -218,13 +251,6 @@
                                ident
                                {}))))))))
 
-(defn sighting-conn-state
-  [app]
-  (let [{:keys [get-store]} (helpers/get-service-map app :StoreService)]
-    (-> (get-store :sighting)
-        :state
-        (update :props assoc :default_operator "AND"))))
-
 (deftest make-search-query-test
   (es-helpers/for-each-es-version
       "make-search-query shall build a proper query from given query string, filter map and date range"
@@ -232,7 +258,7 @@
     #(es-index/delete! % "ctia_*")
     (helpers/fixture-ctia-with-app
      (fn [app]
-       (let [es-conn-state (sighting-conn-state app)
+       (let [es-conn-state (get-conn-state app :sighting)
              simple-access-ctrl-query {:terms {"groups" (:groups ident)}}]
        (with-redefs [find-restriction-query-part (constantly simple-access-ctrl-query)]
          (let [query-string "*"
@@ -397,7 +423,7 @@
    #(es-index/delete! % "ctia_*")
    (helpers/fixture-ctia-with-app
     (fn [app]
-      (let [es-conn-state (sighting-conn-state app)
+      (let [es-conn-state (get-conn-state app :sighting)
              _ (create-fn es-conn-state
                           search-metrics-entities
                           ident
@@ -456,7 +482,7 @@
     #(es-index/delete! % "ctia_*")
     (helpers/fixture-ctia-with-app
      (fn [app]
-       (let [es-conn-state (sighting-conn-state app)
+       (let [es-conn-state (get-conn-state app :sighting)
              _ (create-fn es-conn-state
                           search-metrics-entities
                           ident
@@ -534,7 +560,7 @@
       #(es-index/delete! % "ctia_*")
     (helpers/fixture-ctia-with-app
         (fn [app]
-          (let [es-conn-state (sighting-conn-state app)
+          (let [es-conn-state (get-conn-state app :sighting)
                 ident-1 {:login "johndoe"
                          :groups ["group1"]}
                 ident-2 {:login "janedoe"
@@ -543,7 +569,7 @@
                                            :user (:login ident-1)
                                            :tlp  "amber"))
                           search-metrics-entities)
-                check-fn (fn [{:keys [msg query matched ident deleted?] :as params}]
+                check-fn (fn [{:keys [msg query matched ident deleted?]}]
                            (create-fn es-conn-state
                                       data
                                       ident-1
@@ -581,3 +607,108 @@
               :matched high-t1-title1
               :ident ident-1
               :deleted? true}))))))
+
+(deftest docs-with-indices-test
+  (es-helpers/for-each-es-version
+      "get-docs-with-indices (and variants) shall properly return documents for given ids"
+      [5 7]
+    #(es-index/delete! % "ctia_*")
+    (helpers/fixture-ctia-with-app
+     (fn [app]
+       (let [conn-state (get-conn-state app :sighting)
+             base-sighting {:tlp "green"
+                            :groups ["group1"]}
+             total 200
+             sighting-ids (map #(str "sighting-"  %) (range total))
+             mk-title #(str "title "%)
+             sightings (map #(assoc base-sighting
+                                    :id %
+                                    :title (mk-title %))
+                            sighting-ids)
+             ;; drop some docs to check that we only match requested ids
+             tested-sample (drop (/ total 10)
+                                 (shuffle sightings))
+             ;; create-docs
+             _ (create-fn conn-state
+                          sightings
+                          ident
+                          {})
+             base-check (fn [{:keys [_index _type _id _source]}]
+                          (is (= base-sighting (select-keys _source [:tlp :groups])))
+                          (is (= _id (:id _source)))
+                          (is (string/starts-with? _index "ctia_sighting"))
+                          (when (= version 5)
+                            (is (= _type "sighting"))))]
+         (let [tested-sighting (rand-nth sightings)
+               res (sut/get-doc-with-index conn-state
+                                           (:id tested-sighting)
+                                           {})]
+           (base-check res)
+           (is (= (:_source res) tested-sighting)))
+
+         (let [tested-sample (drop (/ total 10) ;; drop some
+                                   (shuffle sightings))
+               res (sut/get-docs-with-indices conn-state
+                                              (map :id tested-sample)
+                                              {:limit total})]
+           (is (= (set tested-sample)
+                  (set (map :_source res))))
+           (doseq [elem res]
+             (base-check elem))))))))
+
+(deftest bulk-delete-update-test
+  (es-helpers/for-each-es-version
+      "bulk-delete and bulk-update shall properly handle authorization and not-found errors"
+      [5 7]
+    nil
+    (helpers/fixture-ctia-with-app
+     (fn [app]
+       (let [conn-state (get-conn-state app :sighting)
+             base-sighting (assoc sighting-minimal :tlp "amber")
+             total 10
+             sighting-ids (map #(str "sighting-" %) (range total))
+             sightings (map #(assoc base-sighting :id %) sighting-ids)
+             with-owner (fn [{:keys [login groups]} doc]
+                             (assoc doc
+                                    :owner login
+                                    :groups groups))
+             ident1 {:login "john-doe"
+                     :groups ["group1"]}
+             ident2 {:login "jane-doe"
+                     :groups ["group2"]}
+
+             [docs-1 docs-2 docs-3] (partition-all (/ total 3) sightings)
+             ;; amber documents created and owned
+             docs1-ident1 (map (partial with-owner ident1) docs-1)
+             ;; documents created but owned by someone else with amber tlp
+             docs2-ident2 (map (partial with-owner ident2) docs-2)
+             ;; documents not created
+             docs3-ident1 (map (partial with-owner ident1) docs-3)
+             bulk-update-handler (sut/bulk-update ss/Sighting)
+
+             _ (create-fn conn-state
+                       (concat docs1-ident1 docs2-ident2)
+                       ident
+                       {})
+             to-update-docs (map #(assoc % :title "updated title")
+                                 (concat docs1-ident1 docs2-ident2 docs3-ident1))
+             update-res (bulk-update-handler conn-state
+                                             to-update-docs
+                                             ident1
+                                             {})
+             delete-res (sut/bulk-delete conn-state
+                                         sighting-ids
+                                         ident1
+                                         {})
+             expected-not-found (set (concat (map :id docs-3)
+                                             (map :id docs-2)))
+             expected-delete-result {:deleted (set (map :id docs-1))
+                                     :errors {:not-found expected-not-found}}
+             expected-update-result {:updated (set (map :id docs-1))
+                                     :errors {:not-found expected-not-found}}]
+         (is (= expected-update-result
+                (-> (update-in update-res [:errors :not-found] set)
+                    (update :updated set))))
+         (is (= expected-delete-result
+                (-> (update-in delete-res [:errors :not-found] set)
+                    (update :deleted set)))))))))

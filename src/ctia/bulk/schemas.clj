@@ -16,7 +16,8 @@
            (let [bulk-schema
                  (if (keyword? sch)
                    [(s/maybe
-                     (get entity sch))] sch)]
+                     (get entity sch))]
+                   sch)]
              {(-> plural
                   name
                   (str/replace #"-" "_")
@@ -40,11 +41,36 @@
 
 (s/defn BulkRefs :- (s/protocol s/Schema)
   [services :- GetEntitiesServices]
-  (st/assoc
-   (entities-bulk-schema (get-entities services) [(s/maybe Reference)])
-   (s/optional-key :tempids) TempIDs))
+  (entities-bulk-schema (get-entities services) [(s/maybe Reference)]))
+
+(s/defn BulkCreateRes :- (s/protocol s/Schema)
+  [services :- GetEntitiesServices]
+  (st/assoc (BulkRefs services)
+            (s/optional-key :tempids)
+            TempIDs))
 
 (s/defn NewBulk :- (s/protocol s/Schema)
   "Returns NewBulk schema without disabled entities"
   [services :- GetEntitiesServices]
   (entities-bulk-schema (get-entities services) :new-schema))
+
+(s/defn NewBulkDelete
+  "Returns NewBulk schema without disabled entities"
+  [services :- GetEntitiesServices]
+  (entities-bulk-schema (get-entities services) [(s/maybe Reference)]))
+
+(s/defschema BulkErrors
+  (st/optional-keys
+   {:not-found [Reference]
+    :forbidden [Reference]
+    :internal-error [Reference]}))
+
+(s/defschema BulkActions
+  (st/optional-keys
+   {:deleted [Reference]
+    :updated [Reference]
+    :errors BulkErrors}))
+
+(s/defn BulkActionsRefs :- (s/protocol s/Schema)
+  [services :- GetEntitiesServices]
+  (entities-bulk-schema (get-entities services) BulkActions))

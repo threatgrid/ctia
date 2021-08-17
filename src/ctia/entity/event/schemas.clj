@@ -1,7 +1,6 @@
 (ns ctia.entity.event.schemas
   (:require
    [ctia.schemas.core :refer [TLP]]
-   [flanders.schema :as fs]
    [schema.core :as s]
    [schema-tools.core :as st]))
 

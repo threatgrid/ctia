@@ -4,10 +4,9 @@
    [clojure.string :as str]
    [clojure.tools.logging :as log]
    [ctia.auth :as auth]
-   [ctia.domain.entities :as ent :refer [with-long-id]]
+   [ctia.domain.entities :as ent :refer [with-long-id short-id->long-id]]
    [ctia.entity.entities :refer [all-entities]]
    [ctia.flows.crud :as flows]
-   [ctia.properties :as p]
    [ctia.schemas.core :as schemas :refer [APIHandlerServices]]
    [ctia.schemas.utils :as csu]
    [ctia.store :as store]
@@ -81,8 +80,9 @@
                 :entities new-entities
                 :tempids tempids
                 :spec (-> entities entity-type :new-spec))
-              :data (partial map (fn [{:keys [error id] :as result}]
-                                   (if error result id)))))))
+              :data
+              (partial map (fn [{:keys [error id] :as result}]
+                             (if error result id)))))))
 
 (s/defschema ReadEntitiesServices
   {:ConfigService (-> APIHandlerServices
@@ -105,8 +105,54 @@
              (some-> (read-entity id)
                      (with-long-id services))
              (catch Exception e
-               (do (log/error (pr-str e))
-                   nil)))) ids)))
+               (log/error (pr-str e)))))
+         ids)))
+
+(s/defn delete-fn
+  "return the delete function provided an entity type key"
+  [k auth-identity params
+   {{:keys [get-store]} :StoreService} :- APIHandlerServices]
+  #(-> (get-store k)
+       (store/bulk-delete
+         %
+         (auth/ident->map auth-identity)
+         params)))
+
+(defn format-bulk-flow-res
+  "format delete res with-long-id for a given entity type result"
+  [bulk-flow-res services]
+  (into {}
+        (map (fn [[action res]]
+               {action
+                (case action
+                  :errors (format-bulk-flow-res res services)
+                  (map #(short-id->long-id % services) res))}))
+        bulk-flow-res))
+
+(s/defn delete-entities
+  "Create many entities provided their type and returns a list of ids"
+  [entity-ids entity-type auth-identity params
+   services :- APIHandlerServices]
+  (when (seq entity-ids)
+    (let [get-fn #(read-entities %  entity-type auth-identity services)
+          delete-flow-res (flows/delete-flow
+                           :services services
+                           :entity-type entity-type
+                           :entity-ids entity-ids
+                           :get-fn get-fn
+                           :delete-fn (delete-fn entity-type auth-identity params services)
+                           :long-id-fn nil
+                           :identity auth-identity
+                           :get-success-entities (fn [{:keys [results entities] :as fm}]
+                                                   (let [deleted-long-ids
+                                                         (set
+                                                          (map #(short-id->long-id % services)
+                                                               (:deleted results)))
+                                                         filter-fn (fn [entity]
+                                                                     (contains? deleted-long-ids
+                                                                                (:id entity)))]
+                                                     (filter filter-fn entities))))]
+      (format-bulk-flow-res delete-flow-res services))))
 
 (defn gen-bulk-from-fn
   "Kind of fmap but adapted for bulk
@@ -119,12 +165,12 @@
   [func bulk & args]
   (try
     (->> bulk
-         (pmap (fn [[bulk-k entities]]
-                 (let [entity-type (entity-type-from-bulk-key bulk-k)]
-                   [bulk-k
-                    (apply func
-                           entities
-                           entity-type args)])))
+         (map (fn [[bulk-k entities]]
+                (let [entity-type (entity-type-from-bulk-key bulk-k)]
+                  [bulk-k
+                   (apply func
+                          entities
+                          entity-type args)])))
          (into {}))
     (catch java.util.concurrent.ExecutionException e
       (throw (.getCause e)))))
@@ -165,8 +211,9 @@
    1. Creates all entities except Relationships
    2. Creates Relationships with mapping between transient and real IDs"
   ([bulk login services :- APIHandlerServices] (create-bulk bulk {} login {} services))
-  ([bulk tempids login params {{:keys [get-in-config]} :ConfigService :as services} :- APIHandlerServices]
-   (let [{:keys [refresh] :as params
+  ([bulk tempids login params
+    {{:keys [get-in-config]} :ConfigService :as services} :- APIHandlerServices]
+   (let [{:keys [refresh]
           :or   {refresh (bulk-refresh? get-in-config)}} params
          new-entities (gen-bulk-from-fn
                        create-entities
@@ -219,3 +266,13 @@
       (bad-request (str "Bulk max nb of entities: " (get-bulk-max-size get-in-config)))
       (ent/un-store-map
        (gen-bulk-from-fn read-entities bulk auth-identity services)))))
+
+(s/defn delete-bulk
+  [entities-map auth-identity params
+   {{:keys [get-in-config]} :ConfigService
+    :as services} :- APIHandlerServices]
+  (let [bulk (into {} (remove (comp empty? second) entities-map))]
+    (if (> (bulk-size bulk) (get-bulk-max-size get-in-config))
+      (bad-request (str "Bulk max nb of entities: "
+                        (get-bulk-max-size get-in-config)))
+      (gen-bulk-from-fn delete-entities bulk auth-identity params services))))

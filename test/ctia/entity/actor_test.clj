@@ -1,19 +1,19 @@
 (ns ctia.entity.actor-test
-  (:require [clj-momo.test-helpers.core :as mth]
-            [clojure.test :refer [deftest join-fixtures use-fixtures]]
+  (:require [clojure.test :refer [deftest join-fixtures use-fixtures]]
             [ctia.entity.actor :as sut]
             [ctia.test-helpers
              [access-control :refer [access-control-test]]
              [auth :refer [all-capabilities]]
-             [core :as helpers :refer [POST-entity-bulk]]
+             [core :as helpers]
              [crud :refer [entity-crud-test]]
              [aggregate :refer [test-metric-routes]]
              [fake-whoami-service :as whoami-helpers]
              [store :refer [test-for-each-store-with-app]]]
-            [ctim.examples.actors :refer [new-actor-maximal new-actor-minimal]]))
+            [ctim.examples.actors :refer [new-actor-maximal new-actor-minimal]]
+            [schema.test :refer [validate-schemas]]))
 
 (use-fixtures :once
-  (join-fixtures [mth/fixture-schema-validation
+  (join-fixtures [validate-schemas
                   whoami-helpers/fixture-server]))
 
 (deftest test-actor-routes

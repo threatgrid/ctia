@@ -1,16 +1,13 @@
 (ns ctia.test-helpers.fake-whoami-service
   (:require [cheshire.core :as json]
-            [clj-momo.lib.net :as net]
-            [ctia.auth :as auth]
             [ctia.auth.threatgrid :as threatgrid]
             [ctia.test-helpers.core :as helpers-core]
-            [schema.core :as s]
-            [ctia.auth :as ctia-auth]
-            [ring.adapter.jetty :as jetty]
-            [ring.middleware.params :as params]
+            [puppetlabs.trapperkeeper.app :as app]
             [puppetlabs.trapperkeeper.core :as tk]
             [puppetlabs.trapperkeeper.services :refer [service-context]]
-            [puppetlabs.trapperkeeper.app :as app])
+            [ring.adapter.jetty :as jetty]
+            [ring.middleware.params :as params]
+            [schema.core :as s])
   (:import org.eclipse.jetty.server.Server))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

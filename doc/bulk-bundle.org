@@ -1,0 +1,693 @@
+#+TITLE: Bulk and Bundle
+#+AUTHOR: Guillaume ERETEO
+#+OPTIONS: toc:nil
+
+* Bulk
+
+** Create
+Bulk Create schema
+#+begin_src clojure
+(s/defschema NewBulk
+   (st/optional-keys
+    {:actors           [NewActor]
+     :assets           [NewAsset]
+     :asset_mappings   [NewAssetMappings]
+     :asset_properties [NewAssetProperties]
+     :attack_patterns  [NewAttackPattern]
+     :campaigns        [NewCampaing]
+     :coas             [NewCOA]
+     :incidents        [NewIncident]
+     :indicators       [NewIndicator]
+     :investigations   [NewInvestigation]
+     :judgements       [NewJudgment]
+     :malwares         [NewMalware]
+     :relationships    [NewRelationship]
+     :casebooks        [NewCasebook]
+     :sightings        [NewSighting]
+     :target_records   [NewTargetRecord]
+     :tools            [NewTool]
+     :vulnerabilities  [NewVulnerability]
+     :weaknesses       [NewWeakness]})
+#+end_src
+
+Bulk Create Result is a BulkRefs with tempids
+#+begin_src clojure
+(s/defschema BulkCreateRes
+   (st/optional-keys
+    {:tempids          {TransientID ID}
+     :actors           [(s/maybe Reference)]
+     :assets           [(s/maybe Reference)]
+     :asset_mappings   [(s/maybe Reference)]
+     :asset_properties [(s/maybe Reference)]
+     :attack_patterns  [(s/maybe Reference)]
+     :campaigns        [(s/maybe Reference)]
+     :coas             [(s/maybe Reference)]
+     :incidents        [(s/maybe Reference)]
+     :indicators       [(s/maybe Reference)]
+     :investigations   [(s/maybe Reference)]
+     :judgements       [(s/maybe Reference)]
+     :malwares         [(s/maybe Reference)]
+     :relationships    [(s/maybe Reference)]
+     :casebooks        [(s/maybe Reference)]
+     :sightings        [(s/maybe Reference)]
+     :target_records   [(s/maybe Reference)]
+     :tools            [(s/maybe Reference)]
+     :vulnerabilities  [(s/maybe Reference)]
+     :weaknesses       [(s/maybe Reference)]}))
+#+end_src
+
+Example:
+#+begin_src HTTP
+POST /ctia/bulk HTTP/1.1
+Host: localhost:3000
+Authorization: "Bearer ..."
+accept: application/json
+
+{
+  "incidents": [
+    {
+      "description": "## Summary:\n\nOn Monday, June 15th at 3:34am GMT, a host (UUID #dc0415fe-af42-11ea-b3de-0242ac130004) on VLAN 414 established contact with a known Emotet Epoch 2 Command and Control server, triggering an event alarm..",
+      "assignees": [
+        "saintx"
+      ],
+      "type": "incident",
+      "source": "Modeling Incidents in CTIM Tutorial",
+      "external_ids": [
+        "ctim-tutorial-incident-c56de1c94c1ce862c4e6d9883393aacc58275c0c4dc4d8b48cc4db692bf11e4f"
+      ],
+      "short_description": "Incident Report: 2020-06-15 3:34am (Emotet Botnet Attack)",
+      "title": "2020-06-15-0334-emotet-botnet-report",
+      "incident_time": {
+        "opened": "2020-06-15T03:43:27.368Z",
+        "reported": "2020-06-15T03:34:36.298Z"
+      },
+      "discovery_method": "NIDS",
+      "source_uri": "https://github.com/threatgrid/ctim/blob/master/src/doc/tutorials/modeling-incidents-in-ctim.md",
+      "categories": [
+        "Malicious Code"
+      ],
+      "status": "Containment Achieved",
+      "id": "transient:ctim-tutorial-incident-c56de1c94c1ce862c4e6d9883393aacc58275c0c4dc4d8b48cc4db692bf11e4f",
+      "confidence": "High"
+    }
+  ],
+  "sightings": [
+    {
+      "observables": [
+        {
+          "type": "ip",
+          "value": "98.15.140.226"
+        }
+      ],
+      "type": "sighting",
+      "source": "Modeling Incidents in CTIM Tutorial",
+      "external_ids": [
+        "ctim-tutorial-sighting-7b36e0fa2169a3ca330c7790f63c97fd3c9f482f88ee1b350511d8a51fcecc8d"
+      ],
+      "source_uri": "https://github.com/threatgrid/ctim/blob/master/src/doc/tutorials/modeling-incidents-in-ctim.md",
+      "id": "transient:ctim-tutorial-sighting-7b36e0fa2169a3ca330c7790f63c97fd3c9f482f88ee1b350511d8a51fcecc8d",
+      "count": 1,
+      "severity": "High",
+      "tlp": "green",
+      "timestamp": "2020-06-15T03:34:36.298Z",
+      "confidence": "High",
+      "observed_time": {
+        "start_time": "2020-06-15T03:34:36.298Z"
+      }
+    }
+  ],
+  "relationships": [
+    {
+      "type": "relationship",
+      "source": "Modeling Incidents in CTIM Tutorial",
+      "source_uri": "https://github.com/threatgrid/ctim/blob/master/src/doc/tutorials/modeling-incidents-in-ctim.md",
+      "source_ref": "transient:ctim-tutorial-sighting-7b36e0fa2169a3ca330c7790f63c97fd3c9f482f88ee1b350511d8a51fcecc8d",
+      "target_ref": "transient:ctim-tutorial-incident-c56de1c94c1ce862c4e6d9883393aacc58275c0c4dc4d8b48cc4db692bf11e4f",
+      "relationship_type": "member-of",
+      "external_ids": [
+        "ctim-tutorial-relationship-2c1f3fcaf89d294bf7d038f470f6cb4a81dc1fad6ff5deeed18a41bf6fe14f00"
+      ]
+    },
+    {
+      "type": "relationship",
+      "source": "Modeling Incidents in CTIM Tutorial",
+      "source_uri": "https://github.com/threatgrid/ctim/blob/master/src/doc/tutorials/modeling-incidents-in-ctim.md",
+      "source_ref": "transient:ctim-tutorial-sighting-7b36e0fa2169a3ca330c7790f63c97fd3c9f482f88ee1b350511d8a51fcecc8d",
+      "target_ref": "https://ex.tld/ctia/indicator/indicator-b790ade3-e45e-48d4-7d06-f0079e6453a0",
+      "description": "Sighting of host communication with known Emotet Epoch 2 C&C server",
+      "relationship_type": "sighting-of",
+      "external_ids": [
+        "ctim-tutorial-relationship-f879541251b139dfbfbed0f5c66a7c6d20246074241fa2f814f0f3eb2250def8"
+      ]
+    }
+  ]
+}
+#+end_src
+
+Which returns
+#+begin_src javascript
+{
+  "incidents": [
+    "http://localhost:3000/ctia/incident/incident-0e14cef7-fbd9-4c06-a6d6-332ad82d5b32"
+  ],
+  "sightings": [
+    "http://localhost:3000/ctia/sighting/sighting-20e12700-20b1-4e3a-8e79-cb9fdc1579a2"
+  ],
+  "relationships": [
+    "http://localhost:3000/ctia/relationship/relationship-00922b6b-f387-4176-84c4-a07bf70ebb26",
+    "http://localhost:3000/ctia/relationship/relationship-deaa021c-8467-464a-9eea-7118fe8e9c42"
+  ],
+  "tempids": {
+    "transient:ctim-tutorial-incident-c56de1c94c1ce862c4e6d9883393aacc58275c0c4dc4d8b48cc4db692bf11e4f": "http://localhost:3000/ctia/incident/incident-0e14cef7-fbd9-4c06-a6d6-332ad82d5b32",
+    "transient:ctim-tutorial-sighting-7b36e0fa2169a3ca330c7790f63c97fd3c9f482f88ee1b350511d8a51fcecc8d": "http://localhost:3000/ctia/sighting/sighting-20e12700-20b1-4e3a-8e79-cb9fdc1579a2"
+  }
+}
+#+end_src
+
+
+** export
+Bulk Export enables us to retrieve many entities.
+
+Bulk Export Params
+#+begin_src clojure
+(s/defschema BulkRefs
+   (st/optional-keys
+    {:actors           [Reference]
+     :assets           [Reference]
+     :asset_mappings   [Reference]
+     :asset_properties [Reference]
+     :attack_patterns  [Reference]
+     :campaigns        [Reference]
+     :coas             [Reference]
+     :feedbacks        [Reference]
+     :incidents        [Reference]
+     :indicators       [Reference]
+     :investigations   [Reference]
+     :judgements       [Reference]
+     :malwares         [Reference]
+     :relationships    [Reference]
+     :casebooks        [Reference]
+     :sightings        [Reference]
+     :target_records   [Reference]
+     :tools            [Reference]
+     :vulnerabilities  [Reference]
+     :weaknesses       [Reference]}))
+#+end_src
+
+It returns a Bulk
+#+begin_src clojure
+(s/defschema Bulk
+   (st/optional-keys
+    {:actors           [Actor]
+     :assets           [Asset]
+     :asset_mappings   [AssetMappings]
+     :asset_properties [AssetProperties]
+     :attack_patterns  [AttackPattern]
+     :campaigns        [Campaing]
+     :coas             [COA]
+     :incidents        [Incident]
+     :indicators       [Indicator]
+     :investigations   [Investigation]
+     :judgements       [Judgment]
+     :malwares         [Malware]
+     :relationships    [Relationship]
+     :casebooks        [Casebook]
+     :sightings        [Sighting]
+     :target_records   [TargetRecord]
+     :tools            [Tool]
+     :vulnerabilities  [Vulnerability]
+     :weaknesses       [Weakness]})
+#+end_src
+
+Example:
+
+#+begin_src HTTP
+GET /ctia/bulk?incidents=incident-0e14cef7-fbd9-4c06-a6d6-332ad82d5b32&relationships=relationship-00922b6b-f387-4176-84c4-a07bf70ebb26&relationships=relationship-deaa021c-8467-464a-9eea-7118fe8e9c42&sightings=sighting-20e12700-20b1-4e3a-8e79-cb9fdc1579a2 HTTP/1.1
+Host: localhost:3000
+Authorization: "Bearer ..."
+accept: application/json
+#+end_src
+
+Returns:
+#+begin_src javascript
+{
+  "incidents": [
+    {
+      "description": "## Summary:\n\nOn Monday, June 15th at 3:34am GMT, a host (UUID #dc0415fe-af42-11ea-b3de-0242ac130004) on VLAN 414 established contact with a known Emotet Epoch 2 Command and Control server, triggering an event alarm..",
+      "assignees": [
+        "saintx"
+      ],
+      "schema_version": "1.1.3",
+      "type": "incident",
+      "source": "Modeling Incidents in CTIM Tutorial",
+      "external_ids": [
+        "ctim-tutorial-incident-c56de1c94c1ce862c4e6d9883393aacc58275c0c4dc4d8b48cc4db692bf11e4f"
+      ],
+      "short_description": "Incident Report: 2020-06-15 3:34am (Emotet Botnet Attack)",
+      "title": "2020-06-15-0334-emotet-botnet-report",
+      "incident_time": {
+        "opened": "2020-06-15T03:43:27.368Z",
+        "reported": "2020-06-15T03:34:36.298Z"
+      },
+      "discovery_method": "NIDS",
+      "source_uri": "https://github.com/threatgrid/ctim/blob/master/src/doc/tutorials/modeling-incidents-in-ctim.md",
+      "categories": [
+        "Malicious Code"
+      ],
+      "status": "Containment Achieved",
+      "id": "http://localhost:3000/ctia/incident/incident-0e14cef7-fbd9-4c06-a6d6-332ad82d5b32",
+      "tlp": "green",
+      "groups": [
+        "Administrators"
+      ],
+      "timestamp": "2021-08-11T09:32:18.059Z",
+      "confidence": "High",
+      "owner": "Unknown"
+    }
+  ],
+  "relationships": [
+    {
+      "schema_version": "1.1.3",
+      "target_ref": "http://localhost:3000/ctia/incident/incident-0e14cef7-fbd9-4c06-a6d6-332ad82d5b32",
+      "type": "relationship",
+      "source": "Modeling Incidents in CTIM Tutorial",
+      "external_ids": [
+        "ctim-tutorial-relationship-2c1f3fcaf89d294bf7d038f470f6cb4a81dc1fad6ff5deeed18a41bf6fe14f00"
+      ],
+      "source_uri": "https://github.com/threatgrid/ctim/blob/master/src/doc/tutorials/modeling-incidents-in-ctim.md",
+      "source_ref": "http://localhost:3000/ctia/sighting/sighting-20e12700-20b1-4e3a-8e79-cb9fdc1579a2",
+      "id": "http://localhost:3000/ctia/relationship/relationship-00922b6b-f387-4176-84c4-a07bf70ebb26",
+      "tlp": "green",
+      "groups": [
+        "Administrators"
+      ],
+      "timestamp": "2021-08-11T09:32:18.458Z",
+      "owner": "Unknown",
+      "relationship_type": "member-of"
+    },
+    {
+      "description": "Sighting of host communication with known Emotet Epoch 2 C&C server",
+      "schema_version": "1.1.3",
+      "target_ref": "https://ex.tld/ctia/indicator/indicator-b790ade3-e45e-48d4-7d06-f0079e6453a0",
+      "type": "relationship",
+      "source": "Modeling Incidents in CTIM Tutorial",
+      "external_ids": [
+        "ctim-tutorial-relationship-f879541251b139dfbfbed0f5c66a7c6d20246074241fa2f814f0f3eb2250def8"
+      ],
+      "source_uri": "https://github.com/threatgrid/ctim/blob/master/src/doc/tutorials/modeling-incidents-in-ctim.md",
+      "source_ref": "http://localhost:3000/ctia/sighting/sighting-20e12700-20b1-4e3a-8e79-cb9fdc1579a2",
+      "id": "http://localhost:3000/ctia/relationship/relationship-deaa021c-8467-464a-9eea-7118fe8e9c42",
+      "tlp": "green",
+      "groups": [
+        "Administrators"
+      ],
+      "timestamp": "2021-08-11T09:32:18.458Z",
+      "owner": "Unknown",
+      "relationship_type": "sighting-of"
+    }
+  ],
+  "sightings": [
+    {
+      "schema_version": "1.1.3",
+      "observables": [
+        {
+          "value": "98.15.140.226",
+          "type": "ip"
+        }
+      ],
+      "type": "sighting",
+      "source": "Modeling Incidents in CTIM Tutorial",
+      "external_ids": [
+        "ctim-tutorial-sighting-7b36e0fa2169a3ca330c7790f63c97fd3c9f482f88ee1b350511d8a51fcecc8d"
+      ],
+      "source_uri": "https://github.com/threatgrid/ctim/blob/master/src/doc/tutorials/modeling-incidents-in-ctim.md",
+      "id": "http://localhost:3000/ctia/sighting/sighting-20e12700-20b1-4e3a-8e79-cb9fdc1579a2",
+      "count": 1,
+      "severity": "High",
+      "tlp": "green",
+      "groups": [
+        "Administrators"
+      ],
+      "timestamp": "2020-06-15T03:34:36.298Z",
+      "confidence": "High",
+      "observed_time": {
+        "start_time": "2020-06-15T03:34:36.298Z"
+      },
+      "owner": "Unknown"
+    }
+  ]
+}
+#+end_src
+
+** Delete
+
+A Bulk Delete takes a BulkRefs like the Bulk Export but returns a BulkDeleteRes with more specific errors.
+
+#+begin_src clojure
+(s/defschema BulkErrors
+  (st/optional-keys
+   {:not-found [Reference]
+    :forbidden [Reference]
+    :internal-error [Reference]}))
+
+(s/defschema BulkActions
+  (st/optional-keys
+   {:deleted [Reference]
+    :updated [Reference]
+    :errors BulkErrors}))
+
+(s/defschema BulkDeleteRes
+   (st/optional-keys
+    {:actors           BulkAction
+     :assets           BulkAction
+     :asset_mappings   BulkAction
+     :asset_properties BulkAction
+     :attack_patterns  BulkAction
+     :campaigns        BulkAction
+     :coas             BulkAction
+     :incidents        BulkAction
+     :indicators       BulkAction
+     :investigations   BulkAction
+     :judgements       BulkAction
+     :malwares         BulkAction
+     :relationships    BulkAction
+     :casebooks        BulkAction
+     :sightings        BulkAction
+     :target_records   BulkAction
+     :tools            BulkAction
+     :vulnerabilities  BulkAction
+     :weaknesses       BulkAction}))
+#+end_src
+
+Example:
+
+#+begin_src HTTP
+DELETE /ctia/bulk HTTP/1.1
+Host: localhost:3000
+Authorization: "Bearer ..."
+accept: application/json
+
+{
+  "incidents": [
+    "http://localhost:3000/ctia/incident/incident-36c956ee-fde8-4e84-8396-7be9201a9c55"
+  ],
+  "sightings": [
+    "http://localhost:3000/ctia/sighting/sighting-68cb80d5-826e-4b5c-9b9b-cddc5fb1ce27"
+  ],
+  "relationships": [
+    "http://localhost:3000/ctia/relationship/relationship-94b5d199-6353-490d-9b75-38bef7f2dc5a",
+    "http://localhost:3000/ctia/relationship/relationship-eca9e3c6-1c32-484e-b8a5-685719142090"
+  ]
+}
+#+end_src
+
+Returns
+#+begin_src javascript
+{
+  "incidents": {
+    "deleted": [
+      "http://localhost:3000/ctia/incident/incident-36c956ee-fde8-4e84-8396-7be9201a9c55"
+    ]
+  },
+  "sightings": {
+    "deleted": [
+      "http://localhost:3000/ctia/sighting/sighting-68cb80d5-826e-4b5c-9b9b-cddc5fb1ce27"
+    ]
+  },
+  "relationships": {
+    "deleted": [
+      "http://localhost:3000/ctia/relationship/relationship-94b5d199-6353-490d-9b75-38bef7f2dc5a",
+      "http://localhost:3000/ctia/relationship/relationship-eca9e3c6-1c32-484e-b8a5-685719142090"
+    ]
+  }
+}
+#+end_src
+
+Errors are handled per entities. If an entitiy is not visible to a user or does not exist, its id will be indicated as not found. If the user can read the entity but not delete it (ex: tlp green and max-record-visibility set to "everyone"), its id will be indicated as not found.
+The example below shows a response with a mix of not-found, forbidden and deleted entities:
+#+begin_src javascript
+{
+  "incidents": {
+    "errors": {
+      "not-found": [
+        "http://localhost:3000/ctia/incident/incident-36c956ee-fde8-4e84-8396-7be9201a9c55"
+      ]
+    }
+  },
+  "sightings": {
+    "deleted": [
+      "http://localhost:3000/ctia/incident/sighting-48c057ee-fde9-8e94-8396-5be3261a7c44"
+    ],
+    "errors": {
+      "not-found": [
+        "http://localhost:3000/ctia/sighting/sighting-13cb98d6-123e-2b3c-0b8b-cddc4fb3ce57"
+      ],
+      "forbidden": [
+        "http://localhost:3000/ctia/sighting/sighting-68cb80d5-826e-4b5c-9b9b-cddc5fb1ce27"
+      ]
+    }
+  },
+  "relationships": {
+    "deleted": [
+      "http://localhost:3000/ctia/relationship/relationship-94b5d199-6353-490d-9b75-38bef7f2dc5a",
+      "http://localhost:3000/ctia/relationship/relationship-eca9e3c6-1c32-484e-b8a5-685719142090"
+    ]
+  }
+}
+#+end_src
+
+* Bundle
+
+The bundle routes are like bulk but with extra processing helpers to ease large import/export.
+
+** Bundle Import
+
+The `/bundle` API endpoint allows users with the correct permissions to POST a CTIM [bundle object](https://github.com/threatgrid/ctim/blob/master/src/ctim/schemas/bundle.cljc).
+
+The ability to post bundles is controlled by the `import-bundle` capability.
+
+When a bundle is submitted:
+
+1. All entities that have already been imported with the external ID whose prefix has been configured with the `ctia.store.external-key-prefixes` property are searched.
+2. If they are identified by transient IDs, a mapping table between transient and stored IDs is built.
+3. Only new entities are created in the same way as the `/bulk` API endpoint with transient IDs resolutions. Existing entities are not modified.
+
+If more than one entity is referenced by the same external ID, an error is reported.
+
+Example for an incident along with its context, note the transient ids
+#+begin_src HTTP
+POST /ctia/bundle/import HTTP/1.1
+Host: localhost:3000
+Authorization: "Bearer ..."
+accept: application/json
+
+{
+  "type" : "bundle",
+  "source": "Modeling Incidents in CTIM Tutorial",
+  "source_uri": "https://github.com/threatgrid/ctim/blob/master/src/doc/tutorials/modeling-incidents-in-ctim.md",
+  "incidents" : [ {
+    "type": "incident",
+    "source": "Modeling Incidents in CTIM Tutorial",
+    "source_uri": "https://github.com/threatgrid/ctim/blob/master/src/doc/tutorials/modeling-incidents-in-ctim.md",
+    "title": "2020-06-15-0334-emotet-botnet-report",
+    "short_description": "Incident Report: 2020-06-15 3:34am (Emotet Botnet Attack)",
+    "description": "## Summary:\n\nOn Monday, June 15th at 3:34am GMT, a host (UUID #dc0415fe-af42-11ea-b3de-0242ac130004) on VLAN 414 established contact with a known Emotet Epoch 2 Command and Control server, triggering an event alarm. Incident responders isolated the host for further analysis.\n\n## Additional Details:\n\nSMTP traffic log analysis underway to determine the method of initial infection. Phishing attack suspected. No evidence of lateral movement across VLAN 414.",
+    "external_ids": ["ctim-tutorial-incident-c56de1c94c1ce862c4e6d9883393aacc58275c0c4dc4d8b48cc4db692bf11e4f"],
+    "id": "transient:ctim-tutorial-incident-c56de1c94c1ce862c4e6d9883393aacc58275c0c4dc4d8b48cc4db692bf11e4f",
+    "confidence": "High",
+    "status": "Containment Achieved",
+    "incident_time":
+    {"opened": "2020-06-15T03:43:27.368Z",
+     "reported": "2020-06-15T03:34:36.298Z"},
+     "assignees": ["saintx"],
+     "categories": ["Malicious Code"],
+     "discovery_method": "NIDS"
+  } ],
+  "sightings" : [ {
+      "observables" : [ {
+        "type" : "ip",
+        "value" : "98.15.140.226"
+      } ],
+      "type" : "sighting",
+    "source": "Modeling Incidents in CTIM Tutorial",
+    "source_uri": "https://github.com/threatgrid/ctim/blob/master/src/doc/tutorials/modeling-incidents-in-ctim.md",
+      "external_ids" : [ "ctim-tutorial-sighting-7b36e0fa2169a3ca330c7790f63c97fd3c9f482f88ee1b350511d8a51fcecc8d" ],
+      "id" : "transient:ctim-tutorial-sighting-7b36e0fa2169a3ca330c7790f63c97fd3c9f482f88ee1b350511d8a51fcecc8d",
+      "count" : 1,
+      "severity" : "High",
+      "tlp" : "green",
+      "timestamp" : "2020-06-15T03:34:36.298Z",
+      "confidence" : "High",
+      "observed_time" : {
+        "start_time" : "2020-06-15T03:34:36.298Z"
+      }
+    } ],
+    "relationships": [ {
+      "type": "relationship",
+      "source": "Modeling Incidents in CTIM Tutorial",
+      "source_uri": "https://github.com/threatgrid/ctim/blob/master/src/doc/tutorials/modeling-incidents-in-ctim.md",
+      "source_ref" : "transient:ctim-tutorial-sighting-7b36e0fa2169a3ca330c7790f63c97fd3c9f482f88ee1b350511d8a51fcecc8d",
+      "target_ref" : "transient:ctim-tutorial-incident-c56de1c94c1ce862c4e6d9883393aacc58275c0c4dc4d8b48cc4db692bf11e4f",
+      "relationship_type" : "member-of"
+    },
+    {
+      "type": "relationship",
+      "source": "Modeling Incidents in CTIM Tutorial",
+      "source_uri": "https://github.com/threatgrid/ctim/blob/master/src/doc/tutorials/modeling-incidents-in-ctim.md",
+      "source_ref" : "transient:ctim-tutorial-sighting-7b36e0fa2169a3ca330c7790f63c97fd3c9f482f88ee1b350511d8a51fcecc8d",
+      "target_ref" : "https://intel.tutorial.iroh.site:443/ctia/indicator/indicator-b790ade3-e45e-48d4-7d06-f0079e6453a0",
+      "description": "Sighting of host communication with known Emotet Epoch 2 C&C server",
+      "relationship_type" : "sighting-of"
+    }]
+}
+#+end_src
+
+#+begin_src javascript
+{
+  "results": [
+    {
+      "id": "http://localhost:3000/ctia/incident/incident-c545ab34-33c3-4a27-b9af-426220951d75",
+      "original_id": "transient:ctim-tutorial-incident-c56de1c94c1ce862c4e6d9883393aacc58275c0c4dc4d8b48cc4db692bf11e4f",
+      "result": "created",
+      "type": "incident",
+      "external_ids": [
+        "ctim-tutorial-incident-c56de1c94c1ce862c4e6d9883393aacc58275c0c4dc4d8b48cc4db692bf11e4f"
+      ]
+    },
+    {
+      "id": "http://localhost:3000/ctia/sighting/sighting-cdf7d784-ac0e-41f3-9191-f362df293721",
+      "original_id": "transient:ctim-tutorial-sighting-7b36e0fa2169a3ca330c7790f63c97fd3c9f482f88ee1b350511d8a51fcecc8d",
+      "result": "created",
+      "type": "sighting",
+      "external_ids": [
+        "ctim-tutorial-sighting-7b36e0fa2169a3ca330c7790f63c97fd3c9f482f88ee1b350511d8a51fcecc8d"
+      ]
+    },
+    {
+      "id": "http://localhost:3000/ctia/relationship/relationship-56c4ad42-7e75-43b6-a331-4907ec394b5d",
+      "result": "created",
+      "type": "relationship"
+    },
+    {
+      "id": "http://localhost:3000/ctia/relationship/relationship-61fab80f-d097-44de-82e4-95a164b16f61",
+      "result": "created",
+      "type": "relationship"
+    }
+  ]
+}
+#+end_src
+
+| Field          | Description                                              |
+|----------------+----------------------------------------------------------|
+| `:id`          | The real ID                                              |
+| `:original_id` | Provided ID if different from real ID (ex: transient ID) |
+| `:result`      | `error`, `created` or `exists`                           |
+| `:external_id` | External ID used to identify the entity                  |
+| `:error`       | Error message                                            |
+
+** Bundle Export
+
+Bundle Export offers to retrieve many entities from their ids along with corresponding relationships and directly linked entities.
+
+| query Params                | values                     | Description                                           |
+|-----------------------------+----------------------------+-------------------------------------------------------|
+| `:related_to`               | `target_ref`, `source_ref` | The direction of the relationships to retrieve.       |
+| `:source_type`              | valid entity type          | the type of the source entities.                      |
+| `:target_type`              | valid entity type          | the type of the target entitites                      |
+| `:include_related_entities` | `true`, `false``           | Shall the related entities be included in the result? |
+
+The Bundle Export is exposed with a POST and a GET route. The Post route is meant for large Bundle Export queries.
+
+Examples:
+#+begin_src HTTP
+POST /ctia/bundle/export HTTP/1.1
+Host: localhost:3000
+Authorization: "Bearer ..."
+accept: application/json
+
+{
+  "ids": [
+    "incident-1",  "incident-2", ... "incident-100"
+  ]
+
+#+end_src
+
+#+begin_src HTTP
+GET /ctia/bundle/export?id=incident-1&id=incident-2 HTTP/1.1
+Host: localhost:3000
+Authorization: "Bearer ..."
+accept: application/json
+#+end_src
+
+Returns
+
+#+begin_src javascript
+{
+  "type": "bundle",
+  "incidents": [
+    {
+      "description": "## Summary:\n\nOn Monday, June 15th at 3:34am GMT, a host (UUID #dc0415fe-af42-11ea-b3de-0242ac130004) on VLAN 414 established contact with a known Emotet Epoch 2 Command and Control server, triggering an event alarm. Incident responders isolated the host for further analysis.\n\n## Additional Details:\n\nSMTP traffic log analysis underway to determine the method of initial infection. Phishing attack suspected. No evidence of lateral movement across VLAN 414.",
+      "assignees": [
+        "saintx"
+      ],
+      "schema_version": "1.1.3",
+      "type": "incident",
+      "source": "Modeling Incidents in CTIM Tutorial",
+      "external_ids": [
+        "ctim-tutorial-incident-c56de1c94c1ce862c4e6d9883393aacc58275c0c4dc4d8b48cc4db692bf11e4f"
+      ],
+      "short_description": "Incident Report: 2020-06-15 3:34am (Emotet Botnet Attack)",
+      "title": "2020-06-15-0334-emotet-botnet-report",
+      "incident_time": {
+        "opened": "2020-06-15T03:43:27.368Z",
+        "reported": "2020-06-15T03:34:36.298Z"
+      },
+      "discovery_method": "NIDS",
+      "source_uri": "https://github.com/threatgrid/ctim/blob/master/src/doc/tutorials/modeling-incidents-in-ctim.md",
+      "categories": [
+        "Malicious Code"
+      ],
+      "status": "Containment Achieved",
+      "id": "http://localhost:3000/ctia/incident/incident-c545ab34-33c3-4a27-b9af-426220951d75",
+      "tlp": "green",
+      "groups": [
+        "Administrators"
+      ],
+      "timestamp": "2021-08-10T15:22:24.967Z",
+      "confidence": "High",
+      "owner": "Unknown"
+    }
+  ],
+  "source": "ctia",
+  "sightings": [
+    {
+      "schema_version": "1.1.3",
+      "observables": [
+        {
+          "value": "98.15.140.226",
+          "type": "ip"
+        }
+      ],
+      "type": "sighting",
+      "source": "Modeling Incidents in CTIM Tutorial",
+      "external_ids": [
+        "ctim-tutorial-sighting-7b36e0fa2169a3ca330c7790f63c97fd3c9f482f88ee1b350511d8a51fcecc8d"
+      ],
+      "source_uri": "https://github.com/threatgrid/ctim/blob/master/src/doc/tutorials/modeling-incidents-in-ctim.md",
+      "id": "http://localhost:3000/ctia/sighting/sighting-cdf7d784-ac0e-41f3-9191-f362df293721",
+      "count": 1,
+      "severity": "High",
+      "tlp": "green",
+      "groups": [
+        "Administrators"
+      ],
+      "timestamp": "2020-06-15T03:34:36.298Z",
+      "confidence": "High",
+      "observed_time": {
+        "start_time": "2020-06-15T03:34:36.298Z"
+      },
+      "owner": "Unknown"
+    }
+  ]
+}
+#+end_src

@@ -1,28 +1,25 @@
 (ns ctia.bulk.routes-test
   (:require [cheshire.core :refer [parse-string]]
-            [ductile.index :as es-index]
-            [clj-momo.test-helpers
-             [core :as mth]
-             [http :refer [encode]]]
-            [clojure.java.io :as io]
-            [clojure
-             [string :as str]
-             [test :refer [deftest is join-fixtures testing use-fixtures]]]
             [clj-http.fake :refer [with-global-fake-routes]]
+            [clj-momo.test-helpers.core :as mth]
+            [clj-momo.test-helpers.http :refer [encode]]
+            [clojure.java.io :as io]
+            [clojure.string :as str]
+            [clojure.test :refer [deftest is join-fixtures testing use-fixtures]]
+            [ctia.bulk.core :refer [bulk-size gen-bulk-from-fn get-bulk-max-size]]
             [ctia.properties :refer [get-http-show]]
-            [ctia.bulk.core
+            [ctia.store :refer [query-string-search]]
+            [ctia.test-helpers.auth :refer [all-capabilities]]
+            [ctia.test-helpers.core :as helpers :refer [DELETE GET POST]]
+            [ctia.test-helpers.fake-whoami-service :as whoami-helpers]
+            [ctia.test-helpers.http :refer [app->HTTPShowServices]]
+            [ctia.test-helpers.store
              :refer
-             [bulk-size gen-bulk-from-fn get-bulk-max-size]]
-            [ctia.test-helpers
-             [es :as es-helpers]
-             [auth :refer [all-capabilities]]
-             [core :as helpers :refer [GET POST]]
-             [fake-whoami-service :as whoami-helpers]
-             [http :refer [app->HTTPShowServices]]
-             [store :refer [test-for-each-store-with-app
-                            test-selected-stores-with-app]]]
+             [test-for-each-store-with-app test-selected-stores-with-app]]
             [ctim.domain.id :as id]
-            [ctim.examples.incidents :refer [new-incident-maximal]]))
+            [ctim.examples.incidents :refer [new-incident-maximal]]
+            [ductile.index :as es-index]
+            [schema.core :as s]))
 
 (defn fixture-properties:small-max-bulk-size [t]
   ;; Note: These properties may be overwritten by ENV variables
@@ -190,9 +187,11 @@
              (fn [type]
                (str/join "&"
                          (map (fn [id]
-                                (let [id (if (vector? id) (last id) id)
+                                (let [id (cond-> id (vector? id) last)
                                       short-id (:short-id (id/long-id->id id))]
-                                  (str (encode (name type)) "=" (encode short-id))))
+                                  (str (encode (name type))
+                                       "="
+                                       (encode short-id))))
                               (get bulk-ids type))))
              (keys bulk-ids))))
 
@@ -259,6 +258,23 @@
          (check-refresh false "Bulk imports should not wait for index refresh when wait_for is false")
          (check-refresh nil "Configured ctia.store.bundle-refresh value is applied when wait_for is not specified"))))))
 
+
+(s/defn check-events
+  [event-store
+   ident
+   entity-ids
+   event-type :- (s/enum :record-created :record-deleted)]
+  (let [events (:data (query-string-search
+                       event-store
+                       {:filter-map {:entity.id entity-ids
+                                     :event_type event-type
+                                     }}
+                       ident
+                       {}))]
+    (is (= (count entity-ids) (count events))
+        (format "only one %s event can be generated for each entity"
+                entity-ids))))
+
 (deftest test-bulk-routes
   (test-for-each-store-with-app
    (fn [app]
@@ -269,8 +285,8 @@
                                          "foogroup"
                                          "user")
      (testing "POST /ctia/bulk"
-       (let [{:keys [get-in-config]} (helpers/get-service-map app :ConfigService)
-
+       (let [event-store (helpers/get-store app :event)
+             ident {:login "foouser" :groups ["foogroup"]}
              nb 7
              indicators (map mk-new-indicator (range nb))
              judgements (map mk-new-judgement (range nb))
@@ -297,7 +313,12 @@
            (testing (str "number of created " (name type))
              (is (= (count (get new-bulk type))
                     (count (get bulk-ids type))))))
-
+         (testing "created events are generated"
+           (let [expected-created-ids (mapcat val (dissoc bulk-ids :tempids))]
+               (check-events event-store
+                             ident
+                             expected-created-ids
+                             :record-created)))
          (testing "GET /ctia/bulk"
            (let [{status :status
                   response :parsed-body}
@@ -318,7 +339,54 @@
                    (is (= (:hostname id)         (:hostname show-props)))
                    (is (= (:protocol id)         (:protocol show-props)))
                    (is (= (:port id)             (:port show-props)))
-                   (is (= (:path-prefix id) (seq (:path-prefix show-props))))))))))))))
+                   (is (= (:path-prefix id) (seq (:path-prefix show-props)))))))))
+
+         (testing "DELETE /ctia/bulk"
+           ;; edge cases are tested in bulk/core-test
+           (let [delete-bulk-query (into {}
+                                         (map (fn [[k ids]]
+                                                {k (take 2 ids)}))
+                                         (dissoc bulk-ids :tempids))
+                 expected-deleted (into {}
+                                       (map (fn [[k ids]]
+                                              {k {:deleted ids}}))
+                                       delete-bulk-query)
+                 expected-not-found (into {}
+                                       (map (fn [[k ids]]
+                                              {k {:errors {:not-found ids}}}))
+                                       delete-bulk-query)
+                 delete-bulk-url "ctia/bulk?wait_for=true"
+                 {delete-status-1 :status delete-res-1 :parsed-body}
+                 (DELETE app
+                         delete-bulk-url
+                         :form-params delete-bulk-query
+                         :headers {"Authorization" "45c1f5e3f05d0"})
+                 {delete-status-2 :status delete-res-2 :parsed-body}
+                 (DELETE app
+                         delete-bulk-url
+                         :form-params delete-bulk-query
+                         :headers {"Authorization" "45c1f5e3f05d0"})
+                 {get-res :parsed-body}
+                 (GET app
+                      (str "ctia/bulk?"
+                           (make-get-query-str-from-bulkrefs bulk-ids))
+                      :headers {"Authorization" "45c1f5e3f05d0"})]
+             (is (= 200 delete-status-1))
+             (is (= 200 delete-status-2))
+             (doseq [[k res] delete-res-1]
+               (is (= (set (get-in expected-deleted [k :deleted]))
+                      (set (:deleted res)))))
+             (doseq [[k res] delete-res-2]
+               (is (= (set (get-in expected-not-found [k :errors :not-found]))
+                      (set (get-in res [:errors :not-found])))))
+             (doseq [[_k entity-res] (dissoc get-res :tempids)]
+               (is (= [nil nil] (take 2 entity-res))
+                   "the deleted entities must not be found"))
+             (let [expected-deleted-ids (mapcat val delete-bulk-query)]
+               (check-events event-store
+                             ident
+                             expected-deleted-ids
+                             :record-deleted)))))))))
 
 (deftest get-bulk-max-size-test
   (let [nb 10
@@ -396,7 +464,6 @@
                              :sightings sightings
                              :tools (map mk-new-tool (range nb))}
            {status-ok :status
-            response :body
             response-ok :parsed-body} (POST app
                                             "ctia/bulk"
                                             :body new-ok-bulk
@@ -522,11 +589,6 @@
            sighting (assoc (mk-new-sighting 1)
                            :id
                            (id/make-transient-id nil))
-           vulnerability (assoc-in (mk-new-vulnerability 1)
-                                   [:impact :cvss_v2]
-                                   {:base_severity "Low"
-                                    :base_score 1
-                                    :vector_string "CLEARLY INVALID STRING"})
            ;; Submit all entities to create
            {status-create :status
             bulk-ids :parsed-body}
@@ -546,7 +608,7 @@
                 :headers {"Authorization" "45c1f5e3f05d0"})]
        (is (= 201 status-create) "The bulk create should be successfull")
        (is (= 200 status-get) "All valid entities should be retrieved")
-       (is (not (empty? (:tools bulk-ids))))
+       (is (seq (:tools bulk-ids)))
        (is (every? #(contains? % :error) (:tools bulk-ids)))
        (is (every? #(contains? % :error) (:vulnerabilities bulk-ids)))
        (is (= (:description sighting)

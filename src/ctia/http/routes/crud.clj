@@ -12,7 +12,6 @@
    [ctia.http.middleware.auth]
    [ctia.http.routes.common :refer [capabilities->description
                                     created
-                                    filter-map-search-options
                                     paginated-ok
                                     search-options
                                     wait_for->refresh
@@ -472,22 +471,30 @@
                :capabilities capabilities
                :auth-identity identity
                :identity-map identity-map
-               (if (flows/delete-flow
-                    :services services
-                    :get-fn #(-> (get-store entity)
-                                 (read-record
-                                   %
-                                   identity-map
-                                   {}))
-                    :delete-fn #(-> (get-store entity)
-                                    (delete-record
-                                      %
-                                      identity-map
-                                      (wait_for->refresh wait_for)))
-                    :entity-type entity
-                    :long-id-fn #(with-long-id % services)
-                    :entity-id id
-                    :identity identity)
+               (if (first
+                    (flows/delete-flow
+                     :services services
+                     :get-fn (fn [ids]
+                               (let [read-fn #(-> (get-store entity)
+                                                  (read-record
+                                                   %
+                                                   identity-map
+                                                   {}))]
+                                 (map read-fn ids)))
+                     :delete-fn (fn [ids]
+                                  (let [delete-fn #(-> (get-store entity)
+                                                       (delete-record
+                                                        %
+                                                        identity-map
+                                                        (wait_for->refresh wait_for)))]
+                                    (map delete-fn ids)))
+                     :get-success-entities (fn [fm]
+                                             (when (first (:results fm))
+                                                 (:entities fm)))
+                     :entity-type entity
+                     :long-id-fn #(with-long-id % services)
+                     :entity-ids [id]
+                     :identity identity))
                  (no-content)
                  (not-found))))
 

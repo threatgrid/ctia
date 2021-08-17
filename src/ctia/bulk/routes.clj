@@ -1,9 +1,9 @@
 (ns ctia.bulk.routes
   (:require
-   [ctia.bulk.core :refer [bulk-size create-bulk fetch-bulk get-bulk-max-size]]
-   [ctia.bulk.schemas :refer [Bulk BulkRefs NewBulk]]
+   [ctia.bulk.core :refer [bulk-size create-bulk fetch-bulk delete-bulk get-bulk-max-size]]
+   [ctia.bulk.schemas :refer [Bulk BulkCreateRes BulkRefs NewBulk BulkActionsRefs]]
    [ctia.http.routes.common :as common]
-   [ctia.lib.compojure.api.core :refer [GET POST routes]]
+   [ctia.lib.compojure.api.core :refer [GET POST DELETE routes]]
    [ctia.schemas.core :refer [APIHandlerServices Reference]]
    [ring.swagger.json-schema :refer [describe]]
    [ring.util.http-response :refer [bad-request ok]]
@@ -34,7 +34,7 @@
                          :create-vulnerability
                          :create-weakness}]
       (POST "/" []
-            :return (BulkRefs services)
+            :return (BulkCreateRes services)
             :query-params [{wait_for :- (describe s/Bool "wait for created entities to be available for search") nil}]
             :body [bulk (NewBulk services) {:description "a new Bulk object"}]
             :summary "POST many new entities using a single HTTP call"
@@ -122,4 +122,39 @@
                               :tools               tools
                               :vulnerabilities     vulnerabilities
                               :weaknesses          weaknesses}]
-            (ok (fetch-bulk entities-map auth-identity services)))))))
+            (ok (fetch-bulk entities-map auth-identity services)))))
+
+    (let [capabilities #{:delete-actor
+                         :delete-asset
+                         :delete-asset-mapping
+                         :delete-asset-properties
+                         :delete-attack-pattern
+                         :delete-campaign
+                         :delete-coa
+                         :delete-data-table
+                         :delete-feedback
+                         :delete-incident
+                         :delete-investigation
+                         :delete-indicator
+                         :delete-judgement
+                         :delete-malware
+                         :delete-relationship
+                         :delete-casebook
+                         :delete-sighting
+                         :delete-identity-assertion
+                         :delete-target-record
+                         :delete-tool
+                         :delete-vulnerability
+                         :delete-weakness}]
+     (DELETE "/" []
+          :return (s/maybe (BulkActionsRefs services))
+          :summary "DELETE many entities at once"
+          :query-params [{wait_for :- (describe s/Bool "wait for created entities to be available for search") nil}]
+          :body [bulk (BulkRefs services) {:description "a new Bulk Delete object"}]
+          :description (common/capabilities->description capabilities)
+          :capabilities capabilities
+          :auth-identity auth-identity
+          (ok (delete-bulk bulk
+                           auth-identity
+                           (common/wait_for->refresh wait_for)
+                           services))))))

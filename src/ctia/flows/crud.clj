@@ -12,7 +12,6 @@
    [ctia.domain.entities :refer [un-store]]
    [ctia.entity.event.obj-to-event :refer
     [to-create-event to-delete-event to-update-event]]
-   [ctia.entity.event.schemas :refer [Event]]
    [ctia.lib.collection :as coll]
    [ctia.properties :as p]
    [ctia.schemas.core :as schemas :refer
@@ -29,23 +28,25 @@
   (:import java.util.UUID))
 
 (s/defschema FlowMap
-  {:create-event-fn                    (s/pred fn?)
-   :entities                           [{s/Keyword s/Any}]
-   :entity-type                        s/Keyword
-   (s/optional-key :events)            [{s/Keyword s/Any}]
-   :flow-type                          (s/enum :create :update :delete)
-   :services                           APIHandlerServices
-   :identity                           (s/protocol auth/IIdentity)
-   (s/optional-key :long-id-fn)        (s/maybe (s/=> s/Any s/Any))
-   (s/optional-key :prev-entity)       (s/maybe {s/Keyword s/Any})
-   (s/optional-key :partial-entity)    (s/maybe {s/Keyword s/Any})
-   (s/optional-key :patch-operation)   (s/enum :add :remove :replace)
-   (s/optional-key :realize-fn)        RealizeFn
-   (s/optional-key :results)           [s/Bool]
-   (s/optional-key :spec)              (s/maybe s/Keyword)
-   (s/optional-key :tempids)           (s/maybe TempIDs)
-   (s/optional-key :enveloped-result?) (s/maybe s/Bool)
-   :store-fn                           (s/=> s/Any s/Any)})
+  {:create-event-fn                       (s/pred fn?)
+   :entities                              [{s/Keyword s/Any}]
+   :entity-type                           s/Keyword
+   (s/optional-key :events)               [{s/Keyword s/Any}]
+   :flow-type                             (s/enum :create :update :delete)
+   :services                              APIHandlerServices
+   :identity                              (s/protocol auth/IIdentity)
+   (s/optional-key :get-success-entities)  (s/pred fn?)
+   (s/optional-key :long-id-fn)           (s/maybe (s/=> s/Any s/Any))
+   (s/optional-key :prev-entity)          (s/maybe {s/Keyword s/Any})
+   (s/optional-key :partial-entity)       (s/maybe {s/Keyword s/Any})
+   (s/optional-key :patch-operation)      (s/enum :add :remove :replace)
+   (s/optional-key :realize-fn)           RealizeFn
+   (s/optional-key :results)              s/Any
+   (s/optional-key :spec)                 (s/maybe s/Keyword)
+   (s/optional-key :tempids)              (s/maybe TempIDs)
+   (s/optional-key :enveloped-result?)    (s/maybe s/Bool)
+   (s/optional-key :entity-ids)           [s/Str]
+   :store-fn                              (s/=> s/Any s/Any)})
 
 (defn- find-id
   "Lookup an ID in a given entity.  Parse it, because it might be a
@@ -122,8 +123,7 @@
     :else entity))
 
 (s/defn ^:private validate-entities :- FlowMap
-  [{{{:keys [get-in-config]} :ConfigService
-     :as services} :services
+  [{{{:keys [get-in-config]} :ConfigService} :services
     :keys [spec entities] :as fm} :- FlowMap]
   (assoc fm :entities
          (map (fn [entity]
@@ -227,8 +227,17 @@
                   :read-only? true}))
   fm)
 
+(defn default-success-entities
+  [fm]
+  (->> fm :entities (remove :error)))
+
 (s/defn ^:private create-events :- FlowMap
-  [{:keys [create-event-fn flow-type identity prev-entity entities]
+  [{:keys [create-event-fn
+           flow-type
+           identity
+           prev-entity
+           get-success-entities]
+    :or {get-success-entities default-success-entities}
     {{:keys [get-in-config]} :ConfigService}
     :services
     :as fm} :- FlowMap]
@@ -247,8 +256,7 @@
                                                 :login login
                                                 :entity entity
                                                 :prev-entity prev-entity}))))))
-          events (->> entities
-                      (filter #(nil? (:error %)))
+          events (->> (get-success-entities fm)
                       (map create-event)
                       doall)]
       (cond-> fm
@@ -268,7 +276,7 @@
 (s/defn remove-errors :- FlowMap
   "Remove all entities with an error from the given FlowMap"
   [fm :- FlowMap]
-  (update fm :entities #(filter (complement :error) %)))
+  (update fm :entities #(remove :error %)))
 
 (s/defn preserve-errors :- FlowMap
   "Preserve errors and the order of entities after applying
@@ -304,15 +312,16 @@
           (throw e))))
     fm))
 
+(s/defn apply-delete-store-fn
+  [{:keys [entity-ids store-fn] :as fm} :- FlowMap]
+  (let [results (store-fn entity-ids)]
+    (assoc fm :results results)))
+
 (s/defn ^:private apply-store-fn :- FlowMap
   [{:keys [entities flow-type store-fn] :as fm} :- FlowMap]
   (case flow-type
     :create (apply-create-store-fn fm)
-    :delete
-    (assoc fm :results
-           (doall
-            (for [{entity-id :id} entities]
-              (store-fn entity-id))))
+    :delete (apply-delete-store-fn fm)
     :update
     (assoc fm
            :entities
@@ -370,7 +379,7 @@
               (cond-> {:data entities}
                 (seq tempids) (assoc :tempids tempids))
               entities)
-    :delete (first results)
+    :delete results
     :update (first entities)))
 
 (s/defn patch-entities :- FlowMap
@@ -531,17 +540,19 @@
   [& {:keys [entity-type
              get-fn
              delete-fn
-             entity-id
+             entity-ids
              long-id-fn
              services
-             identity]}]
-  (let [entity (get-fn entity-id)]
+             identity
+             get-success-entities]}]
+  (let [entities (get-fn entity-ids)]
     (-> {:flow-type :delete
          :services services
          :entity-type entity-type
-         :entities (remove nil? [entity])
-         :prev-entity entity
+         :entities (remove nil? entities)
+         :entity-ids entity-ids
          :identity identity
+         :get-success-entities get-success-entities
          :long-id-fn long-id-fn
          :store-fn delete-fn
          :create-event-fn to-delete-event}

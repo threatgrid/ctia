@@ -211,7 +211,7 @@
 (defn load-bulk
   ([conn docs] (load-bulk conn docs "wait_for"))
   ([{:keys [version] :as conn} docs refresh?]
-   (es-doc/bulk-create-doc conn
+   (es-doc/bulk-index-docs conn
                            (cond->> docs
                              (> version 5) (map #(dissoc % :_type)))
                            {:refresh refresh?})))
