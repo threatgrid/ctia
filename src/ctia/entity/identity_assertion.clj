@@ -113,10 +113,17 @@
     :can-aggregate?           true
     :enumerable-fields        identity-assertion-enumerable-fields
     :histogram-fields         identity-assertion-histogram-fields
-    :searchable-fields        (routes.common/searchable-fields
-                               {:schema IdentityAssertion
-                                :ignore [:valid_time.start_time
-                                         :valid_time.end_time]})}))
+    :searchable-fields        #{:id
+                                :external_references.url
+                                :assertions.name
+                                :assertions.value
+                                :external_ids
+                                :external_references.description
+                                :external_references.external_id
+                                :external_references.hashes
+                                :external_references.source_name
+                                :identity.observables.type
+                                :identity.observables.value}}))
 
 (def capabilities
   #{:create-identity-assertion

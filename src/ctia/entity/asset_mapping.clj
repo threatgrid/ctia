@@ -143,10 +143,20 @@
     :histogram-fields         asset-mapping-histogram-fields
     :enumerable-fields        asset-mapping-enumerable-fields
     :can-revoke?              asset-mapping-can-revoke?
-    :searchable-fields        (routes.common/searchable-fields
-                               {:schema AssetMapping
-                                :ignore [:valid_time.end_time
-                                         :valid_time.start_time]})}))
+    :searchable-fields        #{:id
+                                :asset_ref
+                                :asset_type
+                                :confidence
+                                :external_ids
+                                :external_references.description
+                                :external_references.external_id
+                                :external_references.hashes
+                                :external_references.source_name
+                                :external_references.url
+                                :observable.type
+                                :observable.value
+                                :specificity
+                                :stability}}))
 
 (def capabilities
   #{:create-asset-mapping

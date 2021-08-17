@@ -140,10 +140,16 @@
     :histogram-fields         asset-properties-histogram-fields
     :enumerable-fields        asset-properties-enumerable-fields
     :can-revoke?              asset-properties-can-revoke?
-    :searchable-fields        (routes.common/searchable-fields
-                               {:schema AssetProperties
-                                :ignore [:valid_time.start_time
-                                         :valid_time.end_time]})}))
+    :searchable-fields        #{:id
+                                :asset_ref
+                                :external_ids
+                                :external_references.description
+                                :external_references.external_id
+                                :external_references.hashes
+                                :external_references.source_name
+                                :external_references.url
+                                :properties.name
+                                :properties.value}}))
 
 (def capabilities
   #{:create-asset-properties

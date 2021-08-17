@@ -162,9 +162,28 @@
     :can-aggregate?           true
     :histogram-fields         indicator-histogram-fields
     :enumerable-fields        indicator-enumerable-fields
-    :searchable-fields        (routes.common/searchable-fields
-                               {:schema Indicator
-                                :ignore [:negate]})}))
+    :searchable-fields        #{:id
+                                :composite_indicator_expression.indicator_ids
+                                :composite_indicator_expression.operator
+                                :confidence
+                                :description
+                                :external_ids
+                                :external_references.description
+                                :external_references.external_id
+                                :external_references.hashes
+                                :external_references.source_name
+                                :external_references.url
+                                :indicator_type
+                                :kill_chain_phases.kill_chain_name
+                                :kill_chain_phases.phase_name
+                                :likely_impact
+                                :producer
+                                :severity
+                                :short_description
+                                :specification
+                                :tags
+                                :test_mechanisms
+                                :title}}))
 
 (def capabilities
   #{:read-indicator

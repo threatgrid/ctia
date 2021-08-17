@@ -54,47 +54,12 @@
    (s/optional-key :search_after) (describe [s/Str] "Pagination stateless cursor")
    (s/optional-key :limit) (describe Long "Pagination Limit")})
 
-(def default-ignored-search-fields
-  #{:authorized_groups
-    :authorized_users
-    :groups
-    :language
-    :owner
-    :revision
-    :schema_version
-    :source
-    :source_uri
-    :timestamp
-    :tlp
-    :type
-    :valid_time.end_time
-    :valid_time.start_time})
-
-(def ^:private SearchableFieldsParams
-  {(s/required-key :schema) (s/protocol s/Schema)
-   (s/optional-key :ignore) [s/Keyword]})
-
-(s/defn searchable-fields :- (s/protocol s/Schema)
-  "Takes an entity schema and (optionally) fields to ignore.
-   Spits out enum schema to be used for :search_fields parameter.
-   see also: `prep-es-fields-schema`"
-  [{:keys [schema ignore]} :- SearchableFieldsParams]
-  (let [all-fields (csu/schema->all-keys schema)
-        ignored-fields (set/union
-                        (set ignore)
-                        default-ignored-search-fields)]
-    (apply s/enum
-           (set/difference
-            all-fields
-            ignored-fields))))
-
 (s/defn prep-es-fields-schema :- (s/protocol s/Schema)
   "Conjoins Elasticsearch fields parameter into search-q-params schema"
   [{:keys [search-q-params
            searchable-fields] :as entity-crud-config}]
   (let [default-fields-schema (->>
                                searchable-fields
-                               :vs
                                (map name)
                                (apply s/enum))]
     (if searchable-fields
@@ -117,7 +82,7 @@
     (assoc
      query-params
      :search_fields
-     (->> searchable-fields :vs (mapv name)))))
+     (->> searchable-fields (mapv name)))))
 
 (def paging-param-keys
   "A list of the paging and sorting related parameters, we can use

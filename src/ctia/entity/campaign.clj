@@ -124,11 +124,22 @@
     :can-aggregate?           true
     :histogram-fields         campaign-histogram-fields
     :enumerable-fields        campaign-enumerable-fields
-    :searchable-fields        (routes.common/searchable-fields
-                               {:schema Campaign
-                                :ignore [:valid_time.start_time
-                                         :valid_time.end_time
-                                         :activity.date_time]})}))
+    :searchable-fields        #{:id
+                                :description
+                                :activity.description
+                                :campaign_type
+                                :confidence
+                                :external_ids
+                                :external_references.description
+                                :external_references.external_id
+                                :external_references.hashes
+                                :external_references.source_name
+                                :external_references.url
+                                :intended_effect
+                                :names
+                                :short_description
+                                :status
+                                :title}}))
 
 (def capabilities
   #{:create-campaign

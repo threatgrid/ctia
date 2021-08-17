@@ -66,16 +66,42 @@
     :can-aggregate?           true
     :histogram-fields         ss/sighting-histogram-fields
     :enumerable-fields        ss/sighting-enumerable-fields
-    :searchable-fields        (routes.common/searchable-fields
-                               {:schema ss/Sighting
-                                :ignore [:count
-                                         :data.columns.required
-                                         :data.row_count
-                                         :internal
-                                         :observed_time.end_time
-                                         :observed_time.start_time
-                                         :targets.observed_time.end_time
-                                         :targets.observed_time.start_time]})}))
+    :searchable-fields        #{:id
+                                :confidence
+                                :data.columns.description
+                                :data.columns.name
+                                :data.columns.short_description
+                                :data.columns.type
+                                :data.rows
+                                :description
+                                :external_ids
+                                :external_references.description
+                                :external_references.external_id
+                                :external_references.hashes
+                                :external_references.source_name
+                                :external_references.url
+                                :observables.type
+                                :observables.value
+                                :relations.origin
+                                :relations.origin_uri
+                                :relations.related.type
+                                :relations.related.value
+                                :relations.relation
+                                :relations.source.type
+                                :relations.source.value
+                                :resolution
+                                :sensor
+                                :sensor_coordinates.observables.type
+                                :sensor_coordinates.observables.value
+                                :sensor_coordinates.os
+                                :sensor_coordinates.type
+                                :severity
+                                :short_description
+                                :targets.observables.type
+                                :targets.observables.value
+                                :targets.os
+                                :targets.type
+                                :title}}))
 
 (def capabilities
   #{:create-sighting

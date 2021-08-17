@@ -126,11 +126,22 @@
     :can-aggregate?           true
     :histogram-fields         target-record-histogram-fields
     :enumerable-fields        target-record-enumerable-fields
-    :searchable-fields        (routes.common/searchable-fields
-                               {:schema TargetRecord
-                                :ignore [:targets.internal
-                                         :targets.observed_time.end_time
-                                         :targets.observed_time.start_time]})}))
+    :searchable-fields        #{:id
+                                :description
+                                :external_ids
+                                :external_references.description
+                                :external_references.external_id
+                                :external_references.hashes
+                                :external_references.source_name
+                                :external_references.url
+                                :short_description
+                                :targets.observables.type
+                                :targets.observables.value
+                                :targets.os
+                                :targets.sensor
+                                :targets.source_uri
+                                :targets.type
+                                :title}}))
 
 (def capabilities
   #{:create-target-record

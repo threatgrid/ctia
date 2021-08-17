@@ -159,8 +159,12 @@
      :search-capabilities     :search-event
      :delete-capabilities     #{:delete-event :developer}
      :date-field              :timestamp
-     :searchable-fields       (routes.common/searchable-fields
-                               {:schema Event})})))
+     :searchable-fields       #{:id
+                                :fields.change.after
+                                :event_type
+                                :fields.action
+                                :fields.change.before
+                                :fields.field}})))
 
 (def event-entity
   {:new-spec              map?

@@ -225,8 +225,19 @@
     :can-aggregate?           true
     :histogram-fields         relationship-histogram-fields
     :enumerable-fields        relationship-enumerable-fields
-    :searchable-fields        (routes.common/searchable-fields
-                               {:schema rs/Relationship})}))
+    :searchable-fields        #{:id
+                                :description
+                                :external_ids
+                                :external_references.description
+                                :external_references.external_id
+                                :external_references.hashes
+                                :external_references.source_name
+                                :external_references.url
+                                :relationship_type
+                                :short_description
+                                :source_ref
+                                :target_ref
+                                :title}}))
 
 (def capabilities
   #{:create-relationship

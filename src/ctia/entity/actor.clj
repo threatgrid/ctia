@@ -130,10 +130,27 @@
     :can-aggregate?           true
     :histogram-fields         actor-histogram-fields
     :enumerable-fields        actor-enumerable-fields
-    :searchable-fields        (routes.common/searchable-fields
-                               {:schema Actor
-                                :ignore [:valid_time.start_time
-                                         :valid_time.end_time]})}))
+    :searchable-fields       #{:id
+                               :actor_type
+                               :confidence
+                               :description
+                               :external_ids
+                               :external_references.description
+                               :external_references.external_id
+                               :external_references.hashes
+                               :external_references.source_name
+                               :external_references.url
+                               :identity.description
+                               :identity.related_identities.confidence
+                               :identity.related_identities.identity
+                               :identity.related_identities.information_source
+                               :identity.related_identities.relationship
+                               :intended_effect
+                               :motivation
+                               :planning_and_operational_support
+                               :short_description
+                               :sophistication
+                               :title}}))
 
 (def capabilities
   #{:create-actor

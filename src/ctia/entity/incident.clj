@@ -232,14 +232,23 @@
      :external-id-capabilities :read-incident
      :histogram-fields         incident-histogram-fields
      :enumerable-fields        incident-enumerable-fields
-     :searchable-fields        (routes.common/searchable-fields
-                                {:schema Incident
-                                 :ignore [:incident_time.remediated
-                                          :incident_time.closed
-                                          :incident_time.discovered
-                                          :incident_time.reported
-                                          :incident_time.opened
-                                          :incident_time.rejected]})})))
+     :searchable-fields        #{:description
+                                 :id
+                                 :assignees
+                                 :categories
+                                 :confidence
+                                 :discovery_method
+                                 :external_ids
+                                 :external_references.description
+                                 :external_references.external_id
+                                 :external_references.hashes
+                                 :external_references.source_name
+                                 :external_references.url
+                                 :intended_effect
+                                 :promotion_method
+                                 :short_description
+                                 :status
+                                 :title}})))
 
 (def IncidentType
   (let [{:keys [fields name description]}

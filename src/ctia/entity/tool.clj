@@ -92,9 +92,20 @@
     :can-aggregate?           true
     :histogram-fields         tool-histogram-fields
     :enumerable-fields        tool-enumerable-fields
-    :searchable-fields        (routes.common/searchable-fields
-                               {:schema ts/Tool
-                                :ignore [:tool_version]})}))
+    :searchable-fields        #{:id
+                                :description
+                                :external_ids
+                                :external_references.description
+                                :external_references.external_id
+                                :external_references.hashes
+                                :external_references.source_name
+                                :external_references.url
+                                :kill_chain_phases.kill_chain_name
+                                :kill_chain_phases.phase_name
+                                :labels
+                                :short_description
+                                :title
+                                :x_mitre_aliases}}))
 
 (def tool-entity
   {:route-context         "/tool"

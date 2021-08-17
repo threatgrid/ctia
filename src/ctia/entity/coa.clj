@@ -132,12 +132,44 @@
     :can-aggregate?           true
     :histogram-fields         coa-histogram-fields
     :enumerable-fields        coa-enumerable-fields
-    :searchable-fields        (routes.common/searchable-fields
-                               {:schema COA
-                                :ignore [:open_c2_coa.modifiers.delay
-                                         :open_c2_coa.modifiers.duration
-                                         :open_c2_coa.modifiers.time.end_time
-                                         :open_c2_coa.modifiers.time.start_time]})}))
+    :searchable-fields        #{:id
+                                :coa_type
+                                :cost
+                                :description
+                                :efficacy
+                                :external_ids
+                                :external_references.description
+                                :external_references.external_id
+                                :external_references.hashes
+                                :external_references.source_name
+                                :external_references.url
+                                :impact
+                                :objective
+                                :open_c2_coa.action.type
+                                :open_c2_coa.actuator.specifiers
+                                :open_c2_coa.actuator.type
+                                :open_c2_coa.id
+                                :open_c2_coa.modifiers.additional_properties.context
+                                :open_c2_coa.modifiers.destination
+                                :open_c2_coa.modifiers.frequency
+                                :open_c2_coa.modifiers.id
+                                :open_c2_coa.modifiers.location
+                                :open_c2_coa.modifiers.method
+                                :open_c2_coa.modifiers.option
+                                :open_c2_coa.modifiers.response
+                                :open_c2_coa.modifiers.search
+                                :open_c2_coa.modifiers.source
+                                :open_c2_coa.target.specifiers
+                                :open_c2_coa.target.type
+                                :open_c2_coa.type
+                                :related_COAs.COA_id
+                                :related_COAs.confidence
+                                :related_COAs.relationship
+                                :related_COAs.source
+                                :short_description
+                                :stage
+                                :structured_coa_type
+                                :title}}))
 
 (def capabilities
   #{:create-coa

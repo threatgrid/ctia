@@ -123,11 +123,17 @@
     :can-aggregate?           true
     :histogram-fields         asset-histogram-fields
     :enumerable-fields        asset-enumerable-fields
-    :searchable-fields        (routes.common/searchable-fields
-                               {:schema Asset
-                                :ignore [:timestamp
-                                         :valid_time.end_time
-                                         :valid_time.start_time]})}))
+    :searchable-fields        #{:id
+                                :asset_type
+                                :description
+                                :external_ids
+                                :external_references.description
+                                :external_references.external_id
+                                :external_references.hashes
+                                :external_references.source_name
+                                :external_references.url
+                                :short_description
+                                :title}}))
 
 (def capabilities
   #{:create-asset
