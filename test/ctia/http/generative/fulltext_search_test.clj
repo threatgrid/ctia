@@ -195,7 +195,32 @@
                                              :parsed-body
                                              (filter #(and (-> % :assignees (= ["bibendum"]))
                                                            (-> % :title (= "Etiam vel neque bibendum dignissim")))))]
-                           (is (= 3 (count matching)))))}]))
+                           (is (= 3 (count matching)))))}]
+
+   [{:test-description "searching for non-existing fields, returns errors"
+     :query-params     {:query         "*"
+                        :search_fields ["donec_retium_posuere_tellus" "proin_neque_massa"]}
+     :bundle-gen       (bundle-gen-for :incidents)
+     :check            (fn [_ _ _ res]
+                         (is (-> res :parsed-body (contains? :errors))))}
+    {:test-description "searching for non-existing values, returns nothing"
+     :query-params     {:query "nullam tempus nulla posuere pellentesque dapibus suscipit ligula"}
+     :bundle-gen       (bundle-gen-for :incidents)
+     :check            (fn [_ _ _ res]
+                         (is (-> res :parsed-body empty?)))}]
+   [(let [bdl (gen/fmap (fn [bundle]
+                          (update bundle :assets
+                                  (fn [incidents]
+                                    (apply utils/update-items incidents
+                                           [;; update only the first record, leave the rest unchanged
+                                            #(assoc % :short_description "first incident"
+                                                    :title "Lorem Ipsum Test Incident")]))))
+                        (bundle-gen-for :assets))]
+      {:test-description "searching within fields that don't contain the pattern, returns empty col"
+       :query-params     {:query         "first Ipsum"
+                          :search_fields ["description"]}
+       :bundle-gen       bdl
+       :check            (fn [_ _ _ res] (is (-> res :parsed-body empty?)))})]))
 
 (defn test-search-case
   [app
