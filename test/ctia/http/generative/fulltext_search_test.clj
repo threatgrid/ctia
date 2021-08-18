@@ -175,23 +175,41 @@
                                      (apply utils/update-items incidents
                                             [;; update only the first record, leave the rest unchanged
                                              #(assoc % :short_description "first incident"
-                                                     :title "Lorem Ipsum Test Incident")]))))
+                                                     :title "Lorem Ipsum Test Incident"
+                                                     :tlp "white")]))))
                          (bulk-gen-for :assets))]
-      {:test-description "searching within fields that don't contain the pattern, returns empty col"
+      {:test-description "searching within fields that don't contain the pattern, shall not return any results"
        :query-params     {:query         "first Ipsum"
                           :search_fields ["description"]}
        :bulk-gen         bulk
        :check            (fn [_ _ _ res] (is (-> res :parsed-body empty?)))}
 
-      {:test-description "searching in fields that contain the pattern, yields results"
-       :query-params     {:query         "\"first\" \"Ipsum\""
-                          :search_fields ["short_description" "title"]}
+      {:test-description "searching in default fields that contain the pattern, yields results"
+       :query-params     {:query "\"first\" \"Ipsum\""}
        :bulk-gen         bulk
        :check            (fn [_ _ _ unparsed]
                            (let [res (-> unparsed :parsed-body)]
                              (is (= 1 (count res)))
                              (is "first incident" (-> res first :short_description))
-                             (is "Lorem Ipsum Test Incident" (-> res first :title))))})]))
+                             (is "Lorem Ipsum Test Incident" (-> res first :title))))}
+      {:test-description "searching in non-default seach fields that contain the pattern, shall not return any results"
+       :query-params     {:query "white"}
+       :bulk-gen         bulk
+       :check            (fn [_ _ _ res] (is (-> res :parsed-body empty?)))}
+
+      {:test-description "searching in a nested default field, yields results"
+       :query-params     {:query "\"lacinia purus\""}
+       :bulk-gen         (gen/fmap (fn [examples]
+                                     (update examples :sightings
+                                             (fn [sightings]
+                                               (apply utils/update-items sightings
+                                                      [;; update only the first record, leave the rest unchanged
+                                                       #(assoc-in % [:observables 0 :value] "lacinia purus")]))))
+                                   (bulk-gen-for :sightings))
+       :check            (fn [_ _ _ unparsed]
+                           (let [res (-> unparsed :parsed-body)]
+                            (is (= 1 (count res)))
+                            (is (-> res first :observables first :value (= "lacinia purus")))))})]))
 
 (defn test-search-case
   [app test-case]
