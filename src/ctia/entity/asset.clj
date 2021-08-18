@@ -124,14 +124,9 @@
     :histogram-fields         asset-histogram-fields
     :enumerable-fields        asset-enumerable-fields
     :searchable-fields        #{:id
+                                :source
                                 :asset_type
                                 :description
-                                :external_ids
-                                :external_references.description
-                                :external_references.external_id
-                                :external_references.hashes
-                                :external_references.source_name
-                                :external_references.url
                                 :short_description
                                 :title}}))
 

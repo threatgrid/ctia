@@ -163,16 +163,9 @@
     :histogram-fields         indicator-histogram-fields
     :enumerable-fields        indicator-enumerable-fields
     :searchable-fields        #{:id
-                                :composite_indicator_expression.indicator_ids
-                                :composite_indicator_expression.operator
+                                :source
                                 :confidence
                                 :description
-                                :external_ids
-                                :external_references.description
-                                :external_references.external_id
-                                :external_references.hashes
-                                :external_references.source_name
-                                :external_references.url
                                 :indicator_type
                                 :kill_chain_phases.kill_chain_name
                                 :kill_chain_phases.phase_name
@@ -180,7 +173,6 @@
                                 :producer
                                 :severity
                                 :short_description
-                                :specification
                                 :tags
                                 :test_mechanisms
                                 :title}}))

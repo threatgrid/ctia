@@ -133,16 +133,11 @@
     :histogram-fields         coa-histogram-fields
     :enumerable-fields        coa-enumerable-fields
     :searchable-fields        #{:id
+                                :source
                                 :coa_type
                                 :cost
                                 :description
                                 :efficacy
-                                :external_ids
-                                :external_references.description
-                                :external_references.external_id
-                                :external_references.hashes
-                                :external_references.source_name
-                                :external_references.url
                                 :impact
                                 :objective
                                 :open_c2_coa.action.type

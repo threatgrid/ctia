@@ -114,14 +114,9 @@
     :enumerable-fields        identity-assertion-enumerable-fields
     :histogram-fields         identity-assertion-histogram-fields
     :searchable-fields        #{:id
-                                :external_references.url
+                                :source
                                 :assertions.name
                                 :assertions.value
-                                :external_ids
-                                :external_references.description
-                                :external_references.external_id
-                                :external_references.hashes
-                                :external_references.source_name
                                 :identity.observables.type
                                 :identity.observables.value}}))
 

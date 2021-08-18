@@ -141,13 +141,8 @@
     :enumerable-fields        asset-properties-enumerable-fields
     :can-revoke?              asset-properties-can-revoke?
     :searchable-fields        #{:id
+                                :source
                                 :asset_ref
-                                :external_ids
-                                :external_references.description
-                                :external_references.external_id
-                                :external_references.hashes
-                                :external_references.source_name
-                                :external_references.url
                                 :properties.name
                                 :properties.value}}))
 

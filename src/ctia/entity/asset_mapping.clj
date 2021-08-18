@@ -144,15 +144,10 @@
     :enumerable-fields        asset-mapping-enumerable-fields
     :can-revoke?              asset-mapping-can-revoke?
     :searchable-fields        #{:id
+                                :source
                                 :asset_ref
                                 :asset_type
                                 :confidence
-                                :external_ids
-                                :external_references.description
-                                :external_references.external_id
-                                :external_references.hashes
-                                :external_references.source_name
-                                :external_references.url
                                 :observable.type
                                 :observable.value
                                 :specificity

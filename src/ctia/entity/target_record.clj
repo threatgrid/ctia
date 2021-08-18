@@ -127,19 +127,13 @@
     :histogram-fields         target-record-histogram-fields
     :enumerable-fields        target-record-enumerable-fields
     :searchable-fields        #{:id
+                                :source
                                 :description
-                                :external_ids
-                                :external_references.description
-                                :external_references.external_id
-                                :external_references.hashes
-                                :external_references.source_name
-                                :external_references.url
                                 :short_description
                                 :targets.observables.type
                                 :targets.observables.value
                                 :targets.os
                                 :targets.sensor
-                                :targets.source_uri
                                 :targets.type
                                 :title}}))
 

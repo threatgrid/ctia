@@ -226,13 +226,8 @@
     :histogram-fields         relationship-histogram-fields
     :enumerable-fields        relationship-enumerable-fields
     :searchable-fields        #{:id
+                                :source
                                 :description
-                                :external_ids
-                                :external_references.description
-                                :external_references.external_id
-                                :external_references.hashes
-                                :external_references.source_name
-                                :external_references.url
                                 :relationship_type
                                 :short_description
                                 :source_ref

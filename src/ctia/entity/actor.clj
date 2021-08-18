@@ -131,17 +131,11 @@
     :histogram-fields         actor-histogram-fields
     :enumerable-fields        actor-enumerable-fields
     :searchable-fields       #{:id
+                               :source
                                :actor_type
                                :confidence
                                :description
-                               :external_ids
-                               :external_references.description
-                               :external_references.external_id
-                               :external_references.hashes
-                               :external_references.source_name
-                               :external_references.url
                                :identity.description
-                               :identity.related_identities.confidence
                                :identity.related_identities.identity
                                :identity.related_identities.information_source
                                :identity.related_identities.relationship

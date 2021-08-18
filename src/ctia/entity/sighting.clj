@@ -67,19 +67,9 @@
     :histogram-fields         ss/sighting-histogram-fields
     :enumerable-fields        ss/sighting-enumerable-fields
     :searchable-fields        #{:id
+                                :source
                                 :confidence
-                                :data.columns.description
-                                :data.columns.name
-                                :data.columns.short_description
-                                :data.columns.type
-                                :data.rows
                                 :description
-                                :external_ids
-                                :external_references.description
-                                :external_references.external_id
-                                :external_references.hashes
-                                :external_references.source_name
-                                :external_references.url
                                 :observables.type
                                 :observables.value
                                 :relations.origin

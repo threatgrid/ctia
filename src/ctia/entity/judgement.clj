@@ -128,18 +128,12 @@
          :histogram-fields         js/judgement-histogram-fields
          :enumerable-fields        js/judgement-enumerable-fields
          :searchable-fields        #{:id
+                                     :source
                                      :confidence
                                      :disposition_name
-                                     :external_ids
-                                     :external_references.description
-                                     :external_references.external_id
-                                     :external_references.hashes
-                                     :external_references.source_name
-                                     :external_references.url
                                      :observable.type
                                      :observable.value
                                      :reason
-                                     :reason_uri
                                      :severity}}]
     (routes
       (services->entity-crud-routes

@@ -114,14 +114,9 @@
     :histogram-fields         attack-pattern-histogram-fields
     :enumerable-fields        attack-pattern-enumerable-fields
     :searchable-fields        #{:id
+                                :source
                                 :abstraction_level
                                 :description
-                                :external_ids
-                                :external_references.description
-                                :external_references.external_id
-                                :external_references.hashes
-                                :external_references.source_name
-                                :external_references.url
                                 :kill_chain_phases.kill_chain_name
                                 :kill_chain_phases.phase_name
                                 :short_description

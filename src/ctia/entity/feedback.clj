@@ -100,13 +100,8 @@
      :enumerable-fields        []
      :can-update?              false
      :searchable-fields        #{:id
+                                 :source
                                  :entity_id
-                                 :external_ids
-                                 :external_references.description
-                                 :external_references.external_id
-                                 :external_references.hashes
-                                 :external_references.source_name
-                                 :external_references.url
                                  :feedback
                                  :reason}})))
 

@@ -160,11 +160,9 @@
      :delete-capabilities     #{:delete-event :developer}
      :date-field              :timestamp
      :searchable-fields       #{:id
-                                :fields.change.after
-                                :event_type
-                                :fields.action
-                                :fields.change.before
-                                :fields.field}})))
+                                :source
+                                :entity.id
+                                :event_type}})))
 
 (def event-entity
   {:new-spec              map?

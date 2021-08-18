@@ -154,6 +154,7 @@
     :histogram-fields         weakness-histogram-fields
     :enumerable-fields        weakness-enumerable-fields
     :searchable-fields        #{:id
+                                :source
                                 :paradigms.name
                                 :description
                                 :technologies.name
@@ -161,7 +162,6 @@
                                 :abstraction_level
                                 :languages.name
                                 :architectures.prevalence
-                                :external_references.url
                                 :common_consequences.scopes
                                 :alternate_terms.term
                                 :detection_methods.method

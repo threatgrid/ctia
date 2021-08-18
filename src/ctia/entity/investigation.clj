@@ -97,14 +97,8 @@
     :histogram-fields         investigation-histogram-fields
     :enumerable-fields        investigation-enumerable-fields
     :searchable-fields        #{:id
+                                :source
                                 :description
-                                :actions
-                                :external_ids
-                                :external_references.description
-                                :external_references.external_id
-                                :external_references.hashes
-                                :external_references.source_name
-                                :external_references.url
                                 :investigated_observables
                                 :object_ids
                                 :short_description

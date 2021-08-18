@@ -233,17 +233,12 @@
      :histogram-fields         incident-histogram-fields
      :enumerable-fields        incident-enumerable-fields
      :searchable-fields        #{:description
+                                 :source
                                  :id
                                  :assignees
                                  :categories
                                  :confidence
                                  :discovery_method
-                                 :external_ids
-                                 :external_references.description
-                                 :external_references.external_id
-                                 :external_references.hashes
-                                 :external_references.source_name
-                                 :external_references.url
                                  :intended_effect
                                  :promotion_method
                                  :short_description

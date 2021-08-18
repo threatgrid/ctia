@@ -125,16 +125,11 @@
     :histogram-fields         campaign-histogram-fields
     :enumerable-fields        campaign-enumerable-fields
     :searchable-fields        #{:id
+                                :source
                                 :description
                                 :activity.description
                                 :campaign_type
                                 :confidence
-                                :external_ids
-                                :external_references.description
-                                :external_references.external_id
-                                :external_references.hashes
-                                :external_references.source_name
-                                :external_references.url
                                 :intended_effect
                                 :names
                                 :short_description
