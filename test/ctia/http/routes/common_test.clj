@@ -38,7 +38,7 @@
 (deftest full-text-search-schema-functions
   (testing "ctia.http.routes.common/prep-es-fields-schema"
     (let [enum->set (fn [enum-schema]
-                      (-> (->> enum-schema ffirst (apply hash-map) :vs)))]
+                      (->> enum-schema ffirst (apply hash-map) :vs))]
       (are [fields result]
           (= result
              (->
