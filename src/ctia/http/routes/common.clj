@@ -74,7 +74,7 @@
      search-q-params)))
 
 (s/defn enforce-search-fields
-  "Gurantees that ES fields parameter always passed to ES instance"
+  "Guarantees that ES fields parameter always passed to ES instance"
   [{:keys [search_fields] :as query-params}
    searchable-fields]
   (if (seq search_fields)
