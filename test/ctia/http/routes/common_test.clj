@@ -35,27 +35,33 @@
               :lt to}
              (sut/coerce-date-range from to))))))
 
-(deftest full-text-search-schema-functions
-  (testing "ctia.http.routes.common/prep-es-fields-schema"
-    (let [enum->set (fn [enum-schema]
-                      (->> enum-schema ffirst (apply hash-map) :vs))]
-      (are [fields result]
-          (= result
-             (->
-              (sut/prep-es-fields-schema
-               {:search-q-params {},
-                :searchable-fields fields})
-              (st/get-in [:search_fields])
-              enum->set))
-        #{:foo :bar} #{"foo" "bar"}
-        #{:foo}      #{"foo"})))
-  (testing "ctia.http.routes.common/enforce-search-fields"
-    (is (= {:search_fields ["foo" "foo-bar"]}
-         (sut/enforce-search-fields {} [:foo :foo-bar])))
-    (is (= {:search_fields ["zap" "zop"]}
-           (sut/enforce-search-fields
-            {:search_fields ["zap" "zop"]}
-            [:foo :foo-bar])))))
+(deftest prep-es-fields-schema-test
+  (let [enum->set (fn [enum-schema]
+                    (->> enum-schema ffirst (apply hash-map) :vs))]
+    (are [fields result]
+        (is (= result
+               (some-> (sut/prep-es-fields-schema
+                        {:search-q-params   {},
+                         :searchable-fields fields})
+                       (st/get-in [:search_fields])
+                       enum->set))
+            (format "when %s passed, %s expected" fields result))
+      #{:foo :bar} #{"foo" "bar"}
+      #{:foo}      #{"foo"}
+      nil          nil)))
+
+(deftest enforce-search-fields-test
+  (is (= {:search_fields ["foo" "foo-bar"]}
+         (sut/enforce-search-fields {} [:foo :foo-bar]))
+      "a query without search_fields forcibly gets some")
+  (is (= {:search_fields ["zap" "zop"]}
+         (sut/enforce-search-fields
+          {:search_fields ["zap" "zop"]}
+          [:foo :foo-bar]))
+      "a query with :search_fields retains search_fields")
+  (is (= {:search_fields []}
+         (sut/enforce-search-fields nil nil))
+      "a query without search_fields, adds the key"))
 
 (deftest search-query-test
   (with-redefs [sut/now (constantly #inst "2020-12-31")]

@@ -62,7 +62,7 @@
                                searchable-fields
                                (map name)
                                (apply s/enum))]
-    (if searchable-fields
+    (if (seq searchable-fields)
      (st/merge
       search-q-params
       {;; We cannot name the parameter :fields, because we already have :fields (part
