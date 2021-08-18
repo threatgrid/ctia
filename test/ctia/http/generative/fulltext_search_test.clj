@@ -163,7 +163,7 @@
                                         "proin_neque_massa"]}
      :bulk-gen         (bulk-gen-for :incidents)
      :check            (fn [_ _ _ res]
-                         (is (-> res :parsed-body (contains? :errors))))}
+                         (is (= 400 (:status res))))}
     {:test-description "searching for non-existing values, returns nothing"
      :query-params     {:query "nullam tempus nulla posuere pellentesque dapibus suscipit ligula"}
      :bulk-gen         (bulk-gen-for :incidents)
