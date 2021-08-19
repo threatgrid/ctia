@@ -10,8 +10,7 @@
    [ctim.schemas.actor :as as]
    [flanders.utils :as fu]
    [schema-tools.core :as st]
-   [schema.core :as s]
-   [ctia.schemas.utils :as csu]))
+   [schema.core :as s]))
 
 (def-acl-schema Actor
   as/Actor
