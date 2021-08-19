@@ -192,7 +192,8 @@
                              (is (= 1 (count res)))
                              (is "first incident" (-> res first :short_description))
                              (is "Lorem Ipsum Test Incident" (-> res first :title))))}
-      {:test-description "searching in non-default seach fields that contain the pattern, shall not return any results"
+      {:test-description (str "searching in non-default search fields that "
+                              "contain the pattern, shall not return any results")
        :query-params     {:query "white"}
        :bulk-gen         bulk
        :check            (fn [_ _ _ res] (is (-> res :parsed-body empty?)))}
