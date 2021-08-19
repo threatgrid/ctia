@@ -1,10 +1,12 @@
 (ns ctia.http.routes.common-test
   (:require [clj-momo.test-helpers.core :as mth]
             [clojure.set :as set]
+            [clojure.string :as string]
             [clojure.test :refer [are deftest is testing use-fixtures]]
             [ctia.auth.capabilities :refer [all-capabilities]]
             [ctia.entity.incident :refer [incident-entity]]
             [ctia.http.routes.common :as sut]
+            [ctia.schemas.utils :as csu]
             [ctia.test-helpers.core :as helpers]
             [ctia.test-helpers.crud :refer [crud-wait-for-test]]
             [ctia.test-helpers.fake-whoami-service :as whoami-helpers]
@@ -62,6 +64,55 @@
   (is (= {:search_fields []}
          (sut/enforce-search-fields nil nil))
       "a query without search_fields, adds the key"))
+
+(defn- entity-schema+searchable-fields
+  "Traverses through existing entities and grabs `schema` and
+  `searchable-fields` (if any) for each.
+  Returns a map where k/v pair is an entity key and a nested map with :schema
+  and :searchable-fields."
+  []
+  ;; get the entities loaded in 'ctia.entity.entities
+  ;; figure out the values of 'searchable-fields and 'schema
+  (let [vars (ns-map 'ctia.entity.entities)
+        ns-keys (->> vars keys (filter #(string/ends-with? % "-entity")))
+        namespaces (->> ns-keys
+                        (map #(some->> % (get vars)
+                                       symbol
+                                       find-var
+                                       meta
+                                       :ns))
+                        (zipmap
+                         (map (comp keyword #(string/replace % "-entity" ""))
+                              ns-keys)))
+        pluck (fn [ns var] (some->> var
+                                    (str ns "/")
+                                    symbol
+                                    resolve
+                                    deref))
+        pluck-searchable-fields (fn [entity-key]
+                                  (pluck
+                                   (get namespaces entity-key)
+                                   "searchable-fields"))
+        pluck-schema (fn [entity-key]
+                       (-> (get namespaces entity-key)
+                           (pluck (str (name entity-key) "-entity"))
+                           :schema))]
+    (zipmap
+     (keys namespaces)
+     (map
+      #(hash-map :searchable-fields (pluck-searchable-fields %)
+                 :schema (pluck-schema %))
+      (keys namespaces)))))
+
+(deftest searchable-fields-test
+  (testing "make sure :searchable-fields of an entity always points to existing key in the schema"
+    (doseq [[entity {:keys [searchable-fields schema]}] (entity-schema+searchable-fields)]
+      (when (seq searchable-fields)
+        (doseq [sf   searchable-fields
+                :let [path (->> (string/split (name sf) #"\.")
+                                (map keyword))]]
+          (is (csu/contains-key? schema path)
+              (format "%s contains %s key" entity (name sf))))))))
 
 (deftest search-query-test
   (with-redefs [sut/now (constantly #inst "2020-12-31")]
