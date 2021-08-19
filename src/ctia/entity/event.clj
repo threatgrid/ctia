@@ -140,7 +140,6 @@
 
 (def searchable-fields
   #{:id
-    :source
     :entity.id
     :event_type})
 
