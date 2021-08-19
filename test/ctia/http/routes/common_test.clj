@@ -4,7 +4,7 @@
             [clojure.string :as string]
             [clojure.test :refer [are deftest is testing use-fixtures]]
             [ctia.auth.capabilities :refer [all-capabilities]]
-            [ctia.entity.incident :refer [incident-entity]]
+            [ctia.entity.incident :as incident]
             [ctia.http.routes.common :as sut]
             [ctia.schemas.utils :as csu]
             [ctia.test-helpers.core :as helpers]
@@ -43,14 +43,19 @@
     (are [fields result]
         (is (= result
                (some-> (sut/prep-es-fields-schema
-                        {:search-q-params   {},
+                        {:search-q-params   incident/IncidentSearchParams
                          :searchable-fields fields})
                        (st/get-in [:search_fields])
                        enum->set))
             (format "when %s passed, %s expected" fields result))
       #{:foo :bar} #{"foo" "bar"}
       #{:foo}      #{"foo"}
-      nil          nil)))
+      nil          nil))
+  (testing "search-q-params shall not be modified with searchable-fields of nil or empty"
+    (is (= incident/IncidentSearchParams
+           (sut/prep-es-fields-schema  {:search-q-params incident/IncidentSearchParams})
+           (sut/prep-es-fields-schema  {:search-q-params   incident/IncidentSearchParams
+                                        :searchable-fields #{}})))))
 
 (deftest enforce-search-fields-test
   (is (= {:search_fields ["foo" "foo-bar"]}
@@ -275,7 +280,7 @@
       (helpers/set-capabilities! app "foouser" ["foogroup"] "user" (all-capabilities))
       (whoami-helpers/set-whoami-response app "45c1f5e3f05d0" "foouser" "foogroup" "user")
       (let [{{:keys [get-in-config]} :ConfigService} (app/service-graph app)
-            {:keys [entity] :as parameters} (into incident-entity
+            {:keys [entity] :as parameters} (into incident/incident-entity
                                                   {:app app
                                                    :example new-incident-maximal
                                                    :headers {:Authorization "45c1f5e3f05d0"}})
