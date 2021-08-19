@@ -308,6 +308,17 @@
 (def casebook-histogram-fields
   [:timestamp])
 
+(def searchable-fields
+  #{:id
+    :source
+    :description
+    :observables.type
+    :observables.value
+    :short_description
+    :texts.text
+    :texts.type
+    :title})
+
 (s/defn casebook-routes [services :- APIHandlerServices]
   (routes
    (casebook-operation-routes services)
@@ -335,15 +346,7 @@
      :hide-delete?             false
      :histogram-fields         casebook-histogram-fields
      :enumerable-fields        casebook-enumerable-fields
-     :searchable-fields        #{:id
-                                 :source
-                                 :description
-                                 :observables.type
-                                 :observables.value
-                                 :short_description
-                                 :texts.text
-                                 :texts.type
-                                 :title}})))
+     :searchable-fields        searchable-fields})))
 
 (def casebook-entity
   {:route-context         "/casebook"

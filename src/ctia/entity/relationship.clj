@@ -202,6 +202,16 @@
   [:source
    :relationship_type])
 
+(def searchable-fields
+  #{:id
+    :source
+    :description
+    :relationship_type
+    :short_description
+    :source_ref
+    :target_ref
+    :title})
+
 (s/defn relationship-routes [services :- APIHandlerServices]
   (services->entity-crud-routes
    services
@@ -225,14 +235,7 @@
     :can-aggregate?           true
     :histogram-fields         relationship-histogram-fields
     :enumerable-fields        relationship-enumerable-fields
-    :searchable-fields        #{:id
-                                :source
-                                :description
-                                :relationship_type
-                                :short_description
-                                :source_ref
-                                :target_ref
-                                :title}}))
+    :searchable-fields        searchable-fields}))
 
 (def capabilities
   #{:create-relationship

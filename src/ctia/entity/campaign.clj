@@ -100,6 +100,19 @@
    routes.common/PagingParams
    CampaignFieldsParam))
 
+(def searchable-fields
+  #{:id
+    :source
+    :description
+    :activity.description
+    :campaign_type
+    :confidence
+    :intended_effect
+    :names
+    :short_description
+    :status
+    :title})
+
 (s/defn campaign-routes [services :- APIHandlerServices]
   (services->entity-crud-routes
    services
@@ -124,17 +137,7 @@
     :can-aggregate?           true
     :histogram-fields         campaign-histogram-fields
     :enumerable-fields        campaign-enumerable-fields
-    :searchable-fields        #{:id
-                                :source
-                                :description
-                                :activity.description
-                                :campaign_type
-                                :confidence
-                                :intended_effect
-                                :names
-                                :short_description
-                                :status
-                                :title}}))
+    :searchable-fields        searchable-fields}))
 
 (def capabilities
   #{:create-campaign

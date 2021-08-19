@@ -103,6 +103,15 @@
                                                    (-> entity
                                                        (update :reason str " " reason)))
                            :wait_for wait_for}))))
+(def searchable-fields
+  #{:id
+    :source
+    :confidence
+    :disposition_name
+    :observable.type
+    :observable.value
+    :reason
+    :severity})
 
 (s/defn judgement-routes [services :- APIHandlerServices]
   (let [entity-crud-config
@@ -127,14 +136,7 @@
          :can-aggregate?           true
          :histogram-fields         js/judgement-histogram-fields
          :enumerable-fields        js/judgement-enumerable-fields
-         :searchable-fields        #{:id
-                                     :source
-                                     :confidence
-                                     :disposition_name
-                                     :observable.type
-                                     :observable.value
-                                     :reason
-                                     :severity}}]
+         :searchable-fields        searchable-fields}]
     (routes
       (services->entity-crud-routes
         services

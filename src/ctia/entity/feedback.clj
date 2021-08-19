@@ -77,6 +77,13 @@
     :read-feedback
     :delete-feedback})
 
+(def searchable-fields
+  #{:id
+    :source
+    :entity_id
+    :feedback
+    :reason})
+
 (s/defn feedback-routes [services :- APIHandlerServices]
   (routes
    (feedback-by-entity-route services)
@@ -99,11 +106,7 @@
      :can-search?              false
      :enumerable-fields        []
      :can-update?              false
-     :searchable-fields        #{:id
-                                 :source
-                                 :entity_id
-                                 :feedback
-                                 :reason}})))
+     :searchable-fields        searchable-fields})))
 
 (def feedback-entity
   {:route-context         "/feedback"

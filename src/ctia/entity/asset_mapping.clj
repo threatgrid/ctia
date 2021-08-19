@@ -119,6 +119,17 @@
 
 (def asset-mapping-can-revoke? true)
 
+(def searchable-fields
+  #{:id
+    :source
+    :asset_ref
+    :asset_type
+    :confidence
+    :observable.type
+    :observable.value
+    :specificity
+    :stability})
+
 (s/defn asset-mapping-routes [services :- APIHandlerServices]
   (services->entity-crud-routes
    services
@@ -143,15 +154,7 @@
     :histogram-fields         asset-mapping-histogram-fields
     :enumerable-fields        asset-mapping-enumerable-fields
     :can-revoke?              asset-mapping-can-revoke?
-    :searchable-fields        #{:id
-                                :source
-                                :asset_ref
-                                :asset_type
-                                :confidence
-                                :observable.type
-                                :observable.value
-                                :specificity
-                                :stability}}))
+    :searchable-fields        searchable-fields}))
 
 (def capabilities
   #{:create-asset-mapping

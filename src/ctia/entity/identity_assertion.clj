@@ -91,6 +91,14 @@
    routes.common/PagingParams
    IdentityAssertionFieldsParam))
 
+(def searchable-fields
+  #{:id
+    :source
+    :assertions.name
+    :assertions.value
+    :identity.observables.type
+    :identity.observables.value})
+
 (s/defn identity-assertion-routes [services :- APIHandlerServices]
   (services->entity-crud-routes
    services
@@ -113,12 +121,7 @@
     :can-aggregate?           true
     :enumerable-fields        identity-assertion-enumerable-fields
     :histogram-fields         identity-assertion-histogram-fields
-    :searchable-fields        #{:id
-                                :source
-                                :assertions.name
-                                :assertions.value
-                                :identity.observables.type
-                                :identity.observables.value}}))
+    :searchable-fields        searchable-fields}))
 
 (def capabilities
   #{:create-identity-assertion
