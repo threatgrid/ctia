@@ -32,32 +32,37 @@
                        {}))]
     (gen/return examples)))
 
-;; Every single query gets tested with its own set of generated Bulk data.
-;; These tests are not meant to test relations between entitites, that is why
-;; we're not using Bundle, but Bulk.
-;;
-;; After the query gets sent, the response results
-;; are passed into :check function, together with the test-case map, entity key
-;; and the original Bulk data
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Every single query gets tested with its own set of generated Bulk data.       ;;
+;; These tests are not meant to test relations between entitites, that is why    ;;
+;; we're not using Bundle, but Bulk.                                             ;;
+;;                                                                               ;;
+;; After query gets sent, :check fn executed with the following argument map:    ;;
+;; :test-case  - original test-case map                                          ;;
+;; :entity     - entity key                                                      ;;
+;; :in         - original imported data (list of records for the current entity) ;;
+;; :out        - the results of the posted http query                            ;;
+;; :es-version - version of Elastic Search                                       ;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn test-cases
-  "Returns vector of test cases, where each map represents:
+  "Returns a vector of test cases, where each map represents:
 
   - a recipe for generating data
   - a query
   - a way to verify the response data
 
-  Test checker function (that would use this) is responsible for generating and
-  importing the data into the ES cluster, and then query and verify the
-  results"
+  Test checker function (that would use this) should generate and import the
+  data into the ES cluster, and then send an http request, and finally verify
+  the results of that request by executing :check function."
   []
   (concat
    [{:test-description "Returns all the records when the wildcard used"
      :query-params     {:query_mode "query_string"
                         :query      "*"}
-     :bulk-gen         (bulk-gen-for :incidents :assets)
-     :check            (fn [_ entity examples res]
-                         (is (= (-> res :parsed-body count)
-                                (-> examples (get entity) count))))}]
+     :data-gen         (bulk-gen-for :incidents :assets)
+     :check            (fn [{:keys [in out]}]
+                         (is (= (-> out :parsed-body count)
+                                (-> in count))))}]
    (let [bulk     (gen/fmap
                    (fn [examples]
                      (update
@@ -68,38 +73,45 @@
                          ;; update first 3 records, leave the rest unchanged
                          (repeat 3 #(assoc % :title "nunc porta vulputate tellus"))))))
                    (bulk-gen-for :incidents))
-         check-fn (fn [{:keys [test-description]} _ _ res]
-                    (let [matching (->> res
-                                        :parsed-body
-                                        (filter #(-> % :title (= "nunc porta vulputate tellus"))))]
-                      (is (= 3 (count matching)) test-description)))]
-     [{:test-description "Multiple records with the same value in a given field. Lucene syntax"
+         check-fn (fn [{:keys [test-case out]}]
+                    (let [match (->> out
+                                     :parsed-body
+                                     (filter #(-> % :title
+                                                  (= "nunc porta vulputate tellus"))))]
+                      (is (= 3 (count match))
+                          (:test-description test-case))))]
+     [{:test-description (str "Multiple records with the same value in "
+                              "a given field. Lucene syntax")
        :query-params     {:query_mode "query_string"
                           :query      "title:nunc porta vulputate tellus"}
-       :bulk-gen         bulk
+       :data-gen         bulk
        :check            check-fn}
-      {:test-description "Multiple records with the same value in a given field set in search_fields"
+      {:test-description (str "Multiple records with the same value in a "
+                              "given field set in search_fields")
        :query-params     {:query_mode    "query_string"
                           :query         "nunc porta vulputate tellus"
                           :search_fields ["title"]}
-       :bulk-gen         bulk
+       :data-gen         bulk
        :check            check-fn}
-      {:test-description "Querying for non-existing value should yield no results. Lucene syntax."
+      {:test-description (str "Querying for non-existing value should "
+                              "yield no results. Lucene syntax.")
        :query-params     {:query_mode "query_string"
                           :query      "title:0e1c9f6a-c3ac-4fd5-982e-4981f86df07a"}
-       :bulk-gen         bulk
-       :check            (fn [_ _ _ res] (is (zero? (-> res :parsed-body count))))}
-      {:test-description "Querying for non-existing field with wildcard should yield no results. Lucene syntax."
+       :data-gen         bulk
+       :check            (fn [{:keys [out]}] (is (-> out :parsed-body count zero?)))}
+      {:test-description (str "Querying for non-existing field with wildcard "
+                              "should yield no results. Lucene syntax.")
        :query-params     {:query_mode "query_string"
                           :query      "74f93781-f370-46ea-bd53-3193db379e41:*"}
-       :bulk-gen         bulk
-       :check            (fn [_ _ _ res] (is (empty? (-> res :parsed-body))))}
-      {:test-description "Querying for non-existing field with wildcard should fail the schema validation. search_fields"
+       :data-gen         bulk
+       :check            (fn [{:keys [out]}] (is (-> out :parsed-body empty?)))}
+      {:test-description (str "Querying for non-existing field with wildcard "
+                              "should fail the schema validation.")
        :query-params     {:query_mode    "query_string"
                           :query         "*"
                           :search_fields ["512b8dce-0423-4e9a-aa63-d3c3b91eb8d8"]}
-       :bulk-gen         bulk
-       :check            (fn [_ _ _ res] (is (= 400 (-> res :status))))}])
+       :data-gen         bulk
+       :check            (fn [{:keys [out]}] (is (= 400 (-> out :status))))}])
 
    ;; Test `AND` (set two different fields that contain the same word in the same entity)
    (let [bulk       (gen/fmap
@@ -113,33 +125,33 @@
                            #(assoc % :discovery_method "Log Review"
                                    :title "title of test incident")))))
                      (bulk-gen-for :incidents))
-         get-fields (fn [res]
-                      (->> res
-                           :parsed-body
+         get-fields (fn [out]
+                      (->> out :parsed-body
                            (some #(and (-> % :discovery_method (= "Log Review"))
                                        (-> % :title (= "title of test incident"))))))]
-     [{:test-description (str "Should NOT return anything, because query field is missing."
+     [{:test-description (str "Should NOT return anything, because query field is missing. "
                               "Asking for multiple things in the query, but not providing all the fields.")
        :query-params     {:query_mode    "query_string"
                           :query         "(title of test incident) AND (Log Review)"
                           :search_fields ["title"]}
-       :bulk-gen         bulk
-       :check            (fn [_ _ _ res] (is (nil? (get-fields res))))}
+       :data-gen         bulk
+       :check            (fn [{:keys [out]}] (is (nil? (get-fields out))))}
 
       {:test-description "Should return an entity where multiple fields match"
        :query-params     {:query_mode    "query_string"
                           :query         "\"title of test incident\" AND \"Log Review\""
                           :search_fields ["title" "discovery_method"]}
-       :bulk-gen         bulk
-       :check            (fn [_ _ _ res]
-                           (is (= 1 (-> res :parsed-body count)))
-                           (is (get-fields res)))}])
+       :data-gen         bulk
+       :check            (fn [{:keys [out]}]
+                           (is (= 1 (-> out :parsed-body count)))
+                           (is (get-fields out)))}])
 
-   [{:test-description "multi_match - looking for the same value in different fields in multiple records"
+   [{:test-description (str "multi_match - looking for the same value in "
+                            "different fields in multiple records")
      :query-params     {:query_mode    "multi_match"
                         :query         "bibendum"
                         :search_fields ["assignees" "title"]}
-     :bulk-gen         (gen/fmap
+     :data-gen         (gen/fmap
                         (fn [examples]
                           (update
                            examples :incidents
@@ -150,8 +162,8 @@
                                       #(assoc % :title "Etiam vel neque bibendum dignissim"
                                               :assignees ["bibendum"]))))))
                         (bulk-gen-for :incidents))
-     :check            (fn [_ _ _ res]
-                         (let [matching (->> res
+     :check            (fn [{:keys [out]}]
+                         (let [matching (->> out
                                              :parsed-body
                                              (filter #(and (-> % :assignees (= ["bibendum"]))
                                                            (-> % :title (= "Etiam vel neque bibendum dignissim")))))]
@@ -161,14 +173,14 @@
      :query-params     {:query         "*"
                         :search_fields ["donec_retium_posuere_tellus"
                                         "proin_neque_massa"]}
-     :bulk-gen         (bulk-gen-for :incidents)
-     :check            (fn [_ _ _ res]
-                         (is (= 400 (:status res))))}
+     :data-gen         (bulk-gen-for :incidents)
+     :check            (fn [{:keys [out]}]
+                         (is (= 400 (:status out))))}
     {:test-description "searching for non-existing values, returns nothing"
      :query-params     {:query "nullam tempus nulla posuere pellentesque dapibus suscipit ligula"}
-     :bulk-gen         (bulk-gen-for :incidents)
-     :check            (fn [_ _ _ res]
-                         (is (-> res :parsed-body empty?)))}]
+     :data-gen         (bulk-gen-for :incidents)
+     :check            (fn [{:keys [out]}]
+                         (is (-> out :parsed-body empty?)))}]
    [(let [bulk (gen/fmap (fn [examples]
                            (update examples :assets
                                    (fn [incidents]
@@ -178,55 +190,65 @@
                                                      :title "Lorem Ipsum Test Incident"
                                                      :tlp "white")]))))
                          (bulk-gen-for :assets))]
-      {:test-description "searching within fields that don't contain the pattern, shall not return any results"
+      {:test-description (str "searching within fields that don't contain the "
+                              "pattern, shall not return any results")
        :query-params     {:query         "first Ipsum"
                           :search_fields ["description"]}
-       :bulk-gen         bulk
-       :check            (fn [_ _ _ res] (is (-> res :parsed-body empty?)))}
+       :data-gen         bulk
+       :check            (fn [{:keys [out]}] (is (-> out :parsed-body empty?)))}
 
       {:test-description "searching in default fields that contain the pattern, yields results"
        :query-params     {:query "\"first\" \"Ipsum\""}
-       :bulk-gen         bulk
-       :check            (fn [_ _ _ unparsed]
-                           (let [res (-> unparsed :parsed-body)]
+       :data-gen         bulk
+       :check            (fn [{:keys [out]}]
+                           (let [res (-> out :parsed-body)]
                              (is (= 1 (count res)))
                              (is "first incident" (-> res first :short_description))
                              (is "Lorem Ipsum Test Incident" (-> res first :title))))}
       {:test-description (str "searching in non-default search fields that "
                               "contain the pattern, shall not return any results")
        :query-params     {:query "white"}
-       :bulk-gen         bulk
-       :check            (fn [_ _ _ res] (is (-> res :parsed-body empty?)))}
+       :data-gen         bulk
+       :check            (fn [{:keys [out]}] (is (-> out :parsed-body empty?)))}
 
       {:test-description "searching in a nested default field, yields results"
        :query-params     {:query "\"lacinia purus\""}
-       :bulk-gen         (gen/fmap (fn [examples]
+       :data-gen         (gen/fmap (fn [examples]
                                      (update examples :sightings
                                              (fn [sightings]
                                                (apply utils/update-items sightings
                                                       [;; update only the first record, leave the rest unchanged
                                                        #(assoc-in % [:observables 0 :value] "lacinia purus")]))))
                                    (bulk-gen-for :sightings))
-       :check            (fn [_ _ _ unparsed]
-                           (let [res (-> unparsed :parsed-body)]
+       :check            (fn [{:keys [out]}]
+                           (let [res (-> out :parsed-body)]
                             (is (= 1 (count res)))
                             (is (-> res first :observables first :value (= "lacinia purus")))))})]))
 
 (defn test-search-case
-  [app test-case]
-  (let [{:keys [query-params
-                bulk-gen
-                check
-                test-description]} test-case
-        examples (gen/generate bulk-gen)
-        ent-keys (keys examples)]
+  [app test-case & {:keys [es-version]}]
+  (let [{:keys [test-description
+                data-gen
+                query-params
+                check]} test-case
+        examples        (gen/generate data-gen)
+        ent-keys        (keys examples)]
     (helpers/POST-bulk app examples)
     (doseq [plural ent-keys]
       (let [entity     (ffirst (helpers/plural-key->entity plural))
             search-res (th.search/search-raw app entity query-params)]
-        (testing test-description (check test-case plural examples search-res))
-        (th.search/delete-search app entity {:query "*"
-                                             :REALLY_DELETE_ALL_THESE_ENTITIES true})))))
+        (testing test-description
+          (check
+           {:test-case  test-case
+            :entity     entity
+            :in         (get examples plural)
+            :out        search-res
+            :es-version es-version}))
+        ;; cleanup
+        (th.search/delete-search
+         app entity
+         {:query "*"
+          :REALLY_DELETE_ALL_THESE_ENTITIES true})))))
 
 (deftest fulltext-search-test
   (es-helpers/for-each-es-version
@@ -235,7 +257,14 @@
    #(es-index/delete! % "ctia_*")
    (helpers/fixture-ctia-with-app
     (fn [app]
-      (helpers/set-capabilities! app "foouser" ["foogroup"] "user" (capabilities/all-capabilities))
-      (whoami-helpers/set-whoami-response app "45c1f5e3f05d0" "foouser" "foogroup" "user")
+      (helpers/set-capabilities!
+       app "foouser" ["foogroup"] "user" (capabilities/all-capabilities))
+      (whoami-helpers/set-whoami-response
+       app "45c1f5e3f05d0" "foouser" "foogroup" "user")
       (doseq [test-case (test-cases)]
-        (test-search-case app test-case))))))
+        (test-search-case
+         app
+         test-case
+         ;; `version` is an anaphoric var interned by `for-each-version` macro
+         ;; please disregard concerning linter errors
+         :es-version version))))))
