@@ -204,6 +204,20 @@
    routes.common/PagingParams
    IncidentFieldsParam))
 
+(def searchable-fields
+  #{:description
+    :source
+    :id
+    :assignees
+    :categories
+    :confidence
+    :discovery_method
+    :intended_effect
+    :promotion_method
+    :short_description
+    :status
+    :title})
+
 (s/defn incident-routes [services :- APIHandlerServices]
   (routes
    (incident-additional-routes services)
@@ -231,7 +245,8 @@
      :search-capabilities      :search-incident
      :external-id-capabilities :read-incident
      :histogram-fields         incident-histogram-fields
-     :enumerable-fields        incident-enumerable-fields})))
+     :enumerable-fields        incident-enumerable-fields
+     :searchable-fields        searchable-fields})))
 
 (def IncidentType
   (let [{:keys [fields name description]}

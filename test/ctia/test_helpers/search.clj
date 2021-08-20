@@ -47,12 +47,13 @@
          :query-params query-params)))
 
 (defn search-text
-  [app entity text]
-  (search-raw app entity {:query text}))
+  [app entity text & [query-params]]
+  (search-raw app entity (merge {:query text}
+                                query-params)))
 
 (defn search-ids
-  [app entity query]
-  (->> (search-text app entity query)
+  [app entity query & [query-params]]
+  (->> (search-text app entity query query-params)
        :parsed-body
        (map :id)
        set))
@@ -152,7 +153,7 @@
       (is (empty? (search-ids app entity "wor"))))
 
     ;; test stop word filtering
-    (is (= matched-ids (search-ids app entity "the word"))
+    (is (= matched-ids (search-ids app entity "the word" {:search_fields ["description"]}))
         "\"the\" is not in text but should be filtered out from query as a stop word")
     (is (empty? (search-ids app entity "description:\"property that attack\""))
         "search_quote analyzer in describabble fields shall preserve stop words")
@@ -189,8 +190,7 @@
       (if (= "AND" default_operator)
         (is (= matched-ids found-ids-escaped)
             "escaping reserved characters should avoid parsing errors and preserve behavior of AND")
-        (is (set/subset? (set/union matched-ids unmatched-ids)
-                         found-ids-escaped)
+        (is (set/subset? found-ids-escaped matched-ids)
             ;; OR could match other test documents matching "http"
             "escaping reserved characters should avoid parsing errors and preserve behavior of OR"))
       (is (= matched-ids

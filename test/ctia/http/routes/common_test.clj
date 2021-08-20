@@ -1,17 +1,20 @@
 (ns ctia.http.routes.common-test
   (:require [clj-momo.test-helpers.core :as mth]
-            [clojure.instant :as inst]
-            [clojure.test :refer [are is deftest testing use-fixtures]]
+            [clojure.set :as set]
+            [clojure.string :as string]
+            [clojure.test :refer [are deftest is testing use-fixtures]]
             [ctia.auth.capabilities :refer [all-capabilities]]
-            [ctia.entity.incident :refer [incident-entity]]
+            [ctia.entity.incident :as incident]
             [ctia.http.routes.common :as sut]
+            [ctia.schemas.utils :as csu]
             [ctia.test-helpers.core :as helpers]
             [ctia.test-helpers.crud :refer [crud-wait-for-test]]
-            [ctia.test-helpers.http :as http]
-            [ctia.test-helpers.store :refer [test-selected-stores-with-app]]
             [ctia.test-helpers.fake-whoami-service :as whoami-helpers]
+            [ctia.test-helpers.store :refer [test-selected-stores-with-app]]
             [ctim.examples.incidents :refer [new-incident-maximal]]
-            [puppetlabs.trapperkeeper.app :as app]))
+            [puppetlabs.trapperkeeper.app :as app]
+            [schema-tools.core :as st]
+            [schema.core :as s]))
 
 (use-fixtures :once
               mth/fixture-schema-validation
@@ -33,6 +36,88 @@
       (is (= {:gte from
               :lt to}
              (sut/coerce-date-range from to))))))
+
+(deftest prep-es-fields-schema-test
+  (let [enum->set (fn [enum-schema]
+                    (->> enum-schema ffirst (apply hash-map) :vs))]
+    (are [fields result]
+        (is (= result
+               (some-> (sut/prep-es-fields-schema
+                        {:search-q-params   incident/IncidentSearchParams
+                         :searchable-fields fields})
+                       (st/get-in [:search_fields])
+                       enum->set))
+            (format "when %s passed, %s expected" fields result))
+      #{:foo :bar} #{"foo" "bar"}
+      #{:foo}      #{"foo"}
+      nil          nil))
+  (testing "search-q-params shall not be modified with searchable-fields of nil or empty"
+    (is (= incident/IncidentSearchParams
+           (sut/prep-es-fields-schema  {:search-q-params incident/IncidentSearchParams})
+           (sut/prep-es-fields-schema  {:search-q-params   incident/IncidentSearchParams
+                                        :searchable-fields #{}})))))
+
+(deftest enforce-search-fields-test
+  (is (= {:search_fields ["foo" "foo-bar"]}
+         (sut/enforce-search-fields {} [:foo :foo-bar]))
+      "a query without search_fields forcibly gets some")
+  (is (= {:search_fields ["zap" "zop"]}
+         (sut/enforce-search-fields
+          {:search_fields ["zap" "zop"]}
+          [:foo :foo-bar]))
+      "a query with :search_fields retains search_fields")
+  (is (= {:search_fields []}
+         (sut/enforce-search-fields nil nil))
+      "a query without search_fields, adds the key"))
+
+(defn- entity-schema+searchable-fields
+  "Traverses through existing entities and grabs `schema` and
+  `searchable-fields` (if any) for each.
+  Returns a map where k/v pair is an entity key and a nested map with :schema
+  and :searchable-fields."
+  []
+  ;; get the entities loaded in 'ctia.entity.entities
+  ;; figure out the values of 'searchable-fields and 'schema
+  (let [vars (ns-map 'ctia.entity.entities)
+        ns-keys (->> vars keys (filter #(string/ends-with? % "-entity")))
+        namespaces (->> ns-keys
+                        (map #(some->> % (get vars)
+                                       symbol
+                                       find-var
+                                       meta
+                                       :ns))
+                        (zipmap
+                         (map (comp keyword #(string/replace % "-entity" ""))
+                              ns-keys)))
+        pluck (fn [ns var] (some->> var
+                                    (str ns "/")
+                                    symbol
+                                    resolve
+                                    deref))
+        pluck-searchable-fields (fn [entity-key]
+                                  (pluck
+                                   (get namespaces entity-key)
+                                   "searchable-fields"))
+        pluck-schema (fn [entity-key]
+                       (-> (get namespaces entity-key)
+                           (pluck (str (name entity-key) "-entity"))
+                           :schema))]
+    (zipmap
+     (keys namespaces)
+     (map
+      #(hash-map :searchable-fields (pluck-searchable-fields %)
+                 :schema (pluck-schema %))
+      (keys namespaces)))))
+
+(deftest searchable-fields-test
+  (testing "make sure :searchable-fields of an entity always points to existing key in the schema"
+    (doseq [[entity {:keys [searchable-fields schema]}] (entity-schema+searchable-fields)]
+      (when (seq searchable-fields)
+        (doseq [sf   searchable-fields
+                :let [path (->> (string/split (name sf) #"\.")
+                                (map keyword))]]
+          (is (csu/contains-key? schema path)
+              (format "%s contains %s key" entity (name sf))))))))
 
 (deftest search-query-test
   (with-redefs [sut/now (constantly #inst "2020-12-31")]
@@ -195,7 +280,7 @@
       (helpers/set-capabilities! app "foouser" ["foogroup"] "user" (all-capabilities))
       (whoami-helpers/set-whoami-response app "45c1f5e3f05d0" "foouser" "foogroup" "user")
       (let [{{:keys [get-in-config]} :ConfigService} (app/service-graph app)
-            {:keys [entity] :as parameters} (into incident-entity
+            {:keys [entity] :as parameters} (into incident/incident-entity
                                                   {:app app
                                                    :example new-incident-maximal
                                                    :headers {:Authorization "45c1f5e3f05d0"}})
