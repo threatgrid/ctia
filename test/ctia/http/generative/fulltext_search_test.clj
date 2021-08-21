@@ -222,8 +222,29 @@
                                    (bulk-gen-for :sightings))
        :check            (fn [{:keys [out]}]
                            (let [res (-> out :parsed-body)]
-                            (is (= 1 (count res)))
-                            (is (-> res first :observables first :value (= "lacinia purus")))))})]))
+                             (is (= 1 (count res)))
+                             (is (-> res first :observables first :value (= "lacinia purus")))))})]
+
+   [{:test-description (str "split_on_whitespace deprecated in ES6, "
+                            "query expected to work differently in 5 and 7")
+     :query-params     {:query "the intrusion event 3\\:19187\\:7 incident"}
+     :data-gen         (gen/fmap (fn [examples]
+                                   (update examples :incidents
+                                           (fn [entities]
+                                             (apply utils/update-items entities
+                                                    [;; update only the first record, leave the rest unchanged
+                                                     #(assoc % :title "Intrusion event 3:19187:7 incident"
+                                                             :source "ngfw_ips_event_service")]))))
+                                 (bulk-gen-for :incidents))
+     :check            (fn [{:keys [in out es-version]}]
+                         (let [res (-> out :parsed-body)]
+                           (case es-version
+                             5 (is (zero? (count res)))
+
+                             7 (do
+                                 (is (seq res))
+                                 (is (= (-> res first (dissoc :id :groups :owner))
+                                        (-> in first (dissoc :id :groups :owner))))))))}]))
 
 (defn test-search-case
   [app test-case & {:keys [es-version]}]
