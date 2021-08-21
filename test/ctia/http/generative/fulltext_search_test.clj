@@ -57,22 +57,22 @@
   []
   (concat
    [{:test-description "Returns all the records when the wildcard used"
-     :query-params     {:query_mode "query_string"
-                        :query      "*"}
-     :data-gen         (bulk-gen-for :incidents :assets)
-     :check            (fn [{:keys [in out]}]
-                         (is (= (-> out :parsed-body count)
-                                (-> in count))))}]
-   (let [bulk     (gen/fmap
-                   (fn [examples]
-                     (update
-                      examples :incidents
-                      (fn [incidents]
-                        (apply
-                         utils/update-items incidents
-                         ;; update first 3 records, leave the rest unchanged
-                         (repeat 3 #(assoc % :title "nunc porta vulputate tellus"))))))
-                   (bulk-gen-for :incidents))
+     :query-params {:query_mode "query_string"
+                    :query "*"}
+     :data-gen (bulk-gen-for :incidents :assets)
+     :check (fn [{:keys [in out]}]
+              (is (= (-> out :parsed-body count)
+                     (-> in count))))}]
+   (let [bulk (gen/fmap
+               (fn [examples]
+                 (update
+                  examples :incidents
+                  (fn [incidents]
+                    (apply
+                     utils/update-items incidents
+                     ;; update first 3 records, leave the rest unchanged
+                     (repeat 3 #(assoc % :title "nunc porta vulputate tellus"))))))
+               (bulk-gen-for :incidents))
          check-fn (fn [{:keys [test-case out]}]
                     (let [match (->> out
                                      :parsed-body
@@ -82,105 +82,105 @@
                           (:test-description test-case))))]
      [{:test-description (str "Multiple records with the same value in "
                               "a given field. Lucene syntax")
-       :query-params     {:query_mode "query_string"
-                          :query      "title:nunc porta vulputate tellus"}
-       :data-gen         bulk
-       :check            check-fn}
+       :query-params {:query_mode "query_string"
+                      :query "title:nunc porta vulputate tellus"}
+       :data-gen bulk
+       :check check-fn}
       {:test-description (str "Multiple records with the same value in a "
                               "given field set in search_fields")
-       :query-params     {:query_mode    "query_string"
-                          :query         "nunc porta vulputate tellus"
-                          :search_fields ["title"]}
-       :data-gen         bulk
-       :check            check-fn}
+       :query-params {:query_mode "query_string"
+                      :query "nunc porta vulputate tellus"
+                      :search_fields ["title"]}
+       :data-gen bulk
+       :check check-fn}
       {:test-description (str "Querying for non-existing value should "
                               "yield no results. Lucene syntax.")
-       :query-params     {:query_mode "query_string"
-                          :query      "title:0e1c9f6a-c3ac-4fd5-982e-4981f86df07a"}
-       :data-gen         bulk
-       :check            (fn [{:keys [out]}] (is (-> out :parsed-body count zero?)))}
+       :query-params {:query_mode "query_string"
+                      :query "title:0e1c9f6a-c3ac-4fd5-982e-4981f86df07a"}
+       :data-gen bulk
+       :check (fn [{:keys [out]}] (is (-> out :parsed-body count zero?)))}
       {:test-description (str "Querying for non-existing field with wildcard "
                               "should yield no results. Lucene syntax.")
-       :query-params     {:query_mode "query_string"
-                          :query      "74f93781-f370-46ea-bd53-3193db379e41:*"}
-       :data-gen         bulk
-       :check            (fn [{:keys [out]}] (is (-> out :parsed-body empty?)))}
+       :query-params {:query_mode "query_string"
+                      :query "74f93781-f370-46ea-bd53-3193db379e41:*"}
+       :data-gen bulk
+       :check (fn [{:keys [out]}] (is (-> out :parsed-body empty?)))}
       {:test-description (str "Querying for non-existing field with wildcard "
                               "should fail the schema validation.")
-       :query-params     {:query_mode    "query_string"
-                          :query         "*"
-                          :search_fields ["512b8dce-0423-4e9a-aa63-d3c3b91eb8d8"]}
-       :data-gen         bulk
-       :check            (fn [{:keys [out]}] (is (= 400 (-> out :status))))}])
+       :query-params {:query_mode "query_string"
+                      :query "*"
+                      :search_fields ["512b8dce-0423-4e9a-aa63-d3c3b91eb8d8"]}
+       :data-gen bulk
+       :check (fn [{:keys [out]}] (is (= 400 (-> out :status))))}])
 
    ;; Test `AND` (set two different fields that contain the same word in the same entity)
-   (let [bulk       (gen/fmap
-                     (fn [examples]
-                       (update
-                        examples :incidents
-                        (fn [incidents]
-                          (utils/update-items
-                           incidents
-                           ;; update only the first, leave the rest unchanged
-                           #(assoc % :discovery_method "Log Review"
-                                   :title "title of test incident")))))
-                     (bulk-gen-for :incidents))
+   (let [bulk (gen/fmap
+               (fn [examples]
+                 (update
+                  examples :incidents
+                  (fn [incidents]
+                    (utils/update-items
+                     incidents
+                     ;; update only the first, leave the rest unchanged
+                     #(assoc % :discovery_method "Log Review"
+                             :title "title of test incident")))))
+               (bulk-gen-for :incidents))
          get-fields (fn [out]
                       (->> out :parsed-body
                            (some #(and (-> % :discovery_method (= "Log Review"))
                                        (-> % :title (= "title of test incident"))))))]
      [{:test-description (str "Should NOT return anything, because query field is missing. "
                               "Asking for multiple things in the query, but not providing all the fields.")
-       :query-params     {:query_mode    "query_string"
-                          :query         "(title of test incident) AND (Log Review)"
-                          :search_fields ["title"]}
-       :data-gen         bulk
-       :check            (fn [{:keys [out]}] (is (nil? (get-fields out))))}
+       :query-params {:query_mode "query_string"
+                      :query "(title of test incident) AND (Log Review)"
+                      :search_fields ["title"]}
+       :data-gen bulk
+       :check (fn [{:keys [out]}] (is (nil? (get-fields out))))}
 
       {:test-description "Should return an entity where multiple fields match"
-       :query-params     {:query_mode    "query_string"
-                          :query         "\"title of test incident\" AND \"Log Review\""
-                          :search_fields ["title" "discovery_method"]}
-       :data-gen         bulk
-       :check            (fn [{:keys [out]}]
-                           (is (= 1 (-> out :parsed-body count)))
-                           (is (get-fields out)))}])
+       :query-params {:query_mode "query_string"
+                      :query "\"title of test incident\" AND \"Log Review\""
+                      :search_fields ["title" "discovery_method"]}
+       :data-gen bulk
+       :check (fn [{:keys [out]}]
+                (is (= 1 (-> out :parsed-body count)))
+                (is (get-fields out)))}])
 
    [{:test-description (str "multi_match - looking for the same value in "
                             "different fields in multiple records")
-     :query-params     {:query_mode    "multi_match"
-                        :query         "bibendum"
-                        :search_fields ["assignees" "title"]}
-     :data-gen         (gen/fmap
-                        (fn [examples]
-                          (update
-                           examples :incidents
-                           (fn [incidents]
-                             (apply
-                              utils/update-items incidents
-                              (repeat 3 ;; update first 3, leave the rest unchanged
-                                      #(assoc % :title "Etiam vel neque bibendum dignissim"
-                                              :assignees ["bibendum"]))))))
-                        (bulk-gen-for :incidents))
-     :check            (fn [{:keys [out]}]
-                         (let [matching (->> out
-                                             :parsed-body
-                                             (filter #(and (-> % :assignees (= ["bibendum"]))
-                                                           (-> % :title (= "Etiam vel neque bibendum dignissim")))))]
-                           (is (= 3 (count matching)))))}]
+     :query-params {:query_mode "multi_match"
+                    :query "bibendum"
+                    :search_fields ["assignees" "title"]}
+     :data-gen (gen/fmap
+                (fn [examples]
+                  (update
+                   examples :incidents
+                   (fn [incidents]
+                     (apply
+                      utils/update-items incidents
+                      (repeat 3 ;; update first 3, leave the rest unchanged
+                              #(assoc % :title "Etiam vel neque bibendum dignissim"
+                                      :assignees ["bibendum"]))))))
+                (bulk-gen-for :incidents))
+     :check (fn [{:keys [out]}]
+              (let [matching (->> out
+                                  :parsed-body
+                                  (filter #(and (-> % :assignees (= ["bibendum"]))
+                                                (-> % :title (= "Etiam vel neque bibendum dignissim")))))]
+                (is (= 3 (count matching)))))}]
 
    [{:test-description "searching for non-existing fields, returns errors"
-     :query-params     {:query         "*"
-                        :search_fields ["donec_retium_posuere_tellus"
-                                        "proin_neque_massa"]}
-     :data-gen         (bulk-gen-for :incidents)
-     :check            (fn [{:keys [out]}]
-                         (is (= 400 (:status out))))}
+     :query-params {:query "*"
+                    :search_fields ["donec_retium_posuere_tellus"
+                                    "proin_neque_massa"]}
+     :data-gen (bulk-gen-for :incidents)
+     :check (fn [{:keys [out]}]
+              (is (= 400 (:status out))))}
     {:test-description "searching for non-existing values, returns nothing"
-     :query-params     {:query "nullam tempus nulla posuere pellentesque dapibus suscipit ligula"}
-     :data-gen         (bulk-gen-for :incidents)
-     :check            (fn [{:keys [out]}]
-                         (is (-> out :parsed-body empty?)))}]
+     :query-params {:query "nullam tempus nulla posuere pellentesque dapibus suscipit ligula"}
+     :data-gen (bulk-gen-for :incidents)
+     :check (fn [{:keys [out]}]
+              (is (-> out :parsed-body empty?)))}]
    [(let [bulk (gen/fmap (fn [examples]
                            (update examples :assets
                                    (fn [incidents]
@@ -192,59 +192,59 @@
                          (bulk-gen-for :assets))]
       {:test-description (str "searching within fields that don't contain the "
                               "pattern, shall not return any results")
-       :query-params     {:query         "first Ipsum"
-                          :search_fields ["description"]}
-       :data-gen         bulk
-       :check            (fn [{:keys [out]}] (is (-> out :parsed-body empty?)))}
+       :query-params {:query "first Ipsum"
+                      :search_fields ["description"]}
+       :data-gen bulk
+       :check (fn [{:keys [out]}] (is (-> out :parsed-body empty?)))}
 
       {:test-description "searching in default fields that contain the pattern, yields results"
-       :query-params     {:query "\"first\" \"Ipsum\""}
-       :data-gen         bulk
-       :check            (fn [{:keys [out]}]
-                           (let [res (-> out :parsed-body)]
-                             (is (= 1 (count res)))
-                             (is "first incident" (-> res first :short_description))
-                             (is "Lorem Ipsum Test Incident" (-> res first :title))))}
+       :query-params {:query "\"first\" \"Ipsum\""}
+       :data-gen bulk
+       :check (fn [{:keys [out]}]
+                (let [res (-> out :parsed-body)]
+                  (is (= 1 (count res)))
+                  (is "first incident" (-> res first :short_description))
+                  (is "Lorem Ipsum Test Incident" (-> res first :title))))}
       {:test-description (str "searching in non-default search fields that "
                               "contain the pattern, shall not return any results")
-       :query-params     {:query "white"}
-       :data-gen         bulk
-       :check            (fn [{:keys [out]}] (is (-> out :parsed-body empty?)))}
+       :query-params {:query "white"}
+       :data-gen bulk
+       :check (fn [{:keys [out]}] (is (-> out :parsed-body empty?)))}
 
       {:test-description "searching in a nested default field, yields results"
-       :query-params     {:query "\"lacinia purus\""}
-       :data-gen         (gen/fmap (fn [examples]
-                                     (update examples :sightings
-                                             (fn [sightings]
-                                               (apply utils/update-items sightings
-                                                      [;; update only the first record, leave the rest unchanged
-                                                       #(assoc-in % [:observables 0 :value] "lacinia purus")]))))
-                                   (bulk-gen-for :sightings))
-       :check            (fn [{:keys [out]}]
-                           (let [res (-> out :parsed-body)]
-                             (is (= 1 (count res)))
-                             (is (-> res first :observables first :value (= "lacinia purus")))))})]
+       :query-params {:query "\"lacinia purus\""}
+       :data-gen (gen/fmap (fn [examples]
+                             (update examples :sightings
+                                     (fn [sightings]
+                                       (apply utils/update-items sightings
+                                              [;; update only the first record, leave the rest unchanged
+                                               #(assoc-in % [:observables 0 :value] "lacinia purus")]))))
+                           (bulk-gen-for :sightings))
+       :check (fn [{:keys [out]}]
+                (let [res (-> out :parsed-body)]
+                  (is (= 1 (count res)))
+                  (is (-> res first :observables first :value (= "lacinia purus")))))})]
 
    [{:test-description (str "split_on_whitespace deprecated in ES6, "
                             "query expected to work differently in 5 and 7")
-     :query-params     {:query "the intrusion event 3\\:19187\\:7 incident"}
-     :data-gen         (gen/fmap (fn [examples]
-                                   (update examples :incidents
-                                           (fn [entities]
-                                             (apply utils/update-items entities
-                                                    [;; update only the first record, leave the rest unchanged
-                                                     #(assoc % :title "Intrusion event 3:19187:7 incident"
-                                                             :source "ngfw_ips_event_service")]))))
-                                 (bulk-gen-for :incidents))
-     :check            (fn [{:keys [in out es-version]}]
-                         (let [res (-> out :parsed-body)]
-                           (case es-version
-                             5 (is (zero? (count res)))
+     :query-params {:query "the intrusion event 3\\:19187\\:7 incident"}
+     :data-gen (gen/fmap (fn [examples]
+                           (update examples :incidents
+                                   (fn [entities]
+                                     (apply utils/update-items entities
+                                            [;; update only the first record, leave the rest unchanged
+                                             #(assoc % :title "Intrusion event 3:19187:7 incident"
+                                                     :source "ngfw_ips_event_service")]))))
+                         (bulk-gen-for :incidents))
+     :check (fn [{:keys [in out es-version]}]
+              (let [res (-> out :parsed-body)]
+                (case es-version
+                  5 (is (zero? (count res)))
 
-                             7 (do
-                                 (is (seq res))
-                                 (is (= (-> res first (dissoc :id :groups :owner))
-                                        (-> in first (dissoc :id :groups :owner))))))))}]))
+                  7 (do
+                      (is (seq res))
+                      (is (= (-> res first (dissoc :id :groups :owner))
+                             (-> in first (dissoc :id :groups :owner))))))))}]))
 
 (defn test-search-case
   [app test-case & {:keys [es-version]}]
