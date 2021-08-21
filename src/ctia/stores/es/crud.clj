@@ -448,6 +448,13 @@ It returns the documents with full hits meta data including the real index in wh
                                            ident
                                            get-in-config))))))
 
+(defn set-in-analyzer
+  [query-mode]
+  (cond-> {}
+    (contains? #{:query_string :simple_query_string} query-mode)
+    (assoc :analyzer :search_analyzer
+           :quote_analyzer :standard)))
+
 (s/defn make-search-query :- {s/Keyword s/Any}
   "Translate SearchQuery map into ES Query DSL map"
   [{{:keys [default_operator]}               :props
@@ -469,7 +476,8 @@ It returns the documents with full hits meta data including the real index in wh
                         {es-query-mode
                          (merge
                           (dissoc full-text :query_mode)
-                          def-operator)})]
+                          def-operator
+                          (set-in-analyzer es-query-mode))})]
     {:bool
      {:filter
       (cond-> [(find-restriction-query-part ident get-in-config)]
