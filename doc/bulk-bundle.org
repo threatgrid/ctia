@@ -165,7 +165,7 @@ Which returns
 #+end_src
 
 
-** export
+** Export
 Bulk Export enables us to retrieve many entities.
 
 Bulk Export Params
@@ -339,10 +339,83 @@ Returns:
 }
 #+end_src
 
-** Delete
+** DELETE / PATCH / UPDATE
 
-A Bulk Delete takes a BulkRefs like the Bulk Export but returns a BulkDeleteRes with more specific errors.
+- A Bulk Delete takes a BulkRefs like the Bulk Export.
+#+begin_src clojure
+(s/defschema BulkRefs
+   (st/optional-keys
+    {:actors           [Reference]
+     :assets           [Reference]
+     :asset_mappings   [Reference]
+     :asset_properties [Reference]
+     :attack_patterns  [Reference]
+     :campaigns        [Reference]
+     :coas             [Reference]
+     :feedbacks        [Reference]
+     :incidents        [Reference]
+     :indicators       [Reference]
+     :investigations   [Reference]
+     :judgements       [Reference]
+     :malwares         [Reference]
+     :relationships    [Reference]
+     :casebooks        [Reference]
+     :sightings        [Reference]
+     :target_records   [Reference]
+     :tools            [Reference]
+     :vulnerabilities  [Reference]
+     :weaknesses       [Reference]}))
+#+end_src
+- A Bulk Update performs a full update of the document and thus takes a new entity schema, the id is used to find the entity:
+#+begin_src  clojure
+(s/defschema UpdateBulk
+   (st/optional-keys
+    {:actors           [Actor]
+     :assets           [Asset]
+     :asset_mappings   [AssetMappings]
+     :asset_properties [AssetProperties]
+     :attack_patterns  [AttackPattern]
+     :campaigns        [Campaing]
+     :coas             [COA]
+     :incidents        [Incident]
+     :indicators       [Indicator]
+     :investigations   [Investigation]
+     :judgements       [Judgment]
+     :malwares         [Malware]
+     :relationships    [Relationship]
+     :casebooks        [Casebook]
+     :sightings        [Sighting]
+     :target_records   [TargetRecord]
+     :tools            [Tool]
+     :vulnerabilities  [Vulnerability]
+     :weaknesses       [Weakness]})
+ #+end_src
+- A Bulk Patch performs a partial update of submitted entities and thus accepts partial documents with there ids, the id is mandatory to find the entity:
+#+begin_src  clojure
+(s/defschema PatchBulk
+   (st/optional-keys
+    {:actors           [PartialActor]
+     :assets           [PartialAsset]
+     :asset_mappings   [PartialAssetMappings]
+     :asset_properties [PartialAssetProperties]
+     :attack_patterns  [PartialAttackPattern]
+     :campaigns        [PartialCampaing]
+     :coas             [PartialCOA]
+     :incidents        [PartialIncident]
+     :indicators       [PartialIndicator]
+     :investigations   [PartialInvestigation]
+     :judgements       [PartialJudgment]
+     :malwares         [PartialMalware]
+     :relationships    [PartialRelationship]
+     :casebooks        [PartialCasebook]
+     :sightings        [PartialSighting]
+     :target_records   [PartialTargetRecord]
+     :tools            [PartialTool]
+     :vulnerabilities  [PartialVulnerability]
+     :weaknesses       [PartialWeakness]})
+#+end_src
 
+The Result schema is common
 #+begin_src clojure
 (s/defschema BulkErrors
   (st/optional-keys
@@ -354,9 +427,10 @@ A Bulk Delete takes a BulkRefs like the Bulk Export but returns a BulkDeleteRes 
   (st/optional-keys
    {:deleted [Reference]
     :updated [Reference]
+    :patched [Reference]
     :errors BulkErrors}))
 
-(s/defschema BulkDeleteRes
+(s/defschema BulkDeleteUpdatenRes
    (st/optional-keys
     {:actors           BulkAction
      :assets           BulkAction
@@ -379,7 +453,7 @@ A Bulk Delete takes a BulkRefs like the Bulk Export but returns a BulkDeleteRes 
      :weaknesses       BulkAction}))
 #+end_src
 
-Example:
+*** DELETE Example:
 
 #+begin_src HTTP
 DELETE /ctia/bulk HTTP/1.1
@@ -422,6 +496,129 @@ Returns
   }
 }
 #+end_src
+
+*** UPDATE Example:
+
+#+begin_src HTTP
+PUT /ctia/bulk HTTP/1.1
+Host: localhost:3000
+Authorization: "Bearer ..."
+accept: application/json
+
+{
+  "incidents": [
+    {
+      "id": "http://localhost:3000/ctia/incident/incident-36c956ee-fde8-4e84-8396-7be9201a9c55",
+      "title": "CLOSED 2020-06-15-0334-emotet-botnet-report",
+      "description": "## Summary:\n\nOn Monday, June 15th at 3:34am GMT, a host (UUID #dc0415fe-af42-11ea-b3de-0242ac130004) on VLAN 414 established contact with a known Emotet Epoch 2 Command and Control server, triggering an event alarm..",
+      "assignees": [
+        "saintx"
+      ],
+      "source": "Modeling Incidents in CTIM Tutorial",
+      "external_ids": [
+        "ctim-tutorial-incident-c56de1c94c1ce862c4e6d9883393aacc58275c0c4dc4d8b48cc4db692bf11e4f"
+      ],
+      "short_description": "Incident Report: 2020-06-15 3:34am (Emotet Botnet Attack)",
+      "incident_time": {
+        "opened": "2020-06-15T03:43:27.368Z",
+        "reported": "2020-06-15T03:34:36.298Z",
+        "closed": "2020-07-15T03:34:36.298Z"
+      },
+      "discovery_method": "NIDS",
+      "source_uri": "https://github.com/threatgrid/ctim/blob/master/src/doc/tutorials/modeling-incidents-in-ctim.md",
+      "categories": [
+        "Malicious Code"
+      ],
+      "status": "Containment Achieved",
+      "confidence": "High"
+    }
+  ],
+  "sightings": [
+    {
+      "id": "http://localhost:3000/ctia/sighting/sighting-68cb80d5-826e-4b5c-9b9b-cddc5fb1ce27",
+      "observables": [
+        {
+          "type": "ip",
+          "value": "98.15.140.226"
+        }
+      ],
+      "source": "Modeling Incidents in CTIM Tutorial",
+      "external_ids": [
+        "ctim-tutorial-sighting-7b36e0fa2169a3ca330c7790f63c97fd3c9f482f88ee1b350511d8a51fcecc8d"
+      ],
+      "source_uri": "https://github.com/threatgrid/ctim/blob/master/src/doc/tutorials/modeling-incidents-in-ctim.md",
+      "count": 1,
+      "severity": "High",
+      "tlp": "green",
+      "confidence": "High",
+      "observed_time": {
+        "start_time": "2020-06-15T03:34:36.298Z"
+      }
+    }
+  ]
+}
+#+end_src
+
+Returns
+#+begin_src javascript
+{
+  "incidents": {
+    "updated": [
+      "http://localhost:3000/ctia/incident/incident-36c956ee-fde8-4e84-8396-7be9201a9c55"
+    ]
+  },
+  "sightings": {
+    "updated": [
+      "http://localhost:3000/ctia/sighting/sighting-68cb80d5-826e-4b5c-9b9b-cddc5fb1ce27"
+    ]
+  }
+}
+#+end_src
+
+*** PATCH Example:
+
+#+begin_src HTTP
+PATCH /ctia/bulk HTTP/1.1
+Host: localhost:3000
+Authorization: "Bearer ..."
+accept: application/json
+
+{
+  "incidents": [
+    {
+      "id": "http://localhost:3000/ctia/incident/incident-36c956ee-fde8-4e84-8396-7be9201a9c55",
+      "title": "ASSIGNED 2020-06-15-0334-emotet-botnet-report",
+      "assignees": ["gereteo"]}]
+    }
+  ],
+  "sightings": [
+    {
+      "id": "http://localhost:3000/ctia/sighting/sighting-68cb80d5-826e-4b5c-9b9b-cddc5fb1ce27",
+      "observed_time": {
+        "end_time": "2021-06-15T03:34:36.298Z"
+      }
+    }
+  ]
+}
+#+end_src
+
+Returns
+#+begin_src javascript
+{
+  "incidents": {
+    "patched": [
+      "http://localhost:3000/ctia/incident/incident-36c956ee-fde8-4e84-8396-7be9201a9c55"
+    ]
+  },
+  "sightings": {
+    "patched": [
+      "http://localhost:3000/ctia/sighting/sighting-68cb80d5-826e-4b5c-9b9b-cddc5fb1ce27"
+    ]
+  }
+}
+#+end_src
+
+*** Errors
 
 Errors are handled per entities. If an entitiy is not visible to a user or does not exist, its id will be indicated as not found. If the user can read the entity but not delete it (ex: tlp green and max-record-visibility set to "everyone"), its id will be indicated as not found.
 The example below shows a response with a mix of not-found, forbidden and deleted entities:
