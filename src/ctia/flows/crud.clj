@@ -250,6 +250,7 @@
                                (create-event-fn entity prev-entity event-id login)
                                (create-event-fn entity event-id login))
                              (catch Throwable e
+                               (.printStackTrace e)
                                (log/error "Could not create event" e)
                                (throw (ex-info "Could not create event"
                                                {:flow-type flow-type
@@ -313,21 +314,22 @@
     fm))
 
 (s/defn apply-delete-store-fn
+  [{:keys [store-fn entities] :as fm} :- FlowMap]
+  (assoc fm
+         :entities
+         (store-fn entities)))
+
+(s/defn apply-update-store-fn
   [{:keys [entity-ids store-fn] :as fm} :- FlowMap]
   (let [results (store-fn entity-ids)]
     (assoc fm :results results)))
 
 (s/defn ^:private apply-store-fn :- FlowMap
-  [{:keys [entities flow-type store-fn] :as fm} :- FlowMap]
+  [{:keys [flow-type] :as fm} :- FlowMap]
   (case flow-type
     :create (apply-create-store-fn fm)
     :delete (apply-delete-store-fn fm)
-    :update
-    (assoc fm
-           :entities
-           (doall
-            (for [entity entities]
-              (store-fn entity))))))
+    :update (apply-update-store-fn fm)))
 
 (defn short-to-long-ids-map
   "Builds a mapping table between short and long IDs"
@@ -496,13 +498,20 @@
              get-fn
              realize-fn
              update-fn
-             entity-id
              identity
              patch-operation
-             partial-entity
+             partial-entities
              long-id-fn
              spec]}]
-  (let [prev-entity (get-fn entity-id)]
+  (let [partial-entity (first partial-entities)
+        entity-ids (map :id partial-entities)
+        prev-entities (get-fn entity-ids)
+        prev-entity (first prev-entities)
+        patch-fn (fn [patches] (update-fn patches))]
+    (println "partial-entity " partial-entity)
+    (println "entity-ids " entity-ids)
+    (println "prev-entities " prev-entities)
+    (println "prev-entity " prev-entity)
     (when prev-entity
       (-> {:flow-type :update
            :entity-type entity-type
@@ -515,7 +524,7 @@
            :long-id-fn long-id-fn
            :realize-fn realize-fn
            :spec spec
-           :store-fn update-fn
+           :store-fn patch-fn
            :create-event-fn to-update-event}
           patch-entities
           validate-entities

@@ -1,14 +1,15 @@
 (ns ctia.flows.crud-test
   (:require [clj-momo.lib.map :refer [deep-merge-with]]
-            [java-time :as jt]
-            [ctim.examples.sightings :refer [sighting-minimal]]
-            [clojure.test :refer [deftest testing is]]
-            [ctia.store :refer [query-string-search]]
+            [clojure.test :refer [deftest is testing]]
             [ctia.auth.threatgrid :refer [map->Identity]]
-            [ctia.test-helpers.core :as helpers]
-            [puppetlabs.trapperkeeper.app :as app]
+            [ctia.entity.sighting.schemas :as ss]
             [ctia.flows.crud :as flows.crud]
-            [ctia.lib.collection :as coll]))
+            [ctia.lib.collection :as coll]
+            [ctia.store :refer [query-string-search]]
+            [ctia.test-helpers.core :as helpers]
+            [ctim.examples.sightings :refer [sighting-minimal]]
+            [java-time :as jt]
+            [puppetlabs.trapperkeeper.app :as app]))
 
 (deftest deep-merge-with-add-colls-test
   (let [fixture {:foo {:bar ["one" "two" "three"]
@@ -129,10 +130,15 @@
                       (:flow-type flow-map)))))))
 
 (defn search-events
-  [event-store ident timestamp entity-id]
+  [event-store
+   ident
+   timestamp
+   event-type
+   entity-id]
   (:data (query-string-search
           event-store
-          {:filter-map {:entity.id entity-id}
+          {:filter-map {:entity.id entity-id
+                        :event_type event-type}
            :range {:timestamp {:gte timestamp}}}
           ident
           {})))
@@ -143,6 +149,81 @@
          :id (str "sighting-" n)
          :tlp "green"
          :groups [(str "groups" n)]))
+
+(deftest patch-flow-test
+  (helpers/with-properties
+    ["ctia.store.es.event.refresh" "true"] ;; force refresh for events created in flow
+    (helpers/fixture-ctia-with-app
+     (fn [app]
+       (let [services (app/service-graph app)
+             store (atom {"sighting-1" (mk-sighting 1)
+                          "sighting-2" (mk-sighting 2)
+                          "sighting-3" (mk-sighting 3)
+                          "sighting-4" (mk-sighting 4)})
+             ident {:login "login"
+                    :groups ["group1"]}
+             event-store (helpers/get-store app :event)
+             get-fn (fn [ids] (vals (select-keys @store ids)))
+
+             patch-fn (fn [patches]
+                        (mapv
+                         (fn [{:keys [id] :as patch}]
+                           (println "patch-fn " patch)
+                           (let [[_old new]
+                                 (swap-vals!
+                                  store
+                                  (fn [s]
+                                    (println "swap value for " id)
+                                    (clojure.pprint/pprint (get s id))
+                                    (when (contains? s id)
+                                      (assoc s id patch))))]
+                             (get new id)))
+                         patches))
+
+             patch-flow (fn [msg expected]
+                           (testing msg
+                             (println "=========")
+                             (let [now (jt/instant)
+                                   entity-ids (seq (keys expected))
+                                   patches (map (fn [id]
+                                                  {:id id
+                                                   :source "patched"})
+                                                 entity-ids)
+                                   res
+                                   (flows.crud/patch-flow
+                                    :entity-type :sighting
+                                    :partial-entities patches
+                                    :get-fn get-fn
+                                    :realize-fn  ss/realize-sighting
+                                    :update-fn patch-fn
+                                    :patch-operation :replace
+                                    :long-id-fn identity
+                                    :services services
+                                    :spec :new-sighting/map
+                                    :get-success-entities :entities
+                                    :identity (map->Identity ident))]
+                               (doseq [[id patched?] expected]
+                                 (is (= patched?
+                                        (= "patched"
+                                           (:source (get @store id))))
+                                     (format "the expected patch result for %s is %s (%s)" id patched? (pr-str (get @store id))))
+                                 (is (= patched?
+                                        (->> (search-events
+                                              event-store
+                                              ident
+                                              now
+                                              :record-updated
+                                              id)
+                                             first
+                                             some?))
+                                     (format "The expected creation event for %s should be %s" id patched?))))))]
+
+         (patch-flow
+          "patch-flow patches existing entities and create events accordingly"
+          {"sighting-1" true "sighting-2" true})
+         (patch-flow "patches flow patches entities and creates events only for existing entities when some are not found"
+                      {"sighting-3" true "missing1" false "missing2" false})
+         )))))
 
 (deftest delete-flow-test
   (helpers/with-properties
@@ -184,6 +265,7 @@
                                                          (map #(->> (search-events event-store
                                                                                    ident
                                                                                    now
+                                                                                   :record-deleted
                                                                                    %)
                                                                     first
                                                                     some?
