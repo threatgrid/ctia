@@ -38,7 +38,8 @@
    (s/optional-key :get-success-entities)  (s/pred fn?)
    (s/optional-key :long-id-fn)           (s/maybe (s/=> s/Any s/Any))
    (s/optional-key :prev-entity)          (s/maybe {s/Keyword s/Any})
-   (s/optional-key :partial-entity)       (s/maybe {s/Keyword s/Any})
+   (s/optional-key :prev-entites)         [(s/maybe {s/Keyword s/Any})]
+   (s/optional-key :partial-entities)     [(s/maybe {s/Keyword s/Any})]
    (s/optional-key :patch-operation)      (s/enum :add :remove :replace)
    (s/optional-key :realize-fn)           RealizeFn
    (s/optional-key :results)              s/Any
@@ -48,12 +49,13 @@
    (s/optional-key :entity-ids)           [s/Str]
    :store-fn                              (s/=> s/Any s/Any)})
 
-(defn- find-id
+(defn- find-prev-entity-id
   "Lookup an ID in a given entity.  Parse it, because it might be a
    URL, and return the short form ID.  Returns nil if the ID could not
    be found."
-  [{id :id}]
-  (when (seq id)
+  [{id :id}
+   prev-entities]
+  (when (and (seq id) (get prev-entities id))
     (id/str->short-id id)))
 
 (s/defn ^:private find-checked-id
@@ -84,10 +86,11 @@
 
 (s/defn ^:private find-entity-id :- s/Str
   [{identity-obj :identity
-    :keys [entity-type prev-entity tempids]} :- FlowMap
+    :keys [entity-type prev-entities tempids]} :- FlowMap
    entity :- {s/Keyword s/Any}
    services :- HTTPShowServices]
-  (or (find-id prev-entity)
+  (println "find-entity-id " entity)
+  (or (find-prev-entity-id entity prev-entities)
       (get tempids (:id entity))
       (when-let [entity-id (find-checked-id entity services)]
         (when-not (auth/capable? identity-obj :specify-id)
@@ -102,7 +105,7 @@
 
 (defn- check-spec [entity spec]
   (if (and spec
-           (not (cs/valid? spec entity)))
+           (not (cs/valid? spec (dissoc entity :id))))
     {:msg (cs/explain-str spec entity)
      :error "Entity validation Error"
      :type :spec-validation-error
@@ -128,8 +131,9 @@
   (assoc fm :entities
          (map (fn [entity]
                 (-> entity
-                     (check-spec spec)
-                     (tlp-check get-in-config))) entities)))
+                    (check-spec spec)
+                    (tlp-check get-in-config)))
+              entities)))
 
 (s/defn ^:private create-ids-from-transient :- FlowMap
   "Creates IDs for entities identified by transient IDs that have not
@@ -151,7 +155,7 @@
            identity
            services
            tempids
-           prev-entity] :as fm} :- FlowMap]
+           prev-entities] :as fm} :- FlowMap]
   (let [login (auth/login identity)
         groups (auth/groups identity)
         realize-fn (lift-realize-fn-with-context
@@ -162,7 +166,9 @@
            :entities
            (doall
             (for [entity entities
-                  :let [entity-id (find-entity-id fm entity services)]]
+                  :let [entity-id (find-entity-id fm entity services)
+                        _ (println "realize entity-id " entity-id)
+                        prev-entity (get prev-entities entity-id)]]
               (cond
                 (:error entity) entity
                 (:error entity-id) entity-id
@@ -226,6 +232,10 @@
                                :delete :after-delete)
                   :read-only? true}))
   fm)
+;; TODO for vs doseq
+;; why apply-before-hooks returns the result of the for
+;; while apply-after-hooks returns the fm as it is?
+
 
 (defn default-success-entities
   [fm]
@@ -235,7 +245,7 @@
   [{:keys [create-event-fn
            flow-type
            identity
-           prev-entity
+           prev-entities
            get-success-entities]
     :or {get-success-entities default-success-entities}
     {{:keys [get-in-config]} :ConfigService}
@@ -244,7 +254,10 @@
   (if (get-in-config [:ctia :events :enabled])
     (let [login (auth/login identity)
           create-event (fn [entity]
-                         (let [event-id (make-id "event")]
+                         (let [event-id (make-id "event")
+                               prev-entity (some->> entity
+                                                    :id
+                                                    (get prev-entities))]
                            (try
                              (if (= flow-type :update)
                                (create-event-fn entity prev-entity event-id login)
@@ -314,15 +327,15 @@
     fm))
 
 (s/defn apply-delete-store-fn
+  [{:keys [entity-ids store-fn] :as fm} :- FlowMap]
+  (let [results (store-fn entity-ids)]
+    (assoc fm :results results)))
+
+(s/defn apply-update-store-fn
   [{:keys [store-fn entities] :as fm} :- FlowMap]
   (assoc fm
          :entities
          (store-fn entities)))
-
-(s/defn apply-update-store-fn
-  [{:keys [entity-ids store-fn] :as fm} :- FlowMap]
-  (let [results (store-fn entity-ids)]
-    (assoc fm :results results)))
 
 (s/defn ^:private apply-store-fn :- FlowMap
   [{:keys [flow-type] :as fm} :- FlowMap]
@@ -384,23 +397,33 @@
     :delete results
     :update (first entities)))
 
+
+(defn patch-entity
+  [patch-fn prev-entity partial-entity]
+  (when prev-entity
+    (-> (deep-merge-with patch-fn
+                         prev-entity
+                         (dissoc partial-entity :id))
+        un-store
+        (dissoc :schema_version))))
+
 (s/defn patch-entities :- FlowMap
-  [{:keys [prev-entity
-           partial-entity
+  [{:keys [prev-entities
+           partial-entities
            patch-operation]
     :as fm} :- FlowMap]
-
   (let [patch-fn (case patch-operation
                    :add coll/add-colls
                    :remove coll/remove-colls
                    :replace coll/replace-colls
                    coll/replace-colls)
-        entity (-> (deep-merge-with patch-fn
-                                    prev-entity
-                                    partial-entity)
-                   un-store
-                   (dissoc :id :schema_version))]
-    (assoc fm :entities [entity])))
+        entities (for [partial-entity partial-entities
+                       :let [prev-entity (some->> partial-entity
+                                                  :id
+                                                  (get prev-entities))]
+                       :when (some? prev-entity)]
+                   (patch-entity patch-fn prev-entity partial-entity))]
+    (assoc fm :entities entities)))
 
 (defn create-flow
   "This function centralizes the create workflow.
@@ -503,41 +526,39 @@
              partial-entities
              long-id-fn
              spec]}]
-  (let [partial-entity (first partial-entities)
-        entity-ids (map :id partial-entities)
-        prev-entities (get-fn entity-ids)
-        prev-entity (first prev-entities)
+  (let [entity-ids (map :id partial-entities)
+        prev-entities (into {}
+                            (map (fn [e] [(:id e) e]))
+                            (get-fn entity-ids))
         patch-fn (fn [patches] (update-fn patches))]
-    (println "partial-entity " partial-entity)
     (println "entity-ids " entity-ids)
-    (println "prev-entities " prev-entities)
-    (println "prev-entity " prev-entity)
-    (when prev-entity
-      (-> {:flow-type :update
-           :entity-type entity-type
-           :entities []
-           :services services
-           :prev-entity prev-entity
-           :partial-entity partial-entity
-           :patch-operation patch-operation
-           :identity identity
-           :long-id-fn long-id-fn
-           :realize-fn realize-fn
-           :spec spec
-           :store-fn patch-fn
-           :create-event-fn to-update-event}
-          patch-entities
-          validate-entities
-          realize-entities
-          throw-validation-error
-          apply-before-hooks
-          apply-store-fn
-          apply-long-id-fn
-          create-events
-          write-events
-          apply-event-hooks
-          apply-after-hooks
-          make-result))))
+    (println "prev-entities =>")
+    (clojure.pprint/pprint prev-entities)
+    (-> {:flow-type :update
+         :entity-type entity-type
+         :entities []
+         :services services
+         :prev-entities prev-entities
+         :partial-entities partial-entities
+         :patch-operation patch-operation
+         :identity identity
+         :long-id-fn long-id-fn
+         :realize-fn realize-fn
+         :spec spec
+         :store-fn patch-fn
+         :create-event-fn to-update-event}
+        patch-entities
+        validate-entities
+        realize-entities
+        throw-validation-error
+        apply-before-hooks
+        apply-store-fn
+        apply-long-id-fn
+        create-events
+        write-events
+        apply-event-hooks
+        apply-after-hooks
+        make-result)))
 
 (defn delete-flow
   "This function centralize the deletion workflow.
