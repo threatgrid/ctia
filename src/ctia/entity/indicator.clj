@@ -139,22 +139,6 @@
 (s/defschema IndicatorsByExternalIdQueryParams
   IndicatorsListQueryParams)
 
-(def searchable-fields
-  #{:id
-    :source
-    :confidence
-    :description
-    :indicator_type
-    :kill_chain_phases.kill_chain_name
-    :kill_chain_phases.phase_name
-    :likely_impact
-    :producer
-    :severity
-    :short_description
-    :tags
-    :test_mechanisms
-    :title})
-
 (s/defn indicator-routes [services :- APIHandlerServices]
   (services->entity-crud-routes
    services
@@ -177,8 +161,7 @@
     :external-id-capabilities :read-indicator
     :can-aggregate?           true
     :histogram-fields         indicator-histogram-fields
-    :enumerable-fields        indicator-enumerable-fields
-    :searchable-fields        searchable-fields}))
+    :enumerable-fields        indicator-enumerable-fields}))
 
 (def capabilities
   #{:read-indicator

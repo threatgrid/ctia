@@ -100,14 +100,6 @@
               asset_ref (:id entity))))
     (assoc entity :asset_ref asset_ref)))
 
-(def searchable-fields
-  #{:id
-    :source
-    :asset_type
-    :description
-    :short_description
-    :title})
-
 (s/defn asset-routes [services :- APIHandlerServices]
   (services->entity-crud-routes
    services
@@ -130,8 +122,7 @@
     :external-id-capabilities :read-asset
     :can-aggregate?           true
     :histogram-fields         asset-histogram-fields
-    :enumerable-fields        asset-enumerable-fields
-    :searchable-fields        searchable-fields}))
+    :enumerable-fields        asset-enumerable-fields}))
 
 (def capabilities
   #{:create-asset

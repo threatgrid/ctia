@@ -106,23 +106,6 @@
    :valid_time.start_time
    :valid_time.end_time])
 
-(def searchable-fields
-  #{:id
-    :source
-    :actor_type
-    :confidence
-    :description
-    :identity.description
-    :identity.related_identities.identity
-    :identity.related_identities.information_source
-    :identity.related_identities.relationship
-    :intended_effect
-    :motivation
-    :planning_and_operational_support
-    :short_description
-    :sophistication
-    :title})
-
 (s/defn actor-routes [services :- APIHandlerServices]
   (services->entity-crud-routes
    services
@@ -145,8 +128,7 @@
     :external-id-capabilities :read-actor
     :can-aggregate?           true
     :histogram-fields         actor-histogram-fields
-    :enumerable-fields        actor-enumerable-fields
-    :searchable-fields        searchable-fields}))
+    :enumerable-fields        actor-enumerable-fields}))
 
 (def capabilities
   #{:create-actor

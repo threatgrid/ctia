@@ -193,29 +193,3 @@
                       {:missing-keys missing-keys
                        :res res})))
     res))
-
-(s/defn contains-key? :- s/Bool
-  "Returns true if schema contains key at the given path.
-   Example:
-    (contains-key? Sighting [:sensor_coordinates :observables :type]) => true"
-  [schema :- (s/protocol s/Schema)
-   path :- [s/Keyword]]
-  (let [any-schema? (fn [s]
-                      (and (map? s)
-                           (instance? schema.core.AnythingSchema (ffirst s))))
-        full-path   (reduce
-                     (fn [track n]
-                       (let [cur (st/get-in schema track)]
-                         (cond
-                           (any-schema? cur) track ;; if {Any _} - don't go deeper
-                           (map? cur)        (conj track n)
-                           (vector? cur)     (conj track 0 n)
-
-                           :else track)))
-                     []
-                     path)
-        val (st/get-in schema full-path)]
-    (or (any-schema? val)
-        (and (some? val)
-             (= (count (remove number? full-path))
-                (count path))))))
