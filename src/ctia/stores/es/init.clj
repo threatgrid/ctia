@@ -125,15 +125,16 @@
      update-settings? :update-settings}
     :props
     :as conn-state}]
-  (when update-mappings?
-    (update-mappings! conn-state)
-    ;; template update must be after update-mapping
-    ;; if it fails a System/exit is triggered because
-    ;; this means that the mapping in invalid and thus
-    ;; must not be propagated to the template that would accept it
-    (upsert-template! conn-state))
-  (when update-settings?
-    (update-settings! conn-state)))
+  (let [conn-state (assoc-in conn-state [:config :settings :index :search :slowlog :threshold :query :debug] "0s")]
+   (when update-mappings?
+     (update-mappings! conn-state)
+     ;; template update must be after update-mapping
+     ;; if it fails a System/exit is triggered because
+     ;; this means that the mapping in invalid and thus
+     ;; must not be propagated to the template that would accept it
+     (upsert-template! conn-state))
+   (when update-settings?
+     (update-settings! conn-state))))
 
 (s/defn init-es-conn! :- ESConnState
   "initiate an ES Store connection,
@@ -142,7 +143,8 @@
    services :- ESConnServices]
   (let [{:keys [conn index props config] :as conn-state}
         (init-store-conn properties services)
-        existing-indices (get-existing-indices conn index)]
+        existing-indices (get-existing-indices conn index)
+        conn-state (assoc-in conn-state [:config :settings :index :search :slowlog :threshold :query :debug] "0s")]
     (if (seq existing-indices)
       (update-index-state conn-state)
       (upsert-template! conn-state))

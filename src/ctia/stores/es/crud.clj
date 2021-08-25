@@ -467,7 +467,7 @@ It returns the documents with full hits meta data including the real index in wh
                         {:range range})
         filter-terms  (-> (ensure-document-id-in-map filter-map)
                           q/prepare-terms)
-        es-query-mode (get full-text :query_mode :query_string) ;; if no :query-mode passed, use :query_string mode
+        es-query-mode :multi_match ;; if no :query-mode passed, use :multi_match mode
         def-operator  (when (and default_operator
                                 ;; some query modes in ES don't support default_operator, e.g. :multi_match
                                 (contains? #{:simple_query_string :query_string} es-query-mode))
@@ -477,7 +477,7 @@ It returns the documents with full hits meta data including the real index in wh
                          (merge
                           (dissoc full-text :query_mode)
                           def-operator
-                          (set-in-analyzer es-query-mode))})]
+                          #_(set-in-analyzer es-query-mode))})]
     {:bool
      {:filter
       (cond-> [(find-restriction-query-part ident get-in-config)]
