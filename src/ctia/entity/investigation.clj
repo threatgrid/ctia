@@ -73,19 +73,6 @@
 (def investigation-histogram-fields
   [:timestamp])
 
-(def searchable-fields
-  #{:id
-    :source
-    :description
-    :investigated_observables
-    :object_ids
-    :short_description
-    :targets.observables.type
-    :targets.observables.value
-    :targets.os
-    :targets.type
-    :title})
-
 (s/defn investigation-routes [services :- APIHandlerServices]
   (services->entity-crud-routes
    services
@@ -108,8 +95,7 @@
     :external-id-capabilities :read-investigation
     :can-aggregate?           true
     :histogram-fields         investigation-histogram-fields
-    :enumerable-fields        investigation-enumerable-fields
-    :searchable-fields        searchable-fields}))
+    :enumerable-fields        investigation-enumerable-fields}))
 
 (def capabilities
   #{:read-investigation

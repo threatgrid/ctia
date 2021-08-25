@@ -119,42 +119,30 @@
 
 (def asset-mapping-can-revoke? true)
 
-(def searchable-fields
-  #{:id
-    :source
-    :asset_ref
-    :asset_type
-    :confidence
-    :observable.type
-    :observable.value
-    :specificity
-    :stability})
-
 (s/defn asset-mapping-routes [services :- APIHandlerServices]
   (services->entity-crud-routes
-   services
-   {:entity                   :asset-mapping
-    :new-schema               NewAssetMapping
-    :entity-schema            AssetMapping
-    :get-schema               PartialAssetMapping
-    :get-params               AssetMappingGetParams
-    :list-schema              PartialAssetMappingList
-    :search-schema            PartialAssetMappingList
-    :external-id-q-params     AssetMappingByExternalIdQueryParams
-    :search-q-params          AssetMappingSearchParams
-    :new-spec                 :new-asset-mapping/map
-    :realize-fn               realize-asset-mapping
-    :get-capabilities         :read-asset-mapping
-    :post-capabilities        :create-asset-mapping
-    :put-capabilities         :create-asset-mapping
-    :delete-capabilities      :delete-asset-mapping
-    :search-capabilities      :search-asset-mapping
-    :external-id-capabilities :read-asset-mapping
-    :can-aggregate?           true
-    :histogram-fields         asset-mapping-histogram-fields
-    :enumerable-fields        asset-mapping-enumerable-fields
-    :can-revoke?              asset-mapping-can-revoke?
-    :searchable-fields        searchable-fields}))
+    services
+    {:entity                   :asset-mapping
+     :new-schema               NewAssetMapping
+     :entity-schema            AssetMapping
+     :get-schema               PartialAssetMapping
+     :get-params               AssetMappingGetParams
+     :list-schema              PartialAssetMappingList
+     :search-schema            PartialAssetMappingList
+     :external-id-q-params     AssetMappingByExternalIdQueryParams
+     :search-q-params          AssetMappingSearchParams
+     :new-spec                 :new-asset-mapping/map
+     :realize-fn               realize-asset-mapping
+     :get-capabilities         :read-asset-mapping
+     :post-capabilities        :create-asset-mapping
+     :put-capabilities         :create-asset-mapping
+     :delete-capabilities      :delete-asset-mapping
+     :search-capabilities      :search-asset-mapping
+     :external-id-capabilities :read-asset-mapping
+     :can-aggregate?           true
+     :histogram-fields         asset-mapping-histogram-fields
+     :enumerable-fields        asset-mapping-enumerable-fields
+     :can-revoke?              asset-mapping-can-revoke?}))
 
 (def capabilities
   #{:create-asset-mapping
