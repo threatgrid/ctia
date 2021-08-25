@@ -105,7 +105,10 @@
 
 (defn- check-spec [entity spec]
   (if (and spec
-           (not (cs/valid? spec (dissoc entity :id))))
+           (not (cs/valid? spec
+                           ;; the spec enforce long id for the API
+                           ;; while we store short ids
+                           (dissoc entity :id))))
     {:msg (cs/explain-str spec entity)
      :error "Entity validation Error"
      :type :spec-validation-error

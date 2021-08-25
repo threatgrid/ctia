@@ -143,12 +143,12 @@
           ident
           {})))
 
-(defn mk-sighting [n]
+(defn mk-sighting [id]
   (assoc sighting-minimal
-         :title (str "sighting-" n)
-         :id (str "sighting-" n)
+         :title (str "sighting " id)
+         :id id
          :tlp "green"
-         :groups [(str "groups" n)]))
+         :groups ["groups"]))
 
 (deftest patch-flow-test
   (helpers/with-properties
@@ -156,10 +156,12 @@
     (helpers/fixture-ctia-with-app
      (fn [app]
        (let [services (app/service-graph app)
-             store (atom {"sighting-1" (mk-sighting 1)
-                          "sighting-2" (mk-sighting 2)
-                          "sighting-3" (mk-sighting 3)
-                          "sighting-4" (mk-sighting 4)})
+             sighting-ids (repeatedly 4 #(flows.crud/make-id :sighting))
+             [sighting-id-1 sighting-id-2 sighting-id-3 sighting-id-4] sighting-ids
+             store (atom {sighting-id-1 (mk-sighting sighting-id-1)
+                          sighting-id-2 (mk-sighting sighting-id-2)
+                          sighting-id-3 (mk-sighting sighting-id-3)
+                          sighting-id-4 (mk-sighting sighting-id-4)})
              ident {:login "login"
                     :groups ["group1"]}
              event-store (helpers/get-store app :event)
@@ -181,15 +183,14 @@
                          patches))
 
              patch-flow (fn [msg expected]
-                           (testing msg
+                           (testing (str msg "\ntested: " (pr-str expected))
                              (println "=========")
                              (let [now (jt/instant)
                                    entity-ids (seq (keys expected))
                                    patches (map (fn [id]
                                                   {:id id
                                                    :source "patched"})
-                                                 entity-ids)
-                                   res
+                                                 entity-ids)]
                                    (flows.crud/patch-flow
                                     :entity-type :sighting
                                     :partial-entities patches
@@ -201,7 +202,7 @@
                                     :services services
                                     :spec :new-sighting/map
                                     :get-success-entities :entities
-                                    :identity (map->Identity ident))]
+                                    :identity (map->Identity ident))
                                (doseq [[id patched?] expected]
                                  (is (= patched?
                                         (= "patched"
@@ -220,9 +221,9 @@
 
          (patch-flow
           "patch-flow patches existing entities and create events accordingly"
-          {"sighting-1" true "sighting-2" true})
+          {sighting-id-1 true sighting-id-2 true})
          (patch-flow "patches flow patches entities and creates events only for existing entities when some are not found"
-                      {"sighting-3" true "missing1" false "missing2" false})
+                      {sighting-id-3 true "missing1" false "missing2" false})
          )))))
 
 (deftest delete-flow-test
