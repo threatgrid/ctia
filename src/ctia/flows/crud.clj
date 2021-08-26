@@ -35,10 +35,9 @@
    :flow-type                             (s/enum :create :update :delete)
    :services                              APIHandlerServices
    :identity                              (s/protocol auth/IIdentity)
-   (s/optional-key :get-success-entities)  (s/pred fn?)
+   (s/optional-key :get-success-entities) (s/pred fn?)
    (s/optional-key :long-id-fn)           (s/maybe (s/=> s/Any s/Any))
-   (s/optional-key :prev-entity)          (s/maybe {s/Keyword s/Any})
-   (s/optional-key :prev-entites)         [(s/maybe {s/Keyword s/Any})]
+   (s/optional-key :prev-entities)        s/Any;;(s/pred fn?)
    (s/optional-key :partial-entities)     [(s/maybe {s/Keyword s/Any})]
    (s/optional-key :patch-operation)      (s/enum :add :remove :replace)
    (s/optional-key :realize-fn)           RealizeFn
@@ -55,7 +54,7 @@
    be found."
   [{id :id}
    prev-entities]
-  (when (and (seq id) (get prev-entities id))
+  (when (and (seq id) (prev-entities id))
     (id/str->short-id id)))
 
 (s/defn ^:private find-checked-id
@@ -64,6 +63,8 @@
   mismatch."
   [{id :id, :as entity}
    services :- HTTPShowServices]
+  (println "find-checked-id " id)
+  (clojure.pprint/pprint entity)
   (when (seq id)
     (if (id/long-id? id)
       (let [id-rec (id/long-id->id id)
@@ -169,9 +170,7 @@
            :entities
            (doall
             (for [entity entities
-                  :let [entity-id (find-entity-id fm entity services)
-                        _ (println "realize entity-id " entity-id)
-                        prev-entity (get prev-entities entity-id)]]
+                  :let [entity-id (find-entity-id fm entity services)]]
               (cond
                 (:error entity) entity
                 (:error entity-id) entity-id
@@ -181,7 +180,7 @@
                                             tempids
                                             login
                                             groups)
-                        :update (if prev-entity
+                        :update (if-let [prev-entity (prev-entities entity-id)]
                                   (realize-fn entity
                                               entity-id
                                               tempids
@@ -257,13 +256,12 @@
   (if (get-in-config [:ctia :events :enabled])
     (let [login (auth/login identity)
           create-event (fn [entity]
-                         (let [event-id (make-id "event")
-                               prev-entity (some->> entity
-                                                    :id
-                                                    (get prev-entities))]
+                         (let [event-id (make-id "event")]
                            (try
                              (if (= flow-type :update)
-                               (create-event-fn entity prev-entity event-id login)
+                               (create-event-fn entity
+                                                (prev-entities (:id entity))
+                                                event-id login)
                                (create-event-fn entity event-id login))
                              (catch Throwable e
                                (.printStackTrace e)
@@ -271,8 +269,7 @@
                                (throw (ex-info "Could not create event"
                                                {:flow-type flow-type
                                                 :login login
-                                                :entity entity
-                                                :prev-entity prev-entity}))))))
+                                                :entity entity}))))))
           events (->> (get-success-entities fm)
                       (map create-event)
                       doall)]
@@ -423,7 +420,7 @@
         entities (for [partial-entity partial-entities
                        :let [prev-entity (some->> partial-entity
                                                   :id
-                                                  (get prev-entities))]
+                                                  prev-entities)]
                        :when (some? prev-entity)]
                    (patch-entity patch-fn prev-entity partial-entity))]
     (assoc fm :entities entities)))
@@ -470,6 +467,16 @@
       apply-after-hooks
       make-result))
 
+(defn prev-entities
+  [get-fn ids]
+  (let [indexed (into {}
+                      (map (fn [e] [(id/str->short-id (:id e)) e]))
+                      (get-fn ids))]
+   ;; indexed))
+    (fn [id]
+      (when (seq id)
+        (get indexed (id/str->short-id id))))))
+
 (defn update-flow
   "This function centralize the update workflow.
   It is helpful to easily add new hooks name
@@ -494,7 +501,7 @@
            :entities [(dissoc entity
                               :schema_version)]
            :services services
-           :prev-entity prev-entity
+           :prev-entities (prev-entities get-fn [entity-id])
            :identity identity
            :long-id-fn long-id-fn
            :realize-fn realize-fn
@@ -529,26 +536,20 @@
              partial-entities
              long-id-fn
              spec]}]
-  (let [entity-ids (map :id partial-entities)
-        prev-entities (into {}
-                            (map (fn [e] [(:id e) e]))
-                            (get-fn entity-ids))
-        patch-fn (fn [patches] (update-fn patches))]
-    (println "entity-ids " entity-ids)
-    (println "prev-entities =>")
-    (clojure.pprint/pprint prev-entities)
+  (let [entity-ids (map :id partial-entities)]
+    (println "patch flow entitiy ids" entity-ids)
     (-> {:flow-type :update
          :entity-type entity-type
          :entities []
          :services services
-         :prev-entities prev-entities
+         :prev-entities (prev-entities get-fn entity-ids)
          :partial-entities partial-entities
          :patch-operation patch-operation
          :identity identity
          :long-id-fn long-id-fn
          :realize-fn realize-fn
          :spec spec
-         :store-fn patch-fn
+         :store-fn update-fn
          :create-event-fn to-update-event}
         patch-entities
         validate-entities

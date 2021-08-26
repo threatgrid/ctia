@@ -265,24 +265,28 @@
                 (if-let [updated-rec
                          (-> (flows/patch-flow
                               :services services
-                              :get-fn #(-> (get-store entity)
-                                           (read-record
-                                             %
-                                             identity-map
-                                             {}))
+                              :get-fn (fn [ids]
+                                        (let [read-fn #(-> (get-store entity)
+                                                           (read-record
+                                                            %
+                                                            identity-map
+                                                            {}))]
+                                          (map read-fn ids)))
                               :realize-fn realize-fn
-                              :update-fn #(-> (get-store entity)
-                                              (update-record
-                                                (:id %)
-                                                %
-                                                identity-map
-                                                (wait_for->refresh wait_for)))
+                              :update-fn (fn [patched]
+                                           (let [update-fn
+                                                 #(-> (get-store entity)
+                                                      (update-record
+                                                       (:id %)
+                                                       %
+                                                       identity-map
+                                                       (wait_for->refresh wait_for)))]
+                                             (map update-fn patched)))
                               :long-id-fn #(with-long-id % services)
                               :entity-type entity
-                              :entity-id id
                               :identity identity
                               :patch-operation :replace
-                              :partial-entity partial-update
+                              :partial-entities [(assoc partial-update :id id)]
                               :spec new-spec)
                              un-store)]
                   (ok updated-rec)

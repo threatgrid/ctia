@@ -181,7 +181,6 @@
                                       (assoc s id patch))))]
                              (get new id)))
                          patches))
-
              patch-flow (fn [msg expected]
                            (testing (str msg "\ntested: " (pr-str expected))
                              (println "=========")
