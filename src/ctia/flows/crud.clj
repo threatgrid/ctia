@@ -395,7 +395,7 @@
                 (seq tempids) (assoc :tempids tempids))
               entities)
     :delete results
-    :update (first entities)))
+    :update entities))
 
 
 (defn patch-entity
@@ -488,37 +488,34 @@
              get-fn
              realize-fn
              update-fn
-             entity-id
              identity
-             entity
+             entities
              long-id-fn
              services
              spec]}]
-  (let [prev-entity (get-fn entity-id)]
-    (when prev-entity
-      (-> {:flow-type :update
-           :entity-type entity-type
-           :entities [(dissoc entity
-                              :schema_version)]
-           :services services
-           :prev-entities (prev-entities get-fn [entity-id])
-           :identity identity
-           :long-id-fn long-id-fn
-           :realize-fn realize-fn
-           :spec spec
-           :store-fn update-fn
-           :create-event-fn to-update-event}
-          validate-entities
-          realize-entities
-          throw-validation-error
-          apply-before-hooks
-          apply-store-fn
-          apply-long-id-fn
-          create-events
-          write-events
-          apply-event-hooks
-          apply-after-hooks
-          make-result))))
+  (let [ids (map :id entities)]
+    (-> {:flow-type :update
+         :entity-type entity-type
+         :entities (map #(dissoc % :schema_version) entities)
+         :services services
+         :prev-entities (prev-entities get-fn ids)
+         :identity identity
+         :long-id-fn long-id-fn
+         :realize-fn realize-fn
+         :spec spec
+         :store-fn update-fn
+         :create-event-fn to-update-event}
+        validate-entities
+        realize-entities
+        throw-validation-error
+        apply-before-hooks
+        apply-store-fn
+        apply-long-id-fn
+        create-events
+        write-events
+        apply-event-hooks
+        apply-after-hooks
+        make-result)))
 
 (defn patch-flow
   "This function centralizes the patch workflow.
@@ -537,7 +534,6 @@
              long-id-fn
              spec]}]
   (let [entity-ids (map :id partial-entities)]
-    (println "patch flow entitiy ids" entity-ids)
     (-> {:flow-type :update
          :entity-type entity-type
          :entities []

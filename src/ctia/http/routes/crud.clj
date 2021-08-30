@@ -184,7 +184,24 @@
                                        aggregate-on-enumerable)
         topn-q-params (st/merge agg-search-schema
                                 TopnParams
-                                aggregate-on-enumerable)]
+                                aggregate-on-enumerable)
+        get-by-ids-fn (fn [identity-map]
+                        (let [get-by-id #(-> (get-store entity)
+                                             (read-record
+                                              %
+                                              identity-map
+                                              {}))]
+                          (fn [ids]
+                            (keep get-by-id ids))))
+        update-fn (fn [identity-map wait_for]
+                    (let [update-fn #(-> (get-store entity)
+                                         (update-record
+                                          (:id %)
+                                          %
+                                          identity-map
+                                          (wait_for->refresh wait_for)))]
+                      (fn [patches]
+                        (keep update-fn patches))))]
    (routes
      (when can-post?
        (let [capabilities post-capabilities]
@@ -229,24 +246,15 @@
               (if-let [updated-rec
                        (-> (flows/update-flow
                             :services services
-                            :get-fn #(-> (get-store entity)
-                                         (read-record
-                                           %
-                                           identity-map
-                                           {}))
+                            :get-fn (get-by-ids-fn identity-map)
                             :realize-fn realize-fn
-                            :update-fn #(-> (get-store entity)
-                                            (update-record
-                                              (:id %)
-                                              %
-                                              identity-map
-                                              (wait_for->refresh wait_for)))
+                            :update-fn (update-fn identity-map wait_for)
                             :long-id-fn #(with-long-id % services)
                             :entity-type entity
-                            :entity-id id
                             :identity identity
-                            :entity entity-update
+                            :entities [(assoc entity-update :id id)]
                             :spec new-spec)
+                           first
                            un-store)]
                 (ok updated-rec)
                 (not-found)))))
@@ -262,35 +270,25 @@
                 :capabilities capabilities
                 :auth-identity identity
                 :identity-map identity-map
-                (if-let [updated-rec
-                         (-> (flows/patch-flow
-                              :services services
-                              :get-fn (fn [ids]
-                                        (let [read-fn #(-> (get-store entity)
-                                                           (read-record
-                                                            %
-                                                            identity-map
-                                                            {}))]
-                                          (map read-fn ids)))
-                              :realize-fn realize-fn
-                              :update-fn (fn [patched]
-                                           (let [update-fn
-                                                 #(-> (get-store entity)
-                                                      (update-record
-                                                       (:id %)
-                                                       %
-                                                       identity-map
-                                                       (wait_for->refresh wait_for)))]
-                                             (map update-fn patched)))
-                              :long-id-fn #(with-long-id % services)
-                              :entity-type entity
-                              :identity identity
-                              :patch-operation :replace
-                              :partial-entities [(assoc partial-update :id id)]
-                              :spec new-spec)
-                             un-store)]
-                  (ok updated-rec)
-                  (not-found)))))
+                (do
+
+                  (println "IN CRUD PATCH")
+                  (if-let [updated-rec
+                           (-> (flows/patch-flow
+                                :services services
+                                :get-fn (get-by-ids-fn identity-map)
+                                :realize-fn realize-fn
+                                :update-fn (update-fn identity-map wait_for)
+                                :long-id-fn #(with-long-id % services)
+                                :entity-type entity
+                                :identity identity
+                                :patch-operation :replace
+                                :partial-entities [(assoc partial-update :id id)]
+                                :spec new-spec)
+                               first
+                               un-store)]
+                    (ok updated-rec)
+                    (not-found))))))
      (when can-get-by-external-id?
        (let [capabilities external-id-capabilities
              _ (assert capabilities
@@ -474,19 +472,14 @@
                (if (first
                     (flows/delete-flow
                      :services services
-                     :get-fn (fn [ids]
-                               (let [read-fn #(-> (get-store entity)
-                                                  (read-record
-                                                   %
-                                                   identity-map
-                                                   {}))]
-                                 (map read-fn ids)))
-                     :delete-fn (fn [ids]
-                                  (let [delete-fn #(-> (get-store entity)
-                                                       (delete-record
-                                                        %
-                                                        identity-map
-                                                        (wait_for->refresh wait_for)))]
+                     :get-fn (get-by-ids-fn identity-map)
+                     :delete-fn (let [delete-fn
+                                      #(-> (get-store entity)
+                                           (delete-record
+                                            %
+                                            identity-map
+                                            (wait_for->refresh wait_for)))]
+                                  (fn [ids]
                                     (map delete-fn ids)))
                      :get-success-entities (fn [fm]
                                              (when (first (:results fm))
