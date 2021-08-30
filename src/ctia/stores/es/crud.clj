@@ -368,11 +368,11 @@ It returns the documents with full hits meta data including the real index in wh
     :one-of {s/Any s/Any}
     :query s/Str}))
 
-(def sort-fields-mapping
+(def enumerable-fields-mapping
   "Mapping table for all fields which needs to be renamed
-   for the sorting. Instead of using fielddata we can have
+   for the sorting or aggregation. Instead of using fielddata we can have
    a text field for full text searches, and an unanalysed keyword
-   field with doc_values enabled for sorting"
+   field with doc_values enabled for sorting or aggregation"
   {"title" "title.whole"
    "reason" "reason.whole"})
 
@@ -402,14 +402,14 @@ It returns the documents with full hits meta data including the real index in wh
        (string/join ",")))
 
 (defn rename-sort-fields
-  "Renames sort fields based on the content of the `sort-fields-mapping` table."
+  "Renames sort fields based on the content of the `enumerable-fields-mapping` table."
   [{:keys [sort_by] :as es-params}]
   (if-let [updated-sort-by
            (some->> sort_by
                     parse-sort-by
                     (map (fn [[field-name :as field]]
                            (assoc field 0
-                                  (get sort-fields-mapping field-name field-name))))
+                                  (get enumerable-fields-mapping field-name field-name))))
                     format-sort-by)]
     (assoc es-params :sort_by updated-sort-by)
     es-params))
@@ -535,7 +535,7 @@ It returns the documents with full hits meta data including the real index in wh
   [{:keys [aggregate-on granularity timezone]
     :or {timezone "+00:00"}} :- HistogramQuery]
   {:date_histogram
-   {:field aggregate-on
+   {:field (get enumerable-fields-mapping aggregate-on aggregate-on)
     :interval granularity ;; TODO switch to calendar_interval with ES7
     :time_zone timezone}})
 
@@ -543,13 +543,13 @@ It returns the documents with full hits meta data including the real index in wh
   [{:keys [aggregate-on limit sort_order]
     :or {limit 10 sort_order :desc}} :- TopnQuery]
   {:terms
-   {:field aggregate-on
+   {:field (get enumerable-fields-mapping aggregate-on aggregate-on)
     :size limit
     :order {:_count sort_order}}})
 
 (s/defn make-cardinality
   [{:keys [aggregate-on]} :- CardinalityQuery]
-  {:cardinality {:field aggregate-on
+  {:cardinality {:field (get enumerable-fields-mapping aggregate-on aggregate-on)
                  :precision_threshold 10000}})
 
 (s/defn make-aggregation

@@ -377,7 +377,17 @@
                                        :granularity :month
                                        :aggs {:agg-type :cardinality
                                               :agg-key :nb-orgs
-                                              :aggregate-on "groups"}}}))))
+                                              :aggregate-on "groups"}}})))
+  (is (= {:metric
+          {:date_histogram
+           {:field     "title.whole"
+            :interval  :week
+            :time_zone "+02:00"}}}
+         (sut/make-aggregation {:agg-type     :histogram
+                                :aggregate-on "title"
+                                :granularity  :week
+                                :timezone     "+02:00"}))
+      "matches fields mapping for enumerable fields"))
 
 (defn generate-sightings
   [nb confidence title timestamp]

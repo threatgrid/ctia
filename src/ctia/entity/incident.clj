@@ -162,11 +162,15 @@
   (apply s/enum incident-fields))
 
 (def incident-enumerable-fields
-  [:source
+  [:assignees
+   :categories
    :confidence
-   :status
    :discovery_method
-   :assignees])
+   :intended_effect
+   :promotion_method
+   :source
+   :status
+   :title])
 
 (def incident-histogram-fields
   [:timestamp
