@@ -41,6 +41,7 @@
    (s/optional-key :partial-entities)     [(s/maybe {s/Keyword s/Any})]
    (s/optional-key :patch-operation)      (s/enum :add :remove :replace)
    (s/optional-key :realize-fn)           RealizeFn
+   (s/optional-key :find-entity-id)       (s/pred fn?)
    (s/optional-key :results)              s/Any
    (s/optional-key :spec)                 (s/maybe s/Keyword)
    (s/optional-key :tempids)              (s/maybe TempIDs)
@@ -48,58 +49,12 @@
    (s/optional-key :entity-ids)           [s/Str]
    :store-fn                              (s/=> s/Any s/Any)})
 
-(defn- find-prev-entity-id
-  "Lookup an ID in a given entity.  Parse it, because it might be a
-   URL, and return the short form ID.  Returns nil if the ID could not
-   be found."
-  [{id :id}
-   prev-entities]
-  (when (and (seq id) (prev-entities id))
-    (id/str->short-id id)))
-
-(s/defn ^:private find-checked-id
-  "checks that the hostname in the ID (if it is a long ID)
-   is the local server hostname. Throws bad-request! on mismatch."
-  [{id :id, :as entity}
-   services :- HTTPShowServices]
-  (when (seq id)
-    (if (id/long-id? id)
-      (let [id-rec (id/long-id->id id)
-            this-host (:hostname (p/get-http-show services))]
-        (if (= (:hostname id-rec) this-host)
-          (:short-id id-rec)
-          (http-response/bad-request!
-           {:error "Invalid hostname in ID"
-            :id id
-            :this-host this-host
-            :entity entity})))
-      (id/str->short-id id))))
-
 (defn gen-random-uuid []
   (UUID/randomUUID))
 
 (defn make-id
   [entity-type]
   (str (name entity-type) "-" (gen-random-uuid)))
-
-(s/defn ^:private find-entity-id :- s/Str
-  [{identity-obj :identity
-    :keys [entity-type prev-entities tempids]} :- FlowMap
-   entity :- {s/Keyword s/Any}
-   services :- HTTPShowServices]
-  (cond
-    prev-entities (find-prev-entity-id entity prev-entities)
-    (seq tempids) (get tempids (:id entity))
-    (when-let [entity-id (find-checked-id entity services)]
-      (when-not (auth/capable? identity-obj :specify-id)
-        (http-response/forbidden!
-         {:error "Missing capability to specify entity ID"
-          :entity entity}))
-      (if (id/valid-short-id? entity-id)
-        entity-id
-        {:error (format "Invalid entity ID: %s" entity-id)
-         :entity entity}))
-    (make-id entity-type)))
 
 (defn- check-spec [entity spec]
   (if (and spec
@@ -156,6 +111,7 @@
            identity
            services
            tempids
+           find-entity-id
            prev-entities] :as fm} :- FlowMap]
   (let [login (auth/login identity)
         groups (auth/groups identity)
@@ -167,7 +123,7 @@
            :entities
            (doall
             (for [entity entities
-                  :let [entity-id (find-entity-id fm entity services)]]
+                  :let [entity-id (find-entity-id fm entity)]]
               (cond
                 (:error entity) entity
                 (:error entity-id) entity-id
@@ -422,6 +378,42 @@
                    (patch-entity patch-fn prev-entity partial-entity))]
     (assoc fm :entities entities)))
 
+(s/defn ^:private find-checked-id
+  "checks that the hostname in the ID (if it is a long ID)
+   is the local server hostname. Throws bad-request! on mismatch."
+  [{id :id :as entity}
+   services :- HTTPShowServices]
+  (when (seq id)
+    (if (id/long-id? id)
+      (let [id-rec (id/long-id->id id)
+            this-host (:hostname (p/get-http-show services))]
+        (if (= (:hostname id-rec) this-host)
+          (:short-id id-rec)
+          (http-response/bad-request!
+           {:error "Invalid hostname in ID"
+            :id id
+            :this-host this-host
+            :entity entity})))
+      (id/str->short-id id))))
+
+(s/defn find-create-entity-id
+  [services :- HTTPShowServices]
+  (s/fn [{identity-obj :identity
+          :keys [entity-type tempids]} :- FlowMap
+         entity]
+    (or
+     (get tempids (:id entity))
+     (when-let [entity-id (find-checked-id entity services)]
+       (when-not (auth/capable? identity-obj :specify-id)
+         (http-response/forbidden!
+          {:error "Missing capability to specify entity ID"
+           :entity entity}))
+       (if (id/valid-short-id? entity-id)
+         entity-id
+         {:error (format "Invalid entity ID: %s" entity-id)
+          :entity entity}))
+     (make-id entity-type))))
+
 (defn create-flow
   "This function centralizes the create workflow.
   It is helpful to easily add new hooks name
@@ -448,6 +440,7 @@
        :long-id-fn long-id-fn
        :spec spec
        :realize-fn realize-fn
+       :find-entity-id (find-create-entity-id services)
        :store-fn store-fn
        :create-event-fn to-create-event
        :enveloped-result? enveloped-result?}
@@ -474,6 +467,12 @@
       (when (seq id)
         (get indexed (id/str->short-id id))))))
 
+(s/defn ^:private find-existing-entity-id :- s/Str
+  [prev-entities-fn]
+  (fn [_fm {id :id :as _entity}]
+    (when (and (seq id) (prev-entities-fn id))
+      (id/str->short-id id))))
+
 (defn update-flow
   "This function centralize the update workflow.
   It is helpful to easily add new hooks name
@@ -490,15 +489,17 @@
              long-id-fn
              services
              spec]}]
-  (let [ids (map :id entities)]
+  (let [ids (map :id entities)
+        prev-entities-fn (prev-entities get-fn ids)]
     (-> {:flow-type :update
          :entity-type entity-type
          :entities (map #(dissoc % :schema_version) entities)
          :services services
-         :prev-entities (prev-entities get-fn ids)
+         :prev-entities prev-entities-fn
          :identity identity
          :long-id-fn long-id-fn
          :realize-fn realize-fn
+         :find-entity-id (find-existing-entity-id prev-entities-fn)
          :spec spec
          :store-fn update-fn
          :create-event-fn to-update-event}
@@ -530,17 +531,19 @@
              partial-entities
              long-id-fn
              spec]}]
-  (let [entity-ids (map :id partial-entities)]
+  (let [ids (map :id partial-entities)
+        prev-entities-fn (prev-entities get-fn ids)]
     (-> {:flow-type :update
          :entity-type entity-type
          :entities []
          :services services
-         :prev-entities (prev-entities get-fn entity-ids)
+         :prev-entities prev-entities-fn
          :partial-entities partial-entities
          :patch-operation patch-operation
          :identity identity
          :long-id-fn long-id-fn
          :realize-fn realize-fn
+         :find-entity-id (find-existing-entity-id prev-entities-fn)
          :spec spec
          :store-fn update-fn
          :create-event-fn to-update-event}
