@@ -31,10 +31,11 @@
   {:create-event-fn                       (s/pred fn?)
    :entities                              [{s/Keyword s/Any}]
    :entity-type                           s/Keyword
-   (s/optional-key :events)               [{s/Keyword s/Any}]
    :flow-type                             (s/enum :create :update :delete)
    :services                              APIHandlerServices
    :identity                              (s/protocol auth/IIdentity)
+   :store-fn                              (s/=> s/Any s/Any)
+   (s/optional-key :events)               [{s/Keyword s/Any}]
    (s/optional-key :get-success-entities) (s/pred fn?)
    (s/optional-key :long-id-fn)           (s/maybe (s/=> s/Any s/Any))
    (s/optional-key :prev-entities)        s/Any;;(s/pred fn?)
@@ -46,8 +47,7 @@
    (s/optional-key :spec)                 (s/maybe s/Keyword)
    (s/optional-key :tempids)              (s/maybe TempIDs)
    (s/optional-key :enveloped-result?)    (s/maybe s/Bool)
-   (s/optional-key :entity-ids)           [s/Str]
-   :store-fn                              (s/=> s/Any s/Any)})
+   (s/optional-key :entity-ids)           [s/Str]})
 
 (defn gen-random-uuid []
   (UUID/randomUUID))
@@ -400,7 +400,7 @@
   [services :- HTTPShowServices]
   (s/fn [{identity-obj :identity
           :keys [entity-type tempids]} :- FlowMap
-         entity]
+         entity] :- s/Str
     (or
      (get tempids (:id entity))
      (when-let [entity-id (find-checked-id entity services)]
@@ -467,9 +467,10 @@
       (when (seq id)
         (get indexed (id/str->short-id id))))))
 
-(s/defn ^:private find-existing-entity-id :- s/Str
+(s/defn ^:private find-existing-entity-id
   [prev-entities-fn]
-  (fn [_fm {id :id :as _entity}]
+  (s/fn [_fm :- FlowMap
+         {id :id :as _entity}] :- (s/maybe s/Str)
     (when (and (seq id) (prev-entities-fn id))
       (id/str->short-id id))))
 
