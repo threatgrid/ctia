@@ -535,7 +535,7 @@ It returns the documents with full hits meta data including the real index in wh
   [{:keys [aggregate-on granularity timezone]
     :or {timezone "+00:00"}} :- HistogramQuery]
   {:date_histogram
-   {:field (get enumerable-fields-mapping aggregate-on aggregate-on)
+   {:field aggregate-on
     :interval granularity ;; TODO switch to calendar_interval with ES7
     :time_zone timezone}})
 
