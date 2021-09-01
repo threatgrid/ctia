@@ -94,31 +94,31 @@
             :capabilities :create-incident
             :auth-identity identity
             :identity-map identity-map
-            (let [status-update (make-status-update update)]
+            (let [status-update (assoc (make-status-update update) :id id)
+                  store (get-store :incident)
+                  get-by-id #(read-record
+                              store
+                              %
+                              identity-map
+                              {})
+                  update-fn #(update-record
+                              store
+                              (:id %)
+                              %
+                              identity-map
+                              (routes.common/wait_for->refresh wait_for))]
               (if-let [updated
                        (some->
                         (flows/patch-flow
                          :services services
-                         :get-fn (let [get-by-id #(-> (get-store :incident)
-                                                      (read-record
-                                                       %
-                                                       identity-map
-                                                       {}))]
-                                   (fn [ids] (keep get-by-id ids)))
+                         :get-fn (fn [ids] (keep get-by-id ids))
                          :realize-fn realize-incident
-                         :update-fn (let [update-fn
-                                          #(-> (get-store :incident)
-                                               (update-record
-                                                (:id %)
-                                                %
-                                                identity-map
-                                                (routes.common/wait_for->refresh wait_for)))]
-                                      (fn [entities] (keep update-fn entities)))
+                         :update-fn (fn [entities] (keep update-fn entities))
                          :long-id-fn #(with-long-id % services)
                          :entity-type :incident
                          :identity identity
                          :patch-operation :replace
-                         :partial-entity [status-update]
+                         :partial-entities [status-update]
                          :spec :new-incident/map)
                         first
                         un-store)]
