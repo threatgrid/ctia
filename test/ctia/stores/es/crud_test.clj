@@ -377,7 +377,24 @@
                                        :granularity :month
                                        :aggs {:agg-type :cardinality
                                               :agg-key :nb-orgs
-                                              :aggregate-on "groups"}}}))))
+                                              :aggregate-on "groups"}}})))
+  (is (= {:metric
+          {:cardinality
+           {:field "title.whole"
+            :precision_threshold 10000}}}
+         (sut/make-aggregation {:agg-type     :cardinality
+                                :aggregate-on "title"}))
+      "matches `sut/enumerable-fields-mapping` for a field")
+  (is (= {:metric
+          {:terms
+           {:field "title.whole"
+            :size  20
+            :order {:_count :desc}}}}
+         (sut/make-aggregation {:agg-type     :topn
+                                :aggregate-on "title"
+                                :limit        20
+                                :sort_order   :desc}))
+      "matches `sut/enumerable-fields-mapping` for a field"))
 
 (defn generate-sightings
   [nb confidence title timestamp]
