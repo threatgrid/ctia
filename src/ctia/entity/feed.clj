@@ -304,6 +304,7 @@
                      :identity identity
                      :entities [(assoc entity-update :id id)]
                      :spec :new-feed/map)
+                    first
                     un-store
                     (decrypt-feed services))]
          (ok updated-rec)
