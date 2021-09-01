@@ -96,7 +96,7 @@
             :identity-map identity-map
             (let [status-update (make-status-update update)]
               (if-let [updated
-                       (un-store
+                       (some->
                         (flows/patch-flow
                          :services services
                          :get-fn (let [get-by-id #(-> (get-store :incident)
@@ -119,7 +119,9 @@
                          :identity identity
                          :patch-operation :replace
                          :partial-entity [status-update]
-                         :spec :new-incident/map))]
+                         :spec :new-incident/map)
+                        first
+                        un-store)]
                 (ok updated)
                 (not-found)))))))
 
