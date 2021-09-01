@@ -41,58 +41,58 @@
 (s/defn capitalize-entity [entity :- (s/pred simple-keyword?)]
   (-> entity name str/capitalize))
 
+
+(s/defschema RevokeParams
+  {:identity s/Any
+   :identity-map s/Any
+   :id s/Any
+   :wait_for (s/pred (some-fn nil? boolean?)
+                     'nilable-boolean?)
+   (s/optional-key :revocation-update-fn) (s/pred ifn?)})
+
 (s/defn revoke-request
   "Process POST /:id/expire route.
   Implemented separately from a POST call to share
   between entity implementations with different :query-params
   requirements (which must be provided at compile-time with
   POST)."
-  [req :- (s/pred map?)
-   {{:keys [get-store]} :StoreService
-    :as services} :- APIHandlerServices
-   {:keys [entity
-           new-spec
-           realize-fn]
-    :as _entity-crud-config}
-   {:keys [identity
-           identity-map
-           id
-           revocation-update-fn
-           wait_for]} :- {:identity s/Any
-                          :identity-map s/Any
-                          :id s/Any
-                          :wait_for (s/pred (some-fn nil? boolean?)
-                                            'nilable-boolean?)
-                          (s/optional-key :revocation-update-fn) (s/pred ifn?)}]
+  [{{:keys [get-store]} :StoreService :as services} :- APIHandlerServices
+   {:keys [entity new-spec realize-fn] :as _entity-crud-config}
+   revoke-params :- RevokeParams]
   ;; almost identical to the PATCH route returned by entity-crud-routes
   ;; except for :update-fn and :partial-entity
-  (if-let [updated-rec
-           (flows/patch-flow
-            :services services
-            :get-fn (fn [_]
-                      (-> (get-store entity)
-                          (read-record
-                            id
-                            identity-map
-                            {})))
-            :realize-fn realize-fn
-            :update-fn #(-> (get-store entity)
-                            (update-record
-                              (:id %)
-                              (cond-> %
-                                true (assoc-in [:valid_time :end_time] (time/internal-now))
-                                revocation-update-fn (revocation-update-fn {:req req}))
-                              identity-map
-                              (wait_for->refresh wait_for)))
-            :long-id-fn #(with-long-id % services)
-            :entity-type entity
-            :entity-id id
-            :identity identity
-            :patch-operation :replace
-            :partial-entity {}
-            :spec new-spec)]
-    (ok (un-store updated-rec))
-    (not-found (str (capitalize-entity entity) " not found"))))
+  (let [{ident :identity
+         :keys [identity-map id revocation-update-fn wait_for]
+         :or {revocation-update-fn identity}} revoke-params
+        store (get-store entity)
+        get-by-id #(read-record store
+                                %
+                                identity-map
+                                {})
+        update-fn #(update-record
+                    store
+                    (:id %)
+                    (revocation-update-fn %)
+                    identity-map
+                    (wait_for->refresh wait_for))
+        prev-entity (get-by-id id)]
+    (if prev-entity
+      (-> (flows/patch-flow
+           :services services
+           :get-fn (fn [ids] (keep get-by-id ids))
+           :realize-fn realize-fn
+           :update-fn (fn [entities] (keep update-fn entities))
+           :long-id-fn #(with-long-id % services)
+           :entity-type entity
+           :identity ident
+           :patch-operation :replace
+           :partial-entities [{:id id
+                               :valid_time {:end_time (time/internal-now)}}]
+           :spec new-spec)
+          first
+          un-store
+          ok)
+      (not-found (str (capitalize-entity entity) " not found")))))
 
 (s/defn revocation-routes
   "Returns POST /:id/expire routes for the given entity."
@@ -101,7 +101,7 @@
            entity-schema
            post-capabilities] :as entity-crud-config}]
   (let [capabilities post-capabilities]
-    (POST "/:id/expire" req
+    (POST "/:id/expire" []
           :summary (format "Expires the supplied %s" (capitalize-entity entity))
           :path-params [id :- s/Str]
           :query-params [{wait_for :- (describe s/Bool "wait for entity to be available for search") nil}]
@@ -110,7 +110,7 @@
           :capabilities capabilities
           :auth-identity identity
           :identity-map identity-map
-          (revoke-request req services entity-crud-config
+          (revoke-request services entity-crud-config
                           {:id id
                            :identity identity
                            :identity-map identity-map
@@ -270,25 +270,22 @@
                 :capabilities capabilities
                 :auth-identity identity
                 :identity-map identity-map
-                (do
-
-                  (println "IN CRUD PATCH")
-                  (if-let [updated-rec
-                           (-> (flows/patch-flow
-                                :services services
-                                :get-fn (get-by-ids-fn identity-map)
-                                :realize-fn realize-fn
-                                :update-fn (update-fn identity-map wait_for)
-                                :long-id-fn #(with-long-id % services)
-                                :entity-type entity
-                                :identity identity
-                                :patch-operation :replace
-                                :partial-entities [(assoc partial-update :id id)]
-                                :spec new-spec)
-                               first
-                               un-store)]
-                    (ok updated-rec)
-                    (not-found))))))
+                (if-let [updated-rec
+                         (-> (flows/patch-flow
+                              :services services
+                              :get-fn (get-by-ids-fn identity-map)
+                              :realize-fn realize-fn
+                              :update-fn (update-fn identity-map wait_for)
+                              :long-id-fn #(with-long-id % services)
+                              :entity-type entity
+                              :identity identity
+                              :patch-operation :replace
+                              :partial-entities [(assoc partial-update :id id)]
+                              :spec new-spec)
+                             first
+                             un-store)]
+                  (ok updated-rec)
+                  (not-found)))))
      (when can-get-by-external-id?
        (let [capabilities external-id-capabilities
              _ (assert capabilities
