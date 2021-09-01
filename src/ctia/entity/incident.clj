@@ -99,24 +99,26 @@
                        (un-store
                         (flows/patch-flow
                          :services services
-                         :get-fn #(-> (get-store :incident)
-                                      (read-record
-                                        %
-                                        identity-map
-                                        {}))
+                         :get-fn (let [get-by-id #(-> (get-store :incident)
+                                                      (read-record
+                                                       %
+                                                       identity-map
+                                                       {}))]
+                                   (fn [ids] (keep get-by-id ids)))
                          :realize-fn realize-incident
-                         :update-fn #(-> (get-store :incident)
-                                         (update-record
-                                           (:id %)
-                                           %
-                                           identity-map
-                                           (routes.common/wait_for->refresh wait_for)))
+                         :update-fn (let [update-fn
+                                          #(-> (get-store :incident)
+                                               (update-record
+                                                (:id %)
+                                                %
+                                                identity-map
+                                                (routes.common/wait_for->refresh wait_for)))]
+                                      (fn [entities] (keep update-fn entities)))
                          :long-id-fn #(with-long-id % services)
                          :entity-type :incident
-                         :entity-id id
                          :identity identity
                          :patch-operation :replace
-                         :partial-entity status-update
+                         :partial-entity [status-update]
                          :spec :new-incident/map))]
                 (ok updated)
                 (not-found)))))))
