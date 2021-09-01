@@ -284,23 +284,25 @@
        (if-let [updated-rec
                 (-> (flows/update-flow
                      :services services
-                     :get-fn #(-> (get-store :feed)
-                                  (read-record
-                                   %
-                                   identity-map
-                                   {}))
+                     :get-fn (let [get-by-id #(-> (get-store :feed)
+                                                  (read-record
+                                                   %
+                                                   identity-map
+                                                   {}))]
+                               (fn [ids] (keep get-by-id ids)))
                      :realize-fn realize-feed
-                     :update-fn #(-> (get-store :feed)
-                                     (update-record
-                                      (:id %)
-                                      %
-                                      identity-map
-                                      (routes.common/wait_for->refresh wait_for)))
+                     :update-fn (let [update-fn
+                                      #(-> (get-store :feed)
+                                           (update-record
+                                            (:id %)
+                                            %
+                                            identity-map
+                                            (routes.common/wait_for->refresh wait_for)))]
+                                  (fn [entities] (keep update-fn entities)))
                      :long-id-fn #(with-long-id % services)
                      :entity-type :feed
-                     :entity-id id
                      :identity identity
-                     :entity entity-update
+                     :entities [(assoc entity-update :id id)]
                      :spec :new-feed/map)
                     un-store
                     (decrypt-feed services))]
