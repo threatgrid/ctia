@@ -21,7 +21,10 @@
            (subs 0 4)
            #_(str "DF"))))
 
+(def ResponsiveContainer (reagent/adapt-react-class charts/ResponsiveContainer))
 (def BarChart (reagent/adapt-react-class charts/BarChart))
+(def LineChart (reagent/adapt-react-class charts/LineChart))
+(def Line (reagent/adapt-react-class charts/Line))
 (def CartesianGrid (reagent/adapt-react-class charts/CartesianGrid))
 (def XAxis (reagent/adapt-react-class charts/XAxis))
 (def YAxis (reagent/adapt-react-class charts/YAxis))
@@ -40,9 +43,9 @@
         :dy          16
         :textAnchor  "end"
         :transform   "rotate(-55)"
-        :font-size   "8pt"
-        :font-family "Helvetica"
-        :font-weight 200}
+        :font-size   "7pt"
+        :font-weight 200
+        :fill "#888"}
        (:value payload)]])))
 
 (reg-event-fx
@@ -107,13 +110,46 @@
                            (assoc nested :name key)))))]
      raw)))
 
+(defn ms->date-str [ms]
+  (let [d (js/Date. 0)]
+    (.setUTCMilliseconds d ms)
+    (.toLocaleDateString d "en-US" (->js {:timeZone "UTC"}))))
+
+(defn remove-zero-vals
+  "Removes keys with zero values from a map"
+  [m]
+  (apply merge (for [[k v] m :when (not (zero? v))] {k v})))
+
+(reg-sub
+ ::line-chart-data
+ :<- [::chart-data]
+ (fn [chart-data]
+   (let [grouped (->> chart-data
+                      (mapcat
+                       (fn [m]
+                         (->> m keys
+                              (remove #(= % :name))
+                              (map #(hash-map
+                                     :date (ms->date-str %)
+                                     :ms %
+                                     (:name m) (get m %))))))
+                      (group-by :date))
+         merged  (->> grouped vals
+                     (map (fn [inner]
+                            (->> inner
+                                 (map #(dissoc % :date))
+                                 (apply merge)
+                                 remove-zero-vals))))
+         combined (map #(assoc %1 :date %2) merged (keys grouped))]
+     (->> combined (sort-by :ms)))))
+
 (declare data-vectors)
 
 (reg-event-db
  ::reset-current-data-vector
  (fn [db [_ key params]]
    (let [{:keys [title] :as dv} (first (filter #(-> % :key (= key)) data-vectors))
-         title (if (fn? title) (apply title params) title)]
+         title                  (if (fn? title) (apply title params) title)]
      (assoc db ::current-data-vector dv
             ::data-elements (remove nil? params)
             ::title title))))
@@ -149,47 +185,83 @@
 (defn bar-chart []
   (let [chart-data @(subscribe [::chart-data])
         all-keys (disj (->> chart-data (mapcat keys) set) :name)]
-    [:div
-     [BarChart
-      {:width 1000
-       :height 700
-       :margin {:top 20
-                :right 20
-                :left 20
-                :bottom 20}
-       :data chart-data}
-      [CartesianGrid {:strokeDasharray "2 2"
-                      :stroke "#dcdcdc"}]
-      [XAxis {:dataKey :name
-              :interval 0
-              :tick customized-axis-tick}]
-      [YAxis {:scale :log
-              :domain [1 "dataMax + 500"]
-              :allowDataOverflow true
-              ;; :tick {:font-family "Helvetica"}
-              :tickCount 20
-              :padding {:top 50 :bottom 5}}]
-      ;; [Tooltip]
-      [Legend {:layout :vertical
-               :align :right
-               :verticalAlign :top
-               :width 200}]
-      (for [k all-keys]
-        [Bar {:dataKey k
-              :key k
-              :label true
-              :name k
-              :stackId "a"
-              :minPointSize 20
-              :fill (random-color k)
-              :on-click (fn [ps]
-                          (let [dv @(subscribe [::current-data-vector])
-                                data-elts @(subscribe [::data-elements])
-                                nxt-k (-> ps ->clj :name)]
+    [BarChart
+     {:width  1000
+      :height 700
+      :margin {:top    20
+               :right  20
+               :left   20
+               :bottom 20}
+      :data   chart-data}
+     [CartesianGrid {:strokeDasharray "2 2"
+                     :stroke          "#dcdcdc"}]
+     [XAxis {:dataKey  :name
+             :interval 0
+             :tick     customized-axis-tick}]
+     [YAxis {:scale             :log
+             :domain            [1 "dataMax + 500"]
+             :allowDataOverflow true
+             ;; :tick {:font-family "Helvetica"}
+             :tickCount         20
+             :padding           {:top 50 :bottom 5}}]
+     ;; [Tooltip]
+     [Legend {:layout        :vertical
+              :align         :right
+              :verticalAlign :top
+              :width         200}]
+     (for [k all-keys]
+       [Bar {:dataKey      k
+             :key          k
+             :label        true
+             :name         k
+             :stackId      "a"
+             :minPointSize 20
+             :fill         (random-color k)
+             :on-click     (fn [ps]
+                             (let [dv        @(subscribe [::current-data-vector])
+                                   data-elts @(subscribe [::data-elements])
+                                   nxt-k     (-> ps ->clj :name)]
                            (dispatch
                             [::next-data-vector
                              {:current-data-vector dv
-                              :data-elements (conj (vec data-elts) nxt-k)}])))}])]]))
+                              :data-elements       (conj (vec data-elts) nxt-k)}])))}])]))
+
+(defn line-chart []
+  (let [data @(subscribe [::line-chart-data])
+        all-keys (disj (->> data (mapcat keys) set) :date :ms)]
+    [LineChart
+     {:width  1700
+      :height 700
+      :margin {:top    20
+               :right  20
+               :left   20
+               :bottom 20}
+      :data   data}
+     [CartesianGrid {:strokeDasharray "2 2"
+                     :stroke          "#eee"}]
+     [XAxis {:dataKey  :date
+             :interval 0
+             :tick     customized-axis-tick}]
+     [YAxis {:scale             :log
+             :domain            [1 "dataMax + 500"]
+             :allowDataOverflow true
+             :tickCount         20
+             :padding           {:top 50 :bottom 5}}]
+     [Tooltip]
+     [Legend
+      {:layout        :vertical
+       :align         :right
+       :verticalAlign :top
+       :width         200}]
+     (for [k all-keys]
+       [Line
+        {:type    :monotone
+         :dataKey k
+         :key     k
+         :stroke  (random-color k)
+         }
+        ]
+       )]))
 
 (def data-vectors
   [{:key          :root
@@ -211,7 +283,7 @@
                                     {:key org} :source :buckets
                                     {:key source} :titles :buckets])
     :inner        [:created-daily :buckets]
-    :ui-component bar-chart}])
+    :ui-component line-chart}])
 
 (defn back-button []
   [:button.back-btn
@@ -224,6 +296,9 @@
 (defn root []
   (dispatch [::fetch-data])
   (dispatch [::reset-current-data-vector :root])
+  #_(dispatch [::reset-current-data-vector :source
+             ["93f3924d-d831-41af-8149-732ac64434a6"
+              "ngfw event service"]])
   (fn []
     (let [title @(subscribe [::title])
           ui-component @(subscribe [::ui-component])]
@@ -233,7 +308,10 @@
         [back-button]
         [:h3 title]]
        (when ui-component
-         [ui-component])])))
+         [ResponsiveContainer
+          {:width  "100%"
+           :height "100%"}
+          [ui-component]])])))
 
 (comment
   (require 're-frame.db)
