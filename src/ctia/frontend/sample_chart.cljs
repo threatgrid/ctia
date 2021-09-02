@@ -224,7 +224,7 @@
              :allowDataOverflow true
              :tickCount         10
              :padding           {:top 10 :bottom 5}}]
-     [Tooltip {:itemSorter #(:value (->clj %))}]
+     [Tooltip {:itemSorter #(- (:value (->clj %)))}]
      [Legend {:layout        :vertical
               :align         :right
               :verticalAlign :top
@@ -272,7 +272,7 @@
              :allowDataOverflow true
              :tickCount         20
              :padding           {:top 50 :bottom 5}}]
-     [Tooltip]
+     [Tooltip {:itemSorter #(- (:value (->clj %)))}]
      [Legend
       {:layout        :vertical
        :align         :right
