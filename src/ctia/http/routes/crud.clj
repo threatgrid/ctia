@@ -50,6 +50,38 @@
                      'nilable-boolean?)
    (s/optional-key :revocation-update-fn) (s/pred ifn?)})
 
+(defn flow-get-by-ids-fn
+  [{:keys [get-store entity identity-map]}]
+  (let [get-by-id #(-> (get-store entity)
+                       (read-record
+                        %
+                        identity-map
+                        {}))]
+    (fn [ids]
+      (keep get-by-id ids))))
+
+(defn flow-update-fn
+  [{:keys [identity-map wait_for get-store entity]}]
+  (let [update-fn #(-> (get-store entity)
+                       (update-record
+                        (:id %)
+                        %
+                        identity-map
+                        (wait_for->refresh wait_for)))]
+    (fn [patches]
+      (keep update-fn patches))))
+
+(defn flow-delete-fn
+  [{:keys [identity-map wait_for get-store entity]}]
+  (let [delete-fn
+        #(-> (get-store entity)
+             (delete-record
+              %
+              identity-map
+              (wait_for->refresh wait_for)))]
+    (fn [ids]
+      (map delete-fn ids))))
+
 (s/defn revoke-request
   "Process POST /:id/expire route.
   Implemented separately from a POST call to share
@@ -64,22 +96,23 @@
   (let [{ident :identity
          :keys [identity-map id revocation-update-fn wait_for]
          :or {revocation-update-fn identity}} revoke-params
-        store (get-store entity)
-        get-by-id #(read-record store
-                                %
-                                identity-map
-                                {})
-        update-fn #(update-record
-                    store
-                    (:id %)
-                    (revocation-update-fn %)
-                    identity-map
-                    (wait_for->refresh wait_for))
-        prev-entity (get-by-id id)]
+
+        get-by-ids (flow-get-by-ids-fn
+                    {:get-store get-store
+                     :entity entity
+                     :identity-map identity-map})
+        update-fn (flow-update-fn
+                   {:get-store get-store
+                    :entity entity
+                    :identity-map identity-map
+                    :wait_for (routes.common/wait_for->refresh wait_for)})
+        update-fn (fn [entities]
+                    (update-fn (map revocation-update-fn entities)))
+        prev-entity (first (get-by-ids [id]))]
     (if prev-entity
       (-> (flows/patch-flow
            :services services
-           :get-fn (fn [ids] (keep get-by-id ids))
+           :get-fn get-by-ids
            :realize-fn realize-fn
            :update-fn (fn [entities] (keep update-fn entities))
            :long-id-fn #(with-long-id % services)
@@ -115,29 +148,6 @@
                            :identity identity
                            :identity-map identity-map
                            :wait_for wait_for}))))
-
-
-(defn flow-get-by-ids-fn
-  [{:keys [get-store entity identity-map]}]
-  (let [get-by-id #(-> (get-store entity)
-                       (read-record
-                        %
-                        identity-map
-                        {}))]
-    (fn [ids]
-      (keep get-by-id ids))))
-
-(defn flow-update-fn
-  [{:keys [identity-map wait_for get-store entity]}]
-  (let [update-fn #(-> (get-store entity)
-                       (update-record
-                        (:id %)
-                        %
-                        identity-map
-                        (wait_for->refresh wait_for)))]
-    (fn [patches]
-      (keep update-fn patches))))
-
 
 (s/defn ^:private entity-crud-routes
   :- DelayedRoutes
@@ -218,7 +228,7 @@
                      {:get-store get-store
                       :entity entity
                       :identity-map identity-map
-                      :wait_for (wait_for->refresh wait_for)}))]
+                      :wait_for wait_for}))]
    (routes
      (when can-post?
        (let [capabilities post-capabilities]
@@ -487,14 +497,11 @@
                     (flows/delete-flow
                      :services services
                      :get-fn (get-by-ids-fn identity-map)
-                     :delete-fn (let [delete-fn
-                                      #(-> (get-store entity)
-                                           (delete-record
-                                            %
-                                            identity-map
-                                            (wait_for->refresh wait_for)))]
-                                  (fn [ids]
-                                    (map delete-fn ids)))
+                     :delete-fn (flow-delete-fn
+                                 {:get-store get-store
+                                  :entity entity
+                                  :identity-map identity-map
+                                  :wait_for wait_for})
                      :get-success-entities (fn [fm]
                                              (when (first (:results fm))
                                                  (:entities fm)))

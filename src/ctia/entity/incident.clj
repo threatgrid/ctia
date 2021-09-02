@@ -7,7 +7,7 @@
    [ctia.entity.relationship.graphql-schemas :as relationship-graphql]
    [ctia.flows.crud :as flows]
    [ctia.http.routes.common :as routes.common]
-   [ctia.http.routes.crud :refer [services->entity-crud-routes]]
+   [ctia.http.routes.crud :as routes.crud]
    [ctia.lib.compojure.api.core :refer [POST routes]]
    [ctia.schemas.core :refer [APIHandlerServices def-acl-schema def-stored-schema]]
    [ctia.schemas.graphql.flanders :as flanders]
@@ -16,7 +16,6 @@
    [ctia.schemas.graphql.pagination :as pagination]
    [ctia.schemas.graphql.sorting :as graphql-sorting]
    [ctia.schemas.sorting :refer [default-entity-sort-fields describable-entity-sort-fields sourcable-entity-sort-fields]]
-   [ctia.store :refer [read-record update-record]]
    [ctia.stores.es.mapping :as em]
    [ctia.stores.es.store :refer [def-es-store]]
    [ctim.schemas.incident :as is]
@@ -95,25 +94,22 @@
             :auth-identity identity
             :identity-map identity-map
             (let [status-update (assoc (make-status-update update) :id id)
-                  store (get-store :incident)
-                  get-by-id #(read-record
-                              store
-                              %
-                              identity-map
-                              {})
-                  update-fn #(update-record
-                              store
-                              (:id %)
-                              %
-                              identity-map
-                              (routes.common/wait_for->refresh wait_for))]
+                  get-by-ids-fn (routes.crud/flow-get-by-ids-fn
+                                 {:get-store get-store
+                                  :entity :incident
+                                  :identity-map identity-map})
+                  update-fn (routes.crud/flow-update-fn
+                             {:get-store get-store
+                              :entity :incident
+                              :identity-map identity-map
+                              :wait_for (routes.common/wait_for->refresh wait_for)})]
               (if-let [updated
                        (some->
                         (flows/patch-flow
                          :services services
-                         :get-fn (fn [ids] (keep get-by-id ids))
+                         :get-fn get-by-ids-fn
                          :realize-fn realize-incident
-                         :update-fn (fn [entities] (keep update-fn entities))
+                         :update-fn update-fn
                          :long-id-fn #(with-long-id % services)
                          :entity-type :incident
                          :identity identity
@@ -225,7 +221,7 @@
 (s/defn incident-routes [services :- APIHandlerServices]
   (routes
    (incident-additional-routes services)
-   (services->entity-crud-routes
+   (routes.crud/services->entity-crud-routes
     services
     {:entity                   :incident
      :new-schema               NewIncident

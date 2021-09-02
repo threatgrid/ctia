@@ -3,7 +3,7 @@
    [ctia.domain.entities :refer [default-realize-fn un-store with-long-id]]
    [ctia.flows.crud :as flows]
    [ctia.http.routes.common :as routes.common]
-   [ctia.http.routes.crud :refer [services->entity-crud-routes]]
+   [ctia.http.routes.crud :as routes.crud]
    [ctia.lib.compojure.api.core :refer [context POST PATCH routes]]
    [ctia.schemas.core :refer [APIHandlerServices Bundle def-acl-schema def-stored-schema]]
    [ctia.schemas.graphql.flanders :as flanders]
@@ -14,7 +14,6 @@
    [ctia.schemas.graphql.sorting :as graphql-sorting]
    [ctia.schemas.sorting :as sorting]
    [ctia.schemas.utils :as csu]
-   [ctia.store :refer [read-record update-record]]
    [ctia.stores.es.mapping :as em]
    [ctia.stores.es.store :refer [def-es-store]]
    [ctim.schemas.casebook :as cs]
@@ -125,26 +124,17 @@
                                     :as services} :- APIHandlerServices]
   (routes
    (let [capabilities :create-casebook
-         store (get-store :casebook)
          get-by-ids-fn (fn [identity-map]
-                         (let [get-by-id #(-> store
-                                              (read-record
-                                               %
-                                               identity-map
-                                               {}))]
-                           (fn [ids]
-                             (keep get-by-id ids))))
+                         (routes.crud/flow-get-by-ids-fn
+                          {:get-store get-store
+                           :entity :casebook
+                           :identity-map identity-map}))
          update-fn (fn [identity-map wait_for]
-                     (let [update-fn
-                           #(-> store
-                                (update-record
-                                 (:id %)
-                                 %
-                                 identity-map
-                                 (routes.common/wait_for->refresh wait_for)))]
-                       (fn [patches]
-                         (keep update-fn patches))))
-
+                     (routes.crud/flow-update-fn
+                      {:get-store get-store
+                       :entity :casebook
+                       :identity-map identity-map
+                       :wait_for (routes.common/wait_for->refresh wait_for)}))
          patch-flow (fn [identity
                          identity-map
                          wait_for
@@ -278,7 +268,7 @@
 (s/defn casebook-routes [services :- APIHandlerServices]
   (routes
    (casebook-operation-routes services)
-   (services->entity-crud-routes
+   (routes.crud/services->entity-crud-routes
     services
     {:api-tags                 ["Casebook"]
      :entity                   :casebook
