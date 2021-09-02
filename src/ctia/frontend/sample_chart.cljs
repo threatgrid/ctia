@@ -13,6 +13,56 @@
    [reagent.core :as reagent]
    [ctia.frontend.colors :as colors]))
 
+(defn- select-but-keys
+  "Returns a map with all entries except those whose key is in keys"
+  [map keyseq]
+  (loop [ret {} keys (keys map)]
+    (if keys
+      (let [key   (first keys)
+            entry (get map key)]
+        (recur
+         (if (not (contains? (set keyseq) key))
+           (assoc ret key entry)
+           ret)
+         (next keys)))
+      (-with-meta ret (meta map)))))
+
+(defn find-m
+  "Returns elements of a list of maps where each element matches given submap.
+  Example:
+  (find-m {:key :bar}
+          [{:key :foo :amount 1},
+           {:key :bar :amount 2}
+           {:key :bar :amount 3}]) => ({:key :bar :amount 2}, {:key :bar :amount 3})"
+  [m col]
+  (->> col (filter #(-> % (select-keys (keys m)) (= m)))))
+
+(defn pick-data
+  "Digs up data from a nested map (with vectors).
+  Path elements either keywords/strings, or maps where k/v pais is present
+  somewhere in the data. Note that regardless of k/v pair uniqueness within the
+  same level, the function always picks the first matching element.
+
+  Examples:
+  (def data {:foo {:bar {:zaps [{:key 42, :pos 1}{:key 43, :pos 2}]}}})
+
+  (pick-data data [:foo :bar]           => {:zaps [{:key 42, :pos 1}{:key 43, :pos 2}]})
+  (pick-data data [:foo :bar {:key 43}] => {:key 43, :pos 2})"
+  [data path]
+  (reduce
+   (fn [acc n]
+     (if (and (map? n)
+              (sequential? acc))
+       (some->> acc (find-m n) first)
+       (get acc n)))
+   data
+   path))
+
+(defn ms->date-str [ms]
+  (let [d (js/Date. 0)]
+    (.setUTCMilliseconds d ms)
+    (.toLocaleDateString d "en-US" (->js {:timeZone "UTC"}))))
+
 (def ResponsiveContainer (reagent/adapt-react-class charts/ResponsiveContainer))
 (def BarChart (reagent/adapt-react-class charts/BarChart))
 (def LineChart (reagent/adapt-react-class charts/LineChart))
@@ -59,37 +109,6 @@
 
 (reg-sub ::current-data-vector #(get % ::current-data-vector))
 
-(defn find-m
-  "Returns elements of a list of maps where each element matches given submap.
-  Example:
-  (find-m {:key :bar}
-          [{:key :foo :amount 1},
-           {:key :bar :amount 2}
-           {:key :bar :amount 3}]) => ({:key :bar :amount 2}, {:key :bar :amount 3})"
-  [m col]
-  (->> col (filter #(-> % (select-keys (keys m)) (= m)))))
-
-(defn pick-data
-  "Digs up data from a nested map (with vectors).
-  Path elements either keywords/strings, or maps where k/v pais is present
-  somewhere in the data. Note that regardless of k/v pair uniqueness within the
-  same level, the function always picks the first matching element.
-
-  Examples:
-  (def data {:foo {:bar {:zaps [{:key 42, :pos 1}{:key 43, :pos 2}]}}})
-
-  (pick-data data [:foo :bar]           => {:zaps [{:key 42, :pos 1}{:key 43, :pos 2}]})
-  (pick-data data [:foo :bar {:key 43}] => {:key 43, :pos 2})"
-  [data path]
-  (reduce
-   (fn [acc n]
-     (if (and (map? n)
-              (sequential? acc))
-       (some->> acc (find-m n) first)
-       (get acc n)))
-   data
-   path))
-
 (reg-sub
  ::chart-data
  :<- [::data]
@@ -109,12 +128,7 @@
                            (assoc nested :name key)))))]
      raw)))
 
-(defn ms->date-str [ms]
-  (let [d (js/Date. 0)]
-    (.setUTCMilliseconds d ms)
-    (.toLocaleDateString d "en-US" (->js {:timeZone "UTC"}))))
-
-(defn remove-zero-vals
+(defn- remove-zero-vals
   "Removes keys with zero values from a map"
   [m]
   (apply merge (for [[k v] m :when (not (zero? v))] {k v})))
@@ -181,9 +195,15 @@
      (when prev-k
        {:dispatch [::reset-current-data-vector prev-k (butlast data-elements)]}))))
 
+(defn data-keys [data keys-to-ignore]
+  (->> data (map #(select-but-keys % keys-to-ignore))
+       (apply merge-with +)
+       (sort-by val <)
+       (map first)))
+
 (defn bar-chart []
   (let [chart-data @(subscribe [::chart-data])
-        all-keys   (disj (->> chart-data (mapcat keys) set) :name)
+        all-keys   (data-keys chart-data [:name])
         colors     (colors/get-colors (count all-keys))]
     [BarChart
      {:width  1000
@@ -203,7 +223,7 @@
              :allowDataOverflow true
              :tickCount         20
              :padding           {:top 50 :bottom 5}}]
-     [Tooltip]
+     [Tooltip {:itemSorter #(:value (->clj %))}]
      [Legend {:layout        :vertical
               :align         :right
               :verticalAlign :top
@@ -215,21 +235,21 @@
        (fn [idx k]
          [Bar {:dataKey  k
                :key      k
-               :name     k
+               ;; :name     k
                :stackId  "a"
                :fill     (get colors idx)
                :on-click (fn [ps]
                            (let [dv        @(subscribe [::current-data-vector])
                                  data-elts @(subscribe [::data-elements])
                                  nxt-k     (-> ps ->clj :name)]
-                                 (dispatch
-                                  [::next-data-vector
-                                   {:current-data-vector dv
-                                    :data-elements       (conj (vec data-elts) nxt-k)}])))}])))]))
+                             (dispatch
+                              [::next-data-vector
+                               {:current-data-vector dv
+                                :data-elements       (conj (vec data-elts) nxt-k)}])))}])))]))
 
 (defn line-chart []
   (let [data     @(subscribe [::line-chart-data])
-        all-keys (disj (->> data (mapcat keys) set) :date :ms)
+        all-keys (data-keys data [:date :ms])
         colors   (colors/get-colors (count all-keys))]
     [LineChart
      {:width  1700
