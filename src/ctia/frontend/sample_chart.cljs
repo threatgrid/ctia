@@ -10,16 +10,8 @@
                           reg-event-db
                           reg-sub
                           subscribe]]
-   [reagent.core :as reagent]))
-
-(defn- random-color [x]
-  (str "#"
-       (-> 16777215
-           (* (js/Math.random))
-           (js/Math.floor)
-           (.toString 16)
-           (subs 0 4)
-           #_(str "DF"))))
+   [reagent.core :as reagent]
+   [ctia.frontend.colors :as colors]))
 
 (def ResponsiveContainer (reagent/adapt-react-class charts/ResponsiveContainer))
 (def BarChart (reagent/adapt-react-class charts/BarChart))
@@ -204,7 +196,7 @@
              ;; :tick {:font-family "Helvetica"}
              :tickCount         20
              :padding           {:top 50 :bottom 5}}]
-     ;; [Tooltip]
+     [Tooltip]
      [Legend {:layout        :vertical
               :align         :right
               :verticalAlign :top
@@ -216,7 +208,7 @@
              :name         k
              :stackId      "a"
              :minPointSize 20
-             :fill         (random-color k)
+             :fill         (colors/random)
              :on-click     (fn [ps]
                              (let [dv        @(subscribe [::current-data-vector])
                                    data-elts @(subscribe [::data-elements])
@@ -258,10 +250,7 @@
         {:type    :monotone
          :dataKey k
          :key     k
-         :stroke  (random-color k)
-         }
-        ]
-       )]))
+         :stroke  (colors/random)}])]))
 
 (def data-vectors
   [{:key          :root
@@ -299,6 +288,7 @@
   #_(dispatch [::reset-current-data-vector :source
              ["93f3924d-d831-41af-8149-732ac64434a6"
               "ngfw event service"]])
+
   (fn []
     (let [title @(subscribe [::title])
           ui-component @(subscribe [::ui-component])]
