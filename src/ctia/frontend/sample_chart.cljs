@@ -73,6 +73,7 @@
 (def Tooltip (reagent/adapt-react-class charts/Tooltip))
 (def Legend (reagent/adapt-react-class charts/Legend))
 (def Bar (reagent/adapt-react-class charts/Bar))
+(def LabelList (reagent/adapt-react-class charts/LabelList))
 (def Cell (reagent/adapt-react-class charts/Cell))
 
 (defn customized-axis-tick [props]
@@ -221,8 +222,8 @@
      [YAxis {:scale             :log
              :domain            [1 "dataMax + 500"]
              :allowDataOverflow true
-             :tickCount         20
-             :padding           {:top 50 :bottom 5}}]
+             :tickCount         10
+             :padding           {:top 10 :bottom 5}}]
      [Tooltip {:itemSorter #(:value (->clj %))}]
      [Legend {:layout        :vertical
               :align         :right
@@ -235,7 +236,7 @@
        (fn [idx k]
          [Bar {:dataKey  k
                :key      k
-               ;; :name     k
+               :name     k
                :stackId  "a"
                :fill     (get colors idx)
                :on-click (fn [ps]
@@ -245,7 +246,9 @@
                              (dispatch
                               [::next-data-vector
                                {:current-data-vector dv
-                                :data-elements       (conj (vec data-elts) nxt-k)}])))}])))]))
+                                :data-elements       (conj (vec data-elts) nxt-k)}])))}
+          [LabelList {:dataKey k
+                      :position :insideStart}]])))]))
 
 (defn line-chart []
   (let [data     @(subscribe [::line-chart-data])
