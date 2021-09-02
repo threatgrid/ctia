@@ -92,10 +92,15 @@
  ::chart-data
  :<- [::data]
  :<- [::current-data-vector]
- (fn [[data {:keys [outer inner]}]]
-   (let [raw (->> (pick-data data outer)
+ :<- [::data-elements]
+ (fn [[data
+       {:keys [outer inner]}
+       data-elements]]
+   (let [outer-path (if (fn? outer) (apply outer data-elements) outer)
+         inner-path (if (fn? inner) (apply inner data-elements) inner)
+         raw (->> (pick-data data outer-path)
                   (map (fn [{:keys [key] :as m}]
-                         (let [nested (->> (get-in m inner)
+                         (let [nested (->> (get-in m inner-path)
                                            (map (fn [{:keys [key doc_count]}]
                                                   (hash-map key doc_count)))
                                            (apply merge))]
@@ -107,56 +112,43 @@
 (reg-event-db
  ::reset-current-data-vector
  (fn [db [_ key params]]
-   (let [{:keys [title outer] :as dv} (first (filter #(-> % :key (= key)) data-vectors))
-         title (if (fn? title) (title params) title)
-         outer (if (fn? outer) (outer params) outer)
-         dv (merge dv {:title title, :outer outer})]
-     (assoc db ::current-data-vector dv))))
+   (let [{:keys [title] :as dv} (first (filter #(-> % :key (= key)) data-vectors))
+         title (if (fn? title) (apply title params) title)]
+     (assoc db ::current-data-vector dv
+            ::data-elements (remove nil? params)
+            ::title title))))
 
-(reg-sub
- ::title
- :<- [::current-data-vector]
- #(get % :title))
+(reg-sub ::title #(get % ::title))
+(reg-sub ::data-elements #(get % ::data-elements))
 
 (reg-sub
  ::ui-component
  :<- [::current-data-vector]
- (fn [cdw]
-   (get cdw :ui-component)))
+ (fn [cdw] (get cdw :ui-component)))
 
 (reg-event-fx
  ::next-data-vector
- (fn [{:keys [db]} [_ data-vector-k params]]
+ (fn [_ [_ {:keys [current-data-vector
+                   data-elements]}]]
    (let [nxt-k (->> data-vectors
-                    (drop-while #(-> % :key (not= data-vector-k)))
+                    (drop-while #(-> % :key (not= (:key current-data-vector))))
                     rest first :key)]
      (when nxt-k
-       {:dispatch [::reset-current-data-vector nxt-k (:name params)]}))))
-
-(drop-last [:foo])
+       {:dispatch [::reset-current-data-vector nxt-k data-elements]}))))
 
 (reg-event-fx
  ::prev-data-vector
- (fn [{:keys [db]} [_ data-vector-k params]]
+ (fn [_ [_ {:keys [current-data-vector
+                   data-elements]}]]
    (let [prev-k (as-> data-vectors $
-                   (take-while #(-> % :key (not= data-vector-k)) $)
-                   (if (< 1 (count $))
-                     (drop-last $)
-                     (last $))
-                   (:key $))]
+                  (take-while #(-> % :key (not= (:key current-data-vector))) $)
+                  (last $) (:key $))]
      (when prev-k
-       {:dispatch [::reset-current-data-vector prev-k (:name params)]}))))
+       {:dispatch [::reset-current-data-vector prev-k (butlast data-elements)]}))))
 
 (defn bar-chart []
   (let [chart-data @(subscribe [::chart-data])
-        current-data-vector @(subscribe [::current-data-vector])
-        ;; chart-data-vector @(subscribe [::current-data-vector]) ;; chart-type
-        ;; @(subscribe [::chart-type]) ;; title @(subscribe [::title])
-        ;; {:keys [x-axis-key y-axis-key]} @(subscribe [::axis-keys])
-        all-keys (disj (->> chart-data
-                            (mapcat keys)
-                            set)
-                       :name)]
+        all-keys (disj (->> chart-data (mapcat keys) set) :name)]
     [:div
      [BarChart
       {:width 1000
@@ -190,13 +182,14 @@
               :stackId "a"
               :minPointSize 20
               :fill (random-color k)
-              :on-click #(dispatch [::next-data-vector
-                                    (:key current-data-vector)
-                                    (-> % ->clj (select-keys [:name]))])}])]]))
-
-(rest (drop-while
-  #(-> % :key (not= :root))
-  data-vectors))
+              :on-click (fn [ps]
+                          (let [dv @(subscribe [::current-data-vector])
+                                data-elts @(subscribe [::data-elements])
+                                nxt-k (-> ps ->clj :name)]
+                           (dispatch
+                            [::next-data-vector
+                             {:current-data-vector dv
+                              :data-elements (conj (vec data-elts) nxt-k)}])))}])]]))
 
 (def data-vectors
   [{:key          :root
@@ -205,28 +198,42 @@
     :inner        [:source :buckets]
     :ui-component bar-chart}
    {:key          :org
-    :title        (fn [k] (str "By event type for Org: " k))
-    :outer        (fn [k] [:aggregations :org :buckets
-                           {:key k} :source :buckets])
+    :title        (fn [org] (str "By event type for Org: " org))
+    :outer        (fn [org]
+                    [:aggregations :org :buckets
+                     {:key org} :source :buckets])
     :inner        [:titles :buckets]
+    :ui-component bar-chart}
+   {:key          :source
+    :title        (fn [org source]
+                    (str "'" source "' types of events for Org: " org))
+    :outer        (fn [org source] [:aggregations :org :buckets
+                                    {:key org} :source :buckets
+                                    {:key source} :titles :buckets])
+    :inner        [:created-daily :buckets]
     :ui-component bar-chart}])
+
+(defn back-button []
+  [:button.back-btn
+   {:on-click
+    #(dispatch [::prev-data-vector
+                {:current-data-vector @(subscribe [::current-data-vector])
+                 :data-elements @(subscribe [::data-elements])}])}
+   "<"])
 
 (defn root []
   (dispatch [::fetch-data])
   (dispatch [::reset-current-data-vector :root])
   (fn []
     (let [title @(subscribe [::title])
-          ui-component @(subscribe [::ui-component])
-          current-data-vector @(subscribe [::current-data-vector])]
+          ui-component @(subscribe [::ui-component])]
       [:div
        [:h1 "CTIA Incidents"]
        [:div.title-container
-        [:button.back-btn
-         {:on-click #(dispatch [::prev-data-vector (:key current-data-vector)])} "<"]
-        [:h2 title]]
+        [back-button]
+        [:h3 title]]
        (when ui-component
          [ui-component])])))
-
 
 (comment
   (require 're-frame.db)
