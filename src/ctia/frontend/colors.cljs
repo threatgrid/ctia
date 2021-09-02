@@ -1,24 +1,38 @@
 (ns ctia.frontend.colors)
 
 (def pallette
-  ["#E2CFC4"
-   "#F7D9C4"
-   "#FAEDCB"
+  ["#DCEDC1"
+   "#E2CFC4"
    "#C9E4DE"
-   "#C6DEF1"
+   "#FFAAA5"
    "#DBCDF0"
    "#F2C6DE"
-   "#F9C6C9"
+   "#580AFF"
    "#84E3C8"
-   "#A8E6CF"
-   "#DCEDC1"
-   "#FFD3B6"
-   "#FFAAA5"
+   "#F7D9C4"
+   "#147DF5"
+   "#A1FF0A"
    "#FF8B94"
-   "#FF7480"
    "#C670FF"
    "#FFE047"
-   "#EEC7FC"])
+   "#EEC7FC"
+   "#FF0000"
+   "#FF8700"
+   "#A8E6CF"
+   "#FAEDCB"
+   "#DEFF0A"
+   "#FFD300"
+   "#C6DEF1"
+   "#F9C6C9"
+   "#0AFF99"
+   "#FF7480"
+   "#FFD3B6"
+   "#0AEFFF"
+   "#BE0AFF"])
 
-(defn random []
-  (get pallette (rand-int (count pallette))))
+(defn get-colors
+  "Gets a sequence of colors of length `n` from the pallette"
+  [n]
+  (vec (take n (cycle pallette))))
+
+

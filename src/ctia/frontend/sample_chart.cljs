@@ -183,7 +183,8 @@
 
 (defn bar-chart []
   (let [chart-data @(subscribe [::chart-data])
-        all-keys (disj (->> chart-data (mapcat keys) set) :name)]
+        all-keys   (disj (->> chart-data (mapcat keys) set) :name)
+        colors     (colors/get-colors (count all-keys))]
     [BarChart
      {:width  1000
       :height 700
@@ -208,26 +209,31 @@
               :align         :right
               :verticalAlign :top
               :width         200}]
-     (for [k all-keys]
-       [Bar {:dataKey      k
-             :key          k
-             :label        true
-             :name         k
-             :stackId      "a"
-             :minPointSize 20
-             :fill         (colors/random)
-             :on-click     (fn [ps]
-                             (let [dv        @(subscribe [::current-data-vector])
-                                   data-elts @(subscribe [::data-elements])
-                                   nxt-k     (-> ps ->clj :name)]
-                           (dispatch
-                            [::next-data-vector
-                             {:current-data-vector dv
-                              :data-elements       (conj (vec data-elts) nxt-k)}])))}])]))
+
+     (->>
+      all-keys
+      (map-indexed
+       (fn [idx k]
+         [Bar {:dataKey      k
+               :key          k
+               :label        true
+               :name         k
+               :stackId      "a"
+               :minPointSize 20
+               :fill         (get colors idx)
+               :on-click     (fn [ps]
+                               (let [dv @(subscribe [::current-data-vector])
+                                     data-elts @(subscribe [::data-elements])
+                                     nxt-k (-> ps ->clj :name)]
+                                 (dispatch
+                                  [::next-data-vector
+                                   {:current-data-vector dv
+                                    :data-elements (conj (vec data-elts) nxt-k)}])))}])))]))
 
 (defn line-chart []
-  (let [data @(subscribe [::line-chart-data])
-        all-keys (disj (->> data (mapcat keys) set) :date :ms)]
+  (let [data     @(subscribe [::line-chart-data])
+        all-keys (disj (->> data (mapcat keys) set) :date :ms)
+        colors   (colors/get-colors (count all-keys))]
     [LineChart
      {:width  1700
       :height 700
@@ -252,12 +258,15 @@
        :align         :right
        :verticalAlign :top
        :width         200}]
-     (for [k all-keys]
-       [Line
-        {:type    :monotone
-         :dataKey k
-         :key     k
-         :stroke  (colors/random)}])]))
+     (->>
+      all-keys
+      (map-indexed
+       (fn [idx k]
+         [Line
+          {:type    :monotone
+           :dataKey k
+           :key     k
+           :stroke  (get colors idx)}])))]))
 
 (def data-vectors
   [{:key          :root
