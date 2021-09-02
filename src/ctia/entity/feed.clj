@@ -426,7 +426,7 @@
               (flows/delete-flow
                :services services
                :get-fn (get-by-ids-fn identity-map)
-               :delete-fn (routes.common/flow-delete-fn
+               :delete-fn (routes.crud/flow-delete-fn
                            {:get-store get-store
                             :entity :feed
                             :identity-map identity-map
