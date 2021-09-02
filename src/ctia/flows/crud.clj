@@ -38,7 +38,7 @@
    (s/optional-key :events)               [{s/Keyword s/Any}]
    (s/optional-key :get-success-entities) (s/pred fn?)
    (s/optional-key :long-id-fn)           (s/maybe (s/=> s/Any s/Any))
-   (s/optional-key :prev-entities)        s/Any;;(s/pred fn?)
+   (s/optional-key :prev-entity)        s/Any;;(s/pred fn?)
    (s/optional-key :partial-entities)     [(s/maybe {s/Keyword s/Any})]
    (s/optional-key :patch-operation)      (s/enum :add :remove :replace)
    (s/optional-key :realize-fn)           RealizeFn
@@ -112,7 +112,7 @@
            services
            tempids
            find-entity-id
-           prev-entities] :as fm} :- FlowMap]
+           prev-entity] :as fm} :- FlowMap]
   (let [login (auth/login identity)
         groups (auth/groups identity)
         realize-fn (lift-realize-fn-with-context
@@ -133,7 +133,7 @@
                                             tempids
                                             login
                                             groups)
-                        :update (if-let [prev-entity (prev-entities entity-id)]
+                        :update (if-let [prev-entity (prev-entity entity-id)]
                                   (realize-fn entity
                                               entity-id
                                               tempids
@@ -200,7 +200,7 @@
   [{:keys [create-event-fn
            flow-type
            identity
-           prev-entities
+           prev-entity
            get-success-entities]
     :or {get-success-entities default-success-entities}
     {{:keys [get-in-config]} :ConfigService}
@@ -213,7 +213,7 @@
                            (try
                              (if (= flow-type :update)
                                (create-event-fn entity
-                                                (prev-entities (:id entity))
+                                                (prev-entity (:id entity))
                                                 event-id login)
                                (create-event-fn entity event-id login))
                              (catch Throwable e
@@ -361,7 +361,7 @@
         (dissoc :schema_version))))
 
 (s/defn patch-entities :- FlowMap
-  [{:keys [prev-entities
+  [{:keys [prev-entity
            partial-entities
            patch-operation]
     :as fm} :- FlowMap]
@@ -373,7 +373,7 @@
         entities (for [partial-entity partial-entities
                        :let [prev-entity (some->> partial-entity
                                                   :id
-                                                  prev-entities)]
+                                                  prev-entity)]
                        :when (some? prev-entity)]
                    (patch-entity patch-fn prev-entity partial-entity))]
     (assoc fm :entities entities)))
@@ -457,7 +457,7 @@
       apply-after-hooks
       make-result))
 
-(defn prev-entities
+(defn prev-entity
   [get-fn ids]
   (let [indexed (into {}
                       (map (fn [e] [(id/str->short-id (:id e)) e]))
@@ -468,10 +468,10 @@
         (get indexed (id/str->short-id id))))))
 
 (s/defn ^:private find-existing-entity-id
-  [prev-entities-fn]
+  [prev-entity-fn]
   (s/fn [_fm :- FlowMap
          {id :id :as _entity}] :- (s/maybe s/Str)
-    (when (and (seq id) (prev-entities-fn id))
+    (when (and (seq id) (prev-entity-fn id))
       (id/str->short-id id))))
 
 (defn update-flow
@@ -491,16 +491,16 @@
              services
              spec]}]
   (let [ids (map :id entities)
-        prev-entities-fn (prev-entities get-fn ids)]
+        prev-entity-fn (prev-entity get-fn ids)]
     (-> {:flow-type :update
          :entity-type entity-type
          :entities (map #(dissoc % :schema_version) entities)
          :services services
-         :prev-entities prev-entities-fn
+         :prev-entity prev-entity-fn
          :identity identity
          :long-id-fn long-id-fn
          :realize-fn realize-fn
-         :find-entity-id (find-existing-entity-id prev-entities-fn)
+         :find-entity-id (find-existing-entity-id prev-entity-fn)
          :spec spec
          :store-fn update-fn
          :create-event-fn to-update-event}
@@ -533,18 +533,18 @@
              long-id-fn
              spec]}]
   (let [ids (map :id partial-entities)
-        prev-entities-fn (prev-entities get-fn ids)]
+        prev-entity-fn (prev-entity get-fn ids)]
     (-> {:flow-type :update
          :entity-type entity-type
          :entities []
          :services services
-         :prev-entities prev-entities-fn
+         :prev-entity prev-entity-fn
          :partial-entities partial-entities
          :patch-operation patch-operation
          :identity identity
          :long-id-fn long-id-fn
          :realize-fn realize-fn
-         :find-entity-id (find-existing-entity-id prev-entities-fn)
+         :find-entity-id (find-existing-entity-id prev-entity-fn)
          :spec spec
          :store-fn update-fn
          :create-event-fn to-update-event}

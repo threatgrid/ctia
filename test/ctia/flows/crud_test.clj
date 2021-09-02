@@ -57,8 +57,8 @@
                {:id "4"}]
               :enveloped-result? true}
              (flows.crud/preserve-errors {:entities entities
-                                   :enveloped-result? true}
-                                  f)))))
+                                          :enveloped-result? true}
+                                         f)))))
   (testing "without enveloped result"
     (is (= {:entities
             [{:id "1"
@@ -103,9 +103,13 @@
                             (fake-event entity))
           to-delete-event (fn [entity _ _]
                             (fake-event entity))
-          valid-entities [{:one 1 :owner "Huey"}
-                          {:two 2 :owner "Dewey"}
-                          {:three 3 :owner "Louie"}]
+          valid-entities [{:id 1 :owner "Huey"}
+                          {:id 2 :owner "Dewey"}
+                          {:id 3 :owner "Louie"}]
+          prev-entity (fn [id]
+                        (first
+                         (filter #(= id (:id %))
+                                 valid-entities)))
           entities-with-error (conj valid-entities {:error "something bad happened"})
           base-flow-map {:services {:ConfigService {:get-in-config (constantly true)}}
                          :identity ident
@@ -115,6 +119,7 @@
                                  :create-event-fn to-create-event)
           update-flow-map (assoc base-flow-map
                                  :flow-type :update
+                                 :prev-entity prev-entity
                                  :create-event-fn to-update-event)
           delete-flow-map (assoc base-flow-map
                                  :flow-type :delete
