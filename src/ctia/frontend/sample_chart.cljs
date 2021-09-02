@@ -59,6 +59,16 @@
 
 (reg-sub ::current-data-vector #(get % ::current-data-vector))
 
+(defn find-m
+  "Returns elements of a list of maps where each element matches given submap.
+  Example:
+  (find-m {:key :bar}
+          [{:key :foo :amount 1},
+           {:key :bar :amount 2}
+           {:key :bar :amount 3}]) => ({:key :bar :amount 2}, {:key :bar :amount 3})"
+  [m col]
+  (->> col (filter #(-> % (select-keys (keys m)) (= m)))))
+
 (defn pick-data
   "Digs up data from a nested map (with vectors).
   Path elements either keywords/strings, or maps where k/v pais is present
@@ -73,13 +83,10 @@
   [data path]
   (reduce
    (fn [acc n]
-     (let [cur (if (and (map? n)
-                        (sequential? acc))
-                 (some->> acc
-                          (filter #(= (second n) (get % (first n))))
-                          first)
-                 (get acc n))]
-       cur))
+     (if (and (map? n)
+              (sequential? acc))
+       (some->> acc (find-m n) first)
+       (get acc n)))
    data
    path))
 
