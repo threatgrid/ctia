@@ -41,15 +41,6 @@
 (s/defn capitalize-entity [entity :- (s/pred simple-keyword?)]
   (-> entity name str/capitalize))
 
-
-(s/defschema RevokeParams
-  {:identity s/Any
-   :identity-map s/Any
-   :id s/Any
-   :wait_for (s/pred (some-fn nil? boolean?)
-                     'nilable-boolean?)
-   (s/optional-key :revocation-update-fn) (s/pred ifn?)})
-
 (defn flow-get-by-ids-fn
   [{:keys [get-store entity identity-map]}]
   (let [get-by-id #(-> (get-store entity)
@@ -82,6 +73,14 @@
     (fn [ids]
       (map delete-fn ids))))
 
+(s/defschema RevokeParams
+  {:identity s/Any
+   :identity-map s/Any
+   :id s/Any
+   :wait_for (s/pred (some-fn nil? boolean?)
+                     'nilable-boolean?)
+   (s/optional-key :revocation-update-fn) (s/pred ifn?)})
+
 (s/defn revoke-request
   "Process POST /:id/expire route.
   Implemented separately from a POST call to share
@@ -106,21 +105,22 @@
                     :entity entity
                     :identity-map identity-map
                     :wait_for (routes.common/wait_for->refresh wait_for)})
-        update-fn (fn [entities]
-                    (update-fn (map revocation-update-fn entities)))
+        revoke-update-fn (fn [entities]
+                           (update-fn (map revocation-update-fn entities)))
+        patch {:id id
+               :valid_time {:end_time (time/internal-now)}}
         prev-entity (first (get-by-ids [id]))]
     (if prev-entity
       (-> (flows/patch-flow
            :services services
            :get-fn get-by-ids
            :realize-fn realize-fn
-           :update-fn (fn [entities] (keep update-fn entities))
+           :update-fn revoke-update-fn
            :long-id-fn #(with-long-id % services)
            :entity-type entity
            :identity ident
            :patch-operation :replace
-           :partial-entities [{:id id
-                               :valid_time {:end_time (time/internal-now)}}]
+           :partial-entities [patch]
            :spec new-spec)
           first
           un-store
