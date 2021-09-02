@@ -116,6 +116,29 @@
                            :identity-map identity-map
                            :wait_for wait_for}))))
 
+
+(defn flow-get-by-ids-fn
+  [{:keys [get-store entity identity-map]}]
+  (let [get-by-id #(-> (get-store entity)
+                       (read-record
+                        %
+                        identity-map
+                        {}))]
+    (fn [ids]
+      (keep get-by-id ids))))
+
+(defn flow-update-fn
+  [{:keys [identity-map wait_for get-store entity]}]
+  (let [update-fn #(-> (get-store entity)
+                       (update-record
+                        (:id %)
+                        %
+                        identity-map
+                        (wait_for->refresh wait_for)))]
+    (fn [patches]
+      (keep update-fn patches))))
+
+
 (s/defn ^:private entity-crud-routes
   :- DelayedRoutes
   "Implementation of services->entity-crud-routes."
@@ -186,22 +209,16 @@
                                 TopnParams
                                 aggregate-on-enumerable)
         get-by-ids-fn (fn [identity-map]
-                        (let [get-by-id #(-> (get-store entity)
-                                             (read-record
-                                              %
-                                              identity-map
-                                              {}))]
-                          (fn [ids]
-                            (keep get-by-id ids))))
+                        (flow-get-by-ids-fn
+                         {:get-store get-store
+                          :entity entity
+                          :identity-map identity-map}))
         update-fn (fn [identity-map wait_for]
-                    (let [update-fn #(-> (get-store entity)
-                                         (update-record
-                                          (:id %)
-                                          %
-                                          identity-map
-                                          (wait_for->refresh wait_for)))]
-                      (fn [patches]
-                        (keep update-fn patches))))]
+                    (flow-update-fn
+                     {:get-store get-store
+                      :entity entity
+                      :identity-map identity-map
+                      :wait_for (wait_for->refresh wait_for)}))]
    (routes
      (when can-post?
        (let [capabilities post-capabilities]
