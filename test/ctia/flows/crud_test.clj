@@ -106,10 +106,10 @@
           valid-entities [{:id 1 :owner "Huey"}
                           {:id 2 :owner "Dewey"}
                           {:id 3 :owner "Louie"}]
-          prev-entity (fn [id]
-                        (first
-                         (filter #(= id (:id %))
-                                 valid-entities)))
+          get-prev-entity (fn [id]
+                            (first
+                             (filter #(= id (:id %))
+                                     valid-entities)))
           entities-with-error (conj valid-entities {:error "something bad happened"})
           base-flow-map {:services {:ConfigService {:get-in-config (constantly true)}}
                          :identity ident
@@ -119,7 +119,7 @@
                                  :create-event-fn to-create-event)
           update-flow-map (assoc base-flow-map
                                  :flow-type :update
-                                 :prev-entity prev-entity
+                                 :get-prev-entity get-prev-entity
                                  :create-event-fn to-update-event)
           delete-flow-map (assoc base-flow-map
                                  :flow-type :delete
@@ -155,7 +155,7 @@
          :tlp "green"
          :groups ["groups"]))
 
-(deftest patch-flow-test
+(deftest crud-flow-test
   (helpers/with-properties
     ["ctia.store.es.event.refresh" "true"] ;; force refresh for events created in flow
     (helpers/fixture-ctia-with-app

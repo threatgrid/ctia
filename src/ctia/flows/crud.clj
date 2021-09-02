@@ -38,7 +38,7 @@
    (s/optional-key :events)               [{s/Keyword s/Any}]
    (s/optional-key :get-success-entities) (s/pred fn?)
    (s/optional-key :long-id-fn)           (s/maybe (s/=> s/Any s/Any))
-   (s/optional-key :prev-entity)        s/Any;;(s/pred fn?)
+   (s/optional-key :get-prev-entity)        s/Any;;(s/pred fn?)
    (s/optional-key :partial-entities)     [(s/maybe {s/Keyword s/Any})]
    (s/optional-key :patch-operation)      (s/enum :add :remove :replace)
    (s/optional-key :realize-fn)           RealizeFn
@@ -112,7 +112,7 @@
            services
            tempids
            find-entity-id
-           prev-entity] :as fm} :- FlowMap]
+           get-prev-entity] :as fm} :- FlowMap]
   (let [login (auth/login identity)
         groups (auth/groups identity)
         realize-fn (lift-realize-fn-with-context
@@ -133,7 +133,7 @@
                                             tempids
                                             login
                                             groups)
-                        :update (if-let [prev-entity (prev-entity entity-id)]
+                        :update (if-let [prev-entity (get-prev-entity entity-id)]
                                   (realize-fn entity
                                               entity-id
                                               tempids
@@ -162,30 +162,32 @@
 
 (s/defn ^:private apply-before-hooks :- FlowMap
   [{{{:keys [apply-hooks]} :HooksService} :services
-    :keys [entities flow-type prev-entity] :as fm} :- FlowMap]
+    :keys [entities flow-type get-prev-entity] :as fm} :- FlowMap]
   (assoc fm
          :entities
          (doall
           (for [entity entities]
-            (apply-hooks {:entity entity
-                          :prev-entity prev-entity
-                          :hook-type (case flow-type
-                                       :create :before-create
-                                       :update :before-update
-                                       :delete :before-delete)
-                          :read-only? (= flow-type :delete)})))))
+            (cond-> {:entity entity
+                     :hook-type (case flow-type
+                                  :create :before-create
+                                  :update :before-update
+                                  :delete :before-delete)
+                     :read-only? (= flow-type :delete)}
+              get-prev-entity (assoc :prev-entity (get-prev-entity (:id entity)))
+              :finally apply-hooks)))))
 
 (s/defn ^:private apply-after-hooks :- FlowMap
   [{{{:keys [apply-hooks]} :HooksService} :services
-    :keys [entities flow-type prev-entity] :as fm} :- FlowMap]
+    :keys [entities flow-type get-prev-entity] :as fm} :- FlowMap]
   (doseq [entity entities]
-    (apply-hooks {:entity entity
-                  :prev-entity prev-entity
-                  :hook-type (case flow-type
-                               :create :after-create
-                               :update :after-update
-                               :delete :after-delete)
-                  :read-only? true}))
+    (cond-> {:entity entity
+             :hook-type (case flow-type
+                          :create :after-create
+                          :update :after-update
+                          :delete :after-delete)
+             :read-only? true}
+      get-prev-entity (assoc :prev-entity (get-prev-entity (:id entity)))
+      :finally apply-hooks))
   fm)
 ;; TODO for vs doseq
 ;; why apply-before-hooks returns the result of the for
@@ -200,7 +202,7 @@
   [{:keys [create-event-fn
            flow-type
            identity
-           prev-entity
+           get-prev-entity
            get-success-entities]
     :or {get-success-entities default-success-entities}
     {{:keys [get-in-config]} :ConfigService}
@@ -213,7 +215,7 @@
                            (try
                              (if (= flow-type :update)
                                (create-event-fn entity
-                                                (prev-entity (:id entity))
+                                                (get-prev-entity (:id entity))
                                                 event-id login)
                                (create-event-fn entity event-id login))
                              (catch Throwable e
@@ -361,7 +363,7 @@
         (dissoc :schema_version))))
 
 (s/defn patch-entities :- FlowMap
-  [{:keys [prev-entity
+  [{:keys [get-prev-entity
            partial-entities
            patch-operation]
     :as fm} :- FlowMap]
@@ -373,7 +375,7 @@
         entities (for [partial-entity partial-entities
                        :let [prev-entity (some->> partial-entity
                                                   :id
-                                                  prev-entity)]
+                                                  get-prev-entity)]
                        :when (some? prev-entity)]
                    (patch-entity patch-fn prev-entity partial-entity))]
     (assoc fm :entities entities)))
@@ -496,7 +498,7 @@
          :entity-type entity-type
          :entities (map #(dissoc % :schema_version) entities)
          :services services
-         :prev-entity prev-entity-fn
+         :get-prev-entity prev-entity-fn
          :identity identity
          :long-id-fn long-id-fn
          :realize-fn realize-fn
@@ -538,7 +540,7 @@
          :entity-type entity-type
          :entities []
          :services services
-         :prev-entity prev-entity-fn
+         :get-prev-entity prev-entity-fn
          :partial-entities partial-entities
          :patch-operation patch-operation
          :identity identity
