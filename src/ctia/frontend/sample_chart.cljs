@@ -201,7 +201,6 @@
      [YAxis {:scale             :log
              :domain            [1 "dataMax + 500"]
              :allowDataOverflow true
-             ;; :tick {:font-family "Helvetica"}
              :tickCount         20
              :padding           {:top 50 :bottom 5}}]
      [Tooltip]
@@ -214,21 +213,19 @@
       all-keys
       (map-indexed
        (fn [idx k]
-         [Bar {:dataKey      k
-               :key          k
-               :label        true
-               :name         k
-               :stackId      "a"
-               :minPointSize 20
-               :fill         (get colors idx)
-               :on-click     (fn [ps]
-                               (let [dv @(subscribe [::current-data-vector])
-                                     data-elts @(subscribe [::data-elements])
-                                     nxt-k (-> ps ->clj :name)]
+         [Bar {:dataKey  k
+               :key      k
+               :name     k
+               :stackId  "a"
+               :fill     (get colors idx)
+               :on-click (fn [ps]
+                           (let [dv        @(subscribe [::current-data-vector])
+                                 data-elts @(subscribe [::data-elements])
+                                 nxt-k     (-> ps ->clj :name)]
                                  (dispatch
                                   [::next-data-vector
                                    {:current-data-vector dv
-                                    :data-elements (conj (vec data-elts) nxt-k)}])))}])))]))
+                                    :data-elements       (conj (vec data-elts) nxt-k)}])))}])))]))
 
 (defn line-chart []
   (let [data     @(subscribe [::line-chart-data])
