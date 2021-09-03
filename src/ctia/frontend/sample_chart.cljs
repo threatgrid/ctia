@@ -320,7 +320,7 @@
         (map-indexed
          (fn [idx k]
            [Line
-            {:type          :monotone
+            {:type          :monotoneY
              :strokeWidth   (if (and legend-item (= legend-item k)) 3.2 1.5)
              :legendType    :circle
              :strokeOpacity (if (and legend-item (not= legend-item k)) 0.25 1)
