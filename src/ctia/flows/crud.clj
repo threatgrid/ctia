@@ -383,7 +383,6 @@
     :delete results
     :update entities))
 
-
 (defn patch-entity
   [patch-fn prev-entity partial-entity]
   (when prev-entity
@@ -459,7 +458,6 @@
   (let [indexed (into {}
                       (map (fn [e] [(id/str->short-id (:id e)) e]))
                       (get-fn ids))]
-   ;; indexed))
     (fn [id]
       (when (seq id)
         (get indexed (id/str->short-id id))))))
