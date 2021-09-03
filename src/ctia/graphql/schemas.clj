@@ -7,7 +7,7 @@
    [ctia.entity.attack-pattern :as attack-pattern :refer [AttackPatternConnectionType AttackPatternType]]
    [ctia.entity.casebook :as casebook :refer [CasebookConnectionType CasebookType]]
    [ctia.entity.entities :as entities]
-   [ctia.entity.incident :as incident :refer [IncidentConnectionType IncidentType]]
+   [ctia.entity.incident.graphql-schemas :as incident :refer [IncidentConnectionType IncidentType]]
    [ctia.entity.indicator :as indicator :refer [IndicatorConnectionType IndicatorType]]
    [ctia.entity.investigation.graphql-schemas :as investigation :refer [InvestigationConnectionType InvestigationType]]
    [ctia.entity.judgement :as judgement :refer [JudgementConnectionType JudgementType]]

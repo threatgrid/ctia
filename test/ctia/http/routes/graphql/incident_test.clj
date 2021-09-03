@@ -1,6 +1,9 @@
 (ns ctia.http.routes.graphql.incident-test
   (:require [clj-momo.test-helpers.core :as mth]
             [clojure.test :refer [deftest is join-fixtures testing use-fixtures]]
+            [ctia.entity.incident.schemas :refer [incident-fields]]
+            [ctia.entity.feedback.schemas :refer [feedback-fields]]
+            [ctia.entity.relationship.schemas :refer [relationship-fields]]
             [ctia.test-helpers
              [auth :refer [all-capabilities]]
              [core :as helpers]
@@ -127,7 +130,7 @@
                 graphql-queries
                 {:id incident-1-id}
                 [:incident :relationships]
-                ctia.entity.relationship.schemas/relationship-fields)))
+                relationship-fields)))
 
            (testing "feedbacks connection"
              (gh/connection-test app
@@ -145,7 +148,7 @@
                 graphql-queries
                 {:id incident-1-id}
                 [:incident :feedbacks]
-                ctia.entity.feedback.schemas/feedback-fields))))
+                feedback-fields))))
          (testing "incidents query"
            (testing "incidents connection"
              (gh/connection-test app
@@ -164,7 +167,7 @@
                 graphql-queries
                 {:query "*"}
                 [:incidents]
-                ctia.entity.incident/incident-fields)))
+                incident-fields)))
 
            (testing "query argument"
              (let [{:keys [data errors status]}

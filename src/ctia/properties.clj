@@ -175,7 +175,9 @@
                       "ctia.hooks.before-delete" s/Str
                       "ctia.hooks.after-delete" s/Str
 
-                      "ctia.metrics.console.enabled" s/Bool
+                      "ctia.incident.high-impact.source" s/Str
+
+                     "ctia.metrics.console.enabled" s/Bool
                       "ctia.metrics.console.interval" s/Int
                       "ctia.metrics.jmx.enabled" s/Bool
                       "ctia.metrics.riemann.enabled" s/Bool
@@ -198,15 +200,8 @@
                       "ctia.migration.batch-size" s/Int
                       "ctia.migration.buffer-size" s/Int
 
-                      "ctia.store.asset" s/Str
-                      "ctia.store.asset-properties" s/Str
-                      "ctia.store.asset-mapping" s/Str
                       "ctia.store.bulk-refresh" Refresh
                       "ctia.store.bundle-refresh" Refresh
-
-                      "ctia.store.es.asset.indexname" s/Str
-                      "ctia.store.es.asset-properties.indexname" s/Str
-                      "ctia.store.es.asset-mapping.indexname" s/Str
 
                       "ctia.store.es.event.slicing.granularity"
                       (s/enum :minute :hour :day :week :month :year)})

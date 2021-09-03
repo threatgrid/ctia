@@ -1,67 +1,22 @@
 (ns ctia.entity.incident
-  (:require
-   [clj-momo.lib.clj-time.core :as time]
-   [ctia.domain.entities
-    :refer [default-realize-fn un-store with-long-id]]
-   [ctia.entity.feedback.graphql-schemas :as feedback]
-   [ctia.entity.relationship.graphql-schemas :as relationship-graphql]
-   [ctia.flows.crud :as flows]
-   [ctia.http.routes.common :as routes.common]
-   [ctia.http.routes.crud :refer [services->entity-crud-routes]]
-   [ctia.lib.compojure.api.core :refer [POST routes]]
-   [ctia.schemas.core :refer [APIHandlerServices def-acl-schema def-stored-schema]]
-   [ctia.schemas.graphql.flanders :as flanders]
-   [ctia.schemas.graphql.helpers :as g]
-   [ctia.schemas.graphql.ownership :as go]
-   [ctia.schemas.graphql.pagination :as pagination]
-   [ctia.schemas.graphql.sorting :as graphql-sorting]
-   [ctia.schemas.sorting :refer [default-entity-sort-fields describable-entity-sort-fields sourcable-entity-sort-fields]]
-   [ctia.store :refer [read-record update-record]]
-   [ctia.stores.es.mapping :as em]
-   [ctia.stores.es.store :refer [def-es-store]]
-   [ctim.schemas.incident :as is]
-   [ctim.schemas.vocabularies :as vocs]
-   [flanders.schema :as fs]
-   [flanders.utils :as fu]
-   [ring.swagger.schema :refer [describe]]
-   [ring.util.http-response :refer [not-found ok]]
-   [schema-tools.core :as st]
-   [schema.core :as s]))
+  (:require [clj-momo.lib.clj-time.core :as time]
+            [ctia.domain.entities :refer [default-realize-fn un-store with-long-id]]
+            [ctia.entity.incident.schemas :as is]
+            [ctia.entity.incident.es-store :as i-store]
+            [ctia.flows.crud :as flows]
+            [ctia.http.routes.common :as routes.common]
+            [ctia.http.routes.crud :refer [services->entity-crud-routes]]
+            [ctia.lib.compojure.api.core :refer [POST routes]]
+            [ctia.schemas.core :refer [APIHandlerServices]]
+            [ctia.store :refer [read-record update-record]]
+            [ring.swagger.schema :refer [describe]]
+            [ring.util.http-response :refer [not-found ok]]
+            [schema.core :as s]))
 
 (def incident-bundle-default-limit 1000)
 
-(def-acl-schema Incident
-  is/Incident
-  "incident")
-
-(def-acl-schema PartialIncident
-  (fu/optionalize-all is/Incident)
-  "partial-incident")
-
-(s/defschema PartialIncidentList
-  [PartialIncident])
-
-(def-acl-schema NewIncident
-  is/NewIncident
-  "new-incident")
-
-(def-stored-schema StoredIncident
-  Incident)
-
-(s/defschema PartialNewIncident
-  (st/optional-keys-schema NewIncident))
-
-(s/defschema PartialStoredIncident
-  (st/optional-keys-schema StoredIncident))
-
 (def realize-incident
-  (default-realize-fn "incident" NewIncident StoredIncident))
-
-(s/defschema IncidentStatus
-  (fs/->schema vocs/Status))
-
-(s/defschema IncidentStatusUpdate
-  {:status IncidentStatus})
+  (default-realize-fn "incident" is/NewIncident is/StoredIncident))
 
 (defn make-status-update
   [{:keys [status]}]
@@ -84,8 +39,8 @@
   (routes
     (let [capabilities :create-incident]
       (POST "/:id/status" []
-            :return Incident
-            :body [update IncidentStatusUpdate
+            :return is/Incident
+            :body [update is/IncidentStatusUpdate
                    {:description "an Incident Status Update"}]
             :summary "Update an Incident Status"
             :query-params [{wait_for :- (describe s/Bool "wait for updated entity to be available for search") nil}]
@@ -121,108 +76,21 @@
                 (ok updated)
                 (not-found)))))))
 
-(def incident-mapping
-  {"incident"
-   {:dynamic false
-    :properties
-    (merge
-     em/base-entity-mapping
-     em/describable-entity-mapping
-     em/sourcable-entity-mapping
-     em/stored-entity-mapping
-     {:confidence em/token
-      :status em/token
-      :incident_time em/incident-time
-      :categories em/token
-      :discovery_method em/token
-      :intended_effect em/token
-      :assignees em/token
-      :promotion_method em/token})}})
-
-(def-es-store IncidentStore :incident StoredIncident PartialStoredIncident)
-
-(def incident-fields
-  (concat default-entity-sort-fields
-          describable-entity-sort-fields
-          sourcable-entity-sort-fields
-          [:confidence
-           :status
-           :incident_time.opened
-           :incident_time.discovered
-           :incident_time.reported
-           :incident_time.remediated
-           :incident_time.closed
-           :incident_time.rejected
-           :discovery_method
-           :intended_effect
-           :assignees
-           :promotion_method]))
-
-(def incident-sort-fields
-  (apply s/enum incident-fields))
-
-(def incident-enumerable-fields
-  [:assignees
-   :categories
-   :confidence
-   :discovery_method
-   :intended_effect
-   :promotion_method
-   :source
-   :status
-   :title])
-
-(def incident-histogram-fields
-  [:timestamp
-   :incident_time.opened
-   :incident_time.discovered
-   :incident_time.reported
-   :incident_time.remediated
-   :incident_time.closed
-   :incident_time.rejected])
-
-(s/defschema IncidentFieldsParam
-  {(s/optional-key :fields) [incident-sort-fields]})
-
-(s/defschema IncidentSearchParams
-  (st/merge
-   routes.common/PagingParams
-   routes.common/BaseEntityFilterParams
-   routes.common/SourcableEntityFilterParams
-   routes.common/SearchableEntityParams
-   IncidentFieldsParam
-   (st/optional-keys
-    {:confidence       s/Str
-     :status           s/Str
-     :discovery_method s/Str
-     :intended_effect  s/Str
-     :categories       s/Str
-     :sort_by          incident-sort-fields
-     :assignees        s/Str
-     :promotion_method s/Str})))
-
-(def IncidentGetParams IncidentFieldsParam)
-
-(s/defschema IncidentByExternalIdQueryParams
-  (st/merge
-   routes.common/PagingParams
-   IncidentFieldsParam))
-
 (s/defn incident-routes [services :- APIHandlerServices]
   (routes
    (incident-additional-routes services)
    (services->entity-crud-routes
     services
     {:entity                   :incident
-     :new-schema               NewIncident
-     :entity-schema            Incident
-     :get-schema               PartialIncident
-     :get-params               IncidentGetParams
-     :list-schema              PartialIncidentList
-     :search-schema            PartialIncidentList
-     :patch-schema             PartialNewIncident
-     :external-id-q-params     IncidentByExternalIdQueryParams
-     :search-q-params          IncidentSearchParams
+     :new-schema               is/NewIncident
+     :entity-schema            is/Incident
+     :get-schema               is/PartialIncident
+     :get-params               is/IncidentGetParams
+     :list-schema              is/PartialIncidentList
+     :search-schema            is/PartialIncidentList
+     :patch-schema             is/PartialNewIncident
+     :external-id-q-params     is/IncidentByExternalIdQueryParams
+     :search-q-params          is/IncidentSearchParams
      :new-spec                 :new-incident/map
      :can-patch?               true
      :can-aggregate?           true
@@ -234,33 +102,8 @@
      :delete-capabilities      :delete-incident
      :search-capabilities      :search-incident
      :external-id-capabilities :read-incident
-     :histogram-fields         incident-histogram-fields
-     :enumerable-fields        incident-enumerable-fields})))
-
-(def IncidentType
-  (let [{:keys [fields name description]}
-        (flanders/->graphql
-         (fu/optionalize-all is/Incident)
-         {})]
-    (g/new-object
-     name
-     description
-     []
-     (merge fields
-            feedback/feedback-connection-field
-            relationship-graphql/relatable-entity-fields
-            go/graphql-ownership-fields))))
-
-(def incident-order-arg
-  (graphql-sorting/order-by-arg
-   "IncidentOrder"
-   "incidents"
-   (into {}
-         (map (juxt graphql-sorting/sorting-kw->enum-name name)
-              incident-fields))))
-
-(def IncidentConnectionType
-  (pagination/new-connection IncidentType))
+     :histogram-fields         is/incident-histogram-fields
+     :enumerable-fields        is/incident-enumerable-fields})))
 
 (def capabilities
   #{:create-incident
@@ -274,16 +117,16 @@
    :entity                :incident
    :plural                :incidents
    :new-spec              :new-incident/map
-   :schema                Incident
-   :partial-schema        PartialIncident
-   :partial-list-schema   PartialIncidentList
-   :new-schema            NewIncident
-   :stored-schema         StoredIncident
-   :partial-stored-schema PartialStoredIncident
+   :schema                is/Incident
+   :partial-schema        is/PartialIncident
+   :partial-list-schema   is/PartialIncidentList
+   :new-schema            is/NewIncident
+   :stored-schema         is/StoredIncident
+   :partial-stored-schema is/PartialStoredIncident
    :realize-fn            realize-incident
-   :es-store              ->IncidentStore
-   :es-mapping            incident-mapping
+   :es-store              i-store/->IncidentStore
+   :es-mapping            i-store/incident-mapping
    :services->routes      (routes.common/reloadable-function incident-routes)
    :capabilities          capabilities
-   :fields                incident-fields
-   :sort-fields           incident-fields})
+   :fields                is/incident-fields
+   :sort-fields           is/incident-fields})

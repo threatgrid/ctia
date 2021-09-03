@@ -1,6 +1,6 @@
 (ns ctia.task.migration.migrations-test
   (:require [clojure.test :refer [deftest is]]
-            [ctia.entity.incident :refer [StoredIncident]]
+            [ctia.entity.incident.schemas :refer [StoredIncident]]
             [ctia.task.migration.migrations :as sut]
             [schema.core :as s]))
 
