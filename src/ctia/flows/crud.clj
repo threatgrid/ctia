@@ -38,7 +38,7 @@
    (s/optional-key :events)               [{s/Keyword s/Any}]
    (s/optional-key :get-success-entities) (s/pred fn?)
    (s/optional-key :long-id-fn)           (s/maybe (s/=> s/Any s/Any))
-   (s/optional-key :get-prev-entity)        s/Any;;(s/pred fn?)
+   (s/optional-key :get-prev-entity)      (s/pred fn?)
    (s/optional-key :partial-entities)     [(s/maybe {s/Keyword s/Any})]
    (s/optional-key :patch-operation)      (s/enum :add :remove :replace)
    (s/optional-key :realize-fn)           RealizeFn
@@ -55,6 +55,49 @@
 (defn make-id
   [entity-type]
   (str (name entity-type) "-" (gen-random-uuid)))
+
+(s/defn ^:private find-checked-id
+  "checks that the hostname in the ID (if it is a long ID)
+   is the local server hostname. Throws bad-request! on mismatch."
+  [{id :id :as entity}
+   services :- HTTPShowServices]
+  (when (seq id)
+    (if (id/long-id? id)
+      (let [id-rec (id/long-id->id id)
+            this-host (:hostname (p/get-http-show services))]
+        (if (= (:hostname id-rec) this-host)
+          (:short-id id-rec)
+          (http-response/bad-request!
+           {:error "Invalid hostname in ID"
+            :id id
+            :this-host this-host
+            :entity entity})))
+      (id/str->short-id id))))
+
+(s/defn find-create-entity-id
+  [services :- HTTPShowServices]
+  (s/fn [{identity-obj :identity
+          :keys [entity-type tempids]} :- FlowMap
+         entity] :- s/Str
+    (or
+     (get tempids (:id entity))
+     (when-let [entity-id (find-checked-id entity services)]
+       (when-not (auth/capable? identity-obj :specify-id)
+         (http-response/forbidden!
+          {:error "Missing capability to specify entity ID"
+           :entity entity}))
+       (if (id/valid-short-id? entity-id)
+         entity-id
+         {:error (format "Invalid entity ID: %s" entity-id)
+          :entity entity}))
+     (make-id entity-type))))
+
+(s/defn ^:private find-existing-entity-id
+  [prev-entity-fn]
+  (s/fn [_fm :- FlowMap
+         {id :id :as _entity}] :- (s/maybe s/Str)
+    (when (and (seq id) (prev-entity-fn id))
+      (id/str->short-id id))))
 
 (defn- check-spec [entity spec]
   (if (and spec
@@ -380,42 +423,6 @@
                    (patch-entity patch-fn prev-entity partial-entity))]
     (assoc fm :entities entities)))
 
-(s/defn ^:private find-checked-id
-  "checks that the hostname in the ID (if it is a long ID)
-   is the local server hostname. Throws bad-request! on mismatch."
-  [{id :id :as entity}
-   services :- HTTPShowServices]
-  (when (seq id)
-    (if (id/long-id? id)
-      (let [id-rec (id/long-id->id id)
-            this-host (:hostname (p/get-http-show services))]
-        (if (= (:hostname id-rec) this-host)
-          (:short-id id-rec)
-          (http-response/bad-request!
-           {:error "Invalid hostname in ID"
-            :id id
-            :this-host this-host
-            :entity entity})))
-      (id/str->short-id id))))
-
-(s/defn find-create-entity-id
-  [services :- HTTPShowServices]
-  (s/fn [{identity-obj :identity
-          :keys [entity-type tempids]} :- FlowMap
-         entity] :- s/Str
-    (or
-     (get tempids (:id entity))
-     (when-let [entity-id (find-checked-id entity services)]
-       (when-not (auth/capable? identity-obj :specify-id)
-         (http-response/forbidden!
-          {:error "Missing capability to specify entity ID"
-           :entity entity}))
-       (if (id/valid-short-id? entity-id)
-         entity-id
-         {:error (format "Invalid entity ID: %s" entity-id)
-          :entity entity}))
-     (make-id entity-type))))
-
 (defn create-flow
   "This function centralizes the create workflow.
   It is helpful to easily add new hooks name
@@ -468,13 +475,6 @@
     (fn [id]
       (when (seq id)
         (get indexed (id/str->short-id id))))))
-
-(s/defn ^:private find-existing-entity-id
-  [prev-entity-fn]
-  (s/fn [_fm :- FlowMap
-         {id :id :as _entity}] :- (s/maybe s/Str)
-    (when (and (seq id) (prev-entity-fn id))
-      (id/str->short-id id))))
 
 (defn update-flow
   "This function centralize the update workflow.
