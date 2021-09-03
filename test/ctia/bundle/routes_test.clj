@@ -506,6 +506,7 @@
   (authenticated? [_] true)
   (login [_] login)
   (groups [_] groups)
+  (client-id [_] nil)
   (allowed-capabilities [_] #{})
   (capable? [_ _] true)
   (rate-limit-fn [_ _] false))

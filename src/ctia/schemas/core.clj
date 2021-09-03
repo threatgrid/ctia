@@ -60,6 +60,7 @@
    :owner s/Str
    :groups [s/Str]
    :created java.util.Date
+   (s/optional-key :client_id) s/Str
    (s/optional-key :modified) java.util.Date})
 
 (s/defschema RealizeFnServices
@@ -209,6 +210,7 @@
    (st/optional-keys
     {:authorized_users [Str]
      :authorized_groups [Str]
+     :client_id s/Str
      :owner s/Str
      :groups [s/Str]})))
 

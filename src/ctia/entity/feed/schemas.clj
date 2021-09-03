@@ -1,5 +1,6 @@
 (ns ctia.entity.feed.schemas
-  (:require
+  (:require [ctia.auth :as auth]
+
    [ctia.encryption :as encryption]
    [clj-momo.lib.time :as time]
    [ctia.domain
@@ -77,14 +78,12 @@
   ([new-object :- NewFeed
     id :- s/Str
     tempids :- (s/maybe TempIDs)
-    owner :- s/Str
-    groups :- [s/Str]]
-   (realize-feed new-object id tempids owner groups nil))
+    ident-map :- auth/IdentityMap]
+   (realize-feed new-object id tempids ident-map nil))
   ([new-object :- NewFeed
     id :- s/Str
     _ :- (s/maybe TempIDs)
-    owner :- s/Str
-    groups :- [s/Str]
+    {:keys [login groups client-id]} :- auth/IdentityMap
     prev-object :- (s/maybe StoredFeed)]
   (delayed/fn :- StoredFeed
    [{{{:keys [get-in-config]} :ConfigService
@@ -107,21 +106,22 @@
          feed_view_url_txt
          (encrypt
           (str long-id "/view.txt?s=" plain-secret))
-         now (time/now)]
-     (merge new-object
-            {:id id
-             :type "feed"
-             :owner (or (:owner prev-object) owner)
-             :groups (or (:groups prev-object) groups)
-             :secret secret
-             :feed_view_url (if (= :judgements output)
-                              feed_view_url
-                              feed_view_url_txt)
-             :schema_version schema-version
-             :created (or (:created prev-object) now)
-             :modified now
-             :timestamp (or (:timestamp new-object) now)
-             :tlp
-             (:tlp new-object
-                   (:tlp prev-object
-                         (properties-default-tlp get-in-config)))})))))
+         now (time/now)
+         base-stored {:id id
+                      :type "feed"
+                      :owner (or (:owner prev-object) login)
+                      :groups (or (:groups prev-object) groups)
+                      :secret secret
+                      :feed_view_url (if (= :judgements output)
+                                       feed_view_url
+                                       feed_view_url_txt)
+                      :schema_version schema-version
+                      :created (or (:created prev-object) now)
+                      :modified now
+                      :timestamp (or (:timestamp new-object) now)
+                      :tlp
+                      (:tlp new-object
+                            (:tlp prev-object
+                                  (properties-default-tlp get-in-config)))}]
+     (cond-> (into new-object base-stored)
+       client-id (assoc :client_id client-id))))))

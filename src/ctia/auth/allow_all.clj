@@ -1,6 +1,5 @@
 (ns ctia.auth.allow-all
-  (:require [clj-momo.lib.set :refer [as-set]]
-            [ctia.auth.capabilities :refer [all-capabilities]]
+  (:require [ctia.auth.capabilities :refer [all-capabilities]]
             [ctia.auth
              :refer [IIdentity IAuth]
              :as auth]
@@ -10,6 +9,8 @@
   IIdentity
   (authenticated? [_]
     true)
+  (client-id [_]
+    auth/not-logged-client-id)
   (login [_]
     auth/not-logged-in-owner)
   (groups [_]

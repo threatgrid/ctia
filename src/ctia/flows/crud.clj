@@ -156,8 +156,7 @@
            tempids
            find-entity-id
            get-prev-entity] :as fm} :- FlowMap]
-  (let [login (auth/login identity)
-        groups (auth/groups identity)
+  (let [identity-map (auth/ident->map identity)
         realize-fn (lift-realize-fn-with-context
                      (:realize-fn fm)
                      {:services (APIHandlerServices->RealizeFnServices
@@ -174,20 +173,17 @@
                         :create (realize-fn entity
                                             entity-id
                                             tempids
-                                            login
-                                            groups)
+                                            identity-map)
                         :update (if-let [prev-entity (get-prev-entity entity-id)]
                                   (realize-fn entity
                                               entity-id
                                               tempids
-                                              login
-                                              groups
+                                              identity-map
                                               prev-entity)
                                   (realize-fn entity
                                               entity-id
                                               tempids
-                                              login
-                                              groups))
+                                              identity-map))
                         :delete entity)))))))
 
 (s/defn ^:private throw-validation-error

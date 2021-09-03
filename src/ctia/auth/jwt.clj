@@ -1,7 +1,6 @@
 (ns ctia.auth.jwt
   (:refer-clojure :exclude [identity])
   (:require
-   [cheshire.core :as json]
    [clj-jwt.key :refer [public-key]]
    [clj-momo.lib.set :refer [as-set]]
    [clojure.set :as set]
@@ -10,7 +9,6 @@
    [ctia.auth :as auth :refer [IIdentity]]
    [ctia.auth.capabilities :refer
     [all-entities gen-capabilities-for-entity-and-accesses]]
-   [ring.util.http-response :as resp]
    [scopula.core :as scopula]))
 
 (defn load-public-key
@@ -67,7 +65,7 @@
 
 (defn claim-prefix [get-in-config]
   (get-in-config [:ctia :http :jwt :claim-prefix]
-                              "https://schemas.cisco.com/iroh/identity/claims"))
+                 "https://schemas.cisco.com/iroh/identity/claims"))
 
 (defn unionize
   "Given a seq of set make the union of all of them"
@@ -147,6 +145,7 @@
   https://schemas.cisco.com/iroh/identity/claims/user/email
   https://schemas.cisco.com/iroh/identity/claims/org/id
   https://schemas.cisco.com/iroh/identity/claims/roles
+  https://schemas.cisco.com/iroh/identity/claims/oauth/client/id
 
   See https://github.com/threatgrid/iroh/issues/1707
 
@@ -175,6 +174,8 @@
   IIdentity
   (authenticated? [_]
     true)
+  (client-id [_]
+    (get jwt (iroh-claim "oauth/client/id" get-in-config)))
   (login [_]
     (:sub jwt))
   (groups [_]
@@ -204,7 +205,8 @@
          (let [identity
                (->JWTIdentity jwt (partial unlimited? unlimited-properties get-in-config) get-in-config)]
            (assoc request
-                  :identity identity
-                  :login    (auth/login identity)
-                  :groups   (auth/groups identity)))
+                  :identity  identity
+                  :client-id (auth/client-id identity)
+                  :login     (auth/login identity)
+                  :groups    (auth/groups identity)))
          request)))))

@@ -1,11 +1,9 @@
 (ns ctia.auth.jwt-test
-  (:require
-   [clojure.set :as set]
-   [clojure.test :as t :refer [deftest testing is are]]
-   [ctia.auth.capabilities :as caps]
-   [ctia.auth.jwt :as sut]
-   [ctia.test-helpers.core :as helpers])
-  (:import [ctia.auth.jwt JWTIdentity]))
+  (:require [clojure.set :as set]
+            [clojure.test :as t :refer [are deftest is testing]]
+            [ctia.auth.capabilities :as caps]
+            [ctia.auth.jwt :as sut]
+            [ctia.test-helpers.core :as helpers]))
 
 ;; note: refactor into tests if this namespace uses any fixtures
 (def get-in-config
@@ -18,9 +16,12 @@
         wrapped-handler (sut/wrap-jwt-to-ctia-auth handler get-in-config)
         request-no-jwt {:body "foo"
                         :url "http://localhost:8080/foo"}
-        request-jwt (assoc request-no-jwt
-                           :jwt {:sub "subject name"
-                                 (sut/iroh-claim "org/id" get-in-config) "organization-id"})
+        client-id-claim (sut/iroh-claim "oauth/client/id" get-in-config)
+        org-id-claim (sut/iroh-claim "org/id" get-in-config)
+        jwt {:sub "subject name"
+             client-id-claim "client-id"
+             org-id-claim "organization-id"}
+        request-jwt (assoc request-no-jwt :jwt jwt)
         response-no-jwt (wrapped-handler request-no-jwt)
         response-jwt (wrapped-handler request-jwt)]
     (is (= {:body {:body "foo"
@@ -30,8 +31,8 @@
     (is (= {:body
             {:body "foo"
              :url "http://localhost:8080/foo"
-             :jwt {:sub "subject name"
-                   (sut/iroh-claim "org/id" get-in-config) "organization-id"}
+             :jwt jwt
+             :client-id "client-id"
              :groups ["organization-id"]
              :login  "subject name"}
             :status 200}

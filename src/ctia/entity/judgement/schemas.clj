@@ -1,5 +1,6 @@
 (ns ctia.entity.judgement.schemas
-  (:require [ctia.domain
+  (:require [ctia.auth :as auth]
+            [ctia.domain
              [entities :refer [default-realize-fn]]]
             [ctia.graphql.delayed :as delayed]
             [ctia.schemas
@@ -43,13 +44,12 @@
   (default-realize-fn "judgement" NewJudgement StoredJudgement))
 
 (s/defn realize-judgement :- (RealizeFnResult (with-error StoredJudgement))
-  ([new-judgement id tempids owner groups]
-   (realize-judgement new-judgement id tempids owner groups nil))
+  ([new-judgement id tempids ident-map]
+   (realize-judgement new-judgement id tempids ident-map nil))
   ([new-judgement :- NewJudgement
     id :- s/Str
     tempids :- (s/maybe TempIDs)
-    owner :- s/Str
-    groups :- [s/Str]
+    ident-map :- auth/IdentityMap
     prev-judgement :- (s/maybe StoredJudgement)]
   (delayed/fn :- (with-error StoredJudgement)
    [rt-ctx :- GraphQLRuntimeContext]
@@ -62,7 +62,7 @@
         (assoc new-judgement
                :disposition disposition
                :disposition_name disposition-name)
-        id tempids owner groups prev-judgement))
+        id tempids ident-map prev-judgement))
      (catch clojure.lang.ExceptionInfo e
        (let [{error-type :type} (ex-data e)]
          (if (= error-type :ctim.schemas.common/disposition-missing)

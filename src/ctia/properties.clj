@@ -198,15 +198,8 @@
                       "ctia.migration.batch-size" s/Int
                       "ctia.migration.buffer-size" s/Int
 
-                      "ctia.store.asset" s/Str
-                      "ctia.store.asset-properties" s/Str
-                      "ctia.store.asset-mapping" s/Str
                       "ctia.store.bulk-refresh" Refresh
                       "ctia.store.bundle-refresh" Refresh
-
-                      "ctia.store.es.asset.indexname" s/Str
-                      "ctia.store.es.asset-properties.indexname" s/Str
-                      "ctia.store.es.asset-mapping.indexname" s/Str
 
                       "ctia.store.es.event.slicing.granularity"
                       (s/enum :minute :hour :day :week :month :year)})

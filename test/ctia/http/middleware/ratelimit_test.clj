@@ -17,6 +17,7 @@
   (authenticated? [_] true)
   (login [_] "user")
   (groups [_] groups)
+  (client-id [_] nil)
   (allowed-capabilities [_] #{})
   (capable? [_ _] true)
   (rate-limit-fn [_ limit-fn] (when limited? limit-fn)))

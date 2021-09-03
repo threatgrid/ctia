@@ -1,14 +1,15 @@
 (ns ctia.domain.entities
   (:require [clj-momo.lib.time :as time]
+            [ctia.auth :as auth]
             [ctia.domain.access-control :refer [properties-default-tlp]]
-            [ctia.properties :refer [get-http-show]]
-            [ctia.schemas.core :as ctia-schemas
-             :refer [GraphQLRuntimeContext
-                     HTTPShowServices
-                     RealizeFnResult
-                     TempIDs]]
-            [ctim.domain.id :as id]
             [ctia.graphql.delayed :as delayed]
+            [ctia.properties :refer [get-http-show]]
+            [ctia.schemas.core
+             :as
+             ctia-schemas
+             :refer
+             [GraphQLRuntimeContext HTTPShowServices RealizeFnResult TempIDs]]
+            [ctim.domain.id :as id]
             [ctim.schemas.common :refer [ctim-schema-version]]
             [schema.core :as s]))
 
@@ -34,6 +35,31 @@
                     (:end_time prev-valid-time)
                     time/default-expire-date)}})
 
+(defn default-realize
+  [type-name Model new-object id ident-map prev-object services]
+  (let [{{{:keys [get-in-config]} :ConfigService} :services} services
+        {:keys [login groups client-id]} ident-map
+        now (time/now)
+        with-base-fields (into new-object
+                               {:id id
+                                :type type-name
+                                :owner (or (:owner prev-object) login)
+                                :groups (or (:groups prev-object) groups)
+                                :schema_version schema-version
+                                :created (or (:created prev-object) now)
+                                :modified now
+                                :timestamp (or (:timestamp new-object)
+                                               (:timestamp prev-object)
+                                               now)
+                                :tlp (:tlp new-object
+                                           (:tlp prev-object (properties-default-tlp get-in-config)))})]
+    (cond-> with-base-fields
+      (contains-key? Model :valid_time)
+      (into (make-valid-time (:valid_time prev-object)
+                             (:valid_time new-object)
+                             now))
+      client-id (assoc :client_id (or (:client_id prev-object) client-id)))))
+
 (s/defn default-realize-fn
   ;; commented since StoredModel is a parameter and not in scope here,
   ;; checking is propagated to the body via s/fn
@@ -41,37 +67,20 @@
   [type-name
    Model :- (s/protocol s/Schema)
    StoredModel  :- (s/protocol s/Schema)]
-  (s/fn default-realize :- (RealizeFnResult StoredModel)
+  (s/fn realize-fn :- (RealizeFnResult StoredModel)
     ([new-object :- Model
       id :- s/Str
       tempids :- (s/maybe TempIDs)
-      owner :- s/Str
-      groups :- [s/Str]]
-     (default-realize new-object id tempids owner groups nil))
+      ident-map :- auth/IdentityMap]
+     (realize-fn new-object id tempids ident-map nil))
     ([new-object :- Model
       id :- s/Str
       _ :- (s/maybe TempIDs)
-      owner :- s/Str
-      groups :- [s/Str]
+      ident-map :- auth/IdentityMap
       prev-object :- (s/maybe StoredModel)]
     (delayed/fn :- StoredModel
-     [{{{:keys [get-in-config]} :ConfigService} :services} :- GraphQLRuntimeContext]
-     (let [now (time/now)]
-       (merge new-object
-              {:id id
-               :type type-name
-               :owner (or (:owner prev-object) owner)
-               :groups (or (:groups prev-object) groups)
-               :schema_version schema-version
-               :created (or (:created prev-object) now)
-               :modified now
-               :timestamp (or (:timestamp new-object) now)
-               :tlp (:tlp new-object
-                          (:tlp prev-object (properties-default-tlp get-in-config)))}
-              (when (contains-key? Model :valid_time)
-                (make-valid-time (:valid_time prev-object)
-                                 (:valid_time new-object)
-                                 now))))))))
+                [services :- GraphQLRuntimeContext]
+                (default-realize type-name Model new-object id ident-map prev-object services)))))
 
 (s/defn short-id->long-id [id services :- HTTPShowServices]
   (id/short-id->long-id id #(get-http-show services)))
