@@ -1,16 +1,20 @@
 (ns ctia.flows.hooks.event-hooks
-  (:require [cheshire.core :refer [generate-string]]
-            [clojure.tools.logging :as log]
-            [ctia.flows.hook-protocol :refer [Hook]]
-            [ctia.flows.hooks-service.schemas :refer [HooksMap]]
-            [ctia.lib.kafka :as lk]
-            [ctia.lib.redis :as lr]
-            [ctia.schemas.services :refer [ConfigServiceFns]]
-            [onyx.kafka.helpers :as okh]
-            [redismq.core :as rmq]
-            [schema-tools.core :as st]
-            [schema.core :as s])
-  (:import org.apache.kafka.clients.producer.KafkaProducer))
+  (:require
+   [clojure.tools.logging :as log]
+   [ctia.flows.hook-protocol :refer [Hook]]
+   [ctia.lib.redis :as lr]
+   [ctia.lib.kafka :as lk]
+   [ctia.entity.event.schemas :refer [CreateEventType
+                                      DeleteEventType]]
+   [ctia.flows.hooks-service.schemas :refer [HooksMap]]
+   [ctia.schemas.services :refer [ConfigServiceFns]]
+   [redismq.core :as rmq]
+   [onyx.kafka.helpers :as okh]
+   [onyx.plugin.kafka :as opk]
+   [cheshire.core :refer [generate-string]]
+   [schema.core :as s]
+   [schema-tools.core :as st])
+  (:import [org.apache.kafka.clients.producer KafkaProducer]))
 
 (defrecord KafkaEventPublisher [^KafkaProducer producer kafka-config]
   Hook

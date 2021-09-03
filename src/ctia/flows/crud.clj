@@ -236,7 +236,6 @@
 ;; why apply-before-hooks returns the result of the for
 ;; while apply-after-hooks returns the fm as it is?
 
-
 (defn default-success-entities
   [fm]
   (->> fm :entities (remove :error)))
@@ -262,7 +261,6 @@
                                                 event-id login)
                                (create-event-fn entity event-id login))
                              (catch Throwable e
-                               (.printStackTrace e)
                                (log/error "Could not create event" e)
                                (throw (ex-info "Could not create event"
                                                {:flow-type flow-type
@@ -326,21 +324,11 @@
 
 (s/defn apply-delete-store-fn
   [{:keys [entity-ids store-fn] :as fm} :- FlowMap]
-  (let [results (store-fn entity-ids)]
-    (assoc fm :results results)))
+  (assoc fm :results (store-fn entity-ids)))
 
 (s/defn apply-update-store-fn
   [{:keys [store-fn entities] :as fm} :- FlowMap]
-  (assoc fm
-         :entities
-         (store-fn entities)))
-
-(s/defn ^:private apply-store-fn :- FlowMap
-  [{:keys [flow-type] :as fm} :- FlowMap]
-  (case flow-type
-    :create (apply-create-store-fn fm)
-    :delete (apply-delete-store-fn fm)
-    :update (apply-update-store-fn fm)))
+  (assoc fm :entities (store-fn entities)))
 
 (defn short-to-long-ids-map
   "Builds a mapping table between short and long IDs"
@@ -458,7 +446,7 @@
       realize-entities
       throw-validation-error
       apply-before-hooks
-      (preserve-errors apply-store-fn)
+      (preserve-errors apply-create-store-fn)
       apply-long-id-fn
       create-events
       write-events
@@ -510,7 +498,7 @@
         realize-entities
         throw-validation-error
         apply-before-hooks
-        apply-store-fn
+        apply-update-store-fn
         apply-long-id-fn
         create-events
         write-events
@@ -555,7 +543,7 @@
         realize-entities
         throw-validation-error
         apply-before-hooks
-        apply-store-fn
+        apply-update-store-fn
         apply-long-id-fn
         create-events
         write-events
@@ -590,7 +578,7 @@
          :store-fn delete-fn
          :create-event-fn to-delete-event}
         apply-before-hooks
-        apply-store-fn
+        apply-delete-store-fn
         apply-long-id-fn
         create-events
         write-events

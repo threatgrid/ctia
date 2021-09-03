@@ -238,9 +238,6 @@
          :unauthorized (unauthorized {:error "wrong secret"})
          (ok (dissoc feed :output)))))))
 
-
-
-
 (s/defn feed-routes [{{:keys [get-store]} :StoreService
                       :as services} :- APIHandlerServices]
   (let [get-by-ids-fn (fn [identity-map]
