@@ -196,11 +196,25 @@
      (when prev-k
        {:dispatch [::reset-current-data-vector prev-k (butlast data-elements)]}))))
 
+(reg-event-db
+ ::set-tooltip-payload
+ (fn [db [_ payload]]
+   (assoc db ::tooltip-payload payload)))
+
+(reg-sub ::tooltip-payload #(get % ::tooltip-payload))
+
 (defn data-keys [data keys-to-ignore]
   (->> data (map #(select-but-keys % keys-to-ignore))
        (apply merge-with +)
        (sort-by val <)
        (map first)))
+
+(defn custom-tooltip []
+  (let [{:keys [name value color]} @(subscribe [::tooltip-payload])]
+    (reagent/as-element
+     [:div.custom-tooltip {:style {:color color}}
+      [:div.label (str name ":")]
+      [:div.value value]])))
 
 (defn bar-chart []
   (let [chart-data @(subscribe [::chart-data])
@@ -224,7 +238,11 @@
              :allowDataOverflow true
              :tickCount         10
              :padding           {:top 10 :bottom 5}}]
-     [Tooltip {:itemSorter #(- (:value (->clj %)))}]
+     [Tooltip {:itemSorter        #(- (:value (->clj %)))
+               :offset            0
+               :animationDuration 500
+               :animationEasing   :ease-in
+               :content           custom-tooltip}]
      [Legend {:layout        :vertical
               :align         :right
               :verticalAlign :top
@@ -234,20 +252,23 @@
       all-keys
       (map-indexed
        (fn [idx k]
-         [Bar {:dataKey  k
-               :key      k
-               :name     k
-               :stackId  "a"
-               :fill     (get colors idx)
-               :on-click (fn [ps]
-                           (let [dv        @(subscribe [::current-data-vector])
-                                 data-elts @(subscribe [::data-elements])
-                                 nxt-k     (-> ps ->clj :name)]
-                             (dispatch
-                              [::next-data-vector
-                               {:current-data-vector dv
-                                :data-elements       (conj (vec data-elts) nxt-k)}])))}
-          [LabelList {:dataKey k
+         [Bar {:dataKey       k
+               :key           k
+               :name          k
+               :stackId       "a"
+               :fill          (get colors idx)
+               :on-click      (fn [ps]
+                                (let [dv        @(subscribe [::current-data-vector])
+                                      data-elts @(subscribe [::data-elements])
+                                      nxt-k     (-> ps ->clj :name)]
+                                (dispatch
+                                 [::next-data-vector
+                                  {:current-data-vector dv
+                                   :data-elements       (conj (vec data-elts) nxt-k)}])))
+               :on-mouse-over #(dispatch [::set-tooltip-payload
+                                          (-> % ->clj :tooltipPayload first)])}
+          [Cell {:cursor :pointer}]
+          [LabelList {:dataKey  k
                       :position :insideStart}]])))]))
 
 (defn line-chart []
