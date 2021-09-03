@@ -50,6 +50,25 @@
          .custom-tooltip .label {
              margin-right: 3px;
          }
+         .chart-item .opaque {
+             animation: chart-item-fade-in 1s;
+             animation-fill-mode: forwards;
+         }
+         .chart-item .transparent {
+             animation: chart-item-fade-out 1s;
+             animation-fill-mode: forwards;
+         }
+         @keyframes chart-item-fade-in {
+             0% {opacity:0.25;}
+             100% {opacity:1;}
+         }
+         @keyframes chart-item-fade-out {
+             0% {opacity:1;}
+             100% {opacity:0.25;}
+         }
+         .recharts-line {
+             transition: all 3s;
+         }
         </style>
     </head>
     <body>

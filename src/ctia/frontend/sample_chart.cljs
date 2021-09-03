@@ -203,6 +203,12 @@
 
 (reg-sub ::tooltip-payload #(get % ::tooltip-payload))
 
+(reg-event-db
+ ::set-current-legend-item
+ (fn [db [_ data-key]] (assoc db ::current-legend-item data-key)))
+
+(reg-sub ::current-legend-item #(get % ::current-legend-item))
+
 (defn data-keys [data keys-to-ignore]
   (->> data (map #(select-but-keys % keys-to-ignore))
        (apply merge-with +)
@@ -243,37 +249,44 @@
                :animationDuration 500
                :animationEasing   :ease-in
                :content           custom-tooltip}]
-     [Legend {:layout        :vertical
-              :align         :right
-              :verticalAlign :top
-              :width         200}]
-
-     (->>
-      all-keys
-      (map-indexed
-       (fn [idx k]
-         [Bar {:dataKey       k
-               :key           k
-               :name          k
-               :stackId       "a"
-               :fill          (get colors idx)
-               :on-click      (fn [ps]
-                                (let [dv        @(subscribe [::current-data-vector])
-                                      data-elts @(subscribe [::data-elements])
-                                      nxt-k     (-> ps ->clj :name)]
-                                (dispatch
-                                 [::next-data-vector
-                                  {:current-data-vector dv
-                                   :data-elements       (conj (vec data-elts) nxt-k)}])))
-               :on-mouse-over #(dispatch [::set-tooltip-payload
-                                          (-> % ->clj :tooltipPayload first)])}
-          [Cell {:cursor :pointer}]
-          [LabelList {:dataKey  k
-                      :position :insideStart}]])))]))
+     [Legend {:layout         :vertical
+              :align          :right
+              :verticalAlign  :top
+              :width          200
+              :on-mouse-enter #(dispatch [::set-current-legend-item (:dataKey (->clj %))])
+              :on-mouse-leave #(dispatch [::set-current-legend-item nil])}]
+     (let [legend-item @(subscribe [::current-legend-item])]
+      (->>
+       all-keys
+       (map-indexed
+        (fn [idx k]
+          [Bar {:dataKey       k
+                :key           k
+                :name          k
+                :stackId       "a"
+                :fill          (get colors idx)
+                :class         (str "chart-item"
+                                    (cond
+                                      (nil? legend-item)   ""
+                                      (not= legend-item k) (str " transparent")
+                                      (= legend-item k)    (str " opaque")))
+                :on-click      (fn [ps]
+                                 (let [dv        @(subscribe [::current-data-vector])
+                                       data-elts @(subscribe [::data-elements])
+                                       nxt-k     (-> ps ->clj :name)]
+                                   (dispatch
+                                    [::next-data-vector
+                                     {:current-data-vector dv
+                                      :data-elements       (conj (vec data-elts) nxt-k)}])))
+                :on-mouse-over #(dispatch [::set-tooltip-payload
+                                           (-> % ->clj :tooltipPayload first)])}
+           [Cell {:cursor :pointer}]
+           [LabelList {:dataKey  k
+                       :position :insideStart}]]))))]))
 
 (defn line-chart []
   (let [data     @(subscribe [::line-chart-data])
-        all-keys (data-keys data [:date :ms])
+        all-keys (reverse (data-keys data [:date :ms]))
         colors   (colors/get-colors (count all-keys))]
     [LineChart
      {:width  1700
@@ -295,19 +308,25 @@
              :padding           {:top 50 :bottom 5}}]
      [Tooltip {:itemSorter #(- (:value (->clj %)))}]
      [Legend
-      {:layout        :vertical
-       :align         :right
-       :verticalAlign :top
-       :width         200}]
-     (->>
-      all-keys
-      (map-indexed
-       (fn [idx k]
-         [Line
-          {:type    :monotone
-           :dataKey k
-           :key     k
-           :stroke  (get colors idx)}])))]))
+      {:layout         :vertical
+       :align          :right
+       :verticalAlign  :top
+       :width          200
+       :on-mouse-enter #(dispatch [::set-current-legend-item (:dataKey (->clj %))])
+       :on-mouse-leave #(dispatch [::set-current-legend-item nil])}]
+     (let [legend-item @(subscribe [::current-legend-item])]
+       (->>
+        all-keys
+        (map-indexed
+         (fn [idx k]
+           [Line
+            {:type          :monotone
+             :strokeWidth   (if (and legend-item (= legend-item k)) 3.2 1.5)
+             :legendType    :circle
+             :strokeOpacity (if (and legend-item (not= legend-item k)) 0.25 1)
+             :dataKey       k
+             :key           k
+             :stroke        (get colors idx)}]))))]))
 
 (def data-vectors
   [{:key          :root
