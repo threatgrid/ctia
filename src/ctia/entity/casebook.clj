@@ -185,7 +185,7 @@
                                    (:operation operation)
                                    {:observables (:observables operation)}
                                    id)]
-            (ok (un-store res))
+            (ok res)
             (not-found {:error "casebook not found"})))
 
         (POST "/texts" []
@@ -198,7 +198,7 @@
                                          (:operation operation)
                                          {:texts (:texts operation)}
                                          id)]
-            (ok (un-store res))
+            (ok res)
             (not-found {:error "casebook not found"})))
 
         (POST "/bundle" []
@@ -211,7 +211,7 @@
                                    (:operation operation)
                                    {:bundle (:bundle operation)}
                                    id)]
-            (ok (un-store res))
+            (ok res)
             (not-found {:error "casebook not found"})))))))
 
 
