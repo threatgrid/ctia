@@ -81,14 +81,21 @@
                                "ctia/incident"
                                :body (assoc incident :source "ngfw")
                                :headers {"Authorization" "45c1f5e3f05d0"}))
-        high-impact (:parsed-body
-                     (POST app
-                           "ctia/incident?wait_for=true"
-                           :body (assoc new-incident-minimal
-                                        :source "secure endpoint")
-                           :headers {"Authorization" "45c1f5e3f05d0"}))
+        high-impact-1 (:parsed-body
+                       (POST app
+                             "ctia/incident"
+                             :body (assoc new-incident-minimal
+                                          :source "highsource")
+                             :headers {"Authorization" "45c1f5e3f05d0"}))
+        high-impact-2 (:parsed-body
+                       (POST app
+                             "ctia/incident?wait_for=true"
+                             :body (assoc new-incident-minimal
+                                          :source "ao")
+                             :headers {"Authorization" "45c1f5e3f05d0"}))
         _ (assert (map? not-high-impact))
-        _ (assert (map? high-impact))
+        _ (assert (map? high-impact-1))
+        _ (assert (map? high-impact-2))
         test-fn (fn [{:keys [msg high-impact? expected-entities]}]
                   (testing msg
                     (let [path (cond-> "ctia/incident/search"
@@ -102,13 +109,13 @@
                              (set found-ids))))))
         test-plan [{:msg "Only high impact incidents shall be returned when high_impact is true"
                     :high-impact? true
-                    :expected-entities [high-impact]}
+                    :expected-entities [high-impact-1 high-impact-2]}
                    {:msg "Only non high impact incidents shall be returned when high_impact is false"
                     :high-impact? false
                     :expected-entities [not-high-impact]}
                    {:msg "The impact of an incident is ignored by default"
                     :high-impact? nil
-                    :expected-entities [high-impact not-high-impact]}]]
+                    :expected-entities [high-impact-1 high-impact-2 not-high-impact]}]]
     (doseq [test-case test-plan]
       (test-fn test-case))))
 
@@ -119,7 +126,7 @@
 
 (deftest test-incident-crud-routes
   (helpers/with-properties
-    ["ctia.incident.high-impact.source" "secure endpoint"]
+    ["ctia.incident.high-impact.source" "highsource,ao"]
     (test-for-each-store-with-app
      (fn [app]
        (helpers/set-capabilities! app "foouser" ["foogroup"] "user" all-capabilities)

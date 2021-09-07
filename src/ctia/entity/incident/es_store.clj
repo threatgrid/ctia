@@ -5,6 +5,7 @@
             [ctia.stores.es.mapping :as em]
             [ctia.stores.es.store :refer [close-connections!]]
             [ctia.stores.es.crud :as crud]
+            [clojure.string :as string]
             [schema.core :as s]
             [ctia.schemas.search-agg :refer [SearchQuery]]))
 
@@ -37,25 +38,35 @@
 (def handle-aggregate crud/handle-aggregate)
 (def handle-delete-search crud/handle-delete-search)
 
-(s/defn append-query-clause :- SearchQuery
+(s/defn append-query-clauses :- SearchQuery
   [search-query  :- SearchQuery
-   str-lucene-clause :- s/Str]
+   str-lucene-clauses :- [s/Str]]
   (let [query (get-in search-query [:full-text :query])
-        lucene-query (cond->> str-lucene-clause
-                       query (str query " "))]
+        prepared (string/join " OR " str-lucene-clauses)
+        lucene-query (if query
+                       ;; from previous observations the order of filters in lucene matters
+                       ;; prepared is likely more optimized, add it first
+                       (format "(%s) AND (%s)" prepared query)
+                       prepared)]
     (assoc-in search-query [:full-text :query] lucene-query)))
+
+(defn high-impact-sources
+  [conn-state]
+  (let [get-in-config (get-in conn-state [:services :ConfigService :get-in-config])]
+    (some-> (get-in-config [:ctia :incident :high-impact :source])
+            (string/split #","))))
 
 (s/defn prepare-impact :- SearchQuery
   [conn-state
    search-query :-  SearchQuery]
-  (let [get-in-config (get-in conn-state [:services :ConfigService :get-in-config])
-        high_impact_source (get-in-config [:ctia :incident :high-impact :source])
-        high_impact (get-in search-query [:filter-map :high_impact])]
-    (clojure.pprint/pprint get-in-config)
+  (let [sources (high-impact-sources conn-state)
+        high_impact (get-in search-query [:filter-map :high_impact])
+        query-clauses (map #(format "source:\"%s\"" %) sources)
+        neg-query-clauses (map #(str "-" %) query-clauses)]
     (cond-> search-query
       (some? high_impact) (update :filter-map dissoc :high_impact)
-      (false? high_impact) (append-query-clause (format "-source:\"%s\"" high_impact_source))
-      (true? high_impact) (assoc-in [:filter-map :source] high_impact_source))))
+      (false? high_impact) (append-query-clauses neg-query-clauses)
+      (true? high_impact) (append-query-clauses query-clauses))))
 
 (defrecord IncidentStore [state]
   IStore

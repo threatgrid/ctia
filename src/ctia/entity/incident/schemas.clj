@@ -1,15 +1,15 @@
 (ns ctia.entity.incident.schemas
-  (:require [ctia.schemas.core :refer [def-acl-schema def-stored-schema]]
-            [ctim.schemas.incident :as is]
-            [ctim.schemas.vocabularies :as vocs]
-            [ctia.http.routes.common :as routes.common]
-            [flanders.schema :as fs]
-            [flanders.utils :as fu]
+  (:require [ctia.http.routes.common :as routes.common]
+            [ctia.schemas.core :refer [def-acl-schema def-stored-schema]]
             [ctia.schemas.sorting
              :refer
              [default-entity-sort-fields
               describable-entity-sort-fields
               sourcable-entity-sort-fields]]
+            [ctim.schemas.incident :as is]
+            [ctim.schemas.vocabularies :as vocs]
+            [flanders.schema :as fs]
+            [flanders.utils :as fu]
             [schema-tools.core :as st]
             [schema.core :as s]))
 
@@ -35,7 +35,6 @@
 
 (s/defschema PartialStoredIncident
   (st/optional-keys-schema StoredIncident))
-
 
 (s/defschema IncidentStatus
   (fs/->schema vocs/Status))

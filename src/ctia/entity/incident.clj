@@ -1,8 +1,8 @@
 (ns ctia.entity.incident
   (:require [clj-momo.lib.clj-time.core :as time]
             [ctia.domain.entities :refer [default-realize-fn un-store with-long-id]]
-            [ctia.entity.incident.schemas :as is]
             [ctia.entity.incident.es-store :as i-store]
+            [ctia.entity.incident.schemas :as is]
             [ctia.flows.crud :as flows]
             [ctia.http.routes.common :as routes.common]
             [ctia.http.routes.crud :refer [services->entity-crud-routes]]

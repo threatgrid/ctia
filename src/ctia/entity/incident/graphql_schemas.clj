@@ -1,15 +1,14 @@
 (ns ctia.entity.incident.graphql-schemas
-  (:require [ctia.schemas.graphql.pagination :as pagination]
-            [ctim.schemas.incident :refer [Incident]]
+  (:require [ctia.entity.feedback.graphql-schemas :as feedback]
             [ctia.entity.incident.schemas :refer [incident-fields]]
-            [ctia.entity.feedback.graphql-schemas :as feedback]
             [ctia.entity.relationship.graphql-schemas :as relationship-graphql]
             [ctia.schemas.graphql.flanders :as flanders]
-            [ctia.schemas.graphql.sorting :as graphql-sorting]
-            [flanders.utils :as fu]
             [ctia.schemas.graphql.helpers :as g]
-            [ctia.schemas.graphql.ownership :as go]))
-
+            [ctia.schemas.graphql.ownership :as go]
+            [ctia.schemas.graphql.pagination :as pagination]
+            [ctia.schemas.graphql.sorting :as graphql-sorting]
+            [ctim.schemas.incident :refer [Incident]]
+            [flanders.utils :as fu]))
 
 (def IncidentType
   (let [{:keys [fields name description]}
