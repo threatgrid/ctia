@@ -252,7 +252,6 @@
      [Legend {:layout         :vertical
               :align          :right
               :verticalAlign  :top
-              :width          200
               :on-mouse-enter #(dispatch [::set-current-legend-item (:dataKey (->clj %))])
               :on-mouse-leave #(dispatch [::set-current-legend-item nil])}]
      (let [legend-item @(subscribe [::current-legend-item])]
@@ -311,7 +310,6 @@
       {:layout         :vertical
        :align          :right
        :verticalAlign  :top
-       :width          200
        :on-mouse-enter #(dispatch [::set-current-legend-item (:dataKey (->clj %))])
        :on-mouse-leave #(dispatch [::set-current-legend-item nil])}]
      (let [legend-item @(subscribe [::current-legend-item])]
