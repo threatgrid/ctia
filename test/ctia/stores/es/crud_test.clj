@@ -318,7 +318,19 @@
                                          {:full-text {:query query-string}
                                           :range date-range
                                           :filter-map filter-map}
-                                         ident))))))))))
+                                         ident)))
+           (is (= {:bool {:filter [simple-access-ctrl-query
+                                   {:simple_query_string {:query "simple"
+                                                          :default_operator "AND"}}
+                                   {:query_string {:query "lucene"
+                                                   :default_operator "AND"}}]}}
+                  (sut/make-search-query
+                   es-conn-state
+                   {:full-text [{:query "simple"
+                                 :query_mode :simple_query_string}
+                                {:query "lucene"
+                                 :query_mode :query_string}]}
+                   ident))))))))))
 
 (deftest make-aggregation-test
   (is (= {:metric
