@@ -30,7 +30,14 @@
   (st/optional-keys
    {:filter-map   {s/Keyword s/Any}
     :range        RangeQuery
-    :full-text    FullTextQuery}))
+    :full-text    (s/conditional map? FullTextQuery :else [FullTextQuery])}))
+
+(s/defschema ESQFullTextQuery
+  (st/merge
+   {:query s/Str}
+   (st/optional-keys
+    {:default_operator s/Str
+     :fields [s/Str]})))
 
 (s/defschema AggType
   "supported aggregation types"
