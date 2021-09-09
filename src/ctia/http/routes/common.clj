@@ -130,11 +130,11 @@
        (seq date-range) (assoc-in [:range date-field] date-range)
        (seq filter-map) (assoc :filter-map filter-map)
        query            (assoc :full-text
-                               (merge
+                               [(merge
                                 {:query      query
                                  :query_mode (or query_mode :query_string)}
                                 (when search_fields
-                                  {:fields search_fields})))))))
+                                  {:fields search_fields}))])))))
 
 (s/defn format-agg-result :- MetricResult
   [result
@@ -148,7 +148,7 @@
         {from :gte to :lt} (-> range first val)
         filters            (cond-> {:from from :to to}
                              (seq filter-map) (into filter-map)
-                             (seq full-text)  (assoc :full-text full-text*))]
+                             (seq full-text)  (assoc :full-text [full-text*]))]
     {:data    (assoc-in {} nested-fields result)
      :type    agg-type
      :filters filters}))
