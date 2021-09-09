@@ -279,12 +279,12 @@
            (is (= {:bool {:filter [simple-access-ctrl-query
                                    es-query-string-AND]}}
                   (sut/make-search-query es-conn-state
-                                         {:full-text {:query query-string}}
+                                         {:full-text [{:query query-string}]}
                                          ident)))
            (is (= {:bool {:filter [simple-access-ctrl-query
                                    es-query-string-no-op]}}
                   (sut/make-search-query (update es-conn-state :props dissoc :default_operator)
-                                         {:full-text {:query query-string}}
+                                         {:full-text [{:query query-string}]}
                                          ident)))
            (is (= {:bool {:filter [simple-access-ctrl-query
                                    es-date-range]}}
@@ -301,21 +301,21 @@
                                    {:simple_query_string {:query "*"
                                                           :default_operator "AND"}}]}}
                   (sut/make-search-query es-conn-state
-                                         {:full-text {:query query-string
-                                                      :query_mode :simple_query_string}}
+                                         {:full-text [{:query      query-string
+                                                       :query_mode :simple_query_string}]}
                                          ident)))
            (is (= {:bool {:filter [simple-access-ctrl-query
                                    {:multi_match {:query "*"}}]}}
                   (sut/make-search-query es-conn-state
-                                         {:full-text {:query query-string
-                                                      :query_mode :multi_match}}
+                                         {:full-text [{:query      query-string
+                                                       :query_mode :multi_match}]}
                                          ident))
                "multi_match queries don't support default_operator")
            (is (= {:bool {:filter (-> [simple-access-ctrl-query]
                                       (into es-terms)
                                       (into [es-date-range es-query-string-AND]))}}
                   (sut/make-search-query es-conn-state
-                                         {:full-text {:query query-string}
+                                         {:full-text [{:query query-string}]
                                           :range date-range
                                           :filter-map filter-map}
                                          ident)))

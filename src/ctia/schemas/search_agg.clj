@@ -30,7 +30,7 @@
   (st/optional-keys
    {:filter-map   {s/Keyword s/Any}
     :range        RangeQuery
-    :full-text    (s/conditional map? FullTextQuery :else [FullTextQuery])}))
+    :full-text    [FullTextQuery]}))
 
 (s/defschema ESQFullTextQuery
   (st/merge
