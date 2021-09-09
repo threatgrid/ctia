@@ -1,14 +1,15 @@
 (ns ctia.flows.crud-test
   (:require [clj-momo.lib.map :refer [deep-merge-with]]
-            [java-time :as jt]
-            [ctim.examples.sightings :refer [sighting-minimal]]
-            [clojure.test :refer [deftest testing is]]
-            [ctia.store :refer [query-string-search]]
+            [clojure.test :refer [deftest is testing]]
             [ctia.auth.threatgrid :refer [map->Identity]]
-            [ctia.test-helpers.core :as helpers]
-            [puppetlabs.trapperkeeper.app :as app]
+            [ctia.entity.sighting.schemas :as ss]
             [ctia.flows.crud :as flows.crud]
-            [ctia.lib.collection :as coll]))
+            [ctia.lib.collection :as coll]
+            [ctia.store :refer [query-string-search]]
+            [ctia.test-helpers.core :as helpers]
+            [ctim.examples.sightings :refer [sighting-minimal]]
+            [java-time :as jt]
+            [puppetlabs.trapperkeeper.app :as app]))
 
 (deftest deep-merge-with-add-colls-test
   (let [fixture {:foo {:bar ["one" "two" "three"]
@@ -56,8 +57,8 @@
                {:id "4"}]
               :enveloped-result? true}
              (flows.crud/preserve-errors {:entities entities
-                                   :enveloped-result? true}
-                                  f)))))
+                                          :enveloped-result? true}
+                                         f)))))
   (testing "without enveloped result"
     (is (= {:entities
             [{:id "1"
@@ -102,9 +103,13 @@
                             (fake-event entity))
           to-delete-event (fn [entity _ _]
                             (fake-event entity))
-          valid-entities [{:one 1 :owner "Huey"}
-                          {:two 2 :owner "Dewey"}
-                          {:three 3 :owner "Louie"}]
+          valid-entities [{:id 1 :owner "Huey"}
+                          {:id 2 :owner "Dewey"}
+                          {:id 3 :owner "Louie"}]
+          get-prev-entity (fn [id]
+                            (first
+                             (filter #(= id (:id %))
+                                     valid-entities)))
           entities-with-error (conj valid-entities {:error "something bad happened"})
           base-flow-map {:services {:ConfigService {:get-in-config (constantly true)}}
                          :identity ident
@@ -114,6 +119,7 @@
                                  :create-event-fn to-create-event)
           update-flow-map (assoc base-flow-map
                                  :flow-type :update
+                                 :get-prev-entity get-prev-entity
                                  :create-event-fn to-update-event)
           delete-flow-map (assoc base-flow-map
                                  :flow-type :delete
@@ -129,35 +135,88 @@
                       (:flow-type flow-map)))))))
 
 (defn search-events
-  [event-store ident timestamp entity-id]
+  [event-store
+   ident
+   timestamp
+   event-type
+   entity-id]
   (:data (query-string-search
           event-store
-          {:filter-map {:entity.id entity-id}
+          {:filter-map {:entity.id entity-id
+                        :event_type event-type}
            :range {:timestamp {:gte timestamp}}}
           ident
           {})))
 
-(defn mk-sighting [n]
+(defn mk-sighting [id]
   (assoc sighting-minimal
-         :title (str "sighting-" n)
-         :id (str "sighting-" n)
+         :title (str "sighting " id)
+         :id id
          :tlp "green"
-         :groups [(str "groups" n)]))
+         :groups ["groups"]))
 
-(deftest delete-flow-test
+(deftest crud-flow-test
   (helpers/with-properties
     ["ctia.store.es.event.refresh" "true"] ;; force refresh for events created in flow
     (helpers/fixture-ctia-with-app
      (fn [app]
        (let [services (app/service-graph app)
-             store (atom {"sighting-1" (mk-sighting 1)
-                          "sighting-2" (mk-sighting 2)
-                          "sighting-3" (mk-sighting 3)
-                          "sighting-4" (mk-sighting 4)})
+             sighting-ids (repeatedly 4 #(flows.crud/make-id :sighting))
+             [sighting-id-1 sighting-id-2 sighting-id-3 sighting-id-4] sighting-ids
+             store (atom {sighting-id-1 (mk-sighting sighting-id-1)
+                          sighting-id-2 (mk-sighting sighting-id-2)
+                          sighting-id-3 (mk-sighting sighting-id-3)
+                          sighting-id-4 (mk-sighting sighting-id-4)})
              ident {:login "login"
                     :groups ["group1"]}
              event-store (helpers/get-store app :event)
              get-fn (fn [ids] (vals (select-keys @store ids)))
+             patch-fn (fn [patches]
+                        (mapv
+                         (fn [{:keys [id] :as patch}]
+                           (let [[_old new]
+                                 (swap-vals!
+                                  store
+                                  (fn [s]
+                                    (when (contains? s id)
+                                      (assoc s id patch))))]
+                             (get new id)))
+                         patches))
+             patch-flow (fn [msg expected]
+                           (testing (str msg "\ntested: " (pr-str expected))
+                             (let [now (jt/instant)
+                                   entity-ids (seq (keys expected))
+                                   patches (map (fn [id]
+                                                  {:id id
+                                                   :source "patched"})
+                                                 entity-ids)]
+                                   (flows.crud/patch-flow
+                                    :entity-type :sighting
+                                    :get-fn get-fn
+                                    :partial-entities patches
+                                    :realize-fn  ss/realize-sighting
+                                    :update-fn patch-fn
+                                    :patch-operation :replace
+                                    :long-id-fn identity
+                                    :services services
+                                    :spec :new-sighting/map
+                                    :get-success-entities :entities
+                                    :identity (map->Identity ident))
+                               (doseq [[id patched?] expected]
+                                 (is (= patched?
+                                        (= "patched"
+                                           (:source (get @store id))))
+                                     (format "the expected patch result for %s is %s (%s)" id patched? (pr-str (get @store id))))
+                                 (is (= patched?
+                                        (->> (search-events
+                                              event-store
+                                              ident
+                                              now
+                                              :record-updated
+                                              id)
+                                             first
+                                             some?))
+                                     (format "The expected creation event for %s should be %s" id patched?))))))
              delete-fn (fn [ids]
                          (into {}
                                (map (fn [id]
@@ -167,7 +226,7 @@
                                          (contains? old id)))))
                                ids))
              delete-flow (fn [msg expected]
-                           (testing msg
+                           (testing (str msg "\ntested: " (pr-str expected))
                              (let [entity-ids (seq (keys expected))
                                    now (jt/instant)
                                    res
@@ -184,6 +243,7 @@
                                                          (map #(->> (search-events event-store
                                                                                    ident
                                                                                    now
+                                                                                   :record-deleted
                                                                                    %)
                                                                     first
                                                                     some?
@@ -192,11 +252,15 @@
                                (is (= expected (into {} res)))
                                (is (= expected deleted-events?)
                                    (str "flow shall return " expected)))))]
+         (patch-flow
+          "patch-flow patches existing entities and create events accordingly"
+          {sighting-id-1 true sighting-id-2 true})
+         (patch-flow "patches flow patches entities and creates events only for existing entities when some are not found"
+                      {sighting-id-3 true "missing1" false "missing2" false})
          (delete-flow "delete-flow deletes existing entities and create events accordingly"
-                      {"sighting-1" true "sighting-2" true})
+                      {sighting-id-1 true sighting-id-2 true})
          (delete-flow "delete-flow must not create events for deleted entities"
-                      {"sighting-1" false "sighting-2" false})
+                      {sighting-id-1 false sighting-id-2 false})
          (delete-flow "delete flow deletes entities and creates events only for existing entities when some are not found"
-                      {"sighting-3" true "missing1" false "missing2" false})
-         ;; TODO test concurrent deletes
+                      {sighting-id-3 true "missing1" false "missing2" false})
          )))))

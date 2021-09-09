@@ -267,8 +267,7 @@
   (let [events (:data (query-string-search
                        event-store
                        {:filter-map {:entity.id entity-ids
-                                     :event_type event-type
-                                     }}
+                                     :event_type event-type}}
                        ident
                        {}))]
     (is (= (count entity-ids) (count events))

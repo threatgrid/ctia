@@ -42,58 +42,91 @@
 (s/defn capitalize-entity [entity :- (s/pred simple-keyword?)]
   (-> entity name str/capitalize))
 
+(defn flow-get-by-ids-fn
+  [{:keys [get-store entity identity-map]}]
+  (let [get-by-id #(-> (get-store entity)
+                       (read-record
+                        %
+                        identity-map
+                        {}))]
+    (fn [ids]
+      (keep get-by-id ids))))
+
+(defn flow-update-fn
+  [{:keys [identity-map wait_for get-store entity]}]
+  (let [update-fn #(-> (get-store entity)
+                       (update-record
+                        (:id %)
+                        %
+                        identity-map
+                        (wait_for->refresh wait_for)))]
+    (fn [patches]
+      (keep update-fn patches))))
+
+(defn flow-delete-fn
+  [{:keys [identity-map wait_for get-store entity]}]
+  (let [delete-fn
+        #(-> (get-store entity)
+             (delete-record
+              %
+              identity-map
+              (wait_for->refresh wait_for)))]
+    (fn [ids]
+      (map delete-fn ids))))
+
+(s/defschema RevokeParams
+  {:identity s/Any
+   :identity-map s/Any
+   :id s/Any
+   :wait_for (s/pred (some-fn nil? boolean?)
+                     'nilable-boolean?)
+   (s/optional-key :revocation-update-fn) (s/pred ifn?)})
+
 (s/defn revoke-request
   "Process POST /:id/expire route.
   Implemented separately from a POST call to share
   between entity implementations with different :query-params
   requirements (which must be provided at compile-time with
   POST)."
-  [req :- (s/pred map?)
-   {{:keys [get-store]} :StoreService
-    :as services} :- APIHandlerServices
-   {:keys [entity
-           new-spec
-           realize-fn]
-    :as _entity-crud-config}
-   {:keys [identity
-           identity-map
-           id
-           revocation-update-fn
-           wait_for]} :- {:identity s/Any
-                          :identity-map s/Any
-                          :id s/Any
-                          :wait_for (s/pred (some-fn nil? boolean?)
-                                            'nilable-boolean?)
-                          (s/optional-key :revocation-update-fn) (s/pred ifn?)}]
+  [{{:keys [get-store]} :StoreService :as services} :- APIHandlerServices
+   {:keys [entity new-spec realize-fn] :as _entity-crud-config}
+   revoke-params :- RevokeParams]
   ;; almost identical to the PATCH route returned by entity-crud-routes
   ;; except for :update-fn and :partial-entity
-  (if-let [updated-rec
-           (flows/patch-flow
-            :services services
-            :get-fn (fn [_]
-                      (-> (get-store entity)
-                          (read-record
-                            id
-                            identity-map
-                            {})))
-            :realize-fn realize-fn
-            :update-fn #(-> (get-store entity)
-                            (update-record
-                              (:id %)
-                              (cond-> %
-                                true (assoc-in [:valid_time :end_time] (time/internal-now))
-                                revocation-update-fn (revocation-update-fn {:req req}))
-                              identity-map
-                              (wait_for->refresh wait_for)))
-            :long-id-fn #(with-long-id % services)
-            :entity-type entity
-            :entity-id id
-            :identity identity
-            :patch-operation :replace
-            :partial-entity {}
-            :spec new-spec)]
-    (ok (un-store updated-rec))
-    (not-found (str (capitalize-entity entity) " not found"))))
+  (let [{ident :identity
+         :keys [identity-map id revocation-update-fn wait_for]
+         :or {revocation-update-fn identity}} revoke-params
+
+        get-by-ids (flow-get-by-ids-fn
+                    {:get-store get-store
+                     :entity entity
+                     :identity-map identity-map})
+        update-fn (flow-update-fn
+                   {:get-store get-store
+                    :entity entity
+                    :identity-map identity-map
+                    :wait_for (routes.common/wait_for->refresh wait_for)})
+        revoke-update-fn (fn [entities]
+                           (update-fn (map revocation-update-fn entities)))
+        patch {:id id
+               :valid_time {:end_time (time/internal-now)}}
+        prev-entity (first (get-by-ids [id]))]
+    (if prev-entity
+      (-> (flows/patch-flow
+           :services services
+           :get-fn get-by-ids
+           :realize-fn realize-fn
+           :update-fn revoke-update-fn
+           :long-id-fn #(with-long-id % services)
+           :entity-type entity
+           :identity ident
+           :patch-operation :replace
+           :partial-entities [patch]
+           :spec new-spec)
+          first
+          un-store
+          ok)
+      (not-found (str (capitalize-entity entity) " not found")))))
 
 (s/defn revocation-routes
   "Returns POST /:id/expire routes for the given entity."
@@ -102,7 +135,7 @@
            entity-schema
            post-capabilities] :as entity-crud-config}]
   (let [capabilities post-capabilities]
-    (POST "/:id/expire" req
+    (POST "/:id/expire" []
           :summary (format "Expires the supplied %s" (capitalize-entity entity))
           :path-params [id :- s/Str]
           :query-params [{wait_for :- (describe s/Bool "wait for entity to be available for search") nil}]
@@ -111,7 +144,7 @@
           :capabilities capabilities
           :auth-identity identity
           :identity-map identity-map
-          (revoke-request req services entity-crud-config
+          (revoke-request services entity-crud-config
                           {:id id
                            :identity identity
                            :identity-map identity-map
@@ -191,7 +224,18 @@
                                        aggregate-on-enumerable)
         topn-q-params (st/merge agg-search-schema
                                 TopnParams
-                                aggregate-on-enumerable)]
+                                aggregate-on-enumerable)
+        get-by-ids-fn (fn [identity-map]
+                        (flow-get-by-ids-fn
+                         {:get-store get-store
+                          :entity entity
+                          :identity-map identity-map}))
+        update-fn (fn [identity-map wait_for]
+                    (flow-update-fn
+                     {:get-store get-store
+                      :entity entity
+                      :identity-map identity-map
+                      :wait_for wait_for}))]
    (routes
      (when can-post?
        (let [capabilities post-capabilities]
@@ -236,24 +280,15 @@
               (if-let [updated-rec
                        (-> (flows/update-flow
                             :services services
-                            :get-fn #(-> (get-store entity)
-                                         (read-record
-                                           %
-                                           identity-map
-                                           {}))
+                            :get-fn (get-by-ids-fn identity-map)
                             :realize-fn realize-fn
-                            :update-fn #(-> (get-store entity)
-                                            (update-record
-                                              (:id %)
-                                              %
-                                              identity-map
-                                              (wait_for->refresh wait_for)))
+                            :update-fn (update-fn identity-map wait_for)
                             :long-id-fn #(with-long-id % services)
                             :entity-type entity
-                            :entity-id id
                             :identity identity
-                            :entity entity-update
+                            :entities [(assoc entity-update :id id)]
                             :spec new-spec)
+                           first
                            un-store)]
                 (ok updated-rec)
                 (not-found)))))
@@ -272,25 +307,16 @@
                 (if-let [updated-rec
                          (-> (flows/patch-flow
                               :services services
-                              :get-fn #(-> (get-store entity)
-                                           (read-record
-                                             %
-                                             identity-map
-                                             {}))
+                              :get-fn (get-by-ids-fn identity-map)
                               :realize-fn realize-fn
-                              :update-fn #(-> (get-store entity)
-                                              (update-record
-                                                (:id %)
-                                                %
-                                                identity-map
-                                                (wait_for->refresh wait_for)))
+                              :update-fn (update-fn identity-map wait_for)
                               :long-id-fn #(with-long-id % services)
                               :entity-type entity
-                              :entity-id id
                               :identity identity
                               :patch-operation :replace
-                              :partial-entity partial-update
+                              :partial-entities [(assoc partial-update :id id)]
                               :spec new-spec)
+                             first
                              un-store)]
                   (ok updated-rec)
                   (not-found)))))
@@ -474,20 +500,12 @@
                (if (first
                     (flows/delete-flow
                      :services services
-                     :get-fn (fn [ids]
-                               (let [read-fn #(-> (get-store entity)
-                                                  (read-record
-                                                   %
-                                                   identity-map
-                                                   {}))]
-                                 (map read-fn ids)))
-                     :delete-fn (fn [ids]
-                                  (let [delete-fn #(-> (get-store entity)
-                                                       (delete-record
-                                                        %
-                                                        identity-map
-                                                        (wait_for->refresh wait_for)))]
-                                    (map delete-fn ids)))
+                     :get-fn (get-by-ids-fn identity-map)
+                     :delete-fn (flow-delete-fn
+                                 {:get-store get-store
+                                  :entity entity
+                                  :identity-map identity-map
+                                  :wait_for wait_for})
                      :get-success-entities (fn [fm]
                                              (when (first (:results fm))
                                                  (:entities fm)))

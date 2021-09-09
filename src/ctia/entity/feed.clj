@@ -13,8 +13,8 @@
             StoredFeed]]
    [ctia.entity.judgement.schemas :refer [Judgement]]
    [ctia.flows.crud :as flows]
-   [ctia.http.routes.common
-    :as routes.common]
+   [ctia.http.routes.common :as routes.common]
+   [ctia.http.routes.crud :as routes.crud]
    [ctia.lib.compojure.api.core :refer [DELETE GET POST PUT routes]]
    [ctia.schemas.core :refer [APIHandlerServices Observable]]
    [ctia.schemas.sorting :as sorting]
@@ -240,210 +240,203 @@
 
 (s/defn feed-routes [{{:keys [get-store]} :StoreService
                       :as services} :- APIHandlerServices]
-  (routes
-   (let [capabilities :create-feed]
-     (POST "/" []
-       :return Feed
-       :query-params [{wait_for :- (describe s/Bool "wait for entity to be available for search") nil}]
-       :body [new-entity NewFeed {:description "a new Feed"}]
-       :summary "Adds a new Feed"
-       :description (routes.common/capabilities->description capabilities)
-       :capabilities capabilities
-       :auth-identity identity
-       :identity-map identity-map
-       (-> (flows/create-flow
-            :services services
-            :entity-type :feed
-            :realize-fn realize-feed
-            :store-fn #(-> (get-store :feed)
-                           (create-record
-                            %
-                            identity-map
-                            (routes.common/wait_for->refresh wait_for)))
-            :long-id-fn #(with-long-id % services)
-            :entity-type :feed
-            :identity identity
-            :entities [new-entity]
-            :spec :new-feed/map)
-           first
-           un-store
-           (decrypt-feed services)
-           routes.common/created)))
-
-   (let [capabilities :create-feed]
-     (PUT "/:id" []
-       :return Feed
-       :body [entity-update NewFeed {:description "an updated Feed"}]
-       :summary "Updates a Feed"
-       :query-params [{wait_for :- (describe s/Bool "wait for updated entity to be available for search") nil}]
-       :path-params [id :- s/Str]
-       :description (routes.common/capabilities->description capabilities)
-       :capabilities capabilities
-       :auth-identity identity
-       :identity-map identity-map
-       (if-let [updated-rec
-                (-> (flows/update-flow
-                     :services services
-                     :get-fn #(-> (get-store :feed)
-                                  (read-record
-                                   %
-                                   identity-map
-                                   {}))
-                     :realize-fn realize-feed
-                     :update-fn #(-> (get-store :feed)
-                                     (update-record
-                                      (:id %)
-                                      %
-                                      identity-map
-                                      (routes.common/wait_for->refresh wait_for)))
-                     :long-id-fn #(with-long-id % services)
-                     :entity-type :feed
-                     :entity-id id
-                     :identity identity
-                     :entity entity-update
-                     :spec :new-feed/map)
-                    un-store
-                    (decrypt-feed services))]
-         (ok updated-rec)
-         (not-found))))
-
-   (let [capabilities :read-feed]
-     (GET "/external_id/:external_id" []
-       :return PartialFeedList
-       :query [q FeedByExternalIdQueryParams]
-       :path-params [external_id :- s/Str]
-       :summary "List Feeds by external_id"
-       :description (routes.common/capabilities->description capabilities)
-       :capabilities capabilities
-       :auth-identity identity
-       :identity-map identity-map
-       (-> (get-store :feed)
-           (list-records
-            {:all-of {:external_ids external_id}}
-            identity-map
-            q)
-           (page-with-long-id services)
-           un-store-page
-           (decrypt-feed-page services)
-           routes.common/paginated-ok)))
-
-   (let [capabilities :search-feed]
-     (GET "/search" []
-       :return PartialFeedList
-       :summary "Search for a Feed using a Lucene/ES query string"
-       :query [params FeedSearchParams]
-       :description (routes.common/capabilities->description capabilities)
-       :capabilities capabilities
-       :auth-identity identity
-       :identity-map identity-map
-       (-> (get-store :feed)
-           (query-string-search
-            (routes.common/search-query :created params)
-            identity-map
-            (select-keys params routes.common/search-options))
-           (page-with-long-id services)
-           un-store-page
-           (decrypt-feed-page services)
-           routes.common/paginated-ok)))
-
-   (let [capabilities :search-feed]
-     (GET "/search/count" []
-       :return s/Int
-       :summary "Count Feed entities matching given search filters."
-       :query [params FeedCountParams]
-       :description (routes.common/capabilities->description capabilities)
-       :capabilities capabilities
-       :auth-identity identity
-       :identity-map identity-map
-       (ok (-> (get-store :feed)
-               (query-string-count
-                (routes.common/search-query :created params)
-                identity-map)))))
-
-
-   (let [capabilities #{:search-feed :delete-feed}]
-     (DELETE "/search" []
-       :capabilities capabilities
-       :description (routes.common/capabilities->description capabilities)
-       :return s/Int
-       :summary (format "Delete Feed entities matching given Lucene/ES query string or/and field filters")
-       :auth-identity identity
-       :identity-map identity-map
-       :query [params FeedDeleteSearchParams]
-       (let [query (->> (dissoc params :wait_for :REALLY_DELETE_ALL_THESE_ENTITIES)
-                        (routes.common/search-query :created))]
-         (if (empty? query)
-           (forbidden {:error "you must provide at least one of from, to, query or any field filter."})
-           (ok
-            (if (:REALLY_DELETE_ALL_THESE_ENTITIES params)
-              (-> (get-store :feed)
-                  (delete-search
-                   query
-                   identity-map
-                   (routes.common/wait_for->refresh (:wait_for params))))
-              (-> (get-store :feed)
-                  (query-string-count
-                   query
-                   identity-map))))))))
-
-   (let [capabilities :read-feed]
-     (GET "/:id" []
-       :return (s/maybe PartialFeed)
-       :summary "Gets a Feed by ID"
-       :path-params [id :- s/Str]
-       :query [params FeedGetParams]
-       :description (routes.common/capabilities->description capabilities)
-       :capabilities capabilities
-       :auth-identity identity
-       :identity-map identity-map
-       (if-let [rec (-> (get-store :feed)
-                        (read-record
-                         id
-                         identity-map
-                         params))]
-         (-> rec
-             (with-long-id services)
+  (let [get-by-ids-fn (fn [identity-map]
+                         (routes.crud/flow-get-by-ids-fn
+                          {:get-store get-store
+                           :entity :feed
+                           :identity-map identity-map}))
+         update-fn (fn [identity-map wait_for]
+                     (routes.crud/flow-update-fn
+                      {:get-store get-store
+                       :entity :feed
+                       :identity-map identity-map
+                       :wait_for (routes.common/wait_for->refresh wait_for)}))]
+    (routes
+     (let [capabilities :create-feed]
+       (POST "/" []
+         :return Feed
+         :query-params [{wait_for :- (describe s/Bool "wait for entity to be available for search") nil}]
+         :body [new-entity NewFeed {:description "a new Feed"}]
+         :summary "Adds a new Feed"
+         :description (routes.common/capabilities->description capabilities)
+         :capabilities capabilities
+         :auth-identity identity
+         :identity-map identity-map
+         (-> (flows/create-flow
+              :services services
+              :entity-type :feed
+              :realize-fn realize-feed
+              :store-fn #(-> (get-store :feed)
+                             (create-record
+                              %
+                              identity-map
+                              (routes.common/wait_for->refresh wait_for)))
+              :long-id-fn #(with-long-id % services)
+              :entity-type :feed
+              :identity identity
+              :entities [new-entity]
+              :spec :new-feed/map)
+             first
              un-store
              (decrypt-feed services)
-             ok)
-         (not-found))))
+             routes.common/created)))
 
-   (let [capabilities :delete-feed]
-     (DELETE "/:id" []
-       :no-doc false
-       :path-params [id :- s/Str]
-       :query-params [{wait_for :- (describe s/Bool "wait for deleted entity to no more be available for search") nil}]
-       :summary "Deletes a Feed"
-       :description (routes.common/capabilities->description capabilities)
-       :capabilities capabilities
-       :auth-identity identity
-       :identity-map identity-map
-       (if (first
-            (flows/delete-flow
-             :services services
-             :get-fn (fn [ids]
-                       (let [read-fn #(-> (get-store :feed)
-                                          (read-record
-                                           %
-                                           identity-map
-                                           {}))]
-                         (map read-fn ids)))
-             :delete-fn (fn [ids]
-                          (let [delete-fn #(-> (get-store :feed)
-                                               (delete-record
-                                                %
-                                                identity-map
-                                                (routes.common/wait_for->refresh wait_for)))]
-                            (map delete-fn ids)))
-             :entity-type :feed
-             :get-success-entities (fn [fm]
-                                     (when (first (:results fm))
+     (let [capabilities :create-feed]
+       (PUT "/:id" []
+         :return Feed
+         :body [entity-update NewFeed {:description "an updated Feed"}]
+         :summary "Updates a Feed"
+         :query-params [{wait_for :- (describe s/Bool "wait for updated entity to be available for search") nil}]
+         :path-params [id :- s/Str]
+         :description (routes.common/capabilities->description capabilities)
+         :capabilities capabilities
+         :auth-identity identity
+         :identity-map identity-map
+         (if-let [updated-rec
+                  (-> (flows/update-flow
+                       :services services
+                       :get-fn (get-by-ids-fn identity-map)
+                       :realize-fn realize-feed
+                       :update-fn (update-fn identity-map wait_for)
+                       :long-id-fn #(with-long-id % services)
+                       :entity-type :feed
+                       :identity identity
+                       :entities [(assoc entity-update :id id)]
+                       :spec :new-feed/map)
+                      first
+                      un-store
+                      (decrypt-feed services))]
+           (ok updated-rec)
+           (not-found))))
+
+     (let [capabilities :read-feed]
+       (GET "/external_id/:external_id" []
+         :return PartialFeedList
+         :query [q FeedByExternalIdQueryParams]
+         :path-params [external_id :- s/Str]
+         :summary "List Feeds by external_id"
+         :description (routes.common/capabilities->description capabilities)
+         :capabilities capabilities
+         :auth-identity identity
+         :identity-map identity-map
+         (-> (get-store :feed)
+             (list-records
+              {:all-of {:external_ids external_id}}
+              identity-map
+              q)
+             (page-with-long-id services)
+             un-store-page
+             (decrypt-feed-page services)
+             routes.common/paginated-ok)))
+
+     (let [capabilities :search-feed]
+       (GET "/search" []
+         :return PartialFeedList
+         :summary "Search for a Feed using a Lucene/ES query string"
+         :query [params FeedSearchParams]
+         :description (routes.common/capabilities->description capabilities)
+         :capabilities capabilities
+         :auth-identity identity
+         :identity-map identity-map
+         (-> (get-store :feed)
+             (query-string-search
+              (routes.common/search-query :created params)
+              identity-map
+              (select-keys params routes.common/search-options))
+             (page-with-long-id services)
+             un-store-page
+             (decrypt-feed-page services)
+             routes.common/paginated-ok)))
+
+     (let [capabilities :search-feed]
+       (GET "/search/count" []
+         :return s/Int
+         :summary "Count Feed entities matching given search filters."
+         :query [params FeedCountParams]
+         :description (routes.common/capabilities->description capabilities)
+         :capabilities capabilities
+         :auth-identity identity
+         :identity-map identity-map
+         (ok (-> (get-store :feed)
+                 (query-string-count
+                  (routes.common/search-query :created params)
+                  identity-map)))))
+
+     (let [capabilities #{:search-feed :delete-feed}]
+       (DELETE "/search" []
+         :capabilities capabilities
+         :description (routes.common/capabilities->description capabilities)
+         :return s/Int
+         :summary (format "Delete Feed entities matching given Lucene/ES query string or/and field filters")
+         :auth-identity identity
+         :identity-map identity-map
+         :query [params FeedDeleteSearchParams]
+         (let [query (->> (dissoc params :wait_for :REALLY_DELETE_ALL_THESE_ENTITIES)
+                          (routes.common/search-query :created))]
+           (if (empty? query)
+             (forbidden {:error "you must provide at least one of from, to, query or any field filter."})
+             (ok
+              (if (:REALLY_DELETE_ALL_THESE_ENTITIES params)
+                (-> (get-store :feed)
+                    (delete-search
+                     query
+                     identity-map
+                     (routes.common/wait_for->refresh (:wait_for params))))
+                (-> (get-store :feed)
+                    (query-string-count
+                     query
+                     identity-map))))))))
+
+     (let [capabilities :read-feed]
+       (GET "/:id" []
+         :return (s/maybe PartialFeed)
+         :summary "Gets a Feed by ID"
+         :path-params [id :- s/Str]
+         :query [params FeedGetParams]
+         :description (routes.common/capabilities->description capabilities)
+         :capabilities capabilities
+         :auth-identity identity
+         :identity-map identity-map
+         (if-let [rec (-> (get-store :feed)
+                          (read-record
+                           id
+                           identity-map
+                           params))]
+           (-> rec
+               (with-long-id services)
+               un-store
+               (decrypt-feed services)
+               ok)
+           (not-found))))
+
+     (let [capabilities :delete-feed]
+       (DELETE "/:id" []
+         :no-doc false
+         :path-params [id :- s/Str]
+         :query-params [{wait_for :- (describe s/Bool "wait for deleted entity to no more be available for search") nil}]
+         :summary "Deletes a Feed"
+         :description (routes.common/capabilities->description capabilities)
+         :capabilities capabilities
+         :auth-identity identity
+         :identity-map identity-map
+         (if (first
+              (flows/delete-flow
+               :services services
+               :get-fn (get-by-ids-fn identity-map)
+               :delete-fn (routes.crud/flow-delete-fn
+                           {:get-store get-store
+                            :entity :feed
+                            :identity-map identity-map
+                            :wait_for wait_for})
+               :entity-type :feed
+               :get-success-entities (fn [fm]
+                                       (when (first (:results fm))
                                          (:entities fm)))
-             :long-id-fn #(with-long-id % services)
-             :entity-ids [id]
-             :identity identity))
-         (no-content)
-         (not-found))))))
+               :long-id-fn #(with-long-id % services)
+               :entity-ids [id]
+               :identity identity))
+           (no-content)
+           (not-found)))))))
 
 (def capabilities
   #{:create-feed

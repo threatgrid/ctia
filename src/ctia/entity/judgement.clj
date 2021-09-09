@@ -87,7 +87,7 @@
            entity-schema
            post-capabilities] :as entity-crud-config}]
   (let [capabilities post-capabilities]
-    (POST "/:id/expire" req
+    (POST "/:id/expire" []
           :summary (format "Expires the supplied %s" (capitalize-entity entity))
           :path-params [id :- s/Str]
           :query-params [reason :- (describe s/Str "Message to append to the Judgement's reason value")
@@ -97,12 +97,12 @@
           :capabilities capabilities
           :auth-identity identity
           :identity-map identity-map
-          (revoke-request req services
+          (revoke-request services
                           entity-crud-config
                           {:id id
                            :identity identity
                            :identity-map identity-map
-                           :revocation-update-fn (fn [entity _]
+                           :revocation-update-fn (fn [entity]
                                                    (-> entity
                                                        (update :reason str " " reason)))
                            :wait_for wait_for}))))
