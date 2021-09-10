@@ -141,14 +141,14 @@
    agg-type
    aggregate-on
    {:keys [range full-text filter-map]} :- SearchQuery]
-  (let [full-text*         (assoc full-text :query_mode
-                                  (get full-text :query_mode :query_string))
+  (let [full-text*         (map #(assoc % :query_mode
+                                (get % :query_mode :query_string)) full-text)
         nested-fields      (map keyword
-                                (str/split (name aggregate-on) #"\."))
+                           (str/split (name aggregate-on) #"\."))
         {from :gte to :lt} (-> range first val)
         filters            (cond-> {:from from :to to}
                              (seq filter-map) (into filter-map)
-                             (seq full-text)  (assoc :full-text [full-text*]))]
+                             (seq full-text)  (assoc :full-text full-text*))]
     {:data    (assoc-in {} nested-fields result)
      :type    agg-type
      :filters filters}))
