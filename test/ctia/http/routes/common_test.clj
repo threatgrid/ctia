@@ -58,13 +58,13 @@
       (is (= {:filter-map {:title "firefox exploit"
                            :disposition 2}}
              (sut/search-query :created {:title "firefox exploit", :disposition 2})))
-      (is (= {:full-text {:query "bad-domain", :query_mode :query_string}
+      (is (= {:full-text [{:query "bad-domain", :query_mode :query_string}]
               :filter-map {:title "firefox exploit"
                            :disposition 2}}
              (sut/search-query :created {:query "bad-domain"
                                          :disposition 2
                                          :title "firefox exploit"})))
-      (is (= {:full-text {:query "bad-domain", :query_mode :query_string}
+      (is (= {:full-text [{:query "bad-domain", :query_mode :query_string}]
               :filter-map {:title "firefox exploit"
                            :disposition 2}}
              (sut/search-query :created {:query       "bad-domain"
@@ -112,7 +112,7 @@
               :type :cardinality
               :filters {:from from
                         :to to
-                        :full-text {:query "baddomain*", :query_mode :query_string}
+                        :full-text [{:query "baddomain*", :query_mode :query_string}]
                         :field1 "foo/bar"
                         :field2 "value2"}}
              (sut/format-agg-result cardinality
@@ -143,8 +143,8 @@
               :type :topn
               :filters {:from from
                         :to to
-                        :full-text {:query      "android"
-                                    :query_mode :query_string}}}
+                        :full-text [{:query      "android"
+                                     :query_mode :query_string}]}}
              (sut/format-agg-result topn
                                     :topn
                                     "status"
