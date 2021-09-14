@@ -137,7 +137,8 @@
       :discovery_method em/token
       :intended_effect em/token
       :assignees em/token
-      :promotion_method em/token})}})
+      :promotion_method em/token
+      :severity em/token})}})
 
 (def-es-store IncidentStore :incident StoredIncident PartialStoredIncident)
 
@@ -156,7 +157,8 @@
            :discovery_method
            :intended_effect
            :assignees
-           :promotion_method]))
+           :promotion_method
+           :severity]))
 
 (def incident-sort-fields
   (apply s/enum incident-fields))
@@ -170,7 +172,8 @@
    :promotion_method
    :source
    :status
-   :title])
+   :title
+   :severity])
 
 (def incident-histogram-fields
   [:timestamp
@@ -199,7 +202,8 @@
      :categories       s/Str
      :sort_by          incident-sort-fields
      :assignees        s/Str
-     :promotion_method s/Str})))
+     :promotion_method s/Str
+     :severity s/Str})))
 
 (def IncidentGetParams IncidentFieldsParam)
 
