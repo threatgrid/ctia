@@ -8,6 +8,7 @@
   (update-record [this id record ident params])
   (delete-record [this id ident params])
   (bulk-delete [this ids ident params])
+  (bulk-update [this records ident params])
   (list-records [this filtermap ident params])
   (close [this]))
 

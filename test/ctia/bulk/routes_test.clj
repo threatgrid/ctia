@@ -1,7 +1,7 @@
 (ns ctia.bulk.routes-test
   (:require [cheshire.core :refer [parse-string]]
             [clj-http.fake :refer [with-global-fake-routes]]
-            [clj-momo.test-helpers.core :as mth]
+            [schema.test :refer [validate-schemas]]
             [clj-momo.test-helpers.http :refer [encode]]
             [clojure.java.io :as io]
             [clojure.string :as str]
@@ -10,7 +10,7 @@
             [ctia.properties :refer [get-http-show]]
             [ctia.store :refer [query-string-search]]
             [ctia.test-helpers.auth :refer [all-capabilities]]
-            [ctia.test-helpers.core :as helpers :refer [DELETE GET POST]]
+            [ctia.test-helpers.core :as helpers :refer [DELETE GET POST PATCH]]
             [ctia.test-helpers.fake-whoami-service :as whoami-helpers]
             [ctia.test-helpers.http :refer [app->HTTPShowServices]]
             [ctia.test-helpers.store
@@ -26,7 +26,7 @@
   (helpers/with-properties ["ctia.http.bulk.max-size" 100]
     (t)))
 
-(use-fixtures :once (join-fixtures [mth/fixture-schema-validation
+(use-fixtures :once (join-fixtures [validate-schemas
                                     fixture-properties:small-max-bulk-size
                                     whoami-helpers/fixture-server]))
 
@@ -263,7 +263,7 @@
   [event-store
    ident
    entity-ids
-   event-type :- (s/enum :record-created :record-deleted)]
+   event-type :- (s/enum :record-created :record-deleted :record-updated)]
   (let [events (:data (query-string-search
                        event-store
                        {:filter-map {:entity.id entity-ids
@@ -298,10 +298,12 @@
                                                                  (-> indicators (nth %) :id)
                                                                  (-> judgements (nth %) :id))
                                            (range nb))
+                       :incidents (map mk-new-incident (range nb))
                        :sightings (map mk-new-sighting (range nb))
                        :tools (map mk-new-tool (range nb))}
+             bulk-url "ctia/bulk"
              response (POST app
-                            "ctia/bulk"
+                            bulk-url
                             :body new-bulk
                             :headers {"Authorization" "45c1f5e3f05d0"})
              bulk-ids (:parsed-body response)
@@ -339,6 +341,33 @@
                    (is (= (:protocol id)         (:protocol show-props)))
                    (is (= (:port id)             (:port show-props)))
                    (is (= (:path-prefix id) (seq (:path-prefix show-props)))))))))
+
+         (testing "PATCH /ctia/bulk"
+           (let [incident-ids (:incidents bulk-ids)
+                 sighting-ids (:sightings bulk-ids)
+                 patch-bulk {:incidents (map #(array-map :id % :source "patched") incident-ids)}
+                 invalid-patch-bulk (assoc patch-bulk
+                                           :sightings
+                                           (map #(array-map :id % :source "patched") sighting-ids))
+                 expected-patch {:incidents {:updated (set incident-ids)}}
+                 {:keys [status parsed-body]} (PATCH app
+                                                      bulk-url
+                                                      :form-params patch-bulk
+                                                      :headers {"Authorization" "45c1f5e3f05d0"})]
+             (is (= 200 status))
+             (is (= expected-patch
+                    (update-in parsed-body [:incidents :updated] set)))
+             (check-events event-store
+                           ident
+                           incident-ids
+                           :record-updated)
+             (is (= 400
+                    (:status
+                     (PATCH app
+                            bulk-url
+                            :form-params invalid-patch-bulk
+                            :headers {"Authorization" "45c1f5e3f05d0"})))
+                 "only entities with patch-bulk? set to true can be submitted to PATCH bulk")))
 
          (testing "DELETE /ctia/bulk"
            ;; edge cases are tested in bulk/core-test

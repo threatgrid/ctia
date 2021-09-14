@@ -12,7 +12,8 @@
    [ctia.store :as store]
    [ring.util.http-response :refer [bad-request]]
    [schema-tools.core :as st]
-   [schema.core :as s]))
+   [schema.core :as s]
+   [ctim.domain.id :as id]))
 
 ;; TODO def => defn
 (def bulk-entity-mapping
@@ -68,18 +69,18 @@
   [new-entities entity-type tempids auth-identity params
    services :- APIHandlerServices]
   (when (seq new-entities)
-    (let [entities (all-entities)]
+    (let [{:keys [realize-fn new-spec]} (get (all-entities) entity-type)]
       (update (flows/create-flow
                 :services services
                 :entity-type entity-type
-                :realize-fn (-> entities entity-type :realize-fn)
+                :realize-fn realize-fn
                 :store-fn (create-fn entity-type auth-identity params services)
                 :long-id-fn #(with-long-id % services)
                 :enveloped-result? true
                 :identity auth-identity
                 :entities new-entities
                 :tempids tempids
-                :spec (-> entities entity-type :new-spec))
+                :spec new-spec)
               :data
               (partial map (fn [{:keys [error id] :as result}]
                              (if error result id)))))))
@@ -108,6 +109,31 @@
                (log/error (pr-str e)))))
          ids)))
 
+(defn to-long-id
+  [id services]
+  (cond-> id
+    (id/valid-short-id? id) (short-id->long-id services)))
+
+(defn format-bulk-flow-res
+  "format bulk res with-long-id for a given entity type result"
+  [results services]
+  (into {}
+        (map (fn [[action res]]
+               {action
+                (case action
+                  :errors (format-bulk-flow-res res services)
+                  (map #(to-long-id % services) res))}))
+        results))
+
+(s/defn make-bulk-result
+  [{:keys [results not-found services] :as _fm} :- flows/FlowMap]
+  (let [formatted (format-bulk-flow-res results services)]
+    (cond-> formatted
+      (seq not-found)
+      (update-in [:errors :not-found]
+                 concat
+                 (map #(to-long-id % services) not-found)))))
+
 (s/defn delete-fn
   "return the delete function provided an entity type key"
   [k auth-identity params
@@ -118,41 +144,65 @@
          (auth/ident->map auth-identity)
          params)))
 
-(defn format-bulk-flow-res
-  "format delete res with-long-id for a given entity type result"
-  [bulk-flow-res services]
-  (into {}
-        (map (fn [[action res]]
-               {action
-                (case action
-                  :errors (format-bulk-flow-res res services)
-                  (map #(short-id->long-id % services) res))}))
-        bulk-flow-res))
+(s/defn update-fn
+  "return the update function provided an entity type key"
+  [k auth-identity params
+   {{:keys [get-store]} :StoreService} :- APIHandlerServices]
+  #(-> (get-store k)
+       (store/bulk-update
+         %
+         (auth/ident->map auth-identity)
+         params)))
+
+(defn get-success-entities-fn
+  [action]
+  (fn [{:keys [results entities services] :as _fm}]
+    (let [successful-long-ids
+          (set
+           (map #(to-long-id % services)
+                (action results)))
+          filter-fn (fn [entity]
+                      (contains? successful-long-ids
+                                 (:id entity)))]
+      (filter filter-fn entities))))
 
 (s/defn delete-entities
-  "Create many entities provided their type and returns a list of ids"
+  "delete many entities provided their type and returns a list of ids"
   [entity-ids entity-type auth-identity params
    services :- APIHandlerServices]
   (when (seq entity-ids)
+    (let [get-fn #(read-entities %  entity-type auth-identity services)]
+      (flows/delete-flow
+       :services services
+       :entity-type entity-type
+       :entity-ids entity-ids
+       :get-fn get-fn
+       :delete-fn (delete-fn entity-type auth-identity params services)
+       :long-id-fn nil
+       :identity auth-identity
+       :make-result make-bulk-result
+       :get-success-entities (get-success-entities-fn :deleted)))))
+
+(s/defn patch-entities
+  "patch many entities provided their type and returns errored and successed entities' ids"
+  [patches entity-type auth-identity params
+   services :- APIHandlerServices]
+  (when (seq patches)
     (let [get-fn #(read-entities %  entity-type auth-identity services)
-          delete-flow-res (flows/delete-flow
-                           :services services
-                           :entity-type entity-type
-                           :entity-ids entity-ids
-                           :get-fn get-fn
-                           :delete-fn (delete-fn entity-type auth-identity params services)
-                           :long-id-fn nil
-                           :identity auth-identity
-                           :get-success-entities (fn [{:keys [results entities] :as _fm}]
-                                                   (let [deleted-long-ids
-                                                         (set
-                                                          (map #(short-id->long-id % services)
-                                                               (:deleted results)))
-                                                         filter-fn (fn [entity]
-                                                                     (contains? deleted-long-ids
-                                                                                (:id entity)))]
-                                                     (filter filter-fn entities))))]
-      (format-bulk-flow-res delete-flow-res services))))
+          {:keys [realize-fn new-spec]} (get (all-entities) entity-type)]
+      (flows/patch-flow
+       :services services
+       :get-fn get-fn
+       :realize-fn realize-fn
+       :update-fn (update-fn entity-type auth-identity params services)
+       :long-id-fn #(with-long-id % services)
+       :entity-type entity-type
+       :identity auth-identity
+       :patch-operation :replace
+       :partial-entities patches
+       :spec new-spec
+       :make-result make-bulk-result
+       :get-success-entities (get-success-entities-fn :updated)))))
 
 (defn gen-bulk-from-fn
   "Kind of fmap but adapted for bulk
@@ -276,3 +326,13 @@
       (bad-request (str "Bulk max nb of entities: "
                         (get-bulk-max-size get-in-config)))
       (gen-bulk-from-fn delete-entities bulk auth-identity params services))))
+
+(s/defn patch-bulk
+  [entities-map auth-identity params
+   {{:keys [get-in-config]} :ConfigService
+    :as services} :- APIHandlerServices]
+  (let [bulk (into {} (remove (comp empty? second) entities-map))]
+    (if (> (bulk-size bulk) (get-bulk-max-size get-in-config))
+      (bad-request (str "Bulk max nb of entities: "
+                        (get-bulk-max-size get-in-config)))
+      (gen-bulk-from-fn patch-entities bulk auth-identity params services))))

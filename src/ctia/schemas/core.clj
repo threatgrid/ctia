@@ -199,7 +199,9 @@
      :capabilities #{s/Keyword}
      :no-bulk? s/Bool
      :no-api? s/Bool
-     :realize-fn RealizeFn})))
+     :realize-fn RealizeFn
+     :can-patch? s/Bool
+     :patch-capabilities  s/Keyword})))
 
 (s/defschema OpenCTIMSchemaVersion
   {(s/optional-key :schema_version) s/Str})

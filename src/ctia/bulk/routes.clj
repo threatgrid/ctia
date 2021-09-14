@@ -1,9 +1,9 @@
 (ns ctia.bulk.routes
   (:require
-   [ctia.bulk.core :refer [bulk-size create-bulk fetch-bulk delete-bulk get-bulk-max-size]]
-   [ctia.bulk.schemas :refer [Bulk BulkCreateRes BulkRefs NewBulk BulkActionsRefs]]
+   [ctia.bulk.core :refer [bulk-size create-bulk fetch-bulk delete-bulk get-bulk-max-size patch-bulk]]
+   [ctia.bulk.schemas :as bulk.schemas]
    [ctia.http.routes.common :as common]
-   [ctia.lib.compojure.api.core :refer [GET POST DELETE routes]]
+   [ctia.lib.compojure.api.core :refer [GET POST DELETE PATCH routes]]
    [ctia.schemas.core :refer [APIHandlerServices Reference]]
    [ring.swagger.json-schema :refer [describe]]
    [ring.util.http-response :refer [bad-request ok]]
@@ -34,9 +34,9 @@
                          :create-vulnerability
                          :create-weakness}]
       (POST "/" []
-            :return (BulkCreateRes services)
+            :return (bulk.schemas/BulkCreateRes services)
             :query-params [{wait_for :- (describe s/Bool "wait for created entities to be available for search") nil}]
-            :body [bulk (NewBulk services) {:description "a new Bulk object"}]
+            :body [bulk (bulk.schemas/NewBulk services) {:description "a new Bulk object"}]
             :summary "POST many new entities using a single HTTP call"
             :auth-identity login
             :description (common/capabilities->description capabilities)
@@ -73,7 +73,7 @@
                         :read-vulnerability
                         :read-weakness}]
      (GET "/" []
-          :return (s/maybe (Bulk services))
+          :return (s/maybe (bulk.schemas/Bulk services))
           :summary "GET many entities at once"
           :query-params [{actors              :- [Reference] []}
                          {asset_mappings      :- [Reference] []}
@@ -123,7 +123,19 @@
                               :vulnerabilities     vulnerabilities
                               :weaknesses          weaknesses}]
             (ok (fetch-bulk entities-map auth-identity services)))))
-
+    (let [capabilities (bulk.schemas/bulk-patch-capabilities services)]
+     (PATCH "/" []
+          :return (s/maybe (bulk.schemas/BulkActionsRefs services))
+          :summary "PATCH many entities at once"
+          :query-params [{wait_for :- (describe s/Bool "wait for patched entities to be available for search") nil}]
+          :body [bulk (bulk.schemas/BulkPatch services) {:description "a new Bulk Patch object"}]
+          :description (common/capabilities->description capabilities)
+          :capabilities capabilities
+          :auth-identity auth-identity
+          (ok (patch-bulk bulk
+                          auth-identity
+                          (common/wait_for->refresh wait_for)
+                          services))))
     (let [capabilities #{:delete-actor
                          :delete-asset
                          :delete-asset-mapping
@@ -147,10 +159,10 @@
                          :delete-vulnerability
                          :delete-weakness}]
      (DELETE "/" []
-          :return (s/maybe (BulkActionsRefs services))
+          :return (s/maybe (bulk.schemas/BulkActionsRefs services))
           :summary "DELETE many entities at once"
-          :query-params [{wait_for :- (describe s/Bool "wait for created entities to be available for search") nil}]
-          :body [bulk (BulkRefs services) {:description "a new Bulk Delete object"}]
+          :query-params [{wait_for :- (describe s/Bool "wait for deleted entities to not be available anymore for search") nil}]
+          :body [bulk (bulk.schemas/BulkRefs services) {:description "a new Bulk Delete object"}]
           :description (common/capabilities->description capabilities)
           :capabilities capabilities
           :auth-identity auth-identity

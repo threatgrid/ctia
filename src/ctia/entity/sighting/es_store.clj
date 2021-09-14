@@ -123,6 +123,13 @@
     (update-fn state id $ ident params)
     (es-stored-sighting->stored-sighting $)))
 
+(def bulk-update-fn (crud/bulk-update ESStoredSighting))
+
+(s/defn handle-bulk-update
+  [state realized-docs ident es-params]
+  (let [es-stored-docs (map stored-sighting->es-stored-sighting realized-docs)]
+    (bulk-update-fn state es-stored-docs ident es-params)))
+
 (def handle-delete (crud/handle-delete :sighting))
 
 (s/defn es-paginated-list->paginated-list
@@ -166,6 +173,8 @@
     (handle-list state filter-map ident params))
   (bulk-delete [_ ids ident params]
     (handle-bulk-delete state ids ident params))
+  (bulk-update [_ docs ident params]
+    (handle-bulk-update state docs ident params))
   (close [_] (close-connections! state))
   ISightingStore
   (list-sightings-by-observables [_ observables ident params]

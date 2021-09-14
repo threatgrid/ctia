@@ -39,6 +39,22 @@
   [services :- GetEntitiesServices]
   (entities-bulk-schema (get-entities services) :schema))
 
+(defn bulk-patch-capabilities
+  [services]
+  (->> (get-entities services)
+       (map second)
+       (filter :can-patch?)
+       (map :patch-capabilities)
+       set))
+
+(s/defn BulkPatch :- (s/protocol s/Schema)
+  "Returns BulkUpdate schema without disabled entities and only entities that can be patched"
+  [services :- GetEntitiesServices]
+  (let [patchable-entities (into {}
+                                 (filter #(:can-patch? (second %)))
+                                 (get-entities services))]
+    (entities-bulk-schema patchable-entities :partial-schema)))
+
 (s/defn BulkRefs :- (s/protocol s/Schema)
   [services :- GetEntitiesServices]
   (entities-bulk-schema (get-entities services) [(s/maybe Reference)]))
