@@ -7,7 +7,7 @@
              [acl-fields allow-read? allow-write? restricted-read?]]
             [ctia.lib.pagination :refer [list-response-schema]]
             [ctia.schemas.search-agg
-             :refer [AggQuery CardinalityQuery ESQFullTextQuery HistogramQuery SearchQuery TopnQuery]]
+             :refer [AggQuery CardinalityQuery HistogramQuery SearchQuery TopnQuery]]
             [ctia.stores.es.query :refer [find-restriction-query-part]]
             [ctia.stores.es.schemas :refer [ESConnState]]
             [ductile.document :as ductile.doc]
@@ -225,6 +225,13 @@ It returns the documents with full hits meta data including the real index in wh
     :_index s/Str
     :status s/Int
     :result s/Str}))
+
+(s/defschema ESQFullTextQuery
+  (st/merge
+   {:query s/Str}
+   (st/optional-keys
+    {:default_operator s/Str
+     :fields [s/Str]})))
 
 ;; TODO move it to ductile
 (s/defschema ESBulkRes

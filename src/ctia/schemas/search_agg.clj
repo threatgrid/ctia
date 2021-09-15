@@ -32,13 +32,6 @@
     :range        RangeQuery
     :full-text    [FullTextQuery]}))
 
-(s/defschema ESQFullTextQuery
-  (st/merge
-   {:query s/Str}
-   (st/optional-keys
-    {:default_operator s/Str
-     :fields [s/Str]})))
-
 (s/defschema AggType
   "supported aggregation types"
   (s/enum :histogram :topn :cardinality))
