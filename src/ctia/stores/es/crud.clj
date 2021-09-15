@@ -7,7 +7,7 @@
              [acl-fields allow-read? allow-write? restricted-read?]]
             [ctia.lib.pagination :refer [list-response-schema]]
             [ctia.schemas.search-agg
-             :refer [AggQuery CardinalityQuery HistogramQuery SearchQuery TopnQuery]]
+             :refer [AggQuery CardinalityQuery HistogramQuery SearchQuery TopnQuery FullTextQuery]]
             [ctia.stores.es.query :refer [find-restriction-query-part]]
             [ctia.stores.es.schemas :refer [ESConnState]]
             [ductile.document :as ductile.doc]
@@ -455,7 +455,7 @@ It returns the documents with full hits meta data including the real index in wh
                                            get-in-config))))))
 
 (s/defn refine-full-text-query-parts :- [{s/Keyword ESQFullTextQuery}]
-  [full-text-terms
+  [full-text-terms :- [FullTextQuery]
    default-operator]
   (let [term->es-query-part (fn [{:keys [query_mode] :as x}]
                               (hash-map
@@ -466,13 +466,7 @@ It returns the documents with full hits meta data including the real index in wh
                                 (when (and default-operator
                                            (not= :multi_match query_mode))
                                   {:default_operator default-operator}))))]
-    (cond
-      (map? full-text-terms)
-      [(term->es-query-part full-text-terms)]
-
-      (sequential? full-text-terms)
-      (->> full-text-terms
-           (mapv term->es-query-part)))))
+    (mapv term->es-query-part full-text-terms)))
 
 (s/defn make-search-query :- {s/Keyword s/Any}
   "Translate SearchQuery map into ES Query DSL map"
