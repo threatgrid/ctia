@@ -38,7 +38,7 @@
   (with-redefs [sut/now (constantly #inst "2020-12-31")]
     (let [from #inst "2020-04-01"
           to #inst "2020-06-01"]
-      (is (= {:full-text {:query "bad-domain", :query_mode :query_string}}
+      (is (= {:full-text [{:query "bad-domain", :query_mode :query_string}]}
              (sut/search-query :created {:query "bad-domain"})))
       (is (= {:range {:created
                       {:gte from
@@ -58,13 +58,13 @@
       (is (= {:filter-map {:title "firefox exploit"
                            :disposition 2}}
              (sut/search-query :created {:title "firefox exploit", :disposition 2})))
-      (is (= {:full-text {:query "bad-domain", :query_mode :query_string}
+      (is (= {:full-text [{:query "bad-domain", :query_mode :query_string}]
               :filter-map {:title "firefox exploit"
                            :disposition 2}}
              (sut/search-query :created {:query "bad-domain"
                                          :disposition 2
                                          :title "firefox exploit"})))
-      (is (= {:full-text {:query "bad-domain", :query_mode :query_string}
+      (is (= {:full-text [{:query "bad-domain", :query_mode :query_string}]
               :filter-map {:title "firefox exploit"
                            :disposition 2}}
              (sut/search-query :created {:query       "bad-domain"
@@ -73,7 +73,7 @@
                                          :fields      ["title"]
                                          :sort_by     "disposition"
                                          :sort_order  :desc})))
-      (is (= {:full-text {:query "bad-domain", :query_mode :query_string}
+      (is (= {:full-text [{:query "bad-domain", :query_mode :query_string}]
               :range {:created {:gte from, :lt to}}
               :filter-map {:title "firefox exploit"
                            :disposition 2}}
@@ -112,7 +112,7 @@
               :type :cardinality
               :filters {:from from
                         :to to
-                        :full-text {:query "baddomain*", :query_mode :query_string}
+                        :full-text [{:query "baddomain*", :query_mode :query_string}]
                         :field1 "foo/bar"
                         :field2 "value2"}}
              (sut/format-agg-result cardinality
@@ -121,7 +121,7 @@
                                     {:range
                                      {:timestamp {:gte from
                                                   :lt to}}
-                                     :full-text {:query "baddomain*"}
+                                     :full-text [{:query "baddomain*"}]
                                      :filter-map {:field1 "foo/bar"
                                                   :field2 "value2"}})))
       (is (= {:data {:observable {:type cardinality}}
@@ -143,14 +143,14 @@
               :type :topn
               :filters {:from from
                         :to to
-                        :full-text {:query      "android"
-                                    :query_mode :query_string}}}
+                        :full-text [{:query      "android"
+                                     :query_mode :query_string}]}}
              (sut/format-agg-result topn
                                     :topn
                                     "status"
                                     {:range     {:timestamp {:gte from
                                                              :lt  to}}
-                                     :full-text {:query "android"}})))
+                                     :full-text [{:query "android"}]})))
       (is (= {:data {:timestamp histogram}
               :type :histogram
               :filters {:from from

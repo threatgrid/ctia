@@ -7,8 +7,7 @@
              [acl-fields allow-read? allow-write? restricted-read?]]
             [ctia.lib.pagination :refer [list-response-schema]]
             [ctia.schemas.search-agg
-             :refer
-             [AggQuery CardinalityQuery HistogramQuery SearchQuery TopnQuery]]
+             :refer [AggQuery CardinalityQuery HistogramQuery SearchQuery TopnQuery FullTextQuery]]
             [ctia.stores.es.query :refer [find-restriction-query-part]]
             [ctia.stores.es.schemas :refer [ESConnState]]
             [ductile.document :as ductile.doc]
@@ -226,6 +225,13 @@ It returns the documents with full hits meta data including the real index in wh
     :_index s/Str
     :status s/Int
     :result s/Str}))
+
+(s/defschema ESQFullTextQuery
+  (st/merge
+   {:query s/Str}
+   (st/optional-keys
+    {:default_operator s/Str
+     :fields [s/Str]})))
 
 ;; TODO move it to ductile
 (s/defschema ESBulkRes
@@ -448,34 +454,40 @@ It returns the documents with full hits meta data including the real index in wh
                                            ident
                                            get-in-config))))))
 
+(s/defn refine-full-text-query-parts :- [{s/Keyword ESQFullTextQuery}]
+  [full-text-terms :- [FullTextQuery]
+   default-operator]
+  (let [term->es-query-part (fn [{:keys [query_mode] :as x}]
+                              (hash-map
+                               ;; if no :query-mode specified, use the default
+                               (or query_mode :query_string)
+                               (merge
+                                (dissoc x :query_mode)
+                                (when (and default-operator
+                                           (not= :multi_match query_mode))
+                                  {:default_operator default-operator}))))]
+    (mapv term->es-query-part full-text-terms)))
+
 (s/defn make-search-query :- {s/Keyword s/Any}
   "Translate SearchQuery map into ES Query DSL map"
-  [{{:keys [default_operator]}               :props
+  [{{:keys [default_operator]} :props
     {{:keys [get-in-config]} :ConfigService} :services} :- ESConnState
    {:keys [filter-map
            range
            full-text]} :- SearchQuery
    ident]
-  (let [range-query   (when range
-                        {:range range})
-        filter-terms  (-> (ensure-document-id-in-map filter-map)
-                          q/prepare-terms)
-        es-query-mode (get full-text :query_mode :query_string) ;; if no :query-mode passed, use :query_string mode
-        def-operator  (when (and default_operator
-                                ;; some query modes in ES don't support default_operator, e.g. :multi_match
-                                (contains? #{:simple_query_string :query_string} es-query-mode))
-                        {:default_operator default_operator})
-        full-text-q   (when full-text
-                        {es-query-mode
-                         (merge
-                          (dissoc full-text :query_mode)
-                          def-operator)})]
+  (let [range-query (when range
+                      {:range range})
+        filter-terms (-> (ensure-document-id-in-map filter-map)
+                         q/prepare-terms)]
     {:bool
      {:filter
       (cond-> [(find-restriction-query-part ident get-in-config)]
         (seq filter-map) (into filter-terms)
-        (seq range)      (conj range-query)
-        (seq full-text)  (conj full-text-q))}}))
+        (seq range) (conj range-query)
+        (seq full-text) (into (refine-full-text-query-parts
+                               full-text
+                               default_operator)))}}))
 
 (defn handle-query-string-search
   "Generate an ES query handler for given schema schema"

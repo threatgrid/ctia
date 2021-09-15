@@ -130,27 +130,26 @@
        (seq date-range) (assoc-in [:range date-field] date-range)
        (seq filter-map) (assoc :filter-map filter-map)
        query            (assoc :full-text
-                               (merge
-                                {:query      query
-                                 :query_mode (or query_mode :query_string)}
-                                (when search_fields
-                                  {:fields search_fields})))))))
+                               [(merge
+                                 {:query      query
+                                  :query_mode (or query_mode :query_string)}
+                                 (when search_fields
+                                   {:fields search_fields}))])))))
 
 (s/defn format-agg-result :- MetricResult
   [result
    agg-type
    aggregate-on
    {:keys [range full-text filter-map]} :- SearchQuery]
-  (let [full-text*         (assoc full-text :query_mode
-                                  (get full-text :query_mode :query_string))
-        nested-fields      (map keyword
-                                (str/split (name aggregate-on) #"\."))
+  (let [full-text* (map #(assoc % :query_mode
+                                (get % :query_mode :query_string)) full-text)
+        nested-fields (map keyword (str/split (name aggregate-on) #"\."))
         {from :gte to :lt} (-> range first val)
-        filters            (cond-> {:from from :to to}
-                             (seq filter-map) (into filter-map)
-                             (seq full-text)  (assoc :full-text full-text*))]
-    {:data    (assoc-in {} nested-fields result)
-     :type    agg-type
+        filters (cond-> {:from from :to to}
+                  (seq filter-map) (into filter-map)
+                  (seq full-text) (assoc :full-text full-text*))]
+    {:data (assoc-in {} nested-fields result)
+     :type agg-type
      :filters filters}))
 
 (defn wait_for->refresh

@@ -30,7 +30,7 @@
   (st/optional-keys
    {:filter-map   {s/Keyword s/Any}
     :range        RangeQuery
-    :full-text    FullTextQuery}))
+    :full-text    [FullTextQuery]}))
 
 (s/defschema AggType
   "supported aggregation types"
