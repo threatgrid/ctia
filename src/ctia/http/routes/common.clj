@@ -22,7 +22,7 @@
                      :search_fields])
 
 (def filter-map-search-options
-  (conj search-options :query :from :to))
+  (conj search-options :query :simple_query :from :to))
 
 (s/defschema BaseEntityFilterParams
   {(s/optional-key :id) s/Str
@@ -119,7 +119,7 @@
   ([date-field
     {:keys [query
             from to
-            query_mode
+            simple_query
             search_fields] :as search-params}
     make-date-range-fn :- (s/=> RangeQueryOpt
                                 (s/named (s/maybe s/Inst) 'from)
@@ -127,14 +127,15 @@
    (let [filter-map (apply dissoc search-params filter-map-search-options)
          date-range (make-date-range-fn from to)]
      (cond-> {}
-       (seq date-range) (assoc-in [:range date-field] date-range)
-       (seq filter-map) (assoc :filter-map filter-map)
-       query            (assoc :full-text
-                               [(merge
-                                 {:query      query
-                                  :query_mode (or query_mode :query_string)}
-                                 (when search_fields
-                                   {:fields search_fields}))])))))
+       (seq date-range)        (assoc-in [:range date-field] date-range)
+       (seq filter-map)        (assoc :filter-map filter-map)
+       (or query simple_query) (assoc :full-text
+                                      (->> (cond-> []
+                                             query        (conj {:query query, :query_mode :query_string})
+                                             simple_query (conj {:query_mode :simple_query_string
+                                                                 :query      simple_query}))
+                                           (mapv #(merge % (when search_fields
+                                                             {:fields search_fields})))))))))
 
 (s/defn format-agg-result :- MetricResult
   [result
