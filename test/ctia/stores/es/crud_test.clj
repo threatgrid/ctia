@@ -301,12 +301,14 @@
                                    {:simple_query_string {:query "*"
                                                           :default_operator "AND"}}]}}
                   (sut/make-search-query es-conn-state
-                                         {:full-text [{:simple_query query-string}]}
+                                         {:full-text [{:query      query-string
+                                                       :query_mode :simple_query_string}]}
                                          ident)))
            (is (= {:bool {:filter [simple-access-ctrl-query
                                    {:multi_match {:query "*"}}]}}
                   (sut/make-search-query es-conn-state
-                                         {:full-text [{:query query-string}]}
+                                         {:full-text [{:query      query-string
+                                                       :query_mode :multi_match}]}
                                          ident))
                "multi_match queries don't support default_operator")
            (is (= {:bool {:filter (-> [simple-access-ctrl-query]
@@ -324,8 +326,10 @@
                                                    :default_operator "AND"}}]}}
                   (sut/make-search-query
                    es-conn-state
-                   {:full-text [{:simple_query "simple"}
-                                {:query "lucene"}]}
+                   {:full-text [{:query "simple"
+                                 :query_mode :simple_query_string}
+                                {:query "lucene"
+                                 :query_mode :query_string}]}
                    ident))))))))))
 
 (deftest make-aggregation-test

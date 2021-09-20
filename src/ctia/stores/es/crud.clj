@@ -454,17 +454,23 @@ It returns the documents with full hits meta data including the real index in wh
                                            ident
                                            get-in-config))))))
 
-(s/defn ^:always-validate refine-full-text-query-parts :- [{s/Keyword ESQFullTextQuery}]
+(s/defn refine-full-text-query-parts :- [{s/Keyword ESQFullTextQuery}]
   [full-text-terms :- [FullTextQuery]
    default-operator]
-  (let [term->es-query-part (fn [{:keys [simple_query query_mode] :as x}]
+  (let [term->es-query-part (fn [{:keys [simple_query
+                                         query_mode
+                                         fields] :as x}]
                               (hash-map
-                               (if simple_query :simple_query_string query_mode)
+                               (if simple_query :simple_query_string
+                                   (or query_mode :query_string))
                                (-> x
                                    (dissoc :simple_query :query_mode)
                                    (merge
-                                    (when default-operator
-                                      {:default_operator default-operator})))))]
+                                    (when (and default-operator
+                                               (not= query_mode :multi_match))
+                                      {:default_operator default-operator})
+                                    (when fields
+                                      {:fields (mapv name fields)})))))]
     (mapv term->es-query-part full-text-terms)))
 
 (s/defn make-search-query :- {s/Keyword s/Any}
@@ -483,10 +489,10 @@ It returns the documents with full hits meta data including the real index in wh
      {:filter
       (cond-> [(find-restriction-query-part ident get-in-config)]
         (seq filter-map) (into filter-terms)
-        (seq range) (conj range-query)
-        (seq full-text) (into (refine-full-text-query-parts
-                               full-text
-                               default_operator)))}}))
+        (seq range)      (conj range-query)
+        (seq full-text)  (into (refine-full-text-query-parts
+                                full-text
+                                default_operator)))}}))
 
 (defn handle-query-string-search
   "Generate an ES query handler for given schema schema"
