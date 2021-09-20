@@ -457,15 +457,14 @@ It returns the documents with full hits meta data including the real index in wh
 (s/defn refine-full-text-query-parts :- [{s/Keyword ESQFullTextQuery}]
   [full-text-terms :- [FullTextQuery]
    default-operator]
-  (let [term->es-query-part (fn [{:keys [query_mode] :as x}]
+  (let [term->es-query-part (fn [{:keys [simple_query] :as x}]
                               (hash-map
-                               ;; if no :query-mode specified, use the default
-                               (or query_mode :query_string)
-                               (merge
-                                (dissoc x :query_mode)
-                                (when (and default-operator
-                                           (not= :multi_match query_mode))
-                                  {:default_operator default-operator}))))]
+                               (if simple_query :simple_query_string :query_string)
+                               (-> x
+                                   (dissoc :simple_query)
+                                   (merge
+                                    (when default-operator
+                                      {:default_operator default-operator})))))]
     (mapv term->es-query-part full-text-terms)))
 
 (s/defn make-search-query :- {s/Keyword s/Any}
