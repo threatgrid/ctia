@@ -454,14 +454,14 @@ It returns the documents with full hits meta data including the real index in wh
                                            ident
                                            get-in-config))))))
 
-(s/defn refine-full-text-query-parts :- [{s/Keyword ESQFullTextQuery}]
+(s/defn ^:always-validate refine-full-text-query-parts :- [{s/Keyword ESQFullTextQuery}]
   [full-text-terms :- [FullTextQuery]
    default-operator]
-  (let [term->es-query-part (fn [{:keys [simple_query] :as x}]
+  (let [term->es-query-part (fn [{:keys [simple_query query_mode] :as x}]
                               (hash-map
-                               (if simple_query :simple_query_string :query_string)
+                               (if simple_query :simple_query_string query_mode)
                                (-> x
-                                   (dissoc :simple_query)
+                                   (dissoc :simple_query :query_mode)
                                    (merge
                                     (when default-operator
                                       {:default_operator default-operator})))))]
