@@ -104,4 +104,5 @@ fragment incidentFields on Incident {
   groups
   assignees
   promotion_method
+  severity
 }
