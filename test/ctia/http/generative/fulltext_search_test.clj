@@ -82,8 +82,7 @@
 (defn test-cases []
   (concat
    [{:test-description "Returns all the records when the wildcard used"
-     :query-params     {:query_mode "query_string"
-                        :query      "*"}
+     :query-params     {:query "*"}
      :bundle-gen       (bundle-gen-for :incidents :assets)
      :check            (fn [_ entity bundle res]
                          (is (= (-> res :parsed-body count)
@@ -104,29 +103,24 @@
                                         (filter #(-> % :title (= "nunc porta vulputate tellus"))))]
                       (is (= 3 (count matching)) test-description)))]
      [{:test-description "Multiple records with the same value in a given field. Lucene syntax"
-       :query-params     {:query_mode "query_string"
-                          :query      "title:nunc porta vulputate tellus"}
+       :query-params     {:query "title:nunc porta vulputate tellus"}
        :bundle-gen       bundle
        :check            check-fn}
       {:test-description "Multiple records with the same value in a given field set in search_fields"
-       :query-params     {:query_mode      "query_string"
-                          :query           "nunc porta vulputate tellus"
+       :query-params     {:query "nunc porta vulputate tellus"
                           :search_fields ["title"]}
        :bundle-gen       bundle
        :check            check-fn}
       {:test-description "Querying for non-existing value should yield no results. Lucene syntax."
-       :query-params     {:query_mode "query_string"
-                          :query      "title:0e1c9f6a-c3ac-4fd5-982e-4981f86df07a"}
+       :query-params     {:query "title:0e1c9f6a-c3ac-4fd5-982e-4981f86df07a"}
        :bundle-gen       bundle
        :check            (fn [_ _ _ res] (is (zero? (-> res :parsed-body count))))}
       {:test-description "Querying for non-existing field with wildcard should yield no results. Lucene syntax."
-       :query-params     {:query_mode "query_string"
-                          :query      "74f93781-f370-46ea-bd53-3193db379e41:*"}
+       :query-params     {:query "74f93781-f370-46ea-bd53-3193db379e41:*"}
        :bundle-gen       bundle
        :check            (fn [_ _ _ res] (is (empty? (-> res :parsed-body))))}
       {:test-description "Querying for non-existing field with wildcard should fail the schema validation. search_fields"
-       :query-params     {:query_mode      "query_string"
-                          :query           "*"
+       :query-params     {:query "*"
                           :search_fields ["512b8dce-0423-4e9a-aa63-d3c3b91eb8d8"]}
        :bundle-gen       bundle
        :check            (fn [_ _ _ res] (is (= 400 (-> res :status))))}])
@@ -150,15 +144,13 @@
                                        (-> % :title (= "title of test incident"))))))]
      [{:test-description (str "Should NOT return anything, because query field is missing."
                               "Asking for multiple things in the query, but not providing all the fields.")
-       :query-params     {:query_mode      "query_string"
-                          :query           "(title of test incident) AND (Log Review)"
+       :query-params     {:query "(title of test incident) AND (Log Review)"
                           :search_fields ["title"]}
        :bundle-gen       bundle
        :check            (fn [_ _ _ res] (is (nil? (get-fields res))))}
 
       {:test-description "Should return an entity where multiple fields match"
-       :query-params     {:query_mode      "query_string"
-                          :query           "\"title of test incident\" AND \"Log Review\""
+       :query-params     {:query "\"title of test incident\" AND \"Log Review\""
                           :search_fields ["title" "discovery_method"]}
        :bundle-gen       bundle
        :check            (fn [_ _ _ res]
@@ -166,8 +158,7 @@
                            (is (get-fields res)))}])
 
    [{:test-description "multi_match - looking for the same value in different fields in multiple records"
-     :query-params     {:query_mode      "multi_match"
-                        :query           "bibendum"
+     :query-params     {:query "bibendum"
                         :search_fields ["assignees" "title"]}
      :bundle-gen       (gen/fmap
                         (fn [bundle]
