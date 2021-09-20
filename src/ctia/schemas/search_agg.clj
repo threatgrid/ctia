@@ -13,14 +13,11 @@
   see: https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl-range-query.html"
   {s/Keyword RangeQueryOpt})
 
-(s/defschema FullTextQueryMode
-  (s/enum :query_string :multi_match :simple_query_string))
-
 (s/defschema FullTextQuery
   (st/merge
    {:query s/Str}
    (st/optional-keys
-    {:query_mode       FullTextQueryMode
+    {:simple_query     s/Str
      :fields           [s/Str]
      :default_operator s/Str})))
 

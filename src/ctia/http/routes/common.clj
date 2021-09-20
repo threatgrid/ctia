@@ -9,7 +9,7 @@
              [http-response :as http-res]
              [http-status :refer [ok]]]
             [ctia.schemas.search-agg :refer
-             [FullTextQueryMode MetricResult RangeQueryOpt SearchQuery]]
+             [MetricResult RangeQueryOpt SearchQuery]]
             [schema.core :as s]))
 
 (def search-options [:sort_by
@@ -38,8 +38,8 @@
 (s/defschema SearchableEntityParams
   {(s/optional-key :query) s/Str
 
-   (s/optional-key :query_mode)
-   (describe FullTextQueryMode "Elasticsearch Fulltext Query Mode. Defaults to query_string")})
+   (s/optional-key :simple_query)
+   (describe s/Str "Query string for posting Simple Query String queries to ES")})
 
 (s/defschema PagingParams
   "A schema defining the accepted paging and sorting related query parameters."
