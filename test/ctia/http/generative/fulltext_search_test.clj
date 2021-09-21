@@ -211,5 +211,6 @@
     (fn [app]
       (helpers/set-capabilities! app "foouser" ["foogroup"] "user" (capabilities/all-capabilities))
       (whoami-helpers/set-whoami-response app "45c1f5e3f05d0" "foouser" "foogroup" "user")
-      (doseq [test-case (test-cases)]
+      (doseq [test-case (if-let [cases (seq (filter :only (test-cases)))]
+                          cases (test-cases))]
         (test-search-case app test-case))))))
