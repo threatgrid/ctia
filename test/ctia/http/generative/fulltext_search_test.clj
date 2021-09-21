@@ -176,7 +176,34 @@
                                              :parsed-body
                                              (filter #(and (-> % :assignees (= ["bibendum"]))
                                                            (-> % :title (= "Etiam vel neque bibendum dignissim")))))]
-                           (is (= 3 (count matching)))))}]))
+                           (is (= 3 (count matching)))))}]
+   (let [bundle-gen (gen/fmap
+                     (fn [bundle]
+                       (update
+                        bundle :incidents
+                        (fn [incidents]
+                          (utils/update-items
+                           incidents
+                           #(assoc % :title "fried eggs eggplant")
+                           #(assoc % :title "fried eggs potato")
+                           #(assoc % :title "fried eggs frittata")))))
+                     (bundle-gen-for :incidents))
+         check-fn   (fn [_ _ _ res]
+                      (let [matching (->> res :parsed-body)]
+                      (is (= 2 (count matching)))
+                      (= #{"fried eggs eggplant" "fried eggs potato"}
+                         (->> matching (map :title) set))))]
+     [{:test-description "simple_query_string"
+       :query-params     {:simple_query  "\"fried eggs\" +(eggplant | potato) -frittata"
+                          :search_fields ["title"]}
+       :bundle-gen       bundle-gen
+       :check            check-fn}
+      {:test-description "simple_query_string and query_string together"
+       :query-params     {:simple_query  "\"fried eggs\" +(eggplant | potato) -frittata"
+                          :query         "(fried eggs eggplant) OR (fried eggs potato)"
+                          :search_fields ["title"]}
+       :bundle-gen       bundle-gen
+       :check            check-fn}])))
 
 (defn test-search-case
   [app
