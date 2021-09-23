@@ -21,7 +21,7 @@
    {:query s/Str}
    (st/optional-keys
     {:query_mode       FullTextQueryMode
-     :fields           [(s/enum s/Keyword s/Str)]
+     :fields           [s/Str]
      :default_operator s/Str})))
 
 (s/defschema SearchQuery
