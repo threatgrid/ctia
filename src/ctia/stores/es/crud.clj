@@ -459,11 +459,11 @@ It returns the documents with full hits meta data including the real index in wh
    default-operator]
   (let [term->es-query-part (fn [{:keys [simple_query
                                          query_mode
-                                         fields] :as x}]
+                                         fields] :as text-query}]
                               (hash-map
                                (if simple_query :simple_query_string
                                    (or query_mode :query_string))
-                               (-> x
+                               (-> text-query
                                    (dissoc :simple_query :query_mode)
                                    (merge
                                     (when (and default-operator
