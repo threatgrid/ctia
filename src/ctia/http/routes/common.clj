@@ -39,7 +39,7 @@
   {(s/optional-key :query) s/Str
 
    (s/optional-key :simple_query)
-   (describe s/Str "Query string for posting Simple Query String queries to ES")})
+   (describe s/Str "Query String with simple query format")})
 
 (s/defschema PagingParams
   "A schema defining the accepted paging and sorting related query parameters."
