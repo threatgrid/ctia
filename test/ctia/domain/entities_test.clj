@@ -13,15 +13,15 @@
                      {:access-control {:default-tlp "green"}}}}}}
         new-sighting-minimal (assoc (dissoc sighting-minimal :id)
                                     :source "create")
-        realized-create (sut/default-realize "sighting"
-                                             ss/NewSighting
-                                             new-sighting-minimal
-                                             "sighting-id-1"
-                                             {:login "g2"
-                                              :groups ["iroh-services"]
-                                              :client-id "ireaux"}
-                                             nil
-                                             services)]
+        realized-create (sut/default-realize {:type-name "sighting"
+                                              :Model ss/NewSighting
+                                              :new-object new-sighting-minimal
+                                              :id "sighting-id-1"
+                                              :ident-map {:login "g2"
+                                                          :groups ["iroh-services"]
+                                                          :client-id "ireaux"}
+                                              :prev-object nil
+                                              :services services})]
     (testing "realized fn without previous object shall initiate all stored field"
       (is-submap? new-sighting-minimal realized-create)
       (is-submap? {:client_id "ireaux",
@@ -40,15 +40,15 @@
     (testing "realized fn with a previous object shall preserve previous stored field and update modified"
       (let [new-sighting-maximal (assoc (dissoc sighting-maximal :id)
                                         :source "update")
-            realized-update (sut/default-realize "sighting"
-                                                 ss/NewSighting
-                                                 new-sighting-maximal
-                                                 "sighting-id-2"
-                                                 {:login "update-login"
-                                                  :groups ["update-group"]
-                                                  :client-id "iroh"}
-                                                 realized-create
-                                                 services)]
+            realized-update (sut/default-realize {:type-name "sighting"
+                                                  :Model ss/NewSighting
+                                                  :new-object new-sighting-maximal
+                                                  :id "sighting-id-2"
+                                                  :ident-map {:login "update-login"
+                                                              :groups ["update-group"]
+                                                              :client-id "iroh"}
+                                                  :prev-object realized-create
+                                                  :services services})]
         (is-submap? new-sighting-maximal realized-update)
         (is-submap? {:client_id "ireaux",
                      :schema_version "1.1.3",

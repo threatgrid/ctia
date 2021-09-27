@@ -36,7 +36,7 @@
                     time/default-expire-date)}})
 
 (defn default-realize
-  [type-name Model new-object id ident-map prev-object services]
+  [{:keys [type-name Model new-object id ident-map prev-object services]}]
   (let [{{{:keys [get-in-config]} :ConfigService} :services} services
         {:keys [login groups client-id]} ident-map
         now (time/now)
@@ -48,9 +48,7 @@
                                 :schema_version schema-version
                                 :created (or (:created prev-object) now)
                                 :modified now
-                                :timestamp (or (:timestamp new-object)
-                                               (:timestamp prev-object)
-                                               now)
+                                :timestamp (or (:timestamp new-object) now)
                                 :tlp (:tlp new-object
                                            (:tlp prev-object (properties-default-tlp get-in-config)))})]
     (cond-> with-base-fields
@@ -80,7 +78,14 @@
       prev-object :- (s/maybe StoredModel)]
     (delayed/fn :- StoredModel
                 [services :- GraphQLRuntimeContext]
-                (default-realize type-name Model new-object id ident-map prev-object services)))))
+      (default-realize
+       {:type-name type-name
+        :Model Model
+        :new-object new-object
+        :id id
+        :ident-map ident-map
+        :prev-object prev-object
+        :services services})))))
 
 (s/defn short-id->long-id [id services :- HTTPShowServices]
   (id/short-id->long-id id #(get-http-show services)))
