@@ -1,21 +1,19 @@
 (ns ctia.entity.web-test
   (:require [clj-http.client :as client]
-            [clj-jwt
-             [core :as jwt]
-             [key :as jwt-key]]
+            [clj-jwt.core :as jwt]
+            [clj-jwt.key :as jwt-key]
             [clj-momo.lib.clj-time.core :as time]
             [clj-time.core :as t]
             [clojure.data.json :as json]
-            [clojure.test :refer [deftest is testing use-fixtures join-fixtures]]
+            [clojure.test :refer [deftest is join-fixtures testing use-fixtures]]
             [clojure.tools.logging.test :as tlog]
             [clojure.walk :as walk]
             [ctia.domain.entities :refer [schema-version]]
-            [ctia.test-helpers
-             [auth :refer [all-capabilities]]
-             [core :as helpers :refer [GET POST]]
-             [es :as es-helpers]
-             [fake-whoami-service :as whoami-helpers]
-             [store :refer [test-for-each-store-with-app]]]
+            [ctia.test-helpers.auth :refer [all-capabilities]]
+            [ctia.test-helpers.core :as helpers :refer [GET POST]]
+            [ctia.test-helpers.es :as es-helpers]
+            [ctia.test-helpers.fake-whoami-service :as whoami-helpers]
+            [ctia.test-helpers.store :refer [test-for-each-store-with-app]]
             [ctim.domain.id :as id]
             [ring.adapter.jetty :as jetty]
             [schema.core :as s]
@@ -158,73 +156,77 @@
 (deftest test-judgement-with-jwt-routes
   (test-for-each-store-with-app
    (fn [app]
-     (helpers/set-capabilities! app "foouser" ["foogroup"] "user" all-capabilities)
-     (helpers/set-capabilities! app "baruser" ["bargroup"] "user" #{})
-     (whoami-helpers/set-whoami-response app "45c1f5e3f05d0" "foouser" "foogroup" "user")
-     (whoami-helpers/set-whoami-response app "2222222222222" "baruser" "bargroup" "user")
-
-     (testing "POST /ctia/judgement"
-       (let [{judgement :parsed-body
-              status :status}
-             (POST app
-                   "ctia/judgement"
-                   :body new-judgement-1
-                   :headers {"Authorization" "45c1f5e3f05d0"
-                             "origin" "http://external.cisco.com"})
-             judgement-id (id/long-id->id (:id judgement))]
-
-         (is (= 201 status))
-
-         (testing "GET /ctia/judgement/:id with bad JWT Authorization header"
-           (let [response
+     (testing "POST /ctia/judgement with JWT Authorization header."
+       (with-redefs [time/now (constantly (time/date-time 2017 02 16 0 0 0))]
+         (let [jwt-token "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwczpcL1wvc2NoZW1hcy5jaXNjby5jb21cL2lyb2hcL2lkZW50aXR5XC9jbGFpbXNcL3VzZXJcL2VtYWlsIjoiZ2J1aXNzb24rcWFfc2RjX2lyb2hAY2lzY28uY29tIiwiaHR0cHM6XC9cL3NjaGVtYXMuY2lzY28uY29tXC9pcm9oXC9pZGVudGl0eVwvY2xhaW1zXC91c2VyXC9pZHBcL2lkIjoiYW1wIiwiaHR0cHM6XC9cL3NjaGVtYXMuY2lzY28uY29tXC9pcm9oXC9pZGVudGl0eVwvY2xhaW1zXC91c2VyXC9uaWNrIjoiZ2J1aXNzb24rcWFfc2RjX2lyb2hAY2lzY28uY29tIiwiZW1haWwiOiJnYnVpc3NvbitxYV9zZGNfaXJvaEBjaXNjby5jb20iLCJzdWIiOiI1NmJiNWY4Yy1jYzRlLTRlZDMtYTkxYS1jNjYwNDI4N2ZlMzIiLCJpc3MiOiJJUk9IIEF1dGgiLCJodHRwczpcL1wvc2NoZW1hcy5jaXNjby5jb21cL2lyb2hcL2lkZW50aXR5XC9jbGFpbXNcL3Njb3BlcyI6WyJjYXNlYm9vayIsImdsb2JhbC1pbnRlbCIsInByaXZhdGUtaW50ZWwiLCJjb2xsZWN0IiwiZW5yaWNoIiwiaW5zcGVjdCIsImludGVncmF0aW9uIiwiaXJvaC1hdXRoIiwicmVzcG9uc2UiLCJ1aS1zZXR0aW5ncyJdLCJleHAiOjE0ODc3NzI4NTAsImh0dHBzOlwvXC9zY2hlbWFzLmNpc2NvLmNvbVwvaXJvaFwvaWRlbnRpdHlcL2NsYWltc1wvb2F1dGhcL2NsaWVudFwvbmFtZSI6Imlyb2gtdWkiLCJodHRwczpcL1wvc2NoZW1hcy5jaXNjby5jb21cL2lyb2hcL2lkZW50aXR5XC9jbGFpbXNcL29yZ1wvaWQiOiI2MzQ4OWNmOS01NjFjLTQ5NTgtYTEzZC02ZDg0YjdlZjA5ZDQiLCJodHRwczpcL1wvc2NoZW1hcy5jaXNjby5jb21cL2lyb2hcL2lkZW50aXR5XC9jbGFpbXNcL29yZ1wvbmFtZSI6IklST0ggVGVzdGluZyIsImp0aSI6ImEyNjhhZTdhMy0wOWM5LTQxNDktYjQ5NS1iOThjOGM1ZGU2NjYiLCJuYmYiOjE0ODcxNjc3NTAsImh0dHBzOlwvXC9zY2hlbWFzLmNpc2NvLmNvbVwvaXJvaFwvaWRlbnRpdHlcL2NsYWltc1wvdXNlclwvaWQiOiI1NmJiNWY4Yy1jYzRlLTRlZDMtYTkxYS1jNjYwNDI4N2ZlMzIiLCJodHRwczpcL1wvc2NoZW1hcy5jaXNjby5jb21cL2lyb2hcL2lkZW50aXR5XC9jbGFpbXNcL29hdXRoXC9jbGllbnRcL2lkIjoiaXJvaC11aSIsImh0dHBzOlwvXC9zY2hlbWFzLmNpc2NvLmNvbVwvaXJvaFwvaWRlbnRpdHlcL2NsYWltc1wvdmVyc2lvbiI6IjEiLCJpYXQiOjE0ODcxNjgwNTAsImh0dHBzOlwvXC9zY2hlbWFzLmNpc2NvLmNvbVwvaXJvaFwvaWRlbnRpdHlcL2NsYWltc1wvb2F1dGhcL2tpbmQiOiJzZXNzaW9uLXRva2VuIn0.jl0r3LiL6qOy6DIDZs5NRiQBHlJEzXFXUvKXGPd2PL66xSE0v0Bkc6FD3vPccYxvk-tWBMJX8oiDuAgYt2eRU05blPtzy1yQ-V-zJtxnpuQbDzvVytZvE9n1_8NdvcLa9eXBjUkJ2FsXAIguXpVDIbR3zs9MkjfyrsKeVCmhC3QTehj55Rf-WINeTq0UflIyoZqfK5Mewl-DBwbvTRjTIRJpNPhjErJ0ypHNXzTKM-nVljSRhrfpoBYpPxQSQVTedWIA2Sks4fBvEwdeE60aBRK1HeTps0G1h3RXPYu7q1I5ti9a2axiQtRLA11CxoOvMmnjyWkffi5vyrFKqZ7muQ"
+               bearer (str "Bearer " jwt-token)
+               jwt-client-id "iroh-ui"
+               {judgement :parsed-body
+                status :status}
+               (POST app
+                     "ctia/judgement"
+                     :body new-judgement-1
+                     :headers {"Authorization" bearer})
+               _ (is (= 201 status))
+               judgement-id (id/long-id->id (:id judgement))
+               expected-get-res
+               {:id (id/long-id judgement-id)
+                :type "judgement"
+                :observable {:value "1.2.3.4"
+                             :type "ip"}
+                :external_ids ["http://ex.tld/ctia/judgement/judgement-123"
+                               "http://ex.tld/ctia/judgement/judgement-456"]
+                :disposition 2
+                :disposition_name "Malicious"
+                :priority 100
+                :timestamp #inst "2042-01-01T00:00:00.000Z"
+                :severity "High"
+                :confidence "Low"
+                :source "test"
+                :tlp "green"
+                :client_id jwt-client-id,
+                :owner "56bb5f8c-cc4e-4ed3-a91a-c6604287fe32",
+                :groups ["63489cf9-561c-4958-a13d-6d84b7ef09d4"]
+                :schema_version schema-version
+                :reason "This is a bad IP address that talked to some evil servers"
+                :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
+                             :end_time #inst "2525-01-01T00:00:00.000-00:00"}}]
+           (let [{:keys [parsed-body status]}
                  (GET app
                       (str "ctia/judgement/" (:short-id judgement-id))
-                      :headers {"Authorization" "Bearer 45c1f5e3f05d0"})]
-             (is (= 401 (:status response)))))
+                      :headers {"Authorization" bearer})]
+             (is (= 200 status))
+             (is (= expected-get-res parsed-body)))
 
-         (testing "GET /ctia/judgement/:id with JWT Authorization header"
-           (with-redefs [time/now (constantly (time/date-time 2017 02 16 0 0 0))]
-             (let [jwt-token "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwczpcL1wvc2NoZW1hcy5jaXNjby5jb21cL2lyb2hcL2lkZW50aXR5XC9jbGFpbXNcL3VzZXJcL2VtYWlsIjoiZ2J1aXNzb24rcWFfc2RjX2lyb2hAY2lzY28uY29tIiwiaHR0cHM6XC9cL3NjaGVtYXMuY2lzY28uY29tXC9pcm9oXC9pZGVudGl0eVwvY2xhaW1zXC91c2VyXC9pZHBcL2lkIjoiYW1wIiwiaHR0cHM6XC9cL3NjaGVtYXMuY2lzY28uY29tXC9pcm9oXC9pZGVudGl0eVwvY2xhaW1zXC91c2VyXC9uaWNrIjoiZ2J1aXNzb24rcWFfc2RjX2lyb2hAY2lzY28uY29tIiwiZW1haWwiOiJnYnVpc3NvbitxYV9zZGNfaXJvaEBjaXNjby5jb20iLCJzdWIiOiI1NmJiNWY4Yy1jYzRlLTRlZDMtYTkxYS1jNjYwNDI4N2ZlMzIiLCJpc3MiOiJJUk9IIEF1dGgiLCJodHRwczpcL1wvc2NoZW1hcy5jaXNjby5jb21cL2lyb2hcL2lkZW50aXR5XC9jbGFpbXNcL3Njb3BlcyI6WyJjYXNlYm9vayIsImdsb2JhbC1pbnRlbCIsInByaXZhdGUtaW50ZWwiLCJjb2xsZWN0IiwiZW5yaWNoIiwiaW5zcGVjdCIsImludGVncmF0aW9uIiwiaXJvaC1hdXRoIiwicmVzcG9uc2UiLCJ1aS1zZXR0aW5ncyJdLCJleHAiOjE0ODc3NzI4NTAsImh0dHBzOlwvXC9zY2hlbWFzLmNpc2NvLmNvbVwvaXJvaFwvaWRlbnRpdHlcL2NsYWltc1wvb2F1dGhcL2NsaWVudFwvbmFtZSI6Imlyb2gtdWkiLCJodHRwczpcL1wvc2NoZW1hcy5jaXNjby5jb21cL2lyb2hcL2lkZW50aXR5XC9jbGFpbXNcL29yZ1wvaWQiOiI2MzQ4OWNmOS01NjFjLTQ5NTgtYTEzZC02ZDg0YjdlZjA5ZDQiLCJodHRwczpcL1wvc2NoZW1hcy5jaXNjby5jb21cL2lyb2hcL2lkZW50aXR5XC9jbGFpbXNcL29yZ1wvbmFtZSI6IklST0ggVGVzdGluZyIsImp0aSI6ImEyNjhhZTdhMy0wOWM5LTQxNDktYjQ5NS1iOThjOGM1ZGU2NjYiLCJuYmYiOjE0ODcxNjc3NTAsImh0dHBzOlwvXC9zY2hlbWFzLmNpc2NvLmNvbVwvaXJvaFwvaWRlbnRpdHlcL2NsYWltc1wvdXNlclwvaWQiOiI1NmJiNWY4Yy1jYzRlLTRlZDMtYTkxYS1jNjYwNDI4N2ZlMzIiLCJodHRwczpcL1wvc2NoZW1hcy5jaXNjby5jb21cL2lyb2hcL2lkZW50aXR5XC9jbGFpbXNcL29hdXRoXC9jbGllbnRcL2lkIjoiaXJvaC11aSIsImh0dHBzOlwvXC9zY2hlbWFzLmNpc2NvLmNvbVwvaXJvaFwvaWRlbnRpdHlcL2NsYWltc1wvdmVyc2lvbiI6IjEiLCJpYXQiOjE0ODcxNjgwNTAsImh0dHBzOlwvXC9zY2hlbWFzLmNpc2NvLmNvbVwvaXJvaFwvaWRlbnRpdHlcL2NsYWltc1wvb2F1dGhcL2tpbmQiOiJzZXNzaW9uLXRva2VuIn0.jl0r3LiL6qOy6DIDZs5NRiQBHlJEzXFXUvKXGPd2PL66xSE0v0Bkc6FD3vPccYxvk-tWBMJX8oiDuAgYt2eRU05blPtzy1yQ-V-zJtxnpuQbDzvVytZvE9n1_8NdvcLa9eXBjUkJ2FsXAIguXpVDIbR3zs9MkjfyrsKeVCmhC3QTehj55Rf-WINeTq0UflIyoZqfK5Mewl-DBwbvTRjTIRJpNPhjErJ0ypHNXzTKM-nVljSRhrfpoBYpPxQSQVTedWIA2Sks4fBvEwdeE60aBRK1HeTps0G1h3RXPYu7q1I5ti9a2axiQtRLA11CxoOvMmnjyWkffi5vyrFKqZ7muQ"
-                   {judgement :parsed-body
-                    :as response}
-                   (GET app
-                        (str "ctia/judgement/" (:short-id judgement-id))
-                        :headers {"Authorization" (str "Bearer " jwt-token)})]
-               (is (= 200 (:status response)))
-               (is (= {:id (id/long-id judgement-id)
-                       :type "judgement"
-                       :observable {:value "1.2.3.4"
-                                    :type "ip"}
-                       :external_ids ["http://ex.tld/ctia/judgement/judgement-123"
-                                      "http://ex.tld/ctia/judgement/judgement-456"]
-                       :disposition 2
-                       :disposition_name "Malicious"
-                       :priority 100
-                       :timestamp #inst "2042-01-01T00:00:00.000Z"
-                       :severity "High"
-                       :confidence "Low"
-                       :source "test"
-                       :tlp "green"
-                       :owner "foouser"
-                       :groups ["foogroup"]
-                       :schema_version schema-version
-                       :reason "This is a bad IP address that talked to some evil servers"
-                       :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
-                                    :end_time #inst "2525-01-01T00:00:00.000-00:00"}}
-                      judgement)))))
+           (testing "Search must properly filter on client-id."
+             (let [search-by-client #(GET app
+                                          (str "ctia/judgement/search?query=client_id:" %)
+                                          :headers {"Authorization" bearer})
+                   matched (search-by-client jwt-client-id)
+                   not-matched (search-by-client "does not exist")]
+               (is (= 200 (:status matched) (:status not-matched)))
+               (is (= [expected-get-res] (:parsed-body matched)))
+               (is (= [] (:parsed-body not-matched)))))
 
-         (testing "POST /ctia/judgement with JWT Authorization header"
-           (with-redefs [time/now (constantly (time/date-time 2017 02 16 0 0 0))]
-             (let [jwt-token "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwczpcL1wvc2NoZW1hcy5jaXNjby5jb21cL2lyb2hcL2lkZW50aXR5XC9jbGFpbXNcL3VzZXJcL2VtYWlsIjoiZ2J1aXNzb24rcWFfc2RjX2lyb2hAY2lzY28uY29tIiwiaHR0cHM6XC9cL3NjaGVtYXMuY2lzY28uY29tXC9pcm9oXC9pZGVudGl0eVwvY2xhaW1zXC91c2VyXC9pZHBcL2lkIjoiYW1wIiwiaHR0cHM6XC9cL3NjaGVtYXMuY2lzY28uY29tXC9pcm9oXC9pZGVudGl0eVwvY2xhaW1zXC91c2VyXC9uaWNrIjoiZ2J1aXNzb24rcWFfc2RjX2lyb2hAY2lzY28uY29tIiwiZW1haWwiOiJnYnVpc3NvbitxYV9zZGNfaXJvaEBjaXNjby5jb20iLCJzdWIiOiI1NmJiNWY4Yy1jYzRlLTRlZDMtYTkxYS1jNjYwNDI4N2ZlMzIiLCJpc3MiOiJJUk9IIEF1dGgiLCJodHRwczpcL1wvc2NoZW1hcy5jaXNjby5jb21cL2lyb2hcL2lkZW50aXR5XC9jbGFpbXNcL3Njb3BlcyI6WyJjYXNlYm9vayIsImdsb2JhbC1pbnRlbCIsInByaXZhdGUtaW50ZWwiLCJjb2xsZWN0IiwiZW5yaWNoIiwiaW5zcGVjdCIsImludGVncmF0aW9uIiwiaXJvaC1hdXRoIiwicmVzcG9uc2UiLCJ1aS1zZXR0aW5ncyJdLCJleHAiOjE0ODc3NzI4NTAsImh0dHBzOlwvXC9zY2hlbWFzLmNpc2NvLmNvbVwvaXJvaFwvaWRlbnRpdHlcL2NsYWltc1wvb2F1dGhcL2NsaWVudFwvbmFtZSI6Imlyb2gtdWkiLCJodHRwczpcL1wvc2NoZW1hcy5jaXNjby5jb21cL2lyb2hcL2lkZW50aXR5XC9jbGFpbXNcL29yZ1wvaWQiOiI2MzQ4OWNmOS01NjFjLTQ5NTgtYTEzZC02ZDg0YjdlZjA5ZDQiLCJodHRwczpcL1wvc2NoZW1hcy5jaXNjby5jb21cL2lyb2hcL2lkZW50aXR5XC9jbGFpbXNcL29yZ1wvbmFtZSI6IklST0ggVGVzdGluZyIsImp0aSI6ImEyNjhhZTdhMy0wOWM5LTQxNDktYjQ5NS1iOThjOGM1ZGU2NjYiLCJuYmYiOjE0ODcxNjc3NTAsImh0dHBzOlwvXC9zY2hlbWFzLmNpc2NvLmNvbVwvaXJvaFwvaWRlbnRpdHlcL2NsYWltc1wvdXNlclwvaWQiOiI1NmJiNWY4Yy1jYzRlLTRlZDMtYTkxYS1jNjYwNDI4N2ZlMzIiLCJodHRwczpcL1wvc2NoZW1hcy5jaXNjby5jb21cL2lyb2hcL2lkZW50aXR5XC9jbGFpbXNcL29hdXRoXC9jbGllbnRcL2lkIjoiaXJvaC11aSIsImh0dHBzOlwvXC9zY2hlbWFzLmNpc2NvLmNvbVwvaXJvaFwvaWRlbnRpdHlcL2NsYWltc1wvdmVyc2lvbiI6IjEiLCJpYXQiOjE0ODcxNjgwNTAsImh0dHBzOlwvXC9zY2hlbWFzLmNpc2NvLmNvbVwvaXJvaFwvaWRlbnRpdHlcL2NsYWltc1wvb2F1dGhcL2tpbmQiOiJzZXNzaW9uLXRva2VuIn0.jl0r3LiL6qOy6DIDZs5NRiQBHlJEzXFXUvKXGPd2PL66xSE0v0Bkc6FD3vPccYxvk-tWBMJX8oiDuAgYt2eRU05blPtzy1yQ-V-zJtxnpuQbDzvVytZvE9n1_8NdvcLa9eXBjUkJ2FsXAIguXpVDIbR3zs9MkjfyrsKeVCmhC3QTehj55Rf-WINeTq0UflIyoZqfK5Mewl-DBwbvTRjTIRJpNPhjErJ0ypHNXzTKM-nVljSRhrfpoBYpPxQSQVTedWIA2Sks4fBvEwdeE60aBRK1HeTps0G1h3RXPYu7q1I5ti9a2axiQtRLA11CxoOvMmnjyWkffi5vyrFKqZ7muQ"
-                   response
+           (testing "Normal users are not allowed to set the ids during creation."
+             (let [response
                    (POST app
                          "ctia/judgement"
                          :body (assoc new-judgement-1
                                       :id "http://localhost:3001/ctia/judgement/judgement-00001111-0000-1111-2222-000011112222")
-                         :headers {"Authorization" (str "Bearer " jwt-token)
+                         :headers {"Authorization" bearer
                                    "origin" "http://external.cisco.com"})]
-               (is (= 403 (:status response))
-                   "Normal users shouldn't be allowed to set the ids during creation.")))))))))
+               (is (= 403 (:status response)))))
+
+           (testing "POST /ctia/judgement/:id with bad JWT Authorization header"
+             (let [response
+                   (POST app
+                         "ctia/judgement"
+                         :body new-judgement-1
+                         :headers {"Authorization" "Bearer 45c1f5e3f05d0"
+                                   "origin" "http://external.cisco.com"})]
+               (is (= 401 (:status response)))))))))))
+
 
 (defn gen-jwts []
   (let [clm (fn [k] (str "https://schemas.cisco.com/iroh/identity/claims/" k))

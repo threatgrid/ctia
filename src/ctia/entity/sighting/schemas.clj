@@ -1,16 +1,15 @@
 (ns ctia.entity.sighting.schemas
-  (:require [clj-momo.lib.time :as time]
-            [ctia.domain
-             [entities :refer [default-realize-fn]]]
+  (:require [ctia.domain.entities :refer [default-realize-fn]]
+            [ctia.auth :as auth]
             [ctia.graphql.delayed :as delayed]
-            [ctia.schemas
-             [core :refer [def-acl-schema
-                           def-stored-schema
-                           GraphQLRuntimeContext
-                           lift-realize-fn-with-context
-                           RealizeFnResult
-                           TempIDs]]
-             [sorting :as sorting]]
+            [ctia.schemas.core
+             :refer [def-acl-schema
+                     def-stored-schema
+                     GraphQLRuntimeContext
+                     lift-realize-fn-with-context
+                     RealizeFnResult
+                     TempIDs]]
+            [ctia.schemas.sorting :as sorting]
             [ctim.schemas.sighting :as ss]
             [flanders.utils :as fu]
             [schema-tools.core :as st]
@@ -40,13 +39,12 @@
   (default-realize-fn "sighting" NewSighting StoredSighting))
 
 (s/defn realize-sighting :- (RealizeFnResult StoredSighting)
-  ([new-sighting id tempids owner groups]
-   (realize-sighting new-sighting id tempids owner groups nil))
+  ([new-sighting id tempids ident-map]
+   (realize-sighting new-sighting id tempids ident-map nil))
   ([new-sighting :- NewSighting
     id :- s/Str
     tempids :- (s/maybe TempIDs)
-    owner :- s/Str
-    groups :- [s/Str]
+    ident-map :- auth/IdentityMap
     prev-sighting :- (s/maybe StoredSighting)]
   (delayed/fn :- StoredSighting
    [rt-ctx :- GraphQLRuntimeContext]
@@ -56,7 +54,7 @@
                           (:count prev-sighting 1))
            :confidence (:confidence new-sighting
                                     (:confidence prev-sighting "Unknown")))
-    id tempids owner groups prev-sighting))))
+    id tempids ident-map prev-sighting))))
 
 (def sighting-fields
   (concat sorting/default-entity-sort-fields

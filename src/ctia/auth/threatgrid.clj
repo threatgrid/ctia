@@ -28,6 +28,8 @@
   auth/IIdentity
   (authenticated? [_]
     true)
+  (client-id [_]
+    auth/not-logged-client-id)
   (login [_]
     login)
   (groups [_]

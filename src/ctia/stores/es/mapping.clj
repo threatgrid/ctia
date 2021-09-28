@@ -72,7 +72,8 @@
    :source_uri token})
 
 (def stored-entity-mapping
-  {:owner token
+  {:client_id token
+   :owner token
    :groups token
    :authorized_users token
    :authorized_groups token

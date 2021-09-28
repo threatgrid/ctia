@@ -3,6 +3,7 @@
 
 (defprotocol IIdentity
   (authenticated? [this])
+  (client-id [this])
   (login [this])
   (groups [this])
   (allowed-capabilities [this])
@@ -11,6 +12,8 @@
 
 (defprotocol IAuth
   (identity-for-token [this token]))
+
+(def not-logged-client-id nil)
 
 (def not-logged-in-owner "Unknown")
 
@@ -22,6 +25,8 @@
   IIdentity
   (authenticated? [_]
     false)
+  (client-id [_]
+    not-logged-client-id)
   (login [_]
     not-logged-in-owner)
   (groups [_]
@@ -34,9 +39,14 @@
 
 (def denied-identity-singleton (->DeniedIdentity))
 
-(s/defn ident->map :- (s/maybe {:login (s/maybe s/Str)
-                                :groups (s/maybe [s/Str])})
+(s/defschema IdentityMap
+  {:client-id (s/maybe s/Str)
+   :login (s/maybe s/Str)
+   :groups (s/maybe [s/Str])})
+
+(s/defn ident->map :- (s/maybe IdentityMap)
   [ident]
   (when ident
     {:login (login ident)
-     :groups (groups ident)}))
+     :groups (groups ident)
+     :client-id (client-id ident)}))

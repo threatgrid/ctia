@@ -26,6 +26,8 @@
   IIdentity
   (authenticated? [_]
     true)
+  (client-id [_]
+    auth/not-logged-client-id)
   (login [_]
     name)
   (groups [_]
@@ -41,6 +43,8 @@
   IIdentity
   (authenticated? [_]
     true)
+  (client-id [_]
+    auth/not-logged-client-id)
   (login [_]
     auth/not-logged-in-owner)
   (groups [_]

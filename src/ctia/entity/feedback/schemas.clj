@@ -1,6 +1,5 @@
 (ns ctia.entity.feedback.schemas
-  (:require [clj-momo.lib.time :as time]
-            [ctia.domain
+  (:require [ctia.domain
              [entities :refer [default-realize-fn]]]
             [ctia.schemas
              [core :refer [def-acl-schema def-stored-schema TempIDs]]
