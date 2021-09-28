@@ -22,6 +22,43 @@
 (use-fixtures :each
   es-helpers/fixture-properties:es-store)
 
+(deftest refine-full-text-query-parts-test
+  (testing "refine-full-text-query-parts with different queries"
+   (are [queries res] (is (= res (sut/refine-full-text-query-parts queries nil)))
+     [{:query "foo"}] [{:query_string {:query "foo"}}]
+
+     [{:query "foo" :query_mode :simple_query_string}] [{:simple_query_string {:query "foo"}}]
+
+     [{:query "foo" :query_mode :simple_query_string}
+      {:query "bar"}] [{:simple_query_string {:query "foo"}}
+                       {:query_string {:query "bar"}}]))
+  (testing "refine-full-text-query-parts schema"
+    (s/with-fn-validation
+      (is (thrown-with-msg?
+           Exception #"does not match schema"
+           (sut/refine-full-text-query-parts
+            [{:query "foo" :query_mode :unknown}] nil)))
+      (is (thrown-with-msg?
+           Exception #"does not match schema"
+           (sut/refine-full-text-query-parts
+            [{}] nil)))))
+  (testing "refine-full-text-query-parts default operator"
+    (is (= [{:query_string {:query "foo" :default_operator "and"}}]
+         (sut/refine-full-text-query-parts
+          [{:query "foo"}]
+          "and")))
+    (is (= [{:multi_match {:query "foo"}}]
+           (sut/refine-full-text-query-parts
+            [{:query "foo" :query_mode :multi_match}]
+            "and")) "no default_operator with mutli_match"))
+  (testing "refine-full-text-query-parts with fields"
+    (is (= [{:query_string {:query            "foo"
+                            :default_operator "and"
+                            :fields           ["title" "description"]}}]
+           (sut/refine-full-text-query-parts
+            [{:query "foo" :fields ["title" "description"]}]
+            "and")))))
+
 (deftest ensure-document-id-in-map-test
   (is (= {:id '("actor-677796fd-b5d2-46e3-b57d-4879bcca1ce7")}
          (sut/ensure-document-id-in-map

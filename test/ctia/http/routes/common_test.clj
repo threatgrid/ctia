@@ -85,6 +85,34 @@
                                          :fields      ["title"]
                                          :sort_by     "disposition"
                                          :sort_order  :desc})))
+      (is (= {:full-text [{:query      "lucene"
+                           :query_mode :query_string
+                           :fields     ["title"]}
+                          {:query      "simple"
+                           :query_mode :simple_query_string
+                           :fields     ["title"]}]
+              :filter-map {:title "firefox exploit"
+                           :disposition 2}}
+             (sut/search-query :created {:query "lucene"
+                                         :simple_query "simple"
+                                         :disposition 2
+                                         :title "firefox exploit"
+                                         :search_fields ["title"]
+                                         :sort_by "disposition"
+                                         :sort_order :desc}))
+          "query and simple_query can be both submitted and accepted")
+      (is (= {:full-text  [{:query "simple"
+                            :query_mode :simple_query_string
+                            :fields ["title"]}]
+              :filter-map {:title       "firefox exploit"
+                           :disposition 2}}
+             (sut/search-query :created {:simple_query  "simple"
+                                         :disposition   2
+                                         :title         "firefox exploit"
+                                         :search_fields ["title"]
+                                         :sort_by       "disposition"
+                                         :sort_order    :desc}))
+          "simple_query can be the only full text search")
       (testing "make-date-range-fn should be properly called"
         (is (= {:range {:timestamp
                         {:gte #inst "2050-01-01"

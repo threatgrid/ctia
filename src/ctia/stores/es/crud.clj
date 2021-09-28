@@ -457,15 +457,17 @@ It returns the documents with full hits meta data including the real index in wh
 (s/defn refine-full-text-query-parts :- [{s/Keyword ESQFullTextQuery}]
   [full-text-terms :- [FullTextQuery]
    default-operator]
-  (let [term->es-query-part (fn [{:keys [query_mode] :as x}]
+  (let [term->es-query-part (fn [{:keys [query_mode fields] :as text-query}]
                               (hash-map
-                               ;; if no :query-mode specified, use the default
                                (or query_mode :query_string)
-                               (merge
-                                (dissoc x :query_mode)
-                                (when (and default-operator
-                                           (not= :multi_match query_mode))
-                                  {:default_operator default-operator}))))]
+                               (-> text-query
+                                   (dissoc :query_mode)
+                                   (merge
+                                    (when (and default-operator
+                                               (not= query_mode :multi_match))
+                                      {:default_operator default-operator})
+                                    (when fields
+                                      {:fields (mapv name fields)})))))]
     (mapv term->es-query-part full-text-terms)))
 
 (s/defn make-search-query :- {s/Keyword s/Any}
@@ -484,10 +486,10 @@ It returns the documents with full hits meta data including the real index in wh
      {:filter
       (cond-> [(find-restriction-query-part ident get-in-config)]
         (seq filter-map) (into filter-terms)
-        (seq range) (conj range-query)
-        (seq full-text) (into (refine-full-text-query-parts
-                               full-text
-                               default_operator)))}}))
+        (seq range)      (conj range-query)
+        (seq full-text)  (into (refine-full-text-query-parts
+                                full-text
+                                default_operator)))}}))
 
 (defn handle-query-string-search
   "Generate an ES query handler for given schema schema"
