@@ -190,9 +190,9 @@
                      (bundle-gen-for :incidents))
          check-fn   (fn [_ _ _ res]
                       (let [matching (->> res :parsed-body)]
-                      (is (= 2 (count matching)))
-                      (= #{"fried eggs eggplant" "fried eggs potato"}
-                         (->> matching (map :title) set))))]
+                        (is (= 2 (count matching)))
+                        (= #{"fried eggs eggplant" "fried eggs potato"}
+                           (->> matching (map :title) set))))]
      [{:test-description "simple_query_string"
        :query-params     {:simple_query  "\"fried eggs\" +(eggplant | potato) -frittata"
                           :search_fields ["title"]}
@@ -225,9 +225,9 @@
     (doseq [plural ent-keys]
       (let [entity (ffirst (helpers/plural-key->entity plural))
             search-res (th.search/search-raw app entity query-params)]
-       (testing test-description (check test-case plural bundle search-res))
-       (th.search/delete-search app entity {:query "*"
-                                            :REALLY_DELETE_ALL_THESE_ENTITIES true})))))
+        (testing test-description (check test-case plural bundle search-res))
+        (th.search/delete-search app entity {:query "*"
+                                             :REALLY_DELETE_ALL_THESE_ENTITIES true})))))
 
 (deftest fulltext-search-test
   (es-helpers/for-each-es-version
