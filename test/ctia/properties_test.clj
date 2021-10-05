@@ -23,6 +23,7 @@
             "ctia.store.es.malware.version" s/Num
             "ctia.store.es.malware.update-mappings" s/Bool
             "ctia.store.es.malware.update-settings" s/Bool
+            "ctia.store.es.malware.refresh-mappings" s/Bool
             "ctia.store.es.malware.timeout" s/Num
             "ctia.store.es.malware.auth" AuthParams}
            (sut/es-store-impl-properties "ctia.store.es." "malware")))
@@ -43,6 +44,7 @@
             "prefix.sighting.version" s/Num
             "prefix.sighting.update-mappings" s/Bool
             "prefix.sighting.update-settings" s/Bool
+            "prefix.sighting.refresh-mappings" s/Bool
             "prefix.sighting.timeout" s/Num
             "prefix.sighting.auth" AuthParams}
            (sut/es-store-impl-properties "prefix." "sighting")))))
