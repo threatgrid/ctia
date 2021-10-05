@@ -1,16 +1,16 @@
 (ns ctia.stores.es.init
   (:require
-   [clojure.tools.logging :as log]
-   [ctia.properties :as p]
    [clojure.set :refer [difference]]
+   [clojure.tools.logging :as log]
+   [ctia.entity.entities :as entities]
+   [ctia.properties :as p]
    [ctia.stores.es.mapping :refer [store-settings]]
    [ctia.stores.es.schemas :refer [ESConnServices ESConnState]]
-   [ductile
-    [conn :refer [connect]]
-    [index]]
-   [ctia.entity.entities :as entities]
-   [schema.core :as s]
-   [schema-tools.core :as st]))
+   [ductile.conn :refer [connect]]
+   [ductile.document]
+   [ductile.index]
+   [schema-tools.core :as st]
+   [schema.core :as s]))
 
 (s/defschema StoreProperties
   (st/merge
@@ -102,6 +102,23 @@
                           :conn conn
                           :mappings mappings))
         (system-exit-error)))))
+
+(s/defn refresh-mappings!
+  [{:keys [conn index]
+    {:keys [mappings]} :config} :- ESConnState]
+  (try
+    (log/info "refreshing mapping: " index)
+    (ductile.document/update-by-query conn
+                                      [index] {}
+                                      {:refresh "true"
+                                       :conflicts "proceed"
+                                       :wait_for_completion true})
+    (catch clojure.lang.ExceptionInfo e
+      (log/error "cannot refresh mapping."
+                 (assoc (ex-data e)
+                        :conn conn
+                        :mappings mappings))
+      (system-exit-error))))
 
 (defn get-existing-indices
   [conn index]
