@@ -114,7 +114,7 @@
                                        :conflicts "proceed"
                                        :wait_for_completion true})
     (catch clojure.lang.ExceptionInfo e
-      (log/error "cannot refresh mapping."
+      (log/error "Cannot refresh mapping."
                  (assoc (ex-data e)
                         :conn conn
                         :mappings mappings))
@@ -138,8 +138,9 @@
       existing)))
 
 (defn update-index-state
-  [{{update-mappings? :update-mappings
-     update-settings? :update-settings}
+  [{{update-mappings?  :update-mappings
+     update-settings?  :update-settings
+     refresh-mappings? :refresh-mappings}
     :props
     :as conn-state}]
   (when update-mappings?
@@ -148,7 +149,9 @@
     ;; if it fails a System/exit is triggered because
     ;; this means that the mapping in invalid and thus
     ;; must not be propagated to the template that would accept it
-    (upsert-template! conn-state))
+    (upsert-template! conn-state)
+    (when refresh-mappings?
+      (refresh-mappings! conn-state)))
   (when update-settings?
     (update-settings! conn-state)))
 
