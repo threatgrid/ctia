@@ -31,6 +31,7 @@
    :aliased true
    :update-mappings true
    :update-settings true
+   :refresh-mappings true
    :version 7
    :auth basic-auth})
 
@@ -311,24 +312,32 @@
          (is (= {} (select-keys (:mappings config) [:a :b]))))))))
 
 (deftest update-index-state-test
-  (let [test-fn (fn [{:keys [update-mappings update-settings]
+  (let [test-fn (fn [{:keys [update-mappings
+                             update-settings
+                             refresh-mappings]
                       :as props}]
                   (let [updated-mappings (atom false)
                         updated-template (atom false)
-                        updated-settings (atom false)]
-                    (with-redefs [sut/update-mappings! (fn [c] (reset! updated-mappings true))
-                                  sut/update-settings! (fn [c] (reset! updated-settings true))
-                                  sut/upsert-template! (fn [c] (reset! updated-template true))]
+                        updated-settings (atom false)
+                        refreshed-mappings (atom false)]
+                    (with-redefs [sut/update-mappings! (fn [_c] (reset! updated-mappings true))
+                                  sut/update-settings! (fn [_c] (reset! updated-settings true))
+                                  sut/upsert-template! (fn [_c] (reset! updated-template true))
+                                  sut/refresh-mappings! (fn [_c] (reset! refreshed-mappings true))]
                       (sut/update-index-state {:props props})
                       (is (= @updated-mappings (boolean update-mappings)))
                       (is (= @updated-template (boolean update-mappings)))
-                      (is (= @updated-settings (boolean update-settings))))))]
-    (doseq [update-mappings? [true false nil]
-            update-settings? [true false nil]
+                      (is (= @updated-settings (boolean update-settings)))
+                      (is (= @refreshed-mappings
+                             (every? (comp true? boolean) [update-mappings refresh-mappings]))))))]
+    (doseq [update-mappings?  [true false nil]
+            update-settings?  [true false nil]
+            refresh-mappings? [true false nil]
             :let [indexname (gen-indexname)]]
       (test-fn (assoc (props-aliased indexname)
                       :update-mappings update-mappings?
-                      :update-settings update-settings?)))))
+                      :update-settings update-settings?
+                      :refresh-mappings refresh-mappings?)))))
 
 (deftest es-auth-properties-test
   (for-each-es-version
