@@ -112,7 +112,7 @@
                                       [index] {}
                                       {:refresh "true"
                                        :conflicts "proceed"
-                                       :wait_for_completion true})
+                                       :wait_for_completion false})
     (catch clojure.lang.ExceptionInfo e
       (log/error "Cannot refresh mapping."
                  (assoc (ex-data e)
