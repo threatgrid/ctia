@@ -203,6 +203,26 @@
                           :query         "(fried eggs eggplant) OR (fried eggs potato)"
                           :search_fields ["title"]}
        :bundle-gen       bundle-gen
+       :check            check-fn}])
+
+   (let [bundle (gen/fmap
+                 (fn [bundle]
+                   (update bundle :incidents
+                           (fn [incidents]
+                             (utils/update-items incidents #(assoc % :source "foo" :title "bar")))))
+                 (bundle-gen-for :incidents))
+         check-fn (fn [_ _ _ res]
+                    (is (=  {:source "foo"
+                             :title "bar"}
+                            (-> res :parsed-body first (select-keys [:source :title])))))]
+     ;; title is indexed as text
+     ;; source field is indexed as keyword but also has an additional text field
+     ;; searching in both fields simultaneously should be possible
+     [{:test-description "searching in mixed fields indexed as pure text and keyword"
+       :query-params     {:query "foo OR bar"
+                          :search_fields ["source" "title"]}
+       :bundle-gen       bundle
+       :only             true
        :check            check-fn}])))
 
 (defn test-search-case
