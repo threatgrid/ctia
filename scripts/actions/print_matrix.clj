@@ -15,7 +15,7 @@
             [cheshire.core :as json]))
 
 (def ^:private default-java-version "11.0.9")
-(def ^:private java-15-version "15")
+(def ^:private java-16-version "16")
 (def ^:private non-cron-ctia-nsplits
   "Job parallelism for non cron tests."
   10)
@@ -82,7 +82,7 @@
         :java_version default-java-version}]
       (map #(into {:ci_profiles "next-clojure"} %)
            [{:java_version default-java-version}
-            {:java_version java-15-version}]))))
+            {:java_version java-16-version}]))))
 
 (defn edn-matrix [build-config]
   {:post [(seq %)

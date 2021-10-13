@@ -185,7 +185,7 @@
                    :source-paths ["dev"]}
              :ci {:pedantic? :abort
                   :global-vars {*warn-on-reflection* true}}
-             :next-clojure {:dependencies [[org.clojure/clojure "1.10.2-rc1"]]}
+             :next-clojure {:dependencies [[org.clojure/clojure "1.11.0-alpha2"]]}
              :jmx {:jvm-opts ["-Dcom.sun.management.jmxremote"
                               "-Dcom.sun.management.jmxremote.port=9010"
                               "-Dcom.sun.management.jmxremote.local.only=false"
