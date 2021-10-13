@@ -34,7 +34,8 @@ env:
   SHELLCHECK_VERSION: v0.7.2
   BB_VERSION: 0.4.3
   DEFAULT_JAVA_VERSION: 11.0.9
-  JAVA_DISTRIBUTION: 'adopt'
+  # https://blog.adoptopenjdk.net/2021/08/goodbye-adoptopenjdk-hello-adoptium/
+  JAVA_DISTRIBUTION: 'temurin'
 
 jobs:
   setup:
