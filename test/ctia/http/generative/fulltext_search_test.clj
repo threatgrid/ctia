@@ -205,24 +205,21 @@
        :bundle-gen       bundle-gen
        :check            check-fn}])
 
-   (let [bundle (gen/fmap
-                 (fn [bundle]
-                   (update bundle :incidents
-                           (fn [incidents]
-                             (utils/update-items incidents #(assoc % :source "foo" :title "bar")))))
+   (let [expected {:title "intrusion event 3:19187:7 incident"
+                   :source "ngfw_ips_event_service"}
+         bundle (gen/fmap
+                 (fn [bndl]
+                   (update bndl :incidents
+                           (fn [items]
+                             (utils/update-items items #(merge % expected)))))
                  (bundle-gen-for :incidents))
          check-fn (fn [_ _ _ res]
-                    (is (=  {:source "foo"
-                             :title "bar"}
-                            (-> res :parsed-body first (select-keys [:source :title])))))]
-     ;; title is indexed as text
-     ;; source field is indexed as keyword but also has an additional text field
-     ;; searching in both fields simultaneously should be possible
+                    (is (= expected
+                           (-> res :parsed-body first (select-keys [:source :title])))))]
      [{:test-description "searching in mixed fields indexed as pure text and keyword"
-       :query-params     {:query "foo OR bar"
-                          :search_fields ["source" "title"]}
+       :query-params     {:query "the intrusion event 3\\:19187\\:7 incident"
+                          :search_fields ["title" "source.text"]}
        :bundle-gen       bundle
-       :only             true
        :check            check-fn}])))
 
 (defn test-search-case
