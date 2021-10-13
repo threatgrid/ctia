@@ -16,9 +16,10 @@
 
 (def ^:private default-java-version "11.0.9")
 (def ^:private default-java-distribution "adopt")
-(def ^:private java-16-version "16")
+;; LTS version, do not remove from cron
+(def ^:private java-17-version "17")
 ;; https://blog.adoptopenjdk.net/2021/08/goodbye-adoptopenjdk-hello-adoptium/
-(def ^:private java-16-distribution "temurin")
+(def ^:private java-17-distribution "temurin")
 (def ^:private non-cron-ctia-nsplits
   "Job parallelism for non cron tests."
   10)
@@ -89,8 +90,8 @@
       (map #(into {:ci_profiles "next-clojure"} %)
            [{:java_version default-java-version
              :java_distribution default-java-distribution}
-            {:java_version java-16-version
-             :java_distribution java-16-distribution}]))))
+            {:java_version java-17-version
+             :java_distribution java-17-distribution}]))))
 
 (defn edn-matrix [build-config]
   {:post [(seq %)
