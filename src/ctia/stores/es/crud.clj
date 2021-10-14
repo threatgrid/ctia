@@ -454,6 +454,12 @@ It returns the documents with full hits meta data including the real index in wh
                                            ident
                                            get-in-config))))))
 
+(defn- rename-search-fields [fields]
+  (let [search-fields-mapping {"source" "source.text"}]
+    (when fields
+      {:fields
+       (mapv (comp #(get search-fields-mapping % %) name) fields)})))
+
 (s/defn refine-full-text-query-parts :- [{s/Keyword ESQFullTextQuery}]
   [full-text-terms :- [FullTextQuery]
    default-operator]
@@ -466,8 +472,7 @@ It returns the documents with full hits meta data including the real index in wh
                                     (when (and default-operator
                                                (not= query_mode :multi_match))
                                       {:default_operator default-operator})
-                                    (when fields
-                                      {:fields (mapv name fields)})))))]
+                                    (rename-search-fields fields)))))]
     (mapv term->es-query-part full-text-terms)))
 
 (s/defn make-search-query :- {s/Keyword s/Any}

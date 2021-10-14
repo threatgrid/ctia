@@ -218,7 +218,8 @@
                            (-> res :parsed-body first (select-keys [:source :title])))))]
      [{:test-description "searching in mixed fields indexed as pure text and keyword"
        :query-params     {:query "the intrusion event 3\\:19187\\:7 incident"
-                          :search_fields ["title" "source.text"]}
+                          :search_fields ["title" "source"]}
+       :only true
        :bundle-gen       bundle
        :check            check-fn}])))
 
