@@ -103,6 +103,18 @@
    :targets.observed_time.start_time
    :targets.observed_time.end_time])
 
+(def searchable-fields
+  #{:id
+    :source
+    :description
+    :short_description
+    :targets.observables.type
+    :targets.observables.value
+    :targets.os
+    :targets.sensor
+    :targets.type
+    :title})
+
 (s/defn target-record-routes [services :- APIHandlerServices]
   (services->entity-crud-routes
    services
@@ -125,7 +137,8 @@
     :external-id-capabilities :read-target-record
     :can-aggregate?           true
     :histogram-fields         target-record-histogram-fields
-    :enumerable-fields        target-record-enumerable-fields}))
+    :enumerable-fields        target-record-enumerable-fields
+    :searchable-fields        searchable-fields}))
 
 (def capabilities
   #{:create-target-record

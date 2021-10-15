@@ -90,6 +90,19 @@
 (def attack-pattern-histogram-fields
   [:timestamp])
 
+(def searchable-fields
+  #{:id
+    :source
+    :abstraction_level
+    :description
+    :kill_chain_phases.kill_chain_name
+    :kill_chain_phases.phase_name
+    :short_description
+    :title
+    :x_mitre_contributors
+    :x_mitre_data_sources
+    :x_mitre_platforms})
+
 (s/defn attack-pattern-routes [services :- APIHandlerServices]
   (services->entity-crud-routes
    services
@@ -112,7 +125,8 @@
     :external-id-capabilities :read-attack-pattern
     :can-aggregate?           true
     :histogram-fields         attack-pattern-histogram-fields
-    :enumerable-fields        attack-pattern-enumerable-fields}))
+    :enumerable-fields        attack-pattern-enumerable-fields
+    :searchable-fields        searchable-fields}))
 
 (def AttackPatternType
   (let [{:keys [fields name description]}

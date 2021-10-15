@@ -107,28 +107,39 @@
                                                        (update :reason str " " reason)))
                            :wait_for wait_for}))))
 
+(def searchable-fields
+  #{:id
+    :source
+    :confidence
+    :disposition_name
+    :observable.type
+    :observable.value
+    :reason
+    :severity})
+
 (s/defn judgement-routes [services :- APIHandlerServices]
-  (let [entity-crud-config {:entity :judgement
-                            :new-schema js/NewJudgement
-                            :entity-schema js/Judgement
-                            :get-schema js/PartialJudgement
-                            :get-params JudgementGetParams
-                            :list-schema js/PartialJudgementList
-                            :search-schema js/PartialJudgementList
-                            :external-id-q-params JudgementsByExternalIdQueryParams
-                            :search-q-params JudgementSearchParams
-                            :new-spec :new-judgement/map
-                            :realize-fn js/realize-judgement
-                            :get-capabilities :read-judgement
-                            :post-capabilities :create-judgement
-                            :put-capabilities #{:create-judgement :developer}
-                            :delete-capabilities :delete-judgement
-                            :search-capabilities :search-judgement
+  (let [entity-crud-config {:entity                   :judgement
+                            :new-schema               js/NewJudgement
+                            :entity-schema            js/Judgement
+                            :get-schema               js/PartialJudgement
+                            :get-params               JudgementGetParams
+                            :list-schema              js/PartialJudgementList
+                            :search-schema            js/PartialJudgementList
+                            :external-id-q-params     JudgementsByExternalIdQueryParams
+                            :search-q-params          JudgementSearchParams
+                            :new-spec                 :new-judgement/map
+                            :realize-fn               js/realize-judgement
+                            :get-capabilities         :read-judgement
+                            :post-capabilities        :create-judgement
+                            :put-capabilities         #{:create-judgement :developer}
+                            :delete-capabilities      :delete-judgement
+                            :search-capabilities      :search-judgement
                             :external-id-capabilities :read-judgement
-                            :can-update? true
-                            :can-aggregate? true
-                            :histogram-fields js/judgement-histogram-fields
-                            :enumerable-fields js/judgement-enumerable-fields}]
+                            :can-update?              true
+                            :can-aggregate?           true
+                            :histogram-fields         js/judgement-histogram-fields
+                            :enumerable-fields        js/judgement-enumerable-fields
+                            :searchable-fields        searchable-fields}]
     (routes
       (services->entity-crud-routes
         services
