@@ -47,7 +47,7 @@
                              {:accept :json
                               :throw-exceptions false
                               :query-params {"api_key" token}})]
-      (if (= 200 (:status response))
+      (when (= 200 (:status response))
         (json/parse-string
          (:body response))))))
 

@@ -63,7 +63,7 @@
 
 (s/defn observable->observable-hash :- s/Str
   "transform an observable to a hash of the form type:value"
-  [{:keys [type value] :as o} :- Observable]
+  [{:keys [type value] :as _o} :- Observable]
   (str type ":" value))
 
 (s/defn obs->hashes :- [s/Str]

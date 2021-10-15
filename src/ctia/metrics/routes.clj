@@ -10,8 +10,7 @@
     [meters :as meters]
     [timers :as timers]
     [utils :refer [all-metrics]]]
-   [ring.util.http-response :refer [ok]]
-   [schema.core :as s])
+   [ring.util.http-response :refer [ok]])
   (:import [com.codahale.metrics Counter Gauge Histogram Meter Timer]))
 
 (defprotocol RenderableMetric

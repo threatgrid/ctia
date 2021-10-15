@@ -36,7 +36,7 @@
   [path]
   (try (slurp (io/resource
                path))
-       (catch Throwable e nil)))
+       (catch Throwable _e nil)))
 
 (defn decorate-markdown
   "decorate an html converted markdown file with css and js"

@@ -49,7 +49,7 @@
 
 (s/defn realize-asset-properties
   :- (RealizeFnResult (with-error StoredAssetProperties))
-  [{:keys [asset_ref]
+  [{:keys [_asset_ref]
     :as   new-entity}
    id tempids & rest-args]
   (delayed/fn :- (with-error StoredAssetProperties)
