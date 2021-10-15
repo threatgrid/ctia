@@ -36,7 +36,7 @@
       (is (= (:modified realized-create)
              (:created realized-create)
              (:timestamp realized-create))))
-
+    (Thread/sleep 1) ;; allow time to pass so :modified != :created below
     (testing "realized fn with a previous object shall preserve previous stored field and update modified"
       (let [new-sighting-maximal (assoc (dissoc sighting-maximal :id)
                                         :source "update")
