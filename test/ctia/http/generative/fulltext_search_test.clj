@@ -1,6 +1,6 @@
 (ns ctia.http.generative.fulltext-search-test
   (:require
-   [clojure.test :refer [deftest testing is use-fixtures join-fixtures]]
+   [clojure.test :refer [deftest testing is are use-fixtures join-fixtures]]
    [clojure.test.check.generators :as gen]
    [ctia.auth.capabilities :as capabilities]
    [ctia.auth.threatgrid :refer [map->Identity]]
@@ -13,6 +13,8 @@
    [ctia.test-helpers.search :as th.search]
    [ctim.examples.bundles :refer [bundle-maximal]]
    [ctim.schemas.bundle :as bundle.schema]
+   [ductile.conn :as conn]
+   [ductile.document :as ductile.doc]
    [ductile.index :as es-index]
    [puppetlabs.trapperkeeper.app :as app]))
 
@@ -259,3 +261,64 @@
       (doseq [test-case (if-let [cases (seq (filter :only (test-cases)))]
                           cases (test-cases))]
         (test-search-case app test-case))))))
+
+;; For the time being (before we fully migrate to ES7), we need to test the behavior
+;; of searching in multiple heterogeneous types of fields, i.e., when some fields are
+;; mapped to 'text' and others to 'keyword'.
+;;
+;; Since at the moment we cannot implement a workaround in the API because that would
+;; require updating mappings on the live, production data, we'd have to test this by
+;; directly sending queries into ES, bypassing the CTIA routes.
+(deftest mixed-fields-text-and-keyword-multi-match
+  (es-helpers/for-each-es-version
+   "Mixed fields text and keyword multimatch"
+   [5 7]
+   #(es-index/delete! % "ctia_*")
+   (helpers/fixture-ctia-with-app
+    (fn [app]
+      (let [{{:keys [get-store]} :StoreService :as services} (app/service-graph app)
+            {:keys [index conn]} (-> (get-store :incident) :state)
+
+            expected {:title  "intrusion event 3:19187:7 incident"
+                      :source "ngfw_ips_event_service"}
+            bundle (->>
+                    :incidents
+                    bundle-gen-for
+                    (gen/fmap
+                     (fn [bndl]
+                       (update bndl :incidents
+                               (fn [items]
+                                 (utils/update-items items #(merge % expected))))))
+                    gen/generate)
+            _ (bundle/import-bundle
+               bundle
+               nil    ;; external-key-prefixes
+               login services)
+            base-query {:query_string {:query "the intrusion event 3\\:19187\\:7 incident"
+                                       :fields ["title" "source.text"]
+                                       :default_operator "AND"}}
+            ignore-ks [:created :groups :id :incident_time :modified :owner :timestamp]]
+        (are [desc query check-fn] (let [res (:data (ductile.doc/query conn index query {}))]
+                                     (testing (str "query: " query)
+                                       (is (check-fn res) desc)))
+          "base query matches expected data"
+          base-query
+          #(-> % first (select-keys (keys expected)) (= expected))
+
+          "querying all matches generated incidents minus selected fields in each entity"
+          (assoc-in base-query [:query_string :query] "*")
+          (fn [res]
+            (let [norm (fn [data] (->> data (map #(apply dissoc % ignore-ks)) set))]
+              (= (-> bundle :incidents norm)
+                 (-> res norm))))
+
+          "query attempt to use 'title' and 'source' expected to return nothing in ES 5"
+          (assoc-in base-query [:query_string :fields] ["title" "source"])
+          (fn [res]
+            (if (= version 5)
+              (empty? res)
+              (-> res first (select-keys (keys expected)) (= expected))))
+
+          "using 'source.text' should work in both ES 5 and 7"
+          (assoc-in base-query [:query_string :fields] ["title" "source.text"])
+          (fn [res] (-> res first (select-keys (keys expected)) (= expected)))))))))
