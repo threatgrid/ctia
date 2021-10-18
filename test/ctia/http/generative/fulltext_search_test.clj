@@ -205,23 +205,23 @@
        :bundle-gen       bundle-gen
        :check            check-fn}])
 
-   (let [expected {:title "intrusion event 3:19187:7 incident"
-                   :source "ngfw_ips_event_service"}
-         bundle (gen/fmap
-                 (fn [bndl]
-                   (update bndl :incidents
-                           (fn [items]
-                             (utils/update-items items #(merge % expected)))))
-                 (bundle-gen-for :incidents))
-         check-fn (fn [_ _ _ res]
-                    (is (= expected
-                           (-> res :parsed-body first (select-keys [:source :title])))))]
-     [{:test-description "searching in mixed fields indexed as pure text and keyword"
-       :query-params     {:query "the intrusion event 3\\:19187\\:7 incident"
-                          :search_fields ["title" "source"]}
-       :only true
-       :bundle-gen       bundle
-       :check            check-fn}])))
+   ;; TODO: Re-enable after solving https://github.com/threatgrid/ctia/pull/1152#pullrequestreview-780638906
+   #_(let [expected {:title  "intrusion event 3:19187:7 incident"
+                     :source "ngfw_ips_event_service"}
+           bundle (gen/fmap
+                   (fn [bndl]
+                     (update bndl :incidents
+                             (fn [items]
+                               (utils/update-items items #(merge % expected)))))
+                   (bundle-gen-for :incidents))
+           check-fn (fn [_ _ _ res]
+                      (is (= expected
+                             (-> res :parsed-body first (select-keys [:source :title])))))]
+       [{:test-description "searching in mixed fields indexed as pure text and keyword"
+         :query-params     {:query "the intrusion event 3\\:19187\\:7 incident"
+                            :search_fields ["title" "source"]}
+         :bundle-gen       bundle
+         :check            check-fn}])))
 
 (defn test-search-case
   [app
