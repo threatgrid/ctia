@@ -39,8 +39,17 @@
 
 (def headers {"Authorization" http/api-key})
 
+(deftest test-default-sort-next
+  (test-for-each-store-with-app
+   (fn [app]
+     (establish-user! app)
+     (let [nb 1000]
+       (assert (= nb
+                (count (helpers/POST-entity-bulk app ctim.examples.incidents/incident-minimal :incidents nb headers)))))
+     (pagination/x-next-test app  (str "ctia/incident/search?query=*") headers))))
+
 (deftest ^:slow test-pagination-lists
-  "generate an observable and many records of all listable entities"
+  ;;generate an observable and many records of all listable entities"
   (test-for-each-store-with-app
    (fn [app]
      (establish-user! app)

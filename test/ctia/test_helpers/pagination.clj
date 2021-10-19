@@ -1,6 +1,5 @@
 (ns ctia.test-helpers.pagination
-  (:require [clojure.string :as str]
-            [clojure.test :refer [is testing]]
+  (:require [clojure.test :refer [is testing]]
             [clojure.walk :as walk]
             [ctim.domain.id :as id]
             [ctia.test-helpers.aggregate :as aggregate]
@@ -42,7 +41,6 @@
              (is (= (get limited-headers "X-Total-Hits")
                     (get full-headers "X-Total-Hits"))))))
 
-
 (defn x-next-test
   "Retrieving a full paginated response with X-Next"
   [app route headers]
@@ -54,7 +52,7 @@
              :query-params {:limit 10000})
         paginated-res
         (loop [results []
-               x-next ""]
+               x-next "limit=99"]
           (if x-next
             (let [{res :parsed-body
                    headers :headers}
@@ -65,7 +63,15 @@
               (recur (into results res)
                      (get headers "X-Next")))
             results))]
-
+    (testing "limit shall not impact the order of the first elements"
+      (let [res (repeatedly 10
+                            #(take 3
+                                   (GET app
+                                        route
+                                        :headers headers
+                                        :query-params {:limit (+ 3 (rand-int 10))})))]
+        (is (apply = (map #(get-in % [:parsed-body "X-Next"]) res)))
+        (is (apply = (map :parsed-body res)))))
     (is (= 200 full-status))
     (is (=  (map :source full-res)
             (map :source paginated-res)))))

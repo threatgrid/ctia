@@ -55,11 +55,6 @@
   this to filter them out of query-param lists."
   (map :k (keys PagingParams)))
 
-
-(defn map->paging-header-value [m]
-  (str/join "&" (map (fn [[k v]]
-                       (str (name k) "=" v)) m)))
-
 (defn map->paging-headers
   "transform a map to a headers map
   {:total-hits 42}
@@ -70,7 +65,6 @@
                                name
                                (str "x-")
                                canonicalize)
-
                           (if (map? v)
                             (codec/form-encode v)
                             (str v))}) headers)))

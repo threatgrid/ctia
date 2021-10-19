@@ -1,21 +1,18 @@
 (ns ctia.http.routes.common-test
-  (:require [clj-momo.test-helpers.core :as mth]
-            [clojure.instant :as inst]
-            [clojure.test :refer [are is deftest testing use-fixtures]]
+  (:require [clojure.test :refer [are deftest is testing use-fixtures]]
             [ctia.auth.capabilities :refer [all-capabilities]]
             [ctia.entity.incident :refer [incident-entity]]
             [ctia.http.routes.common :as sut]
             [ctia.test-helpers.core :as helpers]
             [ctia.test-helpers.crud :refer [crud-wait-for-test]]
-            [ctia.test-helpers.http :as http]
-            [ctia.test-helpers.store :refer [test-selected-stores-with-app]]
             [ctia.test-helpers.fake-whoami-service :as whoami-helpers]
+            [ctia.test-helpers.store :refer [test-selected-stores-with-app]]
             [ctim.examples.incidents :refer [new-incident-maximal]]
-            [puppetlabs.trapperkeeper.app :as app]))
+            [puppetlabs.trapperkeeper.app :as app]
+            [schema.test :refer [validate-schemas]]))
 
-(use-fixtures :once
-              mth/fixture-schema-validation
-              whoami-helpers/fixture-server)
+(use-fixtures :once validate-schemas
+                    whoami-helpers/fixture-server)
 
 (deftest coerce-date-range
   (with-redefs [sut/now (constantly #inst "2020-12-31")]
@@ -230,3 +227,7 @@
             entity-store (get-in-config [:ctia :store entity])]
         (assert (= "es" entity-store) (pr-str entity-store))
         (crud-wait-for-test parameters)))))
+
+(deftest map->paging-headers
+  (is (= {"X-Next" "search_after=value1&search_after=value2"}
+         (sut/map->paging-headers {:next {:search_after ["value1" "value2"]}}))))
