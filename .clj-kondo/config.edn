@@ -1,24 +1,47 @@
 {:linters
  {:skip-comments true
+
   :unresolved-symbol
   {:exclude [(puppetlabs.trapperkeeper.testutils.bootstrap/with-app-with-config [app])]}
+
   :unresolved-var
-  {:exclude [clj-momo.lib.clj-time.core/seconds]}}
- :lint-as {puppetlabs.trapperkeeper.core/defservice  clj-kondo.lint-as/def-catch-all
-           ctia.lib.compojure.api.core/GET           clj-kondo.lint-as/def-catch-all
-           ctia.lib.compojure.api.core/PATCH         clj-kondo.lint-as/def-catch-all
-           ctia.lib.compojure.api.core/POST          clj-kondo.lint-as/def-catch-all
-           ctia.lib.compojure.api.core/PUT           clj-kondo.lint-as/def-catch-all
-           ctia.lib.compojure.api.core/DELETE        clj-kondo.lint-as/def-catch-all
-           ctia.lib.compojure.api.core/context       clj-kondo.lint-as/def-catch-all
+  {:exclude [clj-momo.lib.clj-time.core/seconds
+             taoensso.carmine/unsubscribe
+             taoensso.carmine/subscribe
+             taoensso.carmine/publish]}}
 
-           ctia.schemas.core/defschema               clj-kondo.lint-as/def-catch-all
-           ctia.schemas.core/def-acl-schema          clj-kondo.lint-as/def-catch-all
-           ctia.schemas.core/def-stored-schema       clj-kondo.lint-as/def-catch-all
-           ctia.schemas.core/def-advanced-acl-schema clj-kondo.lint-as/def-catch-all
+ :hooks {:macroexpand {ctia.stores.es.store/def-es-store
+                       ctia.stores.es.store/def-es-store
 
-           ctia.stores.es.store/def-es-store         clojure.core/defrecord
-           ctia.graphql.delayed/fn                   clj-kondo.lint-as/def-catch-all
+                       ctia.schemas.core/def-acl-schema
+                       ctia.schemas.core/def-acl-schema
 
-           flanders.core/def-entity-type             clj-kondo.lint-as/def-catch-all
-           flanders.core/def-eq                      clj-kondo.lint-as/def-catch-all}}
+                       ctia.schemas.core/def-stored-schema
+                       ctia.schemas.core/def-stored-schema
+
+                       ctia.schemas.core/def-advanced-acl-schema
+                       ctia.schemas.core/def-advanced-acl-schema
+
+                       flanders.core/def-enum-type
+                       flanders.core/def-enum-type
+
+                       flanders.core/def-entity-type
+                       flanders.core/def-entity-type
+
+                       flanders.core/def-eq
+                       flanders.core/def-eq
+
+                       flanders.core/def-map-type
+                       flanders.core/def-map-type}}
+
+ :lint-as {puppetlabs.trapperkeeper.core/defservice clj-kondo.lint-as/def-catch-all
+           ctia.lib.compojure.api.core/GET          clj-kondo.lint-as/def-catch-all
+           ctia.lib.compojure.api.core/PATCH        clj-kondo.lint-as/def-catch-all
+           ctia.lib.compojure.api.core/POST         clj-kondo.lint-as/def-catch-all
+           ctia.lib.compojure.api.core/PUT          clj-kondo.lint-as/def-catch-all
+           ctia.lib.compojure.api.core/DELETE       clj-kondo.lint-as/def-catch-all
+           ctia.lib.compojure.api.core/context      clj-kondo.lint-as/def-catch-all
+
+           ctia.schemas.core/defschema clojure.core/def
+
+           ctia.graphql.delayed/fn schema.core/fn}}

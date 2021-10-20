@@ -14,6 +14,7 @@ data/**/*.edn
 pom.xml
 /checkouts
 .dir-locals-2.el
-.lsp/
+.lsp/.cache
 .clj-kondo/.cache
 .clj-kondo/cache
+.clj-kondo/rewrite-clj/
