@@ -186,8 +186,10 @@
      schema (schema-gen/map-schema
               {:explicit-keys explicit-keys})
      present-selection (chuck.gen/subsequence explicit-keys)
-     missing-selection (gen/not-empty
-                         (chuck.gen/subsequence missing-keys))
+     missing-selection (gen/such-that
+                         seq
+                         (chuck.gen/subsequence missing-keys)
+                         {:max-tries 200})
      :let [selection (into (set present-selection)
                            missing-selection)
            expected-missing (-> (set/difference selection
