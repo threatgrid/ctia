@@ -4,10 +4,10 @@
   `(do
      ~ddl
      ~spec-kw-ns
-     (clojure.core/def ~name-sym)))
+     (def ~name-sym)))
 
 (defmacro def-stored-schema [name-sym _sch]
-  `(clojure.core/def ~name-sym))
+  `(def ~name-sym))
 
 (defmacro def-advanced-acl-schema [{:keys [name-sym
                                            ddl
@@ -15,4 +15,4 @@
                                            _open?]}]
   `(do
      ~ddl
-     (clojure.core/def ~name-sym)))
+     (def ~name-sym)))
