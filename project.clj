@@ -55,7 +55,8 @@
   :jvm-opts ["-Djava.awt.headless=true"
              "-Dlog.console.threshold=INFO"
              "-server"]
-  :exclusions [org.slf4j/log4j-over-slf4j] ;; remove from trapperkeeper jars
+  :exclusions [prismatic/schema
+               org.slf4j/log4j-over-slf4j] ;; remove from trapperkeeper jars
   ;; use `lein pom; mvn dependency:tree -Dverbose -Dexcludes=org.clojure:clojure`
   ;; to inspect conflicts.
 
@@ -78,7 +79,7 @@
                  [prismatic/plumbing "0.5.5"] ;; upgrade puppetlabs/trapperkeeper
 
                  ;; Schemas
-                 [prismatic/schema "1.1.12"]
+                 [org.clojars.frenchy64/schema "1.1.13-20211021.171347-1"]
                  [metosin/schema-tools "0.12.2"]
                  [threatgrid/flanders "0.1.23"]
                  [threatgrid/ctim "1.1.8"]
