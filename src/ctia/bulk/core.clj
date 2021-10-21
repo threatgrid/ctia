@@ -143,7 +143,7 @@
                            :delete-fn (delete-fn entity-type auth-identity params services)
                            :long-id-fn nil
                            :identity auth-identity
-                           :get-success-entities (fn [{:keys [results entities] :as fm}]
+                           :get-success-entities (fn [{:keys [results entities] :as _fm}]
                                                    (let [deleted-long-ids
                                                          (set
                                                           (map #(short-id->long-id % services)

@@ -34,7 +34,7 @@
     (remove nil? [guid]))
   (allowed-capabilities [_]
     (write-capabilities))
-  (capable? [this required-capabilities]
+  (capable? [_this required-capabilities]
     (set/subset? (as-set required-capabilities)
                  (write-capabilities)))
   (rate-limit-fn [_ _]))
@@ -51,7 +51,7 @@
     (remove nil? auth/not-logged-in-groups))
   (allowed-capabilities [_]
     (read-only-capabilities))
-  (capable? [this required-capabilities]
+  (capable? [_this required-capabilities]
     (set/subset? (as-set required-capabilities)
                  (read-only-capabilities)))
   (rate-limit-fn [_ _]))

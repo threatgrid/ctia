@@ -1,7 +1,7 @@
 (ns ctia.entity.identity
   (:require [schema.core :as s]
             [schema-tools.core :as st]
-            [ductile.document :refer [create-doc get-doc delete-doc]]
+            [ductile.document :refer [create-doc delete-doc]]
             [ctia.store :refer [IIdentityStore IStore]]
             [ctia.stores.es
              [store :refer [close-connections!]]
@@ -94,7 +94,7 @@
     (handle-read state login))
   (create-identity [_ new-identity]
     (handle-create state new-identity))
-  (delete-identity [_ org-id role]
+  (delete-identity [_ org-id _role]
     (handle-delete state org-id)))
 
 (def identity-entity

@@ -1,8 +1,7 @@
 (ns ctia.store-service
   (:require [ctia.store-service-core :as core]
             [puppetlabs.trapperkeeper.core :as tk]
-            [puppetlabs.trapperkeeper.services :refer [service-context]]
-            [schema.core :as s]))
+            [puppetlabs.trapperkeeper.services :refer [service-context]]))
 
 (defprotocol StoreService
   (all-stores [this] "Returns a map of current stores.

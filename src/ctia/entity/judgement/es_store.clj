@@ -119,7 +119,7 @@
   (close [_] (close-connections! state))
 
   IJudgementStore
-  (list-judgements-by-observable [this observable ident params]
+  (list-judgements-by-observable [_this observable ident params]
     (handle-list state {:all-of {[:observable :type]  (:type observable)
                                  [:observable :value] (:value observable)}} ident params))
   (calculate-verdict [_ observable ident]
