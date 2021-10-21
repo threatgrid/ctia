@@ -20,6 +20,7 @@
                       pagination-test-no-sort]]
              [store :as store :refer [test-for-each-store-with-app]]]
             [ctim.domain.id :as id]
+            [ctim.examples.incidents :refer [incident-minimal]]
             [schema.test :refer [validate-schemas]]
             [schema.core :as s]
             [schema-tools.core :as st]))
@@ -45,7 +46,7 @@
      (establish-user! app)
      (let [nb 1000]
        (assert (= nb
-                (count (helpers/POST-entity-bulk app ctim.examples.incidents/incident-minimal :incidents nb headers)))))
+                (count (helpers/POST-entity-bulk app incident-minimal :incidents nb headers)))))
      (pagination/x-next-test app  (str "ctia/incident/search?query=*") headers))))
 
 (deftest ^:slow test-pagination-lists
