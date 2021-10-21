@@ -1,6 +1,5 @@
 (ns actions.print-matrix-test
   (:require [clojure.test :refer [deftest is testing]]
-            [actions.actions-helpers :as h]
             [actions.test-helpers :as th]
             [actions.print-matrix :as sut]))
 

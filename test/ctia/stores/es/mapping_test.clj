@@ -1,9 +1,7 @@
 (ns ctia.stores.es.mapping-test
   (:require [ctia.stores.es.mapping :as sut]
-            [ductile
-             [document :as doc]
-             [conn :as conn]
-             [index :as index]]
+            [ductile.document :as doc]
+            [ductile.index :as index]
             [ctia.test-helpers.es :as es-helpers]
             [clojure.test :refer [deftest testing is]]))
 

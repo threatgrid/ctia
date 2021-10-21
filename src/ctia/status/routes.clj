@@ -1,7 +1,6 @@
 (ns ctia.status.routes
   (:require
    [ctia.lib.compojure.api.core :refer [context GET]]
-   [schema.core :as s]
    [ctia.schemas.core :refer [StatusInfo]]
    [ring.util.http-response :refer [ok]]))
 

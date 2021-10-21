@@ -9,7 +9,6 @@
                                        RealizeFnResult
                                        resolve-with-rt-ctx]]
             [schema.core :as s]
-            [schema-tools.core :as st]
             [clojure.tools.logging :as log])
   (:import [graphql GraphQL GraphQLException]
            [graphql.language

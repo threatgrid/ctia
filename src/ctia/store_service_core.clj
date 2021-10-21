@@ -1,6 +1,5 @@
 (ns ctia.store-service-core
   (:require [clojure.string :as str]
-            [ctia.properties :as p]
             [ctia.store :refer [empty-stores close]]
             [ctia.store-service.schemas :refer [Store Stores StoresAtom StoreID StoreServiceCtx]]
             [ctia.stores.es.init :as es-init]

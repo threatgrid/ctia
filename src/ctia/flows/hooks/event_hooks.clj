@@ -4,13 +4,10 @@
    [ctia.flows.hook-protocol :refer [Hook]]
    [ctia.lib.redis :as lr]
    [ctia.lib.kafka :as lk]
-   [ctia.entity.event.schemas :refer [CreateEventType
-                                      DeleteEventType]]
    [ctia.flows.hooks-service.schemas :refer [HooksMap]]
    [ctia.schemas.services :refer [ConfigServiceFns]]
    [redismq.core :as rmq]
    [onyx.kafka.helpers :as okh]
-   [onyx.plugin.kafka :as opk]
    [cheshire.core :refer [generate-string]]
    [schema.core :as s]
    [schema-tools.core :as st])

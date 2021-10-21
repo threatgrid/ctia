@@ -1,6 +1,5 @@
 (ns ctia.schemas.test-generators
   (:require [clojure.test.check.generators :as gen]
-            [com.gfredericks.test.chuck.generators :as chuck.gen]
             [schema.core :as s]))
 
 (declare map-schema)

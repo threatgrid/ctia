@@ -3,7 +3,6 @@
             [clojure.core.memoize :as memo]
             [clojure.string :as string]
             [clojure.tools.logging :as log]
-            [compojure.api.middleware :refer [api-middleware]]
             [ctia.auth.jwt :as auth-jwt]
             [ctia.http.handler :as handler]
             [ctia.http.middleware.auth :as auth]

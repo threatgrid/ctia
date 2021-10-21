@@ -1,6 +1,5 @@
 (ns ctia.schemas.graphql.flanders
-  (:require [clj-momo.lib.clj-time.coerce :as time-coerce]
-            [clojure.core.match :refer [match]]
+  (:require [clojure.core.match :refer [match]]
             [clojure.string :as str]
             [clojure.tools.logging :as log]
             [ctia.schemas.graphql.scalars :refer [GraphQLDate]]

@@ -5,9 +5,7 @@
             [clojure.java.io :as io]
             [clojure.java.shell :as sh]
             [clojure.set :as set]
-            [clojure.string :as str]
-            [clojure.test :as test]
-            [clojure.pprint :as pprint]))
+            [clojure.string :as str]))
 
 ; Algorithm By Mark Dickinson https://stackoverflow.com/a/2660138
 (defn partition-fairly
