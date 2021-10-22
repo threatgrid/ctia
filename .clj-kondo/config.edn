@@ -32,7 +32,10 @@
                        flanders.core/def-eq
 
                        flanders.core/def-map-type
-                       flanders.core/def-map-type}}
+                       flanders.core/def-map-type
+
+                       ctia.lib.compojure.api.core/context
+                       ctia.lib.compojure.api.core/context}}
 
  :lint-as {puppetlabs.trapperkeeper.core/defservice clj-kondo.lint-as/def-catch-all
            ctia.lib.compojure.api.core/GET          clj-kondo.lint-as/def-catch-all
@@ -40,7 +43,6 @@
            ctia.lib.compojure.api.core/POST         clj-kondo.lint-as/def-catch-all
            ctia.lib.compojure.api.core/PUT          clj-kondo.lint-as/def-catch-all
            ctia.lib.compojure.api.core/DELETE       clj-kondo.lint-as/def-catch-all
-           ctia.lib.compojure.api.core/context      clj-kondo.lint-as/def-catch-all
 
            ctia.schemas.core/defschema clojure.core/def
 
