@@ -1,6 +1,5 @@
 (ns ctia.schemas.graphql.sorting
   (:require [ctia.schemas.graphql.helpers :as g]
-            [clojure.string :as string]
             [schema-tools.core :as st]
             [schema.core :as s]
             [clojure.string :as str])
@@ -69,7 +68,7 @@
   (some->> (:orderBy connection-params)
            (map (fn [{:keys [field direction]}]
                   (str field ":" direction)))
-           (string/join ",")
+           (str/join ",")
            (assoc {} :sort_by)))
 
 (defn sorting-kw->enum-name

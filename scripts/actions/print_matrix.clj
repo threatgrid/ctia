@@ -10,9 +10,7 @@
 ;;   $ GITHUB_ENV=$(mktemp) CTIA_COMMIT_MESSAGE='{:test-suite :cron} try cron build' GITHUB_EVENT_NAME=push ./scripts/actions/print-matrix.clj
 
 (ns actions.print-matrix
-  (:require [actions.actions-helpers :as h]
-            [clojure.string :as str]
-            [cheshire.core :as json]))
+  (:require [actions.actions-helpers :as h]))
 
 (def ^:private default-java-version "11.0.9")
 (def ^:private default-java-distribution "adopt")

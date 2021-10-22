@@ -1,5 +1,5 @@
 (ns actions.actions-helpers-test
-  (:require [clojure.test :refer [deftest is testing]]
+  (:require [clojure.test :refer [deftest is]]
             [actions.actions-helpers :as sut]
             [actions.test-helpers :as th])
   (:import [java.io File]))
