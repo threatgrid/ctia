@@ -1,8 +1,6 @@
 (ns ctia.encryption-test
   (:require
-   [clojure.test
-    :refer
-    [deftest is join-fixtures testing use-fixtures]]
+   [clojure.test :refer [deftest is testing use-fixtures]]
    [schema.test :refer [validate-schemas]]
    [ctia.test-helpers
     [core :as test-helpers]

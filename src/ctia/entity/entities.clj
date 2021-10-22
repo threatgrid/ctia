@@ -1,7 +1,6 @@
 (ns ctia.entity.entities
   (:require
    ;; !!! Order Matters !!!
-   [clojure.tools.logging :as log]
    [ctia.schemas.core :refer [Entity]]
    [ctia.entity
     [asset :refer [asset-entity]]

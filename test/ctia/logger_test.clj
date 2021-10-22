@@ -1,13 +1,11 @@
 (ns ctia.logger-test
-  (:require [ctia.test-helpers
-             [core :as test-helpers]
-             [es :as es-helpers]]
+  (:require [ctia.test-helpers.core :as test-helpers]
+            [ctia.test-helpers.es :as es-helpers]
             [ctia.entity.event.obj-to-event :as o2e]
             [ctia.logging-core :refer [logging-prefix]]
             [clojure.test :refer [deftest is use-fixtures]]
             [schema.test :as st]
-            [clojure.tools.logging :as log]
-            [clojure.string :as str]))
+            [clojure.tools.logging :as log]))
 
 (use-fixtures :each
   es-helpers/fixture-properties:es-store

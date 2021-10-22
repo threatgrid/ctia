@@ -3,7 +3,6 @@
    [clojure.set :refer [difference]]
    [clojure.tools.logging :as log]
    [ctia.entity.entities :as entities]
-   [ctia.properties :as p]
    [ctia.stores.es.mapping :refer [store-settings]]
    [ctia.stores.es.schemas :refer [ESConnServices ESConnState]]
    [ductile.conn :refer [connect]]

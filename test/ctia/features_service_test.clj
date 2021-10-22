@@ -1,8 +1,6 @@
 (ns ctia.features-service-test
   (:require
-   [clojure.set :as set]
    [clojure.test :refer [deftest are is testing use-fixtures]]
-   [ctia.entity.entities :as entities]
    [ctia.test-helpers.core :as th]
    [ctia.test-helpers.es :as es-helpers]))
 

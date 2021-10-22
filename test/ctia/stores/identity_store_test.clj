@@ -2,9 +2,7 @@
   (:require [clj-momo.test-helpers.core :as mth]
             [clojure.test :refer [deftest is testing use-fixtures]]
             [ctia.store :as store]
-            [ctia.test-helpers
-             [core :as helpers]
-             [store :refer [test-for-each-store-with-app]]]
+            [ctia.test-helpers.store :refer [test-for-each-store-with-app]]
             [puppetlabs.trapperkeeper.app :as app]))
 
 (use-fixtures :once mth/fixture-schema-validation)

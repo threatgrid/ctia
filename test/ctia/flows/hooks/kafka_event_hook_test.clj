@@ -1,17 +1,12 @@
 (ns ctia.flows.hooks.kafka-event-hook-test
   (:require [clj-momo.test-helpers.core :as mth]
-            [clojure.string :as str]
             [clojure.test :refer [deftest is join-fixtures testing use-fixtures]]
             [ctia.domain.entities :refer [schema-version]]
             [ctia.lib.kafka :as lk]
-            [ctia.properties :as p]
             [ctim.domain.id :as id]
-            [ctim.schemas.common :as c]
             [cheshire.core :refer [parse-string]]
-
-            [ctia.test-helpers
-             [core :as test-helpers :refer [POST]]
-             [es :as es-helpers]])
+            [ctia.test-helpers.core :as test-helpers :refer [POST]]
+            [ctia.test-helpers.es :as es-helpers])
   (:import [java.util.concurrent CountDownLatch TimeUnit]
            [org.apache.kafka.clients.consumer ConsumerRebalanceListener]))
 

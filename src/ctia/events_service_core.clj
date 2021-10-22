@@ -2,10 +2,9 @@
   (:require [clj-momo.lib.time :as time]
             [ctia.lib.async :as la]
             [ctia.entity.event.schemas :as es]
-            [clojure.core.async :as a :refer [go-loop alt! chan tap]]
+            [clojure.core.async :as a]
             [schema.core :as s])
-  (:import [clojure.core.async.impl.protocols Channel]
-           [java.util Map]))
+  (:import [clojure.core.async.impl.protocols Channel]))
 
 (def shutdown-max-wait-ms (* 1000 60 60))
 

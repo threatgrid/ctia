@@ -1,6 +1,5 @@
 (ns ctia.entity.asset-properties-test
-  (:require [clj-momo.lib.clj-time.coerce :as tc]
-            [clj-momo.test-helpers.core :as mth]
+  (:require [clj-momo.test-helpers.core :as mth]
             [clojure.test :refer [deftest is are join-fixtures testing use-fixtures]]
             [ctia.entity.asset-properties :as sut]
             [ctia.test-helpers.aggregate :as aggregate]

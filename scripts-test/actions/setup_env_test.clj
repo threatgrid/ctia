@@ -1,5 +1,5 @@
 (ns actions.setup-env-test
-  (:require [clojure.test :refer [deftest is testing]]
+  (:require [clojure.test :refer [deftest is]]
             [actions.test-helpers :as th]
             [actions.setup-env :as sut]))
 

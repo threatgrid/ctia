@@ -1,16 +1,12 @@
 (ns ctia.task.check-es-stores
   (:require
-   [ctia.stores.es.store
-    :refer [store->map]]
-   [ductile
-    [conn :as conn]
-    [document :as es-doc]]
-   [clojure.string :as string]
+   [ctia.stores.es.store :refer [store->map]]
+   [ductile.conn :as conn]
+   [ductile.document :as es-doc]
    [clojure.tools.logging :as log]
-   [ctia
-    [init :refer [start-ctia!*]]
-    [properties :as p]
-    [store-service :as store-svc]]
+   [ctia.init :refer [start-ctia!*]]
+   [ctia.properties :as p]
+   [ctia.store-service :as store-svc]
    [ctia.entity.entities :as entities]
    [ctia.entity.sighting.schemas :refer [StoredSighting]]
    [ctia.stores.es.crud :refer [coerce-to-fn]]

@@ -1,5 +1,4 @@
-(ns ctia.task.stats
-  (:require [ctia.stores.es.crud :refer [make-aggregation]]))
+(ns ctia.task.stats)
 
 (defn topn-orgs
   [n]

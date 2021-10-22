@@ -5,13 +5,11 @@
             [clojure.string :as string]
             [clojure.test :refer [deftest is join-fixtures testing use-fixtures]]
             [ctia.entity.investigation.examples :refer [investigation-minimal]]
-            [ctia.properties :as p]
             [ctia.task.check-es-stores :as sut]
-            [ctia.test-helpers
-             [auth :refer [all-capabilities]]
-             [core :as helpers :refer [POST-bulk with-atom-logger]]
-             [es :as es-helpers]
-             [fake-whoami-service :as whoami-helpers]]
+            [ctia.test-helpers.auth :refer [all-capabilities]]
+            [ctia.test-helpers.core :as helpers :refer [POST-bulk with-atom-logger]]
+            [ctia.test-helpers.es :as es-helpers]
+            [ctia.test-helpers.fake-whoami-service :as whoami-helpers]
             [ctim.domain.id :refer [make-transient-id]]
             [ctim.examples
              [actors :refer [actor-minimal]]

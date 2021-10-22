@@ -1,6 +1,5 @@
 (ns ctia.lib.kafka
   (:require
-   [clojure.tools.logging :as log]
    [onyx.kafka.helpers :as okh]
    [onyx.plugin.kafka :as opk])
   (:import [kafka.admin AdminUtils AdminClient]

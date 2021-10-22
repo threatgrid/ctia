@@ -1,9 +1,7 @@
 (ns ctia.entity.feedback.schemas
-  (:require [ctia.domain
-             [entities :refer [default-realize-fn]]]
-            [ctia.schemas
-             [core :refer [def-acl-schema def-stored-schema TempIDs]]
-             [sorting :as sorting]]
+  (:require [ctia.domain.entities :refer [default-realize-fn]]
+            [ctia.schemas.core :refer [def-acl-schema def-stored-schema]]
+            [ctia.schemas.sorting :as sorting]
             [ctim.schemas.feedback :as feedbacks]
             [flanders.utils :as fu]
             [schema-tools.core :as st]
