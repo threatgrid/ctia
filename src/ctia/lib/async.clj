@@ -105,5 +105,5 @@
   "Extract elements from a channel into a lazy-seq.
    Reading the seq reads from the channel."
   [c :- Channel]
-  (if-let [x (a/poll! c)]
+  (when-let [x (a/poll! c)]
     (cons x (lazy-seq (drain c)))))

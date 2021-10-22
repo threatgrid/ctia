@@ -7,7 +7,7 @@
             [ctia.store :refer [IStore IQueryStringSearchableStore]]
             [ctia.stores.es.crud :as crud]))
 
-(defn delete-state-indexes [{:keys [conn index config] :as state}]
+(defn delete-state-indexes [{:keys [conn index _config] :as _state}]
   (when conn
     (es-index/delete-template! conn (str index "*"))
     (es-index/delete! conn (str index "*"))))
@@ -74,7 +74,7 @@
   "transform a store state
    into a properties map for easier manipulation,
    override the cm to use the custom timeout "
-  [{:keys [index props conn config] :as state}
+  [{:keys [index props conn config] :as _state}
    conn-overrides]
   (let [entity-type (-> props :entity name)]
     {:conn (merge conn conn-overrides)

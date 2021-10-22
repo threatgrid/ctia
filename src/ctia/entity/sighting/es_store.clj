@@ -43,10 +43,12 @@
 (s/defschema ESPartialStoredSighting
   (st/assoc PartialStoredSighting (s/optional-key :observables_hash) [s/Str]))
 
-(def ESStoredSightingList (list-response-schema ESStoredSighting))
+;; TODO: remove unused public var
+;; (def ESStoredSightingList (list-response-schema ESStoredSighting))
 (def ESPartialStoredSightingList (list-response-schema ESPartialStoredSighting))
 
-(def StoredSightingList (list-response-schema StoredSighting))
+;; TODO: remove unused public var
+;; (def StoredSightingList (list-response-schema StoredSighting))
 (def PartialStoredSightingList (list-response-schema PartialStoredSighting))
 
 (def es-coerce! (crud/coerce-to-fn [(s/maybe ESPartialStoredSighting)]))
@@ -79,7 +81,8 @@
     (assoc s :observables_hash
            (map observable->observable-hash observables))))
 
-(s/defn partial-stored-sighting->es-partial-stored-sighting
+;; TODO: remove unused public var
+#_(s/defn partial-stored-sighting->es-partial-stored-sighting
   :- (s/maybe ESPartialStoredSighting)
   "adds an observables hash to a partial-sighting"
   [{:keys [observables] :as s} :- (s/maybe PartialStoredSighting)]

@@ -45,7 +45,7 @@
   "fetch a batch of documents from an es index"
   [{:keys [conn
            indexname
-           mapping]} batch-size offset sort-keys]
+           _mapping]} batch-size offset sort-keys]
   (let [params
         (merge
          {:offset (or offset 0)
@@ -74,7 +74,7 @@
            sort-keys nil
            checked-count 0]
       (let [{:keys [data paging]
-             :as batch}
+             :as _batch}
             (fetch-batch target-store
                          batch-size
                          offset

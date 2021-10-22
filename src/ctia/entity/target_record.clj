@@ -35,7 +35,8 @@
 (def realize-target-record
   (default-realize-fn "target-record" NewTargetRecord StoredTargetRecord))
 
-(def ^:private targets
+;; TODO: remove unused var
+#_(def ^:private targets
   {:type "object"
    :properties
    {:type          em/token

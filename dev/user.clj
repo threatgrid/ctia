@@ -68,7 +68,7 @@
 (defn start
   "Starts CTIA with given config and services, otherwise defaults
   to the same configuration as #'init/start-ctia."
-  [& {:keys [config services] :as m}]
+  [& {:keys [_config _services] :as m}]
   (serially-alter-app 
     (fn [app]
       (println "Starting CTIA...")
@@ -88,7 +88,7 @@
 
 (defn go
   "Restarts CTIA. Same args as #'start."
-  [& {:keys [config services] :as m}]
+  [& {:keys [_config _services] :as m}]
   (serially-alter-app
     (fn [app]
       (println "Restarting CTIA...")
@@ -132,7 +132,7 @@
 (defn- fixup-observables [query-response]
   (for [{obs-type :key, :as type-bucket} (get-in query-response
                                                  [:aggregations :types :buckets])
-        {obs-value :key :as value-bucket} (get-in type-bucket [:values :buckets])]
+        {obs-value :key :as _value-bucket} (get-in type-bucket [:values :buckets])]
     {:type obs-type
      :value obs-value}))
 

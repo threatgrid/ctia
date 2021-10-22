@@ -54,7 +54,7 @@
 (s/defn search-entity-resolver :- AnyGraphQLTypeResolver
   [entity-type-kw]
   (s/fn :- (RealizeFnResult s/Any)
-    [context args field-selection src]
+    [context args field-selection _src]
     (delayed/fn [{:keys [services]
                   :as rt-ctx} :- GraphQLRuntimeContext]
       (search-entity entity-type-kw

@@ -35,8 +35,9 @@
           sorting/describable-entity-sort-fields
           sorting/sourcable-entity-sort-fields))
 
-(def investigation-sort-fields
-  (apply s/enum investigation-fields))
+;; TODO: remove unused public var
+;; (def investigation-sort-fields
+;;   (apply s/enum investigation-fields))
 
 (def investigation-select-fields
   (apply s/enum (concat investigation-fields

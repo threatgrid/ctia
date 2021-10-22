@@ -31,10 +31,11 @@
 (def ObservableTypeRef (g/new-ref observable-type-name))
 
 ;;---- Relationship
-(def relationship-connection-type-name "RelationshipConnection")
-(def relationship-type-name "Relationship")
-(def RelationshipRef
-  (g/new-ref relationship-type-name))
+;; TODO: remove unused vars
+;; (def relationship-connection-type-name "RelationshipConnection")
+;; (def relationship-type-name "Relationship")
+;; (def RelationshipRef
+;;     (g/new-ref relationship-type-name))
 
 (def related-judgement-type-name "RelatedJudgement")
 

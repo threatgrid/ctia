@@ -11,7 +11,7 @@
                                           {:op :sh
                                            :args (vec args)})
                                    {:exit 0})))
-        {:keys [state grab-history utils]} (mk-utils+sh {"LOG_PATH" "foo/bar"})
+        {:keys [_state grab-history utils]} (mk-utils+sh {"LOG_PATH" "foo/bar"})
         _ (sut/setup-env utils)
         _ (is (= (grab-history)
                  [{:op :sh

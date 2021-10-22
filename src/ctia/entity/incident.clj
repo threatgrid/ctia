@@ -27,7 +27,8 @@
    [schema-tools.core :as st]
    [schema.core :as s]))
 
-(def incident-bundle-default-limit 1000)
+;; TODO: remove unused public var
+;; (def incident-bundle-default-limit 1000)
 
 (def-acl-schema Incident
   is/Incident

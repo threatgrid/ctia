@@ -9,9 +9,9 @@
   (read-record [_ id ident params]
     (crud/handle-read state id ident params))
   IEventStore
-  (create-events [this new-events]
+  (create-events [_this new-events]
     (crud/handle-create state new-events))
-  (list-events [this filter-map ident params]
+  (list-events [_this filter-map ident params]
     (crud/handle-list state filter-map ident params))
   (close [_] (close-connections! state))
   IQueryStringSearchableStore

@@ -15,7 +15,7 @@
 (use-fixtures :once (join-fixtures [mth/fixture-schema-validation
                                     whoami-helpers/fixture-server]))
 
-(defn additional-tests [app {:keys [short-id]} asset-mapping-sample]
+(defn additional-tests [app {:keys [_short-id]} asset-mapping-sample]
   (testing "GET /ctia/asset-mapping/search"
    (let [{:keys [get-in-config]} (helpers/get-service-map app :ConfigService)]
     ;; only when ES store

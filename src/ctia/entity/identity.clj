@@ -10,7 +10,8 @@
              [schemas :refer [ESConnState]]]))
 
 (def Role s/Str)
-(def Login s/Str)
+;; TODO: remove unused public var
+;; (def Login s/Str)
 (def Group s/Str)
 
 (s/defschema Identity

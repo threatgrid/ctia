@@ -50,13 +50,14 @@
    (s/optional-key :search_after) (describe [s/Str] "Pagination stateless cursor")
    (s/optional-key :limit) (describe Long "Pagination Limit")})
 
-(def paging-param-keys
+;; TODO: remove unused var
+#_(def paging-param-keys
   "A list of the paging and sorting related parameters, we can use
   this to filter them out of query-param lists."
   (map :k (keys PagingParams)))
 
-
-(defn map->paging-header-value [m]
+;; TODO: remove unused var
+#_(defn map->paging-header-value [m]
   (str/join "&" (map (fn [[k v]]
                        (str (name k) "=" v)) m)))
 

@@ -14,7 +14,8 @@
    :aggregate-on :groups
    :limit n})
 
-(defn topn-source-top-orgs
+;; TODO: remove unused var
+#_(defn topn-source-top-orgs
   [n-sources n-orgs]
   (assoc (topn-sources n-sources)
          :aggs

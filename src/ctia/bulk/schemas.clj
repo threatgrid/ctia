@@ -25,9 +25,10 @@
               bulk-schema})))
         (apply merge {}))))
 
-(s/defschema EntityError
-  "Error related to one entity of the bulk"
-  {:error s/Any})
+;; TODO: remove unused public var
+;; (s/defschema EntityError
+;;   "Error related to one entity of the bulk"
+;;   {:error s/Any})
 
 (s/defn get-entities :- [s/Any]
   "Returns list of enabled entities"
@@ -54,10 +55,11 @@
   [services :- GetEntitiesServices]
   (entities-bulk-schema (get-entities services) :new-schema))
 
-(s/defn NewBulkDelete
-  "Returns NewBulk schema without disabled entities"
-  [services :- GetEntitiesServices]
-  (entities-bulk-schema (get-entities services) [(s/maybe Reference)]))
+;; TODO: remove unused public var
+;; (s/defn NewBulkDelete
+;;   "Returns NewBulk schema without disabled entities"
+;;   [services :- GetEntitiesServices]
+;;   (entities-bulk-schema (get-entities services) [(s/maybe Reference)]))
 
 (s/defschema BulkErrors
   (st/optional-keys

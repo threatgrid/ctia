@@ -136,7 +136,7 @@
                        "visible entities the user is not allowed to delete are returned as forbidden errors")
                  missing-id-1 (short-id->long-id (make-id "indicator") services)
                  missing-id-2 (short-id->long-id (make-id "indicator") services)
-                 {:keys [sightings indicators] :as res}
+                 {:keys [sightings indicators] :as _res}
                  (sut/delete-bulk {:sightings sighting-ids
                                    :indicators (concat indicator-ids
                                                        [missing-id-1

@@ -50,7 +50,7 @@
                            :_index indexname
                            :_type doc-type)
                    (range 3))
-         [doc0 doc1 doc2] docs
+         [_doc0 _doc1 _doc2] docs
          test-sort (fn [field expected-asc]
                      (is (= expected-asc
                             (->> (doc/search-docs conn

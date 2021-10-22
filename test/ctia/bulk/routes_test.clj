@@ -600,7 +600,7 @@
            query-string (make-get-query-str-from-bulkrefs
                          (dissoc bulk-ids :tempids :tools :vulnerabilities))
            {status-get :status
-            {:keys [sightings] :as body} :parsed-body}
+            {:keys [sightings] :as _body} :parsed-body}
            (GET app
                 (str "ctia/bulk?"
                      query-string)

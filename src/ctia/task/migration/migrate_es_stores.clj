@@ -17,7 +17,8 @@
   (:import java.lang.AssertionError))
 
 (def default-batch-size 100)
-(def default-buffer-size 3)
+;; TODO: remove unused var
+#_(def default-buffer-size 3)
 
 ;; TODO def => defn
 (def all-types

@@ -18,7 +18,7 @@
     (str \" etagc \")))
 
 (defn update-headers
-  [headers etag body]
+  [headers etag _body]
   (if etag
     (assoc headers "ETag" etag)
     headers))

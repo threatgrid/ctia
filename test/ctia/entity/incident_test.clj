@@ -20,7 +20,7 @@
 (use-fixtures :once (join-fixtures [mth/fixture-schema-validation
                                     whoami-helpers/fixture-server]))
 
-(defn partial-operations-tests [app incident-id incident]
+(defn partial-operations-tests [app incident-id _incident]
   (let [fixed-now (t/internal-now)]
     (helpers/fixture-with-fixed-time
      fixed-now

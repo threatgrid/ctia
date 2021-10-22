@@ -79,7 +79,8 @@
   (atom {}))
 
 ;; TODO move to Trapperkeeper service
-(s/def default-named-type-registry
+;; TODO: remove unused var
+#_(s/def default-named-type-registry
   :- NamedTypeRegistry
   (create-named-type-registry))
 
@@ -122,7 +123,7 @@
   "A GraphQL Type Name must be non-null, non-empty and match [_A-Za-z][_0-9A-Za-z]*"
   [n]
   (some?
-   (when (and n (not (empty? n)))
+   (when (and n (seq n))
      (re-matches #"[_A-Za-z][_0-9A-Za-z]*" n))))
 
 (defn valid-type-names?
@@ -242,7 +243,7 @@
    fragments :- {s/Keyword FragmentDefinition}]
   (let [selection-set (get-selections-get env)
         first-fields (keys (->clj selection-set))
-        fields (mapcat (fn [[k v]] v) selection-set)
+        fields (mapcat (fn [[_k v]] v) selection-set)
         detected-selections (fields->selections
                              (concat fields
                                      (->clj (.getFields env))) fragments)]

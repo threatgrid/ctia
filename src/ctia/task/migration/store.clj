@@ -161,7 +161,7 @@
       (:value res))))
 
 (defn store-size
-  [{:keys [conn indexname mapping]}]
+  [{:keys [conn indexname _mapping]}]
   (or (retry es-max-retry ductile.doc/count-docs conn indexname)
       0))
 
@@ -199,7 +199,8 @@
 
 (def conn-overrides {:cm (conn/make-connection-manager {:timeout timeout})})
 
-(defn store->map
+;; TODO: remove unused var
+#_(defn store->map
   [store-record]
   (es-store/store->map store-record conn-overrides))
 
@@ -481,7 +482,7 @@ Rollover requires refresh so we cannot just call ES with condition since refresh
 (s/defn batch-delete
   "delete a batch of documents given their ids"
   [{:keys [conn indexname]
-    entity-type :type} :- StoreMap
+    _entity-type :type} :- StoreMap
    ids :- [s/Str]]
   (when (seq ids)
     (ductile.index/refresh! conn indexname)

@@ -2,7 +2,7 @@
   (:require
    [onyx.kafka.helpers :as okh]
    [onyx.plugin.kafka :as opk])
-  (:import [kafka.admin AdminUtils AdminClient]
+  (:import [kafka.admin AdminUtils]
            [org.apache.kafka.common TopicPartition]
            [org.apache.kafka.clients.consumer ConsumerRebalanceListener
             KafkaConsumer]
@@ -35,8 +35,7 @@
            (get-in ssl [:key :password])})))
 
 (defn build-producer ^KafkaProducer [kafka-props]
-  (let [producer-opts {}
-        {:keys [request-size compression]} kafka-props
+  (let [{:keys [request-size compression]} kafka-props
         compression-type (:type compression)
         address (get-in kafka-props [:zk :address])
         brokers (opk/find-brokers {:kafka/zookeeper address})
@@ -50,7 +49,7 @@
                         (okh/byte-array-serializer))))
 
 (defn build-consumer ^KafkaConsumer [kafka-props]
-  (let [{:keys [request-size]} kafka-props
+  (let [{:keys [_request-size]} kafka-props
         address (get-in kafka-props [:zk :address])
         brokers (opk/find-brokers {:kafka/zookeeper address})
         kafka-config (cond-> {"bootstrap.servers" brokers
@@ -119,7 +118,7 @@
 (defn delete-topic [kafka-props]
   (let [address (get-in kafka-props [:zk :address])
         {:keys [name
-                num-partitions
-                replication-factor]}
+                _num-partitions
+                _replication-factor]}
         (:topic kafka-props)]
     (kafka-delete-topic address name)))

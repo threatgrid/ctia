@@ -2,22 +2,20 @@
   (:require
    [clj-momo.lib.clj-time.core :as time]
    [clojure.string :as str]
-   [ctia.domain.entities
-    :refer
-    [page-with-long-id
-     un-store
-     un-store-page
-     with-long-id]]
+   [ctia.domain.entities :refer [page-with-long-id
+                                 un-store
+                                 un-store-page
+                                 with-long-id]]
    [ctia.flows.crud :as flows]
    [ctia.http.middleware.auth]
-   [ctia.http.routes.common :refer [capabilities->description
-                                    created
-                                    paginated-ok
-                                    search-options
-                                    wait_for->refresh
-                                    search-query
-                                    coerce-date-range
-                                    format-agg-result]]
+   [ctia.http.routes.common :as routes.common :refer [capabilities->description
+                                                      created
+                                                      paginated-ok
+                                                      search-options
+                                                      wait_for->refresh
+                                                      search-query
+                                                      coerce-date-range
+                                                      format-agg-result]]
    [ctia.lib.compojure.api.core :refer [context DELETE GET POST PUT PATCH routes]]
    [ctia.schemas.core :refer [APIHandlerServices DelayedRoutes]]
    [ctia.schemas.search-agg :refer [HistogramParams
@@ -36,8 +34,7 @@
    [ring.swagger.schema :refer [describe]]
    [ring.util.http-response :refer [no-content not-found ok forbidden]]
    [schema-tools.core :as st]
-   [schema.core :as s]
-   [ctia.http.routes.common :as routes.common]))
+   [schema.core :as s]))
 
 (s/defn capitalize-entity [entity :- (s/pred simple-keyword?)]
   (-> entity name str/capitalize))

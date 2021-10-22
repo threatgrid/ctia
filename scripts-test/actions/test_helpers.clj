@@ -1,7 +1,7 @@
 (ns actions.test-helpers
   (:require [actions.actions-helpers :as h]))
 
-(defn mk-state [init]
+(defn mk-state [_init]
   (let [state (atom {:history []})
         grab-history (fn []
                        (let [[{:keys [history]}]

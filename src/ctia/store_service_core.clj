@@ -57,6 +57,6 @@
 
 (s/defn stop :- (st/optional-keys StoreServiceCtx)
   [ctx :- StoreServiceCtx]
-  (doseq [[kw [s]] (all-stores ctx)]
+  (doseq [[_kw [s]] (all-stores ctx)]
     (close s))
   ctx)

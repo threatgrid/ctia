@@ -57,7 +57,7 @@
     (log/warn "Ensure Kafka topic creation")
     (try
       (lk/create-topic kafka-props)
-      (catch org.apache.kafka.common.errors.TopicExistsException e
+      (catch org.apache.kafka.common.errors.TopicExistsException _e
         (log/info "Kafka topic already exists")))
 
     (->KafkaEventPublisher
@@ -66,7 +66,7 @@
 
 (defrecord RedisMQPublisher [queue]
   Hook
-  (init [self]
+  (init [_self]
     :nothing)
   (destroy [_]
     :nothing)
