@@ -184,7 +184,6 @@
                 :confidence "Low"
                 :source "test"
                 :tlp "green"
-                :client_id jwt-client-id,
                 :owner "56bb5f8c-cc4e-4ed3-a91a-c6604287fe32",
                 :groups ["63489cf9-561c-4958-a13d-6d84b7ef09d4"]
                 :schema_version schema-version
