@@ -328,4 +328,14 @@
              (= 1 (count res))
              (-> res first
                  (select-keys (keys expected))
+                 (= expected))))
+
+          "using double-quotes at the end of the query"
+          {:full-text [{:query "intrusion event 3\\:19187\\:7 incident \"\""}]
+           :fields ["title" "source"]}
+          (fn [res]
+            (and
+             (= 1 (count res))
+             (-> res first
+                 (select-keys (keys expected))
                  (= expected))))))))))
