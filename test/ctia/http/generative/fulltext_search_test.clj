@@ -7,14 +7,13 @@
    [ctia.bundle.core :as bundle]
    [ctia.http.generative.properties :as prop]
    [ctia.lib.utils :as utils]
+   [ctia.store :as store]
    [ctia.test-helpers.core :as helpers]
    [ctia.test-helpers.es :as es-helpers]
    [ctia.test-helpers.fake-whoami-service :as whoami-helpers]
    [ctia.test-helpers.search :as th.search]
    [ctim.examples.bundles :refer [bundle-maximal]]
    [ctim.schemas.bundle :as bundle.schema]
-   [ductile.conn :as conn]
-   [ductile.document :as ductile.doc]
    [ductile.index :as es-index]
    [puppetlabs.trapperkeeper.app :as app]))
 
@@ -277,48 +276,56 @@
    (helpers/fixture-ctia-with-app
     (fn [app]
       (let [{{:keys [get-store]} :StoreService :as services} (app/service-graph app)
-            {:keys [index conn]} (-> (get-store :incident) :state)
+
+            incidents-store (get-store :incident)
 
             expected {:title  "intrusion event 3:19187:7 incident"
                       :source "ngfw_ips_event_service"}
-            bundle (->>
-                    :incidents
-                    bundle-gen-for
-                    (gen/fmap
-                     (fn [bndl]
-                       (update bndl :incidents
-                               (fn [items]
-                                 (utils/update-items items #(merge % expected))))))
-                    gen/generate)
+            bundle   (->>
+                      :incidents
+                      bundle-gen-for
+                      (gen/fmap
+                       (fn [bndl]
+                         (update bndl :incidents
+                                 (fn [items]
+                                   (utils/update-items items #(merge % expected))))))
+                      gen/generate)
+
             _ (bundle/import-bundle
                bundle
                nil    ;; external-key-prefixes
                login services)
-            base-query {:query_string {:query "the intrusion event 3\\:19187\\:7 incident"
-                                       :fields ["title" "source.text"]
-                                       :default_operator "AND"}}
-            ignore-ks [:created :groups :id :incident_time :modified :owner :timestamp]]
-        (are [desc query check-fn] (let [res (:data (ductile.doc/query conn index query {}))]
+
+            ignore-ks  [:created :groups :id :incident_time :modified :owner :timestamp]]
+        (are [desc query check-fn] (let [res (-> incidents-store
+                                                 (store/query-string-search
+                                                  (merge query {:default_operator "AND"})
+                                                  login {})
+                                                 :data)]
                                      (testing (str "query: " query)
                                        (is (check-fn res) desc)))
           "base query matches expected data"
-          base-query
-          #(-> % first (select-keys (keys expected)) (= expected))
+          {:full-text [{:query "intrusion event 3\\:19187\\:7 incident"}]}
+          (fn [res]
+            (and
+             (= 1 (count res))
+             (-> res first
+                 (select-keys (keys expected))
+                 (= expected))))
 
-          "querying all matches generated incidents minus selected fields in each entity"
-          (assoc-in base-query [:query_string :query] "*")
+          "querying all, matches generated incidents, minus selected fields in each entity"
+          {:full-text [{:query "*"}]}
           (fn [res]
             (let [norm (fn [data] (->> data (map #(apply dissoc % ignore-ks)) set))]
               (= (-> bundle :incidents norm)
                  (-> res norm))))
 
-          "query attempt to use 'title' and 'source' expected to return nothing in ES 5"
-          (assoc-in base-query [:query_string :fields] ["title" "source"])
+          "using 'title' and 'source' fields + a stop word"
+          {:full-text [{:query "that intrusion event 3\\:19187\\:7 incident"}]
+           :fields ["title" "source"]}
           (fn [res]
-            (if (= version 5)
-              (empty? res)
-              (-> res first (select-keys (keys expected)) (= expected))))
-
-          "using 'source.text' should work in both ES 5 and 7"
-          (assoc-in base-query [:query_string :fields] ["title" "source.text"])
-          (fn [res] (-> res first (select-keys (keys expected)) (= expected)))))))))
+            (and
+             (= 1 (count res))
+             (-> res first
+                 (select-keys (keys expected))
+                 (= expected))))))))))
