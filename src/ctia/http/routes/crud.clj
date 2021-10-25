@@ -196,14 +196,7 @@
  (s/fn [{{:keys [get-store]} :StoreService
          :as services} :- APIHandlerServices]
   (let [capitalized (capitalize-entity entity)
-        search-q-params* (st/merge
-                          search-q-params
-                          {;; We cannot name the parameter :fields, because we already have :fields (part
-                           ;; of search-q-params). That key is to select a subsets of fields of the
-                           ;; retrieved document and it gets passed to the `_source` parameter of
-                           ;; Elasticsearch. For more: www.elastic.co/guide/en/elasticsearch/reference/current/mapping-source-field.html
-                           (s/optional-key :search_fields)
-                           (describe (st/get-in search-q-params [:fields]) "'fields' key of Elasticsearch Fulltext Query.")})
+        search-q-params* (routes.common/prep-es-fields-schema entity-crud-config)
         search-filters (st/dissoc search-q-params
                                   :sort_by
                                   :sort_order
