@@ -210,7 +210,6 @@
    (st/optional-keys
     {:authorized_users [Str]
      :authorized_groups [Str]
-     :client_id s/Str
      :owner s/Str
      :groups [s/Str]})))
 
