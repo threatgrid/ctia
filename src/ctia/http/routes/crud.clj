@@ -2,42 +2,24 @@
   (:require
    [clj-momo.lib.clj-time.core :as time]
    [clojure.string :as str]
-   [ctia.domain.entities
-    :refer
-    [page-with-long-id
-     un-store
-     un-store-page
-     with-long-id]]
+   [ctia.domain.entities :as ent :refer [with-long-id]]
    [ctia.flows.crud :as flows]
    [ctia.http.middleware.auth]
-   [ctia.http.routes.common :refer [capabilities->description
-                                    created
-                                    paginated-ok
-                                    search-options
-                                    wait_for->refresh
-                                    search-query
-                                    coerce-date-range
-                                    format-agg-result]]
+   [ctia.http.routes.common :as routes.common :refer [capabilities->description
+                                                      wait_for->refresh
+                                                      search-query
+                                                      coerce-date-range]]
    [ctia.lib.compojure.api.core :refer [context DELETE GET POST PUT PATCH routes]]
    [ctia.schemas.core :refer [APIHandlerServices DelayedRoutes]]
    [ctia.schemas.search-agg :refer [HistogramParams
                                     CardinalityParams
                                     TopnParams
                                     MetricResult]]
-   [ctia.store :refer [query-string-search
-                       query-string-count
-                       aggregate
-                       create-record
-                       delete-record
-                       read-record
-                       update-record
-                       list-records
-                       delete-search]]
+   [ctia.store :as store]
    [ring.swagger.schema :refer [describe]]
    [ring.util.http-response :refer [no-content not-found ok forbidden]]
    [schema-tools.core :as st]
-   [schema.core :as s]
-   [ctia.http.routes.common :as routes.common]))
+   [schema.core :as s]))
 
 (s/defn capitalize-entity [entity :- (s/pred simple-keyword?)]
   (-> entity name str/capitalize))
@@ -45,7 +27,7 @@
 (defn flow-get-by-ids-fn
   [{:keys [get-store entity identity-map]}]
   (let [get-by-id #(-> (get-store entity)
-                       (read-record
+                       (store/read-record
                         %
                         identity-map
                         {}))]
@@ -55,7 +37,7 @@
 (defn flow-update-fn
   [{:keys [identity-map wait_for get-store entity]}]
   (let [update-fn #(-> (get-store entity)
-                       (update-record
+                       (store/update-record
                         (:id %)
                         %
                         identity-map
@@ -67,7 +49,7 @@
   [{:keys [identity-map wait_for get-store entity]}]
   (let [delete-fn
         #(-> (get-store entity)
-             (delete-record
+             (store/delete-record
               %
               identity-map
               (wait_for->refresh wait_for)))]
@@ -124,7 +106,7 @@
            :partial-entities [patch]
            :spec new-spec)
           first
-          un-store
+          ent/un-store
           ok)
       (not-found (str (capitalize-entity entity) " not found")))))
 
@@ -246,7 +228,7 @@
                     :entity-type entity
                     :realize-fn realize-fn
                     :store-fn #(-> (get-store entity)
-                                   (create-record
+                                   (store/create-record
                                      %
                                      identity-map
                                      (wait_for->refresh wait_for)))
@@ -256,8 +238,8 @@
                     :entities [new-entity]
                     :spec new-spec)
                    first
-                   un-store
-                   created))))
+                   ent/un-store
+                   routes.common/created))))
      (when can-update?
        (let [capabilities put-capabilities]
          (PUT "/:id" []
@@ -282,7 +264,7 @@
                             :entities [(assoc entity-update :id id)]
                             :spec new-spec)
                            first
-                           un-store)]
+                           ent/un-store)]
                 (ok updated-rec)
                 (not-found)))))
      (when can-patch?
@@ -310,7 +292,7 @@
                               :partial-entities [(assoc partial-update :id id)]
                               :spec new-spec)
                              first
-                             un-store)]
+                             ent/un-store)]
                   (ok updated-rec)
                   (not-found)))))
      (when can-get-by-external-id?
@@ -328,13 +310,13 @@
               :auth-identity identity
               :identity-map identity-map
               (-> (get-store entity)
-                  (list-records
+                  (store/list-records
                     {:all-of {:external_ids external_id}}
                     identity-map
                     q)
-                  (page-with-long-id services)
-                  un-store-page
-                  paginated-ok))))
+                  (ent/page-with-long-id services)
+                  ent/un-store-page
+                  routes.common/paginated-ok))))
 
      (when can-search?
        (let [delete-search-capabilities (->> [search-capabilities delete-capabilities]
@@ -350,13 +332,13 @@
              :capabilities search-capabilities
              :query [params search-q-params*]
              (-> (get-store entity)
-                 (query-string-search
+                 (store/query-string-search
                    (search-query date-field params)
                    identity-map
-                   (select-keys params search-options))
-                 (page-with-long-id services)
-                 un-store-page
-                 paginated-ok))
+                   (select-keys params routes.common/search-options))
+                 (ent/page-with-long-id services)
+                 ent/un-store-page
+                 routes.common/paginated-ok))
            (GET "/count" []
              :return s/Int
              :summary (format "Count %s matching a Lucene/ES query string and field filters" capitalized)
@@ -364,7 +346,7 @@
              :capabilities search-capabilities
              :query [params search-filters]
              (ok (-> (get-store entity)
-                     (query-string-count
+                     (store/query-string-count
                        (search-query date-field params)
                        identity-map))))
            (DELETE "/" []
@@ -393,12 +375,12 @@
                  (ok
                   (if (:REALLY_DELETE_ALL_THESE_ENTITIES params)
                     (-> (get-store entity)
-                        (delete-search
+                        (store/delete-search
                           query
                           identity-map
                           (wait_for->refresh (:wait_for params))))
                     (-> (get-store entity)
-                        (query-string-count
+                        (store/query-string-count
                           query
                           identity-map))))))))))
      (when can-aggregate?
@@ -419,11 +401,11 @@
                              agg-q (st/assoc (st/select-schema params HistogramParams)
                                              :agg-type :histogram)]
                          (-> (get-store entity)
-                             (aggregate
+                             (store/aggregate
                                search-q
                                agg-q
                                identity-map)
-                             (format-agg-result :histogram aggregate-on search-q)
+                             (routes.common/format-agg-result :histogram aggregate-on search-q)
                              ok)))
                   (GET "/topn" []
                        :return MetricResult
@@ -436,11 +418,11 @@
                              agg-q (st/assoc (st/select-schema params TopnParams)
                                              :agg-type :topn)]
                          (-> (get-store entity)
-                             (aggregate
+                             (store/aggregate
                                search-q
                                agg-q
                                identity-map)
-                             (format-agg-result :topn aggregate-on search-q)
+                             (routes.common/format-agg-result :topn aggregate-on search-q)
                              ok)))
                   (GET "/cardinality" []
                        :return MetricResult
@@ -453,11 +435,11 @@
                              agg-q (st/assoc (st/select-schema params CardinalityParams)
                                              :agg-type :cardinality)]
                          (-> (get-store entity)
-                             (aggregate
+                             (store/aggregate
                                search-q
                                agg-q
                                identity-map)
-                             (format-agg-result :cardinality aggregate-on search-q)
+                             (routes.common/format-agg-result :cardinality aggregate-on search-q)
                              ok))))))
      (let [capabilities get-capabilities]
        (GET "/:id" []
@@ -470,13 +452,13 @@
             :auth-identity identity
             :identity-map identity-map
             (if-let [rec (-> (get-store entity)
-                             (read-record
+                             (store/read-record
                                id
                                identity-map
                                params))]
               (-> rec
                   (with-long-id services)
-                  un-store
+                  ent/un-store
                   ok)
               (not-found))))
 
