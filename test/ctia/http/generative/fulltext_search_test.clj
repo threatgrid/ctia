@@ -1,13 +1,12 @@
 (ns ctia.http.generative.fulltext-search-test
   (:require
-   [clojure.test :refer [deftest testing is are use-fixtures join-fixtures]]
+   [clojure.test :refer [deftest testing is use-fixtures join-fixtures]]
    [clojure.test.check.generators :as gen]
    [ctia.auth.capabilities :as capabilities]
    [ctia.auth.threatgrid :refer [map->Identity]]
    [ctia.bundle.core :as bundle]
    [ctia.http.generative.properties :as prop]
    [ctia.lib.utils :as utils]
-   [ctia.store :as store]
    [ctia.test-helpers.core :as helpers]
    [ctia.test-helpers.es :as es-helpers]
    [ctia.test-helpers.fake-whoami-service :as whoami-helpers]
@@ -204,25 +203,7 @@
                           :query         "(fried eggs eggplant) OR (fried eggs potato)"
                           :search_fields ["title"]}
        :bundle-gen       bundle-gen
-       :check            check-fn}])
-
-   ;; TODO: Re-enable after solving https://github.com/threatgrid/ctia/pull/1152#pullrequestreview-780638906
-   #_(let [expected {:title  "intrusion event 3:19187:7 incident"
-                     :source "ngfw_ips_event_service"}
-           bundle (gen/fmap
-                   (fn [bndl]
-                     (update bndl :incidents
-                             (fn [items]
-                               (utils/update-items items #(merge % expected)))))
-                   (bundle-gen-for :incidents))
-           check-fn (fn [_ _ _ res]
-                      (is (= expected
-                             (-> res :parsed-body first (select-keys [:source :title])))))]
-       [{:test-description "searching in mixed fields indexed as pure text and keyword"
-         :query-params     {:query "the intrusion event 3\\:19187\\:7 incident"
-                            :search_fields ["title" "source"]}
-         :bundle-gen       bundle
-         :check            check-fn}])))
+       :check            check-fn}])))
 
 (defn test-search-case
   [app
@@ -260,82 +241,3 @@
       (doseq [test-case (if-let [cases (seq (filter :only (test-cases)))]
                           cases (test-cases))]
         (test-search-case app test-case))))))
-
-;; For the time being (before we fully migrate to ES7), we need to test the behavior
-;; of searching in multiple heterogeneous types of fields, i.e., when some fields are
-;; mapped to 'text' and others to 'keyword'.
-;;
-;; Since at the moment we cannot implement a workaround in the API because that would
-;; require updating mappings on the live, production data, we'd have to test this by
-;; directly sending queries into ES, bypassing the CTIA routes.
-(deftest mixed-fields-text-and-keyword-multi-match
-  (es-helpers/for-each-es-version
-   "Mixed fields text and keyword multimatch"
-   [5 7]
-   #(es-index/delete! % "ctia_*")
-   (helpers/fixture-ctia-with-app
-    (fn [app]
-      (let [{{:keys [get-store]} :StoreService :as services} (app/service-graph app)
-
-            incidents-store (get-store :incident)
-
-            expected {:title  "intrusion event 3:19187:7 incident"
-                      :source "ngfw_ips_event_service"}
-            bundle   (->>
-                      :incidents
-                      bundle-gen-for
-                      (gen/fmap
-                       (fn [bndl]
-                         (update bndl :incidents
-                                 (fn [items]
-                                   (utils/update-items items #(merge % expected))))))
-                      gen/generate)
-
-            _ (bundle/import-bundle
-               bundle
-               nil    ;; external-key-prefixes
-               login services)
-
-            ignore-ks  [:created :groups :id :incident_time :modified :owner :timestamp]]
-        (are [desc query check-fn] (let [res (-> incidents-store
-                                                 (store/query-string-search
-                                                  (merge query {:default_operator "AND"})
-                                                  login {})
-                                                 :data)]
-                                     (testing (str "query: " query)
-                                       (is (check-fn res) desc)))
-          "base query matches expected data"
-          {:full-text [{:query "intrusion event 3\\:19187\\:7 incident"}]}
-          (fn [res]
-            (and
-             (= 1 (count res))
-             (-> res first
-                 (select-keys (keys expected))
-                 (= expected))))
-
-          "querying all, matches generated incidents, minus selected fields in each entity"
-          {:full-text [{:query "*"}]}
-          (fn [res]
-            (let [norm (fn [data] (->> data (map #(apply dissoc % ignore-ks)) set))]
-              (= (-> bundle :incidents norm)
-                 (-> res norm))))
-
-          "using 'title' and 'source' fields + a stop word"
-          {:full-text [{:query "that intrusion event 3\\:19187\\:7 incident"}]
-           :fields ["title" "source"]}
-          (fn [res]
-            (and
-             (= 1 (count res))
-             (-> res first
-                 (select-keys (keys expected))
-                 (= expected))))
-
-          "using double-quotes at the end of the query"
-          {:full-text [{:query "intrusion event 3\\:19187\\:7 incident \"\""}]
-           :fields ["title" "source"]}
-          (fn [res]
-            (and
-             (= 1 (count res))
-             (-> res first
-                 (select-keys (keys expected))
-                 (= expected))))))))))
