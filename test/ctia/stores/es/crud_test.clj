@@ -778,3 +778,24 @@
          (is (= expected-delete-result
                 (-> (update-in delete-res [:errors :not-found] set)
                     (update :deleted set)))))))))
+
+(deftest with-default-sort-field-test
+  (let [test-cases [{:msg "Use default hardcoded value when sort_by is not defined and no default sort is configured"
+                     :expected {:sort_by "_doc,id"}
+                     :es-params {}
+                     :props  {}}
+                    {:msg "Always use es-params sort_by when provided"
+                     :expected {:sort_by "title"}
+                     :es-params {:sort_by "title"}
+                     :props  {:default-sort "id"}}
+                    {:msg "Always use es-params sort_by when provided"
+                     :expected {:sort_by "title"}
+                     :es-params {:sort_by "title"}
+                     :props  {}}
+                    {:msg "When sort_by is not provided, use configured default-sort"
+                     :expected {:sort_by "id"}
+                     :es-params {}
+                     :props  {:default-sort "id"}}]]
+    (doseq [{:keys [msg expected es-params props]} test-cases]
+      (is (= expected (sut/with-default-sort-field es-params props))
+          msg))))

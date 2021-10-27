@@ -360,13 +360,13 @@ It returns the documents with full hits meta data including the real index in wh
                         {:type :access-control-error})))
       false)))
 
-(def default-sort-field "_doc,id")
-
 (defn with-default-sort-field
-  [es-params]
+  [es-params
+   {:keys [default-sort]
+    :or {default-sort "_doc,id"}}]
   (if (contains? es-params :sort_by)
     es-params
-    (assoc es-params :sort_by default-sort-field)))
+    (assoc es-params :sort_by default-sort)))
 
 (s/defschema FilterSchema
   (st/optional-keys
@@ -427,7 +427,7 @@ It returns the documents with full hits meta data including the real index in wh
         coerce! (coerce-to-fn response-schema)]
     (s/fn :- response-schema
       [{{{:keys [get-in-config]} :ConfigService} :services
-        :keys [conn index]} :- ESConnState
+        :keys [conn index props]} :- ESConnState
        {:keys [all-of one-of query]
         :or {all-of {} one-of {}}} :- FilterSchema
        ident
@@ -447,7 +447,7 @@ It returns the documents with full hits meta data including the real index in wh
                                             (q/bool bool-params)
                                             (-> es-params
                                                 rename-sort-fields
-                                                with-default-sort-field
+                                                (with-default-sort-field props)
                                                 make-es-read-params)))
           (restricted-read? ident) (update :data
                                            access-control-filter-list
@@ -497,7 +497,7 @@ It returns the documents with full hits meta data including the real index in wh
   (let [response-schema (list-response-schema Model)
         coerce!         (coerce-to-fn response-schema)]
     (s/fn :- response-schema
-      [es-conn-state :- ESConnState
+      [{:keys [props] :as es-conn-state} :- ESConnState
        search-query :- SearchQuery
        ident
        es-params]
@@ -511,7 +511,7 @@ It returns the documents with full hits meta data including the real index in wh
                           query
                           (-> es-params
                               rename-sort-fields
-                              with-default-sort-field
+                              (with-default-sort-field props)
                               make-es-read-params)))
 
           (restricted-read? ident) (update

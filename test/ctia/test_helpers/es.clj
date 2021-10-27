@@ -100,6 +100,9 @@
                       "ctia.store.es.default.version" 5
                       "ctia.store.es.default.auth" {:type :basic-auth
                                                     :params {:user "elastic" :pwd "ductile"}}
+                      "ctia.store.es.default.default-sort" "timestamp,created,id"
+                      "ctia.store.es.event.default-sort" "timestamp,id"
+                      "ctia.store.es.relationship.default-sort" "created,id"
                       "ctia.store.es.actor.indexname" "ctia_actor"
                       "ctia.store.es.actor.default_operator" "OR"
                       "ctia.store.es.asset.indexname" "ctia_assets"
