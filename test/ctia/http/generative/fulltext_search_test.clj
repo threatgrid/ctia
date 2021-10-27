@@ -206,6 +206,27 @@
        :bundle-gen       bundle-gen
        :check            check-fn}])
 
+   (let [bundle-gen (->> :incidents
+                         bundle-gen-for
+                         (gen/fmap
+                          (fn [bundle]
+                            (update
+                             bundle :incidents
+                             (fn [incidents]
+                               (utils/update-items
+                                incidents
+                                #(assoc % :title "fried eggs")))))))
+         check-fn   (fn [_ _ _ res]
+                      (is (seq (get-in res [:parsed-body :errors :search_fields]))))]
+     [{:test-description "passing non-existing fields shouldn't be allowed"
+       :query-params     {:query "*", :search_fields ["bad-field"]}
+       :bundle-gen       bundle-gen
+       :check            check-fn}
+      {:test-description "passing legit entity, albeit non-searchable fields still not allowed"
+       :query-params     {:query "*", :search_fields ["incident_time.discovered"]}
+       :bundle-gen       bundle-gen
+       :check            check-fn}])
+
    ;; TODO: Re-enable after solving https://github.com/threatgrid/ctia/pull/1152#pullrequestreview-780638906
    #_(let [expected {:title  "intrusion event 3:19187:7 incident"
                      :source "ngfw_ips_event_service"}
