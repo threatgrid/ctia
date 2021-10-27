@@ -43,6 +43,9 @@
   (assoc text
          :fields {:whole token}))
 
+(def searchable-token
+  (assoc token :fields {:text text}))
+
 (def external-reference
   {:properties
    {:source_name token
@@ -68,7 +71,7 @@
    :description text})
 
 (def sourcable-entity-mapping
-  {:source token
+  {:source searchable-token
    :source_uri token})
 
 (def stored-entity-mapping
