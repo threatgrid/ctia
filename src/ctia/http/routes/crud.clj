@@ -164,7 +164,8 @@
            can-get-by-external-id?
            date-field
            histogram-fields
-           enumerable-fields]
+           enumerable-fields
+           searchable-fields]
     :or {hide-delete? false
          can-post? true
          can-update? true
@@ -331,14 +332,16 @@
              :description (capabilities->description search-capabilities)
              :capabilities search-capabilities
              :query [params search-q-params*]
-             (-> (get-store entity)
-                 (store/query-string-search
-                   (search-query date-field params)
-                   identity-map
-                   (select-keys params routes.common/search-options))
-                 (ent/page-with-long-id services)
-                 ent/un-store-page
-                 routes.common/paginated-ok))
+             (let [params* (routes.common/enforce-search-fields
+                            params searchable-fields)]
+               (-> (get-store entity)
+                   (store/query-string-search
+                    (search-query date-field params*)
+                    identity-map
+                    (select-keys params* routes.common/search-options))
+                   (ent/page-with-long-id services)
+                   ent/un-store-page
+                   routes.common/paginated-ok)))
            (GET "/count" []
              :return s/Int
              :summary (format "Count %s matching a Lucene/ES query string and field filters" capitalized)
