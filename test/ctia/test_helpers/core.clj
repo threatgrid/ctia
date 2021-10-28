@@ -524,7 +524,7 @@
   (-> app
       app/service-graph
       (csu/select-service-subgraph
-        {:FeaturesService #{:enabled?}})))
+        {:FeaturesService #{:entity-enabled?}})))
 
 (defn plural-key->entity
   "Returns entity map for given plural form of the entity key"

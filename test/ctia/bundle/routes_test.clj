@@ -434,7 +434,7 @@
                             :asset_properties_refs #{"http://ex.tld/ctia/asset-properties/asset-properties-5023697b-3857-4652-9b53-ccda297f9c3e"}
                             :target_record_refs    #{"http://ex.tld/ctia/target-record/target-record-5023697b-3857-4652-9b53-ccda297f9c3e"}
                             :target_records        (set-of target-record-maximal)}
-          api-handler-svcs {:FeaturesService {:enabled? #(contains? selected-keys %)}}]
+          api-handler-svcs {:FeaturesService {:entity-enabled? #(contains? selected-keys %)}}]
       (s/set-fn-validation! false)    ;; otherwise it fails for incomplete APIHandlerServices passed into `prep-bundle-schema`
       (is (map? (s/validate (bundle.routes/prep-bundle-schema api-handler-svcs) fake-bundle)))
       (is (thrown? Exception

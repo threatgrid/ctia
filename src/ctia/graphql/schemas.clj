@@ -174,10 +174,10 @@
       keyword))
 
 (defn- disabled-entities
-  [{{:keys [enabled?]} :FeaturesService}]
+  [{{:keys [entity-enabled?]} :FeaturesService}]
   (->> (entities/all-entities)
        keys
-       (filter #(not (enabled? %)))))
+       (filter #(not (entity-enabled? %)))))
 
 (defn- entities+plural-forms
   "Gets map of entity keys with their plural forms."

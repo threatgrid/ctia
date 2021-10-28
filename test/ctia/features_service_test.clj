@@ -11,13 +11,13 @@
     (th/with-properties ["ctia.features.disable" "asset,actor,sighting"]
       (th/fixture-ctia-with-app
        (fn [app]
-         (let [{:keys [enabled?]} (th/get-service-map app :FeaturesService)]
+         (let [{:keys [entity-enabled?]} (th/get-service-map app :FeaturesService)]
            (testing "Asset, Actor and Sighting are disabled"
-             (is (not-any? enabled? [:asset :actor :sighting])))
+             (is (not-any? entity-enabled? [:asset :actor :sighting])))
            (testing "Incident, Indicator entities are enabled"
-             (is (every? enabled? [:incident :indicator])))
+             (is (every? entity-enabled? [:incident :indicator])))
            (testing "It should not return `true` for non-existing entity keys"
-             (is (not (enabled? :lorem-ipsum))))))))))
+             (is (not (entity-enabled? :lorem-ipsum))))))))))
 
 (deftest routes-for-disabled-entities-test
   (let [try-route (fn [app entity]

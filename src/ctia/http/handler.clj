@@ -116,7 +116,7 @@
    :compojure.api.exception/default ex/default-error-handler})
 
 (s/defn api-tags
-  [{{:keys [enabled?]} :FeaturesService} :- APIHandlerServices]
+  [{{:keys [entity-enabled?]} :FeaturesService} :- APIHandlerServices]
   (->>
    [[:actor               "Actor"               "Actor operations"]
     [:asset               "Asset"               "Asset operations"]
@@ -148,7 +148,7 @@
     [:verdict             "Verdict"             "Verdict operations"]
     [:version             "Version"             "Version Information"]]
    (keep (fn [[k n desc]]
-          (when (enabled? k)
+          (when (entity-enabled? k)
             {:name n :description desc})))))
 
 (defn apply-oauth2-swagger-conf
@@ -185,10 +185,10 @@
                     :flow flow}))))
 
 (defn- mark-disabled-entities
-  [{{:keys [enabled?]} :FeaturesService}
+  [{{:keys [entity-enabled?]} :FeaturesService}
    {:keys [entity] :as entity-map}]
   (cond-> entity-map
-    (not (enabled? entity)) (assoc :no-api? true)))
+    (not (entity-enabled? entity)) (assoc :no-api? true)))
 
 (defn make-text-plain-format-encoder
   "Make a simple format encoder for the text/plain

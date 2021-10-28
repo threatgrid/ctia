@@ -13,7 +13,7 @@
   would not be visible in Swagger console."
   (feature-flags [this]
     "Returns all feature flags defined in the config")
-  (enabled? [this key]
+  (entity-enabled? [this key]
     "Returns `true` unless entity key is marked as Disabled in properties config"))
 
 (tk/defservice features-service
@@ -21,7 +21,7 @@
   [[:ConfigService get-in-config]]
   (feature-flags [this]
     (get-in-config [:ctia :features]))
-  (enabled?
+  (entity-enabled?
    [this key]
    (when (-> (entities/all-entities)
              keys

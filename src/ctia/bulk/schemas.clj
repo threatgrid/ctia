@@ -31,8 +31,8 @@
 
 (s/defn get-entities :- [s/Any]
   "Returns list of enabled entities"
-  [{{:keys [enabled?]} :FeaturesService} :- GetEntitiesServices]
-  (->> (entities/all-entities) (filter (fn [[k _]] (enabled? k)))))
+  [{{:keys [entity-enabled?]} :FeaturesService} :- GetEntitiesServices]
+  (->> (entities/all-entities) (filter (fn [[k _]] (entity-enabled? k)))))
 
 (s/defn Bulk :- (s/protocol s/Schema)
   "Returns Bulk schema without disabled entities"
