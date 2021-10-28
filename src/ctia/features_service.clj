@@ -5,22 +5,44 @@
    [puppetlabs.trapperkeeper.core :as tk]))
 
 (defprotocol FeaturesService
-  "Service to read configuration properties under [:ctia :features] key in config.
+  "Service to read configuration properties under [:ctia :features] and [:ctia :feature-flags] keys in config.
 
-  If an option like this: `ctia.features.disable=asset,actor,sighting` is added
-  to the properties file (ctia-default.properties) - http routes for Asset,
-  Actor, and Sighting entities would be disabled and their respective contexts
-  would not be visible in Swagger console."
+  If an option like this: `ctia.features.disable=asset,actor,sighting` is added to
+  the properties file (ctia-default.properties) - http routes for Asset, Actor, and
+  Sighting entities would be disabled and their respective contexts would not be
+  visible in Swagger console.
+
+  Also, can be used to control arbitrary feature flags used for development,
+  key/value pairs, e.g., `ctia.feature-flags=easter_egg:on, experimental_ratio:35`"
   (feature-flags [this]
-    "Returns all feature flags defined in the config")
+    "Returns all feature flags defined in the config with their values")
+  (flag-value [this key]
+    "Returns value of a feature flag")
   (entity-enabled? [this key]
     "Returns `true` unless entity key is marked as Disabled in properties config"))
 
 (tk/defservice features-service
   FeaturesService
   [[:ConfigService get-in-config]]
-  (feature-flags [this]
-    (get-in-config [:ctia :features]))
+  (feature-flags
+   [this]
+   (when-let [fgs-str (some-> [:ctia :feature-flags]
+                              get-in-config
+                              (string/split #","))]
+     (->> fgs-str
+          (map
+           (comp
+            (fn [[k v]] (hash-map
+                         (keyword (string/trim k))
+                         (string/trim v)))
+            (fn [s] (string/split s #":"))
+            string/trim))
+          (apply merge))))
+
+  (flag-value
+   [this key]
+   (get (feature-flags this) key))
+
   (entity-enabled?
    [this key]
    (when (-> (entities/all-entities)
@@ -34,3 +56,17 @@
        (set x)
        (contains? x key)
        (not x)))))
+
+(comment
+
+  (require '[ctia.test-helpers.core :as th])
+
+  (th/with-properties
+    ["ctia.features.disable" "asset,actor,sighting"
+     "ctia.feature-flags" "experimental_ratio:35, bubble-gum:50"]
+    (th/fixture-ctia-with-app
+     (fn [app]
+       (let [{:keys [feature-flags]} (th/get-service-map app :FeaturesService)]
+         (println (feature-flags))))))
+
+  )
