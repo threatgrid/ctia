@@ -1,8 +1,7 @@
 (ns ctia.properties-test
   (:require [ctia.properties :as sut]
-            [ductile.schemas :refer [AuthParams]]
+            [ductile.schemas :refer [AuthParams Refresh]]
             [clojure.test :refer [deftest is testing]]
-            [ductile.schemas :refer [Refresh]]
             [schema.core :as s]))
 
 (deftest es-store-impl-properties-test
@@ -24,6 +23,7 @@
             "ctia.store.es.malware.update-mappings" s/Bool
             "ctia.store.es.malware.update-settings" s/Bool
             "ctia.store.es.malware.refresh-mappings" s/Bool
+            "ctia.store.es.malware.default-sort" s/Str
             "ctia.store.es.malware.timeout" s/Num
             "ctia.store.es.malware.auth" AuthParams}
            (sut/es-store-impl-properties "ctia.store.es." "malware")))
@@ -45,6 +45,7 @@
             "prefix.sighting.update-mappings" s/Bool
             "prefix.sighting.update-settings" s/Bool
             "prefix.sighting.refresh-mappings" s/Bool
+            "prefix.sighting.default-sort" s/Str
             "prefix.sighting.timeout" s/Num
             "prefix.sighting.auth" AuthParams}
            (sut/es-store-impl-properties "prefix." "sighting")))))

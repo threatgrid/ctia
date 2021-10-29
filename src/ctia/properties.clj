@@ -40,6 +40,7 @@
    (str prefix store ".update-mappings")  s/Bool
    (str prefix store ".update-settings")  s/Bool
    (str prefix store ".refresh-mappings") s/Bool
+   (str prefix store ".default-sort") s/Str
    (str prefix store ".auth")  AuthParams})
 
 (s/defschema StorePropertiesSchema

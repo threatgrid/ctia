@@ -186,15 +186,6 @@
                              judgements))
                    (set (map :observable
                              (:judgements valid-response-body)))))
-            (testing "using \"_doc\" as default sort by value makes this test fail."
-              (with-redefs [sut/fetch-limit 19
-                            es.crud/default-sort-field "_doc"] ;; _doc is unique per shard, but not per index
-                (is (< (-> (client/get feed-view-url
-                                       {:as :json})
-                           :body
-                           :judgements
-                           count)
-                       (count judgements)))))
 
             ;;teardown
             (is (= 200
