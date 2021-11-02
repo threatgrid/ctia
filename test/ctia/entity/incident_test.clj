@@ -2,6 +2,7 @@
   (:require [clj-momo.lib.clj-time
              [coerce :as tc]
              [core :as t]]
+            [clj-momo.lib.clj-time.core :as time]
             [clj-momo.test-helpers.core :as mth]
             [clojure.test :refer [deftest is join-fixtures testing use-fixtures]]
             [ctia.entity.incident :as sut]
@@ -13,6 +14,7 @@
              [aggregate :refer [test-metric-routes]]
              [fake-whoami-service :as whoami-helpers]
              [store :refer [test-for-each-store-with-app]]]
+            [ctim.domain.id :as id]
             [ctim.examples.incidents
              :refer
              [new-incident-maximal new-incident-minimal]]
@@ -20,6 +22,8 @@
 
 (use-fixtures :once (join-fixtures [mth/fixture-schema-validation
                                     whoami-helpers/fixture-server]))
+
+(def jwt-token (-> "dev-resources/jwt-token.edn" slurp read-string))
 
 (defn partial-operations-tests [app incident-id incident]
   (let [fixed-now (t/internal-now)]
@@ -74,35 +78,49 @@
            (is (get-in updated-incident [:incident_time :remediated]))
 
            (is (= (get-in updated-incident [:incident_time :remediated])
-                  (tc/to-date fixed-now)))))
-       (let [client_id-cases (s/validate
-                               [{:query-string s/Str
-                                 :client_id? s/Bool}]
-                               (concat
-                                 (map #(hash-map :query-string % :client_id? true)
-                                      ["?client_id=true" "?wait_for=true&client_id=true"
-                                       "?wait_for=true&client_id=false&client_id=true"])
-                                 (map #(hash-map :query-string % :client_id? false)
-                                      ["" "?client_id=false" "?wait_for=true&client_id=false"
-                                       "?wait_for=true&client_id=true&client_id=false"])))]
-         (doseq [{:keys [query-string client_id?] :as test-case} client_id-cases
-                 :let [expected-result (if client_id? {:client_id "Containment Achieved"} {})]]
-           (testing (pr-str test-case)
-             (testing "GET /ctia/incident/:id?client_id=..."
-               (let [response (GET app
-                                   (str "ctia/incident/" (:short-id incident-id) query-string)
-                                   :headers {"Authorization" "45c1f5e3f05d0"})
-                     incident (:parsed-body response)]
-                 (is (= 200 (:status response)))
-                 (is (= expected-result (select-keys incident [:client_id])))))
-             (testing "PATCH /ctia/incident/:id?client_id=..."
-               (let [response (PATCH app
-                                     (str "ctia/incident/" (:short-id incident-id) query-string)
-                                     :body {:incident_time {}}
-                                     :headers {"Authorization" "45c1f5e3f05d0"})
-                     incident (:parsed-body response)]
-                 (is (= 200 (:status response)))
-                 (is (= expected-result (select-keys incident [:client_id]))))))))))))
+                  (tc/to-date fixed-now)))))))))
+
+(deftest test-incident-client_id-routes
+  (test-for-each-store-with-app
+    (fn [app]
+      (with-redefs [time/now (constantly (time/date-time 2017 02 16 0 0 0))]
+        (let [bearer (str "Bearer " jwt-token)
+              jwt-client-id "iroh-ui"
+              {incident :parsed-body
+               status :status}
+              (POST app
+                    "ctia/incident"
+                    :body new-incident-minimal
+                    :headers {"Authorization" bearer})
+              _ (is (= 201 status))
+              incident-id (id/long-id->id (:id incident))]
+          (testing "client_id query param"
+            (let [client_id-cases (s/validate
+                                    [{:query-string s/Str
+                                      :client_id? s/Bool}]
+                                    (concat
+                                      (map #(hash-map :query-string % :client_id? true)
+                                           ["?client_id=true"])
+                                      (map #(hash-map :query-string % :client_id? false)
+                                           ["" "?client_id=false"])))]
+              (doseq [{:keys [query-string client_id?] :as test-case} client_id-cases
+                      :let [expected-result (if client_id? {:client_id jwt-client-id} {})]]
+                (testing (pr-str test-case)
+                  (testing "GET /ctia/incident/:id?client_id=..."
+                    (let [response (GET app
+                                        (str "ctia/incident/" (:short-id incident-id) query-string)
+                                        :headers {"Authorization" bearer})
+                          incident (:parsed-body response)]
+                      (is (= 200 (:status response)))
+                      (is (= expected-result (select-keys incident [:client_id])))))
+                  (testing "PATCH /ctia/incident/:id?client_id=..."
+                    (let [response (PATCH app
+                                          (str "ctia/incident/" (:short-id incident-id) query-string)
+                                          :body {:incident_time {}}
+                                          :headers {"Authorization" bearer})
+                          incident (:parsed-body response)]
+                      (is (= 200 (:status response)))
+                      (is (= expected-result (select-keys incident [:client_id]))))))))))))))
 
 (deftest test-incident-crud-routes
   (test-for-each-store-with-app

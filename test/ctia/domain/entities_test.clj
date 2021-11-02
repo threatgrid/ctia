@@ -65,3 +65,28 @@
         (is (= (:created realized-update)
                (:created realized-create)
                (:timestamp realized-create)))))))
+
+(deftest un-store-test
+  (is (= (sut/un-store
+           {:foo 1
+            :created 2
+            :modified 3
+            :client_id 4})
+         {:foo 1}))
+  (doseq [config [nil {} {:keep-client_id false}]]
+    (testing (pr-str config)
+      (is (= (sut/un-store
+               {:foo 1
+                :created 2
+                :modified 3
+                :client_id 4}
+               config)
+             {:foo 1}))))
+  (is (= (sut/un-store
+           {:foo 1
+            :created 2
+            :modified 3
+            :client_id 4}
+           {:keep-client_id true})
+         {:foo 1
+          :client_id 4})))

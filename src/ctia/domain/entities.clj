@@ -129,7 +129,7 @@
 
 (s/defn un-store
   ([record]
-   (un-store {}))
+   (un-store record {}))
   ([record
     {:keys [keep-client_id]} :- UnStoreOpts]
    (apply dissoc record (cond-> [:created :modified]

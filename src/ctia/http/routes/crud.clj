@@ -158,6 +158,13 @@
     (st/merge {(s/optional-key :client_id)
                (describe s/Bool "include client_id in response")})))
 
+(defn maybe-add-client_id-entity-schema
+  [entity-schema
+   client_id-query-param?]
+  (cond-> entity-schema
+    client_id-query-param?
+    (st/merge {(s/optional-key :client_id) s/Str})))
+
 (s/defschema EntityCrudConfig
   "Configuration for entity-crud-routes.
 
@@ -316,14 +323,16 @@
        (let [client_id-query-param? (:patch client_id-query-param)
              capabilities patch-capabilities]
          (PATCH "/:id" []
-                :return entity-schema
+                :return (-> entity-schema
+                            (maybe-add-client_id-entity-schema
+                              client_id-query-param?))
                 :body [partial-update patch-schema {:description (format "%s partial update" capitalized)}]
                 :summary (format "Partially update an existing %s" capitalized)
                 :query [{:keys [wait_for client_id]}
-                        (maybe-add-client_id-query-param
-                          {(s/optional-key :wait_for)
-                           (describe s/Bool "wait for patched entity to be available for search")}
-                          client_id-query-param?)]
+                        (-> {(s/optional-key :wait_for)
+                             (describe s/Bool "wait for patched entity to be available for search")}
+                            (maybe-add-client_id-query-param
+                              client_id-query-param?))]
                 :path-params [id :- s/Str]
                 :description (capabilities->description capabilities)
                 :capabilities capabilities
@@ -496,12 +505,14 @@
      (let [client_id-query-param? (:get client_id-query-param)
            capabilities get-capabilities]
        (GET "/:id" []
-            :return (s/maybe get-schema)
+            :return (s/maybe (-> get-schema
+                                 (maybe-add-client_id-entity-schema
+                                   client_id-query-param?)))
             :summary (format "Get one %s by ID" capitalized)
             :path-params [id :- s/Str]
-            :query [params (maybe-add-client_id-query-param
-                             get-params
-                             client_id-query-param?)]
+            :query [params (-> get-params
+                               (maybe-add-client_id-query-param
+                                 client_id-query-param?))]
             :description (capabilities->description capabilities)
             :capabilities capabilities
             :auth-identity identity
@@ -555,6 +566,6 @@
 
 (s/defn services->entity-crud-routes
   [services :- APIHandlerServices
-   opt]
+   opt :- EntityCrudConfig]
   ((entity-crud-routes opt)
    services))
