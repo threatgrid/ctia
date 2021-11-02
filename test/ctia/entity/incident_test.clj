@@ -8,14 +8,15 @@
             [ctia.test-helpers
              [access-control :refer [access-control-test]]
              [auth :refer [all-capabilities]]
-             [core :as helpers :refer [PATCH POST]]
+             [core :as helpers :refer [GET PATCH POST]]
              [crud :refer [entity-crud-test]]
              [aggregate :refer [test-metric-routes]]
              [fake-whoami-service :as whoami-helpers]
              [store :refer [test-for-each-store-with-app]]]
             [ctim.examples.incidents
              :refer
-             [new-incident-maximal new-incident-minimal]]))
+             [new-incident-maximal new-incident-minimal]]
+            [schema.core :as s]))
 
 (use-fixtures :once (join-fixtures [mth/fixture-schema-validation
                                     whoami-helpers/fixture-server]))
@@ -76,7 +77,7 @@
                   (tc/to-date fixed-now)))))
        (let [client_id-cases (s/validate
                                [{:query-string s/Str
-                                 :client_id? s/Boool}]
+                                 :client_id? s/Bool}]
                                (concat
                                  (map #(hash-map :query-string % :client_id? true)
                                       ["?client_id=true" "?wait_for=true&client_id=true"
