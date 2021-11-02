@@ -321,7 +321,7 @@
                 :summary (format "Partially update an existing %s" capitalized)
                 :query [{:keys [wait_for client_id]}
                         (maybe-add-client_id-query-param
-                          {(s/optional-key wait_for)
+                          {(s/optional-key :wait_for)
                            (describe s/Bool "wait for patched entity to be available for search")}
                           client_id-query-param?)]
                 :path-params [id :- s/Str]
