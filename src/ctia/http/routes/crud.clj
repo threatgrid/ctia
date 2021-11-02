@@ -163,8 +163,8 @@
 
   Optional keys:
   :client_id-query-param   if contains :get, add `client_id` query param to GET /entity/:id
-                           if contains :get, add `client_id` query param to PATCH /entity/:id
-                           if `client_id` is true, then return `client_id` in response."
+                           if contains :patch, add `client_id` query param to PATCH /entity/:id
+                           when supported, if `client_id` is true, then return `client_id` in response."
   (st/open-schema
     {(s/optional-key :client_id-query-param)
      (s/maybe #{(s/enum :get :patch)})}))
@@ -342,7 +342,9 @@
                               :partial-entities [(assoc partial-update :id id)]
                               :spec new-spec)
                              first
-                             un-store)]
+                             (un-store (when (and client_id-query-param?
+                                                  client_id)
+                                         {:keep-client_id true})))]
                   (ok updated-rec)
                   (not-found)))))
      (when can-get-by-external-id?

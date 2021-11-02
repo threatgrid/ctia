@@ -239,7 +239,8 @@
      :search-capabilities      :search-incident
      :external-id-capabilities :read-incident
      :histogram-fields         incident-histogram-fields
-     :enumerable-fields        incident-enumerable-fields})))
+     :enumerable-fields        incident-enumerable-fields
+     :client_id-query-param    #{:get :patch}})))
 
 (def IncidentType
   (let [{:keys [fields name description]}
@@ -290,5 +291,4 @@
    :services->routes      (routes.common/reloadable-function incident-routes)
    :capabilities          capabilities
    :fields                incident-fields
-   :sort-fields           incident-fields
-   :client_id-query-param #{:get :patch}})
+   :sort-fields           incident-fields})
