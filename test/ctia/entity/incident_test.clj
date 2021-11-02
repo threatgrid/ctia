@@ -97,14 +97,13 @@
           (testing "client_id query param"
             (let [client_id-cases (s/validate
                                     [{:query-string s/Str
-                                      :client_id? s/Bool}]
+                                      :expected (s/pred map?)}]
                                     (concat
-                                      (map #(hash-map :query-string % :client_id? true)
+                                      (map #(hash-map :query-string % :expected {:client_id jwt-client-id})
                                            ["?client_id=true"])
-                                      (map #(hash-map :query-string % :client_id? false)
+                                      (map #(hash-map :query-string % :expected {})
                                            ["" "?client_id=false"])))]
-              (doseq [{:keys [query-string client_id?] :as test-case} client_id-cases
-                      :let [expected-result (if client_id? {:client_id jwt-client-id} {})]]
+              (doseq [{:keys [query-string expected] :as test-case} client_id-cases]
                 (testing (pr-str test-case)
                   (testing "GET /ctia/incident/:id?client_id=..."
                     (let [response (GET app
@@ -112,7 +111,7 @@
                                         :headers {"Authorization" bearer})
                           incident (:parsed-body response)]
                       (is (= 200 (:status response)))
-                      (is (= expected-result (select-keys incident [:client_id])))))
+                      (is (= expected (select-keys incident [:client_id])))))
                   (testing "PATCH /ctia/incident/:id?client_id=..."
                     (let [response (PATCH app
                                           (str "ctia/incident/" (:short-id incident-id) query-string)
@@ -120,7 +119,7 @@
                                           :headers {"Authorization" bearer})
                           incident (:parsed-body response)]
                       (is (= 200 (:status response)))
-                      (is (= expected-result (select-keys incident [:client_id]))))))))))))))
+                      (is (= expected (select-keys incident [:client_id]))))))))))))))
 
 (deftest test-incident-crud-routes
   (test-for-each-store-with-app
