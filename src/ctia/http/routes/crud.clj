@@ -313,7 +313,8 @@
                 (ok updated-rec)
                 (not-found)))))
      (when can-patch?
-       (let [capabilities patch-capabilities]
+       (let [client_id-query-param? (:patch client_id-query-param)
+             capabilities patch-capabilities]
          (PATCH "/:id" []
                 :return entity-schema
                 :body [partial-update patch-schema {:description (format "%s partial update" capitalized)}]
