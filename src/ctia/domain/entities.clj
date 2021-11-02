@@ -11,7 +11,8 @@
              [GraphQLRuntimeContext HTTPShowServices RealizeFnResult TempIDs]]
             [ctim.domain.id :as id]
             [ctim.schemas.common :refer [ctim-schema-version]]
-            [schema.core :as s]))
+            [schema.core :as s]
+            [schema-tools.core :as st]))
 
 (def schema-version ctim-schema-version)
 
