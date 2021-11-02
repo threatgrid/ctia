@@ -290,4 +290,5 @@
    :services->routes      (routes.common/reloadable-function incident-routes)
    :capabilities          capabilities
    :fields                incident-fields
-   :sort-fields           incident-fields})
+   :sort-fields           incident-fields
+   :client_id-query-param #{:get :patch}})

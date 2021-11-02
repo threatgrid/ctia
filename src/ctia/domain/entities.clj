@@ -117,8 +117,22 @@
     (short-id->entity-type id-str services)
     (long-id->entity-type id-str)))
 
-(defn un-store [record]
-  (apply dissoc record [:created :modified :client_id]))
+(s/defschema UnStoreOpts
+  "Options to `un-store`.
+  
+  Optional:
+  - :keep-client_id   If true, don't dissoc it in un-store, otherwise do."
+  (s/maybe
+    (st/optional-keys
+      {:keep-client_id s/Bool})))
+
+(s/defn un-store
+  ([record]
+   (un-store {}))
+  ([record
+    {:keys [keep-client_id]} :- UnStoreOpts]
+   (apply dissoc record (cond-> [:created :modified]
+                          (not keep-client_id) (conj :client_id)))))
 
 (defn un-store-all [x]
   (if (sequential? x)

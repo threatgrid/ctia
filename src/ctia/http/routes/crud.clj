@@ -150,6 +150,25 @@
                            :identity-map identity-map
                            :wait_for wait_for}))))
 
+(defn maybe-add-client_id-query-param
+  [params-schema
+   client_id-query-param?]
+  (cond-> params-schema
+    client_id-query-param?
+    (st/merge {(s/optional-key :client_id)
+               (describe s/Bool "include client_id in response")})))
+
+(s/defschema EntityCrudConfig
+  "Configuration for entity-crud-routes.
+
+  Optional keys:
+  :client_id-query-param   if contains :get, add `client_id` query param to GET /entity/:id
+                           if contains :get, add `client_id` query param to PATCH /entity/:id
+                           if `client_id` is true, then return `client_id` in response."
+  (st/open-schema
+    {(s/optional-key :client_id-query-param)
+     (s/maybe #{(s/enum :get :patch)})}))
+
 (s/defn ^:private entity-crud-routes
   :- DelayedRoutes
   "Implementation of services->entity-crud-routes."
@@ -182,7 +201,8 @@
            can-get-by-external-id?
            date-field
            histogram-fields
-           enumerable-fields]
+           enumerable-fields
+           client_id-query-param]
     :or {hide-delete? false
          can-post? true
          can-update? true
@@ -192,7 +212,7 @@
          can-get-by-external-id? true
          date-field :created
          histogram-fields [:created]}
-    :as entity-crud-config}]
+    :as entity-crud-config} :- EntityCrudConfig]
  (s/fn [{{:keys [get-store]} :StoreService
          :as services} :- APIHandlerServices]
   (let [capitalized (capitalize-entity entity)
@@ -298,7 +318,11 @@
                 :return entity-schema
                 :body [partial-update patch-schema {:description (format "%s partial update" capitalized)}]
                 :summary (format "Partially update an existing %s" capitalized)
-                :query-params [{wait_for :- (describe s/Bool "wait for patched entity to be available for search") nil}]
+                :query [{:keys [wait_for client_id]}
+                        (maybe-add-client_id-query-param
+                          {(s/optional-key wait_for)
+                           (describe s/Bool "wait for patched entity to be available for search")}
+                          client_id-query-param?)]
                 :path-params [id :- s/Str]
                 :description (capabilities->description capabilities)
                 :capabilities capabilities
@@ -466,12 +490,15 @@
                                identity-map)
                              (format-agg-result :cardinality aggregate-on search-q)
                              ok))))))
-     (let [capabilities get-capabilities]
+     (let [client_id-query-param? (:get client_id-query-param)
+           capabilities get-capabilities]
        (GET "/:id" []
             :return (s/maybe get-schema)
             :summary (format "Get one %s by ID" capitalized)
             :path-params [id :- s/Str]
-            :query [params get-params]
+            :query [params (maybe-add-client_id-query-param
+                             get-params
+                             client_id-query-param?)]
             :description (capabilities->description capabilities)
             :capabilities capabilities
             :auth-identity identity
@@ -483,7 +510,9 @@
                                params))]
               (-> rec
                   (with-long-id services)
-                  un-store
+                  (un-store (when (and client_id-query-param?
+                                       (:client_id params))
+                              {:keep-client_id true}))
                   ok)
               (not-found))))
 
@@ -491,7 +520,7 @@
        (DELETE "/:id" []
                :no-doc hide-delete?
                :path-params [id :- s/Str]
-               :query-params [{wait_for :- (describe s/Bool "wait for deleted entity to no more be available for search") nil}]
+               :query-params [{wait_for :- (describe s/Bool "wait for deleted entity to no longer be available for search") nil}]
                :summary (format "Delete one %s" capitalized)
                :description (capabilities->description capabilities)
                :capabilities capabilities
