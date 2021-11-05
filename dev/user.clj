@@ -1,10 +1,11 @@
 (ns user
   (:require
-   [clojure.tools.namespace.repl :refer [set-refresh-dirs]]
+   [clojure.tools.namespace.repl :refer [clear refresh refresh-dirs set-refresh-dirs]]
    [cheshire.core :as json]
    [clj-http.client :as http]
    [clj-momo.lib.time :as time]
    [ctia.init :as init]
+   [ctia.properties :as p]
    [ctim.schemas.vocabularies :as vocab]
    [puppetlabs.trapperkeeper.app :as app]
    [schema.core :as s]))
@@ -68,7 +69,7 @@
 (defn start
   "Starts CTIA with given config and services, otherwise defaults
   to the same configuration as #'init/start-ctia."
-  [& {:keys [_config _services] :as m}]
+  [& {:keys [config services] :as m}]
   (serially-alter-app 
     (fn [app]
       (println "Starting CTIA...")
@@ -88,7 +89,7 @@
 
 (defn go
   "Restarts CTIA. Same args as #'start."
-  [& {:keys [_config _services] :as m}]
+  [& {:keys [config services] :as m}]
   (serially-alter-app
     (fn [app]
       (println "Restarting CTIA...")
@@ -132,7 +133,7 @@
 (defn- fixup-observables [query-response]
   (for [{obs-type :key, :as type-bucket} (get-in query-response
                                                  [:aggregations :types :buckets])
-        {obs-value :key :as _value-bucket} (get-in type-bucket [:values :buckets])]
+        {obs-value :key :as value-bucket} (get-in type-bucket [:values :buckets])]
     {:type obs-type
      :value obs-value}))
 

@@ -1,7 +1,9 @@
 (ns ctia.stores.es.mapping-test
   (:require [ctia.stores.es.mapping :as sut]
-            [ductile.document :as doc]
-            [ductile.index :as index]
+            [ductile
+             [document :as doc]
+             [conn :as conn]
+             [index :as index]]
             [ctia.test-helpers.es :as es-helpers]
             [clojure.test :refer [deftest testing is]]))
 
@@ -50,7 +52,7 @@
                            :_index indexname
                            :_type doc-type)
                    (range 3))
-         [_doc0 _doc1 _doc2] docs
+         [doc0 doc1 doc2] docs
          test-sort (fn [field expected-asc]
                      (is (= expected-asc
                             (->> (doc/search-docs conn

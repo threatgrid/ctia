@@ -50,8 +50,7 @@
                 :cpe_id em/token
                 :class em/token}})
 
-;; TODO: remove unused var
-#_(def notes
+(def notes
   {:properties
    {:type em/token
     :note em/token}})

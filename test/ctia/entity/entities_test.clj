@@ -1,13 +1,16 @@
 (ns ctia.entity.entities-test
-  (:require [ctia.entity.entities :as sut]
+  (:require [clj-momo.test-helpers.core :as mth]
+            [ctia.entity.entities :as sut]
             [ctia.schemas.core :refer [lift-realize-fn-with-context RealizeFnServices]]
             [ctia.schemas.utils :as csu]
-            [ctia.test-helpers.core :as test-helpers]
-            [ctia.test-helpers.es :as es-helpers]
+            [ctia.test-helpers
+             [core :as test-helpers]
+             [es :as es-helpers]]
             [clojure.test :as t :refer [deftest is use-fixtures]]
             [clojure.spec.alpha :refer [gen]]
             [clojure.spec.gen.alpha :refer [generate]]
-            [puppetlabs.trapperkeeper.app :as app]))
+            [puppetlabs.trapperkeeper.app :as app]
+            [puppetlabs.trapperkeeper.services :refer [service-context]]))
 
 ;; FIXME this seems to fail because the specs used to generate
 ;; data via gen-sample-entity don't agree with the schemas

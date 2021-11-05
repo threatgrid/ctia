@@ -1,7 +1,11 @@
 (ns ctia.http.handler.static-auth-anonymous-test
-  (:require [ctia.test-helpers.core :as helpers :refer [GET with-properties]]
-            [ctia.test-helpers.es :as es-helpers]
-            [clojure.test :refer [deftest is use-fixtures]]
+  (:require [clj-momo.test-helpers.core :as mth]
+            [ctia.domain.entities :refer [schema-version]]
+            [ctia.test-helpers
+             [core :as helpers :refer [GET with-properties]]
+             [es :as es-helpers]]
+            [clojure.test :refer [deftest is testing use-fixtures]]
+            [ctim.domain.id :as id]
             [schema.test :refer [validate-schemas]]))
 
 (defn fixture-anonymous-readonly-access

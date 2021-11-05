@@ -34,9 +34,8 @@
 
 (schemas/def-stored-schema StoredAssetMapping AssetMapping)
 
-;; TODO: remove unused var
-;; (s/defschema PartialNewAssetMapping
-;;   (st/optional-keys-schema NewAssetMapping))
+(s/defschema PartialNewAssetMapping
+  (st/optional-keys-schema NewAssetMapping))
 
 (s/defschema PartialStoredAssetMapping
   (st/optional-keys-schema StoredAssetMapping))
@@ -46,7 +45,7 @@
 
 (s/defn realize-asset-mapping
   :- (RealizeFnResult (with-error StoredAssetMapping))
-  [{:keys [_asset_ref]
+  [{:keys [asset_ref]
     :as   new-entity}
    id tempids & rest-args]
   (delayed/fn :- (with-error StoredAssetMapping)

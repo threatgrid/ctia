@@ -1,9 +1,11 @@
 (ns ctia.test-helpers.access-control
   (:require [clojure.set :as set]
             [clojure.test :refer [is testing]]
-            [ctia.test-helpers.auth :refer [all-capabilities]]
-            [ctia.test-helpers.core :as helpers :refer [DELETE GET POST PUT]]
-            [ctia.test-helpers.fake-whoami-service :as whoami-helpers]
+            [ctia.properties :as p]
+            [ctia.test-helpers
+             [auth :refer [all-capabilities]]
+             [core :as helpers :refer [DELETE GET POST PUT]]
+             [fake-whoami-service :as whoami-helpers]]
             [ctia.domain.access-control :as cdac]
             [ctim.domain.id :as id]
             [schema.core :as s]))

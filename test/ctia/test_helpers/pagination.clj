@@ -1,5 +1,6 @@
 (ns ctia.test-helpers.pagination
-  (:require [clojure.test :refer [is testing]]
+  (:require [clojure.string :as str]
+            [clojure.test :refer [is testing]]
             [clojure.walk :as walk]
             [ctim.domain.id :as id]
             [ctia.test-helpers.aggregate :as aggregate]

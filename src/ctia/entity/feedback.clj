@@ -43,6 +43,15 @@
 (s/defschema FeedbackByExternalIdQueryParams
   (st/dissoc FeedbackQueryParams :entity_id))
 
+(comment
+  (require '[ctia.entity.judgement :as judgement])
+
+  (s/defschema FeedbacksByJudgementQueryParams
+    (st/merge
+     routes.common/PagingParams
+     judgement/JudgementFieldsParam
+     {(s/optional-key :sort_by) feedback-sort-fields})))
+
 (s/defn feedback-by-entity-route [{{:keys [get-store]} :StoreService
                                    :as services} :- APIHandlerServices]
   (let [capabilites :read-feedback]

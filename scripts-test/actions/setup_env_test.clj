@@ -1,5 +1,5 @@
 (ns actions.setup-env-test
-  (:require [clojure.test :refer [deftest is]]
+  (:require [clojure.test :refer [deftest is testing]]
             [actions.test-helpers :as th]
             [actions.setup-env :as sut]))
 
@@ -11,7 +11,7 @@
                                           {:op :sh
                                            :args (vec args)})
                                    {:exit 0})))
-        {:keys [_state grab-history utils]} (mk-utils+sh {"LOG_PATH" "foo/bar"})
+        {:keys [state grab-history utils]} (mk-utils+sh {"LOG_PATH" "foo/bar"})
         _ (sut/setup-env utils)
         _ (is (= (grab-history)
                  [{:op :sh

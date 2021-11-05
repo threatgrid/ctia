@@ -19,7 +19,8 @@
    [ctia.store :refer [list-fn read-fn]]
    [ctia.store-service.schemas :refer [GetStoreFn]]
    [ctim.domain.id :as id]
-   [schema.core :as s]))
+   [schema.core :as s]
+   [schema-tools.core :as st]))
 
 (def find-by-external-ids-limit 200)
 

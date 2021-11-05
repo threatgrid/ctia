@@ -1,9 +1,12 @@
 (ns ctia.lib.redis-test
   (:require [clojure.core.async :as a]
-            [clojure.test :refer [deftest is testing use-fixtures]]
+            [clojure.test
+             :refer [join-fixtures deftest is testing use-fixtures]]
             [ctia.lib.redis :as lr]
-            [ctia.test-helpers.core :as test-helpers]
-            [ctia.test-helpers.es :as es-helpers])
+            [ctia.properties :as p]
+            [ctia.test-helpers
+             [core :as test-helpers]
+             [es :as es-helpers]])
   (:import [java.util.concurrent CountDownLatch TimeUnit]))
 
 (use-fixtures :each

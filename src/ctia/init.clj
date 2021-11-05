@@ -58,7 +58,7 @@
                           {:message "Unknown service"
                            :requested-service auth-service-type})))
         encryption-svc
-        (let [{:keys [type] :as _encryption-properties}
+        (let [{:keys [type] :as encryption-properties}
               (get-in config [:ctia :encryption])]
           (case type
             :default {:IEncryption encryption-default/default-encryption-service}

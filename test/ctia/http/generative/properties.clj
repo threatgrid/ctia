@@ -1,13 +1,20 @@
 (ns ctia.http.generative.properties
-  (:require [clj-momo.test-helpers.http :refer [encode]]
+  (:require [clj-momo.test-helpers
+             [core :refer [common=]]
+             [http :refer [encode]]]
             [clj-momo.lib.map :refer [keys-in-all]]
+            [clojure.data :as data]
+            [clojure.pprint :as pp]
+            [clojure.set :as set]
             [clojure.spec.alpha :as cs]
             [clojure.test :refer [is testing]]
             [com.gfredericks.test.chuck.clojure-test :refer [checking]]
             [clojure.test.check.generators :as tcg]
+            [clojure.walk :as walk]
             [ctia.properties :refer [get-http-show]]
             [ctia.schemas.core] ;; for spec side-effects
-            [ctia.test-helpers.core :as helpers :refer [POST GET]]
+            [ctia.test-helpers.core
+             :as helpers :refer [POST GET]]
             [ctia.test-helpers.http :refer [app->HTTPShowServices]]
             [ctim.domain.id :as id]
             [ctim.schemas
@@ -31,8 +38,9 @@
              [target-record :refer [NewTargetRecord]]
              [vulnerability :refer [NewVulnerability]]
              [weakness :refer [NewWeakness]]]
-            [flanders.spec :as fs]
-            [flanders.utils :as fu]))
+            [flanders
+             [spec :as fs]
+             [utils :as fu]]))
 
 (defn check-differences-in-common-key-paths
   "Like (apply common= (vals id->m)) but

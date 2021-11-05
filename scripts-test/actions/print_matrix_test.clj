@@ -1,5 +1,6 @@
 (ns actions.print-matrix-test
   (:require [clojure.test :refer [deftest is testing]]
+            [actions.actions-helpers :as h]
             [actions.test-helpers :as th]
             [actions.print-matrix :as sut]))
 
@@ -11,7 +12,7 @@
                    {"CTIA_COMMIT_MESSAGE" "{:test-suite :pr}"
                     "GITHUB_EVENT_NAME" "schedule"}]]
     (testing env-map
-      (let [{:keys [grab-history _state utils]} (th/mk-utils env-map)
+      (let [{:keys [grab-history state utils]} (th/mk-utils env-map)
             _ (sut/print-matrix utils)
             expected-matrix
             [{:ci_profiles "default", :java_distribution "adopt", :java_version "11.0.9", :this_split 0, :total_splits 10, :test_suite :ci}
@@ -49,7 +50,7 @@
                    {"CTIA_COMMIT_MESSAGE" "{:test-suite :cron}"
                     "GITHUB_EVENT_NAME" "pull_request"}]]
     (testing env-map
-      (let [{:keys [grab-history _state utils]} (th/mk-utils env-map)
+      (let [{:keys [grab-history state utils]} (th/mk-utils env-map)
             _ (sut/print-matrix utils)
             expected-matrix [{:ci_profiles "default", :java_distribution "adopt", :java_version "11.0.9", :this_split 0, :total_splits 2, :test_suite :cron}
                              {:ci_profiles "default", :java_distribution "adopt", :java_version "11.0.9", :this_split 1, :total_splits 2, :test_suite :cron}

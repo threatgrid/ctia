@@ -41,8 +41,7 @@
       (s/protocol s/Schema)
       map?)))
 
-;; TODO: remove unused var
-#_(s/defschema Selector
+(s/defschema Selector
   {SimpleKeywordSpecificKey
    SelectorVal})
 

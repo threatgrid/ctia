@@ -2,6 +2,7 @@
   (:require [clojure.string :as str]
             [clojure.tools.logging :as log]
             [riemann.client :as riemann]
+            [ctia.properties :as p]
             [ctia.lib.utils :as utils])
   (:import [clojure.lang ExceptionInfo]))
 

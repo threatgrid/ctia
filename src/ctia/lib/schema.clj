@@ -20,7 +20,7 @@
      clojure.core/atom
      [(collection/one-element true schema (fn [item-fn coll] (item-fn @coll) nil))]
      (fn [_ xs _] (clojure.core/atom (first xs)))))
-  (explain [_this] (list 'atom (s/explain schema))))
+  (explain [this] (list 'atom (s/explain schema))))
 
 (defn atom
   "An atom containing a value matching 'schema'."

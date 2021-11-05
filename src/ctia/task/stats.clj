@@ -1,4 +1,5 @@
-(ns ctia.task.stats)
+(ns ctia.task.stats
+  (:require [ctia.stores.es.crud :refer [make-aggregation]]))
 
 (defn topn-orgs
   [n]
@@ -14,8 +15,7 @@
    :aggregate-on :groups
    :limit n})
 
-;; TODO: remove unused var
-#_(defn topn-source-top-orgs
+(defn topn-source-top-orgs
   [n-sources n-orgs]
   (assoc (topn-sources n-sources)
          :aggs

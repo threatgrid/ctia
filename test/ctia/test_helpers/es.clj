@@ -2,13 +2,16 @@
   "ES test helpers"
   (:require [clojure.test :refer [testing]]
             [cheshire.core :as json]
-            [ductile.index :as es-index]
-            [ductile.conn :as es-conn]
-            [ductile.document :as es-doc]
+            [ductile
+             [index :as es-index]
+             [conn :as es-conn]
+             [document :as es-doc]]
             [clojure.java.io :as io]
-            [ctia.stores.es.init :as es-init]
-            [ctia.stores.es.store :as es-store]
-            [ctia.stores.es.schemas :refer [ESConnServices]]
+            [clojure.walk :as walk]
+            [ctia.stores.es
+             [init :as es-init]
+             [store :as es-store]
+             [schemas :refer [ESConnServices]]]
             [ctia.test-helpers.core :as h]
             [puppetlabs.trapperkeeper.app :as app]
             [schema.core :as s]))

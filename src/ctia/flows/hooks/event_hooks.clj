@@ -4,10 +4,13 @@
    [ctia.flows.hook-protocol :refer [Hook]]
    [ctia.lib.redis :as lr]
    [ctia.lib.kafka :as lk]
+   [ctia.entity.event.schemas :refer [CreateEventType
+                                      DeleteEventType]]
    [ctia.flows.hooks-service.schemas :refer [HooksMap]]
    [ctia.schemas.services :refer [ConfigServiceFns]]
    [redismq.core :as rmq]
    [onyx.kafka.helpers :as okh]
+   [onyx.plugin.kafka :as opk]
    [cheshire.core :refer [generate-string]]
    [schema.core :as s]
    [schema-tools.core :as st])
@@ -57,7 +60,7 @@
     (log/warn "Ensure Kafka topic creation")
     (try
       (lk/create-topic kafka-props)
-      (catch org.apache.kafka.common.errors.TopicExistsException _e
+      (catch org.apache.kafka.common.errors.TopicExistsException e
         (log/info "Kafka topic already exists")))
 
     (->KafkaEventPublisher
@@ -66,7 +69,7 @@
 
 (defrecord RedisMQPublisher [queue]
   Hook
-  (init [_self]
+  (init [self]
     :nothing)
   (destroy [_]
     :nothing)

@@ -23,7 +23,7 @@
   [{observable-type :type
     observable-value :value}
    ident
-   {{{:keys [_get-in-config]} :ConfigService
+   {{{:keys [get-in-config]} :ConfigService
      {:keys [get-store]} :StoreService
      :as services}
     :services} :- GraphQLRuntimeContext]

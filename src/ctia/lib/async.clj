@@ -1,5 +1,6 @@
 (ns ctia.lib.async
-  (:require [clojure.core.async :as a :refer [go-loop alt! alt!! chan tap thread]]
+  (:require [clj-momo.lib.time :as time]
+            [clojure.core.async :as a :refer [go-loop alt! alt!! chan tap thread]]
             [schema.core :as s :refer [=>]]
             [clojure.core.async.impl.buffers :refer :all])
   (:import [clojure.core.async.impl.protocols Channel]
@@ -105,5 +106,5 @@
   "Extract elements from a channel into a lazy-seq.
    Reading the seq reads from the channel."
   [c :- Channel]
-  (when-let [x (a/poll! c)]
+  (if-let [x (a/poll! c)]
     (cons x (lazy-seq (drain c)))))

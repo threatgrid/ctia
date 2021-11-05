@@ -1,5 +1,6 @@
 (ns ctia.entity.asset-properties-test
-  (:require [clj-momo.test-helpers.core :as mth]
+  (:require [clj-momo.lib.clj-time.coerce :as tc]
+            [clj-momo.test-helpers.core :as mth]
             [clojure.test :refer [deftest is are join-fixtures testing use-fixtures]]
             [ctia.entity.asset-properties :as sut]
             [ctia.test-helpers.aggregate :as aggregate]
@@ -15,7 +16,7 @@
 (use-fixtures :once (join-fixtures [mth/fixture-schema-validation
                                     whoami-helpers/fixture-server]))
 
-(defn additional-tests [app {:keys [_short-id]} asset-properties-sample]
+(defn additional-tests [app {:keys [short-id]} asset-properties-sample]
   (testing "GET /ctia/asset-properties/search"
    (let [{:keys [get-in-config]} (helpers/get-service-map app :ConfigService)]
     ;; only when ES store

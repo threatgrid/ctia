@@ -3,6 +3,7 @@
             [clojure.core.memoize :as memo]
             [clojure.string :as string]
             [clojure.tools.logging :as log]
+            [compojure.api.middleware :refer [api-middleware]]
             [ctia.auth.jwt :as auth-jwt]
             [ctia.http.handler :as handler]
             [ctia.http.middleware.auth :as auth]
@@ -40,7 +41,7 @@
       (some->> (string/split s #",")
                (map #(string/split % #"=" 2))
                (into {})))
-    (catch Exception _e
+    (catch Exception e
       (throw (ex-info
               (str "Wrong format for external endpoints."
                    " Use 'i=url1,j=url2' where i, j are issuers."
@@ -64,7 +65,7 @@
 (defn check-external-endpoints
   "check the status of the JWT (typically revocation) by making an HTTP request.
   Should return [] if the JWT is ok, and a list of error messages if something's wrong."
-  [http-get rev-hash-map params jwt {:keys [iss] :as _claims}]
+  [http-get rev-hash-map params jwt {:keys [iss] :as claims}]
   (if-let [check-jwt-url (get rev-hash-map iss)]
     (try
       (let [{:keys [status body]}
@@ -73,15 +74,15 @@
           (let [{:keys [error_description]
                  :or {error_description "JWT Refused"}} body]
             [error_description])))
-      (catch TimeoutException _e
+      (catch TimeoutException e
         (log/warnf "Couldn't check jwt status due to a call timeout to %s"
                    check-jwt-url)
         [])
-      (catch SocketTimeoutException _e
+      (catch SocketTimeoutException e
         (log/warnf "Couldn't check jwt status due to a call timeout to %s"
                    check-jwt-url)
         [])
-      (catch UnknownHostException _e
+      (catch UnknownHostException e
         (log/errorf "The server for checking JWT seems down: %s"
                     check-jwt-url)
         [])
@@ -139,7 +140,7 @@
 
 (defn build-csp
   "Build the Content Security Policy header from the http configuration"
-  [{:keys [swagger] :as _http-config}]
+  [{:keys [swagger] :as http-config}]
   (str "default-src 'self';"
        " style-src 'self' 'unsafe-inline';"
        " img-src 'self' data:;"
@@ -190,7 +191,7 @@
             {:pubkey-fn ;; if :public-key-map is nil, will use just :public-key
              (when-let [pubkey-for-issuer-map
                         (auth-jwt/parse-jwt-pubkey-map (:public-key-map jwt))]
-               (fn [{:keys [iss] :as _claims}]
+               (fn [{:keys [iss] :as claims}]
                  (get pubkey-for-issuer-map iss)))
              :pubkey-path (:public-key-path jwt)
              :no-jwt-handler rjwt/authorize-no-jwt-header-strategy}

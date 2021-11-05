@@ -3,10 +3,12 @@
             [clojure.string :as str]
             [clojure.tools.cli :refer [parse-opts]]
             [clojure.tools.logging :as log]
+            [schema.core :as s]
             [ctia.stores.es.init :refer [init-es-conn! get-store-properties]]
-            [ctia.init :refer [log-properties]]
-            [ctia.properties :as p]
-            [ctia.store :refer [empty-stores]]))
+            [ctia
+             [init :refer [log-properties]]
+             [properties :as p]
+             [store :refer [empty-stores]]]))
 
 (defn update-stores!
   [store-keys get-in-config]

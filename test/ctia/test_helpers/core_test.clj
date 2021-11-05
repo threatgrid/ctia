@@ -1,6 +1,7 @@
 (ns ctia.test-helpers.core-test
   (:require [clojure.test :refer [deftest is testing]]
-            [ctia.test-helpers.core :as sut])
+            [ctia.test-helpers.core :as sut]
+            [schema.core :as s])
   (:import [clojure.lang ExceptionInfo]
            [java.util UUID]))
 

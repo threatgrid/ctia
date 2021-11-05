@@ -105,29 +105,22 @@
    (assoc related
           :COA_id token)})
 
-;; TODO: remove unused var
-#_(def related-actors
+(def related-actors
   {:properties (assoc related
                       :actor_id token)})
-
-;; TODO: remove unused var
-#_(def related-assets
+(def related-assets
   {:properties (assoc related :asset_id token)})
 
-;; TODO: remove unused var
-#_(def related-asset-mappings
+(def related-asset-mappings
   {:properties (assoc related :asset_mapping_id token)})
 
-;; TODO: remove unused var
-#_(def related-asset-properties
+(def related-asset-properties
   {:properties (assoc related :asset_properties_id token)})
 
-;; TODO: remove unused var
-#_(def related-target-record
+(def related-target-record
   {:properties (assoc related :target_record_id token)})
 
-;; TODO: remove unused var
-#_(def related-incidents
+(def related-incidents
   {:properties (assoc related
                       :incident_id token)})
 

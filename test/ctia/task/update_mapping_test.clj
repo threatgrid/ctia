@@ -1,13 +1,21 @@
 (ns ctia.task.update-mapping-test
-  (:require [ductile.index :as es-index]
+  (:require [ductile
+             [index :as es-index]
+             [conn :as conn]]
+            [clojure.string :as string]
             [clojure.test :refer [deftest is use-fixtures testing]]
             [ctia.task.rollover :as rollover]
             [ctia.entity.incident :as incident]
+            [ctia.store :as store]
             [ctia.stores.es.init :as init]
+            [ctia.properties :as props]
             [ctia.stores.es.mapping :as es-mapping]
             [ctia.task.update-mapping :as task]
-            [ctia.test-helpers.core :as helpers]
-            [ctia.test-helpers.es :as es-helpers]))
+            [ctia.test-helpers
+             [core :as helpers]
+             [es :as es-helpers]
+             [fake-whoami-service :as whoami-helpers]
+             [fixtures :as fixt]]))
 
 (use-fixtures :once
   es-helpers/fixture-properties:es-store)

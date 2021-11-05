@@ -1,7 +1,8 @@
 (ns actions.actions-helpers-test
-  (:require [clojure.test :refer [deftest is]]
+  (:require [clojure.test :refer [deftest is testing]]
             [actions.actions-helpers :as sut]
-            [actions.test-helpers :as th])
+            [actions.test-helpers :as th]
+            [cheshire.core :as json])
   (:import [java.io File]))
 
 (deftest getenv-test

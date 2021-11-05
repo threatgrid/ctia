@@ -9,7 +9,8 @@
             [ctia.store :as store]
             [ctia.store-service :as store-svc]
             [ctia.stores.es.init :as es-init]
-            [puppetlabs.trapperkeeper.app :as app]))
+            [puppetlabs.trapperkeeper.app :as app]
+            [schema.core :as s]))
 
 (defn- update-mapping-state!
   [conn-state]

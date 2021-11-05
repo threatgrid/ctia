@@ -1,10 +1,18 @@
 (ns ctia.flows.hooks.redismq-event-hook-test
   (:require [clj-momo.test-helpers.core :as mth]
             [clojure.test :refer [deftest is join-fixtures testing use-fixtures]]
+            [ctia.domain.entities :refer [schema-version]]
+            [ctia.lib.redis :as lr]
             [redismq.core :as rmq]
+            [ctia.flows.hooks.event-hooks :as hooks]
             [ctia.flows.hooks.event-hooks :as eh]
-            [ctia.test-helpers.core :as test-helpers :refer [POST]]
-            [ctia.test-helpers.es :as es-helpers]))
+
+            [ctim.domain.id :as id]
+            [ctim.schemas.common :as c]
+            [ctia.test-helpers
+             [core :as test-helpers :refer [POST]]
+             [es :as es-helpers]])
+  (:import [java.util.concurrent CountDownLatch TimeUnit]))
 
 (defn fixture-properties:redismq-hook [f]
   (test-helpers/with-properties ["ctia.hook.redismq.enabled" true
