@@ -11,13 +11,28 @@
     (th/with-properties ["ctia.features.disable" "asset,actor,sighting"]
       (th/fixture-ctia-with-app
        (fn [app]
-         (let [{:keys [enabled?]} (th/get-service-map app :FeaturesService)]
+         (let [{:keys [entity-enabled?]} (th/get-service-map app :FeaturesService)]
            (testing "Asset, Actor and Sighting are disabled"
-             (is (not-any? enabled? [:asset :actor :sighting])))
+             (is (not-any? entity-enabled? [:asset :actor :sighting])))
            (testing "Incident, Indicator entities are enabled"
-             (is (every? enabled? [:incident :indicator])))
+             (is (every? entity-enabled? [:incident :indicator])))
            (testing "It should not return `true` for non-existing entity keys"
-             (is (not (enabled? :lorem-ipsum))))))))))
+             (is (not (entity-enabled? :lorem-ipsum)))))))))
+  (testing "FeaturesService feature flagging methods"
+    (th/with-properties ["ctia.feature-flags"
+                         "star:proxima-centauri, distance:4.246,evo-stage:red_dwarf"]
+      (th/fixture-ctia-with-app
+       (fn [app]
+         (let [{:keys [flag-value feature-flags]} (th/get-service-map app :FeaturesService)]
+           (testing "feature flags"
+             (is (= {:star "proxima-centauri"
+                     :evo-stage "red_dwarf"
+                     :distance "4.246"}
+                    (feature-flags)))
+             (is (= (flag-value :star) "proxima-centauri"))
+             (is (= (flag-value :evo-stage) "red_dwarf"))
+             (is (= (flag-value :distance) "4.246"))
+             (is (= (flag-value :no-flag-like-dat) nil)))))))))
 
 (deftest routes-for-disabled-entities-test
   (let [try-route (fn [app entity]

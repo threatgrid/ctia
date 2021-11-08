@@ -78,10 +78,10 @@
 
 (s/defn prep-bundle-schema :- s/Any
   "Remove keys of disabled entities from Bundle schema"
-  [{{:keys [enabled?]} :FeaturesService} :- APIHandlerServices]
+  [{{:keys [entity-enabled?]} :FeaturesService} :- APIHandlerServices]
   (->> (entities/all-entities)
        keys
-       (remove enabled?)
+       (remove entity-enabled?)
        (mapcat entity->bundle-keys)
        (apply st/dissoc NewBundle)))
 
