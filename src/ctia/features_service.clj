@@ -57,16 +57,3 @@
        (contains? x key)
        (not x)))))
 
-(comment
-
-  (require '[ctia.test-helpers.core :as th])
-
-  (th/with-properties
-    ["ctia.features.disable" "asset,actor,sighting"
-     "ctia.feature-flags" "experimental_ratio:35, bubble-gum:50"]
-    (th/fixture-ctia-with-app
-     (fn [app]
-       (let [{:keys [feature-flags]} (th/get-service-map app :FeaturesService)]
-         (println (feature-flags))))))
-
-  )
