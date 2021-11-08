@@ -112,36 +112,8 @@
 (def searchable-fields
   #{:id
     :source
-    :coa_type
-    :cost
     :description
-    :efficacy
-    :impact
-    :objective
-    :open_c2_coa.action.type
-    :open_c2_coa.actuator.specifiers
-    :open_c2_coa.actuator.type
-    :open_c2_coa.id
-    :open_c2_coa.modifiers.additional_properties.context
-    :open_c2_coa.modifiers.destination
-    :open_c2_coa.modifiers.frequency
-    :open_c2_coa.modifiers.id
-    :open_c2_coa.modifiers.location
-    :open_c2_coa.modifiers.method
-    :open_c2_coa.modifiers.option
-    :open_c2_coa.modifiers.response
-    :open_c2_coa.modifiers.search
-    :open_c2_coa.modifiers.source
-    :open_c2_coa.target.specifiers
-    :open_c2_coa.target.type
-    :open_c2_coa.type
-    :related_COAs.COA_id
-    :related_COAs.confidence
-    :related_COAs.relationship
-    :related_COAs.source
     :short_description
-    :stage
-    :structured_coa_type
     :title})
 
 (s/defn coa-routes [services :- APIHandlerServices]

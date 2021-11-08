@@ -126,9 +126,7 @@
     :asset_type
     :confidence
     :observable.type
-    :observable.value
-    :specificity
-    :stability})
+    :observable.value})
 
 (s/defn asset-mapping-routes [services :- APIHandlerServices]
   (services->entity-crud-routes

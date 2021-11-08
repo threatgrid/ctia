@@ -139,9 +139,7 @@
              (ok timeline))))))
 
 (def searchable-fields
-  #{:id
-    :entity.id
-    :event_type})
+  #{})
 
 (s/defn event-routes [services :- APIHandlerServices]
   (routes

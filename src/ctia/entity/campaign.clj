@@ -104,13 +104,7 @@
   #{:id
     :source
     :description
-    :activity.description
-    :campaign_type
-    :confidence
-    :intended_effect
-    :names
     :short_description
-    :status
     :title})
 
 (s/defn campaign-routes [services :- APIHandlerServices]

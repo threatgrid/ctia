@@ -261,8 +261,6 @@
     :observables.type
     :observables.value
     :short_description
-    :texts.text
-    :texts.type
     :title})
 
 (s/defn casebook-routes [services :- APIHandlerServices]

@@ -133,54 +133,9 @@
 (def searchable-fields
   #{:id
     :source
-    :paradigms.name
     :description
-    :technologies.name
-    :background_details
-    :abstraction_level
-    :languages.name
-    :architectures.prevalence
-    :common_consequences.scopes
-    :alternate_terms.term
-    :detection_methods.method
-    :architectures.name
-    :operating_systems.version
-    :potential_mitigations.effectiveness_notes
-    :likelihood
-    :potential_mitigations.effectiveness
-    :paradigms.prevalence
-    :languages.prevalence
-    :modes_of_introduction.phase
-    :external_references.source_name
-    :external_ids
     :short_description
-    :common_consequences.likelihood
-    :notes.note
-    :title
-    :operating_systems.name
-    :operating_systems.cpe_id
-    :functional_areas
-    :notes.type
-    :operating_systems.prevalence
-    :structure
-    :external_references.description
-    :technologies.prevalence
-    :external_references.hashes
-    :affected_resources
-    :potential_mitigations.phases
-    :alternate_terms.description
-    :external_references.external_id
-    :potential_mitigations.strategy
-    :detection_methods.effectiveness_notes
-    :architectures.class
-    :languages.class
-    :potential_mitigations.description
-    :common_consequences.note
-    :detection_methods.effectiveness
-    :common_consequences.impacts
-    :operating_systems.class
-    :modes_of_introduction.note
-    :detection_methods.description})
+    :title})
 
 (s/defn weakness-routes [services :- APIHandlerServices]
   (services->entity-crud-routes

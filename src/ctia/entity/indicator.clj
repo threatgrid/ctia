@@ -142,17 +142,8 @@
 (def searchable-fields
   #{:id
     :source
-    :confidence
     :description
-    :indicator_type
-    :kill_chain_phases.kill_chain_name
-    :kill_chain_phases.phase_name
-    :likely_impact
-    :producer
-    :severity
     :short_description
-    :tags
-    :test_mechanisms
     :title})
 
 (s/defn indicator-routes [services :- APIHandlerServices]

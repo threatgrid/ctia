@@ -73,12 +73,9 @@
   #{:id
     :source
     :description
-    :kill_chain_phases.kill_chain_name
-    :kill_chain_phases.phase_name
     :labels
     :short_description
-    :title
-    :x_mitre_aliases})
+    :title})
 
 (s/defn tool-routes [services :- APIHandlerServices]
   (services->entity-crud-routes

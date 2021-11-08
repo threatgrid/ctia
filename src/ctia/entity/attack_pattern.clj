@@ -93,15 +93,9 @@
 (def searchable-fields
   #{:id
     :source
-    :abstraction_level
     :description
-    :kill_chain_phases.kill_chain_name
-    :kill_chain_phases.phase_name
     :short_description
-    :title
-    :x_mitre_contributors
-    :x_mitre_data_sources
-    :x_mitre_platforms})
+    :title})
 
 (s/defn attack-pattern-routes [services :- APIHandlerServices]
   (services->entity-crud-routes

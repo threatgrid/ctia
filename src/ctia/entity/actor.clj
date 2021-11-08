@@ -110,17 +110,8 @@
   #{:id
     :source
     :actor_type
-    :confidence
     :description
-    :identity.description
-    :identity.related_identities.identity
-    :identity.related_identities.information_source
-    :identity.related_identities.relationship
-    :intended_effect
-    :motivation
-    :planning_and_operational_support
     :short_description
-    :sophistication
     :title})
 
 (s/defn actor-routes [services :- APIHandlerServices]

@@ -78,12 +78,7 @@
     :source
     :description
     :investigated_observables
-    :object_ids
     :short_description
-    :targets.observables.type
-    :targets.observables.value
-    :targets.os
-    :targets.type
     :title})
 
 (s/defn investigation-routes [services :- APIHandlerServices]

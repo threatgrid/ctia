@@ -110,12 +110,9 @@
 (def searchable-fields
   #{:id
     :source
-    :confidence
     :disposition_name
-    :observable.type
     :observable.value
-    :reason
-    :severity})
+    :reason})
 
 (s/defn judgement-routes [services :- APIHandlerServices]
   (let [entity-crud-config {:entity                   :judgement

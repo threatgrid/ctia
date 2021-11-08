@@ -206,10 +206,7 @@
   #{:id
     :source
     :description
-    :relationship_type
     :short_description
-    :source_ref
-    :target_ref
     :title})
 
 (s/defn relationship-routes [services :- APIHandlerServices]

@@ -108,11 +108,7 @@
     :source
     :description
     :short_description
-    :targets.observables.type
     :targets.observables.value
-    :targets.os
-    :targets.sensor
-    :targets.type
     :title})
 
 (s/defn target-record-routes [services :- APIHandlerServices]

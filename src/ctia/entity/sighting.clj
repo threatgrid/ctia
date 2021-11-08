@@ -46,29 +46,10 @@
 (def searchable-fields
   #{:id
     :source
-    :confidence
     :description
-    :observables.type
     :observables.value
-    :relations.origin
-    :relations.origin_uri
-    :relations.related.type
-    :relations.related.value
-    :relations.relation
-    :relations.source.type
-    :relations.source.value
-    :resolution
-    :sensor
-    :sensor_coordinates.observables.type
-    :sensor_coordinates.observables.value
-    :sensor_coordinates.os
-    :sensor_coordinates.type
-    :severity
     :short_description
-    :targets.observables.type
     :targets.observables.value
-    :targets.os
-    :targets.type
     :title})
 
 (s/defn sighting-routes [services :- APIHandlerServices]
