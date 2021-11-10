@@ -130,6 +130,13 @@
    :technologies.name
    :technologies.prevalence])
 
+(def searchable-fields
+  #{:id
+    :source
+    :description
+    :short_description
+    :title})
+
 (s/defn weakness-routes [services :- APIHandlerServices]
   (services->entity-crud-routes
    services
@@ -152,7 +159,8 @@
     :external-id-capabilities :read-weakness
     :can-aggregate?           true
     :histogram-fields         weakness-histogram-fields
-    :enumerable-fields        weakness-enumerable-fields}))
+    :enumerable-fields        weakness-enumerable-fields
+    :searchable-fields        searchable-fields}))
 
 (def capabilities
   #{:create-weakness

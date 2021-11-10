@@ -138,27 +138,31 @@
                  timeline (bucketize-events res get-in-config)]
              (ok timeline))))))
 
+(def searchable-fields
+  #{})
+
 (s/defn event-routes [services :- APIHandlerServices]
   (routes
    (event-history-routes services)
    (services->entity-crud-routes
     services
-    {:tags ["Event"]
-     :entity :event
-     :entity-schema Event
-     :get-schema PartialEvent
-     :get-params EventGetParams
-     :list-schema PartialEventList
-     :search-schema PartialEventList
-     :search-q-params EventSearchParams
-     :get-capabilities :read-event
-     :can-update? false
-     :can-patch? false
-     :can-post? false
+    {:tags                    ["Event"]
+     :entity                  :event
+     :entity-schema           Event
+     :get-schema              PartialEvent
+     :get-params              EventGetParams
+     :list-schema             PartialEventList
+     :search-schema           PartialEventList
+     :search-q-params         EventSearchParams
+     :get-capabilities        :read-event
+     :can-update?             false
+     :can-patch?              false
+     :can-post?               false
      :can-get-by-external-id? false
-     :search-capabilities :search-event
-     :delete-capabilities #{:delete-event :developer}
-     :date-field :timestamp})))
+     :search-capabilities     :search-event
+     :delete-capabilities     #{:delete-event :developer}
+     :date-field              :timestamp
+     :searchable-fields       searchable-fields})))
 
 (def event-entity
   {:new-spec              map?

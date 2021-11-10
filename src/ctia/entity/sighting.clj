@@ -43,6 +43,15 @@
    routes.common/PagingParams
    SightingFieldsParam))
 
+(def searchable-fields
+  #{:id
+    :source
+    :description
+    :observables.value
+    :short_description
+    :targets.observables.value
+    :title})
+
 (s/defn sighting-routes [services :- APIHandlerServices]
   (services->entity-crud-routes
    services
@@ -65,7 +74,8 @@
     :search-capabilities      :search-sighting
     :can-aggregate?           true
     :histogram-fields         ss/sighting-histogram-fields
-    :enumerable-fields        ss/sighting-enumerable-fields}))
+    :enumerable-fields        ss/sighting-enumerable-fields
+    :searchable-fields        searchable-fields}))
 
 (def capabilities
   #{:create-sighting

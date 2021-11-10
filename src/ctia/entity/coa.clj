@@ -109,6 +109,13 @@
    :cost
    :coa_type])
 
+(def searchable-fields
+  #{:id
+    :source
+    :description
+    :short_description
+    :title})
+
 (s/defn coa-routes [services :- APIHandlerServices]
   (services->entity-crud-routes
    services
@@ -131,7 +138,8 @@
     :external-id-capabilities :read-coa
     :can-aggregate?           true
     :histogram-fields         coa-histogram-fields
-    :enumerable-fields        coa-enumerable-fields}))
+    :enumerable-fields        coa-enumerable-fields
+    :searchable-fields        searchable-fields}))
 
 (def capabilities
   #{:create-coa

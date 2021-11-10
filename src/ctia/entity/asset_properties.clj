@@ -116,6 +116,13 @@
 
 (def asset-properties-can-revoke? true)
 
+(def searchable-fields
+  #{:id
+    :source
+    :asset_ref
+    :properties.name
+    :properties.value})
+
 (s/defn asset-properties-routes [services :- APIHandlerServices]
   (services->entity-crud-routes
     services
@@ -139,7 +146,8 @@
      :can-aggregate?           true
      :histogram-fields         asset-properties-histogram-fields
      :enumerable-fields        asset-properties-enumerable-fields
-     :can-revoke?              asset-properties-can-revoke?}))
+     :can-revoke?              asset-properties-can-revoke?
+     :searchable-fields        searchable-fields}))
 
 (def capabilities
   #{:create-asset-properties

@@ -139,6 +139,13 @@
 (s/defschema IndicatorsByExternalIdQueryParams
   IndicatorsListQueryParams)
 
+(def searchable-fields
+  #{:id
+    :source
+    :description
+    :short_description
+    :title})
+
 (s/defn indicator-routes [services :- APIHandlerServices]
   (services->entity-crud-routes
    services
@@ -161,7 +168,8 @@
     :external-id-capabilities :read-indicator
     :can-aggregate?           true
     :histogram-fields         indicator-histogram-fields
-    :enumerable-fields        indicator-enumerable-fields}))
+    :enumerable-fields        indicator-enumerable-fields
+    :searchable-fields        searchable-fields}))
 
 (def capabilities
   #{:read-indicator

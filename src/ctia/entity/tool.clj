@@ -69,6 +69,14 @@
     :delete-tool
     :search-tool})
 
+(def searchable-fields
+  #{:id
+    :source
+    :description
+    :labels
+    :short_description
+    :title})
+
 (s/defn tool-routes [services :- APIHandlerServices]
   (services->entity-crud-routes
    services
@@ -91,7 +99,8 @@
     :external-id-capabilities :read-tool
     :can-aggregate?           true
     :histogram-fields         tool-histogram-fields
-    :enumerable-fields        tool-enumerable-fields}))
+    :enumerable-fields        tool-enumerable-fields
+    :searchable-fields        searchable-fields}))
 
 (def tool-entity
   {:route-context         "/tool"
