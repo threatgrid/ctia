@@ -177,6 +177,7 @@
          histogram-fields [:created]}
     :as entity-crud-config}]
  (s/fn [{{:keys [get-store]} :StoreService
+         {:keys [flag-value]} :FeaturesService
          :as services} :- APIHandlerServices]
   (let [capitalized (capitalize-entity entity)
         search-q-params* (routes.common/prep-es-fields-schema entity-crud-config)
@@ -332,8 +333,10 @@
              :description (capabilities->description search-capabilities)
              :capabilities search-capabilities
              :query [params search-q-params*]
-             (let [params* (routes.common/enforce-search-fields
-                            params searchable-fields)]
+             (let [params* (if (flag-value :enforce-search-fields)
+                             (routes.common/enforce-search-fields
+                              params searchable-fields)
+                             params)]
                (-> (get-store entity)
                    (store/query-string-search
                     (search-query date-field params*)

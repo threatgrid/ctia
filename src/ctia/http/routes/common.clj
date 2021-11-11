@@ -73,9 +73,9 @@
   "Guarantees that ES fields parameter always passed to ES instance"
   [{:keys [search_fields] :as query-params}
    searchable-fields]
-  query-params
-  #_(cond-> query-params
-    (empty? search_fields) (assoc :search_fields (mapv name searchable-fields))))
+  (cond-> query-params
+    (empty? search_fields)
+    (assoc :search_fields (mapv name searchable-fields))))
 
 (def paging-param-keys
   "A list of the paging and sorting related parameters, we can use
