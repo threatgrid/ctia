@@ -5,9 +5,11 @@
    [ctia.auth.capabilities :as capabilities]
    [ctia.auth.threatgrid :refer [map->Identity]]
    [ctia.bundle.core :as bundle]
+   [ctia.entity.incident :as incident]
    [ctia.http.generative.properties :as prop]
    [ctia.lib.utils :as utils]
    [ctia.store :as store]
+   [ctia.stores.es.crud :as crud]
    [ctia.test-helpers.core :as helpers]
    [ctia.test-helpers.es :as es-helpers]
    [ctia.test-helpers.fake-whoami-service :as whoami-helpers]
@@ -360,3 +362,40 @@
              (-> res first
                  (select-keys (keys expected))
                  (= expected))))))))))
+
+(deftest enforcing-fields-with-feature-flag-test
+  (testing "feature flag set? fields should be enforced"
+    (are [properties query expected-fields]
+         (helpers/with-properties properties
+           (helpers/fixture-ctia-with-app
+            (fn [app]
+              (helpers/set-capabilities!
+               app "foouser" ["foogroup"] "user" (capabilities/all-capabilities))
+              (whoami-helpers/set-whoami-response
+               app "45c1f5e3f05d0" "foouser" "foogroup" "user")
+              (let [results (atom nil)]
+                (with-redefs [crud/make-search-query
+                              (fn [_ q _]
+                                (reset! results
+                                        (->> q :full-text first :fields
+                                             (map keyword)
+                                             set))
+                                (throw (ex-info "Early termination" {})))]
+                  (th.search/search-raw app :incident query)
+                  (is (= expected-fields @results)
+                      (format "query: %s expected: %s actual:%s"
+                              query expected-fields @results))
+                  ())))))
+
+      ["ctia.feature-flags" "enforce-search-fields:false"]
+      {:query "*"}
+      #{}
+
+      ["ctia.feature-flags" "enforce-search-fields:true"]
+      {:query "*"}
+      incident/searchable-fields
+
+      ["ctia.feature-flags" "enforce-search-fields:true"]
+      {:query "nunc porta vulputate tellus"
+       :search_fields ["title"]}
+      #{:title})))
