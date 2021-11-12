@@ -1,6 +1,5 @@
 (ns ctia.features-service
   (:require
-   [clojure.edn :as edn]
    [clojure.string :as string]
    [ctia.entity.entities :as entities]
    [puppetlabs.trapperkeeper.core :as tk]))
@@ -42,11 +41,7 @@
 
   (flag-value
    [this key]
-   (some->
-    this
-    feature-flags
-    (get key)
-    edn/read-string))
+   (get (feature-flags this) key))
 
   (entity-enabled?
    [this key]
@@ -61,4 +56,3 @@
        (set x)
        (contains? x key)
        (not x)))))
-

@@ -333,7 +333,7 @@
              :description (capabilities->description search-capabilities)
              :capabilities search-capabilities
              :query [params search-q-params*]
-             (let [params* (if (flag-value :enforce-search-fields)
+             (let [params* (if (= "true" (flag-value :enforce-search-fields))
                              (routes.common/enforce-search-fields
                               params searchable-fields)
                              params)]
