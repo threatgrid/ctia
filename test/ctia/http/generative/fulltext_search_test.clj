@@ -386,16 +386,9 @@
                       (format "query: %s expected: %s actual:%s"
                               query expected-fields @results))
                   ())))))
-
+      ;; Initialy I had more cases, but these tests turned out to be too expensive, it has
+      ;; to start CTIA for every case. This code (I hope) soon to be recycled, so I just
+      ;; removed the other cases for now.
       ["ctia.feature-flags" "enforce-search-fields:false"]
       {:query "*"}
-      #{}
-
-      ["ctia.feature-flags" "enforce-search-fields:true"]
-      {:query "*"}
-      incident/searchable-fields
-
-      ["ctia.feature-flags" "enforce-search-fields:true"]
-      {:query "nunc porta vulputate tellus"
-       :search_fields ["title"]}
-      #{:title})))
+      #{})))
