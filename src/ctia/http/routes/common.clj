@@ -75,7 +75,7 @@
    searchable-fields]
   (cond-> query-params
     (empty? search_fields)
-    (assoc :search_fields searchable-fields)))
+    (assoc :search_fields (mapv name searchable-fields))))
 
 (def paging-param-keys
   "A list of the paging and sorting related parameters, we can use
