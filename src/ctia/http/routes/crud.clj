@@ -164,7 +164,8 @@
            can-get-by-external-id?
            date-field
            histogram-fields
-           enumerable-fields]
+           enumerable-fields
+           searchable-fields]
     :or {hide-delete? false
          can-post? true
          can-update? true
@@ -176,6 +177,7 @@
          histogram-fields [:created]}
     :as entity-crud-config}]
  (s/fn [{{:keys [get-store]} :StoreService
+         {:keys [flag-value]} :FeaturesService
          :as services} :- APIHandlerServices]
   (let [capitalized (capitalize-entity entity)
         search-q-params* (routes.common/prep-es-fields-schema entity-crud-config)
@@ -331,14 +333,18 @@
              :description (capabilities->description search-capabilities)
              :capabilities search-capabilities
              :query [params search-q-params*]
-             (-> (get-store entity)
-                 (store/query-string-search
-                   (search-query date-field params)
-                   identity-map
-                   (select-keys params routes.common/search-options))
-                 (ent/page-with-long-id services)
-                 ent/un-store-page
-                 routes.common/paginated-ok))
+             (let [params* (if (= "true" (flag-value :enforce-search-fields))
+                             (routes.common/enforce-search-fields
+                              params searchable-fields)
+                             params)]
+               (-> (get-store entity)
+                   (store/query-string-search
+                    (search-query date-field params*)
+                    identity-map
+                    (select-keys params* routes.common/search-options))
+                   (ent/page-with-long-id services)
+                   ent/un-store-page
+                   routes.common/paginated-ok)))
            (GET "/count" []
              :return s/Int
              :summary (format "Count %s matching a Lucene/ES query string and field filters" capitalized)
