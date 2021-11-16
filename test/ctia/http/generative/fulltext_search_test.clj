@@ -7,6 +7,7 @@
    [ctia.bundle.core :as bundle]
    [ctia.entity.incident :as incident]
    [ctia.http.generative.properties :as prop]
+   [ctia.http.routes.common :as routes.common]
    [ctia.lib.utils :as utils]
    [ctia.store :as store]
    [ctia.stores.es.crud :as crud]
@@ -205,6 +206,7 @@
        :query-params     {:simple_query  "\"fried eggs\" +(eggplant | potato) -frittata"
                           :query         "(fried eggs eggplant) OR (fried eggs potato)"
                           :search_fields ["title"]}
+       :only true
        :bundle-gen       bundle-gen
        :check            check-fn}])
 
@@ -364,6 +366,15 @@
                  (= expected))))))))))
 
 (deftest enforcing-fields-with-feature-flag-test
+  (testing "unit testing enforce-search-fields"
+    (are [query-params searchable-fields expected-search-fields]
+         (let [res (routes.common/enforce-search-fields query-params searchable-fields)]
+           (and
+            (= (dissoc res :search_fields) (dissoc query-params :search_fields))
+            (= expected-search-fields (:search_fields res))))
+      {:query "*"} [] []
+      {:query "*"} [:title :description] ["title" "description"]
+      {:query "foo" :search_fields ["title"]} [:id :title :description] ["title"]))
   (testing "feature flag set? fields should be enforced"
     (are [properties query expected-fields]
          (helpers/with-properties properties
