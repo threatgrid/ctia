@@ -453,6 +453,18 @@ It returns the documents with full hits meta data including the real index in wh
                                            access-control-filter-list
                                            ident
                                            get-in-config))))))
+(s/defn rename-search-fields :- (s/maybe {s/Keyword [s/Str]})
+  "Automatically translates keyword fields to use underlying text field.
+
+   ES doesn't like when different types of tokens get used in the same query. To deal with
+   that, we create a nested field of type 'text', see:
+   `ctia.stores.es.mapping/searchable-token`. This should be opaque - caller shouldn't
+   have to explicitly instruct API to direct query to the nested field."
+  [fields :- (s/maybe [s/Any])]
+  (let [search-fields-mapping {"source" "source.text"}]
+    (when fields
+      {:fields
+       (mapv (comp #(get search-fields-mapping % %) name) fields)})))
 
 (s/defn refine-full-text-query-parts :- [{s/Keyword ESQFullTextQuery}]
   [full-text-terms :- [FullTextQuery]
@@ -466,8 +478,7 @@ It returns the documents with full hits meta data including the real index in wh
                                     (when (and default-operator
                                                (not= query_mode :multi_match))
                                       {:default_operator default-operator})
-                                    (when fields
-                                      {:fields (mapv name fields)})))))]
+                                    (rename-search-fields fields)))))]
     (mapv term->es-query-part full-text-terms)))
 
 (s/defn make-search-query :- {s/Keyword s/Any}
