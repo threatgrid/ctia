@@ -95,6 +95,15 @@ Returns a map where key is path to a field, and value - path to the nested text 
                 (hash-map path (str path "." v)))))
        (apply merge {})))
 
+(s/defschema EntityProps
+  (st/optional-keys
+   {:default_operator s/Str}))
+
+(s/defschema ESConnStateProps
+  (st/optional-keys
+   {:config {s/Any s/Any}
+    :props EntityProps}))
+
 (s/defn rename-search-fields :- (s/maybe {s/Keyword [s/Str]})
   "Automatically translates keyword fields to use underlying text field.
 
@@ -102,7 +111,7 @@ Returns a map where key is path to a field, and value - path to the nested text 
    that, we create a nested field of type 'text', see:
    `ctia.stores.es.mapping/searchable-token`. This should be opaque - caller shouldn't
    have to explicitly instruct API to direct query to the nested field."
-  [es-conn-state :- ESConnState
+  [es-conn-state :- ESConnStateProps
    fields :- (s/maybe [s/Any])]
   (let [properties (some-> es-conn-state :config :mappings first second :properties)
         mapping (searchable-fields-map properties)]
@@ -111,7 +120,7 @@ Returns a map where key is path to a field, and value - path to the nested text 
        (mapv (comp #(get mapping % %) name) fields)})))
 
 (s/defn refine-full-text-query-parts :- [{s/Keyword ESQFullTextQuery}]
-  [es-conn-state :- ESConnState
+  [es-conn-state :- ESConnStateProps
    full-text-terms :- [FullTextQuery]]
   (let [{{:keys [default_operator]} :props} es-conn-state
         term->es-query-part (fn [{:keys [query_mode fields] :as text-query}]

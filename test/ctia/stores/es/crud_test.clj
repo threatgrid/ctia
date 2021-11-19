@@ -24,9 +24,9 @@
   es-helpers/fixture-properties:es-store)
 
 ;; TODO: Enable later
-#_(deftest refine-full-text-query-parts-test
+(deftest refine-full-text-query-parts-test
   (testing "refine-full-text-query-parts with different queries"
-    (are [queries res] (is (= res (es.query/refine-full-text-query-parts queries nil)))
+    (are [queries res] (is (= res (es.query/refine-full-text-query-parts {} queries)))
       [{:query "foo"}] [{:query_string {:query "foo"}}]
 
       [{:query "foo" :query_mode :simple_query_string}] [{:simple_query_string {:query "foo"}}]
@@ -39,27 +39,28 @@
       (is (thrown-with-msg?
            Exception #"does not match schema"
            (es.query/refine-full-text-query-parts
-            [{:query "foo" :query_mode :unknown}] nil)))
+            {} [{:query "foo" :query_mode :unknown}])))
       (is (thrown-with-msg?
            Exception #"does not match schema"
            (es.query/refine-full-text-query-parts
-            [{}] nil)))))
+            {} [{}])))))
   (testing "refine-full-text-query-parts default operator"
     (is (= [{:query_string {:query "foo" :default_operator "and"}}]
            (es.query/refine-full-text-query-parts
-            [{:query "foo"}]
-            "and")))
+            {:props {:default_operator "and"}}
+            [{:query "foo"}])))
     (is (= [{:multi_match {:query "foo"}}]
            (es.query/refine-full-text-query-parts
-            [{:query "foo" :query_mode :multi_match}]
-            "and")) "no default_operator with mutli_match"))
+            {:props {:default_operator "and"}}
+            [{:query "foo" :query_mode :multi_match}]))
+        "no default_operator with mutli_match"))
   (testing "refine-full-text-query-parts with fields"
-    (is (= [{:query_string {:query            "foo"
+    (is (= [{:query_string {:query "foo"
                             :default_operator "and"
-                            :fields           ["title" "description"]}}]
+                            :fields ["title" "description"]}}]
            (es.query/refine-full-text-query-parts
-            [{:query "foo" :fields ["title" "description"]}]
-            "and")))))
+            {:props {:default_operator "and"}}
+            [{:query "foo" :fields ["title" "description"]}])))))
 
 (deftest ensure-document-id-in-map-test
   (is (= {:id '("actor-677796fd-b5d2-46e3-b57d-4879bcca1ce7")}
