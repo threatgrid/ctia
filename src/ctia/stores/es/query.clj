@@ -95,14 +95,13 @@ Returns a map where key is path to a field, and value - path to the nested text 
                 (hash-map path (str path "." v)))))
        (apply merge {})))
 
-(s/defschema EntityProps
-  (st/optional-keys
-   {:default_operator s/Str}))
-
 (s/defschema ESConnStateProps
   (st/optional-keys
    {:config {s/Any s/Any}
-    :props EntityProps}))
+    :props {s/Keyword s/Any}
+    :index s/Any
+    :conn s/Any
+    :services s/Any}))
 
 (s/defn rename-search-fields :- (s/maybe {s/Keyword [s/Str]})
   "Automatically translates keyword fields to use underlying text field.
