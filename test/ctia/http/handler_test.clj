@@ -58,4 +58,4 @@
                   (str "Expected no :description on these routes, but found some: "
                        (str/join ", " extra-docs))))))))
     ;; disable http
-    false))
+    false nil))

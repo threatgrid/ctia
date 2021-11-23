@@ -78,7 +78,7 @@
                  [prismatic/plumbing "0.5.5"] ;; upgrade puppetlabs/trapperkeeper
 
                  ;; Schemas
-                 [prismatic/schema "1.1.12"]
+                 [prismatic/schema "1.2.0"]
                  [metosin/schema-tools "0.12.2"]
                  [threatgrid/flanders "0.1.23"]
                  [threatgrid/ctim "1.1.8"]
