@@ -279,10 +279,11 @@
   to make them explicit."
   ([t-with-app :- (s/=> s/Any
                         (s/named s/Any 'app))]
-   (fixture-ctia-with-app t-with-app true))
+   (fixture-ctia-with-app t-with-app true {}))
   ([t-with-app :- (s/=> s/Any
                         (s/named s/Any 'app))
-    enable-http?]
+    enable-http? :- s/Bool
+    services-override :- (s/maybe {s/Keyword s/Any})]
    ;; Start CTIA
    ;; This starts the server on an available port (if enabled)
    (let [http-port 0]
@@ -294,21 +295,22 @@
                             (#{:threatgrid} (get-in config [:ctia :auth :type]))
                             ;; dynamic requires can be removed when #'with-properties is phased out or moved
                             (assoc
-                              :ThreatgridAuthWhoAmIURLService
-                              @(requiring-resolve
-                                 'ctia.test-helpers.fake-whoami-service/fake-threatgrid-auth-whoami-url-service)
-                              :IFakeWhoAmIServer
-                              @(requiring-resolve
-                                 'ctia.test-helpers.fake-whoami-service/fake-whoami-service)))
+                             :ThreatgridAuthWhoAmIURLService
+                             @(requiring-resolve
+                               'ctia.test-helpers.fake-whoami-service/fake-threatgrid-auth-whoami-url-service)
+                             :IFakeWhoAmIServer
+                             @(requiring-resolve
+                               'ctia.test-helpers.fake-whoami-service/fake-whoami-service))
+                            true (merge services-override))
              app (init/start-ctia!*
-                   {:services (vals services-map)
-                    :config config})]
+                  {:services (vals services-map)
+                   :config config})]
          (try
            ;; both bind app thread-locally and pass as argument.
            ;; in the future, we should move to just an argument.
            (bind-current-app*
-             app
-             #(t-with-app app))
+            app
+            #(t-with-app app))
            (finally
              (stop-and-cleanup app))))))))
 
@@ -322,7 +324,7 @@
    (fixture-ctia-with-app (fn [_app_]
                             ;; app bound thread-locally
                             (t))
-                          enable-http?)))
+                          enable-http? nil)))
 
 (s/defn fixture-ctia-fast
   "Note: ES indices are unique, use `with-config-transformer`
