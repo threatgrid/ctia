@@ -5,12 +5,12 @@
    [ctia.auth.capabilities :as capabilities]
    [ctia.auth.threatgrid :refer [map->Identity]]
    [ctia.bundle.core :as bundle]
-   [ctia.entity.incident :as incident]
    [ctia.http.generative.properties :as prop]
    [ctia.http.routes.common :as routes.common]
    [ctia.lib.utils :as utils]
    [ctia.store :as store]
-   [ctia.stores.es.crud :as crud]
+   [ctia.store-service :as store-service]
+   [ctia.store-service-core :as store-svc-core]
    [ctia.test-helpers.core :as helpers]
    [ctia.test-helpers.es :as es-helpers]
    [ctia.test-helpers.fake-whoami-service :as whoami-helpers]
@@ -18,7 +18,9 @@
    [ctim.examples.bundles :refer [bundle-maximal]]
    [ctim.schemas.bundle :as bundle.schema]
    [ductile.index :as es-index]
-   [puppetlabs.trapperkeeper.app :as app]))
+   [puppetlabs.trapperkeeper.app :as app]
+   [puppetlabs.trapperkeeper.core :as tk]
+   [puppetlabs.trapperkeeper.services :as tk-svcs]))
 
 (def ^:private login
   (map->Identity {:login  "foouser"
@@ -364,6 +366,30 @@
                  (select-keys (keys expected))
                  (= expected))))))))))
 
+(def enforced-fields-flag-query-params (atom nil))
+
+(defrecord FakeIncidentStore [state]
+  store/IQueryStringSearchableStore
+  (query-string-search
+    [_ search-query _ _]
+    (reset! enforced-fields-flag-query-params search-query)
+    []))
+
+(tk/defservice fake-store-service
+  "A service to manage the central storage area for all stores."
+  store-service/StoreService
+  [[:ConfigService get-in-config]]
+  (init [this context] (store-svc-core/init context))
+  (start [this context] (store-svc-core/start context get-in-config))
+  (stop [this context] (store-svc-core/stop context))
+  (all-stores [this]
+              (store-svc-core/all-stores (tk-svcs/service-context this)))
+  (get-store [this store-id]
+             (let [store (store-svc-core/get-store (tk-svcs/service-context this) store-id)]
+               (if (= :incident store-id)
+                 (->FakeIncidentStore (:state store))
+                 store))))
+
 (deftest enforcing-fields-with-feature-flag-test
   (testing "unit testing enforce-search-fields"
     (are [query-params searchable-fields expected-search-fields]
@@ -374,31 +400,20 @@
       {:query "*"} [] []
       {:query "*"} [:title :description] ["title" "description"]
       {:query "foo" :search_fields ["title"]} [:id :title :description] ["title"]))
-  #_(testing "feature flag set? fields should be enforced"
-    (are [properties query expected-fields]
-         (helpers/with-properties properties
-           (helpers/fixture-ctia-with-app
-            (fn [app]
-              (helpers/set-capabilities!
-               app "foouser" ["foogroup"] "user" (capabilities/all-capabilities))
-              (whoami-helpers/set-whoami-response
-               app "45c1f5e3f05d0" "foouser" "foogroup" "user")
-              (let [results (atom nil)]
-                (with-redefs [crud/make-search-query
-                              (fn [_ q _]
-                                (reset! results
-                                        (->> q :full-text first :fields
-                                             (map keyword)
-                                             set))
-                                (throw (ex-info "Early termination" {})))]
-                  (th.search/search-raw app :incident query)
-                  (is (= expected-fields @results)
-                      (format "query: %s expected: %s actual:%s"
-                              query expected-fields @results))
-                  ())))))
-      ;; Initialy I had more cases, but these tests turned out to be too expensive, it has
-      ;; to start CTIA for every case. This code (I hope) soon to be recycled, so I just
-      ;; removed the other cases for now.
-      ["ctia.feature-flags" "enforce-search-fields:false"]
-      {:query "*"}
-      #{})))
+  (testing "feature flag set? fields should be enforced"
+    (let [http-server? true]
+      (reset! enforced-fields-flag-query-params nil)
+      (helpers/with-properties
+        ["ctia.feature-flags" "enforce-search-fields:false"]
+        (helpers/fixture-ctia-with-app
+         (fn [app]
+           (helpers/set-capabilities!
+            app "foouser" ["foogroup"] "user" (capabilities/all-capabilities))
+           (whoami-helpers/set-whoami-response
+            app "45c1f5e3f05d0" "foouser" "foogroup" "user")
+           (th.search/search-raw app :incident {:query "*"})
+           (is (->> @enforced-fields-flag-query-params
+                    :full-text
+                    (every? #(not (contains? % :fields))))))
+         http-server?
+         {:StoreService fake-store-service})))))
