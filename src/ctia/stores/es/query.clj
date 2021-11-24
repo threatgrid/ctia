@@ -114,7 +114,7 @@ Returns a map where key is path to a field, and value - path to the nested text 
    fields :- (s/maybe [s/Any])]
   (let [properties (some-> es-conn-state :config :mappings first second :properties)
         mapping (searchable-fields-map properties)]
-    (when fields
+    (when (seq fields)
       {:fields
        (mapv (comp #(get mapping % %) name) fields)})))
 
