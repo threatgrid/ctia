@@ -41,7 +41,7 @@
               {"http://non-transient-asset-id" "http://different-asset-id"}))
           "it shouldn't try to renew non-transient asset_ref, even when tempids has it"))))
 
-(defn additional-tests [app asset-id asset-sample]
+(defn additional-tests [app _asset-id asset-sample]
   (testing "GET /ctia/asset/search"
     (do
       (are [term check-fn expected desc] (let [response (helpers/GET app
@@ -67,7 +67,6 @@
              :example          new-asset-maximal
              :invalid-tests?   true
              :update-tests?    true
-             :search-tests?    true
              :update-field     :source
              :additional-tests additional-tests
              :headers          {:Authorization "45c1f5e3f05d0"}})))))

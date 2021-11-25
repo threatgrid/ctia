@@ -60,7 +60,6 @@
              :invalid-tests?   true
              :update-tests?    true
              :update-field     :source
-             :search-tests?    true
              :additional-tests additional-tests
              :headers          {:Authorization "45c1f5e3f05d0"}})))))
 

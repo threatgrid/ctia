@@ -83,6 +83,7 @@
      (let [parameters (into sut/incident-entity
                             {:app app
                              :patch-tests? true
+                             :search-tests? true
                              :example new-incident-maximal
                              :headers {:Authorization "45c1f5e3f05d0"}
                              :additional-tests partial-operations-tests})]
