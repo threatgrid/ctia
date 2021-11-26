@@ -63,37 +63,32 @@
      :fields [s/Str]})))
 
 (defn- searchable-fields-map-impl
-  [prev m result]
-  (reduce-kv
-   (fn [res key val]
-     (if (= "keyword" (:type val))
-       (let [field-name (some->> val
-                                 :fields
-                                 (filter (fn [[_ v]] (= "text" (:type v))))
-                                 ffirst
-                                 name)
-             path (conj prev (name key))]
-         (if field-name
-           (conj res path field-name)
-           res))
-       (if (map? val)
-         (let [path (if (not= :properties key)
-                      (conj prev (name key))
-                      prev)]
-           (searchable-fields-map-impl path val res))
-         res)))
-   result m))
+  ([m] (searchable-fields-map-impl [] m))
+  ([path m]
+   (if (and (map? m) (not= (:type m) "keyword"))
+     (let [step-fn (fn [k]
+                     (let [path (if (= k :properties) path (conj path k))]
+                       (searchable-fields-map-impl path (m k))))]
+       (mapcat step-fn (keys m)))
+     (let [fields (reduce-kv
+                   (fn [acc field {:keys [type]}]
+                     (if (= type "text")
+                       (conj acc field)
+                       acc))
+                   []
+                   (:fields m))]
+       (map #(conj [path] %) fields)))))
 
 (s/defn searchable-fields-map :- {s/Str s/Str}
   "Walks through entity's mapping properties and finds all fields with secondary searchable token.
 Returns a map where key is path to a field, and value - path to the nested text token."
   [properties :- (s/maybe {s/Keyword s/Any})]
-  (->> (searchable-fields-map-impl [] properties [])
-       (partition 2)
-       (map (fn [[p v]]
-              (let [path (str/join "." p)]
-                (hash-map path (str path "." v)))))
-       (apply merge {})))
+  (into {}
+        (map (fn [[path field]]
+               (let [path (str/join "." (map name path))]
+                 [path
+                  (str/join "." [path (name field)])])))
+        (searchable-fields-map-impl properties)))
 
 (s/defschema ESConnStateProps
   (st/optional-keys
