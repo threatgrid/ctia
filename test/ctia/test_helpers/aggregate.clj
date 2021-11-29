@@ -1,18 +1,17 @@
 (ns ctia.test-helpers.aggregate
-  (:require [java-time :as jt]
-            [clj-momo.lib.map :refer [deep-merge-with]]
-            [ctia.test-helpers
-             [auth :refer [all-capabilities]]
-             [fake-whoami-service :as helpers.whoami]
-             [core :as helpers.core :refer [GET POST-bulk fixture-ctia-with-app]]
-             [store :refer [test-selected-stores-with-app]]]
-            [clojure.string :as string]
+  (:require [clj-momo.lib.map :refer [deep-merge-with]]
             [clojure.pprint :refer [pprint]]
-            [schema-generators.generators :as g]
-            [schema-tools.core :as st]
-            [clojure.walk :refer [keywordize-keys]]
+            [clojure.string :as string]
             [clojure.test :refer [is testing]]
             [clojure.test.check.generators :as gen]
+            [clojure.walk :refer [keywordize-keys]]
+            [ctia.test-helpers.auth :refer [all-capabilities]]
+            [ctia.test-helpers.core :as helpers.core :refer [GET POST-bulk]]
+            [ctia.test-helpers.fake-whoami-service :as helpers.whoami]
+            [ctia.test-helpers.store :refer [test-selected-stores-with-app]]
+            [java-time :as jt]
+            [schema-generators.generators :as g]
+            [schema-tools.core :as st]
             [schema.core :as s]))
 
 (defn metric-raw

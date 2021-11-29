@@ -1,11 +1,10 @@
 (ns ctia.test-helpers.core
   (:require
-   [clojure.pprint :refer [pprint]]
    [clj-momo.lib.clj-time.coerce :as mcljtime-coerce]
    [clj-momo.lib.clj-time.core :as mcljtime]
    [clj-momo.lib.time :as time]
    [clj-momo.properties :refer [coerce-properties read-property-files]]
-   [ctia.test-helpers.http :as mthh]
+   [clojure.pprint :refer [pprint]]
    [clojure.spec.alpha :as cs]
    [clojure.string :as str]
    [clojure.test :as test]
@@ -20,10 +19,12 @@
     [GetEntitiesServices HTTPShowServices Port]]
    [ctia.schemas.utils :as csu]
    [ctia.store :as store]
+   [ctia.test-helpers.http :as mthh]
    [ctim.domain.id :as id]
    [flanders.spec :as fs]
    [flanders.utils :as fu]
    [puppetlabs.trapperkeeper.app :as app]
+   [schema-tools.core :as st]
    [schema.core :as s])
   (:import [java.util UUID]))
 
@@ -274,16 +275,18 @@
       all-stores
       get-in-config)))
 
+(s/defschema WithAppOptions
+  (st/optional-keys
+   {:enable-http? s/Bool
+    :services {s/Keyword s/Any}}))
+
 (s/defn fixture-ctia-with-app
   "Note: ES indices are unique, use `with-config-transformer`
   to make them explicit."
-  ([t-with-app :- (s/=> s/Any
-                        (s/named s/Any 'app))]
-   (fixture-ctia-with-app t-with-app true {}))
-  ([t-with-app :- (s/=> s/Any
-                        (s/named s/Any 'app))
-    enable-http? :- s/Bool
-    services-override :- (s/maybe {s/Keyword s/Any})]
+  ([t-with-app :- (s/=> s/Any (s/named s/Any 'app))]
+   (fixture-ctia-with-app {:enable-http? true} t-with-app))
+  ([{:keys [enable-http? services]} :- WithAppOptions
+    t-with-app :- (s/=> s/Any (s/named s/Any 'app))]
    ;; Start CTIA
    ;; This starts the server on an available port (if enabled)
    (let [http-port 0]
@@ -301,7 +304,7 @@
                              :IFakeWhoAmIServer
                              @(requiring-resolve
                                'ctia.test-helpers.fake-whoami-service/fake-whoami-service))
-                            true (merge services-override))
+                            true (merge services))
              app (init/start-ctia!*
                   {:services (vals services-map)
                    :config config})]
@@ -321,10 +324,11 @@
    (fixture-ctia t true))
   ([t :- (s/=> s/Any)
     enable-http?]
-   (fixture-ctia-with-app (fn [_app_]
-                            ;; app bound thread-locally
-                            (t))
-                          enable-http? nil)))
+   (fixture-ctia-with-app
+    {:enable-http? false}
+    (fn [_app_]
+      ;; app bound thread-locally
+      (t)))))
 
 (s/defn fixture-ctia-fast
   "Note: ES indices are unique, use `with-config-transformer`

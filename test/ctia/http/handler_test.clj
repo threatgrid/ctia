@@ -29,33 +29,32 @@
 
 (deftest api-handler-swagger-test
   (helpers/fixture-ctia-with-app
-    (fn [app]
-      (let [;; these routes don't have descriptions (yet)
-            expected-no-doc #{"/swagger.json"
-                              "/doc/*.*"
-                              "/ctia/feed/:id/view.txt"
-                              "/ctia/feed/:id/view"
-                              "/ctia/version"
-                              "/ctia/status"}
-            actual-no-doc (->> 
-                            (sut/api-handler (app->APIHandlerServices app))
-                            routes/get-routes
-                            routes/ring-swagger-paths
-                            :paths
-                            (remove (fn [[_ m]]
-                                      (every? (comp seq :description) (vals m))))
-                            (map first)
-                            set)]
-        (is (= expected-no-doc actual-no-doc)
-            (let [missing-docs (sort (set/difference actual-no-doc expected-no-doc))
-                  extra-docs (sort (set/difference expected-no-doc actual-no-doc))]
-              (str
-                (when (seq missing-docs)
-                  (str "Consider adding a :description with capabilities to these routes: "
-                       (str/join ", " missing-docs)
-                       "\n\n"))
-                (when (seq extra-docs)
-                  (str "Expected no :description on these routes, but found some: "
-                       (str/join ", " extra-docs))))))))
-    ;; disable http
-    false nil))
+   {:enable-http? false}
+   (fn [app]
+     (let [;; these routes don't have descriptions (yet)
+           expected-no-doc #{"/swagger.json"
+                             "/doc/*.*"
+                             "/ctia/feed/:id/view.txt"
+                             "/ctia/feed/:id/view"
+                             "/ctia/version"
+                             "/ctia/status"}
+           actual-no-doc (->>
+                          (sut/api-handler (app->APIHandlerServices app))
+                          routes/get-routes
+                          routes/ring-swagger-paths
+                          :paths
+                          (remove (fn [[_ m]]
+                                    (every? (comp seq :description) (vals m))))
+                          (map first)
+                          set)]
+       (is (= expected-no-doc actual-no-doc)
+           (let [missing-docs (sort (set/difference actual-no-doc expected-no-doc))
+                 extra-docs (sort (set/difference expected-no-doc actual-no-doc))]
+             (str
+              (when (seq missing-docs)
+                (str "Consider adding a :description with capabilities to these routes: "
+                     (str/join ", " missing-docs)
+                     "\n\n"))
+              (when (seq extra-docs)
+                (str "Expected no :description on these routes, but found some: "
+                     (str/join ", " extra-docs))))))))))
