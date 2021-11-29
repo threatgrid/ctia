@@ -63,6 +63,8 @@
       (into sut/indicator-entity
             {:app app
              :example new-indicator-maximal
+             ;; set search-tests? to false to quickly test crud
+             :search-tests? true
              :additional-tests search-tests
              :headers {:Authorization "45c1f5e3f05d0"}})))))
 

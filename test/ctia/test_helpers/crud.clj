@@ -221,8 +221,8 @@
          optional-field :external_ids
          update-tests? true
          patch-tests? false
-         search-tests? true}
-    :as params}]
+         search-tests? false}
+    :as _params}]
  (assert app "Must pass :app to entity-crud-test")
   (let [get-in-config (helpers/current-get-in-config-fn app)
         entity-str (name entity)]

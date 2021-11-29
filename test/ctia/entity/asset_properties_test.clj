@@ -15,7 +15,7 @@
 (use-fixtures :once (join-fixtures [mth/fixture-schema-validation
                                     whoami-helpers/fixture-server]))
 
-(defn additional-tests [app {:keys [short-id]} asset-properties-sample]
+(defn additional-tests [app _id asset-properties-sample]
   (testing "GET /ctia/asset-properties/search"
    (let [{:keys [get-in-config]} (helpers/get-service-map app :ConfigService)]
     ;; only when ES store
@@ -59,7 +59,6 @@
              :invalid-test-field :asset_ref
              :update-tests?      true
              :update-field       :source
-             :search-tests?      true
              :search-field       :source
              :search-value       "cisco:unified_connect"
              :additional-tests   additional-tests

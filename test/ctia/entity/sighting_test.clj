@@ -45,6 +45,8 @@
       (into sut/sighting-entity
             {:app app
              :example new-sighting-maximal
+             ;; set search-tests? to false to quickly test crud
+             :search-tests? true
              :headers {:Authorization "45c1f5e3f05d0"}})))))
 
 (deftest test-sighting-metric-routes
