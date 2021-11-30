@@ -401,19 +401,18 @@
       {:query "*"} [:title :description] ["title" "description"]
       {:query "foo" :search_fields ["title"]} [:id :title :description] ["title"]))
   (testing "feature flag set? fields should be enforced"
-    (let [http-server? true]
-      (reset! enforced-fields-flag-query-params nil)
-      (helpers/with-properties
-        ["ctia.feature-flags" "enforce-search-fields:false"]
-        (helpers/fixture-ctia-with-app
-         (fn [app]
-           (helpers/set-capabilities!
-            app "foouser" ["foogroup"] "user" (capabilities/all-capabilities))
-           (whoami-helpers/set-whoami-response
-            app "45c1f5e3f05d0" "foouser" "foogroup" "user")
-           (th.search/search-raw app :incident {:query "*"})
-           (is (->> @enforced-fields-flag-query-params
-                    :full-text
-                    (every? #(not (contains? % :fields))))))
-         http-server?
-         {:StoreService fake-store-service})))))
+    (reset! enforced-fields-flag-query-params nil)
+    (helpers/with-properties
+      ["ctia.feature-flags" "enforce-search-fields:false"]
+      (helpers/fixture-ctia-with-app
+       {:enable-http? true
+        :services {:StoreService fake-store-service}}
+       (fn [app]
+         (helpers/set-capabilities!
+          app "foouser" ["foogroup"] "user" (capabilities/all-capabilities))
+         (whoami-helpers/set-whoami-response
+          app "45c1f5e3f05d0" "foouser" "foogroup" "user")
+         (th.search/search-raw app :incident {:query "*"})
+         (is (->> @enforced-fields-flag-query-params
+                  :full-text
+                  (every? #(not (contains? % :fields))))))))))
