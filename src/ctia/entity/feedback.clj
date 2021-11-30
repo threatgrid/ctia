@@ -19,7 +19,7 @@
      em/base-entity-mapping
      em/sourcable-entity-mapping
      em/stored-entity-mapping
-     {:entity_id em/token
+     {:entity_id em/searchable-token
       :feedback em/integer-type
       :reason em/sortable-text})}})
 

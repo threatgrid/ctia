@@ -45,7 +45,7 @@
   {:type "object"
    :properties
    {:name  em/token
-    :value em/token}})
+    :value em/searchable-token}})
 
 (s/defn realize-asset-properties
   :- (RealizeFnResult (with-error StoredAssetProperties))

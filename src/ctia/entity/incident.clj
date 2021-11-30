@@ -130,15 +130,15 @@
      em/describable-entity-mapping
      em/sourcable-entity-mapping
      em/stored-entity-mapping
-     {:confidence em/token
-      :status em/token
-      :incident_time em/incident-time
-      :categories em/token
-      :discovery_method em/token
-      :intended_effect em/token
-      :assignees em/token
-      :promotion_method em/token
-      :severity em/token})}})
+     {:confidence       em/searchable-token
+      :status           em/token
+      :incident_time    em/incident-time
+      :categories       em/searchable-token
+      :discovery_method em/searchable-token
+      :intended_effect  em/searchable-token
+      :assignees        em/searchable-token
+      :promotion_method em/searchable-token
+      :severity         em/searchable-token})}})
 
 (def-es-store IncidentStore :incident StoredIncident PartialStoredIncident)
 
