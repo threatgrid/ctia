@@ -19,13 +19,9 @@
    :feed {"id" "id.text"}
    :feedback {"source" "source.text" "id" "id.text" "entity_id" "entity_id.text"}
    :investigation {"source" "source.text"
-                   "targets.observables.type" "targets.observables.type.text"
                    "targets.observables.value" "targets.observables.value.text"
                    "id" "id.text"}
-   :asset-mapping {"observable.type" "observable.type.text"
-                   "observable.value" "observable.value.text"
-                   "source" "source.text"
-                   "id" "id.text"}
+   :asset-mapping {"observable.value" "observable.value.text" "source" "source.text" "id" "id.text"}
    :data-table {"source" "source.text" "id" "id.text"}
    :tool {"source" "source.text"
           "id" "id.text"
@@ -33,12 +29,8 @@
           "kill_chain_phases.phase_name" "kill_chain_phases.phase_name.text"}
    :relationship {"source" "source.text" "id" "id.text"}
    :vulnerability {"source" "source.text" "id" "id.text"}
-   :judgement {"observable.type" "observable.type.text"
-               "observable.value" "observable.value.text"
-               "source" "source.text"
-               "id" "id.text"}
+   :judgement {"observable.value" "observable.value.text" "source" "source.text" "id" "id.text"}
    :target-record {"source" "source.text"
-                   "targets.observables.type" "targets.observables.type.text"
                    "targets.observables.value" "targets.observables.value.text"
                    "id" "id.text"}
    :weakness {"source" "source.text" "id" "id.text"}
@@ -47,15 +39,7 @@
                     "id" "id.text"
                     "kill_chain_phases.kill_chain_name" "kill_chain_phases.kill_chain_name.text"
                     "kill_chain_phases.phase_name" "kill_chain_phases.phase_name.text"}
-   :incident {"confidence" "confidence.text"
-              "id" "id.text"
-              "categories" "categories.text"
-              "assignees" "assignees.text"
-              "discovery_method" "discovery_method.text"
-              "promotion_method" "promotion_method.text"
-              "source" "source.text"
-              "intended_effect" "intended_effect.text"
-              "severity" "severity.text"}
+   :incident {"source" "source.text" "id" "id.text"}
    :event {}
    :indicator {"source" "source.text"
                "id" "id.text"
@@ -63,25 +47,16 @@
                "kill_chain_phases.phase_name" "kill_chain_phases.phase_name.text"}
    :campaign {"source" "source.text" "id" "id.text"}
    :asset-properties {"value" "value.text" "source" "source.text" "id" "id.text"}
-   :sighting {"observables.type" "observables.type.text"
-              "id" "id.text"
-              "relations.source.value" "relations.source.value.text"
-              "observables.value" "observables.value.text"
-              "sensor_coordinates.observables.value" "sensor_coordinates.observables.value.text"
+   :sighting {"relations.source.value" "relations.source.value.text"
               "relations.related.value" "relations.related.value.text"
-              "targets.observables.type" "targets.observables.type.text"
-              "source" "source.text"
-              "sensor_coordinates.observables.type" "sensor_coordinates.observables.type.text"
-              "targets.observables.value" "targets.observables.value.text"
-              "relations.source.type" "relations.source.type.text"
-              "relations.related.type" "relations.related.type.text"}
-   :casebook {"observables.type" "observables.type.text"
+              "sensor_coordinates.observables.value" "sensor_coordinates.observables.value.text"
               "observables.value" "observables.value.text"
               "source" "source.text"
+              "targets.observables.value" "targets.observables.value.text"
               "id" "id.text"}
+   :casebook {"observables.value" "observables.value.text" "source" "source.text" "id" "id.text"}
    :asset {"source" "source.text" "id" "id.text"}
-   :identity-assertion {"identity.observables.type" "identity.observables.type.text"
-                        "identity.observables.value" "identity.observables.value.text"
+   :identity-assertion {"identity.observables.value" "identity.observables.value.text"
                         "source" "source.text"
                         "id" "id.text"}
    :malware {"labels" "labels.text"
