@@ -116,7 +116,8 @@ Returns a map where key is path to a field, and value - path to the nested text 
 (s/defn refine-full-text-query-parts :- [{s/Keyword ESQFullTextQuery}]
   [es-conn-state :- ESConnStateProps
    full-text-terms :- [FullTextQuery]]
-  (let [{{:keys [default_operator]} :props} es-conn-state
+  (let [{{:keys [default_operator services]} :props} es-conn-state
+        {{:keys [flag-value]} :FeaturesService} services
         term->es-query-part (fn [{:keys [query_mode fields] :as text-query}]
                               (hash-map
                                (or query_mode :query_string)
@@ -126,5 +127,7 @@ Returns a map where key is path to a field, and value - path to the nested text 
                                     (when (and default_operator
                                                (not= query_mode :multi_match))
                                       {:default_operator default_operator})
-                                    (rename-search-fields es-conn-state fields)))))]
+                                    (when (and flag-value
+                                           (= "true" (flag-value :translate-searchable-fields)))
+                                      (rename-search-fields es-conn-state fields))))))]
     (mapv term->es-query-part full-text-terms)))
