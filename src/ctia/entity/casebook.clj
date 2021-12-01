@@ -258,7 +258,6 @@
   #{:id
     :source
     :description
-    :observables.type
     :observables.value
     :short_description
     :title})

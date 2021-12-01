@@ -130,7 +130,7 @@
 (def observable
   {:type "object"
    :properties
-   {:type searchable-token
+   {:type token
     :value searchable-token}})
 
 (def identity

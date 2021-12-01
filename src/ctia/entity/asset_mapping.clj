@@ -125,7 +125,6 @@
     :asset_ref
     :asset_type
     :confidence
-    :observable.type
     :observable.value})
 
 (s/defn asset-mapping-routes [services :- APIHandlerServices]
