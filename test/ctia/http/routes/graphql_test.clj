@@ -63,7 +63,7 @@
    "source" "test"
    "source_uri" "https://panacea.threatgrid.com/ips/8.8.8.8"
    "priority" 80
-   "severity" "None"
+   "severity" "Critical"
    "confidence" "High"
    "timestamp" #inst "2042-01-01T00:00:00.000Z"
    "reason" "This is a clean IP address"
