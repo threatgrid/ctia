@@ -40,6 +40,8 @@ function build-and-publish-package {
 
   lein uberjar
 
+  ./scripts/uberjar-trojan-scan.clj
+
   BUILD_NAME="${CTIA_MAJOR_VERSION}-${PKG_TYPE}-${CTIA_BUILD_NUMBER}-${CTIA_COMMIT:0:8}"
   echo "$BUILD_NAME"
   echo "Build: $BUILD_NAME"
