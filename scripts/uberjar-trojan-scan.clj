@@ -78,7 +78,7 @@
 (defn unzip-uberjar []
   (let [_ (check (process ["rm" "-rf" scanning-directory] {:inherit true}))
         _ (check (process ["mkdir" "-p" scanning-directory] {:inherit true}))
-        ;; FIXME
+        ;; FIXME logged: https://github.com/advthreat/iroh/issues/6060
         ;; erm, there's something wrong with ctia's META-INF/license directory,
         ;; it cannot be unzipped with jar.
         ;;   java.io.IOException: META-INF/license : could not create directory
