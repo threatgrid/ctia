@@ -1162,4 +1162,5 @@
 
              res (->> (pmap import (repeat 10 new-bundle))
                       (mapcat (comp :results :parsed-body)))]
-         (is (< 1 (count (filter #(= "created" (:result %)) res)))))))))
+         (testing "there is a race condition for checking external ids"
+             (is (< 1 (count (filter #(= "created" (:result %)) res))))))))))
