@@ -1159,7 +1159,6 @@
                           "ctia/bundle/import"
                         :body new-bundle
                         :headers {"Authorization" "45c1f5e3f05d0"}))
-
              res (->> (pmap import (repeat 10 new-bundle))
                       (mapcat (comp :results :parsed-body)))]
          (testing "there is a race condition for checking external ids"
