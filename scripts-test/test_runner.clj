@@ -12,11 +12,12 @@
     "scripts-test/actions/print_matrix_test.clj" actions.print-matrix-test
     "scripts-test/actions/setup_env_test.clj" actions.setup-env-test})
 
-(let [fs (into #{}
-               (keep (fn [^File f]
-                       (when (.isFile f)
-                         (.getPath f))))
-               (file-seq (io/file "scripts-test")))
+(let [fs (-> (into #{}
+                   (keep (fn [^File f]
+                           (when (.isFile f)
+                             (.getPath f))))
+                   (file-seq (io/file "scripts-test")))
+             (disj "scripts-test/.nrepl-port"))
       expected-extra #{"scripts-test/test_runner.clj"
                        "scripts-test/actions/test_helpers.clj"}
       actual-extra (into #{}

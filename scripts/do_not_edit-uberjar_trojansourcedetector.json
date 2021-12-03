@@ -1,0 +1,33 @@
+{
+  "directory" : "tmp/unzipped-uberjar",
+  "exclude" : [
+    "META-INF/native/linux64/liblmdbjni.so",
+    "com/google/common/base/CharMatcher$Invisible.class",
+    "com/google/protobuf/DescriptorProtos$SourceCodeInfo$Location$Builder.class",
+    "com/ibm/icu/impl/data/icudt65b/brkitr/*.dict",
+    "com/ibm/icu/impl/data/icudt65b/*.res",
+    "com/ibm/icu/impl/data/icudt65b/*/*.res",
+    "com/ibm/icu/impl/data/icudt65b/unames.icu",
+    "externs.zip",
+    "goog/demos/emoji/*.gif",
+    "goog/demos/emoji/*.png",
+    "goog/images/*.gif",
+    "goog/images/*.png",
+    "graphql/parser/antlr/GraphqlLexer.class",
+    "img/*.png",
+    "org/apache/commons/codec/language/bm/gen_rules_arabic.txt",
+    "org/apache/curator/shaded/com/google/common/base/CharMatcher$Invisible.class",
+    "org/bouncycastle/crypto/engines/AESFastEngine.class",
+    "org/xerial/snappy/native/Linux/android-arm/libsnappyjava.so",
+    "org/xerial/snappy/native/Linux/ppc64le/libsnappyjava.so",
+    "org/xerial/snappy/native/Windows/x86/snappyjava.dll",
+    "goog/i18n/datetimepatternsext.js",
+    "goog/i18n/datetimesymbols.js",
+    "goog/i18n/datetimesymbolsext.js",
+    "goog/labs/i18n/listsymbols.js",
+    "goog/labs/i18n/listsymbolsext.js",
+    "goog/i18n/datetimepatterns.js",
+    "goog/format/internationalizedemailaddress.js",
+    "swagger-ui/swagger-ui-bundle.js"
+  ]
+}

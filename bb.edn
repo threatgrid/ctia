@@ -1,2 +1,17 @@
 {:paths ["scripts"
-         "scripts-test"]}
+         "scripts-test"]
+ :tasks
+ {:requires ([babashka.fs :as fs]
+             [babashka.process :as p :refer [process]]
+             [babashka.wait :as wait])
+  ;; bb nrepl
+  nrepl (let [port (with-open [sock (java.net.ServerSocket. 0)] (.getLocalPort sock))
+              proc (process (str "bb nrepl-server " port) {:inherit true})
+              paths ["scripts"
+                     "scripts-test"]]
+          (wait/wait-for-port "localhost" port)
+          (doseq [path paths
+                  :let [nrepl-port-path (str path "/.nrepl-port")]]
+            (spit nrepl-port-path port)
+            (fs/delete-on-exit nrepl-port-path))
+          (deref proc))}}

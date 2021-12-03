@@ -64,6 +64,9 @@ jobs:
       - name: Run tests for scripts
         run: ./scripts-test/test_runner.clj
       - run: ./scripts/actions/setup_env.clj
+      # scan ctia's source for trojans. uberjar is scanned in deploy step.
+      - run: ./scripts/actions/install-trojansourcedetector.sh
+      - run: ./scripts/trojan-scan.sh
       - name: Setup test matrix splits
         id: set-matrix
         run: |
@@ -338,6 +341,7 @@ jobs:
           echo "${BIN_PATH}" >> $GITHUB_PATH
       - name: Install babashka
         run: ./scripts/actions/install-bb.sh
+      - run: ./scripts/actions/install-trojansourcedetector.sh
       - run: ./scripts/actions/setup_env.clj
       - name: Maven Cache
         id: maven-cache
