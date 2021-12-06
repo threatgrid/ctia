@@ -16,22 +16,22 @@ Take this example:
         }
     }
 
-Let's imagine we have an Incident with the title: "incident" and source: "intrusion event 3:19187:7". Even though the search phrase contains "the", the search engine should ignore it - it's a stop word. But the query above doesn't work. And the reason is that title and source are mapped to store different types of values.
+Let's imagine we have an Incident with the title: "incident" and source: "intrusion event 3:19187:7". Even though the search phrase contains "the", the search engine should ignore it - it's a stop word. But the query above doesn't work. And the reason is that `title` and `source` are mapped to store different types of values.
 
-So why do we have to specify which fields to include in the search now? Older versions of ES could use [_all](https://www.elastic.co/guide/en/elasticsearch/reference/6.8/mapping-all-field.html), which forces ES to search in every field, treating every field like text. However, that approach requires extra CPU cycles; it is slow and less accurate. More importantly, this option is now deprecated and no longer available in the new versions. And we're currently undergoing migration to Elasticsearch v7.
+So why do we have to specify which fields to include in the search now? We never had to do that before. Older versions of ES could use [_all](https://www.elastic.co/guide/en/elasticsearch/reference/6.8/mapping-all-field.html), which forces ES to search in every field, treating every field like text. However, that approach requires extra CPU cycles; it is slow and less accurate. More importantly, this option is deprecated and no longer available in the new versions. And we're currently undergoing migration to Elasticsearch v7.
 
-So we have to specify the fields. But we cannot break existing API functionality. So we don't force clients to instruct API which fields to use - if `search-fields` aren't specified, we quietly "inject" default fields. Each entity has a different set of "default searchable fields".
+So we have to specify the fields. But we cannot break existing API functionality. So we don't force clients to instruct API which fields to use - if no `search-fields` specified, we quietly "inject" default fields. Each entity has a different set of "default searchable fields". And the search would be performed **only** on those fields. That is the set of allowed fields for searching.
 
-But, this still doesn't solve the problem of mixed types of fields. 
+But, that still doesn't solve the problem of mixed types of fields. 
 
-To solve that, we decided to use "nested fields" feature. So, going back to the example above - `source` is a keyword and thus cannot be used together with text fields in the same query. But we can add a sub-field to it, of type text. Would then the above query work? Well, then you'd have to specify that sub-field in the query, like so: `"fields": ["title", "source.text"]`. But we don't need to burden the user with these pesky details. We can do that translation ourselves. So, what the API does - for every field that is a keyword and has a sub-field of type text, it would automatically change the query, so the search is performed using the text sub-field. You send a request with: `"fields": ["title", "source"]` and internally, it gets translated to: `"fields": ["title", "source.text"]`.
+We decided to use the "nested fields" feature to solve that. So, going back to the example above, ` source` is a keyword, and `title` is a type of text, and thus they cannot be used together in the same query. But we can add a sub-field to it, of text type. Would then the above query work? Well, then you'd have to specify that sub-field in the query, like so: `"fields": ["title", "source.text"]`. But we don't need to burden the user with these pesky details. We can do that translation ourselves. So, what the API does - for every field that is a keyword and has a sub-field of type text, it would automatically change the query, so the search is performed using the text sub-field. You send a request with: `"fields": ["title", "source"]` - internally it gets translated to: `"fields": ["title", "source.text"]`.
 
 Is that all? Well, not quite.
-Actually, in order for it to work, just adding a sub-field is not enough. We can add it now, but all the existing data would not be affected by that change. So, what do we need to do? We have to refresh the mapping for all our existing records.
+Actually, in order for that to work, just adding a sub-field is not enough. We can add it now, but that change would not affect all the existing data. So, what do we do? We have to refresh the mapping for all our existing records. Basically, we need to tell ES: "Hey, we've changed the way how the records get stored; Could you now re-index existing records, please?"
 
-And that is a very intimidating task. That is why we need to test everything thoroughly before enabling things in production.
+And that is an intimidating task - it's too much data to process. That is why we need to test everything thoroughly before enabling all these things in production.
 
-We have added a couple of feature flags (in addition to existing config properties) to enable or disable things easily.
+We have added a couple of feature flags (in addition to existing config properties) to turn things on and off quickly, in case something goes unintended.
 
 The first config flag you need to know is:
 
@@ -51,27 +51,24 @@ so they can be set like this, e.g.,
 
 ### Queries that end with double quotes
 
-Some systems today would append an empty string to the end of the query. We shouldn't break that
+Apparently, some systems today could append an empty string to the end of the query. We shouldn't break that:
 [advthreat/iroh#5597 Search behavior changed for Ribbon case/incident queries](https://github.com/advthreat/iroh/issues/5597)
 
 ### Make sure Lucene syntax still works
 
-We recently added a simple query format for searching things, but we need to confirm that search still works for queries like:
+We recently added a simple query format for searching things, but we need to confirm that search still works for queries like: `description:Incident AND title:Injection`
 
-    `description:Incident AND title:Injection`
+## Sample data for testing
 
-## Testing Data
+It helps to have data to test the search. You can use `Bulk Import` to create a few unrelated entities; or `Bundle Import` if you want to test entities linked to each other e.g, `Asset` and `AssetMapping`.
 
-Some data has to be generated to test the search. You can use Bulk Import to create a few unrelated entities and Bundle Import if you want to test entities linked to each other e.g, `Asset` and `AssetMapping`.
-
-It is a good strategy to set some property of these test subjects to something unique to eliminate ambiguous results. You can set `source` of every entity to be something like: `dec3-2021`
-
-We suggest exploring various ways to query data and also changing the shape of data itself. Saturate the test cases to flush out any bugs.
+It is a good strategy to set some property of these test subjects to something unique to eliminate ambiguous results. You can set `source` of every entity to be something like: `dec3_2021`
 
 <details>
 <summary>
 Here's an example with a single Actor and three Incident entities
 </summary>
+
 ```json
 {
     "actors": [
@@ -87,7 +84,7 @@ Here's an example with a single Actor and three Incident entities
             "title": "LOD Group",
             "short_description": "founded by the hacker Lex Luthor",
             "external_ids": [],
-            "source": "dec3-2021",
+            "source": "dec3_2021",
             "type": "actor",
             "planning_and_operational_support": "MUHS 9th Hour",
             "revision": 1,
@@ -112,7 +109,7 @@ Here's an example with a single Actor and three Incident entities
             "schema_version": "1.1.3",
             "revision": 1,
             "type": "incident",
-            "source": "dec3-2021",
+            "source": "dec3_2021",
             "external_ids": [],
             "short_description": "first incident",
             "title": "Lorem Ipsum Test Incident",
@@ -144,7 +141,7 @@ Here's an example with a single Actor and three Incident entities
             "schema_version": "1.1.3",
             "revision": 1,
             "type": "incident",
-            "source": "dec3-2021",
+            "source": "dec3_2021",
             "external_ids": [],
             "short_description": "incident numero dos",
             "title": "Lorem Ipsum Test Incident dos",
@@ -176,7 +173,7 @@ Here's an example with a single Actor and three Incident entities
             "schema_version": "1.1.3",
             "revision": 1,
             "type": "incident",
-            "source": "dec3-2021",
+            "source": "dec3_2021",
             "external_ids": [],
             "short_description": "incident numero tres",
             "title": "incident numero three",
@@ -205,15 +202,82 @@ Here's an example with a single Actor and three Incident entities
     ]
 }
 ```
+
 </details>
 
-You can POST that using Bulk Import route
+You can POST it using Bulk Import route to create these entities.
 
-## TODO: Testing
+## Testing
+
+We suggest exploring various ways to query, frequently changing the shape of data, and trying different queries. Saturate test cases to flush out any bugs. What's listed below is an outline with a few examples of what to test. These examples are for testing with the data from above.
 
 ### Basics
 
 #### Query for non-existing values
+
+Send a search query with a bogus text
+
+GET http://private.intel.int.iroh.site/ctia/actor/search?source=dec3_2021&query=lorem_ipsum_suspendisse_potenti
+
+**Expected**: empty list/no results
+
 #### Query including non-existing fields
+
+Even though the following query should work:
+
+GET http://private.intel.int.iroh.site/ctia/actor/search?source=dec3_2021&query=LOD
+
+This next one is expected to fail:
+
+GET http://private.intel.int.iroh.site/ctia/actor/search?source=dec3_2021&query=LOD&search_fields=some_strange_field
+
+**Expected:** Error like this or similar:
+
+```json
+{
+  "errors": {
+    "search_fields": [
+      "(not (#{\"id\" \"short_description\" \"title\" \"source\" \"actor_type\" \"description\"} \"some_strange_field\"))"
+    ]
+  }
+}
+```
+
 #### Search for Incidents that have specific values in specified fields
+
+The following query yields nothing (even though there is an Incident with the description containing "first", it doesn't include "Ipsum"):
+
+GET http://private.intel.int.iroh.site/ctia/incident/search?source=dec3_2021&query=first%20Ipsum&search_fields=description
+
+However, if we add the title field (without changing the query), it should find the matching record:
+
+GET http://private.intel.int.iroh.site/ctia/incident/search?source=dec3_2021&query=first%20Ipsum&search_fields=description&search_fields=title
+
+**Expected:** A single Incident
+
 #### Looking for the same value in different fields in multiple records
+
+Both next queries return two incidents because two incidents have "numero" in their short_description fields:
+
+GET http://private.intel.int.iroh.site/ctia/incident/search?source=dec3_2021&query=numero&search_fields=short_description
+GET http://private.intel.int.iroh.site/ctia/incident/search?source=dec3_2021&query=numero
+
+**Expected:** Two Incidents
+
+Now, if we want to match a record with "numero" in multiple fields, we still can use Lucene syntax, like so:
+
+This query `short_description:numero AND title:numero` should return only a single incident
+
+GET http://private.intel.int.iroh.site/ctia/incident/search?source=dec3_2021&query=short_description%3Anumero%20AND%20title%3Anumero
+
+**Expected:** Single Incident
+
+But changing the query slightly: `short_description:numero OR title:numero` once again, gets both incidents:
+
+GET http://private.intel.int.iroh.site/ctia/incident/search?source=dec3_2021&query=short_description%3Anumero%20OR%20title%3Anumero
+
+**Expected:** Two incidents
+
+### TODO Testing mixed types of fields
+### TODO Testing mapping update yo! 
+### TODO Testing translate-searchable-fields
