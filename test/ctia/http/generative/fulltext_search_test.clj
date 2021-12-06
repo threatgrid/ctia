@@ -316,13 +316,23 @@
                                  (fn [items]
                                    (utils/update-items items #(merge % expected))))))
                       gen/generate)
-
-            _ (bundle/import-bundle
-               bundle
-               nil    ;; external-key-prefixes
-               login services)
-
             ignore-ks  [:created :groups :id :incident_time :modified :owner :timestamp]]
+
+        ;; to avoid accidentally picking up previous state
+        (store/delete-search incidents-store
+                             {:query "intrusion event 3\\:19187\\:7 incident"
+                              :REALLY_DELETE_ALL_THESE_ENTITIES true}
+                             login nil)
+        (is (-> incidents-store
+                (store/query-string-search
+                 {:query "intrusion event 3\\:19187\\:7 incident"}
+                 login {})
+                :data
+                empty?))
+
+        (bundle/import-bundle bundle
+                              nil    ;; external-key-prefixes
+                              login services)
         (are [desc query check-fn] (let [res (-> incidents-store
                                                  (store/query-string-search
                                                   (merge query {:default_operator "AND"})
