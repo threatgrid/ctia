@@ -11,3 +11,6 @@
    :get-in-config (s/=>* s/Any
                          [[s/Any]]
                          [[s/Any] s/Any])})
+
+(s/defschema FeaturesServiceFns
+  {:flag-value (s/=> s/Any)})

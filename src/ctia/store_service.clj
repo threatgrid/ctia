@@ -4,28 +4,30 @@
             [puppetlabs.trapperkeeper.services :refer [service-context]]))
 
 (defprotocol StoreService
-  (all-stores [this] "Returns a map of current stores.
-
-                     See also: ctia.store-service.schemas/AllStoresFn")
+  (all-stores [this]
+    "Returns a map of current stores.
+     See also: ctia.store-service.schemas/AllStoresFn")
   (get-store [this store-id]
-              "Returns the identified store.
-
-              See also: ctia.store-service.schemas/GetStoreFn"))
+    "Returns the identified store.
+     See also: ctia.store-service.schemas/GetStoreFn"))
 
 (tk/defservice store-service
   "A service to manage the central storage area for all stores."
   StoreService
-  [[:ConfigService get-in-config]]
+  [[:ConfigService get-in-config]
+   [:FeaturesService flag-value]]
   (init [this context]
         (core/init context))
   (start [this context]
-         (core/start context
-                     get-in-config))
+         (core/start
+          {:ConfigService {:get-in-config get-in-config}
+           :FeaturesService {:flag-value flag-value}}
+          context))
   (stop [this context]
         (core/stop context))
 
   (all-stores [this]
               (core/all-stores (service-context this)))
   (get-store [this store-id]
-              (core/get-store (service-context this)
-                               store-id)))
+             (core/get-store (service-context this)
+                             store-id)))

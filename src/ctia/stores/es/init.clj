@@ -205,6 +205,7 @@
                 {entity (make-factory es-store services)})
               (entities/all-entities))))
 
-(s/defn init-store! [store-kw services :- ESConnServices]
+(s/defn init-store! [services :- ESConnServices
+                     store-kw]
   (when-let [factory (get (factories services) store-kw)]
     (factory store-kw)))
