@@ -18,7 +18,9 @@
   "Create a ESConnServices map with an app"
   [app]
   (let [get-in-config (h/current-get-in-config-fn app)]
-    {:ConfigService {:get-in-config get-in-config}}))
+    {:ConfigService {:get-in-config get-in-config}
+     :FeaturesService (-> (h/get-service-map app :FeaturesService)
+                          (select-keys [:flag-value]))}))
 
 (s/defn ->ESConnServices
   :- ESConnServices
@@ -44,7 +46,7 @@
        (es-init/init-es-conn!
          (es-init/get-store-properties (get-in state [:props :entity])
                                        get-in-config)
-         {:ConfigService {:get-in-config get-in-config}})))))
+         (app->ESConnServices (h/get-current-app)))))))
 
 (defn ^{:deprecated "1.1"
         :superseded-by "ctia.test-helpers.core/stop-and-cleanup"}
@@ -82,9 +84,9 @@
       (finally
         (purge-index-and-template :event services)))))
 
-(defn purge-indices-and-templates [all-stores get-in-config]
+(defn purge-indices-and-templates [all-stores services]
   (doseq [entity (keys (all-stores))]
-    (purge-index-and-template entity {:ConfigService {:get-in-config get-in-config}})))
+    (purge-index-and-template entity services)))
 
 (defn fixture-properties:es-store [t]
   ;; Note: These properties may be overwritten by ENV variables

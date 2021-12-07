@@ -265,15 +265,17 @@
   "Stop and garbage collect a running app."
   [app]
   (let [{{:keys [get-config]} :ConfigService
-         {:keys [all-stores]} :StoreService} (app/service-graph app)
+         {:keys [all-stores]} :StoreService
+         {:keys [flag-value]} :FeaturesService} (app/service-graph app)
         ;; simulate the current output of these functions before we stop or restart
         ;; the app
         get-in-config (partial get-in (get-config))
         all-stores (constantly (all-stores))]
     (app/stop app)
     (@purge-indices-and-templates
-      all-stores
-      get-in-config)))
+     all-stores
+     {:ConfigService {:get-in-config get-in-config}
+      :FeaturesService {:flag-value flag-value}})))
 
 (s/defschema WithAppOptions
   (st/optional-keys
