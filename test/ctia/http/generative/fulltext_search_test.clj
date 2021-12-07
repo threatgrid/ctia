@@ -388,9 +388,13 @@
 (tk/defservice fake-store-service
   "A service to manage the central storage area for all stores."
   store-service/StoreService
-  [[:ConfigService get-in-config]]
+  [[:ConfigService get-in-config]
+   [:FeaturesService flag-value]]
   (init [this context] (store-svc-core/init context))
-  (start [this context] (store-svc-core/start context get-in-config))
+  (start [this context] (store-svc-core/start
+                         {:ConfigService {:get-in-config get-in-config}
+                          :FeaturesService {:flag-value flag-value}}
+                         context))
   (stop [this context] (store-svc-core/stop context))
   (all-stores [this]
               (store-svc-core/all-stores (tk-svcs/service-context this)))
