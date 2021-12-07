@@ -1125,3 +1125,41 @@
          (is (= 201 (:status link-res)))
          (is (= 200 (:status bundle-get-res)))
          (is (seq (-> bundle-get-res :parsed-body :casebooks))))))))
+
+(deftest race-condition-test
+  (helpers/with-properties
+    ["ctia.store.es.default.refresh" "false"
+     "ctia.store.es.default.refresh_interval" "1s"
+     "ctia.store.bulk-refresh" "false"
+     "ctia.store.bundle-refresh" "wait_for"]
+    (helpers/fixture-ctia-with-app
+     (fn [app]
+       (helpers/set-capabilities! app "foouser" ["foogroup"] "user" (all-capabilities))
+       (whoami-helpers/set-whoami-response app
+                                           "45c1f5e3f05d0"
+                                           "foouser"
+                                           "foogroup"
+                                           "user")
+       (let [new-bundle {:source "anonymous coward"
+                         :incidents
+                         [{:source "CTR-WIN-IP"
+                           :external_ids
+                           ["secure-endpoint-incident-4050710c4bb9692e55465c32ae150730a57936cc95377f09a76952ead9556da0"]
+                           :title "CTR-WIN-IP in group Protect @ 20211124 13:52:21"
+                           :incident_time {:opened "2021-11-24T13:52:21.000Z"}
+                           :source_uri
+                           "https://console.qa1.immunet.com/computers/74eff879-a30b-4a39-8d53-3501a2155f84/trajectory2"
+                           :status "New"
+                           :severity "High"
+                           :tlp "amber"
+                           :timestamp "2021-11-24T13:52:23.906Z"
+                           :confidence "High"}]}
+             import (fn [new-bundle]
+                      (POST app
+                          "ctia/bundle/import"
+                        :body new-bundle
+                        :headers {"Authorization" "45c1f5e3f05d0"}))
+             res (->> (pmap import (repeat 10 new-bundle))
+                      (mapcat (comp :results :parsed-body)))]
+         (testing "there is a race condition for checking external ids"
+             (is (< 1 (count (filter #(= "created" (:result %)) res))))))))))
