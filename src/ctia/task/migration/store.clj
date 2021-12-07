@@ -63,7 +63,8 @@
 (s/defschema MigrationStoreServices
   {:ConfigService (-> external-svc-fns/ConfigServiceFns
                       (csu/select-all-keys #{:get-config
-                                             :get-in-config}))})
+                                             :get-in-config}))
+   :FeaturesService  external-svc-fns/FeaturesServiceFns})
 
 (s/defn MigrationStoreServices->ESConnServices
   :- ESConnServices

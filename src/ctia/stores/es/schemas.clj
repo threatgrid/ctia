@@ -7,7 +7,9 @@
 
 (s/defschema ESConnServices
   {:ConfigService (-> external-svc-fns/ConfigServiceFns
-                      (csu/select-all-keys #{:get-in-config}))})
+                      (csu/select-all-keys #{:get-in-config}))
+   :FeaturesService (-> external-svc-fns/FeaturesServiceFns
+                      (csu/select-all-keys #{:flag-value}))})
 
 (s/defschema ESConnState
   (st/merge

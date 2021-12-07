@@ -26,33 +26,33 @@
 
 (s/defn ^:private get-store-types
   [store-kw :- StoreID
-   get-in-config]
+   {{:keys [get-in-config]} :ConfigService}]
   (or (some-> (get-in-config [:ctia :store store-kw])
               (str/split #","))
       []))
 
 (s/defn ^:private build-store
   [store-kw :- StoreID
-   get-in-config
+   services
    store-type]
   (case store-type
-    "es" (es-init/init-store! store-kw {:ConfigService {:get-in-config get-in-config}})))
+    "es" (es-init/init-store! services store-kw)))
 
 (s/defn ^:private init-store-service!
-  [stores-atom :- StoresAtom
-   get-in-config]
+  [services
+   stores-atom :- StoresAtom]
   (reset! stores-atom
           (->> (keys empty-stores)
                (map (fn [store-kw]
-                      [store-kw (keep (partial build-store store-kw get-in-config)
-                                      (get-store-types store-kw get-in-config))]))
+                      [store-kw (keep (partial build-store store-kw services)
+                                      (get-store-types store-kw services))]))
                (into {})
                (merge-with into empty-stores))))
 
 (s/defn start :- StoreServiceCtx
-  [{:keys [stores-atom] :as context} :- StoreServiceCtx
-   get-in-config]
-  (init-store-service! stores-atom get-in-config)
+  [services
+   {:keys [stores-atom] :as context} :- StoreServiceCtx]
+  (init-store-service! services stores-atom)
   context)
 
 (s/defn stop :- (st/optional-keys StoreServiceCtx)

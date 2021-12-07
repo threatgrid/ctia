@@ -8,4 +8,6 @@
   [app]
   {:ConfigService (-> (helpers/get-service-map app :ConfigService)
                       (select-keys [:get-config
-                                    :get-in-config]))})
+                                    :get-in-config]))
+   :FeaturesService (-> (helpers/get-service-map app :FeaturesService)
+                        (select-keys [:flag-value]))})
