@@ -1,4 +1,6 @@
-# QA instructions for https://github.com/advthreat/iroh/issues/5929 
+# QA instructions for [advthreat/iroh#5929 reactivate default fields + search-token rewrite](https://github.com/advthreat/iroh/issues/5929)
+
+*Due to the extended nature of this document, it was decided to keep it in a file instead of the PR description header*
 
 ## Mechanics of the search improvements
 
@@ -306,6 +308,23 @@ Most likely, that attempt would yield nothing. Then you should set:
     ctia.store.es.default.refresh-mappings=true
     
 Restart the server, and try again. And this time, your query should work.
+
+### Testing of enforcing search fields
+
+If you try this query:
+
+GET http://private.intel.int.iroh.site/ctia/incident/search?source=dec3_2021&simple_query=second%7Cextortion
+
+It should return all three Incidents because the query says: "get everything that contains 'second' or 'extortion'" *('%7C' part of the query is encoded "or" operator - "|")*. And you can see from the results, `intended_effect` field of every Incident indeed is set to "extortion".
+
+Now, set the feature flags like this:
+
+    ctia.feature-flags=translate-searchable-fields:true,enforce-search-fields:true
+    
+Restart the server, and try sending the same query again. It should return only a single Incident.
+Why is that? The reason is that `enforce-search-fields:true`, when there are no `search_fields` specified, "injects" default fields, and default searchable fields for Incident entity do not include "intended_effect" field *TODO: add a link to ctia.entity.incident/searchable-fields*, and thus it would be ignored.
+
+**Expected:** Only the second Incident
 
 ### Testing queries that end with quotes
 
