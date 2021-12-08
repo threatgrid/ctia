@@ -24,25 +24,21 @@
   (is (= "v0.4.2_ctia_actor"
          (sut/prefixed-index "v0.4.1_ctia_actor" "0.4.2"))))
 
-(deftest target-index-config-test
+(deftest target-template-config-test
   (is (= {:settings {:number_of_replicas 0
                      :refresh_interval -1}
-          :aliases {"test_index" {}
-                    "test_index-write" {}}}
-         (sut/target-index-config "test_index"
-                                  {}
-                                  {:write-index "test_index-write"})))
+          :aliases {"test_index" {}}}
+         (sut/target-template-config "test_index"
+                                  {})))
   (is (= {:settings {:number_of_replicas 0
                      :refresh_interval -1
                      :number_of_shards 3}
           :mappings {:a :b}
-          :aliases {"test_index" {}
-                    "test_index-write" {}}}
-         (sut/target-index-config "test_index"
+          :aliases {"test_index" {}}}
+         (sut/target-template-config "test_index"
                                   {:settings {:refresh_interval 2
                                               :number_of_shards 3}
-                                   :mappings {:a :b}}
-                                  {:write-index "test_index-write"}))))
+                                   :mappings {:a :b}}))))
 
 (deftest missing-query-test
   (is (= {:bool
