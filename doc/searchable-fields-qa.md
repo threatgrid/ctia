@@ -278,6 +278,29 @@ GET http://private.intel.int.iroh.site/ctia/incident/search?source=dec3_2021&que
 
 **Expected:** Two incidents
 
-### TODO Testing mixed types of fields
-### TODO Testing mapping update yo! 
-### TODO Testing translate-searchable-fields
+### Testing mixed types of fields
+
+Now, here's an interesting bit coming up for which I think all that explanation of the search mechanics felt necessary.
+Let's try a query where:
+
+- Two different fields involved
+- And the query contains a stop word
+
+
+GET http://private.intel.int.iroh.site/ctia/incident/search?source=dec3_2021&query=the%20Lorem&search_fields=title&search_fields=source
+
+Do you see? The query has "the", and yields no results. Remove "the", and it would return two Incidents. But the point is - it has to work with "the". "The" is a stopword, and Elasticsearch should ignore it. And in fact - it does. But because now we're mixing two different types of fields - keyword and text, nothing comes up.
+
+Now, let's set this property: `ctia.feature-flags=translate-searchable-fields:true` and restart the server
+
+After that, sending the same query again should work.
+
+**Expected:** Two incidents
+
+### Testing queries that end with quotes
+
+That issue mentioned above [Search behavior changed](https://github.com/advthreat/iroh/issues/5597). Remember? We accidentally broke the search, and we had to quickly revert the changes. Let's make sure we're not reintroducing it again:
+
+GET http://localhost:3000/ctia/incident/search?source=dec3_2021&query=the%20%22dos%22+%22%22&search_fields=title
+
+**Expected:** Single incident with the title : "Lorem Ipsum Test Incident dos"
