@@ -383,7 +383,7 @@
   (query-string-search
     [_ search-query _ _]
     (reset! enforced-fields-flag-query-params search-query)
-    []))
+    {:data (), :paging {:total-hits 0}}))
 
 (tk/defservice fake-store-service
   "A service to manage the central storage area for all stores."
