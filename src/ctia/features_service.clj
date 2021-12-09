@@ -46,7 +46,7 @@
    (get (feature-flags this) key))
 
   (entities
-   [this]
+   [_this]
    (entities/all-entities))
 
   (entity-enabled?
