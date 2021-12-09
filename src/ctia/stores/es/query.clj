@@ -98,7 +98,22 @@ Returns a map where key is path to a field, and value - path to the nested text 
     :conn s/Any
     :services s/Any}))
 
-(s/defn rename-search-fields :- (s/maybe {s/Keyword [s/Str]})
+(s/defn enforce-search-fields :- (s/maybe [s/Str])
+  [es-conn-state :- ESConnStateProps
+   fields :- (s/maybe [s/Str])]
+  (let [{{{:keys [flag-value entities]} :FeaturesService} :services
+         {:keys [entity]} :props} es-conn-state
+        searchable-fields (some->> (entities)
+                                   entity
+                                   :searchable-fields
+                                   (mapv name))]
+    (if (and (empty? fields)
+             (= "true" (flag-value :enforce-search-fields))
+             (seq searchable-fields))
+      searchable-fields
+      fields)))
+
+(s/defn rename-search-fields :- (s/maybe [s/Str])
   "Automatically translates keyword fields to use underlying text field.
 
    ES doesn't like when different types of tokens get used in the same query. To deal with
@@ -107,11 +122,12 @@ Returns a map where key is path to a field, and value - path to the nested text 
    have to explicitly instruct API to direct query to the nested field."
   [es-conn-state :- ESConnStateProps
    fields :- (s/maybe [s/Any])]
-  (let [properties (some-> es-conn-state :config :mappings first second :properties)
-        mapping (searchable-fields-map properties)]
-    (when (seq fields)
-      {:fields
-       (mapv (comp #(get mapping % %) name) fields)})))
+  (let [{{{:keys [flag-value]} :FeaturesService} :services} es-conn-state]
+    (when (= "true" (flag-value :translate-searchable-fields))
+      (let [properties (some-> es-conn-state :config :mappings first second :properties)
+            mapping (searchable-fields-map properties)]
+        (when (seq fields)
+          (mapv (comp #(get mapping % %) name) fields))))))
 
 (s/defn refine-full-text-query-parts :- [{s/Keyword ESQFullTextQuery}]
   [es-conn-state :- ESConnStateProps
@@ -119,15 +135,17 @@ Returns a map where key is path to a field, and value - path to the nested text 
   (let [{{:keys [default_operator]} :props
          {{:keys [flag-value]} :FeaturesService} :services} es-conn-state
         term->es-query-part (fn [{:keys [query_mode fields] :as text-query}]
-                              (hash-map
-                               (or query_mode :query_string)
-                               (-> text-query
-                                   (dissoc :query_mode)
-                                   (merge
-                                    (when (and default_operator
-                                               (not= query_mode :multi_match))
-                                      {:default_operator default_operator})
-                                    (when (and flag-value
-                                               (= "true" (flag-value :translate-searchable-fields)))
-                                      (rename-search-fields es-conn-state fields))))))]
+                              (let [fields* (->> fields
+                                                 (enforce-search-fields es-conn-state)
+                                                 (rename-search-fields es-conn-state))]
+                                (hash-map
+                                 (or query_mode :query_string)
+                                 (-> text-query
+                                     (dissoc :query_mode)
+                                     (merge
+                                      (when (and default_operator
+                                                 (not= query_mode :multi_match))
+                                        {:default_operator default_operator})
+                                      (when fields*
+                                        {:fields fields*}))))))]
     (mapv term->es-query-part full-text-terms)))
