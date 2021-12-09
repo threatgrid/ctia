@@ -174,4 +174,5 @@
                             asset-properties-routes)
    :capabilities          capabilities
    :fields                asset-properties-fields
-   :sort-fields           asset-properties-fields})
+   :sort-fields           asset-properties-fields
+   :searchable-fields     searchable-fields})

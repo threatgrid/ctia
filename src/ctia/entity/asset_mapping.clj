@@ -178,4 +178,5 @@
                             asset-mapping-routes)
    :capabilities          capabilities
    :fields                asset-mapping-fields
-   :sort-fields           asset-mapping-fields})
+   :sort-fields           asset-mapping-fields
+   :searchable-fields     searchable-fields})

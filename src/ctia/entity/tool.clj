@@ -120,4 +120,5 @@
    :services->routes      (routes.common/reloadable-function tool-routes)
    :capabilities          capabilities
    :fields                ts/tool-fields
-   :sort-fields           ts/tool-fields})
+   :sort-fields           ts/tool-fields
+   :searchable-fields     searchable-fields})

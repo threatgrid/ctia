@@ -219,4 +219,5 @@
    :services->routes      (routes.common/reloadable-function indicator-routes)
    :capabilities          capabilities
    :fields                indicator-fields
-   :sort-fields           indicator-fields})
+   :sort-fields           indicator-fields
+   :searchable-fields     searchable-fields})

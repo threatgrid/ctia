@@ -157,4 +157,5 @@
    :services->routes      (routes.common/reloadable-function campaign-routes)
    :capabilities          capabilities
    :fields                campaign-fields
-   :sort-fields           campaign-fields})
+   :sort-fields           campaign-fields
+   :searchable-fields     searchable-fields})

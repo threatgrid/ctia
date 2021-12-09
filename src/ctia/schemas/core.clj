@@ -201,7 +201,8 @@
      :no-api? s/Bool
      :realize-fn RealizeFn
      :can-patch? s/Bool
-     :patch-capabilities  s/Keyword})))
+     :patch-capabilities s/Keyword
+     :searchable-fields #{s/Keyword}})))
 
 (s/defschema OpenCTIMSchemaVersion
   {(s/optional-key :schema_version) s/Str})

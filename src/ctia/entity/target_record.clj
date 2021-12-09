@@ -158,7 +158,8 @@
    :es-store              ->TargetRecordStore
    :es-mapping            target-record-mapping
    :services->routes      (routes.common/reloadable-function
-                            target-record-routes)
+                           target-record-routes)
    :capabilities          capabilities
    :fields                target-record-fields
-   :sort-fields           target-record-fields})
+   :sort-fields           target-record-fields
+   :searchable-fields     searchable-fields})

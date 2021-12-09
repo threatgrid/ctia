@@ -300,4 +300,5 @@
    :can-patch?            true
    :patch-capabilities    :create-incident
    :fields                incident-fields
-   :sort-fields           incident-fields})
+   :sort-fields           incident-fields
+   :searchable-fields     searchable-fields})

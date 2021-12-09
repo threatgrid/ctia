@@ -147,4 +147,5 @@
    :services->routes      (routes.common/reloadable-function identity-assertion-routes)
    :capabilities          capabilities
    :fields                identity-assertion-fields
-   :sort-fields           identity-assertion-fields})
+   :sort-fields           identity-assertion-fields
+   :searchable-fields     searchable-fields})

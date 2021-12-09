@@ -127,4 +127,5 @@
                            feedback-routes)
    :capabilities          capabilities
    :fields                fs/feedback-fields
-   :sort-fields           fs/feedback-fields})
+   :sort-fields           fs/feedback-fields
+   :searchable-fields     searchable-fields})
