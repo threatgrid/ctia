@@ -6,11 +6,11 @@
    [ctia.auth.threatgrid :refer [map->Identity]]
    [ctia.bundle.core :as bundle]
    [ctia.http.generative.properties :as prop]
-   [ctia.http.routes.common :as routes.common]
    [ctia.lib.utils :as utils]
    [ctia.store :as store]
    [ctia.store-service :as store-service]
    [ctia.store-service-core :as store-svc-core]
+   [ctia.stores.es.query :as es.query]
    [ctia.test-helpers.core :as helpers]
    [ctia.test-helpers.es :as es-helpers]
    [ctia.test-helpers.fake-whoami-service :as whoami-helpers]
@@ -406,14 +406,19 @@
 
 (deftest enforcing-fields-with-feature-flag-test
   (testing "unit testing enforce-search-fields"
-    (are [query-params searchable-fields expected-search-fields]
-         (let [res (routes.common/enforce-search-fields query-params searchable-fields)]
-           (and
-            (= (dissoc res :search_fields) (dissoc query-params :search_fields))
-            (= expected-search-fields (:search_fields res))))
-      {:query "*"} [] []
-      {:query "*"} [:title :description] ["title" "description"]
-      {:query "foo" :search_fields ["title"]} [:id :title :description] ["title"]))
+    (are [query-params fields expected-search-fields]
+         (let [res (es.query/enforce-search-fields
+                    {:props {:entity :incident}
+                     :services
+                     {:FeaturesService
+                      {:flag-value (constantly "true")
+                       :entities (constantly {:incident
+                                              {:searchable-fields
+                                               #{:foo :bar :zap}}})}}}
+                    fields)]
+           (is (= expected-search-fields res)))
+      {:query "*"} [] ["zap" "bar" "foo"]
+      {:query "*"} ["title" "description"] ["title" "description"]))
   (testing "feature flag set? fields should be enforced"
     (reset! enforced-fields-flag-query-params nil)
     (helpers/with-properties
