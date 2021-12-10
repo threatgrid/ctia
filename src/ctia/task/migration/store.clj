@@ -496,16 +496,15 @@ Rollover requires refresh so we cannot just call ES with condition since refresh
              {:refresh "true"
               :wait_for_completion true}))))
 
-(defn target-index-config
+(defn target-template-config
   "Generates the configuration of an index while migrating"
-  [indexname config props]
+  [indexname config]
   (-> (update config
               :settings
               assoc
               :number_of_replicas 0
               :refresh_interval -1)
-      (assoc :aliases {(:write-index props) {}
-                       indexname {}})))
+      (assoc :aliases {indexname {}})))
 
 (defn revert-optimizations-settings
   "Revert configuration settings used for speeding up migration"
@@ -529,12 +528,13 @@ Rollover requires refresh so we cannot just call ES with condition since refresh
   [{:keys [conn indexname config props] entity-type :type}]
   (when (retry es-max-retry ductile.index/index-exists? conn indexname)
     (log/warnf "tried to create target store %s, but it already exists. Recreating it." indexname))
-  (let [index-config (target-index-config indexname config props)]
+  (let [template-config (target-template-config indexname config)
+        first-index-config (assoc template-config :aliases {(:write-index props) {}})]
     (log/infof "%s - creating index template: %s" entity-type indexname)
     (purge-store entity-type conn indexname)
     (log/infof "%s - creating store: %s" entity-type indexname)
-    (retry es-max-retry ductile.index/create-template! conn indexname index-config)
-    (retry es-max-retry ductile.index/create! conn (format "<%s-{now/d}-000001>" indexname) index-config)))
+    (retry es-max-retry ductile.index/create-template! conn indexname template-config)
+    (retry es-max-retry ductile.index/create! conn (format "<%s-{now/d}-000001>" indexname) first-index-config)))
 
 (s/defn init-storemap :- StoreMap
   [props :- es.init/StoreProperties

@@ -282,10 +282,13 @@
 (s/defn ^:always-validate check-migration-params
   [{:keys [prefix
            restart?
-           store-keys]} :- mst/MigrationParams
+           store-keys
+           migrations]} :- mst/MigrationParams
    get-in-config]
   (when-not restart?
-    (assert prefix "Please provide an indexname prefix for target store creation"))
+    (assert prefix "Please provide an indexname prefix for target store creation")
+    (assert (seq store-keys) "Please provide the store-keys for source store to migrate")
+    (assert (seq migrations) "Please provide the migrations' ids to apply"))
   (doseq [store-key store-keys]
     (let [index (get-in-config [:ctia :store :es store-key :indexname])]
       (when (= (mst/prefixed-index index prefix)
@@ -298,7 +301,7 @@
 (s/defn prepare-params :- mst/MigrationParams
   [migration-properties]
   (let [string-to-coll #(map (comp keyword string/trim)
-                             (string/split % #","))]
+                             (string/split (or % "") #","))]
     (-> migration-properties
         (update :migrations string-to-coll)
         (update :store-keys string-to-coll))))
