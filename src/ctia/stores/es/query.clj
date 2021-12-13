@@ -96,7 +96,8 @@ Returns a map where key is path to a field, and value - path to the nested text 
     :props {s/Keyword s/Any}
     :index s/Any
     :conn s/Any
-    :services s/Any}))
+    :services s/Any
+    :searchable-fields (s/maybe #{s/Keyword})}))
 
 (s/defn enforce-search-fields :- (s/maybe [s/Str])
   [es-conn-state :- ESConnStateProps

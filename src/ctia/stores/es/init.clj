@@ -23,12 +23,13 @@
        :refresh_interval s/Str
        :aliased s/Any})))
 
-;; TODO def => defn
-(def store-mappings
-  (apply merge {}
-         (map (fn [[_ {:keys [entity es-mapping]}]]
-                {entity es-mapping})
-              (entities/all-entities))))
+(def entity-fields
+  (->> (entities/all-entities)
+       (map (fn [[_ {:keys [entity] :as props}]]
+              (hash-map
+               entity (select-keys props [:searchable-fields
+                                          :es-mapping]))))
+       (apply merge)))
 
 (s/defn init-store-conn :- ESConnState
   "initiate an ES store connection, returning a map containing a
@@ -46,8 +47,9 @@
         settings {:refresh_interval refresh_interval
                   :number_of_shards shards
                   :number_of_replicas replicas}
-        mappings (cond-> (get store-mappings entity mappings)
-                   (> version 5) (some-> first val))]
+        mappings (cond-> (get-in entity-fields [entity :es-mapping] mappings)
+                   (< 5 version) (some-> first val))
+        searchable-fields (get-in entity-fields [entity :searchable-fields])]
     {:index indexname
      :props (assoc props :write-index write-index)
      :config (into
@@ -56,7 +58,8 @@
               (when aliased
                 {:aliases {indexname {}}}))
      :conn (connect props)
-     :services services}))
+     :services services
+     :searchable-fields searchable-fields}))
 
 (s/defn update-settings!
   "read store properties of given stores and update indices settings."
