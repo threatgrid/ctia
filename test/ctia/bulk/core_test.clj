@@ -1,5 +1,6 @@
 (ns ctia.bulk.core-test
   (:require [clj-momo.test-helpers.core :as mth]
+            [ctim.domain.id :as id]
             [clojure.set :as set]
             [clojure.test :refer [deftest is testing use-fixtures]]
             [ctia.auth.allow-all :refer [identity-singleton]]
@@ -12,6 +13,8 @@
             [ctia.test-helpers.fixtures :as fixt]
             [ctia.auth.threatgrid :refer [map->Identity]]
             [ctia.domain.entities :refer [short-id->long-id]]
+            [ctim.examples.sightings :refer [sighting-minimal]]
+            [ctim.examples.indicators :refer [indicator-minimal]]
             [puppetlabs.trapperkeeper.app :as app]
             [puppetlabs.trapperkeeper.testutils.bootstrap
              :refer
@@ -80,8 +83,81 @@
                {k (map #(assoc % :tlp tlp) v)}))
         fixtures))
 
-(deftest bulk-create-delete
+(deftest to-long-id-test
+  (helpers/fixture-ctia-with-app
+   (fn [app]
+     (let [services (app/service-graph app)]
+       (is (id/long-id?
+            (sut/to-long-id
+             "sighting-2ea50927-d4e7-449a-bb86-b3be4737437a"
+             services))
+           "return a long id for valid short ids")
+       (is (= "http://localhost:3000/ctia/sighting/sighting-2ea50927-d4e7-449a-bb86-b3be4737437a"
+              (sut/to-long-id
+               "http://localhost:3000/ctia/sighting/sighting-2ea50927-d4e7-449a-bb86-b3be4737437a"
+               services))
+           "preserve long ids")
+       (is (= "anything else"
+              (sut/to-long-id
+               "anything else"
+               services))
+           "preservce invalid ids")))))
+
+(deftest make-bulk-result-test
+  (helpers/fixture-ctia-with-app
+   (fn [app]
+     (let [services (app/service-graph app)
+           updated-indicators (repeatedly 3 #(make-id "indicator"))
+           not-found-indicators (repeatedly 2 #(make-id "indicator"))
+           forbidden-indicators (repeatedly 1 #(make-id "indicator"))
+           results {:updated updated-indicators
+                    :errors {:not-found not-found-indicators
+                             :forbidden forbidden-indicators}}
+           short-ids->long-ids (fn [ids]
+                                 (set
+                                  (map #(short-id->long-id % services)
+                                       ids)))
+           updated-long-ids (short-ids->long-ids updated-indicators)
+           not-found-long-ids (short-ids->long-ids not-found-indicators)
+           forbidden-long-ids (short-ids->long-ids forbidden-indicators)
+           base-expected {:updated updated-long-ids
+                          :errors {:not-found not-found-long-ids
+                                   :forbidden forbidden-long-ids}}
+           with-sets (fn [{:keys [errors] :as res}]
+                       (cond-> (update res :updated set)
+                         (:not-found errors) (update-in [:errors :not-found] set)
+                         (:forbidden errors) (update-in [:errors :forbidden] set)))]
+       (is (= base-expected
+              (with-sets (sut/format-bulk-flow-res results services)))
+           "format-bulk-flow-res shall return results with long ids")
+       (let [base-fake-flowmap {:create-event-fn identity
+                                :entities []
+                                :entity-type :indicator
+                                :flow-type :update
+                                :services services
+                                :identity (map->Identity {:login "user1" :groups ["g1"]})
+                                :store-fn identity}]
+         (is (= base-expected
+                (-> (assoc base-fake-flowmap :results results)
+                    sut/make-bulk-result
+                    with-sets)))
+         (is (= (update-in base-expected [:errors :not-found] conj "not-found-id")
+                (-> (assoc base-fake-flowmap :results results :not-found ["not-found-id"])
+                    sut/make-bulk-result
+                    with-sets))
+             "in case of race condition (an entity deleted during flow) not-found ids are concatenated")
+         (is (= (assoc base-expected :errors {:not-found not-found-long-ids})
+                (-> (assoc base-fake-flowmap
+                           :results (dissoc results :errors)
+                           :not-found not-found-indicators)
+                    sut/make-bulk-result
+                    with-sets))
+             "not found ids are properly added to empty errors"))))))
+
+(deftest bulk-crud-test
   (helpers/with-properties
+    ;; set max record visibility to everyone to test public CTIA case where
+    ;; some entities are visibile to some groups but not editable by their users
     ["ctia.access-control.max-record-visibility" "everyone"]
     (helpers/fixture-ctia-with-app
      (fn [app]
@@ -91,11 +167,19 @@
              ident-map {:login "guigui"
                         :groups ["ireaux"]}
              ident (map->Identity ident-map)
-
+             other-group-ident-map {:login "john doe"
+                                    :groups ["another group"]}
+             other-group-ident (map->Identity other-group-ident-map)
              fixtures-green (with-tlp (select-keys (fixt/bundle 3 false) [:sightings :indicators])
                               "green")
              fixtures-amber (with-tlp (select-keys (fixt/bundle 2 false) [:sightings :indicators])
                               "amber")
+             ;; update / delete helpers
+             missing-id-1 (short-id->long-id (make-id "indicator") services)
+             missing-id-2 (short-id->long-id (make-id "indicator") services)
+             missing-indicator-ids [missing-id-1 missing-id-2]
+             nb-not-found (fn [res ent] (-> res ent :errors :not-found count))
+             nb-forbidden (fn [res ent] (-> res ent :errors :forbidden count))
              fixtures (merge-with concat fixtures-green fixtures-amber)
              with-errors (assoc fixtures
                                 :actors
@@ -116,39 +200,72 @@
            (doseq [indicator-id indicator-ids]
              (is (some? (read-record indicator-store indicator-id ident-map {})))))
 
-         (testing "bulk-delete shall properly delete entities with allowed entities and manage visibilities"
-           (let [other-group-ident {:login "john doe"
-                                    :groups ["another group"]}
-                 other-group-res (sut/delete-bulk {:sightings sighting-ids
-                                                   :indicators indicator-ids}
-                                                  (map->Identity other-group-ident)
-                                                  {:refresh "true"}
-                                                  services)
-                 nb-not-found (fn [res ent] (-> res ent :errors :not-found count))
-                 nb-forbidden (fn [res ent] (-> res ent :errors :forbidden count))
-                 _ (is (= 2
-                          (nb-not-found other-group-res :sightings)
-                          (nb-not-found other-group-res :indicators))
-                       "non visible entities are returned as not-found errors")
-                 _ (is (= 3
-                          (nb-forbidden other-group-res :sightings)
-                          (nb-forbidden other-group-res :indicators))
-                       "visible entities the user is not allowed to delete are returned as forbidden errors")
-                 missing-id-1 (short-id->long-id (make-id "indicator") services)
-                 missing-id-2 (short-id->long-id (make-id "indicator") services)
-                 {:keys [sightings indicators] :as res}
-                 (sut/delete-bulk {:sightings sighting-ids
-                                   :indicators (concat indicator-ids
-                                                       [missing-id-1
-                                                        missing-id-2])}
-                                  ident
-                                  {:refresh "true"}
-                                  services)]
-             (is (= #{missing-id-1 missing-id-2} (set (get-in indicators [:errors :not-found]))))
-             (is (nil? (:not-found sightings)))
-             (is (= (set sighting-ids) (set (:deleted sightings))))
-             (is (= (set indicator-ids) (set (:deleted indicators))))
-             (doseq [sighting-id (:deleted sightings)]
-               (is (nil? (read-record sighting-store sighting-id ident-map {}))))
-             (doseq [indicator-id (:deleted indicators)]
-               (is (nil? (read-record indicator-store indicator-id ident-map {})))))))))))
+         (let [sighting-patches (map #(assoc sighting-minimal
+                                             :source "patched sighting"
+                                             :id %)
+                                     sighting-ids)
+               indicator-patches (map #(assoc indicator-minimal
+                                              :source "patched indicator"
+                                              :id %)
+                                      indicator-ids)
+               missing-indicator-patches (map #(assoc {};;indicator-minimal
+                                                      :source "patched indicator"
+                                                      :id %)
+                                              missing-indicator-ids)
+               bulk-patch {:sightings sighting-patches
+                           :indicators (concat indicator-patches
+                                               missing-indicator-patches)}
+               bulk-delete {:sightings sighting-ids
+                            :indicators (concat indicator-ids missing-indicator-ids)}
+               check-tlp (fn [other-group-res]
+                           (testing "non visible entities are returned as not-found errors"
+                             (is (= 2 (nb-not-found other-group-res :sightings)))
+                             (is (= 4 (nb-not-found other-group-res :indicators))))
+                           (is (= 3
+                                  (nb-forbidden other-group-res :sightings)
+                                  (nb-forbidden other-group-res :indicators))
+                               "visible entities that the user is not allowed to write on are returned as forbidden errors"))]
+           (testing "bulk-patch shall properly patch submitties entitites"
+             (let [other-group-res (sut/patch-bulk bulk-patch
+                                                   other-group-ident
+                                                   {:refresh "true"}
+                                                   services)
+                   {:keys [sightings indicators]}
+                   (sut/patch-bulk bulk-patch
+                                   ident
+                                   {:refresh "true"}
+                                   services)]
+               (check-tlp other-group-res)
+               (is (= #{missing-id-1 missing-id-2} (set (get-in indicators [:errors :not-found]))))
+               (is (nil? (:not-found sightings)))
+               (is (= (set sighting-ids) (set (:updated sightings))))
+               (is (= (set indicator-ids) (set (:updated indicators))))
+               (doseq [sighting-id (:updated sightings)]
+                 (is (= "patched sighting"
+                        (:source (read-record sighting-store sighting-id ident-map {})))))
+               (doseq [indicator-id (:updated indicators)]
+                 (is (= "patched indicator"
+                        (:source (read-record indicator-store indicator-id ident-map {})))))))
+
+           (testing "bulk-delete shall properly delete entities with allowed entities and manage visibilities"
+             (let [other-group-res (sut/delete-bulk bulk-delete
+                                                    other-group-ident
+                                                    {:refresh "true"}
+                                                    services)
+                   {:keys [sightings indicators]}
+                   (sut/delete-bulk {:sightings sighting-ids
+                                     :indicators (concat indicator-ids
+                                                         [missing-id-1
+                                                          missing-id-2])}
+                                    ident
+                                    {:refresh "true"}
+                                    services)]
+               (check-tlp other-group-res)
+               (is (= #{missing-id-1 missing-id-2} (set (get-in indicators [:errors :not-found]))))
+               (is (nil? (:not-found sightings)))
+               (is (= (set sighting-ids) (set (:deleted sightings))))
+               (is (= (set indicator-ids) (set (:deleted indicators))))
+               (doseq [sighting-id (:deleted sightings)]
+                 (is (nil? (read-record sighting-store sighting-id ident-map {}))))
+               (doseq [indicator-id (:deleted indicators)]
+                 (is (nil? (read-record indicator-store indicator-id ident-map {}))))))))))))

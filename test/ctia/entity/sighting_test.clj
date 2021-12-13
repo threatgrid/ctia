@@ -2,20 +2,17 @@
   (:require [clj-momo.test-helpers.core :as mth]
             [clojure.test :refer [deftest join-fixtures use-fixtures]]
             [ctia.entity.sighting :as sut]
-            [ctia.entity.sighting.schemas :refer [sighting-sort-fields
-                                                  sighting-fields
-                                                  sighting-enumerable-fields
-                                                  sighting-histogram-fields
-                                                  NewSighting]]
-            [ctia.test-helpers
-             [access-control :refer [access-control-test]]
-             [auth :refer [all-capabilities]]
-             [core :as helpers :refer [POST-bulk]]
-             [crud :refer [entity-crud-test]]
-             [aggregate :refer [test-metric-routes]]
-             [fake-whoami-service :as whoami-helpers]
-             [http :refer [api-key]]
-             [store :refer [test-for-each-store-with-app]]]
+            [ctia.entity.sighting.schemas
+             :refer
+             [sighting-enumerable-fields sighting-histogram-fields]]
+            [ctia.test-helpers.access-control :refer [access-control-test]]
+            [ctia.test-helpers.aggregate :refer [test-metric-routes]]
+            [ctia.test-helpers.auth :refer [all-capabilities]]
+            [ctia.test-helpers.core :as helpers]
+            [ctia.test-helpers.crud :refer [entity-crud-test]]
+            [ctia.test-helpers.fake-whoami-service :as whoami-helpers]
+            [ctia.test-helpers.http :refer [api-key]]
+            [ctia.test-helpers.store :refer [test-for-each-store-with-app]]
             [ctim.examples.sightings
              :refer
              [new-sighting-maximal new-sighting-minimal]]))

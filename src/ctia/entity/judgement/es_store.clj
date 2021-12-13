@@ -47,6 +47,7 @@
 (def handle-delete (crud/handle-delete :judgement))
 (def handle-list (crud/handle-find PartialStoredJudgement))
 (def handle-bulk-delete crud/bulk-delete)
+(def handle-bulk-update (crud/bulk-update StoredJudgement))
 (def handle-query-string-search (crud/handle-query-string-search PartialStoredJudgement))
 (def handle-query-string-count crud/handle-query-string-count)
 (def handle-aggregate crud/handle-aggregate)
@@ -114,6 +115,8 @@
     (handle-update state id judgement ident params))
   (bulk-delete [_ ids ident params]
     (handle-bulk-delete state ids ident params))
+  (bulk-update [_ docs ident params]
+    (handle-bulk-update state docs ident params))
   (list-records [_ filter-map ident params]
     (handle-list state filter-map ident params))
   (close [_] (close-connections! state))

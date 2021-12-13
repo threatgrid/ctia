@@ -8,6 +8,7 @@
             [ctia.store :refer [query-string-search]]
             [ctia.test-helpers.core :as helpers]
             [ctim.examples.sightings :refer [sighting-minimal]]
+            [ctia.domain.entities :refer [short-id->long-id]]
             [java-time :as jt]
             [puppetlabs.trapperkeeper.app :as app]))
 
@@ -201,22 +202,23 @@
                                     :services services
                                     :spec :new-sighting/map
                                     :get-success-entities :entities
-                                    :identity (map->Identity ident))
-                               (doseq [[id patched?] expected]
-                                 (is (= patched?
-                                        (= "patched"
-                                           (:source (get @store id))))
-                                     (format "the expected patch result for %s is %s (%s)" id patched? (pr-str (get @store id))))
-                                 (is (= patched?
-                                        (->> (search-events
-                                              event-store
-                                              ident
-                                              now
-                                              :record-updated
-                                              id)
-                                             first
-                                             some?))
-                                     (format "The expected creation event for %s should be %s" id patched?))))))
+                                    :identity (map->Identity ident)
+                                    :format-result :results)
+                                   (doseq [[id patched?] expected]
+                                     (is (= patched?
+                                            (= "patched"
+                                               (:source (get @store id))))
+                                         (format "the expected patch result for %s is %s (%s)" id patched? (pr-str (get @store id))))
+                                     (is (= patched?
+                                            (->> (search-events
+                                                  event-store
+                                                  ident
+                                                  now
+                                                  :record-updated
+                                                  id)
+                                                 first
+                                                 some?))
+                                         (format "The expected creation event for %s should be %s" id patched?))))))
              delete-fn (fn [ids]
                          (into {}
                                (map (fn [id]
@@ -251,16 +253,71 @@
                                                          entity-ids)]
                                (is (= expected (into {} res)))
                                (is (= expected deleted-events?)
-                                   (str "flow shall return " expected)))))]
+                                   (str "flow shall return " expected)))))
+             missing-id-1 (short-id->long-id (flows.crud/make-id "missing") services)
+             missing-id-2 (short-id->long-id (flows.crud/make-id "missing") services)]
          (patch-flow
           "patch-flow patches existing entities and create events accordingly"
           {sighting-id-1 true sighting-id-2 true})
          (patch-flow "patches flow patches entities and creates events only for existing entities when some are not found"
-                      {sighting-id-3 true "missing1" false "missing2" false})
+                      {sighting-id-3 true missing-id-1 false missing-id-2 false})
          (delete-flow "delete-flow deletes existing entities and create events accordingly"
                       {sighting-id-1 true sighting-id-2 true})
          (delete-flow "delete-flow must not create events for deleted entities"
                       {sighting-id-1 false sighting-id-2 false})
          (delete-flow "delete flow deletes entities and creates events only for existing entities when some are not found"
-                      {sighting-id-3 true "missing1" false "missing2" false})
-         )))))
+                      {sighting-id-3 true missing-id-1 false missing-id-2 false}))))))
+
+(defn mk-fake-store
+  [entity size]
+  (into {}
+        (map (fn [id] [id (mk-sighting id)]))
+
+        (repeatedly size #(flows.crud/make-id entity))))
+
+(deftest prev-entity-test
+  (let [store (mk-fake-store :sighting 3)
+        sighting-short-ids (keys store)
+        sighting-long-ids (map #(str "http://localhost:3000/ctia/sighting/" %) sighting-short-ids)
+        sighting-short-id-1 (first sighting-short-ids)
+        sighting-long-id-1 (first sighting-long-ids)
+        _ (assert (every? map? (vals store))
+                  "fake-get-fn is not properly initialized, stopping test here")
+        fake-get-fn (fn [ids] (map store ids))
+        prev-entity-fn (flows.crud/prev-entity fake-get-fn sighting-short-ids)]
+    (is (= (store sighting-short-id-1)
+           (prev-entity-fn sighting-short-id-1))
+        "generated prev-entity-fn shall properly return entities from short ids")
+    (is (= (store sighting-short-id-1)
+           (prev-entity-fn sighting-long-id-1))
+        "generated prev-entity-fn shall properly return entities from long ids")
+    (is (nil? (prev-entity-fn "not-found")))))
+
+(deftest patch-entities-test
+  (helpers/fixture-ctia-with-app
+   (fn [app]
+     (let [services (app/service-graph app)
+           store (mk-fake-store :sighting 5)
+           sighting-short-ids (keys store)
+           patched-sighting-ids (take 3 sighting-short-ids)
+           partial-entities (map #(array-map :id % :source "patched")
+                                 (conj patched-sighting-ids "not-found"))
+           patch-flow-map {:create-event-fn identity
+                           :entities []
+                           :entity-type :indicator
+                           :flow-type :update
+                           :services services
+                           :identity (map->Identity {:login "user1" :groups ["g1"]})
+                           :store-fn identity
+                           :get-prev-entity store
+                           :partial-entities partial-entities
+                           :patch-operation :replace}
+           expected-patched-entities (map #(-> (store %)
+                                               (assoc :source "patched")
+                                               (dissoc :schema_version))
+                                          patched-sighting-ids)
+           expected (assoc patch-flow-map
+                           :entities expected-patched-entities
+                           :not-found ["not-found"])]
+       (is (= expected
+              (flows.crud/patch-entities patch-flow-map)))))))

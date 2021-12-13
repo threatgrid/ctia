@@ -21,6 +21,7 @@
                                     whoami-helpers/fixture-server]))
 
 (defn partial-operations-tests [app incident-id incident]
+  (println "incident id :" incident-id)
   (let [fixed-now (t/internal-now)]
     (helpers/fixture-with-fixed-time
      fixed-now
@@ -29,8 +30,7 @@
          (let [response (PATCH app
                                (str "ctia/incident/" (:short-id incident-id))
                                :body {:incident_time {}}
-                               :headers {"Authorization" "45c1f5e3f05d0"})
-               updated-incident (:parsed-body response)]
+                               :headers {"Authorization" "45c1f5e3f05d0"})]
            (is (= 200 (:status response)))))
 
        (testing "POST /ctia/incident/:id/status Open"
@@ -40,6 +40,7 @@
                               :body new-status
                               :headers {"Authorization" "45c1f5e3f05d0"})
                updated-incident (:parsed-body response)]
+           (is (= (:id incident) (:id updated-incident)))
            (is (= 200 (:status response)))
            (is (= "Open" (:status updated-incident)))
            (is (get-in updated-incident [:incident_time :opened]))

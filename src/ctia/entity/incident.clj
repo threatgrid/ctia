@@ -304,5 +304,7 @@
    :es-mapping            incident-mapping
    :services->routes      (routes.common/reloadable-function incident-routes)
    :capabilities          capabilities
+   :can-patch?            true
+   :patch-capabilities    :create-incident
    :fields                incident-fields
    :sort-fields           incident-fields})
