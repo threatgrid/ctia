@@ -1126,7 +1126,7 @@
          (is (= 200 (:status bundle-get-res)))
          (is (seq (-> bundle-get-res :parsed-body :casebooks))))))))
 
-(deftest race-condition-test
+(deftest ^:disabled race-condition-test
   (helpers/with-properties
     ["ctia.store.es.default.refresh" "false"
      "ctia.store.es.default.refresh_interval" "1s"
@@ -1156,10 +1156,10 @@
                            :confidence "High"}]}
              import (fn [new-bundle]
                       (POST app
-                          "ctia/bundle/import"
-                        :body new-bundle
-                        :headers {"Authorization" "45c1f5e3f05d0"}))
+                            "ctia/bundle/import"
+                            :body new-bundle
+                            :headers {"Authorization" "45c1f5e3f05d0"}))
              res (->> (pmap import (repeat 10 new-bundle))
                       (mapcat (comp :results :parsed-body)))]
          (testing "there is a race condition for checking external ids"
-             (is (< 1 (count (filter #(= "created" (:result %)) res))))))))))
+           (is (< 1 (count (filter #(= "created" (:result %)) res))))))))))
