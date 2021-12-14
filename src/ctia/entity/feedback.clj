@@ -105,8 +105,7 @@
      :spec                     :new-feedback/map
      :can-search?              false
      :enumerable-fields        []
-     :can-update?              false
-     :searchable-fields        searchable-fields})))
+     :can-update?              false})))
 
 (def feedback-entity
   {:route-context         "/feedback"

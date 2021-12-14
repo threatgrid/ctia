@@ -246,8 +246,7 @@
      :search-capabilities      :search-incident
      :external-id-capabilities :read-incident
      :histogram-fields         incident-histogram-fields
-     :enumerable-fields        incident-enumerable-fields
-     :searchable-fields        searchable-fields})))
+     :enumerable-fields        incident-enumerable-fields})))
 
 (def IncidentType
   (let [{:keys [fields name description]}

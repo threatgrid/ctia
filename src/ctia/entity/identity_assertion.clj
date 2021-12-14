@@ -120,8 +120,7 @@
     :external-id-capabilities :read-identity-assertion
     :can-aggregate?           true
     :enumerable-fields        identity-assertion-enumerable-fields
-    :histogram-fields         identity-assertion-histogram-fields
-    :searchable-fields        searchable-fields}))
+    :histogram-fields         identity-assertion-histogram-fields}))
 
 (def capabilities
   #{:create-identity-assertion

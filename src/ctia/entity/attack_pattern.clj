@@ -119,8 +119,7 @@
     :external-id-capabilities :read-attack-pattern
     :can-aggregate?           true
     :histogram-fields         attack-pattern-histogram-fields
-    :enumerable-fields        attack-pattern-enumerable-fields
-    :searchable-fields        searchable-fields}))
+    :enumerable-fields        attack-pattern-enumerable-fields}))
 
 (def AttackPatternType
   (let [{:keys [fields name description]}

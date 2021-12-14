@@ -135,8 +135,7 @@
                             :can-update?              true
                             :can-aggregate?           true
                             :histogram-fields         js/judgement-histogram-fields
-                            :enumerable-fields        js/judgement-enumerable-fields
-                            :searchable-fields        searchable-fields}]
+                            :enumerable-fields        js/judgement-enumerable-fields}]
     (routes
       (services->entity-crud-routes
         services

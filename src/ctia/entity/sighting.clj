@@ -74,8 +74,7 @@
     :search-capabilities      :search-sighting
     :can-aggregate?           true
     :histogram-fields         ss/sighting-histogram-fields
-    :enumerable-fields        ss/sighting-enumerable-fields
-    :searchable-fields        searchable-fields}))
+    :enumerable-fields        ss/sighting-enumerable-fields}))
 
 (def capabilities
   #{:create-sighting

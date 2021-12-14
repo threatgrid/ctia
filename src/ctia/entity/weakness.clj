@@ -159,8 +159,7 @@
     :external-id-capabilities :read-weakness
     :can-aggregate?           true
     :histogram-fields         weakness-histogram-fields
-    :enumerable-fields        weakness-enumerable-fields
-    :searchable-fields        searchable-fields}))
+    :enumerable-fields        weakness-enumerable-fields}))
 
 (def capabilities
   #{:create-weakness

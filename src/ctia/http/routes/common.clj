@@ -53,9 +53,10 @@
 
 (s/defn prep-es-fields-schema :- (s/protocol s/Schema)
   "Conjoins Elasticsearch fields parameter into search-q-params schema"
-  [{:keys [search-q-params
-           searchable-fields] :as _entity-crud-config}]
-  (let [default-fields-schema (->> searchable-fields
+  [{{:keys [get-store]} :StoreService}
+   {:keys [search-q-params entity] :as _entity-crud-config}]
+  (let [searchable-fields (-> entity get-store :state :searchable-fields)
+        default-fields-schema (->> searchable-fields
                                    (map name)
                                    (apply s/enum))]
     (if (seq searchable-fields)

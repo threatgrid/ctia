@@ -168,8 +168,7 @@
     :external-id-capabilities :read-indicator
     :can-aggregate?           true
     :histogram-fields         indicator-histogram-fields
-    :enumerable-fields        indicator-enumerable-fields
-    :searchable-fields        searchable-fields}))
+    :enumerable-fields        indicator-enumerable-fields}))
 
 (def capabilities
   #{:read-indicator

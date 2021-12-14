@@ -136,8 +136,7 @@
     :external-id-capabilities :read-actor
     :can-aggregate?           true
     :histogram-fields         actor-histogram-fields
-    :enumerable-fields        actor-enumerable-fields
-    :searchable-fields        searchable-fields}))
+    :enumerable-fields        actor-enumerable-fields}))
 
 (def capabilities
   #{:create-actor

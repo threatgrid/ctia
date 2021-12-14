@@ -138,8 +138,7 @@
     :external-id-capabilities :read-coa
     :can-aggregate?           true
     :histogram-fields         coa-histogram-fields
-    :enumerable-fields        coa-enumerable-fields
-    :searchable-fields        searchable-fields}))
+    :enumerable-fields        coa-enumerable-fields}))
 
 (def capabilities
   #{:create-coa
