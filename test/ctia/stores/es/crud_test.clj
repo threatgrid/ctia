@@ -26,14 +26,16 @@
   (let [es-conn-state {:props {:entity :incident}
                        :services {:FeaturesService {:flag-value (constantly nil)}}}
         with-def-op (assoc-in es-conn-state [:props :default_operator] "and")]
-    (testing "refine-full-text-query-parts with different queries"
+    (testing "simple queries"
       (are [queries exp]
-           (is (= exp (es.query/refine-full-text-query-parts
-                       es-conn-state queries)))
+          (is (= exp (es.query/refine-full-text-query-parts
+                      es-conn-state queries)))
         [{:query "foo"}] [{:query_string {:query "foo"}}]
-        [{:query "foo" :query_mode :simple_query_string}] [{:simple_query_string {:query "foo"}}]
+        [{:query "foo"
+          :query_mode :simple_query_string}] [{:simple_query_string {:query "foo"}}]
 
-        [{:query "foo" :query_mode :simple_query_string}
+        [{:query "foo"
+          :query_mode :simple_query_string}
          {:query "bar"}] [{:simple_query_string {:query "foo"}}
                           {:query_string {:query "bar"}}]))
     (testing "refine-full-text-query-parts schema"
@@ -61,7 +63,38 @@
                               :fields ["title" "description"]}}]
              (es.query/refine-full-text-query-parts
               with-def-op
-              [{:query "foo" :fields ["title" "description"]}]))))))
+              [{:query "foo" :fields ["title" "description"]}]))))
+    (testing "enforcing fields"
+      ;; when an entity has :searchable-fields, and no :search-fields provided with the
+      ;; query - ES should receive all searchable-fields by default
+      (let [es-conn-state
+            (-> es-conn-state
+                (assoc-in [:services :FeaturesService :flag-value] (constantly "true"))
+                (assoc :searchable-fields #{:one :two :three}))]
+        (are [queries exp]
+            (is (= exp (es.query/refine-full-text-query-parts
+                        es-conn-state queries)))
+          [{:query "*"}]
+          [{:query_string {:query "*"
+                           :fields ["one" "three" "two"]}}]
+
+          [{:query "*" :fields []}]
+          [{:query_string {:query "*"
+                           :fields ["one" "three" "two"]}}])))
+    (testing "renaming fields"
+      ;; when an entity has a mapping with keyword and it has a nested text field,
+      ;; substitute keyword with the text field
+      (let [es-conn-state
+            (-> es-conn-state
+                (assoc-in [:services :FeaturesService :flag-value] (constantly "true"))
+                (assoc-in [:config :mappings "incident" :properties :kw-field]
+                          {:type "keyword" :fields {:text {:type "text"}}}))]
+        (are [queries exp]
+            (is (= exp (es.query/refine-full-text-query-parts
+                        es-conn-state queries)))
+          [{:query "*" :fields ["kw-field"]}]
+          [{:query_string {:query "*"
+                           :fields ["kw-field.text"]}}])))))
 
 (deftest ensure-document-id-in-map-test
   (is (= {:id '("actor-677796fd-b5d2-46e3-b57d-4879bcca1ce7")}
