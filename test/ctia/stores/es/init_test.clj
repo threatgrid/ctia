@@ -237,9 +237,9 @@
                          (try
                            (with-redefs [sut/system-exit-error fake-exit
                                          ;; redef mappings
-                                         sut/store-mappings
-                                         (cond-> sut/store-mappings
-                                           field (assoc-in [:sighting "sighting" :properties field]
+                                         sut/entity-fields
+                                         (cond-> sut/entity-fields
+                                           field (assoc-in [:sighting :es-mapping "sighting" :properties field]
                                                            field-mapping))]
                              (testing msg
                                ;; init again to trigger mapping update

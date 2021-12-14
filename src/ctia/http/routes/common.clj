@@ -53,9 +53,10 @@
 
 (s/defn prep-es-fields-schema :- (s/protocol s/Schema)
   "Conjoins Elasticsearch fields parameter into search-q-params schema"
-  [{:keys [search-q-params
-           searchable-fields] :as _entity-crud-config}]
-  (let [default-fields-schema (->> searchable-fields
+  [{{:keys [get-store]} :StoreService}
+   {:keys [search-q-params entity] :as _entity-crud-config}]
+  (let [searchable-fields (-> entity get-store :state :searchable-fields)
+        default-fields-schema (->> searchable-fields
                                    (map name)
                                    (apply s/enum))]
     (if (seq searchable-fields)
@@ -68,14 +69,6 @@
         (s/optional-key :search_fields)
         (describe [default-fields-schema] "'fields' key of Elasticsearch Fulltext Query.")})
       search-q-params)))
-
-(s/defn enforce-search-fields
-  "Guarantees that ES fields parameter always passed to ES instance"
-  [{:keys [search_fields] :as query-params}
-   searchable-fields]
-  (cond-> query-params
-    (empty? search_fields)
-    (assoc :search_fields (mapv name searchable-fields))))
 
 (def paging-param-keys
   "A list of the paging and sorting related parameters, we can use

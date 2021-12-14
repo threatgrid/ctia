@@ -168,8 +168,7 @@
     :external-id-capabilities :read-indicator
     :can-aggregate?           true
     :histogram-fields         indicator-histogram-fields
-    :enumerable-fields        indicator-enumerable-fields
-    :searchable-fields        searchable-fields}))
+    :enumerable-fields        indicator-enumerable-fields}))
 
 (def capabilities
   #{:read-indicator
@@ -219,4 +218,5 @@
    :services->routes      (routes.common/reloadable-function indicator-routes)
    :capabilities          capabilities
    :fields                indicator-fields
-   :sort-fields           indicator-fields})
+   :sort-fields           indicator-fields
+   :searchable-fields     searchable-fields})

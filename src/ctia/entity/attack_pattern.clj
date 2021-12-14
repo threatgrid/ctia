@@ -119,8 +119,7 @@
     :external-id-capabilities :read-attack-pattern
     :can-aggregate?           true
     :histogram-fields         attack-pattern-histogram-fields
-    :enumerable-fields        attack-pattern-enumerable-fields
-    :searchable-fields        searchable-fields}))
+    :enumerable-fields        attack-pattern-enumerable-fields}))
 
 (def AttackPatternType
   (let [{:keys [fields name description]}
@@ -171,4 +170,5 @@
    :services->routes      (routes.common/reloadable-function attack-pattern-routes)
    :capabilities          capabilities
    :fields                attack-pattern-fields
-   :sort-fields           attack-pattern-fields})
+   :sort-fields           attack-pattern-fields
+   :searchable-fields     searchable-fields})

@@ -146,8 +146,7 @@
      :can-aggregate?           true
      :histogram-fields         asset-properties-histogram-fields
      :enumerable-fields        asset-properties-enumerable-fields
-     :can-revoke?              asset-properties-can-revoke?
-     :searchable-fields        searchable-fields}))
+     :can-revoke?              asset-properties-can-revoke?}))
 
 (def capabilities
   #{:create-asset-properties
@@ -174,4 +173,5 @@
                             asset-properties-routes)
    :capabilities          capabilities
    :fields                asset-properties-fields
-   :sort-fields           asset-properties-fields})
+   :sort-fields           asset-properties-fields
+   :searchable-fields     searchable-fields})

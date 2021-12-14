@@ -164,8 +164,7 @@
            can-get-by-external-id?
            date-field
            histogram-fields
-           enumerable-fields
-           searchable-fields]
+           enumerable-fields]
     :or {hide-delete? false
          can-post? true
          can-update? true
@@ -180,7 +179,9 @@
          {:keys [flag-value]} :FeaturesService
          :as services} :- APIHandlerServices]
   (let [capitalized (capitalize-entity entity)
-        search-q-params* (routes.common/prep-es-fields-schema entity-crud-config)
+        search-q-params* (routes.common/prep-es-fields-schema
+                          services
+                          entity-crud-config)
         search-filters (st/dissoc search-q-params
                                   :sort_by
                                   :sort_order
@@ -333,18 +334,14 @@
              :description (capabilities->description search-capabilities)
              :capabilities search-capabilities
              :query [params search-q-params*]
-             (let [params* (if (= "true" (flag-value :enforce-search-fields))
-                             (routes.common/enforce-search-fields
-                              params searchable-fields)
-                             params)]
-               (-> (get-store entity)
-                   (store/query-string-search
-                    (search-query date-field params*)
-                    identity-map
-                    (select-keys params* routes.common/search-options))
-                   (ent/page-with-long-id services)
-                   ent/un-store-page
-                   routes.common/paginated-ok)))
+             (-> (get-store entity)
+                 (store/query-string-search
+                  (search-query date-field params)
+                  identity-map
+                  (select-keys params routes.common/search-options))
+                 (ent/page-with-long-id services)
+                 ent/un-store-page
+                 routes.common/paginated-ok))
            (GET "/count" []
              :return s/Int
              :summary (format "Count %s matching a Lucene/ES query string and field filters" capitalized)

@@ -41,7 +41,7 @@
     :IEncryption                     {:encrypt (s/=> s/Any s/Any)
                                       :decrypt (s/=> s/Any s/Any)}
     :FeaturesService                 {:entity-enabled? (s/=> s/Bool s/Keyword)
-                                      :feature-flags   (s/=> [s/Str])}}))
+                                      :feature-flags (s/=> [s/Str])}}))
 
 (s/defschema HTTPShowServices
   (-> APIHandlerServices
@@ -201,7 +201,8 @@
      :no-api? s/Bool
      :realize-fn RealizeFn
      :can-patch? s/Bool
-     :patch-capabilities  s/Keyword})))
+     :patch-capabilities s/Keyword
+     :searchable-fields #{s/Keyword}})))
 
 (s/defschema OpenCTIMSchemaVersion
   {(s/optional-key :schema_version) s/Str})

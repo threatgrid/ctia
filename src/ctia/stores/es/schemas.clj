@@ -13,6 +13,8 @@
 
 (s/defschema ESConnState
   (st/merge
-    ;; disallows services
-    ductile.schemas/ESConnState
-    {:services ESConnServices}))
+   ;; disallows services
+   ductile.schemas/ESConnState
+   {:services ESConnServices}
+   (st/optional-keys
+    {:searchable-fields (s/maybe #{s/Keyword})})))

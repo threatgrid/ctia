@@ -150,8 +150,7 @@
      :can-aggregate?           true
      :histogram-fields         asset-mapping-histogram-fields
      :enumerable-fields        asset-mapping-enumerable-fields
-     :can-revoke?              asset-mapping-can-revoke?
-     :searchable-fields        searchable-fields}))
+     :can-revoke?              asset-mapping-can-revoke?}))
 
 (def capabilities
   #{:create-asset-mapping
@@ -178,4 +177,5 @@
                             asset-mapping-routes)
    :capabilities          capabilities
    :fields                asset-mapping-fields
-   :sort-fields           asset-mapping-fields})
+   :sort-fields           asset-mapping-fields
+   :searchable-fields     searchable-fields})

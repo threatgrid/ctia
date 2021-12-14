@@ -41,8 +41,8 @@
     (are [fields result]
         (is (= result
                (some-> (sut/prep-es-fields-schema
-                        {:search-q-params   incident/IncidentSearchParams
-                         :searchable-fields fields})
+                        {:StoreService {:get-store (constantly {:state {:searchable-fields fields}})}}
+                        {:search-q-params incident/IncidentSearchParams})
                        (st/get-in [:search_fields])
                        enum->set))
             (format "when %s passed, %s expected" fields result))
@@ -51,9 +51,12 @@
       nil          nil))
   (testing "search-q-params shall not be modified with searchable-fields of nil or empty"
     (is (= incident/IncidentSearchParams
-           (sut/prep-es-fields-schema  {:search-q-params incident/IncidentSearchParams})
-           (sut/prep-es-fields-schema  {:search-q-params   incident/IncidentSearchParams
-                                        :searchable-fields #{}})))))
+           (sut/prep-es-fields-schema
+            {:StoreService {:get-store (constantly {:state {:searchable-fields nil}})}}
+            {:search-q-params incident/IncidentSearchParams})
+           (sut/prep-es-fields-schema
+            {:StoreService {:get-store (constantly {:state {:searchable-fields #{} }})}}
+            {:search-q-params incident/IncidentSearchParams})))))
 
 (defn- entity-schema+searchable-fields
   "Traverses through existing entities and grabs `schema` and
