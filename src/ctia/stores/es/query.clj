@@ -102,12 +102,9 @@ Returns a map where key is path to a field, and value - path to the nested text 
 (s/defn enforce-search-fields :- (s/maybe [s/Str])
   [es-conn-state :- ESConnStateProps
    fields :- (s/maybe [s/Str])]
-  (let [{{{:keys [flag-value entities]} :FeaturesService} :services
-         {:keys [entity]} :props} es-conn-state
-        searchable-fields (some->> (entities)
-                                   entity
-                                   :searchable-fields
-                                   (mapv name))]
+  (let [{:keys [searchable-fields]
+         {{:keys [flag-value]} :FeaturesService} :services} es-conn-state
+        searchable-fields (mapv name searchable-fields)]
     (if (and (empty? fields)
              (= "true" (flag-value :enforce-search-fields))
              (seq searchable-fields))
