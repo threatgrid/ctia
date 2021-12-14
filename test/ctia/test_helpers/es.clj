@@ -20,7 +20,7 @@
   (let [get-in-config (h/current-get-in-config-fn app)]
     {:ConfigService {:get-in-config get-in-config}
      :FeaturesService (-> (h/get-service-map app :FeaturesService)
-                          (select-keys [:flag-value :entities]))}))
+                          (select-keys [:flag-value]))}))
 
 (s/defn ->ESConnServices
   :- ESConnServices

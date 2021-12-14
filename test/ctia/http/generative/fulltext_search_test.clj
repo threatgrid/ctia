@@ -409,12 +409,8 @@
     (are [query-params fields expected-search-fields]
          (let [res (es.query/enforce-search-fields
                     {:props {:entity :incident}
-                     :services
-                     {:FeaturesService
-                      {:flag-value (constantly "true")
-                       :entities (constantly {:incident
-                                              {:searchable-fields
-                                               #{:foo :bar :zap}}})}}}
+                     :searchable-fields #{:foo :bar :zap}
+                     :services {:FeaturesService {:flag-value (constantly "true")}}}
                     fields)]
            (is (= expected-search-fields res)))
       {:query "*"} [] ["zap" "bar" "foo"]

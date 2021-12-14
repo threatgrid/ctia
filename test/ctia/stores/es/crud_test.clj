@@ -24,10 +24,7 @@
 
 (deftest refine-full-text-query-parts-test
   (let [es-conn-state {:props {:entity :incident}
-                       :services
-                       {:FeaturesService
-                        {:flag-value (constantly nil)
-                         :entities (constantly {:incident {}})}}}
+                       :services {:FeaturesService {:flag-value (constantly nil)}}}
         with-def-op (assoc-in es-conn-state [:props :default_operator] "and")]
     (testing "refine-full-text-query-parts with different queries"
       (are [queries exp]

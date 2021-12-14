@@ -18,8 +18,6 @@
     "Returns all feature flags defined in the config with their values")
   (flag-value [this key]
     "Returns value of a feature flag")
-  (entities [this]
-    "Returns map of all entities")
   (entity-enabled? [this key]
     "Returns `true` unless entity key is marked as Disabled in properties config"))
 
@@ -44,10 +42,6 @@
   (flag-value
    [this key]
    (get (feature-flags this) key))
-
-  (entities
-   [_this]
-   (entities/all-entities))
 
   (entity-enabled?
    [this key]

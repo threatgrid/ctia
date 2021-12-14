@@ -40,8 +40,7 @@
                                             (s/=> graphql.schema.GraphQLType))}
     :IEncryption                     {:encrypt (s/=> s/Any s/Any)
                                       :decrypt (s/=> s/Any s/Any)}
-    :FeaturesService                 {:entities (s/=> {s/Keyword s/Any})
-                                      :entity-enabled? (s/=> s/Bool s/Keyword)
+    :FeaturesService                 {:entity-enabled? (s/=> s/Bool s/Keyword)
                                       :feature-flags (s/=> [s/Str])}}))
 
 (s/defschema HTTPShowServices
