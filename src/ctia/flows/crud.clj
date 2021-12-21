@@ -166,7 +166,7 @@
                                   services)})]
     (assoc fm
            :entities
-           (doall
+           (remove nil?
             (for [entity entities
                   :let [entity-id (find-entity-id fm entity)]]
               (cond
@@ -178,16 +178,12 @@
                                             tempids
                                             identity-map)
                         :update
-                        (if-let [prev-entity (get-prev-entity entity-id)]
+                        (when-let [prev-entity (get-prev-entity entity-id)]
                           (realize-fn entity
                                       entity-id
                                       tempids
                                       identity-map
-                                      prev-entity)
-                          (realize-fn entity
-                                      entity-id
-                                      tempids
-                                      identity-map))
+                                      prev-entity))
                         :delete entity)))))))
 
 (s/defn ^:private throw-validation-error
@@ -486,13 +482,13 @@
     - `:before-update` hooks can modify the entity stored.
     - `:after-update` hooks are read only"
   [& {:keys [entity-type
+             services
              get-fn
              realize-fn
              update-fn
              identity
              entities
              long-id-fn
-             services
              spec
              get-success-entities
              make-result]
