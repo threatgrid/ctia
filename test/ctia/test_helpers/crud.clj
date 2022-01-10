@@ -296,24 +296,14 @@
               (is (= with-updates
                      updated-record))
               (is (= updated-record
-                     stored-record)))
-
-            (when revoke-tests?
-              (testing (format "POST /ctia/%s/:id/expire revokes" entity-str)
-                (let [fixed-now (tc/to-date  "2020-12-31")]
-                  (helpers/fixture-with-fixed-time
-                   fixed-now
-                   (fn []
-                     (let [response (apply helpers/POST
-                                           app
-                                           (format "ctia/%s/%s/expire" entity-str (:short-id record-id))
-                                           :headers headers
-                                           (when revoke-tests-extra-query-params
-                                             [:query-params revoke-tests-extra-query-params]))]
-                       (is (= 200 (:status response))
-                           (format "POST %s/:id/expire succeeds" entity-str))
-                       (is (= fixed-now (-> response :parsed-body :valid_time :end_time))
-                           ":valid_time properly reset")))))))
+                     stored-record))
+              (is (= 404
+                     (:status (PUT app
+                                  (format "ctia/%s/not-found-%s"
+                                          entity-str
+                                          (:short-id record-id))
+                                :body with-updates
+                                :headers headers)))))
 
             ;; execute entity custom tests before deleting the fixture
             (testing "additional tests"
@@ -323,6 +313,23 @@
                                   (if update-tests?
                                     updated-record
                                     post-record))))))
+
+        (when revoke-tests?
+          (testing (format "POST /ctia/%s/:id/expire revokes" entity-str)
+            (let [fixed-now (tc/to-date  "2020-12-31")]
+              (helpers/fixture-with-fixed-time
+               fixed-now
+               (fn []
+                 (let [response (apply helpers/POST
+                                       app
+                                       (format "ctia/%s/%s/expire" entity-str (:short-id record-id))
+                                       :headers headers
+                                       (when revoke-tests-extra-query-params
+                                         [:query-params revoke-tests-extra-query-params]))]
+                   (is (= 200 (:status response))
+                       (format "POST %s/:id/expire succeeds" entity-str))
+                   (is (= fixed-now (-> response :parsed-body :valid_time :end_time))
+                       ":valid_time properly reset")))))))
 
         (when invalid-tests?
           (testing (format "PUT invalid /ctia/%s/:id" entity-str)
