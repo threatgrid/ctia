@@ -183,6 +183,22 @@
                                        (assoc s id patch))))]
                               (get new id)))
                           patches))
+             check-update (fn [now source-value expected]
+                            (doseq [[id updated?] expected]
+                              (is (= updated?
+                                     (= source-value"updated"
+                                        (:source (get @store id))))
+                                  (format "the expected update result for %s is %s (%s)" id updated? (pr-str (get @store id))))
+                              (is (= updated?
+                                     (->> (search-events
+                                           event-store
+                                           ident
+                                           now
+                                           :record-updated
+                                           id)
+                                          first
+                                          some?))
+                                  (format "The expected update event for %s should be %s" id updated?))))
              update-flow (fn [msg expected]
                            (testing (str msg "\ntested: " (pr-str expected))
                              (let [now (jt/instant)
@@ -202,21 +218,7 @@
                                     :long-id-fn identity
                                     :spec :new-sighting/map
                                     :get-success-entities :entities)
-                                   (doseq [[id updated?] expected]
-                                     (is (= updated?
-                                            (= "updated"
-                                               (:source (get @store id))))
-                                         (format "the expected update result for %s is %s (%s)" id updated? (pr-str (get @store id))))
-                                     (is (= updated?
-                                            (->> (search-events
-                                                  event-store
-                                                  ident
-                                                  now
-                                                  :record-updated
-                                                  id)
-                                                 first
-                                                 some?))
-                                         (format "The expected creation event for %s should be %s" id updated?))))))
+                                   (check-update now "updated" expected))))
              patch-flow (fn [msg expected]
                            (testing (str msg "\ntested: " (pr-str expected))
                              (let [now (jt/instant)
@@ -237,21 +239,7 @@
                                     :spec :new-sighting/map
                                     :get-success-entities :entities
                                     :identity (map->Identity ident))
-                                   (doseq [[id patched?] expected]
-                                     (is (= patched?
-                                            (= "patched"
-                                               (:source (get @store id))))
-                                         (format "the expected patch result for %s is %s (%s)" id patched? (pr-str (get @store id))))
-                                     (is (= patched?
-                                            (->> (search-events
-                                                  event-store
-                                                  ident
-                                                  now
-                                                  :record-updated
-                                                  id)
-                                                 first
-                                                 some?))
-                                         (format "The expected creation event for %s should be %s" id patched?))))))
+                                   (check-update now "patched" expected))))
              delete-fn (fn [ids]
                          (into {}
                                (map (fn [id]
