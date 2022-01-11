@@ -186,7 +186,7 @@
              check-update (fn [now source-value expected]
                             (doseq [[id updated?] expected]
                               (is (= updated?
-                                     (= source-value"updated"
+                                     (= source-value
                                         (:source (get @store id))))
                                   (format "the expected update result for %s is %s (%s)" id updated? (pr-str (get @store id))))
                               (is (= updated?
