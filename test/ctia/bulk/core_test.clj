@@ -200,21 +200,33 @@
            (doseq [indicator-id indicator-ids]
              (is (some? (read-record indicator-store indicator-id ident-map {})))))
 
-         (let [sighting-patches (map #(assoc sighting-minimal
-                                             :source "patched sighting"
+         (let [sighting-patches (map #(assoc {:source "patched sighting"}
                                              :id %)
                                      sighting-ids)
-               indicator-patches (map #(assoc indicator-minimal
-                                              :source "patched indicator"
+               indicator-patches (map #(assoc {:source "patched indicator"}
                                               :id %)
                                       indicator-ids)
-               missing-indicator-patches (map #(assoc {};;indicator-minimal
-                                                      :source "patched indicator"
+               missing-indicator-patches (map #(assoc {:source "patched indicator"}
+                                                      :id %)
+                                              missing-indicator-ids)
+               sighting-updates (map #(assoc sighting-minimal
+                                             :source "updated sighting"
+                                             :id %)
+                                     sighting-ids)
+               indicator-updates (map #(assoc indicator-minimal
+                                              :source "updated indicator"
+                                              :id %)
+                                      indicator-ids)
+               missing-indicator-updates (map #(assoc indicator-minimal
+                                                      :source "updated indicator"
                                                       :id %)
                                               missing-indicator-ids)
                bulk-patch {:sightings sighting-patches
                            :indicators (concat indicator-patches
                                                missing-indicator-patches)}
+               bulk-update {:sightings sighting-updates
+                            :indicators (concat indicator-updates
+                                                missing-indicator-updates)}
                bulk-delete {:sightings sighting-ids
                             :indicators (concat indicator-ids missing-indicator-ids)}
                check-tlp (fn [other-group-res]
@@ -245,6 +257,28 @@
                         (:source (read-record sighting-store sighting-id ident-map {})))))
                (doseq [indicator-id (:updated indicators)]
                  (is (= "patched indicator"
+                        (:source (read-record indicator-store indicator-id ident-map {})))))))
+
+           (testing "bulk-update shall properly update submitties entitites"
+             (let [other-group-res (sut/update-bulk bulk-update
+                                                   other-group-ident
+                                                   {:refresh "true"}
+                                                   services)
+                   {:keys [sightings indicators]}
+                   (sut/update-bulk bulk-update
+                                   ident
+                                   {:refresh "true"}
+                                   services)]
+               (check-tlp other-group-res)
+               (is (= #{missing-id-1 missing-id-2} (set (get-in indicators [:errors :not-found]))))
+               (is (nil? (:not-found sightings)))
+               (is (= (set sighting-ids) (set (:updated sightings))))
+               (is (= (set indicator-ids) (set (:updated indicators))))
+               (doseq [sighting-id (:updated sightings)]
+                 (is (= "updateed sighting"
+                        (:source (read-record sighting-store sighting-id ident-map {})))))
+               (doseq [indicator-id (:updated indicators)]
+                 (is (= "updateed indicator"
                         (:source (read-record indicator-store indicator-id ident-map {})))))))
 
            (testing "bulk-delete shall properly delete entities with allowed entities and manage visibilities"

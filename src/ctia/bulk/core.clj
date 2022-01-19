@@ -183,6 +183,25 @@
        :make-result make-bulk-result
        :get-success-entities (get-success-entities-fn :deleted)))))
 
+(s/defn update-entities
+  "patch many entities provided their type and returns errored and successed entities' ids"
+  [entities entity-type auth-identity params
+   services :- APIHandlerServices]
+  (when (seq entities)
+    (let [get-fn #(read-entities %  entity-type auth-identity services)
+          {:keys [realize-fn new-spec]} (get (all-entities) entity-type)]
+      (flows/update-flow
+       :services services
+       :get-fn get-fn
+       :realize-fn realize-fn
+       :update-fn (update-fn entity-type auth-identity params services)
+       :long-id-fn #(with-long-id % services)
+       :entity-type entity-type
+       :identity auth-identity
+       :spec new-spec
+       :make-result make-bulk-result
+       :get-success-entities (get-success-entities-fn :updated)))))
+
 (s/defn patch-entities
   "patch many entities provided their type and returns errored and successed entities' ids"
   [patches entity-type auth-identity params
@@ -326,6 +345,16 @@
       (bad-request (str "Bulk max nb of entities: "
                         (get-bulk-max-size get-in-config)))
       (gen-bulk-from-fn delete-entities bulk auth-identity params services))))
+
+(s/defn update-bulk
+  [entities-map auth-identity params
+   {{:keys [get-in-config]} :ConfigService
+    :as services} :- APIHandlerServices]
+  (let [bulk (into {} (remove (comp empty? second) entities-map))]
+    (if (> (bulk-size bulk) (get-bulk-max-size get-in-config))
+      (bad-request (str "Bulk max nb of entities: "
+                        (get-bulk-max-size get-in-config)))
+      (gen-bulk-from-fn update-entities bulk auth-identity params services))))
 
 (s/defn patch-bulk
   [entities-map auth-identity params
