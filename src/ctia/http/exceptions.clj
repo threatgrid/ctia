@@ -35,10 +35,10 @@
   (ex/response-validation-handler e data request))
 
 (defn es-ex-data
-  [e data request]
+  [e data {:keys [query-params]}]
   (let [exception-data (ex-data e)]
-    (cond-> {:request request
-             :data data}
+    (cond-> {:data data}
+      query-params (assoc :query-params query-params)
       exception-data
       (assoc :ex-data exception-data))))
 
