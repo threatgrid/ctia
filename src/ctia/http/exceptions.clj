@@ -38,7 +38,8 @@
   [e data {:keys [query-params]}]
   (let [exception-data (ex-data e)]
     (cond-> {:data data}
-      query-params (assoc :query-params query-params)
+      query-params
+      (assoc :query-params query-params)
       exception-data
       (assoc :ex-data exception-data))))
 
