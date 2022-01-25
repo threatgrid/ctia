@@ -148,11 +148,12 @@
   "return the update function provided an entity type key"
   [k auth-identity params
    {{:keys [get-store]} :StoreService} :- APIHandlerServices]
-  #(-> (get-store k)
-       (store/bulk-update
-         %
-         (auth/ident->map auth-identity)
-         params)))
+  (let [store (get-store k)]
+    (fn [docs]
+      (store/bulk-update store
+                         docs
+                         (auth/ident->map auth-identity)
+                         params))))
 
 (defn get-success-entities-fn
   [action]
@@ -187,10 +188,12 @@
   "patch many entities provided their type and returns errored and successed entities' ids"
   [entities entity-type auth-identity params
    services :- APIHandlerServices]
+  (println "update-entities")
   (when (seq entities)
     (let [get-fn #(read-entities %  entity-type auth-identity services)
           {:keys [realize-fn new-spec]} (get (all-entities) entity-type)]
       (flows/update-flow
+       :entities entities
        :services services
        :get-fn get-fn
        :realize-fn realize-fn
@@ -350,6 +353,7 @@
   [entities-map auth-identity params
    {{:keys [get-in-config]} :ConfigService
     :as services} :- APIHandlerServices]
+  (println "bulk.core/update-bulk")
   (let [bulk (into {} (remove (comp empty? second) entities-map))]
     (if (> (bulk-size bulk) (get-bulk-max-size get-in-config))
       (bad-request (str "Bulk max nb of entities: "

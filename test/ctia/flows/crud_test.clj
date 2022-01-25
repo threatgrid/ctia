@@ -183,22 +183,26 @@
                                        (assoc s id patch))))]
                               (get new id)))
                           patches))
-             check-update (fn [now source-value expected]
-                            (doseq [[id updated?] expected]
-                              (is (= updated?
-                                     (= source-value
-                                        (:source (get @store id))))
-                                  (format "the expected update result for %s is %s (%s)" id updated? (pr-str (get @store id))))
-                              (is (= updated?
-                                     (->> (search-events
-                                           event-store
-                                           ident
-                                           now
-                                           :record-updated
-                                           id)
-                                          first
-                                          some?))
-                                  (format "The expected update event for %s should be %s" id updated?))))
+             check-update (fn [res now source-value expected]
+                            (let [not-found-ids (set (:not-found res))]
+                              (doseq [[id updated?] expected]
+                                (is (= (not updated?)
+                                       (contains? not-found-ids id)))
+                                (is (= updated?
+                                       (= source-value
+                                          (:source (get @store id))))
+                                    (format "the expected update result for %s is %s (%s)" id updated? (pr-str (get @store id))))
+                                (is (= updated?
+                                       (->> (search-events
+                                             event-store
+                                             ident
+                                             now
+                                             :record-updated
+                                             id)
+                                            first
+                                            some?))
+                                    (format "The expected update event for %s should be %s" id updated?)))))
+             make-result #(select-keys % [:entities :not-found])
              update-flow (fn [msg expected]
                            (testing (str msg "\ntested: " (pr-str expected))
                              (let [now (jt/instant)
@@ -206,19 +210,20 @@
                                    docs (map (fn [id]
                                                   (assoc (mk-sighting id)
                                                          :source "updated"))
-                                                 entity-ids)]
-                                   (flows.crud/update-flow
-                                    :entity-type :sighting
-                                    :services services
-                                    :get-fn get-fn
-                                    :realize-fn  ss/realize-sighting
-                                    :update-fn update-fn
-                                    :identity (map->Identity ident)
-                                    :entities docs
-                                    :long-id-fn identity
-                                    :spec :new-sighting/map
-                                    :get-success-entities :entities)
-                                   (check-update now "updated" expected))))
+                                             entity-ids)
+                                   res (flows.crud/update-flow
+                                        :entity-type :sighting
+                                        :services services
+                                        :get-fn get-fn
+                                        :realize-fn  ss/realize-sighting
+                                        :update-fn update-fn
+                                        :identity (map->Identity ident)
+                                        :entities docs
+                                        :long-id-fn identity
+                                        :spec :new-sighting/map
+                                        :get-success-entities :entities
+                                        :make-result make-result)]
+                               (check-update res now "updated" expected))))
              patch-flow (fn [msg expected]
                            (testing (str msg "\ntested: " (pr-str expected))
                              (let [now (jt/instant)
@@ -226,20 +231,24 @@
                                    patches (map (fn [id]
                                                   {:id id
                                                    :source "patched"})
-                                                 entity-ids)]
-                                   (flows.crud/patch-flow
-                                    :entity-type :sighting
-                                    :get-fn get-fn
-                                    :partial-entities patches
-                                    :realize-fn  ss/realize-sighting
-                                    :update-fn update-fn
-                                    :patch-operation :replace
-                                    :long-id-fn identity
-                                    :services services
-                                    :spec :new-sighting/map
-                                    :get-success-entities :entities
-                                    :identity (map->Identity ident))
-                                   (check-update now "patched" expected))))
+                                                entity-ids)
+                                   res (flows.crud/patch-flow
+                                        :entity-type :sighting
+                                        :get-fn get-fn
+                                        :partial-entities patches
+                                        :realize-fn  ss/realize-sighting
+                                        :update-fn update-fn
+                                        :patch-operation :replace
+                                        :long-id-fn identity
+                                        :services services
+                                        :spec :new-sighting/map
+                                        :get-success-entities :entities
+                                        :identity (map->Identity ident)
+                                        :make-result make-result)]
+                               (check-update res
+                                             now
+                                             "patched"
+                                             expected))))
              delete-fn (fn [ids]
                          (into {}
                                (map (fn [id]
@@ -300,7 +309,6 @@
   [entity size]
   (into {}
         (map (fn [id] [id (mk-sighting id)]))
-
         (repeatedly size #(flows.crud/make-id entity))))
 
 (deftest prev-entity-test

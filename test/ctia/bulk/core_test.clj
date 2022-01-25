@@ -275,10 +275,10 @@
                (is (= (set sighting-ids) (set (:updated sightings))))
                (is (= (set indicator-ids) (set (:updated indicators))))
                (doseq [sighting-id (:updated sightings)]
-                 (is (= "updateed sighting"
+                 (is (= "updated sighting"
                         (:source (read-record sighting-store sighting-id ident-map {})))))
                (doseq [indicator-id (:updated indicators)]
-                 (is (= "updateed indicator"
+                 (is (= "updated indicator"
                         (:source (read-record indicator-store indicator-id ident-map {})))))))
 
            (testing "bulk-delete shall properly delete entities with allowed entities and manage visibilities"

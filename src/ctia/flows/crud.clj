@@ -400,11 +400,8 @@
                                                   get-prev-entity)]
 
                        :when (some? prev-entity)]
-                   (patch-entity patch-fn prev-entity partial-entity))
-        not-found (remove #(some->> % :id get-prev-entity) partial-entities)]
-    (assoc fm
-           :entities entities
-           :not-found (map :id not-found))))
+                   (patch-entity patch-fn prev-entity partial-entity))]
+    (assoc fm :entities entities)))
 
 (defn create-flow
   "This function centralizes the create workflow.
@@ -474,6 +471,14 @@
     (make-result fm)
     results))
 
+(defn not-found
+  [{:keys [get-prev-entity entities] :as fm}]
+  (let [grouped (group-by #(some-> % :id get-prev-entity nil?)
+                          entities)]
+    (assoc fm
+           :entities (get grouped false [])
+           :not-found (map :id (get grouped nil)))))
+
 (defn update-flow
   "This function centralize the update workflow.
   It is helpful to easily add new hooks name
@@ -509,6 +514,7 @@
          :create-event-fn to-update-event
          :get-success-entities get-success-entities
          :make-result make-result}
+        not-found
         validate-entities
         realize-entities
         throw-validation-error
@@ -544,7 +550,7 @@
         prev-entity-fn (prev-entity get-fn ids)]
     (-> {:flow-type :update
          :entity-type entity-type
-         :entities []
+         :entities partial-entities
          :services services
          :get-prev-entity prev-entity-fn
          :partial-entities partial-entities
@@ -558,6 +564,7 @@
          :create-event-fn to-update-event
          :get-success-entities get-success-entities
          :make-result make-result}
+        not-found
         patch-entities
         validate-entities
         realize-entities
