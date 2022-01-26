@@ -1,9 +1,9 @@
 (ns ctia.bulk.routes
   (:require
-   [ctia.bulk.core :refer [bulk-size create-bulk fetch-bulk delete-bulk get-bulk-max-size patch-bulk]]
+   [ctia.bulk.core :as core]
    [ctia.bulk.schemas :as bulk.schemas]
    [ctia.http.routes.common :as common]
-   [ctia.lib.compojure.api.core :refer [GET POST DELETE PATCH routes]]
+   [ctia.lib.compojure.api.core :refer [GET POST DELETE PATCH PUT routes]]
    [ctia.schemas.core :refer [APIHandlerServices Reference]]
    [ring.swagger.json-schema :refer [describe]]
    [ring.util.http-response :refer [bad-request ok]]
@@ -33,23 +33,35 @@
                          :create-tool
                          :create-vulnerability
                          :create-weakness}]
-      (POST "/" []
-            :return (bulk.schemas/BulkCreateRes services)
-            :query-params [{wait_for :- (describe s/Bool "wait for created entities to be available for search") nil}]
-            :body [bulk (bulk.schemas/NewBulk services) {:description "a new Bulk object"}]
-            :summary "POST many new entities using a single HTTP call"
-            :auth-identity login
-            :description (common/capabilities->description capabilities)
-            :capabilities capabilities
-            (if (> (bulk-size bulk)
-                   (get-bulk-max-size get-in-config))
-              (bad-request (str "Bulk max nb of entities: " (get-bulk-max-size get-in-config)))
-              (common/created (create-bulk bulk
-                                           {}
-                                           login
-                                           (common/wait_for->refresh wait_for)
-                                           services)))))
-
+      (routes
+       (POST "/" []
+         :return (bulk.schemas/BulkCreateRes services)
+         :query-params [{wait_for :- (describe s/Bool "wait for created entities to be available for search") nil}]
+         :body [bulk (bulk.schemas/NewBulk services) {:description "a new Bulk object"}]
+         :summary "POST many new entities using a single HTTP call"
+         :auth-identity login
+         :description (common/capabilities->description capabilities)
+         :capabilities capabilities
+         (if (> (core/bulk-size bulk) ;; TODO move this check in core
+                (core/get-bulk-max-size get-in-config))
+           (bad-request (str "Bulk max nb of entities: " (core/get-bulk-max-size get-in-config)))
+           (common/created (core/create-bulk bulk
+                                             {}
+                                             login
+                                             (common/wait_for->refresh wait_for)
+                                             services))))
+       (PUT "/" []
+         :return (s/maybe (bulk.schemas/BulkActionsRefs services))
+         :summary "UPDATE many entities at once"
+         :query-params [{wait_for :- (describe s/Bool "wait for updated entities to be available for search") nil}]
+         :body [bulk (bulk.schemas/BulkUpdate services) {:description "a new Bulk Patch object"}]
+         :description (common/capabilities->description capabilities)
+         :capabilities capabilities
+         :auth-identity auth-identity
+         (ok (core/update-bulk bulk
+                               auth-identity
+                               (common/wait_for->refresh wait_for)
+                               services)))))
    (let [capabilities #{:read-actor
                         :read-asset
                         :read-asset-mapping
@@ -122,20 +134,20 @@
                               :tools               tools
                               :vulnerabilities     vulnerabilities
                               :weaknesses          weaknesses}]
-            (ok (fetch-bulk entities-map auth-identity services)))))
+            (ok (core/fetch-bulk entities-map auth-identity services)))))
     (let [capabilities (bulk.schemas/bulk-patch-capabilities services)]
-     (PATCH "/" []
-          :return (s/maybe (bulk.schemas/BulkActionsRefs services))
-          :summary "PATCH many entities at once"
-          :query-params [{wait_for :- (describe s/Bool "wait for patched entities to be available for search") nil}]
-          :body [bulk (bulk.schemas/BulkPatch services) {:description "a new Bulk Patch object"}]
-          :description (common/capabilities->description capabilities)
-          :capabilities capabilities
-          :auth-identity auth-identity
-          (ok (patch-bulk bulk
-                          auth-identity
-                          (common/wait_for->refresh wait_for)
-                          services))))
+      (PATCH "/" []
+        :return (s/maybe (bulk.schemas/BulkActionsRefs services))
+        :summary "PATCH many entities at once"
+        :query-params [{wait_for :- (describe s/Bool "wait for patched entities to be available for search") nil}]
+        :body [bulk (bulk.schemas/BulkPatch services) {:description "a new Bulk Patch object"}]
+        :description (common/capabilities->description capabilities)
+        :capabilities capabilities
+        :auth-identity auth-identity
+        (ok (core/patch-bulk bulk
+                             auth-identity
+                             (common/wait_for->refresh wait_for)
+                             services))))
     (let [capabilities #{:delete-actor
                          :delete-asset
                          :delete-asset-mapping
@@ -166,7 +178,7 @@
           :description (common/capabilities->description capabilities)
           :capabilities capabilities
           :auth-identity auth-identity
-          (ok (delete-bulk bulk
-                           auth-identity
-                           (common/wait_for->refresh wait_for)
-                           services))))))
+          (ok (core/delete-bulk bulk
+                                auth-identity
+                                (common/wait_for->refresh wait_for)
+                                services))))))
