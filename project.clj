@@ -55,7 +55,8 @@
   :jvm-opts ["-Djava.awt.headless=true"
              "-Dlog.console.threshold=INFO"
              "-server"]
-  :exclusions [org.slf4j/log4j-over-slf4j] ;; remove from trapperkeeper jars
+  :exclusions [org.slf4j/slf4j-log4j12
+               org.slf4j/slf4j-nop] ;; Removed in favor of logback
   ;; use `lein pom; mvn dependency:tree -Dverbose -Dexcludes=org.clojure:clojure`
   ;; to inspect conflicts.
 
@@ -64,7 +65,6 @@
                  [org.threeten/threeten-extra "1.2"]
                  [clojure.java-time "0.3.2"]
                  [org.clojure/core.async "1.0.567"]
-                 [org.slf4j/slf4j-log4j12 "1.8.0-beta0"]
                  [org.clojure/core.memoize "1.0.236"]
                  [org.clojure/tools.logging "1.1.0"]
                  [org.clojure/tools.cli "1.0.194"]
