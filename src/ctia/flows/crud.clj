@@ -386,7 +386,7 @@
 
 (s/defn patch-entities :- FlowMap
   [{:keys [get-prev-entity
-           partial-entities
+           entities
            patch-operation]
     :as fm} :- FlowMap]
   (let [patch-fn (case patch-operation
@@ -394,14 +394,14 @@
                    :remove coll/remove-colls
                    :replace coll/replace-colls
                    coll/replace-colls)
-        entities (for [partial-entity partial-entities
+        patched (for [partial-entity entities
                        :let [prev-entity (some->> partial-entity
                                                   :id
-                                                  get-prev-entity)]
-
-                       :when (some? prev-entity)]
-                   (patch-entity patch-fn prev-entity partial-entity))]
-    (assoc fm :entities entities)))
+                                                  get-prev-entity)]]
+                      (cond->> partial-entity
+                       (some? prev-entity)
+                       (patch-entity patch-fn prev-entity)))]
+    (assoc fm :entities patched)))
 
 (defn create-flow
   "This function centralizes the create workflow.
