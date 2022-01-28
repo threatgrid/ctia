@@ -353,7 +353,6 @@
                                                (dissoc :schema_version))
                                           patched-sighting-ids)
            expected (assoc patch-flow-map
-                           :entities expected-patched-entities
-                           :not-found ["not-found"])]
+                           :entities expected-patched-entities)]
        (is (= expected
               (flows.crud/patch-entities patch-flow-map)))))))
