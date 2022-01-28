@@ -344,11 +344,11 @@
                    (is (= (:path-prefix id) (seq (:path-prefix show-props)))))))))
 
          (testing "PUT /ctia/bulk"
-           (let [incident-ids (:incidents bulk-ids)
+           (let [indicator-ids (:indicators bulk-ids)
                  sighting-ids (:sightings bulk-ids)
-                 update-bulk {:incidents (map #(assoc new-incident-maximal :id % :source "updated") incident-ids)
-                              :sightings (map #(assoc new-sighting-minimal :id % :source "updated") sighting-ids)}
-                 expected-update {:incidents {:updated (set incident-ids)}
+                 update-bulk {:indicators (map #(assoc (mk-new-indicator 0) :id % :source "updated") indicator-ids)
+                              :sightings (map #(assoc (mk-new-sighting 0) :id % :source "updated") sighting-ids)}
+                 expected-update {:indicators {:updated (set indicator-ids)}
                                   :sightings {:updated (set sighting-ids)}}
                  {:keys [status parsed-body]} (PUT app
                                                    bulk-url
@@ -357,11 +357,11 @@
              (is (= 200 status))
              (is (= expected-update
                     (-> parsed-body
-                        (update-in [:incidents :updated] set)
+                        (update-in [:indicators :updated] set)
                         (update-in [:sightings :updated] set))))
              (check-events event-store
                            ident
-                           (concat incident-ids sighting-ids)
+                           (concat indicator-ids sighting-ids)
                            :record-updated)))
 
          (testing "PATCH /ctia/bulk"
