@@ -337,9 +337,11 @@
            sighting-short-ids (keys store)
            patched-sighting-ids (take 3 sighting-short-ids)
            partial-entities (map #(array-map :id % :source "patched")
-                                 (conj patched-sighting-ids "not-found"))
+                                 patched-sighting-ids)
+           not-found-patch {:id "not-found" :source "patched"}
+           entities (conj partial-entities not-found-patch)
            patch-flow-map {:create-event-fn identity
-                           :entities []
+                           :entities entities
                            :entity-type :indicator
                            :flow-type :update
                            :services services
@@ -348,11 +350,11 @@
                            :get-prev-entity store
                            :partial-entities partial-entities
                            :patch-operation :replace}
-           expected-patched-entities (map #(-> (store %)
-                                               (assoc :source "patched")
-                                               (dissoc :schema_version))
-                                          patched-sighting-ids)
-           expected (assoc patch-flow-map
-                           :entities expected-patched-entities)]
+           expected-entities (conj (map #(-> (store %)
+                                             (assoc :source "patched")
+                                             (dissoc :schema_version))
+                                        patched-sighting-ids)
+                                   not-found-patch)
+           expected (assoc patch-flow-map :entities expected-entities)]
        (is (= expected
               (flows.crud/patch-entities patch-flow-map)))))))
