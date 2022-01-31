@@ -101,7 +101,8 @@
   [ids entity-type auth-identity
    services :- ReadEntitiesServices]
   (let [read-entity (read-fn entity-type auth-identity {} services)]
-    (map (fn [id]
+    ;; TODO search by ids
+    (pmap (fn [id]
            (try
              (some-> (read-entity id)
                      (with-long-id services))
@@ -188,7 +189,6 @@
   "patch many entities provided their type and returns errored and successed entities' ids"
   [entities entity-type auth-identity params
    services :- APIHandlerServices]
-  (println "update-entities")
   (when (seq entities)
     (let [get-fn #(read-entities %  entity-type auth-identity services)
           {:keys [realize-fn new-spec]} (get (all-entities) entity-type)]
@@ -226,6 +226,10 @@
        :make-result make-bulk-result
        :get-success-entities (get-success-entities-fn :updated)))))
 
+(defn prepare-bulk
+  [bulk]
+  (into {} (remove (comp empty? second) bulk)))
+
 (defn gen-bulk-from-fn
   "Kind of fmap but adapted for bulk
 
@@ -236,7 +240,7 @@
   "
   [func bulk & args]
   (try
-    (->> bulk
+    (->> (prepare-bulk bulk)
          (map (fn [[bulk-k entities]]
                 (let [entity-type (entity-type-from-bulk-key bulk-k)]
                   [bulk-k
@@ -274,6 +278,19 @@
   (get-in-config
     [:ctia :store :bulk-refresh]
     "false"))
+
+(defn bulk-size [bulk]
+  (apply + (map count (vals bulk))))
+
+(defn get-bulk-max-size [get-in-config]
+  (get-in-config [:ctia :http :bulk :max-size]))
+
+(defn bad-request?
+  [bulk
+   {{:keys [get-in-config]} :ConfigService}]
+  (when (> (bulk-size bulk) (get-bulk-max-size get-in-config))
+    (bad-request (str "Bulk max nb of entities: "
+                      (get-bulk-max-size get-in-config)))))
 
 (s/defn create-bulk
   "Creates entities in bulk. To define relationships between entities,
@@ -323,49 +340,23 @@
      (cond-> bulk-refs
        (seq all-tempids) (assoc :tempids all-tempids)))))
 
-(defn bulk-size [bulk]
-  (apply + (map count (vals bulk))))
-
-(defn get-bulk-max-size [get-in-config]
-  (get-in-config [:ctia :http :bulk :max-size]))
-
 (s/defn fetch-bulk
-  [entities-map auth-identity
-   {{:keys [get-in-config]} :ConfigService
-    :as services} :- APIHandlerServices]
-  (let [bulk (into {} (remove (comp empty? second) entities-map))]
-    (if (> (bulk-size bulk) (get-bulk-max-size get-in-config))
-      (bad-request (str "Bulk max nb of entities: " (get-bulk-max-size get-in-config)))
-      (ent/un-store-map
-       (gen-bulk-from-fn read-entities bulk auth-identity services)))))
+  [bulk auth-identity
+   services :- APIHandlerServices]
+  (ent/un-store-map
+   (gen-bulk-from-fn read-entities bulk auth-identity services)))
 
 (s/defn delete-bulk
-  [entities-map auth-identity params
-   {{:keys [get-in-config]} :ConfigService
-    :as services} :- APIHandlerServices]
-  (let [bulk (into {} (remove (comp empty? second) entities-map))]
-    (if (> (bulk-size bulk) (get-bulk-max-size get-in-config))
-      (bad-request (str "Bulk max nb of entities: "
-                        (get-bulk-max-size get-in-config)))
-      (gen-bulk-from-fn delete-entities bulk auth-identity params services))))
+  [bulk auth-identity params
+   services :- APIHandlerServices]
+  (gen-bulk-from-fn delete-entities bulk auth-identity params services))
 
 (s/defn update-bulk
-  [entities-map auth-identity params
-   {{:keys [get-in-config]} :ConfigService
-    :as services} :- APIHandlerServices]
-  (println "bulk.core/update-bulk")
-  (let [bulk (into {} (remove (comp empty? second) entities-map))]
-    (if (> (bulk-size bulk) (get-bulk-max-size get-in-config))
-      (bad-request (str "Bulk max nb of entities: "
-                        (get-bulk-max-size get-in-config)))
-      (gen-bulk-from-fn update-entities bulk auth-identity params services))))
+  [bulk auth-identity params
+   services :- APIHandlerServices]
+  (gen-bulk-from-fn update-entities bulk auth-identity params services))
 
 (s/defn patch-bulk
-  [entities-map auth-identity params
-   {{:keys [get-in-config]} :ConfigService
-    :as services} :- APIHandlerServices]
-  (let [bulk (into {} (remove (comp empty? second) entities-map))]
-    (if (> (bulk-size bulk) (get-bulk-max-size get-in-config))
-      (bad-request (str "Bulk max nb of entities: "
-                        (get-bulk-max-size get-in-config)))
-      (gen-bulk-from-fn patch-entities bulk auth-identity params services))))
+  [bulk auth-identity params
+   services :- APIHandlerServices]
+  (gen-bulk-from-fn patch-entities bulk auth-identity params services))

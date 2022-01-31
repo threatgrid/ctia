@@ -348,7 +348,6 @@
                            :identity (map->Identity {:login "user1" :groups ["g1"]})
                            :store-fn identity
                            :get-prev-entity store
-                           :partial-entities partial-entities
                            :patch-operation :replace}
            expected-entities (conj (map #(-> (store %)
                                              (assoc :source "patched")

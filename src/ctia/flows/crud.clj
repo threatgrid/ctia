@@ -39,7 +39,6 @@
    (s/optional-key :events)               [{s/Keyword s/Any}]
    (s/optional-key :long-id-fn)           (s/maybe (s/=> s/Any s/Any))
    (s/optional-key :get-prev-entity)      (s/pred fn?)
-   (s/optional-key :partial-entities)     [(s/maybe {s/Keyword s/Any})]
    (s/optional-key :patch-operation)      (s/enum :add :remove :replace)
    (s/optional-key :realize-fn)           RealizeFn
    (s/optional-key :find-entity-id)       (s/pred fn?)
@@ -553,7 +552,6 @@
          :entities partial-entities
          :services services
          :get-prev-entity prev-entity-fn
-         :partial-entities partial-entities
          :patch-operation patch-operation
          :identity identity
          :long-id-fn long-id-fn
@@ -564,8 +562,8 @@
          :create-event-fn to-update-event
          :get-success-entities get-success-entities
          :make-result make-result}
-        not-found
         patch-entities
+        not-found
         validate-entities
         realize-entities
         throw-validation-error

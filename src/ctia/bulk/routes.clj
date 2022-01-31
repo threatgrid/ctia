@@ -42,14 +42,12 @@
          :auth-identity login
          :description (common/capabilities->description capabilities)
          :capabilities capabilities
-         (if (> (core/bulk-size bulk) ;; TODO move this check in core
-                (core/get-bulk-max-size get-in-config))
-           (bad-request (str "Bulk max nb of entities: " (core/get-bulk-max-size get-in-config)))
-           (common/created (core/create-bulk bulk
-                                             {}
-                                             login
-                                             (common/wait_for->refresh wait_for)
-                                             services))))
+         (or (core/bad-request? bulk services)
+             (common/created (core/create-bulk bulk
+                                               {}
+                                               login
+                                               (common/wait_for->refresh wait_for)
+                                               services))))
        (PUT "/" []
          :return (s/maybe (bulk.schemas/BulkActionsRefs services))
          :summary "UPDATE many entities at once"
@@ -58,10 +56,11 @@
          :description (common/capabilities->description capabilities)
          :capabilities capabilities
          :auth-identity auth-identity
-         (ok (core/update-bulk bulk
-                               auth-identity
-                               (common/wait_for->refresh wait_for)
-                               services)))))
+         (or (core/bad-request? bulk services)
+             (ok (core/update-bulk bulk
+                                   auth-identity
+                                   (common/wait_for->refresh wait_for)
+                                   services))))))
    (let [capabilities #{:read-actor
                         :read-asset
                         :read-asset-mapping
@@ -112,29 +111,30 @@
           :description (common/capabilities->description capabilities)
           :capabilities capabilities
           :auth-identity auth-identity
-          (let [entities-map {:actors              actors
-                              :asset_mappings      asset_mappings
-                              :assets              assets
-                              :asset_properties    asset_properties
-                              :attack_patterns     attack_patterns
-                              :campaigns           campaigns
-                              :casebooks           casebooks
-                              :coas                coas
-                              :data_tables         data_tables
-                              :feedbacks           feedbacks
-                              :identity_assertions identity_assertions
-                              :incidents           incidents
-                              :indicators          indicators
-                              :investigations      investigations
-                              :judgements          judgements
-                              :malwares            malwares
-                              :relationships       relationships
-                              :sightings           sightings
-                              :target_records      target_records
-                              :tools               tools
-                              :vulnerabilities     vulnerabilities
-                              :weaknesses          weaknesses}]
-            (ok (core/fetch-bulk entities-map auth-identity services)))))
+          (let [bulk {:actors              actors
+                      :asset_mappings      asset_mappings
+                      :assets              assets
+                      :asset_properties    asset_properties
+                      :attack_patterns     attack_patterns
+                      :campaigns           campaigns
+                      :casebooks           casebooks
+                      :coas                coas
+                      :data_tables         data_tables
+                      :feedbacks           feedbacks
+                      :identity_assertions identity_assertions
+                      :incidents           incidents
+                      :indicators          indicators
+                      :investigations      investigations
+                      :judgements          judgements
+                      :malwares            malwares
+                      :relationships       relationships
+                      :sightings           sightings
+                      :target_records      target_records
+                      :tools               tools
+                      :vulnerabilities     vulnerabilities
+                      :weaknesses          weaknesses}]
+            (or (core/bad-request? bulk services)
+                (ok (core/fetch-bulk bulk auth-identity services))))))
     (let [capabilities (bulk.schemas/bulk-patch-capabilities services)]
       (PATCH "/" []
         :return (s/maybe (bulk.schemas/BulkActionsRefs services))
@@ -144,10 +144,11 @@
         :description (common/capabilities->description capabilities)
         :capabilities capabilities
         :auth-identity auth-identity
-        (ok (core/patch-bulk bulk
-                             auth-identity
-                             (common/wait_for->refresh wait_for)
-                             services))))
+        (or (core/bad-request? bulk services)
+            (ok (core/patch-bulk bulk
+                                 auth-identity
+                                 (common/wait_for->refresh wait_for)
+                                 services)))))
     (let [capabilities #{:delete-actor
                          :delete-asset
                          :delete-asset-mapping
@@ -178,7 +179,8 @@
           :description (common/capabilities->description capabilities)
           :capabilities capabilities
           :auth-identity auth-identity
-          (ok (core/delete-bulk bulk
-                                auth-identity
-                                (common/wait_for->refresh wait_for)
-                                services))))))
+          (or (core/bad-request? bulk services)
+              (ok (core/delete-bulk bulk
+                                    auth-identity
+                                    (common/wait_for->refresh wait_for)
+                                    services)))))))
