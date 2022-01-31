@@ -149,12 +149,11 @@
   "return the update function provided an entity type key"
   [k auth-identity params
    {{:keys [get-store]} :StoreService} :- APIHandlerServices]
-  (let [store (get-store k)]
-    (fn [docs]
-      (store/bulk-update store
-                         docs
-                         (auth/ident->map auth-identity)
-                         params))))
+  #(-> (get-store k)
+       (store/bulk-update
+        %
+        (auth/ident->map auth-identity)
+        params)))
 
 (defn get-success-entities-fn
   [action]
@@ -186,7 +185,7 @@
        :get-success-entities (get-success-entities-fn :deleted)))))
 
 (s/defn update-entities
-  "patch many entities provided their type and returns errored and successed entities' ids"
+  "update many entities provided their type and returns errored and successed entities' ids"
   [entities entity-type auth-identity params
    services :- APIHandlerServices]
   (when (seq entities)
