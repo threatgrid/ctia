@@ -184,7 +184,6 @@
                                   [org.clojure/data.priority-map "1.0.0"]
                                   [org.clojure/tools.namespace "1.1.0"]]
                    :pedantic? :warn
-                   :resource-paths ["test/resources"]
                    :source-paths ["dev"]}
              :ci {:pedantic? :abort
                   :global-vars {*warn-on-reflection* true}}
