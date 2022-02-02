@@ -5,9 +5,9 @@
         </encoder>
     </appender>
 
-    <logger name="puppetlabs.trapperkeeper.internal" level="OFF"/>
+    <logger name="ctia" level="INFO"/>
 
-    <root level="INFO">
+    <root level="OFF">
         <appender-ref ref="STDOUT" />
     </root>
 </configuration>
