@@ -143,11 +143,11 @@
            entity-type]
     :as fm} :- FlowMap]
   (let [newtempids
-        (->> entities
-             (keep (fn [{:keys [id]}]
-                     (when (and id (schemas/transient-id? id))
-                       [id (make-id entity-type)])))
-             (into {}))]
+        (into {}
+              (keep (fn [{:keys [id]}]
+                      (when (and id (schemas/transient-id? id))
+                        [id (make-id entity-type)])))
+               entities)]
     (update fm :tempids (fnil into {}) newtempids)))
 
 (s/defn ^:private realize-entities :- FlowMap
@@ -328,11 +328,12 @@
 (defn short-to-long-ids-map
   "Builds a mapping table between short and long IDs"
   [entities long-id-fn]
-  (->> entities
-       (remove :error)
-       (map (fn [{:keys [_ id] :as entity}]
-              [id (:id (long-id-fn entity))]))
-       (into {})))
+  (into {}
+        (comp
+         (remove :error)
+         (map (fn [{:keys [_ id] :as entity}]
+                [id (:id (long-id-fn entity))])))
+        entities))
 
 (defn entities-with-long-ids
   "Converts entity IDs from short to long format"
@@ -345,11 +346,11 @@
 (defn tempids-with-long-ids
   "Converts IDs in the tempids mapping table from short to long format"
   [tempids short-to-long-map]
-  (->> tempids
-       (keep (fn [[tempid short-id]]
-               (when-let [long-id (get short-to-long-map short-id)]
-                 [tempid long-id])))
-       (into {})))
+  (into {}
+        (keep (fn [[tempid short-id]]
+                (when-let [long-id (get short-to-long-map short-id)]
+                  [tempid long-id])))
+        tempids))
 
 (s/defn ^:private apply-long-id-fn :- FlowMap
   [{:keys [entities tempids long-id-fn] :as fm}]
@@ -449,11 +450,12 @@
 
 (defn prev-entity
   [get-fn ids]
-  (let [indexed (->> (get-fn ids)
-                     (filter seq)
-                     (into {}
-                           (map (fn [e]
-                                  [(id/str->short-id (:id e)) e]))))]
+  (let [indexed (into {}
+                      (comp
+                       (filter seq)
+                       (map (fn [e]
+                              [(id/str->short-id (:id e)) e])))
+                      (get-fn ids))]
     (fn [id]
       (when (seq id)
         (get indexed (id/str->short-id id))))))

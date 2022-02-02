@@ -225,10 +225,6 @@
        :make-result make-bulk-result
        :get-success-entities (get-success-entities-fn :updated)))))
 
-(defn prepare-bulk
-  [bulk]
-  (into {} (remove (comp empty? second) bulk)))
-
 (defn gen-bulk-from-fn
   "Kind of fmap but adapted for bulk
 
@@ -239,14 +235,16 @@
   "
   [func bulk & args]
   (try
-    (->> (prepare-bulk bulk)
-         (map (fn [[bulk-k entities]]
-                (let [entity-type (entity-type-from-bulk-key bulk-k)]
-                  [bulk-k
-                   (apply func
-                          entities
-                          entity-type args)])))
-         (into {}))
+    (into {}
+          (comp
+           (remove (comp empty? second))
+           (map (fn [[bulk-k entities]]
+                  (let [entity-type (entity-type-from-bulk-key bulk-k)]
+                    [bulk-k
+                     (apply func
+                            entities
+                            entity-type args)]))))
+          bulk)
     (catch java.util.concurrent.ExecutionException e
       (throw (.getCause e)))))
 
@@ -279,7 +277,7 @@
     "false"))
 
 (defn bulk-size [bulk]
-  (apply + (map count (vals bulk))))
+  (reduce + (map count (vals bulk))))
 
 (defn get-bulk-max-size [get-in-config]
   (get-in-config [:ctia :http :bulk :max-size]))
@@ -288,7 +286,7 @@
   [bulk
    {{:keys [get-in-config]} :ConfigService}]
   (when (> (bulk-size bulk) (get-bulk-max-size get-in-config))
-    (bad-request (str "Bulk max nb of entities: "
+    (bad-request (str "Bulk max number of entities: "
                       (get-bulk-max-size get-in-config)))))
 
 (s/defn create-bulk
