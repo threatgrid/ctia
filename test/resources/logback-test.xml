@@ -4,8 +4,10 @@
             <pattern>%d{"yyyy-MM-dd'T'HH:mm:ss.SSSXXX", UTC} %level \(%thread\) [%logger] - %msg%n</pattern>
         </encoder>
     </appender>
-    <!-- OFF can be used to disable logs but it produces race conditions in tests  -->
-    <root level="WARN">
+
+    <logger name="puppetlabs.trapperkeeper.internal" level="OFF"/>
+
+    <root level="INFO">
         <appender-ref ref="STDOUT" />
     </root>
 </configuration>
