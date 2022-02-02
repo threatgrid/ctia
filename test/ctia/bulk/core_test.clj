@@ -75,6 +75,22 @@
                      :forbidden [(to-long-ids "tool-82240bee-3915-44dd-af7d-d4b650d71724")]}}]
        (is (= expected (sut/format-bulk-flow-res bulk-flow-res services)))))))
 
+(deftest merge-tempids-test
+  (let [bundle-res {:entity-type1 {:data []
+                                   :tempids {"transientid1" "id1"
+                                             "transientid2" "id2"}}
+                    :entity-type2 {:data []
+                                   :tempids {"transientid3" "id3"
+                                             "transientid4" "id4"
+                                             "transientid5" "id4"}}
+                    :entity-type3 {:data []}}]
+    (is (= {"transientid1" "id1"
+            "transientid2" "id2"
+            "transientid3" "id3"
+            "transientid4" "id4"
+            "transientid5" "id4"}
+           (sut/merge-tempids bundle-res)))))
+
 
 (defn with-tlp
   [fixtures tlp]

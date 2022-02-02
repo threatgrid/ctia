@@ -267,9 +267,9 @@
   The create-entities set the enveloped-result? to True in the flow
   configuration to get :data and :tempids for each entity in the result."
   [entities-by-type]
-  (->> entities-by-type
-       (map (fn [[_ v]] (:tempids v)))
-       (reduce into {})))
+  (into {}
+        (map (fn [[_ v]] (:tempids v)))
+         entities-by-type))
 
 (defn bulk-refresh? [get-in-config]
   (get-in-config
@@ -330,10 +330,10 @@
          all-entities (merge new-entities new-linked-ents)
          ;; Extracting data from the enveloped flow result
          ;; {:entity-type {:data [] :tempids {}}
-         bulk-refs (->> all-entities
-                        (map (fn [[k {:keys [data]}]]
-                               {k data}))
-                        (into {}))]
+         bulk-refs (into {}
+                         (map (fn [[k {:keys [data]}]]
+                                {k data}))
+                         all-entities)]
      (cond-> bulk-refs
        (seq all-tempids) (assoc :tempids all-tempids)))))
 
