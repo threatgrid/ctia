@@ -102,6 +102,7 @@
    :indicator_type
    :likely_impact
    :confidence
+   :severity
    :producer
    :tags])
 
@@ -127,6 +128,7 @@
      :producer          s/Str
      :specification     s/Str
      :confidence        s/Str
+     :severity          s/Str
      :sort_by           indicator-sort-fields})))
 
 (def IndicatorGetParams IndicatorFieldsParam)
