@@ -81,6 +81,7 @@
                                         :indicator_ids em/token}}
       :likely_impact em/token
       :confidence em/token
+      :severity em/token
       :kill_chain_phases em/kill-chain-phase
       :test_mechanisms em/token
       :specification {:enabled false}})}})
