@@ -203,12 +203,11 @@
                        :main ctia.main
                        :uberjar-name "ctia.jar"
                        :uberjar-exclusions [#"ctia\.properties"]}
-             :test {:jvm-opts ["-Dlog.console.threshold=WARN"]
-                    :dependencies [[clj-http-fake ~clj-http-fake-version]
+             :test {:dependencies [[clj-http-fake ~clj-http-fake-version]
                                    [com.gfredericks/test.chuck ~test-chuck-version]
                                    [org.clojure/test.check ~test-check-version]
                                    [prismatic/schema-generators ~schema-generators-version]]
-                    :resource-paths ["test/resources"]}
+                    :resource-paths ["test-resources"]}
 
              :prepush {:plugins [[yogsototh/lein-kibit "0.1.6-SNAPSHOT"]
                                  [lein-bikeshed "0.3.0"]]}}
