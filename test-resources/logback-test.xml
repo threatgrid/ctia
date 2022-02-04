@@ -1,0 +1,15 @@
+<configuration debug="false">
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{"yyyy-MM-dd'T'HH:mm:ss.SSSXXX", UTC} %level \(%thread\) [%logger] - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <!-- Log level for all loggers that start with "ctia" -->
+    <logger name="ctia" level="INFO"/>
+
+    <!-- https://logback.qos.ch/manual/configuration.html#rootElement -->
+    <root level="OFF">
+        <appender-ref ref="STDOUT" />
+    </root>
+</configuration>
