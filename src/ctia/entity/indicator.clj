@@ -81,6 +81,7 @@
                                         :indicator_ids em/token}}
       :likely_impact em/token
       :confidence em/token
+      :severity em/token
       :kill_chain_phases em/kill-chain-phase
       :test_mechanisms em/token
       :specification {:enabled false}})}})
@@ -101,6 +102,7 @@
    :indicator_type
    :likely_impact
    :confidence
+   :severity
    :producer
    :tags])
 
@@ -126,6 +128,7 @@
      :producer          s/Str
      :specification     s/Str
      :confidence        s/Str
+     :severity          s/Str
      :sort_by           indicator-sort-fields})))
 
 (def IndicatorGetParams IndicatorFieldsParam)
