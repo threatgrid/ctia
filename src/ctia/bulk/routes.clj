@@ -6,10 +6,10 @@
    [ctia.lib.compojure.api.core :refer [GET POST DELETE PATCH PUT routes]]
    [ctia.schemas.core :refer [APIHandlerServices Reference]]
    [ring.swagger.json-schema :refer [describe]]
-   [ring.util.http-response :refer [bad-request ok]]
+   [ring.util.http-response :refer [ok]]
    [schema.core :as s]))
 
-(s/defn bulk-routes [{{:keys [get-in-config]} :ConfigService :as services} :- APIHandlerServices]
+(s/defn bulk-routes [services :- APIHandlerServices]
   (routes
     (let [capabilities #{:create-actor
                          :create-asset
@@ -42,12 +42,11 @@
          :auth-identity login
          :description (common/capabilities->description capabilities)
          :capabilities capabilities
-         (or (core/bad-request? bulk services)
-             (common/created (core/create-bulk bulk
-                                               {}
-                                               login
-                                               (common/wait_for->refresh wait_for)
-                                               services))))
+         (common/created (core/create-bulk bulk
+                                           {}
+                                           login
+                                           (common/wait_for->refresh wait_for)
+                                           services)))
        (PUT "/" []
          :return (s/maybe (bulk.schemas/BulkActionsRefs services))
          :summary "UPDATE many entities at once"
@@ -56,11 +55,10 @@
          :description (common/capabilities->description capabilities)
          :capabilities capabilities
          :auth-identity auth-identity
-         (or (core/bad-request? bulk services)
-             (ok (core/update-bulk bulk
-                                   auth-identity
-                                   (common/wait_for->refresh wait_for)
-                                   services))))))
+         (ok (core/update-bulk bulk
+                               auth-identity
+                               (common/wait_for->refresh wait_for)
+                               services)))))
    (let [capabilities #{:read-actor
                         :read-asset
                         :read-asset-mapping
@@ -133,8 +131,7 @@
                       :tools               tools
                       :vulnerabilities     vulnerabilities
                       :weaknesses          weaknesses}]
-            (or (core/bad-request? bulk services)
-                (ok (core/fetch-bulk bulk auth-identity services))))))
+            (ok (core/fetch-bulk bulk auth-identity services)))))
     (let [capabilities (bulk.schemas/bulk-patch-capabilities services)]
       (PATCH "/" []
         :return (s/maybe (bulk.schemas/BulkActionsRefs services))
@@ -144,11 +141,10 @@
         :description (common/capabilities->description capabilities)
         :capabilities capabilities
         :auth-identity auth-identity
-        (or (core/bad-request? bulk services)
-            (ok (core/patch-bulk bulk
-                                 auth-identity
-                                 (common/wait_for->refresh wait_for)
-                                 services)))))
+        (ok (core/patch-bulk bulk
+                             auth-identity
+                             (common/wait_for->refresh wait_for)
+                             services))))
     (let [capabilities #{:delete-actor
                          :delete-asset
                          :delete-asset-mapping
@@ -179,8 +175,7 @@
           :description (common/capabilities->description capabilities)
           :capabilities capabilities
           :auth-identity auth-identity
-          (or (core/bad-request? bulk services)
-              (ok (core/delete-bulk bulk
-                                    auth-identity
-                                    (common/wait_for->refresh wait_for)
-                                    services)))))))
+          (ok (core/delete-bulk bulk
+                                auth-identity
+                                (common/wait_for->refresh wait_for)
+                                services))))))

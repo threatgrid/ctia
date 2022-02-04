@@ -10,7 +10,7 @@
    [ctia.schemas.core :as schemas :refer [APIHandlerServices]]
    [ctia.schemas.utils :as csu]
    [ctia.store :as store]
-   [ring.util.http-response :refer [bad-request]]
+   [ring.util.http-response :refer [bad-request!]]
    [schema-tools.core :as st]
    [schema.core :as s]
    [ctim.domain.id :as id]))
@@ -282,12 +282,12 @@
 (defn get-bulk-max-size [get-in-config]
   (get-in-config [:ctia :http :bulk :max-size]))
 
-(defn bad-request?
+(defn validate-bulk-size!
   [bulk
    {{:keys [get-in-config]} :ConfigService}]
   (when (> (bulk-size bulk) (get-bulk-max-size get-in-config))
-    (bad-request (str "Bulk max number of entities: "
-                      (get-bulk-max-size get-in-config)))))
+    (bad-request! (str "Bulk max number of entities: "
+                       (get-bulk-max-size get-in-config)))))
 
 (s/defn create-bulk
   "Creates entities in bulk. To define relationships between entities,
@@ -299,6 +299,7 @@
   ([bulk login services :- APIHandlerServices] (create-bulk bulk {} login {} services))
   ([bulk tempids login params
     {{:keys [get-in-config]} :ConfigService :as services} :- APIHandlerServices]
+   (validate-bulk-size! bulk services)
    (let [{:keys [refresh]
           :or   {refresh (bulk-refresh? get-in-config)}} params
          new-entities (gen-bulk-from-fn
@@ -340,20 +341,24 @@
 (s/defn fetch-bulk
   [bulk auth-identity
    services :- APIHandlerServices]
+  (validate-bulk-size! bulk services)
   (ent/un-store-map
    (gen-bulk-from-fn read-entities bulk auth-identity services)))
 
 (s/defn delete-bulk
   [bulk auth-identity params
    services :- APIHandlerServices]
+  (validate-bulk-size! bulk services)
   (gen-bulk-from-fn delete-entities bulk auth-identity params services))
 
 (s/defn update-bulk
   [bulk auth-identity params
    services :- APIHandlerServices]
+  (validate-bulk-size! bulk services)
   (gen-bulk-from-fn update-entities bulk auth-identity params services))
 
 (s/defn patch-bulk
   [bulk auth-identity params
    services :- APIHandlerServices]
+  (validate-bulk-size! bulk services)
   (gen-bulk-from-fn patch-entities bulk auth-identity params services))
