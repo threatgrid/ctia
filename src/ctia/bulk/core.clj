@@ -299,7 +299,6 @@
   ([bulk login services :- APIHandlerServices] (create-bulk bulk {} login {} services))
   ([bulk tempids login params
     {{:keys [get-in-config]} :ConfigService :as services} :- APIHandlerServices]
-   (validate-bulk-size! bulk services)
    (let [{:keys [refresh]
           :or   {refresh (bulk-refresh? get-in-config)}} params
          new-entities (gen-bulk-from-fn
@@ -341,24 +340,20 @@
 (s/defn fetch-bulk
   [bulk auth-identity
    services :- APIHandlerServices]
-  (validate-bulk-size! bulk services)
   (ent/un-store-map
    (gen-bulk-from-fn read-entities bulk auth-identity services)))
 
 (s/defn delete-bulk
   [bulk auth-identity params
    services :- APIHandlerServices]
-  (validate-bulk-size! bulk services)
   (gen-bulk-from-fn delete-entities bulk auth-identity params services))
 
 (s/defn update-bulk
   [bulk auth-identity params
    services :- APIHandlerServices]
-  (validate-bulk-size! bulk services)
   (gen-bulk-from-fn update-entities bulk auth-identity params services))
 
 (s/defn patch-bulk
   [bulk auth-identity params
    services :- APIHandlerServices]
-  (validate-bulk-size! bulk services)
   (gen-bulk-from-fn patch-entities bulk auth-identity params services))

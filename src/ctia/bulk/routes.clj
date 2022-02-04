@@ -42,6 +42,7 @@
          :auth-identity login
          :description (common/capabilities->description capabilities)
          :capabilities capabilities
+         (core/validate-bulk-size! bulk services)
          (common/created (core/create-bulk bulk
                                            {}
                                            login
@@ -55,6 +56,7 @@
          :description (common/capabilities->description capabilities)
          :capabilities capabilities
          :auth-identity auth-identity
+         (core/validate-bulk-size! bulk services)
          (ok (core/update-bulk bulk
                                auth-identity
                                (common/wait_for->refresh wait_for)
@@ -131,6 +133,7 @@
                       :tools               tools
                       :vulnerabilities     vulnerabilities
                       :weaknesses          weaknesses}]
+            (core/validate-bulk-size! bulk services)
             (ok (core/fetch-bulk bulk auth-identity services)))))
     (let [capabilities (bulk.schemas/bulk-patch-capabilities services)]
       (PATCH "/" []
@@ -141,6 +144,7 @@
         :description (common/capabilities->description capabilities)
         :capabilities capabilities
         :auth-identity auth-identity
+        (core/validate-bulk-size! bulk services)
         (ok (core/patch-bulk bulk
                              auth-identity
                              (common/wait_for->refresh wait_for)
@@ -175,6 +179,7 @@
           :description (common/capabilities->description capabilities)
           :capabilities capabilities
           :auth-identity auth-identity
+          (core/validate-bulk-size! bulk services)
           (ok (core/delete-bulk bulk
                                 auth-identity
                                 (common/wait_for->refresh wait_for)
