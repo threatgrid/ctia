@@ -19,7 +19,7 @@
      em/base-entity-mapping
      em/sourcable-entity-mapping
      em/stored-entity-mapping
-     {:entity_id em/token
+     {:entity_id em/searchable-token
       :feedback em/integer-type
       :reason em/sortable-text})}})
 
@@ -105,8 +105,7 @@
      :spec                     :new-feedback/map
      :can-search?              false
      :enumerable-fields        []
-     :can-update?              false
-     :searchable-fields        searchable-fields})))
+     :can-update?              false})))
 
 (def feedback-entity
   {:route-context         "/feedback"
@@ -127,4 +126,5 @@
                            feedback-routes)
    :capabilities          capabilities
    :fields                fs/feedback-fields
-   :sort-fields           fs/feedback-fields})
+   :sort-fields           fs/feedback-fields
+   :searchable-fields     searchable-fields})

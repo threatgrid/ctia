@@ -1,21 +1,21 @@
 (ns ctia.stores.es.crud
-  (:require [clojure.set :as set]
-            [clojure.string :as string]
-            [clojure.tools.logging :as log]
-            [ctia.domain.access-control
-             :refer
-             [acl-fields allow-read? allow-write? restricted-read?]]
-            [ctia.lib.pagination :refer [list-response-schema]]
-            [ctia.schemas.search-agg
-             :refer [AggQuery CardinalityQuery HistogramQuery SearchQuery TopnQuery FullTextQuery]]
-            [ctia.stores.es.query :refer [find-restriction-query-part]]
-            [ctia.stores.es.schemas :refer [ESConnState]]
-            [ductile.document :as ductile.doc]
-            [ductile.query :as q]
-            [ring.swagger.coerce :as sc]
-            [schema-tools.core :as st]
-            [schema.coerce :as c]
-            [schema.core :as s]))
+  (:require
+   [clojure.set :as set]
+   [clojure.string :as string]
+   [clojure.tools.logging :as log]
+   [ctia.domain.access-control :as ac
+    :refer [allow-read? allow-write? restricted-read?]]
+   [ctia.lib.pagination :refer [list-response-schema]]
+   [ctia.schemas.search-agg
+    :refer [AggQuery CardinalityQuery HistogramQuery SearchQuery TopnQuery]]
+   [ctia.stores.es.query :as es.query]
+   [ctia.stores.es.schemas :refer [ESConnState]]
+   [ductile.document :as ductile.doc]
+   [ductile.query :as q]
+   [ring.swagger.coerce :as sc]
+   [schema-tools.core :as st]
+   [schema.coerce :as c]
+   [schema.core :as s]))
 
 (defn make-es-read-params
   "Prepare ES Params for read operations, setting the _source field
@@ -24,7 +24,7 @@
     :as es-params}]
   (if (coll? fields)
     (-> es-params
-        (assoc :_source (concat fields acl-fields))
+        (assoc :_source (concat fields ac/acl-fields))
         (dissoc :fields))
     es-params))
 
@@ -37,7 +37,7 @@
   document ID, if it's a document ID already, it will just return
   that."
   [id]
-  (let [[_orig docid] (re-matches #".*?([^/]+)\z" id) ]
+  (let [[_orig docid] (re-matches #".*?([^/]+)\z" id)]
     docid))
 
 (defn ensure-document-id-in-map
@@ -225,13 +225,6 @@ It returns the documents with full hits meta data including the real index in wh
     :_index s/Str
     :status s/Int
     :result s/Str}))
-
-(s/defschema ESQFullTextQuery
-  (st/merge
-   {:query s/Str}
-   (st/optional-keys
-    {:default_operator s/Str
-     :fields [s/Str]})))
 
 ;; TODO move it to ductile
 (s/defschema ESBulkRes
@@ -434,7 +427,7 @@ It returns the documents with full hits meta data including the real index in wh
        es-params]
       (let [filter-val (cond-> (q/prepare-terms all-of)
                          (restricted-read? ident)
-                         (conj (find-restriction-query-part ident get-in-config)))
+                         (conj (es.query/find-restriction-query-part ident get-in-config)))
 
             query_string  {:query_string {:query query}}
             bool-params (cond-> {:filter filter-val}
@@ -454,42 +447,25 @@ It returns the documents with full hits meta data including the real index in wh
                                            ident
                                            get-in-config))))))
 
-(s/defn refine-full-text-query-parts :- [{s/Keyword ESQFullTextQuery}]
-  [full-text-terms :- [FullTextQuery]
-   default-operator]
-  (let [term->es-query-part (fn [{:keys [query_mode fields] :as text-query}]
-                              (hash-map
-                               (or query_mode :query_string)
-                               (-> text-query
-                                   (dissoc :query_mode)
-                                   (merge
-                                    (when (and default-operator
-                                               (not= query_mode :multi_match))
-                                      {:default_operator default-operator})
-                                    (when fields
-                                      {:fields (mapv name fields)})))))]
-    (mapv term->es-query-part full-text-terms)))
-
 (s/defn make-search-query :- {s/Keyword s/Any}
   "Translate SearchQuery map into ES Query DSL map"
-  [{{:keys [default_operator]} :props
-    {{:keys [get-in-config]} :ConfigService} :services} :- ESConnState
-   {:keys [filter-map
-           range
-           full-text]} :- SearchQuery
+  [es-conn-state :- ESConnState
+   search-query :- SearchQuery
    ident]
-  (let [range-query (when range
+  (let [{:keys [services]} es-conn-state
+        {{:keys [get-in-config]} :ConfigService} services
+        {:keys [filter-map range full-text]} search-query
+        range-query (when range
                       {:range range})
         filter-terms (-> (ensure-document-id-in-map filter-map)
                          q/prepare-terms)]
     {:bool
      {:filter
-      (cond-> [(find-restriction-query-part ident get-in-config)]
+      (cond-> [(es.query/find-restriction-query-part ident get-in-config)]
         (seq filter-map) (into filter-terms)
         (seq range)      (conj range-query)
-        (seq full-text)  (into (refine-full-text-query-parts
-                                full-text
-                                default_operator)))}}))
+        (seq full-text)  (into (es.query/refine-full-text-query-parts
+                                es-conn-state full-text)))}}))
 
 (defn handle-query-string-search
   "Generate an ES query handler for given schema schema"

@@ -6,11 +6,11 @@
    [ctia.auth.threatgrid :refer [map->Identity]]
    [ctia.bundle.core :as bundle]
    [ctia.http.generative.properties :as prop]
-   [ctia.http.routes.common :as routes.common]
    [ctia.lib.utils :as utils]
    [ctia.store :as store]
    [ctia.store-service :as store-service]
    [ctia.store-service-core :as store-svc-core]
+   [ctia.stores.es.query :as es.query]
    [ctia.test-helpers.core :as helpers]
    [ctia.test-helpers.es :as es-helpers]
    [ctia.test-helpers.fake-whoami-service :as whoami-helpers]
@@ -140,13 +140,13 @@
                              (utils/update-items
                               incidents
                               ;; update only the first, leave the rest unchanged
-                              #(assoc % :discovery_method "Log Review"
+                              #(assoc % :short_description "Log Review"
                                       :title "title of test incident")))))
                         (bundle-gen-for :incidents))
          get-fields (fn [res]
                       (->> res
                            :parsed-body
-                           (some #(and (-> % :discovery_method (= "Log Review"))
+                           (some #(and (-> % :short_description (= "Log Review"))
                                        (-> % :title (= "title of test incident"))))))]
      [{:test-description (str "Should NOT return anything, because query field is missing."
                               "Asking for multiple things in the query, but not providing all the fields.")
@@ -157,7 +157,7 @@
 
       {:test-description "Should return an entity where multiple fields match"
        :query-params     {:query "\"title of test incident\" AND \"Log Review\""
-                          :search_fields ["title" "discovery_method"]}
+                          :search_fields ["title" "short_description"]}
        :bundle-gen       bundle
        :check            (fn [_ _ _ res]
                            (is (= 1 (-> res :parsed-body count)))
@@ -165,7 +165,7 @@
 
    [{:test-description "multi_match - looking for the same value in different fields in multiple records"
      :query-params     {:query "bibendum"
-                        :search_fields ["assignees" "title"]}
+                        :search_fields ["short_description" "title"]}
      :bundle-gen       (gen/fmap
                         (fn [bundle]
                           (update
@@ -175,12 +175,12 @@
                               utils/update-items incidents
                               (repeat 3 ;; update first 3, leave the rest unchanged
                                       #(assoc % :title "Etiam vel neque bibendum dignissim"
-                                              :assignees ["bibendum"]))))))
+                                              :short_description "bibendum"))))))
                         (bundle-gen-for :incidents))
      :check            (fn [_ _ _ res]
                          (let [matching (->> res
                                              :parsed-body
-                                             (filter #(and (-> % :assignees (= ["bibendum"]))
+                                             (filter #(and (-> % :short_description (= "bibendum"))
                                                            (-> % :title (= "Etiam vel neque bibendum dignissim")))))]
                            (is (= 3 (count matching)))))}]
    (let [bundle-gen (gen/fmap
@@ -383,7 +383,7 @@
   (query-string-search
     [_ search-query _ _]
     (reset! enforced-fields-flag-query-params search-query)
-    []))
+    {:data (), :paging {:total-hits 0}}))
 
 (tk/defservice fake-store-service
   "A service to manage the central storage area for all stores."
@@ -406,14 +406,15 @@
 
 (deftest enforcing-fields-with-feature-flag-test
   (testing "unit testing enforce-search-fields"
-    (are [query-params searchable-fields expected-search-fields]
-         (let [res (routes.common/enforce-search-fields query-params searchable-fields)]
-           (and
-            (= (dissoc res :search_fields) (dissoc query-params :search_fields))
-            (= expected-search-fields (:search_fields res))))
-      {:query "*"} [] []
-      {:query "*"} [:title :description] ["title" "description"]
-      {:query "foo" :search_fields ["title"]} [:id :title :description] ["title"]))
+    (are [query-params fields expected-search-fields]
+         (let [res (es.query/enforce-search-fields
+                    {:props {:entity :incident}
+                     :searchable-fields #{:foo :bar :zap}
+                     :services {:FeaturesService {:flag-value (constantly "true")}}}
+                    fields)]
+           (is (= expected-search-fields res)))
+      {:query "*"} [] ["zap" "bar" "foo"]
+      {:query "*"} ["title" "description"] ["title" "description"]))
   (testing "feature flag set? fields should be enforced"
     (reset! enforced-fields-flag-query-params nil)
     (helpers/with-properties

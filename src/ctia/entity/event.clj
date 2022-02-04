@@ -161,8 +161,7 @@
      :can-get-by-external-id? false
      :search-capabilities     :search-event
      :delete-capabilities     #{:delete-event :developer}
-     :date-field              :timestamp
-     :searchable-fields       searchable-fields})))
+     :date-field              :timestamp})))
 
 (def event-entity
   {:new-spec              map?
@@ -179,4 +178,5 @@
    :es-store              ->EventStore
    :es-mapping            event-mapping
    :services->routes      (routes.common/reloadable-function
-                           event-routes)})
+                           event-routes)
+   :searchable-fields     searchable-fields})

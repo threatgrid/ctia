@@ -55,7 +55,7 @@
     :external_id token}})
 
 (def base-entity-mapping
-  {:id token
+  {:id searchable-token
    :type token
    :schema_version token
    :revision long-type
@@ -85,8 +85,8 @@
 
 (def kill-chain-phase
   {:properties
-   {:kill_chain_name token
-    :phase_name token}})
+   {:kill_chain_name searchable-token
+    :phase_name searchable-token}})
 
 (def valid-time
   {:properties
@@ -131,7 +131,7 @@
   {:type "object"
    :properties
    {:type token
-    :value token}})
+    :value searchable-token}})
 
 (def identity
   {:dynamic false

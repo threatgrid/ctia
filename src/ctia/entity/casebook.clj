@@ -258,7 +258,6 @@
   #{:id
     :source
     :description
-    :observables.type
     :observables.value
     :short_description
     :title})
@@ -289,8 +288,7 @@
      :external-id-capabilities :read-casebook
      :hide-delete?             false
      :histogram-fields         casebook-histogram-fields
-     :enumerable-fields        casebook-enumerable-fields
-     :searchable-fields        searchable-fields})))
+     :enumerable-fields        casebook-enumerable-fields})))
 
 (def casebook-entity
   {:route-context         "/casebook"
@@ -310,4 +308,5 @@
    :services->routes      (routes.common/reloadable-function casebook-routes)
    :capabilities          casebook-capabilities
    :fields                casebook-fields
-   :sort-fields           casebook-fields})
+   :sort-fields           casebook-fields
+   :searchable-fields     searchable-fields})

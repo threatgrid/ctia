@@ -5,16 +5,16 @@
             [clojure.test :as t
              :refer
              [are deftest is testing use-fixtures]]
+            [ctia.entity.sighting.schemas :as ss]
             [ctia.flows.crud :refer [gen-random-uuid]]
             [ctia.stores.es.crud :as sut]
             [ctia.stores.es.init :as init]
-            [ctia.stores.es.query :refer [find-restriction-query-part]]
+            [ctia.stores.es.query :as es.query]
             [ctia.task.rollover :refer [rollover-store]]
             [ctia.test-helpers.core :as helpers]
             [ctia.test-helpers.es :as es-helpers]
-            [ductile.index :as es-index]
-            [ctia.entity.sighting.schemas :as ss]
             [ctim.examples.sightings :refer [sighting-minimal sighting-maximal]]
+            [ductile.index :as es-index]
             [schema.core :as s]))
 
 (use-fixtures :once mth/fixture-schema-validation)
@@ -23,41 +23,78 @@
   es-helpers/fixture-properties:es-store)
 
 (deftest refine-full-text-query-parts-test
-  (testing "refine-full-text-query-parts with different queries"
-   (are [queries res] (is (= res (sut/refine-full-text-query-parts queries nil)))
-     [{:query "foo"}] [{:query_string {:query "foo"}}]
+  (let [es-conn-state {:props {:entity :incident}
+                       :services {:FeaturesService {:flag-value (constantly nil)}}}
+        with-def-op (assoc-in es-conn-state [:props :default_operator] "and")]
+    (testing "simple queries"
+      (are [queries exp]
+          (is (= exp (es.query/refine-full-text-query-parts
+                      es-conn-state queries)))
+        [{:query "foo"}] [{:query_string {:query "foo"}}]
+        [{:query "foo"
+          :query_mode :simple_query_string}] [{:simple_query_string {:query "foo"}}]
 
-     [{:query "foo" :query_mode :simple_query_string}] [{:simple_query_string {:query "foo"}}]
+        [{:query "foo"
+          :query_mode :simple_query_string}
+         {:query "bar"}] [{:simple_query_string {:query "foo"}}
+                          {:query_string {:query "bar"}}]))
+    (testing "refine-full-text-query-parts schema"
+      (s/with-fn-validation
+        (is (thrown-with-msg?
+             Exception #"does not match schema"
+             (es.query/refine-full-text-query-parts
+              {} [{:query "foo" :query_mode :unknown}])))
+        (is (thrown-with-msg?
+             Exception #"does not match schema"
+             (es.query/refine-full-text-query-parts
+              {} [{}])))))
+    (testing "refine-full-text-query-parts default operator"
+      (is (= [{:query_string {:query "foo" :default_operator "and"}}]
+             (es.query/refine-full-text-query-parts
+              with-def-op [{:query "foo"}])))
+      (is (= [{:multi_match {:query "foo"}}]
+             (es.query/refine-full-text-query-parts
+              with-def-op
+              [{:query "foo" :query_mode :multi_match}]))
+          "no default_operator with multi_match"))
+    (testing "refine-full-text-query-parts with fields"
+      (is (= [{:query_string {:query "foo"
+                              :default_operator "and"
+                              :fields ["title" "description"]}}]
+             (es.query/refine-full-text-query-parts
+              with-def-op
+              [{:query "foo" :fields ["title" "description"]}]))))
+    (testing "enforcing fields"
+      ;; when an entity has :searchable-fields, and no :search-fields provided with the
+      ;; query - ES should receive all searchable-fields by default
+      (let [es-conn-state
+            (-> es-conn-state
+                (assoc-in [:services :FeaturesService :flag-value] (constantly "true"))
+                (assoc :searchable-fields #{:one :two :three}))]
+        (are [queries exp]
+            (is (= exp (es.query/refine-full-text-query-parts
+                        es-conn-state queries)))
+          [{:query "*"}]
+          [{:query_string {:query "*"
+                           :fields ["one" "three" "two"]}}]
 
-     [{:query "foo" :query_mode :simple_query_string}
-      {:query "bar"}] [{:simple_query_string {:query "foo"}}
-                       {:query_string {:query "bar"}}]))
-  (testing "refine-full-text-query-parts schema"
-    (s/with-fn-validation
-      (is (thrown-with-msg?
-           Exception #"does not match schema"
-           (sut/refine-full-text-query-parts
-            [{:query "foo" :query_mode :unknown}] nil)))
-      (is (thrown-with-msg?
-           Exception #"does not match schema"
-           (sut/refine-full-text-query-parts
-            [{}] nil)))))
-  (testing "refine-full-text-query-parts default operator"
-    (is (= [{:query_string {:query "foo" :default_operator "and"}}]
-         (sut/refine-full-text-query-parts
-          [{:query "foo"}]
-          "and")))
-    (is (= [{:multi_match {:query "foo"}}]
-           (sut/refine-full-text-query-parts
-            [{:query "foo" :query_mode :multi_match}]
-            "and")) "no default_operator with mutli_match"))
-  (testing "refine-full-text-query-parts with fields"
-    (is (= [{:query_string {:query            "foo"
-                            :default_operator "and"
-                            :fields           ["title" "description"]}}]
-           (sut/refine-full-text-query-parts
-            [{:query "foo" :fields ["title" "description"]}]
-            "and")))))
+          [{:query "*" :fields []}]
+          [{:query_string {:query "*"
+                           :fields ["one" "three" "two"]}}])))
+    (testing "renaming fields"
+      ;; when an entity has a mapping with keyword and it has a nested text field,
+      ;; substitute keyword with the text field
+      (let [es-conn-state
+            (-> es-conn-state
+                (assoc-in [:services :FeaturesService :flag-value] (constantly "true"))
+                (assoc-in [:config :mappings "incident" :properties :kw-field]
+                          {:type "keyword" :fields {:text {:type "text"}}}))]
+        (are [queries exp]
+            (is (= exp (es.query/refine-full-text-query-parts
+                        es-conn-state queries)))
+          [{:query "*" :fields ["kw-field"]}]
+          [{:query_string {:query "*"
+                           :fields ["kw-field.text"]}}])))))
 
 (deftest ensure-document-id-in-map-test
   (is (= {:id '("actor-677796fd-b5d2-46e3-b57d-4879bcca1ce7")}
@@ -297,7 +334,7 @@
      (fn [app]
        (let [es-conn-state (get-conn-state app :sighting)
              simple-access-ctrl-query {:terms {"groups" (:groups ident)}}]
-       (with-redefs [find-restriction-query-part (constantly simple-access-ctrl-query)]
+       (with-redefs [es.query/find-restriction-query-part (constantly simple-access-ctrl-query)]
          (let [query-string "*"
                es-query-string-AND {:query_string {:query query-string
                                                    :default_operator "AND"}}

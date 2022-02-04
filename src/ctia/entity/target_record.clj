@@ -133,8 +133,7 @@
     :external-id-capabilities :read-target-record
     :can-aggregate?           true
     :histogram-fields         target-record-histogram-fields
-    :enumerable-fields        target-record-enumerable-fields
-    :searchable-fields        searchable-fields}))
+    :enumerable-fields        target-record-enumerable-fields}))
 
 (def capabilities
   #{:create-target-record
@@ -158,7 +157,8 @@
    :es-store              ->TargetRecordStore
    :es-mapping            target-record-mapping
    :services->routes      (routes.common/reloadable-function
-                            target-record-routes)
+                           target-record-routes)
    :capabilities          capabilities
    :fields                target-record-fields
-   :sort-fields           target-record-fields})
+   :sort-fields           target-record-fields
+   :searchable-fields     searchable-fields})

@@ -130,15 +130,15 @@
      em/describable-entity-mapping
      em/sourcable-entity-mapping
      em/stored-entity-mapping
-     {:confidence em/token
-      :status em/token
-      :incident_time em/incident-time
-      :categories em/token
+     {:confidence       em/token
+      :status           em/token
+      :incident_time    em/incident-time
+      :categories       em/token
       :discovery_method em/token
-      :intended_effect em/token
-      :assignees em/token
+      :intended_effect  em/token
+      :assignees        em/token
       :promotion_method em/token
-      :severity em/token})}})
+      :severity         em/token})}})
 
 (def-es-store IncidentStore :incident StoredIncident PartialStoredIncident)
 
@@ -216,14 +216,7 @@
   #{:description
     :source
     :id
-    :assignees
-    :categories
-    :confidence
-    :discovery_method
-    :intended_effect
-    :promotion_method
     :short_description
-    :status
     :title})
 
 (s/defn incident-routes [services :- APIHandlerServices]
@@ -253,8 +246,7 @@
      :search-capabilities      :search-incident
      :external-id-capabilities :read-incident
      :histogram-fields         incident-histogram-fields
-     :enumerable-fields        incident-enumerable-fields
-     :searchable-fields        searchable-fields})))
+     :enumerable-fields        incident-enumerable-fields})))
 
 (def IncidentType
   (let [{:keys [fields name description]}
@@ -307,4 +299,5 @@
    :can-patch?            true
    :patch-capabilities    :create-incident
    :fields                incident-fields
-   :sort-fields           incident-fields})
+   :sort-fields           incident-fields
+   :searchable-fields     searchable-fields})

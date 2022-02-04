@@ -99,8 +99,7 @@
     :external-id-capabilities :read-tool
     :can-aggregate?           true
     :histogram-fields         tool-histogram-fields
-    :enumerable-fields        tool-enumerable-fields
-    :searchable-fields        searchable-fields}))
+    :enumerable-fields        tool-enumerable-fields}))
 
 (def tool-entity
   {:route-context         "/tool"
@@ -120,4 +119,5 @@
    :services->routes      (routes.common/reloadable-function tool-routes)
    :capabilities          capabilities
    :fields                ts/tool-fields
-   :sort-fields           ts/tool-fields})
+   :sort-fields           ts/tool-fields
+   :searchable-fields     searchable-fields})
