@@ -39,7 +39,6 @@
    (s/optional-key :events)               [{s/Keyword s/Any}]
    (s/optional-key :long-id-fn)           (s/maybe (s/=> s/Any s/Any))
    (s/optional-key :get-prev-entity)      (s/pred fn?)
-   (s/optional-key :partial-entities)     [(s/maybe {s/Keyword s/Any})]
    (s/optional-key :patch-operation)      (s/enum :add :remove :replace)
    (s/optional-key :realize-fn)           RealizeFn
    (s/optional-key :find-entity-id)       (s/pred fn?)
@@ -144,11 +143,11 @@
            entity-type]
     :as fm} :- FlowMap]
   (let [newtempids
-        (->> entities
-             (keep (fn [{:keys [id]}]
-                     (when (and id (schemas/transient-id? id))
-                       [id (make-id entity-type)])))
-             (into {}))]
+        (into {}
+              (keep (fn [{:keys [id]}]
+                      (when (and id (schemas/transient-id? id))
+                        [id (make-id entity-type)])))
+               entities)]
     (update fm :tempids (fnil into {}) newtempids)))
 
 (s/defn ^:private realize-entities :- FlowMap
@@ -166,7 +165,7 @@
                                   services)})]
     (assoc fm
            :entities
-           (doall
+           (remove nil?
             (for [entity entities
                   :let [entity-id (find-entity-id fm entity)]]
               (cond
@@ -178,16 +177,12 @@
                                             tempids
                                             identity-map)
                         :update
-                        (if-let [prev-entity (get-prev-entity entity-id)]
+                        (when-let [prev-entity (get-prev-entity entity-id)]
                           (realize-fn entity
                                       entity-id
                                       tempids
                                       identity-map
-                                      prev-entity)
-                          (realize-fn entity
-                                      entity-id
-                                      tempids
-                                      identity-map))
+                                      prev-entity))
                         :delete entity)))))))
 
 (s/defn ^:private throw-validation-error
@@ -333,11 +328,12 @@
 (defn short-to-long-ids-map
   "Builds a mapping table between short and long IDs"
   [entities long-id-fn]
-  (->> entities
-       (remove :error)
-       (map (fn [{:keys [_ id] :as entity}]
-              [id (:id (long-id-fn entity))]))
-       (into {})))
+  (into {}
+        (comp
+         (remove :error)
+         (map (fn [{:keys [_ id] :as entity}]
+                [id (:id (long-id-fn entity))])))
+        entities))
 
 (defn entities-with-long-ids
   "Converts entity IDs from short to long format"
@@ -350,11 +346,11 @@
 (defn tempids-with-long-ids
   "Converts IDs in the tempids mapping table from short to long format"
   [tempids short-to-long-map]
-  (->> tempids
-       (keep (fn [[tempid short-id]]
-               (when-let [long-id (get short-to-long-map short-id)]
-                 [tempid long-id])))
-       (into {})))
+  (into {}
+        (keep (fn [[tempid short-id]]
+                (when-let [long-id (get short-to-long-map short-id)]
+                  [tempid long-id])))
+        tempids))
 
 (s/defn ^:private apply-long-id-fn :- FlowMap
   [{:keys [entities tempids long-id-fn] :as fm}]
@@ -390,7 +386,7 @@
 
 (s/defn patch-entities :- FlowMap
   [{:keys [get-prev-entity
-           partial-entities
+           entities
            patch-operation]
     :as fm} :- FlowMap]
   (let [patch-fn (case patch-operation
@@ -398,17 +394,14 @@
                    :remove coll/remove-colls
                    :replace coll/replace-colls
                    coll/replace-colls)
-        entities (for [partial-entity partial-entities
+        patched (for [partial-entity entities
                        :let [prev-entity (some->> partial-entity
                                                   :id
-                                                  get-prev-entity)]
-
-                       :when (some? prev-entity)]
-                   (patch-entity patch-fn prev-entity partial-entity))
-        not-found (remove #(some->> % :id get-prev-entity) partial-entities)]
-    (assoc fm
-           :entities entities
-           :not-found (map :id not-found))))
+                                                  get-prev-entity)]]
+                      (cond->> partial-entity
+                       (some? prev-entity)
+                       (patch-entity patch-fn prev-entity)))]
+    (assoc fm :entities patched)))
 
 (defn create-flow
   "This function centralizes the create workflow.
@@ -457,11 +450,12 @@
 
 (defn prev-entity
   [get-fn ids]
-  (let [indexed (->> (get-fn ids)
-                     (filter seq)
-                     (into {}
-                           (map (fn [e]
-                                  [(id/str->short-id (:id e)) e]))))]
+  (let [indexed (into {}
+                      (comp
+                       (filter seq)
+                       (map (fn [e]
+                              [(id/str->short-id (:id e)) e])))
+                      (get-fn ids))]
     (fn [id]
       (when (seq id)
         (get indexed (id/str->short-id id))))))
@@ -478,6 +472,14 @@
     (make-result fm)
     results))
 
+(defn not-found
+  [{:keys [get-prev-entity entities] :as fm}]
+  (let [grouped (group-by #(some-> % :id get-prev-entity nil?)
+                          entities)]
+    (assoc fm
+           :entities (get grouped false [])
+           :not-found (map :id (get grouped nil)))))
+
 (defn update-flow
   "This function centralize the update workflow.
   It is helpful to easily add new hooks name
@@ -486,13 +488,13 @@
     - `:before-update` hooks can modify the entity stored.
     - `:after-update` hooks are read only"
   [& {:keys [entity-type
+             services
              get-fn
              realize-fn
              update-fn
              identity
              entities
              long-id-fn
-             services
              spec
              get-success-entities
              make-result]
@@ -513,6 +515,7 @@
          :create-event-fn to-update-event
          :get-success-entities get-success-entities
          :make-result make-result}
+        not-found
         validate-entities
         realize-entities
         throw-validation-error
@@ -548,10 +551,9 @@
         prev-entity-fn (prev-entity get-fn ids)]
     (-> {:flow-type :update
          :entity-type entity-type
-         :entities []
+         :entities partial-entities
          :services services
          :get-prev-entity prev-entity-fn
-         :partial-entities partial-entities
          :patch-operation patch-operation
          :identity identity
          :long-id-fn long-id-fn
@@ -563,6 +565,7 @@
          :get-success-entities get-success-entities
          :make-result make-result}
         patch-entities
+        not-found
         validate-entities
         realize-entities
         throw-validation-error

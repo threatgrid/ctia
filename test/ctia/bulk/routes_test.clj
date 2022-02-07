@@ -10,14 +10,15 @@
             [ctia.properties :refer [get-http-show]]
             [ctia.store :refer [query-string-search]]
             [ctia.test-helpers.auth :refer [all-capabilities]]
-            [ctia.test-helpers.core :as helpers :refer [DELETE GET POST PATCH]]
+            [ctia.test-helpers.core :as helpers :refer [DELETE GET POST PATCH PUT]]
             [ctia.test-helpers.fake-whoami-service :as whoami-helpers]
             [ctia.test-helpers.http :refer [app->HTTPShowServices]]
             [ctia.test-helpers.store
              :refer
              [test-for-each-store-with-app test-selected-stores-with-app]]
             [ctim.domain.id :as id]
-            [ctim.examples.incidents :refer [new-incident-maximal]]
+            [ctim.examples.incidents :refer [new-incident-maximal new-incident-minimal]]
+            [ctim.examples.sightings :refer [new-sighting-minimal]]
             [ductile.index :as es-index]
             [schema.core :as s]))
 
@@ -341,6 +342,27 @@
                    (is (= (:protocol id)         (:protocol show-props)))
                    (is (= (:port id)             (:port show-props)))
                    (is (= (:path-prefix id) (seq (:path-prefix show-props)))))))))
+
+         (testing "PUT /ctia/bulk"
+           (let [indicator-ids (:indicators bulk-ids)
+                 sighting-ids (:sightings bulk-ids)
+                 update-bulk {:indicators (map #(assoc (mk-new-indicator 0) :id % :source "updated") indicator-ids)
+                              :sightings (map #(assoc (mk-new-sighting 0) :id % :source "updated") sighting-ids)}
+                 expected-update {:indicators {:updated (set indicator-ids)}
+                                  :sightings {:updated (set sighting-ids)}}
+                 {:keys [status parsed-body]} (PUT app
+                                                   bulk-url
+                                                   :form-params update-bulk
+                                                   :headers {"Authorization" "45c1f5e3f05d0"})]
+             (is (= 200 status))
+             (is (= expected-update
+                    (-> parsed-body
+                        (update-in [:indicators :updated] set)
+                        (update-in [:sightings :updated] set))))
+             (check-events event-store
+                           ident
+                           (concat indicator-ids sighting-ids)
+                           :record-updated)))
 
          (testing "PATCH /ctia/bulk"
            (let [incident-ids (:incidents bulk-ids)

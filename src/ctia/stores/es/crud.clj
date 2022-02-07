@@ -312,7 +312,6 @@ It returns the documents with full hits meta data including the real index in wh
           {:keys [prepared errors]} (check-and-prepare-bulk conn-state
                                                             ids
                                                             ident)
-
           prepared-docs (map (fn [meta]
                                (-> (:_id meta)
                                    by-id
