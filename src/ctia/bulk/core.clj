@@ -285,7 +285,7 @@
 (defn validate-bulk-size!
   [bulk
    {{:keys [get-in-config]} :ConfigService}]
-  (when (> (bulk-size bulk) (get-bulk-max-size get-in-config))
+  (when (< (get-bulk-max-size get-in-config) (bulk-size bulk))
     (bad-request! (str "Bulk max number of entities: "
                        (get-bulk-max-size get-in-config)))))
 
