@@ -43,7 +43,7 @@
    stores-atom :- StoresAtom]
   (reset! stores-atom
           (->> (keys empty-stores)
-               (map (fn [store-kw]
+               (pmap (fn [store-kw]
                       [store-kw (keep (partial build-store store-kw services)
                                       (get-store-types store-kw services))]))
                (into {})
