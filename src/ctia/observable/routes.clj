@@ -1,5 +1,6 @@
 (ns ctia.observable.routes
-  (:require [ctia.lib.compojure.api.core :refer [GET routes]]
+  (:require [ctia.observable.core :as core]
+            [ctia.lib.compojure.api.core :refer [GET routes]]
             [ctia.domain.entities
              :refer
              [page-with-long-id short-id->long-id un-store-page]]
@@ -17,8 +18,7 @@
              :refer
              [calculate-verdict
               list-judgements-by-observable
-              list-records
-              list-sightings-by-observables]]
+              list-records]]
             [ctim.domain.id :as id]
             [ductile.pagination :as pag]
             [ring.swagger.schema :refer [describe]]
@@ -132,12 +132,12 @@
         :identity-map identity-map
         :return PartialSightingList
         :summary "Returns Sightings associated with the specified observable."
-        (-> (get-store :sighting)
-            (list-sightings-by-observables
-              [{:type observable_type
-                :value observable_value}]
+        (-> (core/observables->sightings
+             [{:type observable_type
+               :value observable_value}]
               identity-map
-              params)
+              params
+              services)
             (page-with-long-id services)
             un-store-page
             paginated-ok)))
@@ -156,18 +156,8 @@
         :auth-identity identity
         :identity-map identity-map
         (paginated-ok
-         (let [http-show (p/get-http-show services)
-               sightings (-> (get-store :sighting)
-                             (list-sightings-by-observables
-                               [{:type observable_type
-                                 :value observable_value}]
-                               identity-map
-                               {:fields [:id]})
-                             :data)
-               sighting-ids (->> sightings
-                                 (map :id)
-                                 (map #(id/short-id->id :sighting % http-show))
-                                 (map id/long-id))
+         (let [observable {:type observable_type :value observable_value}
+               sighting-ids (core/observables->sighting-ids [observable] identity-map services)
                relationships (-> (get-store :relationship)
                                  (list-records
                                    {:all-of {:source_ref sighting-ids}}
@@ -198,30 +188,9 @@
         :capabilities capabilities
         :auth-identity identity
         :identity-map identity-map
-        (paginated-ok
-         (let [http-show (p/get-http-show services)
-               sightings (-> (get-store :sighting)
-                             (list-sightings-by-observables
-                               [{:type observable_type
-                                 :value observable_value}]
-                               identity-map
-                               {:fields [:id]})
-                             :data)
-               sighting-ids (->> sightings
-                                 (map :id)
-                                 (map #(id/short-id->id :sighting % http-show))
-                                 (map id/long-id))
-               relationships (-> (get-store :relationship)
-                                 (list-records
-                                   {:all-of {:source_ref sighting-ids}}
-                                   identity-map
-                                   {:fields [:target_ref]})
-                                 :data)
-               incident-ids (->> (map :target_ref relationships)
-                                 (map #(id/long-id->id %))
-                                 (filter #(= "incident" (:type %)))
-                                 (map #(id/long-id %))
-                                 set)]
+        (let [observable {:type observable_type :value observable_value}
+              incident-ids (core/observables->incident-ids [observable] identity-map services)]
+          (paginated-ok
            (-> incident-ids
                (pag/paginate params)
                (pag/response {:offset (:offset params)
