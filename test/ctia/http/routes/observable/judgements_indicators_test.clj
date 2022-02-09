@@ -1,6 +1,5 @@
 (ns ctia.http.routes.observable.judgements-indicators-test
   (:require [clj-momo.test-helpers.core :as mht]
-            [ctia.properties :as p]
             [clojure.test :refer [deftest is join-fixtures testing use-fixtures]]
             [ctia.test-helpers.auth :refer [all-capabilities]]
             [ctia.test-helpers.core :as helpers :refer [GET make-id POST]]

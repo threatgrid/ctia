@@ -5,9 +5,6 @@
               list-judgements-by-observable
               list-records
               list-sightings-by-observables]]
-            [ctia.domain.entities
-             :refer
-             [page-with-long-id short-id->long-id un-store-page]]
             [ctim.domain.id :as id]
             [ctia.schemas.core
              :refer
@@ -16,40 +13,129 @@
             [ctia.properties :as p]
             [schema.core :as s]))
 
-(s/defn observables->sightings
-  [observables :- [Observable]
+(s/defn observable->sightings
+  ([observable identity-map services]
+   (observable->sightings observable identity-map {} services))
+  ([observable :- Observable
+    identity-map
+    params
+    {{:keys [get-store]} :StoreService}]
+   (-> (get-store :sighting)
+       (list-sightings-by-observables
+        [observable]
+        identity-map
+        params)
+       :data)))
+
+(s/defn observable->judgements
+  ([observable identity-map services]
+   (observable->judgements observable identity-map {} services))
+  ([observable :- Observable
+    identity-map
+    params
+    {{:keys [get-store]} :StoreService}]
+   (-> (get-store :judgement)
+       (list-judgements-by-observable
+        observable
+        identity-map
+        params))))
+
+(defn observable->sighting-ids
+  [observable identity-map services]
+  (let [http-show (p/get-http-show services)
+        sightings (observable->sightings observable identity-map services)]
+    (map #(id/long-id
+           (id/short-id->id :sighting (:id %) http-show))
+         sightings)))
+
+(defn observable->judgement-ids
+  [observable identity-map services]
+  (let [http-show (p/get-http-show services)
+        judgements (:data (observable->judgements observable identity-map services))]
+    (clojure.pprint/pprint judgements)
+    (map #(id/long-id
+           (id/short-id->id :judgement (:id %) http-show))
+         judgements)))
+
+(defn get-relationships
+  [filters
    identity-map
    {{:keys [get-store]} :StoreService}]
-  (-> (get-store :sighting)
-      (list-sightings-by-observables
-       observables
+  (-> (get-store :relationship)
+      (list-records
+       {:all-of filters}
        identity-map
        {})
       :data))
 
-(defn observables->sighting-ids
-  [observables identity-map services]
-  (let [http-show (p/get-http-show services)
-        sightings (observables->sightings observables identity-map services)]
-    (map #(id/long-id
-          (id/short-id->id :sighting (:id %) http-show))
-         sightings)))
-
-(s/defn observables->incident-ids
-  [observables :- [Observable]
+(s/defn related-entity-ids
+  [filters
+   edge-end :- (s/enum :source_ref :target_ref)
+   entity-type
    identity-map
-   {{:keys [get-store]} :StoreService
-    :as services} :- APIHandlerServices]
-  (let [sighting-ids (observables->sighting-ids observables identity-map services)
-        relationships (-> (get-store :relationship)
-                          (list-records
-                           {:all-of {:source_ref sighting-ids}}
-                           identity-map
-                           {:fields [:target_ref]})
-                          :data)
-        incident-ids (->> (map :target_ref relationships)
-                          (map #(id/long-id->id %))
-                          (filter #(= "incident" (:type %)))
-                          (map #(id/long-id %))
-                          set)]
-    incident-ids))
+   services]
+  (let [relationships (get-relationships filters identity-map services)]
+    (->> (map edge-end relationships)
+         (map #(id/long-id->id %))
+         (filter #(= (str entity-type) (:type %)))
+         (map #(id/long-id %))
+         set)))
+
+(s/defn get-target-ids
+  [entity-ids
+   relationship_type
+   entity-type
+   identity-map
+   services]
+  (related-entity-ids {:source_ref entity-ids
+                       :relationship_type relationship_type}
+                      :target_ref
+                      entity-type
+                      identity-map
+                      services))
+
+(s/defn get-source-ids
+  [entity-ids
+   relationship_type
+   entity-type
+   identity-map
+   services]
+  (related-entity-ids {:target_ref entity-ids
+                       :relationship_type relationship_type}
+                      :source_ref
+                      entity-type
+                      identity-map
+                      services))
+
+(s/defn sighting-observable->incident-ids
+  [observable :- Observable
+   identity-map
+   services :- APIHandlerServices]
+  (let [sighting-ids (observable->sighting-ids observable identity-map services)]
+    (get-target-ids sighting-ids
+                    "member-of"
+                    "incident"
+                    identity-map
+                    services)))
+
+(s/defn sighting-observable->indicator-ids
+  [observable :- Observable
+   identity-map
+   services :- APIHandlerServices]
+  (let [sighting-ids (observable->sighting-ids observable identity-map services)]
+    (get-target-ids sighting-ids
+                    #{"sighting-of" "member-of"}
+                    "indicator"
+                    identity-map
+                    services)))
+
+(s/defn judgement-observable->indicator-ids
+  [observable :- Observable
+   identity-map
+   services :- APIHandlerServices]
+  (let [judgement-ids (observable->judgement-ids observable identity-map services)]
+    (get-target-ids judgement-ids
+                    #{"based-on" "element-of"}
+                    "indicator"
+                    identity-map
+                    services)))

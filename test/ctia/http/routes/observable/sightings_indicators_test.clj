@@ -121,7 +121,7 @@
                      "ctia/relationship"
                      :body {:id (id/long-id relationship-1-id)
                             :source_ref (id/long-id sighting-1-id)
-                            :relationship_type "indicates"
+                            :relationship_type "sighting-of"
                             :target_ref (id/long-id indicator-1-id)
                             :external_ids ["relationship-1"]}
                      :headers {"Authorization" "45c1f5e3f05d0"})]
@@ -135,7 +135,7 @@
                      "ctia/relationship"
                      :body {:id (id/long-id relationship-2-id)
                             :source_ref (id/long-id sighting-3-id)
-                            :relationship_type "indicates"
+                            :relationship_type "sighting-of"
                             :target_ref (id/long-id indicator-2-id)
                             :external_ids ["relationship-2"]}
                      :headers {"Authorization" "45c1f5e3f05d0"})]

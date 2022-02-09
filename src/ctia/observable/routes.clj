@@ -67,12 +67,11 @@
         :capabilities capabilities
         :auth-identity identity
         :identity-map identity-map
-        (-> (get-store :judgement)
-            (list-judgements-by-observable
-              {:type observable_type
-               :value observable_value}
-              identity-map
-              params)
+        (-> (core/observable->judgements {:type observable_type
+                                          :value observable_value}
+                                         identity-map
+                                         params
+                                         services)
             (page-with-long-id services)
             un-store-page
             paginated-ok)))
@@ -91,29 +90,9 @@
         :auth-identity identity
         :identity-map identity-map
         (paginated-ok
-         (let [http-show (p/get-http-show services)
-               judgements (-> (get-store :judgement)
-                              (list-judgements-by-observable
-                                {:type observable_type
-                                 :value observable_value}
-                                identity-map
-                                {:fields [:id]})
-                              :data)
-               judgement-ids (->> judgements
-                                  (map :id)
-                                  (map #(id/short-id->id :judgement % http-show))
-                                  (map id/long-id))
-               relationships (-> (get-store :relationship)
-                                 (list-records
-                                   {:all-of {:source_ref judgement-ids}}
-                                   identity-map
-                                   {:fields [:target_ref]})
-                                 :data)
-               indicator-ids (->> (map :target_ref relationships)
-                                  (map #(id/long-id->id %))
-                                  (filter #(= "indicator" (:type %)))
-                                  (map #(id/long-id %))
-                                  set)]
+         (let [observable {:type observable_type
+                           :value observable_value}
+               indicator-ids (core/judgement-observable->indicator-ids observable identity-map services)]
            (-> indicator-ids
                (pag/paginate params)
                (pag/response {:offset (:offset params)
@@ -133,11 +112,11 @@
         :return PartialSightingList
         :summary "Returns Sightings associated with the specified observable."
         (-> (core/observables->sightings
-             [{:type observable_type
-               :value observable_value}]
-              identity-map
-              params
-              services)
+             {:type observable_type
+              :value observable_value}
+             identity-map
+             params
+             services)
             (page-with-long-id services)
             un-store-page
             paginated-ok)))
@@ -157,18 +136,7 @@
         :identity-map identity-map
         (paginated-ok
          (let [observable {:type observable_type :value observable_value}
-               sighting-ids (core/observables->sighting-ids [observable] identity-map services)
-               relationships (-> (get-store :relationship)
-                                 (list-records
-                                   {:all-of {:source_ref sighting-ids}}
-                                   identity-map
-                                   {:fields [:target_ref]})
-                                 :data)
-               indicator-ids (->> (map :target_ref relationships)
-                                  (map #(id/long-id->id %))
-                                  (filter #(= "indicator" (:type %)))
-                                  (map #(id/long-id %))
-                                  set)]
+               indicator-ids (core/sighting-observable->indicator-ids observable identity-map services)]
            (-> indicator-ids
                (pag/paginate params)
                (pag/response {:offset (:offset params)
@@ -188,9 +156,9 @@
         :capabilities capabilities
         :auth-identity identity
         :identity-map identity-map
-        (let [observable {:type observable_type :value observable_value}
-              incident-ids (core/observables->incident-ids [observable] identity-map services)]
-          (paginated-ok
+        (paginated-ok
+         (let [observable {:type observable_type :value observable_value}
+               incident-ids (core/sighting-observable->incident-ids observable identity-map services)]
            (-> incident-ids
                (pag/paginate params)
                (pag/response {:offset (:offset params)
