@@ -7,6 +7,7 @@
             [clojure.tools.logging :as log]
             [ctia.entity.entities :as entities]
             [ctia.entity.sighting.schemas :refer [StoredSighting]]
+            [ctia.features-service :as features-svc]
             [ctia.properties :as p]
             [ctia.stores.es.crud :refer [coerce-to-fn]]
             [ctia.stores.es.store :refer [StoreMap]]
@@ -313,9 +314,10 @@
     (let [_ (log/info "starting CTIA Stores...")
           config (p/build-init-config)
           get-in-config (partial get-in config)
-          services {:ConfigService {:get-config (fn [] config)
-                                    :get-in-config get-in-config}}
-          _ (mst/setup! services)]
+          app (ctia.init/start-ctia! {:services [features-svc/features-service]
+                                      :config config})
+          services (puppetlabs.trapperkeeper.app/service-graph app)]
+      (mst/setup! services)
       (doto (-> (get-in-config [:ctia :migration])
                 (into options)
                 prepare-params)
