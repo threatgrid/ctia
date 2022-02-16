@@ -24,8 +24,7 @@
        (list-sightings-by-observables
         [observable]
         identity-map
-        params)
-       :data)))
+        params))))
 
 (s/defn observable->judgements
   ([observable identity-map services]
@@ -43,7 +42,7 @@
 (defn observable->sighting-ids
   [observable identity-map services]
   (let [http-show (p/get-http-show services)
-        sightings (observable->sightings observable identity-map services)]
+        sightings (:data (observable->sightings observable identity-map services))]
     (map #(id/long-id
            (id/short-id->id :sighting (:id %) http-show))
          sightings)))
@@ -52,7 +51,6 @@
   [observable identity-map services]
   (let [http-show (p/get-http-show services)
         judgements (:data (observable->judgements observable identity-map services))]
-    (clojure.pprint/pprint judgements)
     (map #(id/long-id
            (id/short-id->id :judgement (:id %) http-show))
          judgements)))

@@ -1,14 +1,14 @@
 (ns ctia.http.routes.observable.sightings-indicators-test
-  (:require [clj-momo.test-helpers.core :as mht]
-            [clojure.test :refer [deftest is join-fixtures testing use-fixtures]]
+  (:require [clojure.test :refer [deftest is join-fixtures testing use-fixtures]]
             [ctia.test-helpers.auth :refer [all-capabilities]]
             [ctia.test-helpers.core :as helpers :refer [GET make-id POST]]
             [ctia.test-helpers.fake-whoami-service :as whoami-helpers]
             [ctia.test-helpers.http :refer [app->HTTPShowServices]]
             [ctia.test-helpers.store :refer [test-for-each-store-with-app]]
-            [ctim.domain.id :as id]))
+            [ctim.domain.id :as id]
+            [schema.test :refer [validate-schemas]]))
 
-(use-fixtures :once (join-fixtures [mht/fixture-schema-validation
+(use-fixtures :once (join-fixtures [validate-schemas
                                     helpers/fixture-properties:events-enabled
                                     whoami-helpers/fixture-server]))
 

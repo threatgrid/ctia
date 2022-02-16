@@ -1,5 +1,5 @@
 (ns ctia.http.routes.observable.sightings-test
-  (:require [clj-momo.test-helpers.core :as mht]
+  (:require [schema.test :refer [validate-schemas]]
             [clojure.test :refer [deftest is join-fixtures testing use-fixtures]]
             [ctia.test-helpers
              [auth :refer [all-capabilities]]
@@ -7,7 +7,7 @@
              [fake-whoami-service :as whoami-helpers]
              [store :refer [test-for-each-store-with-app]]]))
 
-(use-fixtures :once (join-fixtures [mht/fixture-schema-validation
+(use-fixtures :once (join-fixtures [validate-schemas
                                     helpers/fixture-properties:events-enabled
                                     whoami-helpers/fixture-server]))
 
