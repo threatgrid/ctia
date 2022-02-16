@@ -89,7 +89,7 @@
            (assert-post app
                         "ctia/relationship"
                         {:source_ref (id/long-id judgement-id)
-                         :relationship_type "observable-of"
+                         :relationship_type "based-on"
                          :target_ref (id/long-id indicator-id)})))
 
        (testing "indicators with query (ES only)"

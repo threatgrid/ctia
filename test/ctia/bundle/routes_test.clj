@@ -226,8 +226,10 @@
            identity_assertions [(mk-identity-assertion 0)
                                 (mk-identity-assertion 1)]
            relationships (map (fn [idx indicator sighting]
-                                (mk-relationship idx indicator
-                                                 sighting "indicates"))
+                                (mk-relationship idx
+                                                 sighting
+                                                 "sighting-of"
+                                                 indicator))
                               (range)
                               indicators
                               sightings)]
@@ -301,9 +303,9 @@
          (let [indicator (mk-indicator 2000)
                sighting (first sightings)
                relationship (mk-relationship 2000
-                                             indicator
                                              sighting
-                                             "indicates")
+                                             indicator
+                                             "sighting-of")
                bundle
                {:type "bundle"
                 :source "source"
@@ -327,9 +329,9 @@
               entity))))
        (testing "Bundle with missing entities"
          (let [relationship (mk-relationship 2001
-                                             (mk-indicator 2001)
                                              (first sightings)
-                                             "indicates")
+                                             (mk-indicator 2001)
+                                             "sighting-of")
                bundle {:type "bundle"
                        :source "source"
                        :relationships [relationship]}
@@ -600,8 +602,10 @@
                     (mk-indicator 1)]
         sightings [(mk-sighting 0)]
         relationships (map (fn [idx indicator]
-                             (mk-relationship idx indicator
-                                              (first sightings) "indicates"))
+                             (mk-relationship idx
+                                              (first sightings)
+                                              indicator
+                                              "sighting-of"))
                            (range)
                            indicators)]
     {:type "bundle"
@@ -614,8 +618,10 @@
   (let [indicators (map mk-indicator (range 2 402))
         sightings [(mk-sighting 1)]
         relationships (map (fn [idx indicator]
-                             (mk-relationship idx indicator
-                                              (first sightings) "indicates"))
+                             (mk-relationship idx
+                                              (first sightings)
+                                              indicator
+                                              "sighting-of"))
                            (range 100 1000)
                            indicators)]
     {:type "bundle"
@@ -745,8 +751,8 @@
        (let [sighting-1 (mk-sighting 1)
              indicator-1 (mk-indicator 1)
              indicator-2 (mk-indicator 2)
-             relationship-1 (mk-relationship 1 sighting-1 indicator-1 "member-of")
-             relationship-2 (mk-relationship 2 sighting-1 indicator-2 "member-of")
+             relationship-1 (mk-relationship 1 sighting-1 indicator-1 "sighting-of")
+             relationship-2 (mk-relationship 2 sighting-1 indicator-2 "sighting-of")
              relationship-3 ;;relationship to external entity
              {:type "relationship"
               :source_ref (:id sighting-1)
