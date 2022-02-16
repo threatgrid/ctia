@@ -77,7 +77,7 @@
            (assert-post app
                         "ctia/relationship"
                         {:source_ref (id/long-id sighting-id)
-                         :relationship_type "indicates"
+                         :relationship_type "sighting-of"
                          :target_ref (id/long-id indicator-id)})))
 
        (testing "setup: create judgements and their relationships with indicators"
