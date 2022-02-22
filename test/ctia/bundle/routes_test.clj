@@ -756,7 +756,7 @@
              relationship-3 ;;relationship to external entity
              {:type "relationship"
               :source_ref (:id sighting-1)
-              :relationship_type "indicates"
+              :relationship_type "sighting-of"
               :target_ref "http://unknown.site/ctia/indicator/indicator-56067199-47c0-4294-8957-13d6b265bdc4"}
              bundle {:type "bundle"
                      :source "source"
@@ -800,10 +800,10 @@
         sighting-2 (mk-sighting 2)
         incident-1 (mk-incident 1)
         incident-2 (mk-incident 2)
-        relationship-1 (mk-relationship 1 sighting-1 indicator-1 "indicates")
-        relationship-2 (mk-relationship 2 sighting-1 indicator-2 "indicates")
-        relationship-3 (mk-relationship 3 sighting-2 indicator-1 "indicates")
-        relationship-4 (mk-relationship 4 sighting-2 indicator-3 "indicates")
+        relationship-1 (mk-relationship 1 sighting-1 indicator-1 "sighting-of")
+        relationship-2 (mk-relationship 2 sighting-1 indicator-2 "sighting-of")
+        relationship-3 (mk-relationship 3 sighting-2 indicator-1 "sighting-of")
+        relationship-4 (mk-relationship 4 sighting-2 indicator-3 "sighting-of")
         relationship-5 (mk-relationship 5 sighting-2 incident-1 "member-of")
         relationship-6 (mk-relationship 6 sighting-1 incident-2 "member-of")
         relationship-7 (mk-relationship 7 sighting-2 incident-2 "member-of")
