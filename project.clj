@@ -250,7 +250,7 @@
   ;;
 
   ;; uncomment and change during dev
-  :git-down #_{threatgrid/ctim {:coordinates frenchy64/ctim}
+  #_:git-down #_{threatgrid/ctim {:coordinates frenchy64/ctim}
                  threatgrid/clj-momo {:coordinates frenchy64/clj-momo}
                  threatgrid/ring-jwt-middleware {:coordinates frenchy64/ring-jwt-middleware}}
   :aliases {"kibit" ["with-profile" "prepush" "kibit"]
