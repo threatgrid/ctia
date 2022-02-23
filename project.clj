@@ -83,7 +83,7 @@
                  [threatgrid/flanders "0.1.23"]
                  [threatgrid/ctim "1.1.11"]
                  [threatgrid/clj-momo "0.3.5"]
-                 [threatgrid/ductile "0.4.2"]
+                 [threatgrid/ductile "a8cf9269881ea67a0f0555dca8ee39be70fa4591"]
 
                  [com.arohner/uri "0.1.2"]
 
@@ -250,7 +250,7 @@
   ;;
 
   ;; uncomment and change during dev
-  #_:git-down #_{threatgrid/ctim {:coordinates frenchy64/ctim}
+  :git-down #_{threatgrid/ctim {:coordinates frenchy64/ctim}
                  threatgrid/clj-momo {:coordinates frenchy64/clj-momo}
                  threatgrid/ring-jwt-middleware {:coordinates frenchy64/ring-jwt-middleware}}
   :aliases {"kibit" ["with-profile" "prepush" "kibit"]

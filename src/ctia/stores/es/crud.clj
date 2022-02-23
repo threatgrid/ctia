@@ -380,12 +380,12 @@ It returns the documents with full hits meta data including the real index in wh
    \"title:ASC,revision:DESC\"
    ->
    [[\"title\" \"ASC\"] [\"revision\" \"DESC\"]]"
-  [sort-by]
+  [sort_by]
   (map
    (fn [field]
      (let [[x y] (string/split field #":")]
        (if y [x y] [x])))
-   (string/split (name sort-by) #",")))
+   (string/split (name sort_by) #",")))
 
 (defn format-sort-by
   "Format to the sort-by format
