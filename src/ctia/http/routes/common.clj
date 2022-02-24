@@ -20,7 +20,8 @@
                      :fields
                      :search_after
                      :query_mode
-                     :search_fields])
+                     :search_fields
+                     :sort-by-field-exts])
 
 (def filter-map-search-options
   (conj search-options :query :simple_query :from :to))

@@ -142,14 +142,6 @@
     "title:ASC,schema_version:DESC" [["title" "ASC"]
                                      ["schema_version" "DESC"]]))
 
-(deftest format-sort-by-test
-  (are [sort-fields expected] (is (= expected
-                                     (sut/format-sort-by sort-fields)))
-    [["title"]]                   "title"
-    [["title" "ASC"]]             "title:ASC"
-    [["title" "ASC"]
-     ["schema_version" "DESC"]] "title:ASC,schema_version:DESC"))
-
 (deftest rename-sort-fields
   (are [sort_by expected_sort_by] (is (= expected_sort_by
                                          (:sort_by (sut/rename-sort-fields

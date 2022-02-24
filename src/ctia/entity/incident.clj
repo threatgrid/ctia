@@ -160,8 +160,18 @@
            :promotion_method
            :severity]))
 
+(def sort-by-field-exts
+  {:_severity_semantics {:op :remap
+                         :remap-type :number
+                         :remappings {"Info" 1
+                                      "Low" 2
+                                      "Medium" 3
+                                      "High" 4
+                                      "Critical" 5}
+                         :remap-default 0}})
+
 (def incident-sort-fields
-  (apply s/enum incident-fields))
+  (apply s/enum (concat (keys search-field-exts) incident-fields)))
 
 (def incident-enumerable-fields
   [:assignees
@@ -185,7 +195,7 @@
    :incident_time.rejected])
 
 (s/defschema IncidentFieldsParam
-  {(s/optional-key :fields) [incident-sort-fields]})
+  {(s/optional-key :fields) [(apply s/enum incident-fields)]})
 
 (s/defschema IncidentSearchParams
   (st/merge
@@ -300,4 +310,5 @@
    :patch-capabilities    :create-incident
    :fields                incident-fields
    :sort-fields           incident-fields
-   :searchable-fields     searchable-fields})
+   :searchable-fields     searchable-fields
+   :sort-by-field-exts    sort-by-field-exts})

@@ -356,9 +356,9 @@ It returns the documents with full hits meta data including the real index in wh
   [es-params
    {:keys [default-sort]
     :or {default-sort "_doc,id"}}]
-  (if (contains? es-params :sort_by)
-    es-params
-    (assoc es-params :sort_by default-sort)))
+  (cond-> es-params
+    (not (contains? es-params :sort_by))
+    (assoc :sort_by default-sort)))
 
 (s/defschema FilterSchema
   (st/optional-keys
@@ -381,36 +381,29 @@ It returns the documents with full hits meta data including the real index in wh
    ->
    [[\"title\" \"ASC\"] [\"revision\" \"DESC\"]]"
   [sort_by]
-  (map
-   (fn [field]
-     (let [[x y] (string/split field #":")]
-       (if y [x y] [x])))
-   (string/split (name sort_by) #",")))
-
-(defn format-sort-by
-  "Format to the sort-by format
-   Ex:
-   [[\"title\" \"ASC\"] [\"revision\" \"DESC\"]]
-   ->
-   \"title:ASC,revision:DESC\""
-  [sort-fields]
-  (->> sort-fields
-       (map (fn [field]
-              (string/join ":" field)))
-       (string/join ",")))
+  (if ((some-fn string? simple-ident?) sort_by)
+    (map
+      (fn [field]
+        (let [[field-name field-order] (string/split field #":")]
+          (cond-> {:op :field
+                   :field-name field-name}
+            field-order (assoc :field-order field-order))))
+      (string/split (name sort_by) #","))
+    sort_by))
 
 (defn rename-sort-fields
-  "Renames sort fields based on the content of the `enumerable-fields-mapping` table."
-  [{:keys [sort_by] :as es-params}]
-  (if-let [updated-sort-by
-           (some->> sort_by
-                    parse-sort-by
-                    (map (fn [[field-name :as field]]
-                           (assoc field 0
-                                  (get enumerable-fields-mapping field-name field-name))))
-                    format-sort-by)]
-    (assoc es-params :sort_by updated-sort-by)
-    es-params))
+  "Renames sort fields based on the content of the `enumerable-fields-mapping` table
+  and the current script extensions."
+  [{:keys [sort_by sort-by-field-exts] :as es-params} sort-by-field-exts]
+  (cond-> es-params
+    sort_by (assoc :sort_by 
+                   (->> sort_by
+                        parse-sort-by
+                        (mapv (fn [field]
+                                (let [field (update field :field-name #(enumerable-fields-mapping % %))]
+                                  (or (some-> (get sort-by-field-exts (keyword (:field-name field)))
+                                              (into (select-keys field [:field-order :field-name])))
+                                      field))))))))
 
 (defn handle-find
   "Generate an ES find/list handler using some mapping and schema"
