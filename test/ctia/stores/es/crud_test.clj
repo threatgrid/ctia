@@ -187,7 +187,7 @@
                        :remappings {"a" 1, "b" 2}
                        :remap-default 0
                        :field-name "remapme"
-                       :field-order "DESC"}]}
+                       :sort_order "DESC"}]}
            (sut/rename-sort-fields
              {:sort_by "title:ASC,remapme:DESC"
               :sort-by-field-exts {:remapme {:op :remap
