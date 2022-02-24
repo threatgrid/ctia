@@ -171,7 +171,7 @@
                          :remap-default 0}})
 
 (def incident-sort-fields
-  (apply s/enum (concat (keys search-field-exts) incident-fields)))
+  (apply s/enum (concat (keys sort-by-field-exts) incident-fields)))
 
 (def incident-enumerable-fields
   [:assignees
