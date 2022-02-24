@@ -390,7 +390,7 @@ It returns the documents with full hits meta data including the real index in wh
 (defn rename-sort-fields
   "Renames sort fields based on the content of the `enumerable-fields-mapping` table
   and the current script extensions."
-  [{:keys [sort_by sort-by-field-exts] :as es-params} sort-by-field-exts]
+  [{:keys [sort_by sort-by-field-exts] :as es-params}]
   (cond-> es-params
     sort_by (assoc :sort_by 
                    (->> sort_by
