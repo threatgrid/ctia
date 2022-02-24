@@ -162,14 +162,14 @@
            :severity]))
 
 (def sort-by-field-exts
-  {:_severity_semantics {:op :remap
-                         :remap-type :number
-                         :remappings {"Info" 1
-                                      "Low" 2
-                                      "Medium" 3
-                                      "High" 4
-                                      "Critical" 5}
-                         :remap-default 0}})
+  {:severity_int {:op :remap
+                  :remap-type :number
+                  :remappings {"Info" 1
+                               "Low" 2
+                               "Medium" 3
+                               "High" 4
+                               "Critical" 5}
+                  :remap-default 0}})
 
 (def incident-sort-fields
   (apply s/enum (concat (keys sort-by-field-exts) incident-fields)))
