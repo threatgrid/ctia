@@ -68,8 +68,9 @@
         verb (case status
                "New" nil
                "Stalled" nil
-               ("Containment Achieved"
-                "Restoration Achieved") :remediated
+               ;; Note: GitHub syntax highlighting doesn't like lists with strings
+               "Containment Achieved" :remediated
+               "Restoration Achieved" :remediated
                "Open" :opened
                "Rejected" :rejected
                "Closed" :closed
