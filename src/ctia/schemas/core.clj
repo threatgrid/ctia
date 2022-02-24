@@ -202,7 +202,13 @@
      :realize-fn RealizeFn
      :can-patch? s/Bool
      :patch-capabilities s/Keyword
-     :searchable-fields #{s/Keyword}})))
+     :searchable-fields #{s/Keyword}
+     :sort-by-field-exts {s/Keyword (s/conditional
+                                      ;#(= :field (:op %)) {:op (s/eq :field)}
+                                      #(= :remap (:op %)) {:op (s/eq :remap)
+                                                           :remap-type s/Keyword
+                                                           :remappings {s/Any s/Any}
+                                                           :remap-default s/Any})}})))
 
 (s/defschema OpenCTIMSchemaVersion
   {(s/optional-key :schema_version) s/Str})
