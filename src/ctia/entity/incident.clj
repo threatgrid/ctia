@@ -171,9 +171,9 @@
                                    "High" 4
                                    "Critical" 5}
                       :remap-default 0}
+   ;; redefine sorting by :severity to be a semantic notion
+   ;; rather than lexicographic
    :severity {:op :remap
-              ;; implicit
-              ;:field-name :severity
               :remap-type :number
               :remappings {"Info" 1
                            "Low" 2
