@@ -206,6 +206,7 @@
      :sort-by-field-exts {s/Keyword (s/conditional
                                       ;#(= :field (:op %)) {:op (s/eq :field)}
                                       #(= :remap (:op %)) {:op (s/eq :remap)
+                                                           :field-name s/Keyword
                                                            :remap-type s/Keyword
                                                            :remappings {s/Any s/Any}
                                                            :remap-default s/Any})}})))

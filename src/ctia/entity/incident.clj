@@ -163,6 +163,7 @@
 
 (def sort-by-field-exts
   {:severity_int {:op :remap
+                  :field-name :severity
                   :remap-type :number
                   :remappings {"Info" 1
                                "Low" 2

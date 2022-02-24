@@ -398,7 +398,7 @@ It returns the documents with full hits meta data including the real index in wh
                         (mapv (fn [field]
                                 (let [field (update field :field-name #(enumerable-fields-mapping % %))]
                                   (or (some-> (get sort-by-field-exts (keyword (:field-name field)))
-                                              (into (select-keys field [:sort_order :field-name])))
+                                              (into (select-keys field [:sort_order])))
                                       field))))))))
 
 (defn handle-find
