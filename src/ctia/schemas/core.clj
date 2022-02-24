@@ -203,13 +203,15 @@
      :can-patch? s/Bool
      :patch-capabilities s/Keyword
      :searchable-fields #{s/Keyword}
-     :sort-by-field-exts {s/Keyword (s/conditional
-                                      ;#(= :field (:op %)) {:op (s/eq :field)}
-                                      #(= :remap (:op %)) {:op (s/eq :remap)
-                                                           (s/optional-key :field-name) s/Keyword
-                                                           :remap-type s/Keyword
-                                                           :remappings {s/Any s/Any}
-                                                           :remap-default s/Any})}})))
+     :sort-by-field-exts {(s/pred simple-keyword?)
+                          (s/conditional
+                            #(= :field (:op %)) {:op (s/eq :field)
+                                                 (s/optional-key :field-name) (s/pred simple-keyword?)}
+                            #(= :remap (:op %)) {:op (s/eq :remap)
+                                                 (s/optional-key :field-name) (s/pred simple-keyword?)
+                                                 :remap-type (s/pred simple-keyword?)
+                                                 :remappings {s/Any s/Any}
+                                                 :remap-default s/Any})}})))
 
 (s/defschema OpenCTIMSchemaVersion
   {(s/optional-key :schema_version) s/Str})

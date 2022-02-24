@@ -134,80 +134,95 @@
           identity))))
 
 (deftest parse-sort-by-test
-  (are [sort-by expected] (is (= expected
-                                 (sut/parse-sort-by sort-by)))
-    "title"                         [["title"]]
-    :title                          [["title"]]
-    "title:ASC"                     [["title" "ASC"]]
-    "title:ASC,schema_version:DESC" [["title" "ASC"]
-                                     ["schema_version" "DESC"]]))
+  (are [sort_by expected] (is (= expected
+                                 (sut/parse-sort-by sort_by)))
+    [{:op :field, :field-name :title}] [{:op :field, :field-name :title}]
+    "title"                         [{:op :field, :field-name :title}]
+    :title                          [{:op :field, :field-name :title}]
+    "title:ASC"                     [{:op :field, :field-name :title, :sort_order "ASC"}]
+    "title:ASC,schema_version:DESC" [{:op :field, :field-name :title, :sort_order "ASC"}
+                                     {:op :field, :field-name :schema_version, :sort_order "DESC"}]))
 
 (deftest rename-sort-fields
   (are [sort_by expected_sort_by] (is (= expected_sort_by
                                          (:sort_by (sut/rename-sort-fields
                                                     {:sort_by sort_by}))))
-    "title" [{:op :field, :field-name "title.whole"}]
-    [{:op :field, :field-name "title"}] [{:op :field, :field-name "title.whole"}]
-    "revision:DESC,title:ASC,schema_version:DESC" [{:op :field, :field-name "revision", :field-order "DESC"}
-                                                   {:op :field, :field-name "title.whole", :field-order "ASC"}
-                                                   {:op :field, :field-name "schema_version", :field-order "DESC"}])
+    "title" [{:op :field, :field-name :title.whole}]
+    [{:op :field, :field-name "title"}] [{:op :field, :field-name :title.whole}]
+    "revision:DESC,title:ASC,schema_version:DESC" [{:op :field, :field-name :revision, :sort_order "DESC"}
+                                                   {:op :field, :field-name :title.whole, :sort_order "ASC"}
+                                                   {:op :field, :field-name :schema_version, :sort_order "DESC"}])
   (testing "remap"
     (is (= {:sort_by [{:op :remap
                        :remap-type :number
                        :remappings {"a" 1, "b" 2}
                        :remap-default 0
-                       :field-name "remapme"}]}
+                       :field-name :remap}]}
            (sut/rename-sort-fields
-             {:sort_by "remapme"
-              :sort-by-field-exts {:remapme {:op :remap
-                                             :remap-type :number
-                                             :remappings {"a" 1
-                                                          "b" 2}
-                                             :remap-default 0}}}))))
+             {:sort_by "remap"
+              :sort-by-field-exts {:remap {:op :remap
+                                           :remap-type :number
+                                           :remappings {"a" 1
+                                                        "b" 2}
+                                           :remap-default 0}}}))))
   (testing "remap + order"
     (is (= {:sort_by [{:op :remap
                        :remap-type :number
                        :remappings {"a" 1, "b" 2}
                        :remap-default 0
-                       :field-name "remapme"
-                       :field-order "DESC"}]}
+                       :field-name :remap
+                       :sort_order "DESC"}]}
            (sut/rename-sort-fields
-             {:sort_by "remapme:DESC"
-              :sort-by-field-exts {:remapme {:op :remap
-                                             :remap-type :number
-                                             :remappings {"a" 1
-                                                          "b" 2}
-                                             :remap-default 0}}}))))
+             {:sort_by "remap:DESC"
+              :sort-by-field-exts {:remap {:op :remap
+                                           :remap-type :number
+                                           :remappings {"a" 1
+                                                        "b" 2}
+                                           :remap-default 0}}}))))
   (testing "sort by renamed field then remapped field"
     (is (= {:sort_by [{:op :field
-                       :field-name "title.whole"
-                       :field-order "ASC"}
+                       :field-name :title.whole
+                       :sort_order "ASC"}
                       {:op :remap
                        :remap-type :number
                        :remappings {"a" 1, "b" 2}
                        :remap-default 0
-                       :field-name "remapme"
+                       :field-name :remap
                        :sort_order "DESC"}]}
            (sut/rename-sort-fields
-             {:sort_by "title:ASC,remapme:DESC"
-              :sort-by-field-exts {:remapme {:op :remap
-                                             :remap-type :number
-                                             :remappings {"a" 1
-                                                          "b" 2}
-                                             :remap-default 0}}}))))
+             {:sort_by "title:ASC,remap:DESC"
+              :sort-by-field-exts {:remap {:op :remap
+                                           :remap-type :number
+                                           :remappings {"a" 1
+                                                        "b" 2}
+                                           :remap-default 0}}}))))
   (testing "remap a renamed field"
     (is (= {:sort_by [{:op :remap
                        :remap-type :number
                        :remappings {"a" 1, "b" 2}
                        :remap-default 0
-                       :field-name "title.whole"}]}
+                       :field-name :title.whole}]}
            (sut/rename-sort-fields
              {:sort_by "title"
               :sort-by-field-exts {:title.whole {:op :remap
                                                  :remap-type :number
                                                  :remappings {"a" 1
                                                               "b" 2}
-                                                 :remap-default 0}}})))))
+                                                 :remap-default 0}}}))))
+  (testing "remap to another field via :sort-by-field-exts's :field-name"
+    (is (= {:sort_by [{:op :remap
+                       :remap-type :number
+                       :remappings {"a" 1, "b" 2}
+                       :remap-default 0
+                       :field-name :remap2}]}
+           (sut/rename-sort-fields
+             {:sort_by "remap1"
+              :sort-by-field-exts {:remap1 {:op :remap
+                                            :field-name "remap2"
+                                            :remap-type :number
+                                            :remappings {"a" 1
+                                                         "b" 2}
+                                            :remap-default 0}}})))))
 
 (deftest bulk-schema-test
   (testing "bulk-schema shall generate a proper bulk schema"
