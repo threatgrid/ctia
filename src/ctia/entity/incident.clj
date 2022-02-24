@@ -162,7 +162,9 @@
            :severity]))
 
 (def sort-by-field-exts
-  {#_#_:severity_int {:op :remap
+  {;; create a new "virtual" field to sort by called
+   ;; :severity_int, which sorts by :severity semantically
+   #_#_:severity_int {:op :remap
                       :field-name :severity
                       :remap-type :number
                       :remappings {"Info" 1
