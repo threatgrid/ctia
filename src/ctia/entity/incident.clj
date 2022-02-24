@@ -175,6 +175,7 @@
    ;; rather than lexicographic
    :severity {:op :remap
               :remap-type :number
+              ;; TODO this belongs in ctim
               :remappings {"Info" 1
                            "Low" 2
                            "Medium" 3
