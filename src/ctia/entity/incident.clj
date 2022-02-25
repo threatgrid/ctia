@@ -271,7 +271,8 @@
      :search-capabilities      :search-incident
      :external-id-capabilities :read-incident
      :histogram-fields         incident-histogram-fields
-     :enumerable-fields        incident-enumerable-fields})))
+     :enumerable-fields        incident-enumerable-fields
+     :sort-by-field-exts       sort-by-field-exts})))
 
 (def IncidentType
   (let [{:keys [fields name description]}
@@ -325,5 +326,4 @@
    :patch-capabilities    :create-incident
    :fields                incident-fields
    :sort-fields           incident-fields
-   :searchable-fields     searchable-fields
-   :sort-by-field-exts    sort-by-field-exts})
+   :searchable-fields     searchable-fields})

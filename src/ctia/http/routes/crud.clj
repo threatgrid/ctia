@@ -174,7 +174,17 @@
          can-get-by-external-id? true
          date-field :created
          histogram-fields [:created]}
-    :as entity-crud-config}]
+    :as entity-crud-config}
+   :- {:sort-by-field-exts {(s/pred simple-keyword?)
+                            (s/conditional
+                              #(= :field (:op %)) {:op (s/eq :field)
+                                                   (s/optional-key :field-name) (s/pred simple-keyword?)}
+                              #(= :remap (:op %)) {:op (s/eq :remap)
+                                                   (s/optional-key :field-name) (s/pred simple-keyword?)
+                                                   :remap-type (s/pred simple-keyword?)
+                                                   :remappings {s/Any s/Any}
+                                                   :remap-default s/Any})}
+       s/Any s/Any}]
  (s/fn [{{:keys [get-store]} :StoreService
          {:keys [flag-value]} :FeaturesService
          :as services} :- APIHandlerServices]
