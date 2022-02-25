@@ -338,7 +338,9 @@
                  (store/query-string-search
                   (search-query date-field params)
                   identity-map
-                  (select-keys params routes.common/search-options))
+                  (into (dissoc (select-keys params routes.common/search-options)
+                                :sort-by-field-exts)
+                        (select-keys entity-crud-config [:sort-by-field-exts])))
                  (ent/page-with-long-id services)
                  ent/un-store-page
                  routes.common/paginated-ok))
