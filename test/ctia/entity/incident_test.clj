@@ -84,11 +84,12 @@
                   (tc/to-date fixed-now)))))
        (testing "GET /ctia/incident/search"
          (let [severities (vec vocab/severity) ;; for rand-nth
-               incidents (repeatedly
-                           1000
-                           #(-> new-incident-minimal
-                                (dissoc :id)
-                                (assoc :severity (rand-nth severities))))
+               incidents (set
+                           (repeatedly
+                             1000
+                             #(-> new-incident-minimal
+                                  (dissoc :id)
+                                  (assoc :severity (rand-nth severities)))))
                bundle (-> new-bundle-minimal
                           (dissoc :id)
                           (assoc :incidents incidents))
@@ -99,8 +100,21 @@
                    nil    ;; external-key-prefixes
                    login
                    (app/service-graph app))
-               _ (dotimes [_ 10] 
-                     (prn (time (search-th/search-raw app :incident {:sort_by "severity_int"}))))]
+               ;; bench
+               _ (dotimes [_ 10]
+                   (doseq [asc? [true false]]
+                     (let [{:keys [parsed-body]} (time (search-th/search-raw app :incident {:sort_by "severity_int"
+                                                                                            :sort_order (if asc? "asc" "desc")}))
+                           _ (prn (count parsed-body))
+                           {:keys [remappings remap-default remap-type]} (-> sut/sort-by-field-exts :severity_int :remappings)
+                           _ (assert (= :number remap-type))
+                           expected-parsed-body (sort-by (comp
+                                                           (if asc? identity -)
+                                                           #(or (remappings (:severity %))
+                                                                remap-default))
+                                                         parsed-body)]
+                       (is (= expected-parsed-body
+                              parsed-body)))))]
            ))))))
 
 (deftest ^:frenchy64 test-incident-crud-routes
