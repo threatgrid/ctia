@@ -96,11 +96,13 @@
                           (assoc :incidents incidents))
                login (auth/map->Identity {:login  "foouser"
                                           :groups ["foogroup"]})
-               _ (bundle/import-bundle
-                   bundle
-                   nil    ;; external-key-prefixes
-                   login
-                   (app/service-graph app))
+               _ (prn `bundle-import
+                      ((requiring-resolve 'clojure.pprint/pprint) 
+                       (bundle/import-bundle
+                         bundle
+                         nil    ;; external-key-prefixes
+                         login
+                         (app/service-graph app))))
                ;; bench revision
                _ (testing ":revision"
                    (dotimes [_ 10]
