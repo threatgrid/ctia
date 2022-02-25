@@ -84,6 +84,8 @@
      :sophistication  s/Str
      :intended_effect s/Str
      :confidence      s/Str
+     :sort_by         actor-sort-fields})))
+
 (def ActorGetParams ActorFieldsParam)
 
 (s/defschema ActorByExternalIdQueryParams
