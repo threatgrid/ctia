@@ -316,7 +316,9 @@
                   (store/list-records
                     {:all-of {:external_ids external_id}}
                     identity-map
-                    q)
+                    (into (dissoc (select-keys q routes.common/search-options)
+                                  :sort-by-field-exts)
+                          (select-keys entity-crud-config [:sort-by-field-exts])))
                   (ent/page-with-long-id services)
                   ent/un-store-page
                   routes.common/paginated-ok))))
