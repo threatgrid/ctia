@@ -118,8 +118,10 @@
                              _ (prn (count parsed-body))
                              {:keys [remappings remap-default remap-type]} (-> sut/sort-by-field-exts :severity_int)
                              _ (assert (= :number remap-type))
-                             expected-parsed-body (cond-> (sort-by :severity parsed-body)
-                                                    (not asc?) reverse)]
+                             expected-parsed-body (sort-by :severity #(if asc?
+                                                                        (compare %2 %1)
+                                                                        (compare %1 %2))
+                                                           parsed-body)]
                          (is (= (mapv (juxt :id :severity) expected-parsed-body)
                                 (mapv (juxt :id :severity) parsed-body)))))))
                ;; bench severity_int
