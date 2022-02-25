@@ -20,7 +20,7 @@
 (use-fixtures :once (join-fixtures [mth/fixture-schema-validation
                                     whoami-helpers/fixture-server]))
 
-(defn partial-operations-tests [app incident-id incident]
+(defn additional-tests [app incident-id incident]
   (println "incident id :" incident-id)
   (let [fixed-now (t/internal-now)]
     (helpers/fixture-with-fixed-time
@@ -74,7 +74,8 @@
            (is (get-in updated-incident [:incident_time :remediated]))
 
            (is (= (get-in updated-incident [:incident_time :remediated])
-                  (tc/to-date fixed-now)))))))))
+                  (tc/to-date fixed-now)))))
+       ))))
 
 (deftest test-incident-crud-routes
   (test-for-each-store-with-app
@@ -87,7 +88,7 @@
                              :search-tests? true
                              :example new-incident-maximal
                              :headers {:Authorization "45c1f5e3f05d0"}
-                             :additional-tests partial-operations-tests})]
+                             :additional-tests additional-tests})]
        (entity-crud-test parameters)))))
 
 (deftest test-incident-metric-routes

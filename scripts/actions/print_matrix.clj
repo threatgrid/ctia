@@ -20,7 +20,7 @@
 (def ^:private java-17-distribution "temurin")
 (def ^:private non-cron-ctia-nsplits
   "Job parallelism for non cron tests."
-  10)
+  1)
 (def ^:private cron-ctia-nsplits
   "Job parallelism for cron tests."
   2)
