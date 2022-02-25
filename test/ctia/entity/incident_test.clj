@@ -89,6 +89,7 @@
                              1000
                              #(-> new-incident-minimal
                                   (dissoc :id)
+                                  (assoc :title "none")
                                   (assoc :severity (rand-nth severities)))))
                bundle (-> new-bundle-minimal
                           (dissoc :id)
