@@ -85,7 +85,7 @@
        (testing "GET /ctia/incident/search"
          (let [severities (vec vocab/severity) ;; for rand-nth
                incidents (repeatedly
-                           10
+                           1000
                            #(-> new-incident-minimal
                                 (dissoc :id)
                                 (assoc :severity (rand-nth severities))))
@@ -99,8 +99,8 @@
                    nil    ;; external-key-prefixes
                    login
                    (app/service-graph app))
-               res (search-th/search-raw app :incident {:sort_by "severity_int"})]
-           (is (seq res))
+               _ (dotimes [_ 10] 
+                     (prn (time (search-th/search-raw app :incident {:sort_by "severity_int"}))))]
            ))))))
 
 (deftest ^:frenchy64 test-incident-crud-routes
