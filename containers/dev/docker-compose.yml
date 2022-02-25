@@ -4,22 +4,22 @@ services:
     image: redis:5.0.5
     ports:
       - "6379:6379"
-        #  elasticsearch5:
-        #    image: elasticsearch:5.6.11
-        #    environment:
-        #      - cluster.name=elasticsearch5
-        #      - discovery.type=single-node
-        #    ports:
-        #      - "9205:9200"
-        #      - "9305:9300"
+  elasticsearch5:
+    image: elasticsearch:5.6.11
+    environment:
+      - cluster.name=elasticsearch5
+      - discovery.type=single-node
+    ports:
+      - "9205:9200"
+      - "9305:9300"
   elasticsearch7:
     image: elasticsearch:7.9.2
     environment:
       - cluster.name=elasticsearch7
       - discovery.type=single-node
       - xpack.security.enabled=true
-      #- xpack.security.authc.api_key.enabled=true
-      - xpack.security.authc.anonymous.roles=superuser # allows no auth for test purpose
+      - xpack.security.authc.api_key.enabled=true
+      #- xpack.security.authc.anonymous.roles=superuser # allows no auth for test purpose
       - ELASTIC_PASSWORD=ductile
     ports:
       - "9207:9200"
