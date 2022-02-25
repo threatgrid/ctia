@@ -8,5 +8,5 @@ set -ex
 if [[ "$CTIA_TEST_SUITE" == "cron" ]]; then
   lein cron-run-tests
 else
-  lein ci-run-tests :frenchy64
+  lein ci-run-tests
 fi

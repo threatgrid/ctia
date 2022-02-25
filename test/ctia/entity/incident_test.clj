@@ -2,8 +2,14 @@
   (:require [clj-momo.lib.clj-time
              [coerce :as tc]
              [core :as t]]
+            [ctia.test-helpers.search :as search-th]
             [clj-momo.test-helpers.core :as mth]
             [clojure.test :refer [deftest is join-fixtures testing use-fixtures]]
+            [ctia.auth.threatgrid :as auth]
+            [ctia.bundle.core :as bundle]
+            [ctim.schemas.vocabularies :refer [severities]]
+            [ctim.examples.bundles :refer [new-bundle-minimal]]
+            [ctim.examples.incidents :refer [new-incident-minimal]]
             [ctia.entity.incident :as sut]
             [ctia.test-helpers
              [access-control :refer [access-control-test]]
@@ -75,9 +81,28 @@
 
            (is (= (get-in updated-incident [:incident_time :remediated])
                   (tc/to-date fixed-now)))))
-       ))))
+       (testing "GET /ctia/incident/search"
+         (let [severities (vec severities)
+               incidents (repeatedly
+                           10
+                           #(-> new-incident-minimal
+                                (dissoc :id)
+                                (assoc :severity (rand-nth severities))))
+               bundle (-> new-bundle-minimal
+                          #_(dissoc :id)
+                          (assoc :incidents incidents))
+               login (auth/map->Identity {:login  "foouser"
+                                          :groups ["foogroup"]})
+               _ (bundle/import-bundle
+                   bundle
+                   nil    ;; external-key-prefixes
+                   login
+                   (app/service-graph app))
+               res (search-th/search-raw app :incident {:sort_by "severity_int"})]
+           (is (seq res))
+           ))))))
 
-(deftest test-incident-crud-routes
+(deftest ^:frenchy64 test-incident-crud-routes
   (test-for-each-store-with-app
    (fn [app]
      (helpers/set-capabilities! app "foouser" ["foogroup"] "user" all-capabilities)
