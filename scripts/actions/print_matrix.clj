@@ -18,7 +18,7 @@
 (def ^:private java-17-version "17")
 ;; https://blog.adoptopenjdk.net/2021/08/goodbye-adoptopenjdk-hello-adoptium/
 (def ^:private java-17-distribution "temurin")
-(def ^:private non-cron-ctia-nsplits
+(def non-cron-ctia-nsplits
   "Job parallelism for non cron tests."
   1)
 (def ^:private cron-ctia-nsplits
