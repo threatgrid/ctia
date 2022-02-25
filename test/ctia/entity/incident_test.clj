@@ -100,7 +100,17 @@
                    nil    ;; external-key-prefixes
                    login
                    (app/service-graph app))
-               ;; bench
+               ;; bench revision
+               _ (prn "bench revision")
+               _ (dotimes [_ 10]
+                   (doseq [asc? [true false]]
+                     (prn (if asc? "asc" "desc"))
+                     (let [{:keys [parsed-body]} (time (search-th/search-raw app :incident {:sort_by "revision"
+                                                                                            :sort_order (if asc? "asc" "desc")}))
+                           _ (prn (count parsed-body))
+                           ])))
+               ;; bench severity_int
+               _ (prn "bench severity_int")
                _ (dotimes [_ 10]
                    (doseq [asc? [true false]]
                      (let [{:keys [parsed-body]} (time (search-th/search-raw app :incident {:sort_by "severity_int"
