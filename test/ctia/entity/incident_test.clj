@@ -7,7 +7,7 @@
             [clojure.test :refer [deftest is join-fixtures testing use-fixtures]]
             [ctia.auth.threatgrid :as auth]
             [ctia.bundle.core :as bundle]
-            [ctim.schemas.vocabularies :refer [severities]]
+            [ctim.schemas.vocabularies :as vocab]
             [ctim.examples.bundles :refer [new-bundle-minimal]]
             [ctim.examples.incidents :refer [new-incident-minimal]]
             [ctia.entity.incident :as sut]
@@ -82,7 +82,7 @@
            (is (= (get-in updated-incident [:incident_time :remediated])
                   (tc/to-date fixed-now)))))
        (testing "GET /ctia/incident/search"
-         (let [severities (vec severities)
+         (let [severities (vec vocab/severity) ;; for rand-nth
                incidents (repeatedly
                            10
                            #(-> new-incident-minimal
