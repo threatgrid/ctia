@@ -165,25 +165,26 @@
   {;; create a new "virtual" field to sort by called
    ;; :severity_int, which sorts by :severity semantically
    :severity_int {:op :remap
-                      :field-name :severity
-                      :remap-type :number
-                      :remappings {"Info" 1
-                                   "Low" 2
-                                   "Medium" 3
-                                   "High" 4
-                                   "Critical" 5}
-                      :remap-default 0}
+                  :field-name :severity
+                  :remap-type :number
+                  :remappings {"Info" 1
+                               "Low" 2
+                               "Medium" 3
+                               "High" 4
+                               "Critical" 5}
+                  :remap-default 0}
    ;; redefine sorting by :severity to be a semantic notion
    ;; rather than lexicographic
    #_#_:severity {:op :remap
-              :remap-type :number
-              ;; TODO this belongs in ctim
-              :remappings {"Info" 1
-                           "Low" 2
-                           "Medium" 3
-                           "High" 4
-                           "Critical" 5}
-              :remap-default 0}})
+                  :field-name :severity
+                  :remap-type :number
+                  ;; TODO this belongs in ctim
+                  :remappings {"Info" 1
+                               "Low" 2
+                               "Medium" 3
+                               "High" 4
+                               "Critical" 5}
+                  :remap-default 0}})
 
 (def incident-sort-fields
   (apply s/enum (distinct (concat (keys sort-by-field-exts) incident-fields))))

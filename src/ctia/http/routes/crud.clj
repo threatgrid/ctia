@@ -178,9 +178,9 @@
    :- {(s/optional-key :sort-by-field-exts) {(s/pred simple-keyword?)
                                              (s/conditional
                                                #(= :field (:op %)) {:op (s/eq :field)
-                                                                    (s/optional-key :field-name) (s/pred simple-keyword?)}
+                                                                    :field-name (s/pred simple-keyword?)}
                                                #(= :remap (:op %)) {:op (s/eq :remap)
-                                                                    (s/optional-key :field-name) (s/pred simple-keyword?)
+                                                                    :field-name (s/pred simple-keyword?)
                                                                     :remap-type (s/pred simple-keyword?)
                                                                     :remappings {s/Any s/Any}
                                                                     :remap-default s/Any})}

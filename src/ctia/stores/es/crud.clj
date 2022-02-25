@@ -375,7 +375,8 @@ It returns the documents with full hits meta data including the real index in wh
    Ex:
    \"title:ASC,revision:DESC\"
    ->
-   [[\"title\" \"ASC\"] [\"revision\" \"DESC\"]]"
+   [{:op :field :field-name \"title\" :sort_order \"ASC\"}
+    {:op :field :field-name \"revision\" :sort_order \"DESC\"}]"
   [sort_by]
   (if ((some-fn string? simple-ident?) sort_by)
     (map
@@ -396,11 +397,12 @@ It returns the documents with full hits meta data including the real index in wh
                    (->> sort_by
                         parse-sort-by
                         (mapv (fn [field]
+                                {:pre [(= :field (:op field))]}
                                 (let [{:keys [field-name] :as field}
                                       (update field :field-name #(or (keyword (enumerable-fields-mapping (name %)))
                                                                      %))]
+                                  (assert (simple-keyword? field-name))
                                   (or (some-> (get sort-by-field-exts field-name)
-                                              (update :field-name #(or (keyword %) field-name))
                                               (into (select-keys field [:sort_order])))
                                       field))))))))
 
@@ -431,6 +433,7 @@ It returns the documents with full hits meta data including the real index in wh
                                             (q/bool bool-params)
                                             (-> es-params
                                                 rename-sort-fields
+                                                (doto (prn `handle-find$rename-sort-fields))
                                                 (with-default-sort-field props)
                                                 make-es-read-params)))
           (restricted-read? ident) (update :data
@@ -478,6 +481,7 @@ It returns the documents with full hits meta data including the real index in wh
                           query
                           (-> es-params
                               rename-sort-fields
+                              (doto (prn `handle-query-string-search$rename-sort-fields))
                               (with-default-sort-field props)
                               make-es-read-params)))
 
