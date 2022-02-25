@@ -102,7 +102,6 @@
                    (app/service-graph app))
                ;; bench revision
                _ (prn "bench revision")
-               #_#_
                _ (dotimes [_ 10]
                    (doseq [asc? [true false]]
                      (prn (if asc? "asc" "desc"))
@@ -124,8 +123,8 @@
                                                            #(or (remappings (:severity %))
                                                                 remap-default))
                                                          parsed-body)]
-                       (is (= expected-parsed-body
-                              parsed-body)))))]
+                       (is (= (mapv (juxt :id :severity) expected-parsed-body)
+                              (mapv (juxt :id :severity) parsed-body))))))]
            ))))))
 
 (deftest ^:frenchy64 test-incident-crud-routes
