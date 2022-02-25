@@ -89,7 +89,7 @@
                                 (dissoc :id)
                                 (assoc :severity (rand-nth severities))))
                bundle (-> new-bundle-minimal
-                          #_(dissoc :id)
+                          (dissoc :id)
                           (assoc :incidents incidents))
                login (auth/map->Identity {:login  "foouser"
                                           :groups ["foogroup"]})
