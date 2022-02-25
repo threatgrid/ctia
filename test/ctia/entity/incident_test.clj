@@ -96,13 +96,14 @@
                           (assoc :incidents incidents))
                login (auth/map->Identity {:login  "foouser"
                                           :groups ["foogroup"]})
-               _ (prn `bundle-import
-                      ((requiring-resolve 'clojure.pprint/pprint) 
-                       (bundle/import-bundle
-                         bundle
-                         nil    ;; external-key-prefixes
-                         login
-                         (app/service-graph app))))
+               created-bundle (bundle/import-bundle
+                                bundle
+                                nil    ;; external-key-prefixes
+                                login
+                                (app/service-graph app))
+               _ (prn "created bundle:")
+               _ ((requiring-resolve 'clojure.pprint/pprint) 
+                  created-bundle)
                ;; bench revision
                _ (testing ":revision"
                    (dotimes [_ 10]
@@ -142,7 +143,9 @@
                                                                 (not asc?) -)
                                                              parsed-body)]
                            (is (= (mapv (juxt :id :severity) expected-parsed-body)
-                                  (mapv (juxt :id :severity) parsed-body))))))))]
+                                  (mapv (juxt :id :severity) parsed-body))))))))
+               _ (run! #(search-th/delete-doc app :incident (:id %))
+                       (:incidents created-bundle))]
            ))))))
 
 (deftest ^:frenchy64 test-incident-crud-routes
