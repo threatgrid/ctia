@@ -8,5 +8,5 @@ set -ex
 if [[ "$CTIA_TEST_SUITE" == "cron" ]]; then
   lein cron-run-tests
 else
-  lein ci-run-tests ctia.entity.incident-test
+  lein test :only ctia.entity.incident-test/test-incident-crud-routes
 fi
