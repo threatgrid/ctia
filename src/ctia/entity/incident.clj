@@ -164,7 +164,7 @@
 (def sort-by-field-exts
   {;; create a new "virtual" field to sort by called
    ;; :severity_int, which sorts by :severity semantically
-   #_#_:severity_int {:op :remap
+   :severity_int {:op :remap
                       :field-name :severity
                       :remap-type :number
                       :remappings {"Info" 1
@@ -175,7 +175,7 @@
                       :remap-default 0}
    ;; redefine sorting by :severity to be a semantic notion
    ;; rather than lexicographic
-   :severity {:op :remap
+   #_#_:severity {:op :remap
               :remap-type :number
               ;; TODO this belongs in ctim
               :remappings {"Info" 1
