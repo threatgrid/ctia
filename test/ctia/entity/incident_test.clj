@@ -102,6 +102,7 @@
                    (app/service-graph app))
                ;; bench revision
                _ (prn "bench revision")
+               #_#_
                _ (dotimes [_ 10]
                    (doseq [asc? [true false]]
                      (prn (if asc? "asc" "desc"))
@@ -111,7 +112,7 @@
                            ])))
                ;; bench severity_int
                _ (prn "bench severity_int")
-               _ (dotimes [_ 10]
+               _ (dotimes [_ 1 #_10]
                    (doseq [asc? [true false]]
                      (let [{:keys [parsed-body]} (time (search-th/search-raw app :incident {:sort_by "severity_int"
                                                                                             :sort_order (if asc? "asc" "desc")}))
