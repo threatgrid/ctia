@@ -116,7 +116,7 @@
                      (let [{:keys [parsed-body]} (time (search-th/search-raw app :incident {:sort_by "severity_int"
                                                                                             :sort_order (if asc? "asc" "desc")}))
                            _ (prn (count parsed-body))
-                           {:keys [remappings remap-default remap-type]} (-> sut/sort-by-field-exts :severity_int :remappings)
+                           {:keys [remappings remap-default remap-type]} (-> sut/sort-by-field-exts :severity_int)
                            _ (assert (= :number remap-type))
                            expected-parsed-body (sort-by (comp
                                                            (if asc? identity -)
