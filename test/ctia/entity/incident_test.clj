@@ -19,6 +19,7 @@
              [aggregate :refer [test-metric-routes]]
              [fake-whoami-service :as whoami-helpers]
              [store :refer [test-for-each-store-with-app]]]
+            [puppetlabs.trapperkeeper.app :as app]
             [ctim.examples.incidents
              :refer
              [new-incident-maximal new-incident-minimal]]))
