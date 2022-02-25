@@ -101,44 +101,47 @@
                    login
                    (app/service-graph app))
                ;; bench revision
-               _ (dotimes [_ 10]
-                   (doseq [asc? [true false]]
-                     (prn "bench revision" (if asc? "asc" "desc"))
-                     (let [{:keys [parsed-body]} (time (search-th/search-raw app :incident {:sort_by "revision"
-                                                                                            :sort_order (if asc? "asc" "desc")}))
-                           _ (prn (count parsed-body))
-                           ])))
+               _ (testing ":revision"
+                   (dotimes [_ 10]
+                     (doseq [asc? [true false]]
+                       (prn "bench revision" (if asc? "asc" "desc"))
+                       (let [{:keys [parsed-body]} (time (search-th/search-raw app :incident {:sort_by "revision"
+                                                                                              :sort_order (if asc? "asc" "desc")}))
+                             _ (prn (count parsed-body))
+                             ]))))
                ;; bench severity
-               _ (dotimes [_ 1 #_10]
-                   (doseq [asc? [true false]]
-                     (prn "bench severity" (if asc? "asc" "desc"))
-                     (testing {:asc? asc?}
-                       (let [{:keys [parsed-body]} (time (search-th/search-raw app :incident {:sort_by "severity"
-                                                                                              :sort_order (if asc? "asc" "desc")}))
-                             _ (prn (count parsed-body))
-                             {:keys [remappings remap-default remap-type]} (-> sut/sort-by-field-exts :severity_int)
-                             _ (assert (= :number remap-type))
-                             expected-parsed-body (sort-by :severity #(if asc?
-                                                                        (compare %1 %2)
-                                                                        (compare %2 %1))
-                                                           parsed-body)]
-                         (is (= (mapv (juxt :id :severity) expected-parsed-body)
-                                (mapv (juxt :id :severity) parsed-body)))))))
+               _ (testing ":severity"
+                   (dotimes [_ 1 #_10]
+                     (doseq [asc? [true false]]
+                       (prn "bench severity" (if asc? "asc" "desc"))
+                       (testing {:asc? asc?}
+                         (let [{:keys [parsed-body]} (time (search-th/search-raw app :incident {:sort_by "severity"
+                                                                                                :sort_order (if asc? "asc" "desc")}))
+                               _ (prn (count parsed-body))
+                               {:keys [remappings remap-default remap-type]} (-> sut/sort-by-field-exts :severity_int)
+                               _ (assert (= :number remap-type))
+                               expected-parsed-body (sort-by :severity #(if asc?
+                                                                          (compare %1 %2)
+                                                                          (compare %2 %1))
+                                                             parsed-body)]
+                           (is (= (mapv (juxt :id :severity) expected-parsed-body)
+                                  (mapv (juxt :id :severity) parsed-body))))))))
                ;; bench severity_int
-               _ (dotimes [_ 1 #_10]
-                   (doseq [asc? [true false]]
-                     (prn "bench severity" (if asc? "asc" "desc"))
-                     (testing {:asc? asc?}
-                       (let [{:keys [parsed-body]} (time (search-th/search-raw app :incident {:sort_by "severity_int"
-                                                                                              :sort_order (if asc? "asc" "desc")}))
-                             _ (prn (count parsed-body))
-                             {:keys [remappings remap-default remap-type]} (-> sut/sort-by-field-exts :severity_int)
-                             _ (assert (= :number remap-type))
-                             expected-parsed-body (sort-by #(cond-> (remappings (:severity %) remap-default)
-                                                              (not asc?) -)
-                                                           parsed-body)]
-                         (is (= (mapv (juxt :id :severity) expected-parsed-body)
-                                (mapv (juxt :id :severity) parsed-body)))))))]
+               _ (testing ":severity_int"
+                   (dotimes [_ 1 #_10]
+                     (doseq [asc? [true false]]
+                       (prn "bench severity" (if asc? "asc" "desc"))
+                       (testing {:asc? asc?}
+                         (let [{:keys [parsed-body]} (time (search-th/search-raw app :incident {:sort_by "severity_int"
+                                                                                                :sort_order (if asc? "asc" "desc")}))
+                               _ (prn (count parsed-body))
+                               {:keys [remappings remap-default remap-type]} (-> sut/sort-by-field-exts :severity_int)
+                               _ (assert (= :number remap-type))
+                               expected-parsed-body (sort-by #(cond-> (remappings (:severity %) remap-default)
+                                                                (not asc?) -)
+                                                             parsed-body)]
+                           (is (= (mapv (juxt :id :severity) expected-parsed-body)
+                                  (mapv (juxt :id :severity) parsed-body))))))))]
            ))))))
 
 (deftest ^:frenchy64 test-incident-crud-routes
