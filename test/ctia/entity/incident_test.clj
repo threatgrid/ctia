@@ -132,7 +132,7 @@
                _ (testing ":severity_int"
                    (dotimes [_ 1 #_10]
                      (doseq [asc? [true false]]
-                       (prn "bench severity" (if asc? "asc" "desc"))
+                       (prn "bench severity_int" (if asc? "asc" "desc"))
                        (testing {:asc? asc?}
                          (let [{:keys [parsed-body]} (time (search-th/search-raw app :incident {:sort_by "severity_int"
                                                                                                 :sort_order (if asc? "asc" "desc")}))
