@@ -86,7 +86,7 @@
                   (tc/to-date fixed-now)))))
        ))))
 
-(deftest ^:frenchy64 test-incident-crud-routes
+(deftest test-incident-crud-routes
   (test-for-each-store-with-app
    (fn [app]
      (helpers/set-capabilities! app "foouser" ["foogroup"] "user" all-capabilities)
@@ -103,12 +103,13 @@
 (defn script-search [app]
   (testing "GET /ctia/incident/search"
     (let [severities (vec vocab/severity) ;; for rand-nth
+          incidents-count 10
           incidents (set
                       (repeatedly
-                        1000
+                        incidents-count
                         #(-> new-incident-minimal
                              (dissoc :id)
-                             (assoc :title "none")
+                             (assoc :title (str (gensym)))
                              (assoc :severity (rand-nth severities)))))
           bundle (-> new-bundle-minimal
                      (dissoc :id)
@@ -124,6 +125,7 @@
           _ ((requiring-resolve 'clojure.pprint/pprint) 
              created-bundle)
           ;; bench revision
+          #_#_
           _ (testing ":revision"
               (dotimes [_ 10]
                 (doseq [asc? [true false]]
@@ -133,6 +135,7 @@
                         _ (prn (count parsed-body))
                         ]))))
           ;; bench severity
+          #_#_
           _ (testing ":severity"
               (dotimes [_ 1 #_10]
                 (doseq [asc? [true false]]
@@ -151,25 +154,35 @@
           _ (testing ":severity_int"
               (dotimes [_ 1 #_10]
                 (doseq [asc? [true false]]
-                  (prn "bench severity_int" (if asc? "asc" "desc"))
+                  ;(prn "bench severity_int" (if asc? "asc" "desc"))
                   (testing {:asc? asc?}
-                    (let [{:keys [parsed-body]} (time (search-th/search-raw app :incident {:sort_by "severity_int"
-                                                                                           :sort_order (if asc? "asc" "desc")}))
-                          _ (prn (count parsed-body))
+                    (let [{:keys [parsed-body] :as raw} (identity #_time (search-th/search-raw app :incident {:sort_by "severity_int"
+                                                                                                              :sort_order (if asc? "asc" "desc")}))
                           {:keys [remappings remap-default remap-type]} (-> sut/sort-by-field-exts :severity_int)
                           _ (assert (= :number remap-type))
-                          expected-parsed-body (sort-by #(cond-> (remappings (:severity %) remap-default)
-                                                           (not asc?) -)
+                          expected-parsed-body (sort-by #(remappings (:severity %) remap-default)
+                                                        #(if asc?
+                                                           (compare %1 %2)
+                                                           (compare %2 %1))
                                                         parsed-body)]
-                      (is (= (mapv (juxt :id :severity) expected-parsed-body)
-                             (mapv (juxt :id :severity) parsed-body))))))))
+                      (and (is (= incidents-count (count parsed-body)) (pr-str raw))
+                           (is (= (mapv :severity expected-parsed-body)
+                                  (mapv :severity parsed-body)))
+                           (is (= expected-parsed-body
+                                  parsed-body))))))))
           _ (run! #(search-th/delete-doc app :incident (:id %))
                   (:incidents created-bundle))])))
 
-(deftest test-incident-script-search
+(comment
+  docker-compose -f containers/dev/m1-docker-compose.yml up
+  lein repl
+  (do (refresh) (clojure.test/test-vars [(requiring-resolve 'ctia.entity.incident-test/test-incident-script-search)]))
+  )
+(deftest ^:frenchy64 test-incident-script-search
   (es-helpers/for-each-es-version
     ""
-    [#_5 7]
+    (cond-> [7]
+      (System/getenv "CI") (conj 5))
     #(ductile.index/delete! % "ctia_*")
     (helpers/with-properties
       ["ctia.store.es.default.port" es-port
