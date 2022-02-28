@@ -187,11 +187,11 @@
     (helpers/with-properties
       ["ctia.store.es.default.port" es-port
        "ctia.store.es.default.version" version
-       "ctia.auth.type" "allow-all"]
+       "ctia.auth.type" "threatgrid" #_"allow-all"]
       (helpers/fixture-ctia-with-app
         (fn [app]
-          ;(helpers/set-capabilities! app "foouser" ["foogroup"] "user" all-capabilities)
-          ;(whoami-helpers/set-whoami-response app "45c1f5e3f05d0" "foouser" "foogroup" "user")
+          (helpers/set-capabilities! app "foouser" ["foogroup"] "user" all-capabilities)
+          (whoami-helpers/set-whoami-response app "45c1f5e3f05d0" "foouser" "foogroup" "user")
           (script-search app))))))
 
 (deftest test-incident-metric-routes
