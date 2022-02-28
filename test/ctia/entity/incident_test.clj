@@ -2,6 +2,7 @@
   (:require [clj-momo.lib.clj-time
              [coerce :as tc]
              [core :as t]]
+            ductile.index
             [ctia.test-helpers.search :as search-th]
             [clj-momo.test-helpers.core :as mth]
             [clojure.test :refer [deftest is join-fixtures testing use-fixtures]]
@@ -19,6 +20,7 @@
              [aggregate :refer [test-metric-routes]]
              [fake-whoami-service :as whoami-helpers]
              [store :refer [test-for-each-store-with-app]]]
+            [ctia.test-helpers.es :as es-helpers]
             [puppetlabs.trapperkeeper.app :as app]
             [ctim.examples.incidents
              :refer
@@ -82,71 +84,7 @@
 
            (is (= (get-in updated-incident [:incident_time :remediated])
                   (tc/to-date fixed-now)))))
-       (testing "GET /ctia/incident/search"
-         (let [severities (vec vocab/severity) ;; for rand-nth
-               incidents (set
-                           (repeatedly
-                             1000
-                             #(-> new-incident-minimal
-                                  (dissoc :id)
-                                  (assoc :title "none")
-                                  (assoc :severity (rand-nth severities)))))
-               bundle (-> new-bundle-minimal
-                          (dissoc :id)
-                          (assoc :incidents incidents))
-               login (auth/map->Identity {:login  "foouser"
-                                          :groups ["foogroup"]})
-               created-bundle (bundle/import-bundle
-                                bundle
-                                nil    ;; external-key-prefixes
-                                login
-                                (app/service-graph app))
-               _ (prn "created bundle:")
-               _ ((requiring-resolve 'clojure.pprint/pprint) 
-                  created-bundle)
-               ;; bench revision
-               _ (testing ":revision"
-                   (dotimes [_ 10]
-                     (doseq [asc? [true false]]
-                       (prn "bench revision" (if asc? "asc" "desc"))
-                       (let [{:keys [parsed-body]} (time (search-th/search-raw app :incident {:sort_by "revision"
-                                                                                              :sort_order (if asc? "asc" "desc")}))
-                             _ (prn (count parsed-body))
-                             ]))))
-               ;; bench severity
-               _ (testing ":severity"
-                   (dotimes [_ 1 #_10]
-                     (doseq [asc? [true false]]
-                       (prn "bench severity" (if asc? "asc" "desc"))
-                       (testing {:asc? asc?}
-                         (let [{:keys [parsed-body]} (time (search-th/search-raw app :incident {:sort_by "severity"
-                                                                                                :sort_order (if asc? "asc" "desc")}))
-                               _ (prn (count parsed-body))
-                               expected-parsed-body (sort-by :severity #(if asc?
-                                                                          (compare %1 %2)
-                                                                          (compare %2 %1))
-                                                             parsed-body)]
-                           (is (= (mapv (juxt :id :severity) expected-parsed-body)
-                                  (mapv (juxt :id :severity) parsed-body))))))))
-               ;; bench severity_int
-               _ (testing ":severity_int"
-                   (dotimes [_ 1 #_10]
-                     (doseq [asc? [true false]]
-                       (prn "bench severity_int" (if asc? "asc" "desc"))
-                       (testing {:asc? asc?}
-                         (let [{:keys [parsed-body]} (time (search-th/search-raw app :incident {:sort_by "severity_int"
-                                                                                                :sort_order (if asc? "asc" "desc")}))
-                               _ (prn (count parsed-body))
-                               {:keys [remappings remap-default remap-type]} (-> sut/sort-by-field-exts :severity_int)
-                               _ (assert (= :number remap-type))
-                               expected-parsed-body (sort-by #(cond-> (remappings (:severity %) remap-default)
-                                                                (not asc?) -)
-                                                             parsed-body)]
-                           (is (= (mapv (juxt :id :severity) expected-parsed-body)
-                                  (mapv (juxt :id :severity) parsed-body))))))))
-               _ (run! #(search-th/delete-doc app :incident (:id %))
-                       (:incidents created-bundle))]
-           ))))))
+       ))))
 
 (deftest ^:frenchy64 test-incident-crud-routes
   (test-for-each-store-with-app
@@ -161,6 +99,87 @@
                              :headers {:Authorization "45c1f5e3f05d0"}
                              :additional-tests additional-tests})]
        (entity-crud-test parameters)))))
+
+(defn script-search [app]
+  (testing "GET /ctia/incident/search"
+    (let [severities (vec vocab/severity) ;; for rand-nth
+          incidents (set
+                      (repeatedly
+                        1000
+                        #(-> new-incident-minimal
+                             (dissoc :id)
+                             (assoc :title "none")
+                             (assoc :severity (rand-nth severities)))))
+          bundle (-> new-bundle-minimal
+                     (dissoc :id)
+                     (assoc :incidents incidents))
+          login (auth/map->Identity {:login  "foouser"
+                                     :groups ["foogroup"]})
+          created-bundle (bundle/import-bundle
+                           bundle
+                           nil    ;; external-key-prefixes
+                           login
+                           (app/service-graph app))
+          _ (prn "created bundle:")
+          _ ((requiring-resolve 'clojure.pprint/pprint) 
+             created-bundle)
+          ;; bench revision
+          _ (testing ":revision"
+              (dotimes [_ 10]
+                (doseq [asc? [true false]]
+                  (prn "bench revision" (if asc? "asc" "desc"))
+                  (let [{:keys [parsed-body]} (time (search-th/search-raw app :incident {:sort_by "revision"
+                                                                                         :sort_order (if asc? "asc" "desc")}))
+                        _ (prn (count parsed-body))
+                        ]))))
+          ;; bench severity
+          _ (testing ":severity"
+              (dotimes [_ 1 #_10]
+                (doseq [asc? [true false]]
+                  (prn "bench severity" (if asc? "asc" "desc"))
+                  (testing {:asc? asc?}
+                    (let [{:keys [parsed-body]} (time (search-th/search-raw app :incident {:sort_by "severity"
+                                                                                           :sort_order (if asc? "asc" "desc")}))
+                          _ (prn (count parsed-body))
+                          expected-parsed-body (sort-by :severity #(if asc?
+                                                                     (compare %1 %2)
+                                                                     (compare %2 %1))
+                                                        parsed-body)]
+                      (is (= (mapv (juxt :id :severity) expected-parsed-body)
+                             (mapv (juxt :id :severity) parsed-body))))))))
+          ;; bench severity_int
+          _ (testing ":severity_int"
+              (dotimes [_ 1 #_10]
+                (doseq [asc? [true false]]
+                  (prn "bench severity_int" (if asc? "asc" "desc"))
+                  (testing {:asc? asc?}
+                    (let [{:keys [parsed-body]} (time (search-th/search-raw app :incident {:sort_by "severity_int"
+                                                                                           :sort_order (if asc? "asc" "desc")}))
+                          _ (prn (count parsed-body))
+                          {:keys [remappings remap-default remap-type]} (-> sut/sort-by-field-exts :severity_int)
+                          _ (assert (= :number remap-type))
+                          expected-parsed-body (sort-by #(cond-> (remappings (:severity %) remap-default)
+                                                           (not asc?) -)
+                                                        parsed-body)]
+                      (is (= (mapv (juxt :id :severity) expected-parsed-body)
+                             (mapv (juxt :id :severity) parsed-body))))))))
+          _ (run! #(search-th/delete-doc app :incident (:id %))
+                  (:incidents created-bundle))])))
+
+(deftest test-incident-script-search
+  (es-helpers/for-each-es-version
+    ""
+    [#_5 7]
+    #(ductile.index/delete! % "ctia_*")
+    (helpers/with-properties
+      ["ctia.store.es.default.port" es-port
+       "ctia.store.es.default.version" version
+       "ctia.auth.type" "allow-all"]
+      (helpers/fixture-ctia-with-app
+        (fn [app]
+          ;(helpers/set-capabilities! app "foouser" ["foogroup"] "user" all-capabilities)
+          ;(whoami-helpers/set-whoami-response app "45c1f5e3f05d0" "foouser" "foogroup" "user")
+          (script-search app))))))
 
 (deftest test-incident-metric-routes
   (test-metric-routes (into sut/incident-entity
