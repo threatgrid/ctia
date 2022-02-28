@@ -1,15 +1,16 @@
 (ns user
   (:require
-   [clojure.tools.namespace.repl :refer [set-refresh-dirs]]
+   [clojure.tools.namespace.repl :refer [set-refresh-dirs refresh]]
    [cheshire.core :as json]
    [clj-http.client :as http]
    [clj-momo.lib.time :as time]
    [ctia.init :as init]
    [ctim.schemas.vocabularies :as vocab]
    [puppetlabs.trapperkeeper.app :as app]
-   [schema.core :as s]))
+   [schema.core :as s]
+   [clojure.repl :refer :all]))
 
-(set-refresh-dirs "src" "dev" "test")
+(set-refresh-dirs "src" "dev" "test" "checkouts")
 
 ;;;;;;;;;;;;;;;;;;;;;;;
 ;; Lifecycle management
@@ -69,6 +70,7 @@
   "Starts CTIA with given config and services, otherwise defaults
   to the same configuration as #'init/start-ctia."
   [& {:keys [config services] :as m}]
+  (refresh)
   (serially-alter-app 
     (fn [app]
       (println "Starting CTIA...")
