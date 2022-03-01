@@ -221,8 +221,13 @@
                                                                               (str iteration)))
                                                              (println (format "Multiplier: %s" (str multiplier)))
                                                              (println (format "Duration: %ems" ms-time))
-                                                             (println (format "Average: %sms" (:ms-avg nxt))))]
+                                                             (println (format "Average: %sms" (:ms-avg nxt)))
+                                                             #_
+                                                             (when-some [other ({"revision" "severity_int"
+                                                                                 "severity_int" "revision"})])
+                                                             )]
                                                    nxt)))
+                                        #_
                                         ((requiring-resolve 'clojure.pprint/pprint)))))))]))
                   (finally (purge-incidents! app))))))))))
 
