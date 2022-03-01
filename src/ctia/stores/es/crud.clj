@@ -434,7 +434,6 @@ It returns the documents with full hits meta data including the real index in wh
                                             (q/bool bool-params)
                                             (-> es-params
                                                 rename-sort-fields
-                                                (doto (prn `handle-find$rename-sort-fields))
                                                 (with-default-sort-field props)
                                                 make-es-read-params)))
           (restricted-read? ident) (update :data
@@ -482,7 +481,6 @@ It returns the documents with full hits meta data including the real index in wh
                           query
                           (-> es-params
                               rename-sort-fields
-                              (doto (prn `handle-query-string-search$rename-sort-fields))
                               (with-default-sort-field props)
                               make-es-read-params)))
 
