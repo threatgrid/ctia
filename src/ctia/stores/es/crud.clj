@@ -546,7 +546,8 @@ It returns the documents with full hits meta data including the real index in wh
           :topn make-topn
           :cardinality make-cardinality
           :histogram make-histogram
-          (throw (ex-info "invalid aggregation type" agg-type)))]
+          (throw (ex-info (str "invalid aggregation type: " (pr-str agg-type))
+                          {})))]
     (cond-> {agg-key (agg-fn root-agg)}
       (seq aggs) (assoc :aggs (make-aggregation aggs)))))
 
