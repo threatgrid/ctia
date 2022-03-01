@@ -183,7 +183,7 @@
                                               ;; hijacking this int field for perf comparison, see `gen-new-incident`
                                               bench-atom (conj "revision"))
                                     asc? [true false]
-                                    iteration (range (if bench-atom 1 1))]
+                                    iteration (range (if bench-atom 10 0))]
                               (testing {:iteration iteration :sort_by sort_by :asc? asc?}
                                 (let [[{:keys [parsed-body] :as raw} ms-time] (result+ms-time
                                                                                 (search-th/search-raw app :incident {:limit incidents-count
@@ -206,31 +206,24 @@
                                                            parsed-body)))]
                                   (when bench-atom
                                     (assert success?)
-                                    (swap! bench-atom update-in [canonical-fixed-severities-asc multiplier sort_by]
-                                           (fn [prev]
-                                             (let [nxt (-> prev
-                                                           (update :incidents-count #(or (when %
-                                                                                           (assert (= incidents-count (:incidents-count %))
-                                                                                                   (format "case: %s, multiplier %s, expected incidents: %s, actual:"
-                                                                                                           canonical-fixed-severities-asc
-                                                                                                           multiplier
-                                                                                                           incidents-count
-                                                                                                           (count incidents)))
-                                                                                           %)
-                                                                                         incidents-count))
-                                                           (update :ms-times (fnil conj []) ms-time)
-                                                           ((fn [{:keys [ms-times] :as res}]
-                                                              (assoc res :ms-avg (format "%e" (double (/ (apply + ms-times) (count ms-times))))))))]
-                                               ;; dirty side effects in swap!. note: atom access is seralized for now
-                                               (println)
-                                               (println (format "Benchmark %s" sort_by))
-                                               (println (format "Case: %s %s (%sth iteration)"
-                                                                (pr-str canonical-fixed-severities-asc)
-                                                                (if asc? "ascending" "descending")
-                                                                (str iteration)))
-                                               (println (format "Multiplier: %s" (str multiplier)))
-                                               (println (format "Duration: %ems" ms-time))
-                                               (println (format "Average: %sms" (:ms-avg nxt))))))))))]))
+                                    (-> (swap! bench-atom update-in [canonical-fixed-severities-asc incidents-count sort_by]
+                                               (fn [prev]
+                                                 (let [nxt (-> prev
+                                                               (update :ms-times (fnil conj []) ms-time)
+                                                               ((fn [{:keys [ms-times] :as res}]
+                                                                  (assoc res :ms-avg (format "%e" (double (/ (apply + ms-times) (count ms-times))))))))
+                                                       _ (do ;; dirty side effects in swap!. note: atom access is seralized for now
+                                                             (println)
+                                                             (println (format "Benchmark %s" sort_by))
+                                                             (println (format "Case: %s %s (%sth iteration)"
+                                                                              (pr-str canonical-fixed-severities-asc)
+                                                                              (if asc? "ascending" "descending")
+                                                                              (str iteration)))
+                                                             (println (format "Multiplier: %s" (str multiplier)))
+                                                             (println (format "Duration: %ems" ms-time))
+                                                             (println (format "Average: %sms" (:ms-avg nxt))))]
+                                                   nxt)))
+                                        ((requiring-resolve 'clojure.pprint/pprint)))))))]))
                   (finally (purge-incidents! app))))))))))
 
 (comment
