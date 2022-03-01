@@ -127,7 +127,11 @@
    "High" 4
    "Critical" 5})
 
-(defn script-search [app]
+(defn purge-incidents! [app]
+  (search-th/delete-search app :incident {:query "*"
+                                          :REALLY_DELETE_ALL_THESE_ENTITIES true}))
+
+(defn severity-int-script-search [app]
   (let [fixed-severities-asc ["Info" "Low" "Medium" "High" "Critical"]
         incidents-count (count fixed-severities-asc)
         incidents (into (sorted-set-by #(compare (:id %1) (:id %2))) ;; a (possibly vain) attempt to randomize the order in which ES will index
@@ -150,14 +154,15 @@
                      (is (= ((if asc? identity rseq) fixed-severities-asc)
                             (mapv :severity parsed-body)))
                      (is (= expected-parsed-body
-                            parsed-body))))))]))
+                            parsed-body))))))
+        _ (purge-incidents! app)]))
 
 (comment
   docker-compose -f containers/dev/m1-docker-compose.yml up
   lein repl
   (do (refresh) (clojure.test/test-vars [(requiring-resolve 'ctia.entity.incident-test/test-incident-script-search)]))
   )
-(deftest ^:frenchy64 test-incident-script-search
+(deftest ^:frenchy64 test-incident-severity-int-search
   (es-helpers/for-each-es-version
     ""
     (cond-> [7]
@@ -168,7 +173,7 @@
         (fn [app]
           (helpers/set-capabilities! app "foouser" ["foogroup"] "user" all-capabilities)
           (whoami-helpers/set-whoami-response app "45c1f5e3f05d0" "foouser" "foogroup" "user")
-          (script-search app))))))
+          (severity-int-script-search app))))))
 
 (deftest test-incident-metric-routes
   (test-metric-routes (into sut/incident-entity

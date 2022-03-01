@@ -231,10 +231,11 @@
                             (clojure.string/join
                               "\n"
                               ["Welcome to CTIA!"
-                               " (go)    => start or restart CTIA"
-                               " (start) => start CTIA, if not already started"
-                               " (stop)  => stop CTIA, if not already stopped"
-                               " (current-app) => get current app, or nil"]))
+                               " (reset) / (reset7) => refresh, then (re)start CTIA (ES5/ES7)"
+                               " (go)    / (go7)    => (re)start CTIA (ES5/ES7)"
+                               " (start) / (start7) => start CTIA (ES5/ES7)"
+                               " (stop)             => stop CTIA"
+                               " (current-app)      => get current app, or nil"]))
                  ;10m
                  :repl-timeout 600000}
   :middleware [lein-git-down.plugin/inject-properties]
