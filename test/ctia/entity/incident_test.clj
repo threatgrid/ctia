@@ -103,6 +103,8 @@
 
 (defn gen-new-incident [severity]
   (-> new-incident-minimal
+      ;; something throwaway so we can provide a comparator for sorted-set-by below
+      ;; causes benign "no valid external id" warnings in bundle
       (assoc :id (str "transient:" (java.util.UUID/randomUUID)))
       (assoc :title (str (gensym)))
       (assoc :severity severity)))
