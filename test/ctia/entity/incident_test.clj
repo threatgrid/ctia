@@ -117,7 +117,6 @@
     (app/service-graph app)))
 
 (def ctim-severity-order
-  "As opposed to ES level, which is lowercase"
   {"Unknown" 0
    "None" 0
    "Info" 1
