@@ -285,8 +285,8 @@
                           "run" "-m" "ctia.dev.split-tests/dir" :project/test-paths]
             "tests" ["with-profile" ~ci-profiles "run" "-m" "circleci.test"]
 
-            "ci-run-tests" ["with-profile" ~ci-profiles "do" "clean," "javac," "split-test" ":frenchy64"]
-            "cron-run-tests" ["with-profile" ~ci-profiles "do" "clean," "javac," "split-test" ":frenchy64"]
+            "ci-run-tests" ["with-profile" ~ci-profiles "do" "clean," "javac," "split-test" ":no-gen"]
+            "cron-run-tests" ["with-profile" ~ci-profiles "do" "clean," "javac," "split-test" ":all"]
             "all-ci-profiles" ["shell" "echo" ~(pr-str all-ci-profiles)]
             ;; warm deps cache for all permutations of the build
             "warm-ci-deps" ["do"
