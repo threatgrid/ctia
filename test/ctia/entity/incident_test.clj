@@ -103,7 +103,7 @@
 
 (defn gen-new-incident [severity]
   (-> new-incident-minimal
-      (assoc :id (str "transient:" (rand-int 1000)))
+      (assoc :id (str "transient:" (java.util.UUID/randomUUID)))
       (assoc :title (str (gensym)))
       (assoc :severity severity)))
 
