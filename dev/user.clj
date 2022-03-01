@@ -1,15 +1,15 @@
 (ns user
   (:require
-   [clojure.tools.namespace.repl :refer [set-refresh-dirs refresh]]
    [cheshire.core :as json]
    [clj-http.client :as http]
    [clj-momo.lib.time :as time]
+   [clojure.repl :refer :all]
+   [clojure.tools.namespace.repl :refer [set-refresh-dirs refresh]]
    [ctia.init :as init]
    [ctia.properties :as p]
    [ctim.schemas.vocabularies :as vocab]
    [puppetlabs.trapperkeeper.app :as app]
-   [schema.core :as s]
-   [clojure.repl :refer :all]))
+   [schema.core :as s]))
 
 (set-refresh-dirs "src" "dev" "test" "checkouts")
 

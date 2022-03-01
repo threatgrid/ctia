@@ -251,6 +251,13 @@
   ;; 2. change the upstream dependency's version to the relevant sha
   ;;    eg., [threatgrid/ctim "9acbc93333d630d9b9a0a9fc19981b0ba0ddec1c"]
   ;;
+  ;; To work on the library locally without restarting the REPL, you can use lein checkouts.
+  ;; 1. $ mkdir checkouts
+  ;; 2. $ cd checkouts
+  ;; 3. $ ln -s ../ctim
+  ;; 4. Use `user/reset` to automatically reset checkouts
+  ;;    - if this does not work, remove "checkouts" from `set-refresh-dirs` in dev/user.clj
+  ;;      or replace with something more specific, eg., "checkouts/ctim/src"
 
   ;; uncomment and change during dev
   #_:git-down #_{threatgrid/ctim {:coordinates frenchy64/ctim}
