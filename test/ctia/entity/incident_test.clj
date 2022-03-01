@@ -130,7 +130,7 @@
 (defn script-search [app]
   (let [fixed-severities-asc ["Info" "Low" "Medium" "High" "Critical"]
         incidents-count (count fixed-severities-asc)
-        incidents (into (sorted-set-by :id) ;; try and randomize the order in which ES will index
+        incidents (into (sorted-set-by #(compare (:id %1) (:id %2))) ;; a (possibly vain) attempt to randomize the order in which ES will index
                         (map gen-new-incident)
                         fixed-severities-asc)
         _ (assert (= (count incidents) incidents-count))
@@ -163,7 +163,7 @@
     (cond-> [7]
       (System/getenv "CI") (conj 5))
     #(ductile.index/delete! % "ctia_*")
-    (test-for-each-store-with-app
+    (helpers/fixture-ctia-with-app
       (fn [app]
         (helpers/set-capabilities! app "foouser" ["foogroup"] "user" all-capabilities)
         (whoami-helpers/set-whoami-response app "45c1f5e3f05d0" "foouser" "foogroup" "user")

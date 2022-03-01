@@ -69,7 +69,7 @@
 
 (defn start
   "Starts CTIA with given config and services, otherwise defaults
-  to the same configuration as #'init/start-ctia."
+  to the same configuration as #'init/start-ctia (ES5)."
   [& {:keys [config services] :as m}]
   (refresh)
   (serially-alter-app 
@@ -82,8 +82,8 @@
 
 (defn -es7-init-config []
   (-> (p/build-init-config)
-      (assoc-in [:config :ctia :store :es :default :version] 7)
-      (assoc-in [:config :ctia :store :es :default :port] 9207)))
+      (assoc-in [:ctia :store :es :default :version] 7)
+      (assoc-in [:ctia :store :es :default :port] 9207)))
 
 (defn start7
   "Start CTIA with ES7"
