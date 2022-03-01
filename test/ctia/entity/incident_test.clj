@@ -160,7 +160,7 @@
 (comment
   docker-compose -f containers/dev/m1-docker-compose.yml up
   lein repl
-  (do (refresh) (clojure.test/test-vars [(requiring-resolve 'ctia.entity.incident-test/test-incident-script-search)]))
+  (do (refresh) (clojure.test/test-vars [(requiring-resolve 'ctia.entity.incident-test/test-incident-severity-int-search)]))
   )
 (deftest ^:frenchy64 test-incident-severity-int-search
   (es-helpers/for-each-es-version
