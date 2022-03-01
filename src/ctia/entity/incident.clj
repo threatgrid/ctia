@@ -167,12 +167,11 @@
    :severity_int {:op :remap
                   :field-name :severity
                   :remap-type :number
-                  ;; we index in es as lowercase
-                  :remappings {"info" 1
-                               "low" 2
-                               "medium" 3
-                               "high" 4
-                               "critical" 5}
+                  :remappings {"Info" 1
+                               "Low" 2
+                               "Medium" 3
+                               "High" 4
+                               "Critical" 5}
                   :remap-default 0}})
 
 (def incident-sort-fields
