@@ -24,7 +24,8 @@
             [puppetlabs.trapperkeeper.app :as app]
             [ctim.examples.incidents
              :refer
-             [new-incident-maximal new-incident-minimal]]))
+             [new-incident-maximal new-incident-minimal]]
+            [schema.core :as s]))
 
 (use-fixtures :once (join-fixtures [mth/fixture-schema-validation
                                     whoami-helpers/fixture-server]))
@@ -100,78 +101,56 @@
                              :additional-tests additional-tests})]
        (entity-crud-test parameters)))))
 
+(defn gen-new-incident [severity]
+  (-> new-incident-minimal
+      (assoc :id (str "transient:" (rand-int 1000)))
+      (assoc :title (str (gensym)))
+      (assoc :severity severity)))
+
+(s/defn create-incidents [app incidents :- (s/pred set?)]
+  (bundle/import-bundle
+    (-> new-bundle-minimal
+        (dissoc :id)
+        (assoc :incidents incidents))
+    nil    ;; external-key-prefixes
+    (auth/map->Identity {:login "foouser"
+                         :groups ["foogroup"]})
+    (app/service-graph app)))
+
+(def ctim-severity-order
+  "As opposed to ES level, which is lowercase"
+  {"Unknown" 0
+   "None" 0
+   "Info" 1
+   "Low" 2
+   "Medium" 3
+   "High" 4
+   "Critical" 5})
+
 (defn script-search [app]
-  (testing "GET /ctia/incident/search"
-    (let [severities (vec vocab/severity) ;; for rand-nth
-          incidents-count 10
-          incidents (set
-                      (repeatedly
-                        incidents-count
-                        #(-> new-incident-minimal
-                             (dissoc :id)
-                             (assoc :title (str (gensym)))
-                             (assoc :severity (rand-nth severities)))))
-          bundle (-> new-bundle-minimal
-                     (dissoc :id)
-                     (assoc :incidents incidents))
-          login (auth/map->Identity {:login  "foouser"
-                                     :groups ["foogroup"]})
-          created-bundle (bundle/import-bundle
-                           bundle
-                           nil    ;; external-key-prefixes
-                           login
-                           (app/service-graph app))
-          _ (prn "created bundle:")
-          _ ((requiring-resolve 'clojure.pprint/pprint) 
-             created-bundle)
-          ;; bench revision
-          #_#_
-          _ (testing ":revision"
-              (dotimes [_ 10]
-                (doseq [asc? [true false]]
-                  (prn "bench revision" (if asc? "asc" "desc"))
-                  (let [{:keys [parsed-body]} (time (search-th/search-raw app :incident {:sort_by "revision"
-                                                                                         :sort_order (if asc? "asc" "desc")}))
-                        _ (prn (count parsed-body))
-                        ]))))
-          ;; bench severity
-          #_#_
-          _ (testing ":severity"
-              (dotimes [_ 1 #_10]
-                (doseq [asc? [true false]]
-                  (prn "bench severity" (if asc? "asc" "desc"))
-                  (testing {:asc? asc?}
-                    (let [{:keys [parsed-body]} (time (search-th/search-raw app :incident {:sort_by "severity"
-                                                                                           :sort_order (if asc? "asc" "desc")}))
-                          _ (prn (count parsed-body))
-                          expected-parsed-body (sort-by :severity #(if asc?
-                                                                     (compare %1 %2)
-                                                                     (compare %2 %1))
-                                                        parsed-body)]
-                      (is (= (mapv (juxt :id :severity) expected-parsed-body)
-                             (mapv (juxt :id :severity) parsed-body))))))))
-          ;; bench severity_int
-          _ (testing ":severity_int"
-              (dotimes [_ 1 #_10]
-                (doseq [asc? [true false]]
-                  ;(prn "bench severity_int" (if asc? "asc" "desc"))
-                  (testing {:asc? asc?}
-                    (let [{:keys [parsed-body] :as raw} (identity #_time (search-th/search-raw app :incident {:sort_by "severity_int"
-                                                                                                              :sort_order (if asc? "asc" "desc")}))
-                          {:keys [remappings remap-default remap-type]} (-> sut/sort-by-field-exts :severity_int)
-                          _ (assert (= :number remap-type))
-                          expected-parsed-body (sort-by #(remappings (:severity %) remap-default)
-                                                        #(if asc?
-                                                           (compare %1 %2)
-                                                           (compare %2 %1))
-                                                        parsed-body)]
-                      (and (is (= incidents-count (count parsed-body)) (pr-str raw))
-                           (is (= (mapv :severity expected-parsed-body)
-                                  (mapv :severity parsed-body)))
-                           (is (= expected-parsed-body
-                                  parsed-body))))))))
-          _ (run! #(search-th/delete-doc app :incident (:id %))
-                  (:incidents created-bundle))])))
+  (let [fixed-severities-asc ["Info" "Low" "Medium" "High" "Critical"]
+        incidents-count (count fixed-severities-asc)
+        incidents (into (sorted-set-by :id) ;; try and randomize the order in which ES will index
+                        (map gen-new-incident)
+                        fixed-severities-asc)
+        _ (assert (= (count incidents) incidents-count))
+        created-bundle (create-incidents app incidents)
+        _ (doseq [asc? [true false]]
+            (testing {:asc? asc?}
+              (let [{:keys [parsed-body] :as raw} (search-th/search-raw app :incident {:sort_by "severity_int"
+                                                                                       :sort_order (if asc? "asc" "desc")})
+                    expected-parsed-body (sort-by (fn [{:keys [severity]}]
+                                                    {:post [(number? %)]}
+                                                    (ctim-severity-order severity))
+                                                  #(if asc?
+                                                     (compare %1 %2)
+                                                     (compare %2 %1))
+                                                  parsed-body)]
+                (and (is (= incidents-count (count parsed-body)) (pr-str raw))
+                     (is (= ((if asc? identity rseq) fixed-severities-asc)
+                            (mapv :severity parsed-body)))
+                     (is (= expected-parsed-body
+                            parsed-body))))))]))
 
 (comment
   docker-compose -f containers/dev/m1-docker-compose.yml up

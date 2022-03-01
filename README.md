@@ -122,7 +122,7 @@ be created more than once.
 
 ### Local workflow
 
-To start CTIA locally, use `./scripts/run`.
+To start CTIA locally, use `./scripts/run` for ES5 and `./scripts/run7` for ES7.
 
 For a REPL workflow, run `lein repl`. Use `(start)` to start CTIA,
 `(stop)` to stop it, and `(go)` to restart it.

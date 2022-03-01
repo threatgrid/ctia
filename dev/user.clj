@@ -69,7 +69,7 @@
 (defn start
   "Starts CTIA with given config and services, otherwise defaults
   to the same configuration as #'init/start-ctia."
-  [& {:keys [config services] :as m}]
+  [{:keys [config services] :as m}]
   (refresh)
   (serially-alter-app 
     (fn [app]
@@ -78,6 +78,13 @@
         (do (println "CTIA already started! Use (go ...) to restart")
             app)
         (init/start-ctia! m)))))
+
+(defn start7
+  [{:keys [config services] :as m}]
+  (-> m
+      (assoc-in [:config :ctia :store :es :default :version] 7)
+      (assoc-in [:config :ctia :store :es :default :port] 9207)
+      start))
 
 (defn stop
   "Stops CTIA."
@@ -90,12 +97,20 @@
 
 (defn go
   "Restarts CTIA. Same args as #'start."
-  [& {:keys [config services] :as m}]
+  [{:keys [config services] :as m}]
   (serially-alter-app
     (fn [app]
       (println "Restarting CTIA...")
       (some-> app app/stop)
       (init/start-ctia! m))))
+
+(defn go7
+  "Restarts CTIA using ES7. Same args as #'start."
+  [& {:keys [config services] :as m}]
+  (-> m
+      (assoc-in [:config :ctia :store :es :default :version] 7)
+      (assoc-in [:config :ctia :store :es :default :port] 9207)
+      go))
 
 ;;;;;;;;;;;;;;;;;;;;;;;
 ;; Helpers
