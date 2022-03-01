@@ -84,8 +84,7 @@
            (is (get-in updated-incident [:incident_time :remediated]))
 
            (is (= (get-in updated-incident [:incident_time :remediated])
-                  (tc/to-date fixed-now)))))
-       ))))
+                  (tc/to-date fixed-now)))))))))
 
 (deftest test-incident-crud-routes
   (test-for-each-store-with-app
@@ -103,10 +102,8 @@
 
 (defn gen-new-incident [severity]
   (-> new-incident-minimal
-      ;; something throwaway so we can provide a comparator for sorted-set-by below
-      ;; causes benign "no valid external id" warnings in bundle
-      (assoc :id (str "transient:" (java.util.UUID/randomUUID)))
-      (assoc :title (str (gensym)))
+      (dissoc :id)
+      (assoc :title (str (java.util.UUID/randomUUID)))
       (assoc :severity severity)))
 
 (s/defn create-incidents [app incidents :- (s/pred set?)]
@@ -145,7 +142,7 @@
     (purge-incidents! app)
     (testing (pr-str fixed-severities-asc)
       (let [incidents-count (count fixed-severities-asc)
-            incidents (into (sorted-set-by #(compare (:id %1) (:id %2))) ;; a (possibly vain) attempt to randomize the order in which ES will index
+            incidents (into (sorted-set-by #(compare (:title %1) (:title %2))) ;; a (possibly vain) attempt to randomize the order in which ES will index
                             (map gen-new-incident)
                             fixed-severities-asc)
             _ (assert (= (count incidents) incidents-count))
