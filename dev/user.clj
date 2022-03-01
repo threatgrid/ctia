@@ -5,6 +5,7 @@
    [clj-http.client :as http]
    [clj-momo.lib.time :as time]
    [ctia.init :as init]
+   [ctia.properties :as p]
    [ctim.schemas.vocabularies :as vocab]
    [puppetlabs.trapperkeeper.app :as app]
    [schema.core :as s]
@@ -69,7 +70,7 @@
 (defn start
   "Starts CTIA with given config and services, otherwise defaults
   to the same configuration as #'init/start-ctia."
-  [{:keys [config services] :as m}]
+  [& {:keys [config services] :as m}]
   (refresh)
   (serially-alter-app 
     (fn [app]
@@ -79,12 +80,15 @@
             app)
         (init/start-ctia! m)))))
 
-(defn start7
-  [{:keys [config services] :as m}]
-  (-> m
+(defn -es7-init-config []
+  (-> (p/build-init-config)
       (assoc-in [:config :ctia :store :es :default :version] 7)
-      (assoc-in [:config :ctia :store :es :default :port] 9207)
-      start))
+      (assoc-in [:config :ctia :store :es :default :port] 9207)))
+
+(defn start7
+  "Start CTIA with ES7"
+  []
+  (start :config (-es7-init-config)))
 
 (defn stop
   "Stops CTIA."
@@ -97,7 +101,8 @@
 
 (defn go
   "Restarts CTIA. Same args as #'start."
-  [{:keys [config services] :as m}]
+  [& {:keys [config services] :as m}]
+  (refresh)
   (serially-alter-app
     (fn [app]
       (println "Restarting CTIA...")
@@ -105,12 +110,8 @@
       (init/start-ctia! m))))
 
 (defn go7
-  "Restarts CTIA using ES7. Same args as #'start."
-  [& {:keys [config services] :as m}]
-  (-> m
-      (assoc-in [:config :ctia :store :es :default :version] 7)
-      (assoc-in [:config :ctia :store :es :default :port] 9207)
-      go))
+  "Restarts CTIA using ES7."
+  [] (go :config (-es7-init-config)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;
 ;; Helpers
