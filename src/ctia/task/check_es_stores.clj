@@ -70,7 +70,7 @@
     (log/infof "%s - store size: %s records"
                (:type target-store)
                store-size)
-    (loop [offset 0
+    (loop [offset (identity 0) ;; nilable, suppress perf warning
            sort-keys nil
            checked-count 0]
       (let [{:keys [data paging]
@@ -80,7 +80,7 @@
                          offset
                          sort-keys)
             next (:next paging)
-            offset (long (:offset next 0))
+            offset (:offset next 0)
             search_after (:sort paging)
             checked-count (+ checked-count
                              (count data))]
