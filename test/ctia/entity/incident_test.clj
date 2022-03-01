@@ -168,66 +168,68 @@
                    :let [fixed-severities-asc (into [] (mapcat #(repeat multiplier %))
                                                     canonical-fixed-severities-asc)]]
              (try (testing (pr-str fixed-severities-asc)
-                    (dotimes [_ (if bench-atom 10 1)]
-                      (let [incidents-count (count fixed-severities-asc)
-                            incidents (into (sorted-set-by #(compare (:title %1) (:title %2))) ;; a (possibly vain) attempt to randomize the order in which ES will index
-                                            (map gen-new-incident)
-                                            fixed-severities-asc)
-                            _ (assert (= incidents-count (count incidents))
-                                      (format "case: %s, multiplier %s, expected incidents: %s, actual:"
-                                              canonical-fixed-severities-asc
-                                              multiplier
-                                              incidents-count
-                                              (count incidents)))
-                            created-bundle (create-incidents app incidents)
-                            _ (doseq [sort_by (cond-> ["severity_int"]
-                                                ;; hijacking this int field for perf comparison, see `gen-new-incident`
-                                                bench-atom (conj "revision"))
-                                      asc? [true false]]
-                                (dotimes [i (if bench-atom 10 1)]
-                                  (testing {:sort_by sort_by :asc? asc?}
-                                    (let [[{:keys [parsed-body] :as raw} ms-time] (result+ms-time
-                                                                                    (search-th/search-raw app :incident {:sort_by sort_by
-                                                                                                                         :sort_order (if asc? "asc" "desc")}))
-                                          expected-parsed-body (sort-by (fn [{:keys [severity]}]
-                                                                          {:post [(number? %)]}
-                                                                          (ctim-severity-order severity))
-                                                                        #(if asc?
-                                                                           (compare %1 %2)
-                                                                           (compare %2 %1))
-                                                                        parsed-body)
-                                          success? (and (is (= incidents-count (count expected-parsed-body)) (pr-str raw))
-                                                        (is (= incidents-count (count parsed-body)) (pr-str raw))
-                                                        ;; avoid potential bugs via sort-by by using fixed-severities-asc directly
-                                                        (is (= ((if asc? identity rseq) fixed-severities-asc)
-                                                               (mapv :severity parsed-body)))
-                                                        ;; should succeed even with multipliers because sort-by is stable
-                                                        (is (= expected-parsed-body
-                                                               parsed-body)))]
-                                      (when bench-atom
-                                        (assert success?)
-                                        (swap! bench-atom update-in [canonical-fixed-severities-asc multiplier sort_by]
-                                               (fn [prev]
-                                                 (let [nxt (-> prev
-                                                               (update :incidents-count #(or (when %
-                                                                                               (assert (= incidents-count (:incidents-count %))
-                                                                                                       (format "case: %s, multiplier %s, expected incidents: %s, actual:"
-                                                                                                               canonical-fixed-severities-asc
-                                                                                                               multiplier
-                                                                                                               incidents-count
-                                                                                                               (count incidents)))
-                                                                                               %)
-                                                                                             incidents-count))
-                                                               (update :ms-times (fnil conj []) ms-time)
-                                                               ((fn [{:keys [ms-times] :as res}]
-                                                                  (assoc res :ms-avg (format "%e" (double (/ (apply + ms-times) (count ms-times))))))))]
-                                                   ;; dirty side effects in swap!. note: atom access is seralized for now
-                                                   (println)
-                                                   (println (format "Benchmark %s" sort_by))
-                                                   (println (format "Case: %s (%sth iteration)" (pr-str canonical-fixed-severities-asc) (str i)))
-                                                   (println (format "Multiplier: " multiplier))
-                                                   (println (format "Duration: %e ms" ms-time))
-                                                   (println (format "Average: %s ms" (:ms-avg nxt)))))))))))])))
+                    (let [incidents-count (count fixed-severities-asc)
+                          incidents (into (sorted-set-by #(compare (:title %1) (:title %2))) ;; a (possibly vain) attempt to randomize the order in which ES will index
+                                          (map gen-new-incident)
+                                          fixed-severities-asc)
+                          _ (assert (= incidents-count (count incidents))
+                                    (format "case: %s, multiplier %s, expected incidents: %s, actual:"
+                                            canonical-fixed-severities-asc
+                                            multiplier
+                                            incidents-count
+                                            (count incidents)))
+                          created-bundle (create-incidents app incidents)
+                          _ (doseq [sort_by (cond-> ["severity_int"]
+                                              ;; hijacking this int field for perf comparison, see `gen-new-incident`
+                                              bench-atom (conj "revision"))
+                                    asc? [true false]]
+                              (dotimes [i (if bench-atom 1 1)]
+                                (testing {:sort_by sort_by :asc? asc?}
+                                  (let [[{:keys [parsed-body] :as raw} ms-time] (result+ms-time
+                                                                                  (search-th/search-raw app :incident {:sort_by sort_by
+                                                                                                                       :sort_order (if asc? "asc" "desc")}))
+                                        expected-parsed-body (sort-by (fn [{:keys [severity]}]
+                                                                        {:post [(number? %)]}
+                                                                        (ctim-severity-order severity))
+                                                                      #(if asc?
+                                                                         (compare %1 %2)
+                                                                         (compare %2 %1))
+                                                                      parsed-body)
+                                        success? (and (is (= incidents-count (count expected-parsed-body)) (pr-str raw))
+                                                      (is (= incidents-count (count parsed-body)) (pr-str raw))
+                                                      ;; avoid potential bugs via sort-by by using fixed-severities-asc directly
+                                                      (is (= ((if asc? identity rseq) fixed-severities-asc)
+                                                             (mapv :severity parsed-body)))
+                                                      ;; should succeed even with multipliers because sort-by is stable
+                                                      (is (= expected-parsed-body
+                                                             parsed-body)))]
+                                    (when bench-atom
+                                      (assert success?)
+                                      (swap! bench-atom update-in [canonical-fixed-severities-asc multiplier sort_by]
+                                             (fn [prev]
+                                               (let [nxt (-> prev
+                                                             (update :incidents-count #(or (when %
+                                                                                             (assert (= incidents-count (:incidents-count %))
+                                                                                                     (format "case: %s, multiplier %s, expected incidents: %s, actual:"
+                                                                                                             canonical-fixed-severities-asc
+                                                                                                             multiplier
+                                                                                                             incidents-count
+                                                                                                             (count incidents)))
+                                                                                             %)
+                                                                                           incidents-count))
+                                                             (update :ms-times (fnil conj []) ms-time)
+                                                             ((fn [{:keys [ms-times] :as res}]
+                                                                (assoc res :ms-avg (format "%e" (double (/ (apply + ms-times) (count ms-times))))))))]
+                                                 ;; dirty side effects in swap!. note: atom access is seralized for now
+                                                 (println)
+                                                 (println (format "Benchmark %s" sort_by))
+                                                 (println (format "Case: %s %s (%sth iteration)"
+                                                                  (pr-str canonical-fixed-severities-asc)
+                                                                  (if asc? "ascending" "descending")
+                                                                  (str i)))
+                                                 (println (format "Multiplier: %s" (str multiplier)))
+                                                 (println (format "Duration: %ems" ms-time))
+                                                 (println (format "Average: %sms" (:ms-avg nxt)))))))))))]))
                   (finally (purge-incidents! app))))))))))
 
 (comment
