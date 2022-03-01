@@ -132,30 +132,38 @@
                                           :REALLY_DELETE_ALL_THESE_ENTITIES true}))
 
 (defn severity-int-script-search [app]
-  (let [fixed-severities-asc ["Info" "Low" "Medium" "High" "Critical"]
-        incidents-count (count fixed-severities-asc)
-        incidents (into (sorted-set-by #(compare (:id %1) (:id %2))) ;; a (possibly vain) attempt to randomize the order in which ES will index
-                        (map gen-new-incident)
-                        fixed-severities-asc)
-        _ (assert (= (count incidents) incidents-count))
-        created-bundle (create-incidents app incidents)
-        _ (doseq [asc? [true false]]
-            (testing {:asc? asc?}
-              (let [{:keys [parsed-body] :as raw} (search-th/search-raw app :incident {:sort_by "severity_int"
-                                                                                       :sort_order (if asc? "asc" "desc")})
-                    expected-parsed-body (sort-by (fn [{:keys [severity]}]
-                                                    {:post [(number? %)]}
-                                                    (ctim-severity-order severity))
-                                                  #(if asc?
-                                                     (compare %1 %2)
-                                                     (compare %2 %1))
-                                                  parsed-body)]
-                (and (is (= incidents-count (count parsed-body)) (pr-str raw))
-                     (is (= ((if asc? identity rseq) fixed-severities-asc)
-                            (mapv :severity parsed-body)))
-                     (is (= expected-parsed-body
-                            parsed-body))))))
-        _ (purge-incidents! app)]))
+  (doseq [;; only one ordering with these severities. don't add both Unknown and None in the same test.
+          fixed-severities-asc [["Unknown" "Info"]
+                                ["Unknown" "Critical"]
+                                ["None" "Info"]
+                                ["None" "Critical"]
+                                ["Info" "Low" "Medium" "High" "Critical"]
+                                ["Unknown" "Info" "Low" "Medium" "High" "Critical"]
+                                ["None" "Info" "Low" "Medium" "High" "Critical"]]]
+    (purge-incidents! app)
+    (testing (pr-str fixed-severities-asc)
+      (let [incidents-count (count fixed-severities-asc)
+            incidents (into (sorted-set-by #(compare (:id %1) (:id %2))) ;; a (possibly vain) attempt to randomize the order in which ES will index
+                            (map gen-new-incident)
+                            fixed-severities-asc)
+            _ (assert (= (count incidents) incidents-count))
+            created-bundle (create-incidents app incidents)
+            _ (doseq [asc? [true false]]
+                (testing {:asc? asc?}
+                  (let [{:keys [parsed-body] :as raw} (search-th/search-raw app :incident {:sort_by "severity_int"
+                                                                                           :sort_order (if asc? "asc" "desc")})
+                        expected-parsed-body (sort-by (fn [{:keys [severity]}]
+                                                        {:post [(number? %)]}
+                                                        (ctim-severity-order severity))
+                                                      #(if asc?
+                                                         (compare %1 %2)
+                                                         (compare %2 %1))
+                                                      parsed-body)]
+                    (and (is (= incidents-count (count parsed-body)) (pr-str raw))
+                         (is (= ((if asc? identity rseq) fixed-severities-asc)
+                                (mapv :severity parsed-body)))
+                         (is (= expected-parsed-body
+                                parsed-body))))))]))))
 
 (comment
   docker-compose -f containers/dev/m1-docker-compose.yml up
