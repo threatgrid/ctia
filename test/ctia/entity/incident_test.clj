@@ -159,7 +159,8 @@
                                                          (compare %1 %2)
                                                          (compare %2 %1))
                                                       parsed-body)]
-                    (and (is (= incidents-count (count parsed-body)) (pr-str raw))
+                    (and (is (= incidents-count (count expected-parsed-body)) (pr-str raw))
+                         (is (= incidents-count (count parsed-body)) (pr-str raw))
                          (is (= ((if asc? identity rseq) fixed-severities-asc)
                                 (mapv :severity parsed-body)))
                          (is (= expected-parsed-body
