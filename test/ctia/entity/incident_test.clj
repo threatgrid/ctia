@@ -183,7 +183,7 @@
                                               ;; hijacking this int field for perf comparison, see `gen-new-incident`
                                               bench-atom (conj "revision"))
                                     asc? [true false]
-                                    iteration (range (if bench-atom 10 0))]
+                                    iteration (range (if bench-atom 10 1))]
                               (testing {:iteration iteration :sort_by sort_by :asc? asc?}
                                 (let [[{:keys [parsed-body] :as raw} ms-time] (result+ms-time
                                                                                 (search-th/search-raw app :incident {:limit incidents-count
