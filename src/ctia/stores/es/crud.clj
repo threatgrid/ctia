@@ -403,7 +403,8 @@ It returns the documents with full hits meta data including the real index in wh
                                                                      %))]
                                   (assert (simple-keyword? field-name))
                                   (or (some-> (get sort-by-field-exts field-name)
-                                              (into (select-keys field [:sort_order])))
+                                              (into (select-keys field [:sort_order]))
+                                              (update :field-name #(or % (:field-name field))))
                                       field))))))))
 
 (defn handle-find

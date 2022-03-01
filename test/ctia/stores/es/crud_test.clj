@@ -214,7 +214,7 @@
                        :remap-type :number
                        :remappings {"a" 1, "b" 2}
                        :remap-default 0
-                       :field-name :remap2}]}
+                       :field-name "remap2"}]}
            (sut/rename-sort-fields
              {:sort_by "remap1"
               :sort-by-field-exts {:remap1 {:op :remap
