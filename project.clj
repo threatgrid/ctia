@@ -186,7 +186,10 @@
                    :pedantic? :warn
                    :source-paths ["dev"]}
              :ci {:pedantic? :abort
-                  :global-vars {*warn-on-reflection* true}}
+                  :global-vars {*warn-on-reflection* true}
+                  :jvm-opts [;; actually print stack traces instead of useless
+                             ;; "Full report at: /tmp/clojure-8187773283812483853.edn"
+                             "-Dclojure.main.report=stderr"]}
              :next-clojure {:dependencies [[org.clojure/clojure "1.11.0-beta1"]]}
              :jmx {:jvm-opts ["-Dcom.sun.management.jmxremote"
                               "-Dcom.sun.management.jmxremote.port=9010"
