@@ -156,19 +156,19 @@
            (whoami-helpers/set-whoami-response app "45c1f5e3f05d0" "foouser" "foogroup" "user")
            (doseq [;; only one ordering with these severities. don't add both Unknown and None in the same test.
                    canonical-fixed-severities-asc (-> []
-                                                      ;; only benchmark the largest test cases
+                                                      ;; only benchmark the largest test case
                                                       (cond-> (not bench-atom)
                                                         (into [["Unknown" "Info"]
                                                                ["Unknown" "Critical"]
                                                                ["None" "Info"]
                                                                ["None" "Critical"]
-                                                               ["Info" "Low" "Medium" "High" "Critical"]]))
-                                                      (into [["Unknown" "Info" "Low" "Medium" "High" "Critical"]
-                                                             ["None" "Info" "Low" "Medium" "High" "Critical"]]))
+                                                               ["Info" "Low" "Medium" "High" "Critical"]
+                                                               ["Unknown" "Info" "Low" "Medium" "High" "Critical"]]))
+                                                      (into [["None" "Info" "Low" "Medium" "High" "Critical"]]))
                    ;; scale up the test size by repeating elements
                    multiplier (if-not bench-atom
                                 [1 2]
-                                [#_1 #_10 #_100 #_1000 5000])
+                                [#_1 #_10 #_100 #_1000 #_5000 20000])
                    :let [fixed-severities-asc (into [] (mapcat #(repeat multiplier %))
                                                     canonical-fixed-severities-asc)]]
              (try (testing (pr-str fixed-severities-asc)
@@ -187,7 +187,8 @@
                                             multiplier
                                             (count fixed-severities-asc)
                                             (count incidents)))
-                          created-bundle (create-incidents app incidents)
+                          [created-bundle create-incidents-ms-time] (result+ms-time (create-incidents app incidents))
+                          _ (println (format "Took %ems to import %s incidents" create-incidents-ms-time (str incidents-count)))
                           _ (doseq [sort_by (cond-> ["severity_int"]
                                               bench-atom (conj
                                                            ;; hijacking this int field for perf comparison, see `gen-new-incident`
