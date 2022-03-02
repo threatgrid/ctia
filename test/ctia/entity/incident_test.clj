@@ -163,8 +163,9 @@
                                                    ["Unknown" "Info" "Low" "Medium" "High" "Critical"]
                                                    ["None" "Info" "Low" "Medium" "High" "Critical"]]
                    ;; scale up the test size by repeating elements
-                   multiplier (cond-> [1]
-                                bench-atom (into [#_10 #_100 #_1000 20000]))
+                   multiplier (if-not bench-atom
+                                [1]
+                                [#_1 #_10 #_100 #_1000 5000])
                    :let [fixed-severities-asc (into [] (mapcat #(repeat multiplier %))
                                                     canonical-fixed-severities-asc)]]
              (try (testing (pr-str fixed-severities-asc)
@@ -189,9 +190,13 @@
                                     iteration (range (if bench-atom 5 1))
                                     :let [search-params (cond-> {:limit incidents-count}
                                                           sort_by (assoc :sort_by sort_by
-                                                                         :sort_order (if asc? "asc" "desc")))]]
-                              (testing (pr-str {:iteration iteration :sort_by sort_by :asc? asc? :search-params search-params})
-                                (let [[{:keys [parsed-body] :as raw} ms-time] (result+ms-time
+                                                                         :sort_order (if asc? "asc" "desc")))
+                                          test-id {:iteration iteration :sort_by sort_by :asc? asc? :search-params search-params
+                                                   :incidents-count incidents-count}]]
+                              (testing (pr-str test-id)
+                                (let [_ (when bench-atom
+                                          (println "Benchmarking..." (pr-str test-id)))
+                                      [{:keys [parsed-body] :as raw} ms-time] (result+ms-time
                                                                                 (search-th/search-raw app :incident search-params))
                                       
                                       success? (and (is (= incidents-count (count parsed-body)) (when (= 1 multiplier) (pr-str raw)))
