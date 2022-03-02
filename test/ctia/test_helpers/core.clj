@@ -30,6 +30,10 @@
 
 (def ^:dynamic ^:private *current-app*)
 
+(defn get-es-versions-to-test []
+  (or (some-> (System/getProperty "ctia.test.es-versions") read-string set)
+      #{5 7}))
+
 (def
   ^:dynamic ^:private
   *properties-overrides*
@@ -38,29 +42,35 @@
   used to override the default properties."
   ;; Default overrides for any properties that are in the default properties file
   ;; yet are unsafe/undesirable for tests
-  ["ctia.auth.type"                            "allow-all"
-   "ctia.access-control.default-tlp"           "green"
-   "ctia.access-control.min-tlp"               "white"
-   "ctia.access-control.max-record-visibility" "everyone"
-   "ctia.encryption.key.filepath"              "resources/cert/ctia-encryption.key"
-   "ctia.events.enabled"                        true
-   "ctia.events.log"                            false
-   "ctia.http.dev-reload"                       false
-   "ctia.http.min-threads"                      9
-   "ctia.http.max-threads"                      10
-   "ctia.http.show.protocol"                    "http"
-   "ctia.http.show.hostname"                    "localhost"
-   "ctia.http.show.port"                        "57254"
-   "ctia.http.show.path-prefix"                 ""
-   "ctia.http.jwt.enabled"                      true
-   "ctia.http.jwt.public-key-path"              "resources/cert/ctia-jwt.pub"
-   "ctia.http.bulk.max-size"                    30000
-   "ctia.hook.redis.enabled"                    false
-   "ctia.hook.redis.channel-name"               "events-test"
-   "ctia.metrics.riemann.enabled"               false
-   "ctia.metrics.console.enabled"               false
-   "ctia.metrics.jmx.enabled"                   false
-   "ctia.versions.config"                       "test"])
+  (into ["ctia.auth.type"                            "allow-all"
+         "ctia.access-control.default-tlp"           "green"
+         "ctia.access-control.min-tlp"               "white"
+         "ctia.access-control.max-record-visibility" "everyone"
+         "ctia.encryption.key.filepath"              "resources/cert/ctia-encryption.key"
+         "ctia.events.enabled"                        true
+         "ctia.events.log"                            false
+         "ctia.http.dev-reload"                       false
+         "ctia.http.min-threads"                      9
+         "ctia.http.max-threads"                      10
+         "ctia.http.show.protocol"                    "http"
+         "ctia.http.show.hostname"                    "localhost"
+         "ctia.http.show.port"                        "57254"
+         "ctia.http.show.path-prefix"                 ""
+         "ctia.http.jwt.enabled"                      true
+         "ctia.http.jwt.public-key-path"              "resources/cert/ctia-jwt.pub"
+         "ctia.http.bulk.max-size"                    30000
+         "ctia.hook.redis.enabled"                    false
+         "ctia.hook.redis.channel-name"               "events-test"
+         "ctia.metrics.riemann.enabled"               false
+         "ctia.metrics.console.enabled"               false
+         "ctia.metrics.jmx.enabled"                   false
+         "ctia.versions.config"                       "test"]
+        ;; use es7 if es5 is not available
+        (let [es-versions (get-es-versions-to-test)]
+          (when (and (not (es-versions 5))
+                     (es-versions 7))
+            ["ctia.store.es.default.port" 9207
+             "ctia.store.es.default.version" 7]))))
 (assert (even? (count *properties-overrides*)))
 
 (defn- isolate-config-indices
