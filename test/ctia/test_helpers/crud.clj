@@ -270,36 +270,35 @@
             (is (= 200 (:status response)))
             (is (= [expected] records))))
 
-        (testing (format "PATCH /ctia/%s/:id" entity-str)
-          (let [updates {update-field "patch"}
-                response (PATCH app
-                                (format "ctia/%s/%s" entity-str (:short-id record-id))
-                                :body updates
-                                :headers headers)
-                updated-record (:parsed-body response)
-                this-timestamp (:timestamp updated-record)]
-            (when patch-tests?
+        (when patch-tests?
+          (testing (format "PATCH /ctia/%s/:id" entity-str)
+            (let [updates {update-field "patch"}
+                  response (PATCH app
+                                  (format "ctia/%s/%s" entity-str (:short-id record-id))
+                                  :body updates
+                                  :headers headers)
+                  updated-record (:parsed-body response)
+                  this-timestamp (:timestamp updated-record)]
               (is-changed-timestamp updated-record)
-              (is (not= last-timestamp this-timestamp))
               (is (= 200 (:status response)))
               (is (= (merge post-record updates)
                      updated-record)))))
 
-        (testing (format "PUT /ctia/%s/:id" entity-str)
-          (let [with-updates (-> post-record
-                                 (assoc update-field "modified")
-                                 (dissoc optional-field))
-                {updated-record :parsed-body
-                 update-status :status}
-                (PUT app
-                     (format "ctia/%s/%s" entity-str (:short-id record-id))
-                     :body with-updates
-                     :headers headers)
-                {stored-record :parsed-body}
-                (GET app
-                     (format "ctia/%s/%s" entity-str (:short-id record-id))
-                     :headers headers)]
-            (when update-tests?
+        (when update-tests?
+          (testing (format "PUT /ctia/%s/:id" entity-str)
+            (let [with-updates (-> post-record
+                                   (assoc update-field "modified")
+                                   (dissoc optional-field))
+                  {updated-record :parsed-body
+                   update-status :status}
+                  (PUT app
+                       (format "ctia/%s/%s" entity-str (:short-id record-id))
+                       :body with-updates
+                       :headers headers)
+                  {stored-record :parsed-body}
+                  (GET app
+                       (format "ctia/%s/%s" entity-str (:short-id record-id))
+                       :headers headers)]
               (is-changed-timestamp updated-record)
               (is (= 200 update-status))
               (is (= with-updates
@@ -308,24 +307,24 @@
                      stored-record))
               (is (= 404
                      (:status (PUT app
-                                  (format "ctia/%s/not-found-%s"
-                                          entity-str
-                                          (:short-id record-id))
-                                :body with-updates
-                                :headers headers)))))
+                                   (format "ctia/%s/not-found-%s"
+                                           entity-str
+                                           (:short-id record-id))
+                                   :body with-updates
+                                   :headers headers)))))))
 
-            ;; execute entity custom tests before deleting the fixture
-            (testing "additional tests"
-              (when additional-tests
-                (additional-tests app
-                                  record-id
-                                  (if update-tests?
-                                    updated-record
-                                    post-record))))))
+        ;; execute entity custom tests before deleting the fixture
+        (when additional-tests
+          (testing "additional tests"
+            (additional-tests app
+                              record-id
+                              (if update-tests?
+                                updated-record
+                                post-record))))
 
         (when revoke-tests?
           (testing (format "POST /ctia/%s/:id/expire revokes" entity-str)
-            (let [fixed-now (tc/to-date  "2020-12-31")]
+            (let [fixed-now (tc/to-date "2020-12-31")]
               (helpers/fixture-with-fixed-time
                fixed-now
                (fn []
@@ -334,10 +333,12 @@
                                        (format "ctia/%s/%s/expire" entity-str (:short-id record-id))
                                        :headers headers
                                        (when revoke-tests-extra-query-params
-                                         [:query-params revoke-tests-extra-query-params]))]
+                                         [:query-params revoke-tests-extra-query-params]))
+                       updated-record (:parsed-body response)]
+                   (is-changed-timestamp updated-record)
                    (is (= 200 (:status response))
                        (format "POST %s/:id/expire succeeds" entity-str))
-                   (is (= fixed-now (-> response :parsed-body :valid_time :end_time))
+                   (is (= fixed-now (-> updated-record :valid_time :end_time))
                        ":valid_time properly reset")))))))
 
         (when invalid-tests?
