@@ -170,7 +170,8 @@
                                                     canonical-fixed-severities-asc)]]
              (try (testing (pr-str fixed-severities-asc)
                     (let [incidents-count (count fixed-severities-asc)
-                          result-size (min 1000 incidents-count)
+                          result-size (min 10000 ;; default index.max_result_window
+                                           incidents-count)
                           incidents (into (sorted-set-by #(compare (:title %1) (:title %2))) ;; a (possibly vain) attempt to randomize the order in which ES will index
                                           (map gen-new-incident)
                                           fixed-severities-asc)
