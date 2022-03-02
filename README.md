@@ -122,7 +122,9 @@ be created more than once.
 
 ### Local workflow
 
-To start CTIA locally, use `./scripts/run`.
+To start CTIA locally, use `./scripts/run` for ES5 and `./scripts/run7` for ES7.
+
+To run tests, use `./scripts/test` for all non-integration tests, and `./scripts/test7` for just ES7 tests.
 
 For a REPL workflow, run `lein repl`. Use `(start)` to start CTIA,
 `(stop)` to stop it, and `(go)` to restart it.
@@ -132,7 +134,7 @@ For a REPL workflow, run `lein repl`. Use `(start)` to start CTIA,
 All PRs must pass `lein test` with no fails for PRs to be accepted.
 Any new code functionality/change should have tests accompanying it.
 
-PRs are built using GitHub Actions, and push builds via Travis CI.
+PRs are built and deployed using GitHub Actions.
 
 To skip CI on a PR commit, use [[skip ci]](https://github.blog/changelog/2021-02-08-github-actions-skip-pull-request-and-push-workflows-with-skip-ci/)
 in the commit message. Due to branch protection rules, once you are ready to

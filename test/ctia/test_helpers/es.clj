@@ -1,15 +1,15 @@
 (ns ctia.test-helpers.es
   "ES test helpers"
-  (:require [clojure.test :refer [testing]]
-            [cheshire.core :as json]
-            [ductile.index :as es-index]
+  (:require [cheshire.core :as json]
+            [clojure.java.io :as io]
+            [clojure.test :refer [testing]]
+            [ctia.stores.es.init :as es-init]
+            [ctia.stores.es.schemas :refer [ESConnServices]]
+            [ctia.stores.es.store :as es-store]
+            [ctia.test-helpers.core :as h]
             [ductile.conn :as es-conn]
             [ductile.document :as es-doc]
-            [clojure.java.io :as io]
-            [ctia.stores.es.init :as es-init]
-            [ctia.stores.es.store :as es-store]
-            [ctia.stores.es.schemas :refer [ESConnServices]]
-            [ctia.test-helpers.core :as h]
+            [ductile.index :as es-index]
             [puppetlabs.trapperkeeper.app :as app]
             [schema.core :as s]))
 
@@ -88,18 +88,24 @@
   (doseq [entity (keys (all-stores))]
     (purge-index-and-template entity services)))
 
+(defn -es-port []
+  (if ((h/get-es-versions-to-test) 5) "9205" "9207"))
+
+(defn -es-version []
+  (if ((h/get-es-versions-to-test) 5) 5 7))
+
 (defn fixture-properties:es-store [t]
   ;; Note: These properties may be overwritten by ENV variables
   (h/with-properties ["ctia.store.es.default.shards" 5
                       "ctia.store.es.default.replicas" 1
                       "ctia.store.es.default.refresh" "true"
                       "ctia.store.es.default.refresh_interval" "1s"
-                      "ctia.store.es.default.port" "9205"
+                      "ctia.store.es.default.port" (-es-port)
                       "ctia.store.es.default.indexname" "test_ctia"
                       "ctia.store.es.default.default_operator" "AND"
                       "ctia.store.es.default.aliased" true
                       "ctia.store.es.default.rollover.max_docs" 50
-                      "ctia.store.es.default.version" 5
+                      "ctia.store.es.default.version" (-es-version)
                       "ctia.store.es.default.auth" {:type :basic-auth
                                                     :params {:user "elastic" :pwd "ductile"}}
                       "ctia.store.es.default.default-sort" "timestamp,created,id"
@@ -167,14 +173,14 @@
 (defn fixture-properties:es-hook [t]
   ;; Note: These properties may be overwritten by ENV variables
   (h/with-properties ["ctia.hook.es.enabled" true
-                      "ctia.hook.es.port" 9205
+                      "ctia.hook.es.port" (-es-port)
                       "ctia.hook.es.indexname" "test_ctia_events"]
     (t)))
 
 (defn fixture-properties:es-hook:aliased-index [t]
   ;; Note: These properties may be overwritten by ENV variables
   (h/with-properties ["ctia.hook.es.enabled" true
-                      "ctia.hook.es.port" 9205
+                      "ctia.hook.es.port" (-es-port)
                       "ctia.hook.es.indexname" "test_ctia_events"
                       "ctia.hook.es.slicing.strategy" "aliased-index"
                       "ctia.hook.es.slicing.granularity" "week"]
@@ -235,6 +241,9 @@
   {:type :basic-auth
    :params {:user "elastic" :pwd "ductile"}})
 
+(defn -filter-activated-es-versions [versions]
+  (filter (h/get-es-versions-to-test) versions))
+
 (defmacro for-each-es-version
   "for each given ES version:
   - init an ES connection assuming that ES version n listens on port 9200 + n
@@ -246,7 +255,7 @@
   `(let [;; avoid version and the other explicitly bound locals will to be captured
          clean-fn# ~clean
          msg# ~msg]
-     (doseq [~'version ~versions]
+     (doseq [~'version (-filter-activated-es-versions ~versions)]
        (let [~'es-port (+ 9200 ~'version)
              ~'conn (es-conn/connect {:host "localhost"
                                       :port ~'es-port
