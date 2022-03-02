@@ -155,10 +155,10 @@
            (helpers/set-capabilities! app "foouser" ["foogroup"] "user" all-capabilities)
            (whoami-helpers/set-whoami-response app "45c1f5e3f05d0" "foouser" "foogroup" "user")
            (doseq [;; only one ordering with these severities. don't add both Unknown and None in the same test.
-                   canonical-fixed-severities-asc [["Unknown" "Info"]
-                                                   ["Unknown" "Critical"]
-                                                   ["None" "Info"]
-                                                   ["None" "Critical"]
+                   canonical-fixed-severities-asc [#_["Unknown" "Info"]
+                                                   #_["Unknown" "Critical"]
+                                                   #_["None" "Info"]
+                                                   #_["None" "Critical"]
                                                    ["Info" "Low" "Medium" "High" "Critical"]
                                                    ["Unknown" "Info" "Low" "Medium" "High" "Critical"]
                                                    ["None" "Info" "Low" "Medium" "High" "Critical"]]
@@ -170,14 +170,15 @@
                                                     canonical-fixed-severities-asc)]]
              (try (testing (pr-str fixed-severities-asc)
                     (let [incidents-count (count fixed-severities-asc)
+                          result-size (min 1000 incidents-count)
                           incidents (into (sorted-set-by #(compare (:title %1) (:title %2))) ;; a (possibly vain) attempt to randomize the order in which ES will index
                                           (map gen-new-incident)
                                           fixed-severities-asc)
-                          _ (assert (= incidents-count (count incidents))
-                                    (format "case: %s, multiplier %s, expected incidents: %s, actual:"
+                          _ (assert (= (count fixed-severities-asc) (count incidents))
+                                    (format "Bad sorted-set-by call\ncase: %s, multiplier %s, expected incidents: %s, actual:"
                                             canonical-fixed-severities-asc
                                             multiplier
-                                            incidents-count
+                                            (count fixed-severities-asc)
                                             (count incidents)))
                           created-bundle (create-incidents app incidents)
                           _ (doseq [sort_by (cond-> ["severity_int"]
@@ -188,18 +189,18 @@
                                                            nil))
                                     asc? [true false]
                                     iteration (range (if bench-atom 5 1))
-                                    :let [search-params (cond-> {:limit incidents-count}
+                                    :let [search-params (cond-> {:limit result-size}
                                                           sort_by (assoc :sort_by sort_by
                                                                          :sort_order (if asc? "asc" "desc")))
                                           test-id {:iteration iteration :sort_by sort_by :asc? asc? :search-params search-params
-                                                   :incidents-count incidents-count}]]
+                                                   :incidents-count incidents-count :result-size result-size}]]
                               (testing (pr-str test-id)
                                 (let [_ (when bench-atom
                                           (println "Benchmarking..." (pr-str test-id)))
                                       [{:keys [parsed-body] :as raw} ms-time] (result+ms-time
                                                                                 (search-th/search-raw app :incident search-params))
                                       
-                                      success? (and (is (= incidents-count (count parsed-body)) (when (= 1 multiplier) (pr-str raw)))
+                                      success? (and (is (= result-size (count parsed-body)) (when (= 1 multiplier) (pr-str raw)))
                                                     (or (not sort_by) ;; don't check non-sorting baseline benchmark
                                                         (let [expected-parsed-body (sort-by (fn [{:keys [severity]}]
                                                                                               {:post [(number? %)]}
@@ -208,9 +209,10 @@
                                                                                                (compare %1 %2)
                                                                                                (compare %2 %1))
                                                                                             parsed-body)]
-                                                          (and (is (= incidents-count (count expected-parsed-body)) (when (= 1 multiplier) (pr-str raw)))
+                                                          (and (is (= result-size (count expected-parsed-body)) (when (= 1 multiplier) (pr-str raw)))
                                                                ;; avoid potential bugs via sort-by by using fixed-severities-asc directly
-                                                               (is (= ((if asc? identity rseq) fixed-severities-asc)
+                                                               (is (= (->> ((if asc? identity rseq) fixed-severities-asc)
+                                                                           (take result-size))
                                                                       (mapv :severity parsed-body)))
                                                                ;; should succeed even with multipliers because sort-by is stable
                                                                (is (= expected-parsed-body
@@ -230,16 +232,10 @@
                                                                               (pr-str canonical-fixed-severities-asc)
                                                                               (if asc? "ascending" "descending")
                                                                               (str iteration)))
-                                                             (println (format "Multiplier: %s" (str multiplier)))
+                                                             (println (format "Multiplier: %s (incident count: %s)" (str multiplier) (str incidents-count)))
                                                              (println (format "Duration: %ems" ms-time))
-                                                             (println (format "Average: %sms" (:ms-avg nxt)))
-                                                             #_
-                                                             (when-some [other ({"revision" "severity_int"
-                                                                                 "severity_int" "revision"})])
-                                                             )]
-                                                   nxt)))
-                                        #_
-                                        ((requiring-resolve 'clojure.pprint/pprint)))))))]))
+                                                             (println (format "Average: %sms" (:ms-avg nxt))))]
+                                                   nxt))))))))]))
                   (finally (purge-incidents! app))))))))))
 
 (comment
