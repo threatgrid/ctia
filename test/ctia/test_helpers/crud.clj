@@ -235,9 +235,10 @@
                   :body new-record
                   :headers headers)
             record-id (id/long-id->id (:id post-record))
+            expected (assoc post-record :id (id/long-id record-id))
             record-external-ids (:external_ids post-record)]
         (is (= 201 post-status))
-        (is (= new-record (dissoc post-record :id)))
+        (is (= new-record (select-keys post-record (keys new-record))))
 
         (testing (format "the %s ID has correct fields" entity-str)
           (let [show-props (get-http-show (app->HTTPShowServices app))]
