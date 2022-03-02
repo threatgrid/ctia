@@ -83,7 +83,7 @@
                  [threatgrid/flanders "0.1.23"]
                  [threatgrid/ctim "1.1.11"]
                  [threatgrid/clj-momo "0.3.5"]
-                 [threatgrid/ductile "0.4.2"]
+                 [threatgrid/ductile "658fe30258d1852833562dc1555fce3da3c91d82"]
 
                  [com.arohner/uri "0.1.2"]
 
@@ -186,8 +186,11 @@
                    :pedantic? :warn
                    :source-paths ["dev"]}
              :ci {:pedantic? :abort
-                  :global-vars {*warn-on-reflection* true}}
-             :next-clojure {:dependencies [[org.clojure/clojure "1.11.0-beta1"]]}
+                  :global-vars {*warn-on-reflection* true}
+                  :jvm-opts [;; actually print stack traces instead of useless
+                             ;; "Full report at: /tmp/clojure-8187773283812483853.edn"
+                             "-Dclojure.main.report=stderr"]}
+             :next-clojure {:dependencies [[org.clojure/clojure "1.11.0-rc1"]]}
              :jmx {:jvm-opts ["-Dcom.sun.management.jmxremote"
                               "-Dcom.sun.management.jmxremote.port=9010"
                               "-Dcom.sun.management.jmxremote.local.only=false"
@@ -210,7 +213,9 @@
                     :resource-paths ["test-resources"]}
 
              :prepush {:plugins [[yogsototh/lein-kibit "0.1.6-SNAPSHOT"]
-                                 [lein-bikeshed "0.3.0"]]}}
+                                 [lein-bikeshed "0.3.0"]]}
+             :es7 {:jvm-opts ["-Dctia.store.es.default.port=9207"
+                              "-Dctia.store.es.default.version=7"]}}
 
   :perforate {:environments [{:name :actor
                               :namespaces [ctia.entity.actor-bench]}
@@ -229,10 +234,11 @@
                             (clojure.string/join
                               "\n"
                               ["Welcome to CTIA!"
-                               " (go)    => start or restart CTIA"
-                               " (start) => start CTIA, if not already started"
-                               " (stop)  => stop CTIA, if not already stopped"
-                               " (current-app) => get current app, or nil"]))
+                               " (reset) / (reset7) => refresh, then (re)start CTIA (ES5/ES7)"
+                               " (go)    / (go7)    => (re)start CTIA (ES5/ES7)"
+                               " (start) / (start7) => start CTIA (ES5/ES7)"
+                               " (stop)             => stop CTIA"
+                               " (current-app)      => get current app, or nil"]))
                  ;10m
                  :repl-timeout 600000}
   :middleware [lein-git-down.plugin/inject-properties]
@@ -248,6 +254,13 @@
   ;; 2. change the upstream dependency's version to the relevant sha
   ;;    eg., [threatgrid/ctim "9acbc93333d630d9b9a0a9fc19981b0ba0ddec1c"]
   ;;
+  ;; To work on the library locally without restarting the REPL, you can use lein checkouts.
+  ;; 1. $ mkdir checkouts
+  ;; 2. $ cd checkouts
+  ;; 3. $ ln -s ../ctim
+  ;; 4. Use `user/reset` to automatically reset checkouts
+  ;;    - if this does not work, remove "checkouts" from `set-refresh-dirs` in dev/user.clj
+  ;;      or replace with something more specific, eg., "checkouts/ctim/src"
 
   ;; uncomment and change during dev
   #_:git-down #_{threatgrid/ctim {:coordinates frenchy64/ctim}
