@@ -156,7 +156,6 @@
            (whoami-helpers/set-whoami-response app "45c1f5e3f05d0" "foouser" "foogroup" "user")
            (doseq [;; only one ordering with these severities. don't add both Unknown and None in the same test.
                    canonical-fixed-severities-asc (-> []
-                                                      ;; only benchmark the largest test case
                                                       (cond-> (not bench-atom)
                                                         (into [["Unknown" "Info"]
                                                                ["Unknown" "Critical"]
@@ -164,6 +163,8 @@
                                                                ["None" "Critical"]
                                                                ["Info" "Low" "Medium" "High" "Critical"]
                                                                ["Unknown" "Info" "Low" "Medium" "High" "Critical"]]))
+                                                      ;; only benchmark the largest test case because the benchmark is dominated
+                                                      ;; by the bundle import
                                                       (into [["None" "Info" "Low" "Medium" "High" "Critical"]]))
                    ;; scale up the test size by repeating elements
                    multiplier (if-not bench-atom
@@ -209,7 +210,9 @@
                                       [{:keys [parsed-body] :as raw} ms-time] (result+ms-time
                                                                                 (search-th/search-raw app :incident search-params))
 
+
                                       success? (and (is (= result-size (count parsed-body)) (when (= 1 multiplier) (pr-str raw)))
+                                                    (is (= result-size (count expected-parsed-body)) (when (= 1 multiplier) (pr-str raw)))
                                                     (or (not sort_by) ;; don't check non-sorting baseline benchmark
                                                         (let [expected-parsed-body (sort-by (fn [{:keys [severity]}]
                                                                                               {:post [(number? %)]}
@@ -218,8 +221,7 @@
                                                                                                (compare %1 %2)
                                                                                                (compare %2 %1))
                                                                                             parsed-body)]
-                                                          (and (is (= result-size (count expected-parsed-body)) (when (= 1 multiplier) (pr-str raw)))
-                                                               ;; avoid potential bugs via sort-by by using fixed-severities-asc directly
+                                                          (and ;; avoid potential bugs via sort-by by using fixed-severities-asc directly
                                                                (is (= (->> ((if asc? identity rseq) fixed-severities-asc)
                                                                            (take result-size))
                                                                       (map :severity parsed-body)))
