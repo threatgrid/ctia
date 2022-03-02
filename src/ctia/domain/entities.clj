@@ -40,8 +40,8 @@
   (let [{{{:keys [get-in-config]} :ConfigService} :services} services
         {:keys [login groups client-id]} ident-map
         now (time/now)
-        with-base-fields (into new-object
-                               {:id id
+        with-base-fields (assoc new-object
+                                :id id
                                 :type type-name
                                 :owner (or (:owner prev-object) login)
                                 :groups (or (:groups prev-object) groups)
@@ -50,7 +50,7 @@
                                 :modified now
                                 :timestamp now
                                 :tlp (:tlp new-object
-                                           (:tlp prev-object (properties-default-tlp get-in-config)))})]
+                                           (:tlp prev-object (properties-default-tlp get-in-config))))]
     (cond-> with-base-fields
       (contains-key? Model :valid_time)
       (into (make-valid-time (:valid_time prev-object)
