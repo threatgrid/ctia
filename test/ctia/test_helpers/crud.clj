@@ -356,7 +356,7 @@
                                  (name invalid-test-field)))
                            (string/lower-case body))))))
 
-        (testing (format "DELETE non-existant /ctia/%s/:id" entity-str)
+        (testing (format "DELETE non-existent /ctia/%s/:id" entity-str)
           (let [response (DELETE app
                                  (format "ctia/%s/%s-42424242" entity-str entity-str )
                                  :headers headers)]
@@ -366,11 +366,11 @@
           (let [response (DELETE app
                                  (format "ctia/%s/%s" entity-str (:short-id record-id))
                                  :headers headers)]
-            (is (= 204 (:status response)))
-            (let [response (GET app
-                                (format "ctia/%s/%s" entity-str (:short-id record-id))
-                                :headers headers)]
-              (is (= 404 (:status response)))))))
+            (is (= 204 (:status response))))
+          (let [response (GET app
+                              (format "ctia/%s/%s" entity-str (:short-id record-id))
+                              :headers headers)]
+            (is (= 404 (:status response))))))
 
       (when search-tests?
         (th.search/test-query-string-search
