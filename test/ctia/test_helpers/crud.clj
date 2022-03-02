@@ -223,7 +223,7 @@
          patch-tests? false
          search-tests? false}
     :as _params}]
- (assert app "Must pass :app to entity-crud-test")
+  (assert app "Must pass :app to entity-crud-test")
   (let [get-in-config (helpers/current-get-in-config-fn app)
         entity-str (name entity)]
     (testing (str "POST /ctia/" entity-str)
@@ -235,10 +235,9 @@
                   :body new-record
                   :headers headers)
             record-id (id/long-id->id (:id post-record))
-            expected (assoc post-record :id (id/long-id record-id))
             record-external-ids (:external_ids post-record)]
         (is (= 201 post-status))
-        (is (= expected post-record))
+        (is (= new-record (dissoc post-record :id)))
 
         (testing (format "the %s ID has correct fields" entity-str)
           (let [show-props (get-http-show (app->HTTPShowServices app))]
