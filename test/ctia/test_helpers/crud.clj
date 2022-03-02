@@ -236,7 +236,12 @@
                   :headers headers)
             record-id (id/long-id->id (:id post-record))
             expected (assoc post-record :id (id/long-id record-id))
-            record-external-ids (:external_ids post-record)]
+            record-external-ids (:external_ids post-record)
+            is-changed-timestamp (let [last-timestamp-atom (atom (:timestamp post-record))]
+                                   (fn [{this-timestamp :timestamp :as _entity}]
+                                     (let [[last-timestamp] (reset-vals! last-timestamp-atom this-timestamp)]
+                                       (is (and this-timestamp last-timestamp))
+                                       (is (not= last-timestamp this-timestamp)))))]
         (is (= 201 post-status))
         (is (= new-record (select-keys post-record (keys new-record))))
 
@@ -271,8 +276,11 @@
                                 (format "ctia/%s/%s" entity-str (:short-id record-id))
                                 :body updates
                                 :headers headers)
-                updated-record (:parsed-body response)]
+                updated-record (:parsed-body response)
+                this-timestamp (:timestamp updated-record)]
             (when patch-tests?
+              (is-changed-timestamp updated-record)
+              (is (not= last-timestamp this-timestamp))
               (is (= 200 (:status response)))
               (is (= (merge post-record updates)
                      updated-record)))))
@@ -292,6 +300,7 @@
                      (format "ctia/%s/%s" entity-str (:short-id record-id))
                      :headers headers)]
             (when update-tests?
+              (is-changed-timestamp updated-record)
               (is (= 200 update-status))
               (is (= with-updates
                      updated-record))
