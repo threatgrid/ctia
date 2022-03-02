@@ -155,23 +155,28 @@
            (helpers/set-capabilities! app "foouser" ["foogroup"] "user" all-capabilities)
            (whoami-helpers/set-whoami-response app "45c1f5e3f05d0" "foouser" "foogroup" "user")
            (doseq [;; only one ordering with these severities. don't add both Unknown and None in the same test.
-                   canonical-fixed-severities-asc [#_["Unknown" "Info"]
-                                                   #_["Unknown" "Critical"]
-                                                   #_["None" "Info"]
-                                                   #_["None" "Critical"]
-                                                   ["Info" "Low" "Medium" "High" "Critical"]
-                                                   ["Unknown" "Info" "Low" "Medium" "High" "Critical"]
-                                                   ["None" "Info" "Low" "Medium" "High" "Critical"]]
+                   canonical-fixed-severities-asc (-> []
+                                                      (cond-> (not bench-atom)
+                                                        (into [["Unknown" "Info"]
+                                                               ["Unknown" "Critical"]
+                                                               ["None" "Info"]
+                                                               ["None" "Critical"]]))
+                                                      (into [["Info" "Low" "Medium" "High" "Critical"]
+                                                             ["Unknown" "Info" "Low" "Medium" "High" "Critical"]
+                                                             ["None" "Info" "Low" "Medium" "High" "Critical"]]))
                    ;; scale up the test size by repeating elements
                    multiplier (if-not bench-atom
-                                [1]
+                                [1 2]
                                 [#_1 #_10 #_100 #_1000 5000])
                    :let [fixed-severities-asc (into [] (mapcat #(repeat multiplier %))
                                                     canonical-fixed-severities-asc)]]
              (try (testing (pr-str fixed-severities-asc)
                     (let [incidents-count (count fixed-severities-asc)
-                          result-size (min 10000 ;; default index.max_result_window
-                                           incidents-count)
+                          ;; note: there's a default limit of 10k results via index.max_result_window
+                          result-size (cond-> incidents-count
+                                        ;; spend less time parsing results during benchmarks
+                                        bench-atom
+                                        (min 10))
                           incidents (into (sorted-set-by #(compare (:title %1) (:title %2))) ;; a (possibly vain) attempt to randomize the order in which ES will index
                                           (map gen-new-incident)
                                           fixed-severities-asc)
@@ -197,10 +202,11 @@
                                                    :incidents-count incidents-count :result-size result-size}]]
                               (testing (pr-str test-id)
                                 (let [_ (when bench-atom
+                                          (println)
                                           (println "Benchmarking..." (pr-str test-id)))
                                       [{:keys [parsed-body] :as raw} ms-time] (result+ms-time
                                                                                 (search-th/search-raw app :incident search-params))
-                                      
+
                                       success? (and (is (= result-size (count parsed-body)) (when (= 1 multiplier) (pr-str raw)))
                                                     (or (not sort_by) ;; don't check non-sorting baseline benchmark
                                                         (let [expected-parsed-body (sort-by (fn [{:keys [severity]}]
@@ -214,7 +220,7 @@
                                                                ;; avoid potential bugs via sort-by by using fixed-severities-asc directly
                                                                (is (= (->> ((if asc? identity rseq) fixed-severities-asc)
                                                                            (take result-size))
-                                                                      (mapv :severity parsed-body)))
+                                                                      (map :severity parsed-body)))
                                                                ;; should succeed even with multipliers because sort-by is stable
                                                                (is (= expected-parsed-body
                                                                       parsed-body))))))]
