@@ -190,7 +190,7 @@
                   :jvm-opts [;; actually print stack traces instead of useless
                              ;; "Full report at: /tmp/clojure-8187773283812483853.edn"
                              "-Dclojure.main.report=stderr"]}
-             :next-clojure {:dependencies [[org.clojure/clojure "1.11.0-beta1"]]}
+             :next-clojure {:dependencies [[org.clojure/clojure "1.11.0-rc1"]]}
              :jmx {:jvm-opts ["-Dcom.sun.management.jmxremote"
                               "-Dcom.sun.management.jmxremote.port=9010"
                               "-Dcom.sun.management.jmxremote.local.only=false"
