@@ -506,7 +506,7 @@
        ~@body)))
 
 (defn deep-dissoc-entity-ids
-  "Dissoc all non-tranisent entity IDs in the given map recursively"
+  "Dissoc all non-transient entity IDs in the given map recursively"
   [m]
   (prewalk #(if (and (map? %)
                      ;; Do not remove the id of a nested openc2 coa
@@ -517,15 +517,9 @@
            m))
 
 (defn with-sequential-uuid [f]
-  (let [uuid-counter-start 111111111111
-        uuid-counter (atom uuid-counter-start)]
-    (with-redefs [crud/gen-random-uuid
-                  (fn []
-                    (swap! uuid-counter inc)
-                    (str "00000000-0000-0000-0000-" @uuid-counter))]
-      (f)
-      (reset! uuid-counter
-              uuid-counter-start))))
+  (let [uuid-counter (atom 111111111111)]
+    (with-redefs [crud/gen-random-uuid #(str "00000000-0000-0000-0000-" (swap! uuid-counter inc))]
+      (f))))
 
 (s/defn app->GetEntitiesServices :- GetEntitiesServices
   [app]
@@ -538,7 +532,7 @@
   "Returns entity map for given plural form of the entity key"
   [entity-key]
   (into {}
-        (filter (fn [e] (= entity-key (:plural (val e)))))
+        (filter #(= entity-key (:plural (val %))))
         (entities/all-entities)))
 
 (defn assert-post
@@ -559,5 +553,5 @@
                            (with-out-str (pprint response)))
                       {:path path
                        :new-entity new-entity
-                      :response response})))
+                       :response response})))
     result))
