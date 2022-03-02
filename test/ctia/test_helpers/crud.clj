@@ -237,11 +237,11 @@
             record-id (id/long-id->id (:id post-record))
             expected (assoc post-record :id (id/long-id record-id))
             record-external-ids (:external_ids post-record)
-            is-changed-timestamp (let [last-timestamp-atom (atom (:timestamp post-record))]
-                                   (fn [{this-timestamp :timestamp :as _entity}]
-                                     (let [[last-timestamp] (reset-vals! last-timestamp-atom this-timestamp)]
-                                       (is (and this-timestamp last-timestamp))
-                                       (is (not= last-timestamp this-timestamp)))))]
+            latest-record-atom (atom post-record)
+            is-changed-timestamp (fn [{this-timestamp :timestamp :as updated-record}]
+                                   (let [[{last-timestamp :timestamp}] (reset-vals! latest-record-atom updated-record)]
+                                     (is (and this-timestamp last-timestamp))
+                                     (is (not= last-timestamp this-timestamp))))]
         (is (= 201 post-status))
         (is (= new-record (select-keys post-record (keys new-record))))
 
@@ -318,9 +318,7 @@
           (testing "additional tests"
             (additional-tests app
                               record-id
-                              (if update-tests?
-                                updated-record
-                                post-record))))
+                              @latest-record-atom)))
 
         (when revoke-tests?
           (testing (format "POST /ctia/%s/:id/expire revokes" entity-str)
