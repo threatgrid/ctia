@@ -156,13 +156,14 @@
            (whoami-helpers/set-whoami-response app "45c1f5e3f05d0" "foouser" "foogroup" "user")
            (doseq [;; only one ordering with these severities. don't add both Unknown and None in the same test.
                    canonical-fixed-severities-asc (-> []
+                                                      ;; only benchmark the largest test cases
                                                       (cond-> (not bench-atom)
                                                         (into [["Unknown" "Info"]
                                                                ["Unknown" "Critical"]
                                                                ["None" "Info"]
-                                                               ["None" "Critical"]]))
-                                                      (into [["Info" "Low" "Medium" "High" "Critical"]
-                                                             ["Unknown" "Info" "Low" "Medium" "High" "Critical"]
+                                                               ["None" "Critical"]
+                                                               ["Info" "Low" "Medium" "High" "Critical"]]))
+                                                      (into [["Unknown" "Info" "Low" "Medium" "High" "Critical"]
                                                              ["None" "Info" "Low" "Medium" "High" "Critical"]]))
                    ;; scale up the test size by repeating elements
                    multiplier (if-not bench-atom
