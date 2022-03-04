@@ -167,6 +167,7 @@
                                                                ["None" "Info"]
                                                                ["None" "Critical"]
                                                                ["Info" "Low" "Medium" "High" "Critical"]
+                                                               ;; missing severity is the same as None/Unknown
                                                                [nil "Low" "Medium" "High" "Critical"]
                                                                ["Unknown" "Info" "Low" "Medium" "High" "Critical"]]))
                                                       ;; only benchmark the largest test case because the benchmark is dominated
@@ -229,7 +230,8 @@
                                                                        (compare %2 %1))
                                                                     parsed-body)
 
-                                      success? (and (is (= result-size (count parsed-body)) (when (= 1 multiplier) (pr-str raw)))
+                                      success? (and (is (= 200 (:status raw)) (when (= 1 multiplier) (pr-str raw)))
+                                                    (is (= result-size (count parsed-body)) (when (= 1 multiplier) (pr-str raw)))
                                                     (is (= result-size (count expected-parsed-body)) (when (= 1 multiplier) (pr-str raw)))
                                                     (or (not sort_by) ;; don't check non-sorting baseline benchmark
                                                         (and ;; use fixed-severities-asc directly to mitigate mistakes
