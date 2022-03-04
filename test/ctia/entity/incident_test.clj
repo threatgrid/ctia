@@ -215,7 +215,7 @@
                                                                       (let [c (ctim-severity-order severity)]
                                                                         (assert (number? c)
                                                                                 (str "No severity ordering for " (pr-str severity)
-                                                                                     "\n" severity))
+                                                                                     "\n" (pr-str incident)))
                                                                         c))
                                                                     #(if asc?
                                                                        (compare %1 %2)
