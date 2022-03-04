@@ -110,12 +110,17 @@
    "Critical" 5})
 
 (defn gen-new-incident [severity]
-  (-> new-incident-minimal
-      (dissoc :id)
-      (assoc :title (str (java.util.UUID/randomUUID)))
-      (assoc :revision (doto (ctim-severity-order severity)
-                         assert))
-      (assoc :severity severity)))
+  (let [order (ctim-severity-order severity)
+        _ (if (some? severity)
+            (assert (number? order)
+                    (str "Unmapped severity " (pr-str severity)))
+            (assert ((some-fn nil? number?) order)))]
+    (-> new-incident-minimal
+        (dissoc :id :severity)
+        ;; test missing severity if nil
+        (cond-> (some? order) (assoc :severity severity))
+        (assoc :title (str (java.util.UUID/randomUUID)))
+        (assoc :revision (or order 0)))))
 
 (s/defn create-incidents [app incidents :- (s/pred set?)]
   (bundle/import-bundle
@@ -154,7 +159,7 @@
          (fn [app]
            (helpers/set-capabilities! app "foouser" ["foogroup"] "user" all-capabilities)
            (whoami-helpers/set-whoami-response app "45c1f5e3f05d0" "foouser" "foogroup" "user")
-           (doseq [;; only one ordering with these severities. don't add both Unknown and None in the same test.
+           (doseq [;; only one ordering with these severities. don't mix both Unknown, None, or nil in the same test.
                    canonical-fixed-severities-asc (-> []
                                                       (cond-> (not bench-atom)
                                                         (into [["Unknown" "Info"]
@@ -162,6 +167,7 @@
                                                                ["None" "Info"]
                                                                ["None" "Critical"]
                                                                ["Info" "Low" "Medium" "High" "Critical"]
+                                                               [nil "Low" "Medium" "High" "Critical"]
                                                                ["Unknown" "Info" "Low" "Medium" "High" "Critical"]]))
                                                       ;; only benchmark the largest test case because the benchmark is dominated
                                                       ;; by the bundle import
@@ -213,10 +219,11 @@
                                       expected-parsed-body (sort-by (fn [{:keys [severity] :as incident}]
                                                                       {:post [(number? %)]}
                                                                       (let [c (ctim-severity-order severity)]
-                                                                        (assert (number? c)
-                                                                                (str "No severity ordering for " (pr-str severity)
-                                                                                     "\n" (pr-str incident)))
-                                                                        c))
+                                                                        (when severity
+                                                                          (assert (number? c)
+                                                                                  (str "No severity ordering for " (pr-str severity)
+                                                                                       "\n" (pr-str incident))))
+                                                                        (or c 0)))
                                                                     #(if asc?
                                                                        (compare %1 %2)
                                                                        (compare %2 %1))
