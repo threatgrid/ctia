@@ -96,6 +96,8 @@ You can bring up a development environment:
 
 ```
 docker-compose -f containers/dev/docker-compose.yml up
+# for M1 macs
+docker-compose -f containers/dev/m1-docker-compose.yml up
 ```
 
 Using docker for mac, this will bind the following ports on your

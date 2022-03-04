@@ -89,10 +89,10 @@
     (purge-index-and-template entity services)))
 
 (defn -es-port []
-  (if ((h/get-es-versions-to-test) 5) "9205" "9207"))
+  (if ((h/set-of-es-versions-to-test) 5) "9205" "9207"))
 
 (defn -es-version []
-  (if ((h/get-es-versions-to-test) 5) 5 7))
+  (if ((h/set-of-es-versions-to-test) 5) 5 7))
 
 (defn fixture-properties:es-store [t]
   ;; Note: These properties may be overwritten by ENV variables
@@ -242,7 +242,7 @@
    :params {:user "elastic" :pwd "ductile"}})
 
 (defn -filter-activated-es-versions [versions]
-  (filter (h/get-es-versions-to-test) versions))
+  (filter (h/set-of-es-versions-to-test) versions))
 
 (defmacro for-each-es-version
   "for each given ES version:
