@@ -119,8 +119,8 @@
         (dissoc :id :severity)
         ;; test missing severity if nil
         (cond-> (some? order) (assoc :severity severity))
-        (assoc :title (str (java.util.UUID/randomUUID)))
-        (assoc :revision (or order 0)))))
+        (assoc :title (str (java.util.UUID/randomUUID))
+               :revision (or order 0)))))
 
 (s/defn create-incidents [app incidents :- (s/pred set?)]
   (bundle/import-bundle
