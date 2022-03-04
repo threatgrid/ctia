@@ -221,8 +221,10 @@
                                       success? (and (is (= result-size (count parsed-body)) (when (= 1 multiplier) (pr-str raw)))
                                                     (is (= result-size (count expected-parsed-body)) (when (= 1 multiplier) (pr-str raw)))
                                                     (or (not sort_by) ;; don't check non-sorting baseline benchmark
-                                                        (and ;; avoid potential bugs via sort-by by using fixed-severities-asc directly
+                                                        (and ;; use fixed-severities-asc directly to mitigate mistakes
+                                                             ;; in calculating expected-parsed-body (eg., faulty comparator)
                                                              (is (= (->> ((if asc? identity rseq) fixed-severities-asc)
+                                                                         ;; entire query is checked in unit tests, bench uses a subset
                                                                          (take result-size))
                                                                     (map :severity parsed-body)))
                                                              ;; should succeed even with multipliers because sort-by is stable
