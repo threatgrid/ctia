@@ -210,24 +210,24 @@
                                       [{:keys [parsed-body] :as raw} ms-time] (result+ms-time
                                                                                 (search-th/search-raw app :incident search-params))
 
+                                      expected-parsed-body (sort-by (fn [{:keys [severity]}]
+                                                                      {:post [(number? %)]}
+                                                                      (ctim-severity-order severity))
+                                                                    #(if asc?
+                                                                       (compare %1 %2)
+                                                                       (compare %2 %1))
+                                                                    parsed-body)
 
                                       success? (and (is (= result-size (count parsed-body)) (when (= 1 multiplier) (pr-str raw)))
                                                     (is (= result-size (count expected-parsed-body)) (when (= 1 multiplier) (pr-str raw)))
                                                     (or (not sort_by) ;; don't check non-sorting baseline benchmark
-                                                        (let [expected-parsed-body (sort-by (fn [{:keys [severity]}]
-                                                                                              {:post [(number? %)]}
-                                                                                              (ctim-severity-order severity))
-                                                                                            #(if asc?
-                                                                                               (compare %1 %2)
-                                                                                               (compare %2 %1))
-                                                                                            parsed-body)]
-                                                          (and ;; avoid potential bugs via sort-by by using fixed-severities-asc directly
-                                                               (is (= (->> ((if asc? identity rseq) fixed-severities-asc)
-                                                                           (take result-size))
-                                                                      (map :severity parsed-body)))
-                                                               ;; should succeed even with multipliers because sort-by is stable
-                                                               (is (= expected-parsed-body
-                                                                      parsed-body))))))]
+                                                        (and ;; avoid potential bugs via sort-by by using fixed-severities-asc directly
+                                                             (is (= (->> ((if asc? identity rseq) fixed-severities-asc)
+                                                                         (take result-size))
+                                                                    (map :severity parsed-body)))
+                                                             ;; should succeed even with multipliers because sort-by is stable
+                                                             (is (= expected-parsed-body
+                                                                    parsed-body)))))]
                                   (when bench-atom
                                     (assert success?)
                                     (-> (swap! bench-atom update-in [canonical-fixed-severities-asc incidents-count sort_by]
