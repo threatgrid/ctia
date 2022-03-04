@@ -210,9 +210,13 @@
                                       [{:keys [parsed-body] :as raw} ms-time] (result+ms-time
                                                                                 (search-th/search-raw app :incident search-params))
 
-                                      expected-parsed-body (sort-by (fn [{:keys [severity]}]
+                                      expected-parsed-body (sort-by (fn [{:keys [severity] :as incident}]
                                                                       {:post [(number? %)]}
-                                                                      (ctim-severity-order severity))
+                                                                      (let [c (ctim-severity-order severity)]
+                                                                        (assert (number? c)
+                                                                                (str "No severity ordering for " (pr-str severity)
+                                                                                     "\n" severity))
+                                                                        c))
                                                                     #(if asc?
                                                                        (compare %1 %2)
                                                                        (compare %2 %1))
