@@ -30,6 +30,11 @@
 
 (def ^:dynamic ^:private *current-app*)
 
+(defn set-of-es-versions-to-test []
+  {:post [(set? %)]}
+  (or (some-> (System/getProperty "ctia.test.es-versions") read-string set)
+      #{5 7}))
+
 (def
   ^:dynamic ^:private
   *properties-overrides*
@@ -38,29 +43,35 @@
   used to override the default properties."
   ;; Default overrides for any properties that are in the default properties file
   ;; yet are unsafe/undesirable for tests
-  ["ctia.auth.type"                            "allow-all"
-   "ctia.access-control.default-tlp"           "green"
-   "ctia.access-control.min-tlp"               "white"
-   "ctia.access-control.max-record-visibility" "everyone"
-   "ctia.encryption.key.filepath"              "resources/cert/ctia-encryption.key"
-   "ctia.events.enabled"                        true
-   "ctia.events.log"                            false
-   "ctia.http.dev-reload"                       false
-   "ctia.http.min-threads"                      9
-   "ctia.http.max-threads"                      10
-   "ctia.http.show.protocol"                    "http"
-   "ctia.http.show.hostname"                    "localhost"
-   "ctia.http.show.port"                        "57254"
-   "ctia.http.show.path-prefix"                 ""
-   "ctia.http.jwt.enabled"                      true
-   "ctia.http.jwt.public-key-path"              "resources/cert/ctia-jwt.pub"
-   "ctia.http.bulk.max-size"                    30000
-   "ctia.hook.redis.enabled"                    false
-   "ctia.hook.redis.channel-name"               "events-test"
-   "ctia.metrics.riemann.enabled"               false
-   "ctia.metrics.console.enabled"               false
-   "ctia.metrics.jmx.enabled"                   false
-   "ctia.versions.config"                       "test"])
+  (into ["ctia.auth.type"                            "allow-all"
+         "ctia.access-control.default-tlp"           "green"
+         "ctia.access-control.min-tlp"               "white"
+         "ctia.access-control.max-record-visibility" "everyone"
+         "ctia.encryption.key.filepath"              "resources/cert/ctia-encryption.key"
+         "ctia.events.enabled"                        true
+         "ctia.events.log"                            false
+         "ctia.http.dev-reload"                       false
+         "ctia.http.min-threads"                      9
+         "ctia.http.max-threads"                      10
+         "ctia.http.show.protocol"                    "http"
+         "ctia.http.show.hostname"                    "localhost"
+         "ctia.http.show.port"                        "57254"
+         "ctia.http.show.path-prefix"                 ""
+         "ctia.http.jwt.enabled"                      true
+         "ctia.http.jwt.public-key-path"              "resources/cert/ctia-jwt.pub"
+         "ctia.http.bulk.max-size"                    30000
+         "ctia.hook.redis.enabled"                    false
+         "ctia.hook.redis.channel-name"               "events-test"
+         "ctia.metrics.riemann.enabled"               false
+         "ctia.metrics.console.enabled"               false
+         "ctia.metrics.jmx.enabled"                   false
+         "ctia.versions.config"                       "test"]
+        ;; use es7 if es5 is not available
+        (let [es-versions (set-of-es-versions-to-test)]
+          (when (and (not (es-versions 5))
+                     (es-versions 7))
+            ["ctia.store.es.default.port" 9207
+             "ctia.store.es.default.version" 7]))))
 (assert (even? (count *properties-overrides*)))
 
 (defn- isolate-config-indices
@@ -506,7 +517,7 @@
        ~@body)))
 
 (defn deep-dissoc-entity-ids
-  "Dissoc all non-tranisent entity IDs in the given map recursively"
+  "Dissoc all non-transient entity IDs in the given map recursively"
   [m]
   (prewalk #(if (and (map? %)
                      ;; Do not remove the id of a nested openc2 coa
@@ -517,15 +528,9 @@
            m))
 
 (defn with-sequential-uuid [f]
-  (let [uuid-counter-start 111111111111
-        uuid-counter (atom uuid-counter-start)]
-    (with-redefs [crud/gen-random-uuid
-                  (fn []
-                    (swap! uuid-counter inc)
-                    (str "00000000-0000-0000-0000-" @uuid-counter))]
-      (f)
-      (reset! uuid-counter
-              uuid-counter-start))))
+  (let [uuid-counter (atom 111111111111)]
+    (with-redefs [crud/gen-random-uuid #(str "00000000-0000-0000-0000-" (swap! uuid-counter inc))]
+      (f))))
 
 (s/defn app->GetEntitiesServices :- GetEntitiesServices
   [app]
@@ -538,7 +543,7 @@
   "Returns entity map for given plural form of the entity key"
   [entity-key]
   (into {}
-        (filter (fn [e] (= entity-key (:plural (val e)))))
+        (filter #(= entity-key (:plural (val %))))
         (entities/all-entities)))
 
 (defn assert-post
@@ -559,5 +564,5 @@
                            (with-out-str (pprint response)))
                       {:path path
                        :new-entity new-entity
-                      :response response})))
+                       :response response})))
     result))
