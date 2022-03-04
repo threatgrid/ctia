@@ -1,0 +1,3 @@
+#!/bin/bash
+
+lein with-profile +es7 test "$@"
