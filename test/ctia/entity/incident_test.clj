@@ -154,7 +154,8 @@
      (cond-> [7]
        (System/getenv "CI") (conj 5))
      #(ductile.index/delete! % "ctia_*")
-     (helpers/with-properties ["ctia.store.es.default.auth" es-helpers/basic-auth]
+     (helpers/with-properties [;"ctia.store.es.default.auth" es-helpers/basic-auth
+                               ]
        (helpers/fixture-ctia-with-app
          (fn [app]
            (helpers/set-capabilities! app "foouser" ["foogroup"] "user" all-capabilities)
