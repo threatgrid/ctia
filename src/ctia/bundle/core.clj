@@ -335,23 +335,21 @@
 
 (s/defn fetch-relationship-targets
   "given relationships, fetch all related objects"
-  [relationships identity-map
-   services :- APIHandlerServices]
-  (let [all-ids (->> relationships
-                     (map (fn [{:keys [target_ref source_ref]}]
-                            [target_ref source_ref]))
-                     flatten
-                     set
-                     (filter #(local-entity? % services))
-                     set)
-        by-type (dissoc (group-by
-                         #(ent/long-id->entity-type %) all-ids) nil)
-        by-bulk-key (into {}
-                          (map (fn [[k v]]
-                                 {(bulk/bulk-key
-                                   (keyword k)) v}) by-type))
-        fetched (bulk/fetch-bulk by-bulk-key identity-map services)]
-    (clean-bundle fetched)))
+  [relationships identity-map services :- APIHandlerServices]
+  (let [all-ids (sequence
+                 (comp (mapcat (juxt :target_ref :source_ref))
+                       (filter #(local-entity? % services))
+                       (distinct))
+                 relationships)
+        bulk-key->ids (persistent!
+                       (reduce-kv
+                        (fn [acc k v]
+                          (if k
+                            (assoc! acc (bulk/bulk-key (keyword k)) v)
+                            acc))
+                        (transient {})
+                        (group-by ent/long-id->entity-type all-ids)))]
+    (clean-bundle (bulk/fetch-bulk bulk-key->ids identity-map services))))
 
 (defn relationships-filters
   [id
@@ -359,12 +357,11 @@
            source_type
            target_type]
     :or {related_to #{:source_ref :target_ref}}}]
-  (let [edge-filters (->> (map #(hash-map % id) (set related_to))
-                          (apply merge))
+  (let [edge-filters (into {} (map #(vector % id)) (set related_to))
         node-filters (cond->> []
                        source_type (cons (format "source_ref:*%s*" (name source_type)))
                        target_type (cons (format "target_ref:*%s*" (name target_type)))
-                       :always (string/join " AND "))]
+                       :always     (string/join " AND "))]
     (into {:one-of edge-filters}
           (when (seq node-filters)
             {:query node-filters}))))
@@ -377,8 +374,7 @@
    {{:keys [get-in-config]} :ConfigService
     {:keys [get-store]} :StoreService} :- APIHandlerServices]
   (let [filter-map (relationships-filters id filters)
-        max-relationships (get-in-config [:ctia :http :bundle :export :max-relationships]
-                                         1000)]
+        max-relationships (get-in-config [:ctia :http :bundle :export :max-relationships] 1000)]
     (some-> (get-store :relationship)
             (list-fn
               filter-map
@@ -443,8 +439,6 @@
    ident
    params
    services :- APIHandlerServices]
-  (if (seq ids)
-    (->> (map #(export-entities % identity-map ident params services) ids)
-         (reduce #(deep-merge-with coll/add-colls %1 %2))
-         (into empty-bundle))
-    empty-bundle))
+  (->> (map #(export-entities % identity-map ident params services) ids)
+       (reduce #(deep-merge-with coll/add-colls %1 %2) {})
+       (into empty-bundle)))
