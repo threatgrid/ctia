@@ -147,6 +147,8 @@
      [ret# ms-time#]))
 
 (defn severity-int-script-search
+  "If :bench-atom is provided, tests huge cases. Otherwise,
+  performs small unit tests."
   ([] (severity-int-script-search {}))
   ([{:keys [bench-atom]}]
    (es-helpers/for-each-es-version
