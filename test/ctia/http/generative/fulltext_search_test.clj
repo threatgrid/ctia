@@ -431,4 +431,4 @@
          (th.search/search-raw app :incident {:query "*"})
          (is (->> @enforced-fields-flag-query-params
                   :full-text
-                  (every? #(not (contains? % :fields))))))))))
+                  (not-any? #(contains? % :fields)))))))))
