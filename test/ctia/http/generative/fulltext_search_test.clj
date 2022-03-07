@@ -294,7 +294,7 @@
 ;; Since at the moment we cannot implement a workaround in the API because that would
 ;; require updating mappings on the live, production data, we'd have to test this by
 ;; directly sending queries into ES, bypassing the CTIA routes.
-(deftest mixed-fields-text-and-keyword-multi-match
+(deftest ^:disabled mixed-fields-text-and-keyword-multi-match
   (es-helpers/for-each-es-version
    "Mixed fields text and keyword multimatch"
    [5 7]
