@@ -152,16 +152,15 @@
   ([] (severity-int-script-search {}))
   ([{:keys [bench-atom]}]
    (es-helpers/for-each-es-version
-     ""
-     (cond-> [7]
-       (System/getenv "CI") (conj 5))
+     "severity_int sorts like #'ctim-severity-order"
+     [5 7]
      #(ductile.index/delete! % "ctia_*")
      (helpers/with-properties ["ctia.store.es.default.auth" es-helpers/basic-auth
                                "ctia.auth.type" "allow-all"]
        (helpers/fixture-ctia-with-app
          (fn [app]
-           (helpers/set-capabilities! app "foouser" ["foogroup"] "user" all-capabilities)
-           (whoami-helpers/set-whoami-response app "45c1f5e3f05d0" "foouser" "foogroup" "user")
+           ;(helpers/set-capabilities! app "foouser" ["foogroup"] "user" all-capabilities)
+           ;(whoami-helpers/set-whoami-response app "45c1f5e3f05d0" "foouser" "foogroup" "user")
            (doseq [;; only one ordering with these severities. don't mix both Unknown, None, or nil in the same test.
                    canonical-fixed-severities-asc (-> []
                                                       (cond-> (not bench-atom)
@@ -180,6 +179,7 @@
                    multiplier (if-not bench-atom
                                 [1 2]
                                 [#_1 #_10 #_100 #_1000 #_5000 20000])
+                   ;; expand the incidents test data
                    :let [fixed-severities-asc (into [] (mapcat #(repeat multiplier %))
                                                     canonical-fixed-severities-asc)]]
              (try (testing (pr-str fixed-severities-asc)
