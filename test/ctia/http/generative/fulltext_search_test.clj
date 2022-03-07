@@ -294,7 +294,7 @@
 ;; Since at the moment we cannot implement a workaround in the API because that would
 ;; require updating mappings on the live, production data, we'd have to test this by
 ;; directly sending queries into ES, bypassing the CTIA routes.
-(deftest ^:disabled mixed-fields-text-and-keyword-multi-match
+(deftest mixed-fields-text-and-keyword-multi-match
   (es-helpers/for-each-es-version
    "Mixed fields text and keyword multimatch"
    [5 7]
@@ -339,7 +339,8 @@
                                                   login {})
                                                  :data)]
                                      (testing (str "query: " query)
-                                       (check-fn res desc)))
+                                       (check-fn res desc)
+                                       true))
           "base query matches expected data"
           {:full-text [{:query "intrusion event 3\\:19187\\:7 incident"}]}
           (fn [res desc]
@@ -367,15 +368,17 @@
                        (select-keys (keys expected))))
                 desc))
 
-          "using double-quotes at the end of the query"
-          {:full-text [{:query "intrusion event 3\\:19187\\:7 incident \"\""}]
-           :fields ["title" "source"]}
-          (fn [res desc]
-            (is (= 1 (count res)) desc)
-            (is (= expected
-                   (-> res first
-                       (select-keys (keys expected))))
-                desc))))))))
+          ;; FIXME https://github.com/advthreat/iroh/issues/6016
+          ;"using double-quotes at the end of the query"
+          ;{:full-text [{:query "intrusion event 3\\:19187\\:7 incident \"\""}]
+          ; :fields ["title" "source"]}
+          ;(fn [res desc]
+          ;  (is (= 1 (count res)) desc)
+          ;  (is (= expected
+          ;         (-> res first
+          ;             (select-keys (keys expected))))
+          ;      desc))
+          ))))))
 
 (def enforced-fields-flag-query-params (atom nil))
 
