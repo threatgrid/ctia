@@ -57,7 +57,8 @@
                                                   indexname
                                                   nil
                                                   nil
-                                                  {:sort {field "asc"}})
+                                                  {:sort_by field
+                                                   :sort_order "asc"})
                                  :data
                                  (map :id))))
                      (is (= (reverse expected-asc)
@@ -65,7 +66,8 @@
                                                   indexname
                                                   nil
                                                   nil
-                                                  {:sort {field "desc"}})
+                                                  {:sort_by field
+                                                   :sort_order "desc"})
                                  :data
                                  (map :id)))))
          search (fn [query filters opts]
@@ -159,7 +161,8 @@
          (is (thrown? clojure.lang.ExceptionInfo
                       (search {:query_string {:query "simpletext"}}
                               nil
-                              {:sort {"sortable-text" "asc"}})))
+                              {:sort_by "sortable-text"
+                               :sort_order "asc"})))
          (test-sort "sortable-text.whole" '("doc0" "doc1" "doc2"))))
      (testing "ts mapping should be a date type, not in _all field and sortable"
        (let [res-all (search {:query_string {:query "2019"}}
