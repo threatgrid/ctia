@@ -441,7 +441,7 @@ It returns the documents with full hits meta data including the real index in wh
   (update es-params :sort #(or %
                                (some->> default-sort
                                         parse-sort-by
-                                        (mapv #(parse-sort-params-op % :asc)))
+                                        (mapv (fn [m] (parse-sort-params-op m :asc))))
                                [{"_doc" :asc} {"id" :asc}])))
 
 (defn rename-sort-fields
