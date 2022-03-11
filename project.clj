@@ -83,7 +83,7 @@
                  [threatgrid/flanders "0.1.23"]
                  [threatgrid/ctim "1.1.11"]
                  [threatgrid/clj-momo "0.3.5"]
-                 [threatgrid/ductile "8b3ac150dbeeff2592745648151dccf6f7419ba2"]
+                 [threatgrid/ductile "dcb4a2e3950a5c7a43c6a2355612762d7167ccaa"]
 
                  [com.arohner/uri "0.1.2"]
 
