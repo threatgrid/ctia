@@ -357,7 +357,7 @@ It returns the documents with full hits meta data including the real index in wh
                                (some->> default-sort
                                         parse-sort-by
                                         (mapv #(parse-sort-params-op % :asc)))
-                               ["_doc" "id"])))
+                               [{"_doc" :asc} {"id" :asc}])))
 
 (s/defschema FilterSchema
   (st/optional-keys
