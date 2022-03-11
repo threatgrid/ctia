@@ -199,7 +199,8 @@
                                             (count fixed-severities-asc)
                                             (count incidents)))
                           [created-bundle create-incidents-ms-time] (result+ms-time (create-incidents app incidents))
-                          _ (println (format "Took %ems to import %s incidents" create-incidents-ms-time (str incidents-count)))
+                          _ (when bench-atom
+                              (println (format "Took %ems to import %s incidents" create-incidents-ms-time (str incidents-count))))
                           _ (doseq [sort_by (cond-> ["severity_int"]
                                               bench-atom (conj
                                                            ;; hijacking this int field for perf comparison, see `gen-new-incident`
@@ -267,11 +268,6 @@
                                                    nxt))))))))]))
                   (finally (purge-incidents! app))))))))))
 
-(comment
-  docker-compose -f containers/dev/m1-docker-compose.yml up
-  lein repl
-  (do (refresh) (clojure.test/test-vars [(requiring-resolve 'ctia.entity.incident-test/test-incident-severity-int-search)]))
-  )
 (deftest test-incident-severity-int-search
   (severity-int-script-search))
 
