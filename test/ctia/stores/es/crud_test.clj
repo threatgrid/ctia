@@ -144,14 +144,14 @@
                                      {:op :field, :field-name :schema_version, :sort_order "DESC"}]))
 
 (deftest rename-sort-fields
-  (are [sort_by expected_sort_by] (is (= expected_sort_by
-                                         (:sort_by (sut/rename-sort-fields
-                                                    {:sort_by sort_by}))))
-    "title" [{:op :field, :field-name :title.whole}]
-    [{:op :field, :field-name "title"}] [{:op :field, :field-name :title.whole}]
-    "revision:DESC,title:ASC,schema_version:DESC" [{:op :field, :field-name :revision, :sort_order "DESC"}
-                                                   {:op :field, :field-name :title.whole, :sort_order "ASC"}
-                                                   {:op :field, :field-name :schema_version, :sort_order "DESC"}])
+  (are [sort_by expected_sort_by] (= expected_sort_by
+                                     (:sort (sut/rename-sort-fields
+                                              {:sort_by sort_by})))
+    "title" [{"title.whole" {:order :asc}}]
+    [{:op :field, :field-name "title"}] [{"title.whole" {:order :asc}}]
+    "revision:DESC,title:ASC,schema_version:DESC" [{"revision" {:order :DESC}}
+                                                   {"title.whole" {:order :ASC}}
+                                                   {"schema_version" {:order :DESC}}])
   (testing "remap"
     (is (= {:sort [{:_script
                     {:type "number"
