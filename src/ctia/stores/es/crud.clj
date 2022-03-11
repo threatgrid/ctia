@@ -22,11 +22,10 @@
    and including ACL mandatory ones."
   [{:keys [fields]
     :as es-params}]
-  (if (coll? fields)
-    (-> es-params
-        (assoc :_source (concat fields ac/acl-fields))
-        (dissoc :fields))
-    es-params))
+  (cond-> es-params
+    (coll? fields)
+    (-> (assoc :_source (concat fields ac/acl-fields))
+        (dissoc :fields))))
 
 (defn coerce-to-fn
   [Model]
