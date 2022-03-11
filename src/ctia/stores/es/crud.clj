@@ -388,12 +388,65 @@ It returns the documents with full hits meta data including the real index in wh
       (string/split (name sort_by) #","))
     sort_by))
 
+(defn parse-sort-params-op
+  [{:keys [op field-name sort_order] :as params} default-sort_order]
+  (let [field-name (name field-name)
+        order (keyword (or sort_order default-sort_order))]
+    (assert (keyword? order) (pr-str order))
+    (assert (not (some #{"'"} field-name)) (pr-str field-name))
+    (case op
+      ;; eg
+      ;; {:op :field
+      ;;  :field-name "Severity"
+      ;;  :sort_order :asc}
+      :field
+      ;; https://www.elastic.co/guide/en/elasticsearch/reference/current/sort-search-results.html#_sort_values
+      {field-name {:order order}}
+
+      ;; eg
+      ;; {:op :remap
+      ;;  :remap-type :number
+      ;;  :field-name "severity"
+      ;;  :remappings {"Critical" 0
+      ;;               "High" 1}
+      ;;  :sort_order :asc
+      ;;  :remap-default 0}
+      :remap
+      (let [{:keys [remap-type remap-default remappings]} params
+            remappings (into {} (map (fn [e]
+                                       (update e 0 #(cond-> %
+                                                      (string? %) string/lower-case))))
+                             remappings)]
+        (assert ((some-fn string? simple-keyword?) remap-type) (str "Expected eg., :remap-type :number, actual " (pr-str remap-type)))
+        (assert ((every-pred map? seq) remappings) (pr-str remappings))
+        (assert (some? remap-default) (pr-str remap-default))
+        (assert (every? string? (keys remappings)) remappings)
+        (case remap-type
+          :number (do (assert (number? remap-default) remap-default)
+                      (assert (every? number? (vals remappings)) remappings))
+          :string (do (assert (string? remap-default) remap-default)
+                      (assert (every? string? (vals remappings)) remappings)))
+        ;; https://www.elastic.co/guide/en/elasticsearch/painless/current/painless-sort-context.html
+        {:_script
+         {:type (name remap-type)
+          :script {:lang "painless"
+                   :inline (string/join
+                             "\n"
+                             ;; https://www.elastic.co/guide/en/elasticsearch/painless/8.1/painless-walkthrough.html#_missing_keys
+                             [(format "if (!doc.containsKey('%s') || doc['%s'].size() != 1) { return params.default }"
+                                      field-name field-name)
+                              (format "return params.remappings.getOrDefault(doc['%s'].value, params.default)"
+                                      field-name)])
+                   :params {:remappings remappings
+                            :default remap-default}}
+          :order order}}))))
+
 (defn rename-sort-fields
   "Renames sort fields based on the content of the `enumerable-fields-mapping` table
   and remaps to script extensions."
-  [{:keys [sort_by sort-by-field-exts] :as es-params}]
-  (cond-> (dissoc es-params :sort-by-field-exts)
-    sort_by (assoc :sort_by
+  [{:keys [sort_by sort_order sort-by-field-exts] :as es-params}]
+  (cond-> (dissoc es-params :sort-by-field-exts :sort_by :sort_order)
+    sort_by (assoc :sort
                    (->> sort_by
                         parse-sort-by
                         (mapv (fn [field]
@@ -402,10 +455,11 @@ It returns the documents with full hits meta data including the real index in wh
                                       (update field :field-name #(or (keyword (enumerable-fields-mapping (name %)))
                                                                      %))]
                                   (assert (simple-keyword? field-name))
-                                  (or (some-> (get sort-by-field-exts field-name)
-                                              (into (select-keys field [:sort_order]))
-                                              (update :field-name #(or % (:field-name field))))
-                                      field))))))))
+                                  (-> (or (some-> (get sort-by-field-exts field-name)
+                                                  (into (select-keys field [:sort_order]))
+                                                  (update :field-name #(or % (:field-name field))))
+                                          field)
+                                      (parse-sort-params-op sort_order)))))))))
 
 (defn handle-find
   "Generate an ES find/list handler using some mapping and schema"
