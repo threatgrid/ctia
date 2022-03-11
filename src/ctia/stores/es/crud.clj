@@ -449,22 +449,22 @@ It returns the documents with full hits meta data including the real index in wh
   "Renames sort fields based on the content of the `enumerable-fields-mapping` table
   and remaps to script extensions."
   [{:keys [sort_by sort_order sort-by-field-exts] :as es-params}]
-  (assert (not (:sort es-params)) "Use sort_by inside CTIA")
   (cond-> (dissoc es-params :sort-by-field-exts :sort_by :sort_order)
-    sort_by (assoc :sort
-                   (->> sort_by
-                        parse-sort-by
-                        (mapv (fn [field]
-                                {:pre [(= :field (:op field))]}
-                                (let [{:keys [field-name] :as field}
-                                      (update field :field-name #(or (keyword (enumerable-fields-mapping (name %)))
-                                                                     %))]
-                                  (assert (simple-keyword? field-name))
-                                  (-> (or (some-> (get sort-by-field-exts field-name)
-                                                  (into (select-keys field [:sort_order]))
-                                                  (update :field-name #(or % (:field-name field))))
-                                          field)
-                                      (parse-sort-params-op (or sort_order :asc))))))))))
+    (and sort_by (not (:sort es-params)))
+    (assoc :sort
+           (->> sort_by
+                parse-sort-by
+                (mapv (fn [field]
+                        {:pre [(= :field (:op field))]}
+                        (let [{:keys [field-name] :as field}
+                              (update field :field-name #(or (keyword (enumerable-fields-mapping (name %)))
+                                                             %))]
+                          (assert (simple-keyword? field-name))
+                          (-> (or (some-> (get sort-by-field-exts field-name)
+                                          (into (select-keys field [:sort_order]))
+                                          (update :field-name #(or % (:field-name field))))
+                                  field)
+                              (parse-sort-params-op (or sort_order :asc))))))))))
 
 (defn handle-find
   "Generate an ES find/list handler using some mapping and schema"
