@@ -351,14 +351,6 @@ It returns the documents with full hits meta data including the real index in wh
                         {:type :access-control-error})))
       false)))
 
-(defn with-default-sort-field
-  [es-params {:keys [default-sort]}]
-  (update es-params :sort #(or %
-                               (some->> default-sort
-                                        parse-sort-by
-                                        (mapv #(parse-sort-params-op % :asc)))
-                               [{"_doc" :asc} {"id" :asc}])))
-
 (s/defschema FilterSchema
   (st/optional-keys
    {:all-of {s/Any s/Any}
@@ -443,6 +435,14 @@ It returns the documents with full hits meta data including the real index in wh
                    :params {:remappings remappings
                             :default remap-default}}
           :order order}}))))
+
+(defn with-default-sort-field
+  [es-params {:keys [default-sort]}]
+  (update es-params :sort #(or %
+                               (some->> default-sort
+                                        parse-sort-by
+                                        (mapv #(parse-sort-params-op % :asc)))
+                               [{"_doc" :asc} {"id" :asc}])))
 
 (defn rename-sort-fields
   "Renames sort fields based on the content of the `enumerable-fields-mapping` table
