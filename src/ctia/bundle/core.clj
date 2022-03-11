@@ -341,14 +341,13 @@
                        (filter #(local-entity? % services))
                        (distinct))
                  relationships)
-        bulk-key->ids (persistent!
-                       (reduce-kv
-                        (fn [acc k v]
-                          (if k
-                            (assoc! acc (bulk/bulk-key (keyword k)) v)
-                            acc))
-                        (transient {})
-                        (group-by ent/long-id->entity-type all-ids)))]
+        bulk-key->ids (reduce-kv
+                       (fn [acc k v]
+                         (if k
+                           (assoc! acc (bulk/bulk-key (keyword k)) v)
+                           acc))
+                       {}
+                       (group-by ent/long-id->entity-type all-ids))]
     (clean-bundle (bulk/fetch-bulk bulk-key->ids identity-map services))))
 
 (defn relationships-filters
@@ -376,12 +375,9 @@
   (let [filter-map (relationships-filters id filters)
         max-relationships (get-in-config [:ctia :http :bundle :export :max-relationships] 1000)]
     (some-> (get-store :relationship)
-            (list-fn
-              filter-map
-              identity-map
-              {:limit max-relationships
-               :sort_by "timestamp"
-               :sort_order "desc"})
+            (list-fn filter-map identity-map {:limit max-relationships
+                                              :sort_by "timestamp"
+                                              :sort_order "desc"})
             :data
             ent/un-store-all)))
 
@@ -392,10 +388,7 @@
     :as services} :- APIHandlerServices]
   (when-let [entity-type (ent/id->entity-type id services)]
     (-> (get-store (keyword entity-type))
-        (read-fn
-          id
-          identity-map
-          {}))))
+        (read-fn id identity-map {}))))
 
 (s/defn export-entities
   "Given an entity id, export it along
@@ -439,6 +432,8 @@
    ident
    params
    services :- APIHandlerServices]
-  (->> (map #(export-entities % identity-map ident params services) ids)
+  (->> ids
+       (distinct)
+       (map #(export-entities % identity-map ident params services))
        (reduce #(deep-merge-with coll/add-colls %1 %2) {})
        (into empty-bundle)))

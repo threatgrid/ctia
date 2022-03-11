@@ -888,3 +888,26 @@ Returns
   ]
 }
 #+end_src
+
+*** Performance issue
+
+[[https://github.com/advthreat/iroh/issues/4742][Detailed description]]
+
+**** Background
+
+IDs to export are processed sequentially making heavy ES requests to fetch all relationships related to the given entity by id. Because wildcard operators are used to filtering relationship entities every such request must iterate over the entire collection of relationships stored in ES. Every relationship might have a reference to the target entity, source entity or both. The previous request does not automatically dereference them so another ES request must be made using fetch-bulk. In the end, the export-bundle function must make (N * 3) ES operations where at least N operations must iterate over the entire collection stored in ES.
+
+ctia.bulk.core/read-entities makes multiple ES requests instead of one query and this function is an implementation details for fetch-bulk. It better to change its logic to make one query.
+
+**** Possible solutions
+
+1. Instead of a sequential process, export-bundle might process all of the given IDs concurrently.
+
+   - pmap (could work, but it is not ideal at all because it hides away internal shared execution context)
+   - custom ThreadFactory or ThreadPool for better control over the workflow.
+
+2. Rewrite export-bundle logic to do only three requests to ES
+
+   - Use list-records to retrieve all the entities simultaniously
+   - Fetch relationships in one list-records query
+   - Fetch relationships targets (should be possible using one more list-records query)

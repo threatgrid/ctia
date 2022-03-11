@@ -118,7 +118,7 @@
     (long-id->entity-type id-str)))
 
 (defn un-store [record]
-  (apply dissoc record [:created :modified]))
+  (dissoc record :created :modified))
 
 (defn un-store-all [x]
   (if (sequential? x)
