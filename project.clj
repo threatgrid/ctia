@@ -238,8 +238,9 @@
                             (clojure.string/join
                               "\n"
                               ["Welcome to CTIA!"
-                               " (reset) / (reset7) => refresh, then (re)start CTIA (ES5/ES7)"
                                " (go)    / (go7)    => (re)start CTIA (ES5/ES7)"
+                               " (refresh)          => (re)load all code"
+                               " (reset) / (reset7) => refresh, then (re)start CTIA (ES5/ES7)"
                                " (start) / (start7) => start CTIA (ES5/ES7)"
                                " (stop)             => stop CTIA"
                                " (current-app)      => get current app, or nil"]))
