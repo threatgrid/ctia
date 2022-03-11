@@ -153,25 +153,31 @@
                                                    {:op :field, :field-name :title.whole, :sort_order "ASC"}
                                                    {:op :field, :field-name :schema_version, :sort_order "DESC"}])
   (testing "remap"
-    (is (= {:sort_by [{:op :remap
-                       :remap-type :number
-                       :remappings {"a" 1, "b" 2}
-                       :remap-default 0
-                       :field-name :remap}]}
+    (is (= {:sort [{:_script
+                    {:type "number"
+                     :script {:lang "painless"
+                              :inline (str "if (!doc.containsKey('severity') || doc['severity'].size() != 1) { return params.default }\n"
+                                           "return params.remappings.getOrDefault(doc['severity'].value, params.default)")
+                              :params {:remappings {"critical" 2, "high" 1}
+                                       :default 0}}
+                     :order :asc}}]}
            (sut/rename-sort-fields
-             {:sort_by "remap"
-              :sort-by-field-exts {:remap {:op :remap
-                                           :remap-type :number
-                                           :remappings {"a" 1
-                                                        "b" 2}
-                                           :remap-default 0}}}))))
+             {:sort_by "severity_int"
+              :sort-by-field-exts {:severity_int {:op :remap
+                                                  :field-name :severity
+                                                  :remap-type :number
+                                                  :remappings {"Critical" 2
+                                                               "High" 1}
+                                                  :remap-default 0}}}))))
   (testing "remap + order"
-    (is (= {:sort_by [{:op :remap
-                       :remap-type :number
-                       :remappings {"a" 1, "b" 2}
-                       :remap-default 0
-                       :field-name :remap
-                       :sort_order "DESC"}]}
+    (is (= {:sort [{:_script
+                    {:type "number"
+                     :script {:lang "painless"
+                              :inline (str "if (!doc.containsKey('remap') || doc['remap'].size() != 1) { return params.default }\n"
+                                           "return params.remappings.getOrDefault(doc['remap'].value, params.default)")
+                              :params {:remappings {"a" 1, "b" 2}
+                                       :default 0}}
+                     :order :DESC}}]}
            (sut/rename-sort-fields
              {:sort_by "remap:DESC"
               :sort-by-field-exts {:remap {:op :remap
@@ -180,15 +186,15 @@
                                                         "b" 2}
                                            :remap-default 0}}}))))
   (testing "sort by renamed field then remapped field"
-    (is (= {:sort_by [{:op :field
-                       :field-name :title.whole
-                       :sort_order "ASC"}
-                      {:op :remap
-                       :remap-type :number
-                       :remappings {"a" 1, "b" 2}
-                       :remap-default 0
-                       :field-name :remap
-                       :sort_order "DESC"}]}
+    (is (= {:sort [{"title.whole" {:order :ASC}}
+                   {:_script
+                    {:type "number"
+                     :script {:lang "painless"
+                              :inline (str "if (!doc.containsKey('remap') || doc['remap'].size() != 1) { return params.default }\n"
+                                           "return params.remappings.getOrDefault(doc['remap'].value, params.default)")
+                              :params {:remappings {"a" 1, "b" 2}
+                                       :default 0}}
+                     :order :DESC}}]}
            (sut/rename-sort-fields
              {:sort_by "title:ASC,remap:DESC"
               :sort-by-field-exts {:remap {:op :remap
@@ -197,11 +203,14 @@
                                                         "b" 2}
                                            :remap-default 0}}}))))
   (testing "remap a renamed field"
-    (is (= {:sort_by [{:op :remap
-                       :remap-type :number
-                       :remappings {"a" 1, "b" 2}
-                       :remap-default 0
-                       :field-name :title.whole}]}
+    (is (= {:sort [{:_script
+                    {:type "number"
+                     :script {:lang "painless"
+                              :inline (str "if (!doc.containsKey('title.whole') || doc['title.whole'].size() != 1) { return params.default }\n"
+                                           "return params.remappings.getOrDefault(doc['title.whole'].value, params.default)")
+                              :params {:remappings {"a" 1, "b" 2}
+                                       :default 0}}
+                     :order :asc}}]}
            (sut/rename-sort-fields
              {:sort_by "title"
               :sort-by-field-exts {:title.whole {:op :remap
@@ -210,11 +219,14 @@
                                                               "b" 2}
                                                  :remap-default 0}}}))))
   (testing "remap to another field via :sort-by-field-exts's :field-name"
-    (is (= {:sort_by [{:op :remap
-                       :remap-type :number
-                       :remappings {"a" 1, "b" 2}
-                       :remap-default 0
-                       :field-name "remap2"}]}
+    (is (= {:sort [{:_script
+                    {:type "number"
+                     :script {:lang "painless"
+                              :inline (str "if (!doc.containsKey('remap2') || doc['remap2'].size() != 1) { return params.default }\n"
+                                           "return params.remappings.getOrDefault(doc['remap2'].value, params.default)")
+                              :params {:remappings {"a" 1, "b" 2}
+                                       :default 0}}
+                     :order :asc}}]}
            (sut/rename-sort-fields
              {:sort_by "remap1"
               :sort-by-field-exts {:remap1 {:op :remap

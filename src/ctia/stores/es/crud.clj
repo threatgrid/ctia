@@ -459,7 +459,7 @@ It returns the documents with full hits meta data including the real index in wh
                                                   (into (select-keys field [:sort_order]))
                                                   (update :field-name #(or % (:field-name field))))
                                           field)
-                                      (parse-sort-params-op sort_order)))))))))
+                                      (parse-sort-params-op (or sort_order :asc))))))))))
 
 (defn handle-find
   "Generate an ES find/list handler using some mapping and schema"
