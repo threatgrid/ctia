@@ -895,24 +895,25 @@
 
 (deftest with-default-sort-field-test
   (let [test-cases [{:msg "Use default hardcoded value when sort_by is not defined and no default sort is configured"
-                     :expected {:sort_by "_doc,id"}
+                     :expected {:sort [{"_doc" :asc} {"id" :asc}]}
                      :es-params {}
                      :props  {}}
-                    {:msg "Always use es-params sort_by when provided"
-                     :expected {:sort_by "title"}
-                     :es-params {:sort_by "title"}
-                     :props  {:default-sort "id"}}
-                    {:msg "Always use es-params sort_by when provided"
-                     :expected {:sort_by "title"}
-                     :es-params {:sort_by "title"}
-                     :props  {}}
-                    {:msg "When sort_by is not provided, use configured default-sort"
-                     :expected {:sort_by "id"}
+                    {:msg "Always use es-params sort when provided"
+                     :expected {:sort "title"}
+                     :es-params {:sort "title"}
+                     :props {:default-sort "id"}}
+                    {:msg "Always use es-params sort when provided"
+                     :expected {:sort "title"}
+                     :es-params {:sort "title"}
+                     :props {}}
+                    {:msg "When sort is not provided, use configured default-sort"
+                     :expected {:sort [{"id" {:order :asc}} {"_doc" {:order :asc}}]}
                      :es-params {}
-                     :props  {:default-sort "id"}}]]
+                     :props {:default-sort "id,_doc"}}]]
     (doseq [{:keys [msg expected es-params props]} test-cases]
-      (is (= expected (sut/with-default-sort-field es-params props))
-          msg))))
+      (testing (pr-str es-params)
+        (is (= expected (sut/with-default-sort-field es-params props))
+            msg)))))
 
 (deftest parse-sort-params-op-test
   (is (=

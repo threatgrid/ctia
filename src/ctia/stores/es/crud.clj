@@ -438,6 +438,7 @@ It returns the documents with full hits meta data including the real index in wh
 
 (defn with-default-sort-field
   [es-params {:keys [default-sort]}]
+  (assert (not (:sort_by es-params)))
   (update es-params :sort #(or %
                                (some->> default-sort
                                         parse-sort-by
