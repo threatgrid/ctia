@@ -30,7 +30,10 @@
      IStore
      (~(symbol "read-record") [_# id# ident# params#]
       ((crud/handle-read ~partial-stored-schema)
-       ~(symbol "state")  id# ident# params#))
+       ~(symbol "state") id# ident# params#))
+     (~(symbol "read-records") [_# ids# ident# params#]
+      ((crud/handle-read-many ~partial-stored-schema)
+       ~(symbol "state") ids# ident# params#))
      (~(symbol "create-record") [_# new-actors# ident# params#]
       ((crud/handle-create ~entity ~stored-schema)
        ~(symbol "state") new-actors# ident# params#))

@@ -61,8 +61,8 @@
   "return the create function provided an entity type key"
   [k auth-identity params
    {{:keys [get-store]} :StoreService} :- ReadFnServices]
-  #(-> (get-store k)
-       (store/read-record % (auth/ident->map auth-identity) params))) 
+  (fn [id]
+    (store/read-record (get-store k) id (auth/ident->map auth-identity) params)))
 
 (s/defn create-entities
   "Create many entities provided their type and returns a list of ids"
@@ -99,16 +99,12 @@
 (s/defn read-entities
   "Retrieve many entities of the same type provided their ids and common type"
   [ids entity-type auth-identity
-   services :- ReadEntitiesServices]
-  (let [read-entity (read-fn entity-type auth-identity {} services)]
-    ;; TODO search by ids
-    (pmap (fn [id]
-           (try
-             (some-> (read-entity id)
-                     (with-long-id services))
-             (catch Exception e
-               (log/error (pr-str e)))))
-         ids)))
+   {{:keys [get-store]} :StoreService} services :- ReadEntitiesServices]
+  (try
+    (map #(with-long-id % services)
+         (store/read-records (get-store entity-type) ids (auth/ident->map auth-identity) {}))
+    (catch Exception e
+      (log/error (pr-str e)))))
 
 (defn to-long-id
   [id services]
