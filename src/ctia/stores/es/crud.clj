@@ -6,7 +6,7 @@
    [ctia.domain.access-control :as ac
     :refer [allow-read? allow-write? restricted-read?]]
    [ctia.lib.pagination :refer [list-response-schema]]
-   [ctia.schemas.core :refer [SortExtension]]
+   [ctia.schemas.core :refer [ConcreteSortExtension SortExtension]]
    [ctia.schemas.search-agg
     :refer [AggQuery CardinalityQuery HistogramQuery SearchQuery TopnQuery]]
    [ctia.stores.es.query :as es.query]
@@ -366,7 +366,7 @@ It returns the documents with full hits meta data including the real index in wh
   {"title" "title.whole"
    "reason" "reason.whole"})
 
-(s/defn parse-sort-by :- [SortExtension]
+(s/defn parse-sort-by :- [ConcreteSortExtension]
   "Parses the sort_by parameter
    Ex:
    \"title:ASC,revision:DESC\"
@@ -385,7 +385,7 @@ It returns the documents with full hits meta data including the real index in wh
     sort_by))
 
 (s/defn parse-sort-params-op
-  [{:keys [op field-name sort_order] :as params} :- SortExtension
+  [{:keys [op field-name sort_order] :as params} :- ConcreteSortExtension
    default-sort_order]
   (let [field-name (name field-name)
         order (keyword (or sort_order default-sort_order))]
