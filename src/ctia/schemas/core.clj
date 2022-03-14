@@ -335,9 +335,9 @@
 (s/defschema SortExtensionTemplate
   (s/conditional
     #(= :field (:op %)) {:op (s/eq :field)
-                         (s/optional-key :field-name) (s/pred simple-keyword?)}
+                         (s/optional-key :field-name) (s/cond-pre s/Keyword s/Str)}
     #(= :remap (:op %)) {:op (s/eq :remap)
-                         (s/optional-key :field-name) (s/pred simple-keyword?)
+                         (s/optional-key :field-name) (s/cond-pre s/Keyword s/Str)
                          :remap-type (s/pred simple-keyword?)
                          :remappings {s/Any s/Any}
                          :remap-default s/Any}))
@@ -345,10 +345,10 @@
 (s/defschema ConcreteSortExtension
   (s/conditional
     #(= :field (:op %)) {:op (s/eq :field)
-                         :field-name (s/pred simple-keyword?)
+                         :field-name (s/cond-pre s/Keyword s/Str)
                          (s/optional-key :sort_order) (s/cond-pre s/Keyword s/Str)}
     #(= :remap (:op %)) {:op (s/eq :remap)
-                         :field-name (s/pred simple-keyword?)
+                         :field-name (s/cond-pre s/Keyword s/Str)
                          (s/optional-key :sort_order) (s/cond-pre s/Keyword s/Str)
                          :remap-type (s/pred simple-keyword?)
                          :remappings {s/Any s/Any}
