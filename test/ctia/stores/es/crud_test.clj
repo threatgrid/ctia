@@ -134,8 +134,8 @@
           identity))))
 
 (deftest parse-sort-by-test
-  (are [sort_by expected] (is (= expected
-                                 (sut/parse-sort-by sort_by)))
+  (are [sort_by expected] (= expected
+                             (sut/parse-sort-by sort_by))
     [{:op :field, :field-name :title}] [{:op :field, :field-name :title}]
     "title"                         [{:op :field, :field-name :title}]
     :title                          [{:op :field, :field-name :title}]

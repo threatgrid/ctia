@@ -175,7 +175,7 @@
          date-field :created
          histogram-fields [:created]}
     :as entity-crud-config}
-   :- {(s/optional-key :sort-by-field-exts) SortExtension
+   :- {(s/optional-key :sort-by-field-exts) {(s/pred simple-keyword?) SortExtension}
        s/Any s/Any}]
  (s/fn [{{:keys [get-store]} :StoreService
          {:keys [flag-value]} :FeaturesService
