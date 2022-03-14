@@ -154,7 +154,7 @@
                          incidents (into #{}
                                          (map gen-new-incident)
                                          fixed-severities-asc)
-                         [created-bundle create-incidents-ms-time] (result+ms-time (create-incidents app incidents))
+                         created-bundle (create-incidents app incidents)
                          _ (doseq [asc? [true false]
                                    :let [test-id {:asc? asc?}]]
                              (testing (pr-str test-id)

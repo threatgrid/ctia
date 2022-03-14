@@ -6,6 +6,7 @@
    [ctia.domain.access-control :as ac
     :refer [allow-read? allow-write? restricted-read?]]
    [ctia.lib.pagination :refer [list-response-schema]]
+   [ctia.schemas.core :refer [SortExtension]]
    [ctia.schemas.search-agg
     :refer [AggQuery CardinalityQuery HistogramQuery SearchQuery TopnQuery]]
    [ctia.stores.es.query :as es.query]
