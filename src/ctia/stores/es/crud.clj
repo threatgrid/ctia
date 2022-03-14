@@ -365,7 +365,7 @@ It returns the documents with full hits meta data including the real index in wh
   {"title" "title.whole"
    "reason" "reason.whole"})
 
-(defn parse-sort-by
+(s/defn parse-sort-by :- [SortExtension]
   "Parses the sort_by parameter
    Ex:
    \"title:ASC,revision:DESC\"
@@ -383,8 +383,9 @@ It returns the documents with full hits meta data including the real index in wh
       (string/split (name sort_by) #","))
     sort_by))
 
-(defn parse-sort-params-op
-  [{:keys [op field-name sort_order] :as params} default-sort_order]
+(s/defn parse-sort-params-op
+  [{:keys [op field-name sort_order] :as params} :- SortExtension
+   default-sort_order]
   (let [field-name (name field-name)
         order (keyword (or sort_order default-sort_order))]
     (assert (keyword? order) (pr-str order))
