@@ -44,6 +44,7 @@
 (def handle-create (crud/handle-create :judgement StoredJudgement))
 (def handle-update (crud/handle-update :judgement StoredJudgement))
 (def handle-read (crud/handle-read PartialStoredJudgement))
+(def handle-read-many (crud/handle-read-many PartialStoredJudgement))
 (def handle-delete (crud/handle-delete :judgement))
 (def handle-list (crud/handle-find PartialStoredJudgement))
 (def handle-bulk-delete crud/bulk-delete)
@@ -109,6 +110,8 @@
     (handle-create state new-judgements ident params))
   (read-record [_ id ident params]
     (handle-read state id ident params))
+  (read-records [_ ids ident params]
+    (handle-read-many state ids ident params))
   (delete-record [_ id ident params]
     (handle-delete state id ident params))
   (update-record [_ id judgement ident params]

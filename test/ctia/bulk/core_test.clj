@@ -31,7 +31,7 @@
                                  identity-singleton
                                  {:ConfigService {:get-in-config get-in-config}
                                   :StoreService {:get-store (constantly nil)}})]
-      (is (= [nil] res)))))
+      (is (nil? res)))))
 
 (defn schema->keys
   "Extracts both: required and optional keys of schema as set of keywords"
@@ -277,14 +277,14 @@
 
            (testing "bulk-update shall properly update submitties entitites"
              (let [other-group-res (sut/update-bulk bulk-update
-                                                   other-group-ident
-                                                   {:refresh "true"}
-                                                   services)
+                                                    other-group-ident
+                                                    {:refresh "true"}
+                                                    services)
                    {:keys [sightings indicators]}
                    (sut/update-bulk bulk-update
-                                   ident
-                                   {:refresh "true"}
-                                   services)]
+                                    ident
+                                    {:refresh "true"}
+                                    services)]
                (check-tlp other-group-res)
                (is (= #{missing-id-1 missing-id-2} (set (get-in indicators [:errors :not-found]))))
                (is (nil? (:not-found sightings)))

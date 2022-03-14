@@ -99,7 +99,7 @@
 (s/defn read-entities
   "Retrieve many entities of the same type provided their ids and common type"
   [ids entity-type auth-identity
-   {{:keys [get-store]} :StoreService} services :- ReadEntitiesServices]
+   {{:keys [get-store]} :StoreService :as services} :- ReadEntitiesServices]
   (try
     (map #(with-long-id % services)
          (store/read-records (get-store entity-type) ids (auth/ident->map auth-identity) {}))
@@ -185,7 +185,7 @@
   [entities entity-type auth-identity params
    services :- APIHandlerServices]
   (when (seq entities)
-    (let [get-fn #(read-entities %  entity-type auth-identity services)
+    (let [get-fn #(read-entities % entity-type auth-identity services)
           {:keys [realize-fn new-spec]} (get (all-entities) entity-type)]
       (flows/update-flow
        :entities entities
@@ -205,7 +205,7 @@
   [patches entity-type auth-identity params
    services :- APIHandlerServices]
   (when (seq patches)
-    (let [get-fn #(read-entities %  entity-type auth-identity services)
+    (let [get-fn #(read-entities % entity-type auth-identity services)
           {:keys [realize-fn new-spec]} (get (all-entities) entity-type)]
       (flows/patch-flow
        :services services
