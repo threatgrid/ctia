@@ -136,6 +136,49 @@
   (search-th/delete-search app :incident {:query "*"
                                           :REALLY_DELETE_ALL_THESE_ENTITIES true}))
 
+;; extracted from the much more thorough severity-int-script-search
+(deftest simple-severity-int-script-search-test
+  (es-helpers/for-each-es-version
+    "severity_int sorts like #'ctim-severity-order"
+    [5 7]
+    #(ductile.index/delete! % "ctia_*")
+    (helpers/with-properties ["ctia.store.es.default.auth" es-helpers/basic-auth
+                              "ctia.auth.type" "allow-all"]
+      (helpers/fixture-ctia-with-app
+        (fn [app]
+          ;(helpers/set-capabilities! app "foouser" ["foogroup"] "user" all-capabilities)
+          ;(whoami-helpers/set-whoami-response app "45c1f5e3f05d0" "foouser" "foogroup" "user")
+          (let [fixed-severities-asc ["Info" "Low" "Medium" "High" "Critical"]]
+            (try (testing (pr-str fixed-severities-asc)
+                   (let [incidents-count (count fixed-severities-asc)
+                         incidents (into #{}
+                                         (map gen-new-incident)
+                                         fixed-severities-asc)
+                         [created-bundle create-incidents-ms-time] (result+ms-time (create-incidents app incidents))
+                         _ (doseq [asc? [true false]
+                                   :let [test-id {:asc? asc?}]]
+                             (testing (pr-str test-id)
+                               (let [{:keys [parsed-body] :as raw} (search-th/search-raw app :incident {:sort_by "severity_int"
+                                                                                                        :sort_order (if asc? "asc" "desc")})
+
+                                     expected-parsed-body (sort-by (fn [incident]
+                                                                     {:post [(number? %)]}
+                                                                     (ctim-severity-order (:severity incident)))
+                                                                   (if asc?
+                                                                     #(compare %1 %2)
+                                                                     #(compare %2 %1))
+                                                                   parsed-body)]
+                                 (and (is (= 200 (:status raw)) (pr-str raw))
+                                      (is (= incidents-count (count parsed-body)) (pr-str raw))
+                                      (is (= incidents-count (count expected-parsed-body)) (pr-str raw))
+                                      ;; use fixed-severities-asc directly to mitigate mistakes
+                                      ;; in calculating expected-parsed-body (eg., faulty comparator)
+                                      (is (= ((if asc? identity rseq) fixed-severities-asc)
+                                             (map :severity parsed-body)))
+                                      (is (= expected-parsed-body
+                                             parsed-body))))))]))
+                 (finally (purge-incidents! app)))))))))
+
 (defmacro result+ms-time
   "Evaluates expr and returns a tuple [result ms-time] where result is the 
    result of the expr and ns-time is the milliseconds duration of expr."
@@ -145,6 +188,7 @@
          end# (System/nanoTime)
          ms-time# (/ (double (- end# start#)) 1000000.0)]
      [ret# ms-time#]))
+
 
 (defn severity-int-script-search
   "If :bench-atom is provided, tests huge cases. Otherwise,
@@ -229,9 +273,9 @@
                                                                                   (str "No severity ordering for " (pr-str severity)
                                                                                        "\n" (pr-str incident))))
                                                                         (or c 0)))
-                                                                    #(if asc?
-                                                                       (compare %1 %2)
-                                                                       (compare %2 %1))
+                                                                    (if asc?
+                                                                      #(compare %1 %2)
+                                                                      #(compare %2 %1))
                                                                     parsed-body)
 
                                       success? (and (is (= 200 (:status raw)) (when (= 1 multiplier) (pr-str raw)))
