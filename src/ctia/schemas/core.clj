@@ -332,12 +332,12 @@
   [id]
   (and id (some? (re-matches id/transient-id-re id))))
 
-(s/defschema SortExtension
+(s/defschema SortExtensionTemplate
   (s/conditional
     #(= :field (:op %)) {:op (s/eq :field)
-                         :field-name (s/pred simple-keyword?)}
+                         (s/optional-key :field-name) (s/pred simple-keyword?)}
     #(= :remap (:op %)) {:op (s/eq :remap)
-                         :field-name (s/pred simple-keyword?)
+                         (s/optional-key :field-name) (s/pred simple-keyword?)
                          :remap-type (s/pred simple-keyword?)
                          :remappings {s/Any s/Any}
                          :remap-default s/Any}))
