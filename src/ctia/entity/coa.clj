@@ -161,7 +161,7 @@
    :realize-fn            realize-coa
    :es-store              ->COAStore
    :es-mapping            coa-mapping
-   :services->routes      (routes.common/reloadable-function coa-routes)
+   :services->routes      #'coa-routes
    :capabilities          capabilities
    :fields                coa-fields
    :sort-fields           coa-fields

@@ -177,6 +177,5 @@
    :plural                :events
    :es-store              ->EventStore
    :es-mapping            event-mapping
-   :services->routes      (routes.common/reloadable-function
-                           event-routes)
+   :services->routes      #'event-routes
    :searchable-fields     searchable-fields})

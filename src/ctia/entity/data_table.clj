@@ -118,5 +118,5 @@
    :realize-fn            realize-data-table
    :es-store              ->DataTableStore
    :es-mapping            data-table-mapping
-   :services->routes      (routes.common/reloadable-function data-table-routes)
+   :services->routes      #'data-table-routes
    :capabilities          capabilities})

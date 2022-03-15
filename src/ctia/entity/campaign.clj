@@ -153,7 +153,7 @@
    :realize-fn            realize-campaign
    :es-store              ->CampaignStore
    :es-mapping            campaign-mapping
-   :services->routes      (routes.common/reloadable-function campaign-routes)
+   :services->routes      #'campaign-routes
    :capabilities          capabilities
    :fields                campaign-fields
    :sort-fields           campaign-fields

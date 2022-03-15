@@ -173,8 +173,7 @@
    :realize-fn            realize-asset-mapping
    :es-store              ->AssetMappingStore
    :es-mapping            asset-mapping-mapping
-   :services->routes      (routes.common/reloadable-function
-                            asset-mapping-routes)
+   :services->routes      #'asset-mapping-routes
    :capabilities          capabilities
    :fields                asset-mapping-fields
    :sort-fields           asset-mapping-fields

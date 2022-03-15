@@ -122,8 +122,7 @@
    :realize-fn            fs/realize-feedback
    :es-store              ->FeedbackStore
    :es-mapping            feedback-mapping
-   :services->routes      (routes.common/reloadable-function
-                           feedback-routes)
+   :services->routes      #'feedback-routes
    :capabilities          capabilities
    :fields                fs/feedback-fields
    :sort-fields           fs/feedback-fields

@@ -218,7 +218,7 @@
    :realize-fn            realize-indicator
    :es-store              ->IndicatorStore
    :es-mapping            indicator-mapping
-   :services->routes      (routes.common/reloadable-function indicator-routes)
+   :services->routes      #'indicator-routes
    :capabilities          capabilities
    :fields                indicator-fields
    :sort-fields           indicator-fields

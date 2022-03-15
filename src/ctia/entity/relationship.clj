@@ -255,7 +255,7 @@
    :realize-fn            rs/realize-relationship
    :es-store              ->RelationshipStore
    :es-mapping            relationship-mapping
-   :services->routes      (routes.common/reloadable-function relationship-routes)
+   :services->routes      #'relationship-routes
    :capabilities          capabilities
    :fields                relationship-fields
    :sort-fields           relationship-fields

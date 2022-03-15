@@ -460,8 +460,7 @@
    :realize-fn            realize-feed
    :es-store              ->FeedStore
    :es-mapping            feed-mapping
-   :services->routes      (routes.common/reloadable-function
-                           feed-routes)
+   :services->routes      #'feed-routes
    :capabilities          capabilities
    :fields                sort-restricted-feed-fields
    :sort-fields           sort-restricted-feed-fields})

@@ -127,7 +127,7 @@
    :realize-fn            inv/realize-investigation
    :es-store              ->InvestigationStore
    :es-mapping            investigation-mapping
-   :services->routes      (routes.common/reloadable-function investigation-routes)
+   :services->routes      #'investigation-routes
    :capabilities          capabilities
    :fields                investigation-fields
    :sort-fields           investigation-fields

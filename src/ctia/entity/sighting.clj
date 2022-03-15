@@ -98,7 +98,7 @@
    :realize-fn            ss/realize-sighting
    :es-store              s-store/->SightingStore
    :es-mapping            s-store/sighting-mapping
-   :services->routes      (routes.common/reloadable-function sighting-routes)
+   :services->routes      #'sighting-routes
    :capabilities          capabilities
    :fields                ss/sighting-fields
    :sort-fields           ss/sighting-sort-fields

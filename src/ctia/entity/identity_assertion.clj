@@ -143,7 +143,7 @@
    :realize-fn            realize-identity-assertion
    :es-store              ->IdentityAssertionStore
    :es-mapping            identity-assertion-mapping
-   :services->routes      (routes.common/reloadable-function identity-assertion-routes)
+   :services->routes      #'identity-assertion-routes
    :capabilities          capabilities
    :fields                identity-assertion-fields
    :sort-fields           identity-assertion-fields

@@ -192,7 +192,7 @@
    :realize-fn js/realize-judgement
    :es-store j-store/->JudgementStore
    :es-mapping j-store/judgement-mapping-def
-   :services->routes (routes.common/reloadable-function judgement-routes)
+   :services->routes #'judgement-routes
    :capabilities capabilities
    :fields js/judgement-fields
    :sort-fields js/judgement-sort-fields

@@ -167,7 +167,7 @@
    :realize-fn            realize-attack-pattern
    :es-store              ->AttackPatternStore
    :es-mapping            attack-pattern-mapping
-   :services->routes      (routes.common/reloadable-function attack-pattern-routes)
+   :services->routes      #'attack-pattern-routes
    :capabilities          capabilities
    :fields                attack-pattern-fields
    :sort-fields           attack-pattern-fields

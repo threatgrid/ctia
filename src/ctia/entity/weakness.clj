@@ -182,7 +182,7 @@
    :realize-fn            realize-weakness
    :es-store              ->WeaknessStore
    :es-mapping            weakness-mapping
-   :services->routes      (routes.common/reloadable-function weakness-routes)
+   :services->routes      #'weakness-routes
    :capabilities          capabilities
    :fields                weakness-fields
    :sort-fields           weakness-fields

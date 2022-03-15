@@ -267,8 +267,8 @@
    "IncidentOrder"
    "incidents"
    (into {}
-         (map (juxt graphql-sorting/sorting-kw->enum-name name)
-              incident-fields))))
+         (map (juxt graphql-sorting/sorting-kw->enum-name name))
+         incident-fields)))
 
 (def IncidentConnectionType
   (pagination/new-connection IncidentType))
@@ -294,7 +294,7 @@
    :realize-fn            realize-incident
    :es-store              ->IncidentStore
    :es-mapping            incident-mapping
-   :services->routes      (routes.common/reloadable-function incident-routes)
+   :services->routes      #'incident-routes
    :capabilities          capabilities
    :can-patch?            true
    :patch-capabilities    :create-incident

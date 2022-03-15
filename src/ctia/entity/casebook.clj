@@ -305,7 +305,7 @@
    :realize-fn            realize-casebook
    :es-store              ->CasebookStore
    :es-mapping            casebook-mapping
-   :services->routes      (routes.common/reloadable-function casebook-routes)
+   :services->routes      #'casebook-routes
    :capabilities          casebook-capabilities
    :fields                casebook-fields
    :sort-fields           casebook-fields
