@@ -139,7 +139,7 @@
 ;; extracted from the much more thorough severity-int-script-search
 (deftest simple-severity-int-script-search-test
   (es-helpers/for-each-es-version
-    "severity_int sorts like #'ctim-severity-order"
+    "severity sorts like #'ctim-severity-order"
     [5 7]
     #(ductile.index/delete! % "ctia_*")
     (helpers/with-properties ["ctia.store.es.default.auth" es-helpers/basic-auth
@@ -158,7 +158,7 @@
                          _ (doseq [asc? [true false]
                                    :let [test-id {:asc? asc?}]]
                              (testing (pr-str test-id)
-                               (let [{:keys [parsed-body] :as raw} (search-th/search-raw app :incident {:sort_by "severity_int"
+                               (let [{:keys [parsed-body] :as raw} (search-th/search-raw app :incident {:sort_by "severity"
                                                                                                         :sort_order (if asc? "asc" "desc")})
 
                                      expected-parsed-body (sort-by (fn [incident]
@@ -189,14 +189,13 @@
          ms-time# (/ (double (- end# start#)) 1000000.0)]
      [ret# ms-time#]))
 
-
 (defn severity-int-script-search
   "If :bench-atom is provided, tests huge cases. Otherwise,
   performs small unit tests."
   ([] (severity-int-script-search {}))
   ([{:keys [bench-atom]}]
    (es-helpers/for-each-es-version
-     "severity_int sorts like #'ctim-severity-order"
+     "severity sorts like #'ctim-severity-order"
      [5 7]
      #(ductile.index/delete! % "ctia_*")
      (helpers/with-properties ["ctia.store.es.default.auth" es-helpers/basic-auth
@@ -245,7 +244,7 @@
                           [created-bundle create-incidents-ms-time] (result+ms-time (create-incidents app incidents))
                           _ (when bench-atom
                               (println (format "Took %ems to import %s incidents" create-incidents-ms-time (str incidents-count))))
-                          _ (doseq [sort_by (cond-> ["severity_int"]
+                          _ (doseq [sort_by (cond-> ["severity"]
                                               bench-atom (conj
                                                            ;; hijacking this int field for perf comparison, see `gen-new-incident`
                                                            "revision"

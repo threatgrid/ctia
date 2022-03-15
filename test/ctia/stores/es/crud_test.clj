@@ -162,13 +162,12 @@
                                        :default 0}}
                      :order :asc}}]}
            (sut/rename-sort-fields
-             {:sort_by "severity_int"
-              :sort-by-field-exts {:severity_int {:op :remap
-                                                  :field-name :severity
-                                                  :remap-type :number
-                                                  :remappings {"Critical" 2
-                                                               "High" 1}
-                                                  :remap-default 0}}}))))
+             {:sort_by "severity"
+              :sort-by-field-exts {:severity {:op :remap
+                                              :remap-type :number
+                                              :remappings {"Critical" 2
+                                                           "High" 1}
+                                              :remap-default 0}}}))))
   (testing "remap + order"
     (is (= {:sort [{:_script
                     {:type "number"

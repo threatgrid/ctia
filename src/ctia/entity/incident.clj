@@ -162,17 +162,15 @@
            :severity]))
 
 (def sort-by-field-exts
-  {;; create a new "virtual" field to sort by called
-   ;; :severity_int, which sorts by :severity semantically
-   :severity_int {:op :remap
-                  :field-name :severity
-                  :remap-type :number
-                  :remappings {"Info" 1
-                               "Low" 2
-                               "Medium" 3
-                               "High" 4
-                               "Critical" 5}
-                  :remap-default 0}})
+  {;; override :severity field to sort semantically
+   :severity {:op :remap
+              :remap-type :number
+              :remappings {"Info" 1
+                           "Low" 2
+                           "Medium" 3
+                           "High" 4
+                           "Critical" 5}
+              :remap-default 0}})
 
 (def incident-sort-fields
   (apply s/enum (distinct (concat (keys sort-by-field-exts) incident-fields))))
