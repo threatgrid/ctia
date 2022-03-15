@@ -201,6 +201,4 @@
 (s/defn capabilities->description :- s/Str
   "Does not add leading or trailing new lines."
   [capabilities :- Capability]
-  (if ((some-fn keyword? (every-pred set? seq)) capabilities)
-    (str "Requires capability " (capabilities->string capabilities) ".")
-    (throw (ex-info "Missing capabilities!" {}))))
+  (str "Requires capability " (capabilities->string capabilities) "."))
