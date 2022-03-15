@@ -59,16 +59,15 @@
         default-fields-schema (->> searchable-fields
                                    (map name)
                                    (apply s/enum))]
-    (if (seq searchable-fields)
+    (cond-> search-q-params
+      (seq searchable-fields)
       (st/merge
-       search-q-params
        {;; We cannot name the parameter :fields, because we already have :fields (part
         ;; of search-q-params). That key is to select a subsets of fields of the
         ;; retrieved document and it gets passed to the `_source` parameter of
         ;; Elasticsearch. For more: www.elastic.co/guide/en/elasticsearch/reference/current/mapping-source-field.html
         (s/optional-key :search_fields)
-        (describe [default-fields-schema] "'fields' key of Elasticsearch Fulltext Query.")})
-      search-q-params)))
+        (describe [default-fields-schema] "'fields' key of Elasticsearch Fulltext Query.")}))))
 
 (def paging-param-keys
   "A list of the paging and sorting related parameters, we can use
@@ -78,22 +77,24 @@
 
 (defn map->paging-header-value [m]
   (str/join "&" (map (fn [[k v]]
-                       (str (name k) "=" v)) m)))
+                       (str (name k) "=" v))
+                     m)))
 
 (defn map->paging-headers
   "transform a map to a headers map
   {:total-hits 42}
   --> {'X-Total-Hits' '42'}"
   [headers]
-  (reduce into {} (map (fn [[k v]]
-                         {(->> k
-                               name
-                               (str "x-")
-                               canonicalize)
+  (into {} (map (fn [[k v]]
+                  {(->> k
+                        name
+                        (str "x-")
+                        canonicalize)
 
-                          (if (map? v)
-                            (codec/form-encode v)
-                            (str v))}) headers)))
+                   (if (map? v)
+                     (codec/form-encode v)
+                     (str v))}))
+        headers))
 
 (defn paginated-ok
   "returns a 200 with the supplied response
@@ -163,11 +164,11 @@
    aggregate-on
    {:keys [range full-text filter-map]} :- SearchQuery]
   (let [full-text* (map #(assoc % :query_mode
-                                (get % :query_mode :query_string)) full-text)
+                                (get % :query_mode :query_string))
+                        full-text)
         nested-fields (map keyword (str/split (name aggregate-on) #"\."))
         {from :gte to :lt} (-> range first val)
-        filters (cond-> {:from from :to to}
-                  (seq filter-map) (into filter-map)
+        filters (cond-> (into {:from from :to to} filter-map)
                   (seq full-text) (assoc :full-text full-text*))]
     {:data (assoc-in {} nested-fields result)
      :type agg-type
@@ -201,6 +202,5 @@
   "Does not add leading or trailing new lines."
   [capabilities :- Capability]
   (cond
-    (keyword? capabilities) (str "Requires capability " (capabilities->string capabilities) ".")
-    ((every-pred set? seq) capabilities) (str "Requires capabilities " (capabilities->string capabilities) ".")
+    ((some-fn keyword? (every-pred set? seq)) capabilities) (str "Requires capability " (capabilities->string capabilities) ".")
     :else (throw (ex-info "Missing capabilities!" {}))))
