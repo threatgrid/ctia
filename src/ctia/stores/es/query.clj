@@ -9,28 +9,28 @@
 
 (defn find-restriction-query-part
   [{:keys [login groups]} get-in-config]
-  ;; TODO do we really want to discard case on that?
+  ;; TODO do we really want to lower-case here?
   (let [login (str/lower-case login)
         groups (map str/lower-case groups)]
     {:bool
      {:should
       (cond->>
-       [;; Document Owner
-        {:bool {:filter [{:term {"owner" login}}
-                         {:terms {"groups" groups}}]}}
+        [;; Document Owner
+         {:bool {:filter [{:term {"owner" login}}
+                          {:terms {"groups" groups}}]}}
 
-           ;; or if user is listed in authorized_users or authorized_groups field
-        {:term {"authorized_users" login}}
-        {:terms {"authorized_groups" groups}}
+         ;; or if user is listed in authorized_users or authorized_groups field
+         {:term {"authorized_users" login}}
+         {:terms {"authorized_groups" groups}}
 
-           ;; CTIM records with TLP equal or below amber that are owned by org BAR
-        {:bool {:must [{:terms {"tlp" (conj ac/public-tlps "amber")}}
-                       {:terms {"groups" groups}}]}}
+         ;; CTIM records with TLP equal or below amber that are owned by org BAR
+         {:bool {:must [{:terms {"tlp" (conj ac/public-tlps "amber")}}
+                        {:terms {"groups" groups}}]}}
 
-           ;; CTIM records with TLP red that is owned by user FOO
-        {:bool {:must [{:term {"tlp" "red"}}
-                       {:term {"owner" login}}
-                       {:terms {"groups" groups}}]}}]
+         ;; CTIM records with TLP red that is owned by user FOO
+         {:bool {:must [{:term {"tlp" "red"}}
+                        {:term {"owner" login}}
+                        {:terms {"groups" groups}}]}}]
 
         ;; Any Green/White TLP if max-visibility is set to `everyone`
         (ac/max-record-visibility-everyone? get-in-config)
@@ -72,12 +72,11 @@
        (mapcat step-fn (keys m)))
      (let [fields (reduce-kv
                    (fn [acc field {:keys [type]}]
-                     (if (= type "text")
-                       (conj acc field)
-                       acc))
+                     (cond-> acc
+                       (= type "text") (conj field)))
                    []
                    (:fields m))]
-       (map #(conj [path] %) fields)))))
+       (map #(vector path %) fields)))))
 
 (s/defn searchable-fields-map :- {s/Str s/Str}
   "Walks through entity's mapping properties and finds all fields with secondary searchable token.
@@ -124,8 +123,8 @@ Returns a map where key is path to a field, and value - path to the nested text 
     (when (= "true" (flag-value :translate-searchable-fields))
       (let [properties (some-> es-conn-state :config :mappings first second :properties)
             mapping (searchable-fields-map properties)]
-        (when (seq fields)
-          (mapv (comp #(get mapping % %) name) fields))))))
+        (some->> (seq fields)
+                 (mapv (comp #(get mapping % %) name)))))))
 
 (s/defn refine-full-text-query-parts :- [{s/Keyword ESQFullTextQuery}]
   [es-conn-state :- ESConnStateProps
@@ -135,14 +134,12 @@ Returns a map where key is path to a field, and value - path to the nested text 
                               (let [fields* (->> fields
                                                  (enforce-search-fields es-conn-state)
                                                  (rename-search-fields es-conn-state))]
-                                (hash-map
-                                 (or query_mode :query_string)
+                                {(or query_mode :query_string)
                                  (-> text-query
                                      (dissoc :query_mode)
-                                     (merge
-                                      (when (and default_operator
-                                                 (not= query_mode :multi_match))
-                                        {:default_operator default_operator})
-                                      (when fields*
-                                        {:fields fields*}))))))]
+                                     (cond->
+                                       (and default_operator (not= query_mode :multi_match))
+                                       (assoc :default_operator default_operator)
+
+                                       fields* (assoc :fields fields*)))}))]
     (mapv term->es-query-part full-text-terms)))
