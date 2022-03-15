@@ -473,9 +473,9 @@ Rollover requires refresh so we cannot just call ES with condition since refresh
                                                  0
                                                  "asc"
                                                  search_after)
-        deleted (->> (filter filter-events data)
-                     (map :entity)
-                     (map #(update % :type keyword)))]
+        deleted (keep #(when (filter-events %)
+                         (update (:entity %) :type keyword))
+                      data)]
     {:data (group-by :type deleted)
      :paging paging}))
 
