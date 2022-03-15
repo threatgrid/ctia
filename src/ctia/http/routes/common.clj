@@ -163,12 +163,11 @@
    agg-type
    aggregate-on
    {:keys [range full-text filter-map]} :- SearchQuery]
-  (let [full-text* (map (fn [ft] (update ft :query_mode #(or % :query_string)))
-                        full-text)
-        nested-fields (map keyword (str/split (name aggregate-on) #"\."))
+  (let [nested-fields (map keyword (str/split (name aggregate-on) #"\."))
         {from :gte to :lt} (-> range first val)
         filters (cond-> (into {:from from :to to} filter-map)
-                  (seq full-text) (assoc :full-text full-text*))]
+                  (seq full-text) (assoc :full-text (map (fn [ft] (update ft :query_mode #(or % :query_string)))
+                                                         full-text)))]
     {:data (assoc-in {} nested-fields result)
      :type agg-type
      :filters filters}))
