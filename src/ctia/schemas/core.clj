@@ -336,20 +336,33 @@
   (s/conditional
     #(= :field (:op %)) {:op (s/eq :field)
                          (s/optional-key :field-name) (s/cond-pre s/Keyword s/Str)}
-    #(= :remap (:op %)) {:op (s/eq :remap)
-                         (s/optional-key :field-name) (s/cond-pre s/Keyword s/Str)
-                         :remap-type (s/pred simple-keyword?)
-                         :remappings {s/Any s/Any}
-                         :remap-default s/Any}))
+    #(= :remap (:op %)) (s/conditional
+                          #(= :number (:remap-type %)) {:op (s/eq :remap)
+                                                        (s/optional-key :field-name) (s/cond-pre s/Keyword s/Str)
+                                                        :remap-type (s/eq :number)
+                                                        :remappings {s/Str s/Num}
+                                                        :remap-default s/Num}
+                          #(= :string (:remap-type %)) {:op (s/eq :remap)
+                                                        (s/optional-key :field-name) (s/cond-pre s/Keyword s/Str)
+                                                        :remap-type (s/eq :string)
+                                                        :remappings {s/Str s/Str}
+                                                        :remap-default s/Str})))
 
 (s/defschema ConcreteSortExtension
   (s/conditional
     #(= :field (:op %)) {:op (s/eq :field)
                          :field-name (s/cond-pre s/Keyword s/Str)
                          (s/optional-key :sort_order) (s/cond-pre s/Keyword s/Str)}
-    #(= :remap (:op %)) {:op (s/eq :remap)
-                         :field-name (s/cond-pre s/Keyword s/Str)
-                         (s/optional-key :sort_order) (s/cond-pre s/Keyword s/Str)
-                         :remap-type (s/pred simple-keyword?)
-                         :remappings {s/Any s/Any}
-                         :remap-default s/Any}))
+    #(= :remap (:op %)) (s/conditional
+                          #(= :number (:remap-type %)) {:op (s/eq :remap)
+                                                        :field-name (s/cond-pre s/Keyword s/Str)
+                                                        (s/optional-key :sort_order) (s/cond-pre s/Keyword s/Str)
+                                                        :remap-type (s/eq :number)
+                                                        :remappings {s/Str s/Num}
+                                                        :remap-default s/Num}
+                          #(= :string (:remap-type %)) {:op (s/eq :remap)
+                                                        :field-name (s/cond-pre s/Keyword s/Str)
+                                                        (s/optional-key :sort_order) (s/cond-pre s/Keyword s/Str)
+                                                        :remap-type (s/eq :string)
+                                                        :remappings {s/Str s/Str}
+                                                        :remap-default s/Str})))

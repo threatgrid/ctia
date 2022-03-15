@@ -386,10 +386,9 @@ It returns the documents with full hits meta data including the real index in wh
 
 (s/defn parse-sort-params-op
   [{:keys [op field-name sort_order] :as params} :- ConcreteSortExtension
-   default-sort_order]
+   default-sort_order :- (s/cond-pre s/Str s/Keyword)]
   (let [field-name (name field-name)
         order (keyword (or sort_order default-sort_order))]
-    (assert (keyword? order) (pr-str order))
     (assert (not (some #{"'"} field-name)) (pr-str field-name))
     (case op
       ;; eg
@@ -414,15 +413,6 @@ It returns the documents with full hits meta data including the real index in wh
                                        (update e 0 #(cond-> %
                                                       (string? %) string/lower-case))))
                              remappings)]
-        (assert ((some-fn string? simple-keyword?) remap-type) (str "Expected eg., :remap-type :number, actual " (pr-str remap-type)))
-        (assert ((every-pred map? seq) remappings) (pr-str remappings))
-        (assert (some? remap-default) (pr-str remap-default))
-        (assert (every? string? (keys remappings)) remappings)
-        (case remap-type
-          :number (do (assert (number? remap-default) remap-default)
-                      (assert (every? number? (vals remappings)) remappings))
-          :string (do (assert (string? remap-default) remap-default)
-                      (assert (every? string? (vals remappings)) remappings)))
         ;; https://www.elastic.co/guide/en/elasticsearch/painless/current/painless-sort-context.html
         {:_script
          {:type (name remap-type)
