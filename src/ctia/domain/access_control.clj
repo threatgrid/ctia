@@ -25,9 +25,10 @@
       csc/default-tlp))
 
 (defn allowed-tlps [get-in-config]
-  (let [min-tlp (:min-tlp (get-access-control get-in-config) "white")]
-    (nthrest tlps
-             (.indexOf tlps min-tlp))))
+  (let [min-tlp (:min-tlp (get-access-control get-in-config) "white")
+        idx (.indexOf tlps min-tlp)
+        _ (assert (not= -1 idx) min-tlp)]
+    (subvec tlps idx)))
 
 (defn max-record-visibility-everyone? [get-in-config]
   (= "everyone"
@@ -40,10 +41,8 @@
 (s/defn allowed-group? :- s/Bool
   [doc ident]
   (boolean
-   (and (seq (:groups ident))
-        (seq (:groups doc))
-        (boolean (some (set (:groups ident))
-                       (set (:groups doc)))))))
+    (some-> (not-empty (set (:groups doc)))
+            (some (:groups ident)))))
 
 (s/defn owner? :- s/Bool
   [doc ident]
@@ -55,45 +54,38 @@
 (s/defn authorized-group? :- s/Bool
   [doc ident]
   (boolean
-   (and
-    (seq (:groups ident))
-    (seq (:authorized_groups doc))
-    (seq (set/intersection
-          (set (:groups ident))
-          (set (:authorized_groups doc)))))))
+    (some-> (not-empty (set (:authorized_groups doc)))
+            (some (:groups ident)))))
 
 (s/defn authorized-user? :- s/Bool
   [doc ident]
   (boolean
    (and
-    (not (nil? (:login ident)))
-    (seq (:authorized_users doc))
-    (seq (set/intersection
-          #{(:login ident)}
-          (set (:authorized_users doc)))))))
+    (some? (:login ident))
+    (some #{(:login ident)} (:authorized_users doc)))))
 
 (s/defn allow-write? :- s/Bool
   [current-doc ident]
   (boolean
-   (cond
+   (or
      ;; Document Owner
-     (owner? current-doc ident) true
+     (owner? current-doc ident)
 
      ;;or if user is listed in authorized_users field
-     (authorized-user? current-doc ident) true
+     (authorized-user? current-doc ident)
 
      ;;or if one of the users groups are in the authorized_groups field
-     (authorized-group? current-doc ident) true
+     (authorized-group? current-doc ident)
 
      ;; CTIM models with TLP green that is owned by org BAR
      (and (some #{(:tlp current-doc)} public-tlps)
           (allowed-group? current-doc
-                          ident)) true
+                          ident))
 
      ;; CTIM models with TLP amber that is owned by org BAR
      (and (= (:tlp current-doc) "amber")
           (allowed-group? current-doc
-                          ident)) true)))
+                          ident)))))
 
 (defn restricted-read? [ident]
   (not (:authorized-anonymous ident)))
