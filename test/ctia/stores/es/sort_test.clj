@@ -23,7 +23,7 @@
          {:op :remap
           :remap-type :number
           :field-name "Severity"
-          ;; note: uppercased keys are lowercased
+          ;; note: keys are lowercased in script
           :remappings {"Critical" 0
                        "High" 1}
           :sort_order :asc

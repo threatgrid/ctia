@@ -366,3 +366,6 @@
                                                         :remap-type (s/eq :string)
                                                         :remappings {s/Str s/Str}
                                                         :remap-default s/Str})))
+
+(s/defschema SortByFieldExts
+  {(s/pred simple-keyword?) SortExtensionTemplate})
