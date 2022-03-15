@@ -186,8 +186,9 @@
 (s/defn capabilities->string :- s/Str
   "Does not add leading or trailing new lines."
   [capabilities :- Capability]
-  (if-some [capabilities (cond-> capabilities
-                           (keyword? capabilities) hash-set)]
+  (if-some [capabilities (not-empty
+                           (cond-> capabilities
+                             (keyword? capabilities) hash-set))]
     (->> capabilities
          sort
          (map name)
