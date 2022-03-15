@@ -155,8 +155,8 @@
                                              query        (conj {:query query, :query_mode :query_string})
                                              simple_query (conj {:query_mode :simple_query_string
                                                                  :query      simple_query}))
-                                           (mapv #(merge % (when search_fields
-                                                             {:fields search_fields})))))))))
+                                           (mapv #(cond-> % 
+                                                    search_fields (assoc :fields search_fields)))))))))
 
 (s/defn format-agg-result :- MetricResult
   [result
