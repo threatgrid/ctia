@@ -108,9 +108,9 @@
     {:id em/token
      :timestamp em/ts
      :stores {:type "object"
-              :properties (->> (keys store/empty-stores)
-                               (map store-mapping)
-                               (into {}))}}}})
+              :properties (into {}
+                                (map store-mapping)
+                                (keys store/empty-stores))}}}})
 
 (s/defn migration-store-properties [{{:keys [get-in-config]} :ConfigService} :- MigrationStoreServices]
   (into (target-store-properties nil :migration get-in-config)
@@ -552,10 +552,9 @@ Rollover requires refresh so we cannot just call ES with condition since refresh
 
 (s/defn get-target-stores
   [prefix store-keys services :- MigrationStoreServices]
-  (->> (map (fn [k]
-              {k (get-target-store prefix k services)})
-            store-keys)
-       (into {})))
+  (into {} (map (fn [k]
+                  {k (get-target-store prefix k services)}))
+        store-keys))
 
 (s/defn get-source-store
   [store-key
@@ -568,10 +567,9 @@ Rollover requires refresh so we cannot just call ES with condition since refresh
 (s/defn get-source-stores
   [store-keys
    services :- MigrationStoreServices]
-  (->> (map (fn [k]
-              {k (get-source-store k services)})
-            store-keys)
-       (into {})))
+  (into {} (map (fn [k]
+                  {k (get-source-store k services)}))
+        store-keys)
 
 (s/defn init-migration :- MigrationSchema
   "init the migration state, for each store it provides necessary data on source and target stores (indexname, type, source size, search_after).
@@ -611,7 +609,8 @@ when confirm? is true, it stores this state and creates the target indices."
                           (es.init/get-store-properties get-in-config)
                           (init-storemap services))
         target-store (get-target-store prefix entity-type services)]
-    (-> (assoc-in raw-store [:source :store] source-store)
+    (-> raw-store
+        (assoc-in [:source :store] source-store)
         (assoc-in [:target :store] target-store))))
 
 (s/defn update-source-size :- MigratedStore
