@@ -347,7 +347,7 @@ Rollover requires refresh so we cannot just call ES with condition since refresh
 
 (def Interval (s/enum "year" "month" "week" "day"))
 
-(s/defn format-buckets :- (s/maybe [ESQuery])
+(s/defn format-buckets :- [ESQuery]
   "format buckets from aggregation results into an ordered list of proper bool queries"
   [raw-buckets :- [(st/open-schema
                     {:doc_count s/Int
@@ -421,7 +421,7 @@ Rollover requires refresh so we cannot just call ES with condition since refresh
    batch-size :- s/Int
    offset :- s/Int
    sort-order :- (s/maybe s/Str)
-   search_after :- (s/maybe [s/Any])]
+   search_after :- [s/Any]]
   (let [date-sort-order {"order" sort-order
                          "missing" missing-date-epoch}
         sort-by (conj (case mapping
@@ -451,7 +451,7 @@ Rollover requires refresh so we cannot just call ES with condition since refresh
    batch-size :- s/Int
    offset :- s/Int
    sort-order :- (s/maybe s/Str)
-   search_after :- (s/maybe [s/Any])]
+   search_after :- [s/Any]]
   (query-fetch-batch nil store batch-size offset sort-order search_after))
 
 (s/defn fetch-deletes :- (s/maybe {s/Any s/Any})
@@ -460,7 +460,7 @@ Rollover requires refresh so we cannot just call ES with condition since refresh
    entity-types :- [s/Keyword]
    since :- s/Inst
    batch-size :- s/Int
-   search_after :- (s/maybe [s/Any])]
+   search_after :- [s/Any]]
   ;; TODO migrate events with mapping enabling to filter on record-type and entity.type
   (let [query {:range {:timestamp {:gte since}}}
         filter-events (fn [{:keys [event_type entity]}]
@@ -585,10 +585,10 @@ when confirm? is true, it stores this state and creates the target indices."
         target-stores (get-target-stores prefix store-keys services)
         migration-properties (migration-store-properties services)
         now (time/internal-now)
-        migration-stores (->> source-stores
-                              (map (fn [[k v]]
-                                     {k (init-migration-store v (k target-stores))}))
-                              (into {}))
+        migration-stores (into {}
+                               (map (fn [[k v]]
+                                      {k (init-migration-store v (k target-stores))}))
+                               source-stores)
         migration {:id migration-id
                    :prefix prefix
                    :created now
@@ -625,11 +625,10 @@ when confirm? is true, it stores this state and creates the target indices."
   [stores :- {s/Keyword MigratedStore}
    prefix :- s/Str
    services :- MigrationStoreServices]
-  (->> (map (fn [[store-key raw]]
-              {store-key (-> (with-store-map store-key prefix raw services)
-                             update-source-size)})
-            stores)
-       (into {})))
+  (into {} (map (fn [[store-key raw]]
+                  {store-key (-> (with-store-map store-key prefix raw services)
+                                 update-source-size)}))
+        stores))
 
 (s/defn get-migration :- MigrationSchema
   "get migration data from it id. Updates source information,

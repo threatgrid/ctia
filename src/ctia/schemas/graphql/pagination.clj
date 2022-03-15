@@ -104,8 +104,8 @@
               :startCursor (s/maybe Cursor)
               :endCursor (s/maybe Cursor)}
    :totalCount s/Int
-   :edges (s/maybe [Edge])
-   :nodes (s/maybe [s/Any])})
+   :edges [Edge]
+   :nodes [s/Any]})
 
 (s/defschema Result
   {:data [s/Any]
@@ -192,9 +192,9 @@
        :else {:limit 0
               :offset 0}))))
 
-(s/defn data->edges :- (s/maybe [Edge])
+(s/defn data->edges :- [Edge]
   "Builds Connection Edges from a data result list"
-  [data :- (s/maybe [s/Any])
+  [data :- [s/Any]
    first-offset :- s/Int]
   (map-indexed
    (fn [idx x]
