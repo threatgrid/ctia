@@ -9,6 +9,7 @@
    [ctia.schemas.core :refer [ConcreteSortExtension]]
    [ctia.schemas.search-agg
     :refer [AggQuery CardinalityQuery HistogramQuery SearchQuery TopnQuery]]
+   [ctia.stores.es.sort :as es.sort]
    [ctia.stores.es.query :as es.query]
    [ctia.stores.es.schemas :refer [ESConnState]]
    [ductile.document :as ductile.doc]
@@ -384,57 +385,13 @@ It returns the documents with full hits meta data including the real index in wh
       (string/split (name sort_by) #","))
     sort_by))
 
-(s/defn parse-sort-params-op
-  [{:keys [op field-name sort_order] :as params} :- ConcreteSortExtension
-   default-sort_order :- (s/cond-pre s/Str s/Keyword)]
-  (let [field-name (name field-name)
-        order (keyword (or sort_order default-sort_order))]
-    (assert (not (some #{"'"} field-name)) (pr-str field-name))
-    (case op
-      ;; eg
-      ;; {:op :field
-      ;;  :field-name "Severity"
-      ;;  :sort_order :asc}
-      :field
-      ;; https://www.elastic.co/guide/en/elasticsearch/reference/current/sort-search-results.html#_sort_values
-      {field-name {:order order}}
-
-      ;; eg
-      ;; {:op :remap
-      ;;  :remap-type :number
-      ;;  :field-name "severity"
-      ;;  :remappings {"Critical" 0
-      ;;               "High" 1}
-      ;;  :sort_order :asc
-      ;;  :remap-default 0}
-      :remap
-      (let [{:keys [remap-type remap-default remappings]} params
-            remappings (into {} (map (fn [e]
-                                       (update e 0 #(cond-> %
-                                                      (string? %) string/lower-case))))
-                             remappings)]
-        ;; https://www.elastic.co/guide/en/elasticsearch/painless/current/painless-sort-context.html
-        {:_script
-         {:type (name remap-type)
-          :script {:lang "painless"
-                   :inline (string/join
-                             "\n"
-                             ;; https://www.elastic.co/guide/en/elasticsearch/painless/8.1/painless-walkthrough.html#_missing_keys
-                             [(format "if (!doc.containsKey('%s') || doc['%s'].size() != 1) { return params.default }"
-                                      field-name field-name)
-                              (format "return params.remappings.getOrDefault(doc['%s'].value, params.default)"
-                                      field-name)])
-                   :params {:remappings remappings
-                            :default remap-default}}
-          :order order}}))))
-
 (defn with-default-sort-field
   [es-params {:keys [default-sort]}]
   (assert (not (:sort_by es-params)))
   (update es-params :sort #(or %
                                (some->> default-sort
                                         parse-sort-by
-                                        (mapv (fn [m] (parse-sort-params-op m :asc))))
+                                        (mapv (fn [m] (es.sort/parse-sort-params-op m :asc))))
                                [{"_doc" :asc} {"id" :asc}])))
 
 (defn rename-sort-fields
@@ -456,7 +413,7 @@ It returns the documents with full hits meta data including the real index in wh
                                           (into (select-keys field [:sort_order]))
                                           (update :field-name #(or % (:field-name field))))
                                   field)
-                              (parse-sort-params-op (or sort_order :asc))))))))))
+                              (es.sort/parse-sort-params-op (or sort_order :asc))))))))))
 
 (defn handle-find
   "Generate an ES find/list handler using some mapping and schema"
