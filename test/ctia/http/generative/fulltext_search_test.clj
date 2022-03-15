@@ -368,17 +368,15 @@
                        (select-keys (keys expected))))
                 desc))
 
-          ;; FIXME https://github.com/advthreat/iroh/issues/6016
-          ;"using double-quotes at the end of the query"
-          ;{:full-text [{:query "intrusion event 3\\:19187\\:7 incident \"\""}]
-          ; :fields ["title" "source"]}
-          ;(fn [res desc]
-          ;  (is (= 1 (count res)) desc)
-          ;  (is (= expected
-          ;         (-> res first
-          ;             (select-keys (keys expected))))
-          ;      desc))
-          ))))))
+          "using double-quotes at the end of the query"
+          {:full-text [{:query "intrusion event 3\\:19187\\:7 incident \"\""}]
+           :fields ["title" "source"]}
+          (fn [res desc]
+            (is (= 1 (count res)) desc)
+            (is (= expected
+                   (-> res first
+                       (select-keys (keys expected))))
+                desc))))))))
 
 (def enforced-fields-flag-query-params (atom nil))
 
