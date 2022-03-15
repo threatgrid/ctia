@@ -175,10 +175,8 @@
 
 (defn wait_for->refresh
   [wait_for]
-  (case wait_for
-    true {:refresh "wait_for"}
-    false {:refresh "false"}
-    {}))
+  (cond-> {}
+    (boolean? wait_for) (assoc :refresh (if wait_for "wait_for" "false"))))
 
 (s/defschema Capability
   (s/conditional
