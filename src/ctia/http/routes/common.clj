@@ -163,8 +163,7 @@
    agg-type
    aggregate-on
    {:keys [range full-text filter-map]} :- SearchQuery]
-  (let [full-text* (map #(assoc % :query_mode
-                                (get % :query_mode :query_string))
+  (let [full-text* (map (fn [ft] (update ft :query_mode #(or % :query_string)))
                         full-text)
         nested-fields (map keyword (str/split (name aggregate-on) #"\."))
         {from :gte to :lt} (-> range first val)
@@ -190,13 +189,13 @@
 (s/defn capabilities->string :- s/Str
   "Does not add leading or trailing new lines."
   [capabilities :- Capability]
-  (cond
-    (keyword? capabilities) (name capabilities)
-    ((every-pred set? seq) capabilities) (->> capabilities
-                                              sort
-                                              (map name)
-                                              (str/join ", "))
-    :else (throw (ex-info "Missing capabilities!" {}))))
+  (if-some [capabilities (cond-> capabilities
+                           (keyword? capabilities) hash-set)]
+    (->> capabilities
+         sort
+         (map name)
+         (str/join ", "))
+    (throw (ex-info "Missing capabilities!" {}))))
 
 (s/defn capabilities->description :- s/Str
   "Does not add leading or trailing new lines."
