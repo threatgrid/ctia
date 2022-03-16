@@ -421,22 +421,17 @@ Rollover requires refresh so we cannot just call ES with condition since refresh
    offset :- s/Int
    sort-order :- (s/maybe s/Str)
    search_after :- [s/Any]]
-  (let [date-sort-order {"order" sort-order
-                         "missing" missing-date-epoch}
-        sort-by (conj (case mapping
-                        "event" [{"timestamp" date-sort-order}]
-                        "identity" []
-                        [{"modified" date-sort-order}
-                         {"created" date-sort-order}])
-                      {"id" sort-order})
-        params
-        (merge
-         {:offset (or offset 0)
-          :limit batch-size}
-         (when sort-order
-           {:sort sort-by})
-         (when search_after
-           {:search_after search_after}))]
+  (let [params (cond-> {:offset (or offset 0)
+                        :limit batch-size}
+                 sort-order (assoc :sort (let [date-sort-order {"order" sort-order
+                                                                "missing" missing-date-epoch}]
+                                           (conj (case mapping
+                                                   "event" [{"timestamp" date-sort-order}]
+                                                   "identity" []
+                                                   [{"modified" date-sort-order}
+                                                    {"created" date-sort-order}])
+                                                 {"id" sort-order})))
+                 search_after (assoc :search_after search_after))]
     (retry es-max-retry
            ductile.doc/query
            conn
