@@ -344,7 +344,7 @@
         bulk-key->ids (reduce-kv
                        (fn [acc k v]
                          (if k
-                           (assoc! acc (bulk/bulk-key (keyword k)) v)
+                           (assoc acc (bulk/bulk-key (keyword k)) v)
                            acc))
                        {}
                        (group-by ent/long-id->entity-type all-ids))]
