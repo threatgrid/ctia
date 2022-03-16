@@ -228,8 +228,8 @@
            relationships (map (fn [idx indicator sighting]
                                 (mk-relationship idx
                                                  sighting
-                                                 "sighting-of"
-                                                 indicator))
+                                                 indicator
+                                                 "sighting-of"))
                               (range)
                               indicators
                               sightings)]
