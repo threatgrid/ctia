@@ -299,11 +299,11 @@
                      stored-record))
               (is (= 404
                      (:status (PUT app
-                                  (format "ctia/%s/not-found-%s"
-                                          entity-str
-                                          (:short-id record-id))
-                                :body with-updates
-                                :headers headers)))))
+                                   (format "ctia/%s/not-found-%s"
+                                           entity-str
+                                           (:short-id record-id))
+                                   :body with-updates
+                                   :headers headers)))))
 
             ;; execute entity custom tests before deleting the fixture
             (testing "additional tests"

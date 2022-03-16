@@ -197,7 +197,7 @@ It returns the documents with full hits meta data including the real index in wh
        es-params]
       (sequence
        (comp (map (comp coerce! :_source))
-             (filter #(allow-read? % ident get-in-config)))
+             (map #(when (allow-read? % ident get-in-config) %)))
        (get-docs-with-indices conn-state
                               ids
                               (make-es-read-params es-params))))))
@@ -211,10 +211,9 @@ It returns the documents with full hits meta data including the real index in wh
        id :- s/Str
        ident
        es-params]
-      (if-let [doc (first (handler conn-state [id] ident es-params))]
-        doc
-        (throw (ex-info "You are not allowed to read this document"
-                        {:type :access-control-error}))))))
+      (when-let [[doc] (seq (handler conn-state [id] ident es-params))]
+        (or doc (throw (ex-info "You are not allowed to read this document"
+                                {:type :access-control-error})))))))
 
 (defn access-control-filter-list
   "Given an ident, keep only documents it is allowed to read"
