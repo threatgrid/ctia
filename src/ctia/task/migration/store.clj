@@ -569,7 +569,7 @@ Rollover requires refresh so we cannot just call ES with condition since refresh
    services :- MigrationStoreServices]
   (into {} (map (fn [k]
                   {k (get-source-store k services)}))
-        store-keys)
+        store-keys))
 
 (s/defn init-migration :- MigrationSchema
   "init the migration state, for each store it provides necessary data on source and target stores (indexname, type, source size, search_after).
