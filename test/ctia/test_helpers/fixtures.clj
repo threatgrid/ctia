@@ -113,7 +113,7 @@
       :relationships relationships})))
 
 (defn sightings-threat-ctx-bundle
-  "generate n sightings related to an indicator threat context"
+  "generate n sightings related to a simple indicator threat context"
   ([n] (sightings-threat-ctx-bundle n false))
   ([n maximal?]
    (let [sightings (n-examples :sighting n maximal?)
