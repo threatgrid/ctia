@@ -66,27 +66,25 @@
   ([m] (searchable-fields-map-impl [] m))
   ([path m]
    (if (and (map? m) (not= (:type m) "keyword"))
-     (let [step-fn (fn [k]
-                     (let [path (if (= k :properties) path (conj path k))]
-                       (searchable-fields-map-impl path (m k))))]
-       (mapcat step-fn (keys m)))
-     (let [fields (reduce-kv
-                   (fn [acc field {:keys [type]}]
-                     (cond-> acc
-                       (= type "text") (conj field)))
-                   []
-                   (:fields m))]
-       (map #(vector path %) fields)))))
+     (mapcat (fn [[k v]]
+               (searchable-fields-map-impl
+                 (cond-> path
+                   (not= k :properties) (conj k))
+                 v))
+             m)
+     (keep (fn [[field {:keys [type]}]]
+             (when (= type "text")
+               [path field]))
+           (:fields m)))))
 
 (s/defn searchable-fields-map :- {s/Str s/Str}
   "Walks through entity's mapping properties and finds all fields with secondary searchable token.
 Returns a map where key is path to a field, and value - path to the nested text token."
   [properties :- (s/maybe {s/Keyword s/Any})]
-  (into {}
-        (map (fn [[path field]]
-               (let [path (str/join "." (map name path))]
-                 [path
-                  (str/join "." [path (name field)])])))
+  (into {} (map (fn [[path field]]
+                  (let [path (str/join "." (map name path))]
+                    [path
+                     (str/join "." [path (name field)])])))
         (searchable-fields-map-impl properties)))
 
 (s/defschema ESConnStateProps
@@ -102,11 +100,10 @@ Returns a map where key is path to a field, and value - path to the nested text 
   [es-conn-state :- ESConnStateProps
    fields :- [s/Str]]
   (let [{:keys [searchable-fields]
-         {{:keys [flag-value]} :FeaturesService} :services} es-conn-state
-        searchable-fields (mapv name searchable-fields)]
-    (or (when (and (empty? fields)
-                   (= "true" (flag-value :enforce-search-fields)))
-          (not-empty searchable-fields))
+         {{:keys [flag-value]} :FeaturesService} :services} es-conn-state]
+    (or (and (empty? fields)
+             (= "true" (flag-value :enforce-search-fields))
+             (some->> (seq searchable-fields) (mapv name)))
         fields)))
 
 (s/defn rename-search-fields :- [s/Str]
@@ -119,11 +116,11 @@ Returns a map where key is path to a field, and value - path to the nested text 
   [es-conn-state :- ESConnStateProps
    fields :- [s/Any]]
   (let [{{{:keys [flag-value]} :FeaturesService} :services} es-conn-state]
-    (when (= "true" (flag-value :translate-searchable-fields))
-      (let [properties (some-> es-conn-state :config :mappings first second :properties)
-            mapping (searchable-fields-map properties)]
-        (some->> (seq fields)
-                 (mapv (comp #(get mapping % %) name)))))))
+    (when (and (= "true" (flag-value :translate-searchable-fields))
+               (seq fields))
+      (let [mapping (searchable-fields-map (some-> es-conn-state :config :mappings first second :properties))]
+        (mapv (comp #(get mapping % %) name)
+              fields)))))
 
 (s/defn refine-full-text-query-parts :- [{s/Keyword ESQFullTextQuery}]
   [es-conn-state :- ESConnStateProps
