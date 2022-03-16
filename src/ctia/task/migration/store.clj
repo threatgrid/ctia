@@ -358,9 +358,9 @@ Rollover requires refresh so we cannot just call ES with condition since refresh
                "month" "M"
                "week" "w"
                "day" "d")
-        filtered (->> raw-buckets
-                      (filter #(< 0 (:doc_count %)))
-                      (map :key_as_string))
+        filtered (keep #(when (< 0 (:doc_count %))
+                          (:key_as_string %))
+                       raw-buckets)
         queries (map #(range-query % field unit)
                      (drop-last filtered))
         last-query (some-> (last filtered)
