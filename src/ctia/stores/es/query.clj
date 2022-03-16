@@ -15,22 +15,22 @@
     {:bool
      {:should
       (cond->>
-        [;; Document Owner
-         {:bool {:filter [{:term {"owner" login}}
-                          {:terms {"groups" groups}}]}}
+       [;; Document Owner
+        {:bool {:filter [{:term {"owner" login}}
+                         {:terms {"groups" groups}}]}}
 
-         ;; or if user is listed in authorized_users or authorized_groups field
-         {:term {"authorized_users" login}}
-         {:terms {"authorized_groups" groups}}
+           ;; or if user is listed in authorized_users or authorized_groups field
+        {:term {"authorized_users" login}}
+        {:terms {"authorized_groups" groups}}
 
-         ;; CTIM records with TLP equal or below amber that are owned by org BAR
-         {:bool {:must [{:terms {"tlp" (conj ac/public-tlps "amber")}}
-                        {:terms {"groups" groups}}]}}
+           ;; CTIM records with TLP equal or below amber that are owned by org BAR
+        {:bool {:must [{:terms {"tlp" (conj ac/public-tlps "amber")}}
+                       {:terms {"groups" groups}}]}}
 
-         ;; CTIM records with TLP red that is owned by user FOO
-         {:bool {:must [{:term {"tlp" "red"}}
-                        {:term {"owner" login}}
-                        {:terms {"groups" groups}}]}}]
+           ;; CTIM records with TLP red that is owned by user FOO
+        {:bool {:must [{:term {"tlp" "red"}}
+                       {:term {"owner" login}}
+                       {:terms {"groups" groups}}]}}]
 
         ;; Any Green/White TLP if max-visibility is set to `everyone`
         (ac/max-record-visibility-everyone? get-in-config)
@@ -49,7 +49,6 @@
   "a filtered query to get judgements for the specified
   observable, where valid time is in now range"
   [{:keys [value type]} time-str]
-
   (concat
    (unexpired-time-range time-str)
    [{:term {"observable.type" type}}
@@ -101,10 +100,9 @@ Returns a map where key is path to a field, and value - path to the nested text 
    fields :- [s/Str]]
   (let [{:keys [searchable-fields]
          {{:keys [flag-value]} :FeaturesService} :services} es-conn-state]
-    (or (and (empty? fields)
-             (= "true" (flag-value :enforce-search-fields))
-             (some->> (seq searchable-fields) (mapv name)))
-        fields)))
+    (or (seq fields)
+        (when (= "true" (flag-value :enforce-search-fields))
+          (mapv name searchable-fields)))))
 
 (s/defn rename-search-fields :- [s/Str]
   "Automatically translates keyword fields to use underlying text field.
@@ -116,11 +114,11 @@ Returns a map where key is path to a field, and value - path to the nested text 
   [es-conn-state :- ESConnStateProps
    fields :- [s/Any]]
   (let [{{{:keys [flag-value]} :FeaturesService} :services} es-conn-state]
-    (when (and (= "true" (flag-value :translate-searchable-fields))
-               (seq fields))
-      (let [mapping (searchable-fields-map (some-> es-conn-state :config :mappings first second :properties))]
-        (mapv (comp #(get mapping % %) name)
-              fields)))))
+    (when (= "true" (flag-value :translate-searchable-fields))
+      (when-some [fields (seq fields)]
+        (let [mapping (searchable-fields-map (some-> es-conn-state :config :mappings first second :properties))]
+          (mapv (comp #(get mapping % %) name)
+                fields))))))
 
 (s/defn refine-full-text-query-parts :- [{s/Keyword ESQFullTextQuery}]
   [es-conn-state :- ESConnStateProps
