@@ -81,7 +81,6 @@
      :vulnerabilities  (n-examples :vulnerability fixtures-nb maximal?)
      :weaknesses       (n-examples :weakness fixtures-nb maximal?)}))
 
-
 (defn relationship
   [rel-type source-id target-id]
   (assoc (randomize relationship-minimal)
@@ -99,7 +98,7 @@
    sources))
 
 (defn threat-ctx-bundle
-  "returns a threat context with 1 indicator and related judgements and attack patterns"
+  "returns a threat context with 1 indicator, 3 related judgements and 2 attack patterns"
   ([] (threat-ctx-bundle false))
   ([maximal?]
    (let [indicators (n-examples :indicator 1 maximal?)
