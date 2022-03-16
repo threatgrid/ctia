@@ -186,14 +186,13 @@
 (s/defn capabilities->string :- s/Str
   "Does not add leading or trailing new lines."
   [capabilities :- Capability]
-  (if-some [capabilities (not-empty
-                           (cond-> capabilities
-                             (keyword? capabilities) hash-set))]
-    (->> capabilities
-         sort
-         (map name)
-         (str/join ", "))
-    (throw (ex-info "Missing capabilities!" {}))))
+  (cond
+    (keyword? capabilities) (name capabilities)
+    ((every-pred set? seq) capabilities) (->> capabilities
+                                              sort
+                                              (map name)
+                                              (str/join ", "))
+    :else (throw (ex-info "Missing capabilities!" {}))))
 
 (s/defn capabilities->description :- s/Str
   "Does not add leading or trailing new lines."
