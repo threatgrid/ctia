@@ -82,8 +82,7 @@ Returns a map where key is path to a field, and value - path to the nested text 
   [properties :- (s/maybe {s/Keyword s/Any})]
   (into {} (map (fn [[path field]]
                   (let [path (str/join "." (map name path))]
-                    [path
-                     (str/join "." [path (name field)])])))
+                    [path (str path "." (name field))])))
         (searchable-fields-map-impl properties)))
 
 (s/defschema ESConnStateProps
