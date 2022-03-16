@@ -183,28 +183,6 @@ It returns the documents with full hits meta data including the real index in wh
           (throw (ex-info "You are not allowed to update this document"
                           {:type :access-control-error})))))))
 
-(defn handle-read
-  "Generate an ES read handler using some mapping and schema"
-  [Model]
-  (let [coerce! (coerce-to-fn (s/maybe Model))]
-    (s/fn :- (s/maybe Model)
-      [{{{:keys [get-in-config]} :ConfigService}
-        :services
-        :as conn-state}
-       :- ESConnState
-       id :- s/Str
-       ident
-       es-params]
-      (when-let [doc (-> (get-doc-with-index conn-state
-                                             id
-                                             (make-es-read-params es-params))
-                         :_source
-                         coerce!)]
-        (if (allow-read? doc ident get-in-config)
-          doc
-          (throw (ex-info "You are not allowed to read this document"
-                          {:type :access-control-error})))))))
-
 (defn handle-read-many
   "Generate an ES read handler to fetch multiple documents using some mapping and schema"
   [Model]
@@ -223,6 +201,20 @@ It returns the documents with full hits meta data including the real index in wh
        (get-docs-with-indices conn-state
                               ids
                               (make-es-read-params es-params))))))
+
+(defn handle-read
+  "Generate an ES read handler using some mapping and schema"
+  [Model]
+  (let [handler (handle-read-many Model)]
+    (s/fn :- (s/maybe Model)
+      [conn-state :- ESConnState
+       id :- s/Str
+       ident
+       es-params]
+      (if-let [doc (first (handler conn-state [id] ident es-params))]
+        doc
+        (throw (ex-info "You are not allowed to read this document"
+                        {:type :access-control-error}))))))
 
 (defn access-control-filter-list
   "Given an ident, keep only documents it is allowed to read"
