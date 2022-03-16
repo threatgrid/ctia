@@ -80,3 +80,45 @@
      :tools            (n-examples :tool fixtures-nb maximal?)
      :vulnerabilities  (n-examples :vulnerability fixtures-nb maximal?)
      :weaknesses       (n-examples :weakness fixtures-nb maximal?)}))
+
+
+(defn relationship
+  [rel-type source-id target-id]
+  (assoc (randomize relationship-minimal)
+         :source_ref source-id
+         :target_ref target-id
+         :relationship_type rel-type))
+
+(defn mk-relationships
+  [rel-type sources targets]
+  (mapcat
+   (fn [{source-id :id}]
+     (map (fn [{target-id :id}]
+            (relationship rel-type source-id target-id))
+          targets))
+   sources))
+
+(defn threat-ctx-bundle
+  "returns a threat context with 1 indicator and related judgements and attack patterns"
+  ([] (threat-ctx-bundle false))
+  ([maximal?]
+   (let [indicators (n-examples :indicator 1 maximal?)
+         attack-patterns (n-examples :attack-pattern 2 maximal?)
+         judgements (n-examples :judgement 3 maximal?)
+         relationships (concat (mk-relationships "indicates" indicators attack-patterns)
+                               (mk-relationships "based-on" judgements indicators))]
+     {:indicators indicators
+      :attack_patterns attack-patterns
+      :judgements judgements
+      :relationships relationships})))
+
+(defn sightings-threat-ctx-bundle
+  "generate n sightings related to an indicator threat context"
+  ([n] (sightings-threat-ctx-bundle n false))
+  ([n maximal?]
+   (let [sightings (n-examples :sighting n maximal?)
+         threat-context (threat-ctx-bundle)
+         indicators (:indicators threat-context)
+         sight-indic-rels (mk-relationships "sighting-of" sightings indicators)]
+     (-> (assoc threat-context :sightings sightings)
+         (update :relationships concat sight-indic-rels)))))
