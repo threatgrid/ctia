@@ -108,8 +108,7 @@
     {:id em/token
      :timestamp em/ts
      :stores {:type "object"
-              :properties (into {}
-                                (map store-mapping)
+              :properties (into {} (map store-mapping)
                                 (keys store/empty-stores))}}}})
 
 (s/defn migration-store-properties [{{:keys [get-in-config]} :ConfigService} :- MigrationStoreServices]
@@ -583,9 +582,8 @@ when confirm? is true, it stores this state and creates the target indices."
         target-stores (get-target-stores prefix store-keys services)
         migration-properties (migration-store-properties services)
         now (time/internal-now)
-        migration-stores (into {}
-                               (map (fn [[k v]]
-                                      {k (init-migration-store v (k target-stores))}))
+        migration-stores (into {} (map (fn [[k v]]
+                                         {k (init-migration-store v (k target-stores))}))
                                source-stores)
         migration {:id migration-id
                    :prefix prefix
