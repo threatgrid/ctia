@@ -1,6 +1,6 @@
 (ns ctia.entity.target-record-test
   (:require [clj-momo.test-helpers.core :as mth]
-            [clojure.test :refer [deftest is are join-fixtures testing use-fixtures]]
+            [clojure.test :refer [deftest is are testing use-fixtures]]
             [ctia.entity.target-record :as sut]
             [ctia.test-helpers.aggregate :as aggregate]
             [ctia.test-helpers.auth :as auth]
@@ -12,8 +12,9 @@
             [ctim.examples.target-records :refer [new-target-record-minimal
                                                   new-target-record-maximal]]))
 
-(use-fixtures :once (join-fixtures [mth/fixture-schema-validation
-                                    whoami-helpers/fixture-server]))
+(use-fixtures :once
+              mth/fixture-schema-validation
+              whoami-helpers/fixture-server)
 
 (defn additional-tests [app _ target-record-sample]
   (testing "GET /ctia/target-record/search"
