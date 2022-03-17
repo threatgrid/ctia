@@ -1,6 +1,6 @@
 (ns ctia.observable.core-test
   (:require [ctia.observable.core :as sut]
-            [clojure.test :refer [deftest is join-fixtures testing use-fixtures]]
+            [clojure.test :refer [deftest is join-fixtures use-fixtures]]
             [ctia.test-helpers.auth :refer [all-capabilities]]
             [ctia.test-helpers.core :as helpers]
             [ctia.test-helpers.fake-whoami-service :as whoami-helpers]
@@ -20,6 +20,7 @@
                                          "foouser"
                                          "foogroup"
                                          "user")
+     (Thread/sleep 5000)
      (let [services (app/service-graph app)
            bundle (fixt/sightings-threat-ctx-bundle 2 true)
            observable (-> bundle :sightings first :observables first)
