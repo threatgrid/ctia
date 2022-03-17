@@ -60,6 +60,7 @@
    "ctia.metrics.riemann.enabled"               false
    "ctia.metrics.console.enabled"               false
    "ctia.metrics.jmx.enabled"                   false
+   "ctia.store.es.identity.refresh"             "true"
    "ctia.versions.config"                       "test"])
 (assert (even? (count *properties-overrides*)))
 
