@@ -20,21 +20,20 @@
 
       ;; eg
       ;; {:op :remap
-      ;;  :remap-type :number
       ;;  :field-name "severity"
       ;;  :remappings {"Critical" 0
       ;;               "High" 1}
       ;;  :sort_order :asc
       ;;  :remap-default 0}
       :remap
-      (let [{:keys [remap-type remap-default remappings]} params
+      (let [{:keys [remap-default remappings]} params
             remappings (into {} (map (fn [e]
                                        (update e 0 #(cond-> %
                                                       (string? %) str/lower-case))))
                              remappings)]
         ;; https://www.elastic.co/guide/en/elasticsearch/painless/current/painless-sort-context.html
         {:_script
-         {:type (name remap-type)
+         {:type "number"
           :script {:lang "painless"
                    :inline (str/join
                              "\n"

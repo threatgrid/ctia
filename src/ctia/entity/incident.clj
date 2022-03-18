@@ -164,7 +164,6 @@
 (def sort-by-field-exts
   {;; override :severity field to sort semantically
    :severity {:op :remap
-              :remap-type :number
               :remappings {"Low" 1
                            "Medium" 2
                            "High" 3

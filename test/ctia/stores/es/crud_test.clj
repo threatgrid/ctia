@@ -164,7 +164,6 @@
            (sut/rename-sort-fields
              {:sort_by "severity"
               :sort-by-field-exts {:severity {:op :remap
-                                              :remap-type :number
                                               :remappings {"Critical" 2
                                                            "High" 1}
                                               :remap-default 0}}}))))
@@ -180,7 +179,6 @@
            (sut/rename-sort-fields
              {:sort_by "remap:DESC"
               :sort-by-field-exts {:remap {:op :remap
-                                           :remap-type :number
                                            :remappings {"a" 1
                                                         "b" 2}
                                            :remap-default 0}}}))))
@@ -197,7 +195,6 @@
            (sut/rename-sort-fields
              {:sort_by "title:ASC,remap:DESC"
               :sort-by-field-exts {:remap {:op :remap
-                                           :remap-type :number
                                            :remappings {"a" 1
                                                         "b" 2}
                                            :remap-default 0}}}))))
@@ -213,7 +210,6 @@
            (sut/rename-sort-fields
              {:sort_by "title"
               :sort-by-field-exts {:title.whole {:op :remap
-                                                 :remap-type :number
                                                  :remappings {"a" 1
                                                               "b" 2}
                                                  :remap-default 0}}}))))
@@ -230,7 +226,6 @@
              {:sort_by "remap1"
               :sort-by-field-exts {:remap1 {:op :remap
                                             :field-name "remap2"
-                                            :remap-type :number
                                             :remappings {"a" 1
                                                          "b" 2}
                                             :remap-default 0}}})))))

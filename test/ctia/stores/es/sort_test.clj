@@ -21,7 +21,6 @@
                   :order :asc}}
        (sut/parse-sort-params-op
          {:op :remap
-          :remap-type :number
           :field-name "Severity"
           ;; note: keys are lowercased in script
           :remappings {"Critical" 0
