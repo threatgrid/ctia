@@ -165,11 +165,10 @@
   {;; override :severity field to sort semantically
    :severity {:op :remap
               :remap-type :number
-              :remappings {"Info" 1
-                           "Low" 2
-                           "Medium" 3
-                           "High" 4
-                           "Critical" 5}
+              :remappings {"Low" 1
+                           "Medium" 2
+                           "High" 3
+                           "Critical" 4}
               :remap-default 0}})
 
 (def incident-sort-fields

@@ -103,11 +103,11 @@
 (def ctim-severity-order
   {"Unknown" 0
    "None" 0
-   "Info" 1
-   "Low" 2
-   "Medium" 3
-   "High" 4
-   "Critical" 5})
+   "Info" 0
+   "Low" 1
+   "Medium" 2
+   "High" 3
+   "Critical" 4})
 
 (defn gen-new-incident [severity]
   (let [order (ctim-severity-order severity)
@@ -204,20 +204,24 @@
          (fn [app]
            ;(helpers/set-capabilities! app "foouser" ["foogroup"] "user" all-capabilities)
            ;(whoami-helpers/set-whoami-response app "45c1f5e3f05d0" "foouser" "foogroup" "user")
-           (doseq [;; only one ordering with these severities. don't mix both Unknown, None, or nil in the same test.
+           (doseq [;; only one ordering with these severities. don't mix any of Info, Unknown, None, or nil in the same test.
                    canonical-fixed-severities-asc (-> []
                                                       (cond-> (not bench-atom)
-                                                        (into [["Unknown" "Info"]
+                                                        (into [["Unknown" "Low"]
                                                                ["Unknown" "Critical"]
-                                                               ["None" "Info"]
+                                                               ["None" "Low"]
                                                                ["None" "Critical"]
-                                                               ["Info" "Low" "Medium" "High" "Critical"]
+                                                               [nil "Low"]
+                                                               [nil "Critical"]
+                                                               ["Info" "Low"]
+                                                               ["Info" "Critical"]
+                                                               ["Low" "Medium" "High" "Critical"]
                                                                ;; missing severity is the same as None/Unknown
                                                                [nil "Low" "Medium" "High" "Critical"]
-                                                               ["Unknown" "Info" "Low" "Medium" "High" "Critical"]]))
+                                                               ["Unknown" "Low" "Medium" "High" "Critical"]]))
                                                       ;; only benchmark the largest test case because the benchmark is dominated
                                                       ;; by the bundle import
-                                                      (into [["None" "Info" "Low" "Medium" "High" "Critical"]]))
+                                                      (into [["None" "Low" "Medium" "High" "Critical"]]))
                    ;; scale up the test size by repeating elements
                    multiplier (if-not bench-atom
                                 [1 2]
