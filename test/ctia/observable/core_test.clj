@@ -20,7 +20,6 @@
                                          "foouser"
                                          "foogroup"
                                          "user")
-     (Thread/sleep 5000)
      (let [services (app/service-graph app)
            bundle (fixt/sightings-threat-ctx-bundle 2 true)
            observable (-> bundle :sightings first :observables first)
