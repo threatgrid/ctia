@@ -2,6 +2,7 @@
 (def clj-http-fake-version "1.0.3")
 (def clj-version "1.10.1")
 (def metrics-clojure-version "2.10.0")
+(def netty-version "4.1.75.Final")
 (def perforate-version "0.3.4")
 (def ring-version "1.8.0")
 (def schema-generators-version "0.1.3")
@@ -55,7 +56,8 @@
   :jvm-opts ["-Djava.awt.headless=true"
              "-Dlog.console.threshold=INFO"
              "-server"]
-  :exclusions [org.slf4j/slf4j-log4j12
+  :exclusions [io.netty/netty ;; moved to io.netty/netty-all
+               org.slf4j/slf4j-log4j12
                org.slf4j/slf4j-nop] ;; Removed in favor of logback
   ;; use `lein pom; mvn dependency:tree -Dverbose -Dexcludes=org.clojure:clojure`
   ;; to inspect conflicts.
@@ -119,9 +121,9 @@
                  [clout "2.2.1"]
                  [slugger "1.0.1"]
                  [com.google.guava/guava "20.0"];org.onyxplatform/onyx-kafka > threatgrid/ctim
-                 [io.netty/netty "3.10.6.Final"];org.onyxplatform/onyx-kafka > metrics-clojure-riemann, zookeeper-clj
-                 [io.netty/netty-codec "4.1.42.Final"] ;org.apache.zookeeper/zookeeper > riemann-clojure-client
-                 [io.netty/netty-resolver "4.1.42.Final"] ;riemann-clojure-client > org.apache.zookeeper/zookeeper
+                 [io.netty/netty-all ~netty-version];org.onyxplatform/onyx-kafka > metrics-clojure-riemann, zookeeper-clj
+                 [io.netty/netty-codec ~netty-version] ;org.apache.zookeeper/zookeeper > riemann-clojure-client
+                 [io.netty/netty-resolver ~netty-version] ;riemann-clojure-client > org.apache.zookeeper/zookeeper
                  [com.google.protobuf/protobuf-java "3.11.1"] ;riemann-clojure-client > threatgrid:ctim, metrics-clojure-riemann, org.onyxplatform/onyx-kafka
                  [riemann-clojure-client "0.5.1"]
                  ;; https://stackoverflow.com/a/43574427
