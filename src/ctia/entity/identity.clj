@@ -39,11 +39,8 @@
 (s/defn handle-create :- Identity
   [{:keys [conn]
     {:keys [refresh write-index]
-     :or {refresh "false"}} :props
-    :as conn-state} :- ESConnState
+     :or {refresh "false"}} :props} :- ESConnState
    new-identity :- Identity]
-  (clojure.pprint/pprint conn-state)
-  (clojure.pprint/pprint new-identity)
   (let [id (:login new-identity)
         realized (assoc new-identity :id id)
         transformed (update-in realized
