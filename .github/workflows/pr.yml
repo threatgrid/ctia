@@ -42,7 +42,7 @@ jobs:
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           # to read the latest commit message on a PR
           # https://github.com/zero88/gh-project-context/blob/26a3afdce1fe607734278e5ccec0851d50669ef5/README.md#latest-commit-message
@@ -172,7 +172,7 @@ jobs:
       JAVA_VERSION: ${{ matrix.this-split.java_version }}
       JAVA_DISTRIBUTION: ${{ matrix.this-split.java_distribution }}
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Binary Cache
         uses: actions/cache@v2
         with:
@@ -190,7 +190,7 @@ jobs:
       # of time and throw an error. See `Upload docker compose` step below
       # for retrieving this log after a build.
       - name: Docker (async)
-        # depends on LOG_PATH and actions/checkout@v2
+        # depends on LOG_PATH and actions/checkout@v3
         run: docker-compose -f containers/dev/docker-compose.yml up -d &> "${LOG_PATH}/docker-compose.log" &
       - name: Download test timings
         uses: actions/download-artifact@v2
@@ -287,7 +287,7 @@ jobs:
     runs-on: ubuntu-20.04
     needs: [test-matrix]
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Binary Cache
         uses: actions/cache@v2
         with:
@@ -330,7 +330,7 @@ jobs:
     # see on.push.branches for which branches are built on push
     if: github.event_name == 'push' && github.repository == 'threatgrid/ctia'
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Binary Cache
         uses: actions/cache@v2
         with:
