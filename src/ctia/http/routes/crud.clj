@@ -10,7 +10,7 @@
                                                       search-query
                                                       coerce-date-range]]
    [ctia.lib.compojure.api.core :refer [context DELETE GET POST PUT PATCH routes]]
-   [ctia.schemas.core :refer [APIHandlerServices DelayedRoutes SortByFieldExts]]
+   [ctia.schemas.core :refer [APIHandlerServices DelayedRoutes SortExtensionTemplates]]
    [ctia.schemas.search-agg :refer [HistogramParams
                                     CardinalityParams
                                     TopnParams
@@ -175,7 +175,7 @@
          date-field :created
          histogram-fields [:created]}
     :as entity-crud-config}
-   :- {(s/optional-key :sort-by-field-exts) SortByFieldExts
+   :- {(s/optional-key :sort-extension-templates) SortExtensionTemplates
        s/Any s/Any}]
  (s/fn [{{:keys [get-store]} :StoreService
          {:keys [flag-value]} :FeaturesService
@@ -318,8 +318,8 @@
                   (store/list-records
                     {:all-of {:external_ids external_id}}
                     identity-map
-                    (into (dissoc q :sort-by-field-exts)
-                          (select-keys entity-crud-config [:sort-by-field-exts])))
+                    (into (dissoc q :sort-extension-templates)
+                          (select-keys entity-crud-config [:sort-extension-templates])))
                   (ent/page-with-long-id services)
                   ent/un-store-page
                   routes.common/paginated-ok))))
@@ -342,8 +342,8 @@
                   (search-query date-field params)
                   identity-map
                   (into (dissoc (select-keys params routes.common/search-options)
-                                :sort-by-field-exts)
-                        (select-keys entity-crud-config [:sort-by-field-exts])))
+                                :sort-extension-templates)
+                        (select-keys entity-crud-config [:sort-extension-templates])))
                  (ent/page-with-long-id services)
                  ent/un-store-page
                  routes.common/paginated-ok))

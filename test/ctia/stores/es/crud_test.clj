@@ -163,10 +163,10 @@
                      :order :asc}}]}
            (sut/rename-sort-fields
              {:sort_by "severity"
-              :sort-by-field-exts {:severity {:op :remap
-                                              :remappings {"Critical" 2
-                                                           "High" 1}
-                                              :remap-default 0}}}))))
+              :sort-extension-templates {:severity {:op :remap
+                                                    :remappings {"Critical" 2
+                                                                 "High" 1}
+                                                    :remap-default 0}}}))))
   (testing "remap + order"
     (is (= {:sort [{:_script
                     {:type "number"
@@ -178,10 +178,10 @@
                      :order :DESC}}]}
            (sut/rename-sort-fields
              {:sort_by "remap:DESC"
-              :sort-by-field-exts {:remap {:op :remap
-                                           :remappings {"a" 1
-                                                        "b" 2}
-                                           :remap-default 0}}}))))
+              :sort-extension-templates {:remap {:op :remap
+                                                 :remappings {"a" 1
+                                                              "b" 2}
+                                                 :remap-default 0}}}))))
   (testing "sort by renamed field then remapped field"
     (is (= {:sort [{"title.whole" {:order :ASC}}
                    {:_script
@@ -194,10 +194,10 @@
                      :order :DESC}}]}
            (sut/rename-sort-fields
              {:sort_by "title:ASC,remap:DESC"
-              :sort-by-field-exts {:remap {:op :remap
-                                           :remappings {"a" 1
-                                                        "b" 2}
-                                           :remap-default 0}}}))))
+              :sort-extension-templates {:remap {:op :remap
+                                                 :remappings {"a" 1
+                                                              "b" 2}
+                                                 :remap-default 0}}}))))
   (testing "remap a renamed field"
     (is (= {:sort [{:_script
                     {:type "number"
@@ -209,11 +209,11 @@
                      :order :asc}}]}
            (sut/rename-sort-fields
              {:sort_by "title"
-              :sort-by-field-exts {:title.whole {:op :remap
-                                                 :remappings {"a" 1
-                                                              "b" 2}
-                                                 :remap-default 0}}}))))
-  (testing "remap to another field via :sort-by-field-exts's :field-name"
+              :sort-extension-templates {:title.whole {:op :remap
+                                                       :remappings {"a" 1
+                                                                    "b" 2}
+                                                       :remap-default 0}}}))))
+  (testing "remap to another field via :sort-extension-templates's :field-name"
     (is (= {:sort [{:_script
                     {:type "number"
                      :script {:lang "painless"
@@ -224,11 +224,11 @@
                      :order :asc}}]}
            (sut/rename-sort-fields
              {:sort_by "remap1"
-              :sort-by-field-exts {:remap1 {:op :remap
-                                            :field-name "remap2"
-                                            :remappings {"a" 1
-                                                         "b" 2}
-                                            :remap-default 0}}})))))
+              :sort-extension-templates {:remap1 {:op :remap
+                                                  :field-name "remap2"
+                                                  :remappings {"a" 1
+                                                               "b" 2}
+                                                  :remap-default 0}}})))))
 
 (deftest bulk-schema-test
   (testing "bulk-schema shall generate a proper bulk schema"

@@ -9,7 +9,7 @@
    [ctia.http.routes.common :as routes.common]
    [ctia.http.routes.crud :as routes.crud]
    [ctia.lib.compojure.api.core :refer [POST routes]]
-   [ctia.schemas.core :refer [APIHandlerServices def-acl-schema def-stored-schema]]
+   [ctia.schemas.core :refer [APIHandlerServices def-acl-schema def-stored-schema SortExtensionTemplates]]
    [ctia.schemas.graphql.flanders :as flanders]
    [ctia.schemas.graphql.helpers :as g]
    [ctia.schemas.graphql.ownership :as go]
@@ -161,7 +161,7 @@
            :promotion_method
            :severity]))
 
-(def sort-by-field-exts
+(s/def sort-extension-templates :- SortExtensionTemplates
   {;; override :severity field to sort semantically
    :severity {:op :remap
               :remappings {"Low" 1
@@ -171,7 +171,7 @@
               :remap-default 0}})
 
 (def incident-sort-fields
-  (apply s/enum (distinct (concat (keys sort-by-field-exts) incident-fields))))
+  (apply s/enum (distinct (concat (keys sort-extension-templates) incident-fields))))
 
 (def incident-enumerable-fields
   [:assignees
@@ -257,7 +257,7 @@
      :external-id-capabilities :read-incident
      :histogram-fields         incident-histogram-fields
      :enumerable-fields        incident-enumerable-fields
-     :sort-by-field-exts       sort-by-field-exts})))
+     :sort-extension-templates sort-extension-templates})))
 
 (def IncidentType
   (let [{:keys [fields name description]}
