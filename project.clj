@@ -144,7 +144,8 @@
                  ;; Notes on jackson-databind:
                  ;; - overrides org.onyxplatform/onyx-kafka and others
                  ;; - some 2.9.x versions of jackson-databind and earlier have known exploits
-                 [com.fasterxml.jackson.core/jackson-databind "2.10.2"]
+                 ;; - 2.12.4 is the same as cheshire's jackson-core dependency
+                 [com.fasterxml.jackson.core/jackson-databind "2.12.4"]
                  [zookeeper-clj "0.9.4"]
 
                  ;; GraphQL
