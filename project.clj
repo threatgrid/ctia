@@ -144,7 +144,6 @@
                  ;; Notes on jackson-databind:
                  ;; - overrides org.onyxplatform/onyx-kafka and others
                  ;; - some 2.9.x versions of jackson-databind and earlier have known exploits
-                 ;; - 2.10.2 is the same as cheshire's jackson-core dependency
                  [com.fasterxml.jackson.core/jackson-databind "2.10.2"]
                  [zookeeper-clj "0.9.4"]
 
