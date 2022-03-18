@@ -121,9 +121,9 @@
                  [clout "2.2.1"]
                  [slugger "1.0.1"]
                  [com.google.guava/guava "20.0"];org.onyxplatform/onyx-kafka > threatgrid/ctim
-                 [io.netty/netty-all ~netty-version];org.onyxplatform/onyx-kafka > metrics-clojure-riemann, zookeeper-clj
-                 [io.netty/netty-codec ~netty-version] ;org.apache.zookeeper/zookeeper > riemann-clojure-client
-                 [io.netty/netty-resolver ~netty-version] ;riemann-clojure-client > org.apache.zookeeper/zookeeper
+                 [io.netty/netty-all ~netty-version];bump org.onyxplatform/onyx-kafka, metrics-clojure-riemann, zookeeper-clj
+                 [io.netty/netty-codec ~netty-version] ;bump org.apache.zookeeper/zookeeper, riemann-clojure-client
+                 [io.netty/netty-resolver ~netty-version] ;bump riemann-clojure-client, org.apache.zookeeper/zookeeper
                  [com.google.protobuf/protobuf-java "3.11.1"] ;riemann-clojure-client > threatgrid:ctim, metrics-clojure-riemann, org.onyxplatform/onyx-kafka
                  [riemann-clojure-client "0.5.1"]
                  ;; https://stackoverflow.com/a/43574427
