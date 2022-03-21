@@ -16,7 +16,8 @@
    (helpers/with-properties
      ["ctia.store.es.default.port" es-port
       "ctia.store.es.default.version" version
-      "ctia.store.es.default.auth" es-helpers/basic-auth
+      "ctia.store.es.default.auth.type" (:type es-helpers/basic-auth)
+      "ctia.store.es.default.auth.params" (:params es-helpers/basic-auth)
       "ctia.auth.type" "allow-all"]
      (helpers/fixture-ctia-with-app
        (fn [app]

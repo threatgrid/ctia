@@ -110,7 +110,8 @@
                       "ctia.store.es.default.aliased" true
                       "ctia.store.es.default.rollover.max_docs" 50
                       "ctia.store.es.default.version" (-es-version)
-                      "ctia.store.es.default.auth" basic-auth
+                      "ctia.store.es.default.auth.type" (:type basic-auth)
+                      "ctia.store.es.default.auth.params" (:params basic-auth)
                       "ctia.store.es.default.default-sort" "timestamp,created,id"
                       "ctia.store.es.event.default-sort" "timestamp,id"
                       "ctia.store.es.relationship.default-sort" "created,id"

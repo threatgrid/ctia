@@ -363,7 +363,8 @@
                                    map?))
          try-auth-params (fn [auth-params]
                            (helpers/with-properties
-                             ["ctia.store.es.default.auth" auth-params]
+                             ["ctia.store.es.default.auth.type" (:type auth-params)
+                              "ctia.store.es.default.auth.params" (:params auth-params)]
                              (helpers/fixture-ctia-with-app
                               (fn [app]
                                 (let [{:keys [all-stores]} (helpers/get-service-map app :StoreService)]
