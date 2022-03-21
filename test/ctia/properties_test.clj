@@ -1,7 +1,7 @@
 (ns ctia.properties-test
   (:require [ctia.properties :as sut]
             [ductile.schemas :refer [AuthParams Refresh]]
-            [clojure.test :refer [deftest is testing]]
+            [clojure.test :refer [are deftest is testing]]
             [schema.core :as s]))
 
 (deftest es-store-impl-properties-test
@@ -60,9 +60,13 @@
          (sut/coerce-properties
            {(s/optional-key "test.auth.params") sut/AuthParamsBeforeCoerce}
            {"test.auth.params" {:foo "str"}})))
-  (is (thrown-with-msg?
-        Exception
-        #"Value cannot be coerced to match schema.*"
-        (sut/coerce-properties
-          {(s/optional-key "test.auth.params") sut/AuthParamsBeforeCoerce}
-          {"test.auth.params" "{:foo :not-str}"}))))
+  (are [TEST] (thrown-with-msg?
+                Exception
+                #"Value cannot be coerced to match schema.*"
+                (sut/coerce-properties
+                  {(s/optional-key "test.auth.params") sut/AuthParamsBeforeCoerce}
+                  {"test.auth.params" TEST}))
+       "{:foo :not-str}"
+       ""
+       "[]"
+       "{not-str \"str\"}"))
