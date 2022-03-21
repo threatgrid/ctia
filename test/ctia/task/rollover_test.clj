@@ -71,7 +71,7 @@
                                        {:rolled_over (rand-nth [true false])}
                                        (throw (ex-info "that's baaaaaaaddd"
                                                        {:code :unhappy}))))]
-    ;; this test does not depends on ES version
+    ;; this test does not depend on ES version
     (helpers/with-properties*
       ["ctia.auth.type" "allow-all"
        "ctia.store.es.default.port" 9207

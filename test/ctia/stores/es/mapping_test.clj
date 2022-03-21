@@ -33,22 +33,22 @@
                                                (assoc m :_all {:enabled false}) 
                                                {doc-type m}))
                    :settings sut/store-settings}
-         docs (map #(assoc {:id (str "doc" %)
-                            :boolean (even? %)
-                            :float (+ 100 %)
-                            :long (+ 200 %)
-                            :integer (+ 300 %)
-                            :table {:row_count %}
-                            :timestamp (format "2019-07-15T0%s:00:00.000-00:00" %)
-                            :source "cisco"
-                            :token1 "a lower token"
-                            :token2 "an upper TOKEN"
-                            :text1 "this is a first text"
-                            :text2 "this is a second text"
-                            :sortable-text (str "sortable" %)}
-                           :_id (str "doc" %)
-                           :_index indexname
-                           :_type doc-type)
+         docs (map #(do {:id (str "doc" %)
+                         :boolean (even? %)
+                         :float (+ 100 %)
+                         :long (+ 200 %)
+                         :integer (+ 300 %)
+                         :table {:row_count %}
+                         :timestamp (format "2019-07-15T0%s:00:00.000-00:00" %)
+                         :source "cisco"
+                         :token1 "a lower token"
+                         :token2 "an upper TOKEN"
+                         :text1 "this is a first text"
+                         :text2 "this is a second text"
+                         :sortable-text (str "sortable" %)
+                         :_id (str "doc" %)
+                         :_index indexname
+                         :_type doc-type})
                    (range 3))
          [doc0 doc1 doc2] docs
          test-sort (fn [field expected-asc]
