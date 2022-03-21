@@ -3,21 +3,19 @@
    [ctia.encryption.default :as encryption-default]
    [clj-momo.properties :as mp]
    [clojure.tools.logging :as log]
-   [ctia.lib.metrics
-    [riemann :as riemann]
-    [jmx :as jmx]
-    [console :as console]]
+   [ctia.lib.metrics.riemann :as riemann]
+   [ctia.lib.metrics.jmx :as jmx]
+   [ctia.lib.metrics.console :as console]
    [ctia.lib.utils :as utils]
-   [ctia
-    [events-service :as events-svc]
-    [features-service :as features-svc]
-    [logging :as event-logging]
-    [properties :as p]
-    [store-service :as store-svc]]
-   [ctia.auth
-    [allow-all :as allow-all]
-    [static :as static-auth]
-    [threatgrid :as threatgrid]]
+   [ctia.lib.riemann-service :as riemann-svc]
+   [ctia.events-service :as events-svc]
+   [ctia.features-service :as features-svc]
+   [ctia.logging :as event-logging]
+   [ctia.properties :as p]
+   [ctia.store-service :as store-svc]
+   [ctia.auth.allow-all :as allow-all]
+   [ctia.auth.static :as static-auth]
+   [ctia.auth.threatgrid :as threatgrid]
    [ctia.version :as version]
    [ctia.graphql-named-type-registry-service :as graphql-registry-svc]
    [ctia.flows.hooks-service :as hooks-svc]
@@ -58,7 +56,7 @@
                           {:message "Unknown service"
                            :requested-service auth-service-type})))
         encryption-svc
-        (let [{:keys [type] :as encryption-properties}
+        (let [{:keys [type]}
               (get-in config [:ctia :encryption])]
           (case type
             :default {:IEncryption encryption-default/default-encryption-service}
@@ -78,7 +76,8 @@
        :RiemannMetricsService riemann/riemann-metrics-service
        :JMXMetricsService jmx/jmx-metrics-service
        :ConsoleMetricsService console/console-metrics-service
-       :FeaturesService features-svc/features-service}
+       :FeaturesService features-svc/features-service
+       :RiemannService riemann-svc/riemann-service}
       ;; register event file logging only when enabled
       (when (get-in config [:ctia :events :log])
         {:EventLoggingService event-logging/event-logging-service}))))

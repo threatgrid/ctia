@@ -3,7 +3,8 @@
             [clojure.tools.logging :as log]
             [riemann.client :as riemann]
             [ctia.lib.utils :as utils])
-  (:import [clojure.lang ExceptionInfo]))
+  (:import [clojure.lang ExceptionInfo]
+           [io.riemann.riemann.client RiemannClient]))
 
 ;; based on riemann-reporter.core/request-to-event
 (defn request->event
@@ -125,6 +126,16 @@
         (log/warnf "Riemann doesn't seem configured. Event: %s"
                    (utils/safe-pprint-str prepared-event))))))
 
+(defn client [config]
+  (let [conn (-> (select-keys config
+                              [:host :port :interval-in-ms])
+                 riemann/tcp-client
+                 (riemann/batch-client
+                  (or (:batch-size config) 10)))
+        service-prefix (or (:service-prefix config) "CTIA")]
+    (fn [event]
+      (send-event conn service-prefix event))))
+
 ;; based on riemann-reporter.core/wrap-request-metrics
 (defn wrap-request-logs
   "Middleware to log all incoming connections to Riemann"
@@ -133,16 +144,7 @@
                        (seq metric-description))
                   (pr-str metric-description))
         _ (log/info "Riemann request logging initialization")
-        send-event-fn 
-        (let [config (get-in-config [:ctia :log :riemann])
-              client (-> (select-keys config
-                                      [:host :port :interval-in-ms])
-                         riemann/tcp-client
-                         (riemann/batch-client
-                           (or (:batch-size config) 10)))
-              service-prefix (or (:service-prefix config) "CTIA")]
-          (fn [event]
-            (send-event client service-prefix event)))]
+        send-event-fn (client (get-in-config [:ctia :log :riemann]))]
     (fn [request]
       (let [start (System/nanoTime)]
         (try
@@ -177,3 +179,17 @@
                                 :status "500"
                                 :error "true"})
             (throw e)))))))
+
+(defn start [context config]
+  (let [conn (-> (select-keys config
+                              [:host :port :interval-in-ms])
+                 riemann/tcp-client
+                 (riemann/batch-client
+                  (or (:batch-size config) 10)))
+        service-prefix (or (:service-prefix config) "CTIA")]
+    (assoc context
+           :conn conn
+           :service-prefix service-prefix)))
+
+(defn stop [{:keys [^RiemannClient conn]}]
+  (.close conn))

@@ -16,7 +16,7 @@
    IEncryption
    ConfigService
    FeaturesService
-   EventsService]
+   RiemannService]
   (start [this context] (core/start context
                                     ((:get-in-config ConfigService) [:ctia :http])
                                     {:ConfigService                   (-> ConfigService
@@ -31,7 +31,7 @@
                                      :GraphQLNamedTypeRegistryService GraphQLNamedTypeRegistryService
                                      :IEncryption                     IEncryption
                                      :FeaturesService                 FeaturesService
-                                     :EventsService                   (-> EventsService
+                                     :RiemannService                  (-> RiemannService
                                                                           (select-keys #{:send-event}))}))
   (stop [this context] (core/stop context))
   (get-port [this]
