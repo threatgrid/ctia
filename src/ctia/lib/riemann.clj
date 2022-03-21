@@ -139,12 +139,12 @@
 ;; based on riemann-reporter.core/wrap-request-metrics
 (defn wrap-request-logs
   "Middleware to log all incoming connections to Riemann"
-  [handler metric-description get-in-config]
+  [handler metric-description conn service-prefix]
   (let [_ (assert (and (string? metric-description)
                        (seq metric-description))
                   (pr-str metric-description))
         _ (log/info "Riemann request logging initialization")
-        send-event-fn (client (get-in-config [:ctia :log :riemann]))]
+        send-event-fn (partial send-event conn service-prefix)]
     (fn [request]
       (let [start (System/nanoTime)]
         (try
