@@ -3,7 +3,7 @@
    [clj-momo.lib.clj-time.coerce :as mcljtime-coerce]
    [clj-momo.lib.clj-time.core :as mcljtime]
    [clj-momo.lib.time :as time]
-   [clj-momo.properties :refer [coerce-properties read-property-files]]
+   [clj-momo.properties :refer [read-property-files]]
    [clojure.pprint :refer [pprint]]
    [clojure.spec.alpha :as cs]
    [clojure.string :as str]
@@ -236,7 +236,7 @@
                                                  (assoc m k v))
                                                init-props
                                                (partition 2 *properties-overrides*))
-                                       (coerce-properties PropertiesSchema))
+                                       (p/coerce-properties PropertiesSchema))
         init-config (reduce (fn [config [prop v]]
                               (assoc-in config (split-property-to-keywords prop) v))
                             {}

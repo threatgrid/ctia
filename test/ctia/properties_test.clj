@@ -25,7 +25,8 @@
             "ctia.store.es.malware.refresh-mappings" s/Bool
             "ctia.store.es.malware.default-sort" s/Str
             "ctia.store.es.malware.timeout" s/Num
-            "ctia.store.es.malware.auth" AuthParams}
+            "ctia.store.es.malware.auth.type" sut/AuthParamsType
+            "ctia.store.es.malware.auth.params" sut/AuthParamsBeforeCoerce}
            (sut/es-store-impl-properties "ctia.store.es." "malware")))
 
     (is (= {"prefix.sighting.host" s/Str
@@ -47,5 +48,21 @@
             "prefix.sighting.refresh-mappings" s/Bool
             "prefix.sighting.default-sort" s/Str
             "prefix.sighting.timeout" s/Num
-            "prefix.sighting.auth" AuthParams}
+            "prefix.sighting.auth.type" sut/AuthParamsType
+            "prefix.sighting.auth.params" sut/AuthParamsBeforeCoerce}
            (sut/es-store-impl-properties "prefix." "sighting")))))
+
+(deftest es-auth-params-test
+  (is (= {"test.auth.params" {:foo "str"}}
+         (sut/coerce-properties
+           {(s/optional-key "test.auth.params") sut/AuthParamsBeforeCoerce}
+           {"test.auth.params" "{:foo \"str\"}"})
+         (sut/coerce-properties
+           {(s/optional-key "test.auth.params") sut/AuthParamsBeforeCoerce}
+           {"test.auth.params" {:foo "str"}})))
+  (is (thrown-with-msg?
+        Exception
+        #"Value cannot be coerced to match schema.*"
+        (sut/coerce-properties
+          {(s/optional-key "test.auth.params") sut/AuthParamsBeforeCoerce}
+          {"test.auth.params" "{:foo :not-str}"}))))

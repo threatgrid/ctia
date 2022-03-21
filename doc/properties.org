@@ -362,7 +362,8 @@ one can set defaults for all ES stores using =default= as entity
 | ctia.store.es.[entity].update-mappings   | if true, automatically updates index mappings at startup                           | boolean                    |
 | ctia.store.es.[entity].refresh-mappings  | if true, automatically refreshes documents mappings at startup to index new fields | boolean                    |
 | ctia.store.es.[entity].update-settings   | if true, automatically updates index settings at startup                           | boolean                    |
-| ctia.store.es.[entity].auth              | authentication parameters for ES, see [[https://github.com/threatgrid/ductile][ductile documentation]]                        | ductile.schemas/AuthParams |
+| ctia.store.es.[entity].auth.type         | authentication type for ES, see [[https://github.com/threatgrid/ductile][ductile documentation]]          | (get-in ductile.schemas/AuthParams [:type]) |
+| ctia.store.es.[entity].auth.params       | authentication parameter map (or string containing map) for ES provided, see [[https://github.com/threatgrid/ductile][ductile documentation]]          | (get-in ductile.schemas/AuthParams [:params]) |
 | ctia.store.es.[entity].default-sort      | default sort parameter for search                                                  | string                     |
 
 ** Migration

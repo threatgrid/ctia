@@ -9,6 +9,7 @@
             [clj-momo.properties :as mp]
             [ctia.store :as store]
             [schema-tools.core :as st]
+            [schema.coerce :as c]
             [schema.core :as s]
             [ctia.schemas.core
              :refer [HTTPShowServices TLP]]))
@@ -20,6 +21,14 @@
 
 (defn default-store-properties [store]
   {(str "ctia.store." store) s/Str})
+
+(s/defschema AuthParamsType
+  (st/get-in AuthParams [:type]))
+
+(s/defschema AuthParamsBeforeCoerce
+  (s/conditional
+    map? (st/get-in AuthParams [:params])
+    :else s/Str))
 
 (defn es-store-impl-properties [prefix store]
   {(str prefix store ".host") s/Str
@@ -41,7 +50,8 @@
    (str prefix store ".update-settings")  s/Bool
    (str prefix store ".refresh-mappings") s/Bool
    (str prefix store ".default-sort") s/Str
-   (str prefix store ".auth")  AuthParams})
+   (str prefix store ".auth.type") AuthParamsType
+   (str prefix store ".auth.params") AuthParamsBeforeCoerce})
 
 (s/defschema StorePropertiesSchema
   "All entity store properties for every implementation"
@@ -212,6 +222,34 @@
 (def configurable-properties
   (mls/keys PropertiesSchema))
 
+(defn edn-read-string-map [s]
+  (let [v (c/edn-read-string s)]
+    (when (map? v)
+      v)))
+
+(defn build-coercer [schema]
+  (c/coercer! schema
+              (some-fn c/string-coercion-matcher
+                       ;; special cases
+                       {AuthParamsBeforeCoerce (c/safe edn-read-string-map)})))
+
+(defn coerce-properties [schema properties-map]
+  ((build-coercer schema) properties-map))
+
+(defn build-init-fn
+  "Build a function that will read a properties file, merge it with
+   system properties, coerce and validate it, transform it into a
+   nested map with keyword keys, and then store it in memory."
+  [files schema properties-atom]
+  (fn _init! []
+    (->> (merge (mp/read-property-files files)
+                (select-keys (System/getProperties)
+                             (mls/keys schema))
+                (mp/read-env-variables schema))
+         (coerce-properties schema)
+         mp/transform
+         (reset! properties-atom))))
+
 (defn build-init-config
   "Returns a (nested keyword) config map from (merged left-to-right):
 
@@ -221,9 +259,9 @@
   []
   {:post [(map? %)]}
   (let [a (atom nil)]
-    ((mp/build-init-fn files
-                       PropertiesSchema
-                       a))
+    ((build-init-fn files
+                    PropertiesSchema
+                    a))
     @a))
 
 (s/defn get-http-show [{{:keys [get-in-config]} :ConfigService
