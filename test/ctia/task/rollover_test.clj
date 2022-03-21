@@ -77,7 +77,8 @@
       ["ctia.auth.type" "allow-all"
        "ctia.store.es.default.port" 9207
        "ctia.store.es.default.version" 7
-       "ctia.store.es.default.auth" es-helpers/basic-auth]
+       "ctia.store.es.default.auth.type" (:type es-helpers/basic-auth)
+       "ctia.store.es.default.auth.params" (:params es-helpers/basic-auth)]
       #(helpers/fixture-ctia-with-app
         (fn [app]
           (let [services (es-helpers/app->ESConnServices app)
