@@ -358,6 +358,21 @@
       </exclusions>
     </dependency>
     <dependency>
+      <groupId>instaparse</groupId>
+      <artifactId>instaparse</artifactId>
+      <version>1.4.10</version>
+      <exclusions>
+        <exclusion>
+          <artifactId>slf4j-nop</artifactId>
+          <groupId>org.slf4j</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>slf4j-log4j12</artifactId>
+          <groupId>org.slf4j</groupId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    <dependency>
       <groupId>threatgrid</groupId>
       <artifactId>clj-momo</artifactId>
       <version>0.3.5</version>
@@ -1130,7 +1145,7 @@
     <dependency>
       <groupId>com.gfredericks</groupId>
       <artifactId>test.chuck</artifactId>
-      <version>0.2.11</version>
+      <version>0.2.13</version>
       <exclusions>
         <exclusion>
           <artifactId>slf4j-nop</artifactId>

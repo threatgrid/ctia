@@ -6,7 +6,7 @@
 (def ring-version "1.8.0")
 (def schema-generators-version "0.1.3")
 (def test-check-version "1.1.0")
-(def test-chuck-version "0.2.11")
+(def test-chuck-version "0.2.13")
 (def trapperkeeper-version "3.1.0")
 
 ;; TODO we could add -dev here when it works
@@ -82,6 +82,7 @@
                  [metosin/schema-tools "0.12.2"]
                  [threatgrid/flanders "0.1.23"]
                  [threatgrid/ctim "1.1.11"]
+                 [instaparse "1.4.10"] ;; com.gfredericks/test.chuck > threatgrid/ctim
                  [threatgrid/clj-momo "0.3.5"]
                  [threatgrid/ductile "0.4.2"]
 
