@@ -29,7 +29,7 @@
             "ctia.store.es.malware.auth.params.id" s/Str
             "ctia.store.es.malware.auth.params.api-key" s/Str
             "ctia.store.es.malware.auth.params.user" s/Str
-            "ctia.store.es.malware.auth.params.password" s/Str}
+            "ctia.store.es.malware.auth.params.pwd" s/Str}
            (sut/es-store-impl-properties "ctia.store.es." "malware")))
 
     (is (= {"prefix.sighting.host" s/Str
@@ -55,5 +55,5 @@
             "prefix.sighting.auth.params.id" s/Str
             "prefix.sighting.auth.params.api-key" s/Str
             "prefix.sighting.auth.params.user" s/Str
-            "prefix.sighting.auth.params.password" s/Str}
+            "prefix.sighting.auth.params.pwd" s/Str}
            (sut/es-store-impl-properties "prefix." "sighting")))))

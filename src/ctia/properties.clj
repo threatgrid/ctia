@@ -49,7 +49,7 @@
    (str prefix store ".auth.params.id") s/Str
    (str prefix store ".auth.params.api-key") s/Str
    (str prefix store ".auth.params.user") s/Str
-   (str prefix store ".auth.params.password") s/Str})
+   (str prefix store ".auth.params.pwd") s/Str})
 
 (s/defschema StorePropertiesSchema
   "All entity store properties for every implementation"
