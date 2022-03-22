@@ -375,7 +375,7 @@
     <dependency>
       <groupId>metosin</groupId>
       <artifactId>schema-tools</artifactId>
-      <version>0.12.3</version>
+      <version>0.12.2</version>
       <exclusions>
         <exclusion>
           <artifactId>slf4j-nop</artifactId>
@@ -755,7 +755,7 @@
     <dependency>
       <groupId>threatgrid</groupId>
       <artifactId>ring-jwt-middleware</artifactId>
-      <version>1.1.2</version>
+      <version>1.0.1</version>
       <exclusions>
         <exclusion>
           <artifactId>slf4j-nop</artifactId>

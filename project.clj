@@ -81,7 +81,7 @@
 
                  ;; Schemas
                  [prismatic/schema "1.2.0"]
-                 [metosin/schema-tools "0.12.3"]
+                 [metosin/schema-tools "0.12.2"]
                  [threatgrid/flanders "0.1.23"]
                  [threatgrid/ctim "1.1.11"]
                  [instaparse "1.4.10"] ;; com.gfredericks/test.chuck > threatgrid/ctim
@@ -106,7 +106,7 @@
                  [ring/ring-codec "1.1.2"]
                  [threatgrid/clj-jwt "0.3.1"]
                  [threatgrid/ring-turnstile-middleware "0.1.1"]
-                 [threatgrid/ring-jwt-middleware "1.1.2"]
+                 [threatgrid/ring-jwt-middleware "1.0.1"]
                  [scopula "0.1.4"]
                  [org.clojure/tools.reader "1.3.4"] ;; org.clojure/tools.namespace > ring-middleware-format
 
