@@ -143,7 +143,7 @@
     [5 7]
     #(ductile.index/delete! % "ctia_*")
     (helpers/with-properties (into ["ctia.auth.type" "allow-all"]
-                                   (:type es-helpers/basic-auth-properties))
+                                   es-helpers/basic-auth-properties)
       (helpers/fixture-ctia-with-app
         (fn [app]
           ;(helpers/set-capabilities! app "foouser" ["foogroup"] "user" all-capabilities)
