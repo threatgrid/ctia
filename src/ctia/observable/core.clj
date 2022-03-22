@@ -1,14 +1,13 @@
 (ns ctia.observable.core
   (:require [ctia.store
              :refer
-             [calculate-verdict
-              list-judgements-by-observable
+             [list-judgements-by-observable
               list-records
               list-sightings-by-observables]]
             [ctim.domain.id :as id]
             [ctia.schemas.core
              :refer
-             [APIHandlerServices Observable Reference Verdict]]
+             [APIHandlerServices Observable]]
 
             [ctia.properties :as p]
             [schema.core :as s]))
@@ -66,42 +65,45 @@
        {})
       :data))
 
+(s/defschema RelationshipFilter
+  {:entity-ids [s/Str]
+   :relationship_type s/Any;;[s/Str]
+   :entity-type s/Str})
+
 (s/defn related-entity-ids
-  [filters
-   edge-end :- (s/enum :source_ref :target_ref)
-   entity-type
+  [{:keys [entity-ids
+           relationship_type
+           entity-type]} :- RelationshipFilter
+   edge-node :- (s/enum :source_ref :target_ref)
    identity-map
    services]
-  (let [relationships (get-relationships filters identity-map services)]
-    (->> (map edge-end relationships)
-         (map #(id/long-id->id %))
+  (let [filters {edge-node entity-ids
+                 :relationship_type relationship_type}
+        relationships (get-relationships filters identity-map services)
+        get-nodes (case edge-node
+                    :source_ref :target_ref
+                    :target_ref :source_ref)]
+    (->> (map get-nodes relationships)
+         (map id/long-id->id)
          (filter #(= (str entity-type) (:type %)))
-         (map #(id/long-id %))
+         (map id/long-id)
          set)))
 
 (s/defn get-target-ids
-  [entity-ids
-   relationship_type
-   entity-type
+  [filters :- RelationshipFilter
    identity-map
    services]
-  (related-entity-ids {:source_ref entity-ids
-                       :relationship_type relationship_type}
-                      :target_ref
-                      entity-type
+  (related-entity-ids filters
+                      :source_ref
                       identity-map
                       services))
 
 (s/defn get-source-ids
-  [entity-ids
-   relationship_type
-   entity-type
+  [filters :- RelationshipFilter
    identity-map
    services]
-  (related-entity-ids {:target_ref entity-ids
-                       :relationship_type relationship_type}
-                      :source_ref
-                      entity-type
+  (related-entity-ids filters
+                      :target_ref
                       identity-map
                       services))
 
@@ -110,9 +112,9 @@
    identity-map
    services :- APIHandlerServices]
   (let [sighting-ids (observable->sighting-ids observable identity-map services)]
-    (get-target-ids sighting-ids
-                    "member-of"
-                    "incident"
+    (get-target-ids {:entity-ids sighting-ids
+                     :relationship_type "member-of"
+                     :entity-type "incident"}
                     identity-map
                     services)))
 
@@ -121,19 +123,19 @@
    identity-map
    services :- APIHandlerServices]
   (let [sighting-ids (observable->sighting-ids observable identity-map services)]
-    (get-target-ids sighting-ids
-                    #{"sighting-of" "member-of"}
-                    "indicator"
-                    identity-map
-                    services)))
+    (get-target-ids {:entity-ids sighting-ids
+                     :relationship_type ["sighting-of" "member-of"]
+                     :entity-type "indicator"}
+                     identity-map
+                     services)))
 
 (s/defn judgement-observable->indicator-ids
   [observable :- Observable
    identity-map
    services :- APIHandlerServices]
   (let [judgement-ids (observable->judgement-ids observable identity-map services)]
-    (get-target-ids judgement-ids
-                    #{"based-on" "element-of"}
-                    "indicator"
+    (get-target-ids {:entity-ids judgement-ids
+                     :relationship_type ["based-on" "element-of"]
+                     :entity-type "indicator"}
                     identity-map
                     services)))

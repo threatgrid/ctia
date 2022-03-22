@@ -21,19 +21,24 @@
                                          "foogroup"
                                          "user")
      (let [services (app/service-graph app)
-           bundle (fixt/sightings-threat-ctx-bundle 2 true)
-           observable (-> bundle :sightings first :observables first)
+           bundle (fixt/incident-threat-ctx-bundle 2 true)
+           sighting-observable (-> bundle :sightings first :observables first)
+           judgement-observable (-> bundle :judgements first :observable)
            bundle-res (helpers/POST-bulk app bundle)
-           identity-map {:login "foouser" :groups ["foogroup"]}]
-       (is (= (set (:incidents bundle-res))
-              (set (sut/sighting-observable->incident-ids observable
+           identity-map {:login "foouser" :groups ["foogroup"]}
+           incidents (:incidents bundle-res)
+           indicators (:indicators bundle-res)]
+       (assert (seq incidents))
+       (assert (seq indicators))
+       (is (= (set incidents)
+              (set (sut/sighting-observable->incident-ids sighting-observable
                                                           identity-map
                                                           services))))
-       (is (= (set (:indicators bundle-res))
-              (set (sut/sighting-observable->indicator-ids observable
+       (is (= (set indicators)
+              (set (sut/sighting-observable->indicator-ids sighting-observable
                                                            identity-map
                                                            services))))
-       (is (= (set (:judgments bundle-res))
-              (set (sut/judgement-observable->indicator-ids observable
+       (is (= (set indicators)
+              (set (sut/judgement-observable->indicator-ids judgement-observable
                                                             identity-map
                                                             services))))))))
