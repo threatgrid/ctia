@@ -2,7 +2,7 @@
   (:require [clojure.string :as string]
             [ctia.stores.es.init :as sut]
             [ctia.test-helpers.core :as helpers]
-            [ctia.test-helpers.es :refer [->ESConnServices for-each-es-version basic-auth]]
+            [ctia.test-helpers.es :refer [->ESConnServices for-each-es-version basic-auth basic-auth-properties]]
             [ctia.stores.es.mapping :as m]
             [ductile.index :as index]
             [ductile.conn :as conn]
@@ -363,7 +363,7 @@
                                    map?))
          try-auth-params (fn [auth-params]
                            (helpers/with-properties
-                             es-helpers/basic-auth-properties
+                             basic-auth-properties
                              (helpers/fixture-ctia-with-app
                                (fn [app]
                                  (let [{:keys [all-stores]} (helpers/get-service-map app :StoreService)]
