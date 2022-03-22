@@ -67,7 +67,7 @@
 
 (s/defschema RelationshipFilter
   {:entity-ids [s/Str]
-   :relationship_type s/Any;;[s/Str]
+   :relationship_type [s/Str]
    :entity-type s/Str})
 
 (s/defn related-entity-ids
@@ -113,7 +113,7 @@
    services :- APIHandlerServices]
   (let [sighting-ids (observable->sighting-ids observable identity-map services)]
     (get-target-ids {:entity-ids sighting-ids
-                     :relationship_type "member-of"
+                     :relationship_type ["member-of"]
                      :entity-type "incident"}
                     identity-map
                     services)))
