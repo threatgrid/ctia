@@ -126,16 +126,6 @@
         (log/warnf "Riemann doesn't seem configured. Event: %s"
                    (utils/safe-pprint-str prepared-event))))))
 
-(defn client [config]
-  (let [conn (-> (select-keys config
-                              [:host :port :interval-in-ms])
-                 riemann/tcp-client
-                 (riemann/batch-client
-                  (or (:batch-size config) 10)))
-        service-prefix (or (:service-prefix config) "CTIA")]
-    (fn [event]
-      (send-event conn service-prefix event))))
-
 ;; based on riemann-reporter.core/wrap-request-metrics
 (defn wrap-request-logs
   "Middleware to log all incoming connections to Riemann"
