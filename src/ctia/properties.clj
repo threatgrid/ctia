@@ -51,7 +51,8 @@
    (str prefix store ".refresh-mappings") s/Bool
    (str prefix store ".default-sort") s/Str
    (str prefix store ".auth.type") AuthParamsType
-   (str prefix store ".auth.params") AuthParamsBeforeCoerce})
+   (str prefix store ".auth.params.id") s/Str
+   (str prefix store ".auth.params.api-key") s/Str})
 
 (s/defschema StorePropertiesSchema
   "All entity store properties for every implementation"
@@ -222,34 +223,6 @@
 (def configurable-properties
   (mls/keys PropertiesSchema))
 
-(defn edn-read-string-map [s]
-  (let [v (c/edn-read-string s)]
-    (when (map? v)
-      v)))
-
-(defn build-coercer [schema]
-  (c/coercer! schema
-              (some-fn c/string-coercion-matcher
-                       ;; special cases
-                       {AuthParamsBeforeCoerce (c/safe edn-read-string-map)})))
-
-(defn coerce-properties [schema properties-map]
-  ((build-coercer schema) properties-map))
-
-(defn build-init-fn
-  "Build a function that will read a properties file, merge it with
-   system properties, coerce and validate it, transform it into a
-   nested map with keyword keys, and then store it in memory."
-  [files schema properties-atom]
-  (fn _init! []
-    (->> (merge (mp/read-property-files files)
-                (select-keys (System/getProperties)
-                             (mls/keys schema))
-                (mp/read-env-variables schema))
-         (coerce-properties schema)
-         mp/transform
-         (reset! properties-atom))))
-
 (defn build-init-config
   "Returns a (nested keyword) config map from (merged left-to-right):
 
@@ -259,9 +232,9 @@
   []
   {:post [(map? %)]}
   (let [a (atom nil)]
-    ((build-init-fn files
-                    PropertiesSchema
-                    a))
+    ((mp/build-init-fn files
+                       PropertiesSchema
+                       a))
     @a))
 
 (s/defn get-http-show [{{:keys [get-in-config]} :ConfigService
