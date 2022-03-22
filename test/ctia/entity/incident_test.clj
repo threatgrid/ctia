@@ -142,9 +142,8 @@
     "severity sorts like #'ctim-severity-order"
     [5 7]
     #(ductile.index/delete! % "ctia_*")
-    (helpers/with-properties ["ctia.store.es.default.auth.type" (:type es-helpers/basic-auth)
-                              "ctia.store.es.default.auth.params" (:params es-helpers/basic-auth)
-                              "ctia.auth.type" "allow-all"]
+    (helpers/with-properties (into ["ctia.auth.type" "allow-all"]
+                                   (:type es-helpers/basic-auth-properties))
       (helpers/fixture-ctia-with-app
         (fn [app]
           ;(helpers/set-capabilities! app "foouser" ["foogroup"] "user" all-capabilities)
@@ -199,9 +198,8 @@
      "severity sorts like #'ctim-severity-order"
      [5 7]
      #(ductile.index/delete! % "ctia_*")
-     (helpers/with-properties ["ctia.store.es.default.auth.type" (:type es-helpers/basic-auth)
-                               "ctia.store.es.default.auth.params" (:params es-helpers/basic-auth)
-                               "ctia.auth.type" "allow-all"]
+     (helpers/with-properties (into ["ctia.auth.type" "allow-all"]
+                                    es-helpers/basic-auth-properties)
        (helpers/fixture-ctia-with-app
          (fn [app]
            ;(helpers/set-capabilities! app "foouser" ["foogroup"] "user" all-capabilities)

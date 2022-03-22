@@ -25,11 +25,6 @@
 (s/defschema AuthParamsType
   (st/get-in AuthParams [:type]))
 
-(s/defschema AuthParamsBeforeCoerce
-  (s/conditional
-    map? (st/get-in AuthParams [:params])
-    :else s/Str))
-
 (defn es-store-impl-properties [prefix store]
   {(str prefix store ".host") s/Str
    (str prefix store ".port") s/Int
@@ -52,7 +47,9 @@
    (str prefix store ".default-sort") s/Str
    (str prefix store ".auth.type") AuthParamsType
    (str prefix store ".auth.params.id") s/Str
-   (str prefix store ".auth.params.api-key") s/Str})
+   (str prefix store ".auth.params.api-key") s/Str
+   (str prefix store ".auth.params.user") s/Str
+   (str prefix store ".auth.params.password") s/Str})
 
 (s/defschema StorePropertiesSchema
   "All entity store properties for every implementation"

@@ -92,6 +92,12 @@
   {:type :basic-auth
    :params {:user "elastic" :pwd "ductile"}})
 
+(def basic-auth-properties
+  (into ["ctia.store.es.default.auth.type" (:type basic-auth)]
+        (mapcat #(list (str "ctia.store.es.default.auth.params." (-> % key name))
+                       (val %)))
+        (:params basic-auth)))
+
 (defn -es-port []
   (if ((h/set-of-es-versions-to-test) 5) "9205" "9207"))
 
@@ -100,78 +106,77 @@
 
 (defn fixture-properties:es-store [t]
   ;; Note: These properties may be overwritten by ENV variables
-  (h/with-properties ["ctia.store.es.default.shards" 5
-                      "ctia.store.es.default.replicas" 1
-                      "ctia.store.es.default.refresh" "true"
-                      "ctia.store.es.default.refresh_interval" "1s"
-                      "ctia.store.es.default.port" (-es-port)
-                      "ctia.store.es.default.indexname" "test_ctia"
-                      "ctia.store.es.default.default_operator" "AND"
-                      "ctia.store.es.default.aliased" true
-                      "ctia.store.es.default.rollover.max_docs" 50
-                      "ctia.store.es.default.version" (-es-version)
-                      "ctia.store.es.default.auth.type" (:type basic-auth)
-                      "ctia.store.es.default.auth.params" (:params basic-auth)
-                      "ctia.store.es.default.default-sort" "timestamp,created,id"
-                      "ctia.store.es.event.default-sort" "timestamp,id"
-                      "ctia.store.es.relationship.default-sort" "created,id"
-                      "ctia.store.es.actor.indexname" "ctia_actor"
-                      "ctia.store.es.actor.default_operator" "OR"
-                      "ctia.store.es.asset.indexname" "ctia_assets"
-                      "ctia.store.es.asset-mapping.indexname" "ctia_asset_mapping"
-                      "ctia.store.es.asset-properties.indexname" "ctia_asset_properties"
-                      "ctia.store.es.attack-pattern.indexname" "ctia_attack_pattern"
-                      "ctia.store.es.campaign.indexname" "ctia_campaign"
-                      "ctia.store.es.coa.indexname" "ctia_coa"
-                      "ctia.store.es.event.indexname" "ctia_event"
-                      "ctia.store.es.data-table.indexname" "ctia_data-table"
-                      "ctia.store.es.feedback.indexname" "ctia_feedback"
-                      "ctia.store.es.identity.indexname" "ctia_identities"
-                      "ctia.store.es.incident.indexname" "ctia_incident"
-                      "ctia.store.es.indicator.indexname" "ctia_indicator"
-                      "ctia.store.es.investigation.indexname" "ctia_investigation"
-                      "ctia.store.es.judgement.indexname" "ctia_judgement"
-                      "ctia.store.es.malware.indexname" "ctia_malware"
-                      "ctia.store.es.relationship.indexname" "ctia_relationship"
-                      "ctia.store.es.casebook.indexname" "ctia_casebook"
-                      "ctia.store.es.sighting.indexname" "ctia_sighting"
-                      "ctia.store.es.identity-assertion.indexname" "ctia_identity_assertion"
-                      "ctia.store.es.target-record.indexname" "ctia_target_record"
-                      "ctia.store.es.tool.indexname" "ctia_tool"
-                      "ctia.store.es.vulnerability.indexname" "ctia_vulnerability"
-                      "ctia.store.es.weakness.indexname" "ctia_weakness"
+  (h/with-properties (into basic-auth-properties
+                           ["ctia.store.es.default.shards" 5
+                            "ctia.store.es.default.replicas" 1
+                            "ctia.store.es.default.refresh" "true"
+                            "ctia.store.es.default.refresh_interval" "1s"
+                            "ctia.store.es.default.port" (-es-port)
+                            "ctia.store.es.default.indexname" "test_ctia"
+                            "ctia.store.es.default.default_operator" "AND"
+                            "ctia.store.es.default.aliased" true
+                            "ctia.store.es.default.rollover.max_docs" 50
+                            "ctia.store.es.default.version" (-es-version)
+                            "ctia.store.es.default.default-sort" "timestamp,created,id"
+                            "ctia.store.es.event.default-sort" "timestamp,id"
+                            "ctia.store.es.relationship.default-sort" "created,id"
+                            "ctia.store.es.actor.indexname" "ctia_actor"
+                            "ctia.store.es.actor.default_operator" "OR"
+                            "ctia.store.es.asset.indexname" "ctia_assets"
+                            "ctia.store.es.asset-mapping.indexname" "ctia_asset_mapping"
+                            "ctia.store.es.asset-properties.indexname" "ctia_asset_properties"
+                            "ctia.store.es.attack-pattern.indexname" "ctia_attack_pattern"
+                            "ctia.store.es.campaign.indexname" "ctia_campaign"
+                            "ctia.store.es.coa.indexname" "ctia_coa"
+                            "ctia.store.es.event.indexname" "ctia_event"
+                            "ctia.store.es.data-table.indexname" "ctia_data-table"
+                            "ctia.store.es.feedback.indexname" "ctia_feedback"
+                            "ctia.store.es.identity.indexname" "ctia_identities"
+                            "ctia.store.es.incident.indexname" "ctia_incident"
+                            "ctia.store.es.indicator.indexname" "ctia_indicator"
+                            "ctia.store.es.investigation.indexname" "ctia_investigation"
+                            "ctia.store.es.judgement.indexname" "ctia_judgement"
+                            "ctia.store.es.malware.indexname" "ctia_malware"
+                            "ctia.store.es.relationship.indexname" "ctia_relationship"
+                            "ctia.store.es.casebook.indexname" "ctia_casebook"
+                            "ctia.store.es.sighting.indexname" "ctia_sighting"
+                            "ctia.store.es.identity-assertion.indexname" "ctia_identity_assertion"
+                            "ctia.store.es.target-record.indexname" "ctia_target_record"
+                            "ctia.store.es.tool.indexname" "ctia_tool"
+                            "ctia.store.es.vulnerability.indexname" "ctia_vulnerability"
+                            "ctia.store.es.weakness.indexname" "ctia_weakness"
 
-                      "ctia.store.actor" "es"
-                      "ctia.store.asset" "es"
-                      "ctia.store.asset-mapping" "es"
-                      "ctia.store.asset-properties" "es"
-                      "ctia.store.attack-pattern" "es"
-                      "ctia.store.campaign" "es"
-                      "ctia.store.coa" "es"
-                      "ctia.store.data-table" "es"
-                      "ctia.store.event" "es"
-                      "ctia.store.feed" "es"
-                      "ctia.store.feedback" "es"
-                      "ctia.store.identity" "es"
-                      "ctia.store.incident" "es"
-                      "ctia.store.indicator" "es"
-                      "ctia.store.investigation" "es"
-                      "ctia.store.judgement" "es"
-                      "ctia.store.malware" "es"
-                      "ctia.store.relationship" "es"
-                      "ctia.store.casebook" "es"
-                      "ctia.store.sighting" "es"
-                      "ctia.store.identity-assertion" "es"
-                      "ctia.store.target-record" "es"
-                      "ctia.store.tool" "es"
-                      "ctia.store.vulnerability" "es"
-                      "ctia.store.weakness" "es"
-                      "ctia.store.bulk-refresh" "true"
+                            "ctia.store.actor" "es"
+                            "ctia.store.asset" "es"
+                            "ctia.store.asset-mapping" "es"
+                            "ctia.store.asset-properties" "es"
+                            "ctia.store.attack-pattern" "es"
+                            "ctia.store.campaign" "es"
+                            "ctia.store.coa" "es"
+                            "ctia.store.data-table" "es"
+                            "ctia.store.event" "es"
+                            "ctia.store.feed" "es"
+                            "ctia.store.feedback" "es"
+                            "ctia.store.identity" "es"
+                            "ctia.store.incident" "es"
+                            "ctia.store.indicator" "es"
+                            "ctia.store.investigation" "es"
+                            "ctia.store.judgement" "es"
+                            "ctia.store.malware" "es"
+                            "ctia.store.relationship" "es"
+                            "ctia.store.casebook" "es"
+                            "ctia.store.sighting" "es"
+                            "ctia.store.identity-assertion" "es"
+                            "ctia.store.target-record" "es"
+                            "ctia.store.tool" "es"
+                            "ctia.store.vulnerability" "es"
+                            "ctia.store.weakness" "es"
+                            "ctia.store.bulk-refresh" "true"
 
-                     ;; "ctia.migration.store.es.default.port" "9207"
-                      "ctia.migration.store.es.migration.indexname" "ctia_migration"
-                      "ctia.migration.store.es.default.rollover.max_docs" 50
-                      "ctia.migration.store.es.event.rollover.max_docs" 1000]
+                            ;; "ctia.migration.store.es.default.port" "9207"
+                            "ctia.migration.store.es.migration.indexname" "ctia_migration"
+                            "ctia.migration.store.es.default.rollover.max_docs" 50
+                            "ctia.migration.store.es.event.rollover.max_docs" 1000])
     (t)))
 
 (defn fixture-properties:es-hook [t]

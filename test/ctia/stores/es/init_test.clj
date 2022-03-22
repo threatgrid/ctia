@@ -363,13 +363,12 @@
                                    map?))
          try-auth-params (fn [auth-params]
                            (helpers/with-properties
-                             ["ctia.store.es.default.auth.type" (:type auth-params)
-                              "ctia.store.es.default.auth.params" (:params auth-params)]
+                             es-helpers/basic-auth-properties
                              (helpers/fixture-ctia-with-app
-                              (fn [app]
-                                (let [{:keys [all-stores]} (helpers/get-service-map app :StoreService)]
-                                  (doseq [[_ store] (all-stores)]
-                                    (is (try-store store))))))))]
+                               (fn [app]
+                                 (let [{:keys [all-stores]} (helpers/get-service-map app :StoreService)]
+                                   (doseq [[_ store] (all-stores)]
+                                     (is (try-store store))))))))]
      (doseq [[auth-params authorized?] [[basic-auth true]
                                         [ok-api-key-auth-params true]
                                         [ok-header-auth-params true]

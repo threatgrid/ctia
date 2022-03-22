@@ -27,7 +27,9 @@
             "ctia.store.es.malware.timeout" s/Num
             "ctia.store.es.malware.auth.type" sut/AuthParamsType
             "ctia.store.es.malware.auth.params.id" s/Str
-            "ctia.store.es.malware.auth.params.api-key" s/Str}
+            "ctia.store.es.malware.auth.params.api-key" s/Str
+            "ctia.store.es.malware.auth.params.user" s/Str
+            "ctia.store.es.malware.auth.params.password" s/Str}
            (sut/es-store-impl-properties "ctia.store.es." "malware")))
 
     (is (= {"prefix.sighting.host" s/Str
@@ -51,5 +53,7 @@
             "prefix.sighting.timeout" s/Num
             "prefix.sighting.auth.type" sut/AuthParamsType
             "prefix.sighting.auth.params.id" s/Str
-            "prefix.sighting.auth.params.api-key" s/Str}
+            "prefix.sighting.auth.params.api-key" s/Str
+            "prefix.sighting.auth.params.user" s/Str
+            "prefix.sighting.auth.params.password" s/Str}
            (sut/es-store-impl-properties "prefix." "sighting")))))

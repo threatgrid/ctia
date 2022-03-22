@@ -14,11 +14,10 @@
    [5 7]
    #(es-index/delete! % "ctia_*")
    (helpers/with-properties
-     ["ctia.store.es.default.port" es-port
-      "ctia.store.es.default.version" version
-      "ctia.store.es.default.auth.type" (:type es-helpers/basic-auth)
-      "ctia.store.es.default.auth.params" (:params es-helpers/basic-auth)
-      "ctia.auth.type" "allow-all"]
+     (into ["ctia.store.es.default.port" es-port
+            "ctia.store.es.default.version" version
+            "ctia.auth.type" "allow-all"]
+           es-helpers/basic-auth-properties)
      (helpers/fixture-ctia-with-app
        (fn [app]
          (let [{{:keys [get-in-config]} :ConfigService :as services} (es-helpers/app->ESConnServices app)
@@ -74,11 +73,10 @@
                                                        {:code :unhappy}))))]
     ;; this test does not depend on ES version
     (helpers/with-properties*
-      ["ctia.auth.type" "allow-all"
-       "ctia.store.es.default.port" 9207
-       "ctia.store.es.default.version" 7
-       "ctia.store.es.default.auth.type" (:type es-helpers/basic-auth)
-       "ctia.store.es.default.auth.params" (:params es-helpers/basic-auth)]
+      (into ["ctia.auth.type" "allow-all"
+             "ctia.store.es.default.port" 9207
+             "ctia.store.es.default.version" 7]
+            es-helpers/basic-auth-properties)
       #(helpers/fixture-ctia-with-app
         (fn [app]
           (let [services (es-helpers/app->ESConnServices app)
