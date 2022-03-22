@@ -65,6 +65,7 @@
          "ctia.metrics.riemann.enabled"               false
          "ctia.metrics.console.enabled"               false
          "ctia.metrics.jmx.enabled"                   false
+         "ctia.store.es.identity.refresh"             "true"
          "ctia.versions.config"                       "test"]
         ;; use es7 if es5 is not available
         (let [es-versions (set-of-es-versions-to-test)]
