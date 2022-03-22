@@ -122,7 +122,7 @@
                  [io.netty/netty "3.10.6.Final"];org.onyxplatform/onyx-kafka > metrics-clojure-riemann, zookeeper-clj
                  [io.netty/netty-codec "4.1.42.Final"] ;org.apache.zookeeper/zookeeper > riemann-clojure-client
                  [io.netty/netty-resolver "4.1.42.Final"] ;riemann-clojure-client > org.apache.zookeeper/zookeeper
-                 [com.google.protobuf/protobuf-java "3.11.1"] ;riemann-clojure-client > threatgrid:ctim, metrics-clojure-riemann, org.onyxplatform/onyx-kafka
+                 [com.google.protobuf/protobuf-java "3.19.4"] ;bump riemann-clojure-client, threatgrid:ctim, metrics-clojure-riemann, org.onyxplatform/onyx-kafka
                  [riemann-clojure-client "0.5.1"]
                  ;; https://stackoverflow.com/a/43574427
                  [jakarta.xml.bind/jakarta.xml.bind-api "2.3.2"]
