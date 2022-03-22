@@ -11,5 +11,6 @@ else
   echo
   echo 'project.clj and pom.xml are out of sync! Please run ./scripts/sync-dependabot locally and commit the results.'
   echo 'If this is a PR from dependabot, you must manually update the version in project.clj'
+  echo "If you're still stuck, try merging with the latest master, and then running ./scripts/sync-dependabot."
   exit 1
 fi
