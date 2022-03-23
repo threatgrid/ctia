@@ -121,7 +121,7 @@
                  [metrics-clojure-ring ~metrics-clojure-version]
                  [clout "2.2.1"]
                  [slugger "1.0.1"]
-                 [com.google.guava/guava "20.0"];org.onyxplatform/onyx-kafka > threatgrid/ctim
+                 [com.google.guava/guava "31.0-jre"];bump org.onyxplatform/onyx-kafka, threatgrid/ctim
                  [io.netty/netty-all ~netty-version];bump org.onyxplatform/onyx-kafka, metrics-clojure-riemann, zookeeper-clj
                  [io.netty/netty-codec ~netty-version] ;bump org.apache.zookeeper/zookeeper, riemann-clojure-client
                  [io.netty/netty-resolver ~netty-version] ;bump riemann-clojure-client, org.apache.zookeeper/zookeeper
