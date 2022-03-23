@@ -334,3 +334,32 @@
 (defn transient-id?
   [id]
   (and id (some? (re-matches id/transient-id-re id))))
+
+(s/defschema SortExtensionTemplate
+  (s/conditional
+    #(= :field (:op %)) {:op (s/eq :field)
+                         (s/optional-key :field-name) (s/cond-pre s/Keyword s/Str)}
+    #(= :remap (:op %)) {:op (s/eq :remap)
+                         (s/optional-key :field-name) (s/cond-pre s/Keyword s/Str)
+                         :remappings {s/Str s/Num}
+                         :remap-default s/Num}))
+
+(s/defschema ConcreteSortExtension
+  (s/conditional
+    #(= :field (:op %)) {:op (s/eq :field)
+                         :field-name (s/cond-pre s/Keyword s/Str)
+                         (s/optional-key :sort_order) (s/cond-pre s/Keyword s/Str)}
+    #(= :remap (:op %)) {:op (s/eq :remap)
+                         :field-name (s/cond-pre s/Keyword s/Str)
+                         (s/optional-key :sort_order) (s/cond-pre s/Keyword s/Str)
+                         :remappings {s/Str s/Num}
+                         :remap-default s/Num}))
+
+(s/defschema SortExtensionTemplates
+  "A map to override the behavior of sorting by a field.
+  
+  See ctia.entity.incident/sort-extension-templates for an example
+  that redefines the sorting of `severity` with a custom ordering.
+  
+  You can also sort by fields that don't exist."
+  {(s/pred simple-keyword?) SortExtensionTemplate})

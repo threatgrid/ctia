@@ -14,16 +14,8 @@
       (let [{:keys [grab-history state utils]} (th/mk-utils env-map)
             _ (sut/print-matrix utils)
             expected-matrix
-            [{:ci_profiles "default", :java_distribution "adopt", :java_version "11.0.9", :this_split 0, :total_splits 10, :test_suite :ci}
-             {:ci_profiles "default", :java_distribution "adopt", :java_version "11.0.9", :this_split 1, :total_splits 10, :test_suite :ci}
-             {:ci_profiles "default", :java_distribution "adopt", :java_version "11.0.9", :this_split 2, :total_splits 10, :test_suite :ci}
-             {:ci_profiles "default", :java_distribution "adopt", :java_version "11.0.9", :this_split 3, :total_splits 10, :test_suite :ci}
-             {:ci_profiles "default", :java_distribution "adopt", :java_version "11.0.9", :this_split 4, :total_splits 10, :test_suite :ci}
-             {:ci_profiles "default", :java_distribution "adopt", :java_version "11.0.9", :this_split 5, :total_splits 10, :test_suite :ci}
-             {:ci_profiles "default", :java_distribution "adopt", :java_version "11.0.9", :this_split 6, :total_splits 10, :test_suite :ci}
-             {:ci_profiles "default", :java_distribution "adopt", :java_version "11.0.9", :this_split 7, :total_splits 10, :test_suite :ci}
-             {:ci_profiles "default", :java_distribution "adopt", :java_version "11.0.9", :this_split 8, :total_splits 10, :test_suite :ci}
-             {:ci_profiles "default", :java_distribution "adopt", :java_version "11.0.9", :this_split 9, :total_splits 10, :test_suite :ci}]
+            (mapv (fn [this_split] {:ci_profiles "default", :java_distribution "adopt", :java_version "11.0.9", :this_split this_split, :total_splits sut/non-cron-ctia-nsplits, :test_suite :ci})
+                  (range sut/non-cron-ctia-nsplits))
             _ (is (= (grab-history)
                      [{:op :add-env, :k "CTIA_TEST_SUITE", :v "ci"}
                       {:op :set-json-output

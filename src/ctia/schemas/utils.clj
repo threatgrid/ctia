@@ -111,7 +111,8 @@
                                                                    (filter s/specific-key?)
                                                                    (map fn-kw->maybe-graph-fns))
                                                              fn-kws)
-                                         :else (throw (ex-info (str "Unknown selector syntax: " (pr-str fn-kws)))))]
+                                         :else (throw (ex-info (str "Unknown selector syntax: " (pr-str fn-kws))
+                                                               {})))]
                        {(s/explicit-schema-key service-kw) service-fns}))))))
         selectors))
 

@@ -51,7 +51,7 @@ jobs:
       - uses: zero88/gh-project-context@af8b62dd9d7ecbb2763268a040d42390ecfeb0f3
         id: gh-project-context
       - name: Binary Cache
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: ${{ env.BIN_PATH }}
           key: ctia-bin-${{ env.ACTIONS_CACHE_VERSION }}-${{ env.BB_VERSION }}
@@ -77,7 +77,7 @@ jobs:
       # Setup previous timing information
       - name: Timing Cache
         id: get-timing
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: |
             target/test-results/all-test-timings.edn
@@ -125,7 +125,7 @@ jobs:
       # warm dependency cache on project.clj change (ie., when cache-hit is not true).
       - name: Maven Cache
         id: maven-cache
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: |
             ~/.m2/repository
@@ -145,7 +145,7 @@ jobs:
         if: steps.maven-cache.outputs.cache-hit != 'true'
       - name: Leiningen Cache
         if: steps.maven-cache.outputs.cache-hit != 'true'
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         id: lein-cache
         with:
           path: ${{env.LEIN_HOME}}
@@ -174,7 +174,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Binary Cache
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: ${{ env.BIN_PATH }}
           key: ctia-bin-${{ env.ACTIONS_CACHE_VERSION }}-${{ env.BB_VERSION }}
@@ -221,7 +221,7 @@ jobs:
 
       - name: Maven Cache
         id: maven-cache
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: |
             ~/.m2/repository
@@ -239,7 +239,7 @@ jobs:
 
       # install lein using cache to avoid extra download and startup time
       - name: Leiningen Cache
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         id: lein-cache
         with:
           path: ${{env.LEIN_HOME}}
@@ -289,7 +289,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Binary Cache
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: ${{ env.BIN_PATH }}
           key: ctia-bin-${{ env.ACTIONS_CACHE_VERSION }}-${{ env.BB_VERSION }}
@@ -301,7 +301,7 @@ jobs:
         run: ./scripts/actions/install-bb.sh
       - run: ./scripts/actions/setup_env.clj
       - name: Timing results Cache
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: target/test-results/all-test-timings.edn
           # cache should never hit
@@ -332,7 +332,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Binary Cache
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: ${{ env.BIN_PATH }}
           key: ctia-bin-${{ env.ACTIONS_CACHE_VERSION }}-${{ env.BB_VERSION }}
@@ -346,7 +346,7 @@ jobs:
       - run: ./scripts/actions/setup_env.clj
       - name: Maven Cache
         id: maven-cache
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: ~/.m2/repository
           key: ctia-m2-cache-${{ env.ACTIONS_CACHE_VERSION }}-${{ hashFiles('project.clj') }}
@@ -361,7 +361,7 @@ jobs:
 
       # install lein using cache to avoid extra download and startup time
       - name: Leiningen Cache
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         id: lein-cache
         with:
           path: ${{env.LEIN_HOME}}
