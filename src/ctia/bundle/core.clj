@@ -333,10 +333,16 @@
        (filter (comp seq second))
        (into {})))
 
+(def ^:dynamic correlation-id nil)
+
+(defn- get-epoch-second []
+  (.getEpochSecond (java.time.Instant/now)))
+
 (s/defn fetch-relationship-targets
   "given relationships, fetch all related objects"
   [relationships identity-map
-   services :- APIHandlerServices]
+   {{:keys [send-event]} :RiemannService
+    :as services} :- APIHandlerServices]
   (let [all-ids (->> relationships
                      (map (fn [{:keys [target_ref source_ref]}]
                             [target_ref source_ref]))
@@ -350,7 +356,13 @@
                           (map (fn [[k v]]
                                  {(bulk/bulk-key
                                    (keyword k)) v}) by-type))
+        start (System/currentTimeMillis)
         fetched (bulk/fetch-bulk by-bulk-key identity-map services)]
+    (send-event {:service "export-bundle"
+                 :correlation-id correlation-id
+                 :time (get-epoch-second)
+                 :event-type "fetch-relationships-targets"
+                 :metric (- (System/currentTimeMillis) start)})
     (clean-bundle fetched)))
 
 (defn relationships-filters
@@ -375,31 +387,47 @@
    identity-map
    filters
    {{:keys [get-in-config]} :ConfigService
-    {:keys [get-store]} :StoreService} :- APIHandlerServices]
+    {:keys [get-store]} :StoreService
+    {:keys [send-event]} :RiemannService} :- APIHandlerServices]
   (let [filter-map (relationships-filters id filters)
         max-relationships (get-in-config [:ctia :http :bundle :export :max-relationships]
-                                         1000)]
-    (some-> (get-store :relationship)
-            (list-fn
-              filter-map
-              identity-map
-              {:limit max-relationships
-               :sort_by "timestamp"
-               :sort_order "desc"})
-            :data
-            ent/un-store-all)))
+                                         1000)
+        start (System/currentTimeMillis)
+        res (some-> (get-store :relationship)
+                    (list-fn
+                     filter-map
+                     identity-map
+                     {:limit max-relationships
+                      :sort_by "timestamp"
+                      :sort_order "desc"})
+                    :data
+                    ent/un-store-all)]
+    (send-event {:service "export-bundle"
+                 :correlation-id correlation-id
+                 :time (get-epoch-second)
+                 :event-type "fetch-relationships"
+                 :metric (- (System/currentTimeMillis) start)})
+    res))
 
 (s/defn fetch-record
   "Fetch a record by ID guessing its type"
   [id identity-map
    {{:keys [get-store]} :StoreService
+    {:keys [send-event]} :RiemannService
     :as services} :- APIHandlerServices]
   (when-let [entity-type (ent/id->entity-type id services)]
-    (-> (get-store (keyword entity-type))
-        (read-fn
-          id
-          identity-map
-          {}))))
+    (let [start (System/currentTimeMillis)
+          res (-> (get-store (keyword entity-type))
+                  (read-fn
+                   id
+                   identity-map
+                   {}))]
+      (send-event {:service "export-bundle"
+                   :correlation-id correlation-id
+                   :time (get-epoch-second)
+                   :event-type "fetch-record"
+                   :metric (- (System/currentTimeMillis) start)})
+      res)))
 
 (s/defn export-entities
   "Given an entity id, export it along
@@ -442,9 +470,23 @@
    identity-map
    ident
    params
-   services :- APIHandlerServices]
+   {{:keys [send-event]} :RiemannService
+    :as services} :- APIHandlerServices]
   (if (seq ids)
-    (->> (map #(export-entities % identity-map ident params services) ids)
-         (reduce #(deep-merge-with coll/add-colls %1 %2))
-         (into empty-bundle))
+    (binding [correlation-id (str (java.util.UUID/randomUUID))]
+      (send-event {:service "export-bundle"
+                   :correlation-id correlation-id
+                   :time (get-epoch-second)
+                   :event-type "start"
+                   :metric (count ids)})
+      (let [start (System/currentTimeMillis)
+            res (->> (map #(export-entities % identity-map ident params services) ids)
+                     (reduce #(deep-merge-with coll/add-colls %1 %2))
+                     (into empty-bundle))]
+        (send-event {:service "export-bundle"
+                     :correlation-id correlation-id
+                     :time (get-epoch-second)
+                     :event-type "end"
+                     :metric (- (System/currentTimeMillis) start)})
+        res))
     empty-bundle))
