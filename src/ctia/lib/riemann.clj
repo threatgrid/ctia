@@ -182,4 +182,4 @@
            :service-prefix service-prefix)))
 
 (defn stop [{:keys [^RiemannClient conn]}]
-  (.close conn))
+  (when conn (.close conn)))
