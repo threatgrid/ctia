@@ -41,7 +41,10 @@
     :IEncryption                     {:encrypt (s/=> s/Any s/Any)
                                       :decrypt (s/=> s/Any s/Any)}
     :FeaturesService                 {:entity-enabled? (s/=> s/Bool s/Keyword)
-                                      :feature-flags (s/=> [s/Str])}}))
+                                      :feature-flags (s/=> [s/Str])}
+    :RiemannService                  {:send-event (s/=>* s/Any
+                                                         [s/Any]
+                                                         [s/Any s/Any])}}))
 
 (s/defschema HTTPShowServices
   (-> APIHandlerServices
