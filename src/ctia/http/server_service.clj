@@ -15,21 +15,24 @@
    GraphQLNamedTypeRegistryService
    IEncryption
    ConfigService
-   FeaturesService]
+   FeaturesService
+   RiemannService]
   (start [this context] (core/start context
                                     ((:get-in-config ConfigService) [:ctia :http])
                                     {:ConfigService                   (-> ConfigService
-                                                        (select-keys #{:get-config
-                                                                       :get-in-config}))
+                                                                          (select-keys #{:get-config
+                                                                                         :get-in-config}))
                                      :HooksService                    (-> HooksService
-                                                       (select-keys #{:apply-event-hooks
-                                                                      :apply-hooks}))
+                                                                          (select-keys #{:apply-event-hooks
+                                                                                         :apply-hooks}))
                                      :StoreService                    (-> StoreService
-                                                       (select-keys #{:get-store}))
+                                                                          (select-keys #{:get-store}))
                                      :IAuth                           IAuth
                                      :GraphQLNamedTypeRegistryService GraphQLNamedTypeRegistryService
                                      :IEncryption                     IEncryption
-                                     :FeaturesService                 FeaturesService}))
+                                     :FeaturesService                 FeaturesService
+                                     :RiemannService                  (-> RiemannService
+                                                                          (select-keys #{:send-event}))}))
   (stop [this context] (core/stop context))
   (get-port [this]
             (core/get-port (service-context this)))
