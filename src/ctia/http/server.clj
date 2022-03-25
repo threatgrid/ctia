@@ -166,6 +166,7 @@
     :as http-config}
    {{:keys [identity-for-token]} :IAuth
     {:keys [get-in-config]} :ConfigService
+    {:keys [conn service-prefix]} :RiemannService
     :as services} :- APIHandlerServices]
   (doto
       (jetty/run-jetty
@@ -182,7 +183,7 @@
          ;; just after :jwt and :identity is attached to request
          ;; by rjwt/wrap-jwt-auth-fn below.
          (get-in-config [:ctia :log :riemann :enabled])
-         (rie/wrap-request-logs "API response time ms" get-in-config)
+         (rie/wrap-request-logs "API response time ms" conn service-prefix)
 
          (:enabled jwt)
          ((rjwt/wrap-jwt-auth-fn
@@ -190,7 +191,7 @@
             {:pubkey-fn ;; if :public-key-map is nil, will use just :public-key
              (when-let [pubkey-for-issuer-map
                         (auth-jwt/parse-jwt-pubkey-map (:public-key-map jwt))]
-               (fn [{:keys [iss] :as claims}]
+               (fn [{:keys [iss]}]
                  (get pubkey-for-issuer-map iss)))
              :pubkey-path (:public-key-path jwt)
              :no-jwt-handler rjwt/authorize-no-jwt-header-strategy}
