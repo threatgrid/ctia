@@ -39,12 +39,17 @@
         params))))
 
 (defn observable->sighting-ids
-  [observable identity-map services]
-  (let [http-show (p/get-http-show services)
-        sightings (:data (observable->sightings observable identity-map services))]
-    (map #(id/long-id
-           (id/short-id->id :sighting (:id %) http-show))
-         sightings)))
+  ([observable identity-map services]
+   (observable->sighting-ids observable identity-map {} services))
+  ([observable identity-map params services]
+   (let [http-show (p/get-http-show services)
+         res (observable->sightings observable identity-map params services)]
+     (update res
+             :data
+             (fn [sightings]
+               (map #(id/long-id
+                      (id/short-id->id :sighting (:id %) http-show))
+                    sightings))))))
 
 (defn observable->judgement-ids
   [observable identity-map services]
@@ -55,39 +60,55 @@
          judgements)))
 
 (defn get-relationships
-  [filters
-   identity-map
-   {{:keys [get-store]} :StoreService}]
+  ([filters
+    identity-map
+    services]
+   (get-relationships filters {} identity-map services))
+  ([filters
+    params
+    identity-map
+    {{:keys [get-store]} :StoreService}]
   (-> (get-store :relationship)
       (list-records
        {:all-of filters}
        identity-map
-       {})
-      :data))
+       params))))
 
 (s/defschema RelationshipFilter
   {:entity-ids [s/Str]
    :relationship_type [s/Str]
-   :entity-type s/Str})
+   :entity-type s/Str
+   (s/optional-key :paging) {s/Keyword s/Any}
+   (s/optional-key :unique-values?) s/Bool})
 
 (s/defn related-entity-ids
   [{:keys [entity-ids
            relationship_type
-           entity-type]} :- RelationshipFilter
+           entity-type
+           unique-values?
+           paging]} :- RelationshipFilter
    edge-node :- (s/enum :source_ref :target_ref)
    identity-map
    services]
   (let [filters {edge-node entity-ids
                  :relationship_type relationship_type}
-        relationships (get-relationships filters identity-map services)
         get-nodes (case edge-node
                     :source_ref :target_ref
-                    :target_ref :source_ref)]
-    (->> (map get-nodes relationships)
-         (map id/long-id->id)
-         (filter #(= (str entity-type) (:type %)))
-         (map id/long-id)
-         set)))
+                    :target_ref :source_ref)
+        sort-opts (if unique-values?
+                    [get-nodes]
+                    [edge-node :id])
+        res (get-relationships filters
+                               (assoc paging :sort sort-opts)
+                               identity-map
+                               services)
+        get-ids  (fn [relationships]
+                   (->> (map get-nodes relationships)
+                        (map id/long-id->id)
+                        (filter #(= (str entity-type) (:type %)))
+                        (map id/long-id)
+                        set))]
+    (update res :data get-ids)))
 
 (s/defn get-target-ids
   [filters :- RelationshipFilter
@@ -111,7 +132,7 @@
   [observable :- Observable
    identity-map
    services :- APIHandlerServices]
-  (let [sighting-ids (observable->sighting-ids observable identity-map services)]
+  (let [sighting-ids (:data (observable->sighting-ids observable identity-map services))]
     (get-target-ids {:entity-ids sighting-ids
                      :relationship_type ["member-of"]
                      :entity-type "incident"}
@@ -119,15 +140,38 @@
                     services)))
 
 (s/defn sighting-observable->indicator-ids
-  [observable :- Observable
-   identity-map
-   services :- APIHandlerServices]
-  (let [sighting-ids (observable->sighting-ids observable identity-map services)]
-    (get-target-ids {:entity-ids sighting-ids
-                     :relationship_type ["sighting-of" "member-of"]
-                     :entity-type "indicator"}
-                     identity-map
-                     services)))
+  ([observable :- Observable
+    identity-map
+    services :- APIHandlerServices]
+   (sighting-observable->indicator-ids observable {:limit 100} identity-map services))
+  ([observable :- Observable
+    params :- {s/Keyword s/Any}
+    identity-map
+    services :- APIHandlerServices]
+   (let [{sighting-paging :sighting rel-paging :relationship} (:paging params)
+         _ (println "sighting-params: " sighting-paging)
+         default-paging (into {:sort [:id]}
+                              (select-keys params [:limit]))
+         {sighting-ids :data sighting-paging* :paging}
+         (observable->sighting-ids observable
+                                   identity-map
+                                   (or sighting-paging default-paging)
+                                   services)
+         {target-ids :data rel-paging* :paging}
+         ;; TODO crawl until we have the right limit value
+         (get-target-ids {:entity-ids sighting-ids
+                          :relationship_type ["sighting-of" "member-of"]
+                          :entity-type "indicator"
+                          :paging (or rel-paging default-paging)
+                          ;; sort_by target_id to skip last found?
+                          :unique-values? true}
+                         identity-map
+                         services)
+         paging {:sighting (:next sighting-paging*)
+                 :relationship (:next rel-paging*)}]
+     ;; when next page of relationship is not nil return only next relationships and current sighting params
+     ;; do not paginate sighting ids while there is relationship next.
+     {:data target-ids :paging paging})))
 
 (s/defn judgement-observable->indicator-ids
   [observable :- Observable
