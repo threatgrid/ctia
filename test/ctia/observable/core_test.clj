@@ -50,14 +50,7 @@
                 (sut/judgement-observable->indicator-ids judgement-observable
                                                          identity-map
                                                          services)))))
-       (let [;;{paging :paging :as first-page}
-             ;;(sut/sighting-observable->indicator-ids sighting-observable
-             ;;                                        {:limit 20}
-             ;;                                        identity-map
-             ;;                                        services)
-             ;;_ (println "second-paging: ")
-             ;;_ (clojure.pprint/pprint paging)
-             read-page
+       (let [read-page
              (fn [paging-params]
                (println "read-page")
                (clojure.pprint/pprint paging-params)
@@ -71,15 +64,10 @@
                 (let [{:keys [data paging]} (read-page paging-params)]
                   (when (seq data)
                     (cons data (walk-graph paging))))))
-           ;;  second-page (sut/sighting-observable->indicator-ids sighting-observable
-           ;;                                                      {:limit 5
-           ;;                                                       :paging paging}
-           ;;                                                      identity-map
-           ;;                                                      services)
 
              indicator-ids
-             (loop [nb 10
-                    p {:limit 5}
+             (loop [nb 3
+                    p {:limit 1}
                     data []]
                (println "loop " nb)
                (clojure.pprint/pprint data)
@@ -88,9 +76,6 @@
                    (recur (dec nb) (:paging res) (concat data (:data res))))
                  (set data)))
              ]
-         (println "all indicators")
-         (clojure.pprint/pprint indicator-ids)
-;;         (clojure.pprint/pprint (read-indicators {:limit 1}))
          (is (= (set indicators)
                 indicator-ids)))
        ))))

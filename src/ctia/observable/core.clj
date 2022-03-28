@@ -98,6 +98,7 @@
         sort-opts (if unique-values?
                     [get-nodes]
                     [edge-node :id])
+        _ (println "sort-opts: " sort-opts)
         res (get-relationships filters
                                (assoc paging :sort sort-opts)
                                identity-map
@@ -145,29 +146,29 @@
     services :- APIHandlerServices]
    (sighting-observable->indicator-ids observable {:limit 100} identity-map services))
   ([observable :- Observable
-    params :- {s/Keyword s/Any}
+    {:keys [limit] :as params} :- {s/Keyword s/Any}
     identity-map
     services :- APIHandlerServices]
-   (let [{sighting-paging :sighting rel-paging :relationship} (:paging params)
+   (let [sighting-paging (into {:sort [:id] :limit limit}
+                               (:sighting params))
          _ (println "sighting-params: " sighting-paging)
-         default-paging (into {:sort [:id]}
-                              (select-keys params [:limit]))
          {sighting-ids :data sighting-paging* :paging}
          (observable->sighting-ids observable
                                    identity-map
-                                   (or sighting-paging default-paging)
+                                   sighting-paging
                                    services)
+         rel-paging (into {:limit limit} (:relationship params))
          {target-ids :data rel-paging* :paging}
          ;; TODO crawl until we have the right limit value
          (get-target-ids {:entity-ids sighting-ids
                           :relationship_type ["sighting-of" "member-of"]
                           :entity-type "indicator"
-                          :paging (or rel-paging default-paging)
-                          ;; sort_by target_id to skip last found?
+                          :paging rel-paging
                           :unique-values? true}
                          identity-map
                          services)
-         paging {:sighting (:next sighting-paging*)
+         paging {
+                 :sighting (:next sighting-paging*)
                  :relationship (:next rel-paging*)}]
      ;; when next page of relationship is not nil return only next relationships and current sighting params
      ;; do not paginate sighting ids while there is relationship next.
