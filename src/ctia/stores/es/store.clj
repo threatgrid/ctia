@@ -7,7 +7,7 @@
             [ctia.store :refer [IStore IQueryStringSearchableStore]]
             [ctia.stores.es.crud :as crud]))
 
-(defn delete-state-indexes [{:keys [conn index config] :as state}]
+(defn delete-state-indexes [{:keys [conn index]}]
   (when conn
     (es-index/delete-template! conn (str index "*"))
     (es-index/delete! conn (str index "*"))))
@@ -30,7 +30,10 @@
      IStore
      (~(symbol "read-record") [_# id# ident# params#]
       ((crud/handle-read ~partial-stored-schema)
-       ~(symbol "state")  id# ident# params#))
+       ~(symbol "state") id# ident# params#))
+     (~(symbol "read-records") [_# ids# ident# params#]
+      ((crud/handle-read-many ~partial-stored-schema)
+       ~(symbol "state") ids# ident# params#))
      (~(symbol "create-record") [_# new-actors# ident# params#]
       ((crud/handle-create ~entity ~stored-schema)
        ~(symbol "state") new-actors# ident# params#))
