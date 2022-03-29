@@ -42,7 +42,7 @@
 (s/defschema IdentityMap
   {:client-id (s/maybe s/Str)
    :login (s/maybe s/Str)
-   :groups (s/maybe [s/Str])})
+   :groups [s/Str]})
 
 (s/defn ident->map :- (s/maybe IdentityMap)
   [ident]

@@ -75,7 +75,7 @@
         :query [params RefsByObservableQueryParams]
         :path-params [observable_type :- ObservableTypeIdentifier
                       observable_value :- s/Str]
-        :return (s/maybe [Reference])
+        :return [Reference]
         :summary (str "Returns the Indicator references associated with the "
                       "specified observable based on Judgement relationships.")
         :description (common/capabilities->description capabilities)
@@ -120,7 +120,7 @@
         :query [params RefsByObservableQueryParams]
         :path-params [observable_type :- ObservableTypeIdentifier
                       observable_value :- s/Str]
-        :return (s/maybe [Reference])
+        :return [Reference]
         :summary (str "Returns Indicator references associated with the "
                       "specified observable based on Sighting relationships.")
         :description (common/capabilities->description capabilities)
@@ -142,7 +142,7 @@
         :query [params RefsByObservableQueryParams]
         :path-params [observable_type :- ObservableTypeIdentifier
                       observable_value :- s/Str]
-        :return (s/maybe [Reference])
+        :return [Reference]
         :summary (str "Returns Incident references associated with the "
                       "specified observable based on Sighting relationships")
         :description (common/capabilities->description capabilities)

@@ -70,7 +70,7 @@
   [entity-type-kw :- s/Keyword
    id :- s/Str
    ident
-   field-selection :- (s/maybe [s/Keyword])]
+   field-selection :- [s/Keyword]]
   (delayed/fn :- GraphQLValue
     [{{{:keys [get-store]} :StoreService
        :as services}
@@ -101,7 +101,7 @@
   [entity-id :- s/Str
    context :- {s/Keyword s/Any}
    args :- {s/Keyword s/Any}
-   field-selection :- (s/maybe [s/Keyword])]
+   field-selection :- [s/Keyword]]
  (delayed/fn :- GraphQLValue
   [{{{:keys [get-store]} :StoreService} :services} :- GraphQLRuntimeContext]
   (let [paging-params (pagination/connection-params->paging-params args)
@@ -123,7 +123,7 @@
   [observable :- ctia-schemas/Observable
    context :- {s/Keyword s/Any}
    args :- {s/Keyword s/Any}
-   field-selection :- (s/maybe [s/Keyword])]
+   field-selection :- [s/Keyword]]
  (delayed/fn :- pagination/Connection
   [{{{:keys [get-store]} :StoreService
      :as services}
@@ -147,7 +147,7 @@
   [observable :- ctia-schemas/Observable
    context :- {s/Keyword s/Any}
    args :- {s/Keyword s/Any}
-   field-selection :- (s/maybe [s/Keyword])]
+   field-selection :- [s/Keyword]]
  (delayed/fn :- pagination/Connection
   [{{{:keys [get-store]} :StoreService
      :as services}
@@ -191,7 +191,7 @@
   [entity-id :- s/Str
    context :- {s/Keyword s/Any}
    args :- {s/Keyword s/Any}
-   field-selection :- (s/maybe [s/Keyword])]
+   field-selection :- [s/Keyword]]
   (delayed/fn
     :- GraphQLValue
     [{{{:keys [get-store]} :StoreService} :services} :- GraphQLRuntimeContext]
@@ -214,7 +214,7 @@
   [entity-id :- s/Str
    context :- {s/Keyword s/Any}
    args :- {s/Keyword s/Any}
-   field-selection :- (s/maybe [s/Keyword])]
+   field-selection :- [s/Keyword]]
   (delayed/fn
     :- GraphQLValue
     [{{{:keys [get-store]} :StoreService} :services} :- GraphQLRuntimeContext]
