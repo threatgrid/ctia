@@ -18,7 +18,7 @@
                       (recur port)
                       (if-some [port (some->> line
                                               (re-matches (re-pattern "Started nREPL server at 127.0.0.1:(\\d+)"))
-                                              first)]
+                                              second)]
                         (do (doseq [path paths
                                     :let [nrepl-port-path (str path "/.nrepl-port")]]
                               (spit nrepl-port-path port)
