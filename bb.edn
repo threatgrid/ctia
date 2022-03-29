@@ -11,15 +11,17 @@
           (with-open [rdr (clojure.java.io/reader (:out proc))]
             (binding [*in* rdr]
               (loop [port nil]
-                (let [line (doto (read-line) println)]
-                  (if port
-                    (recur port) 
-                    (if-some [port (some->> line
-                                            (re-matches (re-pattern "Started nREPL server at 127.0.0.1:(\\d+)"))
-                                            first)]
-                      (do (doseq [path paths
-                                  :let [nrepl-port-path (str path "/.nrepl-port")]]
-                            (spit nrepl-port-path port)
-                            (fs/delete-on-exit nrepl-port-path))
-                          (recur port))
-                      (recur port))))))))}}
+                (let [line (doto (read-line) println)
+                      sentinel (Object.)]
+                  (when (= sentinel (deref proc 1 sentinel))
+                    (if port
+                      (recur port)
+                      (if-some [port (some->> line
+                                              (re-matches (re-pattern "Started nREPL server at 127.0.0.1:(\\d+)"))
+                                              first)]
+                        (do (doseq [path paths
+                                    :let [nrepl-port-path (str path "/.nrepl-port")]]
+                              (spit nrepl-port-path port)
+                              (fs/delete-on-exit nrepl-port-path))
+                            (recur port))
+                        (recur port)))))))))}}
