@@ -474,21 +474,20 @@
    params
    {{:keys [send-event]} :RiemannService
     :as services} :- APIHandlerServices]
-  (if (seq ids)
-    (binding [correlation-id (str (UUID/randomUUID))]
-      (send-event {:service "Export bundle start"
+  (binding [correlation-id (str (UUID/randomUUID))]
+    (send-event {:service "Export bundle start"
+                 :correlation-id correlation-id
+                 :time (get-epoch-second)
+                 :event-type "export-bundle"
+                 :metric (count ids)})
+    (let [start (System/currentTimeMillis)
+          res (->> (distinct ids)
+                   (map #(export-entities % identity-map ident params services))
+                   (reduce #(deep-merge-with coll/add-colls %1 %2))
+                   (into empty-bundle))]
+      (send-event {:service "Export bundle end"
                    :correlation-id correlation-id
                    :time (get-epoch-second)
                    :event-type "export-bundle"
-                   :metric (count ids)})
-      (let [start (System/currentTimeMillis)
-            res (->> (map #(export-entities % identity-map ident params services) ids)
-                     (reduce #(deep-merge-with coll/add-colls %1 %2))
-                     (into empty-bundle))]
-        (send-event {:service "Export bundle end"
-                     :correlation-id correlation-id
-                     :time (get-epoch-second)
-                     :event-type "export-bundle"
-                     :metric (- (System/currentTimeMillis) start)})
-        res))
-    empty-bundle))
+                   :metric (- (System/currentTimeMillis) start)})
+      res)))
