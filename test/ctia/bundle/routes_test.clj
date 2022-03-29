@@ -738,6 +738,7 @@
          (is (= {:type "bundle"
                  :source "ctia"} bundle-post-res-empty-ids)
              "POST bundle/export with an empty ids list should return an empty bundle"))))))
+
 (deftest bundle-export-with-unreachable-entities
   (testing "external and deleted entities in fetched relationships should be ignored"
     (test-for-each-store-with-app

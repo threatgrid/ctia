@@ -474,8 +474,7 @@
     (let [start (System/currentTimeMillis)
           res (->> (distinct ids)
                    (map #(export-entities % identity-map ident params services))
-                   (reduce #(deep-merge-with coll/add-colls %1 %2))
-                   (into empty-bundle))]
+                   (reduce #(deep-merge-with coll/add-colls %1 %2) empty-bundle))]
       (send-event {:service "Export bundle end"
                    :correlation-id correlation-id
                    :time (get-epoch-second)
