@@ -62,10 +62,6 @@
    :vulnerability []
    :weakness []})
 
-(def read-fn read-record)
-(def create-fn create-record)
-(def list-fn list-records)
-
 (s/defn list-all-pages
   [entity
    list-fn

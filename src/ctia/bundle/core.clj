@@ -16,7 +16,7 @@
     [APIHandlerServices HTTPShowServices NewBundle TempIDs]]
    [ctia.schemas.services :as external-svc-fns]
    [ctia.schemas.utils :as csu]
-   [ctia.store :refer [list-fn read-fn]]
+   [ctia.store :as store]
    [ctia.store-service.schemas :refer [GetStoreFn]]
    [ctim.domain.id :as id]
    [schema.core :as s])
@@ -84,10 +84,7 @@
           paging {:limit find-by-external-ids-limit}
           {results :data
            {next-page :next} :paging} (-> (get-store entity-type)
-                                          (list-fn
-                                            query
-                                            (auth/ident->map auth-identity)
-                                            paging))
+                                          (store/list-records query (auth/ident->map auth-identity) paging))
           acc-entities (into entities results)
           matched-ext-ids (into #{} (mapcat :external_ids results))
           remaining-ext-ids (remove matched-ext-ids ext-ids)]
@@ -396,12 +393,9 @@
                                          1000)
         start (System/currentTimeMillis)
         res (some-> (get-store :relationship)
-                    (list-fn
-                     filter-map
-                     identity-map
-                     {:limit max-relationships
-                      :sort_by "timestamp"
-                      :sort_order "desc"})
+                    (store/list-records filter-map identity-map {:limit max-relationships
+                                                                 :sort_by "timestamp"
+                                                                 :sort_order "desc"})
                     :data
                     ent/un-store-all)]
     (send-event {:service "Export bundle fetch relationships"
@@ -420,10 +414,7 @@
   (when-let [entity-type (ent/id->entity-type id services)]
     (let [start (System/currentTimeMillis)
           res (-> (get-store (keyword entity-type))
-                  (read-fn
-                   id
-                   identity-map
-                   {}))]
+                  (store/read-record id identity-map {}))]
       (send-event {:service "Export bundle fetch record"
                    :correlation-id correlation-id
                    :time (get-epoch-second)
