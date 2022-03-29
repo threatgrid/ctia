@@ -140,7 +140,7 @@ It returns the documents with full hits meta data including the real index in wh
   "Generate an ES create handler using some mapping and schema"
   [mapping Model]
   (let [coerce! (coerce-to-fn (s/maybe Model))]
-    (s/fn :- (s/maybe [Model])
+    (s/fn :- [Model]
       [{:keys [conn] :as conn-state} :- ESConnState
        docs :- [Model]
        _ident

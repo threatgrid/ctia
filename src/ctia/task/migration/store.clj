@@ -347,7 +347,7 @@ Rollover requires refresh so we cannot just call ES with condition since refresh
 
 (def Interval (s/enum "year" "month" "week" "day"))
 
-(s/defn format-buckets :- (s/maybe [ESQuery])
+(s/defn format-buckets :- [ESQuery]
   "format buckets from aggregation results into an ordered list of proper bool queries"
   [raw-buckets :- [(st/open-schema
                     {:doc_count s/Int
@@ -421,7 +421,7 @@ Rollover requires refresh so we cannot just call ES with condition since refresh
    batch-size :- s/Int
    offset :- s/Int
    sort-order :- (s/maybe s/Str)
-   search_after :- (s/maybe [s/Any])]
+   search_after :- [s/Any]]
   (let [date-sort-order {"order" sort-order
                          "missing" missing-date-epoch}
         sort-by (conj (case mapping
@@ -451,7 +451,7 @@ Rollover requires refresh so we cannot just call ES with condition since refresh
    batch-size :- s/Int
    offset :- s/Int
    sort-order :- (s/maybe s/Str)
-   search_after :- (s/maybe [s/Any])]
+   search_after :- [s/Any]]
   (query-fetch-batch nil store batch-size offset sort-order search_after))
 
 (s/defn fetch-deletes :- (s/maybe {s/Any s/Any})
@@ -460,7 +460,7 @@ Rollover requires refresh so we cannot just call ES with condition since refresh
    entity-types :- [s/Keyword]
    since :- s/Inst
    batch-size :- s/Int
-   search_after :- (s/maybe [s/Any])]
+   search_after :- [s/Any]]
   ;; TODO migrate events with mapping enabling to filter on record-type and entity.type
   (let [query {:range {:timestamp {:gte since}}}
         filter-events (fn [{:keys [event_type entity]}]

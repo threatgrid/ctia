@@ -99,9 +99,9 @@ Returns a map where key is path to a field, and value - path to the nested text 
     :services s/Any
     :searchable-fields (s/maybe #{s/Keyword})}))
 
-(s/defn enforce-search-fields :- (s/maybe [s/Str])
+(s/defn enforce-search-fields :- [s/Str]
   [es-conn-state :- ESConnStateProps
-   fields :- (s/maybe [s/Str])]
+   fields :- [s/Str]]
   (let [{:keys [searchable-fields]
          {{:keys [flag-value]} :FeaturesService} :services} es-conn-state
         searchable-fields (mapv name searchable-fields)]
@@ -111,7 +111,7 @@ Returns a map where key is path to a field, and value - path to the nested text 
       searchable-fields
       fields)))
 
-(s/defn rename-search-fields :- (s/maybe [s/Str])
+(s/defn rename-search-fields :- [s/Str]
   "Automatically translates keyword fields to use underlying text field.
 
    ES doesn't like when different types of tokens get used in the same query. To deal with
@@ -119,7 +119,7 @@ Returns a map where key is path to a field, and value - path to the nested text 
    `ctia.stores.es.mapping/searchable-token`. This should be opaque - caller shouldn't
    have to explicitly instruct API to direct query to the nested field."
   [es-conn-state :- ESConnStateProps
-   fields :- (s/maybe [s/Any])]
+   fields :- [s/Any]]
   (let [{{{:keys [flag-value]} :FeaturesService} :services} es-conn-state]
     (when (= "true" (flag-value :translate-searchable-fields))
       (let [properties (some-> es-conn-state :config :mappings first second :properties)
