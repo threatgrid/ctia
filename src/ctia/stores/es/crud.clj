@@ -6,8 +6,10 @@
    [ctia.domain.access-control :as ac
     :refer [allow-read? allow-write? restricted-read?]]
    [ctia.lib.pagination :refer [list-response-schema]]
+   [ctia.schemas.core :refer [ConcreteSortExtension]]
    [ctia.schemas.search-agg
     :refer [AggQuery CardinalityQuery HistogramQuery SearchQuery TopnQuery]]
+   [ctia.stores.es.sort :as es.sort]
    [ctia.stores.es.query :as es.query]
    [ctia.stores.es.schemas :refer [ESConnState]]
    [ductile.document :as ductile.doc]
@@ -22,11 +24,10 @@
    and including ACL mandatory ones."
   [{:keys [fields]
     :as es-params}]
-  (if (coll? fields)
-    (-> es-params
-        (assoc :_source (concat fields ac/acl-fields))
-        (dissoc :fields))
-    es-params))
+  (cond-> es-params
+    (coll? fields)
+    (-> (assoc :_source (concat fields ac/acl-fields))
+        (dissoc :fields))))
 
 (defn coerce-to-fn
   [Model]
@@ -352,14 +353,6 @@ It returns the documents with full hits meta data including the real index in wh
                         {:type :access-control-error})))
       false)))
 
-(defn with-default-sort-field
-  [es-params
-   {:keys [default-sort]
-    :or {default-sort "_doc,id"}}]
-  (if (contains? es-params :sort_by)
-    es-params
-    (assoc es-params :sort_by default-sort)))
-
 (s/defschema FilterSchema
   (st/optional-keys
    {:all-of {s/Any s/Any}
@@ -374,43 +367,53 @@ It returns the documents with full hits meta data including the real index in wh
   {"title" "title.whole"
    "reason" "reason.whole"})
 
-(defn parse-sort-by
+(s/defn parse-sort-by :- [ConcreteSortExtension]
   "Parses the sort_by parameter
    Ex:
    \"title:ASC,revision:DESC\"
    ->
-   [[\"title\" \"ASC\"] [\"revision\" \"DESC\"]]"
-  [sort-by]
-  (map
-   (fn [field]
-     (let [[x y] (string/split field #":")]
-       (if y [x y] [x])))
-   (string/split (name sort-by) #",")))
+   [{:op :field :field-name \"title\" :sort_order \"ASC\"}
+    {:op :field :field-name \"revision\" :sort_order \"DESC\"}]"
+  [sort_by]
+  (if ((some-fn string? simple-ident?) sort_by)
+    (map
+      (fn [field]
+        (let [[field-name field-order] (string/split field #":")]
+          (cond-> {:op :field
+                   :field-name (keyword field-name)}
+            field-order (assoc :sort_order field-order))))
+      (string/split (name sort_by) #","))
+    sort_by))
 
-(defn format-sort-by
-  "Format to the sort-by format
-   Ex:
-   [[\"title\" \"ASC\"] [\"revision\" \"DESC\"]]
-   ->
-   \"title:ASC,revision:DESC\""
-  [sort-fields]
-  (->> sort-fields
-       (map (fn [field]
-              (string/join ":" field)))
-       (string/join ",")))
+(defn with-default-sort-field
+  [es-params {:keys [default-sort]}]
+  (assert (not (:sort_by es-params)))
+  (update es-params :sort #(or %
+                               (some->> default-sort
+                                        parse-sort-by
+                                        (mapv (fn [m] (es.sort/parse-sort-params-op m :asc))))
+                               [{"_doc" :asc} {"id" :asc}])))
 
 (defn rename-sort-fields
-  "Renames sort fields based on the content of the `enumerable-fields-mapping` table."
-  [{:keys [sort_by] :as es-params}]
-  (if-let [updated-sort-by
-           (some->> sort_by
-                    parse-sort-by
-                    (map (fn [[field-name :as field]]
-                           (assoc field 0
-                                  (get enumerable-fields-mapping field-name field-name))))
-                    format-sort-by)]
-    (assoc es-params :sort_by updated-sort-by)
-    es-params))
+  "Renames sort fields based on the content of the `enumerable-fields-mapping` table
+  and remaps to script extensions."
+  [{:keys [sort_by sort_order sort-extension-templates] :as es-params}]
+  (cond-> (dissoc es-params :sort-extension-templates :sort_by :sort_order)
+    (and sort_by (not (:sort es-params)))
+    (assoc :sort
+           (->> sort_by
+                parse-sort-by
+                (mapv (fn [field]
+                        {:pre [(= :field (:op field))]}
+                        (let [{:keys [field-name] :as field}
+                              (update field :field-name #(or (keyword (enumerable-fields-mapping (name %)))
+                                                             %))]
+                          (assert (simple-keyword? field-name))
+                          (-> (or (some-> (get sort-extension-templates field-name)
+                                          (into (select-keys field [:sort_order]))
+                                          (update :field-name #(or % (:field-name field))))
+                                  field)
+                              (es.sort/parse-sort-params-op (or sort_order :asc))))))))))
 
 (defn handle-find
   "Generate an ES find/list handler using some mapping and schema"
@@ -551,7 +554,8 @@ It returns the documents with full hits meta data including the real index in wh
           :topn make-topn
           :cardinality make-cardinality
           :histogram make-histogram
-          (throw (ex-info "invalid aggregation type" agg-type)))]
+          (throw (ex-info (str "invalid aggregation type: " (pr-str agg-type))
+                          {})))]
     (cond-> {agg-key (agg-fn root-agg)}
       (seq aggs) (assoc :aggs (make-aggregation aggs)))))
 

@@ -9,7 +9,7 @@
    [ctia.http.routes.common :as routes.common]
    [ctia.http.routes.crud :as routes.crud]
    [ctia.lib.compojure.api.core :refer [POST routes]]
-   [ctia.schemas.core :refer [APIHandlerServices def-acl-schema def-stored-schema]]
+   [ctia.schemas.core :refer [APIHandlerServices def-acl-schema def-stored-schema SortExtensionTemplates]]
    [ctia.schemas.graphql.flanders :as flanders]
    [ctia.schemas.graphql.helpers :as g]
    [ctia.schemas.graphql.ownership :as go]
@@ -68,8 +68,9 @@
         verb (case status
                "New" nil
                "Stalled" nil
-               ("Containment Achieved"
-                "Restoration Achieved") :remediated
+               ;; Note: GitHub syntax highlighting doesn't like lists with strings
+               "Containment Achieved" :remediated
+               "Restoration Achieved" :remediated
                "Open" :opened
                "Rejected" :rejected
                "Closed" :closed
@@ -160,8 +161,17 @@
            :promotion_method
            :severity]))
 
+(s/def sort-extension-templates :- SortExtensionTemplates
+  {;; override :severity field to sort semantically
+   :severity {:op :remap
+              :remappings {"Low" 1
+                           "Medium" 2
+                           "High" 3
+                           "Critical" 4}
+              :remap-default 0}})
+
 (def incident-sort-fields
-  (apply s/enum incident-fields))
+  (apply s/enum (distinct (concat (keys sort-extension-templates) incident-fields))))
 
 (def incident-enumerable-fields
   [:assignees
@@ -185,7 +195,7 @@
    :incident_time.rejected])
 
 (s/defschema IncidentFieldsParam
-  {(s/optional-key :fields) [incident-sort-fields]})
+  {(s/optional-key :fields) [(apply s/enum incident-fields)]})
 
 (s/defschema IncidentSearchParams
   (st/merge
@@ -246,7 +256,8 @@
      :search-capabilities      :search-incident
      :external-id-capabilities :read-incident
      :histogram-fields         incident-histogram-fields
-     :enumerable-fields        incident-enumerable-fields})))
+     :enumerable-fields        incident-enumerable-fields
+     :sort-extension-templates sort-extension-templates})))
 
 (def IncidentType
   (let [{:keys [fields name description]}

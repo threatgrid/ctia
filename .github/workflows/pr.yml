@@ -23,7 +23,7 @@ env:
   ACTIONS_RETRY_TIMES: 10
   # workaround https://github.com/actions/cache/issues/2
   # to "delete" caches, increment this version
-  ACTIONS_CACHE_VERSION: v15
+  ACTIONS_CACHE_VERSION: v16
   BIN_PATH: ${{github.workspace}}/bin
   LOG_PATH: ${{github.workspace}}/log
   # avoid the (somehow) default /usr/local/lib/lein/
@@ -32,7 +32,7 @@ env:
   LEIN_VERSION: 2.9.6
   CTIA_MAJOR_VERSION: 1
   SHELLCHECK_VERSION: v0.7.2
-  BB_VERSION: 0.4.3
+  BB_VERSION: 0.7.8
   DEFAULT_JAVA_VERSION: 11.0.9
   DEFAULT_JAVA_DISTRIBUTION: 'adopt'
 
@@ -42,16 +42,16 @@ jobs:
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           # to read the latest commit message on a PR
           # https://github.com/zero88/gh-project-context/blob/26a3afdce1fe607734278e5ccec0851d50669ef5/README.md#latest-commit-message
           fetch-depth: 2
       # for grabbing the current commit msg (suprisingly hard!)
-      - uses: zero88/gh-project-context@26a3afdce1fe607734278e5ccec0851d50669ef5
+      - uses: zero88/gh-project-context@af8b62dd9d7ecbb2763268a040d42390ecfeb0f3
         id: gh-project-context
       - name: Binary Cache
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: ${{ env.BIN_PATH }}
           key: ctia-bin-${{ env.ACTIONS_CACHE_VERSION }}-${{ env.BB_VERSION }}
@@ -77,7 +77,7 @@ jobs:
       # Setup previous timing information
       - name: Timing Cache
         id: get-timing
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: |
             target/test-results/all-test-timings.edn
@@ -125,7 +125,7 @@ jobs:
       # warm dependency cache on project.clj change (ie., when cache-hit is not true).
       - name: Maven Cache
         id: maven-cache
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: |
             ~/.m2/repository
@@ -145,7 +145,7 @@ jobs:
         if: steps.maven-cache.outputs.cache-hit != 'true'
       - name: Leiningen Cache
         if: steps.maven-cache.outputs.cache-hit != 'true'
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         id: lein-cache
         with:
           path: ${{env.LEIN_HOME}}
@@ -157,6 +157,7 @@ jobs:
         if: steps.maven-cache.outputs.cache-hit != 'true'
         # poor man's travis_retry
         run: for i in {1..${ACTIONS_RETRY_TIMES}}; do lein warm-ci-deps && break; done
+      - run: ./scripts/check-dependabot
   test-matrix:
     runs-on: ubuntu-20.04
     needs: [setup]
@@ -171,9 +172,9 @@ jobs:
       JAVA_VERSION: ${{ matrix.this-split.java_version }}
       JAVA_DISTRIBUTION: ${{ matrix.this-split.java_distribution }}
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Binary Cache
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: ${{ env.BIN_PATH }}
           key: ctia-bin-${{ env.ACTIONS_CACHE_VERSION }}-${{ env.BB_VERSION }}
@@ -189,7 +190,7 @@ jobs:
       # of time and throw an error. See `Upload docker compose` step below
       # for retrieving this log after a build.
       - name: Docker (async)
-        # depends on LOG_PATH and actions/checkout@v2
+        # depends on LOG_PATH and actions/checkout@v3
         run: docker-compose -f containers/dev/docker-compose.yml up -d &> "${LOG_PATH}/docker-compose.log" &
       - name: Download test timings
         uses: actions/download-artifact@v2
@@ -220,7 +221,7 @@ jobs:
 
       - name: Maven Cache
         id: maven-cache
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: |
             ~/.m2/repository
@@ -238,7 +239,7 @@ jobs:
 
       # install lein using cache to avoid extra download and startup time
       - name: Leiningen Cache
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         id: lein-cache
         with:
           path: ${{env.LEIN_HOME}}
@@ -286,9 +287,9 @@ jobs:
     runs-on: ubuntu-20.04
     needs: [test-matrix]
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Binary Cache
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: ${{ env.BIN_PATH }}
           key: ctia-bin-${{ env.ACTIONS_CACHE_VERSION }}-${{ env.BB_VERSION }}
@@ -300,7 +301,7 @@ jobs:
         run: ./scripts/actions/install-bb.sh
       - run: ./scripts/actions/setup_env.clj
       - name: Timing results Cache
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: target/test-results/all-test-timings.edn
           # cache should never hit
@@ -329,9 +330,9 @@ jobs:
     # see on.push.branches for which branches are built on push
     if: github.event_name == 'push' && github.repository == 'threatgrid/ctia'
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Binary Cache
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: ${{ env.BIN_PATH }}
           key: ctia-bin-${{ env.ACTIONS_CACHE_VERSION }}-${{ env.BB_VERSION }}
@@ -345,7 +346,7 @@ jobs:
       - run: ./scripts/actions/setup_env.clj
       - name: Maven Cache
         id: maven-cache
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: ~/.m2/repository
           key: ctia-m2-cache-${{ env.ACTIONS_CACHE_VERSION }}-${{ hashFiles('project.clj') }}
@@ -360,7 +361,7 @@ jobs:
 
       # install lein using cache to avoid extra download and startup time
       - name: Leiningen Cache
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         id: lein-cache
         with:
           path: ${{env.LEIN_HOME}}

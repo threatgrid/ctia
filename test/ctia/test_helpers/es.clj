@@ -88,6 +88,10 @@
   (doseq [entity (keys (all-stores))]
     (purge-index-and-template entity services)))
 
+(def basic-auth
+  {:type :basic-auth
+   :params {:user "elastic" :pwd "ductile"}})
+
 (defn -es-port []
   (if ((h/set-of-es-versions-to-test) 5) "9205" "9207"))
 
@@ -106,8 +110,7 @@
                       "ctia.store.es.default.aliased" true
                       "ctia.store.es.default.rollover.max_docs" 50
                       "ctia.store.es.default.version" (-es-version)
-                      "ctia.store.es.default.auth" {:type :basic-auth
-                                                    :params {:user "elastic" :pwd "ductile"}}
+                      "ctia.store.es.default.auth" basic-auth
                       "ctia.store.es.default.default-sort" "timestamp,created,id"
                       "ctia.store.es.event.default-sort" "timestamp,id"
                       "ctia.store.es.relationship.default-sort" "created,id"
@@ -236,10 +239,6 @@
        (map (fn [{:keys [index] docs_count :docs.count}]
               {(keyword index) docs_count}))
        (into {})))
-
-(def basic-auth
-  {:type :basic-auth
-   :params {:user "elastic" :pwd "ductile"}})
 
 (defn -filter-activated-es-versions [versions]
   (filter (h/set-of-es-versions-to-test) versions))

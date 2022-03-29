@@ -10,7 +10,7 @@
                                                       search-query
                                                       coerce-date-range]]
    [ctia.lib.compojure.api.core :refer [context DELETE GET POST PUT PATCH routes]]
-   [ctia.schemas.core :refer [APIHandlerServices DelayedRoutes]]
+   [ctia.schemas.core :refer [APIHandlerServices DelayedRoutes SortExtensionTemplates]]
    [ctia.schemas.search-agg :refer [HistogramParams
                                     CardinalityParams
                                     TopnParams
@@ -174,7 +174,9 @@
          can-get-by-external-id? true
          date-field :created
          histogram-fields [:created]}
-    :as entity-crud-config}]
+    :as entity-crud-config}
+   :- {(s/optional-key :sort-extension-templates) SortExtensionTemplates
+       s/Any s/Any}]
  (s/fn [{{:keys [get-store]} :StoreService
          {:keys [flag-value]} :FeaturesService
          :as services} :- APIHandlerServices]
@@ -316,7 +318,8 @@
                   (store/list-records
                     {:all-of {:external_ids external_id}}
                     identity-map
-                    q)
+                    (into (dissoc q :sort-extension-templates)
+                          (select-keys entity-crud-config [:sort-extension-templates])))
                   (ent/page-with-long-id services)
                   ent/un-store-page
                   routes.common/paginated-ok))))
@@ -338,7 +341,9 @@
                  (store/query-string-search
                   (search-query date-field params)
                   identity-map
-                  (select-keys params routes.common/search-options))
+                  (into (dissoc (select-keys params routes.common/search-options)
+                                :sort-extension-templates)
+                        (select-keys entity-crud-config [:sort-extension-templates])))
                  (ent/page-with-long-id services)
                  ent/un-store-page
                  routes.common/paginated-ok))

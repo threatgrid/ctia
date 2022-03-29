@@ -11,7 +11,7 @@ test/java/build/
 resources/*.backup*
 resources/ctia.properties.*
 data/**/*.edn
-pom.xml
+/pom.xml
 /checkouts
 .dir-locals-2.el
 .lsp/.cache

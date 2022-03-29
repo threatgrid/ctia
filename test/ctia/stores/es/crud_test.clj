@@ -134,30 +134,101 @@
           identity))))
 
 (deftest parse-sort-by-test
-  (are [sort-by expected] (is (= expected
-                                 (sut/parse-sort-by sort-by)))
-    "title"                         [["title"]]
-    :title                          [["title"]]
-    "title:ASC"                     [["title" "ASC"]]
-    "title:ASC,schema_version:DESC" [["title" "ASC"]
-                                     ["schema_version" "DESC"]]))
-
-(deftest format-sort-by-test
-  (are [sort-fields expected] (is (= expected
-                                     (sut/format-sort-by sort-fields)))
-    [["title"]]                   "title"
-    [["title" "ASC"]]             "title:ASC"
-    [["title" "ASC"]
-     ["schema_version" "DESC"]] "title:ASC,schema_version:DESC"))
+  (are [sort_by expected] (= expected
+                             (sut/parse-sort-by sort_by))
+    [{:op :field, :field-name :title}] [{:op :field, :field-name :title}]
+    "title"                         [{:op :field, :field-name :title}]
+    :title                          [{:op :field, :field-name :title}]
+    "title:ASC"                     [{:op :field, :field-name :title, :sort_order "ASC"}]
+    "title:ASC,schema_version:DESC" [{:op :field, :field-name :title, :sort_order "ASC"}
+                                     {:op :field, :field-name :schema_version, :sort_order "DESC"}]))
 
 (deftest rename-sort-fields
-  (are [sort_by expected_sort_by] (is (= expected_sort_by
-                                         (:sort_by (sut/rename-sort-fields
-                                                    {:sort_by sort_by}))))
-    "title" "title.whole"
-    "revision:DESC,title:ASC,schema_version:DESC" (str "revision:DESC,"
-                                                       "title.whole:ASC,"
-                                                       "schema_version:DESC")))
+  (are [sort_by expected_sort_by] (= expected_sort_by
+                                     (:sort (sut/rename-sort-fields
+                                              {:sort_by sort_by})))
+    "title" [{"title.whole" {:order :asc}}]
+    [{:op :field, :field-name "title"}] [{"title.whole" {:order :asc}}]
+    "revision:DESC,title:ASC,schema_version:DESC" [{"revision" {:order :DESC}}
+                                                   {"title.whole" {:order :ASC}}
+                                                   {"schema_version" {:order :DESC}}])
+  (testing "remap"
+    (is (= {:sort [{:_script
+                    {:type "number"
+                     :script {:lang "painless"
+                              :inline (str "if (!doc.containsKey('severity') || doc['severity'].size() != 1) { return params.default }\n"
+                                           "return params.remappings.getOrDefault(doc['severity'].value, params.default)")
+                              :params {:remappings {"critical" 2, "high" 1}
+                                       :default 0}}
+                     :order :asc}}]}
+           (sut/rename-sort-fields
+             {:sort_by "severity"
+              :sort-extension-templates {:severity {:op :remap
+                                                    :remappings {"Critical" 2
+                                                                 "High" 1}
+                                                    :remap-default 0}}}))))
+  (testing "remap + order"
+    (is (= {:sort [{:_script
+                    {:type "number"
+                     :script {:lang "painless"
+                              :inline (str "if (!doc.containsKey('remap') || doc['remap'].size() != 1) { return params.default }\n"
+                                           "return params.remappings.getOrDefault(doc['remap'].value, params.default)")
+                              :params {:remappings {"a" 1, "b" 2}
+                                       :default 0}}
+                     :order :DESC}}]}
+           (sut/rename-sort-fields
+             {:sort_by "remap:DESC"
+              :sort-extension-templates {:remap {:op :remap
+                                                 :remappings {"a" 1
+                                                              "b" 2}
+                                                 :remap-default 0}}}))))
+  (testing "sort by renamed field then remapped field"
+    (is (= {:sort [{"title.whole" {:order :ASC}}
+                   {:_script
+                    {:type "number"
+                     :script {:lang "painless"
+                              :inline (str "if (!doc.containsKey('remap') || doc['remap'].size() != 1) { return params.default }\n"
+                                           "return params.remappings.getOrDefault(doc['remap'].value, params.default)")
+                              :params {:remappings {"a" 1, "b" 2}
+                                       :default 0}}
+                     :order :DESC}}]}
+           (sut/rename-sort-fields
+             {:sort_by "title:ASC,remap:DESC"
+              :sort-extension-templates {:remap {:op :remap
+                                                 :remappings {"a" 1
+                                                              "b" 2}
+                                                 :remap-default 0}}}))))
+  (testing "remap a renamed field"
+    (is (= {:sort [{:_script
+                    {:type "number"
+                     :script {:lang "painless"
+                              :inline (str "if (!doc.containsKey('title.whole') || doc['title.whole'].size() != 1) { return params.default }\n"
+                                           "return params.remappings.getOrDefault(doc['title.whole'].value, params.default)")
+                              :params {:remappings {"a" 1, "b" 2}
+                                       :default 0}}
+                     :order :asc}}]}
+           (sut/rename-sort-fields
+             {:sort_by "title"
+              :sort-extension-templates {:title.whole {:op :remap
+                                                       :remappings {"a" 1
+                                                                    "b" 2}
+                                                       :remap-default 0}}}))))
+  (testing "remap to another field via :sort-extension-templates's :field-name"
+    (is (= {:sort [{:_script
+                    {:type "number"
+                     :script {:lang "painless"
+                              :inline (str "if (!doc.containsKey('remap2') || doc['remap2'].size() != 1) { return params.default }\n"
+                                           "return params.remappings.getOrDefault(doc['remap2'].value, params.default)")
+                              :params {:remappings {"a" 1, "b" 2}
+                                       :default 0}}
+                     :order :asc}}]}
+           (sut/rename-sort-fields
+             {:sort_by "remap1"
+              :sort-extension-templates {:remap1 {:op :remap
+                                                  :field-name "remap2"
+                                                  :remappings {"a" 1
+                                                               "b" 2}
+                                                  :remap-default 0}}})))))
 
 (deftest bulk-schema-test
   (testing "bulk-schema shall generate a proper bulk schema"
@@ -818,21 +889,22 @@
 
 (deftest with-default-sort-field-test
   (let [test-cases [{:msg "Use default hardcoded value when sort_by is not defined and no default sort is configured"
-                     :expected {:sort_by "_doc,id"}
+                     :expected {:sort [{"_doc" :asc} {"id" :asc}]}
                      :es-params {}
                      :props  {}}
-                    {:msg "Always use es-params sort_by when provided"
-                     :expected {:sort_by "title"}
-                     :es-params {:sort_by "title"}
-                     :props  {:default-sort "id"}}
-                    {:msg "Always use es-params sort_by when provided"
-                     :expected {:sort_by "title"}
-                     :es-params {:sort_by "title"}
-                     :props  {}}
-                    {:msg "When sort_by is not provided, use configured default-sort"
-                     :expected {:sort_by "id"}
+                    {:msg "Always use es-params sort when provided"
+                     :expected {:sort "title"}
+                     :es-params {:sort "title"}
+                     :props {:default-sort "id"}}
+                    {:msg "Always use es-params sort when provided"
+                     :expected {:sort "title"}
+                     :es-params {:sort "title"}
+                     :props {}}
+                    {:msg "When sort is not provided, use configured default-sort"
+                     :expected {:sort [{"id" {:order :asc}} {"_doc" {:order :asc}}]}
                      :es-params {}
-                     :props  {:default-sort "id"}}]]
+                     :props {:default-sort "id,_doc"}}]]
     (doseq [{:keys [msg expected es-params props]} test-cases]
-      (is (= expected (sut/with-default-sort-field es-params props))
-          msg))))
+      (testing (pr-str es-params)
+        (is (= expected (sut/with-default-sort-field es-params props))
+            msg)))))

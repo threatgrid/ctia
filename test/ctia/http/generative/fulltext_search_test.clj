@@ -339,7 +339,8 @@
                                                   login {})
                                                  :data)]
                                      (testing (str "query: " query)
-                                       (check-fn res desc)))
+                                       (check-fn res desc)
+                                       true))
           "base query matches expected data"
           {:full-text [{:query "intrusion event 3\\:19187\\:7 incident"}]}
           (fn [res desc]
@@ -431,4 +432,4 @@
          (th.search/search-raw app :incident {:query "*"})
          (is (->> @enforced-fields-flag-query-params
                   :full-text
-                  (every? #(not (contains? % :fields))))))))))
+                  (not-any? #(contains? % :fields)))))))))

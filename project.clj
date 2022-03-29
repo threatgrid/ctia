@@ -1,12 +1,13 @@
-(def cheshire-version "5.10.0")
+(def cheshire-version "5.10.2")
 (def clj-http-fake-version "1.0.3")
 (def clj-version "1.10.1")
 (def metrics-clojure-version "2.10.0")
+(def netty-version "4.1.75.Final")
 (def perforate-version "0.3.4")
 (def ring-version "1.8.0")
 (def schema-generators-version "0.1.3")
 (def test-check-version "1.1.0")
-(def test-chuck-version "0.2.11")
+(def test-chuck-version "0.2.13")
 (def trapperkeeper-version "3.1.0")
 
 ;; TODO we could add -dev here when it works
@@ -55,7 +56,8 @@
   :jvm-opts ["-Djava.awt.headless=true"
              "-Dlog.console.threshold=INFO"
              "-server"]
-  :exclusions [org.slf4j/slf4j-log4j12
+  :exclusions [io.netty/netty ;; moved to io.netty/netty-all
+               org.slf4j/slf4j-log4j12
                org.slf4j/slf4j-nop] ;; Removed in favor of logback
   ;; use `lein pom; mvn dependency:tree -Dverbose -Dexcludes=org.clojure:clojure`
   ;; to inspect conflicts.
@@ -82,6 +84,7 @@
                  [metosin/schema-tools "0.12.2"]
                  [threatgrid/flanders "0.1.23"]
                  [threatgrid/ctim "1.1.11"]
+                 [instaparse "1.4.10"] ;; com.gfredericks/test.chuck > threatgrid/ctim
                  [threatgrid/clj-momo "0.3.5"]
                  [threatgrid/ductile "0.4.2"]
 
@@ -118,11 +121,11 @@
                  [metrics-clojure-ring ~metrics-clojure-version]
                  [clout "2.2.1"]
                  [slugger "1.0.1"]
-                 [com.google.guava/guava "20.0"];org.onyxplatform/onyx-kafka > threatgrid/ctim
-                 [io.netty/netty "3.10.6.Final"];org.onyxplatform/onyx-kafka > metrics-clojure-riemann, zookeeper-clj
-                 [io.netty/netty-codec "4.1.42.Final"] ;org.apache.zookeeper/zookeeper > riemann-clojure-client
-                 [io.netty/netty-resolver "4.1.42.Final"] ;riemann-clojure-client > org.apache.zookeeper/zookeeper
-                 [com.google.protobuf/protobuf-java "3.11.1"] ;riemann-clojure-client > threatgrid:ctim, metrics-clojure-riemann, org.onyxplatform/onyx-kafka
+                 [com.google.guava/guava "31.0-jre"];bump org.onyxplatform/onyx-kafka, threatgrid/ctim
+                 [io.netty/netty-all ~netty-version];bump org.onyxplatform/onyx-kafka, metrics-clojure-riemann, zookeeper-clj
+                 [io.netty/netty-codec ~netty-version] ;bump org.apache.zookeeper/zookeeper, riemann-clojure-client
+                 [io.netty/netty-resolver ~netty-version] ;bump riemann-clojure-client, org.apache.zookeeper/zookeeper
+                 [com.google.protobuf/protobuf-java "3.19.4"] ;bump riemann-clojure-client, threatgrid:ctim, metrics-clojure-riemann, org.onyxplatform/onyx-kafka
                  [riemann-clojure-client "0.5.1"]
                  ;; https://stackoverflow.com/a/43574427
                  [jakarta.xml.bind/jakarta.xml.bind-api "2.3.2"]
@@ -144,8 +147,8 @@
                  ;; Notes on jackson-databind:
                  ;; - overrides org.onyxplatform/onyx-kafka and others
                  ;; - some 2.9.x versions of jackson-databind and earlier have known exploits
-                 ;; - 2.10.2 is the same as cheshire's jackson-core dependency
-                 [com.fasterxml.jackson.core/jackson-databind "2.10.2"]
+                 ;; - 2.12.4 is the same as cheshire's jackson-core dependency
+                 [com.fasterxml.jackson.core/jackson-databind "2.12.4"]
                  [zookeeper-clj "0.9.4"]
 
                  ;; GraphQL
@@ -238,8 +241,9 @@
                             (clojure.string/join
                               "\n"
                               ["Welcome to CTIA!"
-                               " (reset) / (reset7) => refresh, then (re)start CTIA (ES5/ES7)"
                                " (go)    / (go7)    => (re)start CTIA (ES5/ES7)"
+                               " (refresh)          => (re)load all code"
+                               " (reset) / (reset7) => refresh, then (re)start CTIA (ES5/ES7)"
                                " (start) / (start7) => start CTIA (ES5/ES7)"
                                " (stop)             => stop CTIA"
                                " (current-app)      => get current app, or nil"]))
