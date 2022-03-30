@@ -1,12 +1,14 @@
 (ns ctia.entity.attack-pattern.core
-  (:require [ctia.schemas.core :refer [APIHandlerServices]]
+  (:require [ctia.entity.attack-pattern.schemas :refer [StoredAttackPattern]]
+            [ctia.schemas.core :refer [APIHandlerServices]]
             [ctia.store :refer [query-string-search]]
             [schema.core :as s]))
 
-(s/defn latest-attack-pattern [patterns]
+(s/defn latest-attack-pattern :- (s/maybe StoredAttackPattern)
+  [patterns :- [StoredAttackPattern]]
   (->> patterns (sort-by :timestamp) last))
 
-(s/defn mitre-attack-pattern
+(s/defn mitre-attack-pattern :- (s/maybe StoredAttackPattern)
   [{{:keys [get-store]} :StoreService
     :as _services} :- APIHandlerServices
    auth-identity

@@ -7,7 +7,13 @@
    [ctia.http.routes.common :as routes.common]
    [ctia.http.routes.crud :refer [services->entity-crud-routes]]
    [ctia.lib.compojure.api.core :refer [GET routes]]
-   [ctia.schemas.core :refer [APIHandlerServices def-acl-schema def-stored-schema]]
+   [ctia.entity.attack-pattern.schemas :refer [AttackPattern
+                                               NewAttackPattern
+                                               PartialAttackPattern
+                                               PartialAttackPatternList
+                                               PartialStoredAttackPattern
+                                               StoredAttackPattern]]
+   [ctia.schemas.core :refer [APIHandlerServices]]
    [ctia.schemas.graphql.flanders :as flanders]
    [ctia.schemas.graphql.helpers :as g]
    [ctia.schemas.graphql.ownership :as go]
@@ -21,26 +27,6 @@
    [ring.util.http-response :refer [ok not-found]]
    [schema-tools.core :as st]
    [schema.core :as s]))
-
-(def-acl-schema AttackPattern
-  attack/AttackPattern
-  "attack-pattern")
-
-(def-acl-schema PartialAttackPattern
-  (fu/optionalize-all attack/AttackPattern)
-  "partial-attack-pattern")
-
-(s/defschema PartialAttackPatternList
-  [PartialAttackPattern])
-
-(def-acl-schema NewAttackPattern
-  attack/NewAttackPattern
-  "new-attack-pattern")
-
-(def-stored-schema StoredAttackPattern AttackPattern)
-
-(s/defschema PartialStoredAttackPattern
-  (st/optional-keys-schema StoredAttackPattern))
 
 (def realize-attack-pattern
   (default-realize-fn "attack-pattern" NewAttackPattern StoredAttackPattern))
@@ -106,7 +92,7 @@
      (GET "/mitre/:mitre-id" []
           :return (s/maybe AttackPattern)
           :path-params [mitre-id :- s/Str]
-          :summary "AttackPattern corresponding to the MITRE external_references external_id or) url"
+          :summary "AttackPattern corresponding to the MITRE external_references external_id or url"
           :description (routes.common/capabilities->description capabilities)
           :capabilities capabilities
           :auth-identity identity
@@ -114,7 +100,7 @@
           (or (some-> services
                       (core/mitre-attack-pattern identity mitre-id)
                       ok)
-              (not-found "Oops"))))))
+              (not-found {:error "attack-pattern not found"}))))))
 
 (s/defn attack-pattern-routes [services :- APIHandlerServices]
   (routes
