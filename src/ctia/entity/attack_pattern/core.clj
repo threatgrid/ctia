@@ -4,14 +4,10 @@
             [ctia.store :refer [query-string-search]]
             [schema.core :as s]))
 
-(s/defn latest-attack-pattern :- (s/maybe StoredAttackPattern)
-  [patterns :- [StoredAttackPattern]]
-  (->> patterns (sort-by :timestamp) last))
-
 (s/defn mitre-attack-pattern :- (s/maybe StoredAttackPattern)
   [{{:keys [get-store]} :StoreService
     :as _services} :- APIHandlerServices
-   auth-identity
+   identity-map
    mitre-id :- s/Str]
   (some-> (get-store :attack-pattern)
           (query-string-search
@@ -19,7 +15,7 @@
                          :fields ["kill_chain_phases.kill_chain_name"]}
                         {:query (str "\"" mitre-id "\"")
                          :fields ["external_references.url" "external_references.external_id"]}]}
-           auth-identity
-           {})
+           identity-map
+           {:sort_by :timestamp :sort_order :desc})
           :data
-          latest-attack-pattern))
+          first))
