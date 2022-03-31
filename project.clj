@@ -86,7 +86,7 @@
                  [threatgrid/ctim "1.1.11"]
                  [instaparse "1.4.10"] ;; com.gfredericks/test.chuck > threatgrid/ctim
                  [threatgrid/clj-momo "0.3.5"]
-                 [threatgrid/ductile "0.4.2"]
+                 [threatgrid/ductile "0.4.4"]
 
                  [com.arohner/uri "0.1.2"]
 
