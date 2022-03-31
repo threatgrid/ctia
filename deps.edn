@@ -16,10 +16,10 @@
   {:extra-deps {org.clojure/clojure {:mvn/version "1.11.0-rc1"}}},
   :test
   {:extra-deps
-   {com.gfredericks/test.chuck {:mvn/version "0.2.13"},
+   {clj-http-fake/clj-http-fake {:mvn/version "1.0.3"},
+    com.gfredericks/test.chuck {:mvn/version "0.2.13"},
     org.clojure/test.check {:mvn/version "1.1.0"},
-    prismatic/schema-generators {:mvn/version "0.1.3"},
-    project-config/clj-http-fake {:mvn/version "1.0.3"}},
+    prismatic/schema-generators {:mvn/version "0.1.3"}},
    :extra-paths ["test" "test-resources"],
    :jvm-opts
    ["-Djava.awt.headless=true"

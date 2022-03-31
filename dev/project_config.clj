@@ -137,7 +137,7 @@
     [org.clojure/data.priority-map "1.0.0"]
     [org.clojure/tools.namespace "1.1.0"]])
 (def test-dependencies
-  `[[clj-http-fake ~project-config/clj-http-fake-version]
+  `[[clj-http-fake/clj-http-fake ~project-config/clj-http-fake-version]
     [com.gfredericks/test.chuck ~project-config/test-chuck-version]
     [org.clojure/test.check ~project-config/test-check-version]
     [prismatic/schema-generators ~project-config/schema-generators-version]])
