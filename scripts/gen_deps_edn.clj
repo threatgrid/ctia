@@ -45,7 +45,7 @@
     (sorted-map
       :deps (lein->cli-style-deps project-config/dependencies project-config/global-exclusions)
       :aliases (sorted-map
-                 :build {:extra-paths (into ["build-src"] project-config/dev-source-paths)
+                 :build {:extra-paths (into ["build-src"] project-config/config-source-paths)
                          :deps {'io.github.clojure/tools.build {:git/tag "v0.7.5" :git/sha "34727f7"}}
                          :ns-default 'build}
                  :cognitest {:extra-deps {'io.github.cognitect-labs/test-runner 

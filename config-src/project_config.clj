@@ -13,8 +13,17 @@
 (def trapperkeeper-version "3.1.0")
 (def next-clojure-version "1.11.0-rc1")
 
+(def ctia-jar-coords
+  "Note: must update manually, grep the project for this var"
+  'ctia/ctia)
+(def main-ns 'ctia.main)
+(def uberjar-name 'ctia.jar)
+
 (def source-paths ["src"])
 (def dev-source-paths ["dev"])
+;; note: this directory is so the :build alias can access project-config
+;; without also bringing in the implicitly loaded user.clj.
+(def config-source-paths ["config-src"])
 (def test-source-paths ["test"])
 (def test-resource-paths ["test-resources"])
 (def resource-paths ["resources" "doc"])

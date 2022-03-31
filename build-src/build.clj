@@ -4,12 +4,10 @@
             [clojure.tools.build.api :as b]))
 
 (def lib project-config/ctia-jar-coords)
-(def version (format "1.15.1.%s" (b/git-count-revs nil)))
+(def version (format "1.1.1.%s" (b/git-count-revs nil)))
 (def class-dir "target/classes")
 (def basis (b/create-basis {:project "deps.edn"}))
-(def uber-file
-  (format "target/%s.jar" (name lib))
-  #_(format "target/%s-%s-standalone.jar" (name lib) version))
+(def uber-file (str "target/%s.jar" project-config/uberjar-name))
 
 (defn clean [_]
   (b/delete {:path "target"}))
@@ -17,6 +15,7 @@
 (defn uber [_]
   (clean nil)
   ;; TODO deal with classpath conflicts
+  ;; TODO :uberjar-exclusions
   (b/copy-dir {:src-dirs (concat project-config/source-paths
                                  project-config/resource-paths)
                :target-dir class-dir})

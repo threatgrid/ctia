@@ -1,4 +1,4 @@
-(load-file "dev/project_config.clj")
+(load-file "config-src/project_config.clj")
 (load-file "scripts/gen_deps_edn.clj") ;; assumes project-config ns is already loaded
 (gen-deps-edn/-main)
 
@@ -38,7 +38,7 @@
 ;; - If you update a dep that has :exclusions, check if each exclusions is still
 ;;   valid, and update the exclusions/comments accordingly
 ;; - Maybe you can just delete the dep! (doesn't hurt to check)
-(defproject ctia "1.1.1-SNAPSHOT"
+(defproject #_project-config/ctia-jar-coords ctia "1.1.1-SNAPSHOT"
   :description "Cisco Threat Intelligence API"
   :license {:name "Eclipse Public License - v 1.0"
             :url "http://www.eclipse.org/legal/epl-v10.html"
@@ -86,9 +86,9 @@
                                     [com.gfredericks/test.chuck ~project-config/test-chuck-version]
                                     [prismatic/schema-generators ~project-config/schema-generators-version]]
                      :source-paths ["src","test","benchmarks"]}
-             :uberjar {:aot [ctia.main]
-                       :main ctia.main
-                       :uberjar-name "ctia.jar"
+             :uberjar {:aot [~project-config/main-ns]
+                       :main ~project-config/main-ns
+                       :uberjar-name ~project-config/uberjar-name
                        :uberjar-exclusions [#"ctia\.properties"]}
              :test {:dependencies ~project-config/test-dependencies
                     :resource-paths ~project-config/test-resource-paths}

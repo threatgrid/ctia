@@ -5,7 +5,7 @@
   {:deps
    {io.github.clojure/tools.build
     {:git/sha "34727f7", :git/tag "v0.7.5"}},
-   :extra-paths ["build-src" "dev"],
+   :extra-paths ["build-src" "config-src"],
    :ns-default build},
   :cognitest
   {:exec-fn ctia.dev.cognitest/exec-main,
