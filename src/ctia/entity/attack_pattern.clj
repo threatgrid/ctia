@@ -98,7 +98,7 @@
           :auth-identity identity
           :identity-map identity-map
           (or (some-> services
-                      (core/mitre-attack-pattern identity mitre-id)
+                      (core/mitre-attack-pattern identity-map mitre-id)
                       ok)
               (not-found {:error "attack-pattern not found"}))))))
 
