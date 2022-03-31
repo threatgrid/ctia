@@ -9,4 +9,5 @@ if [[ "$CTIA_TEST_SUITE" == "cron" ]]; then
   lein cron-run-tests
 else
   lein ci-run-tests
+  ./scripts/test :ci true :selectors '[:all]' :report '[clojure.test/report :pretty]'
 fi

@@ -1,14 +1,6 @@
-(def cheshire-version "5.10.2")
-(def clj-http-fake-version "1.0.3")
-(def clj-version "1.10.1")
-(def metrics-clojure-version "2.10.0")
-(def netty-version "4.1.75.Final")
-(def perforate-version "0.3.4")
-(def ring-version "1.8.0")
-(def schema-generators-version "0.1.3")
-(def test-check-version "1.1.0")
-(def test-chuck-version "0.2.13")
-(def trapperkeeper-version "3.1.0")
+(load-file "dev/project_config.clj")
+(load-file "scripts/gen_deps_edn.clj") ;; assumes project-config ns is already loaded
+(gen-deps-edn/-main)
 
 ;; TODO we could add -dev here when it works
 (def base-ci-profiles "+test,+ci")
@@ -46,120 +38,20 @@
 ;; - If you update a dep that has :exclusions, check if each exclusions is still
 ;;   valid, and update the exclusions/comments accordingly
 ;; - Maybe you can just delete the dep! (doesn't hurt to check)
-
 (defproject ctia "1.1.1-SNAPSHOT"
   :description "Cisco Threat Intelligence API"
   :license {:name "Eclipse Public License - v 1.0"
             :url "http://www.eclipse.org/legal/epl-v10.html"
             :distribution :repo}
 
-  :jvm-opts ["-Djava.awt.headless=true"
-             "-Dlog.console.threshold=INFO"
-             "-server"]
-  :exclusions [io.netty/netty ;; moved to io.netty/netty-all
-               org.slf4j/slf4j-log4j12
-               org.slf4j/slf4j-nop] ;; Removed in favor of logback
+  :jvm-opts ~project-config/global-jvm-opts
+  :exclusions ~project-config/global-exclusions
   ;; use `lein pom; mvn dependency:tree -Dverbose -Dexcludes=org.clojure:clojure`
   ;; to inspect conflicts.
-
-  :dependencies [[org.clojure/clojure ~clj-version]
-                 [clj-time "0.15.2"]
-                 [org.threeten/threeten-extra "1.2"]
-                 [clojure.java-time "0.3.2"]
-                 [org.clojure/core.async "1.0.567"]
-                 [org.clojure/core.memoize "1.0.236"]
-                 [org.clojure/tools.logging "1.1.0"]
-                 [org.clojure/tools.cli "1.0.194"]
-                 [pandect "0.6.1"]
-                 [org.clojure/math.combinatorics "0.1.6"]
-                 [version-clj "2.0.1"]
-
-                 ;; Trapperkeeper
-                 [puppetlabs/trapperkeeper ~trapperkeeper-version]
-                 [puppetlabs/kitchensink ~trapperkeeper-version]
-                 [prismatic/plumbing "0.5.5"] ;; upgrade puppetlabs/trapperkeeper
-
-                 ;; Schemas
-                 [prismatic/schema "1.2.0"]
-                 [metosin/schema-tools "0.12.2"]
-                 [threatgrid/flanders "0.1.23"]
-                 [threatgrid/ctim "1.1.11"]
-                 [instaparse "1.4.10"] ;; com.gfredericks/test.chuck > threatgrid/ctim
-                 [threatgrid/clj-momo "0.3.5"]
-                 [threatgrid/ductile "0.4.2"]
-
-                 [com.arohner/uri "0.1.2"]
-
-                 ;; Web server
-                 [metosin/compojure-api "1.1.13" ]
-                 [ring-middleware-format "0.7.4"]
-                 ;; optional ring-middleware-format dep (Note: ring-middleware-format is also a transitive dep for compojure-api)
-                 ;; see: https://github.com/ngrunwald/ring-middleware-format/issues/74
-                 [com.ibm.icu/icu4j "65.1"]
-                 [metosin/ring-swagger "0.26.2"]
-                 [metosin/ring-swagger-ui "3.24.3"]
-                 [ring/ring-core ~ring-version] ;ring/ring-jetty-adapter > metosin/ring-swagger
-                 [ring/ring-jetty-adapter ~ring-version]
-                 [ring/ring-devel ~ring-version]
-                 [ring-cors "0.1.13"]
-                 [commons-codec "1.12"] ;threatgrid/ctim, threatgrid/clj-momo, clj-http > ring/ring-codec
-                 [ring/ring-codec "1.1.2"]
-                 [threatgrid/clj-jwt "0.3.1"]
-                 [threatgrid/ring-turnstile-middleware "0.1.1"]
-                 [threatgrid/ring-jwt-middleware "1.0.1"]
-                 [scopula "0.1.4"]
-                 [org.clojure/tools.reader "1.3.4"] ;; org.clojure/tools.namespace > ring-middleware-format
-
-                 ;; clients
-                 [clj-http "3.10.1"]
-                 [com.taoensso/carmine "2.19.1" #_"2.20.0-RC1"]
-                 [cheshire ~cheshire-version] ;; upgrade threatgrid/ring-jwt-middleware, puppetlabs/kitchensink (+ a dozen others)
-
-                 ;; Metrics
-                 [metrics-clojure ~metrics-clojure-version]
-                 [metrics-clojure-jvm ~metrics-clojure-version]
-                 [metrics-clojure-ring ~metrics-clojure-version]
-                 [clout "2.2.1"]
-                 [slugger "1.0.1"]
-                 [com.google.guava/guava "31.0-jre"];bump org.onyxplatform/onyx-kafka, threatgrid/ctim
-                 [io.netty/netty-all ~netty-version];bump org.onyxplatform/onyx-kafka, metrics-clojure-riemann, zookeeper-clj
-                 [io.netty/netty-codec ~netty-version] ;bump org.apache.zookeeper/zookeeper, riemann-clojure-client
-                 [io.netty/netty-resolver ~netty-version] ;bump riemann-clojure-client, org.apache.zookeeper/zookeeper
-                 [com.google.protobuf/protobuf-java "3.19.4"] ;bump riemann-clojure-client, threatgrid:ctim, metrics-clojure-riemann, org.onyxplatform/onyx-kafka
-                 [riemann-clojure-client "0.5.1"]
-                 ;; https://stackoverflow.com/a/43574427
-                 [jakarta.xml.bind/jakarta.xml.bind-api "2.3.2"]
-
-                 ;; Docs
-                 [markdown-clj "1.10.1"]
-                 [hiccup "2.0.0-alpha2"]
-
-                 ;; Encryption
-                 [lock-key "1.5.0"]
-
-                 ;; Hooks
-                 [threatgrid/redismq "0.1.1"]
-
-                 [org.apache.zookeeper/zookeeper "3.5.6"] ; override zookeeper-clj, org.onyxplatform/onyx-kafka
-                 [args4j "2.32"] ;org.onyxplatform/onyx-kafka > threatgrid/ctim
-                 [com.stuartsierra/component "0.3.2"] ;org.onyxplatform/onyx-kafka internal override
-                 [org.onyxplatform/onyx-kafka "0.14.5.0"]
-                 ;; Notes on jackson-databind:
-                 ;; - overrides org.onyxplatform/onyx-kafka and others
-                 ;; - some 2.9.x versions of jackson-databind and earlier have known exploits
-                 ;; - 2.12.4 is the same as cheshire's jackson-core dependency
-                 [com.fasterxml.jackson.core/jackson-databind "2.12.4"]
-                 [zookeeper-clj "0.9.4"]
-
-                 ;; GraphQL
-                 [base64-clj "0.1.1"]
-                 [threatgrid/ring-graphql-ui "0.1.1"]
-                 [com.graphql-java/graphql-java "9.7"]
-
-                 ;; Logging
-                 [org.slf4j/log4j-over-slf4j "1.7.20"]]
-
-  :resource-paths ["resources" "doc"]
+  :dependencies ~project-config/dependencies
+  :resource-paths ~project-config/resource-paths
+  :source-paths ~project-config/source-paths
+  :test-paths ~project-config/test-source-paths
   :classpath ".:resources"
   :min-lein-version "2.9.1"
   :test-selectors ~(-> (slurp "dev-resources/circleci_test/config.clj")
@@ -174,46 +66,32 @@
                                          "git" "symbolic-ref" "--short" "HEAD")))})}]
 
 
-  :profiles {:dev {:dependencies [[puppetlabs/trapperkeeper ~trapperkeeper-version
-                                   :classifier "test"]
-                                  [puppetlabs/kitchensink ~trapperkeeper-version
-                                   :classifier "test"]
-                                  [org.clojure/test.check ~test-check-version]
-                                  [com.gfredericks/test.chuck ~test-chuck-version]
-                                  [clj-http-fake ~clj-http-fake-version]
-                                  [prismatic/schema-generators ~schema-generators-version]
-                                  [circleci/circleci.test "0.4.3"]
-                                  [org.clojure/math.combinatorics "0.1.6"]
-                                  [org.clojure/data.priority-map "1.0.0"]
-                                  [org.clojure/tools.namespace "1.1.0"]]
+  :profiles {:dev {:dependencies ~project-config/dev-dependencies
                    :pedantic? :warn
-                   :source-paths ["dev"]}
+                   :source-paths ~project-config/dev-source-paths}
              :ci {:pedantic? :abort
                   :global-vars {*warn-on-reflection* true}
                   :jvm-opts [;; actually print stack traces instead of useless
                              ;; "Full report at: /tmp/clojure-8187773283812483853.edn"
                              "-Dclojure.main.report=stderr"]}
-             :next-clojure {:dependencies [[org.clojure/clojure "1.11.0-rc1"]]}
+             :next-clojure {:dependencies [[org.clojure/clojure ~project-config/next-clojure-version]]}
              :jmx {:jvm-opts ["-Dcom.sun.management.jmxremote"
                               "-Dcom.sun.management.jmxremote.port=9010"
                               "-Dcom.sun.management.jmxremote.local.only=false"
                               "-Dcom.sun.management.jmxremote.authenticate=false"
                               "-Dcom.sun.management.jmxremote.ssl=false"]}
-             :bench {:dependencies [[perforate ~perforate-version]
+             :bench {:dependencies [[perforate ~project-config/perforate-version]
                                     [criterium "0.4.5"]
-                                    [org.clojure/test.check ~test-check-version]
-                                    [com.gfredericks/test.chuck ~test-chuck-version]
-                                    [prismatic/schema-generators ~schema-generators-version]]
+                                    [org.clojure/test.check ~project-config/test-check-version]
+                                    [com.gfredericks/test.chuck ~project-config/test-chuck-version]
+                                    [prismatic/schema-generators ~project-config/schema-generators-version]]
                      :source-paths ["src","test","benchmarks"]}
              :uberjar {:aot [ctia.main]
                        :main ctia.main
                        :uberjar-name "ctia.jar"
                        :uberjar-exclusions [#"ctia\.properties"]}
-             :test {:dependencies [[clj-http-fake ~clj-http-fake-version]
-                                   [com.gfredericks/test.chuck ~test-chuck-version]
-                                   [org.clojure/test.check ~test-check-version]
-                                   [prismatic/schema-generators ~schema-generators-version]]
-                    :resource-paths ["test-resources"]}
+             :test {:dependencies ~project-config/test-dependencies
+                    :resource-paths ~project-config/test-resource-paths}
 
              :prepush {:plugins [[yogsototh/lein-kibit "0.1.6-SNAPSHOT"]
                                  [lein-bikeshed "0.3.0"]]}
@@ -234,8 +112,8 @@
                               :namespaces [ctia.tasks.migrate-es-stores-bench]}]}
   ;; use `lein deps :plugins-tree` to inspect conflicts
   :plugins [[lein-shell "0.5.0"]
-            [org.clojure/clojure ~clj-version] ;override perforate
-            [perforate ~perforate-version]
+            [org.clojure/clojure ~project-config/clj-version] ;override perforate
+            [perforate ~project-config/perforate-version]
             [reifyhealth/lein-git-down "0.3.5"]]
   :repl-options {:welcome (println
                             (clojure.string/join

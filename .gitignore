@@ -19,3 +19,4 @@ data/**/*.edn
 .clj-kondo/cache
 .clj-kondo/rewrite-clj/
 tmp
+.cpcache

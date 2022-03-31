@@ -1,3 +1,18 @@
 #!/bin/bash
 
-lein test "$@"
+#lein test "$@"
+
+set -e
+EXTRA_PROFILES=''
+if [[ "${CI_PROFILES}" == "next-clojure" ]]; then
+  EXTRA_PROFILES="${EXTRA_PROFILES}:next-clojure"
+elif [[ "${CI_PROFILES}" == "default" ]]; then
+  :
+elif [[ ! -z "${CI_PROFILES}" ]]; then
+  echo "Unknown CI_PROFILES value: ${CI_PROFILES}"
+  exit 1
+fi
+set -x
+# does not support selectors yet
+clojure -X:test:cognitest "$@"
+#clojure "-X:test:bat-test${EXTRA_PROFILES}" "$@"

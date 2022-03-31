@@ -35,6 +35,8 @@ env:
   BB_VERSION: 0.7.8
   DEFAULT_JAVA_VERSION: 11.0.9
   DEFAULT_JAVA_DISTRIBUTION: 'adopt'
+  CLOJURE_CLI_VERSION: 1.10.3.1058
+
 
 jobs:
   setup:
@@ -121,6 +123,10 @@ jobs:
       - name: Run shellcheck
         run: ./scripts/shellcheck-build.sh
 
+      - name: Install clojure tools
+        uses: DeLaGuardo/setup-clojure@3.7
+        with:
+          cli: ${{ env.CLOJURE_CLI_VERSION }}
 
       # warm dependency cache on project.clj change (ie., when cache-hit is not true).
       - name: Maven Cache
@@ -130,9 +136,11 @@ jobs:
           path: |
             ~/.m2/repository
             ~/.gitlibs
-          key: ctia-m2-cache-${{ env.ACTIONS_CACHE_VERSION }}-${{ hashFiles('project.clj') }}-${{ env.LEIN_VERSION }}
+          key: ctia-m2-cache-${{ env.ACTIONS_CACHE_VERSION }}-${{ hashFiles('project.clj') }}-${{ env.LEIN_VERSION }}-${{ hashFiles('deps.edn') }}-${{ env.CLOJURE_CLI_VERSION }}
           # these will be considered a cache-miss by `cache-hit`
           restore-keys: |
+            ctia-m2-cache-${{ env.ACTIONS_CACHE_VERSION }}-${{ hashFiles('project.clj') }}-${{ env.LEIN_VERSION }}-${{ hashFiles('deps.edn') }}-
+            ctia-m2-cache-${{ env.ACTIONS_CACHE_VERSION }}-${{ hashFiles('project.clj') }}-${{ env.LEIN_VERSION }}-
             ctia-m2-cache-${{ env.ACTIONS_CACHE_VERSION }}-${{ hashFiles('project.clj') }}-
             ctia-m2-cache-${{ env.ACTIONS_CACHE_VERSION }}-
       - name: Setup Java
@@ -226,8 +234,10 @@ jobs:
           path: |
             ~/.m2/repository
             ~/.gitlibs
-          key: ctia-m2-cache-${{ env.ACTIONS_CACHE_VERSION }}-${{ hashFiles('project.clj') }}-${{ env.LEIN_VERSION }}
+          key: ctia-m2-cache-${{ env.ACTIONS_CACHE_VERSION }}-${{ hashFiles('project.clj') }}-${{ env.LEIN_VERSION }}-${{ hashFiles('deps.edn') }}-${{ env.CLOJURE_CLI_VERSION }}
           restore-keys: |
+            ctia-m2-cache-${{ env.ACTIONS_CACHE_VERSION }}-${{ hashFiles('project.clj') }}-${{ env.LEIN_VERSION }}-${{ hashFiles('deps.edn') }}-
+            ctia-m2-cache-${{ env.ACTIONS_CACHE_VERSION }}-${{ hashFiles('project.clj') }}-${{ env.LEIN_VERSION }}-
             ctia-m2-cache-${{ env.ACTIONS_CACHE_VERSION }}-${{ hashFiles('project.clj') }}-
             ctia-m2-cache-${{ env.ACTIONS_CACHE_VERSION }}-
 
@@ -247,6 +257,11 @@ jobs:
       - name: Install Leiningen
         if: steps.lein-cache.outputs.cache-hit != 'true'
         run: ./scripts/actions/install-lein.sh
+
+      - name: Install clojure tools
+        uses: DeLaGuardo/setup-clojure@3.7
+        with:
+          cli: ${{ env.CLOJURE_CLI_VERSION }}
 
       # we should get a cache hit from maven here, since the `setup` job only succeeds if it exists.
       # in the unlikely event we don't, download deps for this specific job only.
@@ -348,9 +363,14 @@ jobs:
         id: maven-cache
         uses: actions/cache@v3
         with:
-          path: ~/.m2/repository
-          key: ctia-m2-cache-${{ env.ACTIONS_CACHE_VERSION }}-${{ hashFiles('project.clj') }}
+          path: |
+            ~/.m2/repository
+            ~/.gitlibs
+          key: ctia-m2-cache-${{ env.ACTIONS_CACHE_VERSION }}-${{ hashFiles('project.clj') }}-${{ env.LEIN_VERSION }}-${{ hashFiles('deps.edn') }}-${{ env.CLOJURE_CLI_VERSION }}
           restore-keys: |
+            ctia-m2-cache-${{ env.ACTIONS_CACHE_VERSION }}-${{ hashFiles('project.clj') }}-${{ env.LEIN_VERSION }}-${{ hashFiles('deps.edn') }}-
+            ctia-m2-cache-${{ env.ACTIONS_CACHE_VERSION }}-${{ hashFiles('project.clj') }}-${{ env.LEIN_VERSION }}-
+            ctia-m2-cache-${{ env.ACTIONS_CACHE_VERSION }}-${{ hashFiles('project.clj') }}-
             ctia-m2-cache-${{ env.ACTIONS_CACHE_VERSION }}-
 
       - uses: actions/setup-java@v2
