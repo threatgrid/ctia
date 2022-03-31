@@ -1,6 +1,6 @@
 {:paths ["scripts"
          "scripts-test"
-         "dev"]
+         "config-src"]
  :tasks
  {:requires ([babashka.fs :as fs]
              [babashka.process :as p :refer [process]]
