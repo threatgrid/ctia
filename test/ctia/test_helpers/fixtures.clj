@@ -99,36 +99,44 @@
 
 (defn threat-ctx-bundle
   "returns a threat context with 1 indicator, 3 related judgements and 2 attack patterns"
-  ([] (threat-ctx-bundle false))
-  ([maximal?]
-   (let [indicators (n-examples :indicator 1 maximal?)
-         attack-patterns (n-examples :attack-pattern 2 maximal?)
-         judgements (n-examples :judgement 3 maximal?)
-         relationships (concat (mk-relationships "indicates" indicators attack-patterns)
-                               (mk-relationships "based-on" judgements indicators))]
-     {:indicators indicators
-      :attack_patterns attack-patterns
-      :judgements judgements
-      :relationships relationships})))
+  [{:keys [maximal? nb-indicators nb-attack-patterns nb-judgements]
+    :or {maximal? false
+         nb-indicators 1
+         nb-judgements 3
+         nb-attack-patterns 2}}]
+  (let [indicators (n-examples :indicator
+                               nb-indicators
+                               maximal?)
+        attack-patterns (n-examples :attack-pattern
+                                    nb-attack-patterns
+                                    maximal?)
+        judgements (n-examples :judgement
+                               nb-judgements
+                               maximal?)
+        relationships (concat (mk-relationships "indicates" indicators attack-patterns)
+                              (mk-relationships "based-on" judgements indicators))]
+    {:indicators indicators
+     :attack_patterns attack-patterns
+     :judgements judgements
+     :relationships relationships}))
 
 (defn sightings-threat-ctx-bundle
   "generate n sightings related to a simple indicator threat context"
-  ([n] (sightings-threat-ctx-bundle n false))
-  ([n maximal?]
-   (let [sightings (n-examples :sighting n maximal?)
-         threat-context (threat-ctx-bundle)
-         indicators (:indicators threat-context)
-         sight-indic-rels (mk-relationships "sighting-of" sightings indicators)]
-     (-> (assoc threat-context :sightings sightings)
-         (update :relationships concat sight-indic-rels)))))
+  [{:keys [nb-sightings maximal?] :as bundle-params}]
+  (let [sightings (n-examples :sighting nb-sightings maximal?)
+        threat-context (threat-ctx-bundle bundle-params)
+        indicators (:indicators threat-context)
+        sight-indic-rels (mk-relationships "sighting-of" sightings indicators)]
+    (-> (assoc threat-context :sightings sightings)
+        (update :relationships concat sight-indic-rels))))
 
 (defn incident-threat-ctx-bundle
   "generate n sightings related to a simple indicator threat context"
-  ([nb-sightings] (incident-threat-ctx-bundle nb-sightings false))
-  ([nb-sightings maximal?]
-   (let [incidents (n-examples :incident 1 maximal?)
-         threat-context (sightings-threat-ctx-bundle nb-sightings maximal?)
-         sightings (:sightings threat-context)
-         sight-incid-rels (mk-relationships "member-of" sightings incidents)]
-     (-> (assoc threat-context :incidents incidents)
-         (update :relationships concat sight-incid-rels)))))
+  [{:keys [maximal?] :as bundle-params}]
+  (println bundle-params)
+  (let [incidents (n-examples :incident 1 maximal?)
+        threat-context (sightings-threat-ctx-bundle bundle-params)
+        sightings (:sightings threat-context)
+        sight-incid-rels (mk-relationships "member-of" sightings incidents)]
+    (-> (assoc threat-context :incidents incidents)
+        (update :relationships concat sight-incid-rels))))

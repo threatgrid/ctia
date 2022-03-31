@@ -66,6 +66,9 @@
          "ctia.metrics.console.enabled"               false
          "ctia.metrics.jmx.enabled"                   false
          "ctia.store.es.identity.refresh"             "true"
+         "ctia.store.es.default.update-mappings"      "false"
+         "ctia.store.es.default.update-settings"      "false"
+         "ctia.store.es.default.refresh-mappings"     "false"
          "ctia.versions.config"                       "test"]
         ;; use es7 if es5 is not available
         (let [es-versions (set-of-es-versions-to-test)]

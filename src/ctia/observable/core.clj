@@ -8,9 +8,23 @@
             [ctia.schemas.core
              :refer
              [APIHandlerServices Observable]]
-
             [ctia.properties :as p]
-            [schema.core :as s]))
+            [schema.core :as s]
+            [base64-clj.core :as b64]))
+
+(s/defn paginate-until-limit
+  [get-page
+   {:keys [limit] :as paging-params}]
+  (let [base-params (select-keys [:limit :sort] paging-params)
+        {:keys [data paging] :as res} (get-page paging-params)
+         {next-params :next} paging]
+    (if (or (nil? next-params)
+            (= (count data) limit))
+      res
+      (update (paginate-until-limit get-page (into base-params next-params))
+              :data
+              #(concat %2 %1)
+              (set data)))))
 
 (s/defn observable->sightings
   ([observable identity-map services]
@@ -19,11 +33,15 @@
     identity-map
     params
     {{:keys [get-store]} :StoreService}]
-   (-> (get-store :sighting)
-       (list-sightings-by-observables
-        [observable]
-        identity-map
-        params))))
+   (println "sighting-params: " params)
+   (paginate-until-limit
+    (fn [paging-params]
+      (list-sightings-by-observables
+       (get-store :sighting)
+       [observable]
+       identity-map
+       paging-params))
+    params)))
 
 (s/defn observable->judgements
   ([observable identity-map services]
@@ -92,11 +110,11 @@
    services]
   (let [filters {edge-node entity-ids
                  :relationship_type relationship_type}
-        get-nodes (case edge-node
+        res-field (case edge-node
                     :source_ref :target_ref
                     :target_ref :source_ref)
         sort-opts (if unique-values?
-                    [get-nodes]
+                    [res-field]
                     [edge-node :id])
         _ (println "sort-opts: " sort-opts)
         res (get-relationships filters
@@ -104,7 +122,8 @@
                                identity-map
                                services)
         get-ids  (fn [relationships]
-                   (->> (map get-nodes relationships)
+                   (let [])
+                   (->> (map res-field relationships)
                         (map id/long-id->id)
                         (filter #(= (str entity-type) (:type %)))
                         (map id/long-id)
@@ -129,6 +148,26 @@
                       identity-map
                       services))
 
+(defn mk-paging
+  [{:keys [limit] :as paging}
+   entity-type]
+  (into {:sort [:id] :limit limit}
+        (get paging entity-type)))
+
+(s/defn encode-paging
+  [paging :- {s/Keyword s/Any}]
+  (b64/encode (pr-str paging)))
+
+(s/defn decode-paging
+  [params :- s/Str]
+  (read-string (b64/decode params)))
+
+(defn mk-relationship-paging
+  [{:keys [limit sighting] :as _paging}]
+  (into {:sort [:id]
+         :limit (or limit 100)}
+        sighting))
+
 (s/defn sighting-observable->incident-ids
   [observable :- Observable
    identity-map
@@ -149,28 +188,35 @@
     {:keys [limit] :as params} :- {s/Keyword s/Any}
     identity-map
     services :- APIHandlerServices]
-   (let [sighting-paging (into {:sort [:id] :limit limit}
-                               (:sighting params))
-         _ (println "sighting-params: " sighting-paging)
-         {sighting-ids :data sighting-paging* :paging}
+   (let [{sighting-ids :data sighting-paging :paging}
          (observable->sighting-ids observable
                                    identity-map
-                                   sighting-paging
+                                   (mk-paging params :sighting)
                                    services)
-         rel-paging (into {:limit limit} (:relationship params))
-         {target-ids :data rel-paging* :paging}
+         _ (println "sighting-ids: ")
+         _ (clojure.pprint/pprint sighting-ids)
+         {target-ids :data rel-paging :paging}
          ;; TODO crawl until we have the right limit value
          (get-target-ids {:entity-ids sighting-ids
                           :relationship_type ["sighting-of" "member-of"]
                           :entity-type "indicator"
-                          :paging rel-paging
+                          :paging (mk-paging params :relationship)
                           :unique-values? true}
                          identity-map
                          services)
-         paging {
-                 :sighting (:next sighting-paging*)
-                 :relationship (:next rel-paging*)}]
-     ;; when next page of relationship is not nil return only next relationships and current sighting params
+         next-rel-page (:next rel-paging)
+         _ (println "next-rel-page" )
+         _ (clojure.pprint/pprint next-rel-page)
+         ;; when next page of relationship is not nil return only next relationships and current sighting params
+         ;; it enables to deal with scenarios such as [[s1 r1 i1] [s1 r2 i2]] for limit 1.
+         next-sighting-page (if next-rel-page
+                              (:sighting params)
+                              (:next sighting-paging))
+         next-page (cond-> nil
+                     next-rel-page (assoc :relationship (dissoc next-rel-page :offset))
+                     next-sighting-page (assoc :sighting (dissoc next-sighting-page :offset)))
+         paging  (cond-> {}
+                     (seq next-page) (assoc :next (assoc next-page :limit 1)))]
      ;; do not paginate sighting ids while there is relationship next.
      {:data target-ids :paging paging})))
 

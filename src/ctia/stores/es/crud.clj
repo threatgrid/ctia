@@ -436,14 +436,15 @@ It returns the documents with full hits meta data including the real index in wh
                           (seq one-of) (into
                                         {:should (q/prepare-terms one-of)
                                          :minimum_should_match 1})
-                          query (update :filter conj query_string))]
+                          query (update :filter conj query_string))
+            query-params (-> es-params
+                             rename-sort-fields
+                             (with-default-sort-field props)
+                             make-es-read-params) ]
         (cond-> (coerce! (ductile.doc/query conn
                                             index
                                             (q/bool bool-params)
-                                            (-> es-params
-                                                rename-sort-fields
-                                                (with-default-sort-field props)
-                                                make-es-read-params)))
+                                            query-params))
           (restricted-read? ident) (update :data
                                            access-control-filter-list
                                            ident
