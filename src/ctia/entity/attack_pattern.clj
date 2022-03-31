@@ -1,6 +1,6 @@
 (ns ctia.entity.attack-pattern
   (:require
-   [ctia.domain.entities :refer [default-realize-fn]]
+   [ctia.domain.entities :refer [default-realize-fn un-store with-long-id]]
    [ctia.entity.attack-pattern.core :as core]
    [ctia.entity.feedback.graphql-schemas :as feedback]
    [ctia.entity.relationship.graphql-schemas :as relationship-graphql]
@@ -90,7 +90,7 @@
   (routes
    (let [capabilities :read-attack-pattern]
      (GET "/mitre/:mitre-id" []
-          :return (s/maybe AttackPattern)
+          :return (s/maybe PartialAttackPattern)
           :path-params [mitre-id :- s/Str]
           :summary "AttackPattern corresponding to the MITRE external_references external_id or url"
           :description (routes.common/capabilities->description capabilities)
@@ -99,6 +99,8 @@
           :identity-map identity-map
           (or (some-> services
                       (core/mitre-attack-pattern identity-map mitre-id)
+                      un-store
+                      (with-long-id services)
                       ok)
               (not-found {:error "attack-pattern not found"}))))))
 
