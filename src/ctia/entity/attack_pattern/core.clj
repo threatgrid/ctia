@@ -11,8 +11,8 @@
    mitre-id :- s/Str]
   (some-> (get-store :attack-pattern)
           (query-string-search
-           {:full-text [{:query "mitre-*"
-                         :fields ["kill_chain_phases.kill_chain_name"]}
+           {:full-text [{:query "*mitre*"
+                         :fields ["external_references.source_name"]}
                         {:query (str "\"" mitre-id "\"")
                          :fields ["external_references.url" "external_references.external_id"]}]}
            identity-map
