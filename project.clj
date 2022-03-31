@@ -68,7 +68,8 @@
 
   :profiles {:dev {:dependencies ~project-config/dev-dependencies
                    :pedantic? :warn
-                   :source-paths ~project-config/dev-source-paths}
+                   :source-paths ~(into project-config/dev-source-paths
+                                        project-config/config-source-paths)}
              :ci {:pedantic? :abort
                   :global-vars {*warn-on-reflection* true}
                   :jvm-opts [;; actually print stack traces instead of useless
