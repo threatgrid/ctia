@@ -17,7 +17,7 @@
   "Note: must update manually, grep the project for this var"
   'ctia/ctia)
 (def main-ns 'ctia.main)
-(def uberjar-name 'ctia.jar)
+(def uberjar-name "ctia.jar")
 
 (def source-paths ["src"])
 (def dev-source-paths ["dev"])
