@@ -11,10 +11,7 @@
    mitre-id :- s/Str]
   (some-> (get-store :attack-pattern)
           (query-string-search
-           {:full-text [{:query "*mitre*"
-                         :fields ["external_references.source_name"]}
-                        {:query (str "\"" mitre-id "\"")
-                         :fields ["external_references.url" "external_references.external_id"]}]}
+           {:full-text [{:query "external_references.external_id:\"" mitre-id "\""]}]}
            identity-map
            {:sort_by :timestamp :sort_order :desc})
           :data
