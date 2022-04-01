@@ -374,9 +374,13 @@
                                         [ok-header-auth-params true]
                                         [ko-api-key-auth-params false]
                                         [ko-header-auth-params false]]]
-       (testing (format "auth-params: %s, authorized?: %s" auth-params authorized?)
-         (try
-           (try-auth-params auth-params)
-           (catch ExceptionInfo e
-             (is (not authorized?))
-             (is (string/starts-with? (.getMessage e) "Unauthorized ES Request")))))))))
+       (let [branch-taken (atom nil)]
+         (testing (format "auth-params: %s, authorized?: %s" auth-params authorized?)
+           (try
+             (try-auth-params auth-params)
+             (reset! branch-taken true)
+             (catch ExceptionInfo e
+               (reset! branch-taken false)
+               (is (not authorized?))
+               (is (string/starts-with? (.getMessage e) "Unauthorized ES Request"))))
+           (is (= authorized? @branch-taken))))))))
