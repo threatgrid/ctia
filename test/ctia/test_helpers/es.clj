@@ -261,10 +261,10 @@
          clean-fn# ~clean
          msg# ~msg]
      (doseq [version# (-filter-activated-es-versions ~versions)
-             :let [~'es-port (+ 9200 version#)]]
+             :let [es-port# (+ 9200 version#)]]
        (h/with-properties
          (into ["ctia.store.es.default.host" "127.0.0.1"
-                "ctia.store.es.default.port" ~'es-port
+                "ctia.store.es.default.port" es-port#
                 "ctia.store.es.default.version" version#]
                (when (= 7 version#)
                  basic-auth-properties))
@@ -274,7 +274,8 @@
                (when clean-fn#
                  (clean-fn# conn#))
                (let [~'conn conn#
-                     ~'version version#]
+                     ~'version version#
+                     ~'es-port es-port#]
                  ~@body))
              (finally
                (when clean-fn#
