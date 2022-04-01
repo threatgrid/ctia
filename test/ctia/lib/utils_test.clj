@@ -10,7 +10,10 @@
     "password" "abcd"
     :auth
     {:static
-     {:secret "1234"}}}})
+     {:secret "1234"}}
+    :store
+    {:es {:default {:auth {:params {:user "elastic"
+                                    :pwd "ductile"}}}}}}})
 
 (def map-with-hidden-creds
   {:ctia
@@ -19,7 +22,10 @@
     "password" "********"
     :auth
     {:static
-     {:secret "********"}}}})
+     {:secret "********"}}
+    :store
+    {:es {:default {:auth {:params {:user "elastic"
+                                    :pwd "********"}}}}}}})
 
 (deftest filter-out-creds-test
   (is (= {}
