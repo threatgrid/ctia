@@ -2,15 +2,20 @@
   (:require [clojure.string :as string]
             [ctia.stores.es.init :as sut]
             [ctia.test-helpers.core :as helpers]
-            [ctia.test-helpers.es :refer [->ESConnServices for-each-es-version basic-auth]]
+            [ctia.test-helpers.es :refer [->ESConnServices for-each-es-version basic-auth basic-auth-properties]]
             [ctia.stores.es.mapping :as m]
             [ductile.index :as index]
             [ductile.conn :as conn]
             [ductile.auth :as auth]
             [ductile.auth.api-key :refer [create-api-key!]]
-            [clojure.test :refer [deftest testing is are]])
+            [clojure.test :refer [deftest testing is are use-fixtures]]
+            [clj-momo.test-helpers.core :as mth]
+            [schema.core :as s])
   (:import [java.util UUID]
            [clojure.lang ExceptionInfo]))
+
+#_ ;;FIXME incompatible with this ns
+(use-fixtures :once mth/fixture-schema-validation)
 
 (defn gen-indexname []
   (str "ctia_init_test_sighting"
@@ -341,42 +346,48 @@
 
 (deftest es-auth-properties-test
   (for-each-es-version
-   "init-es-conn! should return a conn state in respect with given auth properties."
-   [7] ;; auth only available on ES7 docker, use this macro to easily test future major versions
-   #(index/delete! % "ctia*")
-   (let [;; create API Key
-         {key-id :id :keys [api_key]} (create-api-key! conn {:name "my-api-key"})
-         api-key-params {:id key-id :api-key api_key}
-         ok-api-key-auth-params {:type :api-key
-                                 :params api-key-params}
-         ko-api-key-auth-params {:type :api-key
-                                 :params (assoc api-key-params :id "invalid id")}
+    "init-es-conn! should return a conn state in respect with given auth properties."
+    [7] ;; auth only available on ES7 docker, use this macro to easily test future major versions
+    #(index/delete! % "ctia*")
+    (let [;; create API Key
+          {key-id :id :keys [api_key]} (create-api-key! conn {:name "my-api-key"})
+          api-key-params {:id key-id :api-key api_key}
+          ok-api-key-auth-params {:type :api-key
+                                  :params api-key-params}
+          ko-api-key-auth-params {:type :api-key
+                                  :params (assoc api-key-params :id "invalid id")}
 
-         header-params (:headers (auth/api-key-auth api-key-params))
-         ok-header-auth-params {:type :headers
-                                :params header-params}
+          header-params (:headers (auth/api-key-auth api-key-params))
+          ok-header-auth-params {:type :headers
+                                 :params header-params}
 
-         ko-header-auth-params {:type :headers
-                                :params {:authorization "invalid key"}}
-         try-store (fn [store] (-> store first :state :conn
-                                   (index/get-template "*")
-                                   map?))
-         try-auth-params (fn [auth-params]
-                           (helpers/with-properties
-                             ["ctia.store.es.default.auth" auth-params]
-                             (helpers/fixture-ctia-with-app
-                              (fn [app]
-                                (let [{:keys [all-stores]} (helpers/get-service-map app :StoreService)]
-                                  (doseq [[_ store] (all-stores)]
-                                    (is (try-store store))))))))]
-     (doseq [[auth-params authorized?] [[basic-auth true]
-                                        [ok-api-key-auth-params true]
-                                        [ok-header-auth-params true]
-                                        [ko-api-key-auth-params false]
-                                        [ko-header-auth-params false]]]
-       (testing (format "auth-params: %s, authorized?: %s" auth-params authorized?)
-         (try
-           (try-auth-params auth-params)
-           (catch ExceptionInfo e
-             (is (not authorized?))
-             (is (string/starts-with? (.getMessage e) "Unauthorized ES Request")))))))))
+          ko-header-auth-params {:type :headers
+                                 :params {:authorization "invalid key"}}
+          try-store (fn [store] (-> store first :state :conn
+                                    (index/get-template "*")
+                                    map?))
+          try-auth-params (s/fn [auth-params authorized? :- s/Bool]
+                            (helpers/with-config-transformer
+                              #(assoc-in % [:ctia :store :es :default :auth] auth-params)
+                              (if authorized?
+                                ;; every store should be accessible
+                                (helpers/fixture-ctia-with-app
+                                  (fn [app]
+                                    (let [{:keys [all-stores]} (helpers/get-service-map app :StoreService)
+                                          stores-map (all-stores)
+                                          _ (assert (seq stores-map))]
+                                      (doseq [[k store] stores-map]
+                                        (testing (pr-str k)
+                                          (is (try-store store)))))))
+                                ;; ctia should fail to initialize
+                                (try (helpers/fixture-ctia-with-app identity)
+                                     (is false "Expected error, actual none")
+                                     (catch ExceptionInfo e
+                                       (is (string/starts-with? (.getMessage e) "Unauthorized ES Request")))))))]
+      (doseq [[auth-params authorized?] [[basic-auth true]
+                                         [ok-api-key-auth-params true]
+                                         [ok-header-auth-params true]
+                                         [ko-api-key-auth-params false]
+                                         [ko-header-auth-params false]]]
+        (testing (format "auth-params: %s, authorized?: %s" auth-params authorized?)
+          (try-auth-params auth-params authorized?))))))

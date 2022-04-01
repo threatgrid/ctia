@@ -21,6 +21,9 @@
 (defn default-store-properties [store]
   {(str "ctia.store." store) s/Str})
 
+(s/defschema AuthParamsType
+  (st/get-in AuthParams [:type]))
+
 (defn es-store-impl-properties [prefix store]
   {(str prefix store ".host") s/Str
    (str prefix store ".port") s/Int
@@ -41,7 +44,12 @@
    (str prefix store ".update-settings")  s/Bool
    (str prefix store ".refresh-mappings") s/Bool
    (str prefix store ".default-sort") s/Str
-   (str prefix store ".auth")  AuthParams})
+   (str prefix store ".auth.type") AuthParamsType
+   (str prefix store ".auth.params.id") s/Str
+   (str prefix store ".auth.params.headers.authorization") s/Str
+   (str prefix store ".auth.params.api-key") s/Str
+   (str prefix store ".auth.params.user") s/Str
+   (str prefix store ".auth.params.pwd") s/Str})
 
 (s/defschema StorePropertiesSchema
   "All entity store properties for every implementation"

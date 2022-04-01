@@ -1,7 +1,7 @@
 (ns ctia.properties-test
   (:require [ctia.properties :as sut]
             [ductile.schemas :refer [AuthParams Refresh]]
-            [clojure.test :refer [deftest is testing]]
+            [clojure.test :refer [are deftest is testing]]
             [schema.core :as s]))
 
 (deftest es-store-impl-properties-test
@@ -25,7 +25,12 @@
             "ctia.store.es.malware.refresh-mappings" s/Bool
             "ctia.store.es.malware.default-sort" s/Str
             "ctia.store.es.malware.timeout" s/Num
-            "ctia.store.es.malware.auth" AuthParams}
+            "ctia.store.es.malware.auth.type" sut/AuthParamsType
+            "ctia.store.es.malware.auth.params.id" s/Str
+            "ctia.store.es.malware.auth.params.api-key" s/Str
+            "ctia.store.es.malware.auth.params.headers.authorization" s/Str
+            "ctia.store.es.malware.auth.params.user" s/Str
+            "ctia.store.es.malware.auth.params.pwd" s/Str}
            (sut/es-store-impl-properties "ctia.store.es." "malware")))
 
     (is (= {"prefix.sighting.host" s/Str
@@ -47,5 +52,10 @@
             "prefix.sighting.refresh-mappings" s/Bool
             "prefix.sighting.default-sort" s/Str
             "prefix.sighting.timeout" s/Num
-            "prefix.sighting.auth" AuthParams}
+            "prefix.sighting.auth.type" sut/AuthParamsType
+            "prefix.sighting.auth.params.id" s/Str
+            "prefix.sighting.auth.params.api-key" s/Str
+            "prefix.sighting.auth.params.headers.authorization" s/Str
+            "prefix.sighting.auth.params.user" s/Str
+            "prefix.sighting.auth.params.pwd" s/Str}
            (sut/es-store-impl-properties "prefix." "sighting")))))
