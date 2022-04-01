@@ -9,7 +9,6 @@
             [clj-momo.properties :as mp]
             [ctia.store :as store]
             [schema-tools.core :as st]
-            [schema.coerce :as c]
             [schema.core :as s]
             [ctia.schemas.core
              :refer [HTTPShowServices TLP]]))
