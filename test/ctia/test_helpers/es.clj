@@ -271,8 +271,10 @@
              (when clean-fn#
                (clean-fn# ~'conn))
              (h/with-properties
-               ["ctia.store.es.default.port" ~'es-port
-                "ctia.store.es.default.version" ~'version]
+               (into ["ctia.store.es.default.port" ~'es-port
+                      "ctia.store.es.default.version" ~'version]
+                     (when (= 7 ~'version)
+                       basic-auth-properties))
                ~@body))
            (finally
              (when clean-fn#
