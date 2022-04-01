@@ -363,22 +363,23 @@
                                     (index/get-template "*")
                                     map?))
           try-auth-params (s/fn [auth-params authorized? :- s/Bool]
-                            (helpers/with-properties
-                              basic-auth-properties
-                              (helpers/fixture-ctia-with-app
-                                (fn [app]
-                                  (let [{:keys [all-stores]} (helpers/get-service-map app :StoreService)
-                                        stores-map (all-stores)
-                                        _ (assert (seq stores-map))]
-                                    (doseq [[k store] stores-map]
-                                      (testing (pr-str k)
-                                        (if authorized?
-                                          (is (try-store store))
-                                          (try (let [res (try-store store)]
-                                                 (is (= res authorized?)))
-                                               (catch ExceptionInfo e
-                                                 (is (not authorized?))
-                                                 (is (string/starts-with? (.getMessage e) "Unauthorized ES Request"))))))))))))]
+                            (helpers/with-config-transformer
+                              #(assoc-in % [:ctia :store :es :default :auth] auth-params)
+                              (if authorized?
+                                ;; every store should be accessible
+                                (helpers/fixture-ctia-with-app
+                                  (fn [app]
+                                    (let [{:keys [all-stores]} (helpers/get-service-map app :StoreService)
+                                          stores-map (all-stores)
+                                          _ (assert (seq stores-map))]
+                                      (doseq [[k store] stores-map]
+                                        (testing (pr-str k)
+                                          (is (try-store store)))))))
+                                ;; ctia should fail to initialize
+                                (try (helpers/fixture-ctia-with-app identity)
+                                     (is false "Expected error, actual none")
+                                     (catch ExceptionInfo e
+                                       (is (string/starts-with? (.getMessage e) "Unauthorized ES Request")))))))]
       (doseq [[auth-params authorized?] [[basic-auth true]
                                          [ok-api-key-auth-params true]
                                          [ok-header-auth-params true]
