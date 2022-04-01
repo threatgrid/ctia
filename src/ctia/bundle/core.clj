@@ -433,6 +433,33 @@
                              ident
                              services))))))
 
+(defn- scroll-with-limit
+  "Extension for store/list-records method.
+
+  First argument should be a function taking a single record and returning a value
+  used to group paginated records.
+
+  eg. `:source_ref` to fetch all records limited by `:source_ref` field.
+
+  NOTE: `params-map` must contain `:sort` instruction with the fields based on which you wish to limit responses.
+  NOTE: `params-map` must contain `:limit` instruction to set maximum amount of entities fetched by page."
+  ([f store filter-map identity-map params-map]
+   (scroll-with-limit [] [] f store filter-map identity-map params-map))
+  ([acc prev-data f store filter-map identity-map params-map]
+   (let [{data :data {{:keys [limit offset search_after]} :next} :paging}
+         (store/list-records store filter-map identity-map params-map)
+         params-map (select-keys params-map [:limit :sort])]
+     (if (empty? data)
+       acc
+       (let [[chunk & chunks :as data] (partition-by f data)]
+         (if (empty? chunks)
+           (recur (into acc (take limit (concat prev-data chunk)))
+                  [] f store filter-map identity-map
+                  (assoc params-map :search_after search_after))
+           (recur (reduce into acc (butlast data))
+                  (last data) f store filter-map identity-map
+                  (assoc params-map :offset offset))))))))
+
 (defn fetch-records [ids identity-map
                      {{:keys [get-store]} :StoreService
                       {:keys [send-event]} :RiemannService
@@ -471,11 +498,12 @@
                  :event-type "export-bundle"
                  :metric (count ids)})
     (let [start (System/currentTimeMillis)
+          records (fetch-records (distinct ids) identity-map services)
           res (transduce
                (map #(export-entities % identity-map ident params services))
                (completing #(deep-merge-with coll/add-colls %1 %2))
                empty-bundle
-               (fetch-records (distinct ids) identity-map services))]
+               records)]
       (send-event {:service "Export bundle end"
                    :correlation-id correlation-id
                    :time (get-epoch-second)
