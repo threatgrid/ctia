@@ -365,6 +365,7 @@ one can set defaults for all ES stores using =default= as entity
 | ctia.store.es.[entity].auth.type         | authentication type for ES, see [[https://github.com/threatgrid/ductile][ductile documentation]] | =(get-in ductile.schemas/AuthParams [:type])= |
 | ctia.store.es.[entity].auth.params.id    | :id param for :api-key auth method to ES, see [[https://github.com/threatgrid/ductile][ductile documentation]] | string |
 | ctia.store.es.[entity].auth.params.api-key | :api-key param for :api-key auth method to ES, see [[https://github.com/threatgrid/ductile][ductile documentation]] | string |
+| ctia.store.es.[entity].auth.params.headers.authorization | [:headers :authorization] param for :headers auth method to ES, see [[https://github.com/threatgrid/ductile][ductile documentation]] | string |
 | ctia.store.es.[entity].auth.params.user    | :user param for :basic-auth auth method to ES, see [[https://github.com/threatgrid/ductile][ductile documentation]] | string |
 | ctia.store.es.[entity].auth.params.pwd    | :pwd param for :basic-auth auth method to ES, see [[https://github.com/threatgrid/ductile][ductile documentation]] | string |
 | ctia.store.es.[entity].default-sort      | default sort parameter for search                                                  | string                     |
