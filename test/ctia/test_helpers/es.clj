@@ -260,24 +260,24 @@
   `(let [;; avoid version and the other explicitly bound locals will to be captured
          clean-fn# ~clean
          msg# ~msg]
-     (doseq [~'version (-filter-activated-es-versions ~versions)]
+     (doseq [~'version (-filter-activated-es-versions ~versions)
+             :let [~'es-port (+ 9200 ~'version)]]
        (h/with-properties
          (into ["ctia.store.es.default.host" "127.0.0.1"
                 "ctia.store.es.default.port" ~'es-port
                 "ctia.store.es.default.version" ~'version]
                (when (= 7 ~'version)
                  basic-auth-properties))
-         (let [~'es-port (+ 9200 ~'version)
-               ~'conn (es-conn/connect (init/get-store-properties ::no-store (h/build-get-in-config-fn)))]
+         (let [conn# (es-conn/connect (es-init/get-store-properties ::no-store (h/build-get-in-config-fn)))]
            (try
              (testing (format "%s (ES version: %s).\n" msg#  ~'version)
                (when clean-fn#
-                 (clean-fn# ~'conn))
-               (do ~@body)))
-           (finally
-             (when clean-fn#
-               (clean-fn# ~'conn))
-             (es-conn/close ~'conn)))))))
+                 (clean-fn# conn#))
+               (do ~@body))
+             (finally
+               (when clean-fn#
+                 (clean-fn# conn#))
+               (es-conn/close conn#))))))))
 
 (defn build-mappings
   [base-mappings entity-type version]
