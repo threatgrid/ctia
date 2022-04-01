@@ -341,50 +341,48 @@
                       :refresh-mappings refresh-mappings?)))))
 
 (deftest es-auth-properties-test
-  (helpers/with-filtered-stores
-    #{:actor}
-    (fn []
-      (for-each-es-version
-        "init-es-conn! should return a conn state in respect with given auth properties."
-        [7] ;; auth only available on ES7 docker, use this macro to easily test future major versions
-        #(index/delete! % "ctia*")
-        (let [;; create API Key
-              {key-id :id :keys [api_key]} (create-api-key! conn {:name "my-api-key"})
-              api-key-params {:id key-id :api-key api_key}
-              ok-api-key-auth-params {:type :api-key
-                                      :params api-key-params}
-              ko-api-key-auth-params {:type :api-key
-                                      :params (assoc api-key-params :id "invalid id")}
+  (for-each-es-version
+    "init-es-conn! should return a conn state in respect with given auth properties."
+    [7] ;; auth only available on ES7 docker, use this macro to easily test future major versions
+    #(index/delete! % "ctia*")
+    (let [;; create API Key
+          {key-id :id :keys [api_key]} (create-api-key! conn {:name "my-api-key"})
+          api-key-params {:id key-id :api-key api_key}
+          ok-api-key-auth-params {:type :api-key
+                                  :params api-key-params}
+          ko-api-key-auth-params {:type :api-key
+                                  :params (assoc api-key-params :id "invalid id")}
 
-              header-params (:headers (auth/api-key-auth api-key-params))
-              ok-header-auth-params {:type :headers
-                                     :params header-params}
+          header-params (:headers (auth/api-key-auth api-key-params))
+          ok-header-auth-params {:type :headers
+                                 :params header-params}
 
-              ko-header-auth-params {:type :headers
-                                     :params {:authorization "invalid key"}}
-              try-store (fn [store] (-> store first :state :conn
-                                        (index/get-template "*")
-                                        map?))
-              try-auth-params (s/fn [auth-params authorized? :- s/Bool]
-                                (helpers/with-properties
-                                  basic-auth-properties
-                                  (helpers/fixture-ctia-with-app
-                                    (fn [app]
-                                      (let [{:keys [all-stores]} (helpers/get-service-map app :StoreService)
-                                            stores (vals (all-stores))
-                                            _ (assert (seq stores))]
-                                        (doseq [store stores]
-                                          (if authorized?
-                                            (is (try-store store))
-                                            (try (try-store store)
-                                                 (is false)
-                                                 (catch ExceptionInfo e
-                                                   (is (not authorized?))
-                                                   (is (string/starts-with? (.getMessage e) "Unauthorized ES Request")))))))))))]
-          (doseq [[auth-params authorized?] [[basic-auth true]
-                                             [ok-api-key-auth-params true]
-                                             [ok-header-auth-params true]
-                                             [ko-api-key-auth-params false]
-                                             [ko-header-auth-params false]]]
-            (testing (format "auth-params: %s, authorized?: %s" auth-params authorized?)
-              (try-auth-params auth-params authorized?))))))))
+          ko-header-auth-params {:type :headers
+                                 :params {:authorization "invalid key"}}
+          try-store (fn [store] (-> store first :state :conn
+                                    (index/get-template "*")
+                                    map?))
+          try-auth-params (s/fn [auth-params authorized? :- s/Bool]
+                            (helpers/with-properties
+                              basic-auth-properties
+                              (helpers/fixture-ctia-with-app
+                                (fn [app]
+                                  (let [{:keys [all-stores]} (helpers/get-service-map app :StoreService)
+                                        stores-map (all-stores)
+                                        _ (assert (seq stores-map))]
+                                    (doseq [[k store] stores-map]
+                                      (testing (pr-str k)
+                                        (if authorized?
+                                          (is (try-store store))
+                                          (try (let [res (try-store store)]
+                                                 (is (= res authorized?)))
+                                               (catch ExceptionInfo e
+                                                 (is (not authorized?))
+                                                 (is (string/starts-with? (.getMessage e) "Unauthorized ES Request"))))))))))))]
+      (doseq [[auth-params authorized?] [[basic-auth true]
+                                         [ok-api-key-auth-params true]
+                                         [ok-header-auth-params true]
+                                         [ko-api-key-auth-params false]
+                                         [ko-header-auth-params false]]]
+        (testing (format "auth-params: %s, authorized?: %s" auth-params authorized?)
+          (try-auth-params auth-params authorized?))))))
