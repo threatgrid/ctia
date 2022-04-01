@@ -35,7 +35,9 @@
   (aggregate [this search-query agg-query ident])
   (delete-search [this search-query ident params]))
 
-(def empty-stores
+;; TODO put in config. Awkward because this is both used to generate schemas (compile time)
+;; and iterate over the stores to initialize them (runtime).
+(def ^:dynamic empty-stores
   {:judgement []
    :indicator []
    :feed []

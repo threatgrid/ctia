@@ -120,6 +120,29 @@
   [tf & body]
   `(with-config-transformer* ~tf #(do ~@body)))
 
+(defn with-filtered-stores
+  "If (flter store-name) is true, keep it in the configuration."
+  [flter f]
+  (with-config-transformer (fn [config]
+                             (let [config (update-in config [:ctia :store :es] (fn [es]
+                                                                                 (into {}
+                                                                                       (keep (fn [[k v]]
+                                                                                               (when (or (= :default k)
+                                                                                                         (not (:indexname v))
+                                                                                                         (flter k))
+                                                                                                 [k v])))
+                                                                                       es)))]
+                               ;; TODO what to do with ctia.store.actor=es entries?
+                               (prn "with-filtered-stores" config)
+                               config))
+    (binding [store/empty-stores (into {}
+                                       (keep (fn [[k v]]
+                                               (when (flter k)
+                                                 [k v])))
+                                       store/empty-stores)]
+      (assert (seq store/empty-stores) store/empty-stores)
+      (f))))
+
 (s/defn with-properties*
   [properties-vec :- (s/pred vector?)
    f :- (s/=> s/Any)]
