@@ -28,6 +28,7 @@
             "ctia.store.es.malware.auth.type" sut/AuthParamsType
             "ctia.store.es.malware.auth.params.id" s/Str
             "ctia.store.es.malware.auth.params.api-key" s/Str
+            "ctia.store.es.malware.auth.params.headers.authorization" s/Str
             "ctia.store.es.malware.auth.params.user" s/Str
             "ctia.store.es.malware.auth.params.pwd" s/Str}
            (sut/es-store-impl-properties "ctia.store.es." "malware")))
@@ -54,6 +55,7 @@
             "prefix.sighting.auth.type" sut/AuthParamsType
             "prefix.sighting.auth.params.id" s/Str
             "prefix.sighting.auth.params.api-key" s/Str
+            "prefix.sighting.auth.params.headers.authorization" s/Str
             "prefix.sighting.auth.params.user" s/Str
             "prefix.sighting.auth.params.pwd" s/Str}
            (sut/es-store-impl-properties "prefix." "sighting")))))

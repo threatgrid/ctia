@@ -8,10 +8,14 @@
             [ductile.conn :as conn]
             [ductile.auth :as auth]
             [ductile.auth.api-key :refer [create-api-key!]]
-            [clojure.test :refer [deftest testing is are]]
+            [clojure.test :refer [deftest testing is are use-fixtures]]
+            [clj-momo.test-helpers.core :as mth]
             [schema.core :as s])
   (:import [java.util UUID]
            [clojure.lang ExceptionInfo]))
+
+#_ ;;FIXME incompatible with this ns
+(use-fixtures :once mth/fixture-schema-validation)
 
 (defn gen-indexname []
   (str "ctia_init_test_sighting"

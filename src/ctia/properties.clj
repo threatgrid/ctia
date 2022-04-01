@@ -47,6 +47,7 @@
    (str prefix store ".default-sort") s/Str
    (str prefix store ".auth.type") AuthParamsType
    (str prefix store ".auth.params.id") s/Str
+   (str prefix store ".auth.params.headers.authorization") s/Str
    (str prefix store ".auth.params.api-key") s/Str
    (str prefix store ".auth.params.user") s/Str
    (str prefix store ".auth.params.pwd") s/Str})
