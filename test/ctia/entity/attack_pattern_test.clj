@@ -11,23 +11,20 @@
             [ctim.examples.attack-patterns
              :refer
              [new-attack-pattern-maximal new-attack-pattern-minimal]]
-            [schema.test :refer [validate-schemas]])
-  (:import (java.net URLEncoder)))
+            [schema.test :refer [validate-schemas]]))
 
 (use-fixtures :once (join-fixtures [validate-schemas
                                     whoami-helpers/fixture-server]))
 
 (def auth "45c1f5e3f05d0")
 
-(defn additional-tests [app _attack-pattern-id {[{:keys [external_id url]}] :external_references :as attack-pattern}]
+(defn additional-tests [app _attack-pattern-id {[{:keys [external_id]}] :external_references :as attack-pattern}]
   (letfn [(lookup
             ([mitre-id] (lookup mitre-id auth))
             ([mitre-id auth]
              (GET app
                   (str "ctia/attack-pattern/mitre/" mitre-id)
-                  :headers {"Authorization" auth})))
-          (url-encode [string]
-            (some-> string str (URLEncoder/encode "UTF-8") (.replace "+" "%20")))]
+                  :headers {"Authorization" auth})))]
     (testing "GET /ctia/attack-pattern/mitre/bogus-id returns 404"
       (let [{:keys [status parsed-body] :as _resp} (lookup "bogus-id")]
         (is (= 404 status))
@@ -38,13 +35,8 @@
         (is (= 200 status))
         (is (= attack-pattern parsed-body))))
 
-    (testing "GET /ctia/attack-pattern/mitre/<mitre-url> returns the attack pattern"
-      (let [{:keys [status parsed-body] :as _resp} (lookup (url-encode url))]
-        (is (= 200 status))
-        (is (= attack-pattern parsed-body))))
-
-    (testing "GET /ctia/attack-pattern/mitre/<mitre-url> and bogus auth returns 401"
-      (let [{:keys [status parsed-body] :as _resp} (lookup (url-encode url) "bogus auth")]
+    (testing "GET /ctia/attack-pattern/mitre/<mitre-external-id> and bogus auth returns 401"
+      (let [{:keys [status parsed-body] :as _resp} (lookup external_id "bogus auth")]
         (is (= 401 status))
         (is (= {:error :not_authenticated :message "Only authenticated users allowed"}
                parsed-body))))))
