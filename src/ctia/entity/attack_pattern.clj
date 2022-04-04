@@ -1,11 +1,19 @@
 (ns ctia.entity.attack-pattern
   (:require
-   [ctia.domain.entities :refer [default-realize-fn]]
+   [ctia.domain.entities :refer [default-realize-fn un-store with-long-id]]
+   [ctia.entity.attack-pattern.core :as core]
    [ctia.entity.feedback.graphql-schemas :as feedback]
    [ctia.entity.relationship.graphql-schemas :as relationship-graphql]
    [ctia.http.routes.common :as routes.common]
    [ctia.http.routes.crud :refer [services->entity-crud-routes]]
-   [ctia.schemas.core :refer [APIHandlerServices def-acl-schema def-stored-schema]]
+   [ctia.lib.compojure.api.core :refer [GET routes]]
+   [ctia.entity.attack-pattern.schemas :refer [AttackPattern
+                                               NewAttackPattern
+                                               PartialAttackPattern
+                                               PartialAttackPatternList
+                                               PartialStoredAttackPattern
+                                               StoredAttackPattern]]
+   [ctia.schemas.core :refer [APIHandlerServices]]
    [ctia.schemas.graphql.flanders :as flanders]
    [ctia.schemas.graphql.helpers :as g]
    [ctia.schemas.graphql.ownership :as go]
@@ -16,28 +24,9 @@
    [ctia.stores.es.store :refer [def-es-store]]
    [ctim.schemas.attack-pattern :as attack]
    [flanders.utils :as fu]
+   [ring.util.http-response :refer [ok not-found]]
    [schema-tools.core :as st]
    [schema.core :as s]))
-
-(def-acl-schema AttackPattern
-  attack/AttackPattern
-  "attack-pattern")
-
-(def-acl-schema PartialAttackPattern
-  (fu/optionalize-all attack/AttackPattern)
-  "partial-attack-pattern")
-
-(s/defschema PartialAttackPatternList
-  [PartialAttackPattern])
-
-(def-acl-schema NewAttackPattern
-  attack/NewAttackPattern
-  "new-attack-pattern")
-
-(def-stored-schema StoredAttackPattern AttackPattern)
-
-(s/defschema PartialStoredAttackPattern
-  (st/optional-keys-schema StoredAttackPattern))
 
 (def realize-attack-pattern
   (default-realize-fn "attack-pattern" NewAttackPattern StoredAttackPattern))
@@ -97,29 +86,49 @@
     :short_description
     :title})
 
+(s/defn mitre-routes [services :- APIHandlerServices]
+  (routes
+   (let [capabilities :read-attack-pattern]
+     (GET "/mitre/:mitre-id" []
+          :return (s/maybe PartialAttackPattern)
+          :path-params [mitre-id :- s/Str]
+          :summary "AttackPattern corresponding to the MITRE external_references external_id"
+          :description (routes.common/capabilities->description capabilities)
+          :capabilities capabilities
+          :auth-identity identity
+          :identity-map identity-map
+          (or (some-> services
+                      (core/mitre-attack-pattern identity-map mitre-id)
+                      un-store
+                      (with-long-id services)
+                      ok)
+              (not-found {:error "attack-pattern not found"}))))))
+
 (s/defn attack-pattern-routes [services :- APIHandlerServices]
-  (services->entity-crud-routes
-   services
-   {:entity                   :attack-pattern
-    :new-schema               NewAttackPattern
-    :entity-schema            AttackPattern
-    :get-schema               PartialAttackPattern
-    :get-params               AttackPatternGetParams
-    :list-schema              PartialAttackPatternList
-    :search-schema            PartialAttackPatternList
-    :external-id-q-params     AttackPatternByExternalIdQueryParams
-    :search-q-params          AttackPatternSearchParams
-    :new-spec                 :new-attack-pattern/map
-    :realize-fn               realize-attack-pattern
-    :get-capabilities         :read-attack-pattern
-    :post-capabilities        :create-attack-pattern
-    :put-capabilities         :create-attack-pattern
-    :delete-capabilities      :delete-attack-pattern
-    :search-capabilities      :search-attack-pattern
-    :external-id-capabilities :read-attack-pattern
-    :can-aggregate?           true
-    :histogram-fields         attack-pattern-histogram-fields
-    :enumerable-fields        attack-pattern-enumerable-fields}))
+  (routes
+   (services->entity-crud-routes
+    services
+    {:entity                   :attack-pattern
+     :new-schema               NewAttackPattern
+     :entity-schema            AttackPattern
+     :get-schema               PartialAttackPattern
+     :get-params               AttackPatternGetParams
+     :list-schema              PartialAttackPatternList
+     :search-schema            PartialAttackPatternList
+     :external-id-q-params     AttackPatternByExternalIdQueryParams
+     :search-q-params          AttackPatternSearchParams
+     :new-spec                 :new-attack-pattern/map
+     :realize-fn               realize-attack-pattern
+     :get-capabilities         :read-attack-pattern
+     :post-capabilities        :create-attack-pattern
+     :put-capabilities         :create-attack-pattern
+     :delete-capabilities      :delete-attack-pattern
+     :search-capabilities      :search-attack-pattern
+     :external-id-capabilities :read-attack-pattern
+     :can-aggregate?           true
+     :histogram-fields         attack-pattern-histogram-fields
+     :enumerable-fields        attack-pattern-enumerable-fields})
+   (mitre-routes services)))
 
 (def AttackPatternType
   (let [{:keys [fields name description]}
