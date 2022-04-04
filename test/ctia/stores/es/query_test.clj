@@ -2,7 +2,9 @@
   (:require
    [clojure.test :refer [deftest is testing]]
    [ctia.entity.entities :as entities]
-   [ctia.stores.es.query :as es.query]))
+   [ctia.test-helpers.core :as helpers]
+   [ctia.test-helpers.es :as es-helpers]
+   [ctia.stores.es.query :as sut]))
 
 (defn- all-entities-es-mapping
   "Returns a map where each key is the entity identifier and value its ES mapping props"
@@ -72,7 +74,7 @@
     (is (= expected-mapping-per-entity
            (->> (all-entities-es-mapping)
                 (map (fn [[k v]]
-                       (hash-map k (es.query/searchable-fields-map v))))
+                       (hash-map k (sut/searchable-fields-map v))))
                 (apply merge)))))
   (testing "fake nested properties"
     (let [es-mappings (-> (all-entities-es-mapping)
@@ -86,7 +88,7 @@
           digest-searchable-map (fn [mappings]
                                   (->> mappings
                                        (map (fn [[k v]]
-                                              (hash-map k (es.query/searchable-fields-map v))))
+                                              (hash-map k (sut/searchable-fields-map v))))
                                        (apply merge)))
           expected-result (-> expected-mapping-per-entity
                               (select-keys [:incident :vulnerability])
@@ -104,3 +106,15 @@
                                assoc :type "text" :fields {:ignored-and-sad {:type "text"}}))]
           (is (= expected-result
                  (select-keys (digest-searchable-map es-mappings) [:incident :vulnerability]))))))))
+
+(deftest rename-search-fields-map-test
+  (doseq [es-version [5 7]]
+    (helpers/with-properties
+      ["ctia.feature-flags" "translate-searchable-fields:true"
+       "ctia.store.es.default.port" (+ 9200 es-version)
+       "ctia.store.es.default.version" es-version]
+      (helpers/fixture-ctia-with-app
+       (fn [app]
+         (let [conn-state (:state (helpers/get-store app :sighting))]
+           (is (= ["source.text" "title"]
+                  (sut/rename-search-fields conn-state [:source :title])))))))))

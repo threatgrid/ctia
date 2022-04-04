@@ -24,6 +24,7 @@
 (tk/defservice features-service
   FeaturesService
   [[:ConfigService get-in-config]]
+  ;;TODO build a proper init to prepare fields only once
   (feature-flags
    [this]
    (when-let [fgs-str (some-> [:ctia :feature-flags]
