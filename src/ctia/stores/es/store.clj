@@ -1,9 +1,8 @@
 (ns ctia.stores.es.store
   (:require [schema.core :as s]
-            [ductile
-             [conn :as es-conn]
-             [index :as es-index]
-             [schemas :refer [ESConn]]]
+            [ductile.conn :as es-conn]
+            [ductile.index :as es-index]
+            [ductile.schemas :refer [ESConn]]
             [ctia.store :refer [IStore IQueryStringSearchableStore]]
             [ctia.stores.es.crud :as crud]))
 

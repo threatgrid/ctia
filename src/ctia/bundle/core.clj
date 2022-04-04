@@ -318,13 +318,12 @@
   "Returns true if this entity'ID is hosted by this CTIA instance,
    false otherwise"
   [id services :- HTTPShowServices]
-  (if (seq id)
+  (when id
     (if (id/long-id? id)
       (let [id-rec (id/long-id->id id)
             this-host (:hostname (p/get-http-show services))]
         (= (:hostname id-rec) this-host))
-      true)
-    false))
+      true)))
 
 (defn clean-bundle
   [bundle]

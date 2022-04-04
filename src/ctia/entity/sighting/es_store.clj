@@ -118,7 +118,7 @@
   (es-partial-stored-sighting->partial-stored-sighting
    (read-fn state id ident params)))
 
-(s/defn handle-read-many :- [PartialStoredSighting]
+(s/defn handle-read-many :- [(s/maybe PartialStoredSighting)]
   [state ids ident params]
   (map es-partial-stored-sighting->partial-stored-sighting
        (read-many-fn state ids ident params)))

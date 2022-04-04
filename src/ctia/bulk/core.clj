@@ -10,6 +10,7 @@
    [ctia.schemas.core :as schemas :refer [APIHandlerServices]]
    [ctia.schemas.utils :as csu]
    [ctia.store :as store]
+   [ctia.stores.es.crud :as es-crud]
    [ring.util.http-response :refer [bad-request!]]
    [schema-tools.core :as st]
    [schema.core :as s]
@@ -57,13 +58,6 @@
                      (st/assoc s/Keyword s/Any))
    s/Keyword s/Any})
 
-(s/defn read-fn
-  "return the create function provided an entity type key"
-  [k auth-identity params
-   {{:keys [get-store]} :StoreService} :- ReadFnServices]
-  #(-> (get-store k)
-       (store/read-record % (auth/ident->map auth-identity) params))) 
-
 (s/defn create-entities
   "Create many entities provided their type and returns a list of ids"
   [new-entities entity-type tempids auth-identity params
@@ -99,16 +93,13 @@
 (s/defn read-entities
   "Retrieve many entities of the same type provided their ids and common type"
   [ids entity-type auth-identity
-   services :- ReadEntitiesServices]
-  (let [read-entity (read-fn entity-type auth-identity {} services)]
-    ;; TODO search by ids
-    (pmap (fn [id]
-           (try
-             (some-> (read-entity id)
-                     (with-long-id services))
-             (catch Exception e
-               (log/error (pr-str e)))))
-         ids)))
+   {{:keys [get-store]} :StoreService
+    :as services} :- ReadEntitiesServices]
+  (when-let [store (get-store entity-type)]
+    (map #(when %
+            (with-long-id % services))
+         (binding [es-crud/*throw-access-control-error?* false]
+           (store/read-records store ids auth-identity {})))))
 
 (defn to-long-id
   [id services]
