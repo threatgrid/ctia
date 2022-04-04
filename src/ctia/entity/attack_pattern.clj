@@ -92,7 +92,7 @@
      (GET "/mitre/:mitre-id" []
           :return (s/maybe PartialAttackPattern)
           :path-params [mitre-id :- s/Str]
-          :summary "AttackPattern corresponding to the MITRE external_references external_id or url"
+          :summary "AttackPattern corresponding to the MITRE external_references external_id"
           :description (routes.common/capabilities->description capabilities)
           :capabilities capabilities
           :auth-identity identity
