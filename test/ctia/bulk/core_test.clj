@@ -30,9 +30,10 @@
                                  :judgement
                                  identity-singleton
                                  {:ConfigService {:get-in-config get-in-config}
-                                  ;; NOTE "unreachable" entity === unknown store
-                                  :StoreService {:get-store (constantly nil)}})]
-      (is (= nil res)))))
+                                  :StoreService {:get-store (constantly (reify ctia.store/IStore
+                                                                          (read-records [_ _ _ _]
+                                                                            [nil])))}})]
+      (is (= [nil] res)))))
 
 (defn schema->keys
   "Extracts both: required and optional keys of schema as set of keywords"

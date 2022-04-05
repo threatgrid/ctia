@@ -95,7 +95,7 @@
   [ids entity-type auth-identity
    {{:keys [get-store]} :StoreService
     :as services} :- ReadEntitiesServices]
-  (when-let [store (get-store entity-type)]
+  (let [store (get-store entity-type)]
     (map #(when %
             (with-long-id % services))
          (binding [es-crud/*throw-access-control-error?* false]
