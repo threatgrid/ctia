@@ -337,7 +337,7 @@
 (defn- get-epoch-second []
   (.getEpochSecond (Instant/now)))
 
-(s/defn fetch-targets
+(s/defn fetch-nodes
   "given relationships, fetch all related objects"
   [relationships identity-map
    {{:keys [send-event]} :RiemannService
@@ -491,7 +491,7 @@
           relationships (when (:include_related_entities params true)
                           (map #(ent/with-long-id % services)
                                (fetch-relationships records identity-map params services)))
-          targets (fetch-targets relationships ident services)
+          targets (fetch-nodes relationships ident services)
           res (combine-bundle records relationships targets)]
       (send-event {:service "Export bundle end"
                    :correlation-id correlation-id
