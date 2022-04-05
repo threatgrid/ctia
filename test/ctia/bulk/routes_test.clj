@@ -433,8 +433,8 @@
              (doseq [[k res] delete-res-2]
                (is (= (set (get-in expected-not-found [k :errors :not-found]))
                       (set (get-in res [:errors :not-found])))))
-             (doseq [[_k entity-res] (dissoc get-res :tempids)]
-               (is (= #{} (set/intersection (set (get delete-bulk-query _k))
+             (doseq [[k entity-res] (dissoc get-res :tempids)]
+               (is (= #{} (set/intersection (set (get delete-bulk-query k))
                                             (set (map :id entity-res))))
                    "the deleted entities must not be found"))
              (let [expected-deleted-ids (mapcat val delete-bulk-query)]
