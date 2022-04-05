@@ -23,6 +23,35 @@
   (is (= {:b '(1 2 3) :d '(1 3)}
          (sut/clean-bundle {:a '(nil) :b '(1 2 3) :c '() :d '(1 nil 3)}))))
 
+(deftest relationships-filters
+  (testing "relationships-filters should properly add related_to filters to handle edge direction"
+    (is (= "source_ref:(\"id\")"
+           (:query (sut/relationships-filter [{:id "id"}]
+                                             :source_ref
+                                             nil nil))))
+    (is (= "target_ref:(\"id\")"
+           (:query (sut/relationships-filter [{:id "id"}]
+                                             :target_ref
+                                             nil nil))))
+    (is (= "target_ref:(\"id1\" OR \"id2\")"
+           (:query (sut/relationships-filter [{:id "id1"} {:id "id2"}]
+                                             :target_ref
+                                             nil nil)))))
+
+  (testing "relationships-filters should properly add query filters"
+    (is (= "source_ref:(\"id1\" OR \"id2\") AND source_ref:*malware*"
+           (:query (sut/relationships-filter [{:id "id1"} {:id "id2"}]
+                                             :source_ref
+                                             :malware nil))))
+    (is (= "source_ref:(\"id1\" OR \"id2\") AND target_ref:*sighting*"
+           (:query (sut/relationships-filter [{:id "id1"} {:id "id2"}]
+                                             :source_ref
+                                             nil :sighting))))
+    (is (= "target_ref:(\"id1\" OR \"id2\") AND source_ref:*malware* AND target_ref:*sighting*"
+           (:query (sut/relationships-filter [{:id "id1"} {:id "id2"}]
+                                             :target_ref
+                                             :malware :sighting))))))
+
 (deftest with-existing-entity-test
   (testing "with-existing-entity"
     (let [app (h/get-current-app)
@@ -59,14 +88,14 @@
                 :expected (with-long-id {:result "exists"
                                          :external_ids ["swe-alarm-indicator-1"]
                                          :id indicator-id-1}
-                                        http-show-services)
+                            http-show-services)
                 :existing-ids [indicator-id-1]
                 :log? false})
       (test-fn {:msg "more than 1 existing external id"
                 :expected (with-long-id {:result "exists"
                                          :external_ids ["swe-alarm-indicator-1"]
                                          :id indicator-id-2}
-                                        http-show-services)
+                            http-show-services)
                 :existing-ids [indicator-id-2
                                indicator-id-1]
                 :log? true}))))

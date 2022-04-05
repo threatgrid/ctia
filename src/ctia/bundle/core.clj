@@ -336,7 +336,7 @@
 (defn- get-epoch-second []
   (.getEpochSecond (Instant/now)))
 
-(s/defn fetch-relationship-targets
+(s/defn fetch-targets
   "given relationships, fetch all related objects"
   [relationships identity-map
    {{:keys [send-event]} :RiemannService
@@ -370,14 +370,23 @@
   eg. `:source_ref` to fetch all records limited by `:source_ref` field.
 
   NOTE: `params-map` must contain `:sort` instruction with the fields based on which you wish to limit responses.
-  NOTE: `params-map` must contain `:limit` instruction to set maximum amount of entities fetched by page."
+  NOTE: `params-map` must contain `:limit` instruction to set maximum amount of entities fetched by page.
+
+  NOTE: `search_after` and `offset` usage
+        The result of each invocation of `list-records` can have two main possible cases:
+
+          1. all results belong to the same record
+             in that case next call to `list-records` must use `search_after` to 'fast forward' the cursor to the next
+             record id.
+          2. results list begins with records belong to the same id but then the tail might have 1-N partitions.
+             That means the last partition in result list is incomplete and we must use `offset` to fetch next page."
   ([f store filter-map identity-map params-map]
    (scroll-with-limit [] [] f store filter-map identity-map params-map))
   ([acc prev-data f store filter-map identity-map {:keys [limit] :as params-map}]
    (let [{data :data {{:keys [offset search_after] :as next} :next} :paging}
          (store/list-records store filter-map identity-map params-map)
          params-map (select-keys params-map [:limit :sort])]
-     (if (or (empty? data) (nil? next))
+     (if (nil? next)
        (into acc (take limit (concat prev-data data)))
        (let [[chunk & chunks] (partition-by f data)]
          (if (empty? chunks)
@@ -388,6 +397,13 @@
                   (last chunks) f store filter-map identity-map
                   (assoc params-map :offset offset))))))))
 
+(defn relationships-filter [records related-to source-type target-type]
+  {:query (cond->> [(format "%s:(%s)" (name related-to) (string/join " OR " (map #(format "\"%s\"" %) (map :id records))))]
+            source-type (cons (format "source_ref:*%s*" (name source-type)))
+            target-type (cons (format "target_ref:*%s*" (name target-type)))
+            :always (reverse)
+            :always (string/join " AND "))})
+
 (defn fetch-relationships [records identity-map
                            {:keys [related_to
                                    source_type
@@ -397,32 +413,17 @@
                             {:keys [get-in-config]} :ConfigService
                             {:keys [send-event]} :RiemannService}]
   (when (seq records)
-    (let [ids (string/join "or" (map #(format "\"%s\"" %) (map :id records)))
-          start (System/currentTimeMillis)
-          node-filters #(cond->> [%]
-                          source_type (cons (format "source_ref:*%s*" (name source_type)))
-                          target_type (cons (format "target_ref:*%s*" (name target_type)))
-                          :always (string/join " AND "))
+    (let [start (System/currentTimeMillis)
           store (get-store :relationship)
           limit (get-in-config [:ctia :http :bundle :export :max-relationships] 1000)
-          related_to (set related_to)
-          source-relationships
-          (when (contains? related_to :source_ref)
-            (set (scroll-with-limit :source_ref store
-                                    {:query (node-filters (format "source_ref:(%s)" ids))}
-                                    identity-map
-                                    {:limit limit
-                                     :sort [{"timestamp" "desc"}
-                                            {"source_ref" "desc"}]})))
-          target-relationships
-          (when (contains? related_to :target_ref)
-            (set (scroll-with-limit :target_ref store
-                                    {:query (node-filters (format "target_ref:(%s)" ids))}
-                                    identity-map
-                                    {:limit limit
-                                     :sort [{"timestamp" "desc"}
-                                            {"target_ref" "desc"}]})))
-          res (set/union source-relationships target-relationships)]
+          res (into #{}
+                    (mapcat #(scroll-with-limit % store
+                                                (relationships-filter records % source_type target_type)
+                                                identity-map
+                                                {:limit limit
+                                                 :sort [{"timestamp" "desc"}
+                                                        {(name %) "desc"}]}))
+                    (set related_to))]
       (send-event {:service "Export bundle fetch relationships"
                    :correlation-id correlation-id
                    :time (get-epoch-second)
@@ -456,6 +457,24 @@
   {:type "bundle"
    :source "ctia"})
 
+(defn- combine-bundle
+  "Create a bundle from sets of records, relationships and its targets.
+  Uses `empty-bundle` as basis."
+  [records relationships targets]
+  (let [records-bundle (group-by #(-> (:type %)
+                                      (keyword)
+                                      (bulk/bulk-key))
+                                 records)]
+    (deep-merge-with coll/add-colls
+                     (reduce-kv
+                      (fn [acc k v]
+                        (assoc acc k (set v)))
+                      empty-bundle
+                      records-bundle)
+                     (when (seq relationships)
+                       {:relationships relationships})
+                     targets)))
+
 (s/defn export-bundle
   [ids identity-map ident params
    {{:keys [send-event]} :RiemannService
@@ -471,19 +490,8 @@
           relationships (when (:include_related_entities params true)
                           (map #(ent/with-long-id % services)
                                (fetch-relationships records identity-map params services)))
-          relationship-targets (fetch-relationship-targets relationships ident services)
-          res (deep-merge-with coll/add-colls
-                               (reduce-kv
-                                (fn [acc k v]
-                                  (assoc acc k (set v)))
-                                empty-bundle
-                                (group-by #(-> (:type %)
-                                               (keyword)
-                                               (bulk/bulk-key))
-                                          records))
-                               (when (seq relationships)
-                                 {:relationships relationships})
-                               relationship-targets)]
+          targets (fetch-targets relationships ident services)
+          res (combine-bundle records relationships targets)]
       (send-event {:service "Export bundle end"
                    :correlation-id correlation-id
                    :time (get-epoch-second)
