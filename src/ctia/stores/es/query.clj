@@ -3,7 +3,6 @@
    [clojure.string :as str]
    [ctia.domain.access-control :as ac]
    [ctia.schemas.search-agg :refer [FullTextQuery]]
-   [ctia.stores.es.schemas :refer [ESConnState]]
    [schema-tools.core :as st]
    [schema.core :as s]))
 
@@ -122,7 +121,11 @@ Returns a map where key is path to a field, and value - path to the nested text 
    fields :- [s/Any]]
   (let [{{{:keys [flag-value]} :FeaturesService} :services} es-conn-state]
     (when (= "true" (flag-value :translate-searchable-fields))
-      (let [properties (some-> es-conn-state :config :mappings first second :properties)
+      (let [es-version (get-in es-conn-state [:props :version])
+            mappings (some-> es-conn-state :config :mappings)
+            properties (cond-> mappings
+                         (= 5 es-version) (-> first second)
+                         :always :properties)
             mapping (searchable-fields-map properties)]
         (when (seq fields)
           (mapv (comp #(get mapping % %) name) fields))))))
