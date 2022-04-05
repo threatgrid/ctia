@@ -402,6 +402,8 @@
   {:query (cond->> [(format "%s:(%s)" (name related-to) (string/join " OR " (map #(format "\"%s\"" %) (map :id records))))]
             source-type (cons (format "source_ref:*%s*" (name source-type)))
             target-type (cons (format "target_ref:*%s*" (name target-type)))
+            ;; NOTE reverse is important to ensure more strict filter `source_ref:("id1" OR "id2")`
+            ;;      takes precedence over wildcard filter
             :always (reverse)
             :always (string/join " AND "))})
 
@@ -423,7 +425,8 @@
                                                 identity-map
                                                 {:limit limit
                                                  :sort [{"timestamp" "desc"}
-                                                        {(name %) "desc"}]}))
+                                                        {(name %) "desc"}
+                                                        {"id" "desc"}]}))
                     (set related_to))]
       (send-event {:service "Export bundle fetch relationships"
                    :correlation-id correlation-id
