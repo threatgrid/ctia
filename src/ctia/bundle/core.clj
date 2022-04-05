@@ -425,8 +425,7 @@
                                                 identity-map
                                                 {:limit limit
                                                  :sort [{"timestamp" "desc"}
-                                                        {(name %) "desc"}
-                                                        {"id" "desc"}]}))
+                                                        {(name %) "desc"}]}))
                     (set related_to))]
       (send-event {:service "Export bundle fetch relationships"
                    :correlation-id correlation-id
