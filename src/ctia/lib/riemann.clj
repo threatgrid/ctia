@@ -4,7 +4,7 @@
             [riemann.client :as riemann]
             [ctia.lib.utils :as utils])
   (:import [clojure.lang ExceptionInfo]
-           [io.riemann.riemann.client RiemannClient]))
+           [io.riemann.riemann.client RiemannBatchClient]))
 
 ;; based on riemann-reporter.core/request-to-event
 (defn request->event
@@ -181,5 +181,5 @@
            :conn conn
            :service-prefix service-prefix)))
 
-(defn stop [{:keys [^RiemannClient conn]}]
+(defn stop [{:keys [^RiemannBatchClient conn]}]
   (when conn (.close conn)))
