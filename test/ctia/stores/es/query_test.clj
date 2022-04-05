@@ -110,9 +110,10 @@
 (deftest rename-search-fields-map-test
   (doseq [es-version [5 7]]
     (helpers/with-properties
-      ["ctia.feature-flags" "translate-searchable-fields:true"
-       "ctia.store.es.default.port" (+ 9200 es-version)
-       "ctia.store.es.default.version" es-version]
+      (cond-> ["ctia.feature-flags" "translate-searchable-fields:true"
+               "ctia.store.es.default.port" (+ 9200 es-version)
+               "ctia.store.es.default.version" es-version]
+        (= es-version 7) (concat es-helpers/basic-auth-properties))
       (helpers/fixture-ctia-with-app
        (fn [app]
          (let [conn-state (:state (helpers/get-store app :sighting))]
