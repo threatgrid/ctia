@@ -1,7 +1,8 @@
 #! /usr/bin/env bb
 
 (require '[clojure.pprint :as pp])
-(import '[java.io File])
+(import '[java.io File]
+        '[java.time Duration])
 
 (defn summarize []
   (let [timing-for-prefix (fn [file-prefix]
@@ -15,7 +16,14 @@
         ns-timing (timing-for-prefix "ns-timing")
         sorted-ns-timing (sort-by (comp :elapsed-ns val) > ns-timing)
         var-timing (timing-for-prefix "var-timing")
-        sorted-var-timing (sort-by (comp :elapsed-ns val) > var-timing)]
+        sorted-var-timing (sort-by (comp :elapsed-ns val) > var-timing)
+        humanize-ns (fn [ns]
+                      (str (Duration/ofNanos ns)))
+        humanize (fn [ts]
+                   (mapv (fn [[k {:keys [elapsed-ns] :as t}]]
+                           (assert (number? elapsed-ns) (pr-str t))
+                           [k (assoc t :ISO-8601 (humanize-ns elapsed-ns))])
+                         ts))]
     (when-some [expected (let [f (File. "dev-resources/ctia_test_timings.edn")]
                            (when (.exists f)
                              (-> f
