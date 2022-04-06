@@ -29,8 +29,8 @@
                              (-> f
                                  slurp
                                  read-string)))]
-      (println (str "Expected test duration: " (humanize-ns (apply + (map :elapsed-ns (vals expected)))))))
-    (println (str "Actual test duration: " (humanize-ns (apply + (map :elapsed-ns (vals ns-timing))))))
+      (println (str "Expected test duration: " (humanize-ns (apply +' (map :elapsed-ns (vals expected)))))))
+    (println (str "Actual test duration: " (humanize-ns (apply +' (map :elapsed-ns (vals ns-timing))))))
     (println "\nTest namespace summary (slowest to fastest):")
     (pp/pprint (humanize sorted-ns-timing))
     (println "\nTest var summary (slowest to fastest):")
