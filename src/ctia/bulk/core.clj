@@ -97,9 +97,15 @@
     :as services} :- ReadEntitiesServices]
   (let [store (get-store entity-type)]
     (map #(when %
-            (with-long-id % services))
+            (try
+              (with-long-id % services)
+              (catch Exception e
+                (log/error (pr-str e)))))
          (binding [es-crud/*throw-access-control-error?* false]
-           (store/read-records store ids auth-identity {})))))
+           (try
+             (store/read-records store ids auth-identity {})
+             (catch Exception e
+               (log/error (pr-str e))))))))
 
 (defn to-long-id
   [id services]
