@@ -890,23 +890,23 @@
 
              [indicator-id-1
               indicator-id-2
-              indicator-id-3] (->> (:indicator by-type)
-                                   (sort-by :external_ids)
-                                   (map :id))
+              _indicator-id-3] (->> (:indicator by-type)
+                                    (sort-by :external_ids)
+                                    (map :id))
              [incident-id-1
               incident-id-2] (->> (:incident by-type)
-                                   (sort-by :external_ids)
-                                   (map :id))
+                                  (sort-by :external_ids)
+                                  (map :id))
              [relationship-id-1
               relationship-id-2
               relationship-id-3
-              relationship-id-4
+              _relationship-id-4
               relationship-id-5
               relationship-id-6
               relationship-id-7
-              relationship-id-8] (->> (:relationship by-type)
-                                      (sort-by :external_ids)
-                                      (map :id))
+              _relationship-id-8] (->> (:relationship by-type)
+                                       (sort-by :external_ids)
+                                       (map :id))
              ;; related to queries
              bundle-from-source
              (:parsed-body
@@ -1018,9 +1018,9 @@
                                         set)))
            (is (= #{relationship-id-5
                     relationship-id-7} (->> bundle-incident-target-get
-                                        :relationships
-                                        (map :id)
-                                        set)))
+                                            :relationships
+                                            (map :id)
+                                            set)))
            (is (nil?  (:indicators bundle-incident-target-get)))
            (is (= bundle-incident-target-get bundle-incident-target-post))))))))
 

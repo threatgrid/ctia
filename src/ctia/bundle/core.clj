@@ -393,7 +393,10 @@
          (if (empty? chunks)
            (recur (into acc (take limit (concat prev-data chunk)))
                   [] f store filter-map identity-map
-                  (assoc params-map :search_after search_after))
+                  ;; HACK The second element must contain a numeric value that is guaranteed not to be contained in any document.
+                  ;;      For the timestamp, the value is -1.
+                  ;;      Only in this case, using "search_after" will ensure that the cursor moves to the next identifier.
+                  (assoc params-map :search_after [(first search_after) -1]))
            (recur (reduce into acc (cons (take limit (concat prev-data chunk)) (butlast chunks)))
                   (last chunks) f store filter-map identity-map
                   (assoc params-map :offset offset))))))))
@@ -424,8 +427,8 @@
                                                 (relationships-filter records % source_type target_type)
                                                 identity-map
                                                 {:limit limit
-                                                 :sort [{"timestamp" "desc"}
-                                                        {(name %) "desc"}]}))
+                                                 :sort [{(name %) "desc"}
+                                                        {"timestamp" "desc"}]}))
                     (set related_to))]
       (send-event {:service "Export bundle fetch relationships"
                    :correlation-id correlation-id
