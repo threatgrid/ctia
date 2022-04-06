@@ -29,18 +29,12 @@
                              (-> f
                                  slurp
                                  read-string)))]
-      (println (str "Expected test duration: "
-                    (/ (apply + (map :elapsed-ns (vals expected)))
-                       1e9)
-                    " seconds")))
-    (println (str "Actual test duration: "
-                  (/ (apply + (map :elapsed-ns (vals ns-timing)))
-                     1e9)
-                  " seconds"))
+      (println (str "Expected test duration: " (humanize-ns (apply + (map :elapsed-ns (vals expected)))))))
+    (println (str "Actual test duration: " (humanize-ns (apply + (map :elapsed-ns (vals ns-timing))))))
     (println "\nTest namespace summary (slowest to fastest):")
-    (pp/pprint sorted-ns-timing)
+    (pp/pprint (humanize sorted-ns-timing))
     (println "\nTest var summary (slowest to fastest):")
-    (pp/pprint sorted-var-timing)
+    (pp/pprint (humanize sorted-var-timing))
     (-> (File. "target/test-results") .mkdirs)
     (spit "target/test-results/all-test-var-timings.edn" var-timing)
     (spit "target/test-results/all-test-timings.edn" ns-timing)))
