@@ -168,7 +168,7 @@
                             ;; sut/system-exit-error is redefined to check if
                             ;; it was called but avoid to actually System/exit
                             ;; thus testing the output makes sense only on success
-                            (when expected-successful?
+                            (when (some? expected-successful?)
                               (is (= expected-output ouput)))
                             (is (= expected-successful? @successful?)))))
 
