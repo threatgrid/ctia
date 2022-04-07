@@ -362,6 +362,13 @@
                    :metric (- (System/currentTimeMillis) start)})
       (clean-bundle fetched))))
 
+(defn- into-acc [acc f data]
+  (reduce-kv
+   (fn [acc id records]
+     (update acc id concat records))
+   acc
+   (group-by f data)))
+
 (defn- scroll-with-limit
   "Extension for store/list-records method.
 
@@ -382,24 +389,24 @@
           2. results list begins with records belong to the same id but then the tail might have 1-N partitions.
              That means the last partition in result list is incomplete and we must use `offset` to fetch next page."
   ([f store filter-map identity-map params-map]
-   (scroll-with-limit [] [] f store filter-map identity-map params-map))
-  ([acc prev-data f store filter-map identity-map {:keys [limit] :as params-map}]
+   (scroll-with-limit {} [] f store filter-map identity-map params-map))
+  ([acc prev-data f store filter-map identity-map params-map]
    (let [{data :data {{:keys [offset search_after] :as next} :next} :paging}
          (store/list-records store filter-map identity-map params-map)
-         params-map (select-keys params-map [:limit :sort])]
+         params-map (select-keys params-map [:limit :sort])
+         [chunk & chunks] (partition-by f data)]
      (if (nil? next)
-       (into acc (take limit (concat prev-data data)))
-       (let [[chunk & chunks] (partition-by f data)]
-         (if (empty? chunks)
-           (recur (into acc (take limit (concat prev-data chunk)))
-                  [] f store filter-map identity-map
-                  ;; HACK The second element must contain a numeric value that is guaranteed not to be contained in any document.
-                  ;;      For the timestamp, the value is -1.
-                  ;;      Only in this case, using "search_after" will ensure that the cursor moves to the next identifier.
-                  (assoc params-map :search_after [(first search_after) -1]))
-           (recur (reduce into acc (cons (take limit (concat prev-data chunk)) (butlast chunks)))
-                  (last chunks) f store filter-map identity-map
-                  (assoc params-map :offset offset))))))))
+       (into-acc acc f (concat prev-data data))
+       (if (empty? chunks)
+         (recur (into-acc acc f (concat prev-data chunk))
+                [] f store filter-map identity-map
+                ;; HACK The second element must contain a numeric value that is guaranteed not to be contained in any document.
+                ;;      For the timestamp, the value is -1.
+                ;;      Only in this case, using "search_after" will ensure that the cursor moves to the next identifier.
+                (assoc params-map :search_after [(first search_after) -1]))
+         (recur (into-acc acc f (apply concat prev-data chunk (butlast chunks)))
+                (last chunks) f store filter-map identity-map
+                (assoc params-map :offset offset)))))))
 
 (defn relationships-filter [records related-to source-type target-type]
   {:query (cond->> [(format "%s:(%s)" (name related-to) (string/join " OR " (map #(format "\"%s\"" %) (map :id records))))]
@@ -423,13 +430,24 @@
           store (get-store :relationship)
           limit (get-in-config [:ctia :http :bundle :export :max-relationships] 1000)
           res (into #{}
-                    (mapcat #(scroll-with-limit % store
-                                                (relationships-filter records % source_type target_type)
-                                                identity-map
-                                                {:limit limit
-                                                 :sort [{(name %) "desc"}
-                                                        {"timestamp" "desc"}]}))
-                    (set related_to))]
+                    (comp
+                     ;; sort by timestamp to mix relationships from :source_ref and :target_ref together
+                     ;; use "reverse" comparator to sort from newest to oldest
+                     (map #(sort-by :timestamp (fn [a b] (.after a b)) %))
+                     ;; apply limit for each id to respect configured constraint
+                     (mapcat #(take limit %)))
+                    (vals
+                     (transduce
+                      ;; map over the list of desired related_to
+                      ;; scroll-with-limit returns a mapping from record-id to relationships
+                      (map #(scroll-with-limit % store
+                                               (relationships-filter records % source_type target_type)
+                                               identity-map
+                                               {:limit limit
+                                                :sort [{(name %) "desc"}
+                                                       {"timestamp" "desc"}]}))
+                      #(apply merge-with concat %&)
+                      (set related_to))))]
       (send-event {:service "Export bundle fetch relationships"
                    :correlation-id correlation-id
                    :time (get-epoch-second)
