@@ -150,7 +150,7 @@
 (deftest get-existing-indices-test
   (let [indexname (gen-indexname)]
     (helpers/with-config-transformer
-      #(assoc-in [:ctia :store :es :default :ctia.task.update-index-state/update-index-state-task] true)
+      #(assoc-in % [:ctia :store :es :default :ctia.task.update-index-state/update-index-state-task] true)
       (for-each-es-version
         "get-existing-indices should retrieve existing indices if any."
         [5 7]
