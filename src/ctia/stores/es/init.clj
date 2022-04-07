@@ -166,8 +166,9 @@
         (init-store-conn properties services)
         existing-indices (get-existing-indices conn index)]
     (if (seq existing-indices)
-      (when (:ctia.task.update-index-state/update-index-state-task props)
-        (update-index-state conn-state))
+      (if (:ctia.task.update-index-state/update-index-state-task props)
+        (update-index-state conn-state)
+        (log/info "Not in update-index-state task, skipping update-index-state"))
       (upsert-template! conn-state))
     (when (and (:aliased props)
                (empty? existing-indices))
