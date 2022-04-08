@@ -10,7 +10,6 @@
    [ctia.schemas.core :as schemas :refer [APIHandlerServices]]
    [ctia.schemas.utils :as csu]
    [ctia.store :as store]
-   [ctia.stores.es.crud :as es-crud]
    [ring.util.http-response :refer [bad-request!]]
    [schema-tools.core :as st]
    [schema.core :as s]
@@ -100,12 +99,11 @@
             (try
               (with-long-id % services)
               (catch Exception e
-                (log/error (pr-str e)))))
-         (binding [es-crud/*throw-access-control-error?* false]
-           (try
-             (store/read-records store ids auth-identity {})
-             (catch Exception e
-               (log/error (pr-str e))))))))
+                (log/error e))))
+         (try
+           (store/read-records store ids auth-identity {:suppress-access-control-error? true})
+           (catch Exception e
+             (log/error e))))))
 
 (defn to-long-id
   [id services]

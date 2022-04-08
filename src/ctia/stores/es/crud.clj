@@ -206,12 +206,6 @@ It returns the documents with full hits meta data including the real index in wh
           (throw (ex-info "You are not allowed to read this document"
                           {:type :access-control-error})))))))
 
-(def ^:dynamic *throw-access-control-error?*
-  "This is a hack to keep previous logic the same.
-  But it is better to not throw errors in case of 'access control error'
-  to prevent potential security issues."
-  true)
-
 (defn handle-read-many
   "Generate an ES read-many handler using some mapping and schema"
   [Model]
@@ -223,7 +217,9 @@ It returns the documents with full hits meta data including the real index in wh
        :- ESConnState
        ids :- [s/Str]
        ident
-       es-params]
+       {:keys [suppress-access-control-error?]
+        :or {suppress-access-control-error? false}
+        :as es-params}]
       (sequence
        (comp (map :_source)
              (map coerce!)
@@ -232,9 +228,9 @@ It returns the documents with full hits meta data including the real index in wh
                       record
                       (let [ex (ex-info "You are not allowed to read this document"
                                         {:type :access-control-error})]
-                        (if *throw-access-control-error?*
-                          (throw ex)
-                          (log/error (pr-str ex))))))))
+                        (if suppress-access-control-error?
+                          (log/error ex)
+                          (throw ex)))))))
        (get-docs-with-indices conn-state ids (make-es-read-params es-params))))))
 
 (defn access-control-filter-list
