@@ -3,6 +3,8 @@
 (def cheshire-version "5.10.2")
 (def clj-http-fake-version "1.0.3")
 (def clj-version "1.10.1")
+(def jackson-version "2.12.6")
+(def jackson-databind-version "2.12.6.1")
 (def metrics-clojure-version "2.10.0")
 (def netty-version "4.1.75.Final")
 (def perforate-version "0.3.4")
@@ -60,7 +62,7 @@
     [threatgrid/ctim "1.1.11"]
     [instaparse/instaparse "1.4.10"] ;; com.gfredericks/test.chuck > threatgrid/ctim
     [threatgrid/clj-momo "0.3.5"]
-    [threatgrid/ductile "0.4.2"]
+    [threatgrid/ductile "0.4.4"]
 
     [com.arohner/uri "0.1.2"]
 
@@ -121,8 +123,11 @@
     ;; Notes on jackson-databind:
     ;; - overrides org.onyxplatform/onyx-kafka and others
     ;; - some 2.9.x versions of jackson-databind and earlier have known exploits
-    ;; - 2.12.4 is the same as cheshire's jackson-core dependency
-    [com.fasterxml.jackson.core/jackson-databind "2.12.4"]
+		;; - jackson-databind 2.12.6 is vulnerable, 2.12.6.1 has fix (version does not exist for other jackson deps)
+		[com.fasterxml.jackson.core/jackson-core ~jackson-version] ;; bump cheshire, align with jackson-databind
+		[com.fasterxml.jackson.dataformat/jackson-dataformat-smile ~jackson-version] ;; bump cheshire, align with jackson-databind
+		[com.fasterxml.jackson.dataformat/jackson-dataformat-cbor ~jackson-version] ;; bump cheshire, align with jackson-databind
+		[com.fasterxml.jackson.core/jackson-databind ~jackson-databind-version] ;; bump onyx-kafka and others
     [zookeeper-clj/zookeeper-clj "0.9.4"]
 
     ;; GraphQL

@@ -408,15 +408,15 @@
 
 (deftest enforcing-fields-with-feature-flag-test
   (testing "unit testing enforce-search-fields"
-    (are [query-params fields expected-search-fields]
+    (are [fields expected-search-fields]
          (let [res (es.query/enforce-search-fields
                     {:props {:entity :incident}
                      :searchable-fields #{:foo :bar :zap}
                      :services {:FeaturesService {:flag-value (constantly "true")}}}
                     fields)]
            (is (= expected-search-fields res)))
-      {:query "*"} [] ["zap" "bar" "foo"]
-      {:query "*"} ["title" "description"] ["title" "description"]))
+      [] ["zap" "bar" "foo"]
+      ["title" "description"] ["title" "description"]))
   (testing "feature flag set? fields should be enforced"
     (reset! enforced-fields-flag-query-params nil)
     (helpers/with-properties

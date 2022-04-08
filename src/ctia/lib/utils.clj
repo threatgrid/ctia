@@ -11,6 +11,7 @@
                                "key"
                                "basic-auth"
                                "pass"
+                               "pwd"
                                "secret"
                                "tempfile"
                                "response-url"
