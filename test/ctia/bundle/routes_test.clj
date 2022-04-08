@@ -885,18 +885,17 @@
 
              [sighting-id-1
               sighting-id-2] (->> (:sighting by-type)
-              (sort-by :external_ids)
-              (map :id))
-
+                                  (sort-by :external_ids)
+                                  (map :id))
              [indicator-id-1
               indicator-id-2
               indicator-id-3] (->> (:indicator by-type)
-              (sort-by :external_ids)
-              (map :id))
+                                   (sort-by :external_ids)
+                                   (map :id))
              [incident-id-1
               incident-id-2] (->> (:incident by-type)
-              (sort-by :external_ids)
-              (map :id))
+                                  (sort-by :external_ids)
+                                  (map :id))
              [relationship-id-1
               relationship-id-2
               relationship-id-3
@@ -905,8 +904,8 @@
               relationship-id-6
               relationship-id-7
               relationship-id-8] (->> (:relationship by-type)
-              (sort-by :external_ids)
-              (map :id))
+                                      (sort-by :external_ids)
+                                      (map :id))
              ;; related to queries
              bundle-from-source
              (:parsed-body
@@ -975,14 +974,14 @@
            (is (= #{relationship-id-1
                     relationship-id-2
                     relationship-id-6} (->> bundle-from-source
-                    :relationships
-                    (map :id)
-                    set)))
+                                            :relationships
+                                            (map :id)
+                                            set)))
            (is (= #{indicator-id-1
                     indicator-id-2} (->> bundle-from-source
-                    :indicators
-                    (map :id)
-                    set)))
+                                         :indicators
+                                         (map :id)
+                                         set)))
            (is (= #{sighting-id-1} (->> bundle-from-source
                                         :sightings
                                         (map :id)
@@ -994,14 +993,14 @@
                                          set)))
            (is (= #{relationship-id-1
                     relationship-id-3} (->> bundle-from-target-1
-                    :relationships
-                    (map :id)
-                    set)))
+                                            :relationships
+                                            (map :id)
+                                            set)))
            (is (= #{sighting-id-1
                     sighting-id-2} (->> bundle-from-target-1
-                    :sightings
-                    (map :id)
-                    set)))
+                                        :sightings
+                                        (map :id)
+                                        set)))
 
            (is (= #{relationship-id-2} (->> bundle-from-target-2
                                             :relationships
@@ -1018,14 +1017,14 @@
          (testing "source_type and target_type should filter relationships nodes from their type"
            (is (= #{sighting-id-1
                     sighting-id-2} (->> bundle-sighting-source
-                    :sightings
-                    (map :id)
-                    set)))
+                                        :sightings
+                                        (map :id)
+                                        set)))
            (is (= #{relationship-id-6
                     relationship-id-7} (->> bundle-sighting-source
-                    :relationships
-                    (map :id)
-                    set)))
+                                            :relationships
+                                            (map :id)
+                                            set)))
            (is (nil?  (:indicators bundle-sighting-source)))
 
            (is (seq (:indicators bundle-sighting+indicator-source)))
@@ -1033,14 +1032,14 @@
 
            (is (= #{incident-id-1
                     incident-id-2} (->> bundle-incident-target-get
-                    :incidents
-                    (map :id)
-                    set)))
+                                        :incidents
+                                        (map :id)
+                                        set)))
            (is (= #{relationship-id-5
                     relationship-id-7} (->> bundle-incident-target-get
-                    :relationships
-                    (map :id)
-                    set)))
+                                            :relationships
+                                            (map :id)
+                                            set)))
            (is (nil?  (:indicators bundle-incident-target-get)))
            (is (= bundle-incident-target-get bundle-incident-target-post))
 

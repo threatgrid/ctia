@@ -367,7 +367,7 @@
                  :metric (- (System/currentTimeMillis) start)})
     (clean-bundle fetched)))
 
-(defn exps [field entity-types]
+(defn node-filters [field entity-types]
   (->> entity-types
        (map name)
        (map #(format "%s:*%s*" field %))
@@ -383,8 +383,8 @@
   (let [edge-filters (->> (map #(hash-map % id) (set related_to))
                           (apply merge))
         node-filters (cond->> []
-                       (seq source_type) (cons (exps "source_ref" source_type))
-                       (seq target_type) (cons (exps "target_ref" target_type))
+                       (seq source_type) (cons (node-filters "source_ref" source_type))
+                       (seq target_type) (cons (node-filters "target_ref" target_type))
                        :always (string/join " AND "))]
     (into {:one-of edge-filters}
           (when (seq node-filters)
