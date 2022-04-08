@@ -82,9 +82,10 @@
          entities []]
     (let [query {:all-of {:external_ids ext-ids}}
           paging {:limit find-by-external-ids-limit}
+          ident-map (auth/ident->map auth-identity)
           {results :data
            {next-page :next} :paging} (-> (get-store entity-type)
-                                          (store/list-records query (auth/ident->map auth-identity) paging))
+                                          (store/list-records query ident-map paging))
           acc-entities (into entities results)
           matched-ext-ids (into #{} (mapcat :external_ids results))
           remaining-ext-ids (remove matched-ext-ids ext-ids)]
@@ -372,22 +373,28 @@
 (defn- scroll-with-limit
   "Extension for store/list-records method.
 
-  First argument should be a function taking a single record and returning a value
+  First argument should be a function taking a single record and returns a value
   used to group paginated records.
 
   eg. `:source_ref` to fetch all records limited by `:source_ref` field.
 
-  NOTE: `params-map` must contain `:sort` instruction with the fields based on which you wish to limit responses.
-  NOTE: `params-map` must contain `:limit` instruction to set maximum amount of entities fetched by page.
+  NOTE:
+  `params-map` must contain `:sort` instruction with the fields based on which
+  you wish to limit responses. And `:limit` instruction to set maximum amount of
+  entities fetched by page.
 
-  NOTE: `search_after` and `offset` usage
-        The result of each invocation of `list-records` can have two main possible cases:
+  NOTE:
+  `search_after` and `offset` usage
 
-          1. all results belong to the same record
-             in that case next call to `list-records` must use `search_after` to 'fast forward' the cursor to the next
-             record id.
-          2. results list begins with records belong to the same id but then the tail might have 1-N partitions.
-             That means the last partition in result list is incomplete and we must use `offset` to fetch next page."
+  There are two case to invoke `ctia.store/list-records`:
+
+  1. all results belong to the same record
+     in that case next call to `list-records` must use `search_after` to
+     'fast-forward' the cursor to the next record id.
+
+  2. results list begins with records belong to the same id and the tail might
+     have 1-N partitions. That means the last partition in result list is
+     incomplete and we must use `offset` to fetch next page."
   ([f store filter-map identity-map params-map]
    (scroll-with-limit {} [] f store filter-map identity-map params-map))
   ([acc prev-data f store filter-map identity-map params-map]
@@ -400,19 +407,28 @@
        (if (empty? chunks)
          (recur (into-acc acc f (concat prev-data chunk))
                 [] f store filter-map identity-map
-                ;; HACK The second element must contain a numeric value that is guaranteed not to be contained in any document.
+                ;; HACK The second element must contain a numeric value
+                ;;      that is guaranteed not to be present in any document.
                 ;;      For the timestamp, the value is -1.
-                ;;      Only in this case, using "search_after" will ensure that the cursor moves to the next identifier.
+                ;;      Only in this case, using "search_after" will ensure
+                ;;      that the cursor moves to the next identifier.
                 (assoc params-map :search_after [(first search_after) -1]))
          (recur (into-acc acc f (apply concat prev-data chunk (butlast chunks)))
                 (last chunks) f store filter-map identity-map
                 (assoc params-map :offset offset)))))))
 
 (defn relationships-filter [records related-to source-type target-type]
-  {:query (cond->> [(format "%s:(%s)" (name related-to) (string/join " OR " (map #(format "\"%s\"" %) (map :id records))))]
+  {:query (cond->> [(format "%s:(%s)"
+                            (name related-to)
+                            (string/join " OR "
+                                         (sequence
+                                          (comp (map :id)
+                                                (map #(format "\"%s\"" %)))
+                                          records)))]
             source-type (cons (format "source_ref:*%s*" (name source-type)))
             target-type (cons (format "target_ref:*%s*" (name target-type)))
-            ;; NOTE reverse is important to ensure more strict filter `source_ref:("id1" OR "id2")`
+            ;; NOTE reverse is important to ensure
+            ;;      more strict filter `source_ref:("id1" OR "id2")`
             ;;      takes precedence over wildcard filter
             :always (reverse)
             :always (string/join " AND "))})
@@ -431,21 +447,29 @@
           limit (get-in-config [:ctia :http :bundle :export :max-relationships] 1000)
           res (into #{}
                     (comp
-                     ;; sort by timestamp to mix relationships from :source_ref and :target_ref together
-                     ;; use "reverse" comparator to sort from newest to oldest
+                     ;; sort by timestamp to mix relationships from :source_ref
+                     ;; and :target_ref together
+                     ;; uses "reverse" comparator for java.util.Date
+                     ;; to sort from newest to oldest
                      (map #(sort-by :timestamp (fn [a b] (.after a b)) %))
                      ;; apply limit for each id to respect configured constraint
                      (mapcat #(take limit %)))
                     (vals
                      (transduce
                       ;; map over the list of desired related_to
-                      ;; scroll-with-limit returns a mapping from record-id to relationships
-                      (map #(scroll-with-limit % store
-                                               (relationships-filter records % source_type target_type)
-                                               identity-map
-                                               {:limit limit
-                                                :sort [{(name %) "desc"}
-                                                       {"timestamp" "desc"}]}))
+                      ;; scroll-with-limit returns a mapping
+                      ;; from record-id to relationships
+                      (map (fn [related-to]
+                             (let [filters-map (relationships-filter records
+                                                                     related-to
+                                                                     source_type
+                                                                     target_type)]
+                               (scroll-with-limit related-to store
+                                                  filters-map
+                                                  identity-map
+                                                  {:limit limit
+                                                   :sort [{(name related-to) "desc"}
+                                                          {"timestamp" "desc"}]}))))
                       #(apply merge-with concat %&)
                       (set related_to))))]
       (send-event {:service "Export bundle fetch relationships"
