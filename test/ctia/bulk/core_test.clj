@@ -30,7 +30,9 @@
                                  :judgement
                                  identity-singleton
                                  {:ConfigService {:get-in-config get-in-config}
-                                  :StoreService {:get-store (constantly nil)}})]
+                                  :StoreService {:get-store (constantly (reify ctia.store/IStore
+                                                                          (read-records [_ _ _ _]
+                                                                            [nil])))}})]
       (is (= [nil] res)))))
 
 (defn schema->keys
@@ -277,14 +279,14 @@
 
            (testing "bulk-update shall properly update submitties entitites"
              (let [other-group-res (sut/update-bulk bulk-update
-                                                   other-group-ident
-                                                   {:refresh "true"}
-                                                   services)
+                                                    other-group-ident
+                                                    {:refresh "true"}
+                                                    services)
                    {:keys [sightings indicators]}
                    (sut/update-bulk bulk-update
-                                   ident
-                                   {:refresh "true"}
-                                   services)]
+                                    ident
+                                    {:refresh "true"}
+                                    services)]
                (check-tlp other-group-res)
                (is (= #{missing-id-1 missing-id-2} (set (get-in indicators [:errors :not-found]))))
                (is (nil? (:not-found sightings)))
