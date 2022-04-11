@@ -738,7 +738,6 @@
          (is (= {:type "bundle"
                  :source "ctia"} bundle-post-res-empty-ids)
              "POST bundle/export with an empty ids list should return an empty bundle"))))))
-
 (deftest bundle-export-with-unreachable-entities
   (testing "external and deleted entities in fetched relationships should be ignored"
     (test-for-each-store-with-app
@@ -890,23 +889,23 @@
 
              [indicator-id-1
               indicator-id-2
-              _indicator-id-3] (->> (:indicator by-type)
-                                    (sort-by :external_ids)
-                                    (map :id))
+              indicator-id-3] (->> (:indicator by-type)
+                                   (sort-by :external_ids)
+                                   (map :id))
              [incident-id-1
               incident-id-2] (->> (:incident by-type)
-                                  (sort-by :external_ids)
-                                  (map :id))
+                                   (sort-by :external_ids)
+                                   (map :id))
              [relationship-id-1
               relationship-id-2
               relationship-id-3
-              _relationship-id-4
+              relationship-id-4
               relationship-id-5
               relationship-id-6
               relationship-id-7
-              _relationship-id-8] (->> (:relationship by-type)
-                                       (sort-by :external_ids)
-                                       (map :id))
+              relationship-id-8] (->> (:relationship by-type)
+                                      (sort-by :external_ids)
+                                      (map :id))
              ;; related to queries
              bundle-from-source
              (:parsed-body
@@ -1018,184 +1017,11 @@
                                         set)))
            (is (= #{relationship-id-5
                     relationship-id-7} (->> bundle-incident-target-get
-                                            :relationships
-                                            (map :id)
-                                            set)))
+                                        :relationships
+                                        (map :id)
+                                        set)))
            (is (nil?  (:indicators bundle-incident-target-get)))
            (is (= bundle-incident-target-get bundle-incident-target-post))))))))
-
-(deftest bundle-export-scroll-search-result-test
-  (testing "respect max relationships config when relationships related to one id"
-    (testing "more than set as a limit"
-      (let [indicators (map mk-indicator (range 200))
-            sightings (map mk-sighting (range 10))
-            relationships (map
-                           (fn [idx indicator sighting]
-                             (mk-relationship idx indicator sighting "indicates"))
-                           (range)
-                           indicators
-                           (cycle sightings))
-            bundle {:type "bundle"
-                    :source "source"
-                    :indicators (set indicators)
-                    :sightings (set sightings)
-                    :relationships (set relationships)}
-            max-relationships 2]
-        (helpers/with-properties ["ctia.http.bundle.export.max-relationships" max-relationships]
-          (test-for-each-store-with-app
-           (fn [app]
-             (helpers/set-capabilities! app "foouser" ["foogroup"] "user" (all-capabilities))
-             (whoami-helpers/set-whoami-response app
-                                                 "45c1f5e3f05d0"
-                                                 "foouser"
-                                                 "foogroup"
-                                                 "user")
-             (let [imported-bundle (POST app
-                                         "ctia/bundle/import"
-                                         :body bundle
-                                         :headers {"Authorization" "45c1f5e3f05d0"})
-                   sighting-ids (->> (-> imported-bundle :parsed-body :results)
-                                     (filter #(= (:type %) :sighting))
-                                     (map :id))
-                   exported-bundle
-                   (:parsed-body
-                    (GET app
-                         "ctia/bundle/export"
-                         :query-params {:ids sighting-ids}
-                         :headers {"Authorization" "45c1f5e3f05d0"}))]
-               (is (= (* max-relationships (count sighting-ids))
-                      (count (:relationships exported-bundle))))))))))
-
-    (testing "less than set as a limit"
-      (let [indicators (map mk-indicator (range 200))
-            sightings (map mk-sighting (range 10))
-            relationships (map
-                           (fn [idx indicator sighting]
-                             (mk-relationship idx indicator sighting "indicates"))
-                           (range)
-                           indicators
-                           (cycle sightings))
-            bundle {:type "bundle"
-                    :source "source"
-                    :indicators (set indicators)
-                    :sightings (set sightings)
-                    :relationships (set relationships)}
-            max-relationships 90]
-        (helpers/with-properties ["ctia.http.bundle.export.max-relationships" max-relationships]
-          (test-for-each-store-with-app
-           (fn [app]
-             (helpers/set-capabilities! app "foouser" ["foogroup"] "user" (all-capabilities))
-             (whoami-helpers/set-whoami-response app
-                                                 "45c1f5e3f05d0"
-                                                 "foouser"
-                                                 "foogroup"
-                                                 "user")
-             (let [imported-bundle (POST app
-                                         "ctia/bundle/import"
-                                         :body bundle
-                                         :headers {"Authorization" "45c1f5e3f05d0"})
-                   sighting-ids (->> (-> imported-bundle :parsed-body :results)
-                                     (filter #(= (:type %) :sighting))
-                                     (map :id))
-                   exported-bundle
-                   (:parsed-body
-                    (GET app
-                         "ctia/bundle/export"
-                         :query-params {:ids sighting-ids}
-                         :headers {"Authorization" "45c1f5e3f05d0"}))]
-               (is (= (count relationships)
-                      (count (:relationships exported-bundle)))))))))))
-
-  (testing "different timestamps"
-    (let [indicators (map mk-indicator (range 200))
-          sightings (map mk-sighting (range 10))
-          bundles (map (fn [sightings indicators ids]
-                         (let [relationships (map
-                                              (fn [idx indicator sighting]
-                                                (mk-relationship idx indicator sighting "indicates"))
-                                              ids
-                                              indicators
-                                              (cycle sightings))]
-                           {:type "bundle"
-                            :source "source"
-                            :indicators (set indicators)
-                            :sightings (set sightings)
-                            :relationships (set relationships)}))
-                       (partition 2 sightings)
-                       (partition 40 indicators)
-                       (partition 40 (range)))
-          max-relationships 2]
-      (helpers/with-properties ["ctia.http.bundle.export.max-relationships" max-relationships]
-        (test-for-each-store-with-app
-         (fn [app]
-           (helpers/set-capabilities! app "foouser" ["foogroup"] "user" (all-capabilities))
-           (whoami-helpers/set-whoami-response app
-                                               "45c1f5e3f05d0"
-                                               "foouser"
-                                               "foogroup"
-                                               "user")
-           (let [sighting-ids (doall (mapcat (fn [bundle]
-                                               (let [imported-bundle (POST app
-                                                                           "ctia/bundle/import"
-                                                                           :body bundle
-                                                                           :headers {"Authorization" "45c1f5e3f05d0"})]
-                                                 (->> (-> imported-bundle :parsed-body :results)
-                                                      (filter #(= (:type %) :sighting))
-                                                      (map :id))))
-                                             bundles))
-                 exported-bundle
-                 (:parsed-body
-                  (GET app
-                       "ctia/bundle/export"
-                       :query-params {:ids sighting-ids}
-                       :headers {"Authorization" "45c1f5e3f05d0"}))]
-             (is (= (* max-relationships (count sighting-ids))
-                    (count (:relationships exported-bundle)))))))))
-
-    (let [indicators (map mk-indicator (range 200))
-          sightings (map mk-sighting (range 10))
-          bundles (map (fn [sightings indicators ids]
-                         (let [relationships (map
-                                              (fn [idx indicator sighting]
-                                                (mk-relationship idx indicator sighting "indicates"))
-                                              ids
-                                              indicators
-                                              (cycle sightings))]
-                           {:type "bundle"
-                            :source "source"
-                            :indicators (set indicators)
-                            :sightings (set sightings)
-                            :relationships (set relationships)}))
-                       (partition 2 sightings)
-                       (partition 40 indicators)
-                       (partition 40 (range)))
-          max-relationships 90]
-      (helpers/with-properties ["ctia.http.bundle.export.max-relationships" max-relationships]
-        (test-for-each-store-with-app
-         (fn [app]
-           (helpers/set-capabilities! app "foouser" ["foogroup"] "user" (all-capabilities))
-           (whoami-helpers/set-whoami-response app
-                                               "45c1f5e3f05d0"
-                                               "foouser"
-                                               "foogroup"
-                                               "user")
-           (let [sighting-ids (doall (mapcat (fn [bundle]
-                                               (let [imported-bundle (POST app
-                                                                           "ctia/bundle/import"
-                                                                           :body bundle
-                                                                           :headers {"Authorization" "45c1f5e3f05d0"})]
-                                                 (->> (-> imported-bundle :parsed-body :results)
-                                                      (filter #(= (:type %) :sighting))
-                                                      (map :id))))
-                                             bundles))
-                 exported-bundle
-                 (:parsed-body
-                  (GET app
-                       "ctia/bundle/export"
-                       :query-params {:ids sighting-ids}
-                       :headers {"Authorization" "45c1f5e3f05d0"}))]
-             (is (= 200
-                    (count (:relationships exported-bundle)))))))))))
 
 (defn with-tlp-property-setting [tlp f]
   (helpers/with-config-transformer*
