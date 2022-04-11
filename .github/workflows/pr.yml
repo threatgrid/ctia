@@ -102,7 +102,7 @@ jobs:
             touch dev-resources/ctia_test_timings.edn
           fi
       - name: Upload current test timing
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           retention-days: 30
           name: current-test-timing
@@ -266,14 +266,14 @@ jobs:
           CTIA_WAIT_DOCKER: 1
 
       - name: Upload test timing
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           retention-days: 1
           name: test-timing
           path: target/test-results/*.edn
       - name: Upload docker compose
         if: ${{ always() }}
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           retention-days: 10
           name: docker-compose${{matrix.this-split.this_split}}.log
@@ -317,7 +317,7 @@ jobs:
         run: ./scripts/summarize-tests.clj
 
       - name: Upload all test timings
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           retention-days: 60
           name: all-test-timings
