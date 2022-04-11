@@ -193,7 +193,7 @@ jobs:
         # depends on LOG_PATH and actions/checkout@v3
         run: docker-compose -f containers/dev/docker-compose.yml up -d &> "${LOG_PATH}/docker-compose.log" &
       - name: Download test timings
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3
         with:
           name: current-test-timing
           path: target/current-test-timing
@@ -308,7 +308,7 @@ jobs:
           key: ctia-timings-${{ env.ACTIONS_CACHE_VERSION }}-${{ env.CTIA_TEST_SUITE }}-${{ github.ref }}-${{ github.sha }}
 
       - name: Download test timings
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3
         with:
           name: test-timing
           path: target/test-results
