@@ -53,7 +53,6 @@
 
 (def create-fn (crud/handle-create :sighting ESStoredSighting))
 (def read-fn (crud/handle-read ESPartialStoredSighting))
-(def read-many-fn (crud/handle-read-many ESPartialStoredSighting))
 (def update-fn (crud/handle-update :sighting ESStoredSighting))
 (def list-fn (crud/handle-find ESPartialStoredSighting))
 (def handle-query-string-search (crud/handle-query-string-search ESPartialStoredSighting))
@@ -118,11 +117,6 @@
   (es-partial-stored-sighting->partial-stored-sighting
    (read-fn state id ident params)))
 
-(s/defn handle-read-many :- [(s/maybe PartialStoredSighting)]
-  [state ids ident params]
-  (map es-partial-stored-sighting->partial-stored-sighting
-       (read-many-fn state ids ident params)))
-
 (s/defn handle-update :- StoredSighting
   [state id realized ident params]
   (as-> (stored-sighting->es-stored-sighting realized) $
@@ -169,8 +163,6 @@
   IStore
   (read-record [_ id ident params]
     (handle-read state id ident params))
-  (read-records [_ ids ident params]
-    (handle-read-many state ids ident params))
   (create-record [_ new-sightings ident params]
     (handle-create state new-sightings ident params))
   (update-record [_ id sighting ident params]
