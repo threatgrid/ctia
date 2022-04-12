@@ -15,13 +15,15 @@
 (s/defn paginate-until-limit
   [get-page
    {:keys [limit] :as paging-params}]
-  (let [base-params (select-keys [:limit :sort] paging-params)
+  (let [base-params (select-keys [:sort] paging-params)
         {:keys [data paging] :as res} (get-page paging-params)
-         {next-params :next} paging]
+        next-params (some-> (:next paging)
+                            (assoc :limit (- limit (count data))
+                                   :sort (:sort paging-params)))]
     (if (or (nil? next-params)
             (= (count data) limit))
       res
-      (update (paginate-until-limit get-page (into base-params next-params))
+      (update (paginate-until-limit get-page next-params)
               :data
               #(concat %2 %1)
               (set data)))))
@@ -117,18 +119,22 @@
                     [res-field]
                     [edge-node :id])
         _ (println "sort-opts: " sort-opts)
-        res (get-relationships filters
-                               (assoc paging :sort sort-opts)
-                               identity-map
-                               services)
+        get-page (fn [paging-params]
+                   (get-relationships filters
+                                      paging-params
+                                      identity-map
+                                      services))
+        res (paginate-until-limit
+             get-page
+             (assoc paging :sort sort-opts))
         get-ids  (fn [relationships]
-                   (let [])
                    (->> (map res-field relationships)
                         (map id/long-id->id)
                         (filter #(= (str entity-type) (:type %)))
                         (map id/long-id)
                         set))]
     (update res :data get-ids)))
+
 
 (s/defn get-target-ids
   [filters :- RelationshipFilter
@@ -211,12 +217,12 @@
          ;; it enables to deal with scenarios such as [[s1 r1 i1] [s1 r2 i2]] for limit 1.
          next-sighting-page (if next-rel-page
                               (:sighting params)
-                              (:next sighting-paging))
+                              (assoc (:next sighting-paging) :limit limit))
          next-page (cond-> nil
                      next-rel-page (assoc :relationship (dissoc next-rel-page :offset))
                      next-sighting-page (assoc :sighting (dissoc next-sighting-page :offset)))
          paging  (cond-> {}
-                     (seq next-page) (assoc :next (assoc next-page :limit 1)))]
+                     (seq next-page) (assoc :next (assoc next-page :limit limit)))]
      ;; do not paginate sighting ids while there is relationship next.
      {:data target-ids :paging paging})))
 
