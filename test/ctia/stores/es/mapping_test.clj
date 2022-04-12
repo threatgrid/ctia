@@ -50,7 +50,6 @@
                          :_index indexname
                          :_type doc-type})
                    (range 3))
-         [doc0 doc1 doc2] docs
          test-sort (fn [field expected-asc]
                      (is (= expected-asc
                             (->> (doc/search-docs conn
@@ -70,13 +69,15 @@
                                                    :sort_order "desc"})
                                  :data
                                  (map :id)))))
+         search-raw (fn [query filters opts]
+                      (doc/search-docs conn
+                                       indexname
+                                       query
+                                       filters
+                                       opts))
+
          search (fn [query filters opts]
-                  (:data
-                   (doc/search-docs conn
-                                    indexname
-                                    query
-                                    filters
-                                    opts)))]
+                  (:data (search-raw query filters opts)))]
      (index/create! conn indexname settings)
      (doc/bulk-index-docs conn docs {:refresh "true"})
      (index/refresh! conn indexname)
@@ -138,9 +139,6 @@
              res-text-2 (search {:query_string {:query "text1:\"text\""}}
                                 nil
                                 nil)
-             res-text-3 (search {:query_string {:query "first text"}}
-                                nil
-                                nil)
              res-cross-field-text (search {:query_string {:query "first second"}}
                                           nil
                                           nil)
@@ -177,7 +175,25 @@
          (is (= #{"doc1" "doc2"}
                 (->> res-range
                      (map :id)
-                     set)))))
+                     set)))
+         (testing "epoch date shall be properly coerced"
+           (let [{page-1 :data
+                  {next-paging :next} :paging}
+                 (search-raw {}
+                             nil
+                             {:sort [:timestamp]
+                              :limit 1})
+                 next-paging-str-epoch (update next-paging :search_after #(map str %))
+                 page-2 (search {}
+                                nil
+                                (into next-paging {:sort [:timestamp]}))]
+             (is (< (:timestamp page-1) (:timestemp page-2)))
+             (is (= page-2
+                    (search {}
+                            nil
+                            (into next-paging-str-epoch {:sort [:timestamp]}))))
+             ))
+         ))
      (testing "scalar type should be properly sorted"
        (doseq [[s r] (concat
                       (map vector
