@@ -176,7 +176,7 @@
                 (->> res-range
                      (map :id)
                      set)))
-         (testing "epoch date shall be properly coerced"
+         (testing "epoch date shall be properly coerced in search_after"
            (let [{page-1 :data
                   {next-paging :next} :paging}
                  (search-raw {}
@@ -187,7 +187,9 @@
                  page-2 (search {}
                                 nil
                                 (into next-paging {:sort [:timestamp]}))]
-             (assert (seq page-2))
+             (assert (seq page-2)
+                     "no data were matched to properly test search_after")
+             (is (not (= page-1 page-2)))
              (is (= page-2
                     (search {}
                             nil
