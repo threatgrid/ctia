@@ -144,7 +144,7 @@
 
                  [org.apache.zookeeper/zookeeper "3.5.6"] ; override zookeeper-clj, org.onyxplatform/onyx-kafka
                  [args4j "2.32"] ;org.onyxplatform/onyx-kafka > threatgrid/ctim
-                 [com.stuartsierra/component "0.3.2"] ;org.onyxplatform/onyx-kafka internal override
+                 [com.stuartsierra/component "1.1.0"] ;org.onyxplatform/onyx-kafka internal override
                  [org.onyxplatform/onyx-kafka "0.14.5.0"]
                  ;; Notes on jackson-databind:
                  ;; - overrides org.onyxplatform/onyx-kafka and others
