@@ -97,7 +97,7 @@
                  [ring-middleware-format "0.7.4"]
                  ;; optional ring-middleware-format dep (Note: ring-middleware-format is also a transitive dep for compojure-api)
                  ;; see: https://github.com/ngrunwald/ring-middleware-format/issues/74
-                 [com.ibm.icu/icu4j "71.1"]
+                 [com.ibm.icu/icu4j "65.1"]
                  [metosin/ring-swagger "0.26.2"]
                  [metosin/ring-swagger-ui "3.24.3"]
                  [ring/ring-core ~ring-version] ;ring/ring-jetty-adapter > metosin/ring-swagger
