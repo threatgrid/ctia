@@ -6,7 +6,6 @@
             [ctia.auth.jwt :as auth-jwt]
             [ctia.http.handler :as handler]
             [ctia.http.middleware.auth :as auth]
-            [ctia.lib.riemann :as rie]
             [ctia.schemas.core :refer [APIHandlerServices]]
             [ring-jwt-middleware.core :as rjwt]
             [ring.adapter.jetty :as jetty]
@@ -166,7 +165,7 @@
     :as http-config}
    {{:keys [identity-for-token]} :IAuth
     {:keys [get-in-config]} :ConfigService
-    {:keys [conn service-prefix]} :RiemannService
+    {:keys [wrap-request-logs]} :RiemannService
     :as services} :- APIHandlerServices]
   (doto
       (jetty/run-jetty
@@ -183,7 +182,7 @@
          ;; just after :jwt and :identity is attached to request
          ;; by rjwt/wrap-jwt-auth-fn below.
          (get-in-config [:ctia :log :riemann :enabled])
-         (rie/wrap-request-logs "API response time ms" conn service-prefix)
+         (wrap-request-logs "API response time ms")
 
          (:enabled jwt)
          ((rjwt/wrap-jwt-auth-fn
