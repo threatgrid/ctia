@@ -149,7 +149,7 @@
 
 (defn fake-exit [] (throw (ex-info (str `fake-exit) {::fake-exit true})))
 (defn fake-exit? [e]
-  (when (instance? e clojure.lang.ExceptionInfo)
+  (when (instance? clojure.lang.ExceptionInfo e)
     (-> e ex-data ::fake-exit)))
 
 (deftest get-existing-indices-test
