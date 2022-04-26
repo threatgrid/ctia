@@ -161,12 +161,13 @@
   "initiate an ES Store connection,
    put the index template, return an ESConnState"
   [properties :- StoreProperties
-   services :- ESConnServices]
+   {{:keys [get-in-config]} :ConfigService
+    :as services} :- ESConnServices]
   (let [{:keys [conn index props config] :as conn-state}
         (init-store-conn properties services)
         existing-indices (get-existing-indices conn index)]
     (if (seq existing-indices)
-      (if (:ctia.task.update-index-state/update-index-state-task props)
+      (if (get-in-config [:ctia :task :ctia.task.update-index-state])
         (update-index-state conn-state)
         (log/info "Not in update-index-state task, skipping update-index-state"))
       (upsert-template! conn-state))

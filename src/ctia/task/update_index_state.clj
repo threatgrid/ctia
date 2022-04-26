@@ -5,7 +5,7 @@
 
 (defn do-task []
   (try (-> {:config (assoc-in (p/build-init-config)
-                              [:ctia :store :es :default ::update-index-state-task]
+                              [:ctia :task :ctia.task.update-index-state]
                               true)}
            init/start-ctia!
            internal/shutdown
