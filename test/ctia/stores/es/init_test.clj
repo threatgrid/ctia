@@ -166,7 +166,7 @@
                            expected-output]
                         (assert (boolean? expected-successful?))
                         (testing msg
-                          (let [output (try (with-redefs [sut/system-exit-error fake-exit]
+                          (let [output (try (with-redefs [sut/system-exit-error fake-exit] ;;FIXME move to config
                                               (sut/get-existing-indices conn input-indexname))
                                             (catch Throwable e
                                               (cond-> e
@@ -212,112 +212,114 @@
                         (assoc props
                                :version version
                                :port (+ 9200 version)))]
-    (for-each-es-version
-     "get-existing-indices should retrieve existing indices if any."
-     [5 7]
-     clean-index
-     (testing "init-es-conn! should return a proper conn state with unaliased conf, but not create any index"
-       (let [services (->ESConnServices)
-             props (prepare-props (props-not-aliased indexname) version)
-             {:keys [index props config conn]} (sut/init-es-conn! props services)]
-         (try
-           (let [existing-index (index/get conn (str indexname "*"))]
-             (is (empty? existing-index))
-             (is (= index indexname))
-             (is (= (:write-index props) indexname))
-             (is (= (str "http://localhost:920" version) (:uri conn)))
-             (is (nil? (:aliases config)))
-             (is (= "1s" (get-in config [:settings :refresh_interval])))
-             (is (= 1 (get-in config [:settings :number_of_replicas])))
-             (is (= 2 (get-in config [:settings :number_of_shards])))
-             (is (= {} (select-keys (:mappings config) [:a :b]))))
-           (finally
-             (clean-all conn)
-             (conn/close conn)))))
+    (helpers/with-config-transformer
+      #(assoc-in % [:ctia :task :ctia.task.update-index-state] true)
+      (for-each-es-version
+       "get-existing-indices should retrieve existing indices if any."
+       [5 7]
+       clean-index
+       (testing "init-es-conn! should return a proper conn state with unaliased conf, but not create any index"
+         (let [services (->ESConnServices)
+               props (prepare-props (props-not-aliased indexname) version)
+               {:keys [index props config conn]} (sut/init-es-conn! props services)]
+           (try
+             (let [existing-index (index/get conn (str indexname "*"))]
+               (is (empty? existing-index))
+               (is (= index indexname))
+               (is (= (:write-index props) indexname))
+               (is (= (str "http://localhost:920" version) (:uri conn)))
+               (is (nil? (:aliases config)))
+               (is (= "1s" (get-in config [:settings :refresh_interval])))
+               (is (= 1 (get-in config [:settings :number_of_replicas])))
+               (is (= 2 (get-in config [:settings :number_of_shards])))
+               (is (= {} (select-keys (:mappings config) [:a :b]))))
+             (finally
+               (clean-all conn)
+               (conn/close conn)))))
 
-     (testing "update mapping should allow adding fields or identical mapping"
-       (let [services (->ESConnServices)
-             props (prepare-props (props-aliased indexname) version)
-             test-fn (fn [msg expected-successful? field field-mapping]
-                       ;; init and create aliased indices
-                       (testing msg
-                         (let [{:keys [conn]} (sut/init-es-conn! props services)]
-                           (try
-                             (let [output (try (with-redefs [sut/system-exit-error fake-exit
-                                                             ;; redef mappings
-                                                             sut/entity-fields
-                                                             (cond-> sut/entity-fields
-                                                               field (assoc-in [:sighting :es-mapping "sighting" :properties field]
-                                                                               field-mapping))]
-                                                 ;; init again to trigger mapping update
-                                                 (sut/init-es-conn! props services))
-                                               (catch Throwable e
-                                                 (cond-> e
-                                                   (not (fake-exit? e)) throw)))]
-                               (is (= expected-successful? (not (fake-exit? output)))))
-                             (finally
-                               ;; reset state
-                               (clean-all conn)
-                               (conn/close conn))))))]
-       (test-fn "update mapping should not fail on unchanged mapping"
-                true nil nil)
-       (test-fn "update mapping should not fail on field addition"
-                true :new-field m/token)
-       (test-fn "Update mapping fails when modifying existing field mapping and CTIA must not start in that case."
-                false :id m/text)))
+       (testing "update mapping should allow adding fields or identical mapping"
+         (let [services (->ESConnServices)
+               props (prepare-props (props-aliased indexname) version)
+               test-fn (fn [msg expected-successful? field field-mapping]
+                         ;; init and create aliased indices
+                         (testing msg
+                           (let [{:keys [conn]} (sut/init-es-conn! props services)]
+                             (try
+                               (let [output (try (with-redefs [sut/system-exit-error fake-exit ;;FIXME move to config
+                                                               ;; redef mappings
+                                                               sut/entity-fields
+                                                               (cond-> sut/entity-fields
+                                                                 field (assoc-in [:sighting :es-mapping "sighting" :properties field]
+                                                                                 field-mapping))]
+                                                   ;; init again to trigger mapping update
+                                                   (sut/init-es-conn! props services))
+                                                 (catch Throwable e
+                                                   (cond-> e
+                                                     (not (fake-exit? e)) throw)))]
+                                 (is (= expected-successful? (not (fake-exit? output)))))
+                               (finally
+                                 ;; reset state
+                                 (clean-all conn)
+                                 (conn/close conn))))))]
+         (test-fn "update mapping should not fail on unchanged mapping"
+                  true nil nil)
+         (test-fn "update mapping should not fail on field addition"
+                  true :new-field m/token)
+         (test-fn "Update mapping fails when modifying existing field mapping and CTIA must not start in that case."
+                  false :id m/text)))
 
-     (testing "init-es-conn! should return a proper conn state with aliased conf, and create an initial aliased index"
-       (let [services (->ESConnServices)
-             {:keys [index props config conn]}
-             (-> (prepare-props (props-aliased indexname) version)
-                 (sut/init-es-conn! services))]
-         (try
-           (let [existing-index (index/get conn (str indexname "*"))
-                 created-aliases (->> existing-index
-                                      vals
-                                      first
-                                      :aliases
-                                      keys
-                                      set)]
-             (is (= #{(keyword indexname) (keyword (write-alias indexname))}
-                    created-aliases))
-             (is (= index indexname))
-             (is (= (:write-index props) (write-alias indexname)))
-             (is (= (str "http://localhost:920" version) (:uri conn)))
-             (is (= indexname
-                    (-> config :aliases keys first)))
-             (is (= "2s" (get-in config [:settings :refresh_interval])))
-             (is (= 1 (get-in config [:settings :number_of_replicas])))
-             (is (= 2 (get-in config [:settings :number_of_shards])))
-             (is (= {} (select-keys (:mappings config) [:a :b]))))
-           (finally
-             (clean-all conn)
-             (conn/close conn)))))
+       (testing "init-es-conn! should return a proper conn state with aliased conf, and create an initial aliased index"
+         (let [services (->ESConnServices)
+               {:keys [index props config conn]}
+               (-> (prepare-props (props-aliased indexname) version)
+                   (sut/init-es-conn! services))]
+           (try
+             (let [existing-index (index/get conn (str indexname "*"))
+                   created-aliases (->> existing-index
+                                        vals
+                                        first
+                                        :aliases
+                                        keys
+                                        set)]
+               (is (= #{(keyword indexname) (keyword (write-alias indexname))}
+                      created-aliases))
+               (is (= index indexname))
+               (is (= (:write-index props) (write-alias indexname)))
+               (is (= (str "http://localhost:920" version) (:uri conn)))
+               (is (= indexname
+                      (-> config :aliases keys first)))
+               (is (= "2s" (get-in config [:settings :refresh_interval])))
+               (is (= 1 (get-in config [:settings :number_of_replicas])))
+               (is (= 2 (get-in config [:settings :number_of_shards])))
+               (is (= {} (select-keys (:mappings config) [:a :b]))))
+             (finally
+               (clean-all conn)
+               (conn/close conn)))))
 
-     (testing "init-es-conn! should return a conn state that ignore aliased conf setting when an unaliased index already exists"
-       (index/create! conn
-                      indexname
-                      {:settings m/store-settings})
-       (let [services (->ESConnServices)
-             {:keys [index props config conn]}
-             (-> (prepare-props (props-aliased indexname) version)
-                 (sut/init-es-conn! services))
-             existing-index (index/get conn (str indexname "*"))
-             created-aliases (->> existing-index
-                                  vals
-                                  first
-                                  :aliases
-                                  keys
-                                  set)]
-         (is (= #{} created-aliases))
-         (is (= index indexname))
-         (is (= (:write-index props) indexname))
-         (is (= (str "http://localhost:920" version) (:uri conn)))
-         (is (= indexname
-                (-> config :aliases keys first)))
-         (is (= 1 (get-in config [:settings :number_of_replicas])))
-         (is (= 2 (get-in config [:settings :number_of_shards])))
-         (is (= {} (select-keys (:mappings config) [:a :b]))))))))
+       (testing "init-es-conn! should return a conn state that ignore aliased conf setting when an unaliased index already exists"
+         (index/create! conn
+                        indexname
+                        {:settings m/store-settings})
+         (let [services (->ESConnServices)
+               {:keys [index props config conn]}
+               (-> (prepare-props (props-aliased indexname) version)
+                   (sut/init-es-conn! services))
+               existing-index (index/get conn (str indexname "*"))
+               created-aliases (->> existing-index
+                                    vals
+                                    first
+                                    :aliases
+                                    keys
+                                    set)]
+           (is (= #{} created-aliases))
+           (is (= index indexname))
+           (is (= (:write-index props) indexname))
+           (is (= (str "http://localhost:920" version) (:uri conn)))
+           (is (= indexname
+                  (-> config :aliases keys first)))
+           (is (= 1 (get-in config [:settings :number_of_replicas])))
+           (is (= 2 (get-in config [:settings :number_of_shards])))
+           (is (= {} (select-keys (:mappings config) [:a :b])))))))))
 
 (deftest update-index-state-test
   (let [test-fn (fn [{:keys [update-mappings
