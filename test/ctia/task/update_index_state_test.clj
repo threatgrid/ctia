@@ -10,9 +10,10 @@
 
 (deftest update-index-state-test
   (es-helpers/for-each-es-version
-    "update-index-state task should succeed"
+    "update-index-state task"
     [5 7]
     #(ductile.index/delete! % "ctia_*")
     (es-helpers/fixture-properties:es-store
       (fn []
-        (is (zero? (sut/do-task (h/build-transformed-init-config))))))))
+        (is (= 0 (sut/do-task (h/build-transformed-init-config))))
+        (is (= 1 (sut/do-task {})))))))
