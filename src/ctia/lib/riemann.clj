@@ -182,4 +182,5 @@
            :service-prefix service-prefix)))
 
 (defn stop [{:keys [^RiemannBatchClient conn]}]
-  (when conn (.close conn)))
+  (when conn (.close conn))
+  {})

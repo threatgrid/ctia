@@ -28,7 +28,7 @@
 (defn -main [& args]
   (let [{:keys [options errors summary]} (parse-opts args cli-options)]
     (when errors
-      (binding  [*out* *err*]
+      (binding [*out* *err*]
         (println (str/join "\n" errors))
         (println summary))
       (System/exit 1))
