@@ -184,7 +184,7 @@
     <dependency>
       <groupId>org.clojure</groupId>
       <artifactId>core.memoize</artifactId>
-      <version>1.0.257</version>
+      <version>1.0.236</version>
       <exclusions>
         <exclusion>
           <artifactId>slf4j-nop</artifactId>
@@ -299,7 +299,7 @@
     <dependency>
       <groupId>puppetlabs</groupId>
       <artifactId>trapperkeeper</artifactId>
-      <version>3.1.0</version>
+      <version>3.2.0</version>
       <exclusions>
         <exclusion>
           <artifactId>slf4j-nop</artifactId>
@@ -318,7 +318,7 @@
     <dependency>
       <groupId>puppetlabs</groupId>
       <artifactId>kitchensink</artifactId>
-      <version>3.1.0</version>
+      <version>3.2.0</version>
       <exclusions>
         <exclusion>
           <artifactId>slf4j-nop</artifactId>
@@ -1420,7 +1420,7 @@
     <dependency>
       <groupId>puppetlabs</groupId>
       <artifactId>trapperkeeper</artifactId>
-      <version>3.1.0</version>
+      <version>3.2.0</version>
       <classifier>test</classifier>
       <exclusions>
         <exclusion>
@@ -1562,7 +1562,7 @@
     <dependency>
       <groupId>org.clojure</groupId>
       <artifactId>data.priority-map</artifactId>
-      <version>1.1.0</version>
+      <version>1.0.0</version>
       <exclusions>
         <exclusion>
           <artifactId>slf4j-nop</artifactId>
