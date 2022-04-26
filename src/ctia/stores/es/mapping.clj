@@ -21,9 +21,10 @@
   {:type "integer"})
 
 (def ts
-  "A mapping for our timestamps, which should all be ISO8601 format"
+  "A mapping for our timestamps, which should all be ISO8601 format.
+   epoch_millis is enabled for search_after coercion."
   {:type "date"
-   :format "date_time"})
+   :format "date_time||epoch_millis"})
 
 (def text
   "A mapping for free text, or markdown, fields.  They will be

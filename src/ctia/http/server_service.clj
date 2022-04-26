@@ -32,7 +32,8 @@
                                      :IEncryption                     IEncryption
                                      :FeaturesService                 FeaturesService
                                      :RiemannService                  (-> RiemannService
-                                                                          (select-keys #{:send-event}))}))
+                                                                          (select-keys #{:send-event
+                                                                                         :wrap-request-logs}))}))
   (stop [this context] (core/stop context))
   (get-port [this]
             (core/get-port (service-context this)))

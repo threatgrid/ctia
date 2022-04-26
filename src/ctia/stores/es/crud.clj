@@ -206,33 +206,6 @@ It returns the documents with full hits meta data including the real index in wh
           (throw (ex-info "You are not allowed to read this document"
                           {:type :access-control-error})))))))
 
-(defn handle-read-many
-  "Generate an ES read-many handler using some mapping and schema"
-  [Model]
-  (let [coerce! (coerce-to-fn Model)]
-    (s/fn :- [(s/maybe Model)]
-      [{{{:keys [get-in-config]} :ConfigService}
-        :services
-        :as conn-state}
-       :- ESConnState
-       ids :- [s/Str]
-       ident
-       {:keys [suppress-access-control-error?]
-        :or {suppress-access-control-error? false}
-        :as es-params}]
-      (sequence
-       (comp (map :_source)
-             (map coerce!)
-             (map (fn [record]
-                    (if (allow-read? record ident get-in-config)
-                      record
-                      (let [ex (ex-info "You are not allowed to read this document"
-                                        {:type :access-control-error})]
-                        (if suppress-access-control-error?
-                          (log/error ex)
-                          (throw ex)))))))
-       (get-docs-with-indices conn-state ids (make-es-read-params es-params))))))
-
 (defn access-control-filter-list
   "Given an ident, keep only documents it is allowed to read"
   [docs ident get-in-config]
@@ -458,12 +431,12 @@ It returns the documents with full hits meta data including the real index in wh
                          (restricted-read? ident)
                          (conj (es.query/find-restriction-query-part ident get-in-config)))
 
-            query-string  {:query_string {:query query}}
+            query_string  {:query_string {:query query}}
             bool-params (cond-> {:filter filter-val}
                           (seq one-of) (into
                                         {:should (q/prepare-terms one-of)
                                          :minimum_should_match 1})
-                          query (update :filter conj query-string))]
+                          query (update :filter conj query_string))]
         (cond-> (coerce! (ductile.doc/query conn
                                             index
                                             (q/bool bool-params)
