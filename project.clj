@@ -111,7 +111,7 @@
                  [threatgrid/ring-jwt-middleware "1.0.1"]
                  [org.clojure/data.json "1.0.0"] ;; threatgrid/ring-jwt-middleware > threatgrid/ctim
                  [scopula "0.1.4"]
-                 [org.clojure/tools.reader "1.3.4"] ;; org.clojure/tools.namespace > ring-middleware-format
+                 [org.clojure/tools.reader "1.3.6"] ;; org.clojure/tools.namespace > ring-middleware-format
 
                  ;; clients
                  [clj-http "3.10.1"]
@@ -191,7 +191,7 @@
                                   [circleci/circleci.test "0.4.3"]
                                   [org.clojure/math.combinatorics "0.1.6"]
                                   [org.clojure/data.priority-map "1.1.0"]
-                                  [org.clojure/tools.namespace "1.1.0"]]
+                                  [org.clojure/tools.namespace "1.2.0"]]
                    :pedantic? :warn
                    :source-paths ["dev"]}
              :ci {:pedantic? :abort
