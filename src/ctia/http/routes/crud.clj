@@ -26,9 +26,13 @@
 
 (defn flow-get-by-ids-fn
   [{:keys [get-store entity identity-map]}]
-  (let [s (get-store entity)]
+  (let [get-by-id #(-> (get-store entity)
+                       (store/read-record
+                        %
+                        identity-map
+                        {}))]
     (fn [ids]
-      (store/read-records s ids identity-map {}))))
+      (keep get-by-id ids))))
 
 (defn flow-update-fn
   [{:keys [identity-map wait_for get-store entity]}]

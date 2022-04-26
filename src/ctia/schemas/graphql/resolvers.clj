@@ -10,7 +10,11 @@
                      AnyGraphQLTypeResolver
                      RealizeFnResult]]
             [ctia.schemas.graphql.pagination :as pagination]
-            [ctia.store :as store]
+            [ctia.store :refer [list-judgements-by-observable
+                                list-records
+                                list-sightings-by-observables
+                                query-string-search
+                                read-fn]]
             [schema.core :as s]))
 
 ;; Default fields that must always be retrieved
@@ -38,7 +42,7 @@
     (log/debugf "Search entity %s graphql args %s" entity-type args)
 
     (some-> (get-store entity-type)
-            (store/query-string-search
+            (query-string-search
              {:full-text  [{:query query}]
               :filter-map (remove-map-empty-values filtermap)}
               ident
@@ -50,7 +54,7 @@
 (s/defn search-entity-resolver :- AnyGraphQLTypeResolver
   [entity-type-kw]
   (s/fn :- (RealizeFnResult s/Any)
-    [context args field-selection _src]
+    [context args field-selection src]
     (delayed/fn [{:keys [services]
                   :as rt-ctx} :- GraphQLRuntimeContext]
       (search-entity entity-type-kw
@@ -76,7 +80,10 @@
                 id
                 field-selection)
     (some-> (get-store entity-type-kw)
-            (store/read-record id ident {:fields (concat default-fields field-selection)})
+            (read-fn
+              id
+              ident
+              {:fields (concat default-fields field-selection)})
             (with-long-id services)
             un-store)))
 
@@ -103,7 +110,10 @@
                                         (concat default-fields field-selection)))]
     (log/debug "Search feedback for entity id: " entity-id)
     (some-> (get-store :feedback)
-            (store/list-records {:all-of {:entity_id entity-id}} (:ident context) params)
+            (list-records
+              {:all-of {:entity_id entity-id}}
+              (:ident context)
+              params)
             un-store-page
             (pagination/result->connection-response paging-params)))))
 
@@ -123,7 +133,10 @@
                  field-selection (assoc :fields
                                         (concat default-fields field-selection)))]
     (some-> (get-store :judgement)
-            (store/list-judgements-by-observable observable (:ident context) params)
+            (list-judgements-by-observable
+              observable
+              (:ident context)
+              params)
             (page-with-long-id services)
             un-store
             (pagination/result->connection-response paging-params)))))
@@ -144,7 +157,10 @@
                  field-selection (assoc :fields
                                         (concat default-fields field-selection)))]
     (some-> (get-store :sighting)
-            (store/list-sightings-by-observables [observable] (:ident context) params)
+            (list-sightings-by-observables
+              [observable]
+              (:ident context)
+              params)
             (page-with-long-id services)
             un-store
             (pagination/result->connection-response paging-params)))))
@@ -185,7 +201,10 @@
                                                  (concat default-fields field-selection)))]
       (log/debug "Search for AssetMappings for asset-ref: " entity-id)
       (some-> (get-store :asset-mapping)
-              (store/list-records {:all-of {:asset_ref entity-id}} (:ident context) params)
+              (list-records
+               {:all-of {:asset_ref entity-id}}
+               (:ident context)
+               params)
               un-store-page
               (pagination/result->connection-response paging-params)))))
 
@@ -205,6 +224,9 @@
                                                  (concat default-fields field-selection)))]
       (log/debug "Search for AssetProperties for asset-ref: " entity-id)
       (some-> (get-store :asset-properties)
-              (store/list-records {:all-of {:asset_ref entity-id}} (:ident context) params)
+              (list-records
+               {:all-of {:asset_ref entity-id}}
+               (:ident context)
+               params)
               un-store-page
               (pagination/result->connection-response paging-params)))))

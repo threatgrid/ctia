@@ -17,10 +17,10 @@
              :refer
              [test-for-each-store-with-app test-selected-stores-with-app]]
             [ctim.domain.id :as id]
-            [ctim.examples.incidents :refer [new-incident-maximal]]
+            [ctim.examples.incidents :refer [new-incident-maximal new-incident-minimal]]
+            [ctim.examples.sightings :refer [new-sighting-minimal]]
             [ductile.index :as es-index]
-            [schema.core :as s]
-            [clojure.set :as set]))
+            [schema.core :as s]))
 
 (defn fixture-properties:small-max-bulk-size [t]
   ;; Note: These properties may be overwritten by ENV variables
@@ -315,14 +315,12 @@
            (testing (str "number of created " (name type))
              (is (= (count (get new-bulk type))
                     (count (get bulk-ids type))))))
-
          (testing "created events are generated"
            (let [expected-created-ids (mapcat val (dissoc bulk-ids :tempids))]
-             (check-events event-store
-                           ident
-                           expected-created-ids
-                           :record-created)))
-
+               (check-events event-store
+                             ident
+                             expected-created-ids
+                             :record-created)))
          (testing "GET /ctia/bulk"
            (let [{status :status
                   response :parsed-body}
@@ -334,12 +332,10 @@
 
              (doseq [k (keys new-bulk)]
                (testing (str "retrieved " (name k))
-                 (is (= (into #{}
-                              (map #(dissoc % :id :timestamp :source_ref :target_ref))
-                              (get new-bulk k))
-                        (into #{}
-                              (map #(dissoc % :id :timestamp :type :tlp :schema_version :disposition_name :source_ref :target_ref :owner :groups))
-                              (get response k))))
+                 (is (= (map #(dissoc % :id :timestamp :source_ref :target_ref)
+                             (get new-bulk k))
+                        (map #(dissoc % :id :timestamp :type :tlp :schema_version :disposition_name :source_ref :target_ref :owner :groups)
+                             (get response k))))
 
                  (let [id (id/long-id->id (:id (first (get response k))))]
                    (is (= (:hostname id)         (:hostname show-props)))
@@ -377,9 +373,9 @@
                                            (map #(array-map :id % :source "patched") sighting-ids))
                  expected-patch {:incidents {:updated (set incident-ids)}}
                  {:keys [status parsed-body]} (PATCH app
-                                                     bulk-url
-                                                     :form-params patch-bulk
-                                                     :headers {"Authorization" "45c1f5e3f05d0"})]
+                                                      bulk-url
+                                                      :form-params patch-bulk
+                                                      :headers {"Authorization" "45c1f5e3f05d0"})]
              (is (= 200 status))
              (is (= expected-patch
                     (update-in parsed-body [:incidents :updated] set)))
@@ -402,13 +398,13 @@
                                                 {k (take 2 ids)}))
                                          (dissoc bulk-ids :tempids))
                  expected-deleted (into {}
-                                        (map (fn [[k ids]]
-                                               {k {:deleted ids}}))
-                                        delete-bulk-query)
+                                       (map (fn [[k ids]]
+                                              {k {:deleted ids}}))
+                                       delete-bulk-query)
                  expected-not-found (into {}
-                                          (map (fn [[k ids]]
-                                                 {k {:errors {:not-found ids}}}))
-                                          delete-bulk-query)
+                                       (map (fn [[k ids]]
+                                              {k {:errors {:not-found ids}}}))
+                                       delete-bulk-query)
                  delete-bulk-url "ctia/bulk?wait_for=true"
                  {delete-status-1 :status delete-res-1 :parsed-body}
                  (DELETE app
@@ -433,9 +429,8 @@
              (doseq [[k res] delete-res-2]
                (is (= (set (get-in expected-not-found [k :errors :not-found]))
                       (set (get-in res [:errors :not-found])))))
-             (doseq [[k entity-res] (dissoc get-res :tempids)]
-               (is (= #{} (set/intersection (set (get delete-bulk-query k))
-                                            (set (map :id entity-res))))
+             (doseq [[_k entity-res] (dissoc get-res :tempids)]
+               (is (= [nil nil] (take 2 entity-res))
                    "the deleted entities must not be found"))
              (let [expected-deleted-ids (mapcat val delete-bulk-query)]
                (check-events event-store
@@ -655,7 +650,8 @@
            ;; Retrieve all entities that have been created
            query-string (make-get-query-str-from-bulkrefs
                          (dissoc bulk-ids :tempids :tools :vulnerabilities))
-           {status-get :status {:keys [sightings]} :parsed-body}
+           {status-get :status
+            {:keys [sightings] :as body} :parsed-body}
            (GET app
                 (str "ctia/bulk?"
                      query-string)

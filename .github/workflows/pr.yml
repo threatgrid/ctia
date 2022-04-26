@@ -102,7 +102,7 @@ jobs:
             touch dev-resources/ctia_test_timings.edn
           fi
       - name: Upload current test timing
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           retention-days: 30
           name: current-test-timing
@@ -137,7 +137,7 @@ jobs:
             ctia-m2-cache-${{ env.ACTIONS_CACHE_VERSION }}-
       - name: Setup Java
         if: steps.maven-cache.outputs.cache-hit != 'true'
-        uses: actions/setup-java@v2
+        uses: actions/setup-java@v3.1.1
         with:
           distribution: ${{ env.DEFAULT_JAVA_DISTRIBUTION }}
           java-version: ${{ env.DEFAULT_JAVA_VERSION }}
@@ -193,7 +193,7 @@ jobs:
         # depends on LOG_PATH and actions/checkout@v3
         run: docker-compose -f containers/dev/docker-compose.yml up -d &> "${LOG_PATH}/docker-compose.log" &
       - name: Download test timings
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3
         with:
           name: current-test-timing
           path: target/current-test-timing
@@ -231,7 +231,7 @@ jobs:
             ctia-m2-cache-${{ env.ACTIONS_CACHE_VERSION }}-${{ hashFiles('project.clj') }}-
             ctia-m2-cache-${{ env.ACTIONS_CACHE_VERSION }}-
 
-      - uses: actions/setup-java@v2
+      - uses: actions/setup-java@v3.1.1
         with:
           distribution: ${{ env.JAVA_DISTRIBUTION }}
           java-version: ${{ env.JAVA_VERSION }}
@@ -266,14 +266,14 @@ jobs:
           CTIA_WAIT_DOCKER: 1
 
       - name: Upload test timing
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           retention-days: 1
           name: test-timing
           path: target/test-results/*.edn
       - name: Upload docker compose
         if: ${{ always() }}
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           retention-days: 10
           name: docker-compose${{matrix.this-split.this_split}}.log
@@ -308,7 +308,7 @@ jobs:
           key: ctia-timings-${{ env.ACTIONS_CACHE_VERSION }}-${{ env.CTIA_TEST_SUITE }}-${{ github.ref }}-${{ github.sha }}
 
       - name: Download test timings
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3
         with:
           name: test-timing
           path: target/test-results
@@ -317,7 +317,7 @@ jobs:
         run: ./scripts/summarize-tests.clj
 
       - name: Upload all test timings
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           retention-days: 60
           name: all-test-timings
@@ -353,7 +353,7 @@ jobs:
           restore-keys: |
             ctia-m2-cache-${{ env.ACTIONS_CACHE_VERSION }}-
 
-      - uses: actions/setup-java@v2
+      - uses: actions/setup-java@v3.1.1
         with:
           distribution: ${{ env.DEFAULT_JAVA_DISTRIBUTION }}
           java-version: ${{ env.DEFAULT_JAVA_VERSION }}
