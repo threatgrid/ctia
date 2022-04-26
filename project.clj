@@ -106,7 +106,7 @@
                  [ring-cors "0.1.13"]
                  [commons-codec "1.12"] ;threatgrid/ctim, threatgrid/clj-momo, clj-http > ring/ring-codec
                  [ring/ring-codec "1.1.2"]
-                 [threatgrid/clj-jwt "0.3.1"]
+                 [threatgrid/clj-jwt "0.5.0"]
                  [threatgrid/ring-turnstile-middleware "0.1.1"]
                  [threatgrid/ring-jwt-middleware "1.0.1"]
                  [scopula "0.1.4"]
