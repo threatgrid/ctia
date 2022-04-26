@@ -439,9 +439,31 @@ X-Ctia-Version: 70323eb3b72da558e7f056e418533402f65d335a
 
 - A message is logged with the :info level
 
+### Update index state task
+
+There is a dedicated task for updating ES index state on startup. It performs idempotent
+changes to ES mappings and settings that are needed before CTIA can start.
+
+In theory, this task could be performed automatically when CTIA starts, but in the case where
+CTIA is load-balanced across several instances this causes performance problems as all instances
+will update ES simulateneously. It has been separated out for this reason.
+
+It must be successfully completed before starting CTIA via:
+
+```
+java -cp ctia.jar:resources:. clojure.main -m ctia.task.update-index-state
+```
+
+or from source with leiningen:
+
+```
+lein run -m ctia.task.update-index-state
+```
+
+
 ## License
 
-Copyright © 2015-2021 Cisco Systems
+Copyright © 2015-2022 Cisco Systems
 
 Eclipse Public License v1.0
 
@@ -450,4 +472,3 @@ Eclipse Public License v1.0
 The data model of CTIA is closely based on
 [STIX](http://stixproject.github.io/data-model/), with a few
 simplifications.  See [Cisco Threat Intel Model](https://github.com/threatgrid/ctim/tree/master/doc/) for details.
-
