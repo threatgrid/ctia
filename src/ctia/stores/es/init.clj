@@ -129,10 +129,9 @@
                      keys
                      set)
         index-pattern (re-pattern (str index "(-\\d{4}.\\d{2}.\\d{2}.*)?"))
-        matching (filter #(re-matches index-pattern (name %))
-                         existing)
-        ambiguous (difference existing (set matching))]
-    (if (seq ambiguous)
+        matching (into #{} (filter #(re-matches index-pattern (name %)))
+                       existing)]
+    (if-some [ambiguous (not-empty (difference existing matching))]
       (do (log/warn (format "Ambiguous index names. Index: %s, ambiguous: %s."
                             (pr-str index)
                             (pr-str ambiguous)))
@@ -161,12 +160,13 @@
   "initiate an ES Store connection,
    put the index template, return an ESConnState"
   [properties :- StoreProperties
-   services :- ESConnServices]
+   {{:keys [get-in-config]} :ConfigService
+    :as services} :- ESConnServices]
   (let [{:keys [conn index props config] :as conn-state}
         (init-store-conn properties services)
         existing-indices (get-existing-indices conn index)]
     (if (seq existing-indices)
-      (if (:ctia.task.update-index-state/update-index-state-task props)
+      (if (get-in-config [:ctia :task :ctia.task.update-index-state])
         (update-index-state conn-state)
         (log/info "Not in update-index-state task, skipping update-index-state"))
       (upsert-template! conn-state))
@@ -175,7 +175,7 @@
       ;;https://github.com/elastic/elasticsearch/pull/34499
       (ductile.index/create! conn
                              (format "<%s-{now/d}-000001>" index)
-                             (update config :aliases assoc (:write-index props) {})))
+                             (assoc-in config [:aliases (:write-index props)] {})))
     (if (and (:aliased props)
              (contains? existing-indices (keyword index)))
       (do (log/error "an existing unaliased store was configured as aliased. Switching from unaliased to aliased indices requires a migration."

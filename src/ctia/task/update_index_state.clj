@@ -5,13 +5,14 @@
 
 (defn do-task []
   (try (-> {:config (assoc-in (p/build-init-config)
-                              [:ctia :store :es :default ::update-index-state-task]
+                              [:ctia :task :ctia.task.update-index-state]
                               true)}
            init/start-ctia!
            internal/shutdown
            count ;; returns number of exceptions thrown
            (min 1)) ;; exit 1 if exceptions, otherwise 0
-       (catch Throwable _
+       (catch Throwable e
+         (prn e)
          1)))
 
 (defn -main [& args]
