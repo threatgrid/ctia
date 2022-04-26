@@ -140,22 +140,31 @@
       existing)))
 
 (defn update-index-state
-  [{{update-mappings?  :update-mappings
-     update-settings?  :update-settings
-     refresh-mappings? :refresh-mappings}
-    :props
-    :as conn-state}]
-  (when update-mappings?
-    (update-mappings! conn-state)
-    ;; template update must be after update-mapping
-    ;; if it fails a System/exit is triggered because
-    ;; this means that the mapping in invalid and thus
-    ;; must not be propagated to the template that would accept it
-    (upsert-template! conn-state)
-    (when refresh-mappings?
-      (refresh-mappings! conn-state)))
-  (when update-settings?
-    (update-settings! conn-state)))
+  ([conn-state] (update-index-state conn-state
+                                    {:update-mappings! update-mappings!
+                                     :update-settings! update-settings!
+                                     :refresh-mappings! refresh-mappings!
+                                     :upsert-template! upsert-template!}))
+  ([{{update-mappings?  :update-mappings
+      update-settings?  :update-settings
+      refresh-mappings? :refresh-mappings}
+     :props
+     :as conn-state}
+    {:keys [upsert-template!
+            update-mappings!
+            update-settings!
+            refresh-mappings!]}]
+   (when update-mappings?
+     (update-mappings! conn-state)
+     ;; template update must be after update-mapping
+     ;; if it fails a System/exit is triggered because
+     ;; this means that the mapping in invalid and thus
+     ;; must not be propagated to the template that would accept it
+     (upsert-template! conn-state)
+     (when refresh-mappings?
+       (refresh-mappings! conn-state)))
+   (when update-settings?
+     (update-settings! conn-state))))
 
 (s/defn init-es-conn! :- ESConnState
   "initiate an ES Store connection,

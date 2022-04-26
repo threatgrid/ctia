@@ -149,8 +149,9 @@
 
 (defn exceptional-system-exit [] (throw (ex-info (str `exceptional-system-exit) {::exceptional-system-exit true})))
 (defn exceptional-system-exit? [e]
-  (when (instance? clojure.lang.ExceptionInfo e)
-    (-> e ex-data ::exceptional-system-exit)))
+  (boolean
+    (when (instance? clojure.lang.ExceptionInfo e)
+      (-> e ex-data ::exceptional-system-exit))))
 
 (deftest get-existing-indices-test
   (helpers/with-config-transformer
@@ -329,17 +330,17 @@
                   (let [updated-mappings (atom false)
                         updated-template (atom false)
                         updated-settings (atom false)
-                        refreshed-mappings (atom false)]
-                    (with-redefs [sut/update-mappings! (fn [_c] (reset! updated-mappings true))
-                                  sut/update-settings! (fn [_c] (reset! updated-settings true))
-                                  sut/upsert-template! (fn [_c] (reset! updated-template true))
-                                  sut/refresh-mappings! (fn [_c] (reset! refreshed-mappings true))]
-                      (sut/update-index-state {:props props})
-                      (is (= @updated-mappings (boolean update-mappings)))
-                      (is (= @updated-template (boolean update-mappings)))
-                      (is (= @updated-settings (boolean update-settings)))
-                      (is (= @refreshed-mappings
-                             (every? (comp true? boolean) [update-mappings refresh-mappings]))))))]
+                        refreshed-mappings (atom false)
+                        stubs {:update-mappings! (fn [_c] (reset! updated-mappings true))
+                               :update-settings! (fn [_c] (reset! updated-settings true))
+                               :upsert-template! (fn [_c] (reset! updated-template true))
+                               :refresh-mappings! (fn [_c] (reset! refreshed-mappings true))}]
+                    (sut/update-index-state {:props props} stubs)
+                    (is (= @updated-mappings (boolean update-mappings)))
+                    (is (= @updated-template (boolean update-mappings)))
+                    (is (= @updated-settings (boolean update-settings)))
+                    (is (= @refreshed-mappings
+                           (every? identity [update-mappings refresh-mappings])))))]
     (doseq [update-mappings?  [true false nil]
             update-settings?  [true false nil]
             refresh-mappings? [true false nil]
