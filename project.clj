@@ -69,7 +69,7 @@
                  [org.threeten/threeten-extra "1.2"]
                  [clojure.java-time "0.3.2"]
                  [org.clojure/core.async "1.0.567"]
-                 [org.clojure/core.memoize "1.0.236"]
+                 [org.clojure/core.memoize "1.0.257"]
                  [org.clojure/tools.logging "1.1.0"]
                  [org.clojure/tools.cli "1.0.194"]
                  [pandect "0.6.1"]
@@ -189,7 +189,7 @@
                                   [prismatic/schema-generators ~schema-generators-version]
                                   [circleci/circleci.test "0.4.3"]
                                   [org.clojure/math.combinatorics "0.1.6"]
-                                  [org.clojure/data.priority-map "1.0.0"]
+                                  [org.clojure/data.priority-map "1.1.0"]
                                   [org.clojure/tools.namespace "1.1.0"]]
                    :pedantic? :warn
                    :source-paths ["dev"]}
