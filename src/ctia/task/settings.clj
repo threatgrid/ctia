@@ -4,16 +4,20 @@
             [clojure.tools.cli :refer [parse-opts]]
             [clojure.tools.logging :as log]
             [ctia.stores.es.init :refer [init-es-conn! get-store-properties]]
+            [ctia.stores.es.schemas :refer [ESConnServices]]
             [ctia.init :refer [log-properties]]
             [ctia.properties :as p]
-            [ctia.store :refer [empty-stores]]))
+            [ctia.store :refer [empty-stores]]
+            [schema.core :as s]))
 
-(defn update-stores!
-  [store-keys get-in-config]
+(s/defn update-stores!
+  [store-keys
+   {{:keys [get-in-config]} :ConfigService
+    :as services} :- ESConnServices]
   (doseq [kw store-keys]
     (log/infof "updating settings for store: %s" (name kw))
     (init-es-conn! (get-store-properties kw get-in-config)
-                   get-in-config)))
+                   services)))
 
 (def cli-options
   [["-h" "--help"]
@@ -36,4 +40,4 @@
                    log-properties)
           get-in-config (partial get-in config)]
       (update-stores! (:stores options)
-                      get-in-config))))
+                      {:ConfigService {:get-in-config get-in-config}}))))

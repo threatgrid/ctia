@@ -1,7 +1,9 @@
 (ns ctia.task.settings-test
-  (:require [clojure.test :refer [deftest is testing join-fixtures use-fixtures]]
+  (:require [clojure.test :refer [deftest is testing use-fixtures]]
             [ctia.task.settings :as sut]
             [ctia.stores.es.init :as init]
+            [ctia.test-helpers.es :as es-helpers]
+            [clj-momo.test-helpers.core :as mth]
             [ductile
              [index :as es-index]
              [conn :as es-conn]]
@@ -20,10 +22,12 @@
                    "12s"))
     t))
 
-(use-fixtures :each (join-fixtures [fixture-properties:es-store
-                                    fixture-update-stores
-                                    fixture-ctia
-                                    fixture-delete-store-indexes]))
+(use-fixtures :each 
+              fixture-properties:es-store
+              fixture-update-stores
+              fixture-ctia
+              fixture-delete-store-indexes)
+(use-fixtures :once mth/fixture-schema-validation)
 
 (defn get-setting
   "helper for retrieving a setting inside an index/template ES res"
@@ -37,7 +41,7 @@
         {:keys [get-in-config]} (h/get-service-map app :ConfigService)
 
         initial-indicator-props (init/get-store-properties :indicator get-in-config)
-        _ (sut/update-stores! [:relationship :malware] get-in-config)
+        _ (sut/update-stores! [:relationship :malware] (es-helpers/app->ESConnServices app))
         es-props (get-in-config [:ctia :store :es])
         conn (es-conn/connect (:default es-props))
         relationship-indexname (get-in es-props [:relationship :indexname])
