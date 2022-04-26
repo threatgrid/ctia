@@ -109,6 +109,7 @@
                  [threatgrid/clj-jwt "0.5.0"]
                  [threatgrid/ring-turnstile-middleware "0.1.1"]
                  [threatgrid/ring-jwt-middleware "1.0.1"]
+                 [org.clojure/data.json "1.0.0"] ;; threatgrid/ring-jwt-middleware > threatgrid/ctim
                  [scopula "0.1.4"]
                  [org.clojure/tools.reader "1.3.4"] ;; org.clojure/tools.namespace > ring-middleware-format
 
