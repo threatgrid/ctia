@@ -147,6 +147,11 @@
           (index/delete! conn (str indexname "*"))
           (conn/close conn))))))
 
+(defn fake-exit [] (throw (ex-info (str `fake-exit) {::fake-exit true})))
+(defn fake-exit? [e]
+  (when (instance? e clojure.lang.ExceptionInfo)
+    (-> e ex-data ::fake-exit)))
+
 (deftest get-existing-indices-test
   (let [indexname (gen-indexname)]
     (helpers/with-config-transformer
@@ -161,16 +166,12 @@
                            expected-output]
                         (assert (boolean? expected-successful?))
                         (testing msg
-                          (let [successful? (atom true)
-                                fake-exit (fn [] (reset! successful? false))
-                                ouput (with-redefs [sut/system-exit-error fake-exit]
-                                        (sut/get-existing-indices conn input-indexname))]
-                            ;; sut/system-exit-error is redefined to check if
-                            ;; it was called but avoid to actually System/exit
-                            ;; thus testing the output makes sense only on success
-                            (when (some? expected-successful?)
-                              (is (= expected-output ouput)))
-                            (is (= expected-successful? @successful?)))))
+                          (let [output (try (with-redefs [sut/system-exit-error fake-exit]
+                                              (sut/get-existing-indices conn input-indexname))
+                                            (catch Throwable e e))]
+                            (if expected-successful?
+                              (is (= expected-output output))
+                              (is (fake-exit? e))))))
 
               _ (test-fn "0 existing index"
                          indexname
@@ -234,29 +235,26 @@
 
      (testing "update mapping should allow adding fields or identical mapping"
        (let [services (->ESConnServices)
-             sucessful? (atom true)
-             fake-exit (fn [] (reset! sucessful? false))
              props (prepare-props (props-aliased indexname) version)
              test-fn (fn [msg expected-successful? field field-mapping]
                        ;; init and create aliased indices
-                       (let [{:keys [conn]} (sut/init-es-conn! props services)]
-                         (try
-                           (with-redefs [sut/system-exit-error fake-exit
-                                         ;; redef mappings
-                                         sut/entity-fields
-                                         (cond-> sut/entity-fields
-                                           field (assoc-in [:sighting :es-mapping "sighting" :properties field]
-                                                           field-mapping))]
-                             (testing msg
-                               ;; init again to trigger mapping update
-                               (sut/init-es-conn! props services)
-                               ;; check state
-                               (is (= expected-successful? @sucessful?)))
-                             (reset! sucessful? true))
-                           (finally
-                             ;; reset state
-                             (clean-all conn)
-                             (conn/close conn)))))]
+                       (testing msg
+                         (let [{:keys [conn]} (sut/init-es-conn! props services)]
+                           (try
+                             (let [output (try (with-redefs [sut/system-exit-error fake-exit
+                                                             ;; redef mappings
+                                                             sut/entity-fields
+                                                             (cond-> sut/entity-fields
+                                                               field (assoc-in [:sighting :es-mapping "sighting" :properties field]
+                                                                               field-mapping))]
+                                                 ;; init again to trigger mapping update
+                                                 (sut/init-es-conn! props services))
+                                               (catch Throwable e e))]
+                               (is (= expected-successful? (not (fake-exit? output)))))
+                             (finally
+                               ;; reset state
+                               (clean-all conn)
+                               (conn/close conn))))))]
        (test-fn "update mapping should not fail on unchanged mapping"
                 true nil nil)
        (test-fn "update mapping should not fail on field addition"
