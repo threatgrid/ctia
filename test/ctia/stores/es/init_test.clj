@@ -168,7 +168,9 @@
                         (testing msg
                           (let [output (try (with-redefs [sut/system-exit-error fake-exit]
                                               (sut/get-existing-indices conn input-indexname))
-                                            (catch Throwable e e))]
+                                            (catch Throwable e
+                                              (cond-> e
+                                                (not (fake-exit? e)) throw)))]
                             (if expected-successful?
                               (is (= expected-output output))
                               (is (fake-exit? output))))))
@@ -249,7 +251,9 @@
                                                                                field-mapping))]
                                                  ;; init again to trigger mapping update
                                                  (sut/init-es-conn! props services))
-                                               (catch Throwable e e))]
+                                               (catch Throwable e
+                                                 (cond-> e
+                                                   (not (fake-exit? e)) throw)))]
                                (is (= expected-successful? (not (fake-exit? output)))))
                              (finally
                                ;; reset state
