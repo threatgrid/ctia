@@ -184,7 +184,7 @@
     <dependency>
       <groupId>org.clojure</groupId>
       <artifactId>core.memoize</artifactId>
-      <version>1.0.236</version>
+      <version>1.0.257</version>
       <exclusions>
         <exclusion>
           <artifactId>slf4j-nop</artifactId>
@@ -1192,7 +1192,7 @@
     <dependency>
       <groupId>args4j</groupId>
       <artifactId>args4j</artifactId>
-      <version>2.32</version>
+      <version>2.33</version>
       <exclusions>
         <exclusion>
           <artifactId>slf4j-nop</artifactId>
