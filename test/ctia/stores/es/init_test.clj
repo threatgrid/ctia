@@ -171,7 +171,7 @@
                                             (catch Throwable e e))]
                             (if expected-successful?
                               (is (= expected-output output))
-                              (is (fake-exit? e))))))
+                              (is (fake-exit? output))))))
 
               _ (test-fn "0 existing index"
                          indexname
