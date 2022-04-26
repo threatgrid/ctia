@@ -10,7 +10,7 @@
 (def schema-generators-version "0.1.4")
 (def test-check-version "1.1.0")
 (def test-chuck-version "0.2.13")
-(def trapperkeeper-version "3.1.0")
+(def trapperkeeper-version "3.2.0")
 
 ;; TODO we could add -dev here when it works
 (def base-ci-profiles "+test,+ci")
