@@ -147,10 +147,10 @@
           (index/delete! conn (str indexname "*"))
           (conn/close conn))))))
 
-(defn fake-exit [] (throw (ex-info (str `fake-exit) {::fake-exit true})))
-(defn fake-exit? [e]
+(defn exceptional-system-exit [] (throw (ex-info (str `exceptional-system-exit) {::exceptional-system-exit true})))
+(defn exceptional-system-exit? [e]
   (when (instance? clojure.lang.ExceptionInfo e)
-    (-> e ex-data ::fake-exit)))
+    (-> e ex-data ::exceptional-system-exit)))
 
 (deftest get-existing-indices-test
   (helpers/with-config-transformer
@@ -166,14 +166,14 @@
                            expected-output]
                         (assert (boolean? expected-successful?))
                         (testing msg
-                          (let [output (try (with-redefs [sut/system-exit-error fake-exit] ;;FIXME move to config
+                          (let [output (try (with-redefs [sut/system-exit-error exceptional-system-exit] ;;FIXME move to config
                                               (sut/get-existing-indices conn input-indexname))
                                             (catch Throwable e
                                               (cond-> e
-                                                (not (fake-exit? e)) throw)))]
+                                                (not (exceptional-system-exit? e)) throw)))]
                             (if expected-successful?
                               (is (= expected-output output))
-                              (is (fake-exit? output))))))
+                              (is (exceptional-system-exit? output))))))
 
               _ (test-fn "0 existing index"
                          indexname
@@ -245,7 +245,7 @@
                           (testing msg
                             (let [{:keys [conn]} (sut/init-es-conn! props services)]
                               (try
-                                (let [output (try (with-redefs [sut/system-exit-error fake-exit ;;FIXME move to config
+                                (let [output (try (with-redefs [sut/system-exit-error exceptional-system-exit ;;FIXME move to config
                                                                 ;; redef mappings
                                                                 sut/entity-fields
                                                                 (cond-> sut/entity-fields
@@ -255,8 +255,8 @@
                                                     (sut/init-es-conn! props services))
                                                   (catch Throwable e
                                                     (cond-> e
-                                                      (not (fake-exit? e)) throw)))]
-                                  (is (= expected-successful? (not (fake-exit? output)))))
+                                                      (not (exceptional-system-exit? e)) throw)))]
+                                  (is (= expected-successful? (not (exceptional-system-exit? output)))))
                                 (finally
                                   ;; reset state
                                   (clean-all conn)
