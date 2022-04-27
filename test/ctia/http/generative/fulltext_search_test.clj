@@ -283,8 +283,9 @@
     (fn [app]
       (helpers/set-capabilities! app "foouser" ["foogroup"] "user" (capabilities/all-capabilities))
       (whoami-helpers/set-whoami-response app "45c1f5e3f05d0" "foouser" "foogroup" "user")
-      (doseq [test-case (if-let [cases (seq (filter :only (test-cases)))]
-                          cases (test-cases))]
+      (doseq [test-case ((some-fn #(seq (filter :only %))
+                                  identity)
+                         (test-cases))]
         (test-search-case app test-case))))))
 
 ;; For the time being (before we fully migrate to ES7), we need to test the behavior
