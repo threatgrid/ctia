@@ -6,8 +6,8 @@
 (def metrics-clojure-version "2.10.0")
 (def netty-version "4.1.75.Final")
 (def perforate-version "0.3.4")
-(def ring-version "1.8.0")
-(def schema-generators-version "0.1.3")
+(def ring-version "1.9.5")
+(def schema-generators-version "0.1.4")
 (def test-check-version "1.1.0")
 (def test-chuck-version "0.2.13")
 (def trapperkeeper-version "3.2.0")
@@ -67,9 +67,9 @@
   :dependencies [[org.clojure/clojure ~clj-version]
                  [clj-time "0.15.2"]
                  [org.threeten/threeten-extra "1.2"]
-                 [clojure.java-time "0.3.2"]
+                 [clojure.java-time "0.3.3"]
                  [org.clojure/core.async "1.0.567"]
-                 [org.clojure/core.memoize "1.0.236"]
+                 [org.clojure/core.memoize "1.0.257"]
                  [org.clojure/tools.logging "1.1.0"]
                  [org.clojure/tools.cli "1.0.194"]
                  [pandect "0.6.1"]
@@ -104,13 +104,14 @@
                  [ring/ring-jetty-adapter ~ring-version]
                  [ring/ring-devel ~ring-version]
                  [ring-cors "0.1.13"]
-                 [commons-codec "1.12"] ;threatgrid/ctim, threatgrid/clj-momo, clj-http > ring/ring-codec
-                 [ring/ring-codec "1.1.2"]
-                 [threatgrid/clj-jwt "0.3.1"]
+                 [commons-codec "1.15"] ;ring/ring* > threatgrid/ctim, threatgrid/clj-momo, clj-http
+                 [ring/ring-codec "1.1.3"]
+                 [threatgrid/clj-jwt "0.5.0"]
                  [threatgrid/ring-turnstile-middleware "0.1.1"]
                  [threatgrid/ring-jwt-middleware "1.0.1"]
+                 [org.clojure/data.json "1.0.0"] ;; threatgrid/ring-jwt-middleware > threatgrid/ctim
                  [scopula "0.1.4"]
-                 [org.clojure/tools.reader "1.3.4"] ;; org.clojure/tools.namespace > ring-middleware-format
+                 [org.clojure/tools.reader "1.3.6"] ;; org.clojure/tools.namespace > ring-middleware-format
 
                  ;; clients
                  [clj-http "3.10.1"]
@@ -143,8 +144,8 @@
                  [threatgrid/redismq "0.1.1"]
 
                  [org.apache.zookeeper/zookeeper "3.5.6"] ; override zookeeper-clj, org.onyxplatform/onyx-kafka
-                 [args4j "2.32"] ;org.onyxplatform/onyx-kafka > threatgrid/ctim
-                 [com.stuartsierra/component "0.3.2"] ;org.onyxplatform/onyx-kafka internal override
+                 [args4j "2.33"] ;bump org.onyxplatform/onyx-kafka, threatgrid/ctim
+                 [com.stuartsierra/component "1.1.0"] ;org.onyxplatform/onyx-kafka internal override
                  [org.onyxplatform/onyx-kafka "0.14.5.0"]
                  ;; Notes on jackson-databind:
                  ;; - overrides org.onyxplatform/onyx-kafka and others
@@ -187,10 +188,10 @@
                                   [com.gfredericks/test.chuck ~test-chuck-version]
                                   [clj-http-fake ~clj-http-fake-version]
                                   [prismatic/schema-generators ~schema-generators-version]
-                                  [circleci/circleci.test "0.4.3"]
+                                  [circleci/circleci.test "0.5.0"]
                                   [org.clojure/math.combinatorics "0.1.6"]
-                                  [org.clojure/data.priority-map "1.0.0"]
-                                  [org.clojure/tools.namespace "1.1.0"]]
+                                  [org.clojure/data.priority-map "1.1.0"]
+                                  [org.clojure/tools.namespace "1.2.0"]]
                    :pedantic? :warn
                    :source-paths ["dev"]}
              :ci {:pedantic? :abort

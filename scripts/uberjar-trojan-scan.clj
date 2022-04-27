@@ -1,4 +1,6 @@
 #!/usr/bin/env bb
+;; assumes `lein uberjar` has been run
+;; called by `build/deploy-actions.sh` in the `deploy` job of .github/workflows/pr.yml
 
 ;; Devs: run `bb nrepl` at project root start an nrepl server
 
@@ -32,6 +34,7 @@
    "org/apache/commons/codec/language/bm/gen_rules_arabic.txt"
    "org/apache/curator/shaded/com/google/common/base/CharMatcher$Invisible.class"
    "org/bouncycastle/crypto/engines/AESFastEngine.class"
+   "org/bouncycastle/crypto/digests/GOST3411_2012Digest.class"
    "org/xerial/snappy/native/Linux/android-arm/libsnappyjava.so"
    "org/xerial/snappy/native/Linux/ppc64le/libsnappyjava.so"
    "org/xerial/snappy/native/Windows/x86/snappyjava.dll"

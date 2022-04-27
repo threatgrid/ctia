@@ -4,7 +4,8 @@
             [puppetlabs.trapperkeeper.services :refer [service-context]]))
 
 (defprotocol RiemannService
-  (send-event [this event] [this service-prefix event]))
+  (send-event [this event] [this service-prefix event])
+  (wrap-request-logs [this handler metric-description]))
 
 (tk/defservice riemann-service
   RiemannService
@@ -18,4 +19,7 @@
       (core/send-event conn service-prefix event)))
   (send-event [this service-prefix event]
     (let [{:keys [conn]} (service-context this)]
-      (core/send-event conn service-prefix event))))
+      (core/send-event conn service-prefix event)))
+  (wrap-request-logs [this handler metric-description]
+    (let [{:keys [conn service-prefix]} (service-context this)]
+      (core/wrap-request-logs handler metric-description conn service-prefix))))
