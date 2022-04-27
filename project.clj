@@ -188,7 +188,7 @@
                                   [com.gfredericks/test.chuck ~test-chuck-version]
                                   [clj-http-fake ~clj-http-fake-version]
                                   [prismatic/schema-generators ~schema-generators-version]
-                                  [circleci/circleci.test "0.4.3"]
+                                  [circleci/circleci.test "0.5.0"]
                                   [org.clojure/math.combinatorics "0.1.6"]
                                   [org.clojure/data.priority-map "1.1.0"]
                                   [org.clojure/tools.namespace "1.2.0"]]
