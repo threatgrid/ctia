@@ -18,6 +18,7 @@
     "org/apache/commons/codec/language/bm/gen_rules_arabic.txt",
     "org/apache/curator/shaded/com/google/common/base/CharMatcher$Invisible.class",
     "org/bouncycastle/crypto/engines/AESFastEngine.class",
+    "org/bouncycastle/crypto/digests/GOST3411_2012Digest.class",
     "org/xerial/snappy/native/Linux/android-arm/libsnappyjava.so",
     "org/xerial/snappy/native/Linux/ppc64le/libsnappyjava.so",
     "org/xerial/snappy/native/Windows/x86/snappyjava.dll",

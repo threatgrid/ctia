@@ -6,7 +6,7 @@
 (def metrics-clojure-version "2.10.0")
 (def netty-version "4.1.75.Final")
 (def perforate-version "0.3.4")
-(def ring-version "1.8.0")
+(def ring-version "1.9.5")
 (def schema-generators-version "0.1.4")
 (def test-check-version "1.1.0")
 (def test-chuck-version "0.2.13")
@@ -104,8 +104,8 @@
                  [ring/ring-jetty-adapter ~ring-version]
                  [ring/ring-devel ~ring-version]
                  [ring-cors "0.1.13"]
-                 [commons-codec "1.12"] ;threatgrid/ctim, threatgrid/clj-momo, clj-http > ring/ring-codec
-                 [ring/ring-codec "1.1.2"]
+                 [commons-codec "1.15"] ;ring/ring* > threatgrid/ctim, threatgrid/clj-momo, clj-http
+                 [ring/ring-codec "1.1.3"]
                  [threatgrid/clj-jwt "0.5.0"]
                  [threatgrid/ring-turnstile-middleware "0.1.1"]
                  [threatgrid/ring-jwt-middleware "1.0.1"]
