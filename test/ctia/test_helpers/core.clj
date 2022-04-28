@@ -339,7 +339,7 @@
   ([t :- (s/=> s/Any)
     enable-http?]
    (fixture-ctia-with-app
-    {:enable-http? false}
+    {:enable-http? enable-http?}
     (fn [_app_]
       ;; app bound thread-locally
       (t)))))
