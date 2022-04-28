@@ -244,7 +244,7 @@
             (is (= (count (es-index/get conn
                                         (str "v0.0.0_" (get-in (es-props get-in-config) [store-type :indexname]) "*")))
                    3)
-                "target indice should be rolledover during migration")
+                "target index should be rolled over during migration")
             (es-index/get conn
                           (str "v0.0.0_" (get-in (es-props get-in-config) [store-type :indexname]) "*"))
             (let [migrated-store (get-in migration-state [:stores store-type])
