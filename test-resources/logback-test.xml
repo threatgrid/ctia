@@ -5,11 +5,13 @@
         </encoder>
     </appender>
 
+    <appender name="NOP" class="ch.qos.logback.core.helpers.NOPAppender"/>
+
     <!-- Log level for all loggers that start with "ctia" -->
-    <!--<logger name="ctia" level="INFO"/>-->
+    <logger name="ctia" level="INFO"/>
 
     <!-- https://logback.qos.ch/manual/configuration.html#rootElement -->
     <root level="OFF">
-        <appender-ref ref="STDOUT" />
+        <appender-ref ref="NOP" />
     </root>
 </configuration>
