@@ -6,7 +6,7 @@
     </appender>
 
     <!-- Log level for all loggers that start with "ctia" -->
-    <logger name="ctia" level="INFO"/>
+    <!--<logger name="ctia" level="INFO"/>-->
 
     <!-- https://logback.qos.ch/manual/configuration.html#rootElement -->
     <root level="OFF">
