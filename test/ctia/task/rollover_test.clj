@@ -6,7 +6,8 @@
             [ctia.task.rollover :as sut]
             [ctia.test-helpers.core :as helpers]
             [ctia.test-helpers.es :as es-helpers]
-            [ctia.test-helpers.fixtures :as fixt]))
+            [ctia.test-helpers.fixtures :as fixt]
+            [puppetlabs.trapperkeeper.app :as app]))
 
 (deftest rollover-aliased-test
   (es-helpers/for-each-es-version
@@ -105,3 +106,6 @@
             (is (every? nil? [ko-type-1 ko-type-2]))
             (is (every? (fn [k] (some? (:rolled_over k)))
                         [ok-type-1 ok-type-2 ok-type-3]))))))))
+
+(deftest mk-app!-test
+  (is (map? (app/service-graph (sut/mk-app!)))))
