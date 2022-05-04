@@ -36,6 +36,13 @@
                          (pr-str (ex-data e))))
       (update state :nb-errors inc))))
 
+
+(defn mk-app! []
+  (let [config (p/build-init-config)]
+    (start-ctia!* {:services [store-svc/store-service
+                              features-svc/features-service]
+                   :config config})))
+
 (defn rollover-stores
   [stores]
   (reduce concat-rollover
@@ -44,10 +51,7 @@
 
 (defn -main [& _args]
   (try
-    (let [app (let [config (p/build-init-config)]
-                (start-ctia!* {:services [store-svc/store-service
-                                          features-svc/features-service]
-                               :config config}))
+    (let [app (mk-app!)
           {{:keys [all-stores]} :StoreService} (app/service-graph app)
           {:keys [nb-errors]
            :as res} (rollover-stores (all-stores))]
