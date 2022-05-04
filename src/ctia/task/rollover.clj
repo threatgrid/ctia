@@ -2,6 +2,7 @@
   (:require [clojure.tools.logging :as log]
             [ctia.init :refer [start-ctia!*]]
             [ctia.store-service :as store-svc]
+            [ctia.features-service :as features-svc]
             [ctia.stores.es.schemas :refer [ESConnState]]
             [ctia.properties :as p]
             [puppetlabs.trapperkeeper.app :as app]
@@ -44,7 +45,8 @@
 (defn -main [& _args]
   (try
     (let [app (let [config (p/build-init-config)]
-                (start-ctia!* {:services [store-svc/store-service]
+                (start-ctia!* {:services [store-svc/store-service
+                                          features-svc/features-service]
                                :config config}))
           {{:keys [all-stores]} :StoreService} (app/service-graph app)
           {:keys [nb-errors]
