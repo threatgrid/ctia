@@ -1,0 +1,587 @@
+ctia:ctia:jar:1.1.1-SNAPSHOT
++- org.clojure:clojure:jar:1.10.1:compile
+|  +- org.clojure:spec.alpha:jar:0.2.176:compile
+|  \- org.clojure:core.specs.alpha:jar:0.2.44:compile
++- clj-time:clj-time:jar:0.15.2:compile
+|  \- joda-time:joda-time:jar:2.10:compile
++- org.threeten:threeten-extra:jar:1.2:compile
++- clojure.java-time:clojure.java-time:jar:0.3.3:compile
+|  \- clj-tuple:clj-tuple:jar:0.2.2:compile
++- org.clojure:core.async:jar:1.0.567:compile
+|  \- org.clojure:tools.analyzer.jvm:jar:0.7.3:compile
+|     +- org.clojure:tools.analyzer:jar:0.7.0:compile
+|     +- (org.clojure:core.memoize:jar:0.8.2:compile - omitted for conflict with 1.0.257)
+|     +- org.ow2.asm:asm:jar:5.2:compile
+|     \- (org.clojure:tools.reader:jar:1.3.2:compile - omitted for duplicate)
++- org.clojure:core.memoize:jar:1.0.257:compile
+|  \- org.clojure:core.cache:jar:1.0.225:compile
+|     \- (org.clojure:data.priority-map:jar:1.1.0:compile - omitted for duplicate)
++- org.clojure:tools.logging:jar:1.1.0:compile
++- org.clojure:tools.cli:jar:1.0.194:compile
++- pandect:pandect:jar:0.6.1:compile
++- org.clojure:math.combinatorics:jar:0.1.6:test
++- version-clj:version-clj:jar:2.0.1:compile
++- puppetlabs:trapperkeeper:jar:3.2.0:compile
+|  +- (org.clojure:tools.logging:jar:0.4.0:compile - omitted for conflict with 1.1.0)
+|  +- org.clojure:tools.macro:jar:0.1.5:compile
+|  +- (org.clojure:core.async:jar:0.4.490:compile - omitted for conflict with 1.0.567)
+|  +- (org.slf4j:log4j-over-slf4j:jar:1.7.20:compile - omitted for duplicate)
+|  +- ch.qos.logback:logback-classic:jar:1.2.3:compile
+|  |  +- (ch.qos.logback:logback-core:jar:1.2.3:compile - omitted for duplicate)
+|  |  \- (org.slf4j:slf4j-api:jar:1.7.25:compile - omitted for conflict with 1.7.20)
+|  +- ch.qos.logback:logback-core:jar:1.2.3:compile
+|  +- ch.qos.logback:logback-access:jar:1.2.3:compile
+|  |  \- (ch.qos.logback:logback-core:jar:1.2.3:compile - omitted for duplicate)
+|  +- org.codehaus.janino:janino:jar:3.0.8:compile
+|  |  \- org.codehaus.janino:commons-compiler:jar:3.0.8:compile
+|  +- (clj-time:clj-time:jar:0.11.0:compile - omitted for conflict with 0.15.2)
+|  +- clj-commons:fs:jar:1.6.307:compile
+|  |  +- org.apache.commons:commons-compress:jar:1.20:compile
+|  |  \- org.tukaani:xz:jar:1.8:compile
+|  +- clj-commons:clj-yaml:jar:0.7.2:compile
+|  |  +- org.yaml:snakeyaml:jar:1.26:compile
+|  |  \- org.flatland:ordered:jar:1.5.9:compile
+|  +- (prismatic:plumbing:jar:0.4.2:compile - omitted for conflict with 0.5.5)
+|  +- (prismatic:schema:jar:1.1.12:compile - omitted for conflict with 1.2.0)
+|  +- beckon:beckon:jar:0.1.1:compile
+|  +- puppetlabs:typesafe-config:jar:0.2.0:compile
+|  |  \- com.typesafe:config:jar:1.4.1:compile
+|  +- (puppetlabs:kitchensink:jar:3.1.1:compile - omitted for conflict with 3.2.0)
+|  +- puppetlabs:i18n:jar:0.8.0:compile
+|  |  +- cpath-clj:cpath-clj:jar:0.1.2:compile
+|  |  |  \- (org.clojure:java.classpath:jar:0.2.2:compile - omitted for conflict with 1.0.0)
+|  |  \- org.gnu.gettext:libintl:jar:0.18.3:compile
+|  \- nrepl:nrepl:jar:0.6.0:compile
++- puppetlabs:kitchensink:jar:3.2.0:compile
+|  +- (org.clojure:tools.logging:jar:0.4.0:compile - omitted for conflict with 1.1.0)
+|  +- (org.clojure:tools.cli:jar:0.3.6:compile - omitted for conflict with 1.0.194)
+|  +- (clj-time:clj-time:jar:0.11.0:compile - omitted for conflict with 0.15.2)
+|  +- (clj-commons:fs:jar:1.6.307:compile - omitted for duplicate)
+|  +- slingshot:slingshot:jar:0.12.2:compile
+|  +- (cheshire:cheshire:jar:5.8.0:compile - omitted for conflict with 5.10.2)
+|  +- org.ini4j:ini4j:jar:0.5.2:compile
+|  +- org.tcrawley:dynapath:jar:0.2.5:compile
+|  \- digest:digest:jar:1.4.3:compile
++- prismatic:plumbing:jar:0.5.5:compile
+|  +- (prismatic:schema:jar:1.1.7:compile - omitted for conflict with 1.1.12)
+|  \- de.kotka:lazymap:jar:3.1.0:compile
++- prismatic:schema:jar:1.2.0:compile
++- metosin:schema-tools:jar:0.12.2:compile
+|  \- (prismatic:schema:jar:1.1.12:compile - omitted for conflict with 1.2.0)
++- threatgrid:flanders:jar:0.1.23:compile
+|  +- org.clojure:core.match:jar:0.3.0:compile
+|  +- (cheshire:cheshire:jar:5.9.0:compile - omitted for conflict with 5.8.0)
+|  +- (prismatic:schema:jar:1.1.12:compile - omitted for conflict with 1.2.0)
+|  +- (metosin:ring-swagger:jar:0.26.2:compile - omitted for duplicate)
+|  \- (metosin:schema-tools:jar:0.12.2:compile - omitted for duplicate)
++- threatgrid:ctim:jar:1.1.11:compile
+|  +- (prismatic:schema:jar:1.1.12:compile - omitted for conflict with 1.2.0)
+|  +- (com.google.protobuf:protobuf-java:jar:3.7.1:compile - omitted for conflict with 3.19.4)
+|  +- (instaparse:instaparse:jar:1.4.8:compile - omitted for conflict with 1.4.10)
+|  +- (threatgrid:clj-momo:jar:0.3.5:compile - omitted for duplicate)
+|  +- org.mozilla:rhino:jar:1.7.7.1:compile
+|  +- (threatgrid:flanders:jar:0.1.23:compile - omitted for duplicate)
+|  +- (metosin:ring-swagger:jar:0.26.2:compile - omitted for duplicate)
+|  +- (org.clojure:test.check:jar:0.10.0:compile - omitted for conflict with 1.1.0)
+|  +- (com.gfredericks:test.chuck:jar:0.2.10:compile - omitted for conflict with 0.2.13)
+|  +- (prismatic:schema-generators:jar:0.1.3:compile - omitted for conflict with 0.1.4)
+|  \- kovacnica:clojure.network.ip:jar:0.1.3:compile
+|     \- org.clojure:clojurescript:jar:1.7.122:compile
+|        +- com.google.javascript:closure-compiler:jar:v20150729:compile
+|        |  +- com.google.javascript:closure-compiler-externs:jar:v20150729:compile
+|        |  +- (args4j:args4j:jar:2.0.26:compile - omitted for conflict with 2.33)
+|        |  +- (com.google.guava:guava:jar:18.0:compile - omitted for conflict with 16.0.1)
+|        |  +- (com.google.protobuf:protobuf-java:jar:2.5.0:compile - omitted for conflict with 3.7.1)
+|        |  +- com.google.code.gson:gson:jar:2.2.4:compile
+|        |  \- (com.google.code.findbugs:jsr305:jar:1.3.9:compile - omitted for conflict with 3.0.1)
+|        +- org.clojure:google-closure-library:jar:0.0-20150805-acd8b553:compile
+|        |  \- org.clojure:google-closure-library-third-party:jar:0.0-20150805-acd8b553:compile
+|        +- (org.clojure:data.json:jar:0.2.6:compile - omitted for conflict with 1.0.0)
+|        +- (org.mozilla:rhino:jar:1.7R5:compile - omitted for conflict with 1.7.7.1)
+|        \- (org.clojure:tools.reader:jar:0.10.0-alpha3:compile - omitted for conflict with 1.3.2)
++- instaparse:instaparse:jar:1.4.10:compile
++- threatgrid:clj-momo:jar:0.3.5:compile
+|  +- (org.clojure:tools.logging:jar:0.5.0:compile - omitted for conflict with 1.1.0)
+|  +- (prismatic:schema:jar:1.1.12:compile - omitted for conflict with 1.2.0)
+|  +- (metosin:schema-tools:jar:0.12.2:compile - omitted for duplicate)
+|  +- com.andrewmcveigh:cljs-time:jar:0.5.2:compile
+|  +- (clj-time:clj-time:jar:0.15.2:compile - omitted for duplicate)
+|  +- (com.arohner:uri:jar:0.1.2:compile - omitted for duplicate)
+|  +- (cheshire:cheshire:jar:5.9.0:compile - omitted for conflict with 5.8.0)
+|  +- (clj-http:clj-http:jar:3.10.0:compile - omitted for conflict with 3.10.1)
+|  +- (slugger:slugger:jar:1.0.1:compile - omitted for duplicate)
+|  +- (riemann-clojure-client:riemann-clojure-client:jar:0.5.1:compile - omitted for duplicate)
+|  +- (metrics-clojure:metrics-clojure:jar:2.10.0:compile - omitted for duplicate)
+|  +- (metrics-clojure-jvm:metrics-clojure-jvm:jar:2.10.0:compile - omitted for duplicate)
+|  +- (metrics-clojure-ring:metrics-clojure-ring:jar:2.10.0:compile - omitted for duplicate)
+|  +- threatgrid:metrics-clojure-riemann:jar:2.10.1:compile
+|  |  +- (metrics-clojure:metrics-clojure:jar:2.10.0:compile - omitted for duplicate)
+|  |  \- io.riemann:metrics3-riemann-reporter:jar:0.4.6:compile
+|  |     +- (io.dropwizard.metrics:metrics-core:jar:3.1.5:compile - omitted for conflict with 3.2.2)
+|  |     \- (io.riemann:riemann-java-client:jar:0.4.6:compile - omitted for conflict with 0.5.1)
+|  \- (clout:clout:jar:2.2.1:compile - omitted for duplicate)
++- threatgrid:ductile:jar:0.4.4:compile
+|  +- (org.clojure:tools.logging:jar:0.5.0:compile - omitted for conflict with 1.1.0)
+|  +- (prismatic:schema:jar:1.1.12:compile - omitted for conflict with 1.2.0)
+|  +- (metosin:schema-tools:jar:0.12.2:compile - omitted for duplicate)
+|  +- (clj-http:clj-http:jar:3.10.1:compile - omitted for conflict with 3.10.0)
+|  +- (com.arohner:uri:jar:0.1.2:compile - omitted for duplicate)
+|  +- (cheshire:cheshire:jar:5.9.0:compile - omitted for conflict with 5.8.0)
+|  \- (base64-clj:base64-clj:jar:0.1.1:compile - omitted for duplicate)
++- com.arohner:uri:jar:0.1.2:compile
+|  \- pathetic:pathetic:jar:0.5.0:compile
+|     \- com.cemerick:clojurescript.test:jar:0.0.4:compile
+|        \- (org.clojure:clojurescript:jar:0.0-1586:compile - omitted for conflict with 1.7.122)
++- metosin:compojure-api:jar:1.1.13:compile
+|  +- (prismatic:plumbing:jar:0.5.5:compile - omitted for duplicate)
+|  +- potemkin:potemkin:jar:0.4.5:compile
+|  |  +- (clj-tuple:clj-tuple:jar:0.2.2:compile - omitted for duplicate)
+|  |  \- riddley:riddley:jar:0.1.12:compile
+|  +- (cheshire:cheshire:jar:5.9.0:compile - omitted for conflict with 5.8.0)
+|  +- compojure:compojure:jar:1.6.1:compile
+|  |  +- (org.clojure:tools.macro:jar:0.1.5:compile - omitted for duplicate)
+|  |  +- (clout:clout:jar:2.2.1:compile - omitted for duplicate)
+|  |  +- medley:medley:jar:1.0.0:compile
+|  |  +- (ring:ring-core:jar:1.6.3:compile - omitted for conflict with 1.7.1)
+|  |  \- (ring:ring-codec:jar:1.1.0:compile - omitted for conflict with 1.1.3)
+|  +- (prismatic:schema:jar:1.1.12:compile - omitted for conflict with 1.2.0)
+|  +- org.tobereplaced:lettercase:jar:1.0.0:compile
+|  +- frankiesardo:linked:jar:1.3.0:compile
+|  +- (ring-middleware-format:ring-middleware-format:jar:0.7.4:compile - omitted for duplicate)
+|  +- metosin:ring-http-response:jar:0.9.1:compile
+|  |  +- (ring:ring-core:jar:1.7.1:compile - omitted for duplicate)
+|  |  \- (potemkin:potemkin:jar:0.4.5:compile - omitted for duplicate)
+|  +- (metosin:ring-swagger:jar:0.26.2:compile - omitted for duplicate)
+|  \- (metosin:ring-swagger-ui:jar:2.2.10:compile - omitted for conflict with 3.24.3)
++- ring-middleware-format:ring-middleware-format:jar:0.7.4:compile
+|  +- (org.clojure:core.memoize:jar:0.7.1:compile - omitted for conflict with 1.0.257)
+|  +- (ring:ring-core:jar:1.7.1:compile - omitted for conflict with 1.9.5)
+|  +- (cheshire:cheshire:jar:5.8.1:compile - omitted for conflict with 5.8.0)
+|  +- (org.clojure:tools.reader:jar:1.3.2:compile - omitted for conflict with 1.3.6)
+|  +- (clj-commons:clj-yaml:jar:0.6.0:compile - omitted for conflict with 0.7.2)
+|  +- clojure-msgpack:clojure-msgpack:jar:1.2.1:compile
+|  \- com.cognitect:transit-clj:jar:0.8.313:compile
+|     \- com.cognitect:transit-java:jar:0.8.337:compile
+|        +- (com.fasterxml.jackson.core:jackson-core:jar:2.8.7:compile - omitted for conflict with 2.9.0)
+|        +- org.msgpack:msgpack:jar:0.6.12:compile
+|        |  +- com.googlecode.json-simple:json-simple:jar:1.1.1:compile
+|        |  \- (org.javassist:javassist:jar:3.18.1-GA:compile - omitted for duplicate)
+|        +- (commons-codec:commons-codec:jar:1.10:compile - omitted for conflict with 1.12)
+|        \- javax.xml.bind:jaxb-api:jar:2.3.0:compile
++- com.ibm.icu:icu4j:jar:65.1:compile
++- metosin:ring-swagger:jar:0.26.2:compile
+|  +- (cheshire:cheshire:jar:5.8.1:compile - omitted for conflict with 5.8.0)
+|  +- (metosin:ring-http-response:jar:0.9.1:compile - omitted for duplicate)
+|  +- (ring:ring-core:jar:1.7.1:compile - omitted for duplicate)
+|  +- (metosin:schema-tools:jar:0.11.0:compile - omitted for conflict with 0.12.2)
+|  +- (prismatic:schema:jar:1.1.10:compile - omitted for conflict with 1.2.0)
+|  +- (prismatic:plumbing:jar:0.5.5:compile - omitted for duplicate)
+|  +- metosin:scjsv:jar:0.5.0:compile
+|  |  +- (cheshire:cheshire:jar:5.8.1:compile - omitted for conflict with 5.8.0)
+|  |  \- com.github.java-json-tools:json-schema-validator:jar:2.2.10:compile
+|  |     +- com.github.java-json-tools:json-schema-core:jar:1.2.10:compile
+|  |     |  +- com.github.java-json-tools:jackson-coreutils:jar:1.9:compile
+|  |     |  |  +- (com.fasterxml.jackson.core:jackson-databind:jar:2.2.3:compile - omitted for conflict with 2.11.0)
+|  |     |  |  +- (com.google.guava:guava:jar:16.0.1:compile - omitted for conflict with 18.0)
+|  |     |  |  +- com.github.fge:msg-simple:jar:1.1:compile
+|  |     |  |  |  +- com.github.fge:btf:jar:1.2:compile
+|  |     |  |  |  |  \- (com.google.code.findbugs:jsr305:jar:2.0.1:compile - omitted for duplicate)
+|  |     |  |  |  \- (com.google.code.findbugs:jsr305:jar:2.0.1:compile - omitted for duplicate)
+|  |     |  |  \- (com.google.code.findbugs:jsr305:jar:2.0.1:compile - omitted for conflict with 3.0.1)
+|  |     |  +- com.github.fge:uri-template:jar:0.9:compile
+|  |     |  |  +- (com.github.fge:msg-simple:jar:1.1:compile - omitted for duplicate)
+|  |     |  |  +- (com.google.guava:guava:jar:16.0.1:compile - omitted for conflict with 18.0)
+|  |     |  |  \- (com.google.code.findbugs:jsr305:jar:2.0.1:compile - omitted for duplicate)
+|  |     |  +- (org.mozilla:rhino:jar:1.7.7.1:compile - omitted for duplicate)
+|  |     |  \- (com.google.code.findbugs:jsr305:jar:3.0.1:compile - omitted for duplicate)
+|  |     +- javax.mail:mailapi:jar:1.4.3:compile
+|  |     |  \- javax.activation:activation:jar:1.1:compile
+|  |     +- (joda-time:joda-time:jar:2.9.7:compile - omitted for conflict with 2.10)
+|  |     +- com.googlecode.libphonenumber:libphonenumber:jar:8.0.0:compile
+|  |     +- (com.google.code.findbugs:jsr305:jar:3.0.1:compile - omitted for conflict with 3.0.2)
+|  |     \- (net.sf.jopt-simple:jopt-simple:jar:5.0.3:compile - omitted for conflict with 5.0.4)
+|  +- (clj-time:clj-time:jar:0.15.1:compile - omitted for conflict with 0.15.2)
+|  +- (org.tobereplaced:lettercase:jar:1.0.0:compile - omitted for duplicate)
+|  +- (potemkin:potemkin:jar:0.4.5:compile - omitted for duplicate)
+|  \- (frankiesardo:linked:jar:1.3.0:compile - omitted for duplicate)
++- metosin:ring-swagger-ui:jar:3.24.3:compile
++- ring:ring-core:jar:1.9.5:compile
+|  +- (ring:ring-codec:jar:1.1.3:compile - omitted for duplicate)
+|  +- commons-io:commons-io:jar:2.10.0:compile
+|  +- commons-fileupload:commons-fileupload:jar:1.4:compile
+|  |  \- (commons-io:commons-io:jar:2.2:compile - omitted for conflict with 2.10.0)
+|  +- crypto-random:crypto-random:jar:1.2.1:compile
+|  |  \- (commons-codec:commons-codec:jar:1.15:compile - omitted for conflict with 1.12)
+|  \- crypto-equality:crypto-equality:jar:1.0.0:compile
++- ring:ring-jetty-adapter:jar:1.9.5:compile
+|  +- (ring:ring-core:jar:1.9.5:compile - omitted for duplicate)
+|  +- ring:ring-servlet:jar:1.9.5:compile
+|  |  \- (ring:ring-core:jar:1.9.5:compile - omitted for duplicate)
+|  \- org.eclipse.jetty:jetty-server:jar:9.4.44.v20210927:compile
+|     +- javax.servlet:javax.servlet-api:jar:3.1.0:compile
+|     +- org.eclipse.jetty:jetty-http:jar:9.4.44.v20210927:compile
+|     |  +- org.eclipse.jetty:jetty-util:jar:9.4.44.v20210927:compile
+|     |  \- (org.eclipse.jetty:jetty-io:jar:9.4.44.v20210927:compile - omitted for duplicate)
+|     \- org.eclipse.jetty:jetty-io:jar:9.4.44.v20210927:compile
+|        \- (org.eclipse.jetty:jetty-util:jar:9.4.44.v20210927:compile - omitted for duplicate)
++- ring:ring-devel:jar:1.9.5:compile
+|  +- (ring:ring-core:jar:1.9.5:compile - omitted for duplicate)
+|  +- (hiccup:hiccup:jar:1.0.5:compile - omitted for conflict with 2.0.0-alpha2)
+|  +- clj-stacktrace:clj-stacktrace:jar:0.2.8:compile
+|  \- ns-tracker:ns-tracker:jar:0.4.0:compile
+|     +- (org.clojure:tools.namespace:jar:0.2.11:compile - omitted for conflict with 1.2.0)
+|     \- org.clojure:java.classpath:jar:1.0.0:compile
++- ring-cors:ring-cors:jar:0.1.13:compile
++- commons-codec:commons-codec:jar:1.15:compile
++- ring:ring-codec:jar:1.1.3:compile
+|  \- (commons-codec:commons-codec:jar:1.15:compile - omitted for duplicate)
++- threatgrid:clj-jwt:jar:0.5.0:compile
+|  +- org.clojure:data.codec:jar:0.1.1:compile
+|  +- org.bouncycastle:bcpkix-jdk15on:jar:1.68:compile
+|  |  \- org.bouncycastle:bcprov-jdk15on:jar:1.68:compile
+|  +- (crypto-equality:crypto-equality:jar:1.0.0:compile - omitted for duplicate)
+|  +- (clj-time:clj-time:jar:0.15.2:compile - omitted for duplicate)
+|  \- metosin:jsonista:jar:0.2.6:compile
+|     +- (com.fasterxml.jackson.core:jackson-core:jar:2.11.0:compile - omitted for conflict with 2.9.0)
+|     +- (com.fasterxml.jackson.core:jackson-databind:jar:2.11.0:compile - omitted for conflict with 2.12.6)
+|     \- com.fasterxml.jackson.datatype:jackson-datatype-jsr310:jar:2.11.0:compile
+|        +- (com.fasterxml.jackson.core:jackson-annotations:jar:2.11.0:compile - omitted for duplicate)
+|        +- (com.fasterxml.jackson.core:jackson-core:jar:2.11.0:compile - omitted for conflict with 2.9.0)
+|        \- (com.fasterxml.jackson.core:jackson-databind:jar:2.11.0:compile - omitted for duplicate)
++- threatgrid:ring-turnstile-middleware:jar:0.1.1:compile
+|  +- (org.clojure:tools.logging:jar:0.5.0:compile - omitted for conflict with 1.1.0)
+|  +- threatgrid:turnstile:jar:0.104:compile
+|  |  \- (com.taoensso:carmine:jar:2.19.1:compile - omitted for duplicate)
+|  +- (metosin:schema-tools:jar:0.12.2:compile - omitted for duplicate)
+|  +- (prismatic:schema:jar:1.1.12:compile - omitted for conflict with 1.2.0)
+|  +- ring:ring-mock:jar:0.4.0:compile
+|  |  +- (cheshire:cheshire:jar:5.8.1:compile - omitted for conflict with 5.8.0)
+|  |  \- (ring:ring-codec:jar:1.1.1:compile - omitted for conflict with 1.1.3)
+|  \- (ch.qos.logback:logback-classic:jar:1.2.3:compile - omitted for duplicate)
++- threatgrid:ring-jwt-middleware:jar:1.0.1:compile
+|  +- (clj-time:clj-time:jar:0.15.2:compile - omitted for duplicate)
+|  +- (org.mozilla:rhino:jar:1.7.7.1:compile - omitted for duplicate)
+|  +- (com.google.guava:guava:jar:16.0.1:compile - omitted for conflict with 31.0-jre)
+|  +- (threatgrid:clj-jwt:jar:0.3.1:compile - omitted for conflict with 0.5.0)
+|  +- (threatgrid:clj-momo:jar:0.3.5:compile - omitted for duplicate)
+|  +- (org.clojure:tools.logging:jar:1.0.0:compile - omitted for conflict with 1.1.0)
+|  +- (metosin:ring-http-response:jar:0.9.1:compile - omitted for duplicate)
+|  \- (metosin:compojure-api:jar:1.1.13:compile - omitted for duplicate)
++- org.clojure:data.json:jar:1.0.0:compile
++- scopula:scopula:jar:0.1.4:compile
++- org.clojure:tools.reader:jar:1.3.6:compile
++- clj-http:clj-http:jar:3.10.1:compile
+|  +- org.apache.httpcomponents:httpcore:jar:4.4.12:compile
+|  +- org.apache.httpcomponents:httpclient:jar:4.5.10:compile
+|  |  +- (org.apache.httpcomponents:httpcore:jar:4.4.12:compile - omitted for duplicate)
+|  |  +- commons-logging:commons-logging:jar:1.2:compile
+|  |  \- (commons-codec:commons-codec:jar:1.11:compile - omitted for conflict with 1.15)
+|  +- org.apache.httpcomponents:httpclient-cache:jar:4.5.10:compile
+|  |  +- (org.apache.httpcomponents:httpclient:jar:4.5.10:compile - omitted for duplicate)
+|  |  \- (commons-logging:commons-logging:jar:1.2:compile - omitted for duplicate)
+|  +- org.apache.httpcomponents:httpasyncclient:jar:4.1.4:compile
+|  |  +- (org.apache.httpcomponents:httpcore:jar:4.4.10:compile - omitted for conflict with 4.4.12)
+|  |  +- org.apache.httpcomponents:httpcore-nio:jar:4.4.10:compile
+|  |  |  \- (org.apache.httpcomponents:httpcore:jar:4.4.10:compile - omitted for conflict with 4.4.12)
+|  |  +- (org.apache.httpcomponents:httpclient:jar:4.5.6:compile - omitted for conflict with 4.5.10)
+|  |  \- (commons-logging:commons-logging:jar:1.2:compile - omitted for duplicate)
+|  +- org.apache.httpcomponents:httpmime:jar:4.5.10:compile
+|  |  \- (org.apache.httpcomponents:httpclient:jar:4.5.10:compile - omitted for duplicate)
+|  +- (commons-codec:commons-codec:jar:1.12:compile - omitted for conflict with 1.15)
+|  +- (commons-io:commons-io:jar:2.6:compile - omitted for conflict with 2.10.0)
+|  +- (slingshot:slingshot:jar:0.12.2:compile - omitted for duplicate)
+|  \- (potemkin:potemkin:jar:0.4.5:compile - omitted for duplicate)
++- com.taoensso:carmine:jar:2.19.1:compile
+|  +- com.taoensso:encore:jar:2.99.0:compile
+|  |  +- (org.clojure:tools.reader:jar:1.3.0:compile - omitted for conflict with 1.3.6)
+|  |  \- com.taoensso:truss:jar:1.5.0:compile
+|  +- com.taoensso:timbre:jar:4.10.0:compile
+|  |  +- (com.taoensso:encore:jar:2.91.0:compile - omitted for conflict with 2.99.0)
+|  |  \- io.aviso:pretty:jar:0.1.33:compile
+|  +- com.taoensso:nippy:jar:2.14.0:compile
+|  |  +- (org.clojure:tools.reader:jar:1.1.1:compile - omitted for conflict with 1.3.6)
+|  |  +- (com.taoensso:encore:jar:2.93.0:compile - omitted for conflict with 2.99.0)
+|  |  +- org.iq80.snappy:snappy:jar:0.4:compile
+|  |  +- (org.tukaani:xz:jar:1.6:compile - omitted for conflict with 1.8)
+|  |  \- net.jpountz.lz4:lz4:jar:1.3:compile
+|  +- org.apache.commons:commons-pool2:jar:2.4.2:compile
+|  \- (commons-codec:commons-codec:jar:1.11:compile - omitted for conflict with 1.15)
++- cheshire:cheshire:jar:5.10.2:compile
+|  +- (com.fasterxml.jackson.core:jackson-core:jar:2.12.4:compile - omitted for conflict with 2.12.6)
+|  +- (com.fasterxml.jackson.dataformat:jackson-dataformat-smile:jar:2.12.4:compile - omitted for conflict with 2.12.6)
+|  +- (com.fasterxml.jackson.dataformat:jackson-dataformat-cbor:jar:2.12.4:compile - omitted for conflict with 2.12.6)
+|  \- tigris:tigris:jar:0.1.2:compile
++- metrics-clojure:metrics-clojure:jar:2.10.0:compile
+|  \- io.dropwizard.metrics:metrics-core:jar:3.2.2:compile
+|     \- (org.slf4j:slf4j-api:jar:1.7.22:compile - omitted for conflict with 1.7.20)
++- metrics-clojure-jvm:metrics-clojure-jvm:jar:2.10.0:compile
+|  +- (metrics-clojure:metrics-clojure:jar:2.10.0:compile - omitted for duplicate)
+|  \- io.dropwizard.metrics:metrics-jvm:jar:3.2.2:compile
+|     +- (io.dropwizard.metrics:metrics-core:jar:3.2.2:compile - omitted for duplicate)
+|     \- (org.slf4j:slf4j-api:jar:1.7.22:compile - omitted for conflict with 1.7.20)
++- metrics-clojure-ring:metrics-clojure-ring:jar:2.10.0:compile
+|  +- (cheshire:cheshire:jar:5.8.0:compile - omitted for conflict with 5.10.2)
+|  \- (metrics-clojure:metrics-clojure:jar:2.10.0:compile - omitted for duplicate)
++- clout:clout:jar:2.2.1:compile
+|  \- (instaparse:instaparse:jar:1.4.8:compile - omitted for conflict with 1.4.10)
++- slugger:slugger:jar:1.0.1:compile
++- com.google.guava:guava:jar:31.0-jre:compile
+|  +- com.google.guava:failureaccess:jar:1.0.1:compile
+|  +- com.google.guava:listenablefuture:jar:9999.0-empty-to-avoid-conflict-with-guava:compile
+|  +- com.google.code.findbugs:jsr305:jar:3.0.2:compile
+|  +- org.checkerframework:checker-qual:jar:3.12.0:compile
+|  +- com.google.errorprone:error_prone_annotations:jar:2.7.1:compile
+|  \- com.google.j2objc:j2objc-annotations:jar:1.3:compile
++- io.netty:netty-all:jar:4.1.75.Final:compile
+|  +- io.netty:netty-buffer:jar:4.1.75.Final:compile
+|  +- (io.netty:netty-codec:jar:4.1.75.Final:compile - omitted for duplicate)
+|  +- io.netty:netty-codec-dns:jar:4.1.75.Final:compile
+|  +- io.netty:netty-codec-haproxy:jar:4.1.75.Final:compile
+|  +- io.netty:netty-codec-http:jar:4.1.75.Final:compile
+|  +- io.netty:netty-codec-http2:jar:4.1.75.Final:compile
+|  +- io.netty:netty-codec-memcache:jar:4.1.75.Final:compile
+|  +- io.netty:netty-codec-mqtt:jar:4.1.75.Final:compile
+|  +- io.netty:netty-codec-redis:jar:4.1.75.Final:compile
+|  +- io.netty:netty-codec-smtp:jar:4.1.75.Final:compile
+|  +- io.netty:netty-codec-socks:jar:4.1.75.Final:compile
+|  +- io.netty:netty-codec-stomp:jar:4.1.75.Final:compile
+|  +- io.netty:netty-codec-xml:jar:4.1.75.Final:compile
+|  +- io.netty:netty-common:jar:4.1.75.Final:compile
+|  +- io.netty:netty-handler:jar:4.1.75.Final:compile
+|  +- io.netty:netty-handler-proxy:jar:4.1.75.Final:compile
+|  +- (io.netty:netty-resolver:jar:4.1.75.Final:compile - omitted for duplicate)
+|  +- io.netty:netty-resolver-dns:jar:4.1.75.Final:compile
+|  +- io.netty:netty-transport:jar:4.1.75.Final:compile
+|  +- io.netty:netty-transport-rxtx:jar:4.1.75.Final:compile
+|  +- io.netty:netty-transport-sctp:jar:4.1.75.Final:compile
+|  +- io.netty:netty-transport-udt:jar:4.1.75.Final:compile
+|  +- io.netty:netty-transport-classes-epoll:jar:4.1.75.Final:compile
+|  +- io.netty:netty-transport-native-unix-common:jar:4.1.75.Final:compile
+|  +- io.netty:netty-transport-classes-kqueue:jar:4.1.75.Final:compile
+|  +- io.netty:netty-resolver-dns-classes-macos:jar:4.1.75.Final:compile
+|  +- io.netty:netty-transport-native-epoll:jar:linux-x86_64:4.1.75.Final:runtime
+|  |  +- (io.netty:netty-common:jar:4.1.75.Final:runtime - omitted for duplicate)
+|  |  +- (io.netty:netty-buffer:jar:4.1.75.Final:runtime - omitted for duplicate)
+|  |  +- (io.netty:netty-transport:jar:4.1.75.Final:runtime - omitted for duplicate)
+|  |  +- (io.netty:netty-transport-native-unix-common:jar:4.1.75.Final:runtime - omitted for duplicate)
+|  |  \- (io.netty:netty-transport-classes-epoll:jar:4.1.75.Final:runtime - omitted for duplicate)
+|  +- io.netty:netty-transport-native-epoll:jar:linux-aarch_64:4.1.75.Final:runtime
+|  |  +- (io.netty:netty-common:jar:4.1.75.Final:runtime - omitted for duplicate)
+|  |  +- (io.netty:netty-buffer:jar:4.1.75.Final:runtime - omitted for duplicate)
+|  |  +- (io.netty:netty-transport:jar:4.1.75.Final:runtime - omitted for duplicate)
+|  |  +- (io.netty:netty-transport-native-unix-common:jar:4.1.75.Final:runtime - omitted for duplicate)
+|  |  \- (io.netty:netty-transport-classes-epoll:jar:4.1.75.Final:runtime - omitted for duplicate)
+|  +- io.netty:netty-transport-native-kqueue:jar:osx-x86_64:4.1.75.Final:runtime
+|  |  +- (io.netty:netty-common:jar:4.1.75.Final:runtime - omitted for duplicate)
+|  |  +- (io.netty:netty-buffer:jar:4.1.75.Final:runtime - omitted for duplicate)
+|  |  +- (io.netty:netty-transport:jar:4.1.75.Final:runtime - omitted for duplicate)
+|  |  +- (io.netty:netty-transport-native-unix-common:jar:4.1.75.Final:runtime - omitted for duplicate)
+|  |  \- (io.netty:netty-transport-classes-kqueue:jar:4.1.75.Final:runtime - omitted for duplicate)
+|  +- io.netty:netty-transport-native-kqueue:jar:osx-aarch_64:4.1.75.Final:runtime
+|  |  +- (io.netty:netty-common:jar:4.1.75.Final:runtime - omitted for duplicate)
+|  |  +- (io.netty:netty-buffer:jar:4.1.75.Final:runtime - omitted for duplicate)
+|  |  +- (io.netty:netty-transport:jar:4.1.75.Final:runtime - omitted for duplicate)
+|  |  +- (io.netty:netty-transport-native-unix-common:jar:4.1.75.Final:runtime - omitted for duplicate)
+|  |  \- (io.netty:netty-transport-classes-kqueue:jar:4.1.75.Final:runtime - omitted for duplicate)
+|  +- io.netty:netty-resolver-dns-native-macos:jar:osx-x86_64:4.1.75.Final:runtime
+|  |  \- (io.netty:netty-resolver-dns-classes-macos:jar:4.1.75.Final:runtime - omitted for duplicate)
+|  \- io.netty:netty-resolver-dns-native-macos:jar:osx-aarch_64:4.1.75.Final:runtime
+|     \- (io.netty:netty-resolver-dns-classes-macos:jar:4.1.75.Final:runtime - omitted for duplicate)
++- io.netty:netty-codec:jar:4.1.75.Final:compile
+|  +- (io.netty:netty-common:jar:4.1.75.Final:compile - omitted for duplicate)
+|  +- (io.netty:netty-buffer:jar:4.1.75.Final:compile - omitted for duplicate)
+|  \- (io.netty:netty-transport:jar:4.1.75.Final:compile - omitted for duplicate)
++- io.netty:netty-resolver:jar:4.1.75.Final:compile
+|  \- (io.netty:netty-common:jar:4.1.75.Final:compile - omitted for duplicate)
++- com.google.protobuf:protobuf-java:jar:3.19.4:compile
++- riemann-clojure-client:riemann-clojure-client:jar:0.5.1:compile
+|  +- less-awful-ssl:less-awful-ssl:jar:1.0.4:compile
+|  \- io.riemann:riemann-java-client:jar:0.5.1:compile
+|     +- (org.slf4j:slf4j-api:jar:1.7.25:compile - omitted for conflict with 1.7.20)
+|     +- (com.google.protobuf:protobuf-java:jar:3.7.1:compile - omitted for conflict with 3.19.4)
+|     +- (io.netty:netty-codec:jar:4.1.28.Final:compile - omitted for conflict with 4.1.75.Final)
+|     +- (io.netty:netty-handler:jar:4.1.28.Final:compile - omitted for conflict with 4.1.75.Final)
+|     \- (io.netty:netty-transport:jar:4.1.28.Final:compile - omitted for conflict with 4.1.75.Final)
++- jakarta.xml.bind:jakarta.xml.bind-api:jar:2.3.2:compile
+|  \- jakarta.activation:jakarta.activation-api:jar:1.2.1:compile
++- markdown-clj:markdown-clj:jar:1.10.1:compile
+|  \- (clj-commons:clj-yaml:jar:0.7.0:compile - omitted for conflict with 0.7.2)
++- hiccup:hiccup:jar:2.0.0-alpha2:compile
++- lock-key:lock-key:jar:1.5.0:compile
+|  +- charset:charset:jar:1.2.1:compile
+|  \- (base64-clj:base64-clj:jar:0.1.1:compile - omitted for duplicate)
++- threatgrid:redismq:jar:0.1.1:compile
+|  +- (org.clojure:tools.logging:jar:0.4.1:compile - omitted for conflict with 1.1.0)
+|  +- (cheshire:cheshire:jar:5.8.1:compile - omitted for conflict with 5.10.2)
+|  \- (com.taoensso:carmine:jar:2.19.1:compile - omitted for duplicate)
++- org.apache.zookeeper:zookeeper:jar:3.5.6:compile
+|  +- org.apache.zookeeper:zookeeper-jute:jar:3.5.6:compile
+|  |  \- (org.apache.yetus:audience-annotations:jar:0.5.0:compile - omitted for duplicate)
+|  +- org.apache.yetus:audience-annotations:jar:0.5.0:compile
+|  +- (io.netty:netty-handler:jar:4.1.42.Final:compile - omitted for conflict with 4.1.75.Final)
+|  +- io.netty:netty-transport-native-epoll:jar:4.1.42.Final:compile
+|  |  +- (io.netty:netty-common:jar:4.1.42.Final:compile - omitted for conflict with 4.1.75.Final)
+|  |  +- (io.netty:netty-buffer:jar:4.1.42.Final:compile - omitted for conflict with 4.1.75.Final)
+|  |  +- (io.netty:netty-transport:jar:4.1.42.Final:compile - omitted for conflict with 4.1.75.Final)
+|  |  \- (io.netty:netty-transport-native-unix-common:jar:4.1.42.Final:compile - omitted for conflict with 4.1.75.Final)
+|  +- org.slf4j:slf4j-api:jar:1.7.25:compile
+|  \- log4j:log4j:jar:1.2.17:compile
++- args4j:args4j:jar:2.33:compile
++- com.stuartsierra:component:jar:1.1.0:compile
+|  \- com.stuartsierra:dependency:jar:1.0.0:compile
++- org.onyxplatform:onyx-kafka:jar:0.14.5.0:compile
+|  +- org.onyxplatform:onyx:jar:0.14.5:compile
+|  |  +- (org.clojure:core.async:jar:0.4.474:compile - omitted for conflict with 1.0.567)
+|  |  +- org.apache.curator:curator-test:jar:2.9.1:compile
+|  |  |  +- (org.apache.zookeeper:zookeeper:jar:3.4.6:compile - omitted for conflict with 3.5.6)
+|  |  |  +- org.javassist:javassist:jar:3.18.1-GA:compile
+|  |  |  +- org.apache.commons:commons-math:jar:2.2:compile
+|  |  |  \- (com.google.guava:guava:jar:16.0.1:compile - omitted for conflict with 31.0-jre)
+|  |  +- org.apache.curator:curator-framework:jar:4.0.1:compile
+|  |  |  \- (org.apache.curator:curator-client:jar:4.0.1:compile - omitted for duplicate)
+|  |  +- org.apache.curator:curator-client:jar:4.0.1:compile
+|  |  |  +- (com.google.guava:guava:jar:20.0:compile - omitted for conflict with 31.0-jre)
+|  |  |  \- (org.slf4j:slf4j-api:jar:1.7.6:compile - omitted for conflict with 1.7.25)
+|  |  +- (org.apache.zookeeper:zookeeper:jar:3.4.12:compile - omitted for conflict with 3.5.6)
+|  |  +- (org.slf4j:slf4j-api:jar:1.7.12:compile - omitted for conflict with 1.7.25)
+|  |  +- org.btrplace:scheduler-api:jar:0.46:compile
+|  |  |  +- net.sf.trove4j:trove4j:jar:3.0.3:compile
+|  |  |  \- (org.slf4j:slf4j-api:jar:1.7.21:compile - omitted for conflict with 1.7.25)
+|  |  +- org.btrplace:scheduler-choco:jar:0.46:compile
+|  |  |  +- (org.btrplace:scheduler-api:jar:0.46:compile - omitted for duplicate)
+|  |  |  +- (net.sf.trove4j:trove4j:jar:3.0.3:compile - omitted for duplicate)
+|  |  |  +- org.choco-solver:choco-solver:jar:3.3.3:compile
+|  |  |  |  +- dk.brics.automaton:automaton:jar:1.11-8:compile
+|  |  |  |  +- org.javabits.jgrapht:jgrapht-core:jar:0.9.3:compile
+|  |  |  |  +- (args4j:args4j:jar:2.32:compile - omitted for conflict with 2.33)
+|  |  |  |  +- com.github.cp-profiler:cpprof-java:jar:1.1.0:compile
+|  |  |  |  |  +- org.zeromq:jeromq:jar:0.3.4:compile
+|  |  |  |  |  \- (com.google.protobuf:protobuf-java:jar:2.6.1:compile - omitted for conflict with 3.19.4)
+|  |  |  |  \- (net.sf.trove4j:trove4j:jar:3.0.3:compile - omitted for duplicate)
+|  |  |  +- it.unimi.dsi:fastutil:jar:7.0.12:compile
+|  |  |  \- (org.slf4j:slf4j-api:jar:1.7.21:compile - omitted for conflict with 1.7.25)
+|  |  +- (com.stuartsierra:dependency:jar:0.2.0:compile - omitted for conflict with 1.0.0)
+|  |  +- (com.stuartsierra:component:jar:0.3.2:compile - omitted for conflict with 1.1.0)
+|  |  +- (metrics-clojure:metrics-clojure:jar:2.9.0:compile - omitted for conflict with 2.10.0)
+|  |  +- (com.taoensso:timbre:jar:4.8.0:compile - omitted for conflict with 4.10.0)
+|  |  +- (com.taoensso:nippy:jar:2.14.0:compile - omitted for duplicate)
+|  |  +- io.aeron:aeron-all:jar:1.9.3:compile
+|  |  +- io.replikativ:hasch:jar:0.3.4:compile
+|  |  |  \- io.replikativ:incognito:jar:0.2.1:compile
+|  |  +- (prismatic:schema:jar:1.1.7:compile - omitted for conflict with 1.2.0)
+|  |  +- com.amazonaws:aws-java-sdk-s3:jar:1.11.271:compile
+|  |  |  +- com.amazonaws:aws-java-sdk-kms:jar:1.11.271:compile
+|  |  |  |  +- (com.amazonaws:aws-java-sdk-core:jar:1.11.271:compile - omitted for duplicate)
+|  |  |  |  \- (com.amazonaws:jmespath-java:jar:1.11.271:compile - omitted for duplicate)
+|  |  |  +- com.amazonaws:aws-java-sdk-core:jar:1.11.271:compile
+|  |  |  |  +- (commons-logging:commons-logging:jar:1.1.3:compile - omitted for conflict with 1.2)
+|  |  |  |  +- (org.apache.httpcomponents:httpclient:jar:4.5.2:compile - omitted for conflict with 4.5.10)
+|  |  |  |  +- software.amazon.ion:ion-java:jar:1.0.2:compile
+|  |  |  |  +- (com.fasterxml.jackson.core:jackson-databind:jar:2.6.7.1:compile - omitted for conflict with 2.11.0)
+|  |  |  |  +- (com.fasterxml.jackson.dataformat:jackson-dataformat-cbor:jar:2.6.7:compile - omitted for conflict with 2.12.4)
+|  |  |  |  \- (joda-time:joda-time:jar:2.8.1:compile - omitted for conflict with 2.10)
+|  |  |  \- com.amazonaws:jmespath-java:jar:1.11.271:compile
+|  |  |     \- (com.fasterxml.jackson.core:jackson-databind:jar:2.6.7.1:compile - omitted for conflict with 2.11.0)
+|  |  +- primitive-math:primitive-math:jar:0.1.6:compile
+|  |  +- (clj-tuple:clj-tuple:jar:0.2.2:compile - omitted for duplicate)
+|  |  +- clj-fuzzy:clj-fuzzy:jar:0.4.1:compile
+|  |  +- org.deephacks.lmdbjni:lmdbjni:jar:0.4.6:compile
+|  |  +- org.deephacks.lmdbjni:lmdbjni-linux64:jar:0.4.6:compile
+|  |  |  \- (org.deephacks.lmdbjni:lmdbjni:jar:0.4.6:compile - omitted for duplicate)
+|  |  +- org.deephacks.lmdbjni:lmdbjni-win64:jar:0.4.6:compile
+|  |  |  \- (org.deephacks.lmdbjni:lmdbjni:jar:0.4.6:compile - omitted for duplicate)
+|  |  \- org.deephacks.lmdbjni:lmdbjni-osx64:jar:0.4.6:compile
+|  |     \- (org.deephacks.lmdbjni:lmdbjni:jar:0.4.6:compile - omitted for duplicate)
+|  +- org.apache.kafka:kafka_2.11:jar:1.0.0:compile
+|  |  +- (org.apache.kafka:kafka-clients:jar:1.0.0:compile - omitted for duplicate)
+|  |  +- (com.fasterxml.jackson.core:jackson-databind:jar:2.9.1:compile - omitted for conflict with 2.11.0)
+|  |  +- net.sf.jopt-simple:jopt-simple:jar:5.0.4:compile
+|  |  +- com.yammer.metrics:metrics-core:jar:2.2.0:compile
+|  |  |  \- (org.slf4j:slf4j-api:jar:1.7.2:compile - omitted for conflict with 1.7.25)
+|  |  +- org.scala-lang:scala-library:jar:2.11.11:compile
+|  |  +- com.101tec:zkclient:jar:0.10:compile
+|  |  |  +- (org.slf4j:slf4j-api:jar:1.6.1:compile - omitted for conflict with 1.7.25)
+|  |  |  \- (org.apache.zookeeper:zookeeper:jar:3.4.8:compile - omitted for conflict with 3.5.6)
+|  |  \- (org.apache.zookeeper:zookeeper:jar:3.4.10:compile - omitted for conflict with 3.5.6)
+|  +- org.apache.kafka:kafka-clients:jar:1.0.0:compile
+|  |  +- org.lz4:lz4-java:jar:1.4:compile
+|  |  +- org.xerial.snappy:snappy-java:jar:1.1.4:compile
+|  |  \- (org.slf4j:slf4j-api:jar:1.7.25:compile - omitted for duplicate)
+|  +- (com.stuartsierra:component:jar:0.2.3:compile - omitted for conflict with 1.1.0)
+|  \- (cheshire:cheshire:jar:5.7.0:compile - omitted for conflict with 5.10.2)
++- com.fasterxml.jackson.core:jackson-core:jar:2.12.6:compile
++- com.fasterxml.jackson.dataformat:jackson-dataformat-smile:jar:2.12.6:compile
+|  +- (com.fasterxml.jackson.core:jackson-databind:jar:2.12.6:compile - omitted for conflict with 2.12.6.1)
+|  \- (com.fasterxml.jackson.core:jackson-core:jar:2.12.6:compile - omitted for duplicate)
++- com.fasterxml.jackson.dataformat:jackson-dataformat-cbor:jar:2.12.6:compile
+|  +- (com.fasterxml.jackson.core:jackson-databind:jar:2.12.6:compile - omitted for duplicate)
+|  \- (com.fasterxml.jackson.core:jackson-core:jar:2.12.6:compile - omitted for duplicate)
++- com.fasterxml.jackson.core:jackson-databind:jar:2.12.6.1:compile
+|  +- com.fasterxml.jackson.core:jackson-annotations:jar:2.12.6:compile
+|  \- (com.fasterxml.jackson.core:jackson-core:jar:2.12.6:compile - omitted for duplicate)
++- zookeeper-clj:zookeeper-clj:jar:0.9.4:compile
+|  +- (org.apache.zookeeper:zookeeper:jar:3.4.6:compile - omitted for conflict with 3.5.6)
+|  \- (commons-codec:commons-codec:jar:1.7:compile - omitted for conflict with 1.15)
++- base64-clj:base64-clj:jar:0.1.1:compile
++- threatgrid:ring-graphql-ui:jar:0.1.1:compile
+|  +- (cheshire:cheshire:jar:5.7.1:compile - omitted for conflict with 5.10.2)
+|  +- (metosin:ring-http-response:jar:0.9.0:compile - omitted for conflict with 0.9.1)
+|  +- (ring:ring-core:jar:1.6.0:compile - omitted for conflict with 1.9.5)
+|  +- threatgrid:ring-graphiql:jar:0.1.1:compile
+|  \- threatgrid:ring-graphql-voyager:jar:0.1.0:compile
++- com.graphql-java:graphql-java:jar:9.7:compile
+|  +- org.antlr:antlr4-runtime:jar:4.7.2:compile
+|  +- (org.slf4j:slf4j-api:jar:1.7.25:compile - omitted for duplicate)
+|  +- com.graphql-java:java-dataloader:jar:2.0.2:compile
+|  \- org.reactivestreams:reactive-streams:jar:1.0.2:compile
++- org.slf4j:log4j-over-slf4j:jar:1.7.20:compile
+|  \- (org.slf4j:slf4j-api:jar:1.7.20:compile - omitted for conflict with 1.7.25)
++- puppetlabs:trapperkeeper:jar:test:3.2.0:test
+|  +- (org.clojure:tools.logging:jar:0.4.0:test - omitted for conflict with 1.1.0)
+|  +- (org.clojure:tools.macro:jar:0.1.5:test - omitted for duplicate)
+|  +- (org.clojure:core.async:jar:0.4.490:test - omitted for conflict with 1.0.567)
+|  +- (org.slf4j:log4j-over-slf4j:jar:1.7.20:test - omitted for duplicate)
+|  +- (ch.qos.logback:logback-classic:jar:1.2.3:test - omitted for duplicate)
+|  +- (ch.qos.logback:logback-core:jar:1.2.3:test - omitted for duplicate)
+|  +- (ch.qos.logback:logback-access:jar:1.2.3:test - omitted for duplicate)
+|  +- (org.codehaus.janino:janino:jar:3.0.8:test - omitted for duplicate)
+|  +- (clj-time:clj-time:jar:0.11.0:test - omitted for conflict with 0.15.2)
+|  +- (clj-commons:fs:jar:1.6.307:test - omitted for duplicate)
+|  +- (clj-commons:clj-yaml:jar:0.7.2:test - omitted for duplicate)
+|  +- (prismatic:plumbing:jar:0.4.2:test - omitted for conflict with 0.5.5)
+|  +- (prismatic:schema:jar:1.1.12:test - omitted for conflict with 1.2.0)
+|  +- (beckon:beckon:jar:0.1.1:test - omitted for duplicate)
+|  +- (puppetlabs:typesafe-config:jar:0.2.0:test - omitted for duplicate)
+|  +- (puppetlabs:kitchensink:jar:3.1.1:test - omitted for conflict with 3.2.0)
+|  +- (puppetlabs:i18n:jar:0.8.0:test - omitted for duplicate)
+|  \- (nrepl:nrepl:jar:0.6.0:test - omitted for duplicate)
++- puppetlabs:kitchensink:jar:test:3.2.0:test
+|  +- (org.clojure:tools.logging:jar:0.4.0:test - omitted for conflict with 1.1.0)
+|  +- (org.clojure:tools.cli:jar:0.3.6:test - omitted for conflict with 1.0.194)
+|  +- (clj-time:clj-time:jar:0.11.0:test - omitted for conflict with 0.15.2)
+|  +- (clj-commons:fs:jar:1.6.307:test - omitted for duplicate)
+|  +- (slingshot:slingshot:jar:0.12.2:test - omitted for duplicate)
+|  +- (cheshire:cheshire:jar:5.8.0:test - omitted for conflict with 5.10.2)
+|  +- (org.ini4j:ini4j:jar:0.5.2:test - omitted for duplicate)
+|  +- (org.tcrawley:dynapath:jar:0.2.5:test - omitted for duplicate)
+|  \- (digest:digest:jar:1.4.3:test - omitted for duplicate)
++- org.clojure:test.check:jar:1.1.0:test (scope not updated to compile)
++- com.gfredericks:test.chuck:jar:0.2.13:test (scope not updated to compile)
+|  +- (org.clojure:test.check:jar:1.1.0:test - omitted for duplicate)
+|  +- (clj-time:clj-time:jar:0.15.2:test - omitted for duplicate)
+|  +- (com.andrewmcveigh:cljs-time:jar:0.5.2:test - omitted for duplicate)
+|  \- (instaparse:instaparse:jar:1.4.10:test - omitted for duplicate)
++- clj-http-fake:clj-http-fake:jar:1.0.3:test
+|  +- (org.clojure:math.combinatorics:jar:0.1.3:test - omitted for conflict with 0.1.6)
+|  +- robert:hooke:jar:1.3.0:test
+|  +- (clj-http:clj-http:jar:3.1.0:test - omitted for conflict with 3.10.1)
+|  \- (ring:ring-codec:jar:1.0.1:test - omitted for conflict with 1.1.3)
++- prismatic:schema-generators:jar:0.1.4:test (scope not updated to compile)
+|  +- (org.clojure:test.check:jar:0.9.0:test - omitted for conflict with 1.1.0)
+|  \- (prismatic:schema:jar:1.1.11:test - omitted for conflict with 1.2.0)
++- circleci:circleci.test:jar:0.5.0:test
+|  \- org.clojure:data.xml:jar:0.0.8:test
++- org.clojure:data.priority-map:jar:1.1.0:test (scope not updated to compile)
+\- org.clojure:tools.namespace:jar:1.2.0:test (scope not updated to compile)
+   +- (org.clojure:java.classpath:jar:1.0.0:compile - scope updated from test; omitted for duplicate)
+   \- (org.clojure:tools.reader:jar:1.3.6:test - omitted for duplicate)
