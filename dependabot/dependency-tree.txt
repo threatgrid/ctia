@@ -1,4 +1,3 @@
-ctia:ctia:jar:1.1.1-SNAPSHOT
 +- org.clojure:clojure:jar:1.10.1:compile
 |  +- org.clojure:spec.alpha:jar:0.2.176:compile
 |  \- org.clojure:core.specs.alpha:jar:0.2.44:compile
