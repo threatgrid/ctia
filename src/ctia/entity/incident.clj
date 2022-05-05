@@ -171,7 +171,12 @@
               :remap-default 0}})
 
 (def incident-sort-fields
-  (apply s/enum (distinct (concat (keys sort-extension-templates) incident-fields))))
+  (apply s/enum (distinct (concat (keys sort-extension-templates)
+                                  incident-fields
+                                  ["severity:asc,created:desc"
+                                   "severity:desc,created:desc"
+                                   "severity:asc,created:asc"
+                                   "severity:desc,created:asc"]))))
 
 (def incident-enumerable-fields
   [:assignees

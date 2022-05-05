@@ -1,31 +1,28 @@
 (ns ctia.entity.incident-test
-  (:require [clj-momo.lib.clj-time
-             [coerce :as tc]
-             [core :as t]]
-            ductile.index
-            [ctia.test-helpers.search :as search-th]
+  (:require [clj-momo.lib.clj-time.coerce :as tc]
+            [clj-momo.lib.clj-time.core :as t]
             [clj-momo.test-helpers.core :as mth]
             [clojure.test :refer [deftest is join-fixtures testing use-fixtures]]
             [ctia.auth.threatgrid :as auth]
             [ctia.bundle.core :as bundle]
-            [ctim.schemas.vocabularies :as vocab]
-            [ctim.examples.bundles :refer [new-bundle-minimal]]
-            [ctim.examples.incidents :refer [new-incident-minimal]]
             [ctia.entity.incident :as sut]
-            [ctia.test-helpers
-             [access-control :refer [access-control-test]]
-             [auth :refer [all-capabilities]]
-             [core :as helpers :refer [PATCH POST]]
-             [crud :refer [entity-crud-test]]
-             [aggregate :refer [test-metric-routes]]
-             [fake-whoami-service :as whoami-helpers]
-             [store :refer [test-for-each-store-with-app]]]
+            [ctia.test-helpers.access-control :refer [access-control-test]]
+            [ctia.test-helpers.aggregate :refer [test-metric-routes]]
+            [ctia.test-helpers.auth :refer [all-capabilities]]
+            [ctia.test-helpers.core :as helpers :refer [PATCH POST]]
+            [ctia.test-helpers.crud :refer [entity-crud-test]]
             [ctia.test-helpers.es :as es-helpers]
-            [puppetlabs.trapperkeeper.app :as app]
+            [ctia.test-helpers.fake-whoami-service :as whoami-helpers]
+            [ctia.test-helpers.search :as search-th]
+            [ctia.test-helpers.store :refer [test-for-each-store-with-app]]
+            [ctim.examples.bundles :refer [new-bundle-minimal]]
             [ctim.examples.incidents
              :refer
              [new-incident-maximal new-incident-minimal]]
-            [schema.core :as s]))
+            ductile.index
+            [puppetlabs.trapperkeeper.app :as app]
+            [schema.core :as s]
+            [java-time :as jt]))
 
 (use-fixtures :once (join-fixtures [mth/fixture-schema-validation
                                     whoami-helpers/fixture-server]))
@@ -148,36 +145,42 @@
         (fn [app]
           ;(helpers/set-capabilities! app "foouser" ["foogroup"] "user" all-capabilities)
           ;(whoami-helpers/set-whoami-response app "45c1f5e3f05d0" "foouser" "foogroup" "user")
-          (let [fixed-severities-asc ["Info" "Low" "Medium" "High" "Critical"]]
+          (let [fixed-severities-asc (vec (concat ["Info" "Low" "Medium" "High"]
+                                                  (repeat 10 "Critical")))]
             (try (testing (pr-str fixed-severities-asc)
                    (let [incidents-count (count fixed-severities-asc)
                          incidents (into #{}
                                          (map gen-new-incident)
-                                         fixed-severities-asc)
-                         created-bundle (create-incidents app incidents)
-                         _ (doseq [asc? [true false]
-                                   :let [test-id {:asc? asc?}]]
-                             (testing (pr-str test-id)
-                               (let [{:keys [parsed-body] :as raw} (search-th/search-raw app :incident {:sort_by "severity"
-                                                                                                        :sort_order (if asc? "asc" "desc")})
-
-                                     expected-parsed-body (sort-by (fn [incident]
-                                                                     {:post [(number? %)]}
-                                                                     (ctim-severity-order (:severity incident)))
-                                                                   (if asc?
-                                                                     #(compare %1 %2)
-                                                                     #(compare %2 %1))
-                                                                   parsed-body)]
-                                 (and (is (= 200 (:status raw)) (pr-str raw))
-                                      (is (= incidents-count (count parsed-body)) (pr-str raw))
-                                      (is (= incidents-count (count expected-parsed-body)) (pr-str raw))
-                                      ;; use fixed-severities-asc directly to mitigate mistakes
-                                      ;; in calculating expected-parsed-body (eg., faulty comparator)
-                                      (is (= ((if asc? identity rseq) fixed-severities-asc)
-                                             (map :severity parsed-body)))
-                                      (is (= expected-parsed-body
-                                             parsed-body))))))]))
-                 (finally (purge-incidents! app)))))))))
+                                         fixed-severities-asc)]
+                     (create-incidents app incidents)
+                     (doseq [asc? [true false]
+                             :let [test-id {:asc? asc?}]]
+                       (testing (pr-str test-id)
+                         (let [{:keys [parsed-body] :as raw} (search-th/search-raw app :incident {:sort_by
+                                                                                                  (format "severity:%1$s,created:%1$s"
+                                                                                                          (if asc? "asc" "desc"))})
+                               expected-parsed-body (sort-by (fn [incident]
+                                                               {:post [(number? %)]}
+                                                               (ctim-severity-order (:severity incident)))
+                                                             (if asc?
+                                                               #(compare %1 %2)
+                                                               #(compare %2 %1))
+                                                             parsed-body)
+                               critical-timestamps (map (comp jt/to-millis-from-epoch :timestamp)
+                                                        (filter #(= "Critical" (:severity %))
+                                                                parsed-body))]
+                           (assert (seq critical-timestamps))
+                           (is (apply (if asc? <= >=) critical-timestamps))
+                           (and (is (= 200 (:status raw)) (pr-str raw))
+                                (is (= incidents-count (count parsed-body)) (pr-str raw))
+                                (is (= incidents-count (count expected-parsed-body)) (pr-str raw))
+                                ;; use fixed-severities-asc directly to mitigate mistakes
+                                ;; in calculating expected-parsed-body (eg., faulty comparator)
+                                (is (= ((if asc? identity rseq) fixed-severities-asc)
+                                       (map :severity parsed-body)))
+                                (is (= expected-parsed-body
+                                       parsed-body))))))))
+            (finally (purge-incidents! app)))))))))
 
 (defmacro result+ms-time
   "Evaluates expr and returns a tuple [result ms-time] where result is the 
@@ -245,7 +248,7 @@
                                             multiplier
                                             (count fixed-severities-asc)
                                             (count incidents)))
-                          [created-bundle create-incidents-ms-time] (result+ms-time (create-incidents app incidents))
+                          [_created-bundle create-incidents-ms-time] (result+ms-time (create-incidents app incidents))
                           _ (when bench-atom
                               (println (format "Took %ems to import %s incidents" create-incidents-ms-time (str incidents-count))))
                           _ (doseq [sort_by (cond-> ["severity"]
