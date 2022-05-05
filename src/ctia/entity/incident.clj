@@ -173,10 +173,10 @@
 (def incident-sort-fields
   (apply s/enum (distinct (concat (keys sort-extension-templates)
                                   incident-fields
-                                  ["severity:asc,created:desc"
-                                   "severity:desc,created:desc"
-                                   "severity:asc,created:asc"
-                                   "severity:desc,created:asc"]))))
+                                  ["severity:asc,timestamp:desc"
+                                   "severity:desc,timestamp:desc"
+                                   "severity:asc,timestamp:asc"
+                                   "severity:desc,timestamp:asc"]))))
 
 (def incident-enumerable-fields
   [:assignees
