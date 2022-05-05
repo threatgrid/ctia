@@ -99,7 +99,7 @@
        (let [{status :status
               judgements :parsed-body}
              (GET app
-                  "ctia/ip/10.0.0.1/judgements?sort_by=disposition%3Aasc%2Cvalid_time.start_time%3Adesc"
+                  "ctia/ip/10.0.0.1/judgements"
                   :params {:sort_by "disposition:asc,valid_time.start_time:desc"}
                   :headers {"Authorization" "45c1f5e3f05d0"})]
          (is (= 200 status))
