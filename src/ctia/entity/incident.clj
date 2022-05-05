@@ -170,14 +170,22 @@
                            "Critical" 4}
               :remap-default 0}})
 
+(def severity-date-sort
+  (for [time-field ["timestamp" "created"]
+        time-order ["asc" "desc"]
+        severity-order ["asc" "desc"]]
+    (format "severity:%s,%s:%s"
+            severity-order
+            time-field
+            time-order)))
+
 (def incident-sort-fields
-  (apply s/enum (map name
-                     (distinct (concat (keys sort-extension-templates)
-                                       incident-fields
-                                       ["severity:asc,timestamp:desc"
-                                        "severity:desc,timestamp:desc"
-                                        "severity:asc,timestamp:asc"
-                                        "severity:desc,timestamp:asc"])))))
+  (apply s/enum
+         (map name
+              (distinct
+               (concat (keys sort-extension-templates)
+                       incident-fields
+                       gen-severity-date-sort)))))
 
 (def incident-enumerable-fields
   [:assignees
