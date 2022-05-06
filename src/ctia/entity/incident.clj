@@ -185,7 +185,7 @@
               (distinct
                (concat (keys sort-extension-templates)
                        incident-fields
-                       gen-severity-date-sort)))))
+                       severity-date-sort)))))
 
 (def incident-enumerable-fields
   [:assignees

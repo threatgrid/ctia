@@ -156,9 +156,10 @@
                      (doseq [asc? [true false]
                              :let [test-id {:asc? asc?}]]
                        (testing (pr-str test-id)
-                         (let [{:keys [parsed-body] :as raw} (search-th/search-raw app :incident {:sort_by
-                                                                                                  (format "severity:%1$s,timestamp:%1$s"
-                                                                                                          (if asc? "asc" "desc"))})
+                         (let [{:keys [parsed-body] :as raw}
+                               (search-th/search-raw app :incident {:sort_by
+                                                                    (format "severity:%1$s,created:%1$s"
+                                                                            (if asc? "asc" "desc"))})
                                expected-parsed-body (sort-by (fn [incident]
                                                                {:post [(number? %)]}
                                                                (ctim-severity-order (:severity incident)))
