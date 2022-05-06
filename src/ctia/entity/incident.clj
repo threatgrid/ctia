@@ -171,12 +171,13 @@
               :remap-default 0}})
 
 (def incident-sort-fields
-  (apply s/enum (distinct (concat (keys sort-extension-templates)
-                                  incident-fields
-                                  ["severity:asc,timestamp:desc"
-                                   "severity:desc,timestamp:desc"
-                                   "severity:asc,timestamp:asc"
-                                   "severity:desc,timestamp:asc"]))))
+  (apply s/enum (map name
+                     (distinct (concat (keys sort-extension-templates)
+                                       incident-fields
+                                       ["severity:asc,timestamp:desc"
+                                        "severity:desc,timestamp:desc"
+                                        "severity:asc,timestamp:asc"
+                                        "severity:desc,timestamp:asc"])))))
 
 (def incident-enumerable-fields
   [:assignees
