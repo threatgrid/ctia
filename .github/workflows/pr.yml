@@ -137,7 +137,7 @@ jobs:
             ctia-m2-cache-${{ env.ACTIONS_CACHE_VERSION }}-
       - name: Setup Java
         if: steps.maven-cache.outputs.cache-hit != 'true'
-        uses: actions/setup-java@v3.1.1
+        uses: actions/setup-java@v3.3.0
         with:
           distribution: ${{ env.DEFAULT_JAVA_DISTRIBUTION }}
           java-version: ${{ env.DEFAULT_JAVA_VERSION }}
@@ -231,7 +231,7 @@ jobs:
             ctia-m2-cache-${{ env.ACTIONS_CACHE_VERSION }}-${{ hashFiles('project.clj') }}-
             ctia-m2-cache-${{ env.ACTIONS_CACHE_VERSION }}-
 
-      - uses: actions/setup-java@v3.1.1
+      - uses: actions/setup-java@v3.3.0
         with:
           distribution: ${{ env.JAVA_DISTRIBUTION }}
           java-version: ${{ env.JAVA_VERSION }}
@@ -353,7 +353,7 @@ jobs:
           restore-keys: |
             ctia-m2-cache-${{ env.ACTIONS_CACHE_VERSION }}-
 
-      - uses: actions/setup-java@v3.1.1
+      - uses: actions/setup-java@v3.3.0
         with:
           distribution: ${{ env.DEFAULT_JAVA_DISTRIBUTION }}
           java-version: ${{ env.DEFAULT_JAVA_VERSION }}
