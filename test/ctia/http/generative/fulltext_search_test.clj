@@ -336,7 +336,6 @@
                                                     (merge query {:default_operator "AND"})
                                                     login
                                                     {})
-                                         _ (clojure.pprint/pprint query-res)
                                          res (:data  query-res)]
                                      (testing (format "query:%s\nquery-resi =>\n%s\nbundle =>\n %s"
                                                       query
