@@ -15,6 +15,7 @@
    [ctia.test-helpers.es :as es-helpers]
    [ctia.test-helpers.fake-whoami-service :as whoami-helpers]
    [ctia.test-helpers.search :as th.search]
+   [clojure.pprint :as pp]
    [ctim.examples.bundles :refer [bundle-maximal]]
    [ctim.schemas.bundle :as bundle.schema]
    [ductile.index :as es-index]
@@ -339,9 +340,8 @@
                                          res (:data  query-res)]
                                      (testing (format "query:%s\nquery-resi =>\n%s\nbundle =>\n %s"
                                                       query
-                                                      (with-out-str (clojure.pprint/pprint query-res))
-                                                      (with-out-str (clojure.pprint/pprint bundle))
-                                                      )
+                                                      (with-out-str (pp/pprint query-res))
+                                                      (with-out-str (pp/pprint bundle)))
                                        (check-fn res desc)
                                        true))
             "base query matches expected data"
