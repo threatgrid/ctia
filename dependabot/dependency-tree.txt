@@ -7,10 +7,10 @@ ctia:ctia:jar:1.1.1-SNAPSHOT
 +- org.threeten:threeten-extra:jar:1.2:compile
 +- clojure.java-time:clojure.java-time:jar:0.3.3:compile
 |  \- clj-tuple:clj-tuple:jar:0.2.2:compile
-+- org.clojure:core.async:jar:1.0.567:compile
-|  \- org.clojure:tools.analyzer.jvm:jar:0.7.3:compile
-|     +- org.clojure:tools.analyzer:jar:0.7.0:compile
-|     \- org.ow2.asm:asm:jar:5.2:compile
++- org.clojure:core.async:jar:1.5.648:compile
+|  \- org.clojure:tools.analyzer.jvm:jar:1.2.2:compile
+|     +- org.clojure:tools.analyzer:jar:1.1.0:compile
+|     \- org.ow2.asm:asm:jar:9.2:compile
 +- org.clojure:core.memoize:jar:1.0.257:compile
 |  \- org.clojure:core.cache:jar:1.0.225:compile
 +- org.clojure:tools.logging:jar:1.1.0:compile
