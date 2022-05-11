@@ -7,12 +7,12 @@ ctia:ctia:jar:1.1.1-SNAPSHOT
 +- org.threeten:threeten-extra:jar:1.2:compile
 +- clojure.java-time:clojure.java-time:jar:0.3.3:compile
 |  \- clj-tuple:clj-tuple:jar:0.2.2:compile
-+- org.clojure:core.async:jar:1.0.567:compile
-|  \- org.clojure:tools.analyzer.jvm:jar:0.7.3:compile
-|     +- org.clojure:tools.analyzer:jar:0.7.0:compile
-|     +- (org.clojure:core.memoize:jar:0.8.2:compile - omitted for conflict with 1.0.257)
-|     +- org.ow2.asm:asm:jar:5.2:compile
-|     \- (org.clojure:tools.reader:jar:1.3.2:compile - omitted for duplicate)
++- org.clojure:core.async:jar:1.5.648:compile
+|  \- org.clojure:tools.analyzer.jvm:jar:1.2.2:compile
+|     +- org.clojure:tools.analyzer:jar:1.1.0:compile
+|     +- (org.clojure:core.memoize:jar:1.0.253:compile - omitted for conflict with 1.0.257)
+|     +- org.ow2.asm:asm:jar:9.2:compile
+|     \- (org.clojure:tools.reader:jar:1.3.6:compile - omitted for conflict with 1.3.2)
 +- org.clojure:core.memoize:jar:1.0.257:compile
 |  \- org.clojure:core.cache:jar:1.0.225:compile
 |     \- (org.clojure:data.priority-map:jar:1.1.0:compile - omitted for duplicate)
@@ -24,7 +24,7 @@ ctia:ctia:jar:1.1.1-SNAPSHOT
 +- puppetlabs:trapperkeeper:jar:3.2.0:compile
 |  +- (org.clojure:tools.logging:jar:0.4.0:compile - omitted for conflict with 1.1.0)
 |  +- org.clojure:tools.macro:jar:0.1.5:compile
-|  +- (org.clojure:core.async:jar:0.4.490:compile - omitted for conflict with 1.0.567)
+|  +- (org.clojure:core.async:jar:0.4.490:compile - omitted for conflict with 1.5.648)
 |  +- (org.slf4j:log4j-over-slf4j:jar:1.7.20:compile - omitted for duplicate)
 |  +- ch.qos.logback:logback-classic:jar:1.2.3:compile
 |  |  +- (ch.qos.logback:logback-core:jar:1.2.3:compile - omitted for duplicate)
@@ -98,7 +98,7 @@ ctia:ctia:jar:1.1.1-SNAPSHOT
 |        |  \- org.clojure:google-closure-library-third-party:jar:0.0-20150805-acd8b553:compile
 |        +- (org.clojure:data.json:jar:0.2.6:compile - omitted for conflict with 1.0.0)
 |        +- (org.mozilla:rhino:jar:1.7R5:compile - omitted for conflict with 1.7.7.1)
-|        \- (org.clojure:tools.reader:jar:0.10.0-alpha3:compile - omitted for conflict with 1.3.2)
+|        \- (org.clojure:tools.reader:jar:0.10.0-alpha3:compile - omitted for conflict with 1.3.6)
 +- instaparse:instaparse:jar:1.4.10:compile
 +- threatgrid:clj-momo:jar:0.3.5:compile
 |  +- (org.clojure:tools.logging:jar:0.5.0:compile - omitted for conflict with 1.1.0)
@@ -431,7 +431,7 @@ ctia:ctia:jar:1.1.1-SNAPSHOT
 |  \- com.stuartsierra:dependency:jar:1.0.0:compile
 +- org.onyxplatform:onyx-kafka:jar:0.14.5.0:compile
 |  +- org.onyxplatform:onyx:jar:0.14.5:compile
-|  |  +- (org.clojure:core.async:jar:0.4.474:compile - omitted for conflict with 1.0.567)
+|  |  +- (org.clojure:core.async:jar:0.4.474:compile - omitted for conflict with 1.5.648)
 |  |  +- org.apache.curator:curator-test:jar:2.9.1:compile
 |  |  |  +- (org.apache.zookeeper:zookeeper:jar:3.4.6:compile - omitted for conflict with 3.5.6)
 |  |  |  +- org.javassist:javassist:jar:3.18.1-GA:compile
@@ -539,7 +539,7 @@ ctia:ctia:jar:1.1.1-SNAPSHOT
 +- puppetlabs:trapperkeeper:jar:test:3.2.0:test
 |  +- (org.clojure:tools.logging:jar:0.4.0:test - omitted for conflict with 1.1.0)
 |  +- (org.clojure:tools.macro:jar:0.1.5:test - omitted for duplicate)
-|  +- (org.clojure:core.async:jar:0.4.490:test - omitted for conflict with 1.0.567)
+|  +- (org.clojure:core.async:jar:0.4.490:test - omitted for conflict with 1.5.648)
 |  +- (org.slf4j:log4j-over-slf4j:jar:1.7.20:test - omitted for duplicate)
 |  +- (ch.qos.logback:logback-classic:jar:1.2.3:test - omitted for duplicate)
 |  +- (ch.qos.logback:logback-core:jar:1.2.3:test - omitted for duplicate)
