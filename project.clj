@@ -68,7 +68,7 @@
                  [clj-time "0.15.2"]
                  [org.threeten/threeten-extra "1.2"]
                  [clojure.java-time "0.3.3"]
-                 [org.clojure/core.async "1.0.567"]
+                 [org.clojure/core.async "1.5.648"]
                  [org.clojure/core.memoize "1.0.257"]
                  [org.clojure/tools.logging "1.1.0"]
                  [org.clojure/tools.cli "1.0.194"]
