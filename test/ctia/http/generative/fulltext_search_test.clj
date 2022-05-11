@@ -15,6 +15,7 @@
    [ctia.test-helpers.es :as es-helpers]
    [ctia.test-helpers.fake-whoami-service :as whoami-helpers]
    [ctia.test-helpers.search :as th.search]
+   [clojure.pprint :as pp]
    [ctim.examples.bundles :refer [bundle-maximal]]
    [ctim.schemas.bundle :as bundle.schema]
    [ductile.index :as es-index]
@@ -319,65 +320,66 @@
                       gen/generate)
             ignore-ks  [:created :groups :id :incident_time :modified :owner :timestamp]]
 
-        ;; to avoid accidentally picking up previous state
-        (store/delete-search incidents-store
-                             {:query "intrusion event 3\\:19187\\:7 incident"
-                              :REALLY_DELETE_ALL_THESE_ENTITIES true}
-                             login nil)
-        (is (-> incidents-store
-                (store/query-string-search
-                 {:query "intrusion event 3\\:19187\\:7 incident"}
-                 login {})
-                :data
-                empty?))
+        (assert (empty?
+                 (-> incidents-store
+                     (store/query-string-search
+                      {:query "intrusion event 3\\:19187\\:7 incident"}
+                      login {})
+                     :data))
+                "The test state is polluted with previous documents.")
 
         (bundle/import-bundle bundle
                               nil    ;; external-key-prefixes
-                              login services)
-        (are [desc query check-fn] (let [res (-> incidents-store
-                                                 (store/query-string-search
-                                                  (merge query {:default_operator "AND"})
-                                                  login {})
-                                                 :data)]
-                                     (testing (str "query: " query)
+                              login
+                              services)
+        (are [desc query check-fn] (let [query-res (store/query-string-search
+                                                    incidents-store
+                                                    (merge query {:default_operator "AND"})
+                                                    login
+                                                    {})
+                                         res (:data  query-res)]
+                                     (testing (format "query:%s\nquery-resi =>\n%s\nbundle =>\n %s"
+                                                      query
+                                                      (with-out-str (pp/pprint query-res))
+                                                      (with-out-str (pp/pprint bundle)))
                                        (check-fn res desc)
                                        true))
-          "base query matches expected data"
-          {:full-text [{:query "intrusion event 3\\:19187\\:7 incident"}]}
-          (fn [res desc]
-            (is (= 1 (count res)) desc)
-            (is (= expected
-                   (-> res first
-                       (select-keys (keys expected))))
-                desc))
+            "base query matches expected data"
+            {:full-text [{:query "intrusion event 3\\:19187\\:7 incident"}]}
+            (fn [res desc]
+              (is (= 1 (count res)) desc)
+              (is (= expected
+                     (-> res first
+                         (select-keys (keys expected))))
+                  desc))
 
-          "querying all, matches generated incidents, minus selected fields in each entity"
-          {:full-text [{:query "*"}]}
-          (fn [res desc]
-            (let [norm (fn [data] (->> data (map #(apply dissoc % ignore-ks)) set))]
-              (is (= (-> bundle :incidents norm)
-                     (-> res norm))
-                  desc)))
+            "querying all, matches generated incidents, minus selected fields in each entity"
+            {:full-text [{:query "*"}]}
+            (fn [res desc]
+              (let [norm (fn [data] (->> data (map #(apply dissoc % ignore-ks)) set))]
+                (is (= (-> bundle :incidents norm)
+                       (-> res norm))
+                    desc)))
 
-          "using 'title' and 'source' fields + a stop word"
-          {:full-text [{:query "that intrusion event 3\\:19187\\:7 incident"}]
-           :fields ["title" "source"]}
-          (fn [res desc]
-            (is (= 1 (count res)) desc)
-            (is (= expected
-                   (-> res first
-                       (select-keys (keys expected))))
-                desc))
+            "using 'title' and 'source' fields + a stop word"
+            {:full-text [{:query "that intrusion event 3\\:19187\\:7 incident"}]
+             :fields ["title" "source"]}
+            (fn [res desc]
+              (is (= 1 (count res)) desc)
+              (is (= expected
+                     (-> res first
+                         (select-keys (keys expected))))
+                  desc))
 
-          "using double-quotes at the end of the query"
-          {:full-text [{:query "intrusion event 3\\:19187\\:7 incident \"\""}]
-           :fields ["title" "source"]}
-          (fn [res desc]
-            (is (= 1 (count res)) desc)
-            (is (= expected
-                   (-> res first
-                       (select-keys (keys expected))))
-                desc))))))))
+            "using double-quotes at the end of the query"
+            {:full-text [{:query "intrusion event 3\\:19187\\:7 incident \"\""}]
+             :fields ["title" "source"]}
+            (fn [res desc]
+              (is (= 1 (count res)) desc)
+              (is (= expected
+                     (-> res first
+                         (select-keys (keys expected))))
+                  desc))))))))
 
 (def enforced-fields-flag-query-params (atom nil))
 
