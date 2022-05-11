@@ -1059,7 +1059,7 @@
     <dependency>
       <groupId>com.google.protobuf</groupId>
       <artifactId>protobuf-java</artifactId>
-      <version>3.19.4</version>
+      <version>3.20.1</version>
       <exclusions>
         <exclusion>
           <artifactId>slf4j-nop</artifactId>
