@@ -275,7 +275,7 @@
      ;; word_delimiter filter enables to improve tokenization https://www.elastic.co/guide/en/elasticsearch/reference/5.6/analysis-word-delimiter-tokenfilter.html
      ;; standard tokenization do not split www.domain.com, which is done here to enable search on 'domain', but we avoid splitting on numbers in words like j2ee
      ;; it also removes english possessive
-     :ctia_stemmer {:type "word_graph_delimiter"
+     :ctia_stemmer {:type "word_delimiter_graph"
                     :generate_number_parts false
                     :preserve_original true
                     :split_on_numerics false
