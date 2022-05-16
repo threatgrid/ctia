@@ -300,7 +300,7 @@
   (es-helpers/for-each-es-version
    "Mixed fields text and keyword multimatch"
    [5 7]
-   #(es-index/delete! % "ctia_*")
+   nil;; fixture-ctia-with-app already clean
    (helpers/fixture-ctia-with-app
     (fn [app]
       (let [{{:keys [get-store]} :StoreService :as services} (app/service-graph app)
@@ -309,15 +309,39 @@
 
             expected {:title  "intrusion event 3:19187:7 incident"
                       :source "ngfw_ips_event_service"}
-            bundle   (->>
-                      :incidents
-                      bundle-gen-for
-                      (gen/fmap
-                       (fn [bndl]
-                         (update bndl :incidents
-                                 (fn [items]
-                                   (utils/update-items items #(merge % expected))))))
-                      gen/generate)
+            bundle   {:incidents
+                      [{:description "desc",
+                        :schema_version "1.1.3",
+                        :type "incident",
+                        :source "ngfw_ips_event_service",
+                        :tlp "green",
+                        :short_description "desc",
+                        :title "intrusion event 3:19187:7 incident",
+                        :incident_time
+                        {:opened #inst "2010-01-01T00:00:00.003-00:00",
+                         :discovered #inst "2010-01-01T00:00:00.001-00:00",
+                         :reported #inst "2010-01-01T00:00:06.129-00:00",
+                         :remediated #inst "2010-01-01T00:02:07.145-00:00",
+                         :closed #inst "2010-01-01T00:00:02.349-00:00",
+                         :rejected #inst "2010-01-01T00:00:00.327-00:00"},
+                        :status "New",
+                        :confidence "High"}
+                       {:description "desc",
+                        :schema_version "1.1.3",
+                        :type "incident",
+                        :tlp "green",
+                        :source "ngfw_ips_event_service",
+                        :short_description "desc",
+                        :title "this incident should not be matched",
+                        :incident_time
+                        {:opened #inst "2010-01-01T00:00:00.003-00:00",
+                         :discovered #inst "2010-01-01T00:00:00.001-00:00",
+                         :reported #inst "2010-01-01T00:00:06.129-00:00",
+                         :remediated #inst "2010-01-01T00:02:07.145-00:00",
+                         :closed #inst "2010-01-01T00:00:02.349-00:00",
+                         :rejected #inst "2010-01-01T00:00:00.327-00:00"},
+                        :status "New",
+                        :confidence "High"}]}
             ignore-ks  [:created :groups :id :incident_time :modified :owner :timestamp]]
 
         (assert (empty?
@@ -338,7 +362,7 @@
                                                     login
                                                     {})
                                          res (:data  query-res)]
-                                     (testing (format "query:%s\nquery-resi =>\n%s\nbundle =>\n %s"
+                                     (testing (format "query:%s\nquery-res =>\n%s\nbundle =>\n %s"
                                                       query
                                                       (with-out-str (pp/pprint query-res))
                                                       (with-out-str (pp/pprint bundle)))
@@ -372,7 +396,7 @@
                   desc))
 
             "using double-quotes at the end of the query"
-            {:full-text [{:query "intrusion event 3\\:19187\\:7 incident \"\""}]
+            {:full-text [{:query "intrusion event 3\\:19187\\:7 incident \\\"\\\""}]
              :fields ["title" "source"]}
             (fn [res desc]
               (is (= 1 (count res)) desc)
