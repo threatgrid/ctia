@@ -12,7 +12,7 @@
 (ns actions.print-matrix
   (:require [actions.actions-helpers :as h]))
 
-(def ^:private default-java-version "11.0.9")
+(def ^:private default-java-version "11")
 ;; LTS version, do not remove from cron
 (def ^:private java-17-version "17")
 (def ^:private java-18-version "18")
