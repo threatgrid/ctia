@@ -13,11 +13,9 @@
   (:require [actions.actions-helpers :as h]))
 
 (def ^:private default-java-version "11.0.9")
-(def ^:private default-java-distribution "adopt")
 ;; LTS version, do not remove from cron
 (def ^:private java-17-version "17")
-;; https://blog.adoptopenjdk.net/2021/08/goodbye-adoptopenjdk-hello-adoptium/
-(def ^:private java-17-distribution "temurin")
+(def ^:private java-18-version "18")
 (def non-cron-ctia-nsplits
   "Job parallelism for non cron tests."
   10)
@@ -36,16 +34,15 @@
                                     ("pull_request" "push") :pr)))))))
 
 (defn- valid-split? [{:keys [this_split total_splits
-                             java_version java_distribution ci_profiles] :as m}]
+                             java_version ci_profiles] :as m}]
   (and (= #{:this_split :total_splits
-            :java_distribution :java_version :ci_profiles
+            :java_version :ci_profiles
             :test_suite} (set (keys m)))
        (#{:ci :cron} (:test_suite m))
        (nat-int? this_split)
        ((every-pred nat-int? pos?) total_splits)
        (<= 0 this_split)
        (< this_split total_splits)
-       ((every-pred string? seq) java_distribution)
        ((every-pred string? seq) java_version)
        ((every-pred string? seq) ci_profiles)))
 
@@ -69,8 +66,7 @@
     (map #(assoc % :test_suite :ci))
     (splits-for
       {:ci_profiles "default"
-       :java_version default-java-version
-       :java_distribution default-java-distribution}
+       :java_version default-java-version}
       non-cron-ctia-nsplits)))
 
 (defn cron-matrix
@@ -83,13 +79,11 @@
           (map #(assoc % :test_suite :cron)))
     (concat
       [{:ci_profiles "default"
-        :java_version default-java-version
-        :java_distribution default-java-distribution}]
+        :java_version default-java-version}]
       (map #(into {:ci_profiles "next-clojure"} %)
-           [{:java_version default-java-version
-             :java_distribution default-java-distribution}
-            {:java_version java-17-version
-             :java_distribution java-17-distribution}]))))
+           [{:java_version default-java-version}
+            {:java_version java-17-version}
+            {:java_version java-18-version}]))))
 
 (defn edn-matrix [build-config]
   {:post [(seq %)
