@@ -129,9 +129,10 @@ jobs:
           path: |
             ~/.m2/repository
             ~/.gitlibs
-          key: ctia-m2-cache-${{ env.ACTIONS_CACHE_VERSION }}-${{ hashFiles('project.clj') }}-${{ env.LEIN_VERSION }}
+          key: ctia-m2-cache-${{ env.ACTIONS_CACHE_VERSION }}-${{ hashFiles('project.clj') }}-${{ env.LEIN_VERSION }}-${{ env.DEFAULT_JAVA_VERSION }}
           # these will be considered a cache-miss by `cache-hit`
           restore-keys: |
+            ctia-m2-cache-${{ env.ACTIONS_CACHE_VERSION }}-${{ hashFiles('project.clj') }}-${{ env.LEIN_VERSION }}-
             ctia-m2-cache-${{ env.ACTIONS_CACHE_VERSION }}-${{ hashFiles('project.clj') }}-
             ctia-m2-cache-${{ env.ACTIONS_CACHE_VERSION }}-
       - name: Setup Java
