@@ -10,7 +10,8 @@
    [onyx.kafka.helpers :as okh]
    [cheshire.core :refer [generate-string]]
    [schema.core :as s]
-   [schema-tools.core :as st])
+   [schema-tools.core :as st]
+   [amazonica.aws.s3 :as s3])
   (:import [org.apache.kafka.clients.producer KafkaProducer]))
 
 (defrecord KafkaEventPublisher [^KafkaProducer producer kafka-config]
@@ -43,12 +44,41 @@
         (log/error e "Unable to push an event to Redis")))
     event))
 
+(defn string->length-and-stream
+  ([s] (string->length-and-stream s "UTF-8"))
+  ([^String s encoding]
+   (let [bytes ^bytes (.getBytes s encoding)]
+     [(count bytes) (java.io.ByteArrayInputStream. bytes)])))
+
+
+(defrecord S3EventPublisher [s3-config]
+  Hook
+  (init [_]
+    :nothing)
+  (destroy [_]
+    :nothing)
+  (handle [_ event _]
+    (let [[length stream] (string->length-and-stream (generate-string event))]
+      (s3/put-object {:bucket-name (get s3-config :bucket)
+                      :key (str (get s3-config :key-prefix) "/" (:id event))
+                      :input-stream stream
+                      :metadata {:content-length length}}))
+    event))
+
+
 (s/defn redis-event-publisher
   [get-in-config :- (st/get-in ConfigServiceFns [:get-in-config])]
   (let [{:keys [channel-name] :as redis-config}
         (get-in-config [:ctia :hook :redis])]
     (->RedisEventPublisher (lr/server-connection redis-config)
                            channel-name)))
+
+
+
+(s/defn s3-event-publisher
+  [get-in-config :- (st/get-in ConfigServiceFns [:get-in-config])]
+  (let [s3-props (get-in-config [:ctia :hook :s3])]
+    (->S3EventPublisher s3-props)))
 
 (s/defn kafka-event-publisher
   [get-in-config :- (st/get-in ConfigServiceFns [:get-in-config])]
@@ -98,11 +128,13 @@
    get-in-config :- (st/get-in ConfigServiceFns [:get-in-config])]
   (let [{{redis? :enabled} :redis
          {redismq? :enabled} :redismq
-         {kafka? :enabled} :kafka}
+         {kafka? :enabled} :kafka
+         {s3? :enabled} :s3}
         (get-in-config [:ctia :hook])
         all-event-hooks
         (cond-> {}
           redis?   (assoc :redis (redis-event-publisher get-in-config))
           redismq? (assoc :redismq (redismq-publisher get-in-config))
-          kafka?   (assoc :kafka (kafka-event-publisher get-in-config)))]
+          kafka?   (assoc :kafka (kafka-event-publisher get-in-config))
+          s3?      (assoc :s3 (s3-event-publisher get-in-config)))]
     (update hooks-m :event into (vals all-event-hooks))))

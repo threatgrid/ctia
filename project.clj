@@ -163,7 +163,14 @@
                  [com.graphql-java/graphql-java "9.7"]
 
                  ;; Logging
-                 [org.slf4j/log4j-over-slf4j "1.7.20"]]
+                 [org.slf4j/log4j-over-slf4j "1.7.20"]
+
+
+                 [amazonica "0.3.156" :exclusions [com.amazonaws/aws-java-sdk
+                                                   com.amazonaws/amazon-kinesis-client
+                                                   com.amazonaws/dynamodb-streams-kinesis-adapter]]
+                 [com.amazonaws/aws-java-sdk-core "1.11.968"]
+                 [com.amazonaws/aws-java-sdk-s3 "1.11.968"]]
 
   :resource-paths ["resources" "doc"]
   :classpath ".:resources"
