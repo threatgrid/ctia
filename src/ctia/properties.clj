@@ -146,6 +146,10 @@
 
    (st/optional-keys {"ctia.access-control.max-record-visibility" (s/enum "group" "everyone")})
 
+   (st/optional-keys {"ctia.hook.s3.enabled" s/Bool
+                      "ctia.hook.s3.bucket" s/Str
+                      "ctia.hook.s3.key-prefix" s/Str})
+
    (st/optional-keys {"ctia.hook.kafka.enabled" s/Bool
                       "ctia.hook.kafka.compression.type" (s/enum "none" "gzip" "snappy" "lz4" "zstd")
                       "ctia.hook.kafka.ssl.enabled" s/Bool
