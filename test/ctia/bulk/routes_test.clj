@@ -17,10 +17,10 @@
              :refer
              [test-for-each-store-with-app test-selected-stores-with-app]]
             [ctim.domain.id :as id]
-            [ctim.examples.incidents :refer [new-incident-maximal new-incident-minimal]]
-            [ctim.examples.sightings :refer [new-sighting-minimal]]
+            [ctim.examples.incidents :refer [new-incident-maximal]]
             [ductile.index :as es-index]
-            [schema.core :as s]))
+            [schema.core :as s]
+            [clojure.set :as set]))
 
 (defn fixture-properties:small-max-bulk-size [t]
   ;; Note: These properties may be overwritten by ENV variables
@@ -332,10 +332,12 @@
 
              (doseq [k (keys new-bulk)]
                (testing (str "retrieved " (name k))
-                 (is (= (map #(dissoc % :id :timestamp :source_ref :target_ref)
-                             (get new-bulk k))
-                        (map #(dissoc % :id :timestamp :type :tlp :schema_version :disposition_name :source_ref :target_ref :owner :groups)
-                             (get response k))))
+                 (is (= (into #{}
+                              (map #(dissoc % :id :timestamp :source_ref :target_ref))
+                              (get new-bulk k))
+                        (into #{}
+                              (map #(dissoc % :id :timestamp :type :tlp :schema_version :disposition_name :source_ref :target_ref :owner :groups))
+                              (get response k))))
 
                  (let [id (id/long-id->id (:id (first (get response k))))]
                    (is (= (:hostname id)         (:hostname show-props)))
@@ -429,8 +431,9 @@
              (doseq [[k res] delete-res-2]
                (is (= (set (get-in expected-not-found [k :errors :not-found]))
                       (set (get-in res [:errors :not-found])))))
-             (doseq [[_k entity-res] (dissoc get-res :tempids)]
-               (is (= [nil nil] (take 2 entity-res))
+             (doseq [[k entity-res] (dissoc get-res :tempids)]
+               (is (= #{} (set/intersection (set (get delete-bulk-query k))
+                                            (set (map :id entity-res))))
                    "the deleted entities must not be found"))
              (let [expected-deleted-ids (mapcat val delete-bulk-query)]
                (check-events event-store

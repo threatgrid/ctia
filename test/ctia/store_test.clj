@@ -23,19 +23,19 @@
          (is
           (= (count incidents)
              (count (sut/list-all-pages :incident
-                                        sut/list-fn
+                                        sut/list-records
                                         {:query "*"}
                                         admin-ident
                                         {}
                                         services))
              (count (sut/list-all-pages :incident
-                                        sut/list-fn
+                                        sut/list-records
                                         {:query "*"}
                                         admin-ident
                                         {:limit 2}
                                         services))
              (count (sut/list-all-pages :incident
-                                        sut/list-fn
+                                        sut/list-records
                                         {:query "*"}
                                         admin-ident
                                         {:limit 3}
@@ -44,7 +44,7 @@
          (is
           (= (count incidents)
              (count (sut/list-all-pages :incident
-                                        sut/list-fn
+                                        sut/list-records
                                         {:query "*"}
                                         admin-ident
                                         {}
@@ -58,7 +58,7 @@
           "all store shall be properly listed.")
          (is (= (count incidents-2)
                 (count (sut/list-all-pages :incident
-                                           sut/list-fn
+                                           sut/list-records
                                            {:one-of {:source "incident-2-source"}}
                                            admin-ident
                                            {}
