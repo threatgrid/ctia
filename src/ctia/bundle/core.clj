@@ -367,6 +367,13 @@
                  :metric (- (System/currentTimeMillis) start)})
     (clean-bundle fetched)))
 
+(defn node-filters [field entity-types]
+  (->> entity-types
+       (map name)
+       (map #(format "%s:*%s*" field %))
+       (clojure.string/join " OR ")
+       (format "(%s)")))
+
 (defn relationships-filters
   [id
    {:keys [related_to
@@ -376,8 +383,8 @@
   (let [edge-filters (->> (map #(hash-map % id) (set related_to))
                           (apply merge))
         node-filters (cond->> []
-                       source_type (cons (format "source_ref:*%s*" (name source_type)))
-                       target_type (cons (format "target_ref:*%s*" (name target_type)))
+                       (seq source_type) (cons (node-filters "source_ref" source_type))
+                       (seq target_type) (cons (node-filters "target_ref" target_type))
                        :always (string/join " AND "))]
     (into {:one-of edge-filters}
           (when (seq node-filters)

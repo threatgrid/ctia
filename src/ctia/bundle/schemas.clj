@@ -43,8 +43,8 @@
 (s/defschema BundleExportOptions
   (st/optional-keys
    {:related_to [(s/enum :source_ref :target_ref)]
-    :source_type EntityTypes
-    :target_type EntityTypes
+    :source_type [EntityTypes]
+    :target_type [EntityTypes]
     :include_related_entities s/Bool}))
 
 (s/defschema BundleExportIds

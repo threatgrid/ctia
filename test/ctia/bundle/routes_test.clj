@@ -738,6 +738,7 @@
          (is (= {:type "bundle"
                  :source "ctia"} bundle-post-res-empty-ids)
              "POST bundle/export with an empty ids list should return an empty bundle"))))))
+
 (deftest bundle-export-with-unreachable-entities
   (testing "external and deleted entities in fetched relationships should be ignored"
     (test-for-each-store-with-app
@@ -886,7 +887,6 @@
               sighting-id-2] (->> (:sighting by-type)
                                   (sort-by :external_ids)
                                   (map :id))
-
              [indicator-id-1
               indicator-id-2
               indicator-id-3] (->> (:indicator by-type)
@@ -894,8 +894,8 @@
                                    (map :id))
              [incident-id-1
               incident-id-2] (->> (:incident by-type)
-                                   (sort-by :external_ids)
-                                   (map :id))
+                                  (sort-by :external_ids)
+                                  (map :id))
              [relationship-id-1
               relationship-id-2
               relationship-id-3
@@ -935,14 +935,31 @@
               (GET app
                    "ctia/bundle/export"
                    :query-params {:ids [incident-id-2]
-                                  :source_type "sighting"}
+                                  :source_type ["sighting"]}
                    :headers {"Authorization" "45c1f5e3f05d0"}))
+
+             bundle-sighting+indicator-source
+             (:parsed-body
+              (GET app
+                   "ctia/bundle/export"
+                   :query-params {:ids [incident-id-2]
+                                  :source_type ["sighting" "indicator"]}
+                   :headers {"Authorization" "45c1f5e3f05d0"}))
+
              bundle-incident-target-get
              (:parsed-body
               (GET app
                    "ctia/bundle/export"
                    :query-params {:ids [sighting-id-2]
                                   :target_type "incident"}
+                   :headers {"Authorization" "45c1f5e3f05d0"}))
+
+             bundle-incident+indicator-target-get
+             (:parsed-body
+              (GET app
+                   "ctia/bundle/export"
+                   :query-params {:ids [sighting-id-2]
+                                  :target_type ["incident" "indicator"]}
                    :headers {"Authorization" "45c1f5e3f05d0"}))
 
              bundle-incident-target-post
@@ -1010,6 +1027,9 @@
                                             set)))
            (is (nil?  (:indicators bundle-sighting-source)))
 
+           (is (seq (:indicators bundle-sighting+indicator-source)))
+           (is (seq (:sightings bundle-sighting+indicator-source)))
+
            (is (= #{incident-id-1
                     incident-id-2} (->> bundle-incident-target-get
                                         :incidents
@@ -1017,11 +1037,14 @@
                                         set)))
            (is (= #{relationship-id-5
                     relationship-id-7} (->> bundle-incident-target-get
-                                        :relationships
-                                        (map :id)
-                                        set)))
+                                            :relationships
+                                            (map :id)
+                                            set)))
            (is (nil?  (:indicators bundle-incident-target-get)))
-           (is (= bundle-incident-target-get bundle-incident-target-post))))))))
+           (is (= bundle-incident-target-get bundle-incident-target-post))
+
+           (is (seq (:incidents  bundle-incident+indicator-target-get)))
+           (is (seq (:indicators  bundle-incident+indicator-target-get)))))))))
 
 (defn with-tlp-property-setting [tlp f]
   (helpers/with-config-transformer*
