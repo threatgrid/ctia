@@ -33,6 +33,7 @@
 (s/defschema SightingsByObservableQueryParams
   (st/merge
    routes.common/PagingParams
+   routes.common/DateRangeParams
    SightingFieldsParam
    {(s/optional-key :sort_by) sighting-sort-fields}))
 

@@ -45,6 +45,7 @@
 (s/defschema JudgementsByObservableQueryParams
   (st/merge
    routes.common/PagingParams
+   routes.common/DateRangeParams
    JudgementFieldsParam
    {(s/optional-key :sort_by)
     judgements-by-observable-sort-fields}))
