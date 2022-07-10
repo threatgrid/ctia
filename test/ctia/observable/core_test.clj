@@ -4,8 +4,8 @@
             [ctia.test-helpers.auth :refer [all-capabilities]]
             [ctia.test-helpers.core :as helpers]
             [ctia.test-helpers.fake-whoami-service :as whoami-helpers]
-            [clj-time.core :as t]
-            [clj-time.coerce :as c]
+            [clj-time.core :as time]
+            [clj-time.coerce :as time-coerce]
             [puppetlabs.trapperkeeper.app :as app]
             [schema.test :refer [validate-schemas]]
             [ctia.test-helpers.fixtures :as fixt]))
@@ -70,10 +70,10 @@
                                           identity-map
                                           %
                                           services))
-           now (t/now) ;; approximately same as entity's `created` field value
-           before-now (-> now (t/minus (t/hours 5)) c/to-date)
-           after-now (-> now (t/plus (t/hours 5)) c/to-date)
-           within? #(apply t/within? (map c/from-date [%1 %2 %3]))]
+           now (time/now) ;; approximately same as entity's `created` field value
+           before-now (-> now (time/minus (time/hours 5)) time-coerce/to-date)
+           after-now (-> now (time/plus (time/hours 5)) time-coerce/to-date)
+           within? #(apply time/within? (map time-coerce/from-date [%1 %2 %3]))]
        ;; `from` & `to` values are in turn used to compare with entity's `created` field
        (testing "sightings with specified date range"
          (let [sightings (observable->sightings {:from before-now :to after-now})]

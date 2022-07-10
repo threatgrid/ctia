@@ -33,10 +33,11 @@
 (s/defschema BaseEntityFilterParams
   (st/merge
    DateRangeParams
-   {(s/optional-key :id) s/Str
-    (s/optional-key :revision) s/Int
-    (s/optional-key :language) s/Str
-    (s/optional-key :tlp) s/Str}))
+   (st/optional-keys
+    {:id s/Str
+     :revision s/Int
+     :language s/Str
+     :tlp s/Str})))
 
 (s/defschema SourcableEntityFilterParams
   {(s/optional-key :source) s/Str})

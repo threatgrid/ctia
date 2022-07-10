@@ -7,7 +7,7 @@
     :refer [allow-read? allow-write? restricted-read?]]
    [ctia.lib.pagination :refer [list-response-schema]]
    [ctia.schemas.core :refer [ConcreteSortExtension]]
-   [ctia.schemas.search-agg :as ss
+   [ctia.schemas.search-agg :as search-schemas
     :refer [AggQuery CardinalityQuery HistogramQuery SearchQuery TopnQuery]]
    [ctia.stores.es.sort :as es.sort]
    [ctia.stores.es.query :as es.query]
@@ -415,7 +415,7 @@ It returns the documents with full hits meta data including the real index in wh
                                   field)
                               (es.sort/parse-sort-params-op (or sort_order :asc))))))))))
 
-(s/defn ^:private make-date-range-query :- ss/RangeQuery
+(s/defn ^:private make-date-range-query :- search-schemas/RangeQuery
   [{:keys [from to date-field]
     :or {date-field :created}}]
   (let [date-range (cond-> {}
