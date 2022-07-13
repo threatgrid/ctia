@@ -190,7 +190,7 @@ jobs:
       # for retrieving this log after a build.
       - name: Docker (async)
         # depends on LOG_PATH and actions/checkout@v3
-        run: docker compose -f containers/dev/docker-compose.yml up &> "${LOG_PATH}/docker-compose.log" &
+        run: docker compose -f containers/dev/docker-compose.yml up -d &> "${LOG_PATH}/docker-compose.log" &
       - name: Download test timings
         uses: actions/download-artifact@v3
         with:
