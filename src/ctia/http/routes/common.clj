@@ -25,13 +25,19 @@
 (def filter-map-search-options
   (conj search-options :query :simple_query :from :to))
 
+(s/defschema DateRangeParams
+  (st/optional-keys
+    {:from s/Inst
+     :to s/Inst}))
+
 (s/defschema BaseEntityFilterParams
-  {(s/optional-key :id) s/Str
-   (s/optional-key :from) s/Inst
-   (s/optional-key :to) s/Inst
-   (s/optional-key :revision) s/Int
-   (s/optional-key :language) s/Str
-   (s/optional-key :tlp) s/Str})
+  (st/merge
+   DateRangeParams
+   (st/optional-keys
+    {:id s/Str
+     :revision s/Int
+     :language s/Str
+     :tlp s/Str})))
 
 (s/defschema SourcableEntityFilterParams
   {(s/optional-key :source) s/Str})

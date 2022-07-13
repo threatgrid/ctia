@@ -7,7 +7,7 @@
     :refer [allow-read? allow-write? restricted-read?]]
    [ctia.lib.pagination :refer [list-response-schema]]
    [ctia.schemas.core :refer [ConcreteSortExtension]]
-   [ctia.schemas.search-agg
+   [ctia.schemas.search-agg :as search-schemas
     :refer [AggQuery CardinalityQuery HistogramQuery SearchQuery TopnQuery]]
    [ctia.stores.es.sort :as es.sort]
    [ctia.stores.es.query :as es.query]
@@ -415,6 +415,15 @@ It returns the documents with full hits meta data including the real index in wh
                                   field)
                               (es.sort/parse-sort-params-op (or sort_order :asc))))))))))
 
+(s/defn ^:private make-date-range-query :- search-schemas/RangeQuery
+  [{:keys [from to date-field]
+    :or {date-field :created}}]
+  (let [date-range (cond-> {}
+                     from (assoc :gte from)
+                     to   (assoc :lt to))]
+    (cond-> {}
+      (seq date-range) (assoc date-field date-range))))
+
 (defn handle-find
   "Generate an ES find/list handler using some mapping and schema"
   [Model]
@@ -430,13 +439,14 @@ It returns the documents with full hits meta data including the real index in wh
       (let [filter-val (cond-> (q/prepare-terms all-of)
                          (restricted-read? ident)
                          (conj (es.query/find-restriction-query-part ident get-in-config)))
-
             query_string  {:query_string {:query query}}
+            date-range-query (make-date-range-query es-params)
             bool-params (cond-> {:filter filter-val}
                           (seq one-of) (into
                                         {:should (q/prepare-terms one-of)
                                          :minimum_should_match 1})
-                          query (update :filter conj query_string))]
+                          query (update :filter conj query_string)
+                          (seq date-range-query) (update :filter conj {:range date-range-query}))]
         (cond-> (coerce! (ductile.doc/query conn
                                             index
                                             (q/bool bool-params)
