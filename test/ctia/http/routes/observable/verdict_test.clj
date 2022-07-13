@@ -1,9 +1,9 @@
 (ns ctia.http.routes.observable.verdict-test
   (:require [clj-momo.lib.time :as time]
             [clj-momo.test-helpers.core :as mht]
-            [clj-time
-             [core :as clj-time]
-             [format :as format]]
+            [clj-time.core :as clj-time]
+            [clj-time.coerce :as time-coerce]
+            [clj-time.format :as time-format]
             [clojure.test :refer [deftest is join-fixtures testing use-fixtures]]
             [ctia.test-helpers
              [auth :refer [all-capabilities]]
@@ -396,7 +396,7 @@
              (is (= 404 status))))))
 
      (testing ":end_time is today, but in the future"
-       (let [format (partial format/unparse (format/formatters :date-time))
+       (let [format (partial time-format/unparse (time-format/formatters :date-time))
 
              {:keys [type value]
               :as observable}
@@ -441,7 +441,7 @@
                     (:judgement_id verdict)))))))
 
      (testing ":start_time and :end_time are both in the future"
-       (let [format (partial format/unparse (format/formatters :date-time))
+       (let [format (partial time-format/unparse (time-format/formatters :date-time))
 
              {:keys [type value]
               :as observable}
@@ -712,3 +712,98 @@
              (is (= 200 status-3))
              (is (= (get-in authorized-groups-judgement-post [:parsed-body :id])
                     (:judgement_id verdict-3))))))))))
+
+(deftest with-date-range
+  (test-for-each-store-with-app
+   (fn [app]
+     (helpers/set-capabilities! app "foouser" ["foogroup"] "user" all-capabilities)
+     (whoami-helpers/set-whoami-response app
+                                         "45c1f5e3f05d0"
+                                         "foouser"
+                                         "foogroup"
+                                         "user")
+     (let [create-judgement #(POST app
+                                 "ctia/judgement"
+                               :body %
+                               :headers {"Authorization" "45c1f5e3f05d0"})
+           now->string #(-> (clj-time/now) (time-coerce/to-string))
+           before (now->string) ;; timestamp before judgement entities are created
+           _judgement-1 (create-judgement {:observable {:value "127.0.0.1"
+                                                        :type "ip"}
+                                           :disposition 1
+                                           :source "test"
+                                           :priority 100
+                                           :severity "High"
+                                           :confidence "Low"
+                                           :valid_time {:start_time "2016-02-12T00:00:00.000-00:00"
+                                                        :end_time "2016-12-12T00:00:00.000-00:00"}})
+           _judgement-2 (create-judgement {:observable {:value "10.0.0.1"
+                                                        :type "ip"}
+                                           :disposition 1
+                                           :source "test"
+                                           :priority 90
+                                           :severity "High"
+                                           :confidence "Low"
+                                           :valid_time {:start_time "2017-02-12T00:00:00.000-00:00"}})
+           judgement-3 (create-judgement {:observable {:value "10.0.0.1"
+                                                       :type "ip"}
+                                          :disposition 3
+                                          :source "test"
+                                          :priority 99
+                                          :severity "High"
+                                          :confidence "Low"
+                                          :valid_time {:start_time "2018-02-12T00:00:00.000-00:00"}})
+           midway (now->string) ;; timestamp in between judgement entity creation
+           judgement-4 (create-judgement {:observable {:value "10.0.0.1"
+                                                       :type "ip"}
+                                          :disposition 2
+                                          :source "test"
+                                          :priority 99
+                                          :severity "High"
+                                          :confidence "Low"
+                                          :valid_time {:start_time "2020-02-12T00:00:00.000-00:00"}})
+           after (now->string) ;; timestamp after judgement entities are created
+           ]
+       ;; `from` & `to` values are in turn used to compare with judgement's `created` field
+       (testing "date-range within judgement's created time"
+         (let [{status :status
+                verdict :parsed-body}
+               (GET app
+                   "ctia/ip/10.0.0.1/verdict"
+                 :headers {"Authorization" "45c1f5e3f05d0"}
+                 :query-params {:from before :to midway})]
+           (is (= 200 status))
+           (is (= {:type "verdict"
+                   :disposition 3
+                   :disposition_name "Suspicious"
+                   :judgement_id (:id (:parsed-body judgement-3))
+                   :observable {:value "10.0.0.1", :type "ip"}
+                   :valid_time {:start_time #inst "2018-02-12T00:00:00.000-00:00",
+                                :end_time #inst "2525-01-01T00:00:00.000-00:00"}}
+                  verdict))))
+       (testing "date-range outside judgement's created time"
+         (let [{status :status
+                parsed-body :parsed-body}
+               (GET app
+                   "ctia/ip/10.0.0.1/verdict"
+                 :headers {"Authorization" "45c1f5e3f05d0"}
+                 :query-params {:from after})]
+           (is (= 404 status))
+           (is (= {:message "no verdict currently available for the supplied observable"}
+                  parsed-body))))
+       ;; tests the implementation where `valid_time` is queried instead of `created` field
+       (testing "without date-range parameters"
+         (let [{status :status
+                verdict :parsed-body}
+               (GET app
+                   "ctia/ip/10.0.0.1/verdict"
+                 :headers {"Authorization" "45c1f5e3f05d0"})]
+           (is (= 200 status))
+           (is (= {:type "verdict"
+                   :disposition 2
+                   :disposition_name "Malicious"
+                   :judgement_id (:id (:parsed-body judgement-4))
+                   :observable {:value "10.0.0.1", :type "ip"}
+                   :valid_time {:start_time #inst "2020-02-12T00:00:00.000-00:00",
+                                :end_time #inst "2525-01-01T00:00:00.000-00:00"}}
+                  verdict))))))))

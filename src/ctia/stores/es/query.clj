@@ -2,7 +2,8 @@
   (:require
    [clojure.string :as str]
    [ctia.domain.access-control :as ac]
-   [ctia.schemas.search-agg :refer [FullTextQuery]]
+   [ctia.schemas.search-agg :as search-schemas
+    :refer [FullTextQuery]]
    [schema-tools.core :as st]
    [schema.core :as s]))
 
@@ -35,6 +36,16 @@
         (ac/max-record-visibility-everyone? get-in-config)
         (cons {:terms {"tlp" ac/public-tlps}}))}}))
 
+
+(s/defn make-date-range-query :- search-schemas/RangeQuery
+  [{:keys [from to date-field]
+    :or {date-field :created}}]
+  (let [date-range (cond-> {}
+                     from (assoc :gte from)
+                     to   (assoc :lt to))]
+    (cond-> {}
+      (seq date-range) (assoc date-field date-range))))
+
 (defn- unexpired-time-range
   "ES filter that matches objects which
   valid time range is not expired"
@@ -44,13 +55,24 @@
    {:range
     {"valid_time.end_time" {"gt" time-str}}}])
 
-(defn active-judgements-by-observable-query
-  "a filtered query to get judgements for the specified
-  observable, where valid time is in now range"
-  [{:keys [value type]} time-str]
+(defn- time-opts-range-query
+  [{:keys [date-range now-str]}]
+  (if (seq date-range)
+    [{:range (make-date-range-query date-range)}]
+    (unexpired-time-range now-str)))
 
+(defn active-judgements-by-observable-query
+  "Query to fetch judgments by given observable
+  and time options.
+
+  `time-opts` can have the following otpional keys,
+  * `:now-str` - filters using valid_time field
+  * `:date-range`- filters using created field.
+  `:now-str` is used when `:date-range` is
+  not provided."
+  [{:keys [value type]} time-opts]
   (concat
-   (unexpired-time-range time-str)
+   (time-opts-range-query time-opts)
    [{:term {"observable.type" type}}
     {:term {"observable.value" value}}]))
 

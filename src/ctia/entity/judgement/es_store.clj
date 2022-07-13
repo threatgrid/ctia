@@ -54,16 +54,18 @@
 (def handle-delete-search crud/handle-delete-search)
 
 (defn list-active-by-observable
-  [state observable ident get-in-config]
+  [state observable ident get-in-config params]
   (let [now-str (time/format-date-time (time/timestamp))
+        date-range (select-keys params [:from :to])
+        time-opts {:now-str now-str :date-range date-range}
         composed-query
         (assoc-in
          (find-restriction-query-part ident get-in-config)
          [:bool :must]
          (active-judgements-by-observable-query
           observable
-          now-str))
-        params
+          time-opts))
+        es-params
         {:sort
          {:priority
           "desc"
@@ -81,7 +83,7 @@
                   (:index state)
                   composed-query
                   nil
-                  params)
+                  es-params)
      :data
      coerce-stored-judgement-list)))
 
@@ -97,9 +99,15 @@
 (s/defn handle-calculate-verdict :- (s/maybe Verdict)
   [{{{:keys [get-in-config]} :ConfigService} :services
     :as state} :- ESConnState
-    observable
-    ident]
-  (some-> (list-active-by-observable state observable ident get-in-config)
+   observable
+   ident
+   params]
+  (some-> (list-active-by-observable
+           state
+           observable
+           ident
+           get-in-config
+           params)
           first
           make-verdict))
 
@@ -129,7 +137,9 @@
                  ident
                  params))
   (calculate-verdict [_ observable ident]
-    (handle-calculate-verdict state observable ident))
+    (handle-calculate-verdict state observable ident {}))
+  (calculate-verdict [_ observable ident params]
+    (handle-calculate-verdict state observable ident params))
 
   IQueryStringSearchableStore
   (query-string-search [_ search-query ident params]

@@ -12,6 +12,7 @@
             [ctia.schemas.core
              :refer
              [APIHandlerServices ObservableTypeIdentifier Reference Verdict]]
+            [ctia.schemas.search-agg :as search-schemas]
             [ctia.store :refer [calculate-verdict]]
             [ductile.pagination :as pag]
             [ring.swagger.schema :refer [describe]]
@@ -32,6 +33,7 @@
         :tags ["Verdict"]
         :path-params [observable_type :- ObservableTypeIdentifier
                       observable_value :- s/Str]
+        :query [params common/DateRangeParams]
         :return (s/maybe Verdict)
         :summary (str "Returns the current Verdict associated with the specified "
                       "observable.")
@@ -43,7 +45,8 @@
                     (calculate-verdict
                       {:type observable_type
                        :value observable_value}
-                      identity-map)
+                      identity-map
+                      params)
                     (update :judgement_id short-id->long-id services)
                     ok)
             (not-found {:message "no verdict currently available for the supplied observable"}))))

@@ -13,7 +13,8 @@
   (close [this]))
 
 (defprotocol IJudgementStore
-  (calculate-verdict [this observable ident])
+  (calculate-verdict [this observable ident]
+                     [this observable ident params])
   (list-judgements-by-observable [this observable ident params]))
 
 (defprotocol ISightingStore
