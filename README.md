@@ -95,10 +95,10 @@ bring up the dependencies you need in containers.
 You can bring up a development environment:
 
 ```
-docker compose -f containers/dev/docker-compose.yml up
-# for M1 macs
+# only for M1 macs, build is needed only once
 docker compose -f containers/dev/docker-compose.yml -f containers/dev/m1-docker-compose.yml build
-docker compose -f containers/dev/docker-compose.yml -f containers/dev/m1-docker-compose.yml up
+
+docker compose -f containers/dev/docker-compose.yml up
 ```
 
 Using docker for mac, this will bind the following ports on your
