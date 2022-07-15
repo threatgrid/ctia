@@ -95,16 +95,18 @@ bring up the dependencies you need in containers.
 You can bring up a development environment:
 
 ```
-docker-compose -f containers/dev/docker-compose.yml up
-# for M1 macs
-docker-compose -f containers/dev/m1-docker-compose.yml up
+# only for M1 macs, build is needed only once
+docker compose -f containers/dev/docker-compose.yml -f containers/dev/m1-docker-compose.yml build
+
+docker compose -f containers/dev/docker-compose.yml up
 ```
 
 Using docker for mac, this will bind the following ports on your
 development machine to the services running in the containers:
 
 * Redis - 6379
-* elasticsearch - 9200 and 9300
+* elasticsearch5 - 9205 and 9305
+* elasticsearch7 - 9207 and 9307
 * kibana - 5601
 * zookeeper - 2181
 * kafka - 9092
@@ -112,11 +114,11 @@ development machine to the services running in the containers:
 * riemann-dash - 4567
 
 If you ever need to reset your entire dev environment,
-just kill the docker-compose process and run:
+just kill the docker compose process and run:
 
 ```
-docker-compose -f containers/dev/docker-compose.yml down
-docker-compose -f containers/dev/docker-compose.yml up --force-recreate --remove-orphans
+docker compose -f containers/dev/docker-compose.yml down
+docker compose -f containers/dev/docker-compose.yml up --force-recreate --remove-orphans
 ```
 
 In particular, this resets ElasticSearch indices, which cannot
