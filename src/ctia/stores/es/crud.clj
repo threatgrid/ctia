@@ -7,7 +7,7 @@
     :refer [allow-read? allow-write? restricted-read?]]
    [ctia.lib.pagination :refer [list-response-schema]]
    [ctia.schemas.core :refer [ConcreteSortExtension]]
-   [ctia.schemas.search-agg :as search-schemas
+   [ctia.schemas.search-agg
     :refer [AggQuery CardinalityQuery HistogramQuery SearchQuery TopnQuery]]
    [ctia.stores.es.sort :as es.sort]
    [ctia.stores.es.query :as es.query]
@@ -415,15 +415,6 @@ It returns the documents with full hits meta data including the real index in wh
                                   field)
                               (es.sort/parse-sort-params-op (or sort_order :asc))))))))))
 
-(s/defn ^:private make-date-range-query :- search-schemas/RangeQuery
-  [{:keys [from to date-field]
-    :or {date-field :created}}]
-  (let [date-range (cond-> {}
-                     from (assoc :gte from)
-                     to   (assoc :lt to))]
-    (cond-> {}
-      (seq date-range) (assoc date-field date-range))))
-
 (defn handle-find
   "Generate an ES find/list handler using some mapping and schema"
   [Model]
@@ -440,7 +431,7 @@ It returns the documents with full hits meta data including the real index in wh
                          (restricted-read? ident)
                          (conj (es.query/find-restriction-query-part ident get-in-config)))
             query_string  {:query_string {:query query}}
-            date-range-query (make-date-range-query es-params)
+            date-range-query (es.query/make-date-range-query es-params)
             bool-params (cond-> {:filter filter-val}
                           (seq one-of) (into
                                         {:should (q/prepare-terms one-of)
