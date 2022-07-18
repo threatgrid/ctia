@@ -5,6 +5,7 @@
 (defprotocol IStore
   (create-record [this new-records ident params])
   (read-record [this id ident params])
+  (read-records [this ids ident params])
   (update-record [this id record ident params])
   (delete-record [this id ident params])
   (bulk-delete [this ids ident params])
@@ -62,10 +63,6 @@
    :tool []
    :vulnerability []
    :weakness []})
-
-(def read-fn read-record)
-(def create-fn create-record)
-(def list-fn list-records)
 
 (s/defn list-all-pages
   [entity

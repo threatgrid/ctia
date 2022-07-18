@@ -258,6 +258,7 @@
 (def create-fn (sut/handle-create :sighting s/Any))
 (def update-fn (sut/handle-update :sighting s/Any))
 (def read-fn (sut/handle-read s/Any))
+(def read-many-fn (sut/handle-read-many s/Any))
 (def delete-fn (sut/handle-delete :sighting))
 (def search-fn (sut/handle-query-string-search s/Any))
 (def count-fn sut/handle-query-string-count)
@@ -305,67 +306,73 @@
                                               (str (:index state-aliased) "*")))
             base-sighting {:title "a sighting text title"
                            :tlp "green"
-                           :groups ["group1"]}]
+                           :groups ["group1"]}
+            ids (map #(str "sighting-" %) (range 4))]
         (testing "crud operation should properly handle aliased states before rollover"
           (create-fn state-aliased
-                     (map #(assoc base-sighting
-                                  :id (str "sighting-" %))
-                          (range 4))
+                     (map #(assoc base-sighting :id %)
+                          ids)
                      ident
                      {})
           (is (= 1 (count-index)))
-          (is (= '"sighting-1"
-                 (:id (read-fn state-aliased "sighting-1" ident {}))))
+          (is (= (first ids)
+                 (:id (read-fn state-aliased (first ids) ident {}))))
+          (is (= (set ids)
+                 (into #{} (map :id) (read-many-fn state-aliased ids ident {}))))
           (is (= "value1"
                  (:updated-field (update-fn state-aliased
-                                            "sighting-1"
+                                            (first ids)
                                             (assoc base-sighting
                                                    :updated-field
                                                    "value1")
                                             ident
                                             {}))))
           (is (true? (delete-fn state-aliased
-                                "sighting-1"
+                                (first ids)
                                 ident
                                 {}))))
 
         (rollover-store state-aliased)
         (testing "crud operation should properly handle aliased states after rollover"
-          (create-fn state-aliased
-                     (map #(assoc base-sighting
-                                  :id (str "sighting-" %))
-                          (range 4 7))
-                     ident
-                     {})
-          (is (= 2 (count-index)))
-          (is (= '"sighting-2"
-                 (:id (read-fn state-aliased "sighting-2" ident {}))))
-          (is (= '"sighting-5"
-                 (:id (read-fn state-aliased "sighting-5" ident {}))))
-          (is (= "value2"
-                 (:updated-field (update-fn state-aliased
-                                            "sighting-2"
-                                            (assoc base-sighting
-                                                   :updated-field
-                                                   "value2")
-                                            ident
-                                            {}))))
-          (is (= "value5"
-                 (:updated-field (update-fn state-aliased
-                                            "sighting-5"
-                                            (assoc base-sighting
-                                                   :updated-field
-                                                   "value5")
-                                            ident
-                                            {}))))
-          (is (true? (delete-fn state-aliased
-                                "sighting-2"
-                                ident
-                                {})))
-          (is (true? (delete-fn state-aliased
-                                "sighting-5"
-                                ident
-                                {})))))))))
+          (let [new-ids (map #(str "sighting-" %) (range 4 7))]
+            (create-fn state-aliased
+                       (map #(assoc base-sighting :id %)
+                            new-ids)
+                       ident
+                       {})
+            (is (= 2 (count-index)))
+            (is (= (second ids)
+                   (:id (read-fn state-aliased (second ids) ident {}))))
+            (is (= (set (rest ids))
+                   (into #{} (map :id) (read-many-fn state-aliased (rest ids) ident {}))))
+            (is (= (first new-ids)
+                   (:id (read-fn state-aliased (first new-ids) ident {}))))
+            (is (= (set new-ids)
+                   (into #{} (map :id) (read-many-fn state-aliased new-ids ident {}))))
+            (is (= "value2"
+                   (:updated-field (update-fn state-aliased
+                                              (second ids)
+                                              (assoc base-sighting
+                                                     :updated-field
+                                                     "value2")
+                                              ident
+                                              {}))))
+            (is (= "value5"
+                   (:updated-field (update-fn state-aliased
+                                              (first new-ids)
+                                              (assoc base-sighting
+                                                     :updated-field
+                                                     "value5")
+                                              ident
+                                              {}))))
+            (is (true? (delete-fn state-aliased
+                                  (second ids)
+                                  ident
+                                  {})))
+            (is (true? (delete-fn state-aliased
+                                  (first new-ids)
+                                  ident
+                                  {}))))))))))
 
 (deftest crud-unaliased-test
   (es-helpers/for-each-es-version
@@ -375,25 +382,27 @@
     (helpers/fixture-ctia-with-app
      (fn [app]
        (let [services (es-helpers/app->ESConnServices app)
-             state-not-aliased (init/init-es-conn! (props-not-aliased app) services)]
+             state-not-aliased (init/init-es-conn! (props-not-aliased app) services)
+             ids (map #(str "sighting-" %) (range 4))]
          (create-fn state-not-aliased
-                    (map #(assoc base-sighting
-                                 :id (str "sighting-" %))
-                         (range 4))
+                    (map #(assoc base-sighting :id %)
+                         ids)
                     ident
                     {})
-         (is (= '"sighting-1"
-                (:id (read-fn state-not-aliased "sighting-1" ident {}))))
+         (is (= (first ids)
+                (:id (read-fn state-not-aliased (first ids) ident {}))))
+         (is (= (set ids)
+                (into #{} (map :id) (read-many-fn state-not-aliased ids ident {}))))
          (is (= "value1"
                 (:updated-field (update-fn state-not-aliased
-                                           "sighting-1"
+                                           (first ids)
                                            (assoc base-sighting
                                                   :updated-field
                                                   "value1")
                                            ident
                                            {}))))
          (is (true? (delete-fn state-not-aliased
-                               "sighting-1"
+                               (first ids)
                                ident
                                {}))))))))
 

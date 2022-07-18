@@ -10,11 +10,7 @@
                      AnyGraphQLTypeResolver
                      RealizeFnResult]]
             [ctia.schemas.graphql.pagination :as pagination]
-            [ctia.store :refer [list-judgements-by-observable
-                                list-records
-                                list-sightings-by-observables
-                                query-string-search
-                                read-fn]]
+            [ctia.store :as store]
             [schema.core :as s]))
 
 ;; Default fields that must always be retrieved
@@ -42,7 +38,7 @@
     (log/debugf "Search entity %s graphql args %s" entity-type args)
 
     (some-> (get-store entity-type)
-            (query-string-search
+            (store/query-string-search
              {:full-text  [{:query query}]
               :filter-map (remove-map-empty-values filtermap)}
               ident
@@ -54,7 +50,7 @@
 (s/defn search-entity-resolver :- AnyGraphQLTypeResolver
   [entity-type-kw]
   (s/fn :- (RealizeFnResult s/Any)
-    [context args field-selection src]
+    [context args field-selection _src]
     (delayed/fn [{:keys [services]
                   :as rt-ctx} :- GraphQLRuntimeContext]
       (search-entity entity-type-kw
@@ -80,10 +76,7 @@
                 id
                 field-selection)
     (some-> (get-store entity-type-kw)
-            (read-fn
-              id
-              ident
-              {:fields (concat default-fields field-selection)})
+            (store/read-record id ident {:fields (concat default-fields field-selection)})
             (with-long-id services)
             un-store)))
 
@@ -110,7 +103,7 @@
                                         (concat default-fields field-selection)))]
     (log/debug "Search feedback for entity id: " entity-id)
     (some-> (get-store :feedback)
-            (list-records
+            (store/list-records
               {:all-of {:entity_id entity-id}}
               (:ident context)
               params)
@@ -133,7 +126,7 @@
                  field-selection (assoc :fields
                                         (concat default-fields field-selection)))]
     (some-> (get-store :judgement)
-            (list-judgements-by-observable
+            (store/list-judgements-by-observable
               observable
               (:ident context)
               params)
@@ -157,7 +150,7 @@
                  field-selection (assoc :fields
                                         (concat default-fields field-selection)))]
     (some-> (get-store :sighting)
-            (list-sightings-by-observables
+            (store/list-sightings-by-observables
               [observable]
               (:ident context)
               params)
@@ -201,7 +194,7 @@
                                                  (concat default-fields field-selection)))]
       (log/debug "Search for AssetMappings for asset-ref: " entity-id)
       (some-> (get-store :asset-mapping)
-              (list-records
+              (store/list-records
                {:all-of {:asset_ref entity-id}}
                (:ident context)
                params)
@@ -224,7 +217,7 @@
                                                  (concat default-fields field-selection)))]
       (log/debug "Search for AssetProperties for asset-ref: " entity-id)
       (some-> (get-store :asset-properties)
-              (list-records
+              (store/list-records
                {:all-of {:asset_ref entity-id}}
                (:ident context)
                params)

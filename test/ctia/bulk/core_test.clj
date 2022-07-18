@@ -30,7 +30,9 @@
                                  :judgement
                                  identity-singleton
                                  {:ConfigService {:get-in-config get-in-config}
-                                  :StoreService {:get-store (constantly nil)}})]
+                                  :StoreService {:get-store (constantly (reify ctia.store/IStore
+                                                                          (read-records [_ _ _ _]
+                                                                            [nil])))}})]
       (is (= [nil] res)))))
 
 (defn schema->keys
