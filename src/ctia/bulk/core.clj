@@ -88,17 +88,17 @@
    {{:keys [get-store]} :StoreService
     :as services} :- ReadEntitiesServices]
   (let [store (get-store entity-type)]
-    (doall (map #(when %
-                   (try
-                     (with-long-id % services)
-                     (catch Exception e
-                       (log/error e))))
-                (try
-                  (store/read-records store ids
-                                      (auth/ident->map auth-identity)
-                                      {:suppress-access-control-error? true})
-                  (catch Exception e
-                    (log/error e)))))))
+    (map #(when %
+            (try
+              (with-long-id % services)
+              (catch Exception e
+                (log/error e))))
+         (try
+           (store/read-records store ids
+                               (auth/ident->map auth-identity)
+                               {:suppress-access-control-error? true})
+           (catch Exception e
+             (log/error e))))))
 
 (defn to-long-id
   [id services]
