@@ -1,11 +1,8 @@
 (ns ctia.http.middleware.ratelimit
   (:require [clojure.string :as string]
             [clojure.tools.logging :as log]
-            [ctia
-             [auth :as auth]]
-            [ctia.lib
-             [collection :refer [fmap]]
-             [redis :refer [server-connection]]]
+            [ctia.auth :as auth]
+            [ctia.lib.redis :refer [server-connection]]
             [ring.middleware.turnstile :as turnstile
              :refer
              [default-rate-limit-handler LimitFunction]]
@@ -45,9 +42,12 @@
 
    Ex: group1|25000,group2|80000"
   [limits]
-  (some->> (when limits (string/split limits #","))
-           (map #(string/split % #"\|"))
-           (fmap #(Integer/parseInt %))))
+  (when limits
+    (into {}
+          (comp (map #(string/split % #"\|"))
+                (map (fn [[group st]]
+                       [group (parse-long st)])))
+          (string/split limits #","))))
 
 (defn sort-group-limits
   "Sorts group limits by nb of requests by hour and by group name

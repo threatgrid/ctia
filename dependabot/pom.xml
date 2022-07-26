@@ -89,7 +89,7 @@
     <dependency>
       <groupId>org.clojure</groupId>
       <artifactId>clojure</artifactId>
-      <version>1.10.1</version>
+      <version>1.11.1</version>
       <exclusions>
         <exclusion>
           <artifactId>slf4j-nop</artifactId>
