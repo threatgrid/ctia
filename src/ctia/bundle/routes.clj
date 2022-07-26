@@ -93,35 +93,23 @@
            (let [capabilities export-capabilities]
              (GET "/export" []
                   :return NewBundleExport
-                  :query [q BundleExportQuery]
+                  :query [query BundleExportQuery]
                   :summary "Export records with their local relationships. Ids are URIs (with port if specified)."
                   :description (common/capabilities->description capabilities)
                   :capabilities capabilities
                   :auth-identity identity
-                  :identity-map identity-map
-                  (ok (export-bundle
-                       (:ids q)
-                       identity-map
-                       identity
-                       q
-                       services))))
+                  (ok (export-bundle (:ids query) identity query services))))
 
            (let [capabilities export-capabilities]
              (POST "/export" []
                   :return NewBundleExport
-                  :query [q BundleExportOptions]
-                  :body [b BundleExportIds]
+                  :query [query BundleExportOptions]
+                  :body [body BundleExportIds]
                   :summary "Export records with their local relationships. Ids are URIs (with port if specified)."
                   :description (common/capabilities->description capabilities)
                   :capabilities capabilities
                   :auth-identity identity
-                  :identity-map identity-map
-                  (ok (export-bundle
-                       (:ids b)
-                       identity-map
-                       identity
-                       q
-                       services))))
+                  (ok (export-bundle (:ids body) identity query services))))
 
            (let [capabilities #{:create-actor
                                 :create-asset

@@ -88,15 +88,17 @@
    {{:keys [get-store]} :StoreService
     :as services} :- ReadEntitiesServices]
   (let [store (get-store entity-type)]
-    (map #(when %
-            (try
-              (with-long-id % services)
-              (catch Exception e
-                (log/error e))))
-         (try
-           (store/read-records store ids auth-identity {:suppress-access-control-error? true})
-           (catch Exception e
-             (log/error e))))))
+    (doall (map #(when %
+                   (try
+                     (with-long-id % services)
+                     (catch Exception e
+                       (log/error e))))
+                (try
+                  (store/read-records store ids
+                                      (auth/ident->map auth-identity)
+                                      {:suppress-access-control-error? true})
+                  (catch Exception e
+                    (log/error e)))))))
 
 (defn to-long-id
   [id services]
@@ -227,11 +229,10 @@
           (comp
            (remove (comp empty? second))
            (map (fn [[bulk-k entities]]
-                  (let [entity-type (entity-type-from-bulk-key bulk-k)]
-                    [bulk-k
-                     (apply func
-                            entities
-                            entity-type args)]))))
+                  [bulk-k (apply func
+                                 entities
+                                 (entity-type-from-bulk-key bulk-k)
+                                 args)])))
           bulk)
     (catch java.util.concurrent.ExecutionException e
       (throw (.getCause e)))))

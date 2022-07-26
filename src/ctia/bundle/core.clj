@@ -1,6 +1,5 @@
 (ns ctia.bundle.core
   (:require
-   [clj-momo.lib.map :refer [deep-merge-with]]
    [clojure.set :as set]
    [clojure.string :as string]
    [clojure.tools.logging :as log]
@@ -10,7 +9,7 @@
     [BundleImportData BundleImportResult
      EntityImportData FindByExternalIdsServices]]
    [ctia.domain.entities :as ent :refer [with-long-id]]
-   [ctia.lib.collection :as coll :refer [fmap]]
+   [ctia.lib.collection :as coll :refer [update-vals]]
    [ctia.properties :as p]
    [ctia.schemas.core :as schemas :refer
     [APIHandlerServices HTTPShowServices NewBundle TempIDs]]
@@ -331,9 +330,13 @@
 
 (defn clean-bundle
   [bundle]
-  (->> (fmap #(remove nil? %) bundle)
-       (filter (comp seq second))
-       (into {})))
+  (reduce-kv
+   (fn [acc k v]
+     (if-let [v' (seq (remove nil? v))]
+       (assoc acc k v')
+       acc))
+   {}
+   bundle))
 
 (def ^:dynamic correlation-id nil)
 
@@ -464,7 +467,7 @@
 
 (defn fetch-nodes
   "given relationships, fetch all related objects"
-  [relationships identity-map
+  [relationships identity
    {{:keys [send-event]} :RiemannService
     :as services}]
   (when (seq relationships)
@@ -473,19 +476,20 @@
                               (distinct)
                               (filter #(local-entity? % services)))
                         relationships)
-          by-type (dissoc (group-by #(ent/id->entity-type % services) all-ids) nil)
-          by-bulk-key (into {}
-                            (map (fn [[k v]]
-                                   [(bulk/bulk-key (keyword k)) v]))
-                            by-type)
+          bulk-key->ids (dissoc
+                         (group-by (comp bulk/bulk-key
+                                         keyword
+                                         ent/long-id->entity-type)
+                                   all-ids)
+                         nil)
           start (System/currentTimeMillis)
-          fetched (bulk/fetch-bulk by-bulk-key identity-map services)]
+          fetched (clean-bundle (bulk/fetch-bulk bulk-key->ids identity services))]
       (send-event {:service "Export bundle fetch relationships targets"
                    :correlation-id correlation-id
                    :time (get-epoch-second)
                    :event-type "export-bundle"
                    :metric (- (System/currentTimeMillis) start)})
-      (clean-bundle fetched))))
+      fetched)))
 
 (defn fetch-records [ids identity-map
                      {{:keys [get-store]} :StoreService
@@ -496,7 +500,7 @@
                     (comp (mapcat (fn [[store ids]]
                                     (store/read-records store ids identity-map {})))
                           (map #(-> %
-                                    ent/un-store
+                                    (ent/un-store)
                                     (ent/with-long-id services))))
                     (group-by #(-> (ent/id->entity-type % services)
                                    (keyword)
@@ -517,18 +521,15 @@
                                       (keyword)
                                       (bulk/bulk-key))
                                  records)]
-    (deep-merge-with coll/add-colls
-                     (reduce-kv
-                      (fn [acc k v]
-                        (assoc acc k (set v)))
-                      empty-bundle
-                      records-bundle)
-                     (when (seq relationships)
-                       {:relationships relationships})
-                     targets)))
+    (merge-with into
+                empty-bundle
+                (when (seq relationships)
+                  {:relationships (set relationships)})
+                (update-vals records-bundle set)
+                (update-vals targets set))))
 
 (s/defn export-bundle
-  [ids identity-map ident params
+  [ids identity params
    {{:keys [send-event]} :RiemannService
     :as services} :- APIHandlerServices]
   (binding [correlation-id (str (UUID/randomUUID))]
@@ -538,11 +539,14 @@
                  :event-type "export-bundle"
                  :metric (count ids)})
     (let [start (System/currentTimeMillis)
+          identity-map (auth/ident->map identity)
           records (fetch-records (distinct ids) identity-map services)
           relationships (when (:include_related_entities params true)
-                          (map #(ent/with-long-id % services)
+                          (map #(-> %
+                                    (ent/un-store)
+                                    (ent/with-long-id services))
                                (fetch-relationships records identity-map params services)))
-          targets (fetch-nodes relationships ident services)
+          targets (fetch-nodes relationships identity services)
           res (combine-bundle records relationships targets)]
       (send-event {:service "Export bundle end"
                    :correlation-id correlation-id
