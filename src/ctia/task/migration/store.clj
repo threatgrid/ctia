@@ -5,7 +5,6 @@
             [clojure.string :as string]
             [clojure.tools.logging :as log]
             [ctia.init :refer [log-properties]]
-            [ctia.lib.collection :refer [fmap]]
             [ctia.schemas.services :as external-svc-fns]
             [ctia.schemas.utils :as csu]
             [ctia.store :as store]
@@ -162,7 +161,7 @@
       (:value res))))
 
 (defn store-size
-  [{:keys [conn indexname mapping]}]
+  [{:keys [conn indexname]}]
   (or (retry es-max-retry ductile.doc/count-docs conn indexname)
       0))
 
@@ -179,9 +178,9 @@
   [{:keys [stores] :as migration} :- MigrationSchema]
   (assoc migration
          :stores
-         (fmap #(-> (update % :source dissoc :store)
-                    (update :target dissoc :store))
-               stores)))
+         (update-vals stores #(-> %
+                                  (update :source dissoc :store)
+                                  (update :target dissoc :store)))))
 
 (s/defn store-migration
   [migration :- MigrationSchema
@@ -255,7 +254,7 @@
                         docs)
         {modified true not-modified false} (group-by #(search-real-index? aliased %)
                                                      with-metas)
-        modified-by-ids (fmap first (group-by :id modified))
+        modified-by-ids (update-vals (group-by :id modified) first)
         bulk-metas-res (bulk-metas store-map (map :id modified) services)
         prepared-modified (->> bulk-metas-res
                                (merge-with into modified-by-ids)

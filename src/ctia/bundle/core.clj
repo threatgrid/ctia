@@ -9,7 +9,6 @@
     [BundleImportData BundleImportResult
      EntityImportData FindByExternalIdsServices]]
    [ctia.domain.entities :as ent :refer [with-long-id]]
-   [ctia.lib.collection :as coll :refer [update-vals]]
    [ctia.properties :as p]
    [ctia.schemas.core :as schemas :refer
     [APIHandlerServices HTTPShowServices NewBundle TempIDs]]
