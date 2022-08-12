@@ -64,7 +64,19 @@
   (let [searchable-fields (-> entity get-store :state :searchable-fields)
         default-fields-schema (->> searchable-fields
                                    (map name)
-                                   (apply s/enum))]
+                                   (apply s/enum))
+        search-q-params (cond-> search-q-params
+                          (:sort_by search-q-params) (update :sort_by
+                                                             (fn [sort_by-enum]
+                                                               (assert (instance? schema.core.EnumSchema sort_by-enum))
+                                                               (let [valid-fields (:vs sort_by-enum)
+                                                                     _ (assert (every? string? valid-fields))]
+                                                                 (describe s/Str
+                                                                           (str "Sort result on fields. The following fields are supported: "
+                                                                                (pr-str (vec valid-fields))
+                                                                                "\n\n"
+                                                                                "Fields can be combined with ',' and sort order can be specified by ':asc' and ':desc'"
+                                                                                "eg., sort by field1 ascending, then field2 descending: 'field1,field2:desc'"))))))]
     (if (seq searchable-fields)
       (st/merge
        search-q-params
