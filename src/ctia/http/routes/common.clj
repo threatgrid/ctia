@@ -75,7 +75,7 @@
                                                                            (str "Sort result on fields. The following fields are supported: "
                                                                                 (pr-str (vec valid-fields))
                                                                                 "\n\n"
-                                                                                "Fields can be combined with ',' and sort order can be specified by ':asc' and ':desc'"
+                                                                                "Fields can be combined with ',' and sort order can be specified by ':asc' and ':desc'."
                                                                                 "eg., sort by field1 ascending, then field2 descending: 'field1,field2:desc'"))))))]
     (if (seq searchable-fields)
       (st/merge
