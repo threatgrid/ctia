@@ -29,30 +29,33 @@
       ;; https://www.elastic.co/guide/en/elasticsearch/reference/current/sort-search-results.html#_sort_values
       {field-name {:order order}}
 
+      ;; chooses the maximum value in field (a list) based on remappings,
+      ;; and sorts based on that value for each entity. Remappings must
+      ;; be positive integers.
       ;; eg
-      ;; {:op :remap-list
+      ;; {:op :remap-list-max
       ;;  :field-name "tactics"
       ;;  :remappings {"TA0043" 1
       ;;               "TA0042" 2}
-      ;;  :sort_order :asc
-      ;;  :remap-default 0}
-      :remap-list
-      (let [{:keys [remap-default remappings]} params
+      ;;  :sort_order :asc}
+      :remap-list-max
+      (let [{:keys [remappings]} params
             remappings (normalize-remappings remappings)]
-        ;; https://www.elastic.co/guide/en/elasticsearch/painless/current/painless-sort-context.html
+        (assert (every? pos-int? (vals remappings)) ":remap-list-max :remappings values must be positive integers")
         {:_script
          {:type "number"
           :script {:lang "painless"
                    :inline (str/join
                              "\n"
-                             [(painless-return-default-if-no-field field-name "default")
+                             ["if (!doc.containsKey(params.fieldName)) { return params.default }"
                               "int score = params.default;"
-                              (format "for (int i = 0; i < doc['%s'].length; ++i) {" field-name)
-                              "  score = Math.max(score, params.remappings.getOrDefault(doc['%s'][i], params.default););"
+                              "for (int i = 0; i < doc[params.fieldName].length; ++i) {"
+                              "  score = Math.max(score, params.remappings.getOrDefault(doc[params.fieldName][i], params.default));"
                               "}"
                               "return score;"])
                    :params {:remappings remappings
-                            :default remap-default}}
+                            :fieldName field-name
+                            :default 0}}
           :order order}})
 
       ;; eg
@@ -74,9 +77,9 @@
           :script {:lang "painless"
                    :inline (str/join
                              "\n"
-                             [(painless-return-default-if-no-field field-name "default")
-                              (format "return params.remappings.getOrDefault(doc['%s'].value, params.default)"
-                                      field-name)])
+                             ["if (!doc.containsKey(params.fieldName) || doc[params.fieldName].size() != 1) { return params.default }"
+                              "return params.remappings.getOrDefault(doc[params.fieldName].value, params.default)"])
                    :params {:remappings remappings
+                            :fieldName field-name
                             :default remap-default}}
           :order order}}))))
