@@ -178,19 +178,19 @@
              ;; tactics in lifecycle order
              ;; https://attack.mitre.org/versions/v11/tactics/enterprise/
              {"TA0043" 50
-              "TA0042" 50
-              "TA0001" 50
-              "TA0002" 50
-              "TA0003" 50
-              "TA0004" 50
-              "TA0005" 50
-              "TA0006" 50
-              "TA0007" 50
-              "TA0008" 50
-              "TA0009" 50
-              "TA0011" 50
-              "TA0010" 50
-              "TA0040" 50}
+              "TA0042" 51
+              "TA0001" 52
+              "TA0002" 53
+              "TA0003" 54
+              "TA0004" 55
+              "TA0005" 56
+              "TA0006" 57
+              "TA0007" 58
+              "TA0008" 59
+              "TA0009" 60
+              "TA0011" 61
+              "TA0010" 62
+              "TA0040" 63}
              :remap-default 0}})
 
 (def incident-sort-fields

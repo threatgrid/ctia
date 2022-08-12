@@ -106,18 +106,20 @@
    "High" 3
    "Critical" 4})
 
-(defn gen-new-incident [severity]
-  (let [order (ctim-severity-order severity)
-        _ (if (some? severity)
-            (assert (number? order)
-                    (str "Unmapped severity " (pr-str severity)))
-            (assert ((some-fn nil? number?) order)))]
-    (-> new-incident-minimal
-        (dissoc :id :severity)
-        ;; test missing severity if nil
-        (cond-> (some? order) (assoc :severity severity))
-        (assoc :title (str (java.util.UUID/randomUUID))
-               :revision (or order 0)))))
+(defn gen-new-incident
+  ([] (gen-new-incident "High"))
+  ([severity]
+   (let [order (ctim-severity-order severity)
+         _ (if (some? severity)
+             (assert (number? order)
+                     (str "Unmapped severity " (pr-str severity)))
+             (assert ((some-fn nil? number?) order)))]
+     (-> new-incident-minimal
+         (dissoc :id :severity)
+         ;; test missing severity if nil
+         (cond-> (some? order) (assoc :severity severity))
+         (assoc :title (str (java.util.UUID/randomUUID))
+                :revision (or order 0))))))
 
 (s/defn create-incidents [app incidents :- (s/pred set?)]
   (bundle/import-bundle
@@ -182,6 +184,31 @@
                                 (is (= expected-parsed-body
                                        parsed-body))))))))
             (finally (purge-incidents! app)))))))))
+
+(deftest sort-incidents-by-tactics-test
+  (es-helpers/for-each-es-version
+    "sort by tactics"
+    [5 7]
+    #(ductile.index/delete! % "ctia_*")
+    (helpers/with-properties (into ["ctia.auth.type" "allow-all"]
+                                   es-helpers/basic-auth-properties)
+      (helpers/fixture-ctia-with-app
+        (fn [app]
+          ;(helpers/set-capabilities! app "foouser" ["foogroup"] "user" all-capabilities)
+          ;(whoami-helpers/set-whoami-response app "45c1f5e3f05d0" "foouser" "foogroup" "user")
+          (try (let [ascending-incidents [(assoc (gen-new-incident) :tactics ["bad-id"])
+                                          (assoc (gen-new-incident) :tactics ["TA0043"])
+                                          (assoc (gen-new-incident) :tactics ["TA0042"])
+                                          ;; same position as above
+                                          ;(assoc (gen-new-incident) :tactics ["TA0043" "TA0042"])
+                                          (assoc (gen-new-incident) :tactics ["TA0043" "TA0001"])
+                                          (assoc (gen-new-incident) :tactics ["TA0002" "TA0043"])
+                                          (assoc (gen-new-incident) :tactics ["bad-id" "TA0003"])]]
+                 (create-incidents app (shuffle ascending-incidents))
+                 (let [{:keys [parsed-body] :as raw} (search-th/search-raw app :incident {:sort_by "tactics"})]
+                   (and (is (= 200 (:status raw)) (pr-str raw))
+                        (is (= ascending-incidents parsed-body) (pr-str raw)))))
+               (finally (purge-incidents! app))))))))
 
 (defmacro result+ms-time
   "Evaluates expr and returns a tuple [result ms-time] where result is the 
