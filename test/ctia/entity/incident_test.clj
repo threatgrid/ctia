@@ -204,10 +204,39 @@
                                         ["bad-id" "TA0003"]]
                      ascending-incidents (mapv #(assoc (gen-new-incident) :tactics %) ascending-tactics)]
                  (create-incidents app (shuffle ascending-incidents))
-                 (let [{:keys [parsed-body] :as raw} (search-th/search-raw app :incident {:sort_by "tactics"})]
-                   (and (is (= 200 (:status raw)) (pr-str raw))
-                        (is (= ascending-tactics
-                               (map :tactics parsed-body))))))
+                 (testing "tactics"
+                   (let [{:keys [parsed-body] :as raw} (search-th/search-raw app :incident {:sort_by "tactics"})]
+                     (and (is (= 200 (:status raw)) (pr-str raw))
+                          (is (= ascending-tactics
+                                 (map :tactics parsed-body))))))
+                 (testing "tactics:desc"
+                   (let [{:keys [parsed-body] :as raw} (search-th/search-raw app :incident {:sort_by "tactics:desc"})]
+                     (and (is (= 200 (:status raw)) (pr-str raw))
+                          (is (= (rseq ascending-tactics)
+                                 (map :tactics parsed-body)))))))
+               (finally (purge-incidents! app)))
+          (try (let [ascending-incidents [;; first 3 have equivalent tactics
+                                          (assoc (gen-new-incident) :tactics ["TA0001"] :title "B")
+                                          (assoc (gen-new-incident) :tactics ["TA0043" "TA0001"] :title "C")
+                                          (assoc (gen-new-incident) :tactics ["TA0042" "TA0001"] :title "D")
+                                          ;; higher tactic score
+                                          (assoc (gen-new-incident) :tactics ["TA0003"] :title "A")]]
+                 (create-incidents app (shuffle ascending-incidents))
+                 (testing "tactics,title"
+                   (let [{:keys [parsed-body] :as raw} (search-th/search-raw app :incident {:sort_by "tactics,title"})]
+                     (and (is (= 200 (:status raw)) (pr-str raw))
+                          (is (= ["B" "C" "D" "A"]
+                                 (map :title parsed-body))))))
+                 (testing "tactics,title:desc"
+                   (let [{:keys [parsed-body] :as raw} (search-th/search-raw app :incident {:sort_by "tactics,title:desc"})]
+                     (and (is (= 200 (:status raw)) (pr-str raw))
+                          (is (= ["D" "C" "B" "A"]
+                                 (map :title parsed-body))))))
+                 (testing "tactics:desc,title"
+                   (let [{:keys [parsed-body] :as raw} (search-th/search-raw app :incident {:sort_by "tactics:desc,title"})]
+                     (and (is (= 200 (:status raw)) (pr-str raw))
+                          (is (= ["A" "B" "C" "D"]
+                                 (map :title parsed-body)))))))
                (finally (purge-incidents! app))))))))
 
 (defmacro result+ms-time
