@@ -48,7 +48,7 @@
                    :inline (str/join
                              "\n"
                              ["if (!doc.containsKey(params.fieldName)) { return params.default }"
-                              "int score = params.default;"
+                              "double score = params.default;"
                               "for (int i = 0; i < doc[params.fieldName].length; ++i) {"
                               "  score = Math.max(score, params.remappings.getOrDefault(doc[params.fieldName][i], params.default));"
                               "}"

@@ -188,7 +188,7 @@
 (deftest sort-incidents-by-tactics-test
   (es-helpers/for-each-es-version
     "sort by tactics"
-    [5 7]
+    [#_5 7]
     #(ductile.index/delete! % "ctia_*")
     (helpers/with-properties (into ["ctia.auth.type" "allow-all"]
                                    es-helpers/basic-auth-properties)
@@ -196,18 +196,18 @@
         (fn [app]
           ;(helpers/set-capabilities! app "foouser" ["foogroup"] "user" all-capabilities)
           ;(whoami-helpers/set-whoami-response app "45c1f5e3f05d0" "foouser" "foogroup" "user")
-          (try (let [ascending-incidents [(assoc (gen-new-incident) :tactics ["bad-id"])
-                                          (assoc (gen-new-incident) :tactics ["TA0043"])
-                                          (assoc (gen-new-incident) :tactics ["TA0042"])
-                                          ;; same position as above
-                                          ;(assoc (gen-new-incident) :tactics ["TA0043" "TA0042"])
-                                          (assoc (gen-new-incident) :tactics ["TA0043" "TA0001"])
-                                          (assoc (gen-new-incident) :tactics ["TA0002" "TA0043"])
-                                          (assoc (gen-new-incident) :tactics ["bad-id" "TA0003"])]]
+          (try (let [ascending-tactics [["bad-id"]
+                                        ["TA0043"]
+                                        ["TA0042"]
+                                        ["TA0043" "TA0001"]
+                                        ["TA0002" "TA0043"]
+                                        ["bad-id" "TA0003"]]
+                     ascending-incidents (mapv #(assoc (gen-new-incident) :tactics %) ascending-tactics)]
                  (create-incidents app (shuffle ascending-incidents))
                  (let [{:keys [parsed-body] :as raw} (search-th/search-raw app :incident {:sort_by "tactics"})]
                    (and (is (= 200 (:status raw)) (pr-str raw))
-                        (is (= ascending-incidents parsed-body) (pr-str raw)))))
+                        (is (= ascending-tactics
+                               (map :tactics parsed-body))))))
                (finally (purge-incidents! app))))))))
 
 (defmacro result+ms-time
