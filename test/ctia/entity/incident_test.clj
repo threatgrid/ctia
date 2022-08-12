@@ -203,7 +203,7 @@
                                         ["TA0002" "TA0043"]
                                         ["bad-id" "TA0003"]]
                      ascending-incidents (mapv #(assoc (gen-new-incident) :tactics %) ascending-tactics)]
-                 (create-incidents app (shuffle ascending-incidents))
+                 (create-incidents app (-> ascending-incidents shuffle set))
                  (testing "tactics"
                    (let [{:keys [parsed-body] :as raw} (search-th/search-raw app :incident {:sort_by "tactics"})]
                      (and (is (= 200 (:status raw)) (pr-str raw))
@@ -221,7 +221,7 @@
                                           (assoc (gen-new-incident) :tactics ["TA0042" "TA0001"] :title "D")
                                           ;; higher tactic score
                                           (assoc (gen-new-incident) :tactics ["TA0003"] :title "A")]]
-                 (create-incidents app (shuffle ascending-incidents))
+                 (create-incidents app (-> ascending-incidents shuffle set))
                  (testing "tactics,title"
                    (let [{:keys [parsed-body] :as raw} (search-th/search-raw app :incident {:sort_by "tactics,title"})]
                      (and (is (= 200 (:status raw)) (pr-str raw))
