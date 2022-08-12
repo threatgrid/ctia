@@ -197,11 +197,11 @@
           ;(helpers/set-capabilities! app "foouser" ["foogroup"] "user" all-capabilities)
           ;(whoami-helpers/set-whoami-response app "45c1f5e3f05d0" "foouser" "foogroup" "user")
           (try (let [ascending-tactics [["bad-id"]
-                                        ["TA0043"]
                                         ["TA0042"]
+                                        ["TA0043"]
                                         ["TA0043" "TA0001"]
-                                        ["TA0002" "TA0043"]
-                                        ["bad-id" "TA0003"]]
+                                        ["bad-id" "TA0003"]
+                                        ["TA0002" "TA0043"]]
                      ascending-incidents (mapv #(assoc (gen-new-incident) :tactics %) ascending-tactics)]
                  (create-incidents app (-> ascending-incidents shuffle set))
                  (testing "tactics"
@@ -215,12 +215,12 @@
                           (is (= (rseq ascending-tactics)
                                  (map :tactics parsed-body)))))))
                (finally (purge-incidents! app)))
-          (try (let [ascending-incidents [;; first 3 have equivalent tactics
-                                          (assoc (gen-new-incident) :tactics ["TA0001"] :title "B")
-                                          (assoc (gen-new-incident) :tactics ["TA0043" "TA0001"] :title "C")
-                                          (assoc (gen-new-incident) :tactics ["TA0042" "TA0001"] :title "D")
-                                          ;; higher tactic score
-                                          (assoc (gen-new-incident) :tactics ["TA0003"] :title "A")]]
+          (try (let [ascending-incidents [;; first 3 have equivalent tactics scores (9)
+                                          (assoc (gen-new-incident) :tactics ["TA0003"] :title "B")
+                                          (assoc (gen-new-incident) :tactics ["TA0003" "TA0001"] :title "C")
+                                          (assoc (gen-new-incident) :tactics ["TA0042" "TA0007"] :title "D")
+                                          ;; higher tactic score (10)
+                                          (assoc (gen-new-incident) :tactics ["TA0006"] :title "A")]]
                  (create-incidents app (-> ascending-incidents shuffle set))
                  (testing "tactics,title"
                    (let [{:keys [parsed-body] :as raw} (search-th/search-raw app :incident {:sort_by "tactics,title"})]
