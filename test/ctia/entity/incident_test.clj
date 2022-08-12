@@ -188,7 +188,7 @@
 (deftest sort-incidents-by-tactics-test
   (es-helpers/for-each-es-version
     "sort by tactics"
-    [#_5 7]
+    [5 7]
     #(ductile.index/delete! % "ctia_*")
     (helpers/with-properties (into ["ctia.auth.type" "allow-all"]
                                    es-helpers/basic-auth-properties)
