@@ -139,7 +139,8 @@
       :intended_effect  em/token
       :assignees        em/token
       :promotion_method em/token
-      :severity         em/token})}})
+      :severity         em/token
+      :tactics          em/token})}})
 
 (def-es-store IncidentStore :incident StoredIncident PartialStoredIncident)
 
@@ -159,7 +160,8 @@
            :intended_effect
            :assignees
            :promotion_method
-           :severity]))
+           :severity
+           :tactics]))
 
 (s/def sort-extension-templates :- SortExtensionTemplates
   {;; override :severity field to sort semantically
@@ -217,7 +219,8 @@
    :source
    :status
    :title
-   :severity])
+   :severity
+   :tactics])
 
 (def incident-histogram-fields
   [:timestamp
