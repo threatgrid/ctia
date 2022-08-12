@@ -163,6 +163,48 @@
            :severity
            :tactics]))
 
+(comment
+  (defn generate-mitre-tactic-scores
+    "script for stripping proprietary info from mitre tactic scores.
+    Use to generate new :remappings for :tactics sorting."
+    [csv-file]
+    (let [s (slurp csv-file)
+          ;; lifecycle order
+          relevant-tactics ["TA0043"
+                            "TA0042"
+                            "TA0001"
+                            "TA0002"
+                            "TA0003"
+                            "TA0004"
+                            "TA0005"
+                            "TA0006"
+                            "TA0007"
+                            "TA0008"
+                            "TA0009"
+                            "TA0011"
+                            "TA0010"
+                            "TA0040"]
+          tactic->pos (into {} (map-indexed (fn [i id] [id i]))
+                            relevant-tactics)
+          groups (-> s 
+                     ((requiring-resolve 'cheshire.core/parse-string))
+                     ((requiring-resolve 'clojure.walk/keywordize-keys))
+                     (->> (filter (comp (set relevant-tactics) :id))
+                          (group-by :risk_score)
+                          (sort-by key)
+                          (map second)))
+          out (into (sorted-map-by (fn [id1 id2]
+                                     (< (tactic->pos id1 0) (tactic->pos id2 0))))
+                    (map (fn [score group]
+                           (zipmap (map :id group) (repeat score)))
+                         (next (range)) groups))
+
+          _ (assert (= relevant-tactics (keys out))
+                    "missing score/s")]
+     ((requiring-resolve 'clojure.pprint/pprint) out)))
+  (generate-mitre-tactic-scores "")
+  )
+
 (s/def sort-extension-templates :- SortExtensionTemplates
   {;; override :severity field to sort semantically
    :severity {:op :remap
@@ -173,24 +215,26 @@
               :remap-default 0}
    ;; override :tactics field to sort by the highest risk score for
    ;; any one tactic on an incident
+   ;; https://attack.mitre.org/versions/v11/tactics/enterprise/
    :tactics {:op :remap-list-max
              :remappings
-             ;; tactics in lifecycle order
-             ;; https://attack.mitre.org/versions/v11/tactics/enterprise/
-             {"TA0043" 50
-              "TA0042" 51
-              "TA0001" 52
-              "TA0002" 53
-              "TA0003" 54
-              "TA0004" 55
-              "TA0005" 56
-              "TA0006" 57
-              "TA0007" 58
-              "TA0008" 59
-              "TA0009" 60
-              "TA0011" 61
-              "TA0010" 62
-              "TA0040" 63}
+             ;; Note: don't use actual scores, they may be proprietary. instead,
+             ;; simulate the same ordering (not proprietary) with dummy scores.
+             ;; generate with `generate-mitre-tactic-scores`
+             {"TA0043" 2,
+              "TA0042" 1,
+              "TA0001" 3,
+              "TA0002" 11,
+              "TA0003" 9,
+              "TA0004" 7,
+              "TA0005" 11,
+              "TA0006" 10,
+              "TA0007" 9,
+              "TA0008" 5,
+              "TA0009" 8,
+              "TA0011" 8,
+              "TA0010" 6,
+              "TA0040" 4}
              :remap-default 0}})
 
 (def incident-sort-fields
