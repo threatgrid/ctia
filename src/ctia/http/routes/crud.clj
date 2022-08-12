@@ -177,9 +177,10 @@
          {:keys [flag-value]} :FeaturesService
          :as services} :- APIHandlerServices]
   (let [capitalized (capitalize-entity entity)
-        search-q-params* (routes.common/prep-es-fields-schema
-                          services
-                          entity-crud-config)
+        search-q-params* (-> (routes.common/prep-es-fields-schema
+                               services
+                               entity-crud-config)
+                             routes.common/prep-sort_by-param-schema)
         search-filters (st/dissoc search-q-params
                                   :sort_by
                                   :sort_order

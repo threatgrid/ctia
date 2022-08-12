@@ -131,7 +131,7 @@ To start CTIA locally, use `./scripts/run` for ES5 and `./scripts/run7` for ES7.
 To run tests, use `./scripts/test` for all non-integration tests, and `./scripts/test7` for just ES7 non-integration tests.
 
 For a REPL workflow, run `lein repl`. Use `(start)` to start CTIA,
-`(stop)` to stop it, and `(go)` to restart it.
+`(stop)` to stop it, and `(go)` to restart it for ES5---append `7` to each name for ES7.
 
 ### Testing and CI
 

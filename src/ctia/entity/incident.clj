@@ -192,22 +192,12 @@
               "TA0010" 50
               "TA0040" 50}}})
 
-(def severity-date-sort
-  (for [time-field ["timestamp" "created"]
-        time-order ["asc" "desc"]
-        severity-order ["asc" "desc"]]
-    (format "severity:%s,%s:%s"
-            severity-order
-            time-field
-            time-order)))
-
 (def incident-sort-fields
   (apply s/enum
          (map name
               (distinct
                (concat (keys sort-extension-templates)
-                       incident-fields
-                       severity-date-sort)))))
+                       incident-fields)))))
 
 (def incident-enumerable-fields
   [:assignees
