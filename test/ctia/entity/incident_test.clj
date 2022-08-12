@@ -196,12 +196,13 @@
         (fn [app]
           ;(helpers/set-capabilities! app "foouser" ["foogroup"] "user" all-capabilities)
           ;(whoami-helpers/set-whoami-response app "45c1f5e3f05d0" "foouser" "foogroup" "user")
-          (try (let [ascending-tactics [["bad-id"]
-                                        ["TA0042"]
-                                        ["TA0043"]
-                                        ["TA0043" "TA0001"]
-                                        ["bad-id" "TA0003"]
-                                        ["TA0002" "TA0043"]]
+          (try (let [ascending-tactics [["bad-id"] ;; 0
+                                        ["TA0042"] ;; 1
+                                        ["TA0043"] ;; 2
+                                        ["TA0043" "TA0001"] ;; 3
+                                        ["bad-id" "TA0003"] ;; 9
+                                        ["TA0002" "TA0043"] ;; 11
+                                        ]
                      ascending-incidents (mapv #(assoc (gen-new-incident) :tactics %) ascending-tactics)]
                  (create-incidents app (-> ascending-incidents shuffle set))
                  (testing "tactics"
