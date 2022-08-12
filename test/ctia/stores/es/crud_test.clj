@@ -144,6 +144,10 @@
     "title:ASC,schema_version:DESC" [{:op :field, :field-name :title, :sort_order "ASC"}
                                      {:op :field, :field-name :schema_version, :sort_order "DESC"}]))
 
+(def painless-remap-script
+  (str "if (!doc.containsKey(params.fieldName) || doc[params.fieldName].size() != 1) { return params.default }\n"
+       "return params.remappings.getOrDefault(doc[params.fieldName].value, params.default)"))
+
 (deftest rename-sort-fields
   (are [sort_by expected_sort_by] (= expected_sort_by
                                      (:sort (sut/rename-sort-fields
@@ -157,9 +161,10 @@
     (is (= {:sort [{:_script
                     {:type "number"
                      :script {:lang "painless"
-                              :inline (str "if (!doc.containsKey('severity') || doc['severity'].size() != 1) { return params.default }\n"
-                                           "return params.remappings.getOrDefault(doc['severity'].value, params.default)")
+                              :inline (str "if (!doc.containsKey(params.fieldName) || doc[params.fieldName].size() != 1) { return params.default }\n"
+                                           "return params.remappings.getOrDefault(doc[params.fieldName].value, params.default)")
                               :params {:remappings {"critical" 2, "high" 1}
+                                       :fieldName "severity"
                                        :default 0}}
                      :order :asc}}]}
            (sut/rename-sort-fields
@@ -172,9 +177,9 @@
     (is (= {:sort [{:_script
                     {:type "number"
                      :script {:lang "painless"
-                              :inline (str "if (!doc.containsKey('remap') || doc['remap'].size() != 1) { return params.default }\n"
-                                           "return params.remappings.getOrDefault(doc['remap'].value, params.default)")
+                              :inline painless-remap-script
                               :params {:remappings {"a" 1, "b" 2}
+                                       :fieldName "remap"
                                        :default 0}}
                      :order :DESC}}]}
            (sut/rename-sort-fields
@@ -188,9 +193,9 @@
                    {:_script
                     {:type "number"
                      :script {:lang "painless"
-                              :inline (str "if (!doc.containsKey('remap') || doc['remap'].size() != 1) { return params.default }\n"
-                                           "return params.remappings.getOrDefault(doc['remap'].value, params.default)")
+                              :inline painless-remap-script
                               :params {:remappings {"a" 1, "b" 2}
+                                       :fieldName "remap"
                                        :default 0}}
                      :order :DESC}}]}
            (sut/rename-sort-fields
@@ -203,9 +208,9 @@
     (is (= {:sort [{:_script
                     {:type "number"
                      :script {:lang "painless"
-                              :inline (str "if (!doc.containsKey('title.whole') || doc['title.whole'].size() != 1) { return params.default }\n"
-                                           "return params.remappings.getOrDefault(doc['title.whole'].value, params.default)")
+                              :inline painless-remap-script
                               :params {:remappings {"a" 1, "b" 2}
+                                       :fieldName "title.whole"
                                        :default 0}}
                      :order :asc}}]}
            (sut/rename-sort-fields
@@ -218,9 +223,9 @@
     (is (= {:sort [{:_script
                     {:type "number"
                      :script {:lang "painless"
-                              :inline (str "if (!doc.containsKey('remap2') || doc['remap2'].size() != 1) { return params.default }\n"
-                                           "return params.remappings.getOrDefault(doc['remap2'].value, params.default)")
+                              :inline painless-remap-script
                               :params {:remappings {"a" 1, "b" 2}
+                                       :fieldName "remap2"
                                        :default 0}}
                      :order :asc}}]}
            (sut/rename-sort-fields
