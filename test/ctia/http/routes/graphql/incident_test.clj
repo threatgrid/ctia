@@ -24,19 +24,19 @@
              "incident"
              (-> new-incident-maximal
                  (assoc :title "Incident 1")
-                 (dissoc :id)))
+                 (dissoc :id :tactics :techniques)))
         ap2 (gh/create-object
              app
              "incident"
              (-> new-incident-maximal
                  (assoc :title "Incident 2")
-                 (dissoc :id)))
+                 (dissoc :id :tactics :techniques)))
         ap3 (gh/create-object
              app
              "incident"
              (-> new-incident-maximal
                  (assoc :title "Incident 3")
-                 (dissoc :id)))
+                 (dissoc :id :tactics :techniques)))
         f1 (gh/create-object app "feedback" (gh/feedback-1 (:id ap1) #inst "2042-01-01T00:00:00.000Z"))
         f2 (gh/create-object app "feedback" (gh/feedback-2 (:id ap1) #inst "2042-01-01T00:00:00.000Z"))]
     (gh/create-object app
