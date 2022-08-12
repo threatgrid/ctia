@@ -168,7 +168,27 @@
                            "Medium" 2
                            "High" 3
                            "Critical" 4}
-              :remap-default 0}})
+              :remap-default 0}
+   ;; override :tactics field to sort by the furthest tactic
+   ;; in the incident lifecycle.
+   :tactics {:op :remap-list-max
+             :remappings (zipmap [;; tactics in lifecycle order
+                                  "TA0043"
+                                  "TA0042"
+                                  "TA0001"
+                                  "TA0002"
+                                  "TA0003"
+                                  "TA0004"
+                                  "TA0005"
+                                  "TA0006"
+                                  "TA0007"
+                                  "TA0008"
+                                  "TA0009"
+                                  "TA0011"
+                                  "TA0010"
+                                  "TA0040"]
+                                 ;; remappings must be positive
+                                 (next (range)))}})
 
 (def severity-date-sort
   (for [time-field ["timestamp" "created"]
