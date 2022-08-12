@@ -41,7 +41,7 @@
       :remap-list-max
       (let [{:keys [remappings]} params
             remappings (normalize-remappings remappings)]
-        (assert (every? pos-int? (vals remappings)) ":remap-list-max :remappings values must be positive integers")
+        (assert (every? (complement neg?) (vals remappings)) ":remap-list-max :remappings values must be non-negative")
         {:_script
          {:type "number"
           :script {:lang "painless"

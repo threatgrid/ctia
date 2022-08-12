@@ -174,23 +174,23 @@
    ;; override :tactics field to sort by the furthest tactic
    ;; in the incident lifecycle.
    :tactics {:op :remap-list-max
-             :remappings (zipmap [;; tactics in lifecycle order
-                                  "TA0043"
-                                  "TA0042"
-                                  "TA0001"
-                                  "TA0002"
-                                  "TA0003"
-                                  "TA0004"
-                                  "TA0005"
-                                  "TA0006"
-                                  "TA0007"
-                                  "TA0008"
-                                  "TA0009"
-                                  "TA0011"
-                                  "TA0010"
-                                  "TA0040"]
-                                 ;; remappings must be positive
-                                 (next (range)))}})
+             :remappings
+             ;; tactics in lifecycle order
+             ;; https://attack.mitre.org/versions/v11/tactics/enterprise/
+             {"TA0043" 50
+              "TA0042" 50
+              "TA0001" 50
+              "TA0002" 50
+              "TA0003" 50
+              "TA0004" 50
+              "TA0005" 50
+              "TA0006" 50
+              "TA0007" 50
+              "TA0008" 50
+              "TA0009" 50
+              "TA0011" 50
+              "TA0010" 50
+              "TA0040" 50}}})
 
 (def severity-date-sort
   (for [time-field ["timestamp" "created"]
