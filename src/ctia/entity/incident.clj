@@ -171,8 +171,8 @@
                            "High" 3
                            "Critical" 4}
               :remap-default 0}
-   ;; override :tactics field to sort by the furthest tactic
-   ;; in the incident lifecycle.
+   ;; override :tactics field to sort by the highest risk score for
+   ;; any one tactic on an incident
    :tactics {:op :remap-list-max
              :remappings
              ;; tactics in lifecycle order
@@ -190,7 +190,8 @@
               "TA0009" 50
               "TA0011" 50
               "TA0010" 50
-              "TA0040" 50}}})
+              "TA0040" 50}
+             :remap-default 0}})
 
 (def incident-sort-fields
   (apply s/enum

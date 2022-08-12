@@ -39,7 +39,7 @@
       ;;               "TA0042" 2}
       ;;  :sort_order :asc}
       :remap-list-max
-      (let [{:keys [remappings]} params
+      (let [{:keys [remap-default remappings]} params
             remappings (normalize-remappings remappings)]
         (assert (every? (complement neg?) (vals remappings)) ":remap-list-max :remappings values must be non-negative")
         {:_script
@@ -55,7 +55,7 @@
                               "return score;"])
                    :params {:remappings remappings
                             :fieldName field-name
-                            :default 0}}
+                            :default remap-default}}
           :order order}})
 
       ;; eg
