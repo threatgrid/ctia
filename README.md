@@ -126,7 +126,7 @@ be created more than once.
 
 ### Local workflow
 
-To start CTIA locally, use `./scripts/run` for ES5 and `./scripts/run7` for ES7.
+To start CTIA locally, first configure ES auth for local development by uncommenting the lines beginning with `ctia.store.es.default.auth` in `resources/ctia-default.properties`.  Then use `./scripts/run` for ES5 and `./scripts/run7` for ES7.
 
 To run tests, use `./scripts/test` for all non-integration tests, and `./scripts/test7` for just ES7 non-integration tests.
 
