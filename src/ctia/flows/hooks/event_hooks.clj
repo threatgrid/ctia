@@ -3,6 +3,7 @@
    [clojure.tools.logging :as log]
    [ctia.flows.hook-protocol :refer [Hook]]
    [ctia.lib.redis :as lr]
+   [ctia.lib.firehose :as lf]
    [ctia.lib.kafka :as lk]
    [ctia.flows.hooks-service.schemas :refer [HooksMap]]
    [ctia.schemas.services :refer [ConfigServiceFns]]
@@ -11,7 +12,9 @@
    [cheshire.core :refer [generate-string]]
    [schema.core :as s]
    [schema-tools.core :as st])
-  (:import [org.apache.kafka.clients.producer KafkaProducer]))
+  (:import
+   [software.amazon.awssdk.services.firehose FirehoseClient]
+   [org.apache.kafka.clients.producer KafkaProducer]))
 
 (defrecord KafkaEventPublisher [^KafkaProducer producer kafka-config]
   Hook
@@ -42,6 +45,26 @@
       (catch Exception e
         (log/error e "Unable to push an event to Redis")))
     event))
+
+(defrecord FirehoseEventPublisher [^FirehoseClient client stream-name]
+  Hook
+  (init [_]
+    :nothing)
+  (destroy [_]
+    (log/warn "closing firehose client")
+    (.close client))
+  (handle [_ event _]
+    (try
+      (lf/put-record client stream-name (.getBytes (generate-string event)))
+      (catch Exception e
+        (log/error e "Unable to push an event to Firehose")))
+    event))
+
+(s/defn firehose-event-publisher
+  [get-in-config :- (st/get-in ConfigServiceFns [:get-in-config])]
+  (let [{:keys [stream-name]} (get-in-config [:ctia :hook :firehose])]
+    (with-open [client (lf/default-client)]
+      (->FirehoseEventPublisher client stream-name))))
 
 (s/defn redis-event-publisher
   [get-in-config :- (st/get-in ConfigServiceFns [:get-in-config])]
@@ -98,11 +121,13 @@
    get-in-config :- (st/get-in ConfigServiceFns [:get-in-config])]
   (let [{{redis? :enabled} :redis
          {redismq? :enabled} :redismq
-         {kafka? :enabled} :kafka}
+         {kafka? :enabled} :kafka
+         {firehose? :enabled} :firehose}
         (get-in-config [:ctia :hook])
         all-event-hooks
         (cond-> {}
           redis?   (assoc :redis (redis-event-publisher get-in-config))
           redismq? (assoc :redismq (redismq-publisher get-in-config))
+          firehose? (assoc :firehose (firehose-publisher get-in-config))
           kafka?   (assoc :kafka (kafka-event-publisher get-in-config)))]
     (update hooks-m :event into (vals all-event-hooks))))

@@ -157,6 +157,9 @@
                  [com.fasterxml.jackson.core/jackson-databind ~jackson-databind-version] ;; bump onyx-kafka and others
                  [zookeeper-clj "0.9.4"]
 
+                 ;; firehose
+                 [software.amazon.awssdk/firehose "2.17.230"]
+
                  ;; GraphQL
                  [base64-clj "0.1.1"]
                  [threatgrid/ring-graphql-ui "0.1.1"]
