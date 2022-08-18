@@ -58,7 +58,10 @@
    (s/optional-key :limit) (describe Long "Pagination Limit")})
 
 (s/defn prep-sort_by-param-schema :- (s/protocol s/Schema)
-  "Generalize sort_by enum schema to s/Str and add docs"
+  "Generalize sort_by enum schema from (enum fields...) to s/Str
+  so it can accept the `field1:asc,field2:desc` syntax to sort by
+  multiple fields. Add the original enums to the doc for the route,
+  that also explains how this syntax works."
   [search-q-params]
   (cond-> search-q-params
     (st/get-in search-q-params [:sort_by])
