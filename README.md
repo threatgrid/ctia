@@ -85,8 +85,8 @@ On Mac OS X, you should use
 includes all the dependencies you need to run Docker containers.
 
 **With Kafka and Zookeeper now part of the dev cluster, you will need
-  to increase the memory you allocate to Docker.  You can do this thru
-  your Docker preferences.  This has been tested with a 4GB
+  to increase the memory you allocate to Docker.  You can do this through
+  your Docker preferences.  This has been tested with a 6GB
   allocation.**
 
 We provide a default `containers/dev/docker-compose.yml`  which will
