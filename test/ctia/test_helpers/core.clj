@@ -154,6 +154,12 @@
   (with-properties ["ctia.hook.redis.enabled" true]
     (f)))
 
+(defn fixture-properties:firehose-hook [f]
+  (with-properties ["ctia.hook.firehose.enabled" true
+                    "ctia.hook.firehose.stream-name" "test-ctia-firehose-local"
+                    "ctia.hook.firehose.local" true]
+    (f)))
+
 (defn fixture-properties:kafka-hook [f]
   (with-properties ["ctia.hook.kafka.enabled" true
                     "ctia.hook.kafka.compression.type" "gzip"

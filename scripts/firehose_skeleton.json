@@ -1,0 +1,26 @@
+{
+  "DeliveryStreamName": "test-ctia-firehose-local",
+  "DeliveryStreamType": "DirectPut",
+  "S3DestinationConfiguration": {
+    "RoleARN": "arn:aws:iam::000000000000:role/super-role",
+    "BucketARN": "arn:aws:s3:::firehose-destination",
+    "Prefix": "test-output",
+    "ErrorOutputPrefix": "test-error-log",
+    "BufferingHints": {
+      "SizeInMBs": 1,
+      "IntervalInSeconds": 60
+    },
+    "CompressionFormat": "GZIP",
+    "CloudWatchLoggingOptions": {
+      "Enabled": false,
+      "LogGroupName": "",
+      "LogStreamName": ""
+    }
+  },
+  "Tags": [
+    {
+      "Key": "testKey",
+      "Value": "tagValue"
+    }
+  ]
+}

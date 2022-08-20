@@ -162,6 +162,7 @@
                       "ctia.hook.kafka.topic.replication-factor" s/Int})
 
    (st/optional-keys {"ctia.hook.firehose.enabled" s/Bool
+                      "ctia.hook.firehose.local" s/Bool
                       "ctia.hook.firehose.stream-name" s/Str})
 
    (st/optional-keys {"ctia.events.log" s/Bool

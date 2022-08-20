@@ -16,6 +16,11 @@
    [software.amazon.awssdk.services.firehose FirehoseClient]
    [org.apache.kafka.clients.producer KafkaProducer]))
 
+(defn event->bytes
+  "Given a map, generate the json string and get the bytes."
+  [event]
+  (.getBytes (generate-string event)))
+
 (defrecord KafkaEventPublisher [^KafkaProducer producer kafka-config]
   Hook
   (init [_]
@@ -28,7 +33,7 @@
                     (get-in kafka-config [:topic :name])
                     nil
                     (.getBytes ^String (:id event))
-                    (.getBytes (generate-string event)))
+                    (event->bytes event))
     event))
 
 (defrecord RedisEventPublisher [conn publish-channel-name]
@@ -46,25 +51,25 @@
         (log/error e "Unable to push an event to Redis")))
     event))
 
-(defrecord FirehoseEventPublisher [^FirehoseClient client stream-name]
+(defrecord FirehoseEventPublisher [client-fn stream-name]
   Hook
   (init [_]
     :nothing)
   (destroy [_]
-    (log/warn "closing firehose client")
-    (.close client))
+    :nothing)
   (handle [_ event _]
-    (try
-      (lf/put-record client stream-name (.getBytes (generate-string event)))
-      (catch Exception e
-        (log/error e "Unable to push an event to Firehose")))
+    (with-open [^FirehoseClient client (client-fn)]
+      (try
+        (lf/put-record client stream-name (event->bytes event))
+        (catch Exception e
+          (log/error e "Unable to push an event to Firehose"))))
     event))
 
 (s/defn firehose-event-publisher
   [get-in-config :- (st/get-in ConfigServiceFns [:get-in-config])]
-  (let [{:keys [stream-name]} (get-in-config [:ctia :hook :firehose])]
-    (with-open [client (lf/default-client)]
-      (->FirehoseEventPublisher client stream-name))))
+  (let [{:keys [stream-name local]} (get-in-config [:ctia :hook :firehose])]
+    (log/infof "Stream name: %s, local: %s" stream-name local)
+    (->FirehoseEventPublisher (lf/get-client-fn local) stream-name)))
 
 (s/defn redis-event-publisher
   [get-in-config :- (st/get-in ConfigServiceFns [:get-in-config])]
@@ -128,6 +133,6 @@
         (cond-> {}
           redis?   (assoc :redis (redis-event-publisher get-in-config))
           redismq? (assoc :redismq (redismq-publisher get-in-config))
-          firehose? (assoc :firehose (firehose-publisher get-in-config))
+          firehose? (assoc :firehose (firehose-event-publisher get-in-config))
           kafka?   (assoc :kafka (kafka-event-publisher get-in-config)))]
     (update hooks-m :event into (vals all-event-hooks))))

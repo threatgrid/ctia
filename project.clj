@@ -158,7 +158,25 @@
                  [zookeeper-clj "0.9.4"]
 
                  ;; firehose
-                 [software.amazon.awssdk/firehose "2.17.230"]
+                 [software.amazon.awssdk/firehose "2.17.232" :exclusions
+                  [io.netty/netty
+                   io.netty/netty-all
+                   io.netty/netty-buffer
+                   io.netty/netty-codec
+                   io.netty/netty-codec-http
+                   io.netty/netty-codec-http2
+                   io.netty/netty-common
+                   io.netty/netty-handler
+                   io.netty/netty-resolver
+                   io.netty/netty-transport
+                   io.netty/netty-transport-classes-epoll
+                   io.netty/netty-transport-native-unix-common
+                   org.apache.httpcomponents/httpclient
+                   org.apache.httpcomponents/httpcore
+                   org.reactivestreams/reactive-streams
+                   org.slf4j/slf4j-api
+                   org.slf4j/slf4j-log4j12
+                   org.slf4j/slf4j-nop]]
 
                  ;; GraphQL
                  [base64-clj "0.1.1"]
