@@ -522,6 +522,77 @@ ctia:ctia:jar:1.1.1-SNAPSHOT
 +- zookeeper-clj:zookeeper-clj:jar:0.9.4:compile
 |  +- (org.apache.zookeeper:zookeeper:jar:3.4.6:compile - omitted for conflict with 3.5.6)
 |  \- (commons-codec:commons-codec:jar:1.7:compile - omitted for conflict with 1.15)
++- software.amazon.awssdk:firehose:jar:2.17.232:compile
+|  +- software.amazon.awssdk:aws-json-protocol:jar:2.17.232:compile
+|  |  +- (software.amazon.awssdk:aws-core:jar:2.17.232:compile - omitted for duplicate)
+|  |  +- (software.amazon.awssdk:protocol-core:jar:2.17.232:compile - omitted for duplicate)
+|  |  +- (software.amazon.awssdk:sdk-core:jar:2.17.232:compile - omitted for duplicate)
+|  |  +- (software.amazon.awssdk:annotations:jar:2.17.232:compile - omitted for duplicate)
+|  |  +- (software.amazon.awssdk:http-client-spi:jar:2.17.232:compile - omitted for duplicate)
+|  |  +- (software.amazon.awssdk:utils:jar:2.17.232:compile - omitted for duplicate)
+|  |  +- software.amazon.awssdk:third-party-jackson-core:jar:2.17.232:compile
+|  |  \- software.amazon.awssdk:json-utils:jar:2.17.232:compile
+|  |     +- (software.amazon.awssdk:utils:jar:2.17.232:compile - omitted for duplicate)
+|  |     +- (software.amazon.awssdk:annotations:jar:2.17.232:compile - omitted for duplicate)
+|  |     \- (software.amazon.awssdk:third-party-jackson-core:jar:2.17.232:compile - omitted for duplicate)
+|  +- software.amazon.awssdk:protocol-core:jar:2.17.232:compile
+|  |  +- (software.amazon.awssdk:sdk-core:jar:2.17.232:compile - omitted for duplicate)
+|  |  +- (software.amazon.awssdk:annotations:jar:2.17.232:compile - omitted for duplicate)
+|  |  +- (software.amazon.awssdk:utils:jar:2.17.232:compile - omitted for duplicate)
+|  |  \- (software.amazon.awssdk:http-client-spi:jar:2.17.232:compile - omitted for duplicate)
+|  +- software.amazon.awssdk:sdk-core:jar:2.17.232:compile
+|  |  +- (software.amazon.awssdk:annotations:jar:2.17.232:compile - omitted for duplicate)
+|  |  +- (software.amazon.awssdk:http-client-spi:jar:2.17.232:compile - omitted for duplicate)
+|  |  +- (software.amazon.awssdk:metrics-spi:jar:2.17.232:compile - omitted for duplicate)
+|  |  +- (software.amazon.awssdk:utils:jar:2.17.232:compile - omitted for duplicate)
+|  |  \- software.amazon.awssdk:profiles:jar:2.17.232:compile
+|  |     +- (software.amazon.awssdk:utils:jar:2.17.232:compile - omitted for duplicate)
+|  |     \- (software.amazon.awssdk:annotations:jar:2.17.232:compile - omitted for duplicate)
+|  +- software.amazon.awssdk:auth:jar:2.17.232:compile
+|  |  +- (software.amazon.awssdk:annotations:jar:2.17.232:compile - omitted for duplicate)
+|  |  +- (software.amazon.awssdk:utils:jar:2.17.232:compile - omitted for duplicate)
+|  |  +- (software.amazon.awssdk:sdk-core:jar:2.17.232:compile - omitted for duplicate)
+|  |  +- (software.amazon.awssdk:regions:jar:2.17.232:compile - omitted for duplicate)
+|  |  +- (software.amazon.awssdk:profiles:jar:2.17.232:compile - omitted for duplicate)
+|  |  +- (software.amazon.awssdk:http-client-spi:jar:2.17.232:compile - omitted for duplicate)
+|  |  +- (software.amazon.awssdk:json-utils:jar:2.17.232:compile - omitted for duplicate)
+|  |  \- software.amazon.eventstream:eventstream:jar:1.0.1:compile
+|  +- software.amazon.awssdk:http-client-spi:jar:2.17.232:compile
+|  |  +- (software.amazon.awssdk:annotations:jar:2.17.232:compile - omitted for duplicate)
+|  |  +- (software.amazon.awssdk:utils:jar:2.17.232:compile - omitted for duplicate)
+|  |  \- (software.amazon.awssdk:metrics-spi:jar:2.17.232:compile - omitted for duplicate)
+|  +- software.amazon.awssdk:regions:jar:2.17.232:compile
+|  |  +- (software.amazon.awssdk:annotations:jar:2.17.232:compile - omitted for duplicate)
+|  |  +- (software.amazon.awssdk:utils:jar:2.17.232:compile - omitted for duplicate)
+|  |  +- (software.amazon.awssdk:sdk-core:jar:2.17.232:compile - omitted for duplicate)
+|  |  +- (software.amazon.awssdk:profiles:jar:2.17.232:compile - omitted for duplicate)
+|  |  \- (software.amazon.awssdk:json-utils:jar:2.17.232:compile - omitted for duplicate)
+|  +- software.amazon.awssdk:annotations:jar:2.17.232:compile
+|  +- software.amazon.awssdk:utils:jar:2.17.232:compile
+|  |  \- (software.amazon.awssdk:annotations:jar:2.17.232:compile - omitted for duplicate)
+|  +- software.amazon.awssdk:aws-core:jar:2.17.232:compile
+|  |  +- (software.amazon.awssdk:annotations:jar:2.17.232:compile - omitted for duplicate)
+|  |  +- (software.amazon.awssdk:regions:jar:2.17.232:compile - omitted for duplicate)
+|  |  +- (software.amazon.awssdk:auth:jar:2.17.232:compile - omitted for duplicate)
+|  |  +- (software.amazon.awssdk:profiles:jar:2.17.232:compile - omitted for duplicate)
+|  |  +- (software.amazon.awssdk:sdk-core:jar:2.17.232:compile - omitted for duplicate)
+|  |  +- (software.amazon.awssdk:http-client-spi:jar:2.17.232:compile - omitted for duplicate)
+|  |  +- (software.amazon.awssdk:metrics-spi:jar:2.17.232:compile - omitted for duplicate)
+|  |  +- (software.amazon.awssdk:utils:jar:2.17.232:compile - omitted for duplicate)
+|  |  \- (software.amazon.eventstream:eventstream:jar:1.0.1:compile - omitted for duplicate)
+|  +- software.amazon.awssdk:metrics-spi:jar:2.17.232:compile
+|  |  +- (software.amazon.awssdk:annotations:jar:2.17.232:compile - omitted for duplicate)
+|  |  \- (software.amazon.awssdk:utils:jar:2.17.232:compile - omitted for duplicate)
+|  +- software.amazon.awssdk:apache-client:jar:2.17.232:runtime
+|  |  +- (software.amazon.awssdk:http-client-spi:jar:2.17.232:runtime - omitted for duplicate)
+|  |  +- (software.amazon.awssdk:metrics-spi:jar:2.17.232:runtime - omitted for duplicate)
+|  |  +- (software.amazon.awssdk:utils:jar:2.17.232:runtime - omitted for duplicate)
+|  |  \- (software.amazon.awssdk:annotations:jar:2.17.232:runtime - omitted for duplicate)
+|  \- software.amazon.awssdk:netty-nio-client:jar:2.17.232:runtime
+|     +- (software.amazon.awssdk:annotations:jar:2.17.232:runtime - omitted for duplicate)
+|     +- (software.amazon.awssdk:http-client-spi:jar:2.17.232:runtime - omitted for duplicate)
+|     +- (software.amazon.awssdk:utils:jar:2.17.232:runtime - omitted for duplicate)
+|     \- (software.amazon.awssdk:metrics-spi:jar:2.17.232:runtime - omitted for duplicate)
 +- base64-clj:base64-clj:jar:0.1.1:compile
 +- threatgrid:ring-graphql-ui:jar:0.1.1:compile
 |  +- (cheshire:cheshire:jar:5.7.1:compile - omitted for conflict with 5.10.2)
