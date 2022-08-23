@@ -41,12 +41,14 @@
   [app opts]
   (let [body (make-judgement opts)
         created-judgement (test-helpers/assert-post app "ctia/judgement" body)]
-    {:owner "Unknown"
-     :groups ["Administrators"]
-     :type "event"
-     :tlp "green"
-     :entity created-judgement
-     :event_type "record-created"} ))
+    {:judgement-id (:id created-judgement)
+     :event
+     {:owner "Unknown"
+      :groups ["Administrators"]
+      :type "event"
+      :tlp "green"
+      :entity created-judgement
+      :event_type "record-created"}}))
 
 (defn get-localstack-response
   [path]
@@ -67,13 +69,18 @@
       (update-instant [:valid_time :end_time])
       (update-instant [:timestamp])))
 
+(defn make-entry
+  [event]
+  [(get-in event [:entity :id]) event])
+
 (defn clean-event
   [event]
   (let [parsed-event (json/decode event true)
         entity (:entity parsed-event)]
     (-> parsed-event
         (dissoc :id :timestamp)
-        (update :entity clean-entity))))
+        (update :entity clean-entity)
+        make-entry)))
 
 (defn get-objects
   "Would I normally be regexing for something in a xml blob? No.
@@ -89,29 +96,22 @@
        (map second)
        (reverse)
        (take 3)
-       (map (fn [k]
-              (get-localstack-response (str s3-bucket-location "/" k))))
-       (mapv clean-event)))
-
-(defn initialized?
-  []
-  (-> (get-localstack-response "health")
-      (json/decode true)
-      (get-in [:features :initScripts])
-      (= "initialized")))
+       (map #(get-localstack-response (str s3-bucket-location "/" %)))
+       (mapv clean-event)
+       (into {})))
 
 (deftest ^:integration test-events-created
-  (testing "LocalStack is working as expected"
-    (is (initialized?))
-    (is (not
-         (string/includes? (get-localstack-response s3-bucket-location) "Error"))))
-
   (testing "Events are put on firehose"
     (let [app (test-helpers/get-current-app)
           {:keys [get-in-config]} (test-helpers/get-service-map app :ConfigService)
           firehose-props (get-in-config [:ctia :hook :firehose])
           judgement-event-1 (call-ctia app {:disposition 1})
           judgement-event-2 (call-ctia app {:disposition 2})
-          judgement-event-3 (call-ctia app {:disposition 3})]
-      (is (= [judgement-event-3 judgement-event-2 judgement-event-1]
-             (get-objects))))))
+          judgement-event-3 (call-ctia app {:disposition 3})
+          persisted-events (get-objects)]
+      (is (= (:event judgement-event-1)
+             (get persisted-events (:judgement-id judgement-event-1))))
+      (is (= (:event judgement-event-2)
+             (get persisted-events (:judgement-id judgement-event-2))))
+      (is (= (:event judgement-event-3)
+             (get persisted-events (:judgement-id judgement-event-3)))))))
