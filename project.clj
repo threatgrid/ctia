@@ -124,8 +124,8 @@
                  [metrics-clojure-ring ~metrics-clojure-version]
                  [clout "2.2.1"]
                  [slugger "1.0.1"]
-                 [com.google.guava/guava "31.0-jre"];bump org.onyxplatform/onyx-kafka, threatgrid/ctim
-                 [io.netty/netty-all ~netty-version];bump org.onyxplatform/onyx-kafka, metrics-clojure-riemann, zookeeper-clj
+                 [com.google.guava/guava "31.0-jre"] ;bump org.onyxplatform/onyx-kafka, threatgrid/ctim
+                 [io.netty/netty-all ~netty-version] ;bump org.onyxplatform/onyx-kafka, metrics-clojure-riemann, zookeeper-clj
                  [io.netty/netty-codec ~netty-version] ;bump org.apache.zookeeper/zookeeper, riemann-clojure-client
                  [io.netty/netty-resolver ~netty-version] ;bump riemann-clojure-client, org.apache.zookeeper/zookeeper
                  [com.google.protobuf/protobuf-java "3.19.4"] ;bump riemann-clojure-client, threatgrid:ctim, metrics-clojure-riemann, org.onyxplatform/onyx-kafka
@@ -168,9 +168,13 @@
   :resource-paths ["resources" "doc"]
   :classpath ".:resources"
   :min-lein-version "2.9.1"
-  :test-selectors ~(-> (slurp "dev-resources/circleci_test/config.clj")
-                       read-string
-                       :selectors)
+  :test-selectors ~(->> (slurp "dev-resources/circleci_test/config.clj")
+                        clojure.string/split-lines
+                        rest
+                        (clojure.string/join "")
+                        read-string
+                        :selectors)
+  
   :filespecs [{:type :fn
                :fn (fn [_]
                      {:type :bytes :path "ctia-version.txt"
@@ -196,7 +200,7 @@
                    :source-paths ["dev"]}
              :ci {:pedantic? :abort
                   :global-vars {*warn-on-reflection* true}
-                  :jvm-opts [;; actually print stack traces instead of useless
+                  :jvm-opts [ ;; actually print stack traces instead of useless
                              ;; "Full report at: /tmp/clojure-8187773283812483853.edn"
                              "-Dclojure.main.report=stderr"]}
              :next-clojure {:dependencies [[org.clojure/clojure "1.11.0-rc1"]]}
@@ -244,16 +248,16 @@
             [perforate ~perforate-version]
             [reifyhealth/lein-git-down "0.3.5"]]
   :repl-options {:welcome (println
-                            (clojure.string/join
-                              "\n"
-                              ["Welcome to CTIA!"
-                               " (go)    / (go7)    => (re)start CTIA (ES5/ES7)"
-                               " (refresh)          => (re)load all code"
-                               " (reset) / (reset7) => refresh, then (re)start CTIA (ES5/ES7)"
-                               " (start) / (start7) => start CTIA (ES5/ES7)"
-                               " (stop)             => stop CTIA"
-                               " (current-app)      => get current app, or nil"]))
-                 ;10m
+                           (clojure.string/join
+                            "\n"
+                            ["Welcome to CTIA!"
+                             " (go)    / (go7)    => (re)start CTIA (ES5/ES7)"
+                             " (refresh)          => (re)load all code"
+                             " (reset) / (reset7) => refresh, then (re)start CTIA (ES5/ES7)"
+                             " (start) / (start7) => start CTIA (ES5/ES7)"
+                             " (stop)             => stop CTIA"
+                             " (current-app)      => get current app, or nil"]))
+                 ;; 10m
                  :repl-timeout 600000}
   :middleware [lein-git-down.plugin/inject-properties]
   ;; lein-git-down config
@@ -294,9 +298,8 @@
             "init-properties" ^{:doc (str "create an initial `ctia.properties`"
                                           " using docker machine ip")}
             ["shell" "scripts/init-properties-for-docker.sh"]
-
-            ; circleci.test
-            ;"test" ["run" "-m" "circleci.test/dir" :project/test-paths]
+            ;; circleci.test
+            ;; "test" ["run" "-m" "circleci.test/dir" :project/test-paths]
             "split-test" ["trampoline"
                           "with-profile" ~ci-profiles ;https://github.com/circleci/circleci.test/issues/13
                           "run" "-m" "ctia.dev.split-tests/dir" :project/test-paths]
@@ -314,5 +317,5 @@
                                                         ["deps" ":plugin-tree"]]])
                                    (vals all-ci-profiles))]
 
-            ;"retest" ["run" "-m" "circleci.test.retest"]
+            ;; "retest" ["run" "-m" "circleci.test.retest"]
             })
