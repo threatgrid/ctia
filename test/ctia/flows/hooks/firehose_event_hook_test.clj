@@ -3,6 +3,7 @@
    [clj-momo.test-helpers.core :as mth]
    [clj-momo.test-helpers.http :as http]
    [clojure.instant :as instant]
+   [clojure.string :as string]
    [clojure.test :refer [deftest is join-fixtures testing use-fixtures]]
    [ctia.domain.entities :refer [schema-version]]
    [ctia.lib.firehose :as lf]
@@ -20,6 +21,8 @@
                   test-helpers/fixture-properties:events-enabled
                   test-helpers/fixture-allow-all-auth
                   test-helpers/fixture-ctia]))
+
+(def s3-bucket-location "firehose-destination")
 
 (defn make-judgement [opts]
   (merge
@@ -45,12 +48,10 @@
      :entity created-judgement
      :event_type "record-created"} ))
 
-(defn get-firehose-destination
-  ([]
-   (get-firehose-destination ""))
-  ([path]
-   (:body
-    (http/get (str "firehose-destination" "/" path) 4566))))
+(defn get-localstack-response
+  [path]
+  (:body
+   (http/get path 4566)))
 
 (defn update-instant
   [entity key-paths]
@@ -83,16 +84,28 @@
   the xml shenanigans when we have a known response payload seems
   unnecessary for a 'this is all fake anyways' check."
   []
-  (->> (get-firehose-destination)
+  (->> (get-localstack-response s3-bucket-location)
        (re-seq #"<Key>(test-output[\/\d+]+test-ctia-firehose-local[A-Za-z0-9-]+)</Key>")
        (map second)
        (reverse)
        (take 3)
-       (map get-firehose-destination)
+       (map (fn [k]
+              (get-localstack-response (str s3-bucket-location "/" k))))
        (mapv clean-event)))
 
+(defn initialized?
+  []
+  (-> (get-localstack-response "health")
+      (json/decode true)
+      (get-in [:features :initScripts])
+      (= "initialized")))
 
 (deftest ^:integration test-events-created
+  (testing "LocalStack is working as expected"
+    (is (initialized?))
+    (is (not
+         (string/includes? (get-localstack-response s3-bucket-location) "Error"))))
+
   (testing "Events are put on firehose"
     (let [app (test-helpers/get-current-app)
           {:keys [get-in-config]} (test-helpers/get-service-map app :ConfigService)

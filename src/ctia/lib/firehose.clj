@@ -3,8 +3,10 @@
    [clojure.tools.logging :as log])
   (:import
    [java.net URI]
+   [software.amazon.awssdk.regions Region]
    [software.amazon.awssdk.core SdkBytes]
-   [software.amazon.awssdk.auth.credentials AwsBasicCredentials StaticCredentialsProvider]
+   [software.amazon.awssdk.auth.credentials
+    AwsBasicCredentials StaticCredentialsProvider]
    [software.amazon.awssdk.services.firehose.model
     PutRecordRequest PutRecordResponse Record FirehoseException]
    [software.amazon.awssdk.services.firehose FirehoseClient]))
@@ -23,6 +25,7 @@
   (.build
    (doto (FirehoseClient/builder)
      (.endpointOverride (URI. "http://localhost:4566"))
+     (.region Region/US_EAST_1)
      (.credentialsProvider (StaticCredentialsProvider/create local-basic-auth-client)))))
 
 (defn get-client-fn
