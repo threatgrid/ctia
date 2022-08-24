@@ -57,7 +57,10 @@
                                        :host "localhost"
                                        :port es-port
                                        :aliased aliased?
-                                       :version version}
+                                       :version version
+                                       :auth {:type :basic-auth
+                                              :params {:user "elastic"
+                                                      :pwd "ductile"}}}
                                 ;; cheap trick to rollover store without adding docs
                                 aliased? (assoc :rollover {:max_docs 0}))
 

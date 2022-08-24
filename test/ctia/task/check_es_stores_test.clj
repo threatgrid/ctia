@@ -49,8 +49,15 @@
 (defn n-doc [fixture nb]
   (map randomize (repeat nb fixture)))
 
-(defn refresh-all-indices [host port]
-  (client/post (format "http://%s:%s/_refresh" host port)))
+(defn refresh-all-indices
+  ([host port]
+   (refresh-all-indices host port {}))
+  ([host port {:keys [params] :as auth}]
+   (client/request
+    (cond-> {:method :post
+             :url (format "http://%s:%s/_refresh" host port)}
+      (#{:basic-auth} (:type auth)) (assoc :basic-auth [(:user params)
+                                                        (:pwd params)])))))
 
 (def examples
   {:actors           (n-doc actor-minimal fixtures-nb)
@@ -91,7 +98,8 @@
         store-config (get-in-config [:ctia :store :es :default])]
     (POST-bulk app examples)
     (refresh-all-indices (:host store-config)
-                         (:port store-config))
+                         (:port store-config)
+                         (:auth store-config))
     (testing "check ES Stores test setup"
       (testing "check ES indexes"
         (let [logger (atom [])]
