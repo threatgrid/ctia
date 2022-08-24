@@ -83,6 +83,12 @@
                       "ctia.auth.static.group" s/Str
                       "ctia.auth.static.readonly-for-anonymous" s/Bool})
 
+   (st/optional-keys {"ctia.aws.access-key" s/Str
+                      "ctia.aws.secret-key" s/Str
+                      "ctia.aws.region" s/Str
+                      "ctia.aws.endpoint" s/Str
+                      "ctia.aws.local" s/Bool})
+
    (st/optional-keys {"ctia.encryption.type" (s/enum :default)
                       "ctia.encryption.secret" s/Str
                       "ctia.encryption.key.filepath" s/Str})
@@ -162,7 +168,6 @@
                       "ctia.hook.kafka.topic.replication-factor" s/Int})
 
    (st/optional-keys {"ctia.hook.firehose.enabled" s/Bool
-                      "ctia.hook.firehose.local" s/Bool
                       "ctia.hook.firehose.stream-name" s/Str})
 
    (st/optional-keys {"ctia.events.log" s/Bool

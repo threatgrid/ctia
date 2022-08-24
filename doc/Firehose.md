@@ -3,14 +3,21 @@
 [Firehose](https://aws.amazon.com/kinesis/data-firehose/) is a aws ETL service for streaming into data stores.
 
 This optional hook is implemented in `ctia.flows.hooks.event-hooks` with the sdk implemented in `ctia.lib.firehose`.
-and is configured using `ctia.hook.firehose.*` properties.
+and is configured using `ctia.hook.firehose.*` properties as well as `ctia.aws.*`.
 
-In `resources/ctia-default.properties` it is set to:
+In `resources/ctia-default.properties` the relevant config vars are set to:
 
 ```
+;; aws
+ctia.aws.access-key=test
+ctia.aws.secret-key=test
+ctia.aws.local=true
+ctia.aws.endpoint=http://localhost:4566
+ctia.aws.region=us-east-1
+
+;; firehose
 ctia.hook.firehose.enabled=false
 ctia.hook.firehose.stream-name=test-ctia-firehose-local 
-ctia.hook.firehose.local=true
 ```
 
 The values are straight forward, `ctia.hook.firehose.stream-name` points to whatever the stream name is.
@@ -122,8 +129,8 @@ Update the `ctia.hook.firehose` properties to
 ```
 ctia.hook.firehose.enabled=true
 ctia.hook.firehose.stream-name=$REMOTE_STREAM_NAME
-ctia.hook.firehose.local=false
 ```
+and comment out the `ctia.aws` properties.
 
 #### Making a stream
 

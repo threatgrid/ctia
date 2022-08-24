@@ -155,9 +155,15 @@
     (f)))
 
 (defn fixture-properties:firehose-hook [f]
-  (with-properties ["ctia.hook.firehose.enabled" true
-                    "ctia.hook.firehose.stream-name" "test-ctia-firehose-local"
-                    "ctia.hook.firehose.local" true]
+  (with-properties [;; aws
+                    "ctia.aws.access-key" "test"
+                    "ctia.aws.secret-key" "test"
+                    "ctia.aws.region" "us-east-1"
+                    "ctia.aws.local" true
+                    "ctia.aws.endpoint" "http://localhost:4566"
+                    ;;  firehose specific
+                    "ctia.hook.firehose.enabled" true
+                    "ctia.hook.firehose.stream-name" "test-ctia-firehose-local"]
     (f)))
 
 (defn fixture-properties:kafka-hook [f]

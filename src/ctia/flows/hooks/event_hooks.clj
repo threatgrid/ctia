@@ -13,7 +13,7 @@
    [schema.core :as s]
    [schema-tools.core :as st])
   (:import
-   [software.amazon.awssdk.services.firehose FirehoseClient]
+   [software.amazon.awssdk.services.firehose FirehoseClient FirehoseClientBuilder]
    [org.apache.kafka.clients.producer KafkaProducer]))
 
 (defn event->bytes
@@ -51,14 +51,14 @@
         (log/error e "Unable to push an event to Redis")))
     event))
 
-(defrecord FirehoseEventPublisher [client-fn stream-name]
+(defrecord FirehoseEventPublisher [^FirehoseClientBuilder client-builder stream-name]
   Hook
   (init [_]
     :nothing)
   (destroy [_]
     :nothing)
   (handle [_ event _]
-    (with-open [^FirehoseClient client (client-fn)]
+    (with-open [^FirehoseClient client (lf/build-client client-builder)]
       (try
         (lf/put-record client stream-name (event->bytes event))
         (catch Exception e
@@ -67,9 +67,10 @@
 
 (s/defn firehose-event-publisher
   [get-in-config :- (st/get-in ConfigServiceFns [:get-in-config])]
-  (let [{:keys [stream-name local]} (get-in-config [:ctia :hook :firehose])]
-    (log/infof "Stream name: %s, local: %s" stream-name local)
-    (->FirehoseEventPublisher (lf/get-client-fn local) stream-name)))
+  (let [{:keys [stream-name]} (get-in-config [:ctia :hook :firehose])
+        aws-config (get-in-config [:ctia :aws])]
+    (->FirehoseEventPublisher (lf/create-client-builder aws-config)
+                              stream-name)))
 
 (s/defn redis-event-publisher
   [get-in-config :- (st/get-in ConfigServiceFns [:get-in-config])]
