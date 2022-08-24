@@ -85,3 +85,19 @@ services:
     image: include/docker-riemann-dash
     ports:
       - "4567:4567"
+  aws:
+    image: localstack/localstack:1.0.0
+    ports:
+      - "4566:4566/tcp"
+      - "${PORT_WEB_UI-8080}:${PORT_WEB_UI-8080}"
+    environment:
+      - SERVICES=s3,firehose
+      - DEBUG=${DEBUG- }
+      - PERSIST=1
+      - PORT_WEB_UI=${PORT_WEB_UI- }
+      - DEFAULT_REGION=us-east-1
+      - KINESIS_ERROR_PROBABILITY=${KINESIS_ERROR_PROBABILITY-0.5}
+    volumes:
+      - ${PWD}/containers/dev/firehose-init-scripts:/docker-entrypoint-initaws.d
+      - "/tmp/localstack:/var/lib/localstack"
+      - /var/run/docker.sock:/var/run/docker.sock

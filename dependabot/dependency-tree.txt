@@ -256,6 +256,23 @@ ctia:ctia:jar:1.1.1-SNAPSHOT
 +- com.fasterxml.jackson.core:jackson-databind:jar:2.12.6.1:compile
 |  \- com.fasterxml.jackson.core:jackson-annotations:jar:2.12.6:compile
 +- zookeeper-clj:zookeeper-clj:jar:0.9.4:compile
++- software.amazon.awssdk:firehose:jar:2.17.232:compile
+|  +- software.amazon.awssdk:aws-json-protocol:jar:2.17.232:compile
+|  |  +- software.amazon.awssdk:third-party-jackson-core:jar:2.17.232:compile
+|  |  \- software.amazon.awssdk:json-utils:jar:2.17.232:compile
+|  +- software.amazon.awssdk:protocol-core:jar:2.17.232:compile
+|  +- software.amazon.awssdk:sdk-core:jar:2.17.232:compile
+|  |  \- software.amazon.awssdk:profiles:jar:2.17.232:compile
+|  +- software.amazon.awssdk:auth:jar:2.17.232:compile
+|  |  \- software.amazon.eventstream:eventstream:jar:1.0.1:compile
+|  +- software.amazon.awssdk:http-client-spi:jar:2.17.232:compile
+|  +- software.amazon.awssdk:regions:jar:2.17.232:compile
+|  +- software.amazon.awssdk:annotations:jar:2.17.232:compile
+|  +- software.amazon.awssdk:utils:jar:2.17.232:compile
+|  +- software.amazon.awssdk:aws-core:jar:2.17.232:compile
+|  +- software.amazon.awssdk:metrics-spi:jar:2.17.232:compile
+|  +- software.amazon.awssdk:apache-client:jar:2.17.232:runtime
+|  \- software.amazon.awssdk:netty-nio-client:jar:2.17.232:runtime
 +- base64-clj:base64-clj:jar:0.1.1:compile
 +- threatgrid:ring-graphql-ui:jar:0.1.1:compile
 |  +- threatgrid:ring-graphiql:jar:0.1.1:compile

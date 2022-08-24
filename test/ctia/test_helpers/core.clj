@@ -154,6 +154,18 @@
   (with-properties ["ctia.hook.redis.enabled" true]
     (f)))
 
+(defn fixture-properties:firehose-hook [f]
+  (with-properties [;; aws
+                    "ctia.aws.access-key" "test"
+                    "ctia.aws.secret-key" "test"
+                    "ctia.aws.region" "us-east-1"
+                    "ctia.aws.local" true
+                    "ctia.aws.endpoint" "http://localhost:4566"
+                    ;;  firehose specific
+                    "ctia.hook.firehose.enabled" true
+                    "ctia.hook.firehose.stream-name" "test-ctia-firehose-local"]
+    (f)))
+
 (defn fixture-properties:kafka-hook [f]
   (with-properties ["ctia.hook.kafka.enabled" true
                     "ctia.hook.kafka.compression.type" "gzip"

@@ -112,6 +112,7 @@ development machine to the services running in the containers:
 * kafka - 9092
 * riemann - 5555-5557
 * riemann-dash - 4567
+* aws - 4566
 
 If you ever need to reset your entire dev environment,
 just kill the docker compose process and run:
