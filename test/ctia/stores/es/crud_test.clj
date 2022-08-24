@@ -277,6 +277,9 @@
    :aliased true
    :rollover {:max_docs 3}
    :refresh "true"
+   :auth {:type :basic-auth
+          :params {:user "elastic"
+                   :pwd "ductile"}}
    :version 5})
 
 (defn props-not-aliased [app]
@@ -285,6 +288,9 @@
    :host "localhost"
    :port 9205
    :refresh "true"
+   :auth {:type :basic-auth
+          :params {:user "elastic"
+                   :pwd "ductile"}}
    :version 5})
 
 (defn get-conn-state

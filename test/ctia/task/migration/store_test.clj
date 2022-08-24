@@ -288,25 +288,24 @@
                               :as state}
                              nb]
                           (let [rollover? (<= max-docs (+ current-index-size nb))
-                                cat-before (es-helpers/get-cat-indices conn)
+                                cat-before (es-helpers/get-cat-indices-clean conn)
                                 indices-before (set (keys cat-before))
-                                _ (es-helpers/load-bulk conn
-                                                        (take nb source-docs)
-                                                        "false")
+                                bulk-res (es-helpers/load-bulk conn
+                                                               (take nb source-docs)
+                                                               "false")
                                 res (when rollover?
                                       (sut/rollover storemap
                                                     max-batch-size
                                                     (+ nb migrated-count)
                                                     services))
-                                cat-after (es-helpers/get-cat-indices conn)
+                                cat-after (es-helpers/get-cat-indices-clean conn)
                                 indices-after (set (keys cat-after))
                                 total-after (reduce + (vals cat-after))]
                             (when rollover?
                               (is (true? (:rolled_over res)))
                               (is (< (count indices-before)
                                      (count indices-after)))
-                              (is (= (+ nb migrated-count)
-                                     total-after)))
+                              (is (= (+ nb migrated-count) total-after)))
                             (when-not rollover?
                               (is (= indices-before indices-after)))
 

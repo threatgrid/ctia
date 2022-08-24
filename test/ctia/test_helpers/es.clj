@@ -2,6 +2,7 @@
   "ES test helpers"
   (:require [cheshire.core :as json]
             [clojure.java.io :as io]
+            [clojure.string :as string]
             [clojure.test :refer [testing]]
             [ctia.stores.es.init :as es-init]
             [ctia.stores.es.schemas :refer [ESConnServices]]
@@ -245,6 +246,13 @@
        (map (fn [{:keys [index] docs_count :docs.count}]
               {(keyword index) docs_count}))
        (into {})))
+
+(defn get-cat-indices-clean
+  "GET /_cat/indices removing system indices"
+  [conn]
+  (->> (get-cat-indices conn)
+       (remove (fn [[k _]]
+                 (string/starts-with? (name k) ".")))))
 
 (defn -filter-activated-es-versions [versions]
   (filter (h/set-of-es-versions-to-test) versions))
