@@ -9,10 +9,8 @@
           field-name field-name default-param))
 
 (defn- normalize-remappings [remappings]
-  (into {} (map (fn [e]
-                  (update e 0 #(cond-> %
-                                 (string? %) str/lower-case))))
-        remappings))
+  (update-keys remappings #(cond-> %
+                             (string? %) str/lower-case)))
 
 (s/defn parse-sort-params-op
   [{:keys [op field-name sort_order] :as params} :- ConcreteSortExtension
@@ -67,10 +65,7 @@
       ;;  :remap-default 0}
       :remap
       (let [{:keys [remap-default remappings]} params
-            remappings (into {} (map (fn [e]
-                                       (update e 0 #(cond-> %
-                                                      (string? %) str/lower-case))))
-                             remappings)]
+            remappings (normalize-remappings remappings)]
         ;; https://www.elastic.co/guide/en/elasticsearch/painless/current/painless-sort-context.html
         {:_script
          {:type "number"
