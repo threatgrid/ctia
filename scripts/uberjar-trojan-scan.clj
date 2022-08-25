@@ -38,6 +38,7 @@
    "org/xerial/snappy/native/Linux/android-arm/libsnappyjava.so"
    "org/xerial/snappy/native/Linux/ppc64le/libsnappyjava.so"
    "org/xerial/snappy/native/Windows/x86/snappyjava.dll"
+   "tutorials/threat-context/*.png" ;; ctim
 
    ;; :/
    "goog/i18n/datetimepatternsext.js"
