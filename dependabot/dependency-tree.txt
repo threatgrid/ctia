@@ -49,7 +49,7 @@ ctia:ctia:jar:1.1.1-SNAPSHOT
 +- metosin:schema-tools:jar:0.12.2:compile
 +- threatgrid:flanders:jar:0.1.23:compile
 |  \- org.clojure:core.match:jar:0.3.0:compile
-+- threatgrid:ctim:jar:1.1.11:compile
++- threatgrid:ctim:jar:1.1.12:compile
 |  +- org.mozilla:rhino:jar:1.7.7.1:compile
 |  \- kovacnica:clojure.network.ip:jar:0.1.3:compile
 |     \- org.clojure:clojurescript:jar:1.7.122:compile
@@ -284,7 +284,7 @@ ctia:ctia:jar:1.1.1-SNAPSHOT
 +- org.slf4j:log4j-over-slf4j:jar:1.7.20:compile
 +- puppetlabs:trapperkeeper:jar:test:3.2.0:test
 +- puppetlabs:kitchensink:jar:test:3.2.0:test
-+- org.clojure:test.check:jar:1.1.0:test
++- org.clojure:test.check:jar:1.1.1:test
 +- com.gfredericks:test.chuck:jar:0.2.13:test
 +- clj-http-fake:clj-http-fake:jar:1.0.3:test
 |  \- robert:hooke:jar:1.3.0:test

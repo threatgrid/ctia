@@ -339,6 +339,10 @@
   (s/conditional
     #(= :field (:op %)) {:op (s/eq :field)
                          (s/optional-key :field-name) (s/cond-pre s/Keyword s/Str)}
+    #(= :remap-list-max (:op %)) {:op (s/eq :remap-list-max)
+                                  (s/optional-key :field-name) (s/cond-pre s/Keyword s/Str)
+                                  :remappings {s/Str s/Num}
+                                  :remap-default s/Num}
     #(= :remap (:op %)) {:op (s/eq :remap)
                          (s/optional-key :field-name) (s/cond-pre s/Keyword s/Str)
                          :remappings {s/Str s/Num}
@@ -349,6 +353,11 @@
     #(= :field (:op %)) {:op (s/eq :field)
                          :field-name (s/cond-pre s/Keyword s/Str)
                          (s/optional-key :sort_order) (s/cond-pre s/Keyword s/Str)}
+    #(= :remap-list-max (:op %)) {:op (s/eq :remap-list-max)
+                                  :field-name (s/cond-pre s/Keyword s/Str)
+                                  (s/optional-key :sort_order) (s/cond-pre s/Keyword s/Str)
+                                  :remappings {s/Str s/Num}
+                                  :remap-default s/Num}
     #(= :remap (:op %)) {:op (s/eq :remap)
                          :field-name (s/cond-pre s/Keyword s/Str)
                          (s/optional-key :sort_order) (s/cond-pre s/Keyword s/Str)

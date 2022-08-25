@@ -106,18 +106,20 @@
    "High" 3
    "Critical" 4})
 
-(defn gen-new-incident [severity]
-  (let [order (ctim-severity-order severity)
-        _ (if (some? severity)
-            (assert (number? order)
-                    (str "Unmapped severity " (pr-str severity)))
-            (assert ((some-fn nil? number?) order)))]
-    (-> new-incident-minimal
-        (dissoc :id :severity)
-        ;; test missing severity if nil
-        (cond-> (some? order) (assoc :severity severity))
-        (assoc :title (str (java.util.UUID/randomUUID))
-               :revision (or order 0)))))
+(defn gen-new-incident
+  ([] (gen-new-incident "High"))
+  ([severity]
+   (let [order (ctim-severity-order severity)
+         _ (if (some? severity)
+             (assert (number? order)
+                     (str "Unmapped severity " (pr-str severity)))
+             (assert ((some-fn nil? number?) order)))]
+     (-> new-incident-minimal
+         (dissoc :id :severity)
+         ;; test missing severity if nil
+         (cond-> (some? order) (assoc :severity severity))
+         (assoc :title (str (java.util.UUID/randomUUID))
+                :revision (or order 0))))))
 
 (s/defn create-incidents [app incidents :- (s/pred set?)]
   (bundle/import-bundle
@@ -182,6 +184,61 @@
                                 (is (= expected-parsed-body
                                        parsed-body))))))))
             (finally (purge-incidents! app)))))))))
+
+(deftest sort-incidents-by-tactics-test
+  (es-helpers/for-each-es-version
+    "sort by tactics"
+    [5 7]
+    #(ductile.index/delete! % "ctia_*")
+    (helpers/with-properties (into ["ctia.auth.type" "allow-all"]
+                                   es-helpers/basic-auth-properties)
+      (helpers/fixture-ctia-with-app
+        (fn [app]
+          ;(helpers/set-capabilities! app "foouser" ["foogroup"] "user" all-capabilities)
+          ;(whoami-helpers/set-whoami-response app "45c1f5e3f05d0" "foouser" "foogroup" "user")
+          (try (let [ascending-tactics [["bad-id"] ;; 0
+                                        ["TA0042"] ;; 1
+                                        ["TA0043"] ;; 2
+                                        ["TA0043" "TA0001"] ;; 3
+                                        ["bad-id" "TA0003"] ;; 9
+                                        ["TA0002" "TA0043"] ;; 11
+                                        ]
+                     ascending-incidents (mapv #(assoc (gen-new-incident) :tactics %) ascending-tactics)]
+                 (create-incidents app (-> ascending-incidents shuffle set))
+                 (testing "tactics"
+                   (let [{:keys [parsed-body] :as raw} (search-th/search-raw app :incident {:sort_by "tactics"})]
+                     (and (is (= 200 (:status raw)) (pr-str raw))
+                          (is (= ascending-tactics
+                                 (map :tactics parsed-body))))))
+                 (testing "tactics:desc"
+                   (let [{:keys [parsed-body] :as raw} (search-th/search-raw app :incident {:sort_by "tactics:desc"})]
+                     (and (is (= 200 (:status raw)) (pr-str raw))
+                          (is (= (rseq ascending-tactics)
+                                 (map :tactics parsed-body)))))))
+               (finally (purge-incidents! app)))
+          (try (let [ascending-incidents [;; first 3 have equivalent tactics scores (9)
+                                          (assoc (gen-new-incident) :tactics ["TA0003"] :title "B")
+                                          (assoc (gen-new-incident) :tactics ["TA0003" "TA0001"] :title "C")
+                                          (assoc (gen-new-incident) :tactics ["TA0042" "TA0007"] :title "D")
+                                          ;; higher tactic score (10)
+                                          (assoc (gen-new-incident) :tactics ["TA0006"] :title "A")]]
+                 (create-incidents app (-> ascending-incidents shuffle set))
+                 (testing "tactics,title"
+                   (let [{:keys [parsed-body] :as raw} (search-th/search-raw app :incident {:sort_by "tactics,title"})]
+                     (and (is (= 200 (:status raw)) (pr-str raw))
+                          (is (= ["B" "C" "D" "A"]
+                                 (map :title parsed-body))))))
+                 (testing "tactics,title:desc"
+                   (let [{:keys [parsed-body] :as raw} (search-th/search-raw app :incident {:sort_by "tactics,title:desc"})]
+                     (and (is (= 200 (:status raw)) (pr-str raw))
+                          (is (= ["D" "C" "B" "A"]
+                                 (map :title parsed-body))))))
+                 (testing "tactics:desc,title"
+                   (let [{:keys [parsed-body] :as raw} (search-th/search-raw app :incident {:sort_by "tactics:desc,title"})]
+                     (and (is (= 200 (:status raw)) (pr-str raw))
+                          (is (= ["A" "B" "C" "D"]
+                                 (map :title parsed-body)))))))
+               (finally (purge-incidents! app))))))))
 
 (defmacro result+ms-time
   "Evaluates expr and returns a tuple [result ms-time] where result is the 

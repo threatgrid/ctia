@@ -8,7 +8,7 @@
 (def perforate-version "0.3.4")
 (def ring-version "1.9.5")
 (def schema-generators-version "0.1.4")
-(def test-check-version "1.1.0")
+(def test-check-version "1.1.1")
 (def test-chuck-version "0.2.13")
 (def trapperkeeper-version "3.2.0")
 
@@ -85,7 +85,7 @@
                  [prismatic/schema "1.2.0"]
                  [metosin/schema-tools "0.12.2"]
                  [threatgrid/flanders "0.1.23"]
-                 [threatgrid/ctim "1.1.11"]
+                 [threatgrid/ctim "1.1.12"]
                  [instaparse "1.4.10"] ;; com.gfredericks/test.chuck > threatgrid/ctim
                  [threatgrid/clj-momo "0.3.5"]
                  [threatgrid/ductile "0.4.4"]

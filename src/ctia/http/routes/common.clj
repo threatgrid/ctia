@@ -57,6 +57,33 @@
    (s/optional-key :search_after) (describe [s/Str] "Pagination stateless cursor")
    (s/optional-key :limit) (describe Long "Pagination Limit")})
 
+(s/defn prep-sort_by-param-schema :- (s/protocol s/Schema)
+  "Generalize sort_by enum schema from (enum fields...) to s/Str
+  so it can accept the `field1:asc,field2:desc` syntax to sort by
+  multiple fields. Add the original enums to the doc for the route,
+  that also explains how this syntax works."
+  [search-q-params]
+  (cond-> search-q-params
+    (st/get-in search-q-params [:sort_by])
+    (st/update :sort_by
+               (fn [sort_by-enum]
+                 (assert (instance? schema.core.EnumSchema sort_by-enum)
+                         "Must map :sort_by schema to an s/enum of strings")
+                 (let [valid-fields (:vs sort_by-enum)
+                       _ (assert (every? (some-fn string? simple-ident?) valid-fields) (pr-str valid-fields))
+                       valid-fields (sort (map name valid-fields))
+                       example-field1 (or (first valid-fields) "field1")
+                       example-field2 (or (second valid-fields) "field2")]
+                   (describe s/Str
+                             (str "Sort result on fields.\n\n"
+                                  "The following fields are supported: "
+                                  (str/join ", " valid-fields)
+                                  "\n\n"
+                                  "Fields can be combined with ',' and sort order can be specified by ':asc' and ':desc'. For example:\n\n"
+                                  (format "-  %s       # sort by %s ascending\n" example-field1 example-field1)
+                                  (format "-  %s:desc  # sort by %s descending\n" example-field1 example-field1)
+                                  (format "-  %s,%s:desc  # sort by %s ascending, then %s descending" example-field1 example-field2 example-field1 example-field2))))))))
+
 (s/defn prep-es-fields-schema :- (s/protocol s/Schema)
   "Conjoins Elasticsearch fields parameter into search-q-params schema"
   [{{:keys [get-store]} :StoreService}
