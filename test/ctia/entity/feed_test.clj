@@ -46,7 +46,7 @@
    :tags ["Suspicious IPs"],
    :valid_time
    {:start_time "2019-05-03T21:48:25.801Z",
-    :end_time "2020-06-03T21:48:25.801Z"},
+    :end_time "2052-06-03T21:48:25.801Z"},
    :producer "Talos",
    :schema_version "1.0.11",
    :type "indicator",
@@ -65,30 +65,39 @@
    :tlp "amber",
    :confidence "High"})
 
+(def base-judgement
+  {:schema_version "1.0.11",
+   :type "judgement",
+   :source "Feed Indicator Example",
+   :external_ids
+   ["ctia-feed-indicator-test"],
+   :disposition 2,
+   :source_uri
+   "https://github.com/threatgrid/ctim/blob/master/src/doc/tutorials/modeling-threat-intel-ctim.md",
+   :disposition_name "Malicious",
+   :priority 95,
+   :severity "High",
+   :tlp "amber",
+   :timestamp "2019-03-01T19:22:45.531Z",
+   :confidence "High"})
+
 (def judgements
   (map #(let [transient-id (format "transient:esa-judgement-%03d" %)
-              ip (format "187.75.16.%d" %)]
-          {:id transient-id
-           :observable
-           {:type "ip" :value ip},
-           :valid_time
-           {:start_time "2019-03-01T19:22:45.531Z",
-            :end_time "2019-03-31T19:22:45.531Z"},
-           :schema_version "1.0.11",
-           :type "judgement",
-           :source "Feed Indicator Example",
-           :external_ids
-           ["ctia-feed-indicator-test"],
-           :disposition 2,
-           :source_uri
-           "https://github.com/threatgrid/ctim/blob/master/src/doc/tutorials/modeling-threat-intel-ctim.md",
-           :disposition_name "Malicious",
-           :priority 95,
-           :severity "High",
-           :tlp "amber",
-           :timestamp "2019-03-01T19:22:45.531Z",
-           :confidence "High"})
+              ip (format "187.75.42.%d" %)]
+          (into base-judgement {:id transient-id
+                                :valid_time {:start_time "2019-03-01T19:22:45.531Z",
+                                             :end_time "2052-03-31T19:22:45.531Z"}
+                                :observable {:type "ip" :value ip}}))
        (range 100)))
+
+(def expired-judgements
+  (map #(let [transient-id (format "transient:esa-judgement-%03d" %)
+              ip (format "187.75.16.%d" %)]
+          (into base-judgement {:id transient-id
+                                :valid_time {:start_time "2019-03-01T19:22:45.531Z",
+                                             :end_time "2019-03-31T19:22:45.531Z"}
+                                :observable {:type "ip" :value ip}}))
+       (range 100 200)))
 
 (def relationships
   (map #(let [suffix (string/replace % #"transient:esa-judgement-" "")
@@ -120,7 +129,8 @@
    :judgements (let [duplicated-observable-value (-> judgements
                                                      first
                                                      (assoc :id "transient:esa-judgement-4340e8cc49ff428e21ad1467de4b40246eb0e3b8da96caa2f71f9fe54123d500"))]
-                 (conj judgements duplicated-observable-value ))
+                 (-> (conj judgements duplicated-observable-value)
+                     (concat expired-judgements)))
    :relationships relationships})
 
 (use-fixtures :once
@@ -174,9 +184,8 @@
                          :feed_view_url)))
 
           (let [feed-view-url (:feed_view_url updated-feed)
-                valid-response  (with-redefs [sut/fetch-limit 19] ;; < |judgements| and not a multipe of nb shards (5).
-                                  (client/get feed-view-url
-                                              {:as :json}))
+                valid-response  (client/get feed-view-url
+                                            {:as :json})
                 valid-response-body (:body valid-response)]
 
             (is (= 200 (:status valid-response)))
@@ -188,12 +197,11 @@
                              (:judgements valid-response-body)))))
 
             ;;teardown
-            (is (= 200
-                   (:status
-                    (helpers/PUT app
-                                 (str "ctia/feed/" (:short-id feed-id))
-                                 :body feed
-                                 :headers {"Authorization" "45c1f5e3f05d0"}))))))))))
+            (is (= 200 (:status
+                        (helpers/PUT app
+                                     (str "ctia/feed/" (:short-id feed-id))
+                                     :body feed
+                                     :headers {"Authorization" "45c1f5e3f05d0"}))))))))))
 
 (deftest test-feed-routes
   (test-for-each-store-with-app
@@ -208,7 +216,6 @@
                                          "foouser"
                                          "foogroup"
                                          "user")
-
      (let [response (helpers/POST app
                                   "ctia/bundle/import"
                                   :body blocklist-bundle
