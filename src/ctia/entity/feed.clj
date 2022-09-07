@@ -27,6 +27,7 @@
             query-string-count
             query-string-search
             read-record
+            read-records
             update-record]]
    [ctia.stores.es.mapping :as em]
    [ctia.stores.es.store :refer [def-es-store]]
@@ -161,13 +162,18 @@
       (not feed) :not-found
       (not (valid-lifetime? lifetime)) :not-found
       (not= s (decrypt secret)) :unauthorized
-      :else (let [;; VERY IMPORTANT! inherit the identity from the Feed!
+      :else (let [ ;; VERY IMPORTANT! inherit the identity from the Feed!
                   feed-identity
                   {:login owner
                    :groups groups
                    :capabilities #{:read-judgement
                                    :read-relationship
                                    :list-relationships}}
+                  read-judgements (fn [ident ids]
+                                    (read-records (get-store :judgement)
+                                                  ids
+                                                  ident
+                                                  {}))
                   feed-results
                   (some->> (list-all-pages
                             :relationship
@@ -178,26 +184,21 @@
                              :limit fetch-limit}
                             services)
                            (keep :source_ref)
-                           (map #(-> (get-store :judgement)
-                                     (read-record
-                                      %
-                                      feed-identity
-                                      {})))
+                           (read-judgements feed-identity)
                            (remove nil?)
+                           (remove #(not (cdv/valid-now? (java.util.Date.) %)))
                            (map #(with-long-id % services)))]
               (cond-> {}
                 (= :observables output)
                 (assoc
                  :output :observables
                  :observables
-                 (distinct (map :observable
-                                feed-results)))
+                 (distinct (map :observable feed-results)))
                 (= :judgements output)
                 (assoc
                  :output :judgements
                  :judgements
-                 (distinct (map un-store
-                                feed-results))))))
+                 (distinct (map un-store feed-results))))))
     :not-found))
 
 (defn sorted-observable-values [data]
