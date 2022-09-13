@@ -363,18 +363,18 @@
   you wish to limit responses. And `:limit` instruction to set maximum amount of
   entities fetched by page.
   NOTE:
-  `search_after` and `offset` usage
+  `search_after` usage
   There are two case to invoke `ctia.store/list-records`:
   1. all results belong to the same record
-     in that case next call to `list-records` must use `search_after` to
+     in that case next call to `list-records` must use altered `search_after` to
      'fast-forward' the cursor to the next record id.
   2. results list begins with records belong to the same id and the tail might
      have 1-N partitions. That means the last partition in result list is
-     incomplete and we must use `offset` to fetch next page."
+     incomplete and we must use `search_after` from previous run to fetch next page."
   ([f store filter-map identity-map params-map]
    (scroll-with-limit {} [] f store filter-map identity-map params-map))
   ([acc prev-data f store filter-map identity-map params-map]
-   (let [{data :data {{:keys [offset search_after] :as next} :next} :paging}
+   (let [{data :data {{:keys [search_after] :as next} :next} :paging}
          (store/list-records store filter-map identity-map params-map)
          params-map (select-keys params-map [:limit :sort])
          [chunk & chunks] (partition-by f data)]
@@ -386,12 +386,13 @@
                 ;; HACK The second element must contain a numeric value
                 ;;      that is guaranteed not to be present in any document.
                 ;;      For the timestamp that value is -1.
+                ;;      For the id - "".
                 ;;      Only in this case, using "search_after" will ensure
                 ;;      that the cursor moves to the next identifier.
-                (assoc params-map :search_after [(first search_after) -1]))
+                (assoc params-map :search_after [(first search_after) -1 ""]))
          (recur (into-acc acc f (apply concat prev-data chunk (butlast chunks)))
                 (last chunks) f store filter-map identity-map
-                (assoc params-map :offset offset)))))))
+                (assoc params-map :search_after search_after)))))))
 
 (defn node-filters [field entity-types]
   (let [terms (sequence
@@ -453,8 +454,9 @@
                                                   filters-map
                                                   identity-map
                                                   {:limit limit
-                                                   :sort [{(name related-to) "desc"}
-                                                          {"timestamp" "desc"}]}))))
+                                                   :sort [(name related-to)
+                                                          {"timestamp" "desc"}
+                                                          "id"]}))))
                       #(apply merge-with concat %&)
                       (set related_to))))]
       (send-event {:service "Export bundle fetch relationships"
