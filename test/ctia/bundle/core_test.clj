@@ -26,38 +26,37 @@
 
 (deftest relationships-filters
   (testing "relationships-filters should properly add related_to filters to handle edge direction"
-    (is (= "source_ref:(\"id\")"
-           (:query (sut/relationships-filter [{:id "id"}]
-                                             :source_ref
-                                             nil nil))))
-    (is (= "target_ref:(\"id\")"
-           (:query (sut/relationships-filter [{:id "id"}]
-                                             :target_ref
-                                             nil nil))))
-    (is (= "target_ref:(\"id1\" OR \"id2\")"
-           (:query (sut/relationships-filter [{:id "id1"} {:id "id2"}]
-                                             :target_ref
-                                             nil nil)))))
+    (is (= {:source_ref "id"
+            :target_ref "id"}
+           (:one-of (sut/relationships-filters "id" {})))
+        "default related-_to param is #{:source_ref :target_ref}")
+    (is (= {:source_ref "id"}
+           (:one-of (sut/relationships-filters "id" {:related_to [:source_ref]}))))
+    (is (= {:target_ref "id"}
+           (:one-of (sut/relationships-filters "id" {:related_to [:target_ref]}))))
+    (is (= {:source_ref "id"
+            :target_ref "id"}
+           (:one-of (sut/relationships-filters "id" {:related_to [:source_ref :target_ref]})))))
 
   (testing "relationships-filters should properly add query filters"
-    (is (= "source_ref:(\"id1\" OR \"id2\") AND source_ref:*malware*"
-           (:query (sut/relationships-filter [{:id "id1"} {:id "id2"}]
-                                             :source_ref
-                                             [:malware] nil))))
-    (is (= "source_ref:(\"id1\" OR \"id2\") AND target_ref:*sighting*"
-           (:query (sut/relationships-filter [{:id "id1"} {:id "id2"}]
-                                             :source_ref
-                                             nil [:sighting]))))
-    (is (= "target_ref:(\"id1\" OR \"id2\") AND source_ref:*malware* AND target_ref:*sighting*"
-           (:query (sut/relationships-filter [{:id "id1"} {:id "id2"}]
-                                             :target_ref
-                                             [:malware] [:sighting]))))
+    (is (= "(source_ref:*malware*)"
+           (:query (sut/relationships-filters "id" {:source_type [:malware]}))))
+    (is (= "(target_ref:*sighting*)"
+           (:query (sut/relationships-filters "id" {:target_type [:sighting]}))))
+    (is (= "(target_ref:*sighting*) AND (source_ref:*malware*)"
+           (:query (sut/relationships-filters "id" {:source_type [:malware]
+                                                    :target_type [:sighting]}))))
+    (is (= "(source_ref:*malware* OR source_ref:*vulnerability*)"
+           (:query (sut/relationships-filters "id" {:source_type [:malware :vulnerability]}))))
 
-    (is (= "target_ref:(\"id1\" OR \"id2\") AND (source_ref:*malware* OR source_ref:*vulnerability*) AND (target_ref:*sighting* OR target_ref:*incident*)"
-           (:query (sut/relationships-filter [{:id "id1"} {:id "id2"}]
-                                             :target_ref
-                                             [:malware :vulnerability]
-                                             [:sighting :incident]))))))
+    (is (= "(target_ref:*sighting* OR target_ref:*incident*)"
+           (:query (sut/relationships-filters "id" {:target_type [:sighting :incident]})))))
+
+  (testing "relationships-filters should return proper fields and combine filters"
+    (is (= {:one-of {:source_ref "id"}
+            :query "(source_ref:*malware*)"}
+           (sut/relationships-filters "id" {:source_type [:malware]
+                                            :related_to [:source_ref]})))))
 
 (deftest with-existing-entity-test
   (testing "with-existing-entity"
