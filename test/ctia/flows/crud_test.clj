@@ -9,7 +9,7 @@
             [ctia.test-helpers.core :as helpers]
             [ctim.examples.sightings :refer [sighting-minimal]]
             [ctia.domain.entities :refer [short-id->long-id]]
-            [java-time :as jt]
+            [java-time.api :as jt]
             [puppetlabs.trapperkeeper.app :as app]))
 
 (deftest deep-merge-with-add-colls-test

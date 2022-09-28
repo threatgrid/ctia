@@ -22,7 +22,7 @@
             ductile.index
             [puppetlabs.trapperkeeper.app :as app]
             [schema.core :as s]
-            [java-time :as jt]))
+            [java-time.api :as jt]))
 
 (use-fixtures :once (join-fixtures [mth/fixture-schema-validation
                                     whoami-helpers/fixture-server]))
