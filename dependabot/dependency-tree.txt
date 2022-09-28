@@ -5,8 +5,7 @@ ctia:ctia:jar:1.1.1-SNAPSHOT
 +- clj-time:clj-time:jar:0.15.2:compile
 |  \- joda-time:joda-time:jar:2.10:compile
 +- org.threeten:threeten-extra:jar:1.2:compile
-+- clojure.java-time:clojure.java-time:jar:0.3.3:compile
-|  \- clj-tuple:clj-tuple:jar:0.2.2:compile
++- clojure.java-time:clojure.java-time:jar:1.1.0:compile
 +- org.clojure:core.async:jar:1.5.648:compile
 |  \- org.clojure:tools.analyzer.jvm:jar:1.2.2:compile
 |     +- org.clojure:tools.analyzer:jar:1.1.0:compile
@@ -69,6 +68,7 @@ ctia:ctia:jar:1.1.1-SNAPSHOT
 |     \- com.cemerick:clojurescript.test:jar:0.0.4:compile
 +- metosin:compojure-api:jar:1.1.13:compile
 |  +- potemkin:potemkin:jar:0.4.5:compile
+|  |  +- clj-tuple:clj-tuple:jar:0.2.2:compile
 |  |  \- riddley:riddley:jar:0.1.12:compile
 |  +- compojure:compojure:jar:1.6.1:compile
 |  |  \- medley:medley:jar:1.0.0:compile
