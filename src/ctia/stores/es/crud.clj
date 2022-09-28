@@ -442,6 +442,14 @@ It returns the documents with full hits meta data including the real index in wh
                                   field)
                               (es.sort/parse-sort-params-op (or sort_order :asc))))))))))
 
+(s/defn make-query-params :- {s/Keyword s/Any}
+  [es-params props]
+  (cond-> (-> es-params
+              rename-sort-fields
+              (with-default-sort-field props)
+              make-es-read-params)
+    (<= 7 (:version props)) (assoc :track_total_hits true)))
+
 (defn handle-find
   "Generate an ES find/list handler using some mapping and schema"
   [Model]
@@ -464,14 +472,12 @@ It returns the documents with full hits meta data including the real index in wh
                                         {:should (q/prepare-terms one-of)
                                          :minimum_should_match 1})
                           query (update :filter conj query_string)
-                          (seq date-range-query) (update :filter conj {:range date-range-query}))]
+                          (seq date-range-query) (update :filter conj {:range date-range-query}))
+            query-params (make-query-params es-params props)]
         (cond-> (coerce! (ductile.doc/query conn
                                             index
                                             (q/bool bool-params)
-                                            (-> es-params
-                                                rename-sort-fields
-                                                (with-default-sort-field props)
-                                                make-es-read-params)))
+                                            query-params))
           (restricted-read? ident) (update :data
                                            access-control-filter-list
                                            ident
@@ -509,17 +515,14 @@ It returns the documents with full hits meta data including the real index in wh
        es-params]
       (let [{conn :conn, index :index
              {{:keys [get-in-config]} :ConfigService}
-             :services} es-conn-state
-            query       (make-search-query es-conn-state search-query ident)]
+             :services}  es-conn-state
+            query        (make-search-query es-conn-state search-query ident)
+            query-params (make-query-params es-params props)]
         (cond-> (coerce! (ductile.doc/query
                           conn
                           index
                           query
-                          (-> es-params
-                              rename-sort-fields
-                              (with-default-sort-field props)
-                              make-es-read-params)))
-
+                          query-params))
           (restricted-read? ident) (update
                                     :data
                                     access-control-filter-list

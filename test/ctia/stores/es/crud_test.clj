@@ -417,6 +417,32 @@
                                ident
                                {}))))))))
 
+(deftest make-query-params-test
+  (are [es-params props expected] (= expected
+                                     (sut/make-query-params es-params props))
+
+    {}
+    {:default-sort "timestamp,id"
+     :version 5}
+    {:sort [{"timestamp" {:order :asc}}
+            {"id" {:order :asc}}]}
+
+    {}
+    {:default-sort "timestamp,id"
+     :version 7}
+    {:sort [{"timestamp" {:order :asc}}
+            {"id" {:order :asc}}]
+     :track_total_hits true}
+
+
+    {:fields [:id]}
+    {:default-sort "timestamp,id"
+     :version 7}
+    {:sort [{"timestamp" {:order :asc}}
+            {"id" {:order :asc}}]
+     :_source [:id :id :owner :groups :tlp :authorized_users :authorized_groups]
+     :track_total_hits true}))
+
 (deftest make-search-query-test
   (es-helpers/for-each-es-version
       "make-search-query shall build a proper query from given query string, filter map and date range"
