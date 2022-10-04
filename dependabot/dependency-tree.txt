@@ -192,7 +192,7 @@ ctia:ctia:jar:1.1.1-SNAPSHOT
 |  \- io.netty:netty-resolver-dns-native-macos:jar:osx-aarch_64:4.1.75.Final:runtime
 +- io.netty:netty-codec:jar:4.1.75.Final:compile
 +- io.netty:netty-resolver:jar:4.1.75.Final:compile
-+- com.google.protobuf:protobuf-java:jar:3.19.4:compile
++- com.google.protobuf:protobuf-java:jar:3.19.6:compile
 +- riemann-clojure-client:riemann-clojure-client:jar:0.5.1:compile
 |  +- less-awful-ssl:less-awful-ssl:jar:1.0.4:compile
 |  \- io.riemann:riemann-java-client:jar:0.5.1:compile
