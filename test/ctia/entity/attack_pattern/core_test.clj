@@ -5,7 +5,7 @@
             [ctia.test-helpers.core :as helpers]
             [ctia.test-helpers.fake-whoami-service :as whoami-helpers]
             [ctia.test-helpers.fixtures :as fixtures]
-            [java-time :as jt]
+            [java-time.api :as jt]
             [puppetlabs.trapperkeeper.app :as app]
             [schema.test :refer [validate-schemas]]))
 

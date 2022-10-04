@@ -9,7 +9,7 @@
             [ctia.test-helpers.core :as helpers.core :refer [GET POST-bulk]]
             [ctia.test-helpers.fake-whoami-service :as helpers.whoami]
             [ctia.test-helpers.store :refer [test-selected-stores-with-app]]
-            [java-time :as jt]
+            [java-time.api :as jt]
             [schema-generators.generators :as g]
             [schema-tools.core :as st]
             [schema.core :as s]))
