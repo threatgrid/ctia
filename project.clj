@@ -219,6 +219,8 @@
                                   [org.clojure/tools.namespace "1.2.0"]]
                    :pedantic? :warn
                    :source-paths ["dev"]}
+             :memory-test {:dependencies [[io.github.frenchy64/fully-satisfies "7c81d11795f03089cf98758be0517d163f07afb5"]]
+                           :jvm-opts ["-Xms512m" "-Xmx512m"]}
              :ci {:pedantic? :abort
                   :global-vars {*warn-on-reflection* true}
                   :jvm-opts [ ;; actually print stack traces instead of useless
@@ -302,9 +304,11 @@
   ;;      or replace with something more specific, eg., "checkouts/ctim/src"
 
   ;; uncomment and change during dev
-  #_:git-down #_{threatgrid/ctim {:coordinates frenchy64/ctim}
-                 threatgrid/clj-momo {:coordinates frenchy64/clj-momo}
-                 threatgrid/ring-jwt-middleware {:coordinates frenchy64/ring-jwt-middleware}}
+  :git-down {io.github.frenchy64/fully-satisfies {:coordinates frenchy64/fully-satisfies}
+             ;threatgrid/ctim {:coordinates frenchy64/ctim}
+             ;    threatgrid/clj-momo {:coordinates frenchy64/clj-momo}
+             ;    threatgrid/ring-jwt-middleware {:coordinates frenchy64/ring-jwt-middleware}
+                 }
   :aliases {"kibit" ["with-profile" "prepush" "kibit"]
             "bikeshed" ["with-profile" "prepush" "bikeshed" "-m" "100"]
 
