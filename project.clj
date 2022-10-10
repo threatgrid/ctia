@@ -220,7 +220,7 @@
                    :pedantic? :warn
                    :source-paths ["dev"]}
              :memory-test {:dependencies [[io.github.frenchy64/fully-satisfies "7c81d11795f03089cf98758be0517d163f07afb5"]]
-                           :jvm-opts ["-Xms512m" "-Xmx512m"]}
+                           :jvm-opts ["-Xms128m" "-Xmx128m"]}
              :ci {:pedantic? :abort
                   :global-vars {*warn-on-reflection* true}
                   :jvm-opts [ ;; actually print stack traces instead of useless

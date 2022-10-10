@@ -5,17 +5,17 @@
             [clojure.test :refer [deftest is testing]]))
 
 (deftest do-migrate-query-test
-  (let [{:keys [live lseq]} (head-hold-detecting-lazy-seq)
-        mult (atom 0)
-        buffer-size 6]
-    (sut/do-migrate-query
-      buffer-size
-      (take (* 4 buffer-size) lseq)
-      0
-      (fn [_ _]
-        (is-live (let [mult (swap! mult inc)]
-                   (into #{}
-                         (range (min 0 (* (dec mult) buffer-size))
-                                (* mult buffer-size))))
-                 live)))
-    (is-live #{} live)))
+  (doseq [f [#'sut/do-migrate-query-reduce
+             #'sut/do-migrate-query-loop]
+          buffer-size (range 1 7)]
+    (testing (pr-str buffer-size f)
+      (let [{:keys [live lseq]} (head-hold-detecting-lazy-seq)
+            mult (atom 0)]
+        (f buffer-size
+           (take (* 4 buffer-size) lseq)
+           0
+           (fn [_ _]
+             (is-live (let [mx (* (swap! mult inc) buffer-size)]
+                        (into #{} (range (- mx buffer-size) mx)))
+                      live)))
+        (is-live #{} live)))))

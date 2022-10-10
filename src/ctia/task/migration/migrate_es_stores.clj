@@ -172,7 +172,7 @@
                new-migrated-count)
     new-migrated-count))
 
-(defn do-migrate-query
+(defn do-migrate-query-reduce
   [buffer-size
    source
    migrated-count
@@ -181,6 +181,18 @@
     (reduce write-target
             migrated-count
             data-queue)))
+
+(defn do-migrate-query-loop
+  [buffer-size
+   source
+   migrated-count
+   write-target]
+  (let [data-queue (seque buffer-size source)]
+    (loop [total migrated-count
+           [batch & batches] data-queue]
+      (if batch
+        (recur (write-target total batch) batches)
+        total))))
 
 (s/defn migrate-query :- BatchParams
   "migrate documents that match given `query`"
@@ -194,7 +206,7 @@
              (name entity-type)
              (pr-str query))
   (let [read-params (assoc migration-params :query query)
-        new-migrated-count (do-migrate-query
+        new-migrated-count (do-migrate-query-reduce ;do-migrate-query-loop
                              buffer-size
                              (read-source read-params)
                              migrated-count
