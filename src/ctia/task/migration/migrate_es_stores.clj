@@ -150,7 +150,7 @@
    services :- mst/MigrationStoreServices]
   (let [migrated (transduce migrations conj documents)
         {:keys [data errors]} (list-coerce migrated)
-        new-migrated-count (+ migrated-count (count data))]
+        new-migrated-count (+ (count data) migrated-count)]
     (doseq [entity errors]
       (let [message
             (format "%s - Cannot migrate entity: %s"
