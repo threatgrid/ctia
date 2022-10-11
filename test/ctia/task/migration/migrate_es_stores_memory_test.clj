@@ -17,10 +17,7 @@
            0
            (fn [_ _]
              (is-live (let [from (swap! shift inc)
-                            to (min len (+ from buffer-size
-                                           (if (= f #'sut/do-migrate-query-reduce)
-                                             1
-                                             2)))]
+                            to (min len (+ from buffer-size 1))]
                         (into #{} (range from to)))
                       live)))
         (is-live #{} live)))))

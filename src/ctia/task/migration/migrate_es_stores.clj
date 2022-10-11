@@ -201,9 +201,11 @@
   (let [data-queue (synchronous-seque ;seque
                      buffer-size source)]
     (loop [total migrated-count
-           [batch & batches] data-queue]
-      (if batch
-        (recur (write-target total batch) batches)
+           data-queue data-queue]
+      (if-some [data-queue (seq data-queue)]
+        (recur (write-target total (first data-queue))
+               ;; allow (first data-queue) to be released before realizing next
+               (rest data-queue))
         total))))
 
 (s/defn migrate-query :- BatchParams
