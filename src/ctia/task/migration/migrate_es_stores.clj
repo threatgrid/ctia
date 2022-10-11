@@ -185,14 +185,13 @@
              (pr-str query))
   (let [read-params (assoc migration-params :query query)
         data-queue (seque buffer-size
-                          (read-source read-params))]
-    (loop [total migrated-count
-           [batch & batches] data-queue]
-      (if batch
-        (recur (write-target total batch services) batches)
-        (assoc migration-params
-               :migrated-count
-               total)))))
+                          (read-source read-params))
+        new-migrated-count (reduce #(write-target %1 %2 services)
+                                   migrated-count
+                                   data-queue)]
+    (assoc migration-params
+           :migrated-count
+           new-migrated-count)))
 
 (s/defn migrate-store
   "migrate a single store"
@@ -234,12 +233,9 @@
                                   entity-type
                                   {:started (time/now)}
                                   services))
-    (->> (loop [batch-params base-params
-                [query & next-queries] queries]
-           (if query
-             (recur (migrate-query batch-params query services)
-                    next-queries)
-             batch-params))
+    (->> (reduce #(migrate-query %1 %2 services)
+                 base-params
+                 queries)
          :migrated-count
          (log/infof "%s - finished migrating %s documents"
                     (name entity-type)))
