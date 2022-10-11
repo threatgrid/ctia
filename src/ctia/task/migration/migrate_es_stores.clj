@@ -172,12 +172,23 @@
                new-migrated-count)
     new-migrated-count))
 
+(defn synchronous-seque [buffer-size s]
+  {:pre [(pos? buffer-size)]}
+  (let [synchronous-seque (fn synchronous-seque [s]
+                            (if-some [[v & rst :as s] (not-empty s)]
+                              (do (nthnext s buffer-size)
+                                  (lazy-seq
+                                    (cons v (lazy-seq (synchronous-seque rst)))))
+                              (lazy-seq)))]
+    (synchronous-seque (lazy-seq s))))
+
 (defn do-migrate-query-reduce
   [buffer-size
    source
    migrated-count
    write-target]
-  (let [data-queue (seque buffer-size source)]
+  (let [data-queue (synchronous-seque ;seque
+                     buffer-size source)]
     (reduce write-target
             migrated-count
             data-queue)))
@@ -187,7 +198,8 @@
    source
    migrated-count
    write-target]
-  (let [data-queue (seque buffer-size source)]
+  (let [data-queue (synchronous-seque ;seque
+                     buffer-size source)]
     (loop [total migrated-count
            [batch & batches] data-queue]
       (if batch

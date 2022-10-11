@@ -10,12 +10,17 @@
           buffer-size (range 1 7)]
     (testing (pr-str buffer-size f)
       (let [{:keys [live lseq]} (head-hold-detecting-lazy-seq)
-            mult (atom 0)]
+            shift (atom -1)
+            len (* 4 buffer-size)]
         (f buffer-size
-           (take (* 4 buffer-size) lseq)
+           (take len lseq)
            0
            (fn [_ _]
-             (is-live (let [mx (* (swap! mult inc) buffer-size)]
-                        (into #{} (range (- mx buffer-size) mx)))
+             (is-live (let [from (swap! shift inc)
+                            to (min len (+ from buffer-size
+                                           (if (= f #'sut/do-migrate-query-reduce)
+                                             1
+                                             2)))]
+                        (into #{} (range from to)))
                       live)))
         (is-live #{} live)))))
