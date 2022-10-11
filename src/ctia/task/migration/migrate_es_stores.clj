@@ -175,10 +175,10 @@
 (defn synchronous-seque [buffer-size s]
   {:pre [(pos? buffer-size)]}
   (let [synchronous-seque (fn synchronous-seque [s]
-                            (if-some [[v & rst :as s] (not-empty s)]
+                            (if-some [s (not-empty s)]
                               (do (nthnext s buffer-size)
                                   (lazy-seq
-                                    (cons v (lazy-seq (synchronous-seque rst)))))
+                                    (cons (first s) (lazy-seq (synchronous-seque (rest s))))))
                               (lazy-seq)))]
     (synchronous-seque (lazy-seq s))))
 
