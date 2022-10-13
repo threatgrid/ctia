@@ -40,6 +40,13 @@
                                :headers {"Authorization" "45c1f5e3f05d0"})]
            (is (= 200 (:status response)))))
 
+       (testing "Bad route returns 400"
+         (let [response (PATCH app
+                               (str "ctia/incident/" (:short-id incident-id) "/tactics")
+                               :body {:incident_time {}}
+                               :headers {"Authorization" "45c1f5e3f05d0"})]
+           (is (= 400 (:status response)))))
+
        (testing "POST /ctia/incident/:id/status Open"
          (let [new-status {:status "Open"}
                response (POST app
