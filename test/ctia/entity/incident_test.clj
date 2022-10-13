@@ -40,11 +40,11 @@
                                :headers {"Authorization" "45c1f5e3f05d0"})]
            (is (= 200 (:status response)))))
 
-       (testing "Bad route returns 400"
+       (testing "Bad route returns 404"
          (let [response (GET app
                              (str "ctia/incident/" (:short-id incident-id) "/tactics")
                              :headers {"Authorization" "45c1f5e3f05d0"})]
-           (is (= 400 (:status response)))))
+           (is (= 404 (:status response)))))
 
        (testing "POST /ctia/incident/:id/status Open"
          (let [new-status {:status "Open"}
