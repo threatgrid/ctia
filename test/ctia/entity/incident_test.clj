@@ -9,7 +9,7 @@
             [ctia.test-helpers.access-control :refer [access-control-test]]
             [ctia.test-helpers.aggregate :refer [test-metric-routes]]
             [ctia.test-helpers.auth :refer [all-capabilities]]
-            [ctia.test-helpers.core :as helpers :refer [PATCH POST]]
+            [ctia.test-helpers.core :as helpers :refer [GET PATCH POST]]
             [ctia.test-helpers.crud :refer [entity-crud-test]]
             [ctia.test-helpers.es :as es-helpers]
             [ctia.test-helpers.fake-whoami-service :as whoami-helpers]
@@ -41,10 +41,9 @@
            (is (= 200 (:status response)))))
 
        (testing "Bad route returns 400"
-         (let [response (PATCH app
-                               (str "ctia/incident/" (:short-id incident-id) "/tactics")
-                               :body {:incident_time {}}
-                               :headers {"Authorization" "45c1f5e3f05d0"})]
+         (let [response (GET app
+                             (str "ctia/incident/" (:short-id incident-id) "/tactics")
+                             :headers {"Authorization" "45c1f5e3f05d0"})]
            (is (= 400 (:status response)))))
 
        (testing "POST /ctia/incident/:id/status Open"
