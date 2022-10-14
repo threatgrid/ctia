@@ -8,19 +8,12 @@
    [ctia.schemas.utils :as csu]
    [clj-http.client :as http]
    [puppetlabs.trapperkeeper.app :as app]
-   [schema.core :as s])
-  (:import java.io.ByteArrayInputStream))
+   [schema.core :as s]))
 
 (def api-key "45c1f5e3f05d0")
 
 (defn local-url [path port]
   (format "http://localhost:%d/%s" port path))
-
-(defn string->input-stream
-  [^String s]
-  (-> s
-      (.getBytes)
-      (ByteArrayInputStream.)))
 
 (defn content-type? [expected-str]
   (fn [test-str]
@@ -40,11 +33,10 @@
 
 (defn encode-body
   [body content-type]
-  (string->input-stream
-   (cond
-     (edn? content-type) (pr-str body)
-     (json? content-type) (json/generate-string body)
-     :else body)))
+  (cond
+    (edn? content-type) (pr-str body)
+    (json? content-type) (json/generate-string body)
+    :else body))
 
 (def base-opts
   {:accept :edn

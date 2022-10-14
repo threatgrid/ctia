@@ -246,6 +246,9 @@
                                    [prismatic/schema-generators ~schema-generators-version]]
                     :resource-paths ["test-resources"]}
 
+             :test-encoding {:jvm-opts ["-Dfile.encoding=ANSI_X3.4-1968"]
+                             :test-selectors ^:replace {:default :encoding}}
+
              :prepush {:plugins [[yogsototh/lein-kibit "0.1.6-SNAPSHOT"]
                                  [lein-bikeshed "0.3.0"]]}
              :es5 {:jvm-opts ["-Dctia.store.es.default.port=9205"
