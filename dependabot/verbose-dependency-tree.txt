@@ -118,7 +118,7 @@ ctia:ctia:jar:1.1.1-SNAPSHOT
 |  |     +- (io.dropwizard.metrics:metrics-core:jar:3.1.5:compile - omitted for conflict with 3.2.2)
 |  |     \- (io.riemann:riemann-java-client:jar:0.4.6:compile - omitted for conflict with 0.5.1)
 |  \- (clout:clout:jar:2.2.1:compile - omitted for duplicate)
-+- threatgrid:ductile:jar:0.4.4:compile
++- threatgrid:ductile:jar:0.4.5:compile
 |  +- (org.clojure:tools.logging:jar:0.5.0:compile - omitted for conflict with 1.1.0)
 |  +- (prismatic:schema:jar:1.1.12:compile - omitted for conflict with 1.2.0)
 |  +- (metosin:schema-tools:jar:0.12.2:compile - omitted for duplicate)
