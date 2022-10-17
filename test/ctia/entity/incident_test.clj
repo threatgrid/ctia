@@ -413,23 +413,27 @@
         (fn [app]
           ;(helpers/set-capabilities! app "foouser" ["foogroup"] "user" all-capabilities)
           ;(whoami-helpers/set-whoami-response app "45c1f5e3f05d0" "foouser" "foogroup" "user")
-          (try (let [incident1 (assoc (gen-new-incident) :tactics ["TA0002" "TA0043"])
-                     incident2 (assoc (gen-new-incident) :tactics ["TA0004" "TA0043"])
-                     incident3 (assoc (gen-new-incident) :tactics ["TA0005"])]
-                 (create-incidents app [incident1 incident2 incident3])
+          (try (let [incident1 (assoc (gen-new-incident) :tactics ["TA0002" "TA0043" "TA0006"])
+                     incident2 (assoc (gen-new-incident) :tactics ["TA0004" "TA0043" "TA0006"])
+                     normalize (fn [incidents]
+                                 (->> incidents
+                                      (map #(select-keys % [:title :tactics]))
+                                      (sort-by :tactics)))]
+                 (create-incidents app #{incident1 incident2})
                  (testing "incident1"
                    (let [{:keys [parsed-body] :as raw} (search-th/search-raw app :incident {:tactics "TA0002"})]
                      (and (is (= 200 (:status raw)) (pr-str raw))
-                          (is (= [incident1]
-                                 (map :tactics parsed-body))))))
-                 (testing "incident2+3"
-                   (let [{:keys [parsed-body] :as raw} (search-th/search-raw app :incident {:tactics "TA00043"})]
+                          (is (= (normalize [incident1])
+                                 (normalize parsed-body))
+                              (pr-str parsed-body)))))
+                 (testing "incident1+2"
+                   (let [{:keys [parsed-body] :as raw} (search-th/search-raw app :incident {:tactics "TA0043"})]
                      (and (is (= 200 (:status raw)) (pr-str raw))
-                          (is (= (sort-by :tactics [incident2 incident3])
-                                 (sort-by :tactics (map :tactics parsed-body)))))))
-                 (testing "incident1+3"
-                   (let [{:keys [parsed-body] :as raw} (search-th/search-raw app :incident {:tactics ["TA0002" "TA0005"]})]
+                          (is (= (normalize [incident1 incident2])
+                                 (normalize parsed-body))))))
+                 (testing "incident1+2 multi"
+                   (let [{:keys [parsed-body] :as raw} (search-th/search-raw-query-str app :incident "tactics=TA0043&tactics=TA0006")]
                      (and (is (= 200 (:status raw)) (pr-str raw))
-                          (is (= (sort-by :tactics [incident1 incident3])
-                                 (sort-by :tactics (map :tactics parsed-body))))))))
+                          (is (= (normalize [incident1 incident2])
+                                 (normalize parsed-body)))))))
                (finally (purge-incidents! app))))))))
