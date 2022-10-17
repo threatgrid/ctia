@@ -415,25 +415,25 @@
           ;(whoami-helpers/set-whoami-response app "45c1f5e3f05d0" "foouser" "foogroup" "user")
           (try (let [incident1 (assoc (gen-new-incident) :tactics ["TA0002" "TA0043" "TA0006"])
                      incident2 (assoc (gen-new-incident) :tactics ["TA0004" "TA0043" "TA0008"])
-                     incident3 (assoc (gen-new-incident) :tactics ["TA0008" "TA0043" "TA0006"])
+                     incident3 (assoc (gen-new-incident) :tactics ["TA0008" "TA0043" "TA0006" "TA8888"])
                      normalize (fn [incidents]
                                  (->> incidents
                                       (map #(select-keys % [:title :tactics]))
                                       (sort-by :tactics)))]
                  (create-incidents app #{incident1 incident2 incident3})
                  (testing "incident1"
-                   (let [{:keys [parsed-body] :as raw} (search-th/search-raw app :incident {:tactics "TA0002"})]
+                   (let [{:keys [parsed-body] :as raw} (search-th/search-raw app :incident {:query "tactics:(\"TA0002\")"})]
                      (and (is (= 200 (:status raw)) (pr-str raw))
                           (is (= (normalize [incident1])
                                  (normalize parsed-body))
                               (pr-str parsed-body)))))
                  (testing "incident1+2+3"
-                   (let [{:keys [parsed-body] :as raw} (search-th/search-raw app :incident {:tactics "TA0043"})]
+                   (let [{:keys [parsed-body] :as raw} (search-th/search-raw app :incident {:query "tactics:(\"TA0043\")"})]
                      (and (is (= 200 (:status raw)) (pr-str raw))
                           (is (= (normalize [incident1 incident2 incident3])
                                  (normalize parsed-body))))))
                  (testing "incident1+3 multi"
-                   (let [{:keys [parsed-body] :as raw} (search-th/search-raw-query-str app :incident "tactics=TA0043&tactics=TA0006")]
+                   (let [{:keys [parsed-body] :as raw} (search-th/search-raw app :incident {:query "tactics:(\"TA0002\" || \"TA8888\")"}) ]
                      (and (is (= 200 (:status raw)) (pr-str raw))
                           (is (= (normalize [incident1 incident3])
                                  (normalize parsed-body)))))))

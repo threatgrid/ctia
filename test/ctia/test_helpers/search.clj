@@ -46,13 +46,6 @@
          :headers {"Authorization" "45c1f5e3f05d0"}
          :query-params query-params)))
 
-(defn search-raw-query-str
-  [app entity query-str]
-  (let [search-uri (format "ctia/%s/search" (name entity) "?" query-str)]
-    (GET app
-         search-uri
-         :headers {"Authorization" "45c1f5e3f05d0"})))
-
 (defn search-text
   [app entity text]
   (search-raw app entity {:query text}))
