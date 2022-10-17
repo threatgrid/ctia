@@ -285,7 +285,8 @@
      :sort_by          incident-sort-fields
      :assignees        s/Str
      :promotion_method s/Str
-     :severity s/Str})))
+     :severity s/Str
+     :tactics s/Str})))
 
 (def IncidentGetParams IncidentFieldsParam)
 

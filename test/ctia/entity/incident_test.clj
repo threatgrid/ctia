@@ -401,3 +401,35 @@
                        true
                        true
                        test-for-each-store-with-app))
+
+(deftest filter-incidents-by-tactics-test
+  (es-helpers/for-each-es-version
+    "sort by tactics"
+    [5 7]
+    #(ductile.index/delete! % "ctia_*")
+    (helpers/with-properties (into ["ctia.auth.type" "allow-all"]
+                                   es-helpers/basic-auth-properties)
+      (helpers/fixture-ctia-with-app
+        (fn [app]
+          ;(helpers/set-capabilities! app "foouser" ["foogroup"] "user" all-capabilities)
+          ;(whoami-helpers/set-whoami-response app "45c1f5e3f05d0" "foouser" "foogroup" "user")
+          (try (let [incident1 (assoc (gen-new-incident) :tactics ["TA0002" "TA0043"])
+                     incident2 (assoc (gen-new-incident) :tactics ["TA0004" "TA0043"])
+                     incident3 (assoc (gen-new-incident) :tactics ["TA0005"])]
+                 (create-incidents app [incident1 incident2 incident3])
+                 (testing "incident1"
+                   (let [{:keys [parsed-body] :as raw} (search-th/search-raw app :incident {:tactics "TA0002"})]
+                     (and (is (= 200 (:status raw)) (pr-str raw))
+                          (is (= [incident1]
+                                 (map :tactics parsed-body))))))
+                 (testing "incident2+3"
+                   (let [{:keys [parsed-body] :as raw} (search-th/search-raw app :incident {:tactics "TA00043"})]
+                     (and (is (= 200 (:status raw)) (pr-str raw))
+                          (is (= (sort-by :tactics [incident2 incident3])
+                                 (sort-by :tactics (map :tactics parsed-body)))))))
+                 (testing "incident1+3"
+                   (let [{:keys [parsed-body] :as raw} (search-th/search-raw app :incident {:tactics ["TA0002" "TA0005"]})]
+                     (and (is (= 200 (:status raw)) (pr-str raw))
+                          (is (= (sort-by :tactics [incident1 incident3])
+                                 (sort-by :tactics (map :tactics parsed-body))))))))
+               (finally (purge-incidents! app))))))))
