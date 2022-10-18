@@ -24,8 +24,7 @@
    [ductile.index :as es-index]
    [puppetlabs.trapperkeeper.app :as app]
    [schema.core :as s]
-   [schema.test :refer [validate-schemas]])
-  (:import java.io.ByteArrayInputStream))
+   [schema.test :refer [validate-schemas]]))
 
 (defn fixture-properties [t]
   (helpers/with-properties ["ctia.http.bulk.max-size" 1000
@@ -423,6 +422,35 @@
            ;; reopen index to enable cleaning
            (es-index/open! (:conn indicator-store-state) indexname)))))))
 
+(deftest ^:encoding bundle-import-non-utf-8-encoding
+  (test-for-each-store-with-app
+   (fn [app]
+     (helpers/set-capabilities! app "foouser" ["foogroup"] "user" (all-capabilities))
+     (whoami-helpers/set-whoami-response app
+                                         "45c1f5e3f05d0"
+                                         "foouser"
+                                         "foogroup"
+                                         "user")
+     (let [indicator (-> (mk-indicator 0)
+                         (assoc :description "qй"))]
+       (testing "Non-ASCII symbols imported with UTF-8 encoding"
+         (let [bundle (assoc ctia.bundle.core/empty-bundle
+                             :indicators #{indicator})
+               import-response (POST app
+                                     "ctia/bundle/import"
+                                     :body bundle
+                                     :headers {"Authorization" "45c1f5e3f05d0"})
+               indicator-id (get-in import-response [:parsed-body :results 0 :id])
+               export-response (GET app
+                                    "ctia/bundle/export"
+                                    :query-params {:ids [indicator-id]}
+                                    :headers {"Authorization" "45c1f5e3f05d0"})]
+           (is (= 200 (:status import-response)))
+           (is (= "qй" (-> export-response
+                           (get-in [:parsed-body :indicators])
+                           (first)
+                           (get :description))))))))))
+
 (deftest bundle-import-should-not-allow-disabled-entities
   (testing "disabled entities should be removed from Bundle schema"
     (let [selected-keys    #{:asset :target-record :asset-properties}
@@ -629,12 +657,6 @@
      :indicators (set indicators)
      :sightings (set sightings)
      :relationships (set relationships)}))
-
-(defn string->input-stream
-  [^String s]
-  (-> s
-      (.getBytes)
-      (ByteArrayInputStream.)))
 
 (deftest bundle-export-test
   (test-for-each-store-with-app

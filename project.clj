@@ -88,7 +88,7 @@
                  [threatgrid/ctim "1.1.12"]
                  [instaparse "1.4.10"] ;; com.gfredericks/test.chuck > threatgrid/ctim
                  [threatgrid/clj-momo "0.3.5"]
-                 [threatgrid/ductile "0.4.4"]
+                 [threatgrid/ductile "0.4.5"]
 
                  [com.arohner/uri "0.1.2"]
 
@@ -245,6 +245,9 @@
                                    [org.clojure/test.check ~test-check-version]
                                    [prismatic/schema-generators ~schema-generators-version]]
                     :resource-paths ["test-resources"]}
+
+             :test-encoding {:jvm-opts ["-Dfile.encoding=ANSI_X3.4-1968"]
+                             :test-selectors ^:replace {:default :encoding}}
 
              :prepush {:plugins [[yogsototh/lein-kibit "0.1.6-SNAPSHOT"]
                                  [lein-bikeshed "0.3.0"]]}
