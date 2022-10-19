@@ -29,7 +29,8 @@
                    :v "[\"a\",\"b\",\"c\"]"}]))]))
 
 (deftest set-output-test
-  (is (.contains
-        (with-out-str
-          (sut/set-output "foo" "bar"))
-        "::set-output name=foo::bar\n")))
+  (let [github-output-file (File/createTempFile "github-output" nil)
+        {:keys [grab-history utils]} (th/mk-utils {"GITHUB_OUTPUT" (.getPath github-output-file)})
+        _ (sut/set-output utils "foo" "bar")
+        _ (is (empty? (grab-history)))
+        _ (is (= "foo=bar\n" (slurp github-output-file)))]))

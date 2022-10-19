@@ -22,7 +22,7 @@
                      (throw (Exception. (format "No default :sh stub (args: %s)" (pr-str args)))))
                :getenv (fn [k]
                          (get env-map k))
-               :set-output (fn [k v]
+               :set-output (fn [_utils k v]
                              (swap! state update :history conj
                                     {:op :set-output
                                      :k k
