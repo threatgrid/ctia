@@ -47,7 +47,7 @@ jobs:
           # https://github.com/zero88/gh-project-context/blob/26a3afdce1fe607734278e5ccec0851d50669ef5/README.md#latest-commit-message
           fetch-depth: 2
       # for grabbing the current commit msg (suprisingly hard!)
-      - uses: zero88/gh-project-context@af8b62dd9d7ecbb2763268a040d42390ecfeb0f3
+      - uses: zero88/gh-project-context@88bdb34d636c3c244f26d109618346dc6a38ba6f
         id: gh-project-context
       - name: Binary Cache
         uses: actions/cache@v3
