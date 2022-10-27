@@ -237,7 +237,7 @@
     (catch java.util.concurrent.ExecutionException e
       (throw (.getCause e)))))
 
-(defn merge-tempids
+(defn merge-entity-tempids
   "Merges tempids from all entities
    {:entity-type1 {:data []
                    :tempids {transientid1 id1
@@ -256,9 +256,8 @@
   The create-entities set the enveloped-result? to True in the flow
   configuration to get :data and :tempids for each entity in the result."
   [entities-by-type]
-  (into {}
-        (map (fn [[_ v]] (:tempids v)))
-         entities-by-type))
+  (apply flow/merge-tempids
+         (map (comp :tempids val) entities-by-type)))
 
 (defn bulk-refresh? [get-in-config]
   (get-in-config
@@ -303,7 +302,7 @@
                        login
                        {:refresh refresh}
                        services)
-         entities-tempids (into tempids (merge-tempids new-entities))
+         tempids (flow/merge-tempids tempids (merge-entity-tempids new-entities))
          new-linked-ents (gen-bulk-from-fn
                           create-entities
                           (select-keys
@@ -311,11 +310,11 @@
                            [:relationships
                             :asset_mappings
                             :asset_properties])
-                          entities-tempids
+                          tempids
                           login
                           {:refresh refresh}
                           services)
-         all-tempids (merge entities-tempids (merge-tempids new-linked-ents))
+         tempids (flow/merge-tempids tempids (merge-entity-tempids new-linked-ents))
          all-entities (merge new-entities new-linked-ents)
          ;; Extracting data from the enveloped flow result
          ;; {:entity-type {:data [] :tempids {}}
@@ -324,7 +323,7 @@
                                 {k data}))
                          all-entities)]
      (cond-> bulk-refs
-       (seq all-tempids) (assoc :tempids all-tempids)))))
+       (seq tempids) (assoc :tempids tempids)))))
 
 (s/defn fetch-bulk
   [bulk auth-identity

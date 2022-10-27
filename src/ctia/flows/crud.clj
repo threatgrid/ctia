@@ -136,19 +136,27 @@
                     (tlp-check get-in-config)))
               entities)))
 
+(defn merge-tempids [& tempids-maps]
+  (or (apply merge-with 
+             (fn [id1 id2]
+               (http-response/bad-request!
+                 {:error "Transient id reused for multiple entities"
+                  :entity1 id1
+                  :entity2 id2}))
+             tempids-maps)
+      {}))
+
 (s/defn ^:private create-ids-from-transient :- FlowMap
   "Creates IDs for entities identified by transient IDs that have not
    yet been resolved."
   [{:keys [entities
            entity-type]
     :as fm} :- FlowMap]
-  (let [newtempids
-        (into {}
-              (keep (fn [{:keys [id]}]
-                      (when (and id (schemas/transient-id? id))
-                        [id (make-id entity-type)])))
-               entities)]
-    (update fm :tempids (fnil into {}) newtempids)))
+  (update fm :tempids #(apply merge-tempids %
+                              (keep (fn [{:keys [id]}]
+                                      (when (some-> id schemas/transient-id?)
+                                        {id (make-id entity-type)}))
+                                    entities))))
 
 (s/defn ^:private realize-entities :- FlowMap
   [{:keys [entities
