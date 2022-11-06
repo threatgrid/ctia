@@ -31,6 +31,8 @@
                (map page/include-css additional-css)
                (map page/include-js additional-js)])
 
+(def doc-resource-prefix "ctia/public/doc")
+
 (defn get-file-content
   "read a file from resources, returns nil on any failure"
   [path]
@@ -75,7 +77,7 @@
 (defn render-request
   "read the requested file from resources, render it if needed"
   [path-info]
-  (let [file-path (subs path-info 1)
+  (let [file-path (str doc-resource-prefix path-info)
         file-content (get-file-content file-path)
         file-type (ext-mime-type file-path mime-overrides)]
 

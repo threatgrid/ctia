@@ -21,9 +21,6 @@
       <resource>
         <directory>resources</directory>
       </resource>
-      <resource>
-        <directory>doc</directory>
-      </resource>
     </resources>
     <testResources>
       <testResource>
@@ -31,9 +28,6 @@
       </testResource>
       <testResource>
         <directory>resources</directory>
-      </testResource>
-      <testResource>
-        <directory>doc</directory>
       </testResource>
     </testResources>
     <directory>target</directory>

@@ -186,7 +186,7 @@
                  ;; Logging
                  [org.slf4j/log4j-over-slf4j "1.7.20"]]
 
-  :resource-paths ["resources" "doc"]
+  :resource-paths ["resources"]
   :classpath ".:resources"
   :min-lein-version "2.9.1"
   :test-selectors ~(->> (slurp "dev-resources/circleci_test/config.clj")
