@@ -64,13 +64,12 @@
                  (get :body)
                  (slurp)
                  (md-to-html-string)
-                 (decorate-markdown))
-        body-length (count (.getBytes body "UTF-8"))]
+                 (decorate-markdown))]
     (-> resp
         (assoc :body body)
         (response/content-type "text/html")
         (response/charset "UTF-8")
-        (response/update-header "Content-Length" (constantly (str body-length))))))
+        (response/header "Content-Length" (count (.getBytes body "UTF-8"))))))
 
 (defn render-resource-file [handler]
   (letfn [(render [resp]
