@@ -2,10 +2,11 @@
   (:require
    [ctia.lib.compojure.api.core :refer [context GET]]
    [clojure.core.memoize :as memo]
-   [clojure.java.io :as io]
    [hiccup.page :as page]
    [markdown.core :refer [md-to-html-string]]
-   [ring.util.mime-type :refer [ext-mime-type]]))
+   [ring.util.mime-type :as mime-type]
+   [ring.util.response :refer [resource-response] :as response]
+   [ring.middleware.content-type :as content-type]))
 
 ;; set request cache ttl
 (def cache-ttl-ms (* 1000 5))
@@ -33,13 +34,6 @@
 
 (def doc-resource-prefix "ctia/public/doc")
 
-(defn get-file-content
-  "read a file from resources, returns nil on any failure"
-  [path]
-  (try (slurp (io/resource
-               path))
-       (catch Throwable _e nil)))
-
 (defn decorate-markdown
   "decorate an html converted markdown file with css and js"
   [html-body]
@@ -51,40 +45,13 @@
            :class page-class}
      html-body]]))
 
-(defn render-markdown
-  "render a mardown file into an html webpage"
-  [file]
-  {:status 200
-   :headers {"Content-Type" "text/html"}
-   :body (-> file
-             md-to-html-string
-             decorate-markdown)})
-
-(defn render-default
-  "default render for unknown file types"
-  [file type]
-  {:status 200
-   :headers {"Content-Type" type}
-   :body file})
-
-(defn render
-  "render a file by type"
-  [file type]
-  (condp = type
-    "text/markdown" (render-markdown file)
-    (render-default file type)))
-
 (defn render-request
   "read the requested file from resources, render it if needed"
   [path-info]
-  (let [file-path (str doc-resource-prefix path-info)
-        file-content (get-file-content file-path)
-        file-type (ext-mime-type file-path mime-overrides)]
-
-    (if file-content
-      (render file-content file-type)
+  (or (resource-response (str doc-resource-prefix path-info)
+                         {:allow-symlinks? false})
       {:status 404
-       :body "The requested page couldn't be found."})))
+       :body "The requested page couldn't be found."}))
 
 (def render-request-with-cache
   "request cache wrapper"
@@ -92,8 +59,39 @@
    render-request
    :ttl/threshold cache-ttl-ms))
 
+(defn markdown->html [resp]
+  (let [body (-> resp
+                 (get :body)
+                 (slurp)
+                 (md-to-html-string)
+                 (decorate-markdown))
+        body-length (count (.getBytes body "UTF-8"))]
+    (-> resp
+        (assoc :body body)
+        (response/content-type "text/html")
+        (response/charset "UTF-8")
+        (response/update-header "Content-Length" (constantly (str body-length))))))
+
+(defn render-resource-file [handler]
+  (letfn [(render [resp]
+            (case (response/get-header resp "Content-Type")
+              "text/markdown" (markdown->html resp)
+              resp))]
+    (fn
+      ([req]
+       (-> req (handler) (render)))
+      ([req respond raise]
+       (handler req
+                (fn [resp]
+                  (-> resp (render) (respond)))
+                raise)))))
+
 (defn documentation-routes []
   (context "/doc" []
     (GET "/*.*" req
       :no-doc true
+      :middleware [[render-resource-file]
+                   [content-type/wrap-content-type
+                    {:mime-types (merge mime-type/default-mime-types
+                                        mime-overrides)}]]
       (render-request-with-cache (:path-info req)))))
