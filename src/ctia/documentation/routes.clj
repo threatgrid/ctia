@@ -48,10 +48,8 @@
 (defn render-request
   "read the requested file from resources, render it if needed"
   [path-info]
-  (or (resource-response (str doc-resource-prefix path-info)
-                         {:allow-symlinks? false})
-      {:status 404
-       :body "The requested page couldn't be found."}))
+  (resource-response (str doc-resource-prefix path-info)
+                     {:allow-symlinks? false}))
 
 (def render-request-with-cache
   "request cache wrapper"
@@ -78,16 +76,16 @@
               resp))]
     (fn
       ([req]
-       (-> req (handler) (render)))
+       (some-> req (handler) (render)))
       ([req respond raise]
        (handler req
                 (fn [resp]
-                  (-> resp (render) (respond)))
+                  (some-> resp (render) (respond)))
                 raise)))))
 
 (defn documentation-routes []
   (context "/doc" []
-    (GET "/*.*" req
+    (GET "/*" req
       :no-doc true
       :middleware [[render-resource-file]
                    [content-type/wrap-content-type

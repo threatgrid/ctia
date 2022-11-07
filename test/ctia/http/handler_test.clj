@@ -33,7 +33,7 @@
    (fn [app]
      (let [;; these routes don't have descriptions (yet)
            expected-no-doc #{"/swagger.json"
-                             "/doc/*.*"
+                             "/doc/*"
                              "/ctia/feed/:id/view.txt"
                              "/ctia/feed/:id/view"
                              "/ctia/version"
