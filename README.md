@@ -3,9 +3,9 @@
 
 A Pragmatic, Operationalized Threat Intel Service and Data Model
 
-For full documentation see [doc](resources/public/doc/)
+For full documentation see [doc](resources/ctia/public/doc/)
 
-We also think the [Use Cases](resources/public/doc/use_cases.md) document is a good
+We also think the [Use Cases](resources/ctia/public/doc/use_cases.md) document is a good
 starting point.
 
 Interactive, Swagger docs for the API are available once
@@ -289,7 +289,7 @@ since "foogroup" and "bargroup" are marked as `authorized_groups` identities in 
 ## Bulk and Bundle
 
 CTIA provides Bulk and Bundle routes to help processing multiple entities.
-see [Bulk and Bundle documentation](resources/public/doc/bulk-bundle.org)
+see [Bulk and Bundle documentation](resources/ctia/public/doc/bulk-bundle.org)
 
 ### Bundle import
 
@@ -342,11 +342,11 @@ CTIA will then return the realized `Feed` document including two new fields: `fe
 
 ### Elasticsearch Store management
 
-see [CTIA Elasticsearch Stores: managing big Indices](resources/public/doc/es_stores.md)
+see [CTIA Elasticsearch Stores: managing big Indices](resources/ctia/public/doc/es_stores.md)
 
-see [Migration procedure](resources/public/doc/migration.md)
+see [Migration procedure](resources/ctia/public/doc/migration.md)
 
-see [CTIA Elasticsearch CRUD details](resources/public/doc/es_stores.pdf)
+see [CTIA Elasticsearch CRUD details](resources/ctia/public/doc/es_stores.pdf)
 
 
 ### Store Checks
