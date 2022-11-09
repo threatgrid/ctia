@@ -140,7 +140,7 @@
   (let [transient-id->entity (into {} (map (fn [m]
                                              (let [transient-id->entity (-> m meta :transient-id->entity)]
                                                (assert transient-id->entity
-                                                       (str "Must create tempid maps with create-tempid-map: " (pr-str m)))
+                                                       (str "Must create tempids maps with create-tempid-map: " (pr-str m)))
                                                transient-id->entity)))
                                    tempids-maps)
         m (or (apply merge-with
@@ -158,10 +158,13 @@
 
 (defn lookup-id+entity-from-tempid [tempids transient-id]
   (assert (schemas/transient-id? transient-id))
+  (let [transient-id->entity (-> tempids meta :transient-id->entity)]
+    (assert transient-id->entity
+            (str "Must create tempids maps with create-tempid-map: " (pr-str tempids)))
   (when-some [id (get tempids transient-id)]
-    (let [entity (-> tempids meta :transient-id->entity (get transient-id))]
+    (let [entity (get transient-id->entity transient-id)]
       (assert entity (str "Missing :transient-id->entity for " transient-id))
-      [id entity])))
+      [id entity]))))
 
 (defn create-tempid-map [{:keys [id] :as entity} entity-type]
   (assert (some-> id schemas/transient-id?))
