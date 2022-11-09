@@ -163,7 +163,8 @@
       (assert entity (str "Missing :transient-id->entity for " transient-id))
       [id entity])))
 
-(defn create-tempid-map [{:keys [id] :as entity}]
+(defn create-tempid-map [{:keys [id] :as entity} entity-type]
+  (assert (some-> id schemas/transient-id?))
   (with-meta {id (make-id entity-type)}
              {:transient-id->entity {id entity}}))
 
@@ -176,7 +177,7 @@
   (update fm :tempids #(apply merge-tempids %
                               (keep (fn [{:keys [id] :as entity}]
                                       (when (some-> id schemas/transient-id?)
-                                        (create-tempid-map entity)))
+                                        (create-tempid-map entity entity-type)))
                                     entities))))
 
 (s/defn ^:private realize-entities :- FlowMap
