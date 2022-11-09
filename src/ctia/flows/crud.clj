@@ -137,14 +137,35 @@
               entities)))
 
 (defn merge-tempids [& tempids-maps]
-  (or (apply merge-with 
-             (fn [id1 id2]
-               (http-response/bad-request!
-                 {:error "Transient id reused for multiple entities"
-                  :entity1 id1
-                  :entity2 id2}))
-             tempids-maps)
-      {}))
+  (let [transient-id->entity (into {} (map (fn [m]
+                                             (let [transient-id->entity (-> m meta :transient-id->entity)]
+                                               (assert transient-id->entity
+                                                       (str "Must create tempid maps with create-tempid-map: " (pr-str m)))
+                                               transient-id->entity)))
+                                   tempids-maps)
+        m (or (apply merge-with
+                     (fn [id1 id2]
+                       ;; TODO include transient id in error msg
+                       (http-response/bad-request!
+                         {:error "Transient id reused for multiple entities"
+                          :entity1 id1
+                          :entity2 id2}))
+                     tempids-maps)
+              {})]
+    (assert (= (set (keys transient-id->entity))
+               (set (keys m))))
+    (with-meta m {:transient-id->entity transient-id->entity})))
+
+(defn lookup-id+entity-from-tempid [tempids transient-id]
+  (assert (schemas/transient-id? transient-id))
+  (when-some [id (get tempids transient-id)]
+    (let [entity (-> tempids meta :transient-id->entity (get transient-id))]
+      (assert entity (str "Missing :transient-id->entity for " transient-id))
+      [id entity])))
+
+(defn create-tempid-map [{:keys [id] :as entity}]
+  (with-meta {id (make-id entity-type)}
+             {:transient-id->entity {id entity}}))
 
 (s/defn ^:private create-ids-from-transient :- FlowMap
   "Creates IDs for entities identified by transient IDs that have not
@@ -153,9 +174,9 @@
            entity-type]
     :as fm} :- FlowMap]
   (update fm :tempids #(apply merge-tempids %
-                              (keep (fn [{:keys [id]}]
+                              (keep (fn [{:keys [id] :as entity}]
                                       (when (some-> id schemas/transient-id?)
-                                        {id (make-id entity-type)}))
+                                        (create-tempid-map entity)))
                                     entities))))
 
 (s/defn ^:private realize-entities :- FlowMap

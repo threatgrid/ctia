@@ -1,6 +1,7 @@
 (ns ctia.entity.asset
   (:require
    [ctia.domain.entities :refer [default-realize-fn]]
+   [ctia.flows.crud :refer [lookup-id+entity-from-tempid]]
    [ctia.http.routes.common :as routes.common]
    [ctia.http.routes.crud :refer [services->entity-crud-routes]]
    [ctia.schemas.core :as schemas
@@ -91,8 +92,11 @@
   [{:keys [asset_ref] :as entity}
    tempids]
   (if (schemas/transient-id? asset_ref)
-    (if-let [new-ref (get tempids asset_ref)]
-      (assoc entity :asset_ref new-ref)
+    (if-some [[new-ref {:keys [type] :as entity}] (lookup-id+entity-from-tempid tempids asset_ref)]
+      (if (or (not (string? type))
+              (= "asset" type))
+        (assoc entity :asset_ref new-ref)
+        (assoc entity :error (format "asset_ref must be an asset, found %s: %s" type entity)))
       (assoc entity :error
              (format
               (str "Cannot resolve asset_ref for transient ID: '%s', in '%s'. "
