@@ -302,10 +302,22 @@
   "common.id")
 
 (def TransientID s/Str)
+(s/defschema TempIDInfo
+  {:id s/Str
+   :entity (s/pred map?)
+   :entity-type s/Keyword})
 
 (s/defschema TempIDs
   "Mapping table between transient and permanent IDs"
-  {TransientID ID})
+  (s/conditional
+    (fn [m]
+      (and (map? m)
+           (let [transient-id->info (:transient-id->info (meta m))]
+             (and (nil? (s/check {TransientID TempIDInfo}
+                                 transient-id->info))
+                  (= (set (keys m))
+                     (set (keys transient-id->info)))))))
+    {TransientID ID}))
 
 (s/defschema StatusInfo
   "Status information for a specific instance of CTIA"

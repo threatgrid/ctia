@@ -20,7 +20,8 @@
      HTTPShowServices
      RealizeFn
      lift-realize-fn-with-context
-     TempIDs]]
+     TempIDs
+     TempIDInfo]]
    [ctia.store :as store]
    [ctim.domain.id :as id]
    [ring.util.http-response :as http-response]
@@ -156,10 +157,9 @@
                (set (keys m))))
     (with-meta m {:transient-id->info transient-id->info})))
 
-(s/defn lookup-info-from-tempid :- (s/maybe {:id s/Str
-                                             :entity (s/pred map?)
-                                             :entity-type s/Keyword})
-  [tempids transient-id]
+(s/defn lookup-info-from-tempid :- (s/maybe TempIDInfo)
+  [tempids :- TempIDs
+   transient-id]
   (assert (schemas/transient-id? transient-id))
   (let [transient-id->info (-> tempids meta :transient-id->info)]
     (assert transient-id->info
@@ -382,14 +382,21 @@
            id (assoc :id (get short-to-long-map id))))
        entities))
 
-(defn tempids-with-long-ids
+(s/defn tempids-with-long-ids :- TempIDs
   "Converts IDs in the tempids mapping table from short to long format"
-  [tempids short-to-long-map]
-  (into {}
-        (keep (fn [[tempid short-id]]
-                (when-let [long-id (get short-to-long-map short-id)]
-                  [tempid long-id])))
-        tempids))
+  [tempids :- TempIDs
+   short-to-long-map]
+  (with-meta (into {}
+                   (keep (fn [[tempid short-id]]
+                           (when-let [long-id (get short-to-long-map short-id)]
+                             [tempid long-id])))
+                   tempids)
+             {:transient-id->info
+              (into {}
+                    (keep (fn [[tempid {short-id :id :as info}]]
+                            (when-some [long-id (get short-to-long-map short-id)]
+                              [tempid (assoc info :id long-id)])))
+                    tempids)}))
 
 (s/defn ^:private apply-long-id-fn :- FlowMap
   [{:keys [entities tempids long-id-fn] :as fm}]

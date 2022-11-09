@@ -7,7 +7,7 @@
    [ctia.domain.entities :as ent :refer [with-long-id short-id->long-id]]
    [ctia.entity.entities :refer [all-entities]]
    [ctia.flows.crud :as flows]
-   [ctia.schemas.core :as schemas :refer [APIHandlerServices]]
+   [ctia.schemas.core :as schemas :refer [APIHandlerServices TempIDs]]
    [ctia.schemas.utils :as csu]
    [ctia.store :as store]
    [ring.util.http-response :refer [bad-request!]]
@@ -256,7 +256,7 @@
   The create-entities set the enveloped-result? to True in the flow
   configuration to get :data and :tempids for each entity in the result."
   [entities-by-type]
-  (apply flow/merge-tempids
+  (apply flows/merge-tempids
          (map (comp :tempids val) entities-by-type)))
 
 (defn bulk-refresh? [get-in-config]
@@ -285,7 +285,10 @@
    1. Creates all entities except Relationships
    2. Creates Relationships with mapping between transient and real IDs"
   ([bulk login services :- APIHandlerServices] (create-bulk bulk {} login {} services))
-  ([bulk tempids login params
+  ([bulk
+    tempids :- TempIDs
+    login
+    params
     {{:keys [get-in-config]} :ConfigService :as services} :- APIHandlerServices]
    (let [{:keys [refresh]
           :or   {refresh (bulk-refresh? get-in-config)}} params
@@ -302,7 +305,7 @@
                        login
                        {:refresh refresh}
                        services)
-         tempids (flow/merge-tempids tempids (merge-entity-tempids new-entities))
+         tempids (flows/merge-tempids tempids (merge-entity-tempids new-entities))
          new-linked-ents (gen-bulk-from-fn
                           create-entities
                           (select-keys
@@ -314,7 +317,7 @@
                           login
                           {:refresh refresh}
                           services)
-         tempids (flow/merge-tempids tempids (merge-entity-tempids new-linked-ents))
+         tempids (flows/merge-tempids tempids (merge-entity-tempids new-linked-ents))
          all-entities (merge new-entities new-linked-ents)
          ;; Extracting data from the enveloped flow result
          ;; {:entity-type {:data [] :tempids {}}
