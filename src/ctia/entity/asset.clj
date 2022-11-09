@@ -92,10 +92,10 @@
   [{:keys [asset_ref] :as entity}
    tempids]
   (if (schemas/transient-id? asset_ref)
-    (if-some [{:keys [entity entity-type id]} (lookup-info-from-tempid tempids asset_ref)]
+    (if-some [{tempid-entity :entity :keys [entity-type id]} (lookup-info-from-tempid tempids asset_ref)]
       (if (= :asset entity-type)
         (assoc entity :asset_ref id)
-        (assoc entity :error (format "asset_ref must be an asset, found %s: %s" entity-type entity)))
+        (assoc entity :error (format "asset_ref on entity %s must be an asset, found %s: %s" entity entity-type tempid-entity)))
       (assoc entity :error
              (format
               (str "Cannot resolve asset_ref for transient ID: '%s', in '%s'. "
