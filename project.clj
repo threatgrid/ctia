@@ -21,7 +21,7 @@
 
   By centralizing all build configurations here, we can use LEIN_OFFLINE=true
   when running tests to automatically catch errors in the dep caching logic.
-  
+
   To add a new build, add an entry here and use CTIA_CI_PROFILES to select it."
   {:next-clojure (str base-ci-profiles ",+next-clojure")
    :uberjar "uberjar"
@@ -85,7 +85,7 @@
                  [prismatic/schema "1.2.0"]
                  [metosin/schema-tools "0.12.2"]
                  [threatgrid/flanders "0.1.23"]
-                 [threatgrid/ctim "1.1.12"]
+                 [threatgrid/ctim "1.1.13"]
                  [instaparse "1.4.10"] ;; com.gfredericks/test.chuck > threatgrid/ctim
                  [threatgrid/clj-momo "0.3.5"]
                  [threatgrid/ductile "0.4.4"]
@@ -195,7 +195,7 @@
                         (clojure.string/join "")
                         read-string
                         :selectors)
-  
+
   :filespecs [{:type :fn
                :fn (fn [_]
                      {:type :bytes :path "ctia-version.txt"
