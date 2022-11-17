@@ -407,7 +407,7 @@
     <dependency>
       <groupId>threatgrid</groupId>
       <artifactId>ctim</artifactId>
-      <version>1.1.12</version>
+      <version>1.1.13</version>
       <exclusions>
         <exclusion>
           <artifactId>slf4j-nop</artifactId>
