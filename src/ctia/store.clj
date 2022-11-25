@@ -1,6 +1,4 @@
-(ns ctia.store
-  (:require [ctia.schemas.core :refer [APIHandlerServices]]
-            [schema.core :as s]))
+(ns ctia.store)
 
 (defprotocol IStore
   (create-record [this new-records ident params])
@@ -63,24 +61,3 @@
    :tool []
    :vulnerability []
    :weakness []})
-
-(s/defn list-all-pages
-  [entity
-   list-fn
-   filters
-   identity-map
-   params
-   {{:keys [get-store]} :StoreService} :- APIHandlerServices]
-  (loop [query-params params
-         results []]
-    (let [{:keys [data
-                  paging]}
-          (-> (get-store entity)
-              (list-fn
-                filters
-                identity-map
-                query-params))]
-      (if-let [next-params (:next paging)]
-        (recur (into query-params next-params)
-               (into results data))
-        (into results data)))))

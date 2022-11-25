@@ -79,7 +79,7 @@
   "transform a store state
    into a properties map for easier manipulation,
    override the cm to use the custom timeout "
-  [{:keys [index props conn config] :as state}
+  [{:keys [index props conn config]}
    conn-overrides]
   (let [entity-type (-> props :entity name)]
     {:conn (merge conn conn-overrides)
@@ -97,3 +97,13 @@
   [store conn-overrides]
   (-> store first :state
       (store-state->map conn-overrides)))
+
+(defn all-pages-iteration
+  [query-fn params]
+  (sequence
+   cat
+   (iteration query-fn
+              :vf :data
+              :kf #(when-let [next-params (get-in % [:paging :next])]
+                     (into params next-params))
+              :initk params)))

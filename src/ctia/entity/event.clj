@@ -10,7 +10,8 @@
    [ctia.http.routes.crud :refer [services->entity-crud-routes]]
    [ctia.lib.compojure.api.core :refer [GET routes]]
    [ctia.schemas.core :refer [APIHandlerServices]]
-   [ctia.store :refer [list-all-pages list-events]]
+   [ctia.store :as store]
+   [ctia.stores.es.store :as es-store]
    [ctia.stores.es.mapping :as em]
    [ring.util.http-response :refer [ok]]
    [schema-tools.core :as st]
@@ -107,17 +108,20 @@
         buckets (reduce #(timeline-append %1 %2 get-in-config) [] events)]
     (reverse (sort-by :from buckets))))
 
-(s/defn fetch-related-events [_id identity-map q services :- APIHandlerServices]
+(s/defn fetch-related-events [_id identity-map q
+                              {{:keys [get-store]} :StoreService} :- APIHandlerServices]
   (let [filters {:entity.id _id
                  :entity.source_ref _id
-                 :entity.target_ref _id}]
-    (some-> (list-all-pages :event
-                            list-events
-                            {:one-of filters}
-                            identity-map
-                            q
-                            services)
-            ent/un-store-all)))
+                 :entity.target_ref _id}
+        event-store (get-store :event)]
+    (sequence
+     (map ent/un-store)
+     (es-store/all-pages-iteration #(store/list-events
+                                     event-store
+                                     {:one-of filters}
+                                     identity-map
+                                     %)
+                                   q))))
 
 (s/defn event-history-routes [{{:keys [get-in-config]} :ConfigService
                                :as services} :- APIHandlerServices]

@@ -1,18 +1,16 @@
 (ns ctia.entity.feed-test
   (:require
-   [ctia.entity.feed :as sut]
-   [clojure.string :as string]
    [clj-http.client :as client]
+   [clojure.string :as string]
+   [clojure.test :refer [deftest is join-fixtures testing use-fixtures]]
+   [ctia.entity.feed :as sut]
+   [ctia.test-helpers.access-control :refer [access-control-test]]
+   [ctia.test-helpers.auth :refer [all-capabilities]]
+   [ctia.test-helpers.core :as helpers]
+   [ctia.test-helpers.crud :refer [entity-crud-test]]
+   [ctia.test-helpers.fake-whoami-service :as whoami-helpers]
+   [ctia.test-helpers.store :refer [test-for-each-store-with-app]]
    [ctim.schemas.common :as c]
-   [clojure.test :refer [deftest testing is join-fixtures use-fixtures]]
-   [ctia.stores.es.crud :as es.crud]
-   [ctia.test-helpers
-    [access-control :refer [access-control-test]]
-    [auth :refer [all-capabilities]]
-    [core :as helpers]
-    [crud :refer [entity-crud-test]]
-    [fake-whoami-service :as whoami-helpers]
-    [store :refer [test-for-each-store-with-app]]]
    [schema.test :refer [validate-schemas]]))
 
 (def new-feed-maximal
@@ -118,7 +116,6 @@
            :timestamp "2019-05-08T18:03:32.785Z",
            :relationship_type "element-of"})
        (map :id judgements)))
-
 
 (def blocklist-bundle
   {:type "bundle",

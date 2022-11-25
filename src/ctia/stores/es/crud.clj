@@ -94,14 +94,14 @@ It returns the documents with full hits meta data including the real index in wh
   [{:keys [conn index] :as _conn-state} :- ESConnState
    ids :- [s/Str]
    es-params]
-  (let [ids-query (q/ids (map ensure-document-id ids))
+  (let [limit (count ids)
+        ids-query (q/ids (map ensure-document-id ids))
         res (ductile.doc/query conn
                                index
                                ids-query
                                (assoc (make-es-read-params es-params)
-                                      :limit (count ids)
-                                      :full-hits?
-                                      true))]
+                                      :limit limit
+                                      :full-hits? true))]
     (:data res)))
 
 (s/defn get-doc-with-index
