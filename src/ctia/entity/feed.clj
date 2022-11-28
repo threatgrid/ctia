@@ -179,7 +179,8 @@
                                 (mapcat read-judgements)
                                 (remove nil?)
                                 (remove #(not (cdv/valid-now? now %)))
-                                (map #(with-long-id % services)))
+                                (map #(with-long-id % services))
+                                (map un-store))
                           (store/iteration relationship-store
                                            #(store/list-records %1 {:all-of {:target_ref indicator_id}} feed-identity %2)
                                            {:fields [:source_ref]
@@ -197,8 +198,7 @@
           (= :judgements output)
           (assoc
            :output :judgements
-           :judgements
-           (distinct (map un-store feed-results))))))
+           :judgements feed-results))))
     :not-found))
 
 (defn sorted-observable-values [data]
