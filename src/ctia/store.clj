@@ -25,9 +25,7 @@
   (delete-identity [this org-id role]))
 
 (defprotocol IEventStore
-  (read-event [this id ident params])
-  (create-events [this new-events])
-  (list-events [this filtermap ident params]))
+  (create-events [this new-events]))
 
 (defprotocol IQueryStringSearchableStore
   (query-string-search [this search-query ident params])

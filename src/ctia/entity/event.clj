@@ -116,7 +116,7 @@
         event-store (get-store :event)]
     (sequence
      (map ent/un-store)
-     (es-store/all-pages-iteration #(store/list-events
+     (es-store/all-pages-iteration #(store/list-records
                                      event-store
                                      {:one-of filters}
                                      identity-map
