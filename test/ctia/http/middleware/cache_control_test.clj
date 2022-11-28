@@ -36,7 +36,7 @@
                 :body {:title "actor"
                        :description "description"
                        :short_description "short description"
-                       :actor_type "Hacker"
+                       :actor_types ["Hacker"]
                        :source "a source"
                        :confidence "High"
                        :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"

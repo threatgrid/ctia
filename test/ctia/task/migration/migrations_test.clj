@@ -309,3 +309,12 @@
                        verdict
                        casebook])))))
 
+(deftest actor-type-array-test
+  (let [entities [{:type "actor" :actor_type "Hacker"}
+                  {:type "actor"}
+                  {:type "foo" :other-stuff "blah"}]
+        expected [{:type "actor" :actor_types ["Hacker"]}
+                  {:type "actor"}
+                  {:type "foo" :other-stuff "blah"}]]
+    (is (= expected (into [] sut/actor-type-array entities)))))
+

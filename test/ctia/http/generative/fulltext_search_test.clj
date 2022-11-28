@@ -311,7 +311,7 @@
                       :source "ngfw_ips_event_service"}
             bundle   {:incidents
                       [{:description "desc",
-                        :schema_version "1.1.3",
+                        :schema_version "1.2.0",
                         :type "incident",
                         :source "ngfw_ips_event_service",
                         :tlp "green",
@@ -327,7 +327,7 @@
                         :status "New",
                         :confidence "High"}
                        {:description "desc",
-                        :schema_version "1.1.3",
+                        :schema_version "1.2.0",
                         :type "incident",
                         :tlp "green",
                         :source "ngfw_ips_event_service",
