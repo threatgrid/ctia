@@ -1,8 +1,13 @@
 (ns ctia.entity.event.store
   (:require
-   [ctia.store :refer [IStore IQueryStringSearchableStore IEventStore]]
+   [ctia.store
+    :refer [IStore
+            IQueryStringSearchableStore
+            IEventStore
+            IPaginateableStore]
+    :as store]
    [ctia.entity.event.crud :as crud]
-   [ctia.stores.es.store :refer [close-connections!]]))
+   [ctia.stores.es.store :refer [close-connections! all-pages-iteration]]))
 
 (defrecord EventStore [state]
   IStore
@@ -11,9 +16,11 @@
   (list-records [_ filtermap ident params]
     (crud/handle-list state filtermap ident params))
   (close [_] (close-connections! state))
+
   IEventStore
   (create-events [_ new-events]
     (crud/handle-create state new-events))
+
   IQueryStringSearchableStore
   (query-string-search [_ search-query ident params]
     (crud/handle-event-query-string-search
@@ -26,4 +33,10 @@
      state search-query agg-query ident))
   (delete-search [_ search-query ident params]
     (crud/handle-delete-search
-     state search-query ident params)))
+     state search-query ident params))
+
+  IPaginateableStore
+  (iteration [this fetch-page-fn]
+    (store/iteration this fetch-page-fn {}))
+  (iteration [this fetch-page-fn init-page-params]
+    (all-pages-iteration (partial fetch-page-fn this) init-page-params)))

@@ -116,12 +116,9 @@
         event-store (get-store :event)]
     (sequence
      (map ent/un-store)
-     (es-store/all-pages-iteration #(store/list-records
-                                     event-store
-                                     {:one-of filters}
-                                     identity-map
-                                     %)
-                                   q))))
+     (store/iteration event-store
+                      #(store/list-records %1 {:one-of filters} identity-map %2)
+                      q))))
 
 (s/defn event-history-routes [{{:keys [get-in-config]} :ConfigService
                                :as services} :- APIHandlerServices]

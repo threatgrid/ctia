@@ -3,7 +3,10 @@
             [ductile.conn :as es-conn]
             [ductile.index :as es-index]
             [ductile.schemas :refer [ESConn]]
-            [ctia.store :refer [IStore IQueryStringSearchableStore]]
+            [ctia.store
+             :refer [IStore IQueryStringSearchableStore
+                     IPaginateableStore]
+             :as store]
             [ctia.stores.es.crud :as crud]))
 
 (defn delete-state-indexes [{:keys [conn index] :as _state}]
@@ -14,6 +17,16 @@
 (s/defn close-connections!
   [{:keys [conn]}]
   (es-conn/close conn))
+
+(defn all-pages-iteration
+  [query-fn params]
+  (sequence
+   cat
+   (iteration query-fn
+              :vf :data
+              :kf #(when-let [next-params (get-in % [:paging :next])]
+                     (into params next-params))
+              :initk params)))
 
 (defmacro def-es-store
   [store-name
@@ -52,6 +65,7 @@
        ~(symbol "state") filter-map# ident# params#))
      (~(symbol "close") [_#]
       (close-connections! ~(symbol "state")))
+
      IQueryStringSearchableStore
      (~(symbol "query-string-search") [_# search-query# ident# params#]
       ((crud/handle-query-string-search ~partial-stored-schema)
@@ -64,7 +78,13 @@
        ~(symbol "state") search-query# agg-query# ident#))
      (~(symbol "delete-search") [_# search-query# ident# params#]
       (crud/handle-delete-search
-       ~(symbol "state") search-query# ident# params#))))
+       ~(symbol "state") search-query# ident# params#))
+
+     IPaginateableStore
+     (~(symbol "iteration") [this# fetch-page-fn#]
+      (store/iteration this# fetch-page-fn# {}))
+     (~(symbol "iteration") [this# fetch-page-fn# init-page-params#]
+      (all-pages-iteration (partial fetch-page-fn# this#) init-page-params#))))
 
 (s/defschema StoreMap
   {:conn ESConn
@@ -97,13 +117,3 @@
   [store conn-overrides]
   (-> store first :state
       (store-state->map conn-overrides)))
-
-(defn all-pages-iteration
-  [query-fn params]
-  (sequence
-   cat
-   (iteration query-fn
-              :vf :data
-              :kf #(when-let [next-params (get-in % [:paging :next])]
-                     (into params next-params))
-              :initk params)))

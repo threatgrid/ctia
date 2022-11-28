@@ -1,4 +1,5 @@
-(ns ctia.store)
+(ns ctia.store
+  (:refer-clojure :exclude [iteration]))
 
 (defprotocol IStore
   (create-record [this new-records ident params])
@@ -32,6 +33,11 @@
   (query-string-count [this search-query ident])
   (aggregate [this search-query agg-query ident])
   (delete-search [this search-query ident params]))
+
+(defprotocol IPaginateableStore
+  "Protocol that can implement lazy iteration over some number of calls to impure
+  `fetch-page-fn` using `init-page-params` for the first call."
+  (iteration [this fetch-page-fn] [this fetch-page-fn init-page-params]))
 
 (def empty-stores
   {:actor []

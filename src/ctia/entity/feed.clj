@@ -180,15 +180,12 @@
                                 (remove nil?)
                                 (remove #(not (cdv/valid-now? now %)))
                                 (map #(with-long-id % services)))
-                          (es-store/all-pages-iteration #(store/list-records
-                                                          relationship-store
-                                                          {:all-of {:target_ref indicator_id}}
-                                                          feed-identity
-                                                          %)
-                                                        {:fields [:source_ref]
-                                                         :limit fetch-limit
-                                                         :sort_by "timestamp"
-                                                         :sort_order "desc"}))]
+                          (store/iteration relationship-store
+                                           #(store/list-records %1 {:all-of {:target_ref indicator_id}} feed-identity %2)
+                                           {:fields [:source_ref]
+                                            :limit fetch-limit
+                                            :sort_by "timestamp"
+                                            :sort_order "desc"}))]
         (cond-> {}
 
           (= :observables output)
