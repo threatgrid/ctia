@@ -16,6 +16,7 @@
    [ctia.http.routes.common :as routes.common]
    [ctia.http.routes.crud :as routes.crud]
    [ctia.lib.compojure.api.core :refer [DELETE GET POST PUT routes]]
+   [ctia.lib.edn :as edn]
    [ctia.schemas.core :refer [APIHandlerServices Observable]]
    [ctia.schemas.sorting :as sorting]
    [ctia.store
@@ -138,102 +139,130 @@
           (fn [feeds]
             (map #(decrypt-feed % services) feeds))))
 
-(def fetch-limit 200)
+(s/defn fetch-feed
+  ([id share-token services]
+   (fetch-feed id share-token {} services))
+  ([id share-token
+    page-params
+    {{:keys [decrypt]} :IEncryption
+     {:keys [get-store]} :StoreService
+     :as services} :- APIHandlerServices]
+   (if-let [{:keys [indicator_id
+                    secret
+                    output
+                    lifetime
+                    owner
+                    groups]}
+            (read-record (get-store :feed) id identity-map {})]
+     (cond
+       (not (valid-lifetime? lifetime))
+       :not-found
 
-(s/defn fetch-feed [id share-token
-                    {{:keys [decrypt]} :IEncryption
-                     {:keys [get-store]} :StoreService
-                     :as services} :- APIHandlerServices]
-  (if-let [{:keys [indicator_id
-                   secret
-                   output
-                   lifetime
-                   owner
-                   groups]}
-           (-> (get-store :feed)
-               (read-record id identity-map {}))]
-    (cond
-      (not (valid-lifetime? lifetime))
-      :not-found
+       (not= share-token (decrypt secret))
+       :unauthorized
 
-      (not= share-token (decrypt secret))
-      :unauthorized
+       :else
+       (let [ ;; VERY IMPORTANT! inherit the identity from the Feed!
+             feed-identity {:login owner
+                            :groups groups
+                            :capabilities #{:read-judgement
+                                            :read-relationship
+                                            :list-relationships}}
+             relationship-store (get-store :relationship)
+             relationship-max-result-window (get-in relationship-store [:state :config :settings :max_result_window]
+                                                    pagination/max-result-window)
+             judgement-store (get-store :judgement)
+             judgement-max-result-window (get-in judgement-store [:state :config :settings :max_result_window]
+                                                 pagination/max-result-window)
+             read-judgements #(store/read-records judgement-store % feed-identity {})
+             now (java.util.Date.)
+             {relationships :data
+              {next-page :next} :paging}
+             (first (store/iteration
+                     relationship-store
+                     #(store/list-records %1 {:all-of {:target_ref indicator_id}} feed-identity %2)
+                     (merge {:fields [:source_ref]
+                             :limit relationship-max-result-window
+                             :sort_by "timestamp:desc,id"}
+                            (select-keys page-params [:search_after :limit]))))
+             feed-results (sequence
+                           (comp (keep :source_ref)
+                                 (distinct)
+                                 (partition-all judgement-max-result-window)
+                                 (mapcat read-judgements)
+                                 (remove nil?)
+                                 (remove #(not (cdv/valid-now? now %)))
+                                 (map #(with-long-id % services))
+                                 (map un-store))
+                           relationships)]
+         (cond-> {}
+           (= :observables output)
+           (assoc :output :observables
+                  :observables (distinct (map :observable feed-results)))
 
-      :else
-      (let [ ;; VERY IMPORTANT! inherit the identity from the Feed!
-            feed-identity {:login owner
-                           :groups groups
-                           :capabilities #{:read-judgement
-                                           :read-relationship
-                                           :list-relationships}}
-            relationship-store (get-store :relationship)
-            judgement-store (get-store :judgement)
-            max-result-window (get-in judgement-store [:state :config :settings :max_result_window]
-                                      pagination/max-result-window)
-            read-judgements #(store/read-records judgement-store % feed-identity {})
-            now (java.util.Date.)
-            feed-results (sequence
-                          (comp (keep :source_ref)
-                                (distinct)
-                                (partition-all max-result-window)
-                                (mapcat read-judgements)
-                                (remove nil?)
-                                (remove #(not (cdv/valid-now? now %)))
-                                (map #(with-long-id % services))
-                                (map un-store))
-                          (store/iteration relationship-store
-                                           #(store/list-records %1 {:all-of {:target_ref indicator_id}} feed-identity %2)
-                                           {:fields [:source_ref]
-                                            :limit fetch-limit
-                                            :sort_by "timestamp"
-                                            :sort_order "desc"}))]
-        (cond-> {}
+           (= :judgements output)
+           (assoc :output :judgements
+                  :judgements feed-results)
 
-          (= :observables output)
-          (assoc
-           :output :observables
-           :observables
-           (distinct (map :observable feed-results)))
-
-          (= :judgements output)
-          (assoc
-           :output :judgements
-           :judgements feed-results))))
-    :not-found))
-
-(defn sorted-observable-values [data]
-  (sort-by :value (map #(select-keys % [:value]) data)))
+           (seq next-page)
+           (assoc :next-page next-page))))
+     :not-found)))
 
 (s/defn feed-view-routes [services :- APIHandlerServices]
   (routes
    (GET "/:id/view.txt" []
-        :summary "Get a Feed View as newline separated entries"
-        :path-params [id :- s/Str]
-        :return s/Str
-        :produces #{"text/plain"}
-        :responses {404 {:schema s/Str}
-                    401 {:schema s/Str}}
-        :query-params [s :- (describe s/Str "The feed share token")]
-        (let [{:keys [output]
-               :as feed} (fetch-feed id s services)]
-          (case feed
-            :not-found (not-found "feed not found")
-            :unauthorized (unauthorized "wrong secret")
-            (let [data (output feed)
-                  transformed (some->> (sorted-observable-values data)
-                                       (map :value)
-                                       (string/join \newline))]
-              (ok transformed)))))
-   (GET "/:id/view" []
-        :summary "Get a Feed View"
-        :path-params [id :- s/Str]
-        :return FeedView
-        :query-params [s :- (describe s/Str "The feed share token")]
-        (let [feed (fetch-feed id s services)]
-          (case feed
-            :not-found (not-found {:error "feed not found"})
-            :unauthorized (unauthorized {:error "wrong secret"})
-            (ok (dissoc feed :output)))))))
+     :summary "Get a Feed View as newline separated entries"
+     :path-params [id :- s/Str]
+     :return s/Str
+     :produces #{"text/plain"}
+     :responses {404 {:schema s/Str}
+                 401 {:schema s/Str}}
+     :query-params [s :- (describe s/Str "The feed share token")]
+     :header-params [{X-Search_after :- (s/maybe s/Str) "nil"}
+                     {X-Limit :- (s/maybe s/Str) "nil"}]
+     (let [X-Search_after (edn/read-string X-Search_after)
+           X-Limit (edn/read-string X-Limit)
+           page-params (cond-> {}
+                         X-Search_after
+                         (assoc :search_after X-Search_after)
+
+                         X-Limit
+                         (assoc :limit X-Limit))
+           {:keys [output next-page]
+            :as feed} (fetch-feed id s page-params services)]
+       (case feed
+         :not-found (not-found "feed not found")
+         :unauthorized (unauthorized "wrong secret")
+         (let [data (output feed)
+               transformed (string/join \newline (sort (map :value data)))]
+           (if next-page
+             (routes.common/paginated-ok {:data transformed
+                                          :paging next-page})
+             (ok transformed))))))
+
+   (GET "/:id/view" {:as request}
+     :summary "Get a Feed View"
+     :path-params [id :- s/Str]
+     :return FeedView
+     :query-params [s :- (describe s/Str "The feed share token")]
+     :header-params [{X-Search_after :- (s/maybe s/Str) "nil"}
+                     {X-Limit :- (s/maybe s/Str) "nil"}]
+     (let [X-Search_after (edn/read-string X-Search_after)
+           X-Limit (edn/read-string X-Limit)
+           page-params (cond-> {}
+                         X-Search_after
+                         (assoc :search_after X-Search_after)
+
+                         X-Limit
+                         (assoc :limit X-Limit))
+           {:keys [next-page] :as feed} (fetch-feed id s page-params services)]
+       (case feed
+         :not-found (not-found {:error "feed not found"})
+         :unauthorized (unauthorized {:error "wrong secret"})
+         (if next-page
+           (routes.common/paginated-ok {:data (dissoc feed :output :next-page)
+                                        :paging next-page})
+           (ok (dissoc feed :output))))))))
 
 (s/defn feed-routes [{{:keys [get-store]} :StoreService
                       :as services} :- APIHandlerServices]

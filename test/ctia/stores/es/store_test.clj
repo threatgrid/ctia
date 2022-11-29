@@ -15,14 +15,12 @@
     (helpers/fixture-ctia-with-app
      (fn [app]
        (let [{{:keys [get-store]} :StoreService} (app->APIHandlerServices app)
-             incidents-1 (fixt/n-doc incident-minimal 10)
-             incidents-2 (->> (fixt/n-doc incident-minimal 10)
+             incidents-1 (fixt/n-doc incident-minimal 10000)
+             incidents-2 (->> (fixt/n-doc incident-minimal 10000)
                               (map #(assoc % :source "incident-2-source")))
              incidents (concat incidents-1 incidents-2)
              _ (helpers/POST-bulk app {:incidents incidents})
-             incident-store (get-store :incident)
-             event-store (get-store :event)]
-         (Thread/sleep 1500) ;; ensure index refresh
+             incident-store (get-store :incident)]
 
          (letfn [(make-query-fn [store filters identity-map]
                    (fn query-fn [query-params]
@@ -34,27 +32,52 @@
            (let [query-incidents (make-query-fn
                                   incident-store
                                   {:query "*"}
-                                  admin-ident)
-                 query-events (make-query-fn
-                               event-store
-                               {:query "*"}
-                               admin-ident)]
-             (is
-              (= (count incidents)
-                 (count (sut/all-pages-iteration query-incidents {}))
-                 (count (sut/all-pages-iteration query-incidents {:limit 2}))
-                 (count (sut/all-pages-iteration query-incidents {:limit 3})))
-              "paging parameters shall not alter the number of retrieved entities.")
-             (is
-              (= (count incidents)
-                 (count (sut/all-pages-iteration query-incidents {}))
-                 (count (sut/all-pages-iteration query-events {})))
-              "all store shall be properly listed."))
-
-           (let [query-incidents (make-query-fn
-                                  incident-store
-                                  {:one-of {:source "incident-2-source"}}
                                   admin-ident)]
-             (is (= (count incidents-2)
-                    (count (sut/all-pages-iteration query-incidents {})))
-                 "entities shall be properly filtered."))))))))
+
+             (testing "all-pages-iteration is lazy"
+               (let [calls-counter (atom 0)
+                     iter (sut/all-pages-iteration
+                           (fn [params]
+                             (swap! calls-counter inc)
+                             (query-incidents params))
+                           {})
+                     _ (first iter)]
+                 (is (= 1 @calls-counter))
+                 (let [_ (rest iter)]
+                   (is (= 2 @calls-counter)))))
+
+             (testing "default limit is set"
+               (let [{:keys [data]
+                      {{:keys [limit]} :next} :paging}
+                     (first (sut/all-pages-iteration query-incidents {}))]
+                 (is (= limit 100))
+                 (is (= (count data) 100))))
+
+             (testing "respect max-result-window"
+               (let [{:keys [data]
+                      {{:keys [limit]} :next} :paging}
+                     (first (sut/all-pages-iteration query-incidents {:limit 15000}))]
+                 (is (= limit 10000))
+                 (is (= (count data) 10000))))
+
+             (testing "limit does not affect total number of retrieved entities"
+               (let [iter (sut/all-pages-iteration query-incidents {})
+                     iter1000 (sut/all-pages-iteration query-incidents {:limit 1000})]
+                 (is (= (count incidents)
+                        (count (sequence
+                                (mapcat :data)
+                                iter))
+                        (count (sequence
+                                (mapcat :data)
+                                iter1000)))))))
+
+           (testing "entities should be properly filtered"
+             (let [query-incidents (make-query-fn
+                                    incident-store
+                                    {:one-of {:source "incident-2-source"}}
+                                    admin-ident)]
+
+               (is (= (count incidents-2)
+                      (count (sequence
+                              (mapcat :data)
+                              (sut/all-pages-iteration query-incidents {:limit 20000})))))))))))))
