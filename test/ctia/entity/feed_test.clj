@@ -198,7 +198,21 @@
                         (helpers/PUT app
                                      (str "ctia/feed/" (:short-id feed-id))
                                      :body feed
-                                     :headers {"Authorization" "45c1f5e3f05d0"}))))))))))
+                                     :headers {"Authorization" "45c1f5e3f05d0"})))))))))
+
+  (testing "pagination"
+    (let [feed-view-url (:feed_view_url feed)
+          counter (atom 0)
+          expected-response (into #{} (map #(-> % :observable :value)) judgements)
+          response (loop [acc #{} headers {"X-Limit" 20}]
+                     (let [{:keys [headers body]} (client/get feed-view-url {:headers headers})]
+                       (swap! counter inc)
+                       (if (contains? headers "X-Search_after")
+                         (recur (into acc (string/split-lines body))
+                                (select-keys headers ["X-Limit" "X-Search_after"]))
+                         acc)))]
+      (is (= response expected-response))
+      (is (= (inc (/ (count expected-response) 20)) @counter)))))
 
 (deftest test-feed-routes
   (test-for-each-store-with-app

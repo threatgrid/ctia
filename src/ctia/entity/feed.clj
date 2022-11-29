@@ -218,16 +218,16 @@
      :responses {404 {:schema s/Str}
                  401 {:schema s/Str}}
      :query-params [s :- (describe s/Str "The feed share token")]
-     :header-params [{X-Search_after :- (s/maybe s/Str) "nil"}
-                     {X-Limit :- (s/maybe s/Str) "nil"}]
-     (let [X-Search_after (edn/read-string X-Search_after)
-           X-Limit (edn/read-string X-Limit)
+     :header-params [{x-search_after :- (s/maybe s/Str) "nil"}
+                     {x-limit :- (s/maybe s/Str) "nil"}]
+     (let [x-search_after (edn/read-string x-search_after)
+           x-limit (edn/read-string x-limit)
            page-params (cond-> {}
-                         X-Search_after
-                         (assoc :search_after X-Search_after)
+                         x-search_after
+                         (assoc :search_after x-search_after)
 
-                         X-Limit
-                         (assoc :limit X-Limit))
+                         x-limit
+                         (assoc :limit x-limit))
            {:keys [output next-page]
             :as feed} (fetch-feed id s page-params services)]
        (case feed
@@ -240,21 +240,21 @@
                                           :paging next-page})
              (ok transformed))))))
 
-   (GET "/:id/view" {:as request}
+   (GET "/:id/view" []
      :summary "Get a Feed View"
      :path-params [id :- s/Str]
      :return FeedView
      :query-params [s :- (describe s/Str "The feed share token")]
-     :header-params [{X-Search_after :- (s/maybe s/Str) "nil"}
-                     {X-Limit :- (s/maybe s/Str) "nil"}]
-     (let [X-Search_after (edn/read-string X-Search_after)
-           X-Limit (edn/read-string X-Limit)
+     :header-params [{x-search_after :- (s/maybe s/Str) "nil"}
+                     {x-limit :- (s/maybe s/Str) "nil"}]
+     (let [x-search_after (edn/read-string x-search_after)
+           x-limit (edn/read-string x-limit)
            page-params (cond-> {}
-                         X-Search_after
-                         (assoc :search_after X-Search_after)
+                         x-search_after
+                         (assoc :search_after x-search_after)
 
-                         X-Limit
-                         (assoc :limit X-Limit))
+                         x-limit
+                         (assoc :limit x-limit))
            {:keys [next-page] :as feed} (fetch-feed id s page-params services)]
        (case feed
          :not-found (not-found {:error "feed not found"})
