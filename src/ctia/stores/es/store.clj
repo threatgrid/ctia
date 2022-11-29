@@ -90,9 +90,9 @@
        ~(symbol "state") search-query# ident# params#))
 
      IPaginateableStore
-     (~(symbol "iteration") [this# fetch-page-fn#]
-      (store/iteration this# fetch-page-fn# {}))
-     (~(symbol "iteration") [this# fetch-page-fn# init-page-params#]
+     (~(symbol "paginate") [this# fetch-page-fn#]
+      (store/paginate this# fetch-page-fn# {}))
+     (~(symbol "paginate") [this# fetch-page-fn# init-page-params#]
       (all-pages-iteration (partial fetch-page-fn# this#) init-page-params#))))
 
 (s/defschema StoreMap

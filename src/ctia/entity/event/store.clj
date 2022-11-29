@@ -36,7 +36,7 @@
      state search-query ident params))
 
   IPaginateableStore
-  (iteration [this fetch-page-fn]
-    (store/iteration this fetch-page-fn {}))
-  (iteration [this fetch-page-fn init-page-params]
+  (paginate [this fetch-page-fn]
+    (store/paginate this fetch-page-fn {}))
+  (paginate [this fetch-page-fn init-page-params]
     (all-pages-iteration (partial fetch-page-fn this) init-page-params)))

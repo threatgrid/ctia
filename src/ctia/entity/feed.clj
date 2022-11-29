@@ -178,7 +178,7 @@
              now (java.util.Date.)
              {relationships :data
               {next-page :next} :paging}
-             (first (store/iteration
+             (first (store/paginate
                      relationship-store
                      #(store/list-records %1 {:all-of {:target_ref indicator_id}} feed-identity %2)
                      (merge {:fields [:source_ref]

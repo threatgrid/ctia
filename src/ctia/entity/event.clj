@@ -117,9 +117,9 @@
     (sequence
      (comp (mapcat :data)
            (map ent/un-store))
-     (store/iteration event-store
-                      #(store/list-records %1 {:one-of filters} identity-map %2)
-                      q))))
+     (store/paginate event-store
+                     #(store/list-records %1 {:one-of filters} identity-map %2)
+                     q))))
 
 (s/defn event-history-routes [{{:keys [get-in-config]} :ConfigService
                                :as services} :- APIHandlerServices]
