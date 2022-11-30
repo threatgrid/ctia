@@ -11,6 +11,7 @@
             [schema.core :as s]
             [clojure.tools.logging :as log])
   (:import [graphql GraphQL GraphQLException]
+           [graphql.execution MergedSelectionSet]
            [graphql.language
             Field FragmentDefinition FragmentSpread NamedNode SelectionSetContainer]
            [graphql.schema
@@ -112,11 +113,16 @@
   java.util.List
   (->clj [o] (vec (map ->clj o)))
 
+  MergedSelectionSet
+  (->clj [o] (into {} (.getSubFields o)))
+
   java.lang.Object
   (->clj [o] o)
 
   nil
-  (->clj [_] nil))
+  (->clj [_] nil)
+  
+  )
 
 (defn valid-type-name?
   "A GraphQL Type Name must be non-null, non-empty and match [_A-Za-z][_0-9A-Za-z]*"
