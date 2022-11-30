@@ -272,8 +272,8 @@
                            "TestQuery")]
              (is (= 400 status))
              (is (= #{;;FIXME line 2??
-                      ["ValidationError{validationErrorType=FieldUndefined, queryPath=[nonexistent], message=Validation error of type FieldUndefined: Field 'nonexistent' in type 'Root' is undefined @ 'nonexistent', locations=[SourceLocation{line=1, column=19}], description='Field 'nonexistent' in type 'Root' is undefined'}"]
-                      ["ValidationError{validationErrorType=FieldUndefined, queryPath=[nonexistent], message=Validation error of type FieldUndefined: Field 'nonexistent' in type 'Root' is undefined @ 'nonexistent', locations=[SourceLocation{line=2, column=19}], description='Field 'nonexistent' in type 'Root' is undefined'}"]}
+                      ["ValidationError{validationErrorType=FieldUndefined, queryPath=[nonexistent], message=Validation error of type FieldUndefined: Field 'nonexistent' in type 'Root' is undefined @ 'nonexistent', locations=[SourceLocation{line=2, column=19}], description='Field 'nonexistent' in type 'Root' is undefined'}"
+                      ["ValidationError{validationErrorType=FieldUndefined, queryPath=[nonexistent], message=Validation error of type FieldUndefined: Field 'nonexistent' in type 'Root' is undefined @ 'nonexistent', locations=[SourceLocation{line=1, column=19}], description='Field 'nonexistent' in type 'Root' is undefined'}"]]}
                     errors))))
          (testing "unauthorized access without capabilities"
            (let [{:keys [status]}
