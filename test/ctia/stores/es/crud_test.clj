@@ -278,7 +278,7 @@
   {:entity :sighting
    :indexname (es-helpers/get-indexname app :sighting)
    :host "localhost"
-   :port 9205
+   :port 9207
    :aliased true
    :rollover {:max_docs 3}
    :refresh "true"
@@ -291,7 +291,7 @@
   {:entity :sighting
    :indexname (es-helpers/get-indexname app :sighting)
    :host "localhost"
-   :port 9205
+   :port 9207
    :refresh "true"
    :auth {:type :basic-auth
           :params {:user "elastic"
