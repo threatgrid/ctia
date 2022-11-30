@@ -11,7 +11,7 @@
             [schema.core :as s]
             [clojure.tools.logging :as log])
   (:import [graphql GraphQL GraphQLException]
-           [graphql.execution MergedSelectionSet]
+           [graphql.execution MergedField MergedSelectionSet]
            [graphql.language
             Field FragmentDefinition FragmentSpread NamedNode SelectionSetContainer]
            [graphql.schema
@@ -113,16 +113,17 @@
   java.util.List
   (->clj [o] (vec (map ->clj o)))
 
+  MergedField
+  (->clj [o] (->clj (.getFields o)))
+
   MergedSelectionSet
-  (->clj [o] (into {} (.getSubFields o)))
+  (->clj [o] (->clj (.getSubFields o)))
 
   java.lang.Object
   (->clj [o] o)
 
   nil
-  (->clj [_] nil)
-  
-  )
+  (->clj [_] nil))
 
 (defn valid-type-name?
   "A GraphQL Type Name must be non-null, non-empty and match [_A-Za-z][_0-9A-Za-z]*"
@@ -246,12 +247,13 @@
   provides whenever possible."
   [env :- DataFetchingEnvironment
    fragments :- {s/Keyword FragmentDefinition}]
-  (let [selection-set (get-selections-get env)
-        first-fields (keys (->clj selection-set))
+  (let [selection-set (->clj (get-selections-get env))
+        first-fields (keys selection-set)
         fields (mapcat (fn [[k v]] v) selection-set)
         detected-selections (fields->selections
                              (concat fields
-                                     (->clj (.getFields env))) fragments)]
+                                     (->clj (.getFields env)))
+                             fragments)]
     (distinct
      (cond-> [:type]
        (seq first-fields) (concat first-fields)
