@@ -69,12 +69,12 @@
          "ctia.metrics.jmx.enabled"                   false
          "ctia.store.es.identity.refresh"             "true"
          "ctia.versions.config"                       "test"]
-        ;; use es7 if es5 is not available
+        ;; use es8 if es7 is not available
         (let [es-versions (set-of-es-versions-to-test)]
-          (when (and (not (es-versions 5))
-                     (es-versions 7))
-            ["ctia.store.es.default.port" 9207
-             "ctia.store.es.default.version" 7]))))
+          (when (and (not (es-versions 7))
+                     (es-versions 8))
+            ["ctia.store.es.default.port" 9208
+             "ctia.store.es.default.version" 8]))))
 (assert (even? (count *properties-overrides*)))
 
 (defn- isolate-config-indices
