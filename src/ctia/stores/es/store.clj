@@ -1,15 +1,13 @@
 (ns ctia.stores.es.store
-  (:require [schema.core :as s]
-            [ductile.conn :as es-conn]
-            [ductile.index :as es-index]
-            [ductile.schemas :refer [ESConn]]
-            [ductile.pagination :refer [default-limit
-                                        max-result-window]]
-            [ctia.store
-             :refer [IStore IQueryStringSearchableStore
-                     IPaginateableStore]
-             :as store]
-            [ctia.stores.es.crud :as crud]))
+  (:require
+   [ctia.store :refer [IPaginateableStore IQueryStringSearchableStore IStore]
+    :as store]
+   [ctia.stores.es.crud :as crud]
+   [ductile.conn :as es-conn]
+   [ductile.index :as es-index]
+   [ductile.pagination :refer [default-limit]]
+   [ductile.schemas :refer [ESConn]]
+   [schema.core :as s]))
 
 (defn delete-state-indexes [{:keys [conn index] :as _state}]
   (when conn
@@ -24,18 +22,15 @@
   "Returns lazy iteration of consecutive calls to `query-fn` with pagination params.
 
   Resulted data is a sequence of responses of a shape `{:data [,,,] :paging {:next {,,,}}}`"
-  ([query-fn] (all-pages-iteration query-fn {}))
+  ([query-fn] (all-pages-iteration query-fn {:limit default-limit}))
   ([query-fn {:keys [limit]
               :or {limit default-limit}
               :as params}]
-   (let [limit (if (> limit max-result-window)
-                 max-result-window
-                 limit)]
-     (iteration query-fn
-                :somef #(seq (:data %))
-                :kf #(when-let [next-params (get-in % [:paging :next])]
-                       (into params next-params))
-                :initk (assoc params :limit limit)))))
+   (iteration query-fn
+              :somef #(seq (:data %))
+              :kf #(when-let [next-params (get-in % [:paging :next])]
+                     (into params next-params))
+              :initk (assoc params :limit limit))))
 
 (defmacro def-es-store
   [store-name

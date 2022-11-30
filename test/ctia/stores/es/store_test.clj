@@ -53,13 +53,6 @@
                  (is (= limit 100))
                  (is (= (count data) 100))))
 
-             (testing "respect max-result-window"
-               (let [{:keys [data]
-                      {{:keys [limit]} :next} :paging}
-                     (first (sut/all-pages-iteration query-incidents {:limit 15000}))]
-                 (is (= limit 10000))
-                 (is (= (count data) 10000))))
-
              (testing "limit does not affect total number of retrieved entities"
                (let [iter (sut/all-pages-iteration query-incidents {})
                      iter1000 (sut/all-pages-iteration query-incidents {:limit 1000})]
@@ -80,4 +73,4 @@
                (is (= (count incidents-2)
                       (count (sequence
                               (mapcat :data)
-                              (sut/all-pages-iteration query-incidents {:limit 20000})))))))))))))
+                              (sut/all-pages-iteration query-incidents {:limit 10000})))))))))))))
