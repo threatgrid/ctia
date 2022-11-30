@@ -260,7 +260,7 @@
            (let [{:keys [_ errors status]} (gh/query app "dummy" {} "")]
              (is (= 400 status))
              (is (= errors
-                    ["InvalidSyntaxError{ message=Invalid Syntax ,locations=[SourceLocation{line=1, column=0}]}"]))))
+                    ["InvalidSyntaxError{ message=Invalid Syntax : offending token 'dummy' at line 1 column 0, offendingToken=dummy, locations=[SourceLocation{line=1, column=0}], sourcePreview=dummy\n}"]))))
 
          (testing "Query validation error"
            (let [{:keys [_ errors status]}
