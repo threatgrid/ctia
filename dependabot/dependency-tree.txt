@@ -276,9 +276,10 @@ ctia:ctia:jar:1.1.1-SNAPSHOT
 +- threatgrid:ring-graphql-ui:jar:0.1.1:compile
 |  +- threatgrid:ring-graphiql:jar:0.1.1:compile
 |  \- threatgrid:ring-graphql-voyager:jar:0.1.0:compile
-+- com.graphql-java:graphql-java:jar:19.2:compile
-|  +- com.graphql-java:java-dataloader:jar:3.2.0:compile
-|  \- org.reactivestreams:reactive-streams:jar:1.0.3:compile
++- com.graphql-java:graphql-java:jar:10.0:compile
+|  +- org.antlr:antlr4-runtime:jar:4.7.1:compile
+|  +- com.graphql-java:java-dataloader:jar:2.1.1:compile
+|  \- org.reactivestreams:reactive-streams:jar:1.0.2:compile
 +- org.slf4j:log4j-over-slf4j:jar:1.7.20:compile
 +- org.slf4j:slf4j-api:jar:1.7.35:compile
 +- puppetlabs:trapperkeeper:jar:test:3.2.0:test
