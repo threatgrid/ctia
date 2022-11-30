@@ -4,28 +4,18 @@
    [ctia.domain.entities
     :refer [page-with-long-id un-store un-store-page with-long-id]]
    [ctia.entity.feed.schemas
-    :refer [Feed
-            NewFeed
-            PartialFeed
-            PartialFeedList
-            PartialStoredFeed
-            realize-feed
-            StoredFeed]]
+    :refer [Feed FeedViewQueryParams NewFeed PartialFeed PartialFeedList
+            PartialStoredFeed realize-feed StoredFeed]]
    [ctia.entity.judgement.schemas :refer [Judgement]]
    [ctia.flows.crud :as flows]
    [ctia.http.routes.common :as routes.common]
    [ctia.http.routes.crud :as routes.crud]
    [ctia.lib.compojure.api.core :refer [DELETE GET POST PUT routes]]
-   [ctia.lib.edn :as edn]
    [ctia.schemas.core :refer [APIHandlerServices Observable]]
    [ctia.schemas.sorting :as sorting]
    [ctia.store
-    :refer [create-record
-            delete-search
-            list-records
-            query-string-count
-            query-string-search
-            read-record]
+    :refer [create-record delete-search list-records query-string-count
+            query-string-search read-record]
     :as store]
    [ctia.stores.es.mapping :as em]
    [ctia.stores.es.store :refer [def-es-store] :as es-store]
@@ -217,19 +207,17 @@
      :produces #{"text/plain"}
      :responses {404 {:schema s/Str}
                  401 {:schema s/Str}}
-     :query-params [s :- (describe s/Str "The feed share token")]
-     :header-params [{x-search_after :- (s/maybe s/Str) "nil"}
-                     {x-limit :- (s/maybe s/Str) "nil"}]
-     (let [x-search_after (edn/read-string x-search_after)
-           x-limit (edn/read-string x-limit)
+     :query [params FeedViewQueryParams]
+     (let [search_after (:search_after params)
+           limit (:limit params)
            page-params (cond-> {}
-                         x-search_after
-                         (assoc :search_after x-search_after)
+                         search_after
+                         (assoc :search_after search_after)
 
-                         x-limit
-                         (assoc :limit x-limit))
+                         limit
+                         (assoc :limit limit))
            {:keys [output next-page]
-            :as feed} (fetch-feed id s page-params services)]
+            :as feed} (fetch-feed id (:s params) page-params services)]
        (case feed
          :not-found (not-found "feed not found")
          :unauthorized (unauthorized "wrong secret")
@@ -244,18 +232,17 @@
      :summary "Get a Feed View"
      :path-params [id :- s/Str]
      :return FeedView
-     :query-params [s :- (describe s/Str "The feed share token")]
-     :header-params [{x-search_after :- (s/maybe s/Str) "nil"}
-                     {x-limit :- (s/maybe s/Str) "nil"}]
-     (let [x-search_after (edn/read-string x-search_after)
-           x-limit (edn/read-string x-limit)
+     :query [params FeedViewQueryParams]
+     (let [search_after (:search_after params)
+           limit (:limit params)
            page-params (cond-> {}
-                         x-search_after
-                         (assoc :search_after x-search_after)
+                         search_after
+                         (assoc :search_after search_after)
 
-                         x-limit
-                         (assoc :limit x-limit))
-           {:keys [next-page] :as feed} (fetch-feed id s page-params services)]
+                         limit
+                         (assoc :limit limit))
+           {:keys [next-page]
+            :as feed} (fetch-feed id (:s params) page-params services)]
        (case feed
          :not-found (not-found {:error "feed not found"})
          :unauthorized (unauthorized {:error "wrong secret"})

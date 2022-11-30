@@ -1,6 +1,7 @@
 (ns ctia.entity.feed-test
   (:require
    [clj-http.client :as client]
+   [clojure.edn :as edn]
    [clojure.string :as string]
    [clojure.test :refer [deftest is join-fixtures testing use-fixtures]]
    [ctia.entity.feed :as sut]
@@ -165,7 +166,7 @@
               (client/get url-with-invalid-query-params {:throw-exceptions false})]
           (is (= 400 status))
           (is (string/starts-with? (get headers "Content-Type") "text/plain"))
-          (is (= "{:errors {:s missing-required-key}}" body))))
+          (is (= "{:errors {:s missing-required-key, :invalid disallowed-key}}" body))))
 
       (testing "feed output judgements"
         (let [feed-update (assoc feed :output :judgements)
@@ -204,12 +205,15 @@
     (let [feed-view-url (:feed_view_url feed)
           counter (atom 0)
           expected-response (into #{} (map #(-> % :observable :value)) judgements)
-          response (loop [acc #{} headers {"X-Limit" 20}]
-                     (let [{:keys [headers body]} (client/get feed-view-url {:headers headers})]
+          response (loop [acc #{} limit 20 search-after []]
+                     (let [{:keys [headers body]}
+                           (client/get feed-view-url {:query-params {:limit limit
+                                                                     :search_after search-after}})]
                        (swap! counter inc)
                        (if (contains? headers "X-Search_after")
                          (recur (into acc (string/split-lines body))
-                                (select-keys headers ["X-Limit" "X-Search_after"]))
+                                (edn/read-string (get headers "X-Limit"))
+                                (edn/read-string (get headers "X-Search_after")))
                          acc)))]
       (is (= response expected-response))
       (is (= (inc (/ (count expected-response) 20)) @counter)))))
