@@ -492,7 +492,7 @@
   "Retrieves a Type from the given schema by its name"
   [^GraphQLSchema schema
    type-name]
-  (.getUnwrappedNonNullType schema type-name))
+  (.getType schema type-name))
 
 (s/defn new-graphql :- (RealizeFnResult GraphQL)
   [schema :- (RealizeFnResult GraphQLSchema)]
