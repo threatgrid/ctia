@@ -1516,6 +1516,25 @@
       </exclusions>
     </dependency>
     <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-api</artifactId>
+      <version>1.7.35</version>
+      <exclusions>
+        <exclusion>
+          <artifactId>slf4j-nop</artifactId>
+          <groupId>org.slf4j</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>slf4j-log4j12</artifactId>
+          <groupId>org.slf4j</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>netty</artifactId>
+          <groupId>io.netty</groupId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    <dependency>
       <groupId>puppetlabs</groupId>
       <artifactId>trapperkeeper</artifactId>
       <version>3.2.0</version>

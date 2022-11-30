@@ -423,7 +423,7 @@ ctia:ctia:jar:1.1.1-SNAPSHOT
 |  |  +- (io.netty:netty-buffer:jar:4.1.42.Final:compile - omitted for conflict with 4.1.75.Final)
 |  |  +- (io.netty:netty-transport:jar:4.1.42.Final:compile - omitted for conflict with 4.1.75.Final)
 |  |  \- (io.netty:netty-transport-native-unix-common:jar:4.1.42.Final:compile - omitted for conflict with 4.1.75.Final)
-|  +- org.slf4j:slf4j-api:jar:1.7.25:compile
+|  +- (org.slf4j:slf4j-api:jar:1.7.25:compile - omitted for conflict with 1.7.35)
 |  \- log4j:log4j:jar:1.2.17:compile
 +- args4j:args4j:jar:2.33:compile
 +- com.stuartsierra:component:jar:1.1.0:compile
@@ -606,6 +606,7 @@ ctia:ctia:jar:1.1.1-SNAPSHOT
 |  \- (org.slf4j:slf4j-api:jar:1.7.35:runtime - omitted for conflict with 1.7.25)
 +- org.slf4j:log4j-over-slf4j:jar:1.7.20:compile
 |  \- (org.slf4j:slf4j-api:jar:1.7.20:compile - omitted for conflict with 1.7.25)
++- org.slf4j:slf4j-api:jar:1.7.35:compile
 +- puppetlabs:trapperkeeper:jar:test:3.2.0:test
 |  +- (org.clojure:tools.logging:jar:0.4.0:test - omitted for conflict with 1.1.0)
 |  +- (org.clojure:tools.macro:jar:0.1.5:test - omitted for duplicate)

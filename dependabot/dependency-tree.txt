@@ -207,7 +207,6 @@ ctia:ctia:jar:1.1.1-SNAPSHOT
 |  +- org.apache.zookeeper:zookeeper-jute:jar:3.5.6:compile
 |  +- org.apache.yetus:audience-annotations:jar:0.5.0:compile
 |  +- io.netty:netty-transport-native-epoll:jar:4.1.42.Final:compile
-|  +- org.slf4j:slf4j-api:jar:1.7.25:compile
 |  \- log4j:log4j:jar:1.2.17:compile
 +- args4j:args4j:jar:2.33:compile
 +- com.stuartsierra:component:jar:1.1.0:compile
@@ -281,6 +280,7 @@ ctia:ctia:jar:1.1.1-SNAPSHOT
 |  +- com.graphql-java:java-dataloader:jar:3.2.0:compile
 |  \- org.reactivestreams:reactive-streams:jar:1.0.3:compile
 +- org.slf4j:log4j-over-slf4j:jar:1.7.20:compile
++- org.slf4j:slf4j-api:jar:1.7.35:compile
 +- puppetlabs:trapperkeeper:jar:test:3.2.0:test
 +- puppetlabs:kitchensink:jar:test:3.2.0:test
 +- org.clojure:test.check:jar:1.1.1:test
