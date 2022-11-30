@@ -259,7 +259,7 @@
          (testing "Query syntax error"
            (let [{:keys [_ errors status]} (gh/query app "dummy" {} "")]
              (is (= 400 status))
-             (is (#{;;FIXME line 2?? happens locally, not CI
+             (is (#{;;FIXME line 2??
                     ["InvalidSyntaxError{ message=Invalid Syntax : offending token 'dummy' at line 2 column 0 ,offendingToken=dummy ,locations=[SourceLocation{line=2, column=0}] ,sourcePreview=dummy\n}"]
                     ["InvalidSyntaxError{ message=Invalid Syntax : offending token 'dummy' at line 1 column 0 ,offendingToken=dummy ,locations=[SourceLocation{line=1, column=0}] ,sourcePreview=dummy\n}"]}
                    errors))))
@@ -271,8 +271,10 @@
                            {}
                            "TestQuery")]
              (is (= 400 status))
-             (is (= errors
-                    ["ValidationError{validationErrorType=FieldUndefined, queryPath=[nonexistent], message=Validation error of type FieldUndefined: Field 'nonexistent' in type 'Root' is undefined @ 'nonexistent', locations=[SourceLocation{line=2, column=19}], description='Field 'nonexistent' in type 'Root' is undefined'}"]))))
+             (is (= #{;;FIXME line 2??
+                      ["ValidationError{validationErrorType=FieldUndefined, queryPath=[nonexistent], message=Validation error of type FieldUndefined: Field 'nonexistent' in type 'Root' is undefined @ 'nonexistent', locations=[SourceLocation{line=1, column=19}], description='Field 'nonexistent' in type 'Root' is undefined'}"]
+                      ["ValidationError{validationErrorType=FieldUndefined, queryPath=[nonexistent], message=Validation error of type FieldUndefined: Field 'nonexistent' in type 'Root' is undefined @ 'nonexistent', locations=[SourceLocation{line=2, column=19}], description='Field 'nonexistent' in type 'Root' is undefined'}"]}
+                    errors))))
          (testing "unauthorized access without capabilities"
            (let [{:keys [status]}
                  (helpers/POST app
