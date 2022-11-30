@@ -100,10 +100,10 @@
         (:params basic-auth)))
 
 (defn -es-port []
-  (if ((h/set-of-es-versions-to-test) 7) "9207" (throw (ex-info "No ES version to test" {}))))
+  (if ((h/set-of-es-versions-to-test) 7) "9207" "9208"))
 
 (defn -es-version []
-  (if ((h/set-of-es-versions-to-test) 7) 7 (throw (ex-info "No ES version to test" {}))))
+  (if ((h/set-of-es-versions-to-test) 7) 7 8))
 
 (defn fixture-properties:es-store [t]
   ;; Note: These properties may be overwritten by ENV variables

@@ -1,0 +1,4 @@
+#!/bin/bash
+
+lein with-profile +es8 test "$@"
+lein with-profile +es8,test-encoding "$@"

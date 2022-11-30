@@ -1,3 +1,0 @@
-#!/bin/sh
-
-lein with-profile +es7 run -m ctia.main
