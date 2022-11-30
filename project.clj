@@ -181,7 +181,7 @@
                  ;; GraphQL
                  [base64-clj "0.1.1"]
                  [threatgrid/ring-graphql-ui "0.1.1"]
-                 [com.graphql-java/graphql-java "16.2" #_"19.2"]
+                 [com.graphql-java/graphql-java "19.2"]
 
                  ;; Logging
                  [org.slf4j/log4j-over-slf4j "1.7.20"]
