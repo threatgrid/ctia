@@ -141,7 +141,7 @@ When it's time to start testing against ES8, here's what we need to change in th
 
 1. In `dev/ctia/dev/split_tests.clj`, uncomment the `(wait-es 8)` call to wait for ES8 to be fully up before starting tests.
 2. In `ctia.test-helpers.core/set-of-es-versions-to-test`, add `8` to the default set of versions to test against.
-3. Ensure ES8 is running in `containers/dev/docker-compose.yml`.
+3. Ensure ES8 is uncommented in `containers/dev/docker-compose.yml` and `containers/dev/m1-docker-compose.yml`
 
 ### Testing and CI
 
