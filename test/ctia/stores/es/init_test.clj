@@ -110,7 +110,7 @@
          "https://cisco.com:9201")))))
 
 (deftest update-settings!-test
-  (doseq [version [5 7]]
+  (doseq [version [7 8]]
     (let [services (->ESConnServices)
           indexname (str "ctia_malware" (UUID/randomUUID))
           initial-props {:entity :malware
@@ -159,7 +159,7 @@
     (let [indexname (gen-indexname)]
       (for-each-es-version
         "get-existing-indices should retrieve existing indices if any."
-        [5 7]
+        [7 8]
         #(index/delete! % (str indexname "*"))
         (let [test-fn (fn [msg
                            input-indexname
@@ -217,7 +217,7 @@
                                  :port (+ 9200 version)))]
       (for-each-es-version
         "get-existing-indices should retrieve existing indices if any."
-        [5 7]
+        [7 8]
         clean-index
         (testing "init-es-conn! should return a proper conn state with unaliased conf, but not create any index"
           (let [services (->ESConnServices)
@@ -353,7 +353,7 @@
 (deftest es-auth-properties-test
   (for-each-es-version
     "init-es-conn! should return a conn state in respect with given auth properties."
-    [7] ;; auth only available on ES7 docker, use this macro to easily test future major versions
+    [7 8]
     #(index/delete! % "ctia*")
     (let [;; create API Key
           {key-id :id :keys [api_key]} (create-api-key! conn {:name "my-api-key"})

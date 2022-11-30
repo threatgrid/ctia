@@ -33,7 +33,9 @@
 (defn set-of-es-versions-to-test []
   {:post [(set? %)]}
   (or (some-> (System/getProperty "ctia.test.es-versions") read-string set)
-      #{5 7}))
+      #{7
+        ;;TODO
+        #_8}))
 
 (def
   ^:dynamic ^:private

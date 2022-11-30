@@ -307,7 +307,7 @@
 (deftest crud-aliased-test
   (es-helpers/for-each-es-version
    "crud operation should properly handle aliased states"
-   [5 7]
+   [7 8]
    #(es-index/delete! % "ctia_*")
    (helpers/fixture-ctia-with-app
     (fn [app]
@@ -388,7 +388,7 @@
 (deftest crud-unaliased-test
   (es-helpers/for-each-es-version
       "crud operation should properly handle not aliased states"
-      [5 7]
+      [7 8]
     #(es-index/delete! % "ctia_*")
     (helpers/fixture-ctia-with-app
      (fn [app]
@@ -446,7 +446,7 @@
 (deftest make-search-query-test
   (es-helpers/for-each-es-version
       "make-search-query shall build a proper query from given query string, filter map and date range"
-      [5 7]
+      [7 8]
     #(es-index/delete! % "ctia_*")
     (helpers/fixture-ctia-with-app
      (fn [app]
@@ -640,7 +640,7 @@
 (deftest handle-query-string-search-count-test
   (es-helpers/for-each-es-version
    "handle search and count shall properly apply query and params"
-   [5 7]
+   [7 8]
    #(es-index/delete! % "ctia_*")
    (helpers/fixture-ctia-with-app
     (fn [app]
@@ -699,7 +699,7 @@
 (deftest handle-aggregate-test
   (es-helpers/for-each-es-version
       "handle-aggregate shall properly apply query and params to match data and then aggregate them according to aggregation parameters."
-      [5 7]
+      [7 8]
     #(es-index/delete! % "ctia_*")
     (helpers/fixture-ctia-with-app
      (fn [app]
@@ -777,7 +777,7 @@
 (deftest handle-delete-search
   (es-helpers/for-each-es-version
       "handle-delete-search shall properly apply query and params, delete matched data, and respect access control"
-      [5 7]
+      [7 8]
       #(es-index/delete! % "ctia_*")
     (helpers/fixture-ctia-with-app
         (fn [app]
@@ -832,7 +832,7 @@
 (deftest docs-with-indices-test
   (es-helpers/for-each-es-version
       "get-docs-with-indices (and variants) shall properly return documents for given ids"
-      [5 7]
+      [7 8]
     #(es-index/delete! % "ctia_*")
     (helpers/fixture-ctia-with-app
      (fn [app]
@@ -880,7 +880,7 @@
 (deftest bulk-delete-update-test
   (es-helpers/for-each-es-version
       "bulk-delete and bulk-update shall properly handle authorization and not-found errors"
-      [5 7]
+      [7 8]
     nil
     (helpers/fixture-ctia-with-app
      (fn [app]
