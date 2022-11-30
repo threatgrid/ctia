@@ -599,8 +599,8 @@ ctia:ctia:jar:1.1.1-SNAPSHOT
 |  +- (ring:ring-core:jar:1.6.0:compile - omitted for conflict with 1.9.5)
 |  +- threatgrid:ring-graphiql:jar:0.1.1:compile
 |  \- threatgrid:ring-graphql-voyager:jar:0.1.0:compile
-+- com.graphql-java:graphql-java:jar:11.0:compile
-|  +- org.antlr:antlr4-runtime:jar:4.7.1:compile
++- com.graphql-java:graphql-java:jar:12.0:compile
+|  +- org.antlr:antlr4-runtime:jar:4.7.2:compile
 |  +- (org.slf4j:slf4j-api:jar:1.7.25:compile - omitted for duplicate)
 |  +- com.graphql-java:java-dataloader:jar:2.1.1:compile
 |  \- org.reactivestreams:reactive-streams:jar:1.0.2:compile
