@@ -41,8 +41,8 @@ CTIA is implemented in [Clojure](http://clojure.org)
 CTIA uses Leiningen as its "build" tool, you can install it by
 following the instructions here: http://leiningen.org/#install
 
-By default, CTIA uses Elasticsearch 5.x as its data store.  Assuming you
-have it running on 127.0.0.1:9200 you can simply start
+By default, CTIA uses Elasticsearch 7.x as its data store.  Assuming you
+have it running on 127.0.0.1:9207 you can simply start
 CTIA.
 
 You can jump to the [Development](#Development) section to see instructions
@@ -133,6 +133,15 @@ To run tests, use `./scripts/test` for all non-integration tests, and `./scripts
 
 For a REPL workflow, run `lein repl`. Use `(start)` to start CTIA,
 `(stop)` to stop it, and `(go)` to restart it for ES7---append `8` to each name for ES8.
+
+### Supporting ElasticSearch 8
+
+Currently CTIA only supports and tests against ES7. Eventually, we will need to support and migrate to ES8.
+When it's time to start testing against ES8, here's what we need to change in the build/tests:
+
+1. In `dev/ctia/dev/split_tests.clj`, uncomment the `(wait-es 8)` call to wait for ES8 to be fully up before starting tests.
+2. In `ctia.test-helpers.core/set-of-es-versions-to-test`, add `8` to the default set of versions to test against.
+3. Ensure ES8 is running in `containers/dev/docker-compose.yml`.
 
 ### Testing and CI
 

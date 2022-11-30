@@ -216,8 +216,9 @@
                                     (format "until curl http://127.0.0.1:920%s; do sleep 1; " version)
                                     exit-if-too-long " ; done"))
                         (assert-sh "Error connecting to docker")))]
-      (wait-es 5)
       (wait-es 7)
+      ;;TODO enable when testing ES8
+      ;(wait-es 8)
       ; Wait Kafka
       (-> (sh/sh "bash" "-c"
                  (str "set +e; "
