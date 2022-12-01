@@ -1,6 +1,4 @@
-(ns ctia.store
-  (:require [ctia.schemas.core :refer [APIHandlerServices]]
-            [schema.core :as s]))
+(ns ctia.store)
 
 (defprotocol IStore
   (create-record [this new-records ident params])
@@ -27,15 +25,18 @@
   (delete-identity [this org-id role]))
 
 (defprotocol IEventStore
-  (read-event [this id ident params])
-  (create-events [this new-events])
-  (list-events [this filtermap ident params]))
+  (create-events [this new-events]))
 
 (defprotocol IQueryStringSearchableStore
   (query-string-search [this search-query ident params])
   (query-string-count [this search-query ident])
   (aggregate [this search-query agg-query ident])
   (delete-search [this search-query ident params]))
+
+(defprotocol IPaginateableStore
+  "Protocol that can implement lazy iteration over some number of calls to impure
+  `fetch-page-fn` using `init-page-params` for the first call."
+  (paginate [this fetch-page-fn] [this fetch-page-fn init-page-params]))
 
 (def empty-stores
   {:actor []
@@ -63,24 +64,3 @@
    :tool []
    :vulnerability []
    :weakness []})
-
-(s/defn list-all-pages
-  [entity
-   list-fn
-   filters
-   identity-map
-   params
-   {{:keys [get-store]} :StoreService} :- APIHandlerServices]
-  (loop [query-params params
-         results []]
-    (let [{:keys [data
-                  paging]}
-          (-> (get-store entity)
-              (list-fn
-                filters
-                identity-map
-                query-params))]
-      (if-let [next-params (:next paging)]
-        (recur (into query-params next-params)
-               (into results data))
-        (into results data)))))

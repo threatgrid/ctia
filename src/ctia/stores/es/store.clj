@@ -1,10 +1,13 @@
 (ns ctia.stores.es.store
-  (:require [schema.core :as s]
-            [ductile.conn :as es-conn]
-            [ductile.index :as es-index]
-            [ductile.schemas :refer [ESConn]]
-            [ctia.store :refer [IStore IQueryStringSearchableStore]]
-            [ctia.stores.es.crud :as crud]))
+  (:require
+   [ctia.store :refer [IPaginateableStore IQueryStringSearchableStore IStore]
+    :as store]
+   [ctia.stores.es.crud :as crud]
+   [ductile.conn :as es-conn]
+   [ductile.index :as es-index]
+   [ductile.pagination :refer [default-limit]]
+   [ductile.schemas :refer [ESConn]]
+   [schema.core :as s]))
 
 (defn delete-state-indexes [{:keys [conn index] :as _state}]
   (when conn
@@ -14,6 +17,20 @@
 (s/defn close-connections!
   [{:keys [conn]}]
   (es-conn/close conn))
+
+(defn all-pages-iteration
+  "Returns lazy iteration of consecutive calls to `query-fn` with pagination params.
+
+  Resulted data is a sequence of responses of a shape `{:data [,,,] :paging {:next {,,,}}}`"
+  ([query-fn] (all-pages-iteration query-fn {:limit default-limit}))
+  ([query-fn {:keys [limit]
+              :or {limit default-limit}
+              :as params}]
+   (iteration query-fn
+              :somef #(seq (:data %))
+              :kf #(when-let [next-params (get-in % [:paging :next])]
+                     (into params next-params))
+              :initk (assoc params :limit limit))))
 
 (defmacro def-es-store
   [store-name
@@ -52,6 +69,7 @@
        ~(symbol "state") filter-map# ident# params#))
      (~(symbol "close") [_#]
       (close-connections! ~(symbol "state")))
+
      IQueryStringSearchableStore
      (~(symbol "query-string-search") [_# search-query# ident# params#]
       ((crud/handle-query-string-search ~partial-stored-schema)
@@ -64,7 +82,13 @@
        ~(symbol "state") search-query# agg-query# ident#))
      (~(symbol "delete-search") [_# search-query# ident# params#]
       (crud/handle-delete-search
-       ~(symbol "state") search-query# ident# params#))))
+       ~(symbol "state") search-query# ident# params#))
+
+     IPaginateableStore
+     (~(symbol "paginate") [this# fetch-page-fn#]
+      (store/paginate this# fetch-page-fn# {}))
+     (~(symbol "paginate") [this# fetch-page-fn# init-page-params#]
+      (all-pages-iteration (partial fetch-page-fn# this#) init-page-params#))))
 
 (s/defschema StoreMap
   {:conn ESConn
@@ -79,7 +103,7 @@
   "transform a store state
    into a properties map for easier manipulation,
    override the cm to use the custom timeout "
-  [{:keys [index props conn config] :as state}
+  [{:keys [index props conn config]}
    conn-overrides]
   (let [entity-type (-> props :entity name)]
     {:conn (merge conn conn-overrides)

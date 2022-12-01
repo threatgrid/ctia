@@ -6,22 +6,22 @@
    [ctia.stores.es.mapping :refer [store-settings]]
    [ctia.stores.es.schemas :refer [ESConnServices ESConnState]]
    [ductile.conn :refer [connect]]
-   [ductile.document]
-   [ductile.index]
+   [ductile.document :as document]
+   [ductile.index :as index]
    [schema-tools.core :as st]
    [schema.core :as s]))
 
 (s/defschema StoreProperties
   (st/merge
-    {:entity s/Keyword
-     :indexname s/Str
-     s/Keyword s/Any}
-    (st/optional-keys
-      {:shards s/Num
-       :replicas s/Num
-       :write-suffix s/Str
-       :refresh_interval s/Str
-       :aliased s/Any})))
+   {:entity s/Keyword
+    :indexname s/Str
+    s/Keyword s/Any}
+   (st/optional-keys
+    {:shards s/Num
+     :replicas s/Num
+     :write-suffix s/Str
+     :refresh_interval s/Str
+     :aliased s/Any})))
 
 (def entity-fields
   (->> (entities/all-entities)
@@ -67,7 +67,7 @@
     {:keys [settings]} :config} :- ESConnState]
   (try
     (->> {:index (select-keys settings [:refresh_interval :number_of_replicas])}
-         (ductile.index/update-settings! conn index))
+         (index/update-settings! conn index))
     (log/info "updated settings: " index)
     (catch clojure.lang.ExceptionInfo e
       (log/warn "could not update settings on that store"
@@ -75,7 +75,7 @@
 
 (s/defn upsert-template!
   [{:keys [conn index config]} :- ESConnState]
-  (ductile.index/create-template! conn index config)
+  (index/create-template! conn index config)
   (log/infof "updated template: %s" index))
 
 (defn system-exit-error
@@ -94,10 +94,10 @@
         update-body (or type-mappings mappings)]
     (try
       (log/info "updating mapping: " index)
-      (ductile.index/update-mappings! conn
-                                      index
-                                      entity-type
-                                      update-body)
+      (index/update-mappings! conn
+                              index
+                              entity-type
+                              update-body)
       (catch clojure.lang.ExceptionInfo e
         (log/error "cannot update mapping. You probably tried to update the mapping of an existing field. It's only possible to add new field to existing mappings. If you need to modify the type of a field in an existing index, you must perform a migration"
                    (assoc (ex-data e)
@@ -110,11 +110,11 @@
     {:keys [mappings]} :config} :- ESConnState]
   (try
     (log/info "refreshing mapping: " index)
-    (ductile.document/update-by-query conn
-                                      [index] {}
-                                      {:refresh "true"
-                                       :conflicts "proceed"
-                                       :wait_for_completion false})
+    (document/update-by-query conn
+                              [index] {}
+                              {:refresh "true"
+                               :conflicts "proceed"
+                               :wait_for_completion false})
     (catch clojure.lang.ExceptionInfo e
       (log/error "Cannot refresh mapping."
                  (assoc (ex-data e)
@@ -125,7 +125,7 @@
 (defn get-existing-indices
   [conn index]
   ;; retrieve existing indices using wildcard to identify ambiguous index names
-  (let [existing (-> (ductile.index/get conn (str index "*"))
+  (let [existing (-> (index/get conn (str index "*"))
                      keys
                      set)
         index-pattern (re-pattern (str index "(-\\d{4}.\\d{2}.\\d{2}.*)?"))
@@ -183,9 +183,9 @@
     (when (and (:aliased props)
                (empty? existing-indices))
       ;;https://github.com/elastic/elasticsearch/pull/34499
-      (ductile.index/create! conn
-                             (format "<%s-{now/d}-000001>" index)
-                             (update config :aliases assoc (:write-index props) {})))
+      (index/create! conn
+                     (format "<%s-{now/d}-000001>" index)
+                     (update config :aliases assoc (:write-index props) {})))
     (if (and (:aliased props)
              (contains? existing-indices (keyword index)))
       (do (log/error "an existing unaliased store was configured as aliased. Switching from unaliased to aliased indices requires a migration."
@@ -198,9 +198,9 @@
   [store-kw :- s/Keyword
    get-in-config]
   (merge
-    {:entity store-kw}
-    (get-in-config [:ctia :store :es :default] {})
-    (get-in-config [:ctia :store :es store-kw] {})))
+   {:entity store-kw}
+   (get-in-config [:ctia :store :es :default] {})
+   (get-in-config [:ctia :store :es store-kw] {})))
 
 (s/defn ^:private make-factory
   "Return a store instance factory. Most of the ES stores are
@@ -212,7 +212,7 @@
   (fn store-factory [store-kw]
     (-> (get-store-properties store-kw get-in-config)
         (init-es-conn! services)
-        store-constructor)))
+        (store-constructor))))
 
 (s/defn ^:private factories [services :- ESConnServices]
   (apply merge {}

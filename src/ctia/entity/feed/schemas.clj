@@ -1,27 +1,21 @@
 (ns ctia.entity.feed.schemas
-  (:require [ctia.auth :as auth]
-
-   [ctia.encryption :as encryption]
+  (:require
    [clj-momo.lib.time :as time]
-   [ctia.domain
-    [access-control :refer [properties-default-tlp]]
-    [entities
-     :refer [schema-version
-             short-id->long-id]]]
+   [ctia.auth :as auth]
+   [ctia.domain.access-control :refer [properties-default-tlp]]
+   [ctia.domain.entities :refer [schema-version short-id->long-id]]
    [ctia.graphql.delayed :as delayed]
-   [ctia.schemas
-    [core :as ctia-schemas :refer [def-acl-schema
-                                   def-stored-schema
-                                   GraphQLRuntimeContext
-                                   RealizeFnResult
-                                   TempIDs]]]
+   [ctia.http.routes.common :refer [PagingParams]]
+   [ctia.schemas.core :as ctia-schemas :refer [def-acl-schema
+                                               def-stored-schema GraphQLRuntimeContext
+                                               RealizeFnResult TempIDs]]
    [ctim.schemas.common :as csc]
-   [flanders
-    [core :as f]
-    [spec :as f-spec]
-    [utils :as fu]]
-   [schema.core :as s]
-   [schema-tools.core :as st]))
+   [flanders.core :as f]
+   [flanders.spec :as f-spec]
+   [flanders.utils :as fu]
+   [ring.swagger.schema :refer [describe]]
+   [schema-tools.core :as st]
+   [schema.core :as s]))
 
 (def type-identifier "feed")
 
@@ -125,3 +119,8 @@
                                   (properties-default-tlp get-in-config)))}]
      (cond-> (into new-object base-stored)
        client-id (assoc :client_id client-id))))))
+
+(s/defschema FeedViewQueryParams
+  (-> PagingParams
+      (st/assoc :s (describe s/Str "The feed share token"))
+      (st/dissoc :sort_by :sort_order :offset)))
