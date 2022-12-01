@@ -137,14 +137,18 @@
     {{:keys [decrypt]} :IEncryption
      {:keys [get-store]} :StoreService
      :as services} :- APIHandlerServices]
-   (if-let [{:keys [indicator_id
-                    secret
-                    output
-                    lifetime
-                    owner
-                    groups]}
-            (read-record (get-store :feed) id identity-map {})]
+   (let [{:keys [indicator_id
+                 secret
+                 output
+                 lifetime
+                 owner
+                 groups]
+          :as feed}
+         (read-record (get-store :feed) id identity-map {})]
      (cond
+       (not feed)
+       :not-found
+
        (not (valid-lifetime? lifetime))
        :not-found
 
@@ -195,8 +199,7 @@
                   :judgements feed-results)
 
            (seq next-page)
-           (assoc :next-page next-page))))
-     :not-found)))
+           (assoc :next-page next-page)))))))
 
 (s/defn feed-view-routes [services :- APIHandlerServices]
   (routes
