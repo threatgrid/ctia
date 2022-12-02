@@ -310,11 +310,12 @@
                        casebook])))))
 
 (deftest actor-type-array-test
-  (let [entities [{:type "actor" :actor_type "Hacker"}
-                  {:type "actor"}
-                  {:type "foo" :other-stuff "blah"}]
-        expected [{:type "actor" :actor_types ["Hacker"]}
-                  {:type "actor"}
-                  {:type "foo" :other-stuff "blah"}]]
-    (is (= expected (into [] sut/actor-type-array entities)))))
+  (let [migration (:1.2.0 sut/available-migrations)
+        entities [{:type "actor" :schema_version "1.1.13" :actor_type "Hacker"}
+                  {:type "actor" :schema_version "1.1.13"}
+                  {:type "foo" :schema_version "1.1.13" :other-stuff "blah"}]
+        expected [{:type "actor" :schema_version "1.2.0" :actor_types ["Hacker"]}
+                  {:type "actor" :schema_version "1.2.0"}
+                  {:type "foo" :schema_version "1.2.0" :other-stuff "blah"}]]
+    (is (= expected (into [] migration entities)))))
 
