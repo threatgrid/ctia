@@ -5,14 +5,13 @@
    [ctia.entity.event.schemas
     :refer
     [Event EventBucket PartialEvent PartialEventList]]
-   [ctia.entity.event.store :refer [->EventStore]]
    [ctia.http.routes.common :as routes.common]
    [ctia.http.routes.crud :refer [services->entity-crud-routes]]
    [ctia.lib.compojure.api.core :refer [GET routes]]
    [ctia.schemas.core :refer [APIHandlerServices]]
    [ctia.store :as store]
-   [ctia.stores.es.store :as es-store]
    [ctia.stores.es.mapping :as em]
+   [ctia.stores.es.store :refer [def-es-store]]
    [ring.util.http-response :refer [ok]]
    [schema-tools.core :as st]
    [schema.core :as s]))
@@ -164,6 +163,8 @@
      :search-capabilities     :search-event
      :delete-capabilities     #{:delete-event :developer}
      :date-field              :timestamp})))
+
+(def-es-store EventStore :event Event PartialEvent)
 
 (def event-entity
   {:new-spec              map?
