@@ -25,7 +25,7 @@
     (testing "realized fn without previous object shall initiate all stored field"
       (is-submap? new-sighting-minimal realized-create)
       (is-submap? {:client_id "ireaux",
-                   :schema_version "1.1.3",
+                   :schema_version "1.2.0",
                    :type "sighting",
                    :id "sighting-id-1",
                    :tlp "green",
@@ -51,7 +51,7 @@
                                                   :services services})]
         (is-submap? new-sighting-maximal realized-update)
         (is-submap? {:client_id "ireaux",
-                     :schema_version "1.1.3",
+                     :schema_version "1.2.0",
                      :type "sighting",
                      :id "sighting-id-2",
                      :tlp "amber",

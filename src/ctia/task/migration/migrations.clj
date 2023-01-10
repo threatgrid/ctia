@@ -151,6 +151,15 @@
                (update :incident_time simplify-incident-time))
            doc))))
 
+(def actor-type-array
+  (map (fn [{type :type
+             actor-type :actor_type
+             :as doc}]
+         (if (and (= type "actor") actor-type)
+           (-> doc
+               (assoc :actor_types [actor-type])
+               (dissoc :actor_type))
+           doc))))
 
 (def available-migrations
   {:identity identity
@@ -166,6 +175,8 @@
    :1.0.0 (comp (append-version "1.0.0")
                 (rename-observable-type "pki-serial" "pki_serial")
                 simplify-incident)
+   :1.2.0 (comp (append-version "1.2.0")
+                actor-type-array)
    :investigation-actions (comp (append-version "1.1.0")
                                 migrate-action-data)
    :describe (comp (append-version "1.1.0")

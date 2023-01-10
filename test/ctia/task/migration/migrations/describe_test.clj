@@ -11,7 +11,7 @@
     :title "title"
    :description "description"
    :short_description "short description"
-   :actor_type "Hacker",
+   :actor_types ["Hacker"],
    :confidence "High",
    :source "a source"
    :valid_time {}})
