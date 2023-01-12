@@ -140,7 +140,10 @@
       :assignees        em/token
       :promotion_method em/token
       :severity         em/token
-      :tactics          em/token})}})
+      :tactics          em/token
+      :scores           {:type "nested"
+                         :properties {:score em/float-type
+                                      :type em/token}}})}})
 
 (def-es-store IncidentStore :incident StoredIncident PartialStoredIncident)
 
