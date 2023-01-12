@@ -44,8 +44,8 @@
       e.g., sort by the maximum scores.score after filtering for scores.score == 'asset'.
       {:op :sort-by-list-max
        :field-name \"scores\"
-       :sort-elements-field-name \"score\"
-       :filter-elements {\"type\" \"asset\"}
+       :max-entry \"score\"
+       :filter-entry {\"type\" \"asset\"}
        :sort_order :asc}"
   [{:keys [op field-name sort_order] :as params} :- ConcreteSortExtension
    default-sort_order :- (s/cond-pre s/Str s/Keyword)]
@@ -59,16 +59,14 @@
 
       :sort-by-list-max
       ;; https://www.elastic.co/guide/en/elasticsearch/reference/current/sort-search-results.html#nested-sorting
-      (let [{:keys [list-field-name
-                    sort-elements-field-name
-                    filter-elements]}
+      (let [{:keys [max-entry filter-entry]}
             list-field-name field-name
-            field-name (str field-name "." sort-elements-field-name)]
+            field-name (str field-name "." max-entry)]
         {field-name {:order order
                      ;; https://www.elastic.co/guide/en/elasticsearch/reference/current/sort-search-results.html#_sort_mode_option
                      :mode "max"
                      :nested (cond-> {:path list-field-name}
-                               filter-elements (assoc-in [:filter :term] filter-elements))}})
+                               filter-entry (assoc-in [:filter :term] filter-entry))}})
 
       (:remap :remap-list-max)
       (let [{:keys [remap-default remappings]} params
