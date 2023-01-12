@@ -239,7 +239,7 @@
       ;; :scores.asset, :scores.ttp
       ;; Sort by maximum score of a particular type
       (into (map (fn [score-type]
-                   {(keyword "scores." score-type)
+                   {(keyword (str "scores." score-type))
                     {:op :sort-by-list-max
                      :field-name "scores"
                      :max-entry "score"
