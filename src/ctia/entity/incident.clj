@@ -206,36 +206,43 @@
   )
 
 (s/def sort-extension-templates :- SortExtensionTemplates
-  {;; override :severity field to sort semantically
-   :severity {:op :remap
-              :remappings {"Low" 1
-                           "Medium" 2
-                           "High" 3
-                           "Critical" 4}
-              :remap-default 0}
-   ;; override :tactics field to sort by the highest risk score for
-   ;; any one tactic on an incident
-   ;; https://attack.mitre.org/versions/v11/tactics/enterprise/
-   :tactics {:op :remap-list-max
-             :remappings
-             ;; Note: don't use actual scores, they may be proprietary. instead,
-             ;; simulate the same ordering (not proprietary) with dummy scores.
-             ;; generate with `generate-mitre-tactic-scores`
-             {"TA0043" 2,
-              "TA0042" 1,
-              "TA0001" 3,
-              "TA0002" 11,
-              "TA0003" 9,
-              "TA0004" 7,
-              "TA0005" 11,
-              "TA0006" 10,
-              "TA0007" 9,
-              "TA0008" 5,
-              "TA0009" 8,
-              "TA0011" 8,
-              "TA0010" 6,
-              "TA0040" 4}
-             :remap-default 0}})
+  (-> {;; override :severity field to sort semantically
+       :severity {:op :remap
+                  :remappings {"Low" 1
+                               "Medium" 2
+                               "High" 3
+                               "Critical" 4}
+                  :remap-default 0}
+       ;; override :tactics field to sort by the highest risk score for
+       ;; any one tactic on an incident
+       ;; https://attack.mitre.org/versions/v11/tactics/enterprise/
+       :tactics {:op :remap-list-max
+                 :remappings
+                 ;; Note: don't use actual scores, they may be proprietary. instead,
+                 ;; simulate the same ordering (not proprietary) with dummy scores.
+                 ;; generate with `generate-mitre-tactic-scores`
+                 {"TA0043" 2,
+                  "TA0042" 1,
+                  "TA0001" 3,
+                  "TA0002" 11,
+                  "TA0003" 9,
+                  "TA0004" 7,
+                  "TA0005" 11,
+                  "TA0006" 10,
+                  "TA0007" 9,
+                  "TA0008" 5,
+                  "TA0009" 8,
+                  "TA0011" 8,
+                  "TA0010" 6,
+                  "TA0040" 4}
+                 :remap-default 0}}
+      (into (map (fn [score-type]
+                   {(keyword "scores." score-type)
+                    {:op :sort-by-list-max
+                     :field-name "scores"
+                     :max-entry "score"
+                     :filter-entry {"type" score-type}}}))
+            ["asset" "ttp"])))
 
 (def incident-sort-fields
   (apply s/enum
