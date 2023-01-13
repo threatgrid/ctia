@@ -2,7 +2,6 @@
   (:require [clj-momo.lib.clj-time.coerce :as tc]
             [clj-momo.lib.clj-time.core :as t]
             [clj-momo.test-helpers.core :as mth]
-            [clojure.pprint :as pp]
             [clojure.test :refer [deftest is join-fixtures testing use-fixtures]]
             [clojure.test.check.generators :as gen]
             [com.gfredericks.test.chuck.clojure-test :refer [checking]]
