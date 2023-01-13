@@ -181,21 +181,21 @@
                                                  [true false])
                                            ;; multiple scores per incident
                                            (into (mapcat (fn [asc?]
-                                                           (let [asc (if asc? identity rseq)]
+                                                           (let [reorder (if asc? identity rseq)]
                                                              [;; simple asset sort
                                                               {:test-id (if asc? :asc-asset-multi :desc-asset-multi)
                                                                :sort_by (str "scores.asset:" (if asc? "asc" "desc"))
-                                                               :expected-score-order (asc [asset-000-ttp-000
-                                                                                           asset-002-ttp-004
-                                                                                           asset-004-ttp-002
-                                                                                           asset-100-ttp-100])}
+                                                               :expected-score-order (reorder [asset-000-ttp-000
+                                                                                               asset-002-ttp-004
+                                                                                               asset-004-ttp-002
+                                                                                               asset-100-ttp-100])}
                                                               ;; simple ttp sort
                                                               {:test-id (if asc? :asc-ttp-multi :desc-ttp-multi)
                                                                :sort_by (str "scores.ttp:" (if asc? "asc" "desc"))
-                                                               :expected-score-order (asc [asset-000-ttp-000
-                                                                                           asset-004-ttp-002
-                                                                                           asset-002-ttp-004
-                                                                                           asset-100-ttp-100])}])))
+                                                               :expected-score-order (reorder [asset-000-ttp-000
+                                                                                               asset-004-ttp-002
+                                                                                               asset-002-ttp-004
+                                                                                               asset-100-ttp-100])}])))
                                                  [true false])
                                            ;; composite sort_by param
                                            (into [{:test-id :asset-desc-then-ttp-asc

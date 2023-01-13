@@ -474,6 +474,7 @@ It returns the documents with full hits meta data including the real index in wh
                           query (update :filter conj query_string)
                           (seq date-range-query) (update :filter conj {:range date-range-query}))
             query-params (make-query-params es-params props)]
+        (prn "query-params" query-params)
         (cond-> (coerce! (ductile.doc/query conn
                                             index
                                             (q/bool bool-params)
@@ -518,6 +519,7 @@ It returns the documents with full hits meta data including the real index in wh
              :services}  es-conn-state
             query        (make-search-query es-conn-state search-query ident)
             query-params (make-query-params es-params props)]
+        (prn "query-params" query-params)
         (cond-> (coerce! (ductile.doc/query
                           conn
                           index
