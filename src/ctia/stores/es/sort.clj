@@ -41,7 +41,7 @@
   
   Sort by the maximum value in a filtered list.
 
-      e.g., sort by the maximum scores.score after filtering for scores.score == 'asset'.
+      e.g., sort by the maximum scores.score after filtering for scores.type == 'asset'.
       {:op :sort-by-list-max
        :field-name \"scores\"
        :max-entry \"score\"
