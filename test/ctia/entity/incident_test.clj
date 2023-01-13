@@ -135,6 +135,53 @@
   (search-th/delete-search app :incident {:query "*"
                                           :REALLY_DELETE_ALL_THESE_ENTITIES true}))
 
+(deftest scores-sort-test
+  (es-helpers/for-each-es-version
+    "severity sorts like #'ctim-severity-order"
+    [7]
+    #(ductile.index/delete! % "ctia_*")
+    (helpers/with-properties (into ["ctia.auth.type" "allow-all"]
+                                   es-helpers/basic-auth-properties)
+      (helpers/fixture-ctia-with-app
+        (fn [app]
+          ;(helpers/set-capabilities! app "foouser" ["foogroup"] "user" all-capabilities)
+          ;(whoami-helpers/set-whoami-response app "45c1f5e3f05d0" "foouser" "foogroup" "user")
+          (let [incidents-count 10
+                ;; ascending order for scores.asset, descending order for scores.ttp
+                fixed-scores (mapv (fn [score]
+                                     [{:type "asset" :score score}
+                                      {:type "ttp" :score (- (dec incidents-count) score)}])
+                                   (range incidents-count))]
+            (try (testing (pr-str fixed-scores)
+                   (let [incidents (into #{}
+                                         (map #(assoc (gen-new-incident) :scores %))
+                                         fixed-scores)]
+                     (create-incidents app incidents)
+                     (doseq [asc? [true false]
+                             score-type ["asset" "ttp"]
+                             :let [test-id {:asc? asc?
+                                            :score-type score-type}]]
+                       (testing (pr-str test-id)
+                         (let [{:keys [parsed-body] :as raw} (search-th/search-raw
+                                                               app
+                                                               :incident
+                                                               {:sort_by (str "scores." score-type ":" (if asc? "asc" "desc"))})]
+                           (when (is (= 200 (:status raw)) (pr-str raw))
+                             (let [expected-parsed-body (sort-by (fn [incident]
+                                                                   {:post [(number? %)]}
+                                                                   (prn incident)
+                                                                   (:score (first (filter #(= score-type (:type %))
+                                                                                          (:scores incident)))))
+                                                                 (if asc?
+                                                                   #(compare %1 %2)
+                                                                   #(compare %2 %1))
+                                                                 parsed-body)]
+                               (and (is (= incidents-count (count parsed-body)) (pr-str raw))
+                                    (is (= incidents-count (count expected-parsed-body)) (pr-str raw))
+                                    (is (= expected-parsed-body
+                                           parsed-body))))))))))
+            (finally (purge-incidents! app)))))))))
+
 ;; extracted from the much more thorough severity-int-script-search
 (deftest simple-severity-int-script-search-test
   (es-helpers/for-each-es-version
