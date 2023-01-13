@@ -15,6 +15,7 @@
    [ctia.test-helpers.es :as es-helpers]
    [ctia.test-helpers.fake-whoami-service :as whoami-helpers]
    [ctia.test-helpers.search :as th.search]
+   [ctim.schemas.common :refer [ctim-schema-version]]
    [clojure.pprint :as pp]
    [ctim.examples.bundles :refer [bundle-maximal]]
    [ctim.schemas.bundle :as bundle.schema]
@@ -311,7 +312,7 @@
                       :source "ngfw_ips_event_service"}
             bundle   {:incidents
                       [{:description "desc",
-                        :schema_version "1.2.0",
+                        :schema_version ctim-schema-version,
                         :type "incident",
                         :source "ngfw_ips_event_service",
                         :tlp "green",
@@ -327,7 +328,7 @@
                         :status "New",
                         :confidence "High"}
                        {:description "desc",
-                        :schema_version "1.2.0",
+                        :schema_version ctim-schema-version,
                         :type "incident",
                         :tlp "green",
                         :source "ngfw_ips_event_service",
