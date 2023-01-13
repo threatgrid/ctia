@@ -346,7 +346,11 @@
     #(= :remap (:op %)) {:op (s/eq :remap)
                          (s/optional-key :field-name) (s/cond-pre s/Keyword s/Str)
                          :remappings {s/Str s/Num}
-                         :remap-default s/Num}))
+                         :remap-default s/Num}
+    #(= :sort-by-list-max (:op %)) {:op (s/eq :sort-by-list-max)
+                                    :field-name (s/cond-pre s/Keyword s/Str)
+                                    :max-entry s/Str
+                                    (s/optional-key :filter-entry) {s/Str s/Str}}))
 
 (s/defschema ConcreteSortExtension
   (s/conditional
@@ -362,7 +366,12 @@
                          :field-name (s/cond-pre s/Keyword s/Str)
                          (s/optional-key :sort_order) (s/cond-pre s/Keyword s/Str)
                          :remappings {s/Str s/Num}
-                         :remap-default s/Num}))
+                         :remap-default s/Num}
+    #(= :sort-by-list-max (:op %)) {:op (s/eq :sort-by-list-max)
+                                    :field-name (s/cond-pre s/Keyword s/Str)
+                                    :max-entry s/Str
+                                    (s/optional-key :filter-entry) {s/Str s/Str}
+                                    (s/optional-key :sort_order) (s/cond-pre s/Keyword s/Str)}))
 
 (s/defschema SortExtensionTemplates
   "A map to override the behavior of sorting by a field.

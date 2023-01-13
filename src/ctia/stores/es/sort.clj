@@ -59,7 +59,7 @@
 
       :sort-by-list-max
       ;; https://www.elastic.co/guide/en/elasticsearch/reference/current/sort-search-results.html#nested-sorting
-      (let [{:keys [max-entry filter-entry]}
+      (let [{:keys [max-entry filter-entry]} params
             list-field-name field-name
             field-name (str field-name "." max-entry)]
         {field-name {:order order
@@ -67,7 +67,6 @@
                      :mode "max"
                      :nested (cond-> {:path list-field-name}
                                filter-entry (assoc-in [:filter :term] filter-entry))}})
-
       (:remap :remap-list-max)
       (let [{:keys [remap-default remappings]} params
             remappings (normalize-remappings remappings)]
