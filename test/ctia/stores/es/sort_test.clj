@@ -28,4 +28,16 @@
                        "High" 1}
           :sort_order :asc
           :remap-default 0}
-         :asc))))
+         :asc)))
+  (is (= '{"scores.score"
+           {:order :asc
+            :mode "max"
+            :nested {:path "scores"
+                     :filter {:term {"type" "asset"}}}}}
+         (sut/parse-sort-params-op
+           {:op :sort-by-list-max
+            :field-name "scores"
+            :max-entry "score"
+            :filter-entry {"type" "asset"}
+            :sort_order :asc}
+           :asc))))
