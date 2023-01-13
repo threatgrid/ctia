@@ -33,7 +33,7 @@
           {:order :asc
            :mode "max"
            :nested {:path "scores"
-                    :filter {:term {"type" "asset"}}}}}
+                    :filter {:term {"scores.type" "asset"}}}}}
          (sut/parse-sort-params-op
            {:op :sort-by-list-max
             :field-name "scores"

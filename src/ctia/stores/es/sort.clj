@@ -66,7 +66,7 @@
                      ;; https://www.elastic.co/guide/en/elasticsearch/reference/current/sort-search-results.html#_sort_mode_option
                      :mode "max"
                      :nested (cond-> {:path list-field-name}
-                               filter-entry (assoc-in [:filter :term] filter-entry))}})
+                               filter-entry (assoc-in [:filter :term] (update-keys filter-entry #(str list-field-name "." %))))}})
       (:remap :remap-list-max)
       (let [{:keys [remap-default remappings]} params
             remappings (normalize-remappings remappings)]

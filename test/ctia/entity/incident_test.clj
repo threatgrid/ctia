@@ -4,6 +4,7 @@
             [clj-momo.test-helpers.core :as mth]
             [clojure.pprint :as pp]
             [clojure.test :refer [deftest is join-fixtures testing use-fixtures]]
+            [clojure.test.check.generators :as gen]
             [com.gfredericks.test.chuck.clojure-test :refer [checking]]
             [com.gfredericks.test.chuck.generators :as gen']
             [ctia.auth.threatgrid :as auth]
@@ -147,6 +148,10 @@
 (def asset-100-ttp-000 [{:type "asset" :score 100} {:type "ttp" :score 0}])
 (def asset-100-ttp-100 [{:type "asset" :score 100} {:type "ttp" :score 100}])
 
+(def shrink-sort-scores-test?
+  "If true, enable shrinking in sort-scores-test."
+  false)
+
 (deftest sort-scores-test
   (es-helpers/for-each-es-version
     "Can sort by multiple scores"
@@ -237,7 +242,9 @@
             (doseq [{:keys [test-id sort_by expected-score-order]} all-scoring-test-cases
                     :when (not @tests-failed?)]
               (checking (pr-str test-id)
-                [expected-score-order (gen'/subsequence expected-score-order)
+                {:num-tests (if shrink-sort-scores-test? 10 1)}
+                [expected-score-order ((if shrink-sort-scores-test? gen'/subsequence gen/return)
+                                       expected-score-order)
                  :when (< 1 (count expected-score-order))]
                 (try (or (let [incidents-count (count expected-score-order)
                                incidents (into #{} (shuffle (map #(assoc (gen-new-incident) :scores %)
