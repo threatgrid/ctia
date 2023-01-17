@@ -1,5 +1,6 @@
 (ns ctia.entity.incident
   (:require
+   [clojure.string :as str]
    [clj-momo.lib.clj-time.core :as time]
    [ctia.domain.entities
     :refer [default-realize-fn un-store with-long-id]]
@@ -209,7 +210,7 @@
   )
 
 (s/defn sort-extension-templates :- SortExtensionTemplates
-  [services :- APIHandlerServices]
+  [{{:keys [get-in-config]} :ConfigService} :- APIHandlerServices]
   (-> {;; override :severity field to sort semantically
        :severity {:op :remap
                   :remappings {"Low" 1
@@ -248,8 +249,8 @@
                      :mode "max"
                      :field-name "scores.score"
                      :filter {"scores.type" score-type}}}))
-            ;; TODO get from config
-            ["asset" "ttp"])))
+            (some-> (get-in-config [:ctia :http :incident :sortable-score-types])
+                    (str/split #",")))))
 
 (s/defn incident-sort-fields
   [services :- APIHandlerServices]
