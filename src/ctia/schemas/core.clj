@@ -335,6 +335,8 @@
   [id]
   (and id (some? (re-matches id/transient-id-re id))))
 
+(s/defschema ESSortMode (s/enum "max" "min" "sum" "avg" "median"))
+
 (s/defschema SortExtensionTemplate
   (s/conditional
     #(= :field (:op %)) {:op (s/eq :field)
@@ -347,10 +349,10 @@
                          (s/optional-key :field-name) (s/cond-pre s/Keyword s/Str)
                          :remappings {s/Str s/Num}
                          :remap-default s/Num}
-    #(= :sort-by-list-max (:op %)) {:op (s/eq :sort-by-list-max)
-                                    :field-name (s/cond-pre s/Keyword s/Str)
-                                    :max-entry s/Str
-                                    (s/optional-key :filter-entry) {s/Str s/Str}}))
+    #(= :sort-by-list (:op %)) {:op (s/eq :sort-by-list)
+                                :mode ESSortMode
+                                :field-name (s/cond-pre s/Keyword s/Str)
+                                (s/optional-key :filter) {s/Str s/Str}}))
 
 (s/defschema ConcreteSortExtension
   (s/conditional
@@ -367,11 +369,11 @@
                          (s/optional-key :sort_order) (s/cond-pre s/Keyword s/Str)
                          :remappings {s/Str s/Num}
                          :remap-default s/Num}
-    #(= :sort-by-list-max (:op %)) {:op (s/eq :sort-by-list-max)
-                                    :field-name (s/cond-pre s/Keyword s/Str)
-                                    :max-entry s/Str
-                                    (s/optional-key :filter-entry) {s/Str s/Str}
-                                    (s/optional-key :sort_order) (s/cond-pre s/Keyword s/Str)}))
+    #(= :sort-by-list (:op %)) {:op (s/eq :sort-by-list)
+                                :field-name (s/cond-pre s/Keyword s/Str)
+                                :mode ESSortMode
+                                (s/optional-key :filter) {s/Str s/Str}
+                                (s/optional-key :sort_order) (s/cond-pre s/Keyword s/Str)}))
 
 (s/defschema SortExtensionTemplates
   "A map to override the behavior of sorting by a field.

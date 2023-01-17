@@ -39,13 +39,13 @@
                     \"TA0042\" 2}
        :sort_order :asc}
   
-  Sort by the maximum value in a filtered list.
+  Sort by a value in a filtered list.
 
       e.g., sort by the maximum scores.score after filtering for scores.type == 'asset'.
-      {:op :sort-by-list-max
-       :field-name \"scores\"
-       :max-entry \"score\"
-       :filter-entry {\"type\" \"asset\"}
+      {:op :sort-by-list
+       :mode \"max\"
+       :field-name \"scores.score\"
+       :filter {\"scores.type\" \"asset\"}
        :sort_order :asc}"
   [{:keys [op field-name sort_order] :as params} :- ConcreteSortExtension
    default-sort_order :- (s/cond-pre s/Str s/Keyword)]
@@ -57,16 +57,17 @@
       ;; https://www.elastic.co/guide/en/elasticsearch/reference/current/sort-search-results.html#_sort_values
       {field-name {:order order}}
 
-      :sort-by-list-max
+      :sort-by-list
       ;; https://www.elastic.co/guide/en/elasticsearch/reference/current/sort-search-results.html#nested-sorting
-      (let [{:keys [max-entry filter-entry]} params
-            list-field-name field-name
-            field-name (str field-name "." max-entry)]
+      (let [{filter-entry :filter :keys [mode max-entry]} params
+            _ (assert mode "Mode required")
+            [outer-field-name inner-field-name :as all-fields] (str/split field-name #"\.")
+            _ (assert (= 2 all-fields) (str "Exactly 1 level of nesting required: " field-name))]
         {field-name {:order order
                      ;; https://www.elastic.co/guide/en/elasticsearch/reference/current/sort-search-results.html#_sort_mode_option
-                     :mode "max"
-                     :nested (cond-> {:path list-field-name}
-                               filter-entry (assoc-in [:filter :term] (update-keys filter-entry #(str list-field-name "." %))))}})
+                     :mode mode
+                     :nested (cond-> {:path outer-field-name}
+                               filter-entry (assoc-in [:filter :term] filter-entry))}})
       (:remap :remap-list-max)
       (let [{:keys [remap-default remappings]} params
             remappings (normalize-remappings remappings)]
