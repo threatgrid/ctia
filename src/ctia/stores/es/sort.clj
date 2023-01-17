@@ -62,7 +62,7 @@
       (let [{filter-entry :filter :keys [mode max-entry]} params
             _ (assert mode "Mode required")
             [outer-field-name inner-field-name :as all-fields] (str/split field-name #"\.")
-            _ (assert (= 2 all-fields) (str "Exactly 1 level of nesting required: " field-name))]
+            _ (assert (= 2 (count all-fields)) (str "Exactly 1 level of nesting required: " field-name))]
         {field-name {:order order
                      ;; https://www.elastic.co/guide/en/elasticsearch/reference/current/sort-search-results.html#_sort_mode_option
                      :mode mode
