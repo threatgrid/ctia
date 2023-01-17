@@ -52,15 +52,15 @@
                                  (format "when %s passed, %s expected" fields result))
           #{:foo :bar} #{"foo" "bar"}
           #{:foo}      #{"foo"}
-          nil          nil))
-      (testing "search-q-params shall not be modified with searchable-fields of nil or empty"
-        (is (= IncidentSearchParams
-               (sut/prep-es-fields-schema
-                {:StoreService {:get-store (constantly {:state {:searchable-fields nil}})}}
-                {:search-q-params IncidentSearchParams})
-               (sut/prep-es-fields-schema
-                {:StoreService {:get-store (constantly {:state {:searchable-fields #{} }})}}
-                {:search-q-params IncidentSearchParams})))))))
+          nil          nil)
+        (testing "search-q-params shall not be modified with searchable-fields of nil or empty"
+          (is (= IncidentSearchParams
+                 (sut/prep-es-fields-schema
+                  {:StoreService {:get-store (constantly {:state {:searchable-fields nil}})}}
+                  {:search-q-params IncidentSearchParams})
+                 (sut/prep-es-fields-schema
+                  {:StoreService {:get-store (constantly {:state {:searchable-fields #{} }})}}
+                  {:search-q-params IncidentSearchParams}))))))))
 
 (defn- entity-schema+searchable-fields
   "Traverses through existing entities and grabs `schema` and
