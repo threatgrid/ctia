@@ -278,9 +278,14 @@
     (doseq [plural ent-keys]
       (let [entity (ffirst (helpers/plural-key->entity plural))
             search-res (th.search/search-raw app entity query-params)]
-        (is (= (-> bundle (get plural) count)
-               (get created entity))
-            "number of generated and imported entities should match")
+        (is (< 0 (get created entity))
+            (format "a bundle with at least one %s was imported" entity))
+        (let [numbers-match? (= (-> bundle (get plural) count)
+                                (get created entity))]
+          (is numbers-match? "number of generated and imported entities should match")
+          (when (not numbers-match?)
+            (println "generated bundle:")
+            (pp/pprint bundle)))
         (testing test-description (check test-case plural bundle search-res))
         (th.search/delete-search app entity {:query "*"
                                              :REALLY_DELETE_ALL_THESE_ENTITIES true})))))
