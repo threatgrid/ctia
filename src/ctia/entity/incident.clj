@@ -241,7 +241,6 @@
                   "TA0010" 6,
                   "TA0040" 4}
                  :remap-default 0}}
-      ;; :scores.asset, :scores.ttp
       ;; Sort by maximum score of a particular type
       (into (map (fn [score-type]
                    {(keyword (str "scores." score-type))
