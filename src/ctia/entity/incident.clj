@@ -208,7 +208,8 @@
   (generate-mitre-tactic-scores "")
   )
 
-(s/def sort-extension-templates :- SortExtensionTemplates
+(s/defn sort-extension-templates :- SortExtensionTemplates
+  [services :- APIHandlerServices]
   (-> {;; override :severity field to sort semantically
        :severity {:op :remap
                   :remappings {"Low" 1
@@ -249,11 +250,12 @@
                      :filter-entry {"type" score-type}}}))
             ["asset" "ttp"])))
 
-(def incident-sort-fields
+(s/defn incident-sort-fields
+  [services :- APIHandlerServices]
   (apply s/enum
          (map name
               (distinct
-               (concat (keys sort-extension-templates)
+               (concat (keys (sort-extension-templates services))
                        incident-fields)))))
 
 (def incident-enumerable-fields
@@ -281,7 +283,8 @@
 (s/defschema IncidentFieldsParam
   {(s/optional-key :fields) [(apply s/enum incident-fields)]})
 
-(s/defschema IncidentSearchParams
+(s/defn IncidentSearchParams :- (s/protocol s/Schema)
+  [services :- APIHandlerServices]
   (st/merge
    routes.common/PagingParams
    routes.common/BaseEntityFilterParams
@@ -294,7 +297,7 @@
      :discovery_method s/Str
      :intended_effect  s/Str
      :categories       s/Str
-     :sort_by          incident-sort-fields
+     :sort_by          (incident-sort-fields services)
      :assignees        s/Str
      :promotion_method s/Str
      :severity s/Str})))
@@ -327,7 +330,7 @@
      :search-schema            PartialIncidentList
      :patch-schema             PartialNewIncident
      :external-id-q-params     IncidentByExternalIdQueryParams
-     :search-q-params          IncidentSearchParams
+     :search-q-params          (IncidentSearchParams services)
      :new-spec                 :new-incident/map
      :can-patch?               true
      :can-aggregate?           true
@@ -341,7 +344,7 @@
      :external-id-capabilities :read-incident
      :histogram-fields         incident-histogram-fields
      :enumerable-fields        incident-enumerable-fields
-     :sort-extension-templates sort-extension-templates})))
+     :sort-extension-templates (sort-extension-templates services)})))
 
 (def IncidentType
   (let [{:keys [fields name description]}
