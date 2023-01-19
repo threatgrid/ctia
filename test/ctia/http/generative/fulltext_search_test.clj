@@ -55,7 +55,7 @@
                                         ;; remove IDs so it can be used it in Bundle import
                                         (dissoc :id)
                                         ;; scores can generate NaN in CTIM 1.2.1
-                                        (cond-> (= :incidents e (dissoc :scores))))))
+                                        (cond-> (= :incidents e) (dissoc :scores)))))
                     (gen/vector 5 11)))
               entity-keys)]
     (gen/bind
