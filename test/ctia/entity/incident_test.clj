@@ -3,6 +3,9 @@
             [clj-momo.lib.clj-time.core :as t]
             [clj-momo.test-helpers.core :as mth]
             [clojure.test :refer [deftest is join-fixtures testing use-fixtures]]
+            [clojure.test.check.generators :as gen]
+            [com.gfredericks.test.chuck.clojure-test :refer [checking]]
+            [com.gfredericks.test.chuck.generators :as gen']
             [ctia.auth.threatgrid :as auth]
             [ctia.bundle.core :as bundle]
             [ctia.entity.incident :as sut]
@@ -134,6 +137,136 @@
 (defn purge-incidents! [app]
   (search-th/delete-search app :incident {:query "*"
                                           :REALLY_DELETE_ALL_THESE_ENTITIES true}))
+
+(def asset-000-ttp-000 [{:type "asset" :score 0} {:type "ttp" :score 0}])
+(def asset-000-ttp-100 [{:type "asset" :score 0} {:type "ttp" :score 100}])
+(def asset-002-ttp-004 [{:type "asset" :score 2} {:type "ttp" :score 4}])
+(def asset-002-ttp-006 [{:type "asset" :score 2} {:type "ttp" :score 6}])
+(def asset-004-ttp-002 [{:type "asset" :score 4} {:type "ttp" :score 2}])
+(def asset-006-ttp-002 [{:type "asset" :score 6} {:type "ttp" :score 2}])
+(def asset-100-ttp-000 [{:type "asset" :score 100} {:type "ttp" :score 0}])
+(def asset-100-ttp-100 [{:type "asset" :score 100} {:type "ttp" :score 100}])
+
+(def shrink-sort-scores-test?
+  "If true, enable shrinking in sort-scores-test."
+  false)
+
+(deftest sort-scores-test
+  (es-helpers/for-each-es-version
+    "Can sort by multiple scores"
+    [7]
+    #(ductile.index/delete! % "ctia_*")
+    (helpers/with-properties (-> ["ctia.auth.type" "allow-all"]
+                                 (into es-helpers/basic-auth-properties)
+                                 (into ["ctia.http.incident.sortable-score-types" "asset,ttp"]))
+      (helpers/fixture-ctia-with-app
+        (fn [app]
+          ;(helpers/set-capabilities! app "foouser" ["foogroup"] "user" all-capabilities)
+          ;(whoami-helpers/set-whoami-response app "45c1f5e3f05d0" "foouser" "foogroup" "user")
+          (let [;; ordered from least to most complex
+                all-scoring-test-cases (-> []
+                                           ;; one score per incident
+                                           (into (mapcat (fn [asc?]
+                                                           (let [incident-count 10
+                                                                 ->sort_by (fn [score-type]
+                                                                             (format "scores.%s:%s" score-type (if asc? "asc" "desc")))
+                                                                 ->expected-score-order (fn [score-type]
+                                                                                          ((if asc? identity rseq)
+                                                                                           (mapv (fn [score]
+                                                                                                   [{:type score-type :score score}])
+                                                                                                 (range incident-count))))]
+                                                             [;; simple asset sort
+                                                              {:test-id (if asc? :asc-asset-single :desc-asset-single)
+                                                               :sort_by (->sort_by "asset")
+                                                               :expected-score-order (->expected-score-order "asset")}
+                                                              ;; simple ttp sort
+                                                              {:test-id (if asc? :asc-ttp-single :desc-ttp-single)
+                                                               :sort_by (->sort_by "ttp")
+                                                               :expected-score-order (->expected-score-order "ttp")}])))
+                                                 [true false])
+                                           ;; multiple scores per incident
+                                           (into (mapcat (fn [asc?]
+                                                           (let [reorder (if asc? identity rseq)]
+                                                             [;; simple asset sort
+                                                              {:test-id (if asc? :asc-asset-multi :desc-asset-multi)
+                                                               :sort_by (str "scores.asset:" (if asc? "asc" "desc"))
+                                                               :expected-score-order (reorder [asset-000-ttp-000
+                                                                                               asset-002-ttp-004
+                                                                                               asset-004-ttp-002
+                                                                                               asset-100-ttp-100])}
+                                                              ;; simple ttp sort
+                                                              {:test-id (if asc? :asc-ttp-multi :desc-ttp-multi)
+                                                               :sort_by (str "scores.ttp:" (if asc? "asc" "desc"))
+                                                               :expected-score-order (reorder [asset-000-ttp-000
+                                                                                               asset-004-ttp-002
+                                                                                               asset-002-ttp-004
+                                                                                               asset-100-ttp-100])}])))
+                                                 [true false])
+                                           ;; composite sort_by param
+                                           (into [{:test-id :asset-desc-then-ttp-asc
+                                                   :sort_by "scores.asset:desc,scores.ttp:asc"
+                                                   :expected-score-order [asset-100-ttp-000
+                                                                          asset-100-ttp-100
+                                                                          asset-002-ttp-004
+                                                                          asset-002-ttp-006
+                                                                          asset-000-ttp-000
+                                                                          asset-000-ttp-100]}
+                                                  {:test-id :asset-desc-then-ttp-desc
+                                                   :sort_by "scores.asset:desc,scores.ttp:desc"
+                                                   :expected-score-order [asset-100-ttp-100
+                                                                          asset-100-ttp-000
+                                                                          asset-002-ttp-006
+                                                                          asset-002-ttp-004
+                                                                          asset-000-ttp-100
+                                                                          asset-000-ttp-000]}
+                                                  {:test-id :ttp-desc-then-asset-asc
+                                                   :sort_by "scores.ttp:desc,scores.asset:asc"
+                                                   :expected-score-order [asset-000-ttp-100
+                                                                          asset-100-ttp-100
+                                                                          asset-004-ttp-002
+                                                                          asset-006-ttp-002
+                                                                          asset-000-ttp-000
+                                                                          asset-100-ttp-000]}
+                                                  {:test-id :ttp-desc-then-asset-desc
+                                                   :sort_by "scores.ttp:desc,scores.asset:desc"
+                                                   :expected-score-order [asset-100-ttp-100
+                                                                          asset-000-ttp-100
+                                                                          asset-006-ttp-002
+                                                                          asset-004-ttp-002
+                                                                          asset-100-ttp-000
+                                                                          asset-000-ttp-000]}]))
+                _ (assert (apply distinct? (map :test-id all-scoring-test-cases)))
+                _ (assert (every? #(apply distinct? (:expected-score-order %)) all-scoring-test-cases))
+                ;; only show failures for one case at a time, simplest first
+                tests-failed? (volatile! false)]
+            (doseq [{:keys [test-id sort_by expected-score-order]} all-scoring-test-cases
+                    :when (not @tests-failed?)]
+              (checking (pr-str test-id)
+                {:num-tests (if shrink-sort-scores-test? 10 1)}
+                [expected-score-order ((if shrink-sort-scores-test? gen'/subsequence gen/return)
+                                       expected-score-order)
+                 :when (< 1 (count expected-score-order))]
+                (try (or (let [incidents-count (count expected-score-order)
+                               incidents (into #{} (shuffle (map #(assoc (gen-new-incident) :scores %)
+                                                                 expected-score-order)))
+                               _ (create-incidents app incidents)
+                               {:keys [parsed-body] :as raw} (search-th/search-raw app :incident {:sort_by sort_by})]
+                           (when (is (= 200 (:status raw)) (pr-str raw))
+                             (let [scores->order (into {} (map-indexed (fn [i score] {score i}))
+                                                       expected-score-order)
+                                   expected-parsed-body (sort-by (fn [incident]
+                                                                   {:post [(number? %)]}
+                                                                   (scores->order (:scores incident)))
+                                                                 parsed-body)
+                                   _ (assert (= expected-score-order (map :scores expected-parsed-body)))]
+                               (and (is (= incidents-count (count parsed-body)) (pr-str raw))
+                                    (is (= incidents-count (count expected-parsed-body)) (pr-str raw))
+                                    (is (= expected-score-order
+                                           (mapv :scores parsed-body)))
+                                    (is (= expected-parsed-body
+                                           parsed-body))))))
+                         (vreset! tests-failed? true))
+                   (finally (purge-incidents! app)))))))))))
 
 ;; extracted from the much more thorough severity-int-script-search
 (deftest simple-severity-int-script-search-test

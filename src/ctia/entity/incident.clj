@@ -1,5 +1,6 @@
 (ns ctia.entity.incident
   (:require
+   [clojure.string :as str]
    [clj-momo.lib.clj-time.core :as time]
    [ctia.domain.entities
     :refer [default-realize-fn un-store with-long-id]]
@@ -140,7 +141,10 @@
       :assignees        em/token
       :promotion_method em/token
       :severity         em/token
-      :tactics          em/token})}})
+      :tactics          em/token
+      :scores           {:type "nested"
+                         :properties {:score em/float-type
+                                      :type em/token}}})}})
 
 (def-es-store IncidentStore :incident StoredIncident PartialStoredIncident)
 
@@ -205,43 +209,54 @@
   (generate-mitre-tactic-scores "")
   )
 
-(s/def sort-extension-templates :- SortExtensionTemplates
-  {;; override :severity field to sort semantically
-   :severity {:op :remap
-              :remappings {"Low" 1
-                           "Medium" 2
-                           "High" 3
-                           "Critical" 4}
-              :remap-default 0}
-   ;; override :tactics field to sort by the highest risk score for
-   ;; any one tactic on an incident
-   ;; https://attack.mitre.org/versions/v11/tactics/enterprise/
-   :tactics {:op :remap-list-max
-             :remappings
-             ;; Note: don't use actual scores, they may be proprietary. instead,
-             ;; simulate the same ordering (not proprietary) with dummy scores.
-             ;; generate with `generate-mitre-tactic-scores`
-             {"TA0043" 2,
-              "TA0042" 1,
-              "TA0001" 3,
-              "TA0002" 11,
-              "TA0003" 9,
-              "TA0004" 7,
-              "TA0005" 11,
-              "TA0006" 10,
-              "TA0007" 9,
-              "TA0008" 5,
-              "TA0009" 8,
-              "TA0011" 8,
-              "TA0010" 6,
-              "TA0040" 4}
-             :remap-default 0}})
+(s/defn sort-extension-templates :- SortExtensionTemplates
+  [{{:keys [get-in-config]} :ConfigService} :- APIHandlerServices]
+  (-> {;; override :severity field to sort semantically
+       :severity {:op :remap
+                  :remappings {"Low" 1
+                               "Medium" 2
+                               "High" 3
+                               "Critical" 4}
+                  :remap-default 0}
+       ;; override :tactics field to sort by the highest risk score for
+       ;; any one tactic on an incident
+       ;; https://attack.mitre.org/versions/v11/tactics/enterprise/
+       :tactics {:op :remap-list-max
+                 :remappings
+                 ;; Note: don't use actual scores, they may be proprietary. instead,
+                 ;; simulate the same ordering (not proprietary) with dummy scores.
+                 ;; generate with `generate-mitre-tactic-scores`
+                 {"TA0043" 2,
+                  "TA0042" 1,
+                  "TA0001" 3,
+                  "TA0002" 11,
+                  "TA0003" 9,
+                  "TA0004" 7,
+                  "TA0005" 11,
+                  "TA0006" 10,
+                  "TA0007" 9,
+                  "TA0008" 5,
+                  "TA0009" 8,
+                  "TA0011" 8,
+                  "TA0010" 6,
+                  "TA0040" 4}
+                 :remap-default 0}}
+      ;; Sort by maximum score of a particular type
+      (into (map (fn [score-type]
+                   {(keyword (str "scores." score-type))
+                    {:op :sort-by-list
+                     :mode "max"
+                     :field-name "scores.score"
+                     :filter {"scores.type" score-type}}}))
+            (some-> (get-in-config [:ctia :http :incident :sortable-score-types])
+                    (str/split #",")))))
 
-(def incident-sort-fields
+(s/defn incident-sort-fields
+  [services :- APIHandlerServices]
   (apply s/enum
          (map name
               (distinct
-               (concat (keys sort-extension-templates)
+               (concat (keys (sort-extension-templates services))
                        incident-fields)))))
 
 (def incident-enumerable-fields
@@ -269,7 +284,8 @@
 (s/defschema IncidentFieldsParam
   {(s/optional-key :fields) [(apply s/enum incident-fields)]})
 
-(s/defschema IncidentSearchParams
+(s/defn IncidentSearchParams :- (s/protocol s/Schema)
+  [services :- APIHandlerServices]
   (st/merge
    routes.common/PagingParams
    routes.common/BaseEntityFilterParams
@@ -282,7 +298,7 @@
      :discovery_method s/Str
      :intended_effect  s/Str
      :categories       s/Str
-     :sort_by          incident-sort-fields
+     :sort_by          (incident-sort-fields services)
      :assignees        s/Str
      :promotion_method s/Str
      :severity s/Str})))
@@ -315,7 +331,7 @@
      :search-schema            PartialIncidentList
      :patch-schema             PartialNewIncident
      :external-id-q-params     IncidentByExternalIdQueryParams
-     :search-q-params          IncidentSearchParams
+     :search-q-params          (IncidentSearchParams services)
      :new-spec                 :new-incident/map
      :can-patch?               true
      :can-aggregate?           true
@@ -329,7 +345,7 @@
      :external-id-capabilities :read-incident
      :histogram-fields         incident-histogram-fields
      :enumerable-fields        incident-enumerable-fields
-     :sort-extension-templates sort-extension-templates})))
+     :sort-extension-templates (sort-extension-templates services)})))
 
 (def IncidentType
   (let [{:keys [fields name description]}

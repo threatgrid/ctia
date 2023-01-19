@@ -1,5 +1,6 @@
 (ns ctia.domain.entities-test
   (:require [ctia.domain.entities :as sut]
+            [ctim.schemas.common :refer [ctim-schema-version]]
             [ctim.examples.sightings :refer [sighting-minimal sighting-maximal]]
             [ctia.entity.sighting.schemas :as ss]
             [ctia.test-helpers.collections :refer [is-submap?]]
@@ -25,7 +26,7 @@
     (testing "realized fn without previous object shall initiate all stored field"
       (is-submap? new-sighting-minimal realized-create)
       (is-submap? {:client_id "ireaux",
-                   :schema_version "1.2.0",
+                   :schema_version ctim-schema-version,
                    :type "sighting",
                    :id "sighting-id-1",
                    :tlp "green",
@@ -51,7 +52,7 @@
                                                   :services services})]
         (is-submap? new-sighting-maximal realized-update)
         (is-submap? {:client_id "ireaux",
-                     :schema_version "1.2.0",
+                     :schema_version ctim-schema-version,
                      :type "sighting",
                      :id "sighting-id-2",
                      :tlp "amber",

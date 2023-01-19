@@ -1,6 +1,10 @@
 (ns ctia.stores.es.sort-test
-  (:require [clojure.test :refer [deftest is]]
-            [ctia.stores.es.sort :as sut]))
+  (:require [clojure.test :refer [deftest is use-fixtures]]
+            [ctia.stores.es.sort :as sut]
+            [schema.test :refer [validate-schemas]]))
+
+(use-fixtures :once
+  validate-schemas)
 
 (deftest parse-sort-params-op-test
   (is (=
@@ -28,4 +32,16 @@
                        "High" 1}
           :sort_order :asc
           :remap-default 0}
-         :asc))))
+         :asc)))
+  (is (= {"scores.score"
+          {:order :asc
+           :mode "max"
+           :nested {:path "scores"
+                    :filter {:term {"scores.type" "asset"}}}}}
+         (sut/parse-sort-params-op
+           {:op :sort-by-list
+            :mode "max"
+            :field-name "scores.score"
+            :filter {"scores.type" "asset"}
+            :sort_order :asc}
+           :asc))))

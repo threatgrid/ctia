@@ -10,6 +10,7 @@
             [ctia.test-helpers.crud :refer [crud-wait-for-test]]
             [ctia.test-helpers.fake-whoami-service :as whoami-helpers]
             [ctia.test-helpers.store :refer [test-selected-stores-with-app]]
+            [ctia.test-helpers.http :refer [app->APIHandlerServices]]
             [ctim.examples.incidents :refer [new-incident-maximal]]
             [puppetlabs.trapperkeeper.app :as app]
             [schema-tools.core :as st]))
@@ -36,27 +37,30 @@
              (sut/coerce-date-range from to))))))
 
 (deftest prep-es-fields-schema-test
-  (let [enum->set (fn [enum-schema]
-                    (->> enum-schema ffirst (apply hash-map) :vs))]
-    (are [fields result]
-        (is (= result
-               (some-> (sut/prep-es-fields-schema
-                        {:StoreService {:get-store (constantly {:state {:searchable-fields fields}})}}
-                        {:search-q-params incident/IncidentSearchParams})
-                       (st/get-in [:search_fields])
-                       enum->set))
-            (format "when %s passed, %s expected" fields result))
-      #{:foo :bar} #{"foo" "bar"}
-      #{:foo}      #{"foo"}
-      nil          nil))
-  (testing "search-q-params shall not be modified with searchable-fields of nil or empty"
-    (is (= incident/IncidentSearchParams
-           (sut/prep-es-fields-schema
-            {:StoreService {:get-store (constantly {:state {:searchable-fields nil}})}}
-            {:search-q-params incident/IncidentSearchParams})
-           (sut/prep-es-fields-schema
-            {:StoreService {:get-store (constantly {:state {:searchable-fields #{} }})}}
-            {:search-q-params incident/IncidentSearchParams})))))
+  (test-selected-stores-with-app
+    #{:es-store}
+    (fn [app]
+      (let [IncidentSearchParams (incident/IncidentSearchParams (app->APIHandlerServices app))
+            enum->set (fn [enum-schema]
+                        (->> enum-schema ffirst (apply hash-map) :vs))]
+        (are [fields result] (is (= result
+                                    (some-> (sut/prep-es-fields-schema
+                                              {:StoreService {:get-store (constantly {:state {:searchable-fields fields}})}}
+                                              {:search-q-params IncidentSearchParams})
+                                            (st/get-in [:search_fields])
+                                            enum->set))
+                                 (format "when %s passed, %s expected" fields result))
+          #{:foo :bar} #{"foo" "bar"}
+          #{:foo}      #{"foo"}
+          nil          nil)
+        (testing "search-q-params shall not be modified with searchable-fields of nil or empty"
+          (is (= IncidentSearchParams
+                 (sut/prep-es-fields-schema
+                  {:StoreService {:get-store (constantly {:state {:searchable-fields nil}})}}
+                  {:search-q-params IncidentSearchParams})
+                 (sut/prep-es-fields-schema
+                  {:StoreService {:get-store (constantly {:state {:searchable-fields #{} }})}}
+                  {:search-q-params IncidentSearchParams}))))))))
 
 (defn- entity-schema+searchable-fields
   "Traverses through existing entities and grabs `schema` and
