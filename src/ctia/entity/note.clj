@@ -19,31 +19,14 @@
      em/base-entity-mapping
      em/sourcable-entity-mapping
      em/stored-entity-mapping
-     {:entity_id em/searchable-token
-      :content em/searchable-token})}})
+     {:entity_id em/token
+      :content em/text
+      :author em/token})}})
 
 (def-es-store NoteStore
   :note
   note-schemas/StoredNote
   note-schemas/PartialStoredNote)
-
-(def note-sort-fields
-  (apply s/enum note-schemas/note-fields))
-
-(s/defschema NoteFieldsParam
-  {(s/optional-key :fields) [note-sort-fields]})
-
-(s/defschema NoteQueryParams
-  (st/merge
-   NoteFieldsParam
-   routes.common/PagingParams
-   {:entity_id s/Str
-    (s/optional-key :sort_by) note-sort-fields}))
-
-(def NoteGetParams NoteFieldsParam)
-
-(s/defschema NoteByExternalIdQueryParams
-  (st/dissoc NoteQueryParams :entity_id))
 
 (def capabilities
   #{:create-note
@@ -51,24 +34,6 @@
     :delete-note
     :search-note
     :list-notes})
-
-(def searchable-fields
-  #{:id
-    :source
-    :entity_id
-    :content})
-
-(s/defn NoteSearchParams :- (s/protocol s/Schema)
-  [services :- APIHandlerServices]
-  (st/merge
-   routes.common/PagingParams
-   routes.common/BaseEntityFilterParams
-   routes.common/SourcableEntityFilterParams
-   routes.common/SearchableEntityParams
-   note-schemas/NoteFieldsParam
-   (st/optional-keys
-    {:content s/Str})))
-
 
 (s/defn note-routes [services :- APIHandlerServices]
   (routes
@@ -78,12 +43,12 @@
      :new-schema               note-schemas/NewNote
      :entity-schema            note-schemas/Note
      :get-schema               note-schemas/PartialNote
-     :get-params               NoteGetParams
+     :get-params               note-schemas/NoteGetParams
      :list-schema              note-schemas/PartialNoteList
      :search-schema            note-schemas/PartialNoteList
      :patch-schema             note-schemas/PartialNewNote
-     :external-id-q-params     NoteByExternalIdQueryParams
-     :search-q-params          (NoteSearchParams services)
+     :external-id-q-params     note-schemas/NoteByExternalIdQueryParams
+     :search-q-params          note-schemas/NoteSearchParams
      :new-spec                 :new-note/map
      :can-patch?               true
      :can-aggregate?           true
@@ -115,7 +80,9 @@
    :es-store              ->NoteStore
    :es-mapping            note-mapping
    :services->routes      (routes.common/reloadable-function note-routes)
+   :can-patch?            true
    :capabilities          capabilities
+   :patch-capabilities    :create-note
    :fields                note-schemas/note-fields
    :sort-fields           note-schemas/note-fields
-   :searchable-fields     searchable-fields})
+   :searchable-fields     note-schemas/searchable-fields})

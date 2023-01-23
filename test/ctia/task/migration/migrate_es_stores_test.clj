@@ -35,6 +35,7 @@
            java.text.SimpleDateFormat
            [java.util Date UUID]))
 
+
 (defn fixture-setup! [f]
   (let [app (helpers/get-current-app)
         services (app->MigrationStoreServices app)]
@@ -142,6 +143,7 @@
     (random-updates app bulk-res-1 (/ updates-nb 2))
     (random-updates app bulk-res-2 (/ updates-nb 2))))
 
+
 (deftest check-migration-params-test
   (let [migration-params {:migration-id "id"
                           :prefix       "1.2.0"
@@ -171,19 +173,19 @@
                          (sut/check-migration-params migration-params
                                                      get-in-config))
                 "source and target store must be different")))
-      (with-each-fixtures identity app
-        (let [{:keys [get-in-config]} (helpers/get-service-map app :ConfigService)]
-          (is (thrown? ExceptionInfo
-                       (sut/check-migration-params (update migration-params
-                                                           :migrations
-                                                           conj
-                                                           :bad-migration-id)
-                                                   get-in-config))))))
-    (testing "properly configured migration"
-      (with-each-fixtures identity app
-        (let [{:keys [get-in-config]} (helpers/get-service-map app :ConfigService)]
-          (is (sut/check-migration-params migration-params
-                                          get-in-config))))))))
+        (with-each-fixtures identity app
+          (let [{:keys [get-in-config]} (helpers/get-service-map app :ConfigService)]
+            (is (thrown? ExceptionInfo
+                         (sut/check-migration-params (update migration-params
+                                                             :migrations
+                                                             conj
+                                                             :bad-migration-id)
+                                                     get-in-config))))))
+      (testing "properly configured migration"
+        (with-each-fixtures identity app
+          (let [{:keys [get-in-config]} (helpers/get-service-map app :ConfigService)]
+            (is (sut/check-migration-params migration-params
+                                            get-in-config))))))))
 
 (deftest prepare-params-test
   (let [migration-props {:buffer-size 3,
@@ -454,8 +456,8 @@
             conn (es-conn get-in-config)
             {wo-modified true
              w-modified false} (->> (line-seq rdr)
-                                    (map (partial es-helpers/prepare-bulk-ops app))
-                                    (group-by #(nil? (:modified %))))
+             (map (partial es-helpers/prepare-bulk-ops app))
+             (group-by #(nil? (:modified %))))
             sorted-w-modified (sort-by :modified w-modified)
             bulk-1 (concat wo-modified (take 500 sorted-w-modified))
             bulk-2 (drop 500 sorted-w-modified)
@@ -505,7 +507,6 @@
                (get-in migration-state-1 [:stores :relationship :target :migrated])
                (get-in migration-state-1 [:stores :relationship :source :total]))
             "migration process should start with documents missing field used for bucketizing")
-
         (is (= 1000
                target-count-2
                (get-in migration-state-2 [:stores :relationship :source :total]))
@@ -657,7 +658,7 @@
                  #{"campaign - finished migrating 100 documents"
                    "indicator - finished migrating 100 documents"
                    (format "event - finished migrating %s documents"
-                           (+ 1900 updates-nb))
+                           (+ 2000 updates-nb))
                    "actor - finished migrating 100 documents"
                    "asset - finished migrating 100 documents"
                    "relationship - finished migrating 100 documents"
@@ -666,6 +667,7 @@
                    "coa - finished migrating 100 documents"
                    "identity - finished migrating 0 documents"
                    "judgement - finished migrating 100 documents"
+                   "note - finished migrating 100 documents"
                    "data-table - finished migrating 0 documents"
                    "feedback - finished migrating 0 documents"
                    "casebook - finished migrating 100 documents"
@@ -708,7 +710,7 @@
                                         (format "v0.0.0_%s-%s-000002"
                                                 (es-helpers/get-indexname app :event)
                                                 index-date)
-                                        (+ 900 updates-nb)}
+                                        (+ 950 updates-nb)}
                 expected-indices
                 (->> #{relationship
                        target-record

@@ -151,6 +151,13 @@
    :assertions [{:name "cisco:ctr:device:owner" :value "Bob"}]
    :source "source"})
 
+
+(defn mk-new-note [n]
+  {:id (str "transient:note-" n)
+   :content (str "content: note-" n)
+   :entity_id "https://ex.tld/ctia/note/note-0ecb71f3-6b04-4bbe-ba81-a0acf6f78394"
+   :source "Cisco Threat Response"})
+
 (defn mk-new-tool [n]
   {:id (str "transient:tool-" n)
    :title (str "tool-" n)
@@ -301,7 +308,8 @@
                                            (range nb))
                        :incidents (map mk-new-incident (range nb))
                        :sightings (map mk-new-sighting (range nb))
-                       :tools (map mk-new-tool (range nb))}
+                       :tools (map mk-new-tool (range nb))
+                       :notes (map mk-new-note (range nb))}
              bulk-url "ctia/bulk"
              response (POST app
                             bulk-url
@@ -332,12 +340,19 @@
 
              (doseq [k (keys new-bulk)]
                (testing (str "retrieved " (name k))
+                 (dissoc {:id "transient:note-0",
+                          :content "content: note-0",
+                          :entity_id
+                          "https://ex.tld/ctia/note/note-0ecb71f3-6b04-4bbe-ba81-a0acf6f78394",
+                          :source "Cisco Threat Response"}
+                         :id :timestamp :source_ref :target_ref)
+
                  (is (= (into #{}
-                              (map #(dissoc % :id :timestamp :source_ref :target_ref))
-                              (get new-bulk k))
+                              (map #(dissoc % :id :timestamp :source_ref :target_ref)
+                                   (get new-bulk k)))
                         (into #{}
-                              (map #(dissoc % :id :timestamp :type :tlp :schema_version :disposition_name :source_ref :target_ref :owner :groups))
-                              (get response k))))
+                              (map #(dissoc % :id :timestamp :type :tlp :schema_version :disposition_name :source_ref :target_ref :owner :groups)
+                                   (get response k)))))
 
                  (let [id (id/long-id->id (:id (first (get response k))))]
                    (is (= (:hostname id)         (:hostname show-props)))
@@ -348,10 +363,13 @@
          (testing "PUT /ctia/bulk"
            (let [indicator-ids (:indicators bulk-ids)
                  sighting-ids (:sightings bulk-ids)
+                 note-ids (:notes bulk-ids)
                  update-bulk {:indicators (map #(assoc (mk-new-indicator 0) :id % :source "updated") indicator-ids)
-                              :sightings (map #(assoc (mk-new-sighting 0) :id % :source "updated") sighting-ids)}
+                              :sightings (map #(assoc (mk-new-sighting 0) :id % :source "updated") sighting-ids)
+                              :notes (map #(assoc (mk-new-note 0) :id % :source "updated") note-ids)}
                  expected-update {:indicators {:updated (set indicator-ids)}
-                                  :sightings {:updated (set sighting-ids)}}
+                                  :sightings {:updated (set sighting-ids)}
+                                  :notes {:updated (set note-ids)}}
                  {:keys [status parsed-body]} (PUT app
                                                    bulk-url
                                                    :form-params update-bulk
@@ -360,30 +378,32 @@
              (is (= expected-update
                     (-> parsed-body
                         (update-in [:indicators :updated] set)
-                        (update-in [:sightings :updated] set))))
+                        (update-in [:sightings :updated] set)
+                        (update-in [:notes :updated] set))))
              (check-events event-store
                            ident
-                           (concat indicator-ids sighting-ids)
+                           (concat indicator-ids sighting-ids note-ids)
                            :record-updated)))
 
          (testing "PATCH /ctia/bulk"
            (let [incident-ids (:incidents bulk-ids)
                  sighting-ids (:sightings bulk-ids)
+                 note-ids (:notes bulk-ids)
                  patch-bulk {:incidents (map #(array-map :id % :source "patched") incident-ids)}
                  invalid-patch-bulk (assoc patch-bulk
                                            :sightings
                                            (map #(array-map :id % :source "patched") sighting-ids))
                  expected-patch {:incidents {:updated (set incident-ids)}}
                  {:keys [status parsed-body]} (PATCH app
-                                                      bulk-url
-                                                      :form-params patch-bulk
-                                                      :headers {"Authorization" "45c1f5e3f05d0"})]
+                                                     bulk-url
+                                                     :form-params patch-bulk
+                                                     :headers {"Authorization" "45c1f5e3f05d0"})]
              (is (= 200 status))
-             (is (= expected-patch
-                    (update-in parsed-body [:incidents :updated] set)))
+             (is (= expected-patch (update-in parsed-body [:incidents :updated] set)))
+
              (check-events event-store
                            ident
-                           incident-ids
+                           (concat incident-ids note-ids)
                            :record-updated)
              (is (= 400
                     (:status
