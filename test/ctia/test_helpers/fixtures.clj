@@ -14,6 +14,7 @@
              [indicators :refer [indicator-maximal indicator-minimal]]
              [judgements :refer [judgement-maximal judgement-minimal]]
              [malwares :refer [malware-maximal malware-minimal]]
+             [notes :refer [note-maximal note-minimal]]
              [relationships :refer [relationship-maximal relationship-minimal]]
              [casebooks :refer [casebook-maximal casebook-minimal]]
              [sightings :refer [sighting-maximal sighting-minimal]]
@@ -43,6 +44,7 @@
     :investigation    (n-doc (if maximal? investigation-maximal investigation-minimal) nb)
     :judgement        (n-doc (if maximal? judgement-maximal judgement-minimal) nb)
     :malware          (n-doc (if maximal? malware-maximal malware-minimal) nb)
+    :note             (n-doc (if maximal? note-maximal note-minimal) nb)
     :relationship     (n-doc (if maximal? relationship-maximal relationship-minimal) nb)
     :casebook         (n-doc (if maximal? casebook-maximal casebook-minimal) nb)
     :sighting         (n-doc (if maximal? sighting-maximal sighting-minimal) nb)
@@ -73,6 +75,7 @@
      :investigations   (n-examples :investigation fixtures-nb maximal?)
      :judgements       (n-examples :judgement fixtures-nb maximal?)
      :malwares         (n-examples :malware fixtures-nb maximal?)
+     :notes            (n-examples :note fixtures-nb maximal?)
      :relationships    (n-examples :relationship fixtures-nb maximal?)
      :casebooks        (n-examples :casebook fixtures-nb maximal?)
      :sightings        (n-examples :sighting fixtures-nb maximal?)

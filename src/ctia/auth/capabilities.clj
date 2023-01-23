@@ -102,6 +102,7 @@
      :read-judgement
      :list-judgements
      :read-malware
+     :read-note
      :read-relationship
      :list-relationships
      :read-sighting

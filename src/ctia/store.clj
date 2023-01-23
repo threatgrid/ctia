@@ -58,6 +58,7 @@
    :investigation []
    :judgement []
    :malware []
+   :note []
    :relationship []
    :sighting []
    :target-record []
