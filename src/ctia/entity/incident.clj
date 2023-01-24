@@ -142,6 +142,7 @@
       :promotion_method em/token
       :severity         em/token
       :tactics          em/token
+      :techniques          em/token
       :scores           {:type "nested"
                          :properties {:score em/float-type
                                       :type em/token}}})}})
@@ -165,7 +166,8 @@
            :assignees
            :promotion_method
            :severity
-           :tactics]))
+           :tactics
+           :techniques]))
 
 (comment
   (defn generate-mitre-tactic-scores
@@ -270,7 +272,8 @@
    :status
    :title
    :severity
-   :tactics])
+   :tactics
+   :techniques])
 
 (def incident-histogram-fields
   [:timestamp
