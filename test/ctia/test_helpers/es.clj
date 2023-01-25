@@ -100,10 +100,12 @@
         (:params basic-auth)))
 
 (defn -es-port []
-  (if ((h/set-of-es-versions-to-test) 5) "9205" "9207"))
+  9207)
+;;  (if ((h/set-of-es-versions-to-test) 5) "9205" "9207"))
 
 (defn -es-version []
-  (if ((h/set-of-es-versions-to-test) 5) 5 7))
+  7)
+  ;;(if ((h/set-of-es-versions-to-test) 5) 5 7))
 
 (defn fixture-properties:es-store [t]
   ;; Note: These properties may be overwritten by ENV variables
