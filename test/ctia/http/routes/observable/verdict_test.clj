@@ -5,6 +5,7 @@
             [clj-time.coerce :as time-coerce]
             [clj-time.format :as time-format]
             [clojure.test :refer [deftest is join-fixtures testing use-fixtures]]
+            [ctia.domain.access-control :as cdac]
             [ctia.test-helpers
              [auth :refer [all-capabilities]]
              [core :as helpers :refer [DELETE GET POST]]
@@ -713,6 +714,126 @@
              (is (= (get-in authorized-groups-judgement-post [:parsed-body :id])
                     (:judgement_id verdict-3))))))))))
 
+(deftest test-observable-verdict-access-control-max-record-visibility
+  (test-for-each-store-with-app
+   (fn [app]
+     (with-redefs [cdac/max-record-visibility-everyone? (constantly false)]
+       (helpers/set-capabilities! app "foouser" ["foogroup"] "user" all-capabilities)
+       (helpers/set-capabilities! app "baruser" ["bargroup"] "user" all-capabilities)
+       (helpers/set-capabilities! app "foobaruser" ["bargroup"] "user" all-capabilities)
+
+       (whoami-helpers/set-whoami-response app
+                                           "foouser"
+                                           "foouser"
+                                           "foogroup"
+                                           "user")
+
+       (whoami-helpers/set-whoami-response app
+                                           "baruser"
+                                           "baruser"
+                                           "bargroup"
+                                           "user")
+
+       (whoami-helpers/set-whoami-response app
+                                           "foobaruser"
+                                           "foobaruser"
+                                           "bargroup"
+                                           "user")
+
+       (testing "verdict route TLP behavior"
+         (let [green-observable
+               {:type "domain"
+                :value "green.com"}
+               amber-observable
+               {:type "domain"
+                :value "amber.com"}
+               red-observable
+               {:type "domain"
+                :value "red.com"}
+               auth-observable
+               {:type "domain"
+                :value "auth.com"}
+               base-judgement
+               {:valid_time {:start_time "2016-02-12T00:00:00.000-00:00"}
+                :observable green-observable
+                :reason_uri "https://example.com/",
+                :source "Example",
+                :disposition 2,
+                :disposition_name "Malicious"
+                :reason "Example judgement",
+                :source_uri "https://example.com/",
+                :priority 0,
+                :severity "None",
+                :tlp "green",
+                :confidence "None"}
+               green-judgement-post
+               (POST app
+                     "ctia/judgement"
+                     :body (assoc base-judgement
+                                  :observable green-observable
+                                  :tlp "green")
+                     :headers {"Authorization" "foouser"})
+               amber-judgement-post
+               (POST app
+                     "ctia/judgement"
+                     :body (assoc base-judgement
+                                  :observable amber-observable
+                                  :tlp "amber")
+                     :headers {"Authorization" "baruser"})
+               red-judgement-post
+               (POST app
+                     "ctia/judgement"
+                     :body (assoc base-judgement
+                                  :observable red-observable
+                                  :tlp "red")
+                     :headers {"Authorization" "foobaruser"})
+               authorized-groups-judgement-post
+               (POST app
+                     "ctia/judgement"
+                     :body (assoc base-judgement
+                                  :observable auth-observable
+                                  :tlp "red"
+                                  :authorized_groups ["bargroup"])
+                     :headers {"Authorization" "baruser"})]
+
+           (is (= 201 (:status green-judgement-post)))
+
+           (testing "a green Judgement should not be visible to everyone"
+             (let [{status-1 :status
+                    verdict-1 :parsed-body}
+                   (GET app
+                        (str "ctia/"
+                             (:type green-observable)
+                             "/" (:value green-observable)
+                             "/verdict")
+                        :headers {"Authorization" "foouser"})
+                   {status-2 :status
+                    verdict-2 :parsed-body}
+                   (GET app
+                        (str "ctia/"
+                             (:type green-observable)
+                             "/"
+                             (:value green-observable)
+                             "/verdict")
+                        :headers {"Authorization" "baruser"})
+                   {status-3 :status
+                    verdict-3 :parsed-body}
+                   (GET app
+                        (str "ctia/"
+                             (:type green-observable)
+                             "/"
+                             (:value green-observable)
+                             "/verdict")
+                        :headers {"Authorization" "foobaruser"})]
+
+               (is (= 200 status-1))
+               (is (= (get-in green-judgement-post [:parsed-body :id])
+                      (:judgement_id verdict-1)))
+
+               (is (= 404 status-2))
+               (is (= 404 status-3))))))))))
+
+
 (deftest with-date-range
   (test-for-each-store-with-app
    (fn [app]
@@ -723,9 +844,9 @@
                                          "foogroup"
                                          "user")
      (let [create-judgement #(POST app
-                                 "ctia/judgement"
-                               :body %
-                               :headers {"Authorization" "45c1f5e3f05d0"})
+                                   "ctia/judgement"
+                                   :body %
+                                   :headers {"Authorization" "45c1f5e3f05d0"})
            now->string #(-> (clj-time/now) (time-coerce/to-string))
            before (now->string) ;; timestamp before judgement entities are created
            _judgement-1 (create-judgement {:observable {:value "127.0.0.1"
@@ -769,9 +890,9 @@
          (let [{status :status
                 verdict :parsed-body}
                (GET app
-                   "ctia/ip/10.0.0.1/verdict"
-                 :headers {"Authorization" "45c1f5e3f05d0"}
-                 :query-params {:from before :to midway})]
+                    "ctia/ip/10.0.0.1/verdict"
+                    :headers {"Authorization" "45c1f5e3f05d0"}
+                    :query-params {:from before :to midway})]
            (is (= 200 status))
            (is (= {:type "verdict"
                    :disposition 3
@@ -785,9 +906,9 @@
          (let [{status :status
                 parsed-body :parsed-body}
                (GET app
-                   "ctia/ip/10.0.0.1/verdict"
-                 :headers {"Authorization" "45c1f5e3f05d0"}
-                 :query-params {:from after})]
+                    "ctia/ip/10.0.0.1/verdict"
+                    :headers {"Authorization" "45c1f5e3f05d0"}
+                    :query-params {:from after})]
            (is (= 404 status))
            (is (= {:message "no verdict currently available for the supplied observable"}
                   parsed-body))))
@@ -796,8 +917,8 @@
          (let [{status :status
                 verdict :parsed-body}
                (GET app
-                   "ctia/ip/10.0.0.1/verdict"
-                 :headers {"Authorization" "45c1f5e3f05d0"})]
+                    "ctia/ip/10.0.0.1/verdict"
+                    :headers {"Authorization" "45c1f5e3f05d0"})]
            (is (= 200 status))
            (is (= {:type "verdict"
                    :disposition 2
