@@ -79,12 +79,16 @@
            :mode "min"
            :nested_filter
            {"range" {"valid_time.start_time" {"lte" now-str}}}}}}]
+
+  (clojure.pprint/pprint
+   (assoc es-params :minimum_should_match 2))
+
     (some->>
      (search-docs (:conn state)
                   (:index state)
                   composed-query
                   nil
-                  es-params)
+                  (assoc es-params :minimum_should_match 2))
      :data
      coerce-stored-judgement-list)))
 
