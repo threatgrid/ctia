@@ -866,7 +866,7 @@
            (assert (= 201 (:status green-judgement-post))
                    "the test was not properly initialized")
 
-           (testing "a green Judgement implies a verdict readable by everyone"
+           (testing "a green Judgement should only affect verdicts of the group when visibility is set to group."
              (let [{status-1 :status
                     verdict-1 :parsed-body}
                    (GET app
@@ -883,9 +883,7 @@
                              "/"
                              (:value green-observable)
                              "/verdict")
-                        :headers {"Authorization" "baruser"})
-                   ]
-
+                        :headers {"Authorization" "baruser"})]
                (is (= 200 status-1))
                (is (= (get-in green-judgement-post [:parsed-body :id])
                       (:judgement_id verdict-1)))
