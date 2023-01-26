@@ -112,12 +112,12 @@
                             "ctia.store.es.default.replicas" 1
                             "ctia.store.es.default.refresh" "true"
                             "ctia.store.es.default.refresh_interval" "1s"
-                            "ctia.store.es.default.port" 9207
+                            "ctia.store.es.default.port" (-es-port)
                             "ctia.store.es.default.indexname" "test_ctia"
                             "ctia.store.es.default.default_operator" "AND"
                             "ctia.store.es.default.aliased" true
                             "ctia.store.es.default.rollover.max_docs" 50
-                            "ctia.store.es.default.version" 7
+                            "ctia.store.es.default.version" (-es-version)
                             "ctia.store.es.default.default-sort" "timestamp,created,id"
                             "ctia.store.es.event.default-sort" "timestamp,id"
                             "ctia.store.es.relationship.default-sort" "created,id"
