@@ -250,10 +250,7 @@
                              :test-selectors ^:replace {:default :encoding}}
 
              :prepush {:plugins [[yogsototh/lein-kibit "0.1.6-SNAPSHOT"]
-                                 [lein-bikeshed "0.3.0"]]}
-             :es7 {:jvm-opts ["-Dctia.store.es.default.port=9207"
-                              "-Dctia.store.es.default.version=7"
-                              "-Dctia.test.es-versions=[7]"]}}
+                                 [lein-bikeshed "0.3.0"]]}}
 
   :perforate {:environments [{:name :actor
                               :namespaces [ctia.entity.actor-bench]}
