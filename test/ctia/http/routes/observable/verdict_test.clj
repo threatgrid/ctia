@@ -6,8 +6,9 @@
             [clj-time.format :as time-format]
             [clojure.test :refer [deftest is join-fixtures testing use-fixtures]]
             [ctia.test-helpers
+             [es :as es-helpers]
              [auth :refer [all-capabilities]]
-             [core :as helpers :refer [DELETE GET POST]]
+             [core :as helpers :refer [fixture-ctia-with-app DELETE GET POST]]
              [fake-whoami-service :as whoami-helpers]
              [store :refer [test-for-each-store-with-app]]]
             [ctim.domain.id :as id]))
@@ -807,3 +808,83 @@
                    :valid_time {:start_time #inst "2020-02-12T00:00:00.000-00:00",
                                 :end_time #inst "2525-01-01T00:00:00.000-00:00"}}
                   verdict))))))))
+
+(deftest test-observable-verdict-access-control-max-record-visibility
+  (helpers/with-properties (into es-helpers/basic-auth-properties
+                                 ["ctia.access-control.max-record-visibility" "group"])
+  (fixture-ctia-with-app
+   (fn [app]
+       (helpers/set-capabilities! app "foouser" ["foogroup"] "user" all-capabilities)
+       (helpers/set-capabilities! app "baruser" ["bargroup"] "user" all-capabilities)
+       (helpers/set-capabilities! app "foobaruser" ["bargroup"] "user" all-capabilities)
+
+       (whoami-helpers/set-whoami-response app
+                                           "foouser"
+                                           "foouser"
+                                           "foogroup"
+                                           "user")
+
+       (whoami-helpers/set-whoami-response app
+                                           "baruser"
+                                           "baruser"
+                                           "bargroup"
+                                           "user")
+
+       (testing "verdict route TLP behavior"
+         (let [green-observable
+               {:type "domain"
+                :value "green.com"}
+               amber-observable
+               {:type "domain"
+                :value "amber.com"}
+               red-observable
+               {:type "domain"
+                :value "red.com"}
+               auth-observable
+               {:type "domain"
+                :value "auth.com"}
+               base-judgement
+               {:valid_time {:start_time "2016-02-12T00:00:00.000-00:00"}
+                :observable green-observable
+                :reason_uri "https://example.com/",
+                :source "Example",
+                :disposition 2,
+                :disposition_name "Malicious"
+                :reason "Example judgement",
+                :source_uri "https://example.com/",
+                :priority 0,
+                :severity "None",
+                :tlp "green",
+                :confidence "None"}
+               green-judgement-post
+               (POST app
+                     "ctia/judgement?wait_for=true"
+                     :body (assoc base-judgement
+                                  :observable green-observable
+                                  :tlp "green")
+                     :headers {"Authorization" "foouser"})]
+           (assert (= 201 (:status green-judgement-post))
+                   "the test was not properly initialized")
+
+           (testing "a green Judgement should only affect verdicts of the group when visibility is set to group."
+             (let [{status-1 :status
+                    verdict-1 :parsed-body}
+                   (GET app
+                        (str "ctia/"
+                             (:type green-observable)
+                             "/" (:value green-observable)
+                             "/verdict")
+                        :headers {"Authorization" "foouser"})
+                   {status-2 :status
+                    verdict-2 :parsed-body}
+                   (GET app
+                        (str "ctia/"
+                             (:type green-observable)
+                             "/"
+                             (:value green-observable)
+                             "/verdict")
+                        :headers {"Authorization" "baruser"})]
+               (is (= 200 status-1))
+               (is (= (get-in green-judgement-post [:parsed-body :id])
+                      (:judgement_id verdict-1)))
+               (is (= 404 status-2))))))))))
