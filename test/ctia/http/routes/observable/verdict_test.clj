@@ -8,7 +8,7 @@
             [ctia.test-helpers
              [es :as es-helpers]
              [auth :refer [all-capabilities]]
-             [core :as helpers :refer [DELETE GET POST]]
+             [core :as helpers :refer [fixture-ctia-with-app DELETE GET POST]]
              [fake-whoami-service :as whoami-helpers]
              [store :refer [test-for-each-store-with-app]]]
             [ctim.domain.id :as id]))
@@ -809,12 +809,10 @@
                                 :end_time #inst "2525-01-01T00:00:00.000-00:00"}}
                   verdict))))))))
 
-
 (deftest test-observable-verdict-access-control-max-record-visibility
-  (helpers/with-properties ["ctia.access-control.max-record-visibility" "group"
-                            "ctia.store.es.default.version" 7
-                            "ctia.store.es.default.port" 9207]
-  (test-for-each-store-with-app
+  (helpers/with-properties (into es-helpers/basic-auth-properties
+                                 ["ctia.access-control.max-record-visibility" "group"])
+  (fixture-ctia-with-app
    (fn [app]
        (helpers/set-capabilities! app "foouser" ["foogroup"] "user" all-capabilities)
        (helpers/set-capabilities! app "baruser" ["bargroup"] "user" all-capabilities)
