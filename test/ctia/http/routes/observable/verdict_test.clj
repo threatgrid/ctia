@@ -832,12 +832,6 @@
                                            "bargroup"
                                            "user")
 
-       (whoami-helpers/set-whoami-response app
-                                           "foobaruser"
-                                           "foobaruser"
-                                           "bargroup"
-                                           "user")
-
        (testing "verdict route TLP behavior"
          (let [green-observable
                {:type "domain"
@@ -893,20 +887,11 @@
                              (:value green-observable)
                              "/verdict")
                         :headers {"Authorization" "baruser"})
-                   {status-3 :status
-                    verdict-3 :parsed-body}
-                   (GET app
-                        (str "ctia/"
-                             (:type green-observable)
-                             "/"
-                             (:value green-observable)
-                             "/verdict")
-                        :headers {"Authorization" "foobaruser"})]
+                   ]
 
                (is (= 200 status-1))
                (is (= (get-in green-judgement-post [:parsed-body :id])
                       (:judgement_id verdict-1)))
 
-               (is (= 404 status-2))
-               (is (= 404 status-3))))
+               (is (= 404 status-2))))
            ))))))

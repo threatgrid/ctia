@@ -13,6 +13,7 @@
   (let [login (str/lower-case login)
         groups (map str/lower-case groups)]
     {:bool
+     :minimum_should_match 1
      {:should
       (cond->>
        [;; Document Owner

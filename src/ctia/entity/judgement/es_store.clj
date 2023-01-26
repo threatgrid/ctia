@@ -82,7 +82,7 @@
     (some->>
      (search-docs (:conn state)
                   (:index state)
-                  (assoc-in composed-query  [:bool :minimum_should_match] 1)
+                  composed-query
                   nil
                   es-params)
      :data
