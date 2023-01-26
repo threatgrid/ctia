@@ -860,14 +860,13 @@
                 :confidence "None"}
                green-judgement-post
                (POST app
-                     "ctia/judgement"
+                     "ctia/judgement?wait_for=true"
                      :body (assoc base-judgement
                                   :observable green-observable
                                   :tlp "green")
                      :headers {"Authorization" "foouser"})]
-
-           (is (= 201 (:status green-judgement-post)))
-           (Thread/sleep 1000)
+           (assert (= 201 (:status green-judgement-post))
+                   "the test was not properly initialized")
 
            (testing "a green Judgement implies a verdict readable by everyone"
              (let [{status-1 :status
@@ -892,5 +891,4 @@
                (is (= 200 status-1))
                (is (= (get-in green-judgement-post [:parsed-body :id])
                       (:judgement_id verdict-1)))
-               (is (= 404 status-2))))
-           ))))))
+               (is (= 404 status-2))))))))))
