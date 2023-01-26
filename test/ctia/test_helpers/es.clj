@@ -99,11 +99,8 @@
                        (val %)))
         (:params basic-auth)))
 
-(defn -es-port []
-  (if ((h/set-of-es-versions-to-test) 5) "9205" "9207"))
-
-(defn -es-version []
-  (if ((h/set-of-es-versions-to-test) 5) 5 7))
+(def es-port 9207)
+(def es-version 7)
 
 (defn fixture-properties:es-store [t]
   ;; Note: These properties may be overwritten by ENV variables
@@ -112,12 +109,12 @@
                             "ctia.store.es.default.replicas" 1
                             "ctia.store.es.default.refresh" "true"
                             "ctia.store.es.default.refresh_interval" "1s"
-                            "ctia.store.es.default.port" (-es-port)
+                            "ctia.store.es.default.port" -es-port
                             "ctia.store.es.default.indexname" "test_ctia"
                             "ctia.store.es.default.default_operator" "AND"
                             "ctia.store.es.default.aliased" true
                             "ctia.store.es.default.rollover.max_docs" 50
-                            "ctia.store.es.default.version" (-es-version)
+                            "ctia.store.es.default.version" -es-version
                             "ctia.store.es.default.default-sort" "timestamp,created,id"
                             "ctia.store.es.event.default-sort" "timestamp,id"
                             "ctia.store.es.relationship.default-sort" "created,id"
@@ -183,14 +180,14 @@
 (defn fixture-properties:es-hook [t]
   ;; Note: These properties may be overwritten by ENV variables
   (h/with-properties ["ctia.hook.es.enabled" true
-                      "ctia.hook.es.port" (-es-port)
+                      "ctia.hook.es.port" -es-port
                       "ctia.hook.es.indexname" "test_ctia_events"]
     (t)))
 
 (defn fixture-properties:es-hook:aliased-index [t]
   ;; Note: These properties may be overwritten by ENV variables
   (h/with-properties ["ctia.hook.es.enabled" true
-                      "ctia.hook.es.port" (-es-port)
+                      "ctia.hook.es.port" -es-port
                       "ctia.hook.es.indexname" "test_ctia_events"
                       "ctia.hook.es.slicing.strategy" "aliased-index"
                       "ctia.hook.es.slicing.granularity" "week"]
@@ -254,9 +251,6 @@
        (remove (fn [[k _]]
                  (string/starts-with? (name k) ".")))))
 
-(defn -filter-activated-es-versions [versions]
-  (filter (h/set-of-es-versions-to-test) versions))
-
 (defmacro for-each-es-version
   "for each given ES version:
   - init an ES connection assuming that ES version n listens on port 9200 + n
@@ -268,7 +262,7 @@
   `(let [;; avoid version and the other explicitly bound locals will to be captured
          clean-fn# ~clean
          msg# ~msg]
-     (doseq [version# (-filter-activated-es-versions ~versions)
+     (doseq [version# ~versions
              :let [es-port# (+ 9200 version#)]]
        (h/with-properties
          (into ["ctia.store.es.default.host" "127.0.0.1"
