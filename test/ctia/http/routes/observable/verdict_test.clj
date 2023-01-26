@@ -892,6 +892,5 @@
                (is (= 200 status-1))
                (is (= (get-in green-judgement-post [:parsed-body :id])
                       (:judgement_id verdict-1)))
-
                (is (= 404 status-2))))
            ))))))
