@@ -46,7 +46,7 @@
   {:pre [(boolean? aliased?)]}
   (es-helpers/for-each-es-version
    "update-mapping store should apply valid updates (field addition). for aliased stores, all indices must be updated"
-   [7 8] ;; TODO compatibility with ES7
+   [7] ;; TODO compatibility with ES7
    #(ductile.index/delete! % "ctia_*")
    (helpers/fixture-ctia-with-app
      (fn [app]

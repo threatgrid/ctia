@@ -253,10 +253,7 @@
                                  [lein-bikeshed "0.3.0"]]}
              :es7 {:jvm-opts ["-Dctia.store.es.default.port=9207"
                               "-Dctia.store.es.default.version=7"
-                              "-Dctia.test.es-versions=[7]"]}
-             :es8 {:jvm-opts ["-Dctia.store.es.default.port=9208"
-                              "-Dctia.store.es.default.version=8"
-                              "-Dctia.test.es-versions=[8]"]}}
+                              "-Dctia.test.es-versions=[7]"]}}
 
   :perforate {:environments [{:name :actor
                               :namespaces [ctia.entity.actor-bench]}

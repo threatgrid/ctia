@@ -33,9 +33,7 @@
 (defn set-of-es-versions-to-test []
   {:post [(set? %)]}
   (or (some-> (System/getProperty "ctia.test.es-versions") read-string set)
-      #{7
-        ;;TODO
-        #_8}))
+      #{7}))
 
 (def
   ^:dynamic ^:private
@@ -68,13 +66,7 @@
          "ctia.metrics.console.enabled"               false
          "ctia.metrics.jmx.enabled"                   false
          "ctia.store.es.identity.refresh"             "true"
-         "ctia.versions.config"                       "test"]
-        ;; use es8 if es7 is not available
-        (let [es-versions (set-of-es-versions-to-test)]
-          (when (and (not (es-versions 7))
-                     (es-versions 8))
-            ["ctia.store.es.default.port" 9208
-             "ctia.store.es.default.version" 8]))))
+         "ctia.versions.config"                       "test"]))
 (assert (even? (count *properties-overrides*)))
 
 (defn- isolate-config-indices

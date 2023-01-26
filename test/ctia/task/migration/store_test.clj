@@ -255,7 +255,7 @@
 (deftest rollover-test
   (es-helpers/for-each-es-version
    "rollover should refresh write index and trigger rollover when index size is strictly bigger than max-docs"
-   [7 8]
+   [7]
    #(ductile.index/delete! % "ctia_*")
    (helpers/with-properties*
      ["ctia.store.es.default.port" es-port
@@ -329,7 +329,7 @@
 (deftest sliced-queries-test
   (es-helpers/for-each-es-version
    "Sliced-queries should properly decompose a store into time window queries for given time interval"
-   [7 8]
+   [7]
    #(ductile.index/delete! % "*ctia_relationship*")
    (helpers/with-properties ;; simple way to have a proper store initialization
      ["ctia.store.es.default.port" es-port
@@ -492,7 +492,7 @@
 (deftest bulk-metas-test
   (es-helpers/for-each-es-version
    "bulk-metas prepares ES bulk data for given document ids"
-   [7 8]
+   [7]
    #(ductile.index/delete! % "ctia_*")
    (helpers/with-properties
      ["ctia.store.es.default.port" es-port
@@ -561,7 +561,7 @@
   ;; insert elements in different indices, modify some and check that we retrieve the right one
   (es-helpers/for-each-es-version
    "prepare-docs properly generates meta data for bulk ops for new and modified documents"
-   [7 8]
+   [7]
    #(ductile.index/delete! % "ctia_*")
    (helpers/with-properties
      ["ctia.store.es.default.port" es-port
@@ -631,7 +631,7 @@
 (deftest store-batch-store-size-test
   (es-helpers/for-each-es-version
    "store-batch should properly write data in given store"
-   [7 8]
+   [7]
    #(do (ductile.index/delete! % "test_index*")
         (ductile.index/delete! % "ctia_*"))
    (helpers/with-properties
@@ -810,7 +810,7 @@
 (deftest query-fetch-batch-test
   (es-helpers/for-each-es-version
    "query-fetch should properly fetch and sort data"
-   [7 8]
+   [7]
    (fn [conn]
      (ductile.index/delete! conn "ctia_*")
      (ductile.index/delete! conn "event_index*")
@@ -829,7 +829,7 @@
 (deftest fetch-deletes-test
   (es-helpers/for-each-es-version
    "fetch-deletes should be properly configured to fetch deletes in source store"
-   [7 8]
+   [7]
    #(ductile.index/delete! % "ctia_*")
    (helpers/with-properties
      ["ctia.store.es.default.port" es-port
@@ -904,7 +904,7 @@
 (deftest init-get-migration-test
   (es-helpers/for-each-es-version
    "init-migration should properly create new migration state from selected types."
-   [7 8]
+   [7]
    (fn [c]
      (ductile.index/delete! c "ctia_*")
      (ductile.index/delete! c "v0.0.0*"))

@@ -127,21 +127,12 @@ be created more than once.
 
 ### Local workflow
 
-To start CTIA locally, first configure ES auth for local development by uncommenting the lines beginning with `ctia.store.es.default.auth` in `resources/ctia-default.properties`.  Then use `./scripts/run` for ES7 and `./scripts/run8` for ES8.
+To start CTIA locally, first configure ES auth for local development by uncommenting the lines beginning with `ctia.store.es.default.auth` in `resources/ctia-default.properties`.  Then use `./scripts/run`.
 
-To run tests, use `./scripts/test` for all non-integration tests, and `./scripts/test8` for just ES8 non-integration tests.
+To run tests, use `./scripts/test` for all non-integration tests.
 
 For a REPL workflow, run `lein repl`. Use `(start)` to start CTIA,
-`(stop)` to stop it, and `(go)` to restart it for ES7---append `8` to each name for ES8.
-
-### Supporting ElasticSearch 8
-
-Currently CTIA only supports and tests against ES7. Eventually, we will need to support and migrate to ES8.
-When it's time to start testing against ES8, here's what we need to change in the build/tests:
-
-1. In `dev/ctia/dev/split_tests.clj`, uncomment the `(wait-es 8)` call to wait for ES8 to be fully up before starting tests.
-2. In `ctia.test-helpers.core/set-of-es-versions-to-test`, add `8` to the default set of versions to test against.
-3. Ensure ES8 is uncommented in `containers/dev/docker-compose.yml` and `containers/dev/m1-docker-compose.yml`
+`(stop)` to stop it, and `(go)` to restart it.
 
 ### Testing and CI
 

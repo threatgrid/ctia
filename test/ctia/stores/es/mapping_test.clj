@@ -8,7 +8,7 @@
 (deftest mapping-test
   (es-helpers/for-each-es-version
    "mappings of different type should apply proper analyzers and tokenizers"
-   [7 8]
+   [7]
    #(index/delete! % "ctia_*")
    (let [indexname "ctia_test_mapping"
          doc-type "test_docs"

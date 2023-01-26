@@ -11,7 +11,7 @@
 (deftest update-index-state-test
   (es-helpers/for-each-es-version
     "update-index-state task"
-    [7 8]
+    [7]
     #(ductile.index/delete! % "ctia_*")
     (es-helpers/fixture-properties:es-store
       (fn []
