@@ -99,8 +99,8 @@
                        (val %)))
         (:params basic-auth)))
 
-(def es-port 9207)
-(def es-version 7)
+(def -es-port 9207)
+(def -es-version 7)
 
 (defn fixture-properties:es-store [t]
   ;; Note: These properties may be overwritten by ENV variables
