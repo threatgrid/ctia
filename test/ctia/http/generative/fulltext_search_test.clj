@@ -15,6 +15,7 @@
    [ctia.test-helpers.es :as es-helpers]
    [ctia.test-helpers.fake-whoami-service :as whoami-helpers]
    [ctia.test-helpers.search :as th.search]
+   [ctim.schemas.common :refer [ctim-schema-version]]
    [clojure.pprint :as pp]
    [ctim.examples.bundles :refer [bundle-maximal]]
    [ctim.schemas.bundle :as bundle.schema]
@@ -50,8 +51,11 @@
                          name
                          (str "max-new-")
                          prop/spec-gen
-                         ;; remove IDs so it can be used it in Bundle import
-                         (gen/fmap #(dissoc % :id)))
+                         (gen/fmap #(-> %
+                                        ;; remove IDs so it can be used it in Bundle import
+                                        (dissoc :id)
+                                        ;; scores can generate NaN in CTIM 1.2.1
+                                        (cond-> (= :incidents e) (dissoc :scores)))))
                     (gen/vector 5 11)))
               entity-keys)]
     (gen/bind
@@ -311,7 +315,7 @@
                       :source "ngfw_ips_event_service"}
             bundle   {:incidents
                       [{:description "desc",
-                        :schema_version "1.1.3",
+                        :schema_version ctim-schema-version,
                         :type "incident",
                         :source "ngfw_ips_event_service",
                         :tlp "green",
@@ -327,7 +331,7 @@
                         :status "New",
                         :confidence "High"}
                        {:description "desc",
-                        :schema_version "1.1.3",
+                        :schema_version ctim-schema-version,
                         :type "incident",
                         :tlp "green",
                         :source "ngfw_ips_event_service",

@@ -83,7 +83,7 @@
       (is (= 201 judgement-3-status))
 
       (let [events (-> (get-store :event)
-                       (store/list-events
+                       (store/list-records
                          {:all-of {:owner "Unknown"}}
                          {:login "Unknown"
                           :groups ["Administrators"]}

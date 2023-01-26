@@ -13,7 +13,7 @@
                              (string? %) str/lower-case)))
 
 (s/defn parse-sort-params-op
-  "Currently 3 operations are supported:
+  "Currently 4 operations are supported:
 
 
   Sort by field value:
@@ -37,6 +37,15 @@
        :field-name \"tactics\"
        :remappings {\"TA0043\" 1
                     \"TA0042\" 2}
+       :sort_order :asc}
+  
+  Sort by a value in a filtered list.
+
+      e.g., sort by the maximum scores.score after filtering for scores.type == 'asset'.
+      {:op :sort-by-list
+       :mode \"max\"
+       :field-name \"scores.score\"
+       :filter {\"scores.type\" \"asset\"}
        :sort_order :asc}"
   [{:keys [op field-name sort_order] :as params} :- ConcreteSortExtension
    default-sort_order :- (s/cond-pre s/Str s/Keyword)]
@@ -48,6 +57,17 @@
       ;; https://www.elastic.co/guide/en/elasticsearch/reference/current/sort-search-results.html#_sort_values
       {field-name {:order order}}
 
+      :sort-by-list
+      ;; https://www.elastic.co/guide/en/elasticsearch/reference/current/sort-search-results.html#nested-sorting
+      (let [{filter-entry :filter :keys [mode max-entry]} params
+            _ (assert mode "Mode required")
+            [outer-field-name inner-field-name :as all-fields] (str/split field-name #"\.")
+            _ (assert (= 2 (count all-fields)) (str "Exactly 1 level of nesting required: " field-name))]
+        {field-name {:order order
+                     ;; https://www.elastic.co/guide/en/elasticsearch/reference/current/sort-search-results.html#_sort_mode_option
+                     :mode mode
+                     :nested (cond-> {:path outer-field-name}
+                               filter-entry (assoc-in [:filter :term] filter-entry))}})
       (:remap :remap-list-max)
       (let [{:keys [remap-default remappings]} params
             remappings (normalize-remappings remappings)]

@@ -45,7 +45,7 @@
      em/sourcable-entity-mapping
      em/stored-entity-mapping
      {:valid_time                       em/valid-time
-      :actor_type                       em/token
+      :actor_types                      em/token
       :identity                         em/tg-identity
       :motivation                       em/token
       :sophistication                   em/token
@@ -60,7 +60,7 @@
   (concat sorting/default-entity-sort-fields
           [:valid_time.start_time
            :valid_time.end_time
-           :actor_type
+           :actor_types
            :motivation
            :sophistication
            :intended_effect]))
@@ -79,7 +79,7 @@
    routes.common/SearchableEntityParams
    ActorFieldsParam
    (st/optional-keys
-    {:actor_type      s/Str
+    {:actor_types     s/Str
      :motivation      s/Str
      :sophistication  s/Str
      :intended_effect s/Str
@@ -95,7 +95,7 @@
 
 (def actor-enumerable-fields
   [:source
-   :actor_type
+   :actor_types
    :motivation
    :sophistication
    :confidence
@@ -109,7 +109,7 @@
 (def searchable-fields
   #{:id
     :source
-    :actor_type
+    :actor_types
     :description
     :short_description
     :title})

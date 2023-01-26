@@ -15,17 +15,14 @@
    [ctia.lib.collection :as coll]
    [ctia.properties :as p]
    [ctia.schemas.core :as schemas :refer
-    [APIHandlerServices
-     APIHandlerServices->RealizeFnServices
-     HTTPShowServices
-     RealizeFn
-     lift-realize-fn-with-context
-     TempIDs]]
+    [APIHandlerServices APIHandlerServices->RealizeFnServices HTTPShowServices
+     lift-realize-fn-with-context RealizeFn TempIDs]]
    [ctia.store :as store]
    [ctim.domain.id :as id]
    [ring.util.http-response :as http-response]
    [schema.core :as s])
-  (:import java.util.UUID))
+  (:import
+   java.util.UUID))
 
 (s/defschema FlowMap
   {:create-event-fn                       (s/pred fn?)
@@ -275,7 +272,7 @@
     (assoc fm
            :events
            (-> (get-store :event)
-               (store/create-events events)))
+               (store/create-record events {} {})))
     fm))
 
 (s/defn remove-errors :- FlowMap

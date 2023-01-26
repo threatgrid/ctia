@@ -36,7 +36,7 @@
    :title (str "actor-" n)
    :description (str "description: actor-" n)
    :short_description (str "short_description: actor-" n)
-   :actor_type "Hacker"
+   :actor_types ["Hacker"]
    :source "a source"
    :confidence "High"
    :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"

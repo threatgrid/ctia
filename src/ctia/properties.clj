@@ -141,7 +141,8 @@
                       "ctia.http.show.path-prefix" s/Str
                       "ctia.http.show.port" s/Int
                       "ctia.http.bulk.max-size" s/Int
-                      "ctia.http.bundle.export.max-relationships" s/Int})
+                      "ctia.http.bundle.export.max-relationships" s/Int
+                      "ctia.http.incident.sortable-score-types" s/Str})
 
    (st/required-keys {"ctia.events.enabled" s/Bool
                       "ctia.hook.redis.enabled" s/Bool
