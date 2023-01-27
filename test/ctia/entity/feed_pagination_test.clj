@@ -143,4 +143,10 @@
                  response (let [{:keys [body]} (client/get feed-view-url)]
                             (into #{} (string/split-lines body)))]
              (is (= 100 (count response)))
-             (is (= response expected-response)))))))))
+             (is (= response expected-response))))
+
+         (testing "requesting a limit above maximum returns validation error"
+           (let [{:keys [body status]} (client/get feed-view-url {:query-params {:limit 10001}
+                                                                  :throw-exceptions false})]
+             (is (= 400 status))
+             (is (= "{:errors {:limit \"(not (less-than-10000? 10001))\"}}" body)))))))))
