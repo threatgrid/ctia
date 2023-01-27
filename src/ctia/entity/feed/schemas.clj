@@ -123,4 +123,5 @@
 (s/defschema FeedViewQueryParams
   (-> PagingParams
       (st/assoc :s (describe s/Str "The feed share token"))
-      (st/dissoc :sort_by :sort_order :offset)))
+      (st/dissoc :sort_by :sort_order :offset)
+      (st/assoc (s/optional-key :limit) (s/constrained Long #(<= 1 % 10000) 'less-than-10000?))))
