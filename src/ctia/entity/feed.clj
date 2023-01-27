@@ -133,7 +133,7 @@
   ([id share-token services]
    (fetch-feed id share-token {} services))
   ([id share-token
-    page-params
+    {:keys [no-pagination] :as page-params}
     {{:keys [decrypt]} :IEncryption
      {:keys [get-store]} :StoreService
      :as services} :- APIHandlerServices]
@@ -169,16 +169,24 @@
              judgement-max-result-window (get-in judgement-store [:state :config :settings :max_result_window]
                                                  pagination/max-result-window)
              read-judgements #(store/read-records judgement-store % feed-identity {})
+             get-paginated-response (if no-pagination
+                                      (fn [response]
+                                        (transduce
+                                         (map #(select-keys % [:data]))
+                                         (partial merge-with concat)
+                                         response))
+                                      first)
              now (java.util.Date.)
              {relationships :data
               {next-page :next} :paging}
-             (first (store/paginate
-                     relationship-store
-                     #(store/list-records %1 {:all-of {:target_ref indicator_id}} feed-identity %2)
-                     (merge {:fields [:source_ref]
-                             :limit relationship-max-result-window
-                             :sort_by "timestamp:desc,id"}
-                            (select-keys page-params [:search_after :limit]))))
+             (get-paginated-response
+              (store/paginate
+               relationship-store
+               #(store/list-records %1 {:all-of {:target_ref indicator_id}} feed-identity %2)
+               (merge {:fields [:source_ref]
+                       :limit relationship-max-result-window
+                       :sort_by "timestamp:desc,id"}
+                      (select-keys page-params [:search_after :limit]))))
              feed-results (sequence
                            (comp (keep :source_ref)
                                  (distinct)
@@ -218,7 +226,11 @@
                          (assoc :search_after search_after)
 
                          limit
-                         (assoc :limit limit))
+                         (assoc :limit limit)
+
+                         ;; Defaults to `no-pagination`
+                         (every? nil? [search_after limit])
+                         (assoc :no-pagination true))
            {:keys [output next-page]
             :as feed} (fetch-feed id (:s params) page-params services)]
        (case feed
@@ -243,7 +255,11 @@
                          (assoc :search_after search_after)
 
                          limit
-                         (assoc :limit limit))
+                         (assoc :limit limit)
+
+                         ;; Defaults to `no-pagination`
+                         (every? nil? [search_after limit])
+                         (assoc :no-pagination true))
            {:keys [next-page]
             :as feed} (fetch-feed id (:s params) page-params services)]
        (case feed
