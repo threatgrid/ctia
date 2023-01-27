@@ -172,9 +172,9 @@
         (let [feed-update (assoc feed :output :judgements)
               updated-feed-response
               (helpers/PUT app
-                           (str "ctia/feed/" (:short-id feed-id))
-                           :body feed-update
-                           :headers {"Authorization" "45c1f5e3f05d0"})
+                  (str "ctia/feed/" (:short-id feed-id))
+                  :body feed-update
+                  :headers {"Authorization" "45c1f5e3f05d0"})
               updated-feed (:parsed-body updated-feed-response)]
           (is (= 200 (:status updated-feed-response)))
           (is (= (dissoc feed-update :feed_view_url)
@@ -197,9 +197,9 @@
             ;;teardown
             (is (= 200 (:status
                         (helpers/PUT app
-                                     (str "ctia/feed/" (:short-id feed-id))
-                                     :body feed
-                                     :headers {"Authorization" "45c1f5e3f05d0"})))))))))
+                            (str "ctia/feed/" (:short-id feed-id))
+                            :body feed
+                            :headers {"Authorization" "45c1f5e3f05d0"})))))))))
 
   (testing "pagination"
     (let [feed-view-url (:feed_view_url feed)
@@ -216,7 +216,15 @@
                                 (edn/read-string (get headers "X-Search_after")))
                          acc)))]
       (is (= response expected-response))
-      (is (= (inc (/ (count expected-response) 20)) @counter)))))
+      (is (= (inc (/ (count expected-response) 20)) @counter))))
+
+  (testing "when no pagination params - return entire collection"
+    (let [feed-view-url (:feed_view_url feed)
+          expected-response (into #{} (map #(-> % :observable :value)) judgements)
+          response (let [{:keys [body]} (client/get feed-view-url)]
+                     (into #{} (string/split-lines body)))]
+      (is (= 100 (count response)))
+      (is (= response expected-response)))))
 
 (deftest test-feed-routes
   (test-for-each-store-with-app
@@ -232,9 +240,9 @@
                                          "foogroup"
                                          "user")
      (let [response (helpers/POST app
-                                  "ctia/bundle/import"
-                                  :body blocklist-bundle
-                                  :headers {"Authorization" "45c1f5e3f05d0"})
+                        "ctia/bundle/import"
+                        :body blocklist-bundle
+                        :headers {"Authorization" "45c1f5e3f05d0"})
            bundle-import-result (:parsed-body response)
            indicator-id (some->> (:results bundle-import-result)
                                  (filter #(= (:type %) :indicator))
