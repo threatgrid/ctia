@@ -2,6 +2,4 @@
 
 set -Eeuxo pipefail
 
-./scripts/generate-trojan-config.clj
-
-trojansourcedetector -config .do_not_edit-trojansourcedetector.json
+tsfinder -v -e scripts/trojansourcefinder_excludes_file.txt .
