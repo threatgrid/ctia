@@ -10,10 +10,10 @@
 # - CYBRIC_API_KEY
 set -Eeuxo pipefail
 
-# if [[ "${GITHUB_EVENT_NAME}" != "push" ]]; then
-#   echo "./build/build-actions.sh currently supports push deployments only."
-#   exit 1
-# fi
+if [[ "${GITHUB_EVENT_NAME}" != "push" ]]; then
+  echo "./build/build-actions.sh currently supports push deployments only."
+  exit 1
+fi
 
 if [[ "${GITHUB_REPOSITORY}" != "threatgrid/ctia" ]]; then
   echo "./build/build-actions.sh currently deploys only via the threatgrid/ctia repository."
@@ -42,41 +42,41 @@ function build-and-publish-package {
 
   ./scripts/uberjar-trojan-scan.clj
 
-  # BUILD_NAME="${CTIA_MAJOR_VERSION}-${PKG_TYPE}-${CTIA_BUILD_NUMBER}-${CTIA_COMMIT:0:8}"
-  # echo "$BUILD_NAME"
-  # echo "Build: $BUILD_NAME"
-  # echo "Commit: ${CTIA_COMMIT}"
-  # echo "Version: $BUILD_NAME"
+  BUILD_NAME="${CTIA_MAJOR_VERSION}-${PKG_TYPE}-${CTIA_BUILD_NUMBER}-${CTIA_COMMIT:0:8}"
+  echo "$BUILD_NAME"
+  echo "Build: $BUILD_NAME"
+  echo "Commit: ${CTIA_COMMIT}"
+  echo "Version: $BUILD_NAME"
 
-  # # Upload the jar directly to the artifacts S3 bucket
-  # if [ "${PKG_TYPE}" == "int" ]; then
-  #   ARTIFACTS_BUCKET="372070498991-us-east-1-int-saltstack"
-  # elif [ "${PKG_TYPE}" == "rel" ]; then
-  #   ARTIFACTS_BUCKET="372070498991-us-east-1-test-saltstack"
-  # else
-  #   echo "Bad PKG_TYPE: ${PKG_TYPE}"
-  #   exit 1
-  # fi
+  # Upload the jar directly to the artifacts S3 bucket
+  if [ "${PKG_TYPE}" == "int" ]; then
+    ARTIFACTS_BUCKET="372070498991-us-east-1-int-saltstack"
+  elif [ "${PKG_TYPE}" == "rel" ]; then
+    ARTIFACTS_BUCKET="372070498991-us-east-1-test-saltstack"
+  else
+    echo "Bad PKG_TYPE: ${PKG_TYPE}"
+    exit 1
+  fi
 
-  # ARTIFACT_NAME="${CTIA_BUILD_NUMBER}-${CTIA_COMMIT:0:8}.jar"
-  # aws s3 cp ./target/ctia.jar s3://${ARTIFACTS_BUCKET}/artifacts/ctia/"${ARTIFACT_NAME}" --sse aws:kms --sse-kms-key-id alias/kms-s3
+  ARTIFACT_NAME="${CTIA_BUILD_NUMBER}-${CTIA_COMMIT:0:8}.jar"
+  aws s3 cp ./target/ctia.jar s3://${ARTIFACTS_BUCKET}/artifacts/ctia/"${ARTIFACT_NAME}" --sse aws:kms --sse-kms-key-id alias/kms-s3
 
-  # # Run Vulnerability Scan in the artifact using ZeroNorth - master only
-  # if [ "${PKG_TYPE}" == "int" ]; then
-  #   # WARNING: don't `set -x` here -- exposes credentials
-  #   set +x
-  #   docker pull zeronorth/owasp-5-job-runner
-  #   docker run -v "${PWD}"/target/ctia.jar:/code/ctia.jar -e CYBRIC_API_KEY="${CYBRIC_API_KEY}" -e POLICY_ID=IUkmdVdkSjms9CjeWK-Peg -e WORKSPACE="${PWD}"/target -v /var/run/docker.sock:/var/run/docker.sock --name zeronorth zeronorth/integration:latest python cybric.py
-  #   set -x
-  #   echo "Waiting the ZeroNorth Vulnerability Scanner to finish..."
-  #   while [[ -n $(docker ps -a --format "{{.ID}}" -f status=running -f ancestor=zeronorth/owasp-5-job-runner) ]]; do sleep 5; done
-  # fi
+  # Run Vulnerability Scan in the artifact using ZeroNorth - master only
+  if [ "${PKG_TYPE}" == "int" ]; then
+    # WARNING: don't `set -x` here -- exposes credentials
+    set +x
+    docker pull zeronorth/owasp-5-job-runner
+    docker run -v "${PWD}"/target/ctia.jar:/code/ctia.jar -e CYBRIC_API_KEY="${CYBRIC_API_KEY}" -e POLICY_ID=IUkmdVdkSjms9CjeWK-Peg -e WORKSPACE="${PWD}"/target -v /var/run/docker.sock:/var/run/docker.sock --name zeronorth zeronorth/integration:latest python cybric.py
+    set -x
+    echo "Waiting the ZeroNorth Vulnerability Scanner to finish..."
+    while [[ -n $(docker ps -a --format "{{.ID}}" -f status=running -f ancestor=zeronorth/owasp-5-job-runner) ]]; do sleep 5; done
+  fi
 }
 
-if [[ "${GITHUB_EVENT_NAME}" == "pull_request" ]]; then
-  if [[ ${CTIA_BRANCH} == "refs/pull/1337/merge" ]]; then
+if [[ "${GITHUB_EVENT_NAME}" == "push" ]]; then
+  if [[ ${CTIA_BRANCH} == "master" ]]; then
     # non-pr builds on the master branch yield master packages
-    echo "OK: trojan source finder branch detected"
+    echo "OK: master branch detected"
     build-and-publish-package "int"
     exit 0
 

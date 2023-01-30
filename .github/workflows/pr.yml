@@ -159,56 +159,56 @@ jobs:
         run: for i in {1..${ACTIONS_RETRY_TIMES}}; do lein warm-ci-deps && break; done
       - run: ./scripts/check-dependabot
 
-  # test-encoding:
-  #   runs-on: ubuntu-20.04
-  #   needs: [setup]
-  #   steps:
+  test-encoding:
+    runs-on: ubuntu-20.04
+    needs: [setup]
+    steps:
 
-  #     - name: Checkout
-  #       uses: actions/checkout@v3
+      - name: Checkout
+        uses: actions/checkout@v3
 
-  #     - name: Start Docker environment
-  #       run: docker compose -f containers/dev/docker-compose.yml up --no-color --quiet-pull -d
+      - name: Start Docker environment
+        run: docker compose -f containers/dev/docker-compose.yml up --no-color --quiet-pull -d
 
-  #     - name: Maven Cache
-  #       id: maven-cache
-  #       uses: actions/cache@v3
-  #       with:
-  #         path: |
-  #           ~/.m2/repository
-  #           ~/.gitlibs
-  #         key: ctia-m2-cache-${{ env.ACTIONS_CACHE_VERSION }}-${{ hashFiles('project.clj') }}-${{ env.LEIN_VERSION }}
-  #         restore-keys: |
-  #           ctia-m2-cache-${{ env.ACTIONS_CACHE_VERSION }}-${{ hashFiles('project.clj') }}-
-  #           ctia-m2-cache-${{ env.ACTIONS_CACHE_VERSION }}-
+      - name: Maven Cache
+        id: maven-cache
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.m2/repository
+            ~/.gitlibs
+          key: ctia-m2-cache-${{ env.ACTIONS_CACHE_VERSION }}-${{ hashFiles('project.clj') }}-${{ env.LEIN_VERSION }}
+          restore-keys: |
+            ctia-m2-cache-${{ env.ACTIONS_CACHE_VERSION }}-${{ hashFiles('project.clj') }}-
+            ctia-m2-cache-${{ env.ACTIONS_CACHE_VERSION }}-
 
-  #     - name: Setup Java
-  #       uses: actions/setup-java@v3
-  #       with:
-  #         distribution: 'temurin'
-  #         java-version: ${{ env.DEFAULT_JAVA_VERSION }}
+      - name: Setup Java
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: ${{ env.DEFAULT_JAVA_VERSION }}
 
-  #     # install lein using cache to avoid extra download and startup time
-  #     - name: Install Leiningen from Cache
-  #       uses: actions/cache@v3
-  #       id: lein-cache
-  #       with:
-  #         path: ${{env.LEIN_HOME}}
-  #         key: ctia-lein-cache-${{ env.ACTIONS_CACHE_VERSION }}-${{ env.LEIN_VERSION }}
+      # install lein using cache to avoid extra download and startup time
+      - name: Install Leiningen from Cache
+        uses: actions/cache@v3
+        id: lein-cache
+        with:
+          path: ${{env.LEIN_HOME}}
+          key: ctia-lein-cache-${{ env.ACTIONS_CACHE_VERSION }}-${{ env.LEIN_VERSION }}
 
-  #     - name: Install Leiningen
-  #       if: steps.lein-cache.outputs.cache-hit != 'true'
-  #       run: ./scripts/actions/install-lein.sh
+      - name: Install Leiningen
+        if: steps.lein-cache.outputs.cache-hit != 'true'
+        run: ./scripts/actions/install-lein.sh
 
-  #     # we should get a cache hit from maven here, since the `setup` job only succeeds if it exists.
-  #     # in the unlikely event we don't, download deps for this specific job only.
-  #     - name: Warm dependency cache
-  #       if: steps.maven-cache.outputs.cache-hit != 'true'
-  #       # poor man's travis_retry
-  #       run: for i in {1..${ACTIONS_RETRY_TIMES}}; do lein warm-ci-deps && break; done
+      # we should get a cache hit from maven here, since the `setup` job only succeeds if it exists.
+      # in the unlikely event we don't, download deps for this specific job only.
+      - name: Warm dependency cache
+        if: steps.maven-cache.outputs.cache-hit != 'true'
+        # poor man's travis_retry
+        run: for i in {1..${ACTIONS_RETRY_TIMES}}; do lein warm-ci-deps && break; done
 
-  #     - name: Run encoding tests
-  #       run: lein with-profile +test-encoding test
+      - name: Run encoding tests
+        run: lein with-profile +test-encoding test
 
   test-matrix:
     runs-on: ubuntu-20.04
@@ -229,111 +229,111 @@ jobs:
         with:
           path: ${{ env.BIN_PATH }}
           key: ctia-bin-${{ env.ACTIONS_CACHE_VERSION }}-${{ env.BB_VERSION }}
-  #     - name: Setup PATH and directories
-  #       run: |
-  #         mkdir -p "${BIN_PATH}"
-  #         echo "${BIN_PATH}" >> $GITHUB_PATH
-  #     - name: Install babashka
-  #       run: ./scripts/actions/install-bb.sh
-  #     - run: ./scripts/actions/setup_env.clj
-  #     # run docker as early as possible asynchronously. if this command
-  #     # fails, the split-test test runner will timeout in a reasonable amount
-  #     # of time and throw an error. See `Upload docker compose` step below
-  #     # for retrieving this log after a build.
-  #     - name: Docker (async)
-  #       # depends on LOG_PATH and actions/checkout@v3
-  #       run: docker compose -f containers/dev/docker-compose.yml up -d &> "${LOG_PATH}/docker-compose.log" &
-  #     - name: Download test timings
-  #       uses: actions/download-artifact@v3
-  #       with:
-  #         name: current-test-timing
-  #         path: target/current-test-timing
-  #     - run: |
-  #         # debugging
-  #         ls -al target/current-test-timing
-  #         if [ -f target/current-test-timing/ctia_test_timings.edn ]; then
-  #           cat target/current-test-timing/ctia_test_timings.edn
-  #         fi
-  #         if [ -s target/current-test-timing/ctia_test_timings.edn ]; then
-  #           echo "Updating dev-resources/ctia_test_timings.edn with new timing"
-  #           cp target/current-test-timing/ctia_test_timings.edn dev-resources/ctia_test_timings.edn
-  #         else
-  #           echo "No previous timings found (empty file downloaded)"
-  #         fi
-  #     - run: |
-  #         if [ -f dev-resources/ctia_test_timings.edn ]; then
-  #           echo "Timing:"
-  #           cat dev-resources/ctia_test_timings.edn
-  #         else
-  #           echo "No timing data, using slow-namespace heuristic"
-  #         fi
-  #     - name: ES setup
-  #       run: sudo sysctl -w vm.max_map_count=262144
+      - name: Setup PATH and directories
+        run: |
+          mkdir -p "${BIN_PATH}"
+          echo "${BIN_PATH}" >> $GITHUB_PATH
+      - name: Install babashka
+        run: ./scripts/actions/install-bb.sh
+      - run: ./scripts/actions/setup_env.clj
+      # run docker as early as possible asynchronously. if this command
+      # fails, the split-test test runner will timeout in a reasonable amount
+      # of time and throw an error. See `Upload docker compose` step below
+      # for retrieving this log after a build.
+      - name: Docker (async)
+        # depends on LOG_PATH and actions/checkout@v3
+        run: docker compose -f containers/dev/docker-compose.yml up -d &> "${LOG_PATH}/docker-compose.log" &
+      - name: Download test timings
+        uses: actions/download-artifact@v3
+        with:
+          name: current-test-timing
+          path: target/current-test-timing
+      - run: |
+          # debugging
+          ls -al target/current-test-timing
+          if [ -f target/current-test-timing/ctia_test_timings.edn ]; then
+            cat target/current-test-timing/ctia_test_timings.edn
+          fi
+          if [ -s target/current-test-timing/ctia_test_timings.edn ]; then
+            echo "Updating dev-resources/ctia_test_timings.edn with new timing"
+            cp target/current-test-timing/ctia_test_timings.edn dev-resources/ctia_test_timings.edn
+          else
+            echo "No previous timings found (empty file downloaded)"
+          fi
+      - run: |
+          if [ -f dev-resources/ctia_test_timings.edn ]; then
+            echo "Timing:"
+            cat dev-resources/ctia_test_timings.edn
+          else
+            echo "No timing data, using slow-namespace heuristic"
+          fi
+      - name: ES setup
+        run: sudo sysctl -w vm.max_map_count=262144
 
-  #     - name: Maven Cache
-  #       id: maven-cache
-  #       uses: actions/cache@v3
-  #       with:
-  #         path: |
-  #           ~/.m2/repository
-  #           ~/.gitlibs
-  #         key: ctia-m2-cache-${{ env.ACTIONS_CACHE_VERSION }}-${{ hashFiles('project.clj') }}-${{ env.LEIN_VERSION }}
-  #         restore-keys: |
-  #           ctia-m2-cache-${{ env.ACTIONS_CACHE_VERSION }}-${{ hashFiles('project.clj') }}-
-  #           ctia-m2-cache-${{ env.ACTIONS_CACHE_VERSION }}-
+      - name: Maven Cache
+        id: maven-cache
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.m2/repository
+            ~/.gitlibs
+          key: ctia-m2-cache-${{ env.ACTIONS_CACHE_VERSION }}-${{ hashFiles('project.clj') }}-${{ env.LEIN_VERSION }}
+          restore-keys: |
+            ctia-m2-cache-${{ env.ACTIONS_CACHE_VERSION }}-${{ hashFiles('project.clj') }}-
+            ctia-m2-cache-${{ env.ACTIONS_CACHE_VERSION }}-
 
-  #     - uses: actions/setup-java@v3
-  #       with:
-  #         distribution: 'temurin'
-  #         java-version: ${{ env.JAVA_VERSION }}
-  #     - run: java -version
+      - uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: ${{ env.JAVA_VERSION }}
+      - run: java -version
 
-  #     # install lein using cache to avoid extra download and startup time
-  #     - name: Leiningen Cache
-  #       uses: actions/cache@v3
-  #       id: lein-cache
-  #       with:
-  #         path: ${{env.LEIN_HOME}}
-  #         key: ctia-lein-cache-${{ env.ACTIONS_CACHE_VERSION }}-${{ env.LEIN_VERSION }}
-  #     - name: Install Leiningen
-  #       if: steps.lein-cache.outputs.cache-hit != 'true'
-  #       run: ./scripts/actions/install-lein.sh
+      # install lein using cache to avoid extra download and startup time
+      - name: Leiningen Cache
+        uses: actions/cache@v3
+        id: lein-cache
+        with:
+          path: ${{env.LEIN_HOME}}
+          key: ctia-lein-cache-${{ env.ACTIONS_CACHE_VERSION }}-${{ env.LEIN_VERSION }}
+      - name: Install Leiningen
+        if: steps.lein-cache.outputs.cache-hit != 'true'
+        run: ./scripts/actions/install-lein.sh
 
-  #     # we should get a cache hit from maven here, since the `setup` job only succeeds if it exists.
-  #     # in the unlikely event we don't, download deps for this specific job only.
-  #     - name: Warm dependency cache
-  #       if: steps.maven-cache.outputs.cache-hit != 'true'
-  #       # poor man's travis_retry
-  #       run: for i in {1..${ACTIONS_RETRY_TIMES}}; do lein warm-ci-deps && break; done
-  #     # Note: if this step fails because Leiningen is in offline mode, add more entries to the maven-cache key.
-  #     # Most likely, whatever was changed to cause the build to fail needs to be appended to the cache key.
-  #     # Note there are two Maven caches in this file, keep their keys synchronized.
-  #     - name: Run CTIA tests
-  #       run: ./build/run-tests.sh
-  #       env:
-  #         # offline to catch issues where `lein warm-ci-deps` doesn't download all
-  #         # dependencies we need to run tests.
-  #         LEIN_OFFLINE: true
-  #         CTIA_WAIT_DOCKER: 1
+      # we should get a cache hit from maven here, since the `setup` job only succeeds if it exists.
+      # in the unlikely event we don't, download deps for this specific job only.
+      - name: Warm dependency cache
+        if: steps.maven-cache.outputs.cache-hit != 'true'
+        # poor man's travis_retry
+        run: for i in {1..${ACTIONS_RETRY_TIMES}}; do lein warm-ci-deps && break; done
+      # Note: if this step fails because Leiningen is in offline mode, add more entries to the maven-cache key.
+      # Most likely, whatever was changed to cause the build to fail needs to be appended to the cache key.
+      # Note there are two Maven caches in this file, keep their keys synchronized.
+      - name: Run CTIA tests
+        run: ./build/run-tests.sh
+        env:
+          # offline to catch issues where `lein warm-ci-deps` doesn't download all
+          # dependencies we need to run tests.
+          LEIN_OFFLINE: true
+          CTIA_WAIT_DOCKER: 1
 
-  #     - name: Upload test timing
-  #       uses: actions/upload-artifact@v3
-  #       with:
-  #         retention-days: 1
-  #         name: test-timing
-  #         path: target/test-results/*.edn
-  #     - name: Upload docker compose
-  #       if: ${{ always() }}
-  #       uses: actions/upload-artifact@v3
-  #       with:
-  #         retention-days: 10
-  #         name: docker-compose${{matrix.this-split.this_split}}.log
-  #         path: ${{env.LOG_PATH}}/docker-compose.log
-  # # fan-in tests so there's a single job we can add to protected branches.
-  # # otherwise, we'll have add all (range ${CTIA_NSPLITS}) jobs, and keep
-  # # them up to date
-  # # here's a GitHub Actions feature request that is relevant:
-  # # https://github.community/t/branch-protections-job-names-and-matrix-jobs/16317
+      - name: Upload test timing
+        uses: actions/upload-artifact@v3
+        with:
+          retention-days: 1
+          name: test-timing
+          path: target/test-results/*.edn
+      - name: Upload docker compose
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v3
+        with:
+          retention-days: 10
+          name: docker-compose${{matrix.this-split.this_split}}.log
+          path: ${{env.LOG_PATH}}/docker-compose.log
+  # fan-in tests so there's a single job we can add to protected branches.
+  # otherwise, we'll have add all (range ${CTIA_NSPLITS}) jobs, and keep
+  # them up to date
+  # here's a GitHub Actions feature request that is relevant:
+  # https://github.community/t/branch-protections-job-names-and-matrix-jobs/16317
   all-pr-checks:
     runs-on: ubuntu-20.04
     needs: [test-matrix]
@@ -351,36 +351,35 @@ jobs:
       - name: Install babashka
         run: ./scripts/actions/install-bb.sh
       - run: ./scripts/actions/setup_env.clj
-      # - name: Timing results Cache
-      #   uses: actions/cache@v3
-      #   with:
-      #     path: target/test-results/all-test-timings.edn
-      #     # cache should never hit
-      #     key: ctia-timings-${{ env.ACTIONS_CACHE_VERSION }}-${{ env.CTIA_TEST_SUITE }}-${{ github.ref }}-${{ github.sha }}
+      - name: Timing results Cache
+        uses: actions/cache@v3
+        with:
+          path: target/test-results/all-test-timings.edn
+          # cache should never hit
+          key: ctia-timings-${{ env.ACTIONS_CACHE_VERSION }}-${{ env.CTIA_TEST_SUITE }}-${{ github.ref }}-${{ github.sha }}
 
-      # - name: Download test timings
-      #   uses: actions/download-artifact@v3
-      #   with:
-      #     name: test-timing
-      #     path: target/test-results
+      - name: Download test timings
+        uses: actions/download-artifact@v3
+        with:
+          name: test-timing
+          path: target/test-results
 
-      # - name: Print test timings
-      #   run: ./scripts/summarize-tests.clj
+      - name: Print test timings
+        run: ./scripts/summarize-tests.clj
 
-      # - name: Upload all test timings
-      #   uses: actions/upload-artifact@v3
-      #   with:
-      #     retention-days: 60
-      #     name: all-test-timings
-      #     path: target/test-results/*.edn
+      - name: Upload all test timings
+        uses: actions/upload-artifact@v3
+        with:
+          retention-days: 60
+          name: all-test-timings
+          path: target/test-results/*.edn
 
-      # - run: echo "All tests pass!"
+      - run: echo "All tests pass!"
   deploy:
     runs-on: "ubuntu-latest"
     needs: [all-pr-checks]
     # see on.push.branches for which branches are built on push
-    #if: github.event_name == 'push' && github.repository == 'threatgrid/ctia'
-    if: github.repository == 'threatgrid/ctia' #TODO REMOVE AFTER DEBUGGING
+    if: github.event_name == 'push' && github.repository == 'threatgrid/ctia'
     steps:
       - uses: actions/checkout@v3
       - name: Binary Cache
@@ -431,7 +430,7 @@ jobs:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v1
         with:
-          # region matching buckets in ./build/deploy-actions.sh 
+          # region matching buckets in ./build/deploy-actions.sh
           aws-region: us-east-1
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
