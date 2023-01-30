@@ -73,7 +73,7 @@ function build-and-publish-package {
   # fi
 }
 
-if [[ "${GITHUB_EVENT_NAME}" == "push" ]]; then
+if [[ "${GITHUB_EVENT_NAME}" == "pull_request" ]]; then
   if [[ ${CTIA_BRANCH} == "update-trojan-source-finder" ]]; then
     # non-pr builds on the master branch yield master packages
     echo "OK: master branch detected"
