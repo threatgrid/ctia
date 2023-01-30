@@ -10,7 +10,7 @@
                                                       search-query
                                                       coerce-date-range]]
    [ctia.lib.compojure.api.core :refer [context DELETE GET POST PUT PATCH routes]]
-   [ctia.schemas.core :refer [APIHandlerServices DelayedRoutes SortExtensionTemplates]]
+   [ctia.schemas.core :refer [APIHandlerServices DelayedRoutes SearchExtensionTemplates SortExtensionTemplates]]
    [ctia.schemas.search-agg :refer [HistogramParams
                                     CardinalityParams
                                     TopnParams
@@ -172,6 +172,7 @@
          histogram-fields [:created]}
     :as entity-crud-config}
    :- {(s/optional-key :sort-extension-templates) SortExtensionTemplates
+       (s/optional-key :search-extension-templates) SearchExtensionTemplates
        s/Any s/Any}]
  (s/fn [{{:keys [get-store]} :StoreService
          {:keys [flag-value]} :FeaturesService

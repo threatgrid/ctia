@@ -167,7 +167,8 @@
            :promotion_method
            :severity
            :tactics
-           :techniques]))
+           :techniques
+           :scores]))
 
 (comment
   (defn generate-mitre-tactic-scores
@@ -211,8 +212,13 @@
   (generate-mitre-tactic-scores "")
   )
 
-(s/defn sort-extension-templates :- SortExtensionTemplates
+(s/defn score-types
   [{{:keys [get-in-config]} :ConfigService} :- APIHandlerServices]
+  (some-> (get-in-config [:ctia :http :incident :score-types])
+          (str/split #",")))
+
+(s/defn sort-extension-templates :- SortExtensionTemplates
+  [services :- APIHandlerServices]
   (-> {;; override :severity field to sort semantically
        :severity {:op :remap
                   :remappings {"Low" 1
@@ -250,8 +256,17 @@
                      :mode "max"
                      :field-name "scores.score"
                      :filter {"scores.type" score-type}}}))
-            (some-> (get-in-config [:ctia :http :incident :sortable-score-types])
-                    (str/split #",")))))
+            (score-types services))))
+
+(s/defn search-extension-templates :- SearchExtensionTemplates
+  [services :- APIHandlerServices]
+  (-> {}
+      (into (map (fn [score-type]
+                   {(keyword (str "scores." score-type))
+                    {:op :range-match-list
+                     :field-name "scores.score"
+                     :filter {"scores.type" score-type}}}))
+            (score-types services))))
 
 (s/defn incident-sort-fields
   [services :- APIHandlerServices]
@@ -304,7 +319,11 @@
      :sort_by          (incident-sort-fields services)
      :assignees        s/Str
      :promotion_method s/Str
-     :severity s/Str})))
+     :severity s/Str})
+   (st/optional-keys
+     (into {} (map (fn [score-type]
+                     {(keyword (str "scores." score-type)) s/Str}))
+           (sortable-score-types services)))))
 
 (def IncidentGetParams IncidentFieldsParam)
 
@@ -348,7 +367,8 @@
      :external-id-capabilities :read-incident
      :histogram-fields         incident-histogram-fields
      :enumerable-fields        incident-enumerable-fields
-     :sort-extension-templates (sort-extension-templates services)})))
+     :sort-extension-templates (sort-extension-templates services)
+     :search-extension-templates (search-extension-templates services)})))
 
 (def IncidentType
   (let [{:keys [fields name description]}
