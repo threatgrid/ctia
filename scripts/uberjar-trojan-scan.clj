@@ -18,6 +18,7 @@
 (def uberjar-exclusions
   [
    ".git/"
+   ".lein/"
    "bin/"
    "META-INF/native/linux64/liblmdbjni.so"
    "com/google/common/base/CharMatcher$Invisible.class"
@@ -51,6 +52,8 @@
    "goog/i18n/datetimepatterns.js"
    "goog/format/internationalizedemailaddress.js"
    "swagger-ui/swagger-ui-bundle.js"
+   "target/ctia-1.1.1-SNAPSHOT.jar"
+   "target/ctia.jar"
    ])
 
 (defn regen-config []
