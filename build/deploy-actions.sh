@@ -10,10 +10,10 @@
 # - CYBRIC_API_KEY
 set -Eeuxo pipefail
 
-if [[ "${GITHUB_EVENT_NAME}" != "push" ]]; then
-  echo "./build/build-actions.sh currently supports push deployments only."
-  exit 1
-fi
+# if [[ "${GITHUB_EVENT_NAME}" != "push" ]]; then
+#   echo "./build/build-actions.sh currently supports push deployments only."
+#   exit 1
+# fi
 
 if [[ "${GITHUB_REPOSITORY}" != "threatgrid/ctia" ]]; then
   echo "./build/build-actions.sh currently deploys only via the threatgrid/ctia repository."
