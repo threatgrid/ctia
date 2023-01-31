@@ -258,7 +258,7 @@
                      :filter {"scores.type" score-type}}}))
             (score-types services))))
 
-(s/defn search-extension-templates :- SearchExtensionTemplates
+(s/defn range-search-extension-templates :- SearchExtensionTemplates
   [services :- APIHandlerServices]
   (-> {}
       (into (map (fn [score-type]

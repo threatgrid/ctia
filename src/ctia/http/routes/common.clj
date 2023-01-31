@@ -177,7 +177,8 @@
     make-date-range-fn :- (s/=> RangeQueryOpt
                                 (s/named (s/maybe s/Inst) 'from)
                                 (s/named (s/maybe s/Inst) 'to))]
-   (let [filter-map (apply dissoc search-params filter-map-search-options)
+   (let [;; TODO support range extensions (remove from search-params and add to :range)
+         filter-map (apply dissoc search-params filter-map-search-options)
          date-range (make-date-range-fn from to)]
      (cond-> {}
        (seq date-range)        (assoc-in [:range date-field] date-range)
@@ -200,6 +201,7 @@
         nested-fields (map keyword (str/split (name aggregate-on) #"\."))
         {from :gte to :lt} (-> range first val)
         filters (cond-> {:from from :to to}
+                  ;; TODO support range extensions
                   (seq filter-map) (into filter-map)
                   (seq full-text) (assoc :full-text full-text*))]
     {:data (assoc-in {} nested-fields result)

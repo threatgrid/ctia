@@ -4,5 +4,6 @@
             [schema.core :as s]))
 
 (defn parse-search-params-op
-  []
+  [{:keys [op field-name sort_order] :as params} :- ConcreteSortExtension
+   default-sort_order :- (s/cond-pre s/Str s/Keyword)]
   (assert nil "FIXME"))
