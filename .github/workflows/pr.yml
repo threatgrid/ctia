@@ -37,7 +37,7 @@ env:
 
 jobs:
   setup:
-    runs-on: "ubuntu-latest"
+    runs-on: "ubuntu-22.04"
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
     steps:
@@ -376,7 +376,7 @@ jobs:
 
       - run: echo "All tests pass!"
   deploy:
-    runs-on: "ubuntu-latest"
+    runs-on: "ubuntu-22.04"
     needs: [all-pr-checks]
     # see on.push.branches for which branches are built on push
     if: github.event_name == 'push' && github.repository == 'threatgrid/ctia'
