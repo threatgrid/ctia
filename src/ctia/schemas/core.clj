@@ -337,43 +337,34 @@
 
 (s/defschema ESSortMode (s/enum "max" "min" "sum" "avg" "median"))
 
+(defn ->sort-extension-schema [concrete?]
+  (let [field-name (cond-> :field-name concrete? s/optional-key)
+        extra-concrete {(s/optional-key :sort_order) (s/cond-pre s/Keyword s/Str)}]
+    (s/conditional
+      #(= :field (:op %)) (cond-> {:op (s/eq :field)
+                                   field-name (s/cond-pre s/Keyword s/Str)}
+                            concrete? (st/merge extra-concrete))
+      #(= :remap-list-max (:op %)) (cond-> {:op (s/eq :remap-list-max)
+                                            field-name (s/cond-pre s/Keyword s/Str)
+                                            :remappings {s/Str s/Num}
+                                            :remap-default s/Num}
+                                     concrete? (st/merge extra-concrete))
+      #(= :remap (:op %)) (cond-> {:op (s/eq :remap)
+                                   field-name (s/cond-pre s/Keyword s/Str)
+                                   :remappings {s/Str s/Num}
+                                   :remap-default s/Num}
+                            concrete? (st/merge extra-concrete))
+      #(= :sort-by-list (:op %)) (cond-> {:op (s/eq :sort-by-list)
+                                          :mode ESSortMode
+                                          :field-name (s/cond-pre s/Keyword s/Str)
+                                          (s/optional-key :filter) {s/Str s/Str}}
+                                   concrete? (st/merge extra-concrete)))))
+
 (s/defschema SortExtensionTemplate
-  (s/conditional
-    #(= :field (:op %)) {:op (s/eq :field)
-                         (s/optional-key :field-name) (s/cond-pre s/Keyword s/Str)}
-    #(= :remap-list-max (:op %)) {:op (s/eq :remap-list-max)
-                                  (s/optional-key :field-name) (s/cond-pre s/Keyword s/Str)
-                                  :remappings {s/Str s/Num}
-                                  :remap-default s/Num}
-    #(= :remap (:op %)) {:op (s/eq :remap)
-                         (s/optional-key :field-name) (s/cond-pre s/Keyword s/Str)
-                         :remappings {s/Str s/Num}
-                         :remap-default s/Num}
-    #(= :sort-by-list (:op %)) {:op (s/eq :sort-by-list)
-                                :mode ESSortMode
-                                :field-name (s/cond-pre s/Keyword s/Str)
-                                (s/optional-key :filter) {s/Str s/Str}}))
+  (->sort-extension-schema false))
 
 (s/defschema ConcreteSortExtension
-  (s/conditional
-    #(= :field (:op %)) {:op (s/eq :field)
-                         :field-name (s/cond-pre s/Keyword s/Str)
-                         (s/optional-key :sort_order) (s/cond-pre s/Keyword s/Str)}
-    #(= :remap-list-max (:op %)) {:op (s/eq :remap-list-max)
-                                  :field-name (s/cond-pre s/Keyword s/Str)
-                                  (s/optional-key :sort_order) (s/cond-pre s/Keyword s/Str)
-                                  :remappings {s/Str s/Num}
-                                  :remap-default s/Num}
-    #(= :remap (:op %)) {:op (s/eq :remap)
-                         :field-name (s/cond-pre s/Keyword s/Str)
-                         (s/optional-key :sort_order) (s/cond-pre s/Keyword s/Str)
-                         :remappings {s/Str s/Num}
-                         :remap-default s/Num}
-    #(= :sort-by-list (:op %)) {:op (s/eq :sort-by-list)
-                                :field-name (s/cond-pre s/Keyword s/Str)
-                                :mode ESSortMode
-                                (s/optional-key :filter) {s/Str s/Str}
-                                (s/optional-key :sort_order) (s/cond-pre s/Keyword s/Str)}))
+  (->sort-extension-schema true))
 
 (s/defschema SortExtensionTemplates
   "A map to override the behavior of sorting by a field.
@@ -386,16 +377,18 @@
 
 (defn ->search-extension-schema [concrete?]
   (s/conditional
-    #(= :filter-list-range (:op %)) (cond->
-                                      {:op (s/eq :filter-list-range)
-                                       :comparator-kw (s/enum :from :to)
-                                       :base-list-field s/Str
-                                       :nested-range-field s/Str
-                                       :nested-elem-filter {s/Str s/Str}}
-                                      concrete? (st/merge {:ext-val s/Num}))))
+    #(= :filter-list-range (:op %)) (cond-> {:op (s/eq :filter-list-range)
+                                             :comparator-kw (s/enum :from :to)
+                                             :base-list-field s/Str
+                                             :nested-range-field s/Str
+                                             :nested-elem-filter {s/Str s/Str}}
+                                      concrete? (st/assoc :ext-val s/Num))))
 
 (s/defschema SearchExtensionTemplate
   (->search-extension-schema false))
+
+(s/defschema ConcreteSearchExtension
+  (->search-extension-schema true))
 
 (s/defschema SearchExtensionTemplates
   "A map to override the behavior of searching a field.
@@ -403,6 +396,3 @@
   See ctia.entity.incident/search-extension-templates for an example
   that redefines the searching on `scores.ttp` as a nest range query."
   {(s/pred simple-keyword?) SearchExtensionTemplate})
-
-(s/defschema ConcreteSearchExtension
-  (->search-extension-schema true))
