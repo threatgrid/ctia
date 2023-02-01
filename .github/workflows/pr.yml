@@ -37,7 +37,7 @@ env:
 
 jobs:
   setup:
-    runs-on: ubuntu-20.04
+    runs-on: "ubuntu-22.04"
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
     steps:
@@ -64,7 +64,7 @@ jobs:
         run: ./scripts-test/test_runner.clj
       - run: ./scripts/actions/setup_env.clj
       # scan ctia's source for trojans. uberjar is scanned in deploy step.
-      - run: ./scripts/actions/install-trojansourcedetector.sh
+      - run: ./scripts/actions/install-trojansourcefinder.sh
       - run: ./scripts/trojan-scan.sh
       - name: Setup test matrix splits
         id: set-matrix
@@ -376,7 +376,7 @@ jobs:
 
       - run: echo "All tests pass!"
   deploy:
-    runs-on: ubuntu-20.04
+    runs-on: "ubuntu-22.04"
     needs: [all-pr-checks]
     # see on.push.branches for which branches are built on push
     if: github.event_name == 'push' && github.repository == 'threatgrid/ctia'
@@ -393,7 +393,7 @@ jobs:
           echo "${BIN_PATH}" >> $GITHUB_PATH
       - name: Install babashka
         run: ./scripts/actions/install-bb.sh
-      - run: ./scripts/actions/install-trojansourcedetector.sh
+      - run: ./scripts/actions/install-trojansourcefinder.sh
       - run: ./scripts/actions/setup_env.clj
       - name: Maven Cache
         id: maven-cache
@@ -430,7 +430,7 @@ jobs:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v1
         with:
-          # region matching buckets in ./build/deploy-actions.sh 
+          # region matching buckets in ./build/deploy-actions.sh
           aws-region: us-east-1
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
