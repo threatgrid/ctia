@@ -26,11 +26,13 @@
 
 (s/defschema SearchQuery
   "components of a search query:
-   - query-string: free text search, with lucene syntax enabled"
+   - query-string: free text search, with lucene syntax enabled
+   - filters: collection of ES filters as EDN"
   (st/optional-keys
    {:filter-map   {s/Keyword s/Any}
     :range        RangeQuery
-    :full-text    [FullTextQuery]}))
+    :full-text    [FullTextQuery]
+    :search-extensions [ConcreteRangeSearchExtension]}))
 
 (s/defschema AggType
   "supported aggregation types"

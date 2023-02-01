@@ -173,13 +173,17 @@
     {:keys [query
             from to
             simple_query
-            search_fields] :as search-params}
+            search_fields
+            range-search-extension-templates] :as search-params}
     make-date-range-fn :- (s/=> RangeQueryOpt
                                 (s/named (s/maybe s/Inst) 'from)
                                 (s/named (s/maybe s/Inst) 'to))]
-   (let [;; TODO support range extensions (remove from search-params and add to :range)
-         filter-map (apply dissoc search-params filter-map-search-options)
-         date-range (make-date-range-fn from to)]
+   (let [filter-map (apply dissoc search-params filter-map-search-options (keys range-search-extension-templates))
+         date-range (make-date-range-fn from to)
+         concrete-range-extensions (mapv (fn [[ext-key ext-val]]
+                                           (-> (get range-search-extension-templates ext-key)
+                                               (assoc :ext-val ext-val)))
+                                         (select-keys search-params (keys range-search-extension-templates)))]
      (cond-> {}
        (seq date-range)        (assoc-in [:range date-field] date-range)
        (seq filter-map)        (assoc :filter-map filter-map)
@@ -189,7 +193,8 @@
                                              simple_query (conj {:query_mode :simple_query_string
                                                                  :query      simple_query}))
                                            (mapv #(merge % (when search_fields
-                                                             {:fields search_fields})))))))))
+                                                             {:fields search_fields})))))
+       (seq concrete-range-extensions) (assoc :search-extensions concrete-range-extensions)))))
 
 (s/defn format-agg-result :- MetricResult
   [result
