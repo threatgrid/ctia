@@ -266,7 +266,7 @@
       (into (for [score-type (score-types services)
                   comparator-name score-comparator-names]
               {(keyword (str/join "." ["scores" score-type comparator-name]))
-               {:op :filter-list-range
+               {:op :filter-by-list-range
                 :comparator-kw (keyword comparator-name)
                 :base-list-field "scores"
                 :nested-range-field "score"

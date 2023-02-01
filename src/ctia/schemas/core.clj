@@ -377,12 +377,12 @@
 
 (defn ->search-extension-schema [concrete?]
   (s/conditional
-    #(= :filter-list-range (:op %)) (cond-> {:op (s/eq :filter-list-range)
-                                             :comparator-kw (s/enum :from :to)
-                                             :base-list-field s/Str
-                                             :nested-range-field s/Str
-                                             :nested-elem-filter {s/Str s/Str}}
-                                      concrete? (st/assoc :ext-val s/Num))))
+    #(= :filter-by-list-range (:op %)) (cond-> {:op (s/eq :filter-by-list-range)
+                                                :comparator-kw (s/enum :from :to)
+                                                :base-list-field s/Str
+                                                :nested-range-field s/Str
+                                                :nested-elem-filter {s/Str s/Str}}
+                                         concrete? (st/assoc :ext-val s/Num))))
 
 (s/defschema SearchExtensionTemplate
   (->search-extension-schema false))

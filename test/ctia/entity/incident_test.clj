@@ -158,7 +158,7 @@
     #(ductile.index/delete! % "ctia_*")
     (helpers/with-properties (-> ["ctia.auth.type" "allow-all"]
                                  (into es-helpers/basic-auth-properties)
-                                 (into ["ctia.http.incident.sortable-score-types" "asset,ttp"]))
+                                 (conj "ctia.http.incident.score-types" "asset,ttp"))
       (helpers/fixture-ctia-with-app
         (fn [app]
           ;(helpers/set-capabilities! app "foouser" ["foogroup"] "user" all-capabilities)
@@ -570,4 +570,59 @@
                      (and (is (= 200 (:status raw)) (pr-str raw))
                           (is (= (normalize [incident1 incident3])
                                  (normalize parsed-body)))))))
+               (finally (purge-incidents! app))))))))
+
+(deftest filter-incidents-by-scores-range
+  (es-helpers/for-each-es-version
+    "sort by tactics"
+    [7]
+    #(ductile.index/delete! % "ctia_*")
+    (helpers/with-properties (-> ["ctia.auth.type" "allow-all"]
+                                 (into es-helpers/basic-auth-properties)
+                                 (conj "ctia.http.incident.score-types" "asset,ttp"))
+      (helpers/fixture-ctia-with-app
+        (fn [app]
+          ;(helpers/set-capabilities! app "foouser" ["foogroup"] "user" all-capabilities)
+          ;(whoami-helpers/set-whoami-response app "45c1f5e3f05d0" "foouser" "foogroup" "user")
+          (try (let [incident1 (assoc (gen-new-incident)
+                                      :title "incident1"
+                                      :scores [{:type "ttp"
+                                                :score 30}
+                                               {:type "asset"
+                                                :score 100}])
+                     incident2 (assoc (gen-new-incident)
+                                      :title "incident2"
+                                      :scores [{:type "ttp"
+                                                :score 50}
+                                               {:type "asset"
+                                                :score 50}])
+                     incident3 (assoc (gen-new-incident)
+                                      :title "incident3"
+                                      :scores [{:type "ttp"
+                                                :score 70}
+                                               {:type "asset"
+                                                :score 0}])
+                     normalize (fn [incidents]
+                                 (->> incidents
+                                      (map #(select-keys % [:title :scores]))
+                                      (sort-by :title)))]
+                 (create-incidents app #{incident1 incident2 incident3})
+                 (testing "50<=ttp"
+                   (let [{:keys [parsed-body] :as raw} (search-th/search-raw app :incident {:scores.ttp.from "50"})]
+                     (and (is (= 200 (:status raw)) (pr-str raw))
+                          (is (= (normalize [incident2 incident3])
+                                 (normalize parsed-body))
+                              (pr-str parsed-body)))))
+                 (testing "ttp<=50"
+                   (let [{:keys [parsed-body] :as raw} (search-th/search-raw app :incident {:scores.ttp.to "50"})]
+                     (and (is (= 200 (:status raw)) (pr-str raw))
+                          (is (= (normalize [incident1 incident2])
+                                 (normalize parsed-body))))))
+                 (testing "50<=ttp && asset<=30"
+                   (let [{:keys [parsed-body] :as raw} (search-th/search-raw app :incident {:scores.ttp.to "50"
+                                                                                            :scores.asset.to "30"})]
+                     (and (is (= 200 (:status raw)) (pr-str raw))
+                          (is (= (normalize [incident1 incident3])
+                                 (normalize parsed-body)))))))
+               ;; TODO combine with other kinds of queries
                (finally (purge-incidents! app))))))))
