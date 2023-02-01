@@ -1,5 +1,6 @@
 (ns ctia.schemas.search-agg
   (:require
+   [ctia.schemas.core :refer [ConcreteSearchExtension]]
    [schema.core :as s]
    [schema-tools.core :as st]))
 
@@ -32,7 +33,7 @@
    {:filter-map   {s/Keyword s/Any}
     :range        RangeQuery
     :full-text    [FullTextQuery]
-    :search-extensions [ConcreteRangeSearchExtension]}))
+    :search-extensions [ConcreteSearchExtension]}))
 
 (s/defschema AggType
   "supported aggregation types"

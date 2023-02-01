@@ -384,11 +384,18 @@
   You can also sort by fields that don't exist."
   {(s/pred simple-keyword?) SortExtensionTemplate})
 
-(s/defschema SearchExtensionTemplate
+(defn ->search-extension-schema [concrete?]
   (s/conditional
-    #(= :range-match-list (:op %)) {:op (s/eq :range-match-list)
-                                    :field-name s/Str
-                                    :filter {s/Str s/Str}}))
+    #(= :filter-list-range (:op %)) (cond->
+                                      {:op (s/eq :filter-list-range)
+                                       :comparator-kw (s/enum :from :to)
+                                       :base-list-field s/Str
+                                       :nested-range-field s/Str
+                                       :nested-elem-filter {s/Str s/Str}}
+                                      concrete? (st/merge {:ext-val s/Num}))))
+
+(s/defschema SearchExtensionTemplate
+  (->search-extension-schema false))
 
 (s/defschema SearchExtensionTemplates
   "A map to override the behavior of searching a field.
@@ -396,3 +403,6 @@
   See ctia.entity.incident/search-extension-templates for an example
   that redefines the searching on `scores.ttp` as a nest range query."
   {(s/pred simple-keyword?) SearchExtensionTemplate})
+
+(s/defschema ConcreteSearchExtension
+  (->search-extension-schema true))

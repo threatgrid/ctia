@@ -10,7 +10,7 @@
    [ctia.http.routes.common :as routes.common]
    [ctia.http.routes.crud :as routes.crud]
    [ctia.lib.compojure.api.core :refer [POST routes]]
-   [ctia.schemas.core :refer [APIHandlerServices def-acl-schema def-stored-schema SortExtensionTemplates]]
+   [ctia.schemas.core :refer [APIHandlerServices def-acl-schema def-stored-schema SearchExtensionTemplates SortExtensionTemplates]]
    [ctia.schemas.graphql.flanders :as flanders]
    [ctia.schemas.graphql.helpers :as g]
    [ctia.schemas.graphql.ownership :as go]
@@ -261,17 +261,14 @@
 (s/defn search-extension-templates :- SearchExtensionTemplates
   [services :- APIHandlerServices]
   (-> {}
-      (into (map (fn [score-type]
-                   (into {}
-                         (map (fn [comparator-kw]
-                                {(keyword (str/join "." ["scores" score-type (name comparator-kw)]))
-                                 {:op :filter-list-range
-                                  :comparator-kw comparator-kw
-                                  :base-list-field "scores"
-                                  :nested-range-field "score"
-                                  :nested-elem-filter {"type" score-type}}}))
-                         [:from :to])))
-            (score-types services))))
+      (into (for [score-type (score-types services)
+                  comparator-kw [:from :to]]
+              {(keyword (str/join "." ["scores" score-type (name comparator-kw)]))
+               {:op :filter-list-range
+                :comparator-kw comparator-kw
+                :base-list-field "scores"
+                :nested-range-field "score"
+                :nested-elem-filter {"type" score-type}}}))))
 
 (s/defn incident-sort-fields
   [services :- APIHandlerServices]
