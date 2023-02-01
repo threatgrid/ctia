@@ -258,14 +258,16 @@
                      :filter {"scores.type" score-type}}}))
             (score-types services))))
 
+(def score-comparator-names ["from" "to"])
+
 (s/defn search-extension-templates :- SearchExtensionTemplates
   [services :- APIHandlerServices]
   (-> {}
       (into (for [score-type (score-types services)
-                  comparator-kw [:from :to]]
-              {(keyword (str/join "." ["scores" score-type (name comparator-kw)]))
+                  comparator-name score-comparator-names]
+              {(keyword (str/join "." ["scores" score-type comparator-name]))
                {:op :filter-list-range
-                :comparator-kw comparator-kw
+                :comparator-kw (keyword comparator-name)
                 :base-list-field "scores"
                 :nested-range-field "score"
                 :nested-elem-filter {"type" score-type}}}))))
@@ -325,13 +327,13 @@
    (st/optional-keys
      (into {}
            (for [score-type (score-types services)
-                 comparator-name ["from" "to"]]
+                 comparator-name score-comparator-names]
              {(keyword (str/join "." ["scores" score-type comparator-name]))
               (describe s/Num
                         (str "Filter by "
-                             ({"from" "minimum"
-                               "to" "maximum"}
-                              comparator-name)
+                             (case comparator-name
+                               "from" "minimum"
+                               "to" "maximum")
                              score-type " score "))})))))
 
 (def IncidentGetParams IncidentFieldsParam)
