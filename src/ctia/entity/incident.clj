@@ -330,11 +330,12 @@
                  comparator-name score-comparator-names]
              {(keyword (str/join "." ["scores" score-type comparator-name]))
               (describe s/Num
-                        (str "Filter by "
-                             (case comparator-name
-                               "from" "minimum"
-                               "to" "maximum")
-                             score-type " score "))})))))
+                        (str/join " "
+                                  ["Filter by"
+                                   (case comparator-name
+                                     "from" "minimum"
+                                     "to" "maximum")
+                                   score-type "score."]))})))))
 
 (def IncidentGetParams IncidentFieldsParam)
 
