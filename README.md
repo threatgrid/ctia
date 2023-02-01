@@ -105,7 +105,6 @@ Using docker for mac, this will bind the following ports on your
 development machine to the services running in the containers:
 
 * Redis - 6379
-* elasticsearch5 - 9205 and 9305
 * elasticsearch7 - 9207 and 9307
 * kibana - 5601
 * zookeeper - 2181
