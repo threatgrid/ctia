@@ -2,6 +2,7 @@
   (:require [clj-http.headers :refer [canonicalize]]
             [clj-momo.lib.clj-time.core :as t]
             [clojure.string :as str]
+            [ctia.schemas.core :refer [SearchExtensionTemplates SortExtensionTemplates]]
             [ctia.schemas.search-agg :refer [MetricResult
                                              RangeQueryOpt
                                              SearchQuery]]
@@ -12,6 +13,14 @@
             [ring.util.http-status :refer [ok]]
             [schema-tools.core :as st]
             [schema.core :as s]))
+
+(s/defn es-params->sort-extension-templates :- SortExtensionTemplates
+  [es-params]
+  (-> es-params meta :sort-extension-templates))
+
+(s/defn es-params->search-extension-templates :- SearchExtensionTemplates
+  [es-params]
+  (-> es-params meta :search-extension-templates))
 
 (def search-options [:sort_by
                      :sort_order
@@ -173,17 +182,20 @@
     {:keys [query
             from to
             simple_query
-            search_fields
-            range-search-extension-templates] :as search-params}
+            search_fields] :as search-params}
     make-date-range-fn :- (s/=> RangeQueryOpt
                                 (s/named (s/maybe s/Inst) 'from)
                                 (s/named (s/maybe s/Inst) 'to))]
-   (let [filter-map (apply dissoc search-params filter-map-search-options (keys range-search-extension-templates))
+   (let [search-extension-templates (es-params->search-extension-templates search-params)
+         filter-map (apply dissoc search-params filter-map-search-options (keys search-extension-templates))
+         _ (when filter-map
+             (assert (not-any? filter-map #{"scores.ttp.from" :scores.ttp.from})
+                     [filter-map search-extension-templates]))
          date-range (make-date-range-fn from to)
          concrete-range-extensions (mapv (fn [[ext-key ext-val]]
-                                           (-> (get range-search-extension-templates ext-key)
+                                           (-> (get search-extension-templates ext-key)
                                                (assoc :ext-val ext-val)))
-                                         (select-keys search-params (keys range-search-extension-templates)))]
+                                         (select-keys search-params (keys search-extension-templates)))]
      (cond-> {}
        (seq date-range)        (assoc-in [:range date-field] date-range)
        (seq filter-map)        (assoc :filter-map filter-map)

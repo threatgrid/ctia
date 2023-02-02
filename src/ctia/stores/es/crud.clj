@@ -5,8 +5,10 @@
    [clojure.tools.logging :as log]
    [ctia.domain.access-control :as ac
     :refer [allow-read? allow-write? restricted-read?]]
+   [ctia.http.routes.common :refer [es-params->search-extension-templates
+                                    es-params->sort-extension-templates]]
    [ctia.lib.pagination :refer [list-response-schema]]
-   [ctia.schemas.core :refer [ConcreteSortExtension SearchExtensionTemplates SortExtensionTemplates]]
+   [ctia.schemas.core :refer [ConcreteSortExtension]]
    [ctia.schemas.search-agg
     :refer [AggQuery CardinalityQuery HistogramQuery SearchQuery TopnQuery]]
    [ctia.stores.es.search :as es.search]
@@ -422,14 +424,6 @@ It returns the documents with full hits meta data including the real index in wh
                                         (mapv (fn [m] (es.sort/parse-sort-params-op m :asc))))
                                [{"_doc" :asc} {"id" :asc}])))
 
-(s/defn es-params->sort-extension-templates :- SortExtensionTemplates
-  [es-params]
-  (-> es-params meta :sort-extension-templates))
-
-(s/defn es-params->search-extension-templates :- SearchExtensionTemplates
-  [es-params]
-  (-> es-params meta :search-extension-templates))
-
 (defn rename-sort-fields
   "Renames sort fields based on the content of the `enumerable-fields-mapping` table
   and remaps to script extensions."
@@ -512,8 +506,6 @@ It returns the documents with full hits meta data including the real index in wh
                                search-extensions)
         filter-terms (-> (ensure-document-id-in-map filter-map)
                          q/prepare-terms)]
-    (prn "filter-terms" filter-terms)
-    (prn "range-query" range-query)
     {:bool
      {:filter
       (cond-> [(es.query/find-restriction-query-part ident get-in-config)]

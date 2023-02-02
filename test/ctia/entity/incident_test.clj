@@ -574,7 +574,7 @@
 
 (deftest filter-incidents-by-scores-range
   (es-helpers/for-each-es-version
-    "sort by tactics"
+    "filter by scores"
     [7]
     #(ductile.index/delete! % "ctia_*")
     (helpers/with-properties (-> ["ctia.auth.type" "allow-all"]
@@ -586,6 +586,7 @@
           ;(whoami-helpers/set-whoami-response app "45c1f5e3f05d0" "foouser" "foogroup" "user")
           (try (let [incident1 (assoc (gen-new-incident)
                                       :title "incident1"
+                                      :assignees ["assignee1"]
                                       :scores [{:type "ttp"
                                                 :score 30}
                                                {:type "asset"
@@ -607,22 +608,27 @@
                                       (map #(select-keys % [:title :scores]))
                                       (sort-by :title)))]
                  (create-incidents app #{incident1 incident2 incident3})
-                 (testing "50<=ttp"
-                   (let [{:keys [parsed-body] :as raw} (search-th/search-raw app :incident {:scores.ttp.from "50"})]
-                     (and (is (= 200 (:status raw)) (pr-str raw))
-                          (is (= (normalize [incident2 incident3])
-                                 (normalize parsed-body))
-                              (pr-str parsed-body)))))
-                 (testing "ttp<=50"
-                   (let [{:keys [parsed-body] :as raw} (search-th/search-raw app :incident {:scores.ttp.to "50"})]
-                     (and (is (= 200 (:status raw)) (pr-str raw))
-                          (is (= (normalize [incident1 incident2])
-                                 (normalize parsed-body))))))
-                 (testing "50<=ttp && asset<=30"
-                   (let [{:keys [parsed-body] :as raw} (search-th/search-raw app :incident {:scores.ttp.to "50"
-                                                                                            :scores.asset.to "30"})]
-                     (and (is (= 200 (:status raw)) (pr-str raw))
-                          (is (= (normalize [incident1 incident3])
-                                 (normalize parsed-body)))))))
-               ;; TODO combine with other kinds of queries
+                 (and (testing "50<=ttp"
+                        (let [{:keys [parsed-body] :as raw} (search-th/search-raw app :incident {:scores.ttp.from "50"})]
+                          (and (is (= 200 (:status raw)) (pr-str raw))
+                               (is (= (normalize [incident2 incident3])
+                                      (normalize parsed-body))
+                                   (pr-str parsed-body)))))
+                      (testing "ttp<=50"
+                        (let [{:keys [parsed-body] :as raw} (search-th/search-raw app :incident {:scores.ttp.to "50"})]
+                          (and (is (= 200 (:status raw)) (pr-str raw))
+                               (is (= (normalize [incident1 incident2])
+                                      (normalize parsed-body))))))
+                      (testing "50<=ttp && asset<=30"
+                        (let [{:keys [parsed-body] :as raw} (search-th/search-raw app :incident {:scores.ttp.to "50"
+                                                                                                 :scores.asset.to "30"})]
+                          (and (is (= 200 (:status raw)) (pr-str raw))
+                               (is (= (normalize [incident1 incident3])
+                                      (normalize parsed-body))))))
+                      (testing "combine with filter-map"
+                        (let [{:keys [parsed-body] :as raw} (search-th/search-raw app :incident {:assignees ["assignee1"]
+                                                                                                 :scores.ttp.to "50"})]
+                          (and (is (= 200 (:status raw)) (pr-str raw))
+                               (is (= (normalize [incident1])
+                                      (normalize parsed-body))))))))
                (finally (purge-incidents! app))))))))

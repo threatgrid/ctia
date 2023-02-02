@@ -338,7 +338,8 @@
 (s/defschema ESSortMode (s/enum "max" "min" "sum" "avg" "median"))
 
 (defn ->sort-extension-schema [concrete?]
-  (let [field-name (cond-> :field-name concrete? s/optional-key)
+  (let [field-name (cond-> :field-name
+                     (not concrete?) s/optional-key)
         extra-concrete {(s/optional-key :sort_order) (s/cond-pre s/Keyword s/Str)}]
     (s/conditional
       #(= :field (:op %)) (cond-> {:op (s/eq :field)
