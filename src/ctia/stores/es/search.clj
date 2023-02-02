@@ -6,7 +6,7 @@
 (s/defn parse-search-params-op
   [{:keys [op ext-val] :as params} :- ConcreteSearchExtension]
   (case op
-    :filter-by-list-range (let [{:keys [comparator-kw base-list-field nested-range-field nested-elem-filter]} params
+    :filter-by-list-range (let [{:keys [comparator-kw base-list-field nested-range-field nested-term-filter]} params
                                 es-comparator (case comparator-kw
                                                 :from "gte"
                                                 :to "lte")]
@@ -21,4 +21,4 @@
                                        (cond-> [{:range {(str base-list-field "." nested-range-field) {es-comparator ext-val}}}]
                                          ;; use :term instead of :match for exact match
                                          ;; https://www.elastic.co/guide/en/elasticsearch/reference/7.17/query-dsl-term-query.html
-                                         nested-elem-filter (conj {:term (update-keys nested-elem-filter #(str base-list-field "." %))}))}}}})))
+                                         nested-term-filter (conj {:term (update-keys nested-term-filter #(str base-list-field "." %))}))}}}})))

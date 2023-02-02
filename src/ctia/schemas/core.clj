@@ -382,7 +382,7 @@
                                                 :comparator-kw (s/enum :from :to)
                                                 :base-list-field s/Str
                                                 :nested-range-field s/Str
-                                                :nested-elem-filter {s/Str s/Str}}
+                                                :nested-term-filter {s/Str s/Str}}
                                          concrete? (st/assoc :ext-val s/Num))))
 
 (s/defschema SearchExtensionTemplate

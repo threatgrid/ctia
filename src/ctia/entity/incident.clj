@@ -270,7 +270,7 @@
                 :comparator-kw (keyword comparator-name)
                 :base-list-field "scores"
                 :nested-range-field "score"
-                :nested-elem-filter {"type" score-type}}}))))
+                :nested-term-filter {"type" score-type}}}))))
 
 (s/defn incident-sort-fields
   [services :- APIHandlerServices]
