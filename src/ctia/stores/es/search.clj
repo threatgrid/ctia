@@ -14,8 +14,6 @@
                             ;; https://www.elastic.co/guide/en/elasticsearch/reference/7.17/query-dsl-nested-query.html#query-dsl-nested-query
                             {:nested
                              {:path base-list-field
-                              ;; higher range is more relevant
-                              :score-mode "max"
                               :query {:bool
                                       {:filter
                                        (cond-> [{:range {(str base-list-field "." nested-range-field) {es-comparator ext-val}}}]
