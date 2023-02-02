@@ -20,4 +20,5 @@
                                       {:filter
                                        (cond-> [{:range {(str base-list-field "." nested-range-field) {es-comparator ext-val}}}]
                                          ;; use :term instead of :match for exact match
+                                         ;; https://www.elastic.co/guide/en/elasticsearch/reference/7.17/query-dsl-term-query.html
                                          nested-elem-filter (conj {:term (update-keys nested-elem-filter #(str base-list-field "." %))}))}}}})))
