@@ -214,12 +214,13 @@
                       :entity entity
                       :identity-map identity-map
                       :wait_for wait_for}))
-        add-search-extensions (let [ext-keys [:range-search-extension-templates
-                                              :sort-extension-templates]
-                                    ext-config (not-empty (select-keys entity-crud-config ext-keys))]
-                                (fn [params]
-                                  (into (apply dissoc params ext-keys)
-                                        ext-config)))]
+        add-search-extensions (fn [params]
+                                (-> params
+                                    ;; don't add extra keys to filter-map to avoid accidentally sending to ES.
+                                    ;; might be cleaner to thread another map arg.
+                                    (vary-meta assoc
+                                               :search-extension-templates (get entity-crud-config :search-extension-templates {})
+                                               :sort-extension-templates (get entity-crud-config :sort-extension-templates {}))))]
    (routes
      (when can-post?
        (let [capabilities post-capabilities]

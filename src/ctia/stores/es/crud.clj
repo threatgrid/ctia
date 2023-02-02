@@ -6,7 +6,7 @@
    [ctia.domain.access-control :as ac
     :refer [allow-read? allow-write? restricted-read?]]
    [ctia.lib.pagination :refer [list-response-schema]]
-   [ctia.schemas.core :refer [ConcreteSortExtension]]
+   [ctia.schemas.core :refer [ConcreteSortExtension SearchExtensionTemplates SortExtensionTemplates]]
    [ctia.schemas.search-agg
     :refer [AggQuery CardinalityQuery HistogramQuery SearchQuery TopnQuery]]
    [ctia.stores.es.search :as es.search]
@@ -422,11 +422,19 @@ It returns the documents with full hits meta data including the real index in wh
                                         (mapv (fn [m] (es.sort/parse-sort-params-op m :asc))))
                                [{"_doc" :asc} {"id" :asc}])))
 
+(s/defn es-params->sort-extension-templates :- SortExtensionTemplates
+  [es-params]
+  (-> es-params meta :sort-extension-templates))
+
+(s/defn es-params->search-extension-templates :- SearchExtensionTemplates
+  [es-params]
+  (-> es-params meta :search-extension-templates))
+
 (defn rename-sort-fields
   "Renames sort fields based on the content of the `enumerable-fields-mapping` table
   and remaps to script extensions."
-  [{:keys [sort_by sort_order sort-extension-templates] :as es-params}]
-  (cond-> (dissoc es-params :sort-extension-templates :sort_by :sort_order)
+  [{:keys [sort_by sort_order] :as es-params}]
+  (cond-> (dissoc es-params :sort_by :sort_order)
     (and sort_by (not (:sort es-params)))
     (assoc :sort
            (->> sort_by
@@ -437,7 +445,8 @@ It returns the documents with full hits meta data including the real index in wh
                               (update field :field-name #(or (keyword (enumerable-fields-mapping (name %)))
                                                              %))]
                           (assert (simple-keyword? field-name))
-                          (-> (or (some-> (get sort-extension-templates field-name)
+                          (-> (or (some-> (es-params->sort-extension-templates es-params)
+                                          (get field-name)
                                           (into (select-keys field [:sort_order]))
                                           (update :field-name #(or % (:field-name field))))
                                   field)
@@ -492,12 +501,19 @@ It returns the documents with full hits meta data including the real index in wh
   (let [{:keys [services]} es-conn-state
         {{:keys [get-in-config]} :ConfigService} services
         {:keys [filter-map range full-text search-extensions]} search-query
+        _ (assert (not-any? #{:sort-extension-templates "sort-extension-templates"
+                              :search-extension-templates "search-extension-templates"
+                              :scores.ttp.to "scores.ttp.to"}
+                            filter-map)
+                  filter-map)
         range-query (when range
                       {:range range})
         extension-queries (map es.search/parse-search-params-op
                                search-extensions)
         filter-terms (-> (ensure-document-id-in-map filter-map)
                          q/prepare-terms)]
+    (prn "filter-terms" filter-terms)
+    (prn "range-query" range-query)
     {:bool
      {:filter
       (cond-> [(es.query/find-restriction-query-part ident get-in-config)]
@@ -521,6 +537,7 @@ It returns the documents with full hits meta data including the real index in wh
              {{:keys [get-in-config]} :ConfigService}
              :services}  es-conn-state
             query        (make-search-query es-conn-state search-query ident)
+            _ (prn "HERE" ((requiring-resolve 'clojure.pprint/pprint) query))
             query-params (make-query-params es-params props)]
         (cond-> (coerce! (ductile.doc/query
                           conn
