@@ -67,6 +67,7 @@
              "id" "id.text"
              "kill_chain_phases.kill_chain_name" "kill_chain_phases.kill_chain_name.text"
              "kill_chain_phases.phase_name" "kill_chain_phases.phase_name.text"}
+   :note {"source" "source.text", "id" "id.text"}
    :actor {"source" "source.text" "id" "id.text"}})
 
 (deftest searchable-fields-map-test
