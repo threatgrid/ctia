@@ -19,4 +19,5 @@
                               :query {:bool
                                       {:filter
                                        (cond-> [{:range {(str base-list-field "." nested-range-field) {es-comparator ext-val}}}]
-                                         nested-elem-filter (conj {:match (update-keys nested-elem-filter #(str base-list-field "." %))}))}}}})))
+                                         ;; use :term instead of :match for exact match
+                                         nested-elem-filter (conj {:term (update-keys nested-elem-filter #(str base-list-field "." %))}))}}}})))
