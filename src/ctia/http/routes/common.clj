@@ -16,11 +16,13 @@
 
 (s/defn es-params->sort-extension-templates :- SortExtensionTemplates
   [es-params]
-  (-> es-params meta :sort-extension-templates))
+  (or (-> es-params meta :sort-extension-templates)
+      {}))
 
 (s/defn es-params->search-extension-templates :- SearchExtensionTemplates
   [es-params]
-  (-> es-params meta :search-extension-templates))
+  (or (-> es-params meta :search-extension-templates)
+      {}))
 
 (def search-options [:sort_by
                      :sort_order
@@ -188,9 +190,6 @@
                                 (s/named (s/maybe s/Inst) 'to))]
    (let [search-extension-templates (es-params->search-extension-templates search-params)
          filter-map (apply dissoc search-params filter-map-search-options (keys search-extension-templates))
-         _ (when filter-map
-             (assert (not-any? filter-map #{"scores.ttp.from" :scores.ttp.from})
-                     [filter-map search-extension-templates]))
          date-range (make-date-range-fn from to)
          concrete-range-extensions (mapv (fn [[ext-key ext-val]]
                                            (-> (get search-extension-templates ext-key)
