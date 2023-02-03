@@ -529,7 +529,6 @@ It returns the documents with full hits meta data including the real index in wh
              {{:keys [get-in-config]} :ConfigService}
              :services}  es-conn-state
             query        (make-search-query es-conn-state search-query ident)
-            _ (prn "HERE" ((requiring-resolve 'clojure.pprint/pprint) query))
             query-params (make-query-params es-params props)]
         (cond-> (coerce! (ductile.doc/query
                           conn
