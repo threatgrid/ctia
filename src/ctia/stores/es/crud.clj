@@ -521,13 +521,13 @@ It returns the documents with full hits meta data including the real index in wh
         coerce!         (coerce-to-fn response-schema)]
     (s/fn :- response-schema
       [{:keys [props] :as es-conn-state} :- ESConnState
-       {:keys [search-query ident es-params sort-extension-templates]} :- QueryStringSearchArgs]
+       {:keys [search-query ident] :as query-string-search-args} :- QueryStringSearchArgs]
       (let [{conn :conn, index :index
              {{:keys [get-in-config]} :ConfigService}
              :services}  es-conn-state
             query        (make-search-query es-conn-state search-query ident)
             query-params (make-query-params (into {:props props}
-                                                  (select-keys [:es-params :sort-extension-templates])))]
+                                                  (select-keys query-string-search-args [:params :sort-extension-templates])))]
         (cond-> (coerce! (ductile.doc/query
                           conn
                           index

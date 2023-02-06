@@ -27,10 +27,10 @@
 
 (s/defschema SearchQueryArgs
   {:date-field s/Any
-   :search-params s/Any
-   :make-date-range-fn (s/=> RangeQueryOpt
-                             (s/named (s/maybe s/Inst) 'from)
-                             (s/named (s/maybe s/Inst) 'to))
+   :params s/Any
+   (s/optional-key :make-date-range-fn) (s/=> RangeQueryOpt
+                                              (s/named (s/maybe s/Inst) 'from)
+                                              (s/named (s/maybe s/Inst) 'to))
    (s/optional-key :search-extension-templates) SearchExtensionTemplates
    (s/optional-key :sort-extension-templates) SortExtensionTemplates})
 
@@ -103,6 +103,6 @@
 (s/defschema QueryStringSearchArgs
   {:search-query SearchQuery
    :ident s/Any
-   :es-params s/Any
+   :params s/Any
    (s/optional-key :search-extension-templates) SearchExtensionTemplates
    (s/optional-key :sort-extension-templates) SortExtensionTemplates})
