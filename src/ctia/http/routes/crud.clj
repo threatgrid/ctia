@@ -128,6 +128,11 @@
                            :identity-map identity-map
                            :wait_for wait_for}))))
 
+(s/defschema EntityCrudRoutesArgs
+  {(s/optional-key :sort-extension-templates) SortExtensionTemplates
+   (s/optional-key :search-extension-templates) SearchExtensionTemplates
+   s/Any s/Any})
+
 (s/defn ^:private entity-crud-routes
   :- DelayedRoutes
   "Implementation of services->entity-crud-routes."
@@ -160,7 +165,9 @@
            can-get-by-external-id?
            date-field
            histogram-fields
-           enumerable-fields]
+           enumerable-fields
+           search-extension-templates
+           sort-extension-templates]
     :or {hide-delete? false
          can-post? true
          can-update? true
@@ -171,9 +178,7 @@
          date-field :created
          histogram-fields [:created]}
     :as entity-crud-config}
-   :- {(s/optional-key :sort-extension-templates) SortExtensionTemplates
-       (s/optional-key :search-extension-templates) SearchExtensionTemplates
-       s/Any s/Any}]
+   :- EntityCrudRoutesArgs]
  (s/fn [{{:keys [get-store]} :StoreService
          {:keys [flag-value]} :FeaturesService
          :as services} :- APIHandlerServices]
