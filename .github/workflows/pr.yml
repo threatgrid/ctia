@@ -214,6 +214,8 @@ jobs:
     runs-on: ubuntu-20.04
     needs: [setup]
     strategy:
+      # DELETE ME
+      fail-fast: false
       matrix:
         this-split: ${{fromJson(needs.setup.outputs.matrix)}}
     env:
