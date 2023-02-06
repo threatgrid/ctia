@@ -182,12 +182,14 @@
                                services
                                entity-crud-config)
                              routes.common/prep-sort_by-param-schema)
-        search-filters (st/dissoc search-q-params
-                                  :sort_by
-                                  :sort_order
-                                  :fields
-                                  :limit
-                                  :offset)
+        search-filters (apply st/dissoc search-q-params
+                              :sort_by
+                              :sort_order
+                              :fields
+                              :limit
+                              :offset
+                              ;; TODO support extensions in non-"search" aggregation routes
+                              (mapcat keys [search-extension-templates sort-extension-templates]))
         agg-search-schema (st/merge
                            search-filters
                            {:from s/Inst})
@@ -320,8 +322,7 @@
                   (store/list-records
                     {:all-of {:external_ids external_id}}
                     identity-map
-                    (-> q
-                        #_add-search-extensions))
+                    q)
                   (ent/page-with-long-id services)
                   ent/un-store-page
                   routes.common/paginated-ok))))
