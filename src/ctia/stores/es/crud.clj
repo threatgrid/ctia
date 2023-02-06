@@ -5,10 +5,8 @@
    [clojure.tools.logging :as log]
    [ctia.domain.access-control :as ac
     :refer [allow-read? allow-write? restricted-read?]]
-   [ctia.http.routes.common :refer [es-params->search-extension-templates
-                                    es-params->sort-extension-templates]]
    [ctia.lib.pagination :refer [list-response-schema]]
-   [ctia.schemas.core :refer [ConcreteSortExtension]]
+   [ctia.schemas.core :refer [ConcreteSortExtension SortExtensionTemplates]]
    [ctia.schemas.search-agg
     :refer [AggQuery CardinalityQuery HistogramQuery QueryStringSearchArgs SearchQuery TopnQuery]]
    [ctia.stores.es.search :as es.search]
@@ -424,10 +422,11 @@ It returns the documents with full hits meta data including the real index in wh
                                         (mapv (fn [m] (es.sort/parse-sort-params-op m :asc))))
                                [{"_doc" :asc} {"id" :asc}])))
 
-(defn rename-sort-fields
+(s/defn rename-sort-fields
   "Renames sort fields based on the content of the `enumerable-fields-mapping` table
   and remaps to script extensions."
-  [{:keys [sort_by sort_order] :as es-params}]
+  [{:keys [sort_by sort_order] :as es-params}
+   sort-extension-templates :- (s/maybe SortExtensionTemplates)]
   (cond-> (dissoc es-params :sort_by :sort_order)
     (and sort_by (not (:sort es-params)))
     (assoc :sort
@@ -439,17 +438,16 @@ It returns the documents with full hits meta data including the real index in wh
                               (update field :field-name #(or (keyword (enumerable-fields-mapping (name %)))
                                                              %))]
                           (assert (simple-keyword? field-name))
-                          (-> (or (some-> (es-params->sort-extension-templates es-params)
-                                          (get field-name)
+                          (-> (or (some-> (get sort-extension-templates field-name)
                                           (into (select-keys field [:sort_order]))
                                           (update :field-name #(or % (:field-name field))))
                                   field)
                               (es.sort/parse-sort-params-op (or sort_order :asc))))))))))
 
 (s/defn make-query-params :- {s/Keyword s/Any}
-  [es-params props]
+  [{:keys [es-params props sort-extension-templates]}]
   (cond-> (-> es-params
-              rename-sort-fields
+              (rename-sort-fields sort-extension-templates)
               (with-default-sort-field props)
               make-es-read-params)
     (<= 7 (:version props)) (assoc :track_total_hits true)))
@@ -477,7 +475,7 @@ It returns the documents with full hits meta data including the real index in wh
                                          :minimum_should_match 1})
                           query (update :filter conj query_string)
                           (seq date-range-query) (update :filter conj {:range date-range-query}))
-            query-params (make-query-params es-params props)]
+            query-params (make-query-params {:es-params es-params :props props})]
         (cond-> (coerce! (ductile.doc/query conn
                                             index
                                             (q/bool bool-params)
@@ -523,12 +521,13 @@ It returns the documents with full hits meta data including the real index in wh
         coerce!         (coerce-to-fn response-schema)]
     (s/fn :- response-schema
       [{:keys [props] :as es-conn-state} :- ESConnState
-       {:keys [search-query ident es-params]} :- QueryStringSearchArgs]
+       {:keys [search-query ident es-params sort-extension-templates]} :- QueryStringSearchArgs]
       (let [{conn :conn, index :index
              {{:keys [get-in-config]} :ConfigService}
              :services}  es-conn-state
             query        (make-search-query es-conn-state search-query ident)
-            query-params (make-query-params es-params props)]
+            query-params (make-query-params (into {:props props}
+                                                  (select-keys [:es-params :sort-extension-templates])))]
         (cond-> (coerce! (ductile.doc/query
                           conn
                           index

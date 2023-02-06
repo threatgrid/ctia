@@ -15,16 +15,6 @@
             [schema-tools.core :as st]
             [schema.core :as s]))
 
-(s/defn es-params->sort-extension-templates :- SortExtensionTemplates
-  [es-params]
-  (or (-> es-params meta :sort-extension-templates)
-      {}))
-
-(s/defn es-params->search-extension-templates :- SearchExtensionTemplates
-  [es-params]
-  (or (-> es-params meta :search-extension-templates)
-      {}))
-
 (def search-options [:sort_by
                      :sort_order
                      :offset
