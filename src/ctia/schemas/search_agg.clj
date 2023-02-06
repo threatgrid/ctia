@@ -1,6 +1,6 @@
 (ns ctia.schemas.search-agg
   (:require
-   [ctia.schemas.core :refer [ConcreteSearchExtension]]
+   [ctia.schemas.core :refer [ConcreteSearchExtension SearchExtensionTemplates SortExtensionTemplates]]
    [schema.core :as s]
    [schema-tools.core :as st]))
 
@@ -24,6 +24,15 @@
     {:query_mode       FullTextQueryMode
      :fields           [s/Str]
      :default_operator s/Str})))
+
+(s/defschema SearchQueryArgs
+  {:date-field s/Any
+   :search-params s/Any
+   :make-date-range-fn (s/=> RangeQueryOpt
+                             (s/named (s/maybe s/Inst) 'from)
+                             (s/named (s/maybe s/Inst) 'to))
+   (s/optional-key :search-extension-templates) SearchExtensionTemplates
+   (s/optional-key :sort-extension-templates) SortExtensionTemplates})
 
 (s/defschema SearchQuery
   "components of a search query:
@@ -90,3 +99,10 @@
    :filters (st/open-schema
              {:from s/Inst
               :to s/Inst})})
+
+(s/defschema QueryStringSearchArgs
+  {:search-query SearchQuery
+   :ident s/Any
+   :es-params s/Any
+   (s/optional-key :search-extension-templates) SearchExtensionTemplates
+   (s/optional-key :sort-extension-templates) SortExtensionTemplates})

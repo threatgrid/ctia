@@ -143,11 +143,11 @@
    entity-id]
   (:data (query-string-search
           event-store
-          {:filter-map {:entity.id entity-id
-                        :event_type event-type}
-           :range {:timestamp {:gte timestamp}}}
-          ident
-          {})))
+          {:search-query {:filter-map {:entity.id entity-id
+                                       :event_type event-type}
+                          :range {:timestamp {:gte timestamp}}}
+           :ident ident
+           :params {}})))
 
 (defn mk-sighting [id]
   (assoc sighting-minimal

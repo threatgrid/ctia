@@ -351,8 +351,9 @@
         (assert (empty?
                  (-> incidents-store
                      (store/query-string-search
-                      {:query "intrusion event 3\\:19187\\:7 incident"}
-                      login {})
+                       {:search-query {:query "intrusion event 3\\:19187\\:7 incident"}
+                        :ident login
+                        :params {}})
                      :data))
                 "The test state is polluted with previous documents.")
 
@@ -362,9 +363,9 @@
                               services)
         (are [desc query check-fn] (let [query-res (store/query-string-search
                                                     incidents-store
-                                                    (merge query {:default_operator "AND"})
-                                                    login
-                                                    {})
+                                                    {:search-query (merge query {:default_operator "AND"})
+                                                     :ident login
+                                                     :params {}})
                                          res (:data  query-res)]
                                      (testing (format "query:%s\nquery-res =>\n%s\nbundle =>\n %s"
                                                       query
@@ -414,7 +415,7 @@
 (defrecord FakeIncidentStore [state]
   store/IQueryStringSearchableStore
   (query-string-search
-    [_ search-query _ _]
+    [_ {:keys [search-query]}]
     (reset! enforced-fields-flag-query-params search-query)
     {:data (), :paging {:total-hits 0}}))
 

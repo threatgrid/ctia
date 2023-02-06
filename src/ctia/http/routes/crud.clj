@@ -216,11 +216,8 @@
                       :wait_for wait_for}))
         add-search-extensions (fn [params]
                                 (-> params
-                                    ;; don't add extra keys to filter-map to avoid accidentally sending to ES.
-                                    ;; might be cleaner to thread another map arg.
-                                    (vary-meta assoc
-                                               :search-extension-templates (get entity-crud-config :search-extension-templates {})
-                                               :sort-extension-templates (get entity-crud-config :sort-extension-templates {}))))]
+                                    (assoc :search-extension-templates (get entity-crud-config :search-extension-templates {})
+                                           :sort-extension-templates (get entity-crud-config :sort-extension-templates {}))))]
    (routes
      (when can-post?
        (let [capabilities post-capabilities]
@@ -344,9 +341,13 @@
              :query [params search-q-params*]
              (-> (get-store entity)
                  (store/query-string-search
-                  (search-query date-field (add-search-extensions params))
-                  identity-map
-                  (add-search-extensions (select-keys params routes.common/search-options)))
+                   (-> {:search-query (-> {:date-field date-field
+                                           :params params}
+                                          add-search-extensions
+                                          search-query)
+                        :ident identity-map
+                        :params (select-keys params routes.common/search-options)}
+                       add-search-extensions))
                  (ent/page-with-long-id services)
                  ent/un-store-page
                  routes.common/paginated-ok))
@@ -358,8 +359,8 @@
              :query [params search-filters]
              (ok (-> (get-store entity)
                      (store/query-string-count
-                       (search-query date-field (-> params
-                                                    #_add-search-extensions))
+                       (search-query {:date-field date-field
+                                      :params params})
                        identity-map))))
            (DELETE "/" []
              :capabilities delete-search-capabilities
@@ -380,9 +381,8 @@
                                               " you perform that operation."
                                               " DO NOT FORGET TO SET THAT TO FALSE AFTER EACH DELETION"
                                               " IF YOU INTEND TO USE THAT ROUTE MULTIPLE TIMES."))})]
-             (let [query (->> (dissoc params :wait_for :REALLY_DELETE_ALL_THESE_ENTITIES)
-                              #_add-search-extensions
-                              (search-query date-field))]
+             (let [query (search-query {:date-field date-field
+                                        :params (dissoc params :wait_for :REALLY_DELETE_ALL_THESE_ENTITIES)})]
                (if (empty? query)
                  (forbidden {:error "you must provide at least one of from, to, query or any field filter."})
                  (ok
@@ -408,10 +408,9 @@
                        :summary (format "Histogram for some %s field" capitalized)
                        :query [params histogram-q-params]
                        (let [aggregate-on (keyword (:aggregate-on params))
-                             search-q (search-query aggregate-on
-                                                    (-> (st/select-schema params agg-search-schema)
-                                                        #_add-search-extensions)
-                                                    coerce-date-range)
+                             search-q (search-query {:date-field aggregate-on
+                                                     :params (st/select-schema params agg-search-schema)
+                                                     :make-date-range-fn coerce-date-range})
                              agg-q (st/assoc (st/select-schema params HistogramParams)
                                              :agg-type :histogram)]
                          (-> (get-store entity)
@@ -426,10 +425,9 @@
                        :summary (format "Topn for some %s field" capitalized)
                        :query [params topn-q-params]
                        (let [aggregate-on (:aggregate-on params)
-                             search-q (search-query date-field
-                                                    (-> (st/select-schema params agg-search-schema)
-                                                        #_add-search-extensions)
-                                                    coerce-date-range)
+                             search-q (search-query {:date-field date-field
+                                                     :params (st/select-schema params agg-search-schema)
+                                                     :make-date-range-fn coerce-date-range})
                              agg-q (st/assoc (st/select-schema params TopnParams)
                                              :agg-type :topn)]
                          (-> (get-store entity)
@@ -444,10 +442,9 @@
                        :summary (format "Cardinality for some %s field" capitalized)
                        :query [params cardinality-q-params]
                        (let [aggregate-on (:aggregate-on params)
-                             search-q (search-query date-field
-                                                    (-> (st/select-schema params agg-search-schema)
-                                                        #_add-search-extensions)
-                                                    coerce-date-range)
+                             search-q (search-query {:date-field date-field
+                                                     :params (st/select-schema params agg-search-schema)
+                                                     :make-date-range-fn coerce-date-range})
                              agg-q (st/assoc (st/select-schema params CardinalityParams)
                                              :agg-type :cardinality)]
                          (-> (get-store entity)

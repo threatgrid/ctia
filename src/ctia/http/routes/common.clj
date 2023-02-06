@@ -5,7 +5,8 @@
             [ctia.schemas.core :refer [SearchExtensionTemplates SortExtensionTemplates]]
             [ctia.schemas.search-agg :refer [MetricResult
                                              RangeQueryOpt
-                                             SearchQuery]]
+                                             SearchQuery
+                                             SearchQueryArgs]]
             [ctia.schemas.sorting :as sorting]
             [ring.swagger.schema :refer [describe]]
             [ring.util.codec :as codec]
@@ -171,25 +172,20 @@
      :lt to-or-now}))
 
 (s/defn search-query :- SearchQuery
-  ([date-field search-params]
-   (search-query date-field
-                 search-params
-                 (s/fn :- RangeQueryOpt
-                   [from :- (s/maybe s/Inst)
-                    to :- (s/maybe s/Inst)]
-                   (cond-> {}
-                     from (assoc :gte from)
-                     to   (assoc :lt to)))))
-  ([date-field
-    {:keys [query
-            from to
-            simple_query
-            search_fields] :as search-params}
-    make-date-range-fn :- (s/=> RangeQueryOpt
-                                (s/named (s/maybe s/Inst) 'from)
-                                (s/named (s/maybe s/Inst) 'to))]
-   (let [search-extension-templates (es-params->search-extension-templates search-params)
-         filter-map (apply dissoc search-params filter-map-search-options (keys search-extension-templates))
+  ([{:keys [date-field make-date-range-fn search-extension-templates]
+     {:keys [query
+             from to
+             simple_query
+             search_fields] :as search-params}
+     :search-params
+     :or {make-date-range-fn (s/fn :- RangeQueryOpt
+                               [from :- (s/maybe s/Inst)
+                                to :- (s/maybe s/Inst)]
+                               (cond-> {}
+                                 from (assoc :gte from)
+                                 to   (assoc :lt to)))}}
+    :- SearchQueryArgs]
+   (let [filter-map (apply dissoc search-params filter-map-search-options (keys search-extension-templates))
          date-range (make-date-range-fn from to)
          concrete-range-extensions (mapv (fn [[ext-key ext-val]]
                                            (-> (get search-extension-templates ext-key)

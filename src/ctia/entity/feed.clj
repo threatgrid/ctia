@@ -372,9 +372,9 @@
             :identity-map identity-map
             (-> (get-store :feed)
                 (query-string-search
-                 (routes.common/search-query :created params)
-                 identity-map
-                 (select-keys params routes.common/search-options))
+                  {:search-query (routes.common/search-query :created params)
+                   :ident identity-map
+                   :params (select-keys params routes.common/search-options)})
                 (page-with-long-id services)
                 un-store-page
                 (decrypt-feed-page services)

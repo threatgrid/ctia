@@ -28,7 +28,7 @@
   (create-events [this new-events]))
 
 (defprotocol IQueryStringSearchableStore
-  (query-string-search [this search-query ident params])
+  (query-string-search [this args #_#_:- QueryStringSearchArgs])
   (query-string-count [this search-query ident])
   (aggregate [this search-query agg-query ident])
   (delete-search [this search-query ident params]))

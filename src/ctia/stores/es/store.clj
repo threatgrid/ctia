@@ -62,8 +62,8 @@
          (close-connections! ~state-sym))
 
        IQueryStringSearchableStore
-       (store/query-string-search [_# search-query# ident# params#]
-         ((crud/handle-query-string-search ~partial-stored-schema) ~state-sym search-query# ident# params#))
+       (store/query-string-search [_# args#]
+         ((crud/handle-query-string-search ~partial-stored-schema) ~state-sym args#))
        (store/query-string-count [_# search-query# ident#]
          (crud/handle-query-string-count ~state-sym search-query# ident#))
        (store/aggregate [_# search-query# agg-query# ident#]

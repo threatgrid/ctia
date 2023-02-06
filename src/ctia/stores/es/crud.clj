@@ -10,7 +10,7 @@
    [ctia.lib.pagination :refer [list-response-schema]]
    [ctia.schemas.core :refer [ConcreteSortExtension]]
    [ctia.schemas.search-agg
-    :refer [AggQuery CardinalityQuery HistogramQuery SearchQuery TopnQuery]]
+    :refer [AggQuery CardinalityQuery HistogramQuery QueryStringSearchArgs SearchQuery TopnQuery]]
    [ctia.stores.es.search :as es.search]
    [ctia.stores.es.sort :as es.sort]
    [ctia.stores.es.query :as es.query]
@@ -495,6 +495,7 @@ It returns the documents with full hits meta data including the real index in wh
   (let [{:keys [services]} es-conn-state
         {{:keys [get-in-config]} :ConfigService} services
         {:keys [filter-map range full-text search-extensions]} search-query
+        ;;DELETE ME
         _ (assert (not-any? #{:sort-extension-templates "sort-extension-templates"
                               :search-extension-templates "search-extension-templates"
                               :scores.ttp.to "scores.ttp.to"}
@@ -522,9 +523,7 @@ It returns the documents with full hits meta data including the real index in wh
         coerce!         (coerce-to-fn response-schema)]
     (s/fn :- response-schema
       [{:keys [props] :as es-conn-state} :- ESConnState
-       search-query :- SearchQuery
-       ident
-       es-params]
+       {:keys [search-query ident es-params]} :- QueryStringSearchArgs]
       (let [{conn :conn, index :index
              {{:keys [get-in-config]} :ConfigService}
              :services}  es-conn-state
