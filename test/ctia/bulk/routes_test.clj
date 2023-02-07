@@ -273,11 +273,11 @@
    entity-ids
    event-type :- (s/enum :record-created :record-deleted :record-updated)]
   (let [events (:data (query-string-search
-                       event-store
-                       {:filter-map {:entity.id entity-ids
-                                     :event_type event-type}}
-                       ident
-                       {}))]
+                        event-store
+                        {:search-query {:filter-map {:entity.id entity-ids
+                                                     :event_type event-type}}
+                         :ident ident
+                         :params {}}))]
     (is (= (count entity-ids) (count events))
         (format "only one %s event can be generated for each entity"
                 entity-ids))))

@@ -10,7 +10,7 @@
                                                       search-query
                                                       coerce-date-range]]
    [ctia.lib.compojure.api.core :refer [context DELETE GET POST PUT PATCH routes]]
-   [ctia.schemas.core :refer [APIHandlerServices DelayedRoutes SortExtensionTemplates]]
+   [ctia.schemas.core :refer [APIHandlerServices DelayedRoutes SearchExtensionTemplates SortExtensionTemplates]]
    [ctia.schemas.search-agg :refer [HistogramParams
                                     CardinalityParams
                                     TopnParams
@@ -128,6 +128,11 @@
                            :identity-map identity-map
                            :wait_for wait_for}))))
 
+(s/defschema EntityCrudRoutesArgs
+  {(s/optional-key :sort-extension-templates) SortExtensionTemplates
+   (s/optional-key :search-extension-templates) SearchExtensionTemplates
+   s/Any s/Any})
+
 (s/defn ^:private entity-crud-routes
   :- DelayedRoutes
   "Implementation of services->entity-crud-routes."
@@ -160,7 +165,9 @@
            can-get-by-external-id?
            date-field
            histogram-fields
-           enumerable-fields]
+           enumerable-fields
+           search-extension-templates
+           sort-extension-templates]
     :or {hide-delete? false
          can-post? true
          can-update? true
@@ -171,8 +178,7 @@
          date-field :created
          histogram-fields [:created]}
     :as entity-crud-config}
-   :- {(s/optional-key :sort-extension-templates) SortExtensionTemplates
-       s/Any s/Any}]
+   :- EntityCrudRoutesArgs]
  (s/fn [{{:keys [get-store]} :StoreService
          {:keys [flag-value]} :FeaturesService
          :as services} :- APIHandlerServices]
@@ -181,12 +187,14 @@
                                services
                                entity-crud-config)
                              routes.common/prep-sort_by-param-schema)
-        search-filters (st/dissoc search-q-params
-                                  :sort_by
-                                  :sort_order
-                                  :fields
-                                  :limit
-                                  :offset)
+        search-filters (apply st/dissoc search-q-params
+                              :sort_by
+                              :sort_order
+                              :fields
+                              :limit
+                              :offset
+                              ;; TODO support extensions in non-"search" aggregation routes
+                              (mapcat keys [search-extension-templates sort-extension-templates]))
         agg-search-schema (st/merge
                            search-filters
                            {:from s/Inst})
@@ -212,7 +220,11 @@
                      {:get-store get-store
                       :entity entity
                       :identity-map identity-map
-                      :wait_for wait_for}))]
+                      :wait_for wait_for}))
+        add-search-extensions (fn [params]
+                                (-> params
+                                    (assoc :search-extension-templates (get entity-crud-config :search-extension-templates {})
+                                           :sort-extension-templates (get entity-crud-config :sort-extension-templates {}))))]
    (routes
      (when can-post?
        (let [capabilities post-capabilities]
@@ -315,8 +327,7 @@
                   (store/list-records
                     {:all-of {:external_ids external_id}}
                     identity-map
-                    (into (dissoc q :sort-extension-templates)
-                          (select-keys entity-crud-config [:sort-extension-templates])))
+                    q)
                   (ent/page-with-long-id services)
                   ent/un-store-page
                   routes.common/paginated-ok))))
@@ -336,11 +347,13 @@
              :query [params search-q-params*]
              (-> (get-store entity)
                  (store/query-string-search
-                  (search-query date-field params)
-                  identity-map
-                  (into (dissoc (select-keys params routes.common/search-options)
-                                :sort-extension-templates)
-                        (select-keys entity-crud-config [:sort-extension-templates])))
+                   (-> {:search-query (-> {:date-field date-field
+                                           :params params}
+                                          add-search-extensions
+                                          search-query)
+                        :ident identity-map
+                        :params (select-keys params routes.common/search-options)}
+                       add-search-extensions))
                  (ent/page-with-long-id services)
                  ent/un-store-page
                  routes.common/paginated-ok))
@@ -352,7 +365,8 @@
              :query [params search-filters]
              (ok (-> (get-store entity)
                      (store/query-string-count
-                       (search-query date-field params)
+                       (search-query {:date-field date-field
+                                      :params params})
                        identity-map))))
            (DELETE "/" []
              :capabilities delete-search-capabilities
@@ -373,8 +387,8 @@
                                               " you perform that operation."
                                               " DO NOT FORGET TO SET THAT TO FALSE AFTER EACH DELETION"
                                               " IF YOU INTEND TO USE THAT ROUTE MULTIPLE TIMES."))})]
-             (let [query (->> (dissoc params :wait_for :REALLY_DELETE_ALL_THESE_ENTITIES)
-                              (search-query date-field))]
+             (let [query (search-query {:date-field date-field
+                                        :params (dissoc params :wait_for :REALLY_DELETE_ALL_THESE_ENTITIES)})]
                (if (empty? query)
                  (forbidden {:error "you must provide at least one of from, to, query or any field filter."})
                  (ok
@@ -400,9 +414,9 @@
                        :summary (format "Histogram for some %s field" capitalized)
                        :query [params histogram-q-params]
                        (let [aggregate-on (keyword (:aggregate-on params))
-                             search-q (search-query aggregate-on
-                                                    (st/select-schema params agg-search-schema)
-                                                    coerce-date-range)
+                             search-q (search-query {:date-field aggregate-on
+                                                     :params (st/select-schema params agg-search-schema)
+                                                     :make-date-range-fn coerce-date-range})
                              agg-q (st/assoc (st/select-schema params HistogramParams)
                                              :agg-type :histogram)]
                          (-> (get-store entity)
@@ -417,9 +431,9 @@
                        :summary (format "Topn for some %s field" capitalized)
                        :query [params topn-q-params]
                        (let [aggregate-on (:aggregate-on params)
-                             search-q (search-query date-field
-                                                    (st/select-schema params agg-search-schema)
-                                                    coerce-date-range)
+                             search-q (search-query {:date-field date-field
+                                                     :params (st/select-schema params agg-search-schema)
+                                                     :make-date-range-fn coerce-date-range})
                              agg-q (st/assoc (st/select-schema params TopnParams)
                                              :agg-type :topn)]
                          (-> (get-store entity)
@@ -434,9 +448,9 @@
                        :summary (format "Cardinality for some %s field" capitalized)
                        :query [params cardinality-q-params]
                        (let [aggregate-on (:aggregate-on params)
-                             search-q (search-query date-field
-                                                    (st/select-schema params agg-search-schema)
-                                                    coerce-date-range)
+                             search-q (search-query {:date-field date-field
+                                                     :params (st/select-schema params agg-search-schema)
+                                                     :make-date-range-fn coerce-date-range})
                              agg-q (st/assoc (st/select-schema params CardinalityParams)
                                              :agg-type :cardinality)]
                          (-> (get-store entity)

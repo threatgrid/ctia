@@ -39,10 +39,10 @@
 
     (some-> (get-store entity-type)
             (store/query-string-search
-             {:full-text  [{:query query}]
-              :filter-map (remove-map-empty-values filtermap)}
-              ident
-              params)
+              {:search-query {:full-text  [{:query query}]
+                              :filter-map (remove-map-empty-values filtermap)}
+               :ident ident
+               :params params})
             with-long-id-fn
             un-store-page
             (pagination/result->connection-response paging-params))))

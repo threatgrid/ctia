@@ -2,9 +2,11 @@
   (:require [clj-http.headers :refer [canonicalize]]
             [clj-momo.lib.clj-time.core :as t]
             [clojure.string :as str]
+            [ctia.schemas.core :refer [SearchExtensionTemplates SortExtensionTemplates]]
             [ctia.schemas.search-agg :refer [MetricResult
                                              RangeQueryOpt
-                                             SearchQuery]]
+                                             SearchQuery
+                                             SearchQueryArgs]]
             [ctia.schemas.sorting :as sorting]
             [ring.swagger.schema :refer [describe]]
             [ring.util.codec :as codec]
@@ -160,25 +162,25 @@
      :lt to-or-now}))
 
 (s/defn search-query :- SearchQuery
-  ([date-field search-params]
-   (search-query date-field
-                 search-params
-                 (s/fn :- RangeQueryOpt
-                   [from :- (s/maybe s/Inst)
-                    to :- (s/maybe s/Inst)]
-                   (cond-> {}
-                     from (assoc :gte from)
-                     to   (assoc :lt to)))))
-  ([date-field
-    {:keys [query
-            from to
-            simple_query
-            search_fields] :as search-params}
-    make-date-range-fn :- (s/=> RangeQueryOpt
-                                (s/named (s/maybe s/Inst) 'from)
-                                (s/named (s/maybe s/Inst) 'to))]
-   (let [filter-map (apply dissoc search-params filter-map-search-options)
-         date-range (make-date-range-fn from to)]
+  ([{:keys [date-field make-date-range-fn search-extension-templates]
+     {:keys [query
+             from to
+             simple_query
+             search_fields] :as params}
+     :params
+     :or {make-date-range-fn (s/fn :- RangeQueryOpt
+                               [from :- (s/maybe s/Inst)
+                                to :- (s/maybe s/Inst)]
+                               (cond-> {}
+                                 from (assoc :gte from)
+                                 to   (assoc :lt to)))}}
+    :- SearchQueryArgs]
+   (let [filter-map (apply dissoc params filter-map-search-options (keys search-extension-templates))
+         date-range (make-date-range-fn from to)
+         concrete-range-extensions (mapv (fn [[ext-key ext-val]]
+                                           (-> (get search-extension-templates ext-key)
+                                               (assoc :ext-val ext-val)))
+                                         (select-keys params (keys search-extension-templates)))]
      (cond-> {}
        (seq date-range)        (assoc-in [:range date-field] date-range)
        (seq filter-map)        (assoc :filter-map filter-map)
@@ -188,7 +190,8 @@
                                              simple_query (conj {:query_mode :simple_query_string
                                                                  :query      simple_query}))
                                            (mapv #(merge % (when search_fields
-                                                             {:fields search_fields})))))))))
+                                                             {:fields search_fields})))))
+       (seq concrete-range-extensions) (assoc :search-extensions concrete-range-extensions)))))
 
 (s/defn format-agg-result :- MetricResult
   [result
@@ -200,6 +203,7 @@
         nested-fields (map keyword (str/split (name aggregate-on) #"\."))
         {from :gte to :lt} (-> range first val)
         filters (cond-> {:from from :to to}
+                  ;; TODO support range extensions
                   (seq filter-map) (into filter-map)
                   (seq full-text) (assoc :full-text full-text*))]
     {:data (assoc-in {} nested-fields result)

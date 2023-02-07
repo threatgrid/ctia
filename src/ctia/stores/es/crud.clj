@@ -6,9 +6,10 @@
    [ctia.domain.access-control :as ac
     :refer [allow-read? allow-write? restricted-read?]]
    [ctia.lib.pagination :refer [list-response-schema]]
-   [ctia.schemas.core :refer [ConcreteSortExtension]]
+   [ctia.schemas.core :refer [ConcreteSortExtension SortExtensionTemplates]]
    [ctia.schemas.search-agg
-    :refer [AggQuery CardinalityQuery HistogramQuery SearchQuery TopnQuery]]
+    :refer [AggQuery CardinalityQuery HistogramQuery QueryStringSearchArgs SearchQuery TopnQuery]]
+   [ctia.stores.es.search :as es.search]
    [ctia.stores.es.sort :as es.sort]
    [ctia.stores.es.query :as es.query]
    [ctia.stores.es.schemas :refer [ESConnState]]
@@ -421,11 +422,12 @@ It returns the documents with full hits meta data including the real index in wh
                                         (mapv (fn [m] (es.sort/parse-sort-params-op m :asc))))
                                [{"_doc" :asc} {"id" :asc}])))
 
-(defn rename-sort-fields
+(s/defn rename-sort-fields
   "Renames sort fields based on the content of the `enumerable-fields-mapping` table
   and remaps to script extensions."
-  [{:keys [sort_by sort_order sort-extension-templates] :as es-params}]
-  (cond-> (dissoc es-params :sort-extension-templates :sort_by :sort_order)
+  [{:keys [sort_by sort_order] :as es-params}
+   sort-extension-templates :- (s/maybe SortExtensionTemplates)]
+  (cond-> (dissoc es-params :sort_by :sort_order)
     (and sort_by (not (:sort es-params)))
     (assoc :sort
            (->> sort_by
@@ -442,10 +444,15 @@ It returns the documents with full hits meta data including the real index in wh
                                   field)
                               (es.sort/parse-sort-params-op (or sort_order :asc))))))))))
 
+(s/defschema MakeQueryParamsArgs
+  {:params s/Any
+   :props s/Any
+   (s/optional-key :sort-extension-templates) SortExtensionTemplates})
+
 (s/defn make-query-params :- {s/Keyword s/Any}
-  [es-params props]
-  (cond-> (-> es-params
-              rename-sort-fields
+  [{:keys [params props sort-extension-templates]} :- MakeQueryParamsArgs]
+  (cond-> (-> params
+              (rename-sort-fields sort-extension-templates)
               (with-default-sort-field props)
               make-es-read-params)
     (<= 7 (:version props)) (assoc :track_total_hits true)))
@@ -473,7 +480,7 @@ It returns the documents with full hits meta data including the real index in wh
                                          :minimum_should_match 1})
                           query (update :filter conj query_string)
                           (seq date-range-query) (update :filter conj {:range date-range-query}))
-            query-params (make-query-params es-params props)]
+            query-params (make-query-params {:params es-params :props props})]
         (cond-> (coerce! (ductile.doc/query conn
                                             index
                                             (q/bool bool-params)
@@ -490,15 +497,24 @@ It returns the documents with full hits meta data including the real index in wh
    ident]
   (let [{:keys [services]} es-conn-state
         {{:keys [get-in-config]} :ConfigService} services
-        {:keys [filter-map range full-text]} search-query
+        {:keys [filter-map range full-text search-extensions]} search-query
+        ;;DELETE ME
+        _ (assert (not-any? #{:sort-extension-templates "sort-extension-templates"
+                              :search-extension-templates "search-extension-templates"
+                              :scores.ttp.to "scores.ttp.to"}
+                            filter-map)
+                  filter-map)
         range-query (when range
                       {:range range})
+        extension-queries (map es.search/parse-search-params-op
+                               search-extensions)
         filter-terms (-> (ensure-document-id-in-map filter-map)
                          q/prepare-terms)]
     {:bool
      {:filter
       (cond-> [(es.query/find-restriction-query-part ident get-in-config)]
         (seq filter-map) (into filter-terms)
+        true             (into extension-queries)
         (seq range)      (conj range-query)
         (seq full-text)  (into (es.query/refine-full-text-query-parts
                                 es-conn-state full-text)))}}))
@@ -510,14 +526,13 @@ It returns the documents with full hits meta data including the real index in wh
         coerce!         (coerce-to-fn response-schema)]
     (s/fn :- response-schema
       [{:keys [props] :as es-conn-state} :- ESConnState
-       search-query :- SearchQuery
-       ident
-       es-params]
+       {:keys [search-query ident] :as query-string-search-args} :- QueryStringSearchArgs]
       (let [{conn :conn, index :index
              {{:keys [get-in-config]} :ConfigService}
              :services}  es-conn-state
             query        (make-search-query es-conn-state search-query ident)
-            query-params (make-query-params es-params props)]
+            query-params (make-query-params (-> (select-keys query-string-search-args [:params :sort-extension-templates])
+                                                (assoc :props props)))]
         (cond-> (coerce! (ductile.doc/query
                           conn
                           index

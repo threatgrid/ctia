@@ -4,6 +4,7 @@
              [PartialStoredSighting StoredSighting]]
             [ctia.lib.pagination :refer [list-response-schema]]
             [ctia.schemas.core :refer [Observable]]
+            [ctia.schemas.search-agg :refer [QueryStringSearchArgs]]
             [ctia.store :refer [IQueryStringSearchableStore ISightingStore IStore]]
             [ctia.stores.es
              [store :refer [close-connections!]]
@@ -152,9 +153,9 @@
 
 (s/defn handle-query-string-search-sightings
   :- PartialStoredSightingList
-  [state search-query ident params]
+  [state args :- QueryStringSearchArgs]
   (es-paginated-list->paginated-list
-   (handle-query-string-search state search-query ident params)))
+   (handle-query-string-search state args)))
 
 (s/defn handle-list-by-observables
   :- PartialStoredSightingList
@@ -188,8 +189,8 @@
   (list-sightings-by-observables [_ observables ident params]
     (handle-list-by-observables state observables ident params))
   IQueryStringSearchableStore
-  (query-string-search [_ search-query ident params]
-    (handle-query-string-search-sightings state search-query ident params))
+  (query-string-search [_ args]
+    (handle-query-string-search-sightings state args))
   (query-string-count [_ search-query ident]
     (handle-query-string-count state search-query ident))
   (aggregate [_ search-query agg-query ident]
