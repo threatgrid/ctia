@@ -9,7 +9,6 @@
    [ctia.schemas.core :refer [ConcreteSortExtension SortExtensionTemplates]]
    [ctia.schemas.search-agg
     :refer [AggQuery CardinalityQuery HistogramQuery QueryStringSearchArgs SearchQuery TopnQuery]]
-   [ctia.stores.es.search :as es.search]
    [ctia.stores.es.sort :as es.sort]
    [ctia.stores.es.query :as es.query]
    [ctia.stores.es.schemas :refer [ESConnState]]
@@ -497,7 +496,7 @@ It returns the documents with full hits meta data including the real index in wh
    ident]
   (let [{:keys [services]} es-conn-state
         {{:keys [get-in-config]} :ConfigService} services
-        {:keys [filter-map range full-text search-extensions]} search-query
+        {:keys [filter-map range full-text]} search-query
         ;;DELETE ME
         _ (assert (not-any? #{:sort-extension-templates "sort-extension-templates"
                               :search-extension-templates "search-extension-templates"
@@ -506,15 +505,12 @@ It returns the documents with full hits meta data including the real index in wh
                   filter-map)
         range-query (when range
                       {:range range})
-        extension-queries (map es.search/parse-search-params-op
-                               search-extensions)
         filter-terms (-> (ensure-document-id-in-map filter-map)
                          q/prepare-terms)]
     {:bool
      {:filter
       (cond-> [(es.query/find-restriction-query-part ident get-in-config)]
         (seq filter-map) (into filter-terms)
-        true             (into extension-queries)
         (seq range)      (conj range-query)
         (seq full-text)  (into (es.query/refine-full-text-query-parts
                                 es-conn-state full-text)))}}))

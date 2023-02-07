@@ -1,6 +1,6 @@
 (ns ctia.schemas.search-agg
   (:require
-   [ctia.schemas.core :refer [ConcreteSearchExtension SearchExtensionTemplates SortExtensionTemplates]]
+   [ctia.schemas.core :refer [SortExtensionTemplates]]
    [schema.core :as s]
    [schema-tools.core :as st]))
 

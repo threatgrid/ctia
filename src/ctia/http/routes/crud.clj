@@ -10,7 +10,7 @@
                                                       search-query
                                                       coerce-date-range]]
    [ctia.lib.compojure.api.core :refer [context DELETE GET POST PUT PATCH routes]]
-   [ctia.schemas.core :refer [APIHandlerServices DelayedRoutes SearchExtensionTemplates SortExtensionTemplates]]
+   [ctia.schemas.core :refer [APIHandlerServices DelayedRoutes SortExtensionTemplates]]
    [ctia.schemas.search-agg :refer [HistogramParams
                                     CardinalityParams
                                     TopnParams
@@ -130,7 +130,6 @@
 
 (s/defschema EntityCrudRoutesArgs
   {(s/optional-key :sort-extension-templates) SortExtensionTemplates
-   (s/optional-key :search-extension-templates) SearchExtensionTemplates
    s/Any s/Any})
 
 (s/defn ^:private entity-crud-routes
@@ -166,7 +165,6 @@
            date-field
            histogram-fields
            enumerable-fields
-           search-extension-templates
            sort-extension-templates]
     :or {hide-delete? false
          can-post? true
@@ -194,7 +192,7 @@
                               :limit
                               :offset
                               ;; TODO support extensions in non-"search" aggregation routes
-                              (mapcat keys [search-extension-templates sort-extension-templates]))
+                              (mapcat keys [sort-extension-templates]))
         agg-search-schema (st/merge
                            search-filters
                            {:from s/Inst})
@@ -223,8 +221,7 @@
                       :wait_for wait_for}))
         add-search-extensions (fn [params]
                                 (-> params
-                                    (assoc :search-extension-templates (get entity-crud-config :search-extension-templates {})
-                                           :sort-extension-templates (get entity-crud-config :sort-extension-templates {}))))]
+                                    (assoc :sort-extension-templates (get entity-crud-config :sort-extension-templates {}))))]
    (routes
      (when can-post?
        (let [capabilities post-capabilities]
