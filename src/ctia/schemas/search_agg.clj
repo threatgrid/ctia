@@ -31,7 +31,6 @@
    (s/optional-key :make-date-range-fn) (s/=> RangeQueryOpt
                                               (s/named (s/maybe s/Inst) 'from)
                                               (s/named (s/maybe s/Inst) 'to))
-   (s/optional-key :search-extension-templates) SearchExtensionTemplates
    (s/optional-key :sort-extension-templates) SortExtensionTemplates})
 
 (s/defschema SearchQuery
@@ -41,8 +40,7 @@
   (st/optional-keys
    {:filter-map   {s/Keyword s/Any}
     :range        RangeQuery
-    :full-text    [FullTextQuery]
-    :search-extensions [ConcreteSearchExtension]}))
+    :full-text    [FullTextQuery]}))
 
 (s/defschema AggType
   "supported aggregation types"
@@ -104,5 +102,4 @@
   {:search-query SearchQuery
    :ident s/Any
    :params s/Any
-   (s/optional-key :search-extension-templates) SearchExtensionTemplates
    (s/optional-key :sort-extension-templates) SortExtensionTemplates})

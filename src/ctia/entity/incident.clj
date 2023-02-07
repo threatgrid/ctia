@@ -10,7 +10,7 @@
    [ctia.http.routes.common :as routes.common]
    [ctia.http.routes.crud :as routes.crud]
    [ctia.lib.compojure.api.core :refer [POST routes]]
-   [ctia.schemas.core :refer [APIHandlerServices def-acl-schema def-stored-schema SearchExtensionTemplates SortExtensionTemplates]]
+   [ctia.schemas.core :refer [APIHandlerServices def-acl-schema def-stored-schema SortExtensionTemplates]]
    [ctia.schemas.graphql.flanders :as flanders]
    [ctia.schemas.graphql.helpers :as g]
    [ctia.schemas.graphql.ownership :as go]
@@ -167,8 +167,7 @@
            :promotion_method
            :severity
            :tactics
-           :techniques
-           :scores]))
+           :techniques]))
 
 (comment
   (defn generate-mitre-tactic-scores
@@ -212,13 +211,8 @@
   (generate-mitre-tactic-scores "")
   )
 
-(s/defn score-types
-  [{{:keys [get-in-config]} :ConfigService} :- APIHandlerServices]
-  (some-> (get-in-config [:ctia :http :incident :score-types])
-          (str/split #",")))
-
 (s/defn sort-extension-templates :- SortExtensionTemplates
-  [services :- APIHandlerServices]
+  [{{:keys [get-in-config]} :ConfigService} :- APIHandlerServices]
   (-> {;; override :severity field to sort semantically
        :severity {:op :remap
                   :remappings {"Low" 1
@@ -256,21 +250,8 @@
                      :mode "max"
                      :field-name "scores.score"
                      :filter {"scores.type" score-type}}}))
-            (score-types services))))
-
-(def score-comparator-names ["from" "to"])
-
-(s/defn search-extension-templates :- SearchExtensionTemplates
-  [services :- APIHandlerServices]
-  (-> {}
-      (into (for [score-type (score-types services)
-                  comparator-name score-comparator-names]
-              {(keyword (str/join "." ["scores" score-type comparator-name]))
-               {:op :filter-by-list-range
-                :comparator-kw (keyword comparator-name)
-                :base-list-field "scores"
-                :nested-range-field "score"
-                :nested-term-filter {"type" score-type}}}))))
+            (some-> (get-in-config [:ctia :http :incident :sortable-score-types])
+                    (str/split #",")))))
 
 (s/defn incident-sort-fields
   [services :- APIHandlerServices]
@@ -323,19 +304,7 @@
      :sort_by          (incident-sort-fields services)
      :assignees        s/Str
      :promotion_method s/Str
-     :severity s/Str})
-   (st/optional-keys
-     (into {}
-           (for [score-type (score-types services)
-                 comparator-name score-comparator-names]
-             {(keyword (str/join "." ["scores" score-type comparator-name]))
-              (describe s/Num
-                        (str/join " "
-                                  ["Filter by"
-                                   (case comparator-name
-                                     "from" "minimum"
-                                     "to" "maximum")
-                                   score-type "score."]))})))))
+     :severity s/Str})))
 
 (def IncidentGetParams IncidentFieldsParam)
 
@@ -379,8 +348,7 @@
      :external-id-capabilities :read-incident
      :histogram-fields         incident-histogram-fields
      :enumerable-fields        incident-enumerable-fields
-     :sort-extension-templates (sort-extension-templates services)
-     :search-extension-templates (search-extension-templates services)})))
+     :sort-extension-templates (sort-extension-templates services)})))
 
 (def IncidentType
   (let [{:keys [fields name description]}

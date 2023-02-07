@@ -162,7 +162,7 @@
      :lt to-or-now}))
 
 (s/defn search-query :- SearchQuery
-  ([{:keys [date-field make-date-range-fn search-extension-templates]
+  ([{:keys [date-field make-date-range-fn]
      {:keys [query
              from to
              simple_query
@@ -175,7 +175,7 @@
                                  from (assoc :gte from)
                                  to   (assoc :lt to)))}}
     :- SearchQueryArgs]
-   (let [filter-map (apply dissoc params filter-map-search-options (keys search-extension-templates))
+   (let [filter-map (apply dissoc params filter-map-search-options)
          date-range (make-date-range-fn from to)
          concrete-range-extensions (mapv (fn [[ext-key ext-val]]
                                            (-> (get search-extension-templates ext-key)
@@ -190,8 +190,7 @@
                                              simple_query (conj {:query_mode :simple_query_string
                                                                  :query      simple_query}))
                                            (mapv #(merge % (when search_fields
-                                                             {:fields search_fields})))))
-       (seq concrete-range-extensions) (assoc :search-extensions concrete-range-extensions)))))
+                                                             {:fields search_fields})))))))))
 
 (s/defn format-agg-result :- MetricResult
   [result
@@ -203,7 +202,6 @@
         nested-fields (map keyword (str/split (name aggregate-on) #"\."))
         {from :gte to :lt} (-> range first val)
         filters (cond-> {:from from :to to}
-                  ;; TODO support range extensions
                   (seq filter-map) (into filter-map)
                   (seq full-text) (assoc :full-text full-text*))]
     {:data (assoc-in {} nested-fields result)
