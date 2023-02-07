@@ -572,7 +572,6 @@
                                  (normalize parsed-body)))))))
                (finally (purge-incidents! app))))))))
 
-#_
 (deftest filter-incidents-by-scores-range
   (es-helpers/for-each-es-version
     "filter by scores"
