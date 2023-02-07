@@ -324,6 +324,7 @@
      :assignees        s/Str
      :promotion_method s/Str
      :severity s/Str})
+   #_
    (st/optional-keys
      (into {}
            (for [score-type (score-types services)
@@ -380,7 +381,7 @@
      :histogram-fields         incident-histogram-fields
      :enumerable-fields        incident-enumerable-fields
      :sort-extension-templates (sort-extension-templates services)
-     :search-extension-templates (search-extension-templates services)})))
+     #_#_:search-extension-templates (search-extension-templates services)})))
 
 (def IncidentType
   (let [{:keys [fields name description]}
