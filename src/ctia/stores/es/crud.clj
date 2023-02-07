@@ -444,9 +444,14 @@ It returns the documents with full hits meta data including the real index in wh
                                   field)
                               (es.sort/parse-sort-params-op (or sort_order :asc))))))))))
 
+(s/defschema MakeQueryParamsArgs
+  {:params s/Any
+   :props s/Any
+   (s/optional-key :sort-extension-templates) SortExtensionTemplates})
+
 (s/defn make-query-params :- {s/Keyword s/Any}
-  [{:keys [es-params props sort-extension-templates]}]
-  (cond-> (-> es-params
+  [{:keys [params props sort-extension-templates]} :- MakeQueryParamsArgs]
+  (cond-> (-> params
               (rename-sort-fields sort-extension-templates)
               (with-default-sort-field props)
               make-es-read-params)
@@ -475,7 +480,7 @@ It returns the documents with full hits meta data including the real index in wh
                                          :minimum_should_match 1})
                           query (update :filter conj query_string)
                           (seq date-range-query) (update :filter conj {:range date-range-query}))
-            query-params (make-query-params {:es-params es-params :props props})]
+            query-params (make-query-params {:params es-params :props props})]
         (cond-> (coerce! (ductile.doc/query conn
                                             index
                                             (q/bool bool-params)
@@ -526,8 +531,8 @@ It returns the documents with full hits meta data including the real index in wh
              {{:keys [get-in-config]} :ConfigService}
              :services}  es-conn-state
             query        (make-search-query es-conn-state search-query ident)
-            query-params (make-query-params (into {:props props}
-                                                  (select-keys query-string-search-args [:params :sort-extension-templates])))]
+            query-params (make-query-params (-> (select-keys query-string-search-args [:params :sort-extension-templates])
+                                                (assoc :props props)))]
         (cond-> (coerce! (ductile.doc/query
                           conn
                           index
