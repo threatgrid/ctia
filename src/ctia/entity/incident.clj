@@ -250,7 +250,7 @@
                      :mode "max"
                      :field-name "scores.score"
                      :filter {"scores.type" score-type}}}))
-            (some-> (get-in-config [:ctia :http :incident :sortable-score-types])
+            (some-> (get-in-config [:ctia :http :incident :score-types])
                     (str/split #",")))))
 
 (s/defn incident-sort-fields
