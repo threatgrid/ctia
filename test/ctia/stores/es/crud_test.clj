@@ -654,7 +654,9 @@
                                    :lt (inst/read-instant-date timestamp-2)}}
              filter-map {:confidence "High"}
              search-helper (fn [q params]
-                             (search-fn es-conn-state q ident params))
+                             (search-fn es-conn-state {:search-query q
+                                                       :ident ident
+                                                       :params params}))
              count-helper (fn [q]
                             (count-fn es-conn-state q ident))]
          (testing "Properly handle different search query options"
