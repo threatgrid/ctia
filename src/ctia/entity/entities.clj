@@ -27,7 +27,8 @@
     [identity :refer [identity-entity]]
     [feed :refer [feed-entity]]
     [event :refer [event-entity]]
-    [investigation :refer [investigation-entity]]]
+    [investigation :refer [investigation-entity]]
+    [note :refer [note-entity]]]
    [schema.core :as s]))
 
 (s/defschema AllEntities 
@@ -53,6 +54,7 @@
    :investigation      investigation-entity
    :judgement          judgement-entity
    :malware            malware-entity
+   :note               note-entity
    :relationship       relationship-entity
    :sighting           sighting-entity
    :target-record      target-record-entity

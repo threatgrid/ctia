@@ -10,7 +10,7 @@
    [ctia.http.routes.common :as routes.common]
    [ctia.http.routes.crud :as routes.crud]
    [ctia.lib.compojure.api.core :refer [POST routes]]
-   [ctia.schemas.core :refer [APIHandlerServices def-acl-schema def-stored-schema SearchExtensionTemplates SortExtensionTemplates]]
+   [ctia.schemas.core :refer [APIHandlerServices def-acl-schema def-stored-schema SearchExtensionTemplates SortExtensionDefinitions]]
    [ctia.schemas.graphql.flanders :as flanders]
    [ctia.schemas.graphql.helpers :as g]
    [ctia.schemas.graphql.ownership :as go]
@@ -277,7 +277,7 @@
   (apply s/enum
          (map name
               (distinct
-               (concat (keys (sort-extension-templates services))
+               (concat (keys (sort-extension-definitions services))
                        incident-fields)))))
 
 (def incident-enumerable-fields
@@ -379,7 +379,7 @@
      :external-id-capabilities :read-incident
      :histogram-fields         incident-histogram-fields
      :enumerable-fields        incident-enumerable-fields
-     :sort-extension-templates (sort-extension-templates services)
+     :sort-extension-definitions (sort-extension-definitions services)
      :search-extension-templates (search-extension-templates services)})))
 
 (def IncidentType

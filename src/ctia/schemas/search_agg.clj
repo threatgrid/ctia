@@ -1,6 +1,6 @@
 (ns ctia.schemas.search-agg
   (:require
-   [ctia.schemas.core :refer [ConcreteSearchExtension SearchExtensionTemplates SortExtensionTemplates]]
+   [ctia.schemas.core :refer [ConcreteSearchExtension SearchExtensionTemplates SortExtensionDefinitions]]
    [schema.core :as s]
    [schema-tools.core :as st]))
 
@@ -32,7 +32,7 @@
                                               (s/named (s/maybe s/Inst) 'from)
                                               (s/named (s/maybe s/Inst) 'to))
    (s/optional-key :search-extension-templates) SearchExtensionTemplates
-   (s/optional-key :sort-extension-templates) SortExtensionTemplates})
+   (s/optional-key :sort-extension-definitions) SortExtensionDefinitions})
 
 (s/defschema SearchQuery
   "components of a search query:
@@ -105,4 +105,4 @@
    :ident s/Any
    :params s/Any
    (s/optional-key :search-extension-templates) SearchExtensionTemplates
-   (s/optional-key :sort-extension-templates) SortExtensionTemplates})
+   (s/optional-key :sort-extension-definitions) SortExtensionDefinitions})

@@ -116,52 +116,61 @@
     (let [from #inst "2020-04-01"
           to #inst "2020-06-01"]
       (is (= {:full-text [{:query "bad-domain", :query_mode :query_string}]}
-             (sut/search-query :created {:query "bad-domain"})))
+             (sut/search-query {:date-field :created 
+                                :params {:query "bad-domain"}})))
       (is (= {:range {:created
                       {:gte from
                        :lt  to}}}
-             (sut/search-query :created {:from from
-                                         :to to})))
+             (sut/search-query {:date-field :created
+                                :params {:from from
+                                         :to to}})))
       (is (= {:range {:timestamp
                       {:gte from
                        :lt  to}}}
-             (sut/search-query :timestamp {:from from, :to to})))
+             (sut/search-query {:date-field :timestamp
+                                :params {:from from, :to to}})))
       (is (= {:range {:created
                       {:lt to}}}
-             (sut/search-query :created {:to to})))
+             (sut/search-query {:date-field :created
+                                :params {:to to}})))
       (is (= {:range {:created
                       {:gte from}}}
-             (sut/search-query :created {:from from})))
+             (sut/search-query {:date-field :created
+                                :params {:from from}})))
       (is (= {:filter-map {:title "firefox exploit"
                            :disposition 2}}
-             (sut/search-query :created {:title "firefox exploit", :disposition 2})))
+             (sut/search-query {:date-field :created
+                                :params {:title "firefox exploit", :disposition 2}})))
       (is (= {:full-text [{:query "bad-domain", :query_mode :query_string}]
               :filter-map {:title "firefox exploit"
                            :disposition 2}}
-             (sut/search-query :created {:query "bad-domain"
+             (sut/search-query {:date-field :created
+                                :params {:query "bad-domain"
                                          :disposition 2
-                                         :title "firefox exploit"})))
+                                         :title "firefox exploit"}})))
       (is (= {:full-text [{:query "bad-domain", :query_mode :query_string}]
               :filter-map {:title "firefox exploit"
                            :disposition 2}}
-             (sut/search-query :created {:query       "bad-domain"
+             (sut/search-query {:date-field :created
+                                :params {:query       "bad-domain"
                                          :disposition 2
                                          :title       "firefox exploit"
                                          :fields      ["title"]
                                          :sort_by     "disposition"
-                                         :sort_order  :desc})))
+                                         :sort_order  :desc}})))
       (is (= {:full-text [{:query "bad-domain", :query_mode :query_string}]
               :range {:created {:gte from, :lt to}}
               :filter-map {:title "firefox exploit"
                            :disposition 2}}
-             (sut/search-query :created {:query       "bad-domain"
+             (sut/search-query {:date-field :created
+                                :params {:query       "bad-domain"
                                          :from        from
                                          :to          to
                                          :disposition 2
                                          :title       "firefox exploit"
                                          :fields      ["title"]
                                          :sort_by     "disposition"
-                                         :sort_order  :desc})))
+                                         :sort_order  :desc}})))
       (is (= {:full-text [{:query      "lucene"
                            :query_mode :query_string
                            :fields     ["title"]}
@@ -170,35 +179,38 @@
                            :fields     ["title"]}]
               :filter-map {:title "firefox exploit"
                            :disposition 2}}
-             (sut/search-query :created {:query "lucene"
+             (sut/search-query {:date-field :created
+                                :params {:query "lucene"
                                          :simple_query "simple"
                                          :disposition 2
                                          :title "firefox exploit"
                                          :search_fields ["title"]
                                          :sort_by "disposition"
-                                         :sort_order :desc}))
+                                         :sort_order :desc}}))
           "query and simple_query can be both submitted and accepted")
       (is (= {:full-text  [{:query "simple"
                             :query_mode :simple_query_string
                             :fields ["title"]}]
               :filter-map {:title       "firefox exploit"
                            :disposition 2}}
-             (sut/search-query :created {:simple_query  "simple"
+             (sut/search-query {:date-field :created
+                                :params {:simple_query  "simple"
                                          :disposition   2
                                          :title         "firefox exploit"
                                          :search_fields ["title"]
                                          :sort_by       "disposition"
-                                         :sort_order    :desc}))
+                                         :sort_order    :desc}}))
           "simple_query can be the only full text search")
       (testing "make-date-range-fn should be properly called"
         (is (= {:range {:timestamp
                         {:gte #inst "2050-01-01"
                          :lt  #inst "2100-01-01"}}}
-                (sut/search-query :timestamp
-                                  {:from from, :to to}
+               (sut/search-query {:date-field :timestamp
+                                  :params {:from from, :to to}
+                                  :make-date-range-fn
                                   (fn [from to]
                                     {:gte #inst "2050-01-01"
-                                     :lt #inst "2100-01-01"}))))))))
+                                     :lt #inst "2100-01-01"})})))))))
 
 (deftest format-agg-result-test
   (let [from #inst "2019-01-01"
@@ -300,10 +312,10 @@
       (helpers/set-capabilities! app "foouser" ["foogroup"] "user" (all-capabilities))
       (whoami-helpers/set-whoami-response app "45c1f5e3f05d0" "foouser" "foogroup" "user")
       (let [{{:keys [get-in-config]} :ConfigService} (app/service-graph app)
-            {:keys [entity] :as parameters} (into incident-entity
-                                                  {:app app
+            {:keys [entity] :as parameters} (assoc incident-entity
+                                                   :app app
                                                    :example new-incident-maximal
-                                                   :headers {:Authorization "45c1f5e3f05d0"}})
+                                                   :headers {:Authorization "45c1f5e3f05d0"})
             entity-store (get-in-config [:ctia :store entity])]
         (assert (= "es" entity-store) (pr-str entity-store))
         (crud-wait-for-test parameters)))))

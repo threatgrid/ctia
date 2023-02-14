@@ -151,7 +151,8 @@
 (deftest rename-sort-fields
   (are [sort_by expected_sort_by] (= expected_sort_by
                                      (:sort (sut/rename-sort-fields
-                                              {:sort_by sort_by})))
+                                              {:sort_by sort_by}
+                                              {})))
     "title" [{"title.whole" {:order :asc}}]
     [{:op :field, :field-name "title"}] [{"title.whole" {:order :asc}}]
     "revision:DESC,title:ASC,schema_version:DESC" [{"revision" {:order :DESC}}
@@ -168,11 +169,11 @@
                                        :default 0}}
                      :order :asc}}]}
            (sut/rename-sort-fields
-             {:sort_by "severity"
-              :sort-extension-templates {:severity {:op :remap
-                                                    :remappings {"Critical" 2
-                                                                 "High" 1}
-                                                    :remap-default 0}}}))))
+             {:sort_by "severity"}
+             {:severity {:op :remap
+                         :remappings {"Critical" 2
+                                      "High" 1}
+                         :remap-default 0}}))))
   (testing "remap + order"
     (is (= {:sort [{:_script
                     {:type "number"
@@ -183,11 +184,11 @@
                                        :default 0}}
                      :order :DESC}}]}
            (sut/rename-sort-fields
-             {:sort_by "remap:DESC"
-              :sort-extension-templates {:remap {:op :remap
-                                                 :remappings {"a" 1
-                                                              "b" 2}
-                                                 :remap-default 0}}}))))
+             {:sort_by "remap:DESC"}
+             {:remap {:op :remap
+                      :remappings {"a" 1
+                                   "b" 2}
+                      :remap-default 0}}))))
   (testing "sort by renamed field then remapped field"
     (is (= {:sort [{"title.whole" {:order :ASC}}
                    {:_script
@@ -199,11 +200,11 @@
                                        :default 0}}
                      :order :DESC}}]}
            (sut/rename-sort-fields
-             {:sort_by "title:ASC,remap:DESC"
-              :sort-extension-templates {:remap {:op :remap
-                                                 :remappings {"a" 1
-                                                              "b" 2}
-                                                 :remap-default 0}}}))))
+             {:sort_by "title:ASC,remap:DESC"}
+             {:remap {:op :remap
+                      :remappings {"a" 1
+                                   "b" 2}
+                      :remap-default 0}}))))
   (testing "remap a renamed field"
     (is (= {:sort [{:_script
                     {:type "number"
@@ -214,12 +215,12 @@
                                        :default 0}}
                      :order :asc}}]}
            (sut/rename-sort-fields
-             {:sort_by "title"
-              :sort-extension-templates {:title.whole {:op :remap
-                                                       :remappings {"a" 1
-                                                                    "b" 2}
-                                                       :remap-default 0}}}))))
-  (testing "remap to another field via :sort-extension-templates's :field-name"
+             {:sort_by "title"}
+             {:title.whole {:op :remap
+                            :remappings {"a" 1
+                                         "b" 2}
+                            :remap-default 0}}))))
+  (testing "remap to another field via :sort-extension-definitions's :field-name"
     (is (= {:sort [{:_script
                     {:type "number"
                      :script {:lang "painless"
@@ -229,12 +230,12 @@
                                        :default 0}}
                      :order :asc}}]}
            (sut/rename-sort-fields
-             {:sort_by "remap1"
-              :sort-extension-templates {:remap1 {:op :remap
-                                                  :field-name "remap2"
-                                                  :remappings {"a" 1
-                                                               "b" 2}
-                                                  :remap-default 0}}})))))
+             {:sort_by "remap1"}
+             {:remap1 {:op :remap
+                       :field-name "remap2"
+                       :remappings {"a" 1
+                                    "b" 2}
+                       :remap-default 0}})))))
 
 (deftest bulk-schema-test
   (testing "bulk-schema shall generate a proper bulk schema"
@@ -419,7 +420,8 @@
 
 (deftest make-query-params-test
   (are [es-params props expected] (= expected
-                                     (sut/make-query-params es-params props))
+                                     (sut/make-query-params {:params es-params
+                                                             :props props}))
 
     {}
     {:default-sort "timestamp,id"
@@ -654,7 +656,9 @@
                                    :lt (inst/read-instant-date timestamp-2)}}
              filter-map {:confidence "High"}
              search-helper (fn [q params]
-                             (search-fn es-conn-state q ident params))
+                             (search-fn es-conn-state {:search-query q
+                                                       :ident ident
+                                                       :params params}))
              count-helper (fn [q]
                             (count-fn es-conn-state q ident))]
          (testing "Properly handle different search query options"

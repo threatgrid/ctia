@@ -46,6 +46,8 @@
     :list-verdicts
     :list-feedbacks
     :list-malwares
+    :list-notes
+    :read-note
     :list-data-tables
     :list-incidents
     :read-campaign
@@ -125,6 +127,7 @@
                                 :create-indicator
                                 :create-judgement
                                 :create-malware
+                                :create-note
                                 :create-relationship
                                 :create-sighting
                                 :create-tool

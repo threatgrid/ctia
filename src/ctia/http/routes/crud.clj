@@ -10,7 +10,7 @@
                                                       search-query
                                                       coerce-date-range]]
    [ctia.lib.compojure.api.core :refer [context DELETE GET POST PUT PATCH routes]]
-   [ctia.schemas.core :refer [APIHandlerServices DelayedRoutes SearchExtensionTemplates SortExtensionTemplates]]
+   [ctia.schemas.core :refer [APIHandlerServices DelayedRoutes SearchExtensionTemplates SortExtensionDefinitions]]
    [ctia.schemas.search-agg :refer [HistogramParams
                                     CardinalityParams
                                     TopnParams
@@ -129,7 +129,7 @@
                            :wait_for wait_for}))))
 
 (s/defschema EntityCrudRoutesArgs
-  {(s/optional-key :sort-extension-templates) SortExtensionTemplates
+  {(s/optional-key :sort-extension-definitions) SortExtensionDefinitions
    (s/optional-key :search-extension-templates) SearchExtensionTemplates
    s/Any s/Any})
 
@@ -167,7 +167,7 @@
            histogram-fields
            enumerable-fields
            search-extension-templates
-           sort-extension-templates]
+           sort-extension-definitions]
     :or {hide-delete? false
          can-post? true
          can-update? true
@@ -193,8 +193,8 @@
                               :fields
                               :limit
                               :offset
-                              ;; TODO support extensions in non-"search" aggregation routes
-                              (mapcat keys [search-extension-templates sort-extension-templates]))
+                              ;; TODO support filtering extensions in non-"search" aggregation routes
+                              (keys search-extension-templates))
         agg-search-schema (st/merge
                            search-filters
                            {:from s/Inst})
@@ -224,7 +224,7 @@
         add-search-extensions (fn [params]
                                 (-> params
                                     (assoc :search-extension-templates (get entity-crud-config :search-extension-templates {})
-                                           :sort-extension-templates (get entity-crud-config :sort-extension-templates {}))))]
+                                           :sort-extension-definitions (get entity-crud-config :sort-extension-definitions {}))))]
    (routes
      (when can-post?
        (let [capabilities post-capabilities]

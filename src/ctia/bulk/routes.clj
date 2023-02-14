@@ -25,6 +25,7 @@
                          :create-indicator
                          :create-judgement
                          :create-malware
+                         :create-note
                          :create-relationship
                          :create-casebook
                          :create-sighting
@@ -77,6 +78,7 @@
                         :read-investigation
                         :read-judgement
                         :read-malware
+                        :read-note
                         :read-relationship
                         :read-sighting
                         :read-target-record
@@ -102,6 +104,7 @@
                          {investigations      :- [Reference] []}
                          {judgements          :- [Reference] []}
                          {malwares            :- [Reference] []}
+                         {notes               :- [Reference] []}
                          {relationships       :- [Reference] []}
                          {sightings           :- [Reference] []}
                          {target_records      :- [Reference] []}
@@ -127,6 +130,7 @@
                       :investigations      investigations
                       :judgements          judgements
                       :malwares            malwares
+                      :notes               notes
                       :relationships       relationships
                       :sightings           sightings
                       :target_records      target_records
@@ -163,6 +167,7 @@
                          :delete-indicator
                          :delete-judgement
                          :delete-malware
+                         :delete-note
                          :delete-relationship
                          :delete-casebook
                          :delete-sighting

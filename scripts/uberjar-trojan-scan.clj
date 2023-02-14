@@ -13,10 +13,13 @@
 ;; repo root relative
 (def scanning-directory "tmp/unzipped-uberjar")
 ;; repo root relative
-(def config-file "scripts/do_not_edit-uberjar_trojansourcedetector.json")
+(def config-file "scripts/do_not_edit-uberjar_trojansourcefinder.txt")
 
 (def uberjar-exclusions
   [
+   ".git/"
+   ".lein/"
+   "bin/"
    "META-INF/native/linux64/liblmdbjni.so"
    "com/google/common/base/CharMatcher$Invisible.class"
    "com/google/protobuf/DescriptorProtos$SourceCodeInfo$Location$Builder.class"
@@ -49,26 +52,24 @@
    "goog/i18n/datetimepatterns.js"
    "goog/format/internationalizedemailaddress.js"
    "swagger-ui/swagger-ui-bundle.js"
+   "target/ctia-1.1.1-SNAPSHOT.jar"
+   "target/ctia.jar"
    ])
 
 (defn regen-config []
   (spit config-file
-        (str
-          (json/generate-string
-            (sorted-map
-              "directory" scanning-directory
-              "exclude" uberjar-exclusions)
-            {:pretty (json/create-pretty-printer
-                       (assoc json/default-pretty-print-options
-                              :indent-arrays? true))})
-          \newline)))
+        (str/join \newline
+                  (concat [scanning-directory]
+                          uberjar-exclusions))))
 
 (defn run-trojansourcedetector []
   {:post [(#{0 1} %)]}
   (regen-config)
-  (let [{:keys [exit]} @(process ["trojansourcedetector"
-                                  "-config"
-                                  config-file]
+  (let [{:keys [exit]} @(process ["tsfinder"
+                                  "-v"
+                                  "-e"
+                                  config-file
+                                  "."]
                                  {:inherit true})]
     (if (zero? exit)
       0
