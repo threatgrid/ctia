@@ -375,7 +375,7 @@
 (s/defschema SortExtensionDefinitions
   "A map to override the behavior of sorting by a field.
   
-  See ctia.entity.incident/sort-extension-templates for an example
+  See ctia.entity.incident/sort-extension-definitions for an example
   that redefines the sorting of `severity` with a custom ordering.
   
   You can also sort by fields that don't exist."

@@ -31,7 +31,7 @@
    (s/optional-key :make-date-range-fn) (s/=> RangeQueryOpt
                                               (s/named (s/maybe s/Inst) 'from)
                                               (s/named (s/maybe s/Inst) 'to))
-   (s/optional-key :sort-extension-templates) SortExtensionDefinitions})
+   (s/optional-key :sort-extension-definitions) SortExtensionDefinitions})
 
 (s/defschema SearchQuery
   "components of a search query:
@@ -102,4 +102,4 @@
   {:search-query SearchQuery
    :ident s/Any
    :params s/Any
-   (s/optional-key :sort-extension-templates) SortExtensionDefinitions})
+   (s/optional-key :sort-extension-definitions) SortExtensionDefinitions})

@@ -220,7 +220,7 @@
                             :remappings {"a" 1
                                          "b" 2}
                             :remap-default 0}}))))
-  (testing "remap to another field via :sort-extension-templates's :field-name"
+  (testing "remap to another field via :sort-extension-definitions's :field-name"
     (is (= {:sort [{:_script
                     {:type "number"
                      :script {:lang "painless"

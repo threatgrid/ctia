@@ -211,7 +211,7 @@
   (generate-mitre-tactic-scores "")
   )
 
-(s/defn sort-extension-templates :- SortExtensionDefinitions
+(s/defn sort-extension-definitions :- SortExtensionDefinitions
   [{{:keys [get-in-config]} :ConfigService} :- APIHandlerServices]
   (-> {;; override :severity field to sort semantically
        :severity {:op :remap
@@ -258,7 +258,7 @@
   (apply s/enum
          (map name
               (distinct
-               (concat (keys (sort-extension-templates services))
+               (concat (keys (sort-extension-definitions services))
                        incident-fields)))))
 
 (def incident-enumerable-fields
@@ -348,7 +348,7 @@
      :external-id-capabilities :read-incident
      :histogram-fields         incident-histogram-fields
      :enumerable-fields        incident-enumerable-fields
-     :sort-extension-templates (sort-extension-templates services)})))
+     :sort-extension-definitions (sort-extension-definitions services)})))
 
 (def IncidentType
   (let [{:keys [fields name description]}

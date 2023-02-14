@@ -129,7 +129,7 @@
                            :wait_for wait_for}))))
 
 (s/defschema EntityCrudRoutesArgs
-  {(s/optional-key :sort-extension-templates) SortExtensionDefinitions
+  {(s/optional-key :sort-extension-definitions) SortExtensionDefinitions
    s/Any s/Any})
 
 (s/defn ^:private entity-crud-routes
@@ -165,7 +165,7 @@
            date-field
            histogram-fields
            enumerable-fields
-           sort-extension-templates]
+           sort-extension-definitions]
     :or {hide-delete? false
          can-post? true
          can-update? true
@@ -192,7 +192,7 @@
                               :limit
                               :offset
                               ;; TODO support extensions in non-"search" aggregation routes
-                              (mapcat keys [sort-extension-templates]))
+                              (mapcat keys [sort-extension-definitions]))
         agg-search-schema (st/merge
                            search-filters
                            {:from s/Inst})
@@ -221,7 +221,7 @@
                       :wait_for wait_for}))
         add-search-extensions (fn [params]
                                 (-> params
-                                    (assoc :sort-extension-templates (get entity-crud-config :sort-extension-templates {}))))]
+                                    (assoc :sort-extension-definitions (get entity-crud-config :sort-extension-definitions {}))))]
    (routes
      (when can-post?
        (let [capabilities post-capabilities]
