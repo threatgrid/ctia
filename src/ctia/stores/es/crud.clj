@@ -6,9 +6,9 @@
    [ctia.domain.access-control :as ac
     :refer [allow-read? allow-write? restricted-read?]]
    [ctia.lib.pagination :refer [list-response-schema]]
-   [ctia.schemas.core :refer [ConcreteSortExtension]]
+   [ctia.schemas.core :refer [SortExtension SortExtensionDefinitions]]
    [ctia.schemas.search-agg
-    :refer [AggQuery CardinalityQuery HistogramQuery SearchQuery TopnQuery]]
+    :refer [AggQuery CardinalityQuery HistogramQuery QueryStringSearchArgs SearchQuery TopnQuery]]
    [ctia.stores.es.sort :as es.sort]
    [ctia.stores.es.query :as es.query]
    [ctia.stores.es.schemas :refer [ESConnState]]
@@ -394,7 +394,7 @@ It returns the documents with full hits meta data including the real index in wh
   {"title" "title.whole"
    "reason" "reason.whole"})
 
-(s/defn parse-sort-by :- [ConcreteSortExtension]
+(s/defn parse-sort-by :- [SortExtension]
   "Parses the sort_by parameter
    Ex:
    \"title:ASC,revision:DESC\"
@@ -421,11 +421,12 @@ It returns the documents with full hits meta data including the real index in wh
                                         (mapv (fn [m] (es.sort/parse-sort-params-op m :asc))))
                                [{"_doc" :asc} {"id" :asc}])))
 
-(defn rename-sort-fields
+(s/defn rename-sort-fields
   "Renames sort fields based on the content of the `enumerable-fields-mapping` table
   and remaps to script extensions."
-  [{:keys [sort_by sort_order sort-extension-templates] :as es-params}]
-  (cond-> (dissoc es-params :sort-extension-templates :sort_by :sort_order)
+  [{:keys [sort_by sort_order] :as es-params}
+   sort-extension-definitions :- (s/maybe SortExtensionDefinitions)]
+  (cond-> (dissoc es-params :sort_by :sort_order)
     (and sort_by (not (:sort es-params)))
     (assoc :sort
            (->> sort_by
@@ -436,16 +437,21 @@ It returns the documents with full hits meta data including the real index in wh
                               (update field :field-name #(or (keyword (enumerable-fields-mapping (name %)))
                                                              %))]
                           (assert (simple-keyword? field-name))
-                          (-> (or (some-> (get sort-extension-templates field-name)
+                          (-> (or (some-> (get sort-extension-definitions field-name)
                                           (into (select-keys field [:sort_order]))
                                           (update :field-name #(or % (:field-name field))))
                                   field)
                               (es.sort/parse-sort-params-op (or sort_order :asc))))))))))
 
+(s/defschema MakeQueryParamsArgs
+  {:params s/Any
+   :props s/Any
+   (s/optional-key :sort-extension-definitions) SortExtensionDefinitions})
+
 (s/defn make-query-params :- {s/Keyword s/Any}
-  [es-params props]
-  (cond-> (-> es-params
-              rename-sort-fields
+  [{:keys [params props sort-extension-definitions]} :- MakeQueryParamsArgs]
+  (cond-> (-> params
+              (rename-sort-fields sort-extension-definitions)
               (with-default-sort-field props)
               make-es-read-params)
     (<= 7 (:version props)) (assoc :track_total_hits true)))
@@ -473,7 +479,7 @@ It returns the documents with full hits meta data including the real index in wh
                                          :minimum_should_match 1})
                           query (update :filter conj query_string)
                           (seq date-range-query) (update :filter conj {:range date-range-query}))
-            query-params (make-query-params es-params props)]
+            query-params (make-query-params {:params es-params :props props})]
         (cond-> (coerce! (ductile.doc/query conn
                                             index
                                             (q/bool bool-params)
@@ -510,14 +516,13 @@ It returns the documents with full hits meta data including the real index in wh
         coerce!         (coerce-to-fn response-schema)]
     (s/fn :- response-schema
       [{:keys [props] :as es-conn-state} :- ESConnState
-       search-query :- SearchQuery
-       ident
-       es-params]
+       {:keys [search-query ident] :as query-string-search-args} :- QueryStringSearchArgs]
       (let [{conn :conn, index :index
              {{:keys [get-in-config]} :ConfigService}
              :services}  es-conn-state
             query        (make-search-query es-conn-state search-query ident)
-            query-params (make-query-params es-params props)]
+            query-params (make-query-params (-> (select-keys query-string-search-args [:params :sort-extension-definitions])
+                                                (assoc :props props)))]
         (cond-> (coerce! (ductile.doc/query
                           conn
                           index

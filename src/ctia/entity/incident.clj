@@ -10,7 +10,7 @@
    [ctia.http.routes.common :as routes.common]
    [ctia.http.routes.crud :as routes.crud]
    [ctia.lib.compojure.api.core :refer [POST routes]]
-   [ctia.schemas.core :refer [APIHandlerServices def-acl-schema def-stored-schema SortExtensionTemplates]]
+   [ctia.schemas.core :refer [APIHandlerServices def-acl-schema def-stored-schema SortExtensionDefinitions]]
    [ctia.schemas.graphql.flanders :as flanders]
    [ctia.schemas.graphql.helpers :as g]
    [ctia.schemas.graphql.ownership :as go]
@@ -211,7 +211,7 @@
   (generate-mitre-tactic-scores "")
   )
 
-(s/defn sort-extension-templates :- SortExtensionTemplates
+(s/defn sort-extension-definitions :- SortExtensionDefinitions
   [{{:keys [get-in-config]} :ConfigService} :- APIHandlerServices]
   (-> {;; override :severity field to sort semantically
        :severity {:op :remap
@@ -250,7 +250,7 @@
                      :mode "max"
                      :field-name "scores.score"
                      :filter {"scores.type" score-type}}}))
-            (some-> (get-in-config [:ctia :http :incident :sortable-score-types])
+            (some-> (get-in-config [:ctia :http :incident :score-types])
                     (str/split #",")))))
 
 (s/defn incident-sort-fields
@@ -258,7 +258,7 @@
   (apply s/enum
          (map name
               (distinct
-               (concat (keys (sort-extension-templates services))
+               (concat (keys (sort-extension-definitions services))
                        incident-fields)))))
 
 (def incident-enumerable-fields
@@ -348,7 +348,7 @@
      :external-id-capabilities :read-incident
      :histogram-fields         incident-histogram-fields
      :enumerable-fields        incident-enumerable-fields
-     :sort-extension-templates (sort-extension-templates services)})))
+     :sort-extension-definitions (sort-extension-definitions services)})))
 
 (def IncidentType
   (let [{:keys [fields name description]}

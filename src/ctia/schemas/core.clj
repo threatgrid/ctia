@@ -337,49 +337,46 @@
 
 (s/defschema ESSortMode (s/enum "max" "min" "sum" "avg" "median"))
 
-(s/defschema SortExtensionTemplate
-  (s/conditional
-    #(= :field (:op %)) {:op (s/eq :field)
-                         (s/optional-key :field-name) (s/cond-pre s/Keyword s/Str)}
-    #(= :remap-list-max (:op %)) {:op (s/eq :remap-list-max)
-                                  (s/optional-key :field-name) (s/cond-pre s/Keyword s/Str)
-                                  :remappings {s/Str s/Num}
-                                  :remap-default s/Num}
-    #(= :remap (:op %)) {:op (s/eq :remap)
-                         (s/optional-key :field-name) (s/cond-pre s/Keyword s/Str)
-                         :remappings {s/Str s/Num}
-                         :remap-default s/Num}
-    #(= :sort-by-list (:op %)) {:op (s/eq :sort-by-list)
-                                :mode ESSortMode
-                                :field-name (s/cond-pre s/Keyword s/Str)
-                                (s/optional-key :filter) {s/Str s/Str}}))
+(defn ->sort-extension-schema [definition?]
+  (let [field-name (cond-> :field-name
+                     definition? s/optional-key)
+        extra (cond-> {}
+                (not definition?)
+                (st/assoc (s/optional-key :sort_order) (s/cond-pre s/Keyword s/Str)))]
+    (s/conditional
+      #(= :field (:op %)) (st/merge
+                            {:op (s/eq :field)
+                             field-name (s/cond-pre s/Keyword s/Str)}
+                            extra)
+      #(= :remap-list-max (:op %)) (st/merge
+                                     {:op (s/eq :remap-list-max)
+                                      field-name (s/cond-pre s/Keyword s/Str)
+                                      :remappings {s/Str s/Num}
+                                      :remap-default s/Num}
+                                     extra)
+      #(= :remap (:op %)) (st/merge {:op (s/eq :remap)
+                                     field-name (s/cond-pre s/Keyword s/Str)
+                                     :remappings {s/Str s/Num}
+                                     :remap-default s/Num}
+                                    extra)
+      #(= :sort-by-list (:op %)) (st/merge
+                                   {:op (s/eq :sort-by-list)
+                                    :mode ESSortMode
+                                    :field-name (s/cond-pre s/Keyword s/Str)
+                                    (s/optional-key :filter) {s/Str s/Str}}
+                                   extra))))
 
-(s/defschema ConcreteSortExtension
-  (s/conditional
-    #(= :field (:op %)) {:op (s/eq :field)
-                         :field-name (s/cond-pre s/Keyword s/Str)
-                         (s/optional-key :sort_order) (s/cond-pre s/Keyword s/Str)}
-    #(= :remap-list-max (:op %)) {:op (s/eq :remap-list-max)
-                                  :field-name (s/cond-pre s/Keyword s/Str)
-                                  (s/optional-key :sort_order) (s/cond-pre s/Keyword s/Str)
-                                  :remappings {s/Str s/Num}
-                                  :remap-default s/Num}
-    #(= :remap (:op %)) {:op (s/eq :remap)
-                         :field-name (s/cond-pre s/Keyword s/Str)
-                         (s/optional-key :sort_order) (s/cond-pre s/Keyword s/Str)
-                         :remappings {s/Str s/Num}
-                         :remap-default s/Num}
-    #(= :sort-by-list (:op %)) {:op (s/eq :sort-by-list)
-                                :field-name (s/cond-pre s/Keyword s/Str)
-                                :mode ESSortMode
-                                (s/optional-key :filter) {s/Str s/Str}
-                                (s/optional-key :sort_order) (s/cond-pre s/Keyword s/Str)}))
+(s/defschema SortExtensionDefinition
+  (->sort-extension-schema true))
 
-(s/defschema SortExtensionTemplates
+(s/defschema SortExtension
+  (->sort-extension-schema false))
+
+(s/defschema SortExtensionDefinitions
   "A map to override the behavior of sorting by a field.
   
-  See ctia.entity.incident/sort-extension-templates for an example
+  See ctia.entity.incident/sort-extension-definitions for an example
   that redefines the sorting of `severity` with a custom ordering.
   
   You can also sort by fields that don't exist."
-  {(s/pred simple-keyword?) SortExtensionTemplate})
+  {(s/pred simple-keyword?) SortExtensionDefinition})

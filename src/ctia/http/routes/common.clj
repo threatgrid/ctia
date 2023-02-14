@@ -2,9 +2,11 @@
   (:require [clj-http.headers :refer [canonicalize]]
             [clj-momo.lib.clj-time.core :as t]
             [clojure.string :as str]
+            [ctia.schemas.core :refer [SortExtensionDefinitions]]
             [ctia.schemas.search-agg :refer [MetricResult
                                              RangeQueryOpt
-                                             SearchQuery]]
+                                             SearchQuery
+                                             SearchQueryArgs]]
             [ctia.schemas.sorting :as sorting]
             [ring.swagger.schema :refer [describe]]
             [ring.util.codec :as codec]
@@ -160,24 +162,20 @@
      :lt to-or-now}))
 
 (s/defn search-query :- SearchQuery
-  ([date-field search-params]
-   (search-query date-field
-                 search-params
-                 (s/fn :- RangeQueryOpt
-                   [from :- (s/maybe s/Inst)
-                    to :- (s/maybe s/Inst)]
-                   (cond-> {}
-                     from (assoc :gte from)
-                     to   (assoc :lt to)))))
-  ([date-field
-    {:keys [query
-            from to
-            simple_query
-            search_fields] :as search-params}
-    make-date-range-fn :- (s/=> RangeQueryOpt
-                                (s/named (s/maybe s/Inst) 'from)
-                                (s/named (s/maybe s/Inst) 'to))]
-   (let [filter-map (apply dissoc search-params filter-map-search-options)
+  ([{:keys [date-field make-date-range-fn]
+     {:keys [query
+             from to
+             simple_query
+             search_fields] :as params}
+     :params
+     :or {make-date-range-fn (s/fn :- RangeQueryOpt
+                               [from :- (s/maybe s/Inst)
+                                to :- (s/maybe s/Inst)]
+                               (cond-> {}
+                                 from (assoc :gte from)
+                                 to   (assoc :lt to)))}}
+    :- SearchQueryArgs]
+   (let [filter-map (apply dissoc params filter-map-search-options)
          date-range (make-date-range-fn from to)]
      (cond-> {}
        (seq date-range)        (assoc-in [:range date-field] date-range)

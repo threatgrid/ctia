@@ -142,7 +142,8 @@
                       "ctia.http.show.port" s/Int
                       "ctia.http.bulk.max-size" s/Int
                       "ctia.http.bundle.export.max-relationships" s/Int
-                      "ctia.http.incident.sortable-score-types" s/Str})
+                      ;; a csv of score.type's that have special sorting and searching support 
+                      "ctia.http.incident.score-types" s/Str})
 
    (st/required-keys {"ctia.events.enabled" s/Bool
                       "ctia.hook.redis.enabled" s/Bool

@@ -28,7 +28,8 @@
   (create-events [this new-events]))
 
 (defprotocol IQueryStringSearchableStore
-  (query-string-search [this search-query ident params])
+  ;; TODO uncomment when s/defprotocol is available via schema upgrade
+  (query-string-search [this args #_#_:- QueryStringSearchArgs])
   (query-string-count [this search-query ident])
   (aggregate [this search-query agg-query ident])
   (delete-search [this search-query ident params]))

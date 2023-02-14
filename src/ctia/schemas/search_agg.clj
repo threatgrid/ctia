@@ -1,5 +1,6 @@
 (ns ctia.schemas.search-agg
   (:require
+   [ctia.schemas.core :refer [SortExtensionDefinitions]]
    [schema.core :as s]
    [schema-tools.core :as st]))
 
@@ -24,9 +25,18 @@
      :fields           [s/Str]
      :default_operator s/Str})))
 
+(s/defschema SearchQueryArgs
+  {:date-field s/Any
+   :params s/Any
+   (s/optional-key :make-date-range-fn) (s/=> RangeQueryOpt
+                                              (s/named (s/maybe s/Inst) 'from)
+                                              (s/named (s/maybe s/Inst) 'to))
+   (s/optional-key :sort-extension-definitions) SortExtensionDefinitions})
+
 (s/defschema SearchQuery
   "components of a search query:
-   - query-string: free text search, with lucene syntax enabled"
+   - query-string: free text search, with lucene syntax enabled
+   - filters: collection of ES filters as EDN"
   (st/optional-keys
    {:filter-map   {s/Keyword s/Any}
     :range        RangeQuery
@@ -87,3 +97,9 @@
    :filters (st/open-schema
              {:from s/Inst
               :to s/Inst})})
+
+(s/defschema QueryStringSearchArgs
+  {:search-query SearchQuery
+   :ident s/Any
+   :params s/Any
+   (s/optional-key :sort-extension-definitions) SortExtensionDefinitions})

@@ -158,7 +158,7 @@
     #(ductile.index/delete! % "ctia_*")
     (helpers/with-properties (-> ["ctia.auth.type" "allow-all"]
                                  (into es-helpers/basic-auth-properties)
-                                 (into ["ctia.http.incident.sortable-score-types" "asset,ttp"]))
+                                 (into ["ctia.http.incident.score-types" "asset,ttp"]))
       (helpers/fixture-ctia-with-app
         (fn [app]
           ;(helpers/set-capabilities! app "foouser" ["foogroup"] "user" all-capabilities)
