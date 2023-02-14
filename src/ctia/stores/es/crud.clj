@@ -6,7 +6,7 @@
    [ctia.domain.access-control :as ac
     :refer [allow-read? allow-write? restricted-read?]]
    [ctia.lib.pagination :refer [list-response-schema]]
-   [ctia.schemas.core :refer [ConcreteSortExtension SortExtensionTemplates]]
+   [ctia.schemas.core :refer [SortExtension SortExtensionDefinitions]]
    [ctia.schemas.search-agg
     :refer [AggQuery CardinalityQuery HistogramQuery QueryStringSearchArgs SearchQuery TopnQuery]]
    [ctia.stores.es.sort :as es.sort]
@@ -394,7 +394,7 @@ It returns the documents with full hits meta data including the real index in wh
   {"title" "title.whole"
    "reason" "reason.whole"})
 
-(s/defn parse-sort-by :- [ConcreteSortExtension]
+(s/defn parse-sort-by :- [SortExtension]
   "Parses the sort_by parameter
    Ex:
    \"title:ASC,revision:DESC\"
@@ -425,7 +425,7 @@ It returns the documents with full hits meta data including the real index in wh
   "Renames sort fields based on the content of the `enumerable-fields-mapping` table
   and remaps to script extensions."
   [{:keys [sort_by sort_order] :as es-params}
-   sort-extension-templates :- (s/maybe SortExtensionTemplates)]
+   sort-extension-templates :- (s/maybe SortExtensionDefinitions)]
   (cond-> (dissoc es-params :sort_by :sort_order)
     (and sort_by (not (:sort es-params)))
     (assoc :sort
@@ -446,7 +446,7 @@ It returns the documents with full hits meta data including the real index in wh
 (s/defschema MakeQueryParamsArgs
   {:params s/Any
    :props s/Any
-   (s/optional-key :sort-extension-templates) SortExtensionTemplates})
+   (s/optional-key :sort-extension-templates) SortExtensionDefinitions})
 
 (s/defn make-query-params :- {s/Keyword s/Any}
   [{:keys [params props sort-extension-templates]} :- MakeQueryParamsArgs]

@@ -1,5 +1,5 @@
 (ns ctia.stores.es.sort
-  (:require [ctia.schemas.core :refer [ConcreteSortExtension]]
+  (:require [ctia.schemas.core :refer [SortExtension]]
             [clojure.string :as str]
             [schema.core :as s]))
 
@@ -47,7 +47,7 @@
        :field-name \"scores.score\"
        :filter {\"scores.type\" \"asset\"}
        :sort_order :asc}"
-  [{:keys [op field-name sort_order] :as params} :- ConcreteSortExtension
+  [{:keys [op field-name sort_order] :as params} :- SortExtension
    default-sort_order :- (s/cond-pre s/Str s/Keyword)]
   (let [field-name (name field-name)
         order (keyword (or sort_order default-sort_order))]

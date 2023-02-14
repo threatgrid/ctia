@@ -2,7 +2,7 @@
   (:require [clj-http.headers :refer [canonicalize]]
             [clj-momo.lib.clj-time.core :as t]
             [clojure.string :as str]
-            [ctia.schemas.core :refer [SortExtensionTemplates]]
+            [ctia.schemas.core :refer [SortExtensionDefinitions]]
             [ctia.schemas.search-agg :refer [MetricResult
                                              RangeQueryOpt
                                              SearchQuery
