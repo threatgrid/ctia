@@ -168,6 +168,7 @@
            :severity
            :tactics
            :techniques
+           #_
            :scores]))
 
 (comment
