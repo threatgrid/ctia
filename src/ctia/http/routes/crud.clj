@@ -191,8 +191,7 @@
                               :fields
                               :limit
                               :offset
-                              ;; TODO support extensions in non-"search" aggregation routes
-                              (mapcat keys [sort-extension-definitions]))
+                              (keys sort-extension-definitions))
         agg-search-schema (st/merge
                            search-filters
                            {:from s/Inst})
