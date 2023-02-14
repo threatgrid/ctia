@@ -372,7 +372,8 @@
             :identity-map identity-map
             (-> (get-store :feed)
                 (query-string-search
-                  {:search-query (routes.common/search-query {:date-field :created, :params params})
+                  {:search-query (routes.common/search-query {:date-field :created
+                                                              :params params})
                    :ident identity-map
                    :params (select-keys params routes.common/search-options)})
                 (page-with-long-id services)
@@ -391,7 +392,8 @@
             :identity-map identity-map
             (ok (-> (get-store :feed)
                     (query-string-count
-                     (routes.common/search-query {:date-field :created, :params params})
+                     (routes.common/search-query {:date-field :created
+                                                  :params params})
                      identity-map)))))
 
      (let [capabilities #{:search-feed :delete-feed}]

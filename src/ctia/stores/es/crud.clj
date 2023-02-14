@@ -497,12 +497,6 @@ It returns the documents with full hits meta data including the real index in wh
   (let [{:keys [services]} es-conn-state
         {{:keys [get-in-config]} :ConfigService} services
         {:keys [filter-map range full-text]} search-query
-        ;;DELETE ME
-        _ (assert (not-any? #{:sort-extension-templates "sort-extension-templates"
-                              :search-extension-templates "search-extension-templates"
-                              :scores.ttp.to "scores.ttp.to"}
-                            filter-map)
-                  filter-map)
         range-query (when range
                       {:range range})
         filter-terms (-> (ensure-document-id-in-map filter-map)
