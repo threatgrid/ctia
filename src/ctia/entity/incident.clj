@@ -217,8 +217,8 @@
   (some-> (get-in-config [:ctia :http :incident :score-types])
           (str/split #",")))
 
-(s/defn sort-extension-templates :- SortExtensionTemplates
-  [services :- APIHandlerServices]
+(s/defn sort-extension-definitions :- SortExtensionDefinitions
+  [{{:keys [get-in-config]} :ConfigService} :- APIHandlerServices]
   (-> {;; override :severity field to sort semantically
        :severity {:op :remap
                   :remappings {"Low" 1
