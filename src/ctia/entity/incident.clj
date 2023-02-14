@@ -218,7 +218,7 @@
           (str/split #",")))
 
 (s/defn sort-extension-definitions :- SortExtensionDefinitions
-  [{{:keys [get-in-config]} :ConfigService} :- APIHandlerServices]
+  [services :- APIHandlerServices]
   (-> {;; override :severity field to sort semantically
        :severity {:op :remap
                   :remappings {"Low" 1
