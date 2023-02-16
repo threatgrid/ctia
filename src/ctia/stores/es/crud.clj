@@ -514,7 +514,7 @@ It returns the documents with full hits meta data including the real index in wh
      {:filter
       (cond-> [(es.query/find-restriction-query-part ident get-in-config)]
         (seq filter-map) (into filter-terms)
-        true             (into extension-queries)
+        ;true             (into extension-queries)
         (seq range)      (conj range-query)
         (seq full-text)  (into (es.query/refine-full-text-query-parts
                                 es-conn-state full-text)))}}))
