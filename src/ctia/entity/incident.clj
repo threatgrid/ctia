@@ -128,6 +128,8 @@
 (def incident-mapping
   {"incident"
    {:dynamic false
+    :date_detection false
+    :numeric_detection true
     :dynamic_templates
     [{:num
       {:match_mapping_type "long"

@@ -149,7 +149,7 @@
 
 (def shrink-sort-scores-test?
   "If true, enable shrinking in sort-scores-test."
-  false)
+  true)
 
 (deftest sort-scores-test
   (es-helpers/for-each-es-version
@@ -158,7 +158,8 @@
     #(ductile.index/delete! % "ctia_*")
     (helpers/with-properties (-> ["ctia.auth.type" "allow-all"]
                                  (into es-helpers/basic-auth-properties)
-                                 (into ["ctia.http.incident.score-types" "asset,ttp"]))
+                                 (conj "ctia.http.incident.score-types" "asset,ttp"
+                                       "ctia.store.bulk-refresh" "wait_for"))
       (helpers/fixture-ctia-with-app
         (fn [app]
           ;(helpers/set-capabilities! app "foouser" ["foogroup"] "user" all-capabilities)
