@@ -138,14 +138,14 @@
   (search-th/delete-search app :incident {:query "*"
                                           :REALLY_DELETE_ALL_THESE_ENTITIES true}))
 
-(def asset-000-ttp-000 [{:type "asset" :score 0} {:type "ttp" :score 0}])
-(def asset-000-ttp-100 [{:type "asset" :score 0} {:type "ttp" :score 100}])
-(def asset-002-ttp-004 [{:type "asset" :score 2} {:type "ttp" :score 4}])
-(def asset-002-ttp-006 [{:type "asset" :score 2} {:type "ttp" :score 6}])
-(def asset-004-ttp-002 [{:type "asset" :score 4} {:type "ttp" :score 2}])
-(def asset-006-ttp-002 [{:type "asset" :score 6} {:type "ttp" :score 2}])
-(def asset-100-ttp-000 [{:type "asset" :score 100} {:type "ttp" :score 0}])
-(def asset-100-ttp-100 [{:type "asset" :score 100} {:type "ttp" :score 100}])
+(def asset-000-ttp-000 {"asset" 0   "ttp" 0})
+(def asset-000-ttp-100 {"asset" 0   "ttp" 100})
+(def asset-002-ttp-004 {"asset" 2   "ttp" 4})
+(def asset-002-ttp-006 {"asset" 2   "ttp" 6})
+(def asset-004-ttp-002 {"asset" 4   "ttp" 2})
+(def asset-006-ttp-002 {"asset" 6   "ttp" 2})
+(def asset-100-ttp-000 {"asset" 100 "ttp" 0})
+(def asset-100-ttp-100 {"asset" 100 "ttp" 100})
 
 (def shrink-sort-scores-test?
   "If true, enable shrinking in sort-scores-test."
@@ -173,7 +173,7 @@
                                                                  ->expected-score-order (fn [score-type]
                                                                                           ((if asc? identity rseq)
                                                                                            (mapv (fn [score]
-                                                                                                   [{:type score-type :score score}])
+                                                                                                   {score-type score})
                                                                                                  (range incident-count))))]
                                                              [;; simple asset sort
                                                               {:test-id (if asc? :asc-asset-single :desc-asset-single)

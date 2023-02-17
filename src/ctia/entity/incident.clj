@@ -30,12 +30,14 @@
 
 (def incident-bundle-default-limit 1000)
 
+(def isIncident (st/assoc is/Incident :scores {s/Keyword s/Num}))
+
 (def-acl-schema Incident
-  is/Incident
+  isIncident
   "incident")
 
 (def-acl-schema PartialIncident
-  (fu/optionalize-all is/Incident)
+  (fu/optionalize-all isIncident)
   "partial-incident")
 
 (s/defschema PartialIncidentList
@@ -126,6 +128,10 @@
 (def incident-mapping
   {"incident"
    {:dynamic false
+    :dynamic_templates
+    [{:num
+      {:match_mapping_type "long"
+       :mapping em/float-type}}]
     :properties
     (merge
      em/base-entity-mapping
@@ -142,10 +148,9 @@
       :promotion_method em/token
       :severity         em/token
       :tactics          em/token
-      :techniques          em/token
-      :scores           {:type "nested"
-                         :properties {:score em/float-type
-                                      :type em/token}}})}})
+      :techniques       em/token
+      :scores           {:type "object"
+                         :dynamic true}})}})
 
 (def-es-store IncidentStore :incident StoredIncident PartialStoredIncident)
 
@@ -243,13 +248,9 @@
                   "TA0010" 6,
                   "TA0040" 4}
                  :remap-default 0}}
-      ;; Sort by maximum score of a particular type
+      ;; Sort by score
       (into (map (fn [score-type]
-                   {(keyword (str "scores." score-type))
-                    {:op :sort-by-list
-                     :mode "max"
-                     :field-name "scores.score"
-                     :filter {"scores.type" score-type}}}))
+                   {(keyword (str "scores." score-type)) {:op :field}}))
             (some-> (get-in-config [:ctia :http :incident :score-types])
                     (str/split #",")))))
 
@@ -353,7 +354,7 @@
 (def IncidentType
   (let [{:keys [fields name description]}
         (flanders/->graphql
-         (fu/optionalize-all is/Incident)
+         (fu/optionalize-all isIncident)
          {})]
     (g/new-object
      name
