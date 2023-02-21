@@ -85,7 +85,7 @@
                  [prismatic/schema "1.2.0"]
                  [metosin/schema-tools "0.12.2"]
                  [threatgrid/flanders "0.1.23"]
-                 [threatgrid/ctim "6eb9af231fe88faab62bf861710c966c8413a563"]
+                 [threatgrid/ctim "7beb78e8edebf1c4c0e1df5f430bc9359e2c4179"]
                  [instaparse "1.4.10"] ;; com.gfredericks/test.chuck > threatgrid/ctim
                  [threatgrid/clj-momo "0.3.5"]
                  [threatgrid/ductile "0.4.5"]
