@@ -354,7 +354,7 @@
 (def IncidentType
   (let [{:keys [fields name description]}
         (flanders/->graphql
-         (fu/optionalize-all isIncident)
+         (fu/optionalize-all is/Incident)
          {})]
     (g/new-object
      name
