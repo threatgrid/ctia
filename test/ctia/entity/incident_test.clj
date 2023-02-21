@@ -138,14 +138,14 @@
   (search-th/delete-search app :incident {:query "*"
                                           :REALLY_DELETE_ALL_THESE_ENTITIES true}))
 
-(def asset-000-ttp-000 {"asset" 0   "ttp" 0})
-(def asset-000-ttp-100 {"asset" 0   "ttp" 100})
-(def asset-002-ttp-004 {"asset" 2   "ttp" 4})
-(def asset-002-ttp-006 {"asset" 2   "ttp" 6})
-(def asset-004-ttp-002 {"asset" 4   "ttp" 2})
-(def asset-006-ttp-002 {"asset" 6   "ttp" 2})
-(def asset-100-ttp-000 {"asset" 100 "ttp" 0})
-(def asset-100-ttp-100 {"asset" 100 "ttp" 100})
+(def asset-000-ttp-000 {:asset 0   :ttp 0})
+(def asset-000-ttp-100 {:asset 0   :ttp 100})
+(def asset-002-ttp-004 {:asset 2   :ttp 4})
+(def asset-002-ttp-006 {:asset 2   :ttp 6})
+(def asset-004-ttp-002 {:asset 4   :ttp 2})
+(def asset-006-ttp-002 {:asset 6   :ttp 2})
+(def asset-100-ttp-000 {:asset 100 :ttp 0})
+(def asset-100-ttp-100 {:asset 100 :ttp 100})
 
 (def shrink-sort-scores-test?
   "If true, enable shrinking in sort-scores-test."
@@ -169,21 +169,21 @@
                                            ;; one score per incident
                                            (into (mapcat (fn [asc?]
                                                            (let [incident-count 10
-                                                                 ->sort_by (fn [score-type]
-                                                                             (format "scores.%s:%s" score-type (if asc? "asc" "desc")))
-                                                                 ->expected-score-order (fn [score-type]
+                                                                 ->sort_by (s/fn [score-type :- (s/pred simple-keyword?)]
+                                                                             (format "scores.%s:%s" (name score-type) (if asc? "asc" "desc")))
+                                                                 ->expected-score-order (s/fn [score-type :- (s/pred simple-keyword?)]
                                                                                           ((if asc? identity rseq)
                                                                                            (mapv (fn [score]
                                                                                                    {score-type score})
                                                                                                  (range incident-count))))]
                                                              [;; simple asset sort
                                                               {:test-id (if asc? :asc-asset-single :desc-asset-single)
-                                                               :sort_by (->sort_by "asset")
-                                                               :expected-score-order (->expected-score-order "asset")}
+                                                               :sort_by (->sort_by :asset)
+                                                               :expected-score-order (->expected-score-order :asset)}
                                                               ;; simple ttp sort
                                                               {:test-id (if asc? :asc-ttp-single :desc-ttp-single)
-                                                               :sort_by (->sort_by "ttp")
-                                                               :expected-score-order (->expected-score-order "ttp")}])))
+                                                               :sort_by (->sort_by :ttp)
+                                                               :expected-score-order (->expected-score-order :ttp)}])))
                                                  [true false])
                                            ;; multiple scores per incident
                                            (into (mapcat (fn [asc?]
