@@ -30,14 +30,12 @@
 
 (def incident-bundle-default-limit 1000)
 
-(def isIncident (st/assoc is/Incident :scores {s/Keyword s/Num}))
-
 (def-acl-schema Incident
-  isIncident
+  is/Incident
   "incident")
 
 (def-acl-schema PartialIncident
-  (fu/optionalize-all isIncident)
+  (fu/optionalize-all is/Incident)
   "partial-incident")
 
 (s/defschema PartialIncidentList
