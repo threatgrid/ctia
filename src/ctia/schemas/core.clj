@@ -358,13 +358,7 @@
                                      field-name (s/cond-pre s/Keyword s/Str)
                                      :remappings {s/Str s/Num}
                                      :remap-default s/Num}
-                                    extra)
-      #(= :sort-by-list (:op %)) (st/merge
-                                   {:op (s/eq :sort-by-list)
-                                    :mode ESSortMode
-                                    :field-name (s/cond-pre s/Keyword s/Str)
-                                    (s/optional-key :filter) {s/Str s/Str}}
-                                   extra))))
+                                    extra))))
 
 (s/defschema SortExtensionDefinition
   (->sort-extension-schema true))
