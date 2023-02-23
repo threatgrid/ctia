@@ -157,8 +157,7 @@ jobs:
         if: steps.maven-cache.outputs.cache-hit != 'true'
         # poor man's travis_retry
         run: for i in {1..${ACTIONS_RETRY_TIMES}}; do lein warm-ci-deps && break; done
-      #DELETE ME!!!
-      #- run: ./scripts/check-dependabot
+      - run: ./scripts/check-dependabot
 
   test-encoding:
     runs-on: ubuntu-20.04
