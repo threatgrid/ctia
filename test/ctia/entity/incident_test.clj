@@ -149,7 +149,7 @@
 
 (def shrink-sort-scores-test?
   "If true, enable shrinking in sort-scores-test."
-  true)
+  false)
 
 (deftest sort-scores-test
   (es-helpers/for-each-es-version
