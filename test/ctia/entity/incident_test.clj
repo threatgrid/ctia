@@ -588,22 +588,16 @@
           (try (let [incident1 (assoc (gen-new-incident)
                                       :title "incident1"
                                       :assignees ["assignee1"]
-                                      :scores [{:type "ttp"
-                                                :score 30}
-                                               {:type "asset"
-                                                :score 100}])
+                                      :scores {:ttp 30
+                                               :asset 100})
                      incident2 (assoc (gen-new-incident)
                                       :title "incident2"
-                                      :scores [{:type "ttp"
-                                                :score 50}
-                                               {:type "asset"
-                                                :score 50}])
+                                      :scores {:ttp 50
+                                               :asset 50})
                      incident3 (assoc (gen-new-incident)
                                       :title "incident3"
-                                      :scores [{:type "ttp"
-                                                :score 70}
-                                               {:type "asset"
-                                                :score 0}])
+                                      :scores {:ttp 70
+                                               :asset 0})
                      normalize (fn [incidents]
                                  (->> incidents
                                       (map #(select-keys % [:title :scores]))
