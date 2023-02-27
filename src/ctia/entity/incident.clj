@@ -129,7 +129,8 @@
     :date_detection false
     :numeric_detection true
     :dynamic_templates
-    [{:num
+    [{;; Incident schema will prevent other types (like text, array, object)
+      :num
       {:match_mapping_type "long"
        :mapping em/float-type}}]
     :properties
