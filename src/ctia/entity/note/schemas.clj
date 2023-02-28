@@ -37,8 +37,8 @@
 (def note-fields
   (concat sorting/base-entity-sort-fields
           sorting/sourcable-entity-sort-fields
-          [:related_entities.id
-           :related_entities.type
+          [:related_entities.entity_id
+           :related_entities.entity_type
            :note_class
            :author
            :content]))
@@ -49,8 +49,8 @@
 (def searchable-fields
   #{:id
     :source
-    :related_entities.id
-    :related_entities.type
+    :related_entities.entity_id
+    :related_entities.entity_type
     :note_class
     :content})
 
@@ -70,8 +70,8 @@
    routes.common/SourcableEntityFilterParams
    routes.common/SearchableEntityParams
    (st/optional-keys
-    {:related_entities.id s/Str
-     :related_entities.type s/Str
+    {:related_entities.entity_id s/Str
+     :related_entities.entity_type s/Str
      :note_class s/Str
      :content s/Str})))
 
@@ -79,8 +79,8 @@
   (st/merge
    NoteFieldsParam
    routes.common/PagingParams
-   {:related_entities.id s/Str
-    :related_entities.type s/Str
+   {:related_entities.entity_id s/Str
+    :related_entities.entity_type s/Str
     :note_class s/Str
     (s/optional-key :sort_by) note-sort-fields}))
 
@@ -88,6 +88,6 @@
 
 (s/defschema NoteByExternalIdQueryParams
   (st/dissoc NoteQueryParams
-             :related_entities.id
-             :related_entities.type
+             :related_entities.entity_id
+             :related_entities.entity_type
              :note_class))

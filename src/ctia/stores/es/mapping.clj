@@ -259,8 +259,8 @@
 (def note-related-entity
   {:type "object"
    :properties
-   {:type token
-    :id token}})
+   {:entity_type token
+    :entity_id token}})
 
 (def texts
   {:properties {:type token
