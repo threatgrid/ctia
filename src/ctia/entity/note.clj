@@ -15,13 +15,13 @@
   {"note"
    {:dynamic false
     :properties
-    (merge
-     em/base-entity-mapping
-     em/sourcable-entity-mapping
-     em/stored-entity-mapping
-     {:entity_id em/token
-      :content em/text
-      :author em/token})}})
+    (merge em/base-entity-mapping
+           em/sourcable-entity-mapping
+           em/stored-entity-mapping
+           {:related_entities em/note-related-entity
+            :content em/text
+            :note_class em/token
+            :author em/token})}})
 
 (def-es-store NoteStore
   :note

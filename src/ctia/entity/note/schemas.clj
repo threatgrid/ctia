@@ -37,7 +37,9 @@
 (def note-fields
   (concat sorting/base-entity-sort-fields
           sorting/sourcable-entity-sort-fields
-          [:entity_id
+          [:related_entities.id
+           :related_entities.type
+           :note_class
            :author
            :content]))
 
@@ -47,11 +49,13 @@
 (def searchable-fields
   #{:id
     :source
-    :entity_id
+    :related_entities.id
+    :related_entities.type
+    :note_class
     :content})
 
 (def note-histogram-fields [:timestamp])
-(def note-enumerable-fields [:entity_id])
+(def note-enumerable-fields [])
 
 (s/defschema NoteFieldsParam
   {(s/optional-key :fields) [(apply s/enum note-fields)]})
@@ -66,17 +70,24 @@
    routes.common/SourcableEntityFilterParams
    routes.common/SearchableEntityParams
    (st/optional-keys
-    {:entity_id s/Str
+    {:related_entities.id s/Str
+     :related_entities.type s/Str
+     :note_class s/Str
      :content s/Str})))
 
 (s/defschema NoteQueryParams
   (st/merge
    NoteFieldsParam
    routes.common/PagingParams
-   {:entity_id s/Str
+   {:related_entities.id s/Str
+    :related_entities.type s/Str
+    :note_class s/Str
     (s/optional-key :sort_by) note-sort-fields}))
 
 (def NoteGetParams NoteFieldsParam)
 
 (s/defschema NoteByExternalIdQueryParams
-  (st/dissoc NoteQueryParams :entity_id))
+  (st/dissoc NoteQueryParams
+             :related_entities.id
+             :related_entities.type
+             :note_class))
