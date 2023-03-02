@@ -17,7 +17,7 @@
    [ctim.domain.id :as id]
    [ctim.examples.asset-properties :refer [asset-properties-maximal]]
    [ctim.examples.assets :refer [asset-maximal]]
-   [ctim.examples.bundles :refer [bundle-maximal]]
+   [ctim.examples.bundles :refer [bundle-minimal bundle-maximal]]
    [ctim.examples.incidents :refer [incident-maximal]]
    [ctim.examples.target-records :refer [target-record-maximal]]
    [ctim.schemas.common :refer [ctim-schema-version]]
@@ -1214,3 +1214,61 @@
                       (mapcat (comp :results :parsed-body)))]
          (testing "there is a race condition for checking external ids"
            (is (< 1 (count (filter #(= "created" (:result %)) res))))))))))
+
+(deftest bundle-asset-relationships-test
+  (test-for-each-store-with-app
+    (fn [app]
+      (helpers/set-capabilities! app "foouser" ["foogroup"] "user" (all-capabilities))
+      (whoami-helpers/set-whoami-response app
+                                          "45c1f5e3f05d0"
+                                          "foouser"
+                                          "foogroup"
+                                          "user")
+
+      (testing "relationships are created for asset mappings/properties"
+        (let [new-bundle (-> bundle-minimal
+                             (assoc :assets #{{:asset_type "device"
+                                               :valid_time {:start_time #inst "2023-03-02T19:14:46.658-00:00"}
+                                               :schema_version "1.0.19"
+                                               :type "asset"
+                                               :source "something"
+                                               :external_ids ["transient:89497b1a-1e42-4258-81f0-1d394fe1a90f"]
+                                               :title "something"
+                                               :source_uri "https://something"
+                                               :id "transient:89497b1a-1e42-4258-81f0-1d394fe1a90f"
+                                               :timestamp #inst "2023-03-02T19:14:46.658-00:00"}}
+                                    :asset_mappings #{{:asset_type "device"
+                                                       :valid_time {:start_time #inst "2023-03-02T19:14:46.660-00:00"}
+                                                       :stability "Managed"
+                                                       :schema_version ctim-schema-version
+                                                       :observable {:value "something" :type "hostname"}
+                                                       :asset_ref "transient:89497b1a-1e42-4258-81f0-1d394fe1a90f"
+                                                       :type "asset-mapping"
+                                                       :source "Something"
+                                                       :source_uri "https://something"
+                                                       :id "transient:07b82ae5-0757-4e72-bda4-9a4cd62986e1"
+                                                       :timestamp #inst "2023-03-02T19:14:46.660-00:00"
+                                                       :specificity "Unique"
+                                                       :confidence "Unknown"}}
+                                    :asset_properties #{{:properties [{:name "something" :value "66"}]
+                                                         :valid_time {:start_time #inst "2023-03-02T19:14:46.660-00:00"}
+                                                         :schema_version ctim-schema-version
+                                                         :asset_ref "transient:89497b1a-1e42-4258-81f0-1d394fe1a90f"
+                                                         :type "asset-properties"
+                                                         :source "somethintg"
+                                                         :source_uri "https://something"
+                                                         :id "transient:8ae8d2b0-950b-402d-b053-935da85582a3"
+                                                         :timestamp #inst "2023-03-02T19:14:46.783-00:00"}}
+                                    :relationships #{{:source_ref "https://private.intel.int.iroh.site:443/ctia/incident/incident-4fb91401-36a5-46d1-b0aa-01af02f00a7a", :target_ref "transient:07b82ae5-0757-4e72-bda4-9a4cd62986e1", :relationship_type "related-to", :source "IROH Risk Score Service"}
+                                                     {:source_ref "https://private.intel.int.iroh.site:443/ctia/incident/incident-4fb91401-36a5-46d1-b0aa-01af02f00a7a", :target_ref "transient:8ae8d2b0-950b-402d-b053-935da85582a3", :relationship_type "related-to", :source "IROH Risk Score Service"}
+                                                     {:source_ref "https://private.intel.int.iroh.site:443/ctia/incident/incident-4fb91401-36a5-46d1-b0aa-01af02f00a7a", :target_ref "transient:89497b1a-1e42-4258-81f0-1d394fe1a90f", :relationship_type "related-to", :source "IROH Risk Score Service"}
+                                                     {:source_ref "https://private.intel.int.iroh.site:443/ctia/incident/incident-4fb91401-36a5-46d1-b0aa-01af02f00a7a", :target_ref "transient:75e39205-730b-4916-8ae8-40f7cf19ef88", :relationship_type "related-to", :source "IROH Risk Score Service"}}))
+              response (POST app
+                             "ctia/bundle/import"
+                             :body new-bundle
+                             :headers {"Authorization" "45c1f5e3f05d0"})
+              {:keys [results]} (:parsed-body response)]
+          (is (= 200 (:status response)))
+          (is (= 7 (count results)))
+          (is (every? (comp #{"created"} :result) results)
+              (pr-str (mapv :result results))))))))
