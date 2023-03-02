@@ -1261,14 +1261,13 @@
                                                          :timestamp #inst "2023-03-02T19:14:46.783-00:00"}}
                                     :relationships #{{:source_ref "https://private.intel.int.iroh.site:443/ctia/incident/incident-4fb91401-36a5-46d1-b0aa-01af02f00a7a", :target_ref "transient:07b82ae5-0757-4e72-bda4-9a4cd62986e1", :relationship_type "related-to", :source "IROH Risk Score Service"}
                                                      {:source_ref "https://private.intel.int.iroh.site:443/ctia/incident/incident-4fb91401-36a5-46d1-b0aa-01af02f00a7a", :target_ref "transient:8ae8d2b0-950b-402d-b053-935da85582a3", :relationship_type "related-to", :source "IROH Risk Score Service"}
-                                                     {:source_ref "https://private.intel.int.iroh.site:443/ctia/incident/incident-4fb91401-36a5-46d1-b0aa-01af02f00a7a", :target_ref "transient:89497b1a-1e42-4258-81f0-1d394fe1a90f", :relationship_type "related-to", :source "IROH Risk Score Service"}
-                                                     {:source_ref "https://private.intel.int.iroh.site:443/ctia/incident/incident-4fb91401-36a5-46d1-b0aa-01af02f00a7a", :target_ref "transient:75e39205-730b-4916-8ae8-40f7cf19ef88", :relationship_type "related-to", :source "IROH Risk Score Service"}}))
+                                                     {:source_ref "https://private.intel.int.iroh.site:443/ctia/incident/incident-4fb91401-36a5-46d1-b0aa-01af02f00a7a", :target_ref "transient:89497b1a-1e42-4258-81f0-1d394fe1a90f", :relationship_type "related-to", :source "IROH Risk Score Service"}}))
               response (POST app
                              "ctia/bundle/import"
                              :body new-bundle
                              :headers {"Authorization" "45c1f5e3f05d0"})
               {:keys [results]} (:parsed-body response)]
           (is (= 200 (:status response)))
-          (is (= 7 (count results)))
+          (is (= 6 (count results)))
           (is (every? (comp #{"created"} :result) results)
               (pr-str (mapv :result results))))))))
