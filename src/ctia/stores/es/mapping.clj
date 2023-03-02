@@ -256,12 +256,6 @@
     :columns {:enabled false}
     :rows {:enabled false}}})
 
-(def note-related-entity
-  {:type "object"
-   :properties
-   {:entity_type token
-    :entity_id token}})
-
 (def texts
   {:properties {:type token
                 :text text}})

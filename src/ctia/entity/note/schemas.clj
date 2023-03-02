@@ -49,9 +49,6 @@
 (def searchable-fields
   #{:id
     :source
-    :related_entities.entity_id
-    :related_entities.entity_type
-    :note_class
     :content})
 
 (def note-histogram-fields [:timestamp])
