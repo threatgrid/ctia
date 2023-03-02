@@ -290,41 +290,32 @@
     {{:keys [get-in-config]} :ConfigService :as services} :- APIHandlerServices]
    (let [{:keys [refresh]
           :or   {refresh (bulk-refresh? get-in-config)}} params
-         new-entities (gen-bulk-from-fn
-                       create-entities
-                       (dissoc
-                        bulk
-                        :relationships
-                        ;; AssetMapping and AssetProperties have asset-ref field
-                        ;; that needs to be resolved, so we delay the creation
-                        ;; of these entities to be after we create Assets
-                        :asset_mappings :asset_properties)
-                       tempids
-                       login
-                       {:refresh refresh}
-                       services)
-         entities-tempids (into tempids (merge-tempids new-entities))
-         new-linked-ents (gen-bulk-from-fn
-                          create-entities
-                          (select-keys
-                           bulk
-                           [:relationships
-                            :asset_mappings
-                            :asset_properties])
-                          entities-tempids
-                          login
-                          {:refresh refresh}
-                          services)
-         all-tempids (merge entities-tempids (merge-tempids new-linked-ents))
-         all-entities (merge new-entities new-linked-ents)
+         {:keys [entities tempids]} (reduce (fn [acc bulk]
+                                              (let [entities (gen-bulk-from-fn
+                                                               create-entities
+                                                               bulk
+                                                               (:tempids acc)
+                                                               login
+                                                               {:refresh refresh}
+                                                               services)]
+                                                (-> acc
+                                                    (update :entities merge entities)
+                                                    (update :tempids into (merge-tempids entities)))))
+                                            {:entities {}
+                                             :tempids tempids}
+                                            [(dissoc bulk :relationships :asset_mappings :asset_properties)
+                                             ;; resolve asset_ref on AssetMapping and AssetProperties
+                                             (select-keys bulk [:asset_mappings :asset_properties])
+                                             ;; resolve transient ids on relationships. all other entities must be realized.
+                                             (select-keys bulk [:relationships])])
          ;; Extracting data from the enveloped flow result
          ;; {:entity-type {:data [] :tempids {}}
          bulk-refs (into {}
                          (map (fn [[k {:keys [data]}]]
                                 {k data}))
-                         all-entities)]
+                         entities)]
      (cond-> bulk-refs
-       (seq all-tempids) (assoc :tempids all-tempids)))))
+       (seq tempids) (assoc :tempids tempids)))))
 
 (s/defn fetch-bulk
   [bulk auth-identity
