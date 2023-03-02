@@ -11,17 +11,23 @@
             [schema-tools.core :as st]
             [schema.core :as s]))
 
+(def note-related-entity
+  {:type "object"
+   :properties
+   {:entity_type em/token
+    :entity_id em/token}})
+
 (def note-mapping
   {"note"
    {:dynamic false
     :properties
-    (merge
-     em/base-entity-mapping
-     em/sourcable-entity-mapping
-     em/stored-entity-mapping
-     {:entity_id em/token
-      :content em/text
-      :author em/token})}})
+    (merge em/base-entity-mapping
+           em/sourcable-entity-mapping
+           em/stored-entity-mapping
+           {:related_entities note-related-entity
+            :content em/text
+            :note_class em/token
+            :author em/token})}})
 
 (def-es-store NoteStore
   :note

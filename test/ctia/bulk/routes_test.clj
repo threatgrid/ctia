@@ -151,11 +151,12 @@
    :assertions [{:name "cisco:ctr:device:owner" :value "Bob"}]
    :source "source"})
 
-
 (defn mk-new-note [n]
   {:id (str "transient:note-" n)
    :content (str "content: note-" n)
-   :entity_id "https://ex.tld/ctia/note/note-0ecb71f3-6b04-4bbe-ba81-a0acf6f78394"
+   :note_class :default
+   :related_entities [{:entity_type "incident"
+                       :entity_id "https://ex.tld/ctia/incident/incident-0ecb71f3-6b04-4bbe-ba81-a0acf6f78394"}]
    :source "Cisco Threat Response"})
 
 (defn mk-new-tool [n]
