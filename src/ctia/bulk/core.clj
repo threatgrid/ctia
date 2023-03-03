@@ -4,7 +4,7 @@
    [clojure.string :as str]
    [clojure.tools.logging :as log]
    [ctia.auth :as auth]
-   [ctia.bulk.schemas :refer [BulkRefs* NewBulk*]]
+   [ctia.bulk.schemas :refer [NewBulk*]]
    [ctia.domain.entities :as ent :refer [with-long-id short-id->long-id]]
    [ctia.entity.entities :refer [all-entities]]
    [ctia.flows.crud :as flows]
@@ -280,12 +280,12 @@
                        (get-bulk-max-size get-in-config)))))
 
 (s/defschema BulkRefs+TempIDs
-  {:bulk-refs BulkRefs*
+  {:bulk-refs {s/Keyword [s/Any]}
    :tempids TempIDs})
 
 (s/defn import-bulks-with :- BulkRefs+TempIDs
   "Import each new-bulk in order while accumulating tempids."
-  [f :- (s/=> {s/Keyword {:data (st/get-in BulkRefs* [:data])
+  [f :- (s/=> {s/Keyword {:data [s/Any]
                           :tempids TempIDs}}
               NewBulk*
               TempIDs)
