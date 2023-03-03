@@ -289,7 +289,7 @@
                           :tempids TempIDs}}
               NewBulk*
               TempIDs)
-   new-bulks :- [NewBulk*]
+   new-bulks ;;:- [NewBulk*]
    tempids :- TempIDs]
   (reduce (s/fn [acc :- BulkRefs+TempIDs
                  new-bulk :- NewBulk*]
@@ -308,8 +308,8 @@
 
    1. Creates all entities except Relationships
    2. Creates Relationships with mapping between transient and real IDs"
-  ([new-bulk :- NewBulk*, login, services :- APIHandlerServices] (create-bulk new-bulk {} login {} services))
-  ([new-bulk :- NewBulk*
+  ([new-bulk login services :- APIHandlerServices] (create-bulk new-bulk {} login {} services))
+  ([new-bulk ;;:- NewBulk*
     tempids :- TempIDs
     login
     params

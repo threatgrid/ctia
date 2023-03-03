@@ -207,8 +207,9 @@
              (sut/create-bulk with-errors
                               {}
                               ident
-                              {:refresh "true"} services)]
-         (testing "bulk-create shall properly create submitties entitites"
+                              {:refresh "true"}
+                              services)]
+         (testing "bulk-create shall properly create submitted entities"
            (is (= 5
                   (count sighting-ids)
                   (count indicator-ids)))
