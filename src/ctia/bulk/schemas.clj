@@ -70,14 +70,10 @@
             (s/optional-key :tempids)
             TempIDs))
 
-(let [f #(entities-bulk-schema % :new-schema)]
-  (s/defschema NewBulk*
-    "NewBulk schema with disabled entities, for top-level (s/defn) schema validation."
-    (f (entities/all-entities)))
-  (s/defn NewBulk :- (s/protocol s/Schema)
-    "Returns NewBulk schema without disabled entities"
-    [services :- GetEntitiesServices]
-    (f (get-entities services))))
+(s/defn NewBulk :- (s/protocol s/Schema)
+  "Returns NewBulk schema without disabled entities"
+  [services :- GetEntitiesServices]
+  (entities-bulk-schema (get-entities services) :new-schema))
 
 (s/defn NewBulkDelete
   "Returns NewBulk schema without disabled entities"

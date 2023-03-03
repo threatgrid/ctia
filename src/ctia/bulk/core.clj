@@ -4,7 +4,6 @@
    [clojure.string :as str]
    [clojure.tools.logging :as log]
    [ctia.auth :as auth]
-   [ctia.bulk.schemas :refer [NewBulk*]]
    [ctia.domain.entities :as ent :refer [with-long-id short-id->long-id]]
    [ctia.entity.entities :refer [all-entities]]
    [ctia.flows.crud :as flows]
@@ -287,12 +286,12 @@
   "Import each new-bulk in order while accumulating tempids."
   [f :- (s/=> {s/Keyword {:data [s/Any]
                           :tempids TempIDs}}
-              NewBulk*
+              (s/named (s/pred map?) 'new-bulk)
               TempIDs)
-   new-bulks ;;:- [NewBulk*]
+   new-bulks
    tempids :- TempIDs]
   (reduce (s/fn [acc :- BulkRefs+TempIDs
-                 new-bulk :- NewBulk*]
+                 new-bulk]
             (let [entities (f new-bulk (:tempids acc))]
               (-> acc
                   (update :bulk-refs #(merge-with into % (update-vals entities :data)))
@@ -309,7 +308,7 @@
    1. Creates all entities except Relationships
    2. Creates Relationships with mapping between transient and real IDs"
   ([new-bulk login services :- APIHandlerServices] (create-bulk new-bulk {} login {} services))
-  ([new-bulk ;;:- NewBulk*
+  ([new-bulk
     tempids :- TempIDs
     login
     params
