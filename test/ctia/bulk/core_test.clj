@@ -321,3 +321,32 @@
                  (is (nil? (read-record sighting-store sighting-id ident-map {}))))
                (doseq [indicator-id (:deleted indicators)]
                  (is (nil? (read-record indicator-store indicator-id ident-map {}))))))))))))
+
+(deftest import-bulks-with-test
+  (is (= {:bulk-refs {}
+          :tempids {"foo" "bar"}}
+         (sut/import-bulks-with
+           (fn [_ _] (assert nil))
+           []
+           {"foo" "bar"})))
+  (let [intermediate-tempids (atom [])]
+    (is (= {:bulk-refs {:incidents [{:id "transientid1"}
+                                    {:id "transientid2"}]}
+            :tempids {"foo" "bar"
+                      "transientid1" "id1"
+                      "transientid2" "id2"}}
+           (sut/import-bulks-with
+             (fn [{:keys [incidents]} tempids]
+               (swap! intermediate-tempids conj tempids)
+               {:incidents {:data incidents
+                            :tempids (into tempids
+                                           (map (fn [{:keys [id]}]
+                                                  {id (subs id (count "transient"))}))
+                                           incidents)}})
+             [{:incidents [{:id "transientid1"}]}
+              {:incidents [{:id "transientid2"}]}]
+             {"foo" "bar"})))
+    (is (= [{"foo" "bar"}
+            {"foo" "bar"
+             "transientid1" "id1"}]
+          @intermediate-tempids))))
