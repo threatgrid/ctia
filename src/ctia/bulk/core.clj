@@ -4,10 +4,11 @@
    [clojure.string :as str]
    [clojure.tools.logging :as log]
    [ctia.auth :as auth]
+   [ctia.bulk.schemas :refer [NewBulk*]]
    [ctia.domain.entities :as ent :refer [with-long-id short-id->long-id]]
    [ctia.entity.entities :refer [all-entities]]
    [ctia.flows.crud :as flows]
-   [ctia.schemas.core :as schemas :refer [APIHandlerServices]]
+   [ctia.schemas.core :as schemas :refer [APIHandlerServices TempIDs]]
    [ctia.schemas.utils :as csu]
    [ctia.store :as store]
    [ring.util.http-response :refer [bad-request!]]
@@ -258,7 +259,7 @@
   [entities-by-type]
   (into {}
         (map (fn [[_ v]] (:tempids v)))
-         entities-by-type))
+        entities-by-type))
 
 (defn bulk-refresh? [get-in-config]
   (get-in-config
@@ -278,6 +279,28 @@
     (bad-request! (str "Bulk max number of entities: "
                        (get-bulk-max-size get-in-config)))))
 
+(s/defschema BulkRefs+TempIDs
+  {:bulk-refs {s/Keyword [s/Any]}
+   :tempids TempIDs})
+
+(s/defn import-bulks-with :- BulkRefs+TempIDs
+  "Import each new-bulk in order while accumulating tempids."
+  [f :- (s/=> {s/Keyword {:data [s/Any]
+                          :tempids TempIDs}}
+              NewBulk*
+              TempIDs)
+   new-bulks ;;:- [NewBulk*]
+   tempids :- TempIDs]
+  (reduce (s/fn [acc :- BulkRefs+TempIDs
+                 new-bulk :- NewBulk*]
+            (let [entities (f new-bulk (:tempids acc))]
+              (-> acc
+                  (update :bulk-refs #(merge-with into % (update-vals entities :data)))
+                  (update :tempids into (merge-tempids entities)))))
+          {:bulk-refs {}
+           :tempids tempids}
+          new-bulks))
+
 (s/defn create-bulk
   "Creates entities in bulk. To define relationships between entities,
    transient IDs can be used. They are automatically converted into
@@ -285,35 +308,29 @@
 
    1. Creates all entities except Relationships
    2. Creates Relationships with mapping between transient and real IDs"
-  ([bulk login services :- APIHandlerServices] (create-bulk bulk {} login {} services))
-  ([bulk tempids login params
+  ([new-bulk login services :- APIHandlerServices] (create-bulk new-bulk {} login {} services))
+  ([new-bulk ;;:- NewBulk*
+    tempids :- TempIDs
+    login
+    params
     {{:keys [get-in-config]} :ConfigService :as services} :- APIHandlerServices]
    (let [{:keys [refresh]
           :or   {refresh (bulk-refresh? get-in-config)}} params
-         {:keys [entities tempids]} (reduce (fn [acc bulk]
-                                              (let [entities (gen-bulk-from-fn
-                                                               create-entities
-                                                               bulk
-                                                               (:tempids acc)
-                                                               login
-                                                               {:refresh refresh}
-                                                               services)]
-                                                (-> acc
-                                                    (update :entities merge entities)
-                                                    (update :tempids into (merge-tempids entities)))))
-                                            {:entities {}
-                                             :tempids tempids}
-                                            [(dissoc bulk :relationships :asset_mappings :asset_properties)
-                                             ;; resolve asset_ref on AssetMapping and AssetProperties
-                                             (select-keys bulk [:asset_mappings :asset_properties])
-                                             ;; resolve transient ids on relationships. all other entities must be realized.
-                                             (select-keys bulk [:relationships])])
-         ;; Extracting data from the enveloped flow result
-         ;; {:entity-type {:data [] :tempids {}}
-         bulk-refs (into {}
-                         (map (fn [[k {:keys [data]}]]
-                                {k data}))
-                         entities)]
+         {:keys [bulk-refs tempids]} (import-bulks-with
+                                       (fn [new-bulk tempids]
+                                         (gen-bulk-from-fn
+                                           create-entities
+                                           new-bulk
+                                           tempids
+                                           login
+                                           {:refresh refresh}
+                                           services))
+                                       [(dissoc new-bulk :relationships :asset_mappings :asset_properties)
+                                        ;; resolve asset_ref on AssetMapping and AssetProperties
+                                        (select-keys new-bulk [:asset_mappings :asset_properties])
+                                        ;; resolve transient ids on relationships. all other entities must be realized.
+                                        (select-keys new-bulk [:relationships])]
+                                       tempids)]
      (cond-> bulk-refs
        (seq tempids) (assoc :tempids tempids)))))
 
