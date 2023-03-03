@@ -60,14 +60,9 @@
   [services :- GetEntitiesServices]
   (entities-bulk-schema (get-entities services) :new-schema))
 
-(let [f #(entities-bulk-schema % [(s/maybe Reference)])]
-  (s/defschema BulkRefs*
-    "Returns BulkRefs schema with disabled entities"
-    (f (entities/all-entities)))
-  (s/defn BulkRefs :- (s/protocol s/Schema)
-    "Returns BulkRefs schema without disabled entities"
-    [services :- GetEntitiesServices]
-    (f (get-entities services))))
+(s/defn BulkRefs :- (s/protocol s/Schema)
+  [services :- GetEntitiesServices]
+  (entities-bulk-schema (get-entities services) [(s/maybe Reference)]))
 
 (let [f #(st/assoc % (s/optional-key :tempids) TempIDs)]
   (s/defschema BulkCreateRes*
