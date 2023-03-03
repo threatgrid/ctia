@@ -13,6 +13,7 @@
             [ctia.test-helpers.fixtures :as fixt]
             [ctia.auth.threatgrid :refer [map->Identity]]
             [ctia.domain.entities :refer [short-id->long-id]]
+            [ctim.examples.incidents :refer [incident-minimal]]
             [ctim.examples.sightings :refer [sighting-minimal]]
             [ctim.examples.indicators :refer [indicator-minimal]]
             [puppetlabs.trapperkeeper.app :as app]
@@ -329,9 +330,10 @@
            (fn [_ _] (assert nil))
            []
            {"foo" "bar"})))
-  (let [intermediate-tempids (atom [])]
-    (is (= {:bulk-refs {:incidents [{:id "transientid1"}
-                                    {:id "transientid2"}]}
+  (let [intermediate-tempids (atom [])
+        incident1 (assoc incident-minimal :id "transientid1")
+        incident2 (assoc incident-minimal :id "transientid2")]
+    (is (= {:bulk-refs {:incidents [incident1 incident2]}
             :tempids {"foo" "bar"
                       "transientid1" "id1"
                       "transientid2" "id2"}}
@@ -343,8 +345,8 @@
                                            (map (fn [{:keys [id]}]
                                                   {id (subs id (count "transient"))}))
                                            incidents)}})
-             [{:incidents [{:id "transientid1"}]}
-              {:incidents [{:id "transientid2"}]}]
+             [{:incidents [incident1]}
+              {:incidents [incident2]}]
              {"foo" "bar"})))
     (is (= [{"foo" "bar"}
             {"foo" "bar"
