@@ -13,6 +13,7 @@
             [ctia.test-helpers.fixtures :as fixt]
             [ctia.auth.threatgrid :refer [map->Identity]]
             [ctia.domain.entities :refer [short-id->long-id]]
+            [ctim.examples.incidents :refer [incident-minimal]]
             [ctim.examples.sightings :refer [sighting-minimal]]
             [ctim.examples.indicators :refer [indicator-minimal]]
             [puppetlabs.trapperkeeper.app :as app]
@@ -206,8 +207,9 @@
              (sut/create-bulk with-errors
                               {}
                               ident
-                              {:refresh "true"} services)]
-         (testing "bulk-create shall properly create submitties entitites"
+                              {:refresh "true"}
+                              services)]
+         (testing "bulk-create shall properly create submitted entities"
            (is (= 5
                   (count sighting-ids)
                   (count indicator-ids)))
@@ -321,3 +323,33 @@
                  (is (nil? (read-record sighting-store sighting-id ident-map {}))))
                (doseq [indicator-id (:deleted indicators)]
                  (is (nil? (read-record indicator-store indicator-id ident-map {}))))))))))))
+
+(deftest import-bulks-with-test
+  (is (= {:bulk-refs {}
+          :tempids {"foo" "bar"}}
+         (sut/import-bulks-with
+           (fn [_ _] (assert nil))
+           []
+           {"foo" "bar"})))
+  (let [intermediate-tempids (atom [])
+        incident1 (assoc incident-minimal :id "transientid1")
+        incident2 (assoc incident-minimal :id "transientid2")]
+    (is (= {:bulk-refs {:incidents [incident1 incident2]}
+            :tempids {"foo" "bar"
+                      "transientid1" "id1"
+                      "transientid2" "id2"}}
+           (sut/import-bulks-with
+             (fn [{:keys [incidents]} tempids]
+               (swap! intermediate-tempids conj tempids)
+               {:incidents {:data incidents
+                            :tempids (into tempids
+                                           (map (fn [{:keys [id]}]
+                                                  {id (subs id (count "transient"))}))
+                                           incidents)}})
+             [{:incidents [incident1]}
+              {:incidents [incident2]}]
+             {"foo" "bar"})))
+    (is (= [{"foo" "bar"}
+            {"foo" "bar"
+             "transientid1" "id1"}]
+          @intermediate-tempids))))
