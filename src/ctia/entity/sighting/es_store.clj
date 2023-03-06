@@ -36,7 +36,9 @@
       :internal em/boolean-type
       :observables em/observable
       :observables_hash em/token
-      :relations em/observed-relation})}})
+      :relations em/observed-relation
+      :context {:type "object"
+                :enabled false}})}})
 
 (s/defschema ESStoredSighting
   (st/assoc StoredSighting :observables_hash [s/Str]))
