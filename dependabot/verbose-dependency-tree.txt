@@ -62,9 +62,8 @@ ctia:ctia:jar:1.1.1-SNAPSHOT
 +- prismatic:plumbing:jar:0.5.5:compile
 |  +- (prismatic:schema:jar:1.1.7:compile - omitted for conflict with 1.1.12)
 |  \- de.kotka:lazymap:jar:3.1.0:compile
-+- org.yaml:snakeyaml:jar:2.0:compile
 +- clj-commons:clj-yaml:jar:1.0.26:compile
-|  +- (org.yaml:snakeyaml:jar:1.33:compile - omitted for conflict with 2.0)
+|  +- org.yaml:snakeyaml:jar:1.33:compile
 |  \- org.flatland:ordered:jar:1.5.9:compile
 +- prismatic:schema:jar:1.2.0:compile
 +- metosin:schema-tools:jar:0.12.2:compile
