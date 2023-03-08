@@ -159,8 +159,7 @@
                  [com.fasterxml.jackson.dataformat/jackson-dataformat-cbor ~jackson-version] ;; bump cheshire, align with jackson-databind
                  [com.fasterxml.jackson.core/jackson-databind ~jackson-databind-version] ;; bump onyx-kafka and others
                  [zookeeper-clj "0.9.4"]
-                 [org.apache.logging.log4j/log4j-api ~log4j2-version]
-                 [org.apache.logging.log4j/log4j-core ~log4j2-version]
+                 [org.apache.logging.log4j/log4j-core ~log4j2-version] ;;log4j2
                  [org.apache.logging.log4j/log4j-1.2-api ~log4j2-version] ;; log4j 1=>2 bridge
 
                  ;; firehose
