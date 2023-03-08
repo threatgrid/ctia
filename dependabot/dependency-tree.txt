@@ -207,8 +207,7 @@ ctia:ctia:jar:1.1.1-SNAPSHOT
 |  +- org.apache.zookeeper:zookeeper-jute:jar:3.5.6:compile
 |  +- org.apache.yetus:audience-annotations:jar:0.5.0:compile
 |  +- io.netty:netty-transport-native-epoll:jar:4.1.42.Final:compile
-|  +- org.slf4j:slf4j-api:jar:1.7.25:compile
-|  \- log4j:log4j:jar:1.2.17:compile
+|  \- org.slf4j:slf4j-api:jar:1.7.25:compile
 +- args4j:args4j:jar:2.33:compile
 +- com.stuartsierra:component:jar:1.1.0:compile
 |  \- com.stuartsierra:dependency:jar:1.0.0:compile
@@ -256,6 +255,9 @@ ctia:ctia:jar:1.1.1-SNAPSHOT
 +- com.fasterxml.jackson.core:jackson-databind:jar:2.13.4.2:compile
 |  \- com.fasterxml.jackson.core:jackson-annotations:jar:2.13.4:compile
 +- zookeeper-clj:zookeeper-clj:jar:0.9.4:compile
++- org.apache.logging.log4j:log4j-api:jar:2.20.0:compile
++- org.apache.logging.log4j:log4j-core:jar:2.20.0:compile
++- org.apache.logging.log4j:log4j-1.2-api:jar:2.20.0:compile
 +- software.amazon.awssdk:firehose:jar:2.17.232:compile
 |  +- software.amazon.awssdk:aws-json-protocol:jar:2.17.232:compile
 |  |  +- software.amazon.awssdk:third-party-jackson-core:jar:2.17.232:compile

@@ -11,6 +11,7 @@
 (def test-check-version "1.1.1")
 (def test-chuck-version "0.2.13")
 (def trapperkeeper-version "3.2.0")
+(def log4j2-version "2.20.0")
 
 ;; TODO we could add -dev here when it works
 (def base-ci-profiles "+test,+ci")
@@ -58,7 +59,8 @@
   :jvm-opts ["-Djava.awt.headless=true"
              "-Dlog.console.threshold=INFO"
              "-server"]
-  :exclusions [io.netty/netty ;; moved to io.netty/netty-all
+  :exclusions [log4j/log4j ;; subsumed by org.apache.logging.log4j/log4j-api
+               io.netty/netty ;; moved to io.netty/netty-all
                org.slf4j/slf4j-log4j12
                org.slf4j/slf4j-nop] ;; Removed in favor of logback
   ;; use `lein pom; mvn dependency:tree -Dverbose -Dexcludes=org.clojure:clojure`
@@ -157,6 +159,9 @@
                  [com.fasterxml.jackson.dataformat/jackson-dataformat-cbor ~jackson-version] ;; bump cheshire, align with jackson-databind
                  [com.fasterxml.jackson.core/jackson-databind ~jackson-databind-version] ;; bump onyx-kafka and others
                  [zookeeper-clj "0.9.4"]
+                 [org.apache.logging.log4j/log4j-api ~log4j2-version]
+                 [org.apache.logging.log4j/log4j-core ~log4j2-version]
+                 [org.apache.logging.log4j/log4j-1.2-api ~log4j2-version] ;; log4j 1=>2 bridge
 
                  ;; firehose
                  [software.amazon.awssdk/firehose "2.17.232" :exclusions

@@ -77,6 +77,10 @@
           <artifactId>netty</artifactId>
           <groupId>io.netty</groupId>
         </exclusion>
+        <exclusion>
+          <artifactId>log4j</artifactId>
+          <groupId>log4j</groupId>
+        </exclusion>
       </exclusions>
     </dependency>
     <dependency>
@@ -95,6 +99,10 @@
         <exclusion>
           <artifactId>netty</artifactId>
           <groupId>io.netty</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>log4j</artifactId>
+          <groupId>log4j</groupId>
         </exclusion>
       </exclusions>
     </dependency>
@@ -115,6 +123,10 @@
           <artifactId>netty</artifactId>
           <groupId>io.netty</groupId>
         </exclusion>
+        <exclusion>
+          <artifactId>log4j</artifactId>
+          <groupId>log4j</groupId>
+        </exclusion>
       </exclusions>
     </dependency>
     <dependency>
@@ -133,6 +145,10 @@
         <exclusion>
           <artifactId>netty</artifactId>
           <groupId>io.netty</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>log4j</artifactId>
+          <groupId>log4j</groupId>
         </exclusion>
       </exclusions>
     </dependency>
@@ -153,6 +169,10 @@
           <artifactId>netty</artifactId>
           <groupId>io.netty</groupId>
         </exclusion>
+        <exclusion>
+          <artifactId>log4j</artifactId>
+          <groupId>log4j</groupId>
+        </exclusion>
       </exclusions>
     </dependency>
     <dependency>
@@ -171,6 +191,10 @@
         <exclusion>
           <artifactId>netty</artifactId>
           <groupId>io.netty</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>log4j</artifactId>
+          <groupId>log4j</groupId>
         </exclusion>
       </exclusions>
     </dependency>
@@ -191,6 +215,10 @@
           <artifactId>netty</artifactId>
           <groupId>io.netty</groupId>
         </exclusion>
+        <exclusion>
+          <artifactId>log4j</artifactId>
+          <groupId>log4j</groupId>
+        </exclusion>
       </exclusions>
     </dependency>
     <dependency>
@@ -209,6 +237,10 @@
         <exclusion>
           <artifactId>netty</artifactId>
           <groupId>io.netty</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>log4j</artifactId>
+          <groupId>log4j</groupId>
         </exclusion>
       </exclusions>
     </dependency>
@@ -229,6 +261,10 @@
           <artifactId>netty</artifactId>
           <groupId>io.netty</groupId>
         </exclusion>
+        <exclusion>
+          <artifactId>log4j</artifactId>
+          <groupId>log4j</groupId>
+        </exclusion>
       </exclusions>
     </dependency>
     <dependency>
@@ -247,6 +283,10 @@
         <exclusion>
           <artifactId>netty</artifactId>
           <groupId>io.netty</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>log4j</artifactId>
+          <groupId>log4j</groupId>
         </exclusion>
       </exclusions>
       <scope>test</scope>
@@ -268,6 +308,10 @@
           <artifactId>netty</artifactId>
           <groupId>io.netty</groupId>
         </exclusion>
+        <exclusion>
+          <artifactId>log4j</artifactId>
+          <groupId>log4j</groupId>
+        </exclusion>
       </exclusions>
     </dependency>
     <dependency>
@@ -286,6 +330,10 @@
         <exclusion>
           <artifactId>netty</artifactId>
           <groupId>io.netty</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>log4j</artifactId>
+          <groupId>log4j</groupId>
         </exclusion>
       </exclusions>
     </dependency>
@@ -306,6 +354,10 @@
           <artifactId>netty</artifactId>
           <groupId>io.netty</groupId>
         </exclusion>
+        <exclusion>
+          <artifactId>log4j</artifactId>
+          <groupId>log4j</groupId>
+        </exclusion>
       </exclusions>
     </dependency>
     <dependency>
@@ -324,6 +376,10 @@
         <exclusion>
           <artifactId>netty</artifactId>
           <groupId>io.netty</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>log4j</artifactId>
+          <groupId>log4j</groupId>
         </exclusion>
       </exclusions>
     </dependency>
@@ -344,6 +400,10 @@
           <artifactId>netty</artifactId>
           <groupId>io.netty</groupId>
         </exclusion>
+        <exclusion>
+          <artifactId>log4j</artifactId>
+          <groupId>log4j</groupId>
+        </exclusion>
       </exclusions>
     </dependency>
     <dependency>
@@ -362,6 +422,10 @@
         <exclusion>
           <artifactId>netty</artifactId>
           <groupId>io.netty</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>log4j</artifactId>
+          <groupId>log4j</groupId>
         </exclusion>
       </exclusions>
     </dependency>
@@ -382,6 +446,10 @@
           <artifactId>netty</artifactId>
           <groupId>io.netty</groupId>
         </exclusion>
+        <exclusion>
+          <artifactId>log4j</artifactId>
+          <groupId>log4j</groupId>
+        </exclusion>
       </exclusions>
     </dependency>
     <dependency>
@@ -400,6 +468,10 @@
         <exclusion>
           <artifactId>netty</artifactId>
           <groupId>io.netty</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>log4j</artifactId>
+          <groupId>log4j</groupId>
         </exclusion>
       </exclusions>
     </dependency>
@@ -420,6 +492,10 @@
           <artifactId>netty</artifactId>
           <groupId>io.netty</groupId>
         </exclusion>
+        <exclusion>
+          <artifactId>log4j</artifactId>
+          <groupId>log4j</groupId>
+        </exclusion>
       </exclusions>
     </dependency>
     <dependency>
@@ -438,6 +514,10 @@
         <exclusion>
           <artifactId>netty</artifactId>
           <groupId>io.netty</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>log4j</artifactId>
+          <groupId>log4j</groupId>
         </exclusion>
       </exclusions>
     </dependency>
@@ -458,6 +538,10 @@
           <artifactId>netty</artifactId>
           <groupId>io.netty</groupId>
         </exclusion>
+        <exclusion>
+          <artifactId>log4j</artifactId>
+          <groupId>log4j</groupId>
+        </exclusion>
       </exclusions>
     </dependency>
     <dependency>
@@ -476,6 +560,10 @@
         <exclusion>
           <artifactId>netty</artifactId>
           <groupId>io.netty</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>log4j</artifactId>
+          <groupId>log4j</groupId>
         </exclusion>
       </exclusions>
     </dependency>
@@ -496,6 +584,10 @@
           <artifactId>netty</artifactId>
           <groupId>io.netty</groupId>
         </exclusion>
+        <exclusion>
+          <artifactId>log4j</artifactId>
+          <groupId>log4j</groupId>
+        </exclusion>
       </exclusions>
     </dependency>
     <dependency>
@@ -514,6 +606,10 @@
         <exclusion>
           <artifactId>netty</artifactId>
           <groupId>io.netty</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>log4j</artifactId>
+          <groupId>log4j</groupId>
         </exclusion>
       </exclusions>
     </dependency>
@@ -534,6 +630,10 @@
           <artifactId>netty</artifactId>
           <groupId>io.netty</groupId>
         </exclusion>
+        <exclusion>
+          <artifactId>log4j</artifactId>
+          <groupId>log4j</groupId>
+        </exclusion>
       </exclusions>
     </dependency>
     <dependency>
@@ -552,6 +652,10 @@
         <exclusion>
           <artifactId>netty</artifactId>
           <groupId>io.netty</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>log4j</artifactId>
+          <groupId>log4j</groupId>
         </exclusion>
       </exclusions>
     </dependency>
@@ -572,6 +676,10 @@
           <artifactId>netty</artifactId>
           <groupId>io.netty</groupId>
         </exclusion>
+        <exclusion>
+          <artifactId>log4j</artifactId>
+          <groupId>log4j</groupId>
+        </exclusion>
       </exclusions>
     </dependency>
     <dependency>
@@ -590,6 +698,10 @@
         <exclusion>
           <artifactId>netty</artifactId>
           <groupId>io.netty</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>log4j</artifactId>
+          <groupId>log4j</groupId>
         </exclusion>
       </exclusions>
     </dependency>
@@ -610,6 +722,10 @@
           <artifactId>netty</artifactId>
           <groupId>io.netty</groupId>
         </exclusion>
+        <exclusion>
+          <artifactId>log4j</artifactId>
+          <groupId>log4j</groupId>
+        </exclusion>
       </exclusions>
     </dependency>
     <dependency>
@@ -628,6 +744,10 @@
         <exclusion>
           <artifactId>netty</artifactId>
           <groupId>io.netty</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>log4j</artifactId>
+          <groupId>log4j</groupId>
         </exclusion>
       </exclusions>
     </dependency>
@@ -648,6 +768,10 @@
           <artifactId>netty</artifactId>
           <groupId>io.netty</groupId>
         </exclusion>
+        <exclusion>
+          <artifactId>log4j</artifactId>
+          <groupId>log4j</groupId>
+        </exclusion>
       </exclusions>
     </dependency>
     <dependency>
@@ -666,6 +790,10 @@
         <exclusion>
           <artifactId>netty</artifactId>
           <groupId>io.netty</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>log4j</artifactId>
+          <groupId>log4j</groupId>
         </exclusion>
       </exclusions>
     </dependency>
@@ -686,6 +814,10 @@
           <artifactId>netty</artifactId>
           <groupId>io.netty</groupId>
         </exclusion>
+        <exclusion>
+          <artifactId>log4j</artifactId>
+          <groupId>log4j</groupId>
+        </exclusion>
       </exclusions>
     </dependency>
     <dependency>
@@ -704,6 +836,10 @@
         <exclusion>
           <artifactId>netty</artifactId>
           <groupId>io.netty</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>log4j</artifactId>
+          <groupId>log4j</groupId>
         </exclusion>
       </exclusions>
     </dependency>
@@ -724,6 +860,10 @@
           <artifactId>netty</artifactId>
           <groupId>io.netty</groupId>
         </exclusion>
+        <exclusion>
+          <artifactId>log4j</artifactId>
+          <groupId>log4j</groupId>
+        </exclusion>
       </exclusions>
     </dependency>
     <dependency>
@@ -742,6 +882,10 @@
         <exclusion>
           <artifactId>netty</artifactId>
           <groupId>io.netty</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>log4j</artifactId>
+          <groupId>log4j</groupId>
         </exclusion>
       </exclusions>
     </dependency>
@@ -762,6 +906,10 @@
           <artifactId>netty</artifactId>
           <groupId>io.netty</groupId>
         </exclusion>
+        <exclusion>
+          <artifactId>log4j</artifactId>
+          <groupId>log4j</groupId>
+        </exclusion>
       </exclusions>
     </dependency>
     <dependency>
@@ -780,6 +928,10 @@
         <exclusion>
           <artifactId>netty</artifactId>
           <groupId>io.netty</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>log4j</artifactId>
+          <groupId>log4j</groupId>
         </exclusion>
       </exclusions>
     </dependency>
@@ -800,6 +952,10 @@
           <artifactId>netty</artifactId>
           <groupId>io.netty</groupId>
         </exclusion>
+        <exclusion>
+          <artifactId>log4j</artifactId>
+          <groupId>log4j</groupId>
+        </exclusion>
       </exclusions>
     </dependency>
     <dependency>
@@ -818,6 +974,10 @@
         <exclusion>
           <artifactId>netty</artifactId>
           <groupId>io.netty</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>log4j</artifactId>
+          <groupId>log4j</groupId>
         </exclusion>
       </exclusions>
     </dependency>
@@ -838,6 +998,10 @@
           <artifactId>netty</artifactId>
           <groupId>io.netty</groupId>
         </exclusion>
+        <exclusion>
+          <artifactId>log4j</artifactId>
+          <groupId>log4j</groupId>
+        </exclusion>
       </exclusions>
     </dependency>
     <dependency>
@@ -856,6 +1020,10 @@
         <exclusion>
           <artifactId>netty</artifactId>
           <groupId>io.netty</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>log4j</artifactId>
+          <groupId>log4j</groupId>
         </exclusion>
       </exclusions>
     </dependency>
@@ -876,6 +1044,10 @@
           <artifactId>netty</artifactId>
           <groupId>io.netty</groupId>
         </exclusion>
+        <exclusion>
+          <artifactId>log4j</artifactId>
+          <groupId>log4j</groupId>
+        </exclusion>
       </exclusions>
     </dependency>
     <dependency>
@@ -894,6 +1066,10 @@
         <exclusion>
           <artifactId>netty</artifactId>
           <groupId>io.netty</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>log4j</artifactId>
+          <groupId>log4j</groupId>
         </exclusion>
       </exclusions>
     </dependency>
@@ -914,6 +1090,10 @@
           <artifactId>netty</artifactId>
           <groupId>io.netty</groupId>
         </exclusion>
+        <exclusion>
+          <artifactId>log4j</artifactId>
+          <groupId>log4j</groupId>
+        </exclusion>
       </exclusions>
     </dependency>
     <dependency>
@@ -932,6 +1112,10 @@
         <exclusion>
           <artifactId>netty</artifactId>
           <groupId>io.netty</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>log4j</artifactId>
+          <groupId>log4j</groupId>
         </exclusion>
       </exclusions>
     </dependency>
@@ -952,6 +1136,10 @@
           <artifactId>netty</artifactId>
           <groupId>io.netty</groupId>
         </exclusion>
+        <exclusion>
+          <artifactId>log4j</artifactId>
+          <groupId>log4j</groupId>
+        </exclusion>
       </exclusions>
     </dependency>
     <dependency>
@@ -970,6 +1158,10 @@
         <exclusion>
           <artifactId>netty</artifactId>
           <groupId>io.netty</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>log4j</artifactId>
+          <groupId>log4j</groupId>
         </exclusion>
       </exclusions>
     </dependency>
@@ -990,6 +1182,10 @@
           <artifactId>netty</artifactId>
           <groupId>io.netty</groupId>
         </exclusion>
+        <exclusion>
+          <artifactId>log4j</artifactId>
+          <groupId>log4j</groupId>
+        </exclusion>
       </exclusions>
     </dependency>
     <dependency>
@@ -1008,6 +1204,10 @@
         <exclusion>
           <artifactId>netty</artifactId>
           <groupId>io.netty</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>log4j</artifactId>
+          <groupId>log4j</groupId>
         </exclusion>
       </exclusions>
     </dependency>
@@ -1028,6 +1228,10 @@
           <artifactId>netty</artifactId>
           <groupId>io.netty</groupId>
         </exclusion>
+        <exclusion>
+          <artifactId>log4j</artifactId>
+          <groupId>log4j</groupId>
+        </exclusion>
       </exclusions>
     </dependency>
     <dependency>
@@ -1046,6 +1250,10 @@
         <exclusion>
           <artifactId>netty</artifactId>
           <groupId>io.netty</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>log4j</artifactId>
+          <groupId>log4j</groupId>
         </exclusion>
       </exclusions>
     </dependency>
@@ -1066,6 +1274,10 @@
           <artifactId>netty</artifactId>
           <groupId>io.netty</groupId>
         </exclusion>
+        <exclusion>
+          <artifactId>log4j</artifactId>
+          <groupId>log4j</groupId>
+        </exclusion>
       </exclusions>
     </dependency>
     <dependency>
@@ -1084,6 +1296,10 @@
         <exclusion>
           <artifactId>netty</artifactId>
           <groupId>io.netty</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>log4j</artifactId>
+          <groupId>log4j</groupId>
         </exclusion>
       </exclusions>
     </dependency>
@@ -1104,6 +1320,10 @@
           <artifactId>netty</artifactId>
           <groupId>io.netty</groupId>
         </exclusion>
+        <exclusion>
+          <artifactId>log4j</artifactId>
+          <groupId>log4j</groupId>
+        </exclusion>
       </exclusions>
     </dependency>
     <dependency>
@@ -1122,6 +1342,10 @@
         <exclusion>
           <artifactId>netty</artifactId>
           <groupId>io.netty</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>log4j</artifactId>
+          <groupId>log4j</groupId>
         </exclusion>
       </exclusions>
     </dependency>
@@ -1142,6 +1366,10 @@
           <artifactId>netty</artifactId>
           <groupId>io.netty</groupId>
         </exclusion>
+        <exclusion>
+          <artifactId>log4j</artifactId>
+          <groupId>log4j</groupId>
+        </exclusion>
       </exclusions>
     </dependency>
     <dependency>
@@ -1160,6 +1388,10 @@
         <exclusion>
           <artifactId>netty</artifactId>
           <groupId>io.netty</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>log4j</artifactId>
+          <groupId>log4j</groupId>
         </exclusion>
       </exclusions>
     </dependency>
@@ -1180,6 +1412,10 @@
           <artifactId>netty</artifactId>
           <groupId>io.netty</groupId>
         </exclusion>
+        <exclusion>
+          <artifactId>log4j</artifactId>
+          <groupId>log4j</groupId>
+        </exclusion>
       </exclusions>
     </dependency>
     <dependency>
@@ -1198,6 +1434,10 @@
         <exclusion>
           <artifactId>netty</artifactId>
           <groupId>io.netty</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>log4j</artifactId>
+          <groupId>log4j</groupId>
         </exclusion>
       </exclusions>
     </dependency>
@@ -1218,6 +1458,10 @@
           <artifactId>netty</artifactId>
           <groupId>io.netty</groupId>
         </exclusion>
+        <exclusion>
+          <artifactId>log4j</artifactId>
+          <groupId>log4j</groupId>
+        </exclusion>
       </exclusions>
     </dependency>
     <dependency>
@@ -1236,6 +1480,10 @@
         <exclusion>
           <artifactId>netty</artifactId>
           <groupId>io.netty</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>log4j</artifactId>
+          <groupId>log4j</groupId>
         </exclusion>
       </exclusions>
     </dependency>
@@ -1256,6 +1504,10 @@
           <artifactId>netty</artifactId>
           <groupId>io.netty</groupId>
         </exclusion>
+        <exclusion>
+          <artifactId>log4j</artifactId>
+          <groupId>log4j</groupId>
+        </exclusion>
       </exclusions>
     </dependency>
     <dependency>
@@ -1274,6 +1526,10 @@
         <exclusion>
           <artifactId>netty</artifactId>
           <groupId>io.netty</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>log4j</artifactId>
+          <groupId>log4j</groupId>
         </exclusion>
       </exclusions>
     </dependency>
@@ -1294,6 +1550,10 @@
           <artifactId>netty</artifactId>
           <groupId>io.netty</groupId>
         </exclusion>
+        <exclusion>
+          <artifactId>log4j</artifactId>
+          <groupId>log4j</groupId>
+        </exclusion>
       </exclusions>
     </dependency>
     <dependency>
@@ -1312,6 +1572,10 @@
         <exclusion>
           <artifactId>netty</artifactId>
           <groupId>io.netty</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>log4j</artifactId>
+          <groupId>log4j</groupId>
         </exclusion>
       </exclusions>
     </dependency>
@@ -1332,6 +1596,10 @@
           <artifactId>netty</artifactId>
           <groupId>io.netty</groupId>
         </exclusion>
+        <exclusion>
+          <artifactId>log4j</artifactId>
+          <groupId>log4j</groupId>
+        </exclusion>
       </exclusions>
     </dependency>
     <dependency>
@@ -1351,6 +1619,79 @@
           <artifactId>netty</artifactId>
           <groupId>io.netty</groupId>
         </exclusion>
+        <exclusion>
+          <artifactId>log4j</artifactId>
+          <groupId>log4j</groupId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.logging.log4j</groupId>
+      <artifactId>log4j-api</artifactId>
+      <version>2.20.0</version>
+      <exclusions>
+        <exclusion>
+          <artifactId>slf4j-nop</artifactId>
+          <groupId>org.slf4j</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>slf4j-log4j12</artifactId>
+          <groupId>org.slf4j</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>netty</artifactId>
+          <groupId>io.netty</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>log4j</artifactId>
+          <groupId>log4j</groupId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.logging.log4j</groupId>
+      <artifactId>log4j-core</artifactId>
+      <version>2.20.0</version>
+      <exclusions>
+        <exclusion>
+          <artifactId>slf4j-nop</artifactId>
+          <groupId>org.slf4j</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>slf4j-log4j12</artifactId>
+          <groupId>org.slf4j</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>netty</artifactId>
+          <groupId>io.netty</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>log4j</artifactId>
+          <groupId>log4j</groupId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.logging.log4j</groupId>
+      <artifactId>log4j-1.2-api</artifactId>
+      <version>2.20.0</version>
+      <exclusions>
+        <exclusion>
+          <artifactId>slf4j-nop</artifactId>
+          <groupId>org.slf4j</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>slf4j-log4j12</artifactId>
+          <groupId>org.slf4j</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>netty</artifactId>
+          <groupId>io.netty</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>log4j</artifactId>
+          <groupId>log4j</groupId>
+        </exclusion>
       </exclusions>
     </dependency>
     <dependency>
@@ -1369,6 +1710,10 @@
         <exclusion>
           <artifactId>netty</artifactId>
           <groupId>io.netty</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>log4j</artifactId>
+          <groupId>log4j</groupId>
         </exclusion>
         <exclusion>
           <artifactId>netty-all</artifactId>
@@ -1449,6 +1794,10 @@
           <artifactId>netty</artifactId>
           <groupId>io.netty</groupId>
         </exclusion>
+        <exclusion>
+          <artifactId>log4j</artifactId>
+          <groupId>log4j</groupId>
+        </exclusion>
       </exclusions>
     </dependency>
     <dependency>
@@ -1467,6 +1816,10 @@
         <exclusion>
           <artifactId>netty</artifactId>
           <groupId>io.netty</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>log4j</artifactId>
+          <groupId>log4j</groupId>
         </exclusion>
       </exclusions>
     </dependency>
@@ -1487,6 +1840,10 @@
           <artifactId>netty</artifactId>
           <groupId>io.netty</groupId>
         </exclusion>
+        <exclusion>
+          <artifactId>log4j</artifactId>
+          <groupId>log4j</groupId>
+        </exclusion>
       </exclusions>
     </dependency>
     <dependency>
@@ -1505,6 +1862,10 @@
         <exclusion>
           <artifactId>netty</artifactId>
           <groupId>io.netty</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>log4j</artifactId>
+          <groupId>log4j</groupId>
         </exclusion>
       </exclusions>
     </dependency>
@@ -1525,6 +1886,10 @@
         <exclusion>
           <artifactId>netty</artifactId>
           <groupId>io.netty</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>log4j</artifactId>
+          <groupId>log4j</groupId>
         </exclusion>
       </exclusions>
       <scope>test</scope>
@@ -1547,6 +1912,10 @@
           <artifactId>netty</artifactId>
           <groupId>io.netty</groupId>
         </exclusion>
+        <exclusion>
+          <artifactId>log4j</artifactId>
+          <groupId>log4j</groupId>
+        </exclusion>
       </exclusions>
       <scope>test</scope>
     </dependency>
@@ -1566,6 +1935,10 @@
         <exclusion>
           <artifactId>netty</artifactId>
           <groupId>io.netty</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>log4j</artifactId>
+          <groupId>log4j</groupId>
         </exclusion>
       </exclusions>
       <scope>test</scope>
@@ -1587,6 +1960,10 @@
           <artifactId>netty</artifactId>
           <groupId>io.netty</groupId>
         </exclusion>
+        <exclusion>
+          <artifactId>log4j</artifactId>
+          <groupId>log4j</groupId>
+        </exclusion>
       </exclusions>
       <scope>test</scope>
     </dependency>
@@ -1606,6 +1983,10 @@
         <exclusion>
           <artifactId>netty</artifactId>
           <groupId>io.netty</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>log4j</artifactId>
+          <groupId>log4j</groupId>
         </exclusion>
       </exclusions>
       <scope>test</scope>
@@ -1627,6 +2008,10 @@
           <artifactId>netty</artifactId>
           <groupId>io.netty</groupId>
         </exclusion>
+        <exclusion>
+          <artifactId>log4j</artifactId>
+          <groupId>log4j</groupId>
+        </exclusion>
       </exclusions>
       <scope>test</scope>
     </dependency>
@@ -1646,6 +2031,10 @@
         <exclusion>
           <artifactId>netty</artifactId>
           <groupId>io.netty</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>log4j</artifactId>
+          <groupId>log4j</groupId>
         </exclusion>
       </exclusions>
       <scope>test</scope>
@@ -1667,6 +2056,10 @@
           <artifactId>netty</artifactId>
           <groupId>io.netty</groupId>
         </exclusion>
+        <exclusion>
+          <artifactId>log4j</artifactId>
+          <groupId>log4j</groupId>
+        </exclusion>
       </exclusions>
       <scope>test</scope>
     </dependency>
@@ -1686,6 +2079,10 @@
         <exclusion>
           <artifactId>netty</artifactId>
           <groupId>io.netty</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>log4j</artifactId>
+          <groupId>log4j</groupId>
         </exclusion>
       </exclusions>
       <scope>test</scope>
