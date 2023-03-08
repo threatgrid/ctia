@@ -80,6 +80,7 @@
                  [puppetlabs/trapperkeeper ~trapperkeeper-version]
                  [puppetlabs/kitchensink ~trapperkeeper-version]
                  [prismatic/plumbing "0.5.5"] ;; upgrade puppetlabs/trapperkeeper
+                 [org.yaml/snakeyaml "1.33"] ;; security fix
 
                  ;; Schemas
                  [prismatic/schema "1.2.0"]
