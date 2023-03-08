@@ -27,8 +27,6 @@ ctia:ctia:jar:1.1.1-SNAPSHOT
 |  +- clj-commons:fs:jar:1.6.307:compile
 |  |  +- org.apache.commons:commons-compress:jar:1.20:compile
 |  |  \- org.tukaani:xz:jar:1.8:compile
-|  +- clj-commons:clj-yaml:jar:0.7.2:compile
-|  |  \- org.flatland:ordered:jar:1.5.9:compile
 |  +- beckon:beckon:jar:0.1.1:compile
 |  +- puppetlabs:typesafe-config:jar:0.2.0:compile
 |  |  \- com.typesafe:config:jar:1.4.1:compile
@@ -44,6 +42,8 @@ ctia:ctia:jar:1.1.1-SNAPSHOT
 +- prismatic:plumbing:jar:0.5.5:compile
 |  \- de.kotka:lazymap:jar:3.1.0:compile
 +- org.yaml:snakeyaml:jar:2.0:compile
++- clj-commons:clj-yaml:jar:1.0.26:compile
+|  \- org.flatland:ordered:jar:1.5.9:compile
 +- prismatic:schema:jar:1.2.0:compile
 +- metosin:schema-tools:jar:0.12.2:compile
 +- threatgrid:flanders:jar:0.1.23:compile

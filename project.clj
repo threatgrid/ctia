@@ -81,6 +81,7 @@
                  [puppetlabs/kitchensink ~trapperkeeper-version]
                  [prismatic/plumbing "0.5.5"] ;; upgrade puppetlabs/trapperkeeper
                  [org.yaml/snakeyaml "2.0"] ;; security fix
+                 [clj-commons/clj-yaml "1.0.26"] ;; compatible with snakeyaml 2.0
 
                  ;; Schemas
                  [prismatic/schema "1.2.0"]
