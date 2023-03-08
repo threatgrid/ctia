@@ -80,6 +80,7 @@
                  [puppetlabs/trapperkeeper ~trapperkeeper-version]
                  [puppetlabs/kitchensink ~trapperkeeper-version]
                  [prismatic/plumbing "0.5.5"] ;; upgrade puppetlabs/trapperkeeper
+                 [clj-commons/clj-yaml "1.0.26"] ;; upgrade snakeyaml dep
 
                  ;; Schemas
                  [prismatic/schema "1.2.0"]
@@ -224,7 +225,8 @@
                   :jvm-opts [ ;; actually print stack traces instead of useless
                              ;; "Full report at: /tmp/clojure-8187773283812483853.edn"
                              "-Dclojure.main.report=stderr"]}
-             :next-clojure {:dependencies [[org.clojure/clojure "1.11.0-rc1"]]}
+             :next-clojure {:dependencies [[org.clojure/clojure "1.12.0-master-SNAPSHOT"]]
+                            :repositories [["snapshots" "https://oss.sonatype.org/content/repositories/snapshots/"]]}
              :jmx {:jvm-opts ["-Dcom.sun.management.jmxremote"
                               "-Dcom.sun.management.jmxremote.port=9010"
                               "-Dcom.sun.management.jmxremote.local.only=false"
@@ -270,7 +272,7 @@
   :plugins [[lein-shell "0.5.0"]
             [org.clojure/clojure ~clj-version] ;override perforate
             [perforate ~perforate-version]
-            [reifyhealth/lein-git-down "0.3.5"]]
+            #_[reifyhealth/lein-git-down "0.3.5"]]
   :repl-options {:welcome (println
                            (clojure.string/join
                             "\n"
@@ -283,10 +285,8 @@
                              " (current-app)      => get current app, or nil"]))
                  ;; 10m
                  :repl-timeout 600000}
-  :middleware [lein-git-down.plugin/inject-properties]
   ;; lein-git-down config
-  :repositories [["public-github" {:url "git://github.com"}]
-                 ["private-github" {:url "git://github.com" :protocol :ssh}]]
+  ;; 
   ;; to simultaneously work on an upstream dependency and have
   ;; Travis pick up on it:
   ;; 1. add an entry mapping the upstream's maven coordinate to its dev GitHub repository
@@ -295,6 +295,10 @@
   ;;         :git-down {threatgrid/ctim {:coordinates frenchy64/ctim}}
   ;; 2. change the upstream dependency's version to the relevant sha
   ;;    eg., [threatgrid/ctim "9acbc93333d630d9b9a0a9fc19981b0ba0ddec1c"]
+  ;; 3. uncomment the following :middleware and :repositories forms and the dependency in the :plugins entry.
+  #_#_:middleware [lein-git-down.plugin/inject-properties]
+  #_#_:repositories [["public-github" {:url "git://github.com"}]
+                     ["private-github" {:url "git://github.com" :protocol :ssh}]]
   ;;
   ;; To work on the library locally without restarting the REPL, you can use lein checkouts.
   ;; 1. $ mkdir checkouts
