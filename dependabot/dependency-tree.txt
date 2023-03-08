@@ -43,7 +43,7 @@ ctia:ctia:jar:1.1.1-SNAPSHOT
 |  \- digest:digest:jar:1.4.3:compile
 +- prismatic:plumbing:jar:0.5.5:compile
 |  \- de.kotka:lazymap:jar:3.1.0:compile
-+- org.yaml:snakeyaml:jar:1.33:compile
++- org.yaml:snakeyaml:jar:2.0:compile
 +- prismatic:schema:jar:1.2.0:compile
 +- metosin:schema-tools:jar:0.12.2:compile
 +- threatgrid:flanders:jar:0.1.23:compile

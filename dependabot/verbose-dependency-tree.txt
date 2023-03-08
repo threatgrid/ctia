@@ -38,7 +38,7 @@ ctia:ctia:jar:1.1.1-SNAPSHOT
 |  |  +- org.apache.commons:commons-compress:jar:1.20:compile
 |  |  \- org.tukaani:xz:jar:1.8:compile
 |  +- clj-commons:clj-yaml:jar:0.7.2:compile
-|  |  +- (org.yaml:snakeyaml:jar:1.26:compile - omitted for conflict with 1.33)
+|  |  +- (org.yaml:snakeyaml:jar:1.26:compile - omitted for conflict with 2.0)
 |  |  \- org.flatland:ordered:jar:1.5.9:compile
 |  +- (prismatic:plumbing:jar:0.4.2:compile - omitted for conflict with 0.5.5)
 |  +- (prismatic:schema:jar:1.1.12:compile - omitted for conflict with 1.2.0)
@@ -64,7 +64,7 @@ ctia:ctia:jar:1.1.1-SNAPSHOT
 +- prismatic:plumbing:jar:0.5.5:compile
 |  +- (prismatic:schema:jar:1.1.7:compile - omitted for conflict with 1.1.12)
 |  \- de.kotka:lazymap:jar:3.1.0:compile
-+- org.yaml:snakeyaml:jar:1.33:compile
++- org.yaml:snakeyaml:jar:2.0:compile
 +- prismatic:schema:jar:1.2.0:compile
 +- metosin:schema-tools:jar:0.12.2:compile
 |  \- (prismatic:schema:jar:1.1.12:compile - omitted for conflict with 1.2.0)
