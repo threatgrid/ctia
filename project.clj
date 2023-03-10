@@ -182,10 +182,11 @@
                  ;; GraphQL
                  [base64-clj "0.1.1"]
                  [threatgrid/ring-graphql-ui "0.1.1"]
-                 [com.graphql-java/graphql-java "9.7"]
+                 [com.graphql-java/graphql-java "19.2"]
 
                  ;; Logging
-                 [org.slf4j/log4j-over-slf4j "1.7.20"]]
+                 [org.slf4j/log4j-over-slf4j "1.7.20"]
+                 [org.slf4j/slf4j-api "1.7.35"]]
 
   :resource-paths ["resources"]
   :classpath ".:resources"

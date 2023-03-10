@@ -11,6 +11,7 @@
             [schema.core :as s]
             [clojure.tools.logging :as log])
   (:import [graphql GraphQL GraphQLException]
+           [graphql.execution MergedField MergedSelectionSet]
            [graphql.language
             Field FragmentDefinition FragmentSpread NamedNode SelectionSetContainer]
            [graphql.schema
@@ -111,6 +112,12 @@
 
   java.util.List
   (->clj [o] (vec (map ->clj o)))
+
+  MergedField
+  (->clj [o] (->clj (.getFields o)))
+
+  MergedSelectionSet
+  (->clj [o] (->clj (.getSubFields o)))
 
   java.lang.Object
   (->clj [o] o)
@@ -240,12 +247,13 @@
   provides whenever possible."
   [env :- DataFetchingEnvironment
    fragments :- {s/Keyword FragmentDefinition}]
-  (let [selection-set (get-selections-get env)
-        first-fields (keys (->clj selection-set))
+  (let [selection-set (->clj (get-selections-get env))
+        first-fields (keys selection-set)
         fields (mapcat (fn [[k v]] v) selection-set)
         detected-selections (fields->selections
                              (concat fields
-                                     (->clj (.getFields env))) fragments)]
+                                     (->clj (.getFields env)))
+                             fragments)]
     (distinct
      (cond-> [:type]
        (seq first-fields) (concat first-fields)

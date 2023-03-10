@@ -55,11 +55,6 @@ query AssetQueryTest($id: String!) {
 }
 
 
-fragment validTimeFields on ValidTime {
-  start_time
-  end_time
-}
-
 fragment observableBaseFields on Observable {
   type
   value
