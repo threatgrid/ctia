@@ -59,7 +59,7 @@
   :jvm-opts ["-Djava.awt.headless=true"
              "-Dlog.console.threshold=INFO"
              "-server"]
-  :exclusions [log4j/log4j ;; subsumed by org.apache.logging.log4j/log4j-api
+  :exclusions [log4j/log4j ;; handled by org.slf4j/log4j-over-slf4j
                io.netty/netty ;; moved to io.netty/netty-all
                org.slf4j/slf4j-log4j12
                org.slf4j/slf4j-nop] ;; Removed in favor of logback
@@ -159,8 +159,6 @@
                  [com.fasterxml.jackson.dataformat/jackson-dataformat-cbor ~jackson-version] ;; bump cheshire, align with jackson-databind
                  [com.fasterxml.jackson.core/jackson-databind ~jackson-databind-version] ;; bump onyx-kafka and others
                  [zookeeper-clj "0.9.4"]
-                 [org.apache.logging.log4j/log4j-core ~log4j2-version] ;;log4j2
-                 [org.apache.logging.log4j/log4j-1.2-api ~log4j2-version] ;; log4j 1=>2 bridge
 
                  ;; firehose
                  [software.amazon.awssdk/firehose "2.17.232" :exclusions
