@@ -58,7 +58,8 @@
   :jvm-opts ["-Djava.awt.headless=true"
              "-Dlog.console.threshold=INFO"
              "-server"]
-  :exclusions [io.netty/netty ;; moved to io.netty/netty-all
+  :exclusions [log4j/log4j ;; handled by org.slf4j/log4j-over-slf4j
+               io.netty/netty ;; moved to io.netty/netty-all
                org.slf4j/slf4j-log4j12
                org.slf4j/slf4j-nop] ;; Removed in favor of logback
   ;; use `lein pom; mvn dependency:tree -Dverbose -Dexcludes=org.clojure:clojure`
