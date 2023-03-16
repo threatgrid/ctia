@@ -771,7 +771,8 @@
                                            "foouser"
                                            "foogroup"
                                            "user")
-       (let [sighting-1 (mk-sighting 1)
+       (let [;; set :tlp "red" to make `sighting-1` inaccessible to anyone except owner
+             sighting-1 (assoc (mk-sighting 1) :tlp "red")
              indicator-1 (mk-indicator 1)
              indicator-2 (mk-indicator 2)
              relationship-1 (mk-relationship 1 sighting-1 indicator-1 "sighting-of")
@@ -813,7 +814,21 @@
          (is (= (list indicator-2-final-id) (->> (:indicators bundle-export-body)
                                                  (map :id))))
          (is (= 3 (count (:relationships bundle-export-body))))
-         (is (= 1 (count (:sightings bundle-export-body)))))))))
+         (is (= 1 (count (:sightings bundle-export-body))))
+
+         (testing "unauthorized access"
+           ;; Create another user and try to access sighting with :tlp "red"
+           (helpers/set-capabilities! app "baruser" ["bargroup"] "user" (all-capabilities))
+           (whoami-helpers/set-whoami-response app
+                                               "45c1f5e3f05d1"
+                                               "baruser"
+                                               "bargroup"
+                                               "user")
+           (let [bundle-export (GET app
+                                    "ctia/bundle/export"
+                                    :query-params {:ids [sighting-1-final-id]}
+                                    :headers {"Authorization" "45c1f5e3f05d1"})]
+             (is (= core/empty-bundle (:parsed-body bundle-export))))))))))
 
 (def bundle-graph-fixture
   (let [indicator-1 (mk-indicator 1)

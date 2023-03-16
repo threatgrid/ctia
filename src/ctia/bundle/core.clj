@@ -7,8 +7,8 @@
    [ctia.auth :as auth]
    [ctia.bulk.core :as bulk]
    [ctia.bundle.schemas :refer
-    [BundleImportData BundleImportResult
-     EntityImportData FindByExternalIdsServices]]
+    [BundleImportData BundleImportResult EntityImportData
+     FindByExternalIdsServices]]
    [ctia.domain.entities :as ent :refer [with-long-id]]
    [ctia.lib.collection :as coll]
    [ctia.properties :as p]
@@ -20,8 +20,10 @@
    [ctia.store-service.schemas :refer [GetStoreFn]]
    [ctim.domain.id :as id]
    [schema.core :as s])
-  (:import (java.util UUID)
-           (java.time Instant)))
+  (:import
+   [java.time Instant]
+   [java.util UUID]
+   [java.util.concurrent ExecutionException]))
 
 (def find-by-external-ids-limit 200)
 
@@ -434,7 +436,7 @@
                   (store/read-record
                    id
                    identity-map
-                   {}))]
+                   {:suppress-access-control-error? true}))]
       (send-event {:service "Export bundle fetch record"
                    :correlation-id correlation-id
                    :time (get-epoch-second)
@@ -491,7 +493,13 @@
                    :metric (count ids)})
       (let [start (System/currentTimeMillis)
             identity-map (auth/ident->map identity)
-            res (->> (pmap #(export-entities % identity-map identity params services) ids)
+            entities (try
+                       (->> ids
+                            (pmap #(export-entities % identity-map identity params services))
+                            (into []))
+                       (catch ExecutionException e
+                         (throw (.getCause e))))
+            res (->> entities
                      (reduce #(deep-merge-with coll/add-colls %1 %2))
                      (into empty-bundle))]
         (send-event {:service "Export bundle end"

@@ -195,7 +195,9 @@ It returns the documents with full hits meta data including the real index in wh
        :- ESConnState
        id :- s/Str
        ident
-       es-params]
+       {:keys [suppress-access-control-error?]
+        :or {suppress-access-control-error? false}
+        :as es-params}]
       (when-let [doc (-> (get-doc-with-index conn-state
                                              id
                                              (make-es-read-params es-params))
@@ -203,8 +205,11 @@ It returns the documents with full hits meta data including the real index in wh
                          coerce!)]
         (if (allow-read? doc ident get-in-config)
           doc
-          (throw (ex-info "You are not allowed to read this document"
-                          {:type :access-control-error})))))))
+          (let [ex (ex-info "You are not allowed to read this document"
+                            {:type :access-control-error})]
+            (if suppress-access-control-error?
+              (log/error ex)
+              (throw ex))))))))
 
 (defn handle-read-many
   "Generate an ES read-many handler using some mapping and schema"
