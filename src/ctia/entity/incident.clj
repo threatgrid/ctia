@@ -340,6 +340,8 @@
      :new-spec                 :new-incident/map
      :can-patch?               true
      :can-aggregate?           true
+     :custom-aggregations      {"/mean/time-to-investigate" {:doc "Mean time to investigate (Incident new to open)"
+                                                             :extension ::aggregate-new-to-open}}
      :realize-fn               realize-incident
      :get-capabilities         :read-incident
      :post-capabilities        :create-incident

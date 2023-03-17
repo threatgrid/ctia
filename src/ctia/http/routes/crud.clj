@@ -165,7 +165,8 @@
            date-field
            histogram-fields
            enumerable-fields
-           sort-extension-definitions]
+           sort-extension-definitions
+           custom-aggregations]
     :or {hide-delete? false
          can-post? true
          can-update? true
@@ -405,6 +406,12 @@
                   :capabilities capabilities
                   :auth-identity identity
                   :identity-map identity-map
+                  (apply routes
+                         (for [[id {:keys [doc q-params-schema extension]}] custom-aggregations]
+                           (GET id []
+                                :summary doc
+                                :query [params (or q-params-schema {})]
+                                )))
                   (GET "/histogram" []
                        :return MetricResult
                        :summary (format "Histogram for some %s field" capitalized)
