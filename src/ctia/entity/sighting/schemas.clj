@@ -4,41 +4,25 @@
    [ctia.domain.entities :refer [default-realize-fn]]
    [ctia.graphql.delayed :as delayed]
    [ctia.schemas
-    [core :refer [CTIAEntity def-stored-schema GraphQLRuntimeContext
+    [core :refer [def-acl-schema def-stored-schema GraphQLRuntimeContext
                   lift-realize-fn-with-context RealizeFnResult TempIDs]]
     [sorting :as sorting]]
    [ctim.schemas.sighting :as ss]
-   [flanders
-    [schema :as f-schema]
-    [spec :as f-spec]
-    [utils :as fu]]
+   [flanders.utils :as fu]
    [schema-tools.core :as st]
    [schema.core :as s]))
 
-(s/defschema NewSighting
-  (st/merge
-   (f-schema/->schema
-    (fu/replace-either-with-any
-     ss/NewSighting))
-   CTIAEntity))
+(def-acl-schema NewSighting
+  ss/NewSighting
+  "new-sighting")
 
-(f-spec/->spec ss/NewSighting "new-sighting")
+(def-acl-schema Sighting
+  ss/Sighting
+  "sighting")
 
-(s/defschema Sighting
-  (st/merge
-   (f-schema/->schema
-    (fu/replace-either-with-any
-     ss/Sighting))
-   CTIAEntity))
-
-(f-spec/->spec ss/Sighting "sighting")
-
-(s/defschema PartialSighting
-  (st/merge CTIAEntity
-            (f-schema/->schema
-             (fu/optionalize-all
-              (fu/replace-either-with-any
-               ss/Sighting)))))
+ (def-acl-schema PartialSighting
+  (fu/optionalize-all ss/Sighting)
+  "partial-sighting")
 
 (s/defschema PartialSightingList
   [PartialSighting])
