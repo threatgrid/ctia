@@ -214,11 +214,22 @@
           _ (assert (= relevant-tactics (keys out))
                     "missing score/s")]
      ((requiring-resolve 'clojure.pprint/pprint) out)))
-  (generate-mitre-tactic-scores "")
-  )
+  (generate-mitre-tactic-scores ""))
+
+(defn score-types
+  [get-in-config]
+  (some-> (get-in-config [:ctia :http :incident :score-types])
+          (str/split #",")))
+
+(defn mk-scores-schema
+  [{{:keys [get-in-config]} :ConfigService}]
+  (st/optional-keys
+   (into {}
+         (map (fn [score-type] {(keyword score-type) s/Num}))
+         (score-types get-in-config))))
 
 (s/defn sort-extension-definitions :- SortExtensionDefinitions
-  [{{:keys [get-in-config]} :ConfigService} :- APIHandlerServices]
+  [services :- APIHandlerServices]
   (-> {;; override :severity field to sort semantically
        :severity {:op :remap
                   :remappings {"Low" 1
@@ -252,8 +263,7 @@
       ;; Sort by score
       (into (map (fn [score-type]
                    {(keyword (str "scores." score-type)) {:op :field}}))
-            (some-> (get-in-config [:ctia :http :incident :score-types])
-                    (str/split #",")))))
+            (score-types services))))
 
 (s/defn incident-sort-fields
   [services :- APIHandlerServices]
@@ -323,34 +333,37 @@
     :title})
 
 (s/defn incident-routes [services :- APIHandlerServices]
-  (routes
-   (incident-additional-routes services)
-   (routes.crud/services->entity-crud-routes
-    services
-    {:entity                   :incident
-     :new-schema               NewIncident
-     :entity-schema            Incident
-     :get-schema               PartialIncident
-     :get-params               IncidentGetParams
-     :list-schema              PartialIncidentList
-     :search-schema            PartialIncidentList
-     :patch-schema             PartialNewIncident
-     :external-id-q-params     IncidentByExternalIdQueryParams
-     :search-q-params          (IncidentSearchParams services)
-     :new-spec                 :new-incident/map
-     :can-patch?               true
-     :can-aggregate?           true
-     :realize-fn               realize-incident
-     :get-capabilities         :read-incident
-     :post-capabilities        :create-incident
-     :put-capabilities         :create-incident
-     :patch-capabilities       :create-incident
-     :delete-capabilities      :delete-incident
-     :search-capabilities      :search-incident
-     :external-id-capabilities :read-incident
-     :histogram-fields         incident-histogram-fields
-     :enumerable-fields        incident-enumerable-fields
-     :sort-extension-definitions (sort-extension-definitions services)})))
+  (let [scores-schema (mk-scores-schema services)
+        new-schema (assoc NewIncident (s/optional-key :scores) scores-schema)
+        patch-schema (assoc PartialNewIncident (s/optional-key :scores) scores-schema)]
+    (routes
+     (incident-additional-routes services)
+     (routes.crud/services->entity-crud-routes
+      services
+      {:entity                   :incident
+       :new-schema               new-schema
+       :entity-schema            Incident
+       :get-schema               PartialIncident
+       :get-params               IncidentGetParams
+       :list-schema              PartialIncidentList
+       :search-schema            PartialIncidentList
+       :patch-schema             patch-schema
+       :external-id-q-params     IncidentByExternalIdQueryParams
+       :search-q-params          (IncidentSearchParams services)
+       :new-spec                 :new-incident/map
+       :can-patch?               true
+       :can-aggregate?           true
+       :realize-fn               realize-incident
+       :get-capabilities         :read-incident
+       :post-capabilities        :create-incident
+       :put-capabilities         :create-incident
+       :patch-capabilities       :create-incident
+       :delete-capabilities      :delete-incident
+       :search-capabilities      :search-incident
+       :external-id-capabilities :read-incident
+       :histogram-fields         incident-histogram-fields
+       :enumerable-fields        incident-enumerable-fields
+       :sort-extension-definitions (sort-extension-definitions services)}))))
 
 (def IncidentType
   (let [{:keys [fields name description]}
