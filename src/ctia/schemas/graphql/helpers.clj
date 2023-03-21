@@ -418,22 +418,22 @@
    created, the corresponding object is retrieved from the provided or the
    default type repository."
   [object-name :- s/Str
-   description :- s/Str
+   description :- (s/maybe s/Str)
    interfaces
    fields :- GraphQLFields]
   (delayed/fn :- GraphQLObjectType
     [{{{:keys [get-or-update-named-type-registry]} :GraphQLNamedTypeRegistryService} :services
       :as rt-ctx} :- GraphQLRuntimeContext]
     (get-or-update-named-type-registry
-      object-name
-      #(let [builder (-> (GraphQLObjectType/newObject)
-                         (.description ^String description)
-                         (.name ^String object-name)
-                         (add-fields fields rt-ctx))]
-         (doseq [^GraphQLInterfaceType interface interfaces]
-           (.withInterface builder interface))
-         (let [obj (.build builder)]
-           obj)))))
+     object-name
+     #(let [builder (-> (GraphQLObjectType/newObject)
+                        (.description ^String description)
+                        (.name ^String object-name)
+                        (add-fields fields rt-ctx))]
+        (doseq [^GraphQLInterfaceType interface interfaces]
+          (.withInterface builder interface))
+        (let [obj (.build builder)]
+          obj)))))
 
 (s/defn fn->type-resolver :- TypeResolver
   "Converts a function that takes the current object, the args

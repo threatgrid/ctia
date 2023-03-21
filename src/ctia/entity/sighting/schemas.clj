@@ -1,19 +1,16 @@
 (ns ctia.entity.sighting.schemas
-  (:require [ctia.domain.entities :refer [default-realize-fn]]
-            [ctia.auth :as auth]
-            [ctia.graphql.delayed :as delayed]
-            [ctia.schemas.core
-             :refer [def-acl-schema
-                     def-stored-schema
-                     GraphQLRuntimeContext
-                     lift-realize-fn-with-context
-                     RealizeFnResult
-                     TempIDs]]
-            [ctia.schemas.sorting :as sorting]
-            [ctim.schemas.sighting :as ss]
-            [flanders.utils :as fu]
-            [schema-tools.core :as st]
-            [schema.core :as s]))
+  (:require
+   [ctia.auth :as auth]
+   [ctia.domain.entities :refer [default-realize-fn]]
+   [ctia.graphql.delayed :as delayed]
+   [ctia.schemas
+    [core :refer [def-acl-schema def-stored-schema GraphQLRuntimeContext
+                  lift-realize-fn-with-context RealizeFnResult TempIDs]]
+    [sorting :as sorting]]
+   [ctim.schemas.sighting :as ss]
+   [flanders.utils :as fu]
+   [schema-tools.core :as st]
+   [schema.core :as s]))
 
 (def-acl-schema NewSighting
   ss/NewSighting
@@ -23,7 +20,7 @@
   ss/Sighting
   "sighting")
 
-(def-acl-schema PartialSighting
+ (def-acl-schema PartialSighting
   (fu/optionalize-all ss/Sighting)
   "partial-sighting")
 
@@ -46,15 +43,15 @@
     tempids :- (s/maybe TempIDs)
     ident-map :- auth/IdentityMap
     prev-sighting :- (s/maybe StoredSighting)]
-  (delayed/fn :- StoredSighting
-   [rt-ctx :- GraphQLRuntimeContext]
-   ((lift-realize-fn-with-context sighting-default-realize rt-ctx)
-    (assoc new-sighting
-           :count (:count new-sighting
-                          (:count prev-sighting 1))
-           :confidence (:confidence new-sighting
-                                    (:confidence prev-sighting "Unknown")))
-    id tempids ident-map prev-sighting))))
+   (delayed/fn :- StoredSighting
+     [rt-ctx :- GraphQLRuntimeContext]
+     ((lift-realize-fn-with-context sighting-default-realize rt-ctx)
+      (assoc new-sighting
+             :count (:count new-sighting
+                            (:count prev-sighting 1))
+             :confidence (:confidence new-sighting
+                                      (:confidence prev-sighting "Unknown")))
+      id tempids ident-map prev-sighting))))
 
 (def sighting-fields
   (concat sorting/default-entity-sort-fields
