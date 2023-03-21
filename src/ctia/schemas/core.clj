@@ -185,7 +185,7 @@
    {:entity s/Keyword
     :plural s/Keyword
     :new-spec (s/either s/Keyword s/Any)
-    :schema (s/protocol s/Schema)
+    :schema (s/eihter (s/protocol s/Schema) (s/pred fn?))
     :partial-schema (s/protocol s/Schema)
     :partial-list-schema (s/protocol s/Schema)
     :stored-schema (s/protocol s/Schema)

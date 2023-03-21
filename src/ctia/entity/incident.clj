@@ -332,38 +332,41 @@
     :short_description
     :title})
 
+(defn with-config-scores
+  [schema services]
+  (assoc schema
+         (s/optional-key :scores)
+         (mk-scores-schema services)))
+
 (s/defn incident-routes [services :- APIHandlerServices]
-  (let [scores-schema (mk-scores-schema services)
-        new-schema (assoc NewIncident (s/optional-key :scores) scores-schema)
-        patch-schema (assoc PartialNewIncident (s/optional-key :scores) scores-schema)]
-    (routes
-     (incident-additional-routes services)
-     (routes.crud/services->entity-crud-routes
-      services
-      {:entity                   :incident
-       :new-schema               new-schema
-       :entity-schema            Incident
-       :get-schema               PartialIncident
-       :get-params               IncidentGetParams
-       :list-schema              PartialIncidentList
-       :search-schema            PartialIncidentList
-       :patch-schema             patch-schema
-       :external-id-q-params     IncidentByExternalIdQueryParams
-       :search-q-params          (IncidentSearchParams services)
-       :new-spec                 :new-incident/map
-       :can-patch?               true
-       :can-aggregate?           true
-       :realize-fn               realize-incident
-       :get-capabilities         :read-incident
-       :post-capabilities        :create-incident
-       :put-capabilities         :create-incident
-       :patch-capabilities       :create-incident
-       :delete-capabilities      :delete-incident
-       :search-capabilities      :search-incident
-       :external-id-capabilities :read-incident
-       :histogram-fields         incident-histogram-fields
-       :enumerable-fields        incident-enumerable-fields
-       :sort-extension-definitions (sort-extension-definitions services)}))))
+  (routes
+   (incident-additional-routes services)
+   (routes.crud/services->entity-crud-routes
+    services
+    {:entity                   :incident
+     :new-schema               (with-config-scores NewIncident services)
+     :entity-schema            Incident
+     :get-schema               PartialIncident
+     :get-params               IncidentGetParams
+     :list-schema              PartialIncidentList
+     :search-schema            PartialIncidentList
+     :patch-schema             (with-config-scores PartialNewIncident services)
+     :external-id-q-params     IncidentByExternalIdQueryParams
+     :search-q-params          (IncidentSearchParams services)
+     :new-spec                 :new-incident/map
+     :can-patch?               true
+     :can-aggregate?           true
+     :realize-fn               realize-incident
+     :get-capabilities         :read-incident
+     :post-capabilities        :create-incident
+     :put-capabilities         :create-incident
+     :patch-capabilities       :create-incident
+     :delete-capabilities      :delete-incident
+     :search-capabilities      :search-incident
+     :external-id-capabilities :read-incident
+     :histogram-fields         incident-histogram-fields
+     :enumerable-fields        incident-enumerable-fields
+     :sort-extension-definitions (sort-extension-definitions services)})))
 
 (def IncidentType
   (let [{:keys [fields name description]}
@@ -403,9 +406,9 @@
    :plural                :incidents
    :new-spec              :new-incident/map
    :schema                Incident
-   :partial-schema        PartialIncident
+   :partial-schema        (partial with-config-scores PartialIncident)
    :partial-list-schema   PartialIncidentList
-   :new-schema            NewIncident
+   :new-schema            (partial with-config-scores NewIncident)
    :stored-schema         StoredIncident
    :partial-stored-schema PartialStoredIncident
    :realize-fn            realize-incident
