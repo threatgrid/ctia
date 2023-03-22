@@ -550,7 +550,8 @@
   (-> app
       app/service-graph
       (csu/select-service-subgraph
-        {:FeaturesService #{:entity-enabled?}})))
+        {:FeaturesService #{:entity-enabled?}
+         :ConfigService {:get-in-config (constantly nil)}})))
 
 (defn plural-key->entity
   "Returns entity map for given plural form of the entity key"
