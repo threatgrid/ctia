@@ -406,9 +406,9 @@
    :plural                :incidents
    :new-spec              :new-incident/map
    :schema                Incident
-   :partial-schema        (partial with-config-scores PartialIncident)
+   :partial-schema        (fn [services] (with-config-scores PartialIncident services))
    :partial-list-schema   PartialIncidentList
-   :new-schema            (partial with-config-scores NewIncident)
+   :new-schema            (fn [services] (with-config-scores NewIncident services))
    :stored-schema         StoredIncident
    :partial-stored-schema PartialStoredIncident
    :realize-fn            realize-incident
