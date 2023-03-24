@@ -5,25 +5,26 @@
             [schema-tools.core :as st]
             [schema.core :as s]))
 
+(defn entity-schema
+  [{:keys [plural] :as entity} sch services]
+  (let [bulk-schema
+        (if (keyword? sch)
+          [(s/maybe
+            (let [ent-schema (get entity sch)]
+              (if (fn? ent-schema) (ent-schema services) ent-schema)))]
+          sch)]
+    {(-> plural
+         name
+         (str/replace #"-" "_")
+         keyword)
+     bulk-schema}))
+
 (defn entities-bulk-schema
   [entities sch services]
   (st/optional-keys
-   (->> entities
-        (remove #(:no-bulk? (val %)))
-        (map
-         (fn [[_ {:keys [plural]
-                  :as entity}]]
-           (let [bulk-schema
-                 (if (keyword? sch)
-                   [(s/maybe
-                     (let [ent-schema (get entity sch)]
-                       (if (fn? ent-schema) (ent-schema services) ent-schema)))]
-                   sch)]
-             {(-> plural
-                  name
-                  (str/replace #"-" "_")
-                  keyword)
-              bulk-schema})))
+   (->> (vals entities)
+        (remove :no-bulk?)
+        (map #(entity-schema % sch services))
         (apply merge {}))))
 
 (s/defschema EntityError
