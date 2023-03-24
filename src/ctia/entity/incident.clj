@@ -214,11 +214,22 @@
           _ (assert (= relevant-tactics (keys out))
                     "missing score/s")]
      ((requiring-resolve 'clojure.pprint/pprint) out)))
-  (generate-mitre-tactic-scores "")
-  )
+  (generate-mitre-tactic-scores ""))
+
+(defn score-types
+  [get-in-config]
+  (some-> (get-in-config [:ctia :http :incident :score-types])
+          (str/split #",")))
+
+(defn mk-scores-schema
+  [{{:keys [get-in-config]} :ConfigService}]
+  (st/optional-keys
+   (into {}
+         (map (fn [score-type] {(keyword score-type) s/Num}))
+         (score-types get-in-config))))
 
 (s/defn sort-extension-definitions :- SortExtensionDefinitions
-  [{{:keys [get-in-config]} :ConfigService} :- APIHandlerServices]
+  [services :- APIHandlerServices]
   (-> {;; override :severity field to sort semantically
        :severity {:op :remap
                   :remappings {"Low" 1
@@ -252,8 +263,7 @@
       ;; Sort by score
       (into (map (fn [score-type]
                    {(keyword (str "scores." score-type)) {:op :field}}))
-            (some-> (get-in-config [:ctia :http :incident :score-types])
-                    (str/split #",")))))
+            (score-types services))))
 
 (s/defn incident-sort-fields
   [services :- APIHandlerServices]
@@ -322,19 +332,25 @@
     :short_description
     :title})
 
+(defn with-config-scores
+  [schema services]
+  (assoc schema
+         (s/optional-key :scores)
+         (mk-scores-schema services)))
+
 (s/defn incident-routes [services :- APIHandlerServices]
   (routes
    (incident-additional-routes services)
    (routes.crud/services->entity-crud-routes
     services
     {:entity                   :incident
-     :new-schema               NewIncident
+     :new-schema               (with-config-scores NewIncident services)
      :entity-schema            Incident
      :get-schema               PartialIncident
      :get-params               IncidentGetParams
      :list-schema              PartialIncidentList
      :search-schema            PartialIncidentList
-     :patch-schema             PartialNewIncident
+     :patch-schema             (with-config-scores PartialNewIncident services)
      :external-id-q-params     IncidentByExternalIdQueryParams
      :search-q-params          (IncidentSearchParams services)
      :new-spec                 :new-incident/map
@@ -390,9 +406,9 @@
    :plural                :incidents
    :new-spec              :new-incident/map
    :schema                Incident
-   :partial-schema        PartialIncident
+   :partial-schema        (fn [services] (with-config-scores PartialIncident services))
    :partial-list-schema   PartialIncidentList
-   :new-schema            NewIncident
+   :new-schema            (fn [services] (with-config-scores NewIncident services))
    :stored-schema         StoredIncident
    :partial-stored-schema PartialStoredIncident
    :realize-fn            realize-incident

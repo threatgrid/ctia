@@ -25,10 +25,19 @@
             ductile.index
             [puppetlabs.trapperkeeper.app :as app]
             [schema.core :as s]
+            [schema-tools.core :as st]
             [java-time.api :as jt]))
 
 (use-fixtures :once (join-fixtures [mth/fixture-schema-validation
                                     whoami-helpers/fixture-server]))
+
+(deftest incident-scores-schema-test
+  (let [get-in-config (partial get-in {:ctia {:http {:incident {:score-types "global,ttp,asset"}}}})
+        fake-services {:ConfigService {:get-in-config get-in-config}}
+        expected (st/optional-keys {:global s/Num :ttp s/Num :asset s/Num})
+        res (sut/mk-scores-schema fake-services)]
+    (is (= expected res))
+    (is (= {} (sut/mk-scores-schema {:ConfigService {:get-in-config (constantly nil)}})))))
 
 (defn additional-tests [app incident-id incident]
   (println "incident id :" incident-id)

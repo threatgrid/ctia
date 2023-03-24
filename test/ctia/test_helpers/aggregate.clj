@@ -242,7 +242,10 @@
            enumerable-fields
            date-fields]}
    n]
-  (let [enumerable-schema (schema-enumerable-fields new-schema enumerable-fields)
+  (let [schema (if (fn? new-schema)
+                 (new-schema {:ConfigService {:get-in-config (constantly nil)}})
+                 new-schema)
+        enumerable-schema (schema-enumerable-fields schema enumerable-fields)
         base-doc (dissoc entity-minimal :id)]
     (doall
      (repeatedly n (fn [] (deep-merge-with
