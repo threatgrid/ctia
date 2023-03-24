@@ -200,7 +200,9 @@
 
 (def relationship-enumerable-fields
   [:source
-   :relationship_type])
+   :relationship_type
+   :target_ref
+   :source_ref])
 
 (def searchable-fields
   #{:id
