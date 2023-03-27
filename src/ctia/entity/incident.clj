@@ -307,8 +307,8 @@
      :assignees        s/Str
      :promotion_method s/Str
      :severity         s/Str
-     :tactics          s/Str
-     :techniques       s/Str})))
+     :tactics          [s/Str]
+     :techniques       [s/Str]})))
 
 (def IncidentGetParams IncidentFieldsParam)
 
