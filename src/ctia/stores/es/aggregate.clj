@@ -24,5 +24,5 @@
 
 (s/defn parse-aggregate-op [op]
   (case op
-    :ctia.entity.incident/aggregate-new-to-open (incident-aggregate-new-to-open-query nil #_"new" "discovered" "opened")
-    :ctia.entity.incident/aggregate-open-to-closed (incident-aggregate-new-to-open-query nil "opened" "closed")))
+    :ctia.entity.incident/mean-time-to-investigate (incident-aggregate-new-to-open-query nil #_"new" "discovered" "opened")
+    :ctia.entity.incident/mean-time-to-resolve (incident-aggregate-new-to-open-query nil "opened" "closed")))

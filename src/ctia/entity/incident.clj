@@ -341,11 +341,11 @@
      :can-patch?               true
      :can-aggregate?           true
      :custom-aggregations      {"/mean-time-to-investigate" {:doc "Mean time to investigate (Incident new to open)"
-                                                             :op ::aggregate-new-to-open
+                                                             :op ::mean-time-to-investigate
                                                              ;:aggregate-on :avg-
                                                              :q-params-schema {}}
                                 "/mean-time-to-resolve" {:doc "Mean time to resolve (Incident open to closed)"
-                                                         :op ::aggregate-open-to-closed
+                                                         :op ::mean-time-to-resolve
                                                          ;:aggregate-on :avg-
                                                          :q-params-schema {}}}
      :realize-fn               realize-incident
