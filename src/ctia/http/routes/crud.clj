@@ -16,6 +16,7 @@
                                     TopnParams
                                     MetricResult]]
    [ctia.store :as store]
+   [ctia.stores.es.aggregate :as es-agg]
    [ring.swagger.schema :refer [describe]]
    [ring.util.http-response :refer [no-content not-found ok forbidden]]
    [schema-tools.core :as st]
@@ -407,11 +408,22 @@
                   :auth-identity identity
                   :identity-map identity-map
                   (apply routes
-                         (for [[id {:keys [doc q-params-schema extension]}] custom-aggregations]
+                         (for [[id {:keys [doc q-params-schema op]}] custom-aggregations
+                               :let [q-params-schema (or (st/merge agg-search-schema q-params-schema) {})]]
                            (GET id []
                                 :summary doc
-                                :query [params (or q-params-schema {})]
-                                )))
+                                :query [params q-params-schema]
+                                (let [;aggregate-on (keyword (:aggregate-on params))
+                                      search-q (search-query {;:date-field aggregate-on
+                                                              :params (st/select-schema params agg-search-schema)
+                                                              :make-date-range-fn coerce-date-range})]
+                                  (-> (get-store entity)
+                                      (store/aggregate
+                                        search-q
+                                        (es-agg/parse-aggregate-op op)
+                                        identity-map)
+                                      (routes.common/format-agg-result :avg id search-q)
+                                      ok)))))
                   (GET "/histogram" []
                        :return MetricResult
                        :summary (format "Histogram for some %s field" capitalized)
