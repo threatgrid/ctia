@@ -180,53 +180,53 @@
  (s/fn [{{:keys [get-store]} :StoreService
          {:keys [flag-value]} :FeaturesService
          :as services} :- APIHandlerServices]
-   (let [capitalized (capitalize-entity entity)
-         search-q-params* (-> (routes.common/prep-es-fields-schema
-                                services
-                                entity-crud-config)
-                              routes.common/prep-sort_by-param-schema)
-         search-filters (apply st/dissoc search-q-params
-                               :sort_by
-                               :sort_order
-                               :fields
-                               :limit
-                               :offset
-                               (keys sort-extension-definitions))
-         agg-search-schema (st/merge
-                             search-filters
-                             {:from s/Inst})
-         aggregate-on-enumerable {:aggregate-on (apply s/enum (map name enumerable-fields))}
-         average-filters {:aggregate-on (apply s/enum (map name average-fields))
-                          :from (describe s/Inst "Start date of the average. Filters the value of selected aggregated-on field.")
-                          (s/optional-key :to) (describe s/Inst "End date of the average. Filters the value of selected aggregated-on field.")}
-         average-q-params (st/merge agg-search-schema
-                                    #_HistogramParams
-                                    #_histogram-filters)
-         histogram-filters {:aggregate-on (apply s/enum (map name histogram-fields))
-                            :from (describe s/Inst "Start date of the histogram. Filters the value of selected aggregated-on field.")
-                            (s/optional-key :to) (describe s/Inst "End date of the histogram. Filters the value of selected aggregated-on field.")}
-         histogram-q-params (st/merge agg-search-schema
-                                      HistogramParams
-                                      histogram-filters)
-         cardinality-q-params (st/merge agg-search-schema
-                                        aggregate-on-enumerable)
-         topn-q-params (st/merge agg-search-schema
-                                 TopnParams
-                                 aggregate-on-enumerable)
-         get-by-ids-fn (fn [identity-map]
-                         (flow-get-by-ids-fn
-                           {:get-store get-store
-                            :entity entity
-                            :identity-map identity-map}))
-         update-fn (fn [identity-map wait_for]
-                     (flow-update-fn
-                       {:get-store get-store
-                        :entity entity
-                        :identity-map identity-map
-                        :wait_for wait_for}))
-         add-search-extensions (fn [params]
-                                 (-> params
-                                     (assoc :sort-extension-definitions (get entity-crud-config :sort-extension-definitions {}))))]
+  (let [capitalized (capitalize-entity entity)
+        search-q-params* (-> (routes.common/prep-es-fields-schema
+                               services
+                               entity-crud-config)
+                             routes.common/prep-sort_by-param-schema)
+        search-filters (apply st/dissoc search-q-params
+                              :sort_by
+                              :sort_order
+                              :fields
+                              :limit
+                              :offset
+                              (keys sort-extension-definitions))
+        agg-search-schema (st/merge
+                           search-filters
+                           {:from s/Inst})
+        aggregate-on-enumerable {:aggregate-on (apply s/enum (map name enumerable-fields))}
+        average-filters {:aggregate-on (apply s/enum (map name average-fields))
+                         :from (describe s/Inst "Start date of the average. Filters the value of selected aggregated-on field.")
+                         (s/optional-key :to) (describe s/Inst "End date of the average. Filters the value of selected aggregated-on field.")}
+        average-q-params (st/merge agg-search-schema
+                                   #_HistogramParams
+                                   #_histogram-filters)
+        histogram-filters {:aggregate-on (apply s/enum (map name histogram-fields))
+                           :from (describe s/Inst "Start date of the histogram. Filters the value of selected aggregated-on field.")
+                           (s/optional-key :to) (describe s/Inst "End date of the histogram. Filters the value of selected aggregated-on field.")}
+        histogram-q-params (st/merge agg-search-schema
+                                     HistogramParams
+                                     histogram-filters)
+        cardinality-q-params (st/merge agg-search-schema
+                                       aggregate-on-enumerable)
+        topn-q-params (st/merge agg-search-schema
+                                TopnParams
+                                aggregate-on-enumerable)
+        get-by-ids-fn (fn [identity-map]
+                        (flow-get-by-ids-fn
+                         {:get-store get-store
+                          :entity entity
+                          :identity-map identity-map}))
+        update-fn (fn [identity-map wait_for]
+                    (flow-update-fn
+                     {:get-store get-store
+                      :entity entity
+                      :identity-map identity-map
+                      :wait_for wait_for}))
+        add-search-extensions (fn [params]
+                                (-> params
+                                    (assoc :sort-extension-definitions (get entity-crud-config :sort-extension-definitions {}))))]
    (routes
      (when can-post?
        (let [capabilities post-capabilities]
