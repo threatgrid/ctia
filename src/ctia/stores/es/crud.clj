@@ -453,13 +453,21 @@ It returns the documents with full hits meta data including the real index in wh
    :props s/Any
    (s/optional-key :sort-extension-definitions) SortExtensionDefinitions})
 
+(defn es-seven-configured?
+  "given ES store properties, check it is configured to use ES7"
+  [{:keys [version]}]
+  (<= 7 version))
+
 (s/defn make-query-params :- {s/Keyword s/Any}
   [{:keys [params props sort-extension-definitions]} :- MakeQueryParamsArgs]
-  (cond-> (-> params
-              (rename-sort-fields sort-extension-definitions)
-              (with-default-sort-field props)
-              make-es-read-params)
-    (<= 7 (:version props)) (assoc :track_total_hits true)))
+  (let [pres-k :allow_partial_search_results]
+    (cond-> (-> params
+                (rename-sort-fields sort-extension-definitions)
+                (with-default-sort-field props)
+                make-es-read-params)
+      (and (es-seven-configured? props) (contains? props pres-k))
+      (assoc pres-k (pres-k props))
+      (es-seven-configured? props) (assoc :track_total_hits true))))
 
 (defn handle-find
   "Generate an ES find/list handler using some mapping and schema"

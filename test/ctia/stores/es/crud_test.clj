@@ -443,7 +443,17 @@
     {:sort [{"timestamp" {:order :asc}}
             {"id" {:order :asc}}]
      :_source [:id :id :owner :groups :tlp :authorized_users :authorized_groups]
-     :track_total_hits true}))
+     :track_total_hits true}
+
+    {:fields [:id]}
+    {:default-sort "timestamp,id"
+     :version 7
+     :allow_partial_search_results false}
+    {:sort [{"timestamp" {:order :asc}}
+            {"id" {:order :asc}}]
+     :_source [:id :id :owner :groups :tlp :authorized_users :authorized_groups]
+     :track_total_hits true
+     :allow_partial_search_results false}))
 
 (deftest make-search-query-test
   (es-helpers/for-each-es-version
