@@ -419,7 +419,7 @@
                              search-q (search-query {:date-field aggregate-on
                                                      :params (st/select-schema params agg-search-schema)
                                                      :make-date-range-fn coerce-date-range})
-                             agg-q (st/assoc (st/select-schema params HistogramParams)
+                             agg-q (st/assoc (st/select-schema params AverageParams)
                                              :agg-type :avg)]
                          (-> (get-store entity)
                              (store/aggregate
