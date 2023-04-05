@@ -65,7 +65,7 @@
   {:status IncidentStatus})
 
 (defn make-status-update
-  [{:keys [status incident_time]}]
+  [{:keys [status]}]
   (let [t (time/internal-now)
         verb (case status
                "New" nil
