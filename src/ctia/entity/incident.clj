@@ -85,8 +85,9 @@
       verb (assoc :incident_time {verb t}))))
 
 (s/defn compute-intervals :- PartialStoredIncident
-  "Given an existing incident "
-  [{:keys [id] :as incident-update} :- (st/required-keys PartialStoredIncident [:id])
+  "Given an incident update and the current stored incident, return a new update
+  that also computes any intervals that are missing from the stored incident."
+  [{:keys [id] :as incident-update} :- (st/required-keys PartialIncident [:id])
    {:keys [created incident_time intervals]} :- StoredIncident]
   (let [update-interval (fn [incident-update field earlier later]
                           (cond-> incident-update
@@ -94,10 +95,11 @@
                                  (not (get intervals field)))
                             (assoc-in [:intervals field]
                                       (- (jt/to-millis-from-epoch later)
-                                         (jt/to-millis-from-epoch earlier)))))]
+                                         (jt/to-millis-from-epoch earlier)))))
+        {:keys [opened closed]} incident_time]
     (-> incident-update
-        (update-interval :new_to_opened created (:opened incident_time))
-        (update-interval :opened_to_closed (:opened incident_time) (:closed incident_time)))))
+        (update-interval :new_to_opened created opened)
+        (update-interval :opened_to_closed opened closed))))
 
 (s/defn incident-additional-routes [{{:keys [get-store]} :StoreService
                                      :as services} :- APIHandlerServices]
