@@ -47,10 +47,10 @@
   "new-incident")
 
 (def-stored-schema StoredIncident
-  (st/assoc Incident (s/optional-key :intervals)
-            (st/optional-keys
-              {:new_to_opened s/Inst
-               :opened_to_closed s/Inst})))
+  (st/assoc Incident
+            (s/optional-key :intervals) (st/optional-keys
+                                          {:new_to_opened (s/pred nat-int?)
+                                           :opened_to_closed (s/pred nat-int?)})))
 
 (s/defschema PartialNewIncident
   (st/optional-keys-schema NewIncident))
@@ -91,8 +91,10 @@
    {:keys [created incident_time intervals]} :- StoredIncident]
   (let [update-interval (fn [incident-update field earlier later]
                           (cond-> incident-update
-                            (and earlier later (jt/not-after? earlier later)
-                                 (not (get intervals field)))
+                            (and (not (get intervals field))
+                                 earlier later
+                                 (jt/not-after? earlier later)
+                                 (nat-int? (jt/to-millis-from-epoch earlier)))
                             (assoc-in [:intervals field]
                                       (- (jt/to-millis-from-epoch later)
                                          (jt/to-millis-from-epoch earlier)))))
