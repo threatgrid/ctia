@@ -1,6 +1,7 @@
 (ns ctia.entity.incident
   (:require
    [clojure.string :as str]
+   [java-time.api :as jt]
    [clj-momo.lib.clj-time.core :as time]
    [ctia.domain.entities
     :refer [default-realize-fn un-store with-long-id]]
@@ -111,12 +112,16 @@
                                             (-> incident
                                                 (update :intervals
                                                         (fn [intervals]
-                                                          (cond-> intervals
-                                                            (= the-new-status "Open") (update :new_to_open #(or % (- (:opened incident_time)
-                                                                                                                     (:created incident))))
-                                                            (= the-new-status "Closed")
-                                                            (update :open_to #(or % (- (:closed incident_time)
-                                                                                       (:opened incident_time)))))))))
+                                                          (let [update-interval (fn [field earlier later]
+                                                                                  (if-some [new-interval (when (and earlier later (jt/not-after? earlier later))
+                                                                                                           ;;coerce me
+                                                                                                           (- later earlier))]
+                                                                                    (update intervals field #(or % new-interval))
+                                                                                    intervals))]
+                                                            (case (:status status-update)
+                                                              "Open" (update-interval :new_to_open (:created incident) (:opened incident_time))
+                                                              "Closed" (update-interval :open_to_closed (:opened incident_time) (:closed incident_time))
+                                                              intervals))))))
                                           incidents)))]
               (if-let [updated
                        (some->
