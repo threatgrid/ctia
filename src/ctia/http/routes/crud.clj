@@ -11,7 +11,8 @@
                                                       coerce-date-range]]
    [ctia.lib.compojure.api.core :refer [context DELETE GET POST PUT PATCH routes]]
    [ctia.schemas.core :refer [APIHandlerServices DelayedRoutes SortExtensionDefinitions]]
-   [ctia.schemas.search-agg :refer [HistogramParams
+   [ctia.schemas.search-agg :refer [AverageParams
+                                    HistogramParams
                                     CardinalityParams
                                     TopnParams
                                     MetricResult]]
@@ -165,7 +166,8 @@
            date-field
            histogram-fields
            enumerable-fields
-           sort-extension-definitions]
+           sort-extension-definitions
+           average-fields]
     :or {hide-delete? false
          can-post? true
          can-update? true
@@ -200,8 +202,8 @@
                          :from (describe s/Inst "Start date of the average. Filters the value of selected aggregated-on field.")
                          (s/optional-key :to) (describe s/Inst "End date of the average. Filters the value of selected aggregated-on field.")}
         average-q-params (st/merge agg-search-schema
-                                   #_HistogramParams
-                                   #_histogram-filters)
+                                   AverageParams
+                                   average-filters)
         histogram-filters {:aggregate-on (apply s/enum (map name histogram-fields))
                            :from (describe s/Inst "Start date of the histogram. Filters the value of selected aggregated-on field.")
                            (s/optional-key :to) (describe s/Inst "End date of the histogram. Filters the value of selected aggregated-on field.")}

@@ -313,6 +313,10 @@
    :incident_time.closed
    :incident_time.rejected])
 
+(def incident-average-fields
+  [:intervals.new_to_open
+   :intervals.open_to_closed])
+
 (s/defschema IncidentFieldsParam
   {(s/optional-key :fields) [(apply s/enum incident-fields)]})
 
@@ -384,6 +388,7 @@
      :search-capabilities      :search-incident
      :external-id-capabilities :read-incident
      :histogram-fields         incident-histogram-fields
+     :average-fields           incident-average-fields
      :enumerable-fields        incident-enumerable-fields
      :sort-extension-definitions (sort-extension-definitions services)})))
 

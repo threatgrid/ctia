@@ -56,6 +56,9 @@
     (->> (concat positives negatives)
          (apply s/enum))))
 
+(s/defschema AverageParams
+  AggCommonParams)
+
 (s/defschema HistogramParams
   (st/merge
    AggCommonParams
