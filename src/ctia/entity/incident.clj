@@ -81,6 +81,20 @@
     (cond-> {:status status}
       verb (assoc :incident_time {verb t}))))
 
+(s/defn compute-intervals :- PartialIncident
+  [{:keys [id] :as incident-update} :- (st/assoc IncidentStatusUpdate :id (st/get Incident :id))
+   {:keys [incident_time intervals]} :- Incident]
+  (let [update-interval (fn [incident-update field earlier later]
+                          (cond-> incident-update
+                            (and earlier later (jt/not-after? earlier later)
+                                 (not (get intervals field)))
+                            (assoc-in [:intervals field]
+                                      (- (jt/to-millis-from-epoch later)
+                                         (jt/to-millis-from-epoch earlier)))))]
+    (-> incident-update
+        (update-interval :new_to_open (:created incident) (:opened incident_time))
+        (update-interval :open_to_closed (:opened incident_time) (:closed incident_time)))))
+
 (s/defn incident-additional-routes [{{:keys [get-store]} :StoreService
                                      :as services} :- APIHandlerServices]
   (routes
@@ -100,21 +114,9 @@
                                   {:get-store get-store
                                    :entity :incident
                                    :identity-map identity-map})
-                  compute-intervals (fn [{:keys [id] :as incident-update}]
-                                      (let [[{:keys [incident_time intervals]}] (get-by-ids-fn [id])
-                                            update-interval (fn [incident-update field earlier later]
-                                                              (cond-> incident-update
-                                                                (and earlier later (jt/not-after? earlier later)
-                                                                     (not (get intervals field)))
-                                                                (assoc-in [:intervals field]
-                                                                          (- (jt/to-millis-from-epoch later)
-                                                                             (jt/to-millis-from-epoch earlier)))))]
-                                        (-> incident-update
-                                            (update-interval :new_to_open (:created incident) (:opened incident_time))
-                                            (update-interval :open_to_closed (:opened incident_time) (:closed incident_time)))))
                   status-update (-> (make-status-update update')
                                     (assoc :id id)
-                                    compute-intervals)
+                                    (compute-intervals (first (get-by-ids-fn [id]))))
                   update-fn (routes.crud/flow-update-fn
                               {:get-store get-store
                                :entity :incident
