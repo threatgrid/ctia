@@ -64,7 +64,7 @@
   {:status IncidentStatus})
 
 (defn make-status-update
-  [{:keys [status]}]
+  [{:keys [status incident_time]}]
   (let [t (time/internal-now)
         verb (case status
                "New" nil
@@ -96,15 +96,28 @@
             :auth-identity identity
             :identity-map identity-map
             (let [status-update (assoc (make-status-update update) :id id)
+                  the-new-status (:status status-update)
                   get-by-ids-fn (routes.crud/flow-get-by-ids-fn
                                  {:get-store get-store
                                   :entity :incident
                                   :identity-map identity-map})
-                  update-fn (routes.crud/flow-update-fn
-                             {:get-store get-store
-                              :entity :incident
-                              :identity-map identity-map
-                              :wait_for (routes.common/wait_for->refresh wait_for)})]
+                  update-fn (comp (routes.crud/flow-update-fn
+                                    {:get-store get-store
+                                     :entity :incident
+                                     :identity-map identity-map
+                                     :wait_for (routes.common/wait_for->refresh wait_for)})
+                                  (fn [incidents]
+                                    (mapv (fn [{:keys [incident_time] :as incident}]
+                                            (-> incident
+                                                (update :intervals
+                                                        (fn [intervals]
+                                                          (cond-> intervals
+                                                            (= the-new-status "Open") (update :new_to_open #(or % (- (:opened incident_time)
+                                                                                                                     (:created incident))))
+                                                            (= the-new-status "Closed")
+                                                            (update :open_to #(or % (- (:closed incident_time)
+                                                                                       (:opened incident_time)))))))))
+                                          incidents)))]
               (if-let [updated
                        (some->
                         (flows/patch-flow
@@ -151,6 +164,8 @@
       :tactics          em/token
       :techniques       em/token
       :scores           {:type "object"
+                         :dynamic true}
+      :intervals        {:type "object"
                          :dynamic true}})}})
 
 (def-es-store IncidentStore :incident StoredIncident PartialStoredIncident)
