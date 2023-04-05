@@ -78,7 +78,7 @@ services:
       - "5556:5556"
       - "5557:5557" # nREPL
     environment:
-      - ELASTICSEARCH_URL=http://localhost:9200
+      - ELASTICSEARCH_URL=http://localhost:9207
     volumes:
       - ./riemann.config:/etc/riemann.config
   docker-riemann-dash-dev:
