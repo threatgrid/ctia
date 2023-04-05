@@ -47,7 +47,10 @@
   "new-incident")
 
 (def-stored-schema StoredIncident
-  Incident)
+  (st/assoc Incident (s/optional-key :intervals)
+            (st/optional-keys
+              {:new_to_opened s/Inst
+               :opened_to_closed s/Inst})))
 
 (s/defschema PartialNewIncident
   (st/optional-keys-schema NewIncident))
@@ -81,9 +84,10 @@
     (cond-> {:status status}
       verb (assoc :incident_time {verb t}))))
 
-(s/defn compute-intervals :- PartialIncident
-  [{:keys [id] :as incident-update} :- (st/assoc IncidentStatusUpdate :id (st/get Incident :id))
-   {:keys [incident_time intervals]} :- Incident]
+(s/defn compute-intervals :- PartialStoredIncident
+  "Given an existing incident "
+  [{:keys [id] :as incident-update} :- (st/required-keys PartialStoredIncident [:id])
+   {:keys [created incident_time intervals]} :- StoredIncident]
   (let [update-interval (fn [incident-update field earlier later]
                           (cond-> incident-update
                             (and earlier later (jt/not-after? earlier later)
@@ -92,8 +96,8 @@
                                       (- (jt/to-millis-from-epoch later)
                                          (jt/to-millis-from-epoch earlier)))))]
     (-> incident-update
-        (update-interval :new_to_open (:created incident) (:opened incident_time))
-        (update-interval :open_to_closed (:opened incident_time) (:closed incident_time)))))
+        (update-interval :new_to_opened created (:opened incident_time))
+        (update-interval :opened_to_closed (:opened incident_time) (:closed incident_time)))))
 
 (s/defn incident-additional-routes [{{:keys [get-store]} :StoreService
                                      :as services} :- APIHandlerServices]
@@ -316,8 +320,8 @@
    :incident_time.rejected])
 
 (def incident-average-fields
-  [:intervals.new_to_open
-   :intervals.open_to_closed])
+  [:intervals.new_to_opened
+   :intervals.opened_to_closed])
 
 (s/defschema IncidentFieldsParam
   {(s/optional-key :fields) [(apply s/enum incident-fields)]})
