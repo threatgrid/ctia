@@ -87,7 +87,7 @@
     (let [capabilities :create-incident]
       (POST "/:id/status" []
             :return Incident
-            :body [update IncidentStatusUpdate
+            :body [update' IncidentStatusUpdate
                    {:description "an Incident Status Update"}]
             :summary "Update an Incident Status"
             :query-params [{wait_for :- (describe s/Bool "wait for updated entity to be available for search") nil}]
@@ -96,33 +96,30 @@
             :capabilities :create-incident
             :auth-identity identity
             :identity-map identity-map
-            (let [status-update (assoc (make-status-update update) :id id)
-                  the-new-status (:status status-update)
-                  get-by-ids-fn (routes.crud/flow-get-by-ids-fn
-                                 {:get-store get-store
-                                  :entity :incident
-                                  :identity-map identity-map})
-                  update-fn (comp (routes.crud/flow-update-fn
-                                    {:get-store get-store
-                                     :entity :incident
-                                     :identity-map identity-map
-                                     :wait_for (routes.common/wait_for->refresh wait_for)})
-                                  (fn [incidents]
-                                    (mapv (fn [{:keys [incident_time] :as incident}]
-                                            (-> incident
-                                                (update :intervals
-                                                        (fn [intervals]
-                                                          (let [update-interval (fn [field earlier later]
-                                                                                  (if-some [new-interval (when (and earlier later (jt/not-after? earlier later))
-                                                                                                           ;;coerce me
-                                                                                                           (- later earlier))]
-                                                                                    (update intervals field #(or % new-interval))
-                                                                                    intervals))]
-                                                            (case (:status status-update)
-                                                              "Open" (update-interval :new_to_open (:created incident) (:opened incident_time))
-                                                              "Closed" (update-interval :open_to_closed (:opened incident_time) (:closed incident_time))
-                                                              intervals))))))
-                                          incidents)))]
+            (let [get-by-ids-fn (routes.crud/flow-get-by-ids-fn
+                                  {:get-store get-store
+                                   :entity :incident
+                                   :identity-map identity-map})
+                  compute-intervals (fn [{:keys [id] :as incident-update}]
+                                      (let [[{:keys [incident_time intervals]}] (get-by-ids-fn [id])
+                                            update-interval (fn [incident-update field earlier later]
+                                                              (cond-> incident-update
+                                                                (and earlier later (jt/not-after? earlier later)
+                                                                     (not (get intervals field)))
+                                                                (assoc-in [:intervals field]
+                                                                          (- (jt/to-millis-from-epoch later)
+                                                                             (jt/to-millis-from-epoch earlier)))))]
+                                        (-> incident-update
+                                            (update-interval :new_to_open (:created incident) (:opened incident_time))
+                                            (update-interval :open_to_closed (:opened incident_time) (:closed incident_time)))))
+                  status-update (-> (make-status-update update')
+                                    (assoc :id id)
+                                    compute-intervals)
+                  update-fn (routes.crud/flow-update-fn
+                              {:get-store get-store
+                               :entity :incident
+                               :identity-map identity-map
+                               :wait_for (routes.common/wait_for->refresh wait_for)})]
               (if-let [updated
                        (some->
                         (flows/patch-flow
