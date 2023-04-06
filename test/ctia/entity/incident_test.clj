@@ -638,16 +638,17 @@
 
 (deftest compute-intervals-test
   (testing "retrieves full incident by need"
-    (doseq [incident-update (mapv #(do {:id "foo" :status %})
-                                  (remove #{"Closed" "Open"}
-                                          ;(st/get-in sut/Incident [:status])
-                                          ["New" "Closed" "Rejected" "Open" "Restoration Achieved" "Incident Reported" "Stalled" "Containment Achieved"]))]
-      (testing (pr-str incident-update)
-        (let [dly (delay
-                    ;; should be stored incident
-                    incident-minimal)]
-          (is (= incident-update (sut/compute-intervals incident-update dly)))
-          (is (not (realized? dly)))))))
+    (let [irrelevant-statuses (disj (:vs (st/get-in sut/Incident [:status]))
+                                    "Closed" "Open")
+          _ (assert (irrelevant-statuses "Rejected"))]
+      (doseq [incident-update (mapv #(do {:id "foo" :status %})
+                                    (sort irrelevant-statuses))]
+        (testing (pr-str incident-update)
+          (let [dly (delay
+                      ;; should be stored incident
+                      incident-minimal)]
+            (is (= incident-update (sut/compute-intervals incident-update dly)))
+            (is (not (realized? dly))))))))
   (let [earlier (-> (jt/instant 0) (jt/plus (jt/seconds -10)) jt/java-date)
         later   (-> (jt/instant 0) (jt/plus (jt/seconds  10)) jt/java-date)
         computed-interval 20
