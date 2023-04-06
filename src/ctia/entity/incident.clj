@@ -119,7 +119,7 @@
         ;; the duration between the time at which the incident changed from New to Open and the incident creation time
         ;; https://github.com/advthreat/iroh/issues/7622#issuecomment-1496374419
         "Open"   (cond-> incident-update
-                   (= "New" (:status stored-incident)) ;;TODO unit test this condition
+                   (= "New" (:status stored-incident))
                    (update-interval :new_to_opened
                                     (:created stored-incident)
                                     (get-in incident-update [:incident_time :opened])))
