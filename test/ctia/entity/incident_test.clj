@@ -642,6 +642,8 @@
 (assert (every? incident-statuses ["New" "Open" "Closed" "Rejected"]))
 
 (deftest compute-intervals-test
+  ;; tests the laziness of the second argument of sut/compute-intervals. since it's expensive
+  ;; to compute, it's important we don't realize it unnecessarily.
   (testing "retrieves full incident by need"
     (let [irrelevant-statuses (disj incident-statuses "Closed" "Open")]
       (doseq [incident-update (mapv #(do {:id "foo" :status %})
@@ -652,6 +654,12 @@
                       incident-minimal)]
             (is (= incident-update (sut/compute-intervals incident-update dly)))
             (is (not (realized? dly)) "Store incident was retrieved unnecessarily"))))))
+  ;; the interesting cases where intervals are potentially computed. these are suprisingly involved
+  ;; since the "earlier" time is in the stored incident, and the "later" time is in the incident update,
+  ;; and the same entries can appear in both but only one is relevant.
+  ;; there are many invariants to juggle in these tests. to increase certainty that we're actually
+  ;; testing the invariants we claim to, we use local functions to construct the test cases. Unfortunately,
+  ;; this makes the code hard to follow. Printing the cases might make for a clearer view.
   (let [earlier (-> (jt/instant 0) (jt/plus (jt/seconds -10)) jt/java-date)
         later   (-> (jt/instant 0) (jt/plus (jt/seconds  10)) jt/java-date)
         computed-interval 20
@@ -659,9 +667,6 @@
                      (jt/time-between (jt/instant earlier) (jt/instant later) :seconds)))
         precomputed-interval 15 ;; for testing that old intervals are preserved
         _ (assert (not= computed-interval precomputed-interval))]
-    ;; there are many invariants to juggle in these tests. to increase certainty that we're actually
-    ;; testing the invariants we claim to, we use local functions to construct the test cases. Unfortunately,
-    ;; this makes the code hard to follow. Printing the cases might make for a clearer view.
     (testing "updating status 'Open'"
       (doseq [{:keys [id incident-update stored-incident expected]}
               (let [->base-test-case (s/fn [prev-status :- (st/get-in sut/Incident [:status])
