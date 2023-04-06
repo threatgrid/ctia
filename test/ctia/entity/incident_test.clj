@@ -708,6 +708,8 @@
                                          {:incident-update incident-update
                                           :stored-incident (-> incident-minimal
                                                                (assoc-in [:incident_time :opened] earlier)
+                                                               ;; store status doesn't matter
+                                                               (assoc :status (rand-nth (vec incident-statuses)))
                                                                (dissoc :intervals))
                                           ;; default to no interval being computed, override for success cases
                                           :expected incident-update}))]
