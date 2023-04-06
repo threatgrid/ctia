@@ -645,7 +645,7 @@
   (testing "retrieves full incident by need"
     (let [irrelevant-statuses (disj incident-statuses "Closed" "Open")]
       (doseq [incident-update (mapv #(do {:id "foo" :status %})
-                                    (sort irrelevant-statuses))]
+                                    (shuffle irrelevant-statuses))]
         (testing (pr-str incident-update)
           (let [dly (delay
                       ;; should be stored incident
@@ -659,9 +659,9 @@
                      (jt/time-between (jt/instant earlier) (jt/instant later) :seconds)))
         precomputed-interval 15 ;; for testing that old intervals are preserved
         _ (assert (not= computed-interval precomputed-interval))]
-    ;; there are many invariants to juggle in these tests. the test cases are constructed to
-    ;; increase certainty that we're actually testing what we claim to. Unfortunately, this
-    ;; makes the following code hard to follow. Printing the cases might make for a clearer view.
+    ;; there are many invariants to juggle in these tests. to increase certainty that we're actually
+    ;; testing the invariants we claim to, we use local functions to construct the test cases. Unfortunately,
+    ;; this makes the code hard to follow. Printing the cases might make for a clearer view.
     (testing "updating status 'Open'"
       (doseq [{:keys [id incident-update stored-incident expected]}
               (let [->base-test-case (s/fn [prev-status :- (st/get-in sut/Incident [:status])
@@ -696,7 +696,7 @@
                       (doto (map #(-> base
                                       (assoc :id (str "no-update-wrong-prev-status " %))
                                       (assoc-in [:stored-incident :status] %))
-                                 (sort (disj incident-statuses "New")))
+                                 (shuffle (disj incident-statuses "New")))
                         (-> seq assert))))
                   [;; if :created is after the updated :incident_time.opened, elide interval from update
                    (-> (->base-test-case "New" later earlier)
@@ -704,15 +704,16 @@
         (testing (pr-str id)
           (is (= expected (sut/compute-intervals incident-update (delay stored-incident)))))))
     (testing "updating status 'Closed'"
-      (doseq [{:keys [id incident-update stored-incident expected]}
+      (doseq [;; stored status doesn't matter
+              stored-status (shuffle incident-statuses)
+              {:keys [id incident-update stored-incident expected]}
               (let [->base-test-case (s/fn [earlier :- s/Inst
                                             later :- s/Inst]
                                        (let [incident-update {:id "foo" :status "Closed" :incident_time {:closed later}}]
                                          {:incident-update incident-update
                                           :stored-incident (-> incident-minimal
                                                                (assoc-in [:incident_time :opened] earlier)
-                                                               ;; store status doesn't matter
-                                                               (assoc :status (rand-nth (vec incident-statuses)))
+                                                               (assoc :status stored-status)
                                                                (dissoc :intervals))
                                           ;; default to no interval being computed, override for success cases
                                           :expected incident-update}))]
@@ -729,5 +730,5 @@
                   [;; if :incident_time.opened is after the updated :incident_time.closed, elide interval from update
                    (-> (->base-test-case later earlier)
                        (assoc :id :no-update-because-earlier-after-later))]))]
-        (testing (pr-str id)
+        (testing (pr-str id " " stored-status)
           (is (= expected (sut/compute-intervals incident-update (delay stored-incident)))))))))
