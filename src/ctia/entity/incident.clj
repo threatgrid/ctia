@@ -106,7 +106,8 @@
   (if-not (#{"Open" "Closed"} status) ;; only deref stored incident if needed
     incident-update
     (let [stored-incident @->stored-incident
-          update-interval (s/fn [interval :- (apply s/enum incident-intervals)
+          update-interval (s/fn [incident-update
+                                 interval :- (apply s/enum incident-intervals)
                                  earlier :- s/Inst
                                  later :- s/Inst]
                             (cond-> incident-update
@@ -117,10 +118,13 @@
       (case status
         ;; the duration between the time at which the incident changed from New to Open and the incident creation time
         ;; https://github.com/advthreat/iroh/issues/7622#issuecomment-1496374419
-        "Open"   (update-interval :new_to_opened
-                                  (:created stored-incident)
-                                  (get-in incident-update [:incident_time :opened]))
-        "Closed" (update-interval :opened_to_closed
+        "Open"   (cond-> incident-update
+                   (= "New" (:status stored-incident)) ;;TODO unit test this condition
+                   (update-interval :new_to_opened
+                                    (:created stored-incident)
+                                    (get-in incident-update [:incident_time :opened])))
+        "Closed" (update-interval incident-update
+                                  :opened_to_closed
                                   (get-in stored-incident [:incident_time :opened])
                                   (get-in incident-update [:incident_time :closed]))))))
 
