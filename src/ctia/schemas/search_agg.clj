@@ -56,14 +56,14 @@
     (->> (concat positives negatives)
          (apply s/enum))))
 
-(s/defschema AverageParams
-  AggCommonParams)
-
 (s/defschema HistogramParams
   (st/merge
    AggCommonParams
    {:granularity (s/enum :day :week :month)
     (s/optional-key :timezone) Timezone}))
+
+(s/defschema AverageParams
+  HistogramParams)
 
 (s/defschema HistogramQuery
   (st/merge

@@ -30,6 +30,7 @@
 (def cardinality (partial metric-raw :cardinality))
 (def histogram (partial metric-raw :histogram))
 (def topn (partial metric-raw :topn))
+(def average (partial metric-raw :average))
 
 (defn parse-field
   [field]
@@ -41,10 +42,10 @@
   (mapcat set values))
 
 (defn es-get-in
-  "like get-in, but match keys in maps embedded in collections.
-   This function is intended to simulate how ES match nested fields like a.b.
-   for instance (get-in {:a [{:b 2} {:b 3}]} [:a :b]) returns nil
-   while (es-get-in {:a [{:b 2} {:b 3}]} [:a :b]) returns '(2 3)"
+  "Like get-in, but match keys in maps embedded in collections.
+   This function is intended to simulate how ES matches nested fields like `a.b`.
+   For instance, (get-in {:a [{:b 2} {:b 3}]} [:a :b]) returns nil
+   while (es-get-in {:a [{:b 2} {:b 3}]} [:a :b]) returns '(2 3)."
   {:test (fn []
            (is (= (es-get-in {:a [{:b 2} {:b 3}]} [:a :b])
                   '(2 3)))
@@ -180,6 +181,7 @@
                        examples
                        (keep #(es-get-in % parsed))
                        flatten)
+          _           (assert (seq values))
           now         (jt/instant)
           from        (jt/minus now (jt/days 300))
           to          (jt/minus now (jt/days 60))
@@ -201,6 +203,39 @@
       (is (= expected
              (format-ctia-histogram parsed res))
           (format "test-histogram on: %s %s" entity field))
+      (check-from-to from to))))
+
+(defn- test-average
+  "test one field histogram, examples are already created"
+  [app examples entity field granularity]
+  (testing (format "average %s %s" entity field)
+    (let [parsed      (parse-field field)
+          values      (->>
+                       examples
+                       (keep #(es-get-in % parsed))
+                       flatten)
+          _           (assert (seq values))
+          now         (jt/instant)
+          from        (jt/minus now (jt/days 300))
+          to          (jt/minus now (jt/days 60))
+          from-str    (str from)
+          to-str      (str to)
+          date-values (vals->date-vals from-str to-str values)
+          _           (assert (seq? date-values))
+          res-days    (map #(to-granularity-first-day granularity %)
+                           date-values)
+          expected    (make-average-res res-days)
+          _           (assert (every? #(:value %) expected))
+          {{:keys [from to]} :filters
+           :as res} (average app
+                             entity
+                             {:from from-str
+                              :to   to-str}
+                             {:aggregate-on (name field)
+                              :granularity  (name granularity)})]
+      (is (= expected
+             (format-ctia-average parsed res))
+          (format "test-average on: %s %s" entity field))
       (check-from-to from to))))
 
 (defn schema-enumerable-fields
@@ -262,7 +297,8 @@
   [{:keys [entity
            plural
            enumerable-fields
-           date-fields] :as metric-params}]
+           date-fields
+           average-fields] :as metric-params}]
 
   ;; enforce 1 shard to avoid ES terms approximation used by topn which is not simulated here by the manual aggregation here.
   ;; see ES details: https://www.elastic.co/guide/en/elasticsearch/reference/5.6/search-aggregations-bucket-terms-aggregation.html#search-aggregations-bucket-terms-aggregation-approximate-counts
@@ -281,4 +317,7 @@
             (test-topn app docs entity field 3))
           (doseq [field date-fields]
             (test-histogram app docs entity field :day)
-            (test-histogram app docs entity field :month)))))))
+            (test-histogram app docs entity field :month))
+          (doseq [field average-fields]
+            (test-average app docs entity field :day)
+            (test-average app docs entity field :month)))))))

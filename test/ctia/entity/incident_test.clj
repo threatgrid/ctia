@@ -536,7 +536,8 @@
   (test-metric-routes (into sut/incident-entity
                             {:entity-minimal new-incident-minimal
                              :enumerable-fields sut/incident-enumerable-fields
-                             :date-fields sut/incident-histogram-fields})))
+                             :date-fields sut/incident-histogram-fields
+                             :average-fields sut/incident-average-fields})))
 
 (deftest test-incident-routes-access-control
   (access-control-test "incident"
