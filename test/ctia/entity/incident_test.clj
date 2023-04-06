@@ -651,7 +651,7 @@
                       ;; should be stored incident
                       incident-minimal)]
             (is (= incident-update (sut/compute-intervals incident-update dly)))
-            (is (not (realized? dly))))))))
+            (is (not (realized? dly)) "Store incident was retrieved unnecessarily"))))))
   (let [earlier (-> (jt/instant 0) (jt/plus (jt/seconds -10)) jt/java-date)
         later   (-> (jt/instant 0) (jt/plus (jt/seconds  10)) jt/java-date)
         computed-interval 20
@@ -659,6 +659,9 @@
                      (jt/time-between (jt/instant earlier) (jt/instant later) :seconds)))
         precomputed-interval 15 ;; for testing that old intervals are preserved
         _ (assert (not= computed-interval precomputed-interval))]
+    ;; there are many invariants to juggle in these tests. the test cases are constructed to
+    ;; increase certainty that we're actually testing what we claim to. Unfortunately, this
+    ;; makes the following code hard to follow. Printing the cases might make for a clearer view.
     (testing "updating status 'Open'"
       (doseq [{:keys [id incident-update stored-incident expected]}
               (let [->base-test-case (s/fn [prev-status :- (st/get-in sut/Incident [:status])
