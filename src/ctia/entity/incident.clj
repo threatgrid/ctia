@@ -346,8 +346,8 @@
    :incident_time.rejected])
 
 (def incident-average-fields
-  [:intervals.new_to_opened
-   :intervals.opened_to_closed])
+  (mapv #(keyword (str "intervals." (name %)))
+        incident-intervals))
 
 (s/defschema IncidentFieldsParam
   {(s/optional-key :fields) [(apply s/enum incident-fields)]})
