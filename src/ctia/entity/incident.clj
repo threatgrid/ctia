@@ -419,6 +419,7 @@
      :search-capabilities      :search-incident
      :external-id-capabilities :read-incident
      :histogram-fields         incident-histogram-fields
+     ;; TODO write an integration test for GET /incident/metric/average
      :average-fields           incident-average-fields
      :enumerable-fields        incident-enumerable-fields
      :sort-extension-definitions (sort-extension-definitions services)})))
