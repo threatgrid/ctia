@@ -46,11 +46,14 @@
   is/NewIncident
   "new-incident")
 
+(def incident-intervals
+  [:new_to_opened
+   :opened_to_closed])
+
 (def-stored-schema StoredIncident
   (st/assoc Incident
             (s/optional-key :intervals) (st/optional-keys
-                                          {:new_to_opened (s/pred nat-int?)
-                                           :opened_to_closed (s/pred nat-int?)})))
+                                          (zipmap incident-intervals (repeat (s/pred nat-int?))))))
 
 (s/defschema PartialNewIncident
   (st/optional-keys-schema NewIncident))
@@ -100,9 +103,10 @@
   Avoids retrieving the stored incident if possible."
   [{:keys [id status] :as incident-update} :- IncidentUpdateBeforeComputeIntervals
    ->stored-incident :- (s/pred delay?) #_(s/delay StoredIncident)]
-  (if (#{"Open" "Closed"} status) ;; only deref stored incident if needed
+  (if-not (#{"Open" "Closed"} status) ;; only deref stored incident if needed
+    incident-update
     (let [{:keys [incident_time intervals] :as stored-incident} @->stored-incident
-          update-interval (s/fn [interval :- s/Keyword
+          update-interval (s/fn [interval :- (apply s/enum incident-intervals)
                                  earlier :- s/Inst
                                  later :- s/Inst]
                             (cond-> incident-update
@@ -119,8 +123,7 @@
                                   (get-in incident-update [:incident_time :opened]))
         "Closed" (update-interval :opened_to_closed
                                   (get-in stored-incident [:incident_time :opened])
-                                  (get-in incident-update [:incident_time :closed]))))
-    incident-update))
+                                  (get-in incident-update [:incident_time :closed]))))))
 
 (s/defn incident-additional-routes [{{:keys [get-store]} :StoreService
                                      :as services} :- APIHandlerServices]
