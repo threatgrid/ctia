@@ -650,7 +650,8 @@
                                     (shuffle irrelevant-statuses))]
         (testing (pr-str incident-update)
           (let [dly (delay
-                      ;; should be stored incident
+                      ;; should be a stored incident, but it doesn't really make a practical difference
+                      ;; since we're testing that this delay is never realized.
                       incident-minimal)]
             (is (= incident-update (sut/compute-intervals incident-update dly)))
             (is (not (realized? dly)) "Store incident was retrieved unnecessarily"))))))
