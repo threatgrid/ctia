@@ -102,7 +102,7 @@
               (st/update :status #(apply s/enum (disj (:vs %) "Open" "Closed"))))))
 
 (s/defn compute-intervals :- PartialStoredIncident
-  "Given an incident update and the a function returning the current stored incident, return a new update
+  "Given an incident update and a function returning the current stored incident, return a new update
   that also computes any relevant intervals that are missing from the stored incident.
   Avoids retrieving the stored incident if possible."
   [{:keys [id status] :as incident-update} :- IncidentUpdateBeforeComputeIntervals
