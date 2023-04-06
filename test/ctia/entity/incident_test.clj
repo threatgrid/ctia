@@ -638,11 +638,10 @@
 
 (deftest compute-intervals-test
   (testing "retrieves full incident by need"
-    (doseq [incident-update [{:id "foo"}
-                             {:id "foo"
-                              :status "Rejected"}
-                             {:id "foo"
-                              :status "Incident Reported"}]]
+    (doseq [incident-update (mapv #(do {:id "foo" :status %})
+                                  (remove #{"Closed" "Open"}
+                                          ;(st/get-in sut/Incident [:status])
+                                          ["New" "Closed" "Rejected" "Open" "Restoration Achieved" "Incident Reported" "Stalled" "Containment Achieved"]))]
       (testing (pr-str incident-update)
         (let [dly (delay
                     ;; should be stored incident
