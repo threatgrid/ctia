@@ -21,7 +21,7 @@
             [ctim.examples.bundles :refer [new-bundle-minimal]]
             [ctim.examples.incidents
              :refer
-             [new-incident-maximal new-incident-minimal]]
+             [new-incident-maximal new-incident-minimal incident-minimal]]
             ductile.index
             [puppetlabs.trapperkeeper.app :as app]
             [schema.core :as s]
@@ -635,3 +635,40 @@
                           (is (= (normalize [incident1])
                                  (normalize parsed-body)))))))
                (finally (purge-incidents! app))))))))
+
+(deftest compute-intervals-test
+  (testing "retrieves full incident by need"
+    (doseq [incident-update [{:id "foo"}
+                             {:id "foo"
+                              :status "Rejected"}
+                             {:id "foo"
+                              :status "Incident Reported"}]]
+      (testing (pr-str incident-update)
+        (let [dly (delay
+                    ;; should be stored incident
+                    incident-minimal)]
+          (is (= incident-update (sut/compute-intervals incident-update dly)))
+          (is (not (realized? dly)))))))
+  (testing "updating status 'Open'"
+    (doseq [{:keys [id incident-update stored-incident expected]}
+            (let [earlier (jt/java-date (jt/plus (jt/instant 0) (jt/seconds -10)))
+                  later   (jt/java-date (jt/plus (jt/instant 0) (jt/seconds 10)))
+                  computed-interval 20
+                  precomputed-interval 15
+                  _ (assert (not= computed-interval precomputed-interval))
+                  base-test-case {:incident-update {:id "foo" :status "Open"}
+                                  :stored-incident (-> incident-minimal
+                                                       (assoc :created earlier
+                                                              :incident_time {:opened later})
+                                                       (dissoc :intervals))
+                                  :expected {:id "foo" :status "Open"}}]
+              [(-> base-test-case
+                   (assoc :id :update-new_to_opened)
+                   ;; if :stored-incident does not already have a :new_to_opened interval, compute it
+                   (assoc-in [:expected :intervals :new_to_opened] computed-interval))
+               (-> base-test-case
+                   (assoc :id :no-update-new_to_opened)
+                   ;; if :stored-incident already has :new_to_opened interval, don't add it to the update
+                   (assoc-in [:stored-incident :intervals :new_to_opened] precomputed-interval))])]
+      (testing (pr-str id)
+        (is (= expected (sut/compute-intervals incident-update (delay stored-incident))))))))

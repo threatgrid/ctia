@@ -85,23 +85,27 @@
       verb (assoc :incident_time {verb t}))))
 
 (s/defn compute-intervals :- PartialStoredIncident
-  "Given an incident update and the current stored incident, return a new update
-  that also computes any intervals that are missing from the stored incident."
-  [{:keys [id] :as incident-update} :- (st/required-keys PartialIncident [:id])
-   {:keys [created incident_time intervals]} :- StoredIncident]
-  (let [update-interval (fn [incident-update field earlier later]
-                          (cond-> incident-update
-                            (and (not (get intervals field))
-                                 earlier later
-                                 (jt/not-after? earlier later)
-                                 (nat-int? (jt/to-millis-from-epoch earlier)))
-                            (assoc-in [:intervals field]
-                                      (- (jt/to-millis-from-epoch later)
-                                         (jt/to-millis-from-epoch earlier)))))
-        {:keys [opened closed]} incident_time]
-    (-> incident-update
-        (update-interval :new_to_opened created opened)
-        (update-interval :opened_to_closed opened closed))))
+  "Given an incident update and the a function returning the current stored incident, return a new update
+  that also computes any relevant intervals that are missing from the stored incident.
+  Avoids retrieving the stored incident if possible."
+  [{:keys [id status] :as incident-update} :- (st/required-keys PartialIncident [:id])
+   ->stored-incident :- (s/pred delay?) #_(s/delay StoredIncident)]
+  (if (#{"Open" "Closed"} status)
+    (let [{:keys [created incident_time intervals]} @->stored-incident
+          update-interval (fn [incident-update interval earlier later]
+                            (cond-> incident-update
+                              (and (not (get intervals interval))
+                                   earlier later
+                                   (jt/not-after? (jt/instant earlier) (jt/instant later)))
+                              (assoc-in [:intervals interval]
+                                        (jt/time-between (jt/instant earlier) (jt/instant later) :seconds))))
+          {:keys [opened closed]} incident_time]
+      (-> incident-update
+          ;; the duration between the time at which the incident changed from New to Open and the incident creation time
+          ;; https://github.com/advthreat/iroh/issues/7622#issuecomment-1496374419
+          (update-interval :new_to_opened created opened)
+          (update-interval :opened_to_closed opened closed)))
+    incident-update))
 
 (s/defn incident-additional-routes [{{:keys [get-store]} :StoreService
                                      :as services} :- APIHandlerServices]
@@ -109,7 +113,7 @@
     (let [capabilities :create-incident]
       (POST "/:id/status" []
             :return Incident
-            :body [update' IncidentStatusUpdate
+            :body [status-update IncidentStatusUpdate
                    {:description "an Incident Status Update"}]
             :summary "Update an Incident Status"
             :query-params [{wait_for :- (describe s/Bool "wait for updated entity to be available for search") nil}]
@@ -122,9 +126,9 @@
                                   {:get-store get-store
                                    :entity :incident
                                    :identity-map identity-map})
-                  status-update (-> (make-status-update update')
+                  status-update (-> (make-status-update status-update)
                                     (assoc :id id)
-                                    (compute-intervals (first (get-by-ids-fn [id]))))
+                                    (compute-intervals (delay (first (get-by-ids-fn [id])))))
                   update-fn (routes.crud/flow-update-fn
                               {:get-store get-store
                                :entity :incident
