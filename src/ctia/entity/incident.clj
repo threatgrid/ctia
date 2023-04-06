@@ -90,12 +90,16 @@
 (s/defschema IncidentUpdateBeforeComputeIntervals
   (s/conditional
     #(= "Open" (:status %)) (-> PartialIncident
+                                (st/assoc :status (s/enum "Open"))
                                 (st/required-keys [:id])
                                 (st/update :incident_time st/required-keys [:opened]))
     #(= "Closed" (:status %)) (-> PartialIncident
+                                  (st/assoc :status (s/enum "Closed"))
                                   (st/required-keys [:id])
                                   (st/update :incident_time st/required-keys [:closed]))
-    :else (st/required-keys PartialIncident [:id :status])))
+    :else (-> PartialIncident
+              (st/required-keys [:id :status])
+              (st/update :status #(apply s/enum (disj (:vs %) "Open" "Closed"))))))
 
 (s/defn compute-intervals :- PartialStoredIncident
   "Given an incident update and the a function returning the current stored incident, return a new update
