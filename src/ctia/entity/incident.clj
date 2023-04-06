@@ -105,16 +105,15 @@
    ->stored-incident :- (s/pred delay?) #_(s/delay StoredIncident)]
   (if-not (#{"Open" "Closed"} status) ;; only deref stored incident if needed
     incident-update
-    (let [{:keys [incident_time intervals] :as stored-incident} @->stored-incident
+    (let [stored-incident @->stored-incident
           update-interval (s/fn [interval :- (apply s/enum incident-intervals)
                                  earlier :- s/Inst
                                  later :- s/Inst]
                             (cond-> incident-update
-                              (and (not (get intervals interval)) ;; don't clobber existing interval
+                              (and (not (get (:intervals stored-incident) interval)) ;; don't clobber existing interval
                                    (jt/not-after? (jt/instant earlier) (jt/instant later)))
                               (assoc-in [:intervals interval]
-                                        (jt/time-between (jt/instant earlier) (jt/instant later) :seconds))))
-          {:keys [opened closed]} incident_time]
+                                        (jt/time-between (jt/instant earlier) (jt/instant later) :seconds))))]
       (case status
         ;; the duration between the time at which the incident changed from New to Open and the incident creation time
         ;; https://github.com/advthreat/iroh/issues/7622#issuecomment-1496374419
