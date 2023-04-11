@@ -760,7 +760,8 @@
              (let [{:keys [parsed-body] :as raw} (GET app
                                                       "ctia/incident/metric/average"
                                                       :headers {"Authorization" "45c1f5e3f05d0"}
-                                                      :query-params {:aggregate-on "intervals.new_to_opened"})]
+                                                      :query-params {:aggregate-on "intervals.new_to_opened"
+                                                                     :from (str (jt/minus (jt/instant) (jt/days 50)))})]
                (and (is (= 200 (:status raw)) (pr-str raw))
                     (is (= 300 parsed-body)
                         (pr-str parsed-body)))))
