@@ -44,7 +44,7 @@
 
 (s/defschema AggType
   "supported aggregation types"
-  (s/enum :histogram :topn :cardinality :avg))
+  (s/enum :histogram :topn :cardinality :average))
 
 (s/defschema AggCommonParams
   {:aggregate-on s/Str
@@ -63,14 +63,17 @@
     (s/optional-key :timezone) Timezone}))
 
 (s/defschema AverageParams
-  (st/merge
-    AggCommonParams
-    #_{(s/optional-key :timezone) Timezone}))
+  AggCommonParams)
 
 (s/defschema HistogramQuery
   (st/merge
    {:agg-type (s/eq :histogram)}
    HistogramParams))
+
+(s/defschema AverageQuery
+  (st/merge
+   {:agg-type (s/eq :average)}
+   AverageParams))
 
 (s/defschema TopnParams
   (st/merge
