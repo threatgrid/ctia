@@ -422,13 +422,13 @@
                                                      :params (st/select-schema params agg-search-schema)
                                                      :make-date-range-fn coerce-date-range})
                              agg-q (st/assoc (st/select-schema params AverageParams)
-                                             :agg-type :average)]
+                                             :agg-type :avg)]
                          (-> (get-store entity)
                              (store/aggregate
                                search-q
                                agg-q
                                identity-map)
-                             (routes.common/format-agg-result :average aggregate-on search-q)
+                             (routes.common/format-agg-result :avg aggregate-on search-q)
                              ok)))
                   (GET "/histogram" []
                        :return MetricResult

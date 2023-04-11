@@ -600,7 +600,7 @@ It returns the documents with full hits meta data including the real index in wh
           :topn make-topn
           :cardinality make-cardinality
           :histogram make-histogram
-          :average make-average
+          :avg make-average
           (throw (ex-info (str "invalid aggregation type: " (pr-str agg-type))
                           {})))]
     (cond-> {agg-key (agg-fn root-agg)}
@@ -616,7 +616,8 @@ It returns the documents with full hits meta data including the real index in wh
                buckets)
     :histogram (map #(array-map :key (:key_as_string %)
                                 :value (:doc_count %))
-                    buckets)))
+                    buckets)
+    :avg nil))
 
 (s/defn handle-aggregate
   "Generate an ES aggregation handler for given schema"

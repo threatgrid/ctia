@@ -44,7 +44,7 @@
 
 (s/defschema AggType
   "supported aggregation types"
-  (s/enum :histogram :topn :cardinality :average))
+  (s/enum :histogram :topn :cardinality :avg))
 
 (s/defschema AggCommonParams
   {:aggregate-on s/Str
@@ -72,7 +72,7 @@
 
 (s/defschema AverageQuery
   (st/merge
-   {:agg-type (s/eq :average)}
+   {:agg-type (s/eq :avg)}
    AverageParams))
 
 (s/defschema TopnParams
