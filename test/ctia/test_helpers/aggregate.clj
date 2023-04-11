@@ -224,7 +224,7 @@
           _           (assert (seq? date-values))
           res-days    (map #(to-granularity-first-day granularity %)
                            date-values)
-          expected    (make-average-res res-days)
+          expected    (assert nil "TODO") #_(make-average-res res-days)
           _           (assert (every? #(:value %) expected))
           {{:keys [from to]} :filters
            :as res} (average app
@@ -233,6 +233,8 @@
                               :to   to-str}
                              {:aggregate-on (name field)
                               :granularity  (name granularity)})]
+      (assert nil "TODO")
+      #_
       (is (= expected
              (format-ctia-average parsed res))
           (format "test-average on: %s %s" entity field))
