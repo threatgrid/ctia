@@ -62,7 +62,7 @@
   (st/optional-keys-schema StoredIncident))
 
 (def realize-incident
-  (default-realize-fn "incident" PartialStoredIncident StoredIncident))
+  (default-realize-fn "incident" NewIncident StoredIncident))
 
 (s/defschema IncidentStatus
   (fs/->schema vocs/Status))
