@@ -787,7 +787,7 @@
                    (let [{:keys [parsed-body] :as raw} (GET app "ctia/incident/metric/average"
                                                             :headers {"Authorization" "45c1f5e3f05d0"}
                                                             :query-params {:aggregate-on (str "intervals." field)
-                                                                           :from (jt/java-date new-time)})]
+                                                                           :from new-time})]
                      (and (is (= 200 (:status raw)) (pr-str raw))
                           (is (= expected parsed-body)
                               (pr-str parsed-body))))))))
