@@ -428,6 +428,7 @@
                                search-q
                                agg-q
                                identity-map)
+                             (doto (prn "store/aggregate"))
                              (routes.common/format-agg-result :avg aggregate-on search-q)
                              ok)))
                   (GET "/histogram" []
