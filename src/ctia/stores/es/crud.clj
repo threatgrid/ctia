@@ -632,5 +632,6 @@ It returns the documents with full hits meta data including the real index in wh
                                   query
                                   agg
                                   {:limit 0})]
+    (prn "es handle-aggregate" query agg es-res)
     (format-agg-result agg-type
                        (get-in es-res [:aggs :metric]))))
