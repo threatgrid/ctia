@@ -118,9 +118,11 @@
     (long-id->entity-type id-str)))
 
 (defn un-store [record]
+  #_
+  (when (= "incident" (:type record))
+    (prn "un-store incident" record))
   (cond-> (dissoc record :created :modified)
-    ;; FIXME parameterize un-store for each entity
-    true #_(= :incident (:type record)) (dissoc :intervals)))
+    (= "incident" (:type record)) (dissoc :intervals)))
 
 (defn un-store-all [x]
   (if (sequential? x)
