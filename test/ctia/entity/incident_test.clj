@@ -742,27 +742,53 @@
     (fn [app]
       (helpers/set-capabilities! app "foouser" ["foogroup"] "user" all-capabilities)
       (whoami-helpers/set-whoami-response app "45c1f5e3f05d0" "foouser" "foogroup" "user")
-      (try (let [incidents (into #{} (map #(assoc (gen-new-incident)
-                                                  :status "New"
-                                                  :title (str "incident" (inc %))))
-                                 (range 2))
-                 bulk-out (create-incidents app incidents)
-                 incident-ids (map :id (:results bulk-out))
-                 _ (prn {:incident-ids incident-ids})
-                 _ (assert (= (count incident-ids) (count incidents))
+      (try (let [incident->intervals [[(assoc (gen-new-incident) :status "New" :title "incident1")
+                                       {:new_to_opened 100
+                                        :opened_to_closed 150}]
+                                      [(assoc (gen-new-incident) :status "New" :title "incident2")
+                                       {:new_to_opened 200
+                                        :opened_to_closed 250}]
+                                      [(assoc (gen-new-incident) :status "New" :title "incident3")
+                                       {:new_to_opened 500
+                                        :opened_to_closed 550}]]
+                 expected-new_to_opened 266
+                 _ (assert (= expected-new_to_opened
+                              (long (/ (apply + (map (comp :new_to_opened second)
+                                                     incident->intervals))
+                                       (count incident->intervals)))))
+                 expected-opened_to_closed 316
+                 _ (assert (= expected-opened_to_closed
+                              (long (/ (apply + (map (comp :opened_to_closed second)
+                                                     incident->intervals))
+                                       (count incident->intervals)))))
+                 new-time (jt/instant)
+                 bulk-out (helpers/fixture-with-fixed-time
+                            (jt/java-date new-time)
+                            #(create-incidents app (into #{} (map first) incident->intervals)))
+                 incident-id->incident+intervals (map vector
+                                                      (map :id (:results bulk-out))
+                                                      incident->intervals)
+                 _ (assert (= (count incident-id->incident+intervals) (count incident->intervals))
                            bulk-out)
-                 _ (doseq [incident-id incident-ids
-                           ;; initialize intervals.new_to_opened and intervals.opened_to_closed
-                           new-status ["Open" "Closed"]]
-                     (let [{:keys [parsed-body] :as response} (post-status app (uri/uri-encode incident-id) new-status)]
-                       (is (= 200 (:status response))
-                           response)))]
-             (let [{:keys [parsed-body] :as raw} (GET app
-                                                      "ctia/incident/metric/average"
-                                                      :headers {"Authorization" "45c1f5e3f05d0"}
-                                                      :query-params {:aggregate-on "intervals.new_to_opened"
-                                                                     :from (str (jt/minus (jt/instant) (jt/days 50)))})]
-               (and (is (= 200 (:status raw)) (pr-str raw))
-                    (is (= 300 parsed-body)
-                        (pr-str parsed-body)))))
+                 _ (testing "populate intervals"
+                     (doseq [[incident-id [incident {:keys [new_to_opened opened_to_closed]}]] incident-id->incident+intervals
+                             [new-status next-time] [["Open" (jt/plus new-time (jt/seconds new_to_opened))]
+                                                     ["Closed" (jt/plus new-time (jt/seconds (+ new_to_opened opened_to_closed)))]]]
+                       (testing (pr-str [new-status incident])
+                         (let [{:keys [parsed-body] :as response} (helpers/fixture-with-fixed-time
+                                                                    (jt/java-date next-time)
+                                                                    #(post-status app (uri/uri-encode incident-id) new-status))]
+                           (is (= 200 (:status response))
+                               response)))))]
+             (testing "average aggregation"
+               (doseq [[field expected] [["new_to_opened" expected-new_to_opened]
+                                         ["opened_to_closed" expected-opened_to_closed]]]
+                 (testing field
+                   (let [{:keys [parsed-body] :as raw} (GET app "ctia/incident/metric/average"
+                                                            :headers {"Authorization" "45c1f5e3f05d0"}
+                                                            :query-params {:aggregate-on (str "intervals." field)
+                                                                           :from (jt/java-date new-time)})]
+                     (and (is (= 200 (:status raw)) (pr-str raw))
+                          (is (= expected parsed-body)
+                              (pr-str parsed-body))))))))
            (finally (purge-incidents! app))))))

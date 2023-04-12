@@ -617,7 +617,7 @@ It returns the documents with full hits meta data including the real index in wh
     :histogram (map #(array-map :key (:key_as_string %)
                                 :value (:doc_count %))
                     buckets)
-    :avg nil))
+    :avg value))
 
 (s/defn handle-aggregate
   "Generate an ES aggregation handler for given schema"

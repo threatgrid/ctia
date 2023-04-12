@@ -107,6 +107,7 @@
   Avoids retrieving the stored incident if possible."
   [{:keys [id status] :as incident-update} :- IncidentUpdateBeforeComputeIntervals
    ->stored-incident :- (s/pred delay?) #_(s/delay StoredIncident)]
+  (prn "compute-intervals" id status)
   (if-not (#{"Open" "Closed"} status) ;; only deref stored incident if needed
     incident-update
     (let [stored-incident @->stored-incident
@@ -114,19 +115,23 @@
                                  interval :- (apply s/enum incident-intervals)
                                  earlier :- s/Inst
                                  later :- s/Inst]
+                            (prn "update-interval" incident-update interval earlier later)
                             (cond-> incident-update
                               (and (not (get (:intervals stored-incident) interval)) ;; don't clobber existing interval
                                    (jt/not-after? (jt/instant earlier) (jt/instant later)))
                               (assoc-in [:intervals interval]
                                         (jt/time-between (jt/instant earlier) (jt/instant later) :seconds))))]
+
+      (prn "compute-intervals old" incident-update (:status stored-incident))
       (case status
         ;; the duration between the time at which the incident changed from New to Open and the incident creation time
         ;; https://github.com/advthreat/iroh/issues/7622#issuecomment-1496374419
-        "Open"   (cond-> incident-update
-                   (= "New" (:status stored-incident))
-                   (update-interval :new_to_opened
-                                    (:created stored-incident)
-                                    (get-in incident-update [:incident_time :opened])))
+        "Open"   (doto (cond-> incident-update
+                         (= "New" (:status stored-incident))
+                         (update-interval :new_to_opened
+                                          (:created stored-incident)
+                                          (get-in incident-update [:incident_time :opened])))
+                   (prn "FINAL compute-intervals"))
         "Closed" (update-interval incident-update
                                   :opened_to_closed
                                   (get-in stored-incident [:incident_time :opened])
