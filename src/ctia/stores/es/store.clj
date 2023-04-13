@@ -36,10 +36,12 @@
   (assert (symbol? store-name) (pr-str store-name))
   (assert (keyword? entity-kw) (pr-str entity-kw))
   (assert (symbol? stored-schema) (pr-str stored-schema))
-  (assert (not= 'state stored-schema) "Captured stored-schema binding!")
-  (assert (not= 'state partial-stored-schema) "Captured partial-stored-schema binding!")
-
-  (let [state-sym 'state]
+  (let [state-sym 'state
+        qsym #(let [v (resolve %)] (when (var? v) (symbol v)))
+        stored-schema (or (qsym stored-schema)
+                          (throw (ex-info (str "stored-schema did not resolve to a var") {:stored-schema stored-schema})))
+        partial-stored-schema (or (qsym stored-schema)
+                                  (throw (ex-info (str "partial-stored-schema did not resolve to a var") {:partial-stored-schema partial-stored-schema})))]
     `(defrecord ~store-name [~state-sym]
        IStore
        (store/read-record [_# id# ident# params#]
