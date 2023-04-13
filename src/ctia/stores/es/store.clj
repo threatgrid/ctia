@@ -37,11 +37,14 @@
   (assert (keyword? entity-kw) (pr-str entity-kw))
   (assert (symbol? stored-schema) (pr-str stored-schema))
   (let [state-sym 'state
-        qsym #(let [v (resolve %)] (when (var? v) (symbol v)))
-        stored-schema (or (qsym stored-schema)
-                          (throw (ex-info (str "stored-schema did not resolve to a var") {:stored-schema stored-schema})))
-        partial-stored-schema (or (qsym stored-schema)
-                                  (throw (ex-info (str "partial-stored-schema did not resolve to a var") {:partial-stored-schema partial-stored-schema})))]
+        qsym (fn [arg arg-name]
+               (let [v (resolve arg)]
+                 (if (var? v)
+                   (symbol v)
+                   (throw (ex-info (format "% did not resolve to a var" arg-name)
+                                   {(keyword arg-name) arg})))))
+        stored-schema (qsym stored-schema 'stored-schema)
+        partial-stored-schema (qsym partial-stored-schema 'partial-stored-schema)]
     `(defrecord ~store-name [~state-sym]
        IStore
        (store/read-record [_# id# ident# params#]
