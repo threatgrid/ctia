@@ -787,9 +787,6 @@
                    (let [{:keys [parsed-body] :as raw} (GET app "ctia/incident/metric/average"
                                                             :headers {"Authorization" "45c1f5e3f05d0"}
                                                             :query-params {:aggregate-on (str "intervals." field)
-                                                                           ;FIXME what are the semantics of from? currently it
-                                                                           ; gets compiled to an unhelpful ES query:
-                                                                           ; {:range {:intervals.opened_to_closed {:gte #inst "2023-04-12T17:01:56.584-00:00", :lt #inst "2023-04-12T17:01:58.226-00:00"}}}
                                                                            :from new-time})]
                      (and (is (= 200 (:status raw)) (pr-str raw))
                           (is (= expected parsed-body)

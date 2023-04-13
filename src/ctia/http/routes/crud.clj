@@ -418,7 +418,7 @@
                        :summary (format "Average for some %s field" capitalized)
                        :query [params average-q-params]
                        (let [aggregate-on (keyword (:aggregate-on params))
-                             search-q (search-query {:date-field aggregate-on
+                             search-q (search-query {:date-field :created
                                                      :params (st/select-schema params agg-search-schema)
                                                      :make-date-range-fn coerce-date-range})
                              agg-q (st/assoc (st/select-schema params AverageParams)
