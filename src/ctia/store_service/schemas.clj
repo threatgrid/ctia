@@ -7,7 +7,7 @@
   (s/pred simple-keyword?))
 
 (s/defschema Store
-  (s/protocol map?))
+  (s/protocol IStore))
 
 (s/defschema GetStoreFn
   "ctia.store-service/get-store in the service graph."
