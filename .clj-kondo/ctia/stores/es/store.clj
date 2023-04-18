@@ -5,4 +5,4 @@
    _entity
    _stored-schema
    _partial-stored-schema]
-  `(clojure.core/defrecord ~store-name [~(symbol "state")]))
+  `(clojure.core/defn ~(symbol (str "->" (name store-name))) [state#] (throw (Exception.))))
