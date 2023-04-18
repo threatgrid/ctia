@@ -32,64 +32,50 @@
                      (into params next-params))
               :initk (assoc params :limit limit))))
 
-(defn create-es-store-fn [{:keys [entity-kw stored-schema partial-stored-schema]}]
-  (assert (keyword? entity-kw) (pr-str entity-kw))
-  (assert (map? stored-schema) (pr-str stored-schema))
-  (assert (map? partial-stored-schema) (pr-str partial-stored-schema))
-  (let [read-record# (crud/handle-read partial-stored-schema)
-        handle-read-many# (crud/handle-read-many partial-stored-schema)
-        handle-create# (crud/handle-create entity-kw stored-schema)
-        handle-update# (crud/handle-update entity-kw stored-schema)
-        handle-delete# (crud/handle-delete entity-kw)
-        bulk-update# (crud/bulk-update stored-schema)
-        handle-find# (crud/handle-find partial-stored-schema)
-        handle-query-string-search# (crud/handle-query-string-search partial-stored-schema)]
-    (fn [state]
-      (reify
-        IStore
-        (store/read-record [_# id# ident# params#]
-          (read-record# state id# ident# params#))
-        (store/read-records [_# ids# ident# params#]
-          (handle-read-many# state ids# ident# params#))
-        (store/create-record [_# new-actors# ident# params#]
-          (handle-create# state new-actors# ident# params#))
-        (store/update-record [_# id# actor# ident# params#]
-          (handle-update# state id# actor# ident# params#))
-        (store/delete-record [_# id# ident# params#]
-          (handle-delete# state id# ident# params#))
-        (store/bulk-delete [_# ids# ident# params#]
-          (crud/bulk-delete state ids# ident# params#))
-        (store/bulk-update [_# docs# ident# params#]
-          (bulk-update# state docs# ident# params#))
-        (store/list-records [_# filter-map# ident# params#]
-          (handle-find# state filter-map# ident# params#))
-        (store/close [_#] (close-connections! state))
-
-        IQueryStringSearchableStore
-        (store/query-string-search [_# args#]
-          (handle-query-string-search# state args#))
-        (store/query-string-count [_# search-query# ident#]
-          (crud/handle-query-string-count state search-query# ident#))
-        (store/aggregate [_# search-query# agg-query# ident#]
-          (crud/handle-aggregate state search-query# agg-query# ident#))
-        (store/delete-search [_# search-query# ident# params#]
-          (crud/handle-delete-search state search-query# ident# params#))
-
-        IPaginateableStore
-        (store/paginate [this# fetch-page-fn#]
-          (store/paginate this# fetch-page-fn# {}))
-        (store/paginate [this# fetch-page-fn# init-page-params#]
-          (all-pages-iteration (partial fetch-page-fn# this#) init-page-params#))))))
-
 (defmacro def-es-store [store-name entity-kw stored-schema partial-stored-schema]
   (assert (symbol? store-name) (pr-str store-name))
-  (let [state-sym (gensym 'state)
-        ctor (symbol (str "->" (name store-name)))]
-    `(let [f# (create-es-store-fn {:entity-kw ~entity-kw
-                                   :stored-schema ~stored-schema
-                                   :partial-stored-schema ~partial-stored-schema})]
-       (defn ~ctor [state#]
-         (f# state#)))))
+  (assert (keyword? entity-kw) (pr-str entity-kw))
+  (assert (symbol? stored-schema) (pr-str stored-schema))
+  (assert (not= 'state stored-schema) "Captured stored-schema binding!")
+  (assert (not= 'state partial-stored-schema) "Captured partial-stored-schema binding!")
+
+  (let [state-sym 'state]
+    `(defrecord ~store-name [~state-sym]
+       IStore
+       (store/read-record [_# id# ident# params#]
+         ((crud/handle-read ~partial-stored-schema) ~state-sym id# ident# params#))
+       (store/read-records [_# ids# ident# params#]
+         ((crud/handle-read-many ~partial-stored-schema) ~state-sym ids# ident# params#))
+       (store/create-record [_# new-actors# ident# params#]
+         ((crud/handle-create ~entity-kw ~stored-schema) ~state-sym new-actors# ident# params#))
+       (store/update-record [_# id# actor# ident# params#]
+         ((crud/handle-update ~entity-kw ~stored-schema) ~state-sym id# actor# ident# params#))
+       (store/delete-record [_# id# ident# params#]
+         ((crud/handle-delete ~entity-kw) ~state-sym id# ident# params#))
+       (store/bulk-delete [_# ids# ident# params#]
+         (crud/bulk-delete ~state-sym ids# ident# params#))
+       (store/bulk-update [_# docs# ident# params#]
+         ((crud/bulk-update ~stored-schema) ~state-sym docs# ident# params#))
+       (store/list-records [_# filter-map# ident# params#]
+         ((crud/handle-find ~partial-stored-schema) ~state-sym filter-map# ident# params#))
+       (store/close [_#]
+         (close-connections! ~state-sym))
+
+       IQueryStringSearchableStore
+       (store/query-string-search [_# args#]
+         ((crud/handle-query-string-search ~partial-stored-schema) ~state-sym args#))
+       (store/query-string-count [_# search-query# ident#]
+         (crud/handle-query-string-count ~state-sym search-query# ident#))
+       (store/aggregate [_# search-query# agg-query# ident#]
+         (crud/handle-aggregate ~state-sym search-query# agg-query# ident#))
+       (store/delete-search [_# search-query# ident# params#]
+         (crud/handle-delete-search ~state-sym search-query# ident# params#))
+
+       IPaginateableStore
+       (store/paginate [this# fetch-page-fn#]
+         (store/paginate this# fetch-page-fn# {}))
+       (store/paginate [this# fetch-page-fn# init-page-params#]
+         (all-pages-iteration (partial fetch-page-fn# this#) init-page-params#)))))
 
 (s/defschema StoreMap
   {:conn ESConn
