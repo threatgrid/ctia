@@ -47,7 +47,8 @@
          bulk-update# (crud/bulk-update stored-schema#)
          list-records# (crud/handle-find partial-stored-schema#)
          query-string-search# (crud/handle-query-string-search partial-stored-schema#)]
-     (defn ~(symbol (str "->" (name store-name))) [state#]
+     (defn ~(symbol (str "->" (name store-name)))
+       [state#]
        (reify
          IStore
          (read-record [_# id# ident# params#]
