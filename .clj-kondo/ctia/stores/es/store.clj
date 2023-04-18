@@ -5,4 +5,4 @@
    _entity
    _stored-schema
    _partial-stored-schema]
-  `(clojure.core/defn ~(symbol (str "->" (name store-name))) [state#] @(promise)))
+  `(clojure.core/defn ~(symbol (str "->" (name store-name))) [state#] (while true)))
