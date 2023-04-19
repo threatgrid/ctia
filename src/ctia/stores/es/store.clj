@@ -37,6 +37,52 @@
   `(do ~@(map (fn [[n b]] `(def ~n ~b)) (partition-all 2 bs))
        ~@body))
 
+(defmacro def-es-store [store-name entity-kw stored-schema partial-stored-schema]
+  (assert (symbol? store-name) (pr-str store-name))
+  (assert (keyword? entity-kw) (pr-str entity-kw))
+  (assert (symbol? stored-schema) (pr-str stored-schema))
+  (assert (not= 'state stored-schema) "Captured stored-schema binding!")
+  (assert (not= 'state partial-stored-schema) "Captured partial-stored-schema binding!")
+
+  (let [state-sym 'state]
+    `(defrecord ~store-name [~state-sym]
+       IStore
+       (store/read-record [_# id# ident# params#]
+         ((crud/handle-read ~partial-stored-schema) ~state-sym id# ident# params#))
+       (store/read-records [_# ids# ident# params#]
+         ((crud/handle-read-many ~partial-stored-schema) ~state-sym ids# ident# params#))
+       (store/create-record [_# new-actors# ident# params#]
+         ((crud/handle-create ~entity-kw ~stored-schema) ~state-sym new-actors# ident# params#))
+       (store/update-record [_# id# actor# ident# params#]
+         ((crud/handle-update ~entity-kw ~stored-schema) ~state-sym id# actor# ident# params#))
+       (store/delete-record [_# id# ident# params#]
+         ((crud/handle-delete ~entity-kw) ~state-sym id# ident# params#))
+       (store/bulk-delete [_# ids# ident# params#]
+         (crud/bulk-delete ~state-sym ids# ident# params#))
+       (store/bulk-update [_# docs# ident# params#]
+         ((crud/bulk-update ~stored-schema) ~state-sym docs# ident# params#))
+       (store/list-records [_# filter-map# ident# params#]
+         ((crud/handle-find ~partial-stored-schema) ~state-sym filter-map# ident# params#))
+       (store/close [_#]
+         (close-connections! ~state-sym))
+
+       IQueryStringSearchableStore
+       (store/query-string-search [_# args#]
+         ((crud/handle-query-string-search ~partial-stored-schema) ~state-sym args#))
+       (store/query-string-count [_# search-query# ident#]
+         (crud/handle-query-string-count ~state-sym search-query# ident#))
+       (store/aggregate [_# search-query# agg-query# ident#]
+         (crud/handle-aggregate ~state-sym search-query# agg-query# ident#))
+       (store/delete-search [_# search-query# ident# params#]
+         (crud/handle-delete-search ~state-sym search-query# ident# params#))
+
+       IPaginateableStore
+       (store/paginate [this# fetch-page-fn#]
+         (store/paginate this# fetch-page-fn# {}))
+       (store/paginate [this# fetch-page-fn# init-page-params#]
+         (all-pages-iteration (partial fetch-page-fn# this#) init-page-params#)))))
+
+#_
 (defmacro def-es-store [store-name entity-kw es-stored-schema es-partial-stored-schema
                         & {:keys [stored-schema
                                   partial-stored-schema
