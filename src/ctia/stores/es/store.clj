@@ -34,9 +34,9 @@
 
 (defmacro def-es-store [store-name entity-kw stored-schema partial-stored-schema
                         & {:keys [extra-impls]}]
-  (assert (symbol? store-name) (pr-str store-name))
+  (assert (simple-symbol? store-name) (pr-str store-name))
   `(let [entity-kw# ~entity-kw
-         _ (assert (keyword? entity-kw#) (pr-str entity-kw#))
+         _# (assert (keyword? entity-kw#) (pr-str entity-kw#))
          stored-schema# ~stored-schema
          partial-stored-schema# ~partial-stored-schema
          read-record# (crud/handle-read partial-stored-schema#)
