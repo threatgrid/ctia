@@ -97,7 +97,7 @@
                                                      [:incident 0 :state :config :mappings
                                                       "incident" :properties (nth add-field 0)]
                                                      (nth add-field 1)))]
-                            (testing (str "Indicies should correctly update with ordering " (vec chosen-order))
+                            (testing (str "Incides should correctly update with ordering " (vec chosen-order))
                               (testing "Store should update without error"
                                 (run! (comp #(% stores) fs) chosen-order))
                               (let [index-map (into {}
