@@ -55,7 +55,6 @@
 (def es-coerce! (crud/coerce-to-fn [(s/maybe ESPartialStoredSighting)]))
 
 (def create-fn (crud/handle-create :sighting ESStoredSighting))
-(def read-many-fn (crud/handle-read-many ESPartialStoredSighting))
 (def update-fn (crud/handle-update :sighting ESStoredSighting))
 (def list-fn (crud/handle-find ESPartialStoredSighting))
 (def handle-query-string-search (crud/handle-query-string-search ESPartialStoredSighting))
@@ -99,10 +98,10 @@
   (when s (dissoc s :observables_hash)))
 
 (s/defn es-partial-stored-sighting->partial-stored-sighting
-  :- (s/maybe PartialStoredSighting)
+  :- PartialStoredSighting
   "remove the computed observables hash from a sighting"
-  [s :- (s/maybe ESPartialStoredSighting)]
-  (when s (dissoc s :observables_hash)))
+  [s :- ESPartialStoredSighting]
+  (dissoc s :observables_hash))
 
 (s/defn handle-create :- [StoredSighting]
   [state :- ESConnState
@@ -115,17 +114,19 @@
      (create-fn state $ ident params)
      (map es-stored-sighting->stored-sighting $))))
 
+(s/def read-record-opts :- crud/ReadRecordOpts
+  {:partial-stored-schema PartialStoredSighting
+   :es-partial-stored->partial-stored es-partial-stored-sighting->partial-stored-sighting})
+
 (s/defn handle-read :- (s/maybe PartialStoredSighting)
   [state id ident params]
-  ((crud/handle-read ESPartialStoredSighting
-                     {:partial-stored-schema PartialStoredSighting
-                      :es-partial-stored->partial-stored es-partial-stored-sighting->partial-stored-sighting})
+  ((crud/handle-read ESPartialStoredSighting read-record-opts)
    state id ident params))
 
 (s/defn handle-read-many :- [(s/maybe PartialStoredSighting)]
   [state ids ident params]
-  (map es-partial-stored-sighting->partial-stored-sighting
-       (read-many-fn state ids ident params)))
+  ((crud/handle-read-many ESPartialStoredSighting read-record-opts)
+   state ids ident params))
 
 (s/defn handle-update :- StoredSighting
   [state id realized ident params]
