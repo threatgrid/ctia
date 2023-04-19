@@ -72,8 +72,8 @@
                        test-for-each-store-with-app))
 
 (deftest test-attack-pattern-metric-routes
-  (test-metric-routes (into sut/attack-pattern-entity
-                            {:plural :attack_patterns
+  (test-metric-routes (assoc sut/attack-pattern-entity
+                             :plural :attack_patterns
                              :entity-minimal new-attack-pattern-minimal
                              :enumerable-fields sut/attack-pattern-enumerable-fields
-                             :date-fields sut/attack-pattern-histogram-fields})))
+                             :date-fields sut/attack-pattern-histogram-fields)))
