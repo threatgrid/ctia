@@ -186,30 +186,33 @@ It returns the documents with full hits meta data including the real index in wh
 
 (defn handle-read
   "Generate an ES read handler using some mapping and schema"
-  [Model]
-  (let [coerce! (coerce-to-fn (s/maybe Model))]
-    (s/fn :- (s/maybe Model)
-      [{{{:keys [get-in-config]} :ConfigService}
-        :services
-        :as conn-state}
-       :- ESConnState
-       id :- s/Str
-       ident
-       {:keys [suppress-access-control-error?]
-        :or {suppress-access-control-error? false}
-        :as es-params}]
-      (when-let [doc (-> (get-doc-with-index conn-state
-                                             id
-                                             (make-es-read-params es-params))
-                         :_source
-                         coerce!)]
-        (if (allow-read? doc ident get-in-config)
-          doc
-          (let [ex (ex-info "You are not allowed to read this document"
-                            {:type :access-control-error})]
-            (if suppress-access-control-error?
-              (log/error ex)
-              (throw ex))))))))
+  ([es-partial-schema]
+   (handle-read es-partial-schema {:partial-schema es-partial-schema}))
+  ([es-partial-schema {:keys [partial-schema]}]
+   (let [partial-schema (or partial-schema es-partial-schema)
+         coerce! (coerce-to-fn (s/maybe es-partial-schema))]
+     (s/fn :- (s/maybe partial-schema)
+       [{{{:keys [get-in-config]} :ConfigService}
+         :services
+         :as conn-state}
+        :- ESConnState
+        id :- s/Str
+        ident
+        {:keys [suppress-access-control-error?]
+         :or {suppress-access-control-error? false}
+         :as es-params}]
+       (when-let [doc (-> (get-doc-with-index conn-state
+                                              id
+                                              (make-es-read-params es-params))
+                          :_source
+                          coerce!)]
+         (if (allow-read? doc ident get-in-config)
+           doc
+           (let [ex (ex-info "You are not allowed to read this document"
+                             {:type :access-control-error})]
+             (if suppress-access-control-error?
+               (log/error ex)
+               (throw ex)))))))))
 
 (defn handle-read-many
   "Generate an ES read-many handler using some mapping and schema"

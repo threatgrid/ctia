@@ -55,7 +55,8 @@
 (def es-coerce! (crud/coerce-to-fn [(s/maybe ESPartialStoredSighting)]))
 
 (def create-fn (crud/handle-create :sighting ESStoredSighting))
-(def read-fn (crud/handle-read ESPartialStoredSighting))
+(def read-fn (crud/handle-read ESPartialStoredSighting
+                               ))
 (def read-many-fn (crud/handle-read-many ESPartialStoredSighting))
 (def update-fn (crud/handle-update :sighting ESStoredSighting))
 (def list-fn (crud/handle-find ESPartialStoredSighting))
