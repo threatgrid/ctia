@@ -94,15 +94,16 @@
         default-fields-schema (->> searchable-fields
                                    (map name)
                                    (apply s/enum))]
-    (cond-> search-q-params
-      (seq searchable-fields)
-      (st/assoc
-        ;; We cannot name the parameter :fields, because we already have :fields (part
+    (if (seq searchable-fields)
+      (st/merge
+       search-q-params
+       {;; We cannot name the parameter :fields, because we already have :fields (part
         ;; of search-q-params). That key is to select a subsets of fields of the
         ;; retrieved document and it gets passed to the `_source` parameter of
         ;; Elasticsearch. For more: www.elastic.co/guide/en/elasticsearch/reference/current/mapping-source-field.html
         (s/optional-key :search_fields)
-        (describe [default-fields-schema] "'fields' key of Elasticsearch Fulltext Query.")))))
+        (describe [default-fields-schema] "'fields' key of Elasticsearch Fulltext Query.")})
+      search-q-params)))
 
 (def paging-param-keys
   "A list of the paging and sorting related parameters, we can use

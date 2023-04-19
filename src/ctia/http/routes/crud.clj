@@ -192,7 +192,9 @@
                               :limit
                               :offset
                               (keys sort-extension-definitions))
-        agg-search-schema (st/assoc search-filters :from s/Inst)
+        agg-search-schema (st/merge
+                           search-filters
+                           {:from s/Inst})
         aggregate-on-enumerable {:aggregate-on (apply s/enum (map name enumerable-fields))}
         histogram-filters {:aggregate-on (apply s/enum (map name histogram-fields))
                            :from (describe s/Inst "Start date of the histogram. Filters the value of selected aggregated-on field.")
