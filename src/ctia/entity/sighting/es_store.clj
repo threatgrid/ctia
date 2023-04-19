@@ -54,7 +54,6 @@
 
 (def es-coerce! (crud/coerce-to-fn [(s/maybe ESPartialStoredSighting)]))
 
-(def create-fn (crud/handle-create :sighting ESStoredSighting))
 (def update-fn (crud/handle-update :sighting ESStoredSighting))
 (def list-fn (crud/handle-find ESPartialStoredSighting))
 (def handle-query-string-search (crud/handle-query-string-search ESPartialStoredSighting))
@@ -73,6 +72,7 @@
   [observables :- [Observable]]
   (map observable->observable-hash observables))
 
+;TODO remove s/maybe
 (s/defn stored-sighting->es-stored-sighting
   :- (s/maybe ESStoredSighting)
   "adds an observables hash to a sighting"
@@ -108,11 +108,9 @@
    new-sightings :- [StoredSighting]
    ident
    params]
-  (doall
-   (as-> new-sightings $
-     (map stored-sighting->es-stored-sighting $)
-     (create-fn state $ ident params)
-     (map es-stored-sighting->stored-sighting $))))
+  ((crud/handle-create :sighting ESStoredSighting
+                       {:stored->es-stored stored-sighting->es-stored-sighting})
+   state new-sightings ident params))
 
 (s/def read-record-opts :- crud/ReadRecordOpts
   {:partial-stored-schema PartialStoredSighting

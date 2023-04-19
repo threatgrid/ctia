@@ -136,29 +136,35 @@ It returns the documents with full hits meta data including the real index in wh
          :_index (:write-index props)
          :_type (name mapping)))
 
-(defn handle-create
+(s/defn handle-create
   "Generate an ES create handler using some mapping and schema"
-  [mapping Model]
-  (let [coerce! (coerce-to-fn (s/maybe Model))]
-    (s/fn :- [Model]
-      [{:keys [conn] :as conn-state} :- ESConnState
-       docs :- [Model]
-       _ident
-       es-params]
-      (let [prepare-doc (partial prepare-bulk-doc conn-state mapping)
-            prepared (mapv prepare-doc docs)]
-        (try
-          (ductile.doc/bulk-index-docs conn
-                                       prepared
-                                       (prepare-opts conn-state es-params))
-          docs
-          (catch Exception e
-            (throw
-             (if-let [ex-data (ex-data e)]
-               ;; Add partial results to the exception data map
-               (ex-info (.getMessage e)
-                        (partial-results ex-data docs coerce!))
-               e))))))))
+  ([mapping :- s/Keyword
+    stored-schema :- (s/protocol s/Schema)]
+   (handle-create mapping stored-schema {:stored->es-stored identity}))
+  ([mapping :- s/Keyword
+    stored-schema :- (s/protocol s/Schema)
+    {:keys [stored->es-stored]} :- {:stored->es-stored (s/pred ifn?)}]
+   (let [coerce! (coerce-to-fn (s/maybe stored-schema))]
+     (s/fn :- [stored-schema]
+       [{:keys [conn] :as conn-state} :- ESConnState
+        docs :- [stored-schema]
+        _ident
+        es-params]
+       (let [prepare-doc (comp #(some-> % stored->es-stored)
+                               (partial prepare-bulk-doc conn-state mapping))
+             prepared (mapv prepare-doc docs)]
+         (try
+           (ductile.doc/bulk-index-docs conn
+                                        prepared
+                                        (prepare-opts conn-state es-params))
+           docs
+           (catch Exception e
+             (throw
+               (if-let [ex-data (ex-data e)]
+                 ;; Add partial results to the exception data map
+                 (ex-info (.getMessage e)
+                          (partial-results ex-data docs coerce!))
+                 e)))))))))
 
 (defn handle-update
   "Generate an ES update handler using some mapping and schema"
