@@ -105,7 +105,7 @@
   (when s (dissoc s :observables_hash)))
 
 (def read-fn (crud/handle-read ESPartialStoredSighting
-                               {:partial-schema PartialStoredSighting
+                               {:partial-stored-schema PartialStoredSighting
                                 :es-partial-stored->partial-stored (comp es-partial-stored-sighting->partial-stored-sighting :doc)}))
 
 (s/defn handle-create :- [StoredSighting]

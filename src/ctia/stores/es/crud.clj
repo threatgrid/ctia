@@ -184,15 +184,18 @@ It returns the documents with full hits meta data including the real index in wh
           (throw (ex-info "You are not allowed to update this document"
                           {:type :access-control-error})))))))
 
-(defn handle-read
+(s/defn handle-read
   "Generate an ES read handler using some mapping and schema"
-  ([es-partial-schema]
-   (handle-read es-partial-schema {:partial-schema es-partial-schema
-                                   :es-partial-stored->partial-stored :doc}))
-  ([es-partial-schema {:keys [partial-schema es-partial-stored->partial-stored]}]
-   (let [partial-schema (or partial-schema es-partial-schema)
-         coerce! (coerce-to-fn (s/maybe es-partial-schema))]
-     (s/fn :- (s/maybe partial-schema)
+  ([es-partial-stored-schema]
+   (handle-read es-partial-stored-schema
+                {:partial-stored-schema es-partial-stored-schema
+                 :es-partial-stored->partial-stored :doc}))
+  ([es-partial-stored-schema
+    {:keys [partial-stored-schema es-partial-stored->partial-stored]}
+    :- {:partial-stored-schema s/Any :es-partial-stored->partial-stored s/Any}]
+   (let [partial-stored-schema (or partial-stored-schema es-partial-stored-schema)
+         coerce! (coerce-to-fn (s/maybe es-partial-stored-schema))]
+     (s/fn :- (s/maybe partial-stored-schema)
        [{{{:keys [get-in-config]} :ConfigService}
          :services
          :as conn-state}
