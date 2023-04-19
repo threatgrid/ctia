@@ -45,16 +45,16 @@
          es-partial-stored-schema# ~es-partial-stored-schema
          es-partial-stored->partial-stored# ~es-partial-stored->partial-stored
          partial-stored-schema# (or ~partial-stored-schema es-partial-stored-schema#)
-         read-record# (crud/handle-read partial-stored-schema#
-                                        {:partial-stored-schema es-partial-stored-schema#
+         read-record# (crud/handle-read es-partial-stored-schema#
+                                        {:partial-stored-schema partial-stored-schema#
                                          :es-partial-stored->partial-stored es-partial-stored->partial-stored#})
-         read-records# (crud/handle-read-many partial-stored-schema#)
-         create-record# (crud/handle-create entity-kw# stored-schema#)
-         update-record# (crud/handle-update entity-kw# stored-schema#)
+         read-records# (crud/handle-read-many es-partial-stored-schema#)
+         create-record# (crud/handle-create entity-kw# es-stored-schema#)
+         update-record# (crud/handle-update entity-kw# es-stored-schema#)
          delete-record# (crud/handle-delete entity-kw#)
-         bulk-update# (crud/bulk-update stored-schema#)
-         list-records# (crud/handle-find partial-stored-schema#)
-         query-string-search# (crud/handle-query-string-search partial-stored-schema#)]
+         bulk-update# (crud/bulk-update es-stored-schema#)
+         list-records# (crud/handle-find es-partial-stored-schema#)
+         query-string-search# (crud/handle-query-string-search es-partial-stored-schema#)]
      (defn ~(symbol (str "->" (name store-name)))
        [state#]
        (reify
