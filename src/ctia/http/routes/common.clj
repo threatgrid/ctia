@@ -94,7 +94,6 @@
         default-fields-schema (->> searchable-fields
                                    (map name)
                                    (apply s/enum))]
-    (prn "prep-es-fields-schema" search-q-params entity)
     (cond-> search-q-params
       (seq searchable-fields)
       (st/assoc
