@@ -98,10 +98,10 @@
   (when s (dissoc s :observables_hash)))
 
 (s/defn es-partial-stored-sighting->partial-stored-sighting
-  :- PartialStoredSighting
+  :- (s/maybe PartialStoredSighting)
   "remove the computed observables hash from a sighting"
-  [s :- ESPartialStoredSighting]
-  (dissoc s :observables_hash))
+  [s :- (s/maybe ESPartialStoredSighting)]
+  (when s (dissoc s :observables_hash)))
 
 (s/defn handle-create :- [StoredSighting]
   [state :- ESConnState
