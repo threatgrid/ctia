@@ -55,7 +55,6 @@
 (def es-coerce! (crud/coerce-to-fn [(s/maybe ESPartialStoredSighting)]))
 
 (def create-fn (crud/handle-create :sighting ESStoredSighting))
-(def read-fn (crud/handle-read ESPartialStoredSighting))
 (def read-many-fn (crud/handle-read-many ESPartialStoredSighting))
 (def update-fn (crud/handle-update :sighting ESStoredSighting))
 (def list-fn (crud/handle-find ESPartialStoredSighting))
@@ -118,8 +117,10 @@
 
 (s/defn handle-read :- (s/maybe PartialStoredSighting)
   [state id ident params]
-  (es-partial-stored-sighting->partial-stored-sighting
-   (read-fn state id ident params)))
+  ((crud/handle-read ESPartialStoredSighting
+                     {:partial-stored-schema PartialStoredSighting
+                      :es-partial-stored->partial-stored es-partial-stored-sighting->partial-stored-sighting})
+   state id ident params))
 
 (s/defn handle-read-many :- [(s/maybe PartialStoredSighting)]
   [state ids ident params]

@@ -32,14 +32,22 @@
                      (into params next-params))
               :initk (assoc params :limit limit))))
 
-(defmacro def-es-store [store-name entity-kw stored-schema partial-stored-schema
-                        & {:keys [extra-impls]}]
+(defmacro def-es-store [store-name entity-kw es-stored-schema es-partial-stored-schema
+                        & {:keys [stored-schema
+                                  partial-stored-schema
+                                  es-partial-stored->partial-stored
+                                  extra-impls]}]
   (assert (simple-symbol? store-name) (pr-str store-name))
   `(let [entity-kw# ~entity-kw
          _# (assert (keyword? entity-kw#) (pr-str entity-kw#))
-         stored-schema# ~stored-schema
-         partial-stored-schema# ~partial-stored-schema
-         read-record# (crud/handle-read partial-stored-schema#)
+         es-stored-schema# ~es-stored-schema
+         stored-schema# (or ~stored-schema es-stored-schema#)
+         es-partial-stored-schema# ~es-partial-stored-schema
+         es-partial-stored->partial-stored# ~es-partial-stored->partial-stored
+         partial-stored-schema# (or ~partial-stored-schema es-partial-stored-schema#)
+         read-record# (crud/handle-read partial-stored-schema#
+                                        {:partial-stored-schema es-partial-stored-schema#
+                                         :es-partial-stored->partial-stored es-partial-stored->partial-stored#})
          read-records# (crud/handle-read-many partial-stored-schema#)
          create-record# (crud/handle-create entity-kw# stored-schema#)
          update-record# (crud/handle-update entity-kw# stored-schema#)
