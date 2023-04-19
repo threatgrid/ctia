@@ -66,6 +66,9 @@
      (defn ~(symbol (str "->" (name store-name)))
        [state#]
        (reify
+         clojure.lang.ILookup
+         (valAt [_# k#] (case k# :state state# nil))
+         (valAt [_# k# d#] (case k# :state state# d#))
          IStore
          (read-record [_# id# ident# params#]
            (read-record# state# id# ident# params#))
