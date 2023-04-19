@@ -54,7 +54,6 @@
 
 (def es-coerce! (crud/coerce-to-fn [(s/maybe ESPartialStoredSighting)]))
 
-(def create-fn (crud/handle-create :sighting ESStoredSighting))
 (def update-fn (crud/handle-update :sighting ESStoredSighting))
 (def list-fn (crud/handle-find ESPartialStoredSighting))
 (def handle-query-string-search (crud/handle-query-string-search ESPartialStoredSighting))
@@ -104,16 +103,9 @@
   (when s (dissoc s :observables_hash)))
 
 
-(s/defn handle-create :- [StoredSighting]
-  [state :- ESConnState
-   new-sightings :- [StoredSighting]
-   ident
-   params]
-  (doall
-   (as-> new-sightings $
-     (map stored-sighting->es-stored-sighting $)
-     (create-fn state $ ident params)
-     (map es-stored-sighting->stored-sighting $))))
+(def handle-create
+  (crud/handle-create :sighting StoredSighting
+                      {:stored->es-stored (comp stored-sighting->es-stored-sighting :doc)}))
 
 (def handle-read
   (crud/handle-read ESPartialStoredSighting
