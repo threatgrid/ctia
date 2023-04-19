@@ -49,10 +49,15 @@
          stored->es-stored# (or ~stored->es-stored identity)
          read-record-opts# {:partial-stored-schema partial-stored-schema#
                             :es-partial-stored->partial-stored es-partial-stored->partial-stored#}
-         read-record# (crud/handle-read es-partial-stored-schema# read-record-opts#)
-         read-records# (crud/handle-read-many es-partial-stored-schema# read-record-opts#)
+         read-record# (crud/handle-read es-partial-stored-schema# 
+                                        ;read-record-opts#
+                                        )
+         read-records# (crud/handle-read-many es-partial-stored-schema#
+                                              ;read-record-opts#
+                                              )
          create-record# (crud/handle-create entity-kw# es-stored-schema#
-                                            {:stored->es-stored stored->es-stored#})
+                                            ;{:stored->es-stored stored->es-stored#}
+                                            )
          update-record# (crud/handle-update entity-kw# es-stored-schema#)
          delete-record# (crud/handle-delete entity-kw#)
          bulk-update# (crud/bulk-update es-stored-schema#)
