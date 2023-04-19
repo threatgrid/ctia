@@ -55,7 +55,6 @@
 (def es-coerce! (crud/coerce-to-fn [(s/maybe ESPartialStoredSighting)]))
 
 (def create-fn (crud/handle-create :sighting ESStoredSighting))
-(def read-many-fn (crud/handle-read-many ESPartialStoredSighting))
 (def update-fn (crud/handle-update :sighting ESStoredSighting))
 (def list-fn (crud/handle-find ESPartialStoredSighting))
 (def handle-query-string-search (crud/handle-query-string-search ESPartialStoredSighting))
@@ -104,9 +103,6 @@
   [s :- (s/maybe ESPartialStoredSighting)]
   (when s (dissoc s :observables_hash)))
 
-(def read-fn (crud/handle-read ESPartialStoredSighting
-                               {:partial-stored-schema PartialStoredSighting
-                                :es-partial-stored->partial-stored (comp es-partial-stored-sighting->partial-stored-sighting :doc)}))
 
 (s/defn handle-create :- [StoredSighting]
   [state :- ESConnState
@@ -119,14 +115,15 @@
      (create-fn state $ ident params)
      (map es-stored-sighting->stored-sighting $))))
 
-(s/defn handle-read :- (s/maybe PartialStoredSighting)
-  [state id ident params]
-  (read-fn state id ident params))
+(def handle-read
+  (crud/handle-read ESPartialStoredSighting
+                    {:partial-stored-schema PartialStoredSighting
+                     :es-partial-stored->partial-stored (comp es-partial-stored-sighting->partial-stored-sighting :doc)}))
 
-(s/defn handle-read-many :- [(s/maybe PartialStoredSighting)]
-  [state ids ident params]
-  (map es-partial-stored-sighting->partial-stored-sighting
-       (read-many-fn state ids ident params)))
+(def handle-read-many
+  (crud/handle-read-many ESPartialStoredSighting
+                         {:partial-stored-schema PartialStoredSighting
+                          :es-partial-stored->partial-stored (comp es-partial-stored-sighting->partial-stored-sighting :doc)}))
 
 (s/defn handle-update :- StoredSighting
   [state id realized ident params]

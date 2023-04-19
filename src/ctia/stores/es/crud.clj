@@ -218,32 +218,39 @@ It returns the documents with full hits meta data including the real index in wh
                (log/error ex)
                (throw ex)))))))))
 
-(defn handle-read-many
+(s/defn handle-read-many
   "Generate an ES read-many handler using some mapping and schema"
-  [Model]
-  (let [coerce! (coerce-to-fn Model)]
-    (s/fn :- [(s/maybe Model)]
-      [{{{:keys [get-in-config]} :ConfigService}
-        :services
-        :as conn-state}
-       :- ESConnState
-       ids :- [s/Str]
-       ident
-       {:keys [suppress-access-control-error?]
-        :or {suppress-access-control-error? false}
-        :as es-params}]
-      (sequence
-       (comp (map :_source)
-             (map coerce!)
-             (map (fn [record]
-                    (if (allow-read? record ident get-in-config)
-                      record
-                      (let [ex (ex-info "You are not allowed to read this document"
-                                        {:type :access-control-error})]
-                        (if suppress-access-control-error?
-                          (log/error ex)
-                          (throw ex)))))))
-       (get-docs-with-indices conn-state ids (make-es-read-params es-params))))))
+  ([es-partial-stored-schema]
+   (handle-read-many es-partial-stored-schema
+                     {:partial-stored-schema es-partial-stored-schema
+                      :es-partial-stored->partial-stored :doc}))
+  ([es-partial-stored-schema
+    {:keys [partial-stored-schema es-partial-stored->partial-stored]}
+    :- {:partial-stored-schema s/Any :es-partial-stored->partial-stored s/Any}]
+   (let [partial-stored-schema (or partial-stored-schema es-partial-stored-schema)
+         coerce! (coerce-to-fn es-partial-stored-schema)]
+     (s/fn :- [(s/maybe partial-stored-schema)]
+       [{{{:keys [get-in-config]} :ConfigService}
+         :services
+         :as conn-state}
+        :- ESConnState
+        ids :- [s/Str]
+        ident
+        {:keys [suppress-access-control-error?]
+         :or {suppress-access-control-error? false}
+         :as es-params}]
+       (sequence
+         (comp (map :_source)
+               (map coerce!)
+               (map (fn [record]
+                      (if (allow-read? record ident get-in-config)
+                        (es-partial-stored->partial-stored {:doc record})
+                        (let [ex (ex-info "You are not allowed to read this document"
+                                          {:type :access-control-error})]
+                          (if suppress-access-control-error?
+                            (log/error ex)
+                            (throw ex)))))))
+         (get-docs-with-indices conn-state ids (make-es-read-params es-params)))))))
 
 (defn access-control-filter-list
   "Given an ident, keep only documents it is allowed to read"
