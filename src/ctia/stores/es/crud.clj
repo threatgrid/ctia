@@ -187,8 +187,9 @@ It returns the documents with full hits meta data including the real index in wh
 (defn handle-read
   "Generate an ES read handler using some mapping and schema"
   ([es-partial-schema]
-   (handle-read es-partial-schema {:partial-schema es-partial-schema}))
-  ([es-partial-schema {:keys [partial-schema]}]
+   (handle-read es-partial-schema {:partial-schema es-partial-schema
+                                   :es-partial-stored->partial-stored :doc}))
+  ([es-partial-schema {:keys [partial-schema es-partial-stored->partial-stored]}]
    (let [partial-schema (or partial-schema es-partial-schema)
          coerce! (coerce-to-fn (s/maybe es-partial-schema))]
      (s/fn :- (s/maybe partial-schema)
@@ -207,7 +208,7 @@ It returns the documents with full hits meta data including the real index in wh
                           :_source
                           coerce!)]
          (if (allow-read? doc ident get-in-config)
-           doc
+           (es-partial-stored->partial-stored {:doc doc})
            (let [ex (ex-info "You are not allowed to read this document"
                              {:type :access-control-error})]
              (if suppress-access-control-error?

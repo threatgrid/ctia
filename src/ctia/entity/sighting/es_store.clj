@@ -55,8 +55,6 @@
 (def es-coerce! (crud/coerce-to-fn [(s/maybe ESPartialStoredSighting)]))
 
 (def create-fn (crud/handle-create :sighting ESStoredSighting))
-(def read-fn (crud/handle-read ESPartialStoredSighting
-                               {:partial-schema PartialStoredSighting}))
 (def read-many-fn (crud/handle-read-many ESPartialStoredSighting))
 (def update-fn (crud/handle-update :sighting ESStoredSighting))
 (def list-fn (crud/handle-find ESPartialStoredSighting))
@@ -105,6 +103,10 @@
   "remove the computed observables hash from a sighting"
   [s :- (s/maybe ESPartialStoredSighting)]
   (when s (dissoc s :observables_hash)))
+
+(def read-fn (crud/handle-read ESPartialStoredSighting
+                               {:partial-schema PartialStoredSighting
+                                :es-partial-stored->partial-stored (comp es-partial-stored-sighting->partial-stored-sighting :doc)}))
 
 (s/defn handle-create :- [StoredSighting]
   [state :- ESConnState
