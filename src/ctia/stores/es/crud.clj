@@ -182,18 +182,23 @@ It returns the documents with full hits meta data including the real index in wh
                           (partial-results ex-data docs coerce!))
                  e)))))))))
 
+(s/defschema Update1MapArg
+  {:stored->es-stored (s/=> s/Any {:doc s/Any}) ;(s/=> es-stored-schema {:doc stored-schema})
+   :stored-schema (s/protocol s/Schema)})
+
+(s/defn update1-default :- Update1MapArg
+  [es-stored-schema]
+  {:stored->es-stored :doc
+   :stored-schema es-stored-schema})
+
 (s/defn handle-update
   "Generate an ES update handler using some mapping and schema"
   ([mapping es-stored-schema]
-   (handle-update mapping es-stored-schema
-                  {:stored->es-stored :doc
-                   :stored-schema es-stored-schema}))
+   (handle-update mapping es-stored-schema (update1-default es-stored-schema)))
   ([mapping
     es-stored-schema :- (s/protocol s/Schema)
     {:keys [stored->es-stored
-            stored-schema]}
-    :- {:stored->es-stored (s/=> s/Any {:doc s/Any}) ;(s/=> es-stored-schema {:doc stored-schema})
-        :stored-schema (s/protocol s/Schema)}]
+            stored-schema]} :- Update1MapArg]
    (let [stored->es-stored (build-stored-transformer stored->es-stored stored-schema es-stored-schema)
          coerce! (coerce-to-fn (s/maybe stored-schema))]
      (s/fn :- (s/maybe stored-schema)
@@ -221,12 +226,15 @@ It returns the documents with full hits meta data including the real index in wh
    ; (s/=> partial-stored-schema {:doc es-partial-stored-schema})
    :es-partial-stored->partial-stored (s/=> s/Any {:doc s/Any})})
 
+(s/defn read1-map-default :- Read1MapArg
+  [es-partial-stored-schema]
+  {:partial-stored-schema es-partial-stored-schema
+   :es-partial-stored->partial-stored :doc})
+
 (s/defn handle-read
   "Generate an ES read handler using some mapping and schema"
   ([es-partial-stored-schema]
-   (handle-read es-partial-stored-schema
-                {:partial-stored-schema es-partial-stored-schema
-                 :es-partial-stored->partial-stored :doc}))
+   (handle-read es-partial-stored-schema (read1-map-default es-partial-stored-schema)))
   ([es-partial-stored-schema
     {:keys [partial-stored-schema es-partial-stored->partial-stored]} :- Read1MapArg]
    (let [es-partial-stored->partial-stored (build-stored-transformer
@@ -260,9 +268,7 @@ It returns the documents with full hits meta data including the real index in wh
 (s/defn handle-read-many
   "Generate an ES read-many handler using some mapping and schema"
   ([es-partial-stored-schema]
-   (handle-read-many es-partial-stored-schema
-                     {:partial-stored-schema es-partial-stored-schema
-                      :es-partial-stored->partial-stored :doc}))
+   (handle-read-many es-partial-stored-schema (read1-map-default es-partial-stored-schema)))
   ([es-partial-stored-schema
     {:keys [partial-stored-schema es-partial-stored->partial-stored]} :- Read1MapArg]
    (let [es-partial-stored->partial-stored (build-stored-transformer
@@ -391,12 +397,10 @@ It returns the documents with full hits meta data including the real index in wh
 (s/defn bulk-update
   "Generate an ES bulk update handler using some mapping and schema"
   ([es-stored-schema]
-   (bulk-update es-stored-schema
-                {:stored-schema es-stored-schema
-                 :stored->es-stored :doc}))
+   (bulk-update es-stored-schema (update1-default es-stored-schema)))
   ([es-stored-schema :- (s/protocol s/Schema)
     {:keys [stored-schema
-            stored->es-stored]}]
+            stored->es-stored]} :- Update1MapArg]
    (let [stored->es-stored (build-stored-transformer stored->es-stored stored-schema es-stored-schema)]
      (s/fn :- BulkResult
        [{:keys [conn] :as conn-state}
@@ -536,9 +540,7 @@ It returns the documents with full hits meta data including the real index in wh
 (s/defn handle-find
   "Generate an ES find/list handler using some mapping and schema"
   ([es-partial-stored-schema]
-   (handle-find es-partial-stored-schema
-                {:partial-stored-schema es-partial-stored-schema
-                 :es-partial-stored->partial-stored :doc}))
+   (handle-find es-partial-stored-schema (read1-map-default es-partial-stored-schema)))
   ([es-partial-stored-schema :- (s/protocol s/Schema)
     {:keys [partial-stored-schema
             es-partial-stored->partial-stored]} :- Read1MapArg]

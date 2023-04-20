@@ -111,15 +111,11 @@
 (def handle-read (crud/handle-read ESPartialStoredSighting read1-map-arg))
 (def handle-read-many (crud/handle-read-many ESPartialStoredSighting read1-map-arg))
 
-(def handle-update
-  (crud/handle-update :sighting ESStoredSighting
-                      {:stored-schema StoredSighting
-                       :stored->es-stored (comp stored-sighting->es-stored-sighting :doc)}))
+(def update1-map-arg {:stored-schema StoredSighting
+                      :stored->es-stored (comp stored-sighting->es-stored-sighting :doc)})
 
-(def handle-bulk-update
-  (crud/bulk-update ESStoredSighting
-                    {:stored-schema StoredSighting
-                     :stored->es-stored (comp stored-sighting->es-stored-sighting :doc)}))
+(def handle-update (crud/handle-update :sighting ESStoredSighting update1-map-arg))
+(def handle-bulk-update (crud/bulk-update ESStoredSighting update1-map-arg))
 
 (def handle-delete (crud/handle-delete :sighting))
 
