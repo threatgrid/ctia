@@ -166,33 +166,29 @@ It returns the documents with full hits meta data including the real index in wh
                           (partial-results ex-data docs coerce!))
                  e)))))))))
 
-(s/defn handle-update
+(defn handle-update
   "Generate an ES update handler using some mapping and schema"
-  ([mapping Model]
-   (handle-update mapping Model
-                  {:stored->es-stored :doc}))
-  ([mapping Model
-    {:keys [stored->es-stored]} :- {:stored->es-stored s/Any}]
-   (let [coerce! (coerce-to-fn (s/maybe Model))]
-     (s/fn :- (s/maybe Model)
-       [{:keys [conn] :as conn-state} :- ESConnState
-        id :- s/Str
-        realized :- Model
-        ident
-        es-params]
-       (when-let [[{index :_index current-doc :_source}]
-                  (get-docs-with-indices conn-state [id] {})]
-         (if (allow-write? current-doc ident)
-           (let [update-doc (assoc realized
-                                   :id (ensure-document-id id))]
-             (ductile.doc/index-doc conn
-                                    index
-                                    (name mapping)
-                                    (stored->es-stored {:doc update-doc})
-                                    (prepare-opts conn-state es-params))
-             (coerce! update-doc))
-           (throw (ex-info "You are not allowed to update this document"
-                           {:type :access-control-error}))))))))
+  [mapping Model]
+  (let [coerce! (coerce-to-fn (s/maybe Model))]
+    (s/fn :- (s/maybe Model)
+      [{:keys [conn] :as conn-state} :- ESConnState
+       id :- s/Str
+       realized :- Model
+       ident
+       es-params]
+      (when-let [[{index :_index current-doc :_source}]
+                 (get-docs-with-indices conn-state [id] {})]
+        (if (allow-write? current-doc ident)
+          (let [update-doc (assoc realized
+                                  :id (ensure-document-id id))]
+            (ductile.doc/index-doc conn
+                                   index
+                                   (name mapping)
+                                   update-doc
+                                   (prepare-opts conn-state es-params))
+            (coerce! update-doc))
+          (throw (ex-info "You are not allowed to update this document"
+                          {:type :access-control-error})))))))
 
 (s/defn handle-read
   "Generate an ES read handler using some mapping and schema"
