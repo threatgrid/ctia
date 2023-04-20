@@ -539,6 +539,11 @@ It returns the documents with full hits meta data including the real index in wh
       (assoc pres-k (pres-k props))
       (es-seven-configured? props) (assoc :track_total_hits true))))
 
+(defn list-response-coercer [es-partial-stored-schema
+                             es-partial-stored->partial-stored]
+  (comp #(update % :data (fn [docs] (mapv es-partial-stored->partial-stored docs)))
+        (coerce-to-fn (list-response-schema es-partial-stored-schema))))
+
 (s/defn handle-find
   "Generate an ES find/list handler using some mapping and schema"
   ([es-partial-stored-schema]
@@ -549,8 +554,8 @@ It returns the documents with full hits meta data including the real index in wh
    (let [es-partial-stored->partial-stored (build-stored-transformer es-partial-stored->partial-stored
                                                                      es-partial-stored-schema
                                                                      partial-stored-schema)
-         coerce! (comp #(update % :data (fn [docs] (mapv es-partial-stored->partial-stored docs)))
-                       (coerce-to-fn (list-response-schema es-partial-stored-schema)))]
+         coerce! (list-response-coercer es-partial-stored-schema
+                                        es-partial-stored->partial-stored )]
      (s/fn :- (list-response-schema partial-stored-schema)
        [{{{:keys [get-in-config]} :ConfigService} :services
          :keys [conn index props]} :- ESConnState
@@ -599,30 +604,36 @@ It returns the documents with full hits meta data including the real index in wh
         (seq full-text)  (into (es.query/refine-full-text-query-parts
                                 es-conn-state full-text)))}}))
 
-(defn handle-query-string-search
+(s/defn handle-query-string-search
   "Generate an ES query handler for given schema schema"
-  [Model]
-  (let [response-schema (list-response-schema Model)
-        coerce!         (coerce-to-fn response-schema)]
-    (s/fn :- response-schema
-      [{:keys [props] :as es-conn-state} :- ESConnState
-       {:keys [search-query ident] :as query-string-search-args} :- QueryStringSearchArgs]
-      (let [{conn :conn, index :index
-             {{:keys [get-in-config]} :ConfigService}
-             :services}  es-conn-state
-            query        (make-search-query es-conn-state search-query ident)
-            query-params (make-query-params (-> (select-keys query-string-search-args [:params :sort-extension-definitions])
-                                                (assoc :props props)))]
-        (cond-> (coerce! (ductile.doc/query
-                          conn
-                          index
-                          query
-                          query-params))
-          (restricted-read? ident) (update
-                                    :data
-                                    access-control-filter-list
-                                    ident
-                                    get-in-config))))))
+  ([es-partial-stored-schema]
+   (handle-query-string-search es-partial-stored-schema (read1-map-default es-partial-stored-schema)))
+  ([es-partial-stored-schema :- (s/protocol s/Schema)
+    {:keys [partial-stored-schema es-partial-stored->partial-stored]} :- Read1MapArg]
+   (let [es-partial-stored->partial-stored (build-stored-transformer es-partial-stored->partial-stored
+                                                                     es-partial-stored-schema
+                                                                     partial-stored-schema)
+         coerce! (list-response-coercer es-partial-stored-schema
+                                        es-partial-stored->partial-stored)]
+     (s/fn :- (list-response-schema partial-stored-schema)
+       [{:keys [props] :as es-conn-state} :- ESConnState
+        {:keys [search-query ident] :as query-string-search-args} :- QueryStringSearchArgs]
+       (let [{conn :conn, index :index
+              {{:keys [get-in-config]} :ConfigService}
+              :services}  es-conn-state
+             query        (make-search-query es-conn-state search-query ident)
+             query-params (make-query-params (-> (select-keys query-string-search-args [:params :sort-extension-definitions])
+                                                 (assoc :props props)))]
+         (cond-> (coerce! (ductile.doc/query
+                            conn
+                            index
+                            query
+                            query-params))
+           (restricted-read? ident) (update
+                                      :data
+                                      access-control-filter-list
+                                      ident
+                                      get-in-config)))))))
 
 (s/defn handle-delete-search
   "ES delete by query handler"
