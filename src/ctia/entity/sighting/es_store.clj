@@ -2,6 +2,7 @@
   (:require [ctia.entity.sighting.schemas
              :refer
              [PartialStoredSighting StoredSighting]]
+            [ctia.stores.es.store :refer [def-es-store]]
             [ctia.lib.pagination :refer [list-response-schema]]
             [ctia.schemas.core :refer [Observable]]
             [ctia.schemas.search-agg :refer [QueryStringSearchArgs]]
@@ -92,30 +93,12 @@
    :stored-schema StoredSighting
    :partial-stored-schema PartialStoredSighting})
 
-(def create1-map-arg
-  (select-keys all-es-store-opts
-               [:stored->es-stored
-                :es-stored->stored
-                :es-stored-schema]))
-
 (def read1-map-arg
   (select-keys all-es-store-opts
                [:partial-stored-schema
                 :es-partial-stored->partial-stored]))
 
-(def update1-map-arg 
-  (select-keys all-es-store-opts
-               [:stored-schema
-                :stored->es-stored]))
-
-(def handle-create (crud/handle-create :sighting StoredSighting create1-map-arg))
-(def handle-read (crud/handle-read ESPartialStoredSighting read1-map-arg))
-(def handle-read-many (crud/handle-read-many ESPartialStoredSighting read1-map-arg))
-(def handle-update (crud/handle-update :sighting ESStoredSighting update1-map-arg))
-(def handle-bulk-update (crud/bulk-update ESStoredSighting update1-map-arg))
-(def handle-delete (crud/handle-delete :sighting))
 (def handle-list (crud/handle-find ESPartialStoredSighting read1-map-arg))
-(def handle-query-string-search-sightings (crud/handle-query-string-search ESPartialStoredSighting read1-map-arg))
 
 (s/defn handle-list-by-observables
   :- PartialStoredSightingList
@@ -126,34 +109,9 @@
                ident
                params))
 
-(defrecord SightingStore [state]
-  IStore
-  (read-record [_ id ident params]
-    (handle-read state id ident params))
-  (read-records [_ ids ident params]
-    (handle-read-many state ids ident params))
-  (create-record [_ new-sightings ident params]
-    (handle-create state new-sightings ident params))
-  (update-record [_ id sighting ident params]
-    (handle-update state id sighting ident params))
-  (delete-record [_ id ident params]
-    (handle-delete state id ident params))
-  (list-records [_ filter-map ident params]
-    (handle-list state filter-map ident params))
-  (bulk-delete [_ ids ident params]
-    (crud/bulk-delete state ids ident params))
-  (bulk-update [_ docs ident params]
-    (handle-bulk-update state docs ident params))
-  (close [_] (close-connections! state))
-  ISightingStore
-  (list-sightings-by-observables [_ observables ident params]
-    (handle-list-by-observables state observables ident params))
-  IQueryStringSearchableStore
-  (query-string-search [_ args]
-    (handle-query-string-search-sightings state args))
-  (query-string-count [_ search-query ident]
-    (crud/handle-query-string-count state search-query ident))
-  (aggregate [_ search-query agg-query ident]
-    (crud/handle-aggregate state search-query agg-query ident))
-  (delete-search [_ search-query ident params]
-    (crud/handle-delete-search state search-query ident params)))
+(def-es-store SightingStore :sighting StoredSighting PartialStoredSighting
+  :store-opts all-es-store-opts
+  :extra-impls
+  [ISightingStore
+   (list-sightings-by-observables [this observables ident params]
+     (handle-list-by-observables (:state this) observables ident params))])
