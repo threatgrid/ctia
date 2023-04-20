@@ -150,7 +150,7 @@ It returns the documents with full hits meta data including the real index in wh
         docs :- [Model]
         _ident
         es-params]
-       (let [prepare-doc #(stored->es-stored {:doc (prepare-bulk-doc conn-state mapping %)})
+       (let [prepare-doc #(prepare-bulk-doc conn-state mapping (stored->es-stored {:doc %}))
              prepared (mapv prepare-doc docs)]
          (try
            (ductile.doc/bulk-index-docs conn
