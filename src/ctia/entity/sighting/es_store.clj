@@ -46,16 +46,11 @@
 (s/defschema ESPartialStoredSighting
   (st/assoc PartialStoredSighting (s/optional-key :observables_hash) [s/Str]))
 
-(def ESStoredSightingList (list-response-schema ESStoredSighting))
 (def ESPartialStoredSightingList (list-response-schema ESPartialStoredSighting))
-
-(def StoredSightingList (list-response-schema StoredSighting))
 (def PartialStoredSightingList (list-response-schema PartialStoredSighting))
 
 (def es-coerce! (crud/coerce-to-fn [(s/maybe ESPartialStoredSighting)]))
 
-(def update-fn (crud/handle-update :sighting ESStoredSighting))
-(def list-fn (crud/handle-find ESPartialStoredSighting))
 (def handle-query-string-search (crud/handle-query-string-search ESPartialStoredSighting))
 (def handle-query-string-count crud/handle-query-string-count)
 (def handle-aggregate crud/handle-aggregate)
@@ -109,15 +104,12 @@
                        :es-stored->stored (comp es-stored-sighting->stored-sighting :doc)
                        :es-stored-schema ESStoredSighting}))
 
-(def handle-read
-  (crud/handle-read ESPartialStoredSighting
-                    {:partial-stored-schema PartialStoredSighting
-                     :es-partial-stored->partial-stored (comp es-partial-stored-sighting->partial-stored-sighting :doc)}))
+(def read1-map-arg 
+  {:partial-stored-schema PartialStoredSighting
+   :es-partial-stored->partial-stored (comp es-partial-stored-sighting->partial-stored-sighting :doc)})
 
-(def handle-read-many
-  (crud/handle-read-many ESPartialStoredSighting
-                         {:partial-stored-schema PartialStoredSighting
-                          :es-partial-stored->partial-stored (comp es-partial-stored-sighting->partial-stored-sighting :doc)}))
+(def handle-read (crud/handle-read ESPartialStoredSighting read1-map-arg))
+(def handle-read-many (crud/handle-read-many ESPartialStoredSighting read1-map-arg))
 
 (def handle-update
   (crud/handle-update :sighting ESStoredSighting
@@ -138,10 +130,7 @@
              [:data]
              #(map es-partial-stored-sighting->partial-stored-sighting (es-coerce! %))))
 
-(s/defn handle-list :- PartialStoredSightingList
-  [state filter-map ident params]
-  (es-paginated-list->paginated-list
-   (list-fn state filter-map ident params)))
+(def handle-list (crud/handle-find ESPartialStoredSighting read1-map-arg))
 
 (s/defn handle-query-string-search-sightings
   :- PartialStoredSightingList

@@ -533,38 +533,47 @@ It returns the documents with full hits meta data including the real index in wh
       (assoc pres-k (pres-k props))
       (es-seven-configured? props) (assoc :track_total_hits true))))
 
-(defn handle-find
+(s/defn handle-find
   "Generate an ES find/list handler using some mapping and schema"
-  [Model]
-  (let [response-schema (list-response-schema Model)
-        coerce! (coerce-to-fn response-schema)]
-    (s/fn :- response-schema
-      [{{{:keys [get-in-config]} :ConfigService} :services
-        :keys [conn index props]} :- ESConnState
-       {:keys [all-of one-of query]
-        :or {all-of {} one-of {}}} :- FilterSchema
-       ident
-       es-params]
-      (let [filter-val (cond-> (q/prepare-terms all-of)
-                         (restricted-read? ident)
-                         (conj (es.query/find-restriction-query-part ident get-in-config)))
-            query_string  {:query_string {:query query}}
-            date-range-query (es.query/make-date-range-query es-params)
-            bool-params (cond-> {:filter filter-val}
-                          (seq one-of) (into
-                                        {:should (q/prepare-terms one-of)
-                                         :minimum_should_match 1})
-                          query (update :filter conj query_string)
-                          (seq date-range-query) (update :filter conj {:range date-range-query}))
-            query-params (make-query-params {:params es-params :props props})]
-        (cond-> (coerce! (ductile.doc/query conn
-                                            index
-                                            (q/bool bool-params)
-                                            query-params))
-          (restricted-read? ident) (update :data
-                                           access-control-filter-list
-                                           ident
-                                           get-in-config))))))
+  ([es-partial-stored-schema]
+   (handle-find es-partial-stored-schema
+                {:partial-stored-schema es-partial-stored-schema
+                 :es-partial-stored->partial-stored :doc}))
+  ([es-partial-stored-schema :- (s/protocol s/Schema)
+    {:keys [partial-stored-schema
+            es-partial-stored->partial-stored]} :- Read1MapArg]
+   (let [es-partial-stored->partial-stored (build-stored-transformer es-partial-stored->partial-stored
+                                                                     es-partial-stored-schema
+                                                                     partial-stored-schema)
+         coerce! (comp #(update % :data (fn [docs] (mapv es-partial-stored->partial-stored docs)))
+                       (coerce-to-fn (list-response-schema es-partial-stored-schema)))]
+     (s/fn :- (list-response-schema partial-stored-schema)
+       [{{{:keys [get-in-config]} :ConfigService} :services
+         :keys [conn index props]} :- ESConnState
+        {:keys [all-of one-of query]
+         :or {all-of {} one-of {}}} :- FilterSchema
+        ident
+        es-params]
+       (let [filter-val (cond-> (q/prepare-terms all-of)
+                          (restricted-read? ident)
+                          (conj (es.query/find-restriction-query-part ident get-in-config)))
+             query_string  {:query_string {:query query}}
+             date-range-query (es.query/make-date-range-query es-params)
+             bool-params (cond-> {:filter filter-val}
+                           (seq one-of) (into
+                                          {:should (q/prepare-terms one-of)
+                                           :minimum_should_match 1})
+                           query (update :filter conj query_string)
+                           (seq date-range-query) (update :filter conj {:range date-range-query}))
+             query-params (make-query-params {:params es-params :props props})]
+         (cond-> (coerce! (ductile.doc/query conn
+                                             index
+                                             (q/bool bool-params)
+                                             query-params))
+           (restricted-read? ident) (update :data
+                                            access-control-filter-list
+                                            ident
+                                            get-in-config)))))))
 
 (s/defn make-search-query :- {s/Keyword s/Any}
   "Translate SearchQuery map into ES Query DSL map"
