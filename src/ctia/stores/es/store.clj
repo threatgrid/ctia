@@ -32,77 +32,73 @@
                      (into params next-params))
               :initk (assoc params :limit limit))))
 
-;; make it easy to eventually refactor 
-;; (do (def ..) .. (defrecord))
-;; to
-;; (let [...] (reify))
-(defmacro let-defs [bs & body]
-  (assert (even? (count bs)))
-  `(do ~@(map (fn [[k v]] `(def ~k ~v))
-              (partition-all 2 bs))
-       ~@body))
-
 (defmacro def-es-store [store-name entity-kw stored-schema partial-stored-schema
                         & {:keys [store-opts extra-impls]}]
   (assert (simple-symbol? store-name) (pr-str store-name))
-  (let [state-sym 'state]
-    ;; gensyms will bloat namespace if reloaded. prefer tools.namespace refresh over reloading.
-    `(let-defs [partial-stored-schema# ~partial-stored-schema
-                stored-schema# ~stored-schema
-                entity-kw# ~entity-kw
-                _# (assert (keyword? entity-kw#) (pr-str entity-kw#))
-                store-opts# ~store-opts
-                slice-opts# #(some-> nil ;; FIXME
-                                     store-opts# (select-keys %) not-empty list)
-                create1-map-arg# (slice-opts# [:stored->es-stored :es-stored->stored :es-stored-schema])
-                read1-map-arg# (slice-opts# [:partial-stored-schema :es-partial-stored->partial-stored])
-                update1-map-arg# (slice-opts# [:stored-schema :stored->es-stored])
-                read-record# (apply crud/handle-read partial-stored-schema# read1-map-arg#)
-                read-records# (apply crud/handle-read-many partial-stored-schema# read1-map-arg#)
-                create-record# (apply crud/handle-create entity-kw# stored-schema# create1-map-arg#)
-                update-record# (apply crud/handle-update entity-kw# stored-schema# update1-map-arg#)
-                delete-record# (crud/handle-delete entity-kw#)
-                bulk-update# (apply crud/bulk-update stored-schema# update1-map-arg#)
-                list-records# (apply crud/handle-find partial-stored-schema# read1-map-arg#)
-                query-string-search# (apply crud/handle-query-string-search partial-stored-schema# read1-map-arg#)]
-       (defrecord ~store-name [~state-sym]
-         IStore
-         (store/read-record [_# id# ident# params#]
-           (read-record# ~state-sym id# ident# params#))
-         (store/read-records [_# ids# ident# params#]
-           (read-records# ~state-sym ids# ident# params#))
-         (store/create-record [_# new-actors# ident# params#]
-           (create-record# ~state-sym new-actors# ident# params#))
-         (store/update-record [_# id# actor# ident# params#]
-           (update-record# ~state-sym id# actor# ident# params#))
-         (store/delete-record [_# id# ident# params#]
-           (delete-record# ~state-sym id# ident# params#))
-         (store/bulk-delete [_# ids# ident# params#]
-           (crud/bulk-delete ~state-sym ids# ident# params#))
-         (store/bulk-update [_# docs# ident# params#]
-           (bulk-update# ~state-sym docs# ident# params#))
-         (store/list-records [_# filter-map# ident# params#]
-           (list-records# ~state-sym filter-map# ident# params#))
-         (store/close [_#]
-           (close-connections! ~state-sym))
+  (let [qsym #(symbol (-> *ns* ns-name name str) (name %))
+        ctor (symbol (str "->" store-name))
+        qctor (qsym ctor)]
+    `(let [partial-stored-schema# ~partial-stored-schema
+           stored-schema# ~stored-schema
+           entity-kw# ~entity-kw
+           _# (assert (keyword? entity-kw#) (pr-str entity-kw#))
+           store-opts# ~store-opts
+           slice-opts# #(some-> store-opts# (select-keys %) not-empty list)
+           create1-map-arg# (slice-opts# [:stored->es-stored :es-stored->stored :es-stored-schema])
+           read1-map-arg# (slice-opts# [:partial-stored-schema :es-partial-stored->partial-stored])
+           update1-map-arg# (slice-opts# [:stored-schema :stored->es-stored])
+           read-record# (apply crud/handle-read partial-stored-schema# read1-map-arg#)
+           read-records# (apply crud/handle-read-many partial-stored-schema# read1-map-arg#)
+           create-record# (apply crud/handle-create entity-kw# stored-schema# create1-map-arg#)
+           update-record# (apply crud/handle-update entity-kw# stored-schema# update1-map-arg#)
+           delete-record# (crud/handle-delete entity-kw#)
+           bulk-update# (apply crud/bulk-update stored-schema# update1-map-arg#)
+           list-records# (apply crud/handle-find partial-stored-schema# read1-map-arg#)
+           query-string-search# (apply crud/handle-query-string-search partial-stored-schema# read1-map-arg#)]
+       (defn ~ctor [state#]
+         (reify
+           clojure.lang.IPersistentMap
+           clojure.lang.ILookup
+           (valAt [_# k#] (case k# :state state#))
+           clojure.lang.Associative
+           (assoc [_# k# v#] (case k# :state (~qctor v#)))
+           IStore
+           (store/read-record [_# id# ident# params#]
+             (read-record# state# id# ident# params#))
+           (store/read-records [_# ids# ident# params#]
+             (read-records# state# ids# ident# params#))
+           (store/create-record [_# new-actors# ident# params#]
+             (create-record# state# new-actors# ident# params#))
+           (store/update-record [_# id# actor# ident# params#]
+             (update-record# state# id# actor# ident# params#))
+           (store/delete-record [_# id# ident# params#]
+             (delete-record# state# id# ident# params#))
+           (store/bulk-delete [_# ids# ident# params#]
+             (crud/bulk-delete state# ids# ident# params#))
+           (store/bulk-update [_# docs# ident# params#]
+             (bulk-update# state# docs# ident# params#))
+           (store/list-records [_# filter-map# ident# params#]
+             (list-records# state# filter-map# ident# params#))
+           (store/close [_#]
+             (close-connections! state#))
 
-         IQueryStringSearchableStore
-         (store/query-string-search [_# args#]
-           (query-string-search# ~state-sym args#))
-         (store/query-string-count [_# search-query# ident#]
-           (crud/handle-query-string-count ~state-sym search-query# ident#))
-         (store/aggregate [_# search-query# agg-query# ident#]
-           (crud/handle-aggregate ~state-sym search-query# agg-query# ident#))
-         (store/delete-search [_# search-query# ident# params#]
-           (crud/handle-delete-search ~state-sym search-query# ident# params#))
+           IQueryStringSearchableStore
+           (store/query-string-search [_# args#]
+             (query-string-search# state# args#))
+           (store/query-string-count [_# search-query# ident#]
+             (crud/handle-query-string-count state# search-query# ident#))
+           (store/aggregate [_# search-query# agg-query# ident#]
+             (crud/handle-aggregate state# search-query# agg-query# ident#))
+           (store/delete-search [_# search-query# ident# params#]
+             (crud/handle-delete-search state# search-query# ident# params#))
 
-         IPaginateableStore
-         (store/paginate [this# fetch-page-fn#]
-           (store/paginate this# fetch-page-fn# {}))
-         (store/paginate [this# fetch-page-fn# init-page-params#]
-           (all-pages-iteration (partial fetch-page-fn# this#) init-page-params#))
+           IPaginateableStore
+           (store/paginate [this# fetch-page-fn#]
+             (store/paginate this# fetch-page-fn# {}))
+           (store/paginate [this# fetch-page-fn# init-page-params#]
+             (all-pages-iteration (partial fetch-page-fn# this#) init-page-params#))
 
-         ~@extra-impls))))
+           ~@extra-impls)))))
 
 (s/defschema StoreMap
   {:conn ESConn
