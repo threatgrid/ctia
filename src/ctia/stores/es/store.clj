@@ -33,44 +33,51 @@
               :initk (assoc params :limit limit))))
 
 (defmacro def-es-store [store-name entity-kw stored-schema partial-stored-schema]
-  (assert (symbol? store-name) (pr-str store-name))
-  (assert (keyword? entity-kw) (pr-str entity-kw))
-  (assert (symbol? stored-schema) (pr-str stored-schema))
-  (assert (not= 'state stored-schema) "Captured stored-schema binding!")
-  (assert (not= 'state partial-stored-schema) "Captured partial-stored-schema binding!")
-
-  (let [ctor (symbol (str "->" store-name))
-        qsym #(symbol (-> *ns* ns-name name str) (name %))]
-    `(let []
+  (assert (simple-symbol? store-name) (pr-str store-name))
+  (let [qsym #(symbol (-> *ns* ns-name name str) (name %))
+        ctor (symbol (str "->" store-name))
+        qctor (qsym ctor)]
+    `(let [partial-stored-schema# ~partial-stored-schema
+           stored-schema# ~stored-schema
+           entity-kw# ~entity-kw
+           _# (assert (keyword? entity-kw#) (pr-str entity-kw#))
+           read-record# (crud/handle-read partial-stored-schema#)
+           read-records# (crud/handle-read-many partial-stored-schema#)
+           create-record# (crud/handle-create entity-kw# stored-schema#)
+           update-record# (crud/handle-update entity-kw# stored-schema#)
+           delete-record# (crud/handle-delete entity-kw#)
+           bulk-update# (crud/bulk-update stored-schema#)
+           list-records# (crud/handle-find partial-stored-schema#)
+           query-string-search# (crud/handle-query-string-search partial-stored-schema#)]
        (defn ~ctor [state#]
          (reify
            clojure.lang.ILookup
            (valAt [_# k#] (case k# :state state#))
            clojure.lang.Associative
-           (assoc [_# k# v#] (case k# :state (~(qsym ctor) v#)))
+           (assoc [_# k# v#] (case k# :state (~qctor v#)))
            IStore
            (store/read-record [_# id# ident# params#]
-             ((crud/handle-read ~partial-stored-schema) state# id# ident# params#))
+             (read-record# state# id# ident# params#))
            (store/read-records [_# ids# ident# params#]
-             ((crud/handle-read-many ~partial-stored-schema) state# ids# ident# params#))
+             (read-records# state# ids# ident# params#))
            (store/create-record [_# new-actors# ident# params#]
-             ((crud/handle-create ~entity-kw ~stored-schema) state# new-actors# ident# params#))
+             (create-record# state# new-actors# ident# params#))
            (store/update-record [_# id# actor# ident# params#]
-             ((crud/handle-update ~entity-kw ~stored-schema) state# id# actor# ident# params#))
+             (update-record# state# id# actor# ident# params#))
            (store/delete-record [_# id# ident# params#]
-             ((crud/handle-delete ~entity-kw) state# id# ident# params#))
+             (delete-record# state# id# ident# params#))
            (store/bulk-delete [_# ids# ident# params#]
              (crud/bulk-delete state# ids# ident# params#))
            (store/bulk-update [_# docs# ident# params#]
-             ((crud/bulk-update ~stored-schema) state# docs# ident# params#))
+             (bulk-update# state# docs# ident# params#))
            (store/list-records [_# filter-map# ident# params#]
-             ((crud/handle-find ~partial-stored-schema) state# filter-map# ident# params#))
+             (list-records# state# filter-map# ident# params#))
            (store/close [_#]
              (close-connections! state#))
 
            IQueryStringSearchableStore
            (store/query-string-search [_# args#]
-             ((crud/handle-query-string-search ~partial-stored-schema) state# args#))
+             (query-string-search# state# args#))
            (store/query-string-count [_# search-query# ident#]
              (crud/handle-query-string-count state# search-query# ident#))
            (store/aggregate [_# search-query# agg-query# ident#]
