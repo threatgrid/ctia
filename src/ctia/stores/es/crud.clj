@@ -145,7 +145,7 @@ It returns the documents with full hits meta data including the real index in wh
             es-stored-schema]}
     :- (st/optional-keys {:stored->es-stored (s/=> s/Any {:doc s/Any}) ;(s/=> es-stored-schema {:doc stored-schema})
                           :es-stored-schema (s/protocol s/Schema)})]
-   (let [es-stored-schema (or stored-schema es-stored-schema)
+   (let [es-stored-schema (or es-stored-schema stored-schema)
          stored->es-stored (s/fn :- es-stored-schema
                              [stored :- stored-schema]
                              (if stored->es-stored
