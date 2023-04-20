@@ -2,13 +2,12 @@
   (:require [ctia.entity.sighting.schemas
              :refer
              [PartialStoredSighting StoredSighting]]
-            [ctia.stores.es.store :refer [def-es-store]]
             [ctia.lib.pagination :refer [list-response-schema]]
             [ctia.schemas.core :refer [Observable]]
             [ctia.schemas.search-agg :refer [QueryStringSearchArgs]]
-            [ctia.store :refer [IQueryStringSearchableStore ISightingStore IStore]]
+            [ctia.store :refer [IQueryStringSearchableStore ISightingStore IStore] :as store]
             [ctia.stores.es
-             [store :refer [close-connections!]]
+             [store :refer [close-connections! def-es-store]]
              [crud :as crud]
              [mapping :as em]
              [schemas :refer [ESConnState]]]
@@ -93,25 +92,13 @@
    :stored-schema StoredSighting
    :partial-stored-schema PartialStoredSighting})
 
-(def read1-map-arg
-  (select-keys all-es-store-opts
-               [:partial-stored-schema
-                :es-partial-stored->partial-stored]))
-
-(def handle-list (crud/handle-find ESPartialStoredSighting read1-map-arg))
-
-(s/defn handle-list-by-observables
-  :- PartialStoredSightingList
-  [state observables :- [Observable] ident params]
-  (handle-list state
-               {:all-of {:observables_hash
-                         (obs->hashes observables)}}
-               ident
-               params))
-
 (def-es-store SightingStore :sighting StoredSighting PartialStoredSighting
   :store-opts all-es-store-opts
   :extra-impls
   [ISightingStore
    (list-sightings-by-observables [this observables ident params]
-     (handle-list-by-observables (:state this) observables ident params))])
+     (store/list-records this
+                         {:all-of {:observables_hash
+                                   (obs->hashes observables)}}
+                         ident
+                         params))])
