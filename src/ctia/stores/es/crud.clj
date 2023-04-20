@@ -182,29 +182,39 @@ It returns the documents with full hits meta data including the real index in wh
                           (partial-results ex-data docs coerce!))
                  e)))))))))
 
-(defn handle-update
+(s/defn handle-update
   "Generate an ES update handler using some mapping and schema"
-  [mapping Model]
-  (let [coerce! (coerce-to-fn (s/maybe Model))]
-    (s/fn :- (s/maybe Model)
-      [{:keys [conn] :as conn-state} :- ESConnState
-       id :- s/Str
-       realized :- Model
-       ident
-       es-params]
-      (when-let [[{index :_index current-doc :_source}]
-                 (get-docs-with-indices conn-state [id] {})]
-        (if (allow-write? current-doc ident)
-          (let [update-doc (assoc realized
-                                  :id (ensure-document-id id))]
-            (ductile.doc/index-doc conn
-                                   index
-                                   (name mapping)
-                                   update-doc
-                                   (prepare-opts conn-state es-params))
-            (coerce! update-doc))
-          (throw (ex-info "You are not allowed to update this document"
-                          {:type :access-control-error})))))))
+  ([mapping es-stored-schema]
+   (handle-update mapping es-stored-schema
+                  {:stored->es-stored :doc
+                   :stored-schema es-stored-schema}))
+  ([mapping
+    es-stored-schema :- (s/protocol s/Schema)
+    {:keys [stored->es-stored
+            stored-schema]}
+    :- {:stored->es-stored (s/=> s/Any {:doc s/Any}) ;(s/=> es-stored-schema {:doc stored-schema})
+        :stored-schema (s/protocol s/Schema)}]
+   (let [stored->es-stored (build-stored-transformer stored->es-stored stored-schema es-stored-schema)
+         coerce! (coerce-to-fn (s/maybe stored-schema))]
+     (s/fn :- (s/maybe stored-schema)
+       [{:keys [conn] :as conn-state} :- ESConnState
+        id :- s/Str
+        realized :- stored-schema
+        ident
+        es-params]
+       (when-let [[{index :_index current-doc :_source}]
+                  (get-docs-with-indices conn-state [id] {})]
+         (if (allow-write? current-doc ident)
+           (let [update-doc (assoc realized
+                                   :id (ensure-document-id id))]
+             (ductile.doc/index-doc conn
+                                    index
+                                    (name mapping)
+                                    (stored->es-stored update-doc)
+                                    (prepare-opts conn-state es-params))
+             (coerce! update-doc))
+           (throw (ex-info "You are not allowed to update this document"
+                           {:type :access-control-error}))))))))
 
 (s/defschema Read1MapArg
   {:partial-stored-schema (s/protocol s/Schema)
@@ -380,36 +390,44 @@ It returns the documents with full hits meta data including the real index in wh
 
 (s/defn bulk-update
   "Generate an ES bulk update handler using some mapping and schema"
-  [Model]
-  (s/fn :- BulkResult
-    [{:keys [conn] :as conn-state}
-     docs :- [Model]
-     ident
-     es-params]
-    (let [by-id (group-by :id docs)
-          ids (seq (keys by-id))
-          {:keys [prepared errors]} (check-and-prepare-bulk conn-state
-                                                            ids
-                                                            ident)
-          prepared-docs (map (fn [meta]
-                               (-> (:_id meta)
-                                   by-id
-                                   first
-                                   (into meta)))
-                             prepared)
-          bulk-res (when prepared
-                     (try
-                       (format-bulk-res
-                        (ductile.doc/bulk-index-docs conn
-                                                     prepared-docs
-                                                     (prepare-opts conn-state es-params)))
-                       (catch Exception e
-                         (log/error (str "bulk update failed: " (.getMessage e))
-                                    (pr-str prepared))
-                         {:errors {:internal-error (map :_id prepared)}})))]
-      (cond-> bulk-res
-        errors (update :errors
-                       #(merge-with concat errors %))))))
+  ([es-stored-schema]
+   (bulk-update es-stored-schema
+                {:stored-schema es-stored-schema
+                 :stored->es-stored :doc}))
+  ([es-stored-schema :- (s/protocol s/Schema)
+    {:keys [stored-schema
+            stored->es-stored]}]
+   (let [stored->es-stored (build-stored-transformer stored->es-stored stored-schema es-stored-schema)]
+     (s/fn :- BulkResult
+       [{:keys [conn] :as conn-state}
+        docs :- [stored-schema]
+        ident
+        es-params]
+       (let [docs (map stored->es-stored docs)
+             by-id (group-by :id docs)
+             ids (seq (keys by-id))
+             {:keys [prepared errors]} (check-and-prepare-bulk conn-state
+                                                               ids
+                                                               ident)
+             prepared-docs (map (fn [meta]
+                                  (-> (:_id meta)
+                                      by-id
+                                      first
+                                      (into meta)))
+                                prepared)
+             bulk-res (when prepared
+                        (try
+                          (format-bulk-res
+                            (ductile.doc/bulk-index-docs conn
+                                                         prepared-docs
+                                                         (prepare-opts conn-state es-params)))
+                          (catch Exception e
+                            (log/error (str "bulk update failed: " (.getMessage e))
+                                       (pr-str prepared))
+                            {:errors {:internal-error (map :_id prepared)}})))]
+         (cond-> bulk-res
+           errors (update :errors
+                          #(merge-with concat errors %))))))))
 
 (defn handle-delete
   "Generate an ES delete handler using some mapping"

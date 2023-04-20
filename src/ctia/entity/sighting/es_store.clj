@@ -119,18 +119,15 @@
                          {:partial-stored-schema PartialStoredSighting
                           :es-partial-stored->partial-stored (comp es-partial-stored-sighting->partial-stored-sighting :doc)}))
 
-(s/defn handle-update :- StoredSighting
-  [state id realized ident params]
-  (as-> (stored-sighting->es-stored-sighting realized) $
-    (update-fn state id $ ident params)
-    (es-stored-sighting->stored-sighting $)))
+(def handle-update
+  (crud/handle-update :sighting ESStoredSighting
+                      {:stored-schema StoredSighting
+                       :stored->es-stored (comp stored-sighting->es-stored-sighting :doc)}))
 
-(def bulk-update-fn (crud/bulk-update ESStoredSighting))
-
-(s/defn handle-bulk-update
-  [state realized-docs ident es-params]
-  (let [es-stored-docs (map stored-sighting->es-stored-sighting realized-docs)]
-    (bulk-update-fn state es-stored-docs ident es-params)))
+(def handle-bulk-update
+  (crud/bulk-update ESStoredSighting
+                    {:stored-schema StoredSighting
+                     :stored->es-stored (comp stored-sighting->es-stored-sighting :doc)}))
 
 (def handle-delete (crud/handle-delete :sighting))
 
