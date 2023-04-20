@@ -240,7 +240,7 @@ It returns the documents with full hits meta data including the real index in wh
                           :_source
                           coerce!)]
          (if (allow-read? doc ident get-in-config)
-           (some-> doc es-partial-stored->partial-stored)
+           (es-partial-stored->partial-stored doc)
            (let [ex (ex-info "You are not allowed to read this document"
                              {:type :access-control-error})]
              (if suppress-access-control-error?
