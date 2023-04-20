@@ -32,7 +32,8 @@
                      (into params next-params))
               :initk (assoc params :limit limit))))
 
-(defmacro def-es-store [store-name entity-kw stored-schema partial-stored-schema]
+(defmacro def-es-store [store-name entity-kw stored-schema partial-stored-schema
+                        & {:keys [store-opts extra-impls]}]
   (assert (simple-symbol? store-name) (pr-str store-name))
   (let [qsym #(symbol (-> *ns* ns-name name str) (name %))
         ctor (symbol (str "->" store-name))
@@ -41,14 +42,20 @@
            stored-schema# ~stored-schema
            entity-kw# ~entity-kw
            _# (assert (keyword? entity-kw#) (pr-str entity-kw#))
-           read-record# (crud/handle-read partial-stored-schema#)
-           read-records# (crud/handle-read-many partial-stored-schema#)
-           create-record# (crud/handle-create entity-kw# stored-schema#)
-           update-record# (crud/handle-update entity-kw# stored-schema#)
+           store-opts# ~store-opts
+           slice-opts# #(some-> nil ;;FIXME
+                                store-opts# (select-keys %) not-empty list)
+           create1-map-arg# (slice-opts# [:stored->es-stored :es-stored->stored :es-stored-schema])
+           read1-map-arg# (slice-opts# [:partial-stored-schema :es-partial-stored->partial-stored])
+           update1-map-arg# (slice-opts# [:stored-schema :stored->es-stored])
+           read-record# (apply crud/handle-read partial-stored-schema# read1-map-arg#)
+           read-records# (apply crud/handle-read-many partial-stored-schema# read1-map-arg#)
+           create-record# (apply crud/handle-create entity-kw# stored-schema# create1-map-arg#)
+           update-record# (apply crud/handle-update entity-kw# stored-schema# update1-map-arg#)
            delete-record# (crud/handle-delete entity-kw#)
-           bulk-update# (crud/bulk-update stored-schema#)
-           list-records# (crud/handle-find partial-stored-schema#)
-           query-string-search# (crud/handle-query-string-search partial-stored-schema#)]
+           bulk-update# (apply crud/bulk-update stored-schema# update1-map-arg#)
+           list-records# (apply crud/handle-find partial-stored-schema# read1-map-arg#)
+           query-string-search# (apply crud/handle-query-string-search partial-stored-schema# read1-map-arg#)]
        (defn ~ctor [state#]
          (reify
            clojure.lang.ILookup
@@ -89,7 +96,9 @@
            (store/paginate [this# fetch-page-fn#]
              (store/paginate this# fetch-page-fn# {}))
            (store/paginate [this# fetch-page-fn# init-page-params#]
-             (all-pages-iteration (partial fetch-page-fn# this#) init-page-params#)))))))
+             (all-pages-iteration (partial fetch-page-fn# this#) init-page-params#))
+
+           ~@extra-impls)))))
 
 (s/defschema StoreMap
   {:conn ESConn
