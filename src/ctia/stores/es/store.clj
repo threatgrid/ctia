@@ -43,7 +43,7 @@
            entity-kw# ~entity-kw
            _# (assert (keyword? entity-kw#) (pr-str entity-kw#))
            store-opts# ~store-opts
-           slice-opts# #(some-> store-opts# (select-keys %) not-empty list)
+           slice-opts# #(some-> store-opts# (select-keys %) list)
            create1-map-arg# (slice-opts# [:stored->es-stored :es-stored->stored :es-stored-schema])
            read1-map-arg# (slice-opts# [:partial-stored-schema :es-partial-stored->partial-stored])
            update1-map-arg# (slice-opts# [:stored-schema :stored->es-stored])
@@ -57,7 +57,7 @@
            query-string-search# (apply crud/handle-query-string-search partial-stored-schema# read1-map-arg#)]
        (defn ~ctor [state#]
          (reify
-           clojure.lang.IPersistentMap
+           clojure.lang.IPersistentMap ;; satisfy ctia.store-service.schemas/Store
            clojure.lang.ILookup
            (valAt [_# k#] (case k# :state state#))
            clojure.lang.Associative
