@@ -137,12 +137,14 @@ It returns the documents with full hits meta data including the real index in wh
          :_type (name mapping)))
 
 (s/defn build-stored-transformer
+  :- (s/=> s/Any s/Any) ;(s/=> (s/maybe out) (s/maybe in))
   [transformer :- (s/=> s/Any {:doc s/Any}) ;;(s/=> out {:doc in})
    in :- (s/protocol s/Schema)
    out :- (s/protocol s/Schema)]
-  (s/fn :- out
-    [doc :- in]
-    (transformer {:doc doc})))
+  (s/fn :- (s/maybe out)
+    [doc :- (s/maybe in)]
+    (when (some? doc)
+      (transformer {:doc doc}))))
 
 (s/defn handle-create
   "Generate an ES create handler using some mapping and schema"
@@ -160,7 +162,7 @@ It returns the documents with full hits meta data including the real index in wh
         :es-stored-schema (s/protocol s/Schema)}]
    (let [stored->es-stored (build-stored-transformer stored->es-stored stored-schema es-stored-schema) 
          es-stored->stored (build-stored-transformer es-stored->stored es-stored-schema stored-schema)
-         coerce! (comp #(some-> % es-stored->stored)
+         coerce! (comp es-stored->stored
                        (coerce-to-fn (s/maybe es-stored-schema)))]
      (s/fn :- [stored-schema]
        [{:keys [conn] :as conn-state} :- ESConnState
