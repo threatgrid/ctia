@@ -106,6 +106,7 @@
 (def handle-create
   (crud/handle-create :sighting StoredSighting
                       {:stored->es-stored (comp stored-sighting->es-stored-sighting :doc)
+                       :es-stored->stored (comp es-stored-sighting->stored-sighting :doc)
                        :es-stored-schema ESStoredSighting}))
 
 (def handle-read

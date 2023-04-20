@@ -136,22 +136,32 @@ It returns the documents with full hits meta data including the real index in wh
          :_index (:write-index props)
          :_type (name mapping)))
 
+(s/defn build-stored-transformer
+  [transformer :- (s/=> s/Any {:doc s/Any}) ;;(s/=> out {:doc in})
+   in :- (s/protocol s/Schema)
+   out :- (s/protocol s/Schema)]
+  (s/fn :- out
+    [doc :- in]
+    (transformer {:doc doc})))
+
 (s/defn handle-create
   "Generate an ES create handler using some mapping and schema"
   ([mapping stored-schema]
-   (handle-create mapping stored-schema {}))
+   (handle-create mapping stored-schema
+                  {:stored->es-stored :doc
+                   :es-stored->stored :doc
+                   :es-stored-schema stored-schema}))
   ([mapping stored-schema
     {:keys [stored->es-stored
+            es-stored->stored
             es-stored-schema]}
-    :- (st/optional-keys {:stored->es-stored (s/=> s/Any {:doc s/Any}) ;(s/=> es-stored-schema {:doc stored-schema})
-                          :es-stored-schema (s/protocol s/Schema)})]
-   (let [es-stored-schema (or es-stored-schema stored-schema)
-         stored->es-stored (s/fn :- es-stored-schema
-                             [stored :- stored-schema]
-                             (if stored->es-stored
-                               (stored->es-stored {:doc stored})
-                               stored))
-         coerce! (coerce-to-fn (s/maybe stored-schema))]
+    :- {:stored->es-stored (s/=> s/Any {:doc s/Any}) ;(s/=> es-stored-schema {:doc stored-schema})
+        :es-stored->stored (s/=> s/Any {:doc s/Any}) ;(s/=> stored-schema {:doc es-stored-schema})
+        :es-stored-schema (s/protocol s/Schema)}]
+   (let [stored->es-stored (build-stored-transformer stored->es-stored stored-schema es-stored-schema) 
+         es-stored->stored (build-stored-transformer es-stored->stored es-stored-schema stored-schema)
+         coerce! (comp #(some-> % es-stored->stored)
+                       (coerce-to-fn (s/maybe es-stored-schema)))]
      (s/fn :- [stored-schema]
        [{:keys [conn] :as conn-state} :- ESConnState
         docs :- [stored-schema]
