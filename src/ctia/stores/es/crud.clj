@@ -138,19 +138,28 @@ It returns the documents with full hits meta data including the real index in wh
 
 (s/defn handle-create
   "Generate an ES create handler using some mapping and schema"
-  ([mapping Model]
-   (handle-create mapping Model
-                  {:stored->es-stored :doc}))
-  ([mapping Model
-    {:keys [stored->es-stored]}
-    :- {:stored->es-stored s/Any}]
-   (let [coerce! (coerce-to-fn (s/maybe Model))]
-     (s/fn :- [Model]
+  ([mapping stored-schema]
+   (handle-create mapping stored-schema
+                  {:es-stored-schema stored-schema
+                   :stored->es-stored :doc}))
+  ([mapping stored-schema
+    {:keys [stored->es-stored
+            es-stored-schema]}
+    :- (st/optional-keys {:stored->es-stored s/Any
+                          :es-stored-schema s/Any})]
+   (let [es-stored-schema (or stored-schema es-stored-schema)
+         stored->es-stored (s/fn :- es-stored-schema
+                             [stored :- stored-schema]
+                             (if stored->es-stored
+                               (stored->es-stored {:doc stored})
+                               stored))
+         coerce! (coerce-to-fn (s/maybe stored-schema))]
+     (s/fn :- [stored-schema]
        [{:keys [conn] :as conn-state} :- ESConnState
-        docs :- [Model]
+        docs :- [stored-schema]
         _ident
         es-params]
-       (let [prepare-doc #(prepare-bulk-doc conn-state mapping (stored->es-stored {:doc %}))
+       (let [prepare-doc #(prepare-bulk-doc conn-state mapping (stored->es-stored %))
              prepared (mapv prepare-doc docs)]
          (try
            (ductile.doc/bulk-index-docs conn
