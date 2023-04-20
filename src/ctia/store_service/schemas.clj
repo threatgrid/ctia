@@ -1,12 +1,13 @@
 (ns ctia.store-service.schemas
-  (:require [schema.core :as s]))
+  (:require [ctia.store :refer [IStore]]
+            [schema.core :as s]))
 
 (s/defschema StoreID
   "An identifier for a store."
   (s/pred simple-keyword?))
 
 (s/defschema Store
-  (s/pred map?))
+  (s/protocol IStore))
 
 (s/defschema GetStoreFn
   "ctia.store-service/get-store in the service graph."
