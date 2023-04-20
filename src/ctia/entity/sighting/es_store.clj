@@ -59,35 +59,16 @@
   [observables :- [Observable]]
   (map observable->observable-hash observables))
 
-(s/defn stored-sighting->es-stored-sighting
-  :- ESStoredSighting
-  "adds an observables hash to a sighting"
-  [{:keys [observables] :as s} :- StoredSighting]
-  (assoc s :observables_hash (map observable->observable-hash observables)))
+(s/defn add-observables_hash [{{:keys [observables] :as s} :doc}]
+  (assoc s :observables_hash (obs->hashes observables)))
 
-(s/defn partial-stored-sighting->es-partial-stored-sighting
-  :- ESPartialStoredSighting
-  "adds an observables hash to a partial-sighting"
-  [{:keys [observables] :as s} :- PartialStoredSighting]
-  (cond-> s
-    observables (assoc :observables_hash (map observable->observable-hash observables))))
-
-(s/defn es-stored-sighting->stored-sighting
-  :- StoredSighting
-  "remove the computed observables hash from a sighting"
-  [s :- ESStoredSighting]
-  (dissoc s :observables_hash))
-
-(s/defn es-partial-stored-sighting->partial-stored-sighting
-  :- PartialStoredSighting
-  "remove the computed observables hash from a sighting"
-  [s :- ESPartialStoredSighting]
-  (dissoc s :observables_hash))
+(defn remove-observables_hash [{:keys [doc]}]
+  (dissoc doc :observables_hash))
 
 (def all-es-store-opts
-  {:stored->es-stored (comp stored-sighting->es-stored-sighting :doc)
-   :es-stored->stored (comp es-stored-sighting->stored-sighting :doc)
-   :es-partial-stored->partial-stored (comp es-partial-stored-sighting->partial-stored-sighting :doc)
+  {:stored->es-stored add-observables_hash
+   :es-stored->stored remove-observables_hash
+   :es-partial-stored->partial-stored remove-observables_hash
    :es-stored-schema ESStoredSighting
    :stored-schema StoredSighting
    :partial-stored-schema PartialStoredSighting})
