@@ -206,6 +206,11 @@ It returns the documents with full hits meta data including the real index in wh
           (throw (ex-info "You are not allowed to update this document"
                           {:type :access-control-error})))))))
 
+(s/defschema Read1MapArg
+  {:partial-stored-schema (s/protocol s/Schema)
+   ; (s/=> partial-stored-schema {:doc es-partial-stored-schema})
+   :es-partial-stored->partial-stored (s/=> s/Any {:doc s/Any})})
+
 (s/defn handle-read
   "Generate an ES read handler using some mapping and schema"
   ([es-partial-stored-schema]
@@ -213,9 +218,11 @@ It returns the documents with full hits meta data including the real index in wh
                 {:partial-stored-schema es-partial-stored-schema
                  :es-partial-stored->partial-stored :doc}))
   ([es-partial-stored-schema
-    {:keys [partial-stored-schema es-partial-stored->partial-stored]}
-    :- {:partial-stored-schema s/Any :es-partial-stored->partial-stored s/Any}]
-   (let [partial-stored-schema (or partial-stored-schema es-partial-stored-schema)
+    {:keys [partial-stored-schema es-partial-stored->partial-stored]} :- Read1MapArg]
+   (let [es-partial-stored->partial-stored (build-stored-transformer
+                                             es-partial-stored->partial-stored
+                                             es-partial-stored-schema
+                                             partial-stored-schema)
          coerce! (coerce-to-fn (s/maybe es-partial-stored-schema))]
      (s/fn :- (s/maybe partial-stored-schema)
        [{{{:keys [get-in-config]} :ConfigService}
@@ -233,7 +240,7 @@ It returns the documents with full hits meta data including the real index in wh
                           :_source
                           coerce!)]
          (if (allow-read? doc ident get-in-config)
-           (es-partial-stored->partial-stored {:doc doc})
+           (some-> doc es-partial-stored->partial-stored)
            (let [ex (ex-info "You are not allowed to read this document"
                              {:type :access-control-error})]
              (if suppress-access-control-error?
@@ -247,9 +254,11 @@ It returns the documents with full hits meta data including the real index in wh
                      {:partial-stored-schema es-partial-stored-schema
                       :es-partial-stored->partial-stored :doc}))
   ([es-partial-stored-schema
-    {:keys [partial-stored-schema es-partial-stored->partial-stored]}
-    :- {:partial-stored-schema s/Any :es-partial-stored->partial-stored s/Any}]
-   (let [partial-stored-schema (or partial-stored-schema es-partial-stored-schema)
+    {:keys [partial-stored-schema es-partial-stored->partial-stored]} :- Read1MapArg]
+   (let [es-partial-stored->partial-stored (build-stored-transformer
+                                             es-partial-stored->partial-stored
+                                             es-partial-stored-schema
+                                             partial-stored-schema)
          coerce! (coerce-to-fn es-partial-stored-schema)]
      (s/fn :- [(s/maybe partial-stored-schema)]
        [{{{:keys [get-in-config]} :ConfigService}
@@ -262,11 +271,12 @@ It returns the documents with full hits meta data including the real index in wh
          :or {suppress-access-control-error? false}
          :as es-params}]
        (sequence
+         ;;TODO factor out following copied code from handle-read
          (comp (map :_source)
                (map coerce!)
                (map (fn [record]
                       (if (allow-read? record ident get-in-config)
-                        (es-partial-stored->partial-stored {:doc record})
+                        (es-partial-stored->partial-stored record)
                         (let [ex (ex-info "You are not allowed to read this document"
                                           {:type :access-control-error})]
                           (if suppress-access-control-error?
