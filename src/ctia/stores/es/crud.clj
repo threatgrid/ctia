@@ -139,14 +139,12 @@ It returns the documents with full hits meta data including the real index in wh
 (s/defn handle-create
   "Generate an ES create handler using some mapping and schema"
   ([mapping stored-schema]
-   (handle-create mapping stored-schema
-                  {:es-stored-schema stored-schema
-                   :stored->es-stored :doc}))
+   (handle-create mapping stored-schema {}))
   ([mapping stored-schema
     {:keys [stored->es-stored
             es-stored-schema]}
-    :- (st/optional-keys {:stored->es-stored s/Any
-                          :es-stored-schema s/Any})]
+    :- (st/optional-keys {:stored->es-stored (s/=> s/Any {:doc s/Any}) ;(s/=> es-stored-schema {:doc stored-schema})
+                          :es-stored-schema (s/protocol s/Schema)})]
    (let [es-stored-schema (or stored-schema es-stored-schema)
          stored->es-stored (s/fn :- es-stored-schema
                              [stored :- stored-schema]
