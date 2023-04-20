@@ -52,7 +52,8 @@
                 entity-kw# ~entity-kw
                 _# (assert (keyword? entity-kw#) (pr-str entity-kw#))
                 store-opts# ~store-opts
-                slice-opts# #(some-> store-opts# (select-keys %) not-empty list)
+                slice-opts# #(some-> nil ;; FIXME
+                                     store-opts# (select-keys %) not-empty list)
                 create1-map-arg# (slice-opts# [:stored->es-stored :es-stored->stored :es-stored-schema])
                 read1-map-arg# (slice-opts# [:partial-stored-schema :es-partial-stored->partial-stored])
                 update1-map-arg# (slice-opts# [:stored-schema :stored->es-stored])
