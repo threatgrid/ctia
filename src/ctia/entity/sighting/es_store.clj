@@ -54,6 +54,7 @@
 
 (def es-coerce! (crud/coerce-to-fn [(s/maybe ESPartialStoredSighting)]))
 
+(def update-fn (crud/handle-update :sighting ESStoredSighting))
 (def list-fn (crud/handle-find ESPartialStoredSighting))
 (def handle-query-string-search (crud/handle-query-string-search ESPartialStoredSighting))
 (def handle-query-string-count crud/handle-query-string-count)
@@ -117,9 +118,11 @@
                          {:partial-stored-schema PartialStoredSighting
                           :es-partial-stored->partial-stored (comp es-partial-stored-sighting->partial-stored-sighting :doc)}))
 
-(def handle-update
-  (crud/handle-update :sighting StoredSighting
-                      {:stored->es-stored (comp stored-sighting->es-stored-sighting :doc)}))
+(s/defn handle-update :- StoredSighting
+  [state id realized ident params]
+  (as-> (stored-sighting->es-stored-sighting realized) $
+    (update-fn state id $ ident params)
+    (es-stored-sighting->stored-sighting $)))
 
 (def bulk-update-fn (crud/bulk-update ESStoredSighting))
 
