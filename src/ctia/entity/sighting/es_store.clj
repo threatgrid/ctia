@@ -89,8 +89,7 @@
    :es-stored->stored (comp es-stored-sighting->stored-sighting :doc)
    :es-partial-stored->partial-stored (comp es-partial-stored-sighting->partial-stored-sighting :doc)
    :es-stored-schema ESStoredSighting
-   :es-partial-stored-schema ESPartialStoredSighting
-   :partial-stored-schema PartialStoredSighting})
+   :es-partial-stored-schema ESPartialStoredSighting})
 
 (def create1-map-arg
   (select-keys all-es-store-opts
