@@ -1,5 +1,6 @@
 (ns ctia.stores.es.store
   (:require
+   [clojure.string :as str]
    [ctia.store :refer [IPaginateableStore IQueryStringSearchableStore IStore]
     :as store]
    [ctia.stores.es.crud :as crud]
@@ -32,79 +33,68 @@
                      (into params next-params))
               :initk (assoc params :limit limit))))
 
-;; make it easy to eventually refactor 
-;; (do (def ..) .. (defrecord))
-;; to
-;; (let [...] (reify))
-(defmacro let-defs [bs & body]
-  (assert (even? (count bs)))
-  `(do ~@(map (fn [[k v]] `(def ~k ~v))
-              (partition-all 2 bs))
-       ~@body))
-
-(defn prep-def-es-store [store-opts]
-  )
+(s/defn es-store-impls [entity-kw :- s/Keyword
+                        stored-schema :- (s/protocol s/Schema)
+                        partial-stored-schema :- (s/protocol s/Schema)
+                        store-opts]
+  (let [slice-opts #(some-> store-opts (select-keys %) list)
+        create1-map-arg (slice-opts [:stored->es-stored :es-stored->stored :es-stored-schema])
+        read1-map-arg (slice-opts [:partial-stored-schema :es-partial-stored->partial-stored])
+        update1-map-arg (slice-opts [:es-stored-schema :stored->es-stored])]
+    {:read-record (apply crud/handle-read partial-stored-schema read1-map-arg)
+     :read-records (apply crud/handle-read-many partial-stored-schema read1-map-arg)
+     :create-record (apply crud/handle-create entity-kw stored-schema create1-map-arg)
+     :update-record (apply crud/handle-update entity-kw stored-schema update1-map-arg)
+     :delete-record (crud/handle-delete entity-kw)
+     :bulk-update (apply crud/bulk-update stored-schema update1-map-arg)
+     :list-records (apply crud/handle-find partial-stored-schema read1-map-arg)
+     :query-string-search (apply crud/handle-query-string-search partial-stored-schema read1-map-arg)}))
 
 (defmacro def-es-store [store-name entity-kw stored-schema partial-stored-schema
                         & {:keys [store-opts extra-impls]}]
   (assert (simple-symbol? store-name) (pr-str store-name))
-  (let [state-sym 'state]
-    ;; gensyms will bloat namespace if reloaded. prefer tools.namespace refresh over reloading.
-    `(let-defs [partial-stored-schema# ~partial-stored-schema
-                stored-schema# ~stored-schema
-                entity-kw# ~entity-kw
-                _# (assert (keyword? entity-kw#) (pr-str entity-kw#))
-                store-opts# ~store-opts
-                store-opts# (cond-> store-opts#
-                              store-opts# (assoc :stored-schema stored-schema#
-                                                 :partial-stored-schema partial-stored-schema#))
-                slice-opts# #(some-> store-opts# (select-keys %) list)
-                create1-map-arg# (slice-opts# [:stored->es-stored :es-stored->stored :es-stored-schema])
-                read1-map-arg# (slice-opts# [:partial-stored-schema :es-partial-stored->partial-stored])
-                update1-map-arg# (slice-opts# [:es-stored-schema :stored->es-stored])
-                read-record# (apply crud/handle-read partial-stored-schema# read1-map-arg#)
-                read-records# (apply crud/handle-read-many partial-stored-schema# read1-map-arg#)
-                create-record# (apply crud/handle-create entity-kw# stored-schema# create1-map-arg#)
-                update-record# (apply crud/handle-update entity-kw# stored-schema# update1-map-arg#)
-                delete-record# (crud/handle-delete entity-kw#)
-                bulk-update# (apply crud/bulk-update stored-schema# update1-map-arg#)
-                list-records# (apply crud/handle-find partial-stored-schema# read1-map-arg#)
-                query-string-search# (apply crud/handle-query-string-search partial-stored-schema# read1-map-arg#)]
+  (let [des-gsym #(symbol (str "__" (str/replace (munge (str `def-es-store)) \. \_) "__" store-name "__" (name %)))
+        qsym #(symbol (-> *ns* ns-name name) (name %))
+        gimpls (des-gsym :impls)
+        qgimpls (qsym gimpls)
+        get-impl #(list % qgimpls)
+        state-sym 'state]
+    `(do (def ~gimpls (es-store-impls ~entity-kw ~stored-schema ~partial-stored-schema ~store-opts))
        (defrecord ~store-name [~state-sym]
          IStore
-         (store/read-record [_# id# ident# params#]
-           (read-record# ~state-sym id# ident# params#))
-         (store/read-records [_# ids# ident# params#]
-           (read-records# ~state-sym ids# ident# params#))
-         (store/create-record [_# new-actors# ident# params#]
-           (create-record# ~state-sym new-actors# ident# params#))
-         (store/update-record [_# id# actor# ident# params#]
-           (update-record# ~state-sym id# actor# ident# params#))
-         (store/delete-record [_# id# ident# params#]
-           (delete-record# ~state-sym id# ident# params#))
-         (store/bulk-delete [_# ids# ident# params#]
-           (crud/bulk-delete ~state-sym ids# ident# params#))
-         (store/bulk-update [_# docs# ident# params#]
-           (bulk-update# ~state-sym docs# ident# params#))
-         (store/list-records [_# filter-map# ident# params#]
-           (list-records# ~state-sym filter-map# ident# params#))
-         (store/close [_#]
-           (close-connections! ~state-sym))
+         (read-record [this# id# ident# params#]
+           (~(get-impl :read-record) (.state this#) id# ident# params#))
+         (read-records [this# ids# ident# params#]
+           (~(get-impl :read-records) (.state this#) ids# ident# params#))
+         (create-record [this# new-actors# ident# params#]
+           (~(get-impl :create-record) (.state this#) new-actors# ident# params#))
+         (update-record [this# id# actor# ident# params#]
+           (~(get-impl :update-record) (.state this#) id# actor# ident# params#))
+         (delete-record [this# id# ident# params#]
+           (~(get-impl :delete-record) (.state this#) id# ident# params#))
+         (bulk-delete [this# ids# ident# params#]
+           (crud/bulk-delete (.state this#) ids# ident# params#))
+         (bulk-update [this# docs# ident# params#]
+           (~(get-impl :bulk-update) (.state this#) docs# ident# params#))
+         (list-records [this# filter-map# ident# params#]
+           (~(get-impl :list-records) (.state this#) filter-map# ident# params#))
+         (close [this#]
+           (close-connections! (.state this#)))
 
          IQueryStringSearchableStore
-         (store/query-string-search [_# args#]
-           (query-string-search# ~state-sym args#))
-         (store/query-string-count [_# search-query# ident#]
-           (crud/handle-query-string-count ~state-sym search-query# ident#))
-         (store/aggregate [_# search-query# agg-query# ident#]
-           (crud/handle-aggregate ~state-sym search-query# agg-query# ident#))
-         (store/delete-search [_# search-query# ident# params#]
-           (crud/handle-delete-search ~state-sym search-query# ident# params#))
+         (query-string-search [this# args#]
+           (~(get-impl :query-string-search) (.state this#) args#))
+         (query-string-count [this# search-query# ident#]
+           (crud/handle-query-string-count (.state this#) search-query# ident#))
+         (aggregate [this# search-query# agg-query# ident#]
+           (crud/handle-aggregate (.state this#) search-query# agg-query# ident#))
+         (delete-search [this# search-query# ident# params#]
+           (crud/handle-delete-search (.state this#) search-query# ident# params#))
 
          IPaginateableStore
-         (store/paginate [this# fetch-page-fn#]
+         (paginate [this# fetch-page-fn#]
            (store/paginate this# fetch-page-fn# {}))
-         (store/paginate [this# fetch-page-fn# init-page-params#]
+         (paginate [this# fetch-page-fn# init-page-params#]
            (all-pages-iteration (partial fetch-page-fn# this#) init-page-params#))
 
          ~@extra-impls))))
