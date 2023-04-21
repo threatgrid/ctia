@@ -55,12 +55,11 @@
   (assert (simple-symbol? store-name) (pr-str store-name))
   (let [des-gsym #(symbol (str "__" (str/replace (munge (str `def-es-store)) \. \_) "__" store-name "__" (name %)))
         qsym #(symbol (-> *ns* ns-name name) (name %))
-        gimpls (des-gsym :impls)
-        qgimpls (qsym gimpls)
-        get-impl #(list % qgimpls)
-        state-sym 'state]
-    `(do (def ~gimpls (es-store-impls ~entity-kw ~stored-schema ~partial-stored-schema ~store-opts))
-       (defrecord ~store-name [~state-sym]
+        impls (des-gsym :impls)
+        qimpls (qsym impls)
+        get-impl #(list % qimpls)]
+    `(do (def ~impls (es-store-impls ~entity-kw ~stored-schema ~partial-stored-schema ~store-opts))
+       (defrecord ~store-name [~'state]
          IStore
          (read-record [this# id# ident# params#]
            (~(get-impl :read-record) (.state this#) id# ident# params#))
