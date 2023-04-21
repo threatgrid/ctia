@@ -8,7 +8,6 @@
             [ctia.store :refer [IJudgementStore IQueryStringSearchableStore IStore]]
             [ctia.stores.es
              [store :refer [close-connections! def-es-store] :as es.store]
-             [crud :as crud]
              [mapping :as em]
              [query :refer [active-judgements-by-observable-query find-restriction-query-part]]
              [schemas :refer [ESConnState]]]
@@ -41,7 +40,12 @@
   (c/coercer! [(s/maybe StoredJudgement)]
               sc/json-schema-coercion-matcher))
 
-(def handle-list (crud/handle-find PartialStoredJudgement))
+(defn list-judgements-by-observable [this observable ident params]
+  (store/list-records this
+                      {:all-of {[:observable :type]  (:type observable)
+                                [:observable :value] (:value observable)}}
+                      ident
+                      params))
 
 (defn list-active-by-observable
   [state observable ident get-in-config params]
@@ -86,7 +90,7 @@
    :observable (:observable judgement)
    :valid_time (:valid_time judgement)})
 
-(s/defn handle-calculate-verdict :- (s/maybe Verdict)
+(s/defn calculate-verdict :- (s/maybe Verdict)
   [{{{:keys [get-in-config]} :ConfigService} :services
     :as state} :- ESConnState
    observable
@@ -104,13 +108,9 @@
 (def-es-store JudgementStore :judgement StoredJudgement PartialStoredJudgement
   :extra-impls
   [IJudgementStore
-   (list-judgements-by-observable [_this observable ident params]
-     (handle-list state
-                  {:all-of {[:observable :type]  (:type observable)
-                            [:observable :value] (:value observable)}}
-                  ident
-                  params))
+   (list-judgements-by-observable [this observable ident params]
+     (list-judgements-by-observable this observable ident params))
    (calculate-verdict [_ observable ident]
-     (handle-calculate-verdict state observable ident {}))
+     (calculate-verdict (:state this) observable ident {}))
    (calculate-verdict [_ observable ident params]
-     (handle-calculate-verdict state observable ident params))])
+     (calculate-verdict (:state this) observable ident params))])
