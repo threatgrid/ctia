@@ -5,7 +5,9 @@
             [ctia.test-helpers.fixtures :as fixt]
             [ctia.test-helpers.core :as helpers]
             [ctim.examples.incidents :refer [incident-minimal]]
-            [clojure.test :refer [deftest testing is]]))
+            [clojure.test :refer [deftest testing is]]
+            [schema.core :as s]
+            [schema-tools.core :as st]))
 
 (def admin-ident {:login "johndoe"
                   :groups ["Administators"]})
@@ -74,3 +76,21 @@
                       (count (sequence
                               (mapcat :data)
                               (sut/all-pages-iteration query-incidents {:limit 10000})))))))))))))
+
+(s/defschema Stored {:stored [s/Any]})
+(s/defschema ESStored (st/assoc Stored :es-stored [s/Any]))
+(s/defschema PartialStored (st/optional-keys Stored))
+(s/defschema ESPartialStored (st/optional-keys ESStored))
+
+(sut/def-es-store DefEsStoreTest :DefEsStoreTest Stored PartialStored
+  :store-opts {:stored->es-stored (comp #(update % :es-stored (fnil conj []) :stored->es-stored)
+                                        :doc)
+               :es-stored->stored (comp #(-> % (dissoc :es-stored) (update :stored (fnil conj []) [:es-stored->stored %]))
+                                        :doc)
+               :es-partial-stored->partial-stored (comp #(-> % (dissoc :es-stored) (update :stored (fnil conj []) [:es-partial-stored->partial-stored %]))
+                                                        :doc)
+               :es-stored-schema ESStored
+               :es-partial-stored-schema ESPartialStored})
+
+(deftest def-es-store-test
+  )
