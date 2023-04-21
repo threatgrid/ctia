@@ -7,7 +7,7 @@
             [ctia.schemas.search-agg :refer [QueryStringSearchArgs]]
             [ctia.store :refer [IQueryStringSearchableStore ISightingStore IStore]]
             [ctia.stores.es
-             [store :refer [close-connections!]]
+             [store :refer [close-connections!] :as es.store]
              [crud :as crud]
              [mapping :as em]
              [schemas :refer [ESConnState]]]
@@ -84,7 +84,7 @@
   [s :- ESPartialStoredSighting]
   (dissoc s :observables_hash))
 
-(def all-es-store-opts
+(s/def all-es-store-opts :- es.store/StoreOpts
   {:stored->es-stored (comp stored-sighting->es-stored-sighting :doc)
    :es-stored->stored (comp es-stored-sighting->stored-sighting :doc)
    :es-partial-stored->partial-stored (comp es-partial-stored-sighting->partial-stored-sighting :doc)
