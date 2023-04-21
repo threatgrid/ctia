@@ -72,10 +72,10 @@
            ((:read-record ~qimpls) (.state this#) id# ident# params#))
          (read-records [this# ids# ident# params#]
            ((:read-records ~qimpls) (.state this#) ids# ident# params#))
-         (create-record [this# new-actors# ident# params#]
-           ((:create-record ~qimpls) (.state this#) new-actors# ident# params#))
-         (update-record [this# id# actor# ident# params#]
-           ((:update-record ~qimpls) (.state this#) id# actor# ident# params#))
+         (create-record [this# new-docs# ident# params#]
+           ((:create-record ~qimpls) (.state this#) new-docs# ident# params#))
+         (update-record [this# id# doc# ident# params#]
+           ((:update-record ~qimpls) (.state this#) id# doc# ident# params#))
          (delete-record [this# id# ident# params#]
            ((:delete-record ~qimpls) (.state this#) id# ident# params#))
          (bulk-delete [this# ids# ident# params#]
