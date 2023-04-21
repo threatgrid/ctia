@@ -49,7 +49,7 @@
         create1-map-arg (slice-opts [:stored->es-stored :es-stored->stored :es-stored-schema])
         read1-map-arg (slice-opts [:es-partial-stored-schema :es-partial-stored->partial-stored])
         update1-map-arg (slice-opts [:es-stored-schema :stored->es-stored])]
-    {:read-record (apply crud/handle-read prtial-stored-schema read1-map-arg)
+    {:read-record (apply crud/handle-read partial-stored-schema read1-map-arg)
      :read-records (apply crud/handle-read-many partial-stored-schema read1-map-arg)
      :create-record (apply crud/handle-create entity-kw stored-schema create1-map-arg)
      :update-record (apply crud/handle-update entity-kw stored-schema update1-map-arg)
@@ -77,7 +77,7 @@
          (update-record [this# id# actor# ident# params#]
            ((:update-record ~qimpls) (.state this#) id# actor# ident# params#))
          (delete-record [this# id# ident# params#]
-           (~(:delete-record ~qimpls) (.state this#) id# ident# params#))
+           ((:delete-record ~qimpls) (.state this#) id# ident# params#))
          (bulk-delete [this# ids# ident# params#]
            (crud/bulk-delete (.state this#) ids# ident# params#))
          (bulk-update [this# docs# ident# params#]
