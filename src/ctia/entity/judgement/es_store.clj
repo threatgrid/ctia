@@ -5,7 +5,7 @@
              :refer
              [PartialStoredJudgement StoredJudgement]]
             [ctia.schemas.core :refer [Verdict]]
-            [ctia.store :refer [IJudgementStore IQueryStringSearchableStore IStore]]
+            [ctia.store :refer [IJudgementStore IQueryStringSearchableStore IStore] :as store]
             [ctia.stores.es
              [store :refer [close-connections! def-es-store] :as es.store]
              [mapping :as em]
@@ -110,7 +110,7 @@
   [IJudgementStore
    (list-judgements-by-observable [this observable ident params]
      (list-judgements-by-observable this observable ident params))
-   (calculate-verdict [_ observable ident]
+   (calculate-verdict [this observable ident]
      (calculate-verdict (:state this) observable ident {}))
-   (calculate-verdict [_ observable ident params]
+   (calculate-verdict [this observable ident params]
      (calculate-verdict (:state this) observable ident params))])
