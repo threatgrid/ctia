@@ -339,6 +339,7 @@
                                                    "value1")
                                             ident
                                             {}))))
+          (is (= "value1" (:updated-field (read-fn state-aliased (first ids) ident {}))))
           (is (true? (delete-fn state-aliased
                                 (first ids)
                                 ident
@@ -369,6 +370,7 @@
                                                      "value2")
                                               ident
                                               {}))))
+            (is (= "value2" (:updated-field (read-fn state-aliased (second ids) ident {}))))
             (is (= "value5"
                    (:updated-field (update-fn state-aliased
                                               (first new-ids)
@@ -377,6 +379,7 @@
                                                      "value5")
                                               ident
                                               {}))))
+            (is (= "value5" (:updated-field (read-fn state-aliased (first ids) ident {}))))
             (is (true? (delete-fn state-aliased
                                   (second ids)
                                   ident
@@ -413,6 +416,7 @@
                                                   "value1")
                                            ident
                                            {}))))
+         (is (= "value1" (:updated-field (read-fn state-not-aliased (first ids) ident {}))))
          (is (true? (delete-fn state-not-aliased
                                (first ids)
                                ident
