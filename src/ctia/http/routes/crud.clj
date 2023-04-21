@@ -455,7 +455,7 @@
                                search-q
                                agg-q
                                identity-map)
-                             routes.common/format-agg-result :cardinality aggregate-on search-q)
+                             (routes.common/format-agg-result :cardinality aggregate-on search-q)
                              routes.common/paginated-ok))))))
      (let [capabilities get-capabilities]
        (GET "/:id" []
