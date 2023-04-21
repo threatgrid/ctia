@@ -40,7 +40,7 @@
    :es-stored-schema (s/protocol s/Schema)
    :es-partial-stored-schema (s/protocol s/Schema)})
 
-(s/defn ^:always-validate es-store-impls
+(s/defn es-store-impls
   [entity-kw :- s/Keyword
    stored-schema :- (s/protocol s/Schema)
    partial-stored-schema :- (s/protocol s/Schema)

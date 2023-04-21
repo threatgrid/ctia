@@ -146,7 +146,7 @@ It returns the documents with full hits meta data including the real index in wh
     (when (some? doc)
       (transformer {:doc doc}))))
 
-(s/defn ^:always-validate handle-create
+(s/defn handle-create
   "Generate an ES create handler using some mapping and schema"
   ([mapping stored-schema]
    (handle-create mapping stored-schema
@@ -193,7 +193,7 @@ It returns the documents with full hits meta data including the real index in wh
   {:stored->es-stored :doc
    :es-stored-schema stored-schema})
 
-(s/defn ^:always-validate handle-update
+(s/defn handle-update
   "Generate an ES update handler using some mapping and schema"
   ([mapping stored-schema]
    (handle-update mapping stored-schema (update1-default stored-schema)))
@@ -233,7 +233,7 @@ It returns the documents with full hits meta data including the real index in wh
   {:es-partial-stored-schema partial-stored-schema
    :es-partial-stored->partial-stored :doc})
 
-(s/defn ^:always-validate handle-read
+(s/defn handle-read
   "Generate an ES read handler using some mapping and schema"
   ([partial-stored-schema]
    (handle-read partial-stored-schema (read1-map-default partial-stored-schema)))
@@ -267,7 +267,7 @@ It returns the documents with full hits meta data including the real index in wh
                (log/error ex)
                (throw ex)))))))))
 
-(s/defn ^:always-validate handle-read-many
+(s/defn handle-read-many
   "Generate an ES read-many handler using some mapping and schema"
   ([partial-stored-schema]
    (handle-read-many partial-stored-schema (read1-map-default partial-stored-schema)))
@@ -396,7 +396,7 @@ It returns the documents with full hits meta data including the real index in wh
       errors (update :errors
                      #(merge-with concat errors %)))))
 
-(s/defn ^:always-validate bulk-update
+(s/defn bulk-update
   "Generate an ES bulk update handler using some mapping and schema"
   ([stored-schema]
    (bulk-update stored-schema (update1-default stored-schema)))
@@ -544,7 +544,7 @@ It returns the documents with full hits meta data including the real index in wh
   (comp #(update % :data (fn [docs] (mapv es-partial-stored->partial-stored docs)))
         (coerce-to-fn (list-response-schema es-partial-stored-schema))))
 
-(s/defn ^:always-validate handle-find
+(s/defn handle-find
   "Generate an ES find/list handler using some mapping and schema"
   ([partial-stored-schema]
    (handle-find partial-stored-schema (read1-map-default partial-stored-schema)))
@@ -604,7 +604,7 @@ It returns the documents with full hits meta data including the real index in wh
         (seq full-text)  (into (es.query/refine-full-text-query-parts
                                 es-conn-state full-text)))}}))
 
-(s/defn ^:always-validate handle-query-string-search
+(s/defn handle-query-string-search
   "Generate an ES query handler for given schema schema"
   ([partial-stored-schema]
    (handle-query-string-search partial-stored-schema (read1-map-default partial-stored-schema)))
