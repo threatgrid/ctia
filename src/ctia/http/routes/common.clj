@@ -110,11 +110,6 @@
   this to filter them out of query-param lists."
   (map :k (keys PagingParams)))
 
-
-(defn map->paging-header-value [m]
-  (str/join "&" (map (fn [[k v]]
-                       (str (name k) "=" v)) m)))
-
 (defn map->paging-headers
   "transform a map to a headers map
   {:total-hits 42}
@@ -188,8 +183,8 @@
                                            (mapv #(merge % (when search_fields
                                                              {:fields search_fields})))))))))
 
-(s/defn format-agg-result :- MetricResult
-  [result
+(s/defn format-agg-result* :- MetricResult
+  [agg-data
    agg-type
    aggregate-on
    {:keys [range full-text filter-map]} :- SearchQuery]
@@ -200,9 +195,17 @@
         filters (cond-> {:from from :to to}
                   (seq filter-map) (into filter-map)
                   (seq full-text) (assoc :full-text full-text*))]
-    {:data (assoc-in {} nested-fields result)
+    {:data (assoc-in {} nested-fields agg-data)
      :type agg-type
      :filters filters}))
+
+(s/defn format-agg-result
+  [result
+   agg-type
+   aggregate-on
+   search-query :- SearchQuery]
+  {:data (format-agg-result* (:data result) agg-type aggregate-on search-query)
+   :paging (:paging result)})
 
 (defn wait_for->refresh
   [wait_for]
