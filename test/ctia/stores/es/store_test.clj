@@ -1,16 +1,26 @@
 (ns ctia.stores.es.store-test
-  (:require [ctia.store :as store]
+  (:require [clojure.set :as set]
+            [ctia.store :as store]
+            [clj-momo.test-helpers.core :as mth]
             [ctia.stores.es.store :as sut]
             [ctia.entity.entities :as entities]
             [ctia.entity.sighting :as sighting]
+            [ctim.examples.sightings :refer [sighting-minimal]]
             [ctia.entity.sighting.schemas :refer [PartialStoredSighting StoredSighting]]
             [ctia.test-helpers.http :refer [app->APIHandlerServices]]
+            [ctia.test-helpers.fake-whoami-service :as whoami-helpers]
+            [ctia.test-helpers.auth :refer [all-capabilities]]
             [ctia.test-helpers.fixtures :as fixt]
             [ctia.test-helpers.core :as helpers]
             [ctim.examples.incidents :refer [incident-minimal]]
-            [clojure.test :refer [deftest testing is]]
+            [clojure.test :refer [deftest testing is use-fixtures]]
             [schema.core :as s]
             [schema-tools.core :as st]))
+
+(use-fixtures :once
+              mth/fixture-schema-validation
+              whoami-helpers/fixture-server)
+
 
 (def admin-ident {:login "johndoe"
                   :groups ["Administators"]})
@@ -87,11 +97,12 @@
                :es-stored-schema StoredSighting
                :es-partial-stored-schema PartialStoredSighting})
 
-(def ident {:login "johndoe"
-            :groups ["group1"]})
-(def base-sighting {:title "a sighting text title"
-                    :tlp "green"
-                    :groups ["group1"]})
+(def ident {:login "foouser"
+            :groups ["foogroup"]})
+(def base-sighting (-> sighting-minimal
+                       (into (set/rename-keys ident {:login :owner}))
+                       (assoc :created (java.util.Date.)
+                              :title "a sighting text title")))
 
 (deftest def-es-store-test
   (testing ":state"
@@ -99,13 +110,23 @@
       (is (= g (-> g ->SightingStore :state)))))
   (helpers/fixture-ctia-with-app
     (fn [app]
+      ;(helpers/set-capabilities! app "foouser" ["foogroup"] "user" all-capabilities)
+      ;(whoami-helpers/set-whoami-response app "45c1f5e3f05d0" "foouser" "foogroup" "user")
       (let [{{:keys [get-store]} :StoreService} (app->APIHandlerServices app)
             store (->SightingStore (:state (get-store :sighting)))
-            id "sighting1"]
+            params {:refresh "wait_for"}
+            id "sighting1"
+            is-title #(do (is (= % (:title (store/read-record store id ident params))))
+                          (is (= [%] (mapv :title (store/read-records store [id] ident params)))))]
         (testing "create-record"
-          (is (= "a sighting text title"
-                 (:title (store/create-record store [(assoc base-sighting :id id)] ident {}))))
-          (is (= "a sighting text title stored->es-stored es-stored->stored"
-                 (:title (store/read-record store id ident {}))))
-          (is (= "a sighting text title stored->es-stored es-stored->stored"
-                 (:title (store/read-records store [id] ident {})))))))))
+          (let [base-sighting (assoc base-sighting :title "create-record")]
+            (is (= "create-record"
+                   (-> (store/create-record store [(assoc base-sighting :id id)] ident params)
+                       first
+                       :title)))
+            (is-title "create-record stored->es-stored es-partial-stored->partial-stored")))
+        (testing "update-record"
+          (let [base-sighting (assoc base-sighting :title "update-record")]
+            (is (= "update-record"
+                   (:title (store/update-record store id base-sighting ident params))))
+            (is-title "update-record stored->es-stored es-partial-stored->partial-stored")))))))
