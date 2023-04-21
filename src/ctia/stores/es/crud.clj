@@ -224,21 +224,21 @@ It returns the documents with full hits meta data including the real index in wh
                            {:type :access-control-error}))))))))
 
 (s/defschema Read1MapArg
-  {:partial-stored-schema (s/protocol s/Schema)
+  {:es-partial-stored-schema (s/protocol s/Schema)
    ; (s/=> partial-stored-schema {:doc es-partial-stored-schema})
    :es-partial-stored->partial-stored (s/=> s/Any {:doc s/Any})})
 
 (s/defn read1-map-default :- Read1MapArg
-  [es-partial-stored-schema]
-  {:partial-stored-schema es-partial-stored-schema
+  [partial-stored-schema]
+  {:es-partial-stored-schema partial-stored-schema
    :es-partial-stored->partial-stored :doc})
 
 (s/defn handle-read
   "Generate an ES read handler using some mapping and schema"
-  ([es-partial-stored-schema]
-   (handle-read es-partial-stored-schema (read1-map-default es-partial-stored-schema)))
-  ([es-partial-stored-schema
-    {:keys [partial-stored-schema es-partial-stored->partial-stored]} :- Read1MapArg]
+  ([partial-stored-schema]
+   (handle-read partial-stored-schema (read1-map-default partial-stored-schema)))
+  ([partial-stored-schema
+    {:keys [es-partial-stored-schema es-partial-stored->partial-stored]} :- Read1MapArg]
    (let [es-partial-stored->partial-stored (build-stored-transformer
                                              es-partial-stored->partial-stored
                                              es-partial-stored-schema
@@ -269,10 +269,10 @@ It returns the documents with full hits meta data including the real index in wh
 
 (s/defn handle-read-many
   "Generate an ES read-many handler using some mapping and schema"
-  ([es-partial-stored-schema]
-   (handle-read-many es-partial-stored-schema (read1-map-default es-partial-stored-schema)))
-  ([es-partial-stored-schema
-    {:keys [partial-stored-schema es-partial-stored->partial-stored]} :- Read1MapArg]
+  ([partial-stored-schema]
+   (handle-read-many partial-stored-schema (read1-map-default partial-stored-schema)))
+  ([partial-stored-schema
+    {:keys [es-partial-stored-schema es-partial-stored->partial-stored]} :- Read1MapArg]
    (let [es-partial-stored->partial-stored (build-stored-transformer
                                              es-partial-stored->partial-stored
                                              es-partial-stored-schema
@@ -546,10 +546,10 @@ It returns the documents with full hits meta data including the real index in wh
 
 (s/defn handle-find
   "Generate an ES find/list handler using some mapping and schema"
-  ([es-partial-stored-schema]
-   (handle-find es-partial-stored-schema (read1-map-default es-partial-stored-schema)))
-  ([es-partial-stored-schema :- (s/protocol s/Schema)
-    {:keys [partial-stored-schema
+  ([partial-stored-schema]
+   (handle-find partial-stored-schema (read1-map-default partial-stored-schema)))
+  ([partial-stored-schema :- (s/protocol s/Schema)
+    {:keys [es-partial-stored-schema
             es-partial-stored->partial-stored]} :- Read1MapArg]
    (let [es-partial-stored->partial-stored (build-stored-transformer es-partial-stored->partial-stored
                                                                      es-partial-stored-schema
@@ -606,10 +606,10 @@ It returns the documents with full hits meta data including the real index in wh
 
 (s/defn handle-query-string-search
   "Generate an ES query handler for given schema schema"
-  ([es-partial-stored-schema]
-   (handle-query-string-search es-partial-stored-schema (read1-map-default es-partial-stored-schema)))
-  ([es-partial-stored-schema :- (s/protocol s/Schema)
-    {:keys [partial-stored-schema es-partial-stored->partial-stored]} :- Read1MapArg]
+  ([partial-stored-schema]
+   (handle-query-string-search partial-stored-schema (read1-map-default partial-stored-schema)))
+  ([partial-stored-schema :- (s/protocol s/Schema)
+    {:keys [es-partial-stored-schema es-partial-stored->partial-stored]} :- Read1MapArg]
    (let [es-partial-stored->partial-stored (build-stored-transformer es-partial-stored->partial-stored
                                                                      es-partial-stored-schema
                                                                      partial-stored-schema)

@@ -89,7 +89,7 @@
    :es-stored->stored (comp es-stored-sighting->stored-sighting :doc)
    :es-partial-stored->partial-stored (comp es-partial-stored-sighting->partial-stored-sighting :doc)
    :es-stored-schema ESStoredSighting
-   :stored-schema StoredSighting
+   :es-partial-stored-schema ESPartialStoredSighting
    :partial-stored-schema PartialStoredSighting})
 
 (def create1-map-arg
@@ -98,24 +98,24 @@
                 :es-stored->stored
                 :es-stored-schema]))
 
-(def read1-map-arg
+(s/def read1-map-arg :- crud/Read1MapArg
   (select-keys all-es-store-opts
-               [:partial-stored-schema
+               [:es-partial-stored-schema
                 :es-partial-stored->partial-stored]))
 
 (def update1-map-arg 
   (select-keys all-es-store-opts
-               [:stored-schema
+               [:es-stored-schema
                 :stored->es-stored]))
 
 (def handle-create (crud/handle-create :sighting StoredSighting create1-map-arg))
-(def handle-read (crud/handle-read ESPartialStoredSighting read1-map-arg))
-(def handle-read-many (crud/handle-read-many ESPartialStoredSighting read1-map-arg))
-(def handle-update (crud/handle-update :sighting ESStoredSighting update1-map-arg))
-(def handle-bulk-update (crud/bulk-update ESStoredSighting update1-map-arg))
+(def handle-read (crud/handle-read PartialStoredSighting read1-map-arg))
+(def handle-read-many (crud/handle-read-many PartialStoredSighting read1-map-arg))
+(def handle-update (crud/handle-update :sighting StoredSighting update1-map-arg))
+(def handle-bulk-update (crud/bulk-update StoredSighting update1-map-arg))
 (def handle-delete (crud/handle-delete :sighting))
-(def handle-list (crud/handle-find ESPartialStoredSighting read1-map-arg))
-(def handle-query-string-search-sightings (crud/handle-query-string-search ESPartialStoredSighting read1-map-arg))
+(def handle-list (crud/handle-find PartialStoredSighting read1-map-arg))
+(def handle-query-string-search-sightings (crud/handle-query-string-search PartialStoredSighting read1-map-arg))
 
 (s/defn handle-list-by-observables
   :- PartialStoredSightingList
