@@ -33,10 +33,18 @@
                      (into params next-params))
               :initk (assoc params :limit limit))))
 
-(s/defn es-store-impls [entity-kw :- s/Keyword
-                        stored-schema :- (s/protocol s/Schema)
-                        partial-stored-schema :- (s/protocol s/Schema)
-                        store-opts]
+(s/defschema StoreOpts
+  {:stored->es-stored (s/pred ifn?)
+   :es-stored->stored (s/pred ifn?)
+   :es-partial-stored->partial-stored (s/pred ifn?)
+   :es-stored-schema (s/protocol s/Schema)
+   :es-partial-stored-schema (s/protocol s/Schema)})
+
+(s/defn ^:always-validate es-store-impls
+  [entity-kw :- s/Keyword
+   stored-schema :- (s/protocol s/Schema)
+   partial-stored-schema :- (s/protocol s/Schema)
+   store-opts :- (s/maybe StoreOpts)]
   (let [slice-opts #(some-> store-opts (select-keys %) list)
         create1-map-arg (slice-opts [:stored->es-stored :es-stored->stored :es-stored-schema])
         read1-map-arg (slice-opts [:es-partial-stored-schema :es-partial-stored->partial-stored])
