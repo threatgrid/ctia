@@ -186,21 +186,21 @@ It returns the documents with full hits meta data including the real index in wh
 
 (s/defschema Update1MapArg
   {:stored->es-stored (s/=> s/Any {:doc s/Any}) ;(s/=> es-stored-schema {:doc stored-schema})
-   :stored-schema (s/protocol s/Schema)})
+   :es-stored-schema (s/protocol s/Schema)})
 
 (s/defn update1-default :- Update1MapArg
-  [es-stored-schema]
+  [stored-schema]
   {:stored->es-stored :doc
-   :stored-schema es-stored-schema})
+   :es-stored-schema stored-schema})
 
 (s/defn handle-update
   "Generate an ES update handler using some mapping and schema"
-  ([mapping es-stored-schema]
-   (handle-update mapping es-stored-schema (update1-default es-stored-schema)))
+  ([mapping stored-schema]
+   (handle-update mapping stored-schema (update1-default stored-schema)))
   ([mapping
-    es-stored-schema :- (s/protocol s/Schema)
+    stored-schema :- (s/protocol s/Schema)
     {:keys [stored->es-stored
-            stored-schema]} :- Update1MapArg]
+            es-stored-schema]} :- Update1MapArg]
    (let [stored->es-stored (build-stored-transformer stored->es-stored stored-schema es-stored-schema)
          coerce! (coerce-to-fn (s/maybe stored-schema))]
      (s/fn :- (s/maybe stored-schema)
@@ -398,12 +398,12 @@ It returns the documents with full hits meta data including the real index in wh
 
 (s/defn bulk-update
   "Generate an ES bulk update handler using some mapping and schema"
-  ([es-stored-schema]
-   (bulk-update es-stored-schema (update1-default es-stored-schema)))
-  ([es-stored-schema :- (s/protocol s/Schema)
-    {:keys [stored-schema
+  ([stored-schema]
+   (bulk-update stored-schema (update1-default stored-schema)))
+  ([stored-schema :- (s/protocol s/Schema)
+    {:keys [es-stored-schema
             stored->es-stored]} :- Update1MapArg]
-   (let [stored->es-stored (build-stored-transformer stored->es-stored stored-schema es-stored-schema)]
+   (let [stored->es-stored (build-stored-transformer stored->es-stored stored-schema stored-schema)]
      (s/fn :- BulkResult
        [{:keys [conn] :as conn-state}
         docs :- [stored-schema]

@@ -42,6 +42,9 @@
               (partition-all 2 bs))
        ~@body))
 
+(defn prep-def-es-store [store-opts]
+  )
+
 (defmacro def-es-store [store-name entity-kw stored-schema partial-stored-schema
                         & {:keys [store-opts extra-impls]}]
   (assert (simple-symbol? store-name) (pr-str store-name))
@@ -52,10 +55,13 @@
                 entity-kw# ~entity-kw
                 _# (assert (keyword? entity-kw#) (pr-str entity-kw#))
                 store-opts# ~store-opts
-                slice-opts# #(some-> store-opts# (select-keys %) not-empty list)
+                store-opts# (cond-> store-opts#
+                              store-opts# (assoc :stored-schema stored-schema#
+                                                 :partial-stored-schema partial-stored-schema#))
+                slice-opts# #(some-> store-opts# (select-keys %) list)
                 create1-map-arg# (slice-opts# [:stored->es-stored :es-stored->stored :es-stored-schema])
                 read1-map-arg# (slice-opts# [:partial-stored-schema :es-partial-stored->partial-stored])
-                update1-map-arg# (slice-opts# [:stored-schema :stored->es-stored])
+                update1-map-arg# (slice-opts# [:es-stored-schema :stored->es-stored])
                 read-record# (apply crud/handle-read partial-stored-schema# read1-map-arg#)
                 read-records# (apply crud/handle-read-many partial-stored-schema# read1-map-arg#)
                 create-record# (apply crud/handle-create entity-kw# stored-schema# create1-map-arg#)

@@ -71,7 +71,6 @@
    :es-stored->stored remove-observables_hash
    :es-partial-stored->partial-stored remove-observables_hash
    :es-stored-schema ESStoredSighting
-   :stored-schema StoredSighting
    :partial-stored-schema PartialStoredSighting})
 
 (def-es-store SightingStore :sighting StoredSighting PartialStoredSighting
