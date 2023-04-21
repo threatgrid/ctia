@@ -7,7 +7,7 @@
             [ctia.schemas.search-agg :refer [QueryStringSearchArgs]]
             [ctia.store :refer [IQueryStringSearchableStore ISightingStore IStore] :as store]
             [ctia.stores.es
-             [store :refer [def-es-store close-connections!] :as es.store]
+             [store :refer [def-es-store close-connections!]]
              [crud :as crud]
              [mapping :as em]
              [schemas :refer [ESConnState]]]
