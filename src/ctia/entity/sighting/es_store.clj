@@ -84,37 +84,21 @@
   [s :- ESPartialStoredSighting]
   (dissoc s :observables_hash))
 
-(s/def all-es-store-opts :- es.store/StoreOpts
+(s/def store-opts :- es.store/StoreOpts
   {:stored->es-stored (comp stored-sighting->es-stored-sighting :doc)
    :es-stored->stored (comp es-stored-sighting->stored-sighting :doc)
    :es-partial-stored->partial-stored (comp es-partial-stored-sighting->partial-stored-sighting :doc)
    :es-stored-schema ESStoredSighting
    :es-partial-stored-schema ESPartialStoredSighting})
 
-(def create1-map-arg
-  (select-keys all-es-store-opts
-               [:stored->es-stored
-                :es-stored->stored
-                :es-stored-schema]))
+(def impls (es.store/es-store-impls :sighting StoredSighting PartialStoredSighting store-opts))
 
 (s/def read1-map-arg :- crud/Read1MapArg
-  (select-keys all-es-store-opts
+  (select-keys store-opts
                [:es-partial-stored-schema
                 :es-partial-stored->partial-stored]))
 
-(def update1-map-arg 
-  (select-keys all-es-store-opts
-               [:es-stored-schema
-                :stored->es-stored]))
-
-(def handle-create (crud/handle-create :sighting StoredSighting create1-map-arg))
-(def handle-read (crud/handle-read PartialStoredSighting read1-map-arg))
-(def handle-read-many (crud/handle-read-many PartialStoredSighting read1-map-arg))
-(def handle-update (crud/handle-update :sighting StoredSighting update1-map-arg))
-(def handle-bulk-update (crud/bulk-update StoredSighting update1-map-arg))
-(def handle-delete (crud/handle-delete :sighting))
 (def handle-list (crud/handle-find PartialStoredSighting read1-map-arg))
-(def handle-query-string-search-sightings (crud/handle-query-string-search PartialStoredSighting read1-map-arg))
 
 (s/defn handle-list-by-observables
   :- PartialStoredSightingList
@@ -128,28 +112,28 @@
 (defrecord SightingStore [state]
   IStore
   (read-record [_ id ident params]
-    (handle-read state id ident params))
+    ((:read-record impls) state id ident params))
   (read-records [_ ids ident params]
-    (handle-read-many state ids ident params))
+    ((:read-records impls) state ids ident params))
   (create-record [_ new-sightings ident params]
-    (handle-create state new-sightings ident params))
+    ((:create-record impls) state new-sightings ident params))
   (update-record [_ id sighting ident params]
-    (handle-update state id sighting ident params))
+    ((:update-record impls) state id sighting ident params))
   (delete-record [_ id ident params]
-    (handle-delete state id ident params))
+    ((:delete-record impls) state id ident params))
   (list-records [_ filter-map ident params]
-    (handle-list state filter-map ident params))
+    ((:list-records impls) state filter-map ident params))
   (bulk-delete [_ ids ident params]
     (crud/bulk-delete state ids ident params))
   (bulk-update [_ docs ident params]
-    (handle-bulk-update state docs ident params))
+    ((:bulk-update impls) state docs ident params))
   (close [_] (close-connections! state))
   ISightingStore
   (list-sightings-by-observables [_ observables ident params]
     (handle-list-by-observables state observables ident params))
   IQueryStringSearchableStore
   (query-string-search [_ args]
-    (handle-query-string-search-sightings state args))
+    ((:query-string-search impls) state args))
   (query-string-count [_ search-query ident]
     (crud/handle-query-string-count state search-query ident))
   (aggregate [_ search-query agg-query ident]
