@@ -39,7 +39,7 @@
                         store-opts]
   (let [slice-opts #(some-> store-opts (select-keys %) list)
         create1-map-arg (slice-opts [:stored->es-stored :es-stored->stored :es-stored-schema])
-        read1-map-arg (slice-opts [:partial-stored-schema :es-partial-stored->partial-stored])
+        read1-map-arg (slice-opts [:es-partial-stored-schema :es-partial-stored->partial-stored])
         update1-map-arg (slice-opts [:es-stored-schema :stored->es-stored])]
     {:read-record (apply crud/handle-read partial-stored-schema read1-map-arg)
      :read-records (apply crud/handle-read-many partial-stored-schema read1-map-arg)
