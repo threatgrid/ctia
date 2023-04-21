@@ -403,7 +403,7 @@ It returns the documents with full hits meta data including the real index in wh
   ([stored-schema :- (s/protocol s/Schema)
     {:keys [es-stored-schema
             stored->es-stored]} :- Update1MapArg]
-   (let [stored->es-stored (build-stored-transformer stored->es-stored stored-schema stored-schema)]
+   (let [stored->es-stored (build-stored-transformer stored->es-stored stored-schema es-stored-schema)]
      (s/fn :- BulkResult
        [{:keys [conn] :as conn-state}
         docs :- [stored-schema]
