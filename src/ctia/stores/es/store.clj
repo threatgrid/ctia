@@ -49,7 +49,7 @@
         create1-map-arg (slice-opts [:stored->es-stored :es-stored->stored :es-stored-schema])
         read1-map-arg (slice-opts [:es-partial-stored-schema :es-partial-stored->partial-stored])
         update1-map-arg (slice-opts [:es-stored-schema :stored->es-stored])]
-    {:read-record (apply crud/handle-read partial-stored-schema read1-map-arg)
+    {:read-record (apply crud/handle-read prtial-stored-schema read1-map-arg)
      :read-records (apply crud/handle-read-many partial-stored-schema read1-map-arg)
      :create-record (apply crud/handle-create entity-kw stored-schema create1-map-arg)
      :update-record (apply crud/handle-update entity-kw stored-schema update1-map-arg)
@@ -63,34 +63,33 @@
   (assert (simple-symbol? store-name) (pr-str store-name))
   (let [des-gsym #(symbol (str "__" (str/replace (munge (str `def-es-store)) \. \_) "__" store-name "__" (name %)))
         qsym #(symbol (-> *ns* ns-name name) (name %))
-        impls (des-gsym :impls)
-        qimpls (qsym impls)
-        get-impl #(list % qimpls)]
+        impls (des-gsym 'impls)
+        qimpls (qsym impls)]
     `(do (def ~impls (es-store-impls ~entity-kw ~stored-schema ~partial-stored-schema ~store-opts))
        (defrecord ~store-name [~'state]
          IStore
          (read-record [this# id# ident# params#]
-           (~(get-impl :read-record) (.state this#) id# ident# params#))
+           ((:read-record ~qimpls) (.state this#) id# ident# params#))
          (read-records [this# ids# ident# params#]
-           (~(get-impl :read-records) (.state this#) ids# ident# params#))
+           ((:read-records ~qimpls) (.state this#) ids# ident# params#))
          (create-record [this# new-actors# ident# params#]
-           (~(get-impl :create-record) (.state this#) new-actors# ident# params#))
+           ((:create-record ~qimpls) (.state this#) new-actors# ident# params#))
          (update-record [this# id# actor# ident# params#]
-           (~(get-impl :update-record) (.state this#) id# actor# ident# params#))
+           ((:update-record ~qimpls) (.state this#) id# actor# ident# params#))
          (delete-record [this# id# ident# params#]
-           (~(get-impl :delete-record) (.state this#) id# ident# params#))
+           (~(:delete-record ~qimpls) (.state this#) id# ident# params#))
          (bulk-delete [this# ids# ident# params#]
            (crud/bulk-delete (.state this#) ids# ident# params#))
          (bulk-update [this# docs# ident# params#]
-           (~(get-impl :bulk-update) (.state this#) docs# ident# params#))
+           ((:bulk-update ~qimpls) (.state this#) docs# ident# params#))
          (list-records [this# filter-map# ident# params#]
-           (~(get-impl :list-records) (.state this#) filter-map# ident# params#))
+           ((:list-records ~qimpls) (.state this#) filter-map# ident# params#))
          (close [this#]
            (close-connections! (.state this#)))
 
          IQueryStringSearchableStore
          (query-string-search [this# args#]
-           (~(get-impl :query-string-search) (.state this#) args#))
+           ((:query-string-search ~qimpls) (.state this#) args#))
          (query-string-count [this# search-query# ident#]
            (crud/handle-query-string-count (.state this#) search-query# ident#))
          (aggregate [this# search-query# agg-query# ident#]
