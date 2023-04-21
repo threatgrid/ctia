@@ -109,7 +109,7 @@
   (testing ":state"
     (let [g (gensym)]
       (is (= g (-> g ->SightingStore :state)))))
-  (testing "transformers"
+  (testing ":store-opts transformers"
     (helpers/fixture-ctia-with-app
       (fn [app]
         (let [{{:keys [get-store]} :StoreService} (app->APIHandlerServices app)
