@@ -60,7 +60,8 @@
   (map observable->observable-hash observables))
 
 (s/defn add-observables_hash [{{:keys [observables] :as s} :doc}]
-  (assoc s :observables_hash (obs->hashes observables)))
+  (cond-> s
+    observables (assoc :observables_hash (obs->hashes observables))))
 
 (defn remove-observables_hash [{:keys [doc]}]
   (dissoc doc :observables_hash))
