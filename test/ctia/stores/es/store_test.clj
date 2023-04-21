@@ -1,6 +1,8 @@
 (ns ctia.stores.es.store-test
   (:require [ctia.store :as store]
             [ctia.stores.es.store :as sut]
+            [ctia.entity.entities :as entities]
+            [ctia.entity.sighting :as sighting]
             [ctia.test-helpers.http :refer [app->APIHandlerServices]]
             [ctia.test-helpers.fixtures :as fixt]
             [ctia.test-helpers.core :as helpers]
@@ -77,20 +79,36 @@
                               (mapcat :data)
                               (sut/all-pages-iteration query-incidents {:limit 10000})))))))))))))
 
-(s/defschema Stored {:stored [s/Any]})
-(s/defschema ESStored (st/assoc Stored :es-stored [s/Any]))
-(s/defschema PartialStored (st/optional-keys Stored))
-(s/defschema ESPartialStored (st/optional-keys ESStored))
-
-(sut/def-es-store DefEsStoreTest :DefEsStoreTest Stored PartialStored
-  :store-opts {:stored->es-stored (comp #(update % :es-stored (fnil conj []) :stored->es-stored)
-                                        :doc)
-               :es-stored->stored (comp #(-> % (dissoc :es-stored) (update :stored (fnil conj []) [:es-stored->stored %]))
-                                        :doc)
-               :es-partial-stored->partial-stored (comp #(-> % (dissoc :es-stored) (update :stored (fnil conj []) [:es-partial-stored->partial-stored %]))
-                                                        :doc)
-               :es-stored-schema ESStored
-               :es-partial-stored-schema ESPartialStored})
-
-(deftest def-es-store-test
-  )
+;(s/defschema Stored {:stored1 [s/Any] :stored2 [s/Any]})
+;(s/defschema ESStored (st/assoc Stored :es-stored [s/Any]))
+;(s/defschema PartialStored (st/optional-keys Stored))
+;(s/defschema ESPartialStored (st/optional-keys ESStored))
+;
+;(def ^:dynamic *stored->es-stored* (comp  :doc))
+;(def ^:dynamic *es-stored->stored* (comp #(-> % (dissoc :es-stored) (update :stored (fnil conj []) [:es-stored->stored %])) :doc))
+;(def ^:dynamic *es-partial-stored->partial-stored* (comp #(-> % (dissoc :es-stored) (update :stored (fnil conj []) [:es-stored->stored %])) :doc))
+;
+;(sut/def-es-store SightingStore :sighting StoredSighting PartialStoredSighting
+;  :store-opts {:stored->es-stored #'*stored->es-stored*
+;               :es-stored->stored #'*es-stored->stored*
+;               :es-partial-stored->partial-stored #'*es-partial-stored->partial-stored*
+;               :es-stored-schema ESStored
+;               :es-partial-stored-schema ESPartialStored})
+;
+;(deftest def-es-store-test
+;  (testing ":state"
+;    (let [g (gensym)]
+;      (is (= g (-> g ->SightingStore :state)))))
+;  (with-redefs [;; TODO parameterize app by entities map
+;                entities/all-entities (let [orig entities/all-entities]
+;                                        (fn []
+;                                          (-> (orig)
+;                                              (assoc :sighting
+;                                                     (assoc sighting/sighting-entity
+;                                                            :es-store ->SightingStore)))))]
+;    (helpers/fixture-ctia-with-app
+;      (fn [app]
+;        (testing "read-record"
+;          (let [{{:keys [get-store]} :StoreService} (app->APIHandlerServices app)
+;                res (store/read-record (->DefEsStoreTest {:service {:ConfigService {:get-in-config }}}))]
+;            ))))))
