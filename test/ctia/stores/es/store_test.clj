@@ -92,6 +92,7 @@
 
 (sut/def-es-store SightingStore :sighting StoredSighting PartialStoredSighting 
   :store-opts {:stored->es-stored (fn [{:keys [doc]}] (update doc :title str " stored->es-stored"))
+               ;;TODO unit test. only used for the error case of `handle-create`
                :es-stored->stored (fn [{:keys [doc]}] (update doc :title str " es-stored->stored"))
                :es-partial-stored->partial-stored (fn [{:keys [doc]}] (update doc :title str " es-partial-stored->partial-stored"))
                :es-stored-schema StoredSighting
@@ -108,25 +109,34 @@
   (testing ":state"
     (let [g (gensym)]
       (is (= g (-> g ->SightingStore :state)))))
-  (helpers/fixture-ctia-with-app
-    (fn [app]
-      ;(helpers/set-capabilities! app "foouser" ["foogroup"] "user" all-capabilities)
-      ;(whoami-helpers/set-whoami-response app "45c1f5e3f05d0" "foouser" "foogroup" "user")
-      (let [{{:keys [get-store]} :StoreService} (app->APIHandlerServices app)
-            store (->SightingStore (:state (get-store :sighting)))
-            params {:refresh "wait_for"}
-            id "sighting1"
-            is-title #(do (is (= % (:title (store/read-record store id ident params))))
-                          (is (= [%] (mapv :title (store/read-records store [id] ident params)))))]
-        (testing "create-record"
-          (let [base-sighting (assoc base-sighting :title "create-record")]
-            (is (= "create-record"
-                   (-> (store/create-record store [(assoc base-sighting :id id)] ident params)
-                       first
-                       :title)))
-            (is-title "create-record stored->es-stored es-partial-stored->partial-stored")))
-        (testing "update-record"
-          (let [base-sighting (assoc base-sighting :title "update-record")]
-            (is (= "update-record"
-                   (:title (store/update-record store id base-sighting ident params))))
-            (is-title "update-record stored->es-stored es-partial-stored->partial-stored")))))))
+  (testing "transformers"
+    (helpers/fixture-ctia-with-app
+      (fn [app]
+        (let [{{:keys [get-store]} :StoreService} (app->APIHandlerServices app)
+              store (->SightingStore (:state (get-store :sighting)))
+              params {:refresh "wait_for"}
+              id "sighting1"
+              is-title #(do (is (= % (:title (store/read-record store id ident params))))
+                            (is (= [%] (->> (store/read-records store [id] ident params)
+                                            (mapv :title))))
+                            (is (= [%] (->> (store/list-records store {} ident params)
+                                            :data (mapv :title))))
+                            (is (= [%] (->> (store/query-string-search store {:ident ident :params params :search-query {:filter-map {:id id}}})
+                                            :data (mapv :title)))))]
+          (testing "create-record"
+            (let [base-sighting (assoc base-sighting :id id :title "create-record")]
+              (is (= "create-record"
+                     (-> (store/create-record store [base-sighting] ident params)
+                         first
+                         :title)))
+              (is-title "create-record stored->es-stored es-partial-stored->partial-stored")))
+          (testing "update-record"
+            (let [base-sighting (assoc base-sighting :title "update-record")]
+              (is (= "update-record"
+                     (:title (store/update-record store id base-sighting ident params))))
+              (is-title "update-record stored->es-stored es-partial-stored->partial-stored")))
+          (testing "bulk-update"
+            (let [base-sighting (assoc base-sighting :id id :title "bulk-update")]
+              (is (= {:updated [id]}
+                     (store/bulk-update store [base-sighting] ident params)))
+              (is-title "bulk-update stored->es-stored es-partial-stored->partial-stored"))))))))
