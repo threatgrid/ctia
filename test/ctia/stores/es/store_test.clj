@@ -1,7 +1,6 @@
 (ns ctia.stores.es.store-test
   (:require [clojure.set :as set]
             [ctia.store :as store]
-            [clj-momo.test-helpers.core :as mth]
             [ctia.stores.es.store :as sut]
             [ctia.entity.entities :as entities]
             [ctia.entity.sighting :as sighting]
@@ -15,10 +14,11 @@
             [ctim.examples.incidents :refer [incident-minimal]]
             [clojure.test :refer [deftest testing is use-fixtures]]
             [schema.core :as s]
+            [schema.test :refer [validate-schemas]]
             [schema-tools.core :as st]))
 
 (use-fixtures :once
-              mth/fixture-schema-validation
+              validate-schemas
               whoami-helpers/fixture-server)
 
 
