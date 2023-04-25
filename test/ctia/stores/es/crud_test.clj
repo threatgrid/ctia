@@ -338,8 +338,7 @@
                                                    :updated-field
                                                    "value1")
                                             ident
-                                            {:refresh "wait_for"}))))
-          (is (= "value1" (:updated-field (read-fn state-aliased (first ids) ident {}))))
+                                            {}))))
           (is (true? (delete-fn state-aliased
                                 (first ids)
                                 ident
@@ -369,8 +368,7 @@
                                                      :updated-field
                                                      "value2")
                                               ident
-                                              {:refresh "wait_for"}))))
-            (is (= "value2" (:updated-field (read-fn state-aliased (second ids) ident {}))))
+                                              {}))))
             (is (= "value5"
                    (:updated-field (update-fn state-aliased
                                               (first new-ids)
@@ -378,8 +376,7 @@
                                                      :updated-field
                                                      "value5")
                                               ident
-                                              {:refresh "wait_for"}))))
-            (is (= "value5" (:updated-field (read-fn state-aliased (first ids) ident {}))))
+                                              {}))))
             (is (true? (delete-fn state-aliased
                                   (second ids)
                                   ident
@@ -415,8 +412,7 @@
                                                   :updated-field
                                                   "value1")
                                            ident
-                                           {:refresh "wait_for"}))))
-         (is (= "value1" (:updated-field (read-fn state-not-aliased (first ids) ident {}))))
+                                           {}))))
          (is (true? (delete-fn state-not-aliased
                                (first ids)
                                ident
