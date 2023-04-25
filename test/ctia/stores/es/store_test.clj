@@ -6,6 +6,7 @@
             [ctia.entity.sighting :as sighting]
             [ctim.examples.sightings :refer [sighting-minimal]]
             [ctia.entity.sighting.schemas :refer [PartialStoredSighting StoredSighting]]
+            [ctia.test-helpers.es :as es-helpers]
             [ctia.test-helpers.http :refer [app->APIHandlerServices]]
             [ctia.test-helpers.fake-whoami-service :as whoami-helpers]
             [ctia.test-helpers.auth :refer [all-capabilities]]
