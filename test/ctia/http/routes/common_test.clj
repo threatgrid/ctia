@@ -232,53 +232,66 @@
                         :full-text [{:query "baddomain*", :query_mode :query_string}]
                         :field1 "foo/bar"
                         :field2 "value2"}}
-             (sut/format-agg-result cardinality
-                                    :cardinality
-                                    "observable.type"
-                                    {:range
-                                     {:timestamp {:gte from
-                                                  :lt to}}
-                                     :full-text [{:query "baddomain*"}]
-                                     :filter-map {:field1 "foo/bar"
-                                                  :field2 "value2"}})))
+             (sut/format-agg-result* cardinality
+                                     :cardinality
+                                     "observable.type"
+                                     {:range
+                                      {:timestamp {:gte from
+                                                   :lt to}}
+                                      :full-text [{:query "baddomain*"}]
+                                      :filter-map {:field1 "foo/bar"
+                                                   :field2 "value2"}})))
       (is (= {:data {:observable {:type cardinality}}
               :type :cardinality
               :filters {:from from
                         :to to
                         :field1 "value1"
                         :field2 "abc def"}}
-             (sut/format-agg-result cardinality
-                                    :cardinality
-                                    "observable.type"
-                                    {:range
-                                     {:timestamp {:gte from
-                                                  :lt to}}
-                                     :filter-map {:field1 "value1"
-                                                  :field2 "abc def"}}))))
+             (sut/format-agg-result* cardinality
+                                     :cardinality
+                                     "observable.type"
+                                     {:range
+                                      {:timestamp {:gte from
+                                                   :lt to}}
+                                      :filter-map {:field1 "value1"
+                                                   :field2 "abc def"}}))))
     (testing "should properly format aggregation results and avoid nil filters"
       (is (= {:data {:status topn}
               :type :topn
               :filters {:from from
                         :to to
-                        :full-text [{:query      "android"
+                        :full-text [{:query "android"
                                      :query_mode :query_string}]}}
-             (sut/format-agg-result topn
-                                    :topn
-                                    "status"
-                                    {:range     {:timestamp {:gte from
-                                                             :lt  to}}
-                                     :full-text [{:query "android"}]})))
+             (sut/format-agg-result* topn
+                                     :topn
+                                     "status"
+                                     {:range     {:timestamp {:gte from
+                                                              :lt  to}}
+                                      :full-text [{:query "android"}]})))
       (is (= {:data {:timestamp histogram}
               :type :histogram
               :filters {:from from
                         :to to}}
-             (sut/format-agg-result histogram
-                                    :histogram
-                                    "timestamp"
+             (sut/format-agg-result* histogram
+                                     :histogram
+                                     "timestamp"
+                                     {:range
+                                      {:incident_time.closed
+                                       {:gte from
+                                        :lt to}}}))))
+    (testing "format-agg-result returns paginated data with total-hits for response headers"
+      (is (= {:data {:data {:observable {:type 5}}
+                     :type :cardinality
+                     :filters {:from from
+                               :to to}}
+              :paging {:total-hits 10}}
+             (sut/format-agg-result {:data cardinality
+                                     :paging {:total-hits 10}}
+                                    :cardinality
+                                    "observable.type"
                                     {:range
-                                     {:incident_time.closed
-                                      {:gte from
-                                       :lt to}}}))))))
+                                     {:timestamp {:gte from
+                                                  :lt to}}}))))))
 
 (deftest wait_for->refresh-test
   (is (= {:refresh "wait_for"} (sut/wait_for->refresh true)))
