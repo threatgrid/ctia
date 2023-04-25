@@ -8,8 +8,6 @@
             [ctia.entity.sighting.schemas :refer [PartialStoredSighting StoredSighting]]
             [ctia.test-helpers.es :as es-helpers]
             [ctia.test-helpers.http :refer [app->APIHandlerServices]]
-            [ctia.test-helpers.fake-whoami-service :as whoami-helpers]
-            [ctia.test-helpers.auth :refer [all-capabilities]]
             [ctia.test-helpers.fixtures :as fixt]
             [ctia.test-helpers.core :as helpers]
             [ctim.examples.incidents :refer [incident-minimal]]
@@ -19,8 +17,7 @@
             [schema-tools.core :as st]))
 
 (use-fixtures :once
-              validate-schemas
-              whoami-helpers/fixture-server)
+              validate-schemas)
 
 
 (def admin-ident {:login "johndoe"
