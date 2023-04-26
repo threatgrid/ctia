@@ -20,7 +20,8 @@
    [ring.swagger.schema :refer [describe]]
    [ring.util.http-response :refer [no-content not-found ok forbidden]]
    [schema-tools.core :as st]
-   [schema.core :as s]))
+   [schema.core :as s]
+   [compojure.api.routes :as routes]))
 
 (s/defn capitalize-entity [entity :- (s/pred simple-keyword?)]
   (-> entity name str/capitalize))
@@ -447,7 +448,7 @@
                                agg-q
                                identity-map)
                              (routes.common/format-agg-result :histogram aggregate-on search-q)
-                             ok)))
+                             routes.common/paginated-ok)))
                   (GET "/topn" []
                        :return MetricResult
                        :summary (format "Topn for some %s field" capitalized)
@@ -464,7 +465,7 @@
                                agg-q
                                identity-map)
                              (routes.common/format-agg-result :topn aggregate-on search-q)
-                             ok)))
+                             routes.common/paginated-ok)))
                   (GET "/cardinality" []
                        :return MetricResult
                        :summary (format "Cardinality for some %s field" capitalized)
@@ -481,7 +482,7 @@
                                agg-q
                                identity-map)
                              (routes.common/format-agg-result :cardinality aggregate-on search-q)
-                             ok))))))
+                             routes.common/paginated-ok))))))
      (let [capabilities get-capabilities]
        (GET "/:id" []
             :return (s/maybe get-schema)

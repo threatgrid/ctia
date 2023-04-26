@@ -443,7 +443,17 @@
     {:sort [{"timestamp" {:order :asc}}
             {"id" {:order :asc}}]
      :_source [:id :id :owner :groups :tlp :authorized_users :authorized_groups]
-     :track_total_hits true}))
+     :track_total_hits true}
+
+    {:fields [:id]}
+    {:default-sort "timestamp,id"
+     :version 7
+     :allow_partial_search_results false}
+    {:sort [{"timestamp" {:order :asc}}
+            {"id" {:order :asc}}]
+     :_source [:id :id :owner :groups :tlp :authorized_users :authorized_groups]
+     :track_total_hits true
+     :allow_partial_search_results false}))
 
 (deftest make-search-query-test
   (es-helpers/for-each-es-version
@@ -712,71 +722,70 @@
                           search-metrics-entities
                           ident
                           {:refresh "true"})
-             aggregate (fn [search-query agg-query]
-                         (aggregate-fn es-conn-state search-query agg-query ident))]
-         (testing "cardinality"
-           (is (= 3 (aggregate {:full-text [{:query "*"}]}
-                               {:agg-type :cardinality
-                                :aggregate-on "confidence"})))
-           (is (= 2 (aggregate {:full-text [{:query "confidence:(high OR medium)"}]}
-                               {:agg-type :cardinality
-                                :aggregate-on "confidence"}))
-               "query filters should be properly applied"))
-         (testing "histogram"
-           (is (= [{:key  "2020-03-01T00:00:00.000-01:00" :value 70}
-                   {:key  "2020-04-01T00:00:00.000-01:00" :value 25}]
-                  (aggregate {:full-text [{:query "*"}]}
-                             {:agg-type :histogram
-                              :aggregate-on "created"
-                              :granularity :month
-                              :timezone "-01:00"})))
-           (is (= [{:key timestamp-1 :value 60}
-                   {:key timestamp-2 :value 20}]
-                  (aggregate {:full-text [{:query "confidence:high"}]}
-                             {:agg-type :histogram
-                              :aggregate-on "created"
-                              :granularity :month
-                              :timezone "+00:00"}))
-               "query filters should be properly applied")
-           (is (= [{:key  "2020-04-01T00:00:00.000Z" :value 70}
-                   {:key  "2020-05-01T00:00:00.000Z" :value 25}]
-                  (aggregate {:full-text [{:query "*"}]}
-                             {:agg-type     :histogram
-                              :aggregate-on "created"
-                              :granularity  :month})
-                  (aggregate {:full-text [{:query "*"}]}
-                             {:agg-type :histogram
-                              :aggregate-on "created"
-                              :granularity :month
-                              :timezone "+00:00"}))
-               "default timezone is UTC"))
-         (testing "topn"
-           (is (= [{:key "low":value 5}
-                   {:key "medium" :value 10}]
-                  (aggregate {:full-text [{:query "*"}]}
-                             {:agg-type     :topn
-                              :aggregate-on "confidence"
-                              :limit        2
-                              :sort_order   :asc})))
-           (is (= [{:key "high" :value 80}
-                   {:key "medium" :value 10}
-                   {:key "low":value 5}]
-                  (aggregate {:full-text [{:query "*"}]}
-                             {:agg-type :topn
-                              :aggregate-on "confidence"})
-                  (aggregate {:full-text [{:query "*"}]}
-                             {:agg-type :topn
-                              :aggregate-on "confidence"
-                              :limit 10
-                              :sort_order :desc}))
-               "default limit is 10, default sort_order is desc")
-           (is (= [{:key "high" :value 80}
-                   {:key "low" :value 5}]
-                  (aggregate {:full-text [{:query "confidence:(high OR low)"}]}
-                             {:agg-type     :topn
-                              :aggregate-on "confidence"
-                              :limit        10
-                              :sort_order   :desc})))))))))
+             check-aggregate (fn [{:keys [msg expected-data total-hits search-query agg-query]}]
+                               (is (= {:data expected-data
+                                       :paging {:total-hits total-hits}}
+                                      (aggregate-fn es-conn-state search-query agg-query ident))
+                                   msg))
+
+             test-plan [{:msg "cardinality match all"
+                         :expected-data 3
+                         :total-hits 95
+                         :search-query {:full-text [{:query "*"}]}
+                         :agg-query {:agg-type :cardinality
+                                    :aggregate-on "confidence"}}
+                        {:msg "cardinality: query filters should be properly applied"
+                         :expected-data 2
+                         :total-hits 90
+                         :search-query {:full-text [{:query "confidence:(high OR medium)"}]}
+                         :agg-query {:agg-type :cardinality
+                                     :aggregate-on "confidence"}}
+                        {:msg "histogram match all"
+                         :expected-data [{:key  "2020-03-01T00:00:00.000-01:00" :value 70}
+                                         {:key  "2020-04-01T00:00:00.000-01:00" :value 25}]
+                         :total-hits 95
+                         :search-query {:full-text [{:query "*"}]}
+                         :agg-query {:agg-type :histogram
+                                     :aggregate-on "created"
+                                     :granularity :month
+                                     :timezone "-01:00"}}
+                        {:msg "histogram: query filters should be properly applied"
+                         :expected-data [{:key timestamp-1 :value 60}
+                                         {:key timestamp-2 :value 20}]
+                         :total-hits 80
+                         :search-query {:full-text [{:query "confidence:high"}]}
+                         :agg-query {:agg-type :histogram
+                                     :aggregate-on "created"
+                                     :granularity :month
+                                     :timezone "+00:00"}}
+                        {:msg "histogram: default timezone is UTC"
+                         :expected-data [{:key  "2020-04-01T00:00:00.000Z" :value 70}
+                                         {:key  "2020-05-01T00:00:00.000Z" :value 25}]
+                         :total-hits 95
+                         :search-query {:full-text [{:query "*"}]}
+                         :agg-query {:agg-type     :histogram
+                                     :aggregate-on "created"
+                                     :granularity  :month}}
+                        {:msg "topn match all"
+                         :expected-data [{:key "low":value 5}
+                                         {:key "medium" :value 10}]
+                         :total-hits 95
+                         :search-query {:full-text [{:query "*"}]}
+                         :agg-query {:agg-type     :topn
+                                     :aggregate-on "confidence"
+                                     :limit        2
+                                     :sort_order   :asc}}
+                        {:msg "topn: query filters should be properly applied"
+                         :expected-data [{:key "high" :value 80}
+                                         {:key "low" :value 5}]
+                         :total-hits 85
+                         :search-query {:full-text [{:query "confidence:(high OR low)"}]}
+                         :agg-query {:agg-type     :topn
+                                     :aggregate-on "confidence"
+                                     :limit        10
+                                     :sort_order   :desc}}]]
+         (doseq [test-case test-plan]
+           (check-aggregate test-case)))))))
 
 (deftest handle-delete-search
   (es-helpers/for-each-es-version

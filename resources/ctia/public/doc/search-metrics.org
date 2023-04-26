@@ -167,5 +167,5 @@ it will return for instance
  "type": "histogram",
  "filters": {"from": "2020-04-01",
              "to": "2020-05-01",
-             "Status": "Open"}} 
+             "Status": "Open"}}
 #+END_SRC

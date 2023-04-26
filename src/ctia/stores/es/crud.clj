@@ -136,107 +136,171 @@ It returns the documents with full hits meta data including the real index in wh
          :_index (:write-index props)
          :_type (name mapping)))
 
-(defn handle-create
+(s/defn build-stored-transformer
+  :- (s/=> s/Any s/Any) ;(s/=> (s/maybe out) (s/maybe in))
+  [transformer :- (s/=> s/Any {:doc s/Any}) ;;(s/=> out {:doc in})
+   in :- (s/protocol s/Schema)
+   out :- (s/protocol s/Schema)]
+  (s/fn :- (s/maybe out)
+    [doc :- (s/maybe in)]
+    (when (some? doc)
+      (transformer {:doc doc}))))
+
+(s/defn handle-create
   "Generate an ES create handler using some mapping and schema"
-  [mapping Model]
-  (let [coerce! (coerce-to-fn (s/maybe Model))]
-    (s/fn :- [Model]
-      [{:keys [conn] :as conn-state} :- ESConnState
-       docs :- [Model]
-       _ident
-       es-params]
-      (let [prepare-doc (partial prepare-bulk-doc conn-state mapping)
-            prepared (mapv prepare-doc docs)]
-        (try
-          (ductile.doc/bulk-index-docs conn
-                                       prepared
-                                       (prepare-opts conn-state es-params))
-          docs
-          (catch Exception e
-            (throw
-             (if-let [ex-data (ex-data e)]
-               ;; Add partial results to the exception data map
-               (ex-info (.getMessage e)
-                        (partial-results ex-data docs coerce!))
-               e))))))))
+  ([mapping stored-schema]
+   (handle-create mapping stored-schema
+                  {:stored->es-stored :doc
+                   :es-stored->stored :doc
+                   :es-stored-schema stored-schema}))
+  ([mapping stored-schema
+    {:keys [stored->es-stored
+            es-stored->stored
+            es-stored-schema]}
+    :- {:stored->es-stored (s/=> s/Any {:doc s/Any}) ;(s/=> es-stored-schema {:doc stored-schema})
+        :es-stored->stored (s/=> s/Any {:doc s/Any}) ;(s/=> stored-schema {:doc es-stored-schema})
+        :es-stored-schema (s/protocol s/Schema)}]
+   (let [stored->es-stored (build-stored-transformer stored->es-stored stored-schema es-stored-schema) 
+         es-stored->stored (build-stored-transformer es-stored->stored es-stored-schema stored-schema)
+         coerce! (comp es-stored->stored
+                       (coerce-to-fn (s/maybe es-stored-schema)))]
+     (s/fn :- [stored-schema]
+       [{:keys [conn] :as conn-state} :- ESConnState
+        docs :- [stored-schema]
+        _ident
+        es-params]
+       (let [prepare-doc #(prepare-bulk-doc conn-state mapping (stored->es-stored %))
+             prepared (mapv prepare-doc docs)]
+         (try
+           (ductile.doc/bulk-index-docs conn
+                                        prepared
+                                        (prepare-opts conn-state es-params))
+           docs
+           (catch Exception e
+             (throw
+               (if-let [ex-data (ex-data e)]
+                 ;; Add partial results to the exception data map
+                 (ex-info (.getMessage e)
+                          (partial-results ex-data docs coerce!))
+                 e)))))))))
 
-(defn handle-update
+(s/defschema Update1MapArg
+  {:stored->es-stored (s/=> s/Any {:doc s/Any}) ;(s/=> es-stored-schema {:doc stored-schema})
+   :es-stored-schema (s/protocol s/Schema)})
+
+(s/defn update1-default :- Update1MapArg
+  [stored-schema]
+  {:stored->es-stored :doc
+   :es-stored-schema stored-schema})
+
+(s/defn handle-update
   "Generate an ES update handler using some mapping and schema"
-  [mapping Model]
-  (let [coerce! (coerce-to-fn (s/maybe Model))]
-    (s/fn :- (s/maybe Model)
-      [{:keys [conn] :as conn-state} :- ESConnState
-       id :- s/Str
-       realized :- Model
-       ident
-       es-params]
-      (when-let [[{index :_index current-doc :_source}]
-                 (get-docs-with-indices conn-state [id] {})]
-        (if (allow-write? current-doc ident)
-          (let [update-doc (assoc realized
-                                  :id (ensure-document-id id))]
-            (ductile.doc/index-doc conn
-                                   index
-                                   (name mapping)
-                                   update-doc
-                                   (prepare-opts conn-state es-params))
-            (coerce! update-doc))
-          (throw (ex-info "You are not allowed to update this document"
-                          {:type :access-control-error})))))))
+  ([mapping stored-schema]
+   (handle-update mapping stored-schema (update1-default stored-schema)))
+  ([mapping
+    stored-schema :- (s/protocol s/Schema)
+    {:keys [stored->es-stored
+            es-stored-schema]} :- Update1MapArg]
+   (let [stored->es-stored (build-stored-transformer stored->es-stored stored-schema es-stored-schema)
+         coerce! (coerce-to-fn (s/maybe stored-schema))]
+     (s/fn :- (s/maybe stored-schema)
+       [{:keys [conn] :as conn-state} :- ESConnState
+        id :- s/Str
+        realized :- stored-schema
+        ident
+        es-params]
+       (when-let [[{index :_index current-doc :_source}]
+                  (get-docs-with-indices conn-state [id] {})]
+         (if (allow-write? current-doc ident)
+           (let [update-doc (assoc realized
+                                   :id (ensure-document-id id))]
+             (ductile.doc/index-doc conn
+                                    index
+                                    (name mapping)
+                                    (stored->es-stored update-doc)
+                                    (prepare-opts conn-state es-params))
+             (coerce! update-doc))
+           (throw (ex-info "You are not allowed to update this document"
+                           {:type :access-control-error}))))))))
 
-(defn handle-read
+(s/defschema Read1MapArg
+  {:es-partial-stored-schema (s/protocol s/Schema)
+   ; (s/=> partial-stored-schema {:doc es-partial-stored-schema})
+   :es-partial-stored->partial-stored (s/=> s/Any {:doc s/Any})})
+
+(s/defn read1-map-default :- Read1MapArg
+  [partial-stored-schema]
+  {:es-partial-stored-schema partial-stored-schema
+   :es-partial-stored->partial-stored :doc})
+
+(s/defn handle-read
   "Generate an ES read handler using some mapping and schema"
-  [Model]
-  (let [coerce! (coerce-to-fn (s/maybe Model))]
-    (s/fn :- (s/maybe Model)
-      [{{{:keys [get-in-config]} :ConfigService}
-        :services
-        :as conn-state}
-       :- ESConnState
-       id :- s/Str
-       ident
-       {:keys [suppress-access-control-error?]
-        :or {suppress-access-control-error? false}
-        :as es-params}]
-      (when-let [doc (-> (get-doc-with-index conn-state
-                                             id
-                                             (make-es-read-params es-params))
-                         :_source
-                         coerce!)]
-        (if (allow-read? doc ident get-in-config)
-          doc
-          (let [ex (ex-info "You are not allowed to read this document"
-                            {:type :access-control-error})]
-            (if suppress-access-control-error?
-              (log/error ex)
-              (throw ex))))))))
+  ([partial-stored-schema]
+   (handle-read partial-stored-schema (read1-map-default partial-stored-schema)))
+  ([partial-stored-schema
+    {:keys [es-partial-stored-schema es-partial-stored->partial-stored]} :- Read1MapArg]
+   (let [es-partial-stored->partial-stored (build-stored-transformer
+                                             es-partial-stored->partial-stored
+                                             es-partial-stored-schema
+                                             partial-stored-schema)
+         coerce! (coerce-to-fn (s/maybe es-partial-stored-schema))]
+     (s/fn :- (s/maybe partial-stored-schema)
+       [{{{:keys [get-in-config]} :ConfigService}
+         :services
+         :as conn-state}
+        :- ESConnState
+        id :- s/Str
+        ident
+        {:keys [suppress-access-control-error?]
+         :or {suppress-access-control-error? false}
+         :as es-params}]
+       (when-let [doc (-> (get-doc-with-index conn-state
+                                              id
+                                              (make-es-read-params es-params))
+                          :_source
+                          coerce!)]
+         (if (allow-read? doc ident get-in-config)
+           (es-partial-stored->partial-stored doc)
+           (let [ex (ex-info "You are not allowed to read this document"
+                             {:type :access-control-error})]
+             (if suppress-access-control-error?
+               (log/error ex)
+               (throw ex)))))))))
 
-(defn handle-read-many
+(s/defn handle-read-many
   "Generate an ES read-many handler using some mapping and schema"
-  [Model]
-  (let [coerce! (coerce-to-fn Model)]
-    (s/fn :- [(s/maybe Model)]
-      [{{{:keys [get-in-config]} :ConfigService}
-        :services
-        :as conn-state}
-       :- ESConnState
-       ids :- [s/Str]
-       ident
-       {:keys [suppress-access-control-error?]
-        :or {suppress-access-control-error? false}
-        :as es-params}]
-      (sequence
-       (comp (map :_source)
-             (map coerce!)
-             (map (fn [record]
-                    (if (allow-read? record ident get-in-config)
-                      record
-                      (let [ex (ex-info "You are not allowed to read this document"
-                                        {:type :access-control-error})]
-                        (if suppress-access-control-error?
-                          (log/error ex)
-                          (throw ex)))))))
-       (get-docs-with-indices conn-state ids (make-es-read-params es-params))))))
+  ([partial-stored-schema]
+   (handle-read-many partial-stored-schema (read1-map-default partial-stored-schema)))
+  ([partial-stored-schema
+    {:keys [es-partial-stored-schema es-partial-stored->partial-stored]} :- Read1MapArg]
+   (let [es-partial-stored->partial-stored (build-stored-transformer
+                                             es-partial-stored->partial-stored
+                                             es-partial-stored-schema
+                                             partial-stored-schema)
+         coerce! (coerce-to-fn es-partial-stored-schema)]
+     (s/fn :- [(s/maybe partial-stored-schema)]
+       [{{{:keys [get-in-config]} :ConfigService}
+         :services
+         :as conn-state}
+        :- ESConnState
+        ids :- [s/Str]
+        ident
+        {:keys [suppress-access-control-error?]
+         :or {suppress-access-control-error? false}
+         :as es-params}]
+       (sequence
+         ;;TODO factor out following copied code from handle-read
+         (comp (map :_source)
+               (map coerce!)
+               (map (fn [record]
+                      (if (allow-read? record ident get-in-config)
+                        (es-partial-stored->partial-stored record)
+                        (let [ex (ex-info "You are not allowed to read this document"
+                                          {:type :access-control-error})]
+                          (if suppress-access-control-error?
+                            (log/error ex)
+                            (throw ex)))))))
+         (get-docs-with-indices conn-state ids (make-es-read-params es-params)))))))
 
 (defn access-control-filter-list
   "Given an ident, keep only documents it is allowed to read"
@@ -334,36 +398,42 @@ It returns the documents with full hits meta data including the real index in wh
 
 (s/defn bulk-update
   "Generate an ES bulk update handler using some mapping and schema"
-  [Model]
-  (s/fn :- BulkResult
-    [{:keys [conn] :as conn-state}
-     docs :- [Model]
-     ident
-     es-params]
-    (let [by-id (group-by :id docs)
-          ids (seq (keys by-id))
-          {:keys [prepared errors]} (check-and-prepare-bulk conn-state
-                                                            ids
-                                                            ident)
-          prepared-docs (map (fn [meta]
-                               (-> (:_id meta)
-                                   by-id
-                                   first
-                                   (into meta)))
-                             prepared)
-          bulk-res (when prepared
-                     (try
-                       (format-bulk-res
-                        (ductile.doc/bulk-index-docs conn
-                                                     prepared-docs
-                                                     (prepare-opts conn-state es-params)))
-                       (catch Exception e
-                         (log/error (str "bulk update failed: " (.getMessage e))
-                                    (pr-str prepared))
-                         {:errors {:internal-error (map :_id prepared)}})))]
-      (cond-> bulk-res
-        errors (update :errors
-                       #(merge-with concat errors %))))))
+  ([stored-schema]
+   (bulk-update stored-schema (update1-default stored-schema)))
+  ([stored-schema :- (s/protocol s/Schema)
+    {:keys [es-stored-schema
+            stored->es-stored]} :- Update1MapArg]
+   (let [stored->es-stored (build-stored-transformer stored->es-stored stored-schema es-stored-schema)]
+     (s/fn :- BulkResult
+       [{:keys [conn] :as conn-state}
+        docs :- [stored-schema]
+        ident
+        es-params]
+       (let [docs (map stored->es-stored docs)
+             by-id (group-by :id docs)
+             ids (seq (keys by-id))
+             {:keys [prepared errors]} (check-and-prepare-bulk conn-state
+                                                               ids
+                                                               ident)
+             prepared-docs (map (fn [meta]
+                                  (-> (:_id meta)
+                                      by-id
+                                      first
+                                      (into meta)))
+                                prepared)
+             bulk-res (when prepared
+                        (try
+                          (format-bulk-res
+                            (ductile.doc/bulk-index-docs conn
+                                                         prepared-docs
+                                                         (prepare-opts conn-state es-params)))
+                          (catch Exception e
+                            (log/error (str "bulk update failed: " (.getMessage e))
+                                       (pr-str prepared))
+                            {:errors {:internal-error (map :_id prepared)}})))]
+         (cond-> bulk-res
+           errors (update :errors
+                          #(merge-with concat errors %))))))))
 
 (defn handle-delete
   "Generate an ES delete handler using some mapping"
@@ -453,46 +523,66 @@ It returns the documents with full hits meta data including the real index in wh
    :props s/Any
    (s/optional-key :sort-extension-definitions) SortExtensionDefinitions})
 
+(defn es-seven-configured?
+  "given ES store properties, check it is configured to use ES7"
+  [{:keys [version]}]
+  (<= 7 version))
+
 (s/defn make-query-params :- {s/Keyword s/Any}
   [{:keys [params props sort-extension-definitions]} :- MakeQueryParamsArgs]
-  (cond-> (-> params
-              (rename-sort-fields sort-extension-definitions)
-              (with-default-sort-field props)
-              make-es-read-params)
-    (<= 7 (:version props)) (assoc :track_total_hits true)))
+  (let [pres-k :allow_partial_search_results]
+    (cond-> (-> params
+                (rename-sort-fields sort-extension-definitions)
+                (with-default-sort-field props)
+                make-es-read-params)
+      (and (es-seven-configured? props) (contains? props pres-k))
+      (assoc pres-k (pres-k props))
+      (es-seven-configured? props) (assoc :track_total_hits true))))
 
-(defn handle-find
+(defn list-response-coercer [es-partial-stored-schema
+                             es-partial-stored->partial-stored]
+  (comp #(update % :data (fn [docs] (mapv es-partial-stored->partial-stored docs)))
+        (coerce-to-fn (list-response-schema es-partial-stored-schema))))
+
+(s/defn handle-find
   "Generate an ES find/list handler using some mapping and schema"
-  [Model]
-  (let [response-schema (list-response-schema Model)
-        coerce! (coerce-to-fn response-schema)]
-    (s/fn :- response-schema
-      [{{{:keys [get-in-config]} :ConfigService} :services
-        :keys [conn index props]} :- ESConnState
-       {:keys [all-of one-of query]
-        :or {all-of {} one-of {}}} :- FilterSchema
-       ident
-       es-params]
-      (let [filter-val (cond-> (q/prepare-terms all-of)
-                         (restricted-read? ident)
-                         (conj (es.query/find-restriction-query-part ident get-in-config)))
-            query_string  {:query_string {:query query}}
-            date-range-query (es.query/make-date-range-query es-params)
-            bool-params (cond-> {:filter filter-val}
-                          (seq one-of) (into
-                                        {:should (q/prepare-terms one-of)
-                                         :minimum_should_match 1})
-                          query (update :filter conj query_string)
-                          (seq date-range-query) (update :filter conj {:range date-range-query}))
-            query-params (make-query-params {:params es-params :props props})]
-        (cond-> (coerce! (ductile.doc/query conn
-                                            index
-                                            (q/bool bool-params)
-                                            query-params))
-          (restricted-read? ident) (update :data
-                                           access-control-filter-list
-                                           ident
-                                           get-in-config))))))
+  ([partial-stored-schema]
+   (handle-find partial-stored-schema (read1-map-default partial-stored-schema)))
+  ([partial-stored-schema :- (s/protocol s/Schema)
+    {:keys [es-partial-stored-schema
+            es-partial-stored->partial-stored]} :- Read1MapArg]
+   (let [es-partial-stored->partial-stored (build-stored-transformer es-partial-stored->partial-stored
+                                                                     es-partial-stored-schema
+                                                                     partial-stored-schema)
+         coerce! (list-response-coercer es-partial-stored-schema
+                                        es-partial-stored->partial-stored )]
+     (s/fn :- (list-response-schema partial-stored-schema)
+       [{{{:keys [get-in-config]} :ConfigService} :services
+         :keys [conn index props]} :- ESConnState
+        {:keys [all-of one-of query]
+         :or {all-of {} one-of {}}} :- FilterSchema
+        ident
+        es-params]
+       (let [filter-val (cond-> (q/prepare-terms all-of)
+                          (restricted-read? ident)
+                          (conj (es.query/find-restriction-query-part ident get-in-config)))
+             query_string  {:query_string {:query query}}
+             date-range-query (es.query/make-date-range-query es-params)
+             bool-params (cond-> {:filter filter-val}
+                           (seq one-of) (into
+                                          {:should (q/prepare-terms one-of)
+                                           :minimum_should_match 1})
+                           query (update :filter conj query_string)
+                           (seq date-range-query) (update :filter conj {:range date-range-query}))
+             query-params (make-query-params {:params es-params :props props})]
+         (cond-> (coerce! (ductile.doc/query conn
+                                             index
+                                             (q/bool bool-params)
+                                             query-params))
+           (restricted-read? ident) (update :data
+                                            access-control-filter-list
+                                            ident
+                                            get-in-config)))))))
 
 (s/defn make-search-query :- {s/Keyword s/Any}
   "Translate SearchQuery map into ES Query DSL map"
@@ -514,30 +604,36 @@ It returns the documents with full hits meta data including the real index in wh
         (seq full-text)  (into (es.query/refine-full-text-query-parts
                                 es-conn-state full-text)))}}))
 
-(defn handle-query-string-search
+(s/defn handle-query-string-search
   "Generate an ES query handler for given schema schema"
-  [Model]
-  (let [response-schema (list-response-schema Model)
-        coerce!         (coerce-to-fn response-schema)]
-    (s/fn :- response-schema
-      [{:keys [props] :as es-conn-state} :- ESConnState
-       {:keys [search-query ident] :as query-string-search-args} :- QueryStringSearchArgs]
-      (let [{conn :conn, index :index
-             {{:keys [get-in-config]} :ConfigService}
-             :services}  es-conn-state
-            query        (make-search-query es-conn-state search-query ident)
-            query-params (make-query-params (-> (select-keys query-string-search-args [:params :sort-extension-definitions])
-                                                (assoc :props props)))]
-        (cond-> (coerce! (ductile.doc/query
-                          conn
-                          index
-                          query
-                          query-params))
-          (restricted-read? ident) (update
-                                    :data
-                                    access-control-filter-list
-                                    ident
-                                    get-in-config))))))
+  ([partial-stored-schema]
+   (handle-query-string-search partial-stored-schema (read1-map-default partial-stored-schema)))
+  ([partial-stored-schema :- (s/protocol s/Schema)
+    {:keys [es-partial-stored-schema es-partial-stored->partial-stored]} :- Read1MapArg]
+   (let [es-partial-stored->partial-stored (build-stored-transformer es-partial-stored->partial-stored
+                                                                     es-partial-stored-schema
+                                                                     partial-stored-schema)
+         coerce! (list-response-coercer es-partial-stored-schema
+                                        es-partial-stored->partial-stored)]
+     (s/fn :- (list-response-schema partial-stored-schema)
+       [{:keys [props] :as es-conn-state} :- ESConnState
+        {:keys [search-query ident] :as query-string-search-args} :- QueryStringSearchArgs]
+       (let [{conn :conn, index :index
+              {{:keys [get-in-config]} :ConfigService}
+              :services}  es-conn-state
+             query        (make-search-query es-conn-state search-query ident)
+             query-params (make-query-params (-> (select-keys query-string-search-args [:params :sort-extension-definitions])
+                                                 (assoc :props props)))]
+         (cond-> (coerce! (ductile.doc/query
+                            conn
+                            index
+                            query
+                            query-params))
+           (restricted-read? ident) (update
+                                      :data
+                                      access-control-filter-list
+                                      ident
+                                      get-in-config)))))))
 
 (s/defn handle-delete-search
   "ES delete by query handler"
@@ -632,6 +728,6 @@ It returns the documents with full hits meta data including the real index in wh
                                   query
                                   agg
                                   {:limit 0})]
-    (prn "es handle-aggregate" query agg es-res)
-    (format-agg-result agg-type
-                       (get-in es-res [:aggs :metric]))))
+    {:data (format-agg-result agg-type
+                              (get-in es-res [:aggs :metric]))
+     :paging (select-keys (:paging es-res) [:total-hits])}))
