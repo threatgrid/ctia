@@ -463,15 +463,6 @@ or from source with leiningen:
 lein run -m ctia.task.update-index-state
 ```
 
-# Frequently Asked Questions (FAQ)
-
-Q: How do I stop seeing `Unauthorized ES request` when running CTIA locally?
-A: Uncomment the following lines in `resources/ctia-default.properties`
-```
-ctia.store.es.default.auth.type=basic-auth
-ctia.store.es.default.auth.params.user=elastic
-ctia.store.es.default.auth.params.pwd=ductile
-```
 
 ## License
 

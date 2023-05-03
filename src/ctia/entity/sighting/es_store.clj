@@ -5,9 +5,9 @@
             [ctia.lib.pagination :refer [list-response-schema]]
             [ctia.schemas.core :refer [Observable]]
             [ctia.schemas.search-agg :refer [QueryStringSearchArgs]]
-            [ctia.store :refer [IQueryStringSearchableStore ISightingStore IStore] :as store]
+            [ctia.store :refer [IQueryStringSearchableStore ISightingStore IStore]]
             [ctia.stores.es
-             [store :refer [close-connections! def-es-store] :as es.store]
+             [store :refer [close-connections!]]
              [crud :as crud]
              [mapping :as em]
              [schemas :refer [ESConnState]]]
@@ -46,8 +46,24 @@
 (s/defschema ESPartialStoredSighting
   (st/assoc PartialStoredSighting (s/optional-key :observables_hash) [s/Str]))
 
+(def ESStoredSightingList (list-response-schema ESStoredSighting))
 (def ESPartialStoredSightingList (list-response-schema ESPartialStoredSighting))
+
+(def StoredSightingList (list-response-schema StoredSighting))
 (def PartialStoredSightingList (list-response-schema PartialStoredSighting))
+
+(def es-coerce! (crud/coerce-to-fn [(s/maybe ESPartialStoredSighting)]))
+
+(def create-fn (crud/handle-create :sighting ESStoredSighting))
+(def read-fn (crud/handle-read ESPartialStoredSighting))
+(def read-many-fn (crud/handle-read-many ESPartialStoredSighting))
+(def update-fn (crud/handle-update :sighting ESStoredSighting))
+(def list-fn (crud/handle-find ESPartialStoredSighting))
+(def handle-query-string-search (crud/handle-query-string-search ESPartialStoredSighting))
+(def handle-query-string-count crud/handle-query-string-count)
+(def handle-aggregate crud/handle-aggregate)
+(def handle-delete-search crud/handle-delete-search)
+(def handle-bulk-delete crud/bulk-delete)
 
 (s/defn observable->observable-hash :- s/Str
   "transform an observable to a hash of the form type:value"
@@ -60,49 +76,126 @@
   (map observable->observable-hash observables))
 
 (s/defn stored-sighting->es-stored-sighting
-  :- ESStoredSighting
+  :- (s/maybe ESStoredSighting)
   "adds an observables hash to a sighting"
-  [{:keys [observables] :as s} :- StoredSighting]
-  (assoc s :observables_hash (map observable->observable-hash observables)))
+  [{:keys [observables] :as s} :- (s/maybe StoredSighting)]
+  (when s
+    (assoc s :observables_hash
+           (map observable->observable-hash observables))))
 
 (s/defn partial-stored-sighting->es-partial-stored-sighting
-  :- ESPartialStoredSighting
+  :- (s/maybe ESPartialStoredSighting)
   "adds an observables hash to a partial-sighting"
-  [{:keys [observables] :as s} :- PartialStoredSighting]
-  (cond-> s
-    observables (assoc :observables_hash (map observable->observable-hash observables))))
+  [{:keys [observables] :as s} :- (s/maybe PartialStoredSighting)]
+  (when s
+    (if observables
+      (assoc s :observables_hash
+             (map observable->observable-hash observables))
+      s)))
 
 (s/defn es-stored-sighting->stored-sighting
-  :- StoredSighting
+  :- (s/maybe StoredSighting)
   "remove the computed observables hash from a sighting"
-  [s :- ESStoredSighting]
-  (dissoc s :observables_hash))
+  [s :- (s/maybe ESStoredSighting)]
+  (when s (dissoc s :observables_hash)))
 
 (s/defn es-partial-stored-sighting->partial-stored-sighting
-  :- PartialStoredSighting
+  :- (s/maybe PartialStoredSighting)
   "remove the computed observables hash from a sighting"
-  [s :- ESPartialStoredSighting]
-  (dissoc s :observables_hash))
+  [s :- (s/maybe ESPartialStoredSighting)]
+  (when s (dissoc s :observables_hash)))
 
-(s/def store-opts :- es.store/StoreOpts
-  {:stored->es-stored (comp stored-sighting->es-stored-sighting :doc)
-   :es-stored->stored (comp es-stored-sighting->stored-sighting :doc)
-   :es-partial-stored->partial-stored (comp es-partial-stored-sighting->partial-stored-sighting :doc)
-   :es-stored-schema ESStoredSighting
-   :es-partial-stored-schema ESPartialStoredSighting})
+(s/defn handle-create :- [StoredSighting]
+  [state :- ESConnState
+   new-sightings :- [StoredSighting]
+   ident
+   params]
+  (doall
+   (as-> new-sightings $
+     (map stored-sighting->es-stored-sighting $)
+     (create-fn state $ ident params)
+     (map es-stored-sighting->stored-sighting $))))
 
-(defn list-sightings-by-observables [this observables ident params]
-  (store/list-records this
-                      {:all-of {:observables_hash (obs->hashes observables)}}
-                      ident
-                      params))
+(s/defn handle-read :- (s/maybe PartialStoredSighting)
+  [state id ident params]
+  (es-partial-stored-sighting->partial-stored-sighting
+   (read-fn state id ident params)))
 
-(def-es-store SightingStore :sighting StoredSighting PartialStoredSighting
-  :store-opts store-opts
-  :extra-impls
-  [ISightingStore
-   (list-sightings-by-observables [this observables ident params]
-     (list-sightings-by-observables this
-                                    observables
-                                    ident
-                                    params))])
+(s/defn handle-read-many :- [(s/maybe PartialStoredSighting)]
+  [state ids ident params]
+  (map es-partial-stored-sighting->partial-stored-sighting
+       (read-many-fn state ids ident params)))
+
+(s/defn handle-update :- StoredSighting
+  [state id realized ident params]
+  (as-> (stored-sighting->es-stored-sighting realized) $
+    (update-fn state id $ ident params)
+    (es-stored-sighting->stored-sighting $)))
+
+(def bulk-update-fn (crud/bulk-update ESStoredSighting))
+
+(s/defn handle-bulk-update
+  [state realized-docs ident es-params]
+  (let [es-stored-docs (map stored-sighting->es-stored-sighting realized-docs)]
+    (bulk-update-fn state es-stored-docs ident es-params)))
+
+(def handle-delete (crud/handle-delete :sighting))
+
+(s/defn es-paginated-list->paginated-list
+  :- PartialStoredSightingList
+  [paginated-list :- ESPartialStoredSightingList]
+  (update-in paginated-list
+             [:data]
+             #(map es-partial-stored-sighting->partial-stored-sighting (es-coerce! %))))
+
+(s/defn handle-list :- PartialStoredSightingList
+  [state filter-map ident params]
+  (es-paginated-list->paginated-list
+   (list-fn state filter-map ident params)))
+
+(s/defn handle-query-string-search-sightings
+  :- PartialStoredSightingList
+  [state args :- QueryStringSearchArgs]
+  (es-paginated-list->paginated-list
+   (handle-query-string-search state args)))
+
+(s/defn handle-list-by-observables
+  :- PartialStoredSightingList
+  [state observables :- [Observable] ident params]
+  (handle-list state
+               {:all-of {:observables_hash
+                         (obs->hashes observables)}}
+               ident
+               params))
+
+(defrecord SightingStore [state]
+  IStore
+  (read-record [_ id ident params]
+    (handle-read state id ident params))
+  (read-records [_ ids ident params]
+    (handle-read-many state ids ident params))
+  (create-record [_ new-sightings ident params]
+    (handle-create state new-sightings ident params))
+  (update-record [_ id sighting ident params]
+    (handle-update state id sighting ident params))
+  (delete-record [_ id ident params]
+    (handle-delete state id ident params))
+  (list-records [_ filter-map ident params]
+    (handle-list state filter-map ident params))
+  (bulk-delete [_ ids ident params]
+    (handle-bulk-delete state ids ident params))
+  (bulk-update [_ docs ident params]
+    (handle-bulk-update state docs ident params))
+  (close [_] (close-connections! state))
+  ISightingStore
+  (list-sightings-by-observables [_ observables ident params]
+    (handle-list-by-observables state observables ident params))
+  IQueryStringSearchableStore
+  (query-string-search [_ args]
+    (handle-query-string-search-sightings state args))
+  (query-string-count [_ search-query ident]
+    (handle-query-string-count state search-query ident))
+  (aggregate [_ search-query agg-query ident]
+    (handle-aggregate state search-query agg-query ident))
+  (delete-search [_ search-query ident params]
+    (handle-delete-search state search-query ident params)))
