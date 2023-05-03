@@ -5,9 +5,10 @@
              :refer
              [PartialStoredJudgement StoredJudgement]]
             [ctia.schemas.core :refer [Verdict]]
-            [ctia.store :refer [IJudgementStore IQueryStringSearchableStore IStore] :as store]
+            [ctia.store :refer [IJudgementStore IQueryStringSearchableStore IStore]]
             [ctia.stores.es
-             [store :refer [close-connections! def-es-store] :as es.store]
+             [store :refer [close-connections!]]
+             [crud :as crud]
              [mapping :as em]
              [query :refer [active-judgements-by-observable-query find-restriction-query-part]]
              [schemas :refer [ESConnState]]]
@@ -40,12 +41,18 @@
   (c/coercer! [(s/maybe StoredJudgement)]
               sc/json-schema-coercion-matcher))
 
-(defn list-judgements-by-observable [this observable ident params]
-  (store/list-records this
-                      {:all-of {[:observable :type]  (:type observable)
-                                [:observable :value] (:value observable)}}
-                      ident
-                      params))
+(def handle-create (crud/handle-create :judgement StoredJudgement))
+(def handle-update (crud/handle-update :judgement StoredJudgement))
+(def handle-read (crud/handle-read PartialStoredJudgement))
+(def handle-read-many (crud/handle-read-many PartialStoredJudgement))
+(def handle-delete (crud/handle-delete :judgement))
+(def handle-list (crud/handle-find PartialStoredJudgement))
+(def handle-bulk-delete crud/bulk-delete)
+(def handle-bulk-update (crud/bulk-update StoredJudgement))
+(def handle-query-string-search (crud/handle-query-string-search PartialStoredJudgement))
+(def handle-query-string-count crud/handle-query-string-count)
+(def handle-aggregate crud/handle-aggregate)
+(def handle-delete-search crud/handle-delete-search)
 
 (defn list-active-by-observable
   [state observable ident get-in-config params]
@@ -90,7 +97,7 @@
    :observable (:observable judgement)
    :valid_time (:valid_time judgement)})
 
-(s/defn calculate-verdict :- (s/maybe Verdict)
+(s/defn handle-calculate-verdict :- (s/maybe Verdict)
   [{{{:keys [get-in-config]} :ConfigService} :services
     :as state} :- ESConnState
    observable
@@ -105,12 +112,44 @@
           first
           make-verdict))
 
-(def-es-store JudgementStore :judgement StoredJudgement PartialStoredJudgement
-  :extra-impls
-  [IJudgementStore
-   (list-judgements-by-observable [this observable ident params]
-     (list-judgements-by-observable this observable ident params))
-   (calculate-verdict [this observable ident]
-     (calculate-verdict (:state this) observable ident {}))
-   (calculate-verdict [this observable ident params]
-     (calculate-verdict (:state this) observable ident params))])
+(defrecord JudgementStore [state]
+  IStore
+  (create-record [_ new-judgements ident params]
+    (handle-create state new-judgements ident params))
+  (read-record [_ id ident params]
+    (handle-read state id ident params))
+  (read-records [_ ids ident params]
+    (handle-read-many state ids ident params))
+  (delete-record [_ id ident params]
+    (handle-delete state id ident params))
+  (update-record [_ id judgement ident params]
+    (handle-update state id judgement ident params))
+  (bulk-delete [_ ids ident params]
+    (handle-bulk-delete state ids ident params))
+  (bulk-update [_ docs ident params]
+    (handle-bulk-update state docs ident params))
+  (list-records [_ filter-map ident params]
+    (handle-list state filter-map ident params))
+  (close [_] (close-connections! state))
+
+  IJudgementStore
+  (list-judgements-by-observable [_this observable ident params]
+    (handle-list state
+                 {:all-of {[:observable :type]  (:type observable)
+                           [:observable :value] (:value observable)}}
+                 ident
+                 params))
+  (calculate-verdict [_ observable ident]
+    (handle-calculate-verdict state observable ident {}))
+  (calculate-verdict [_ observable ident params]
+    (handle-calculate-verdict state observable ident params))
+
+  IQueryStringSearchableStore
+  (query-string-search [_ args]
+    (handle-query-string-search state args))
+  (query-string-count [_ search-query ident]
+    (handle-query-string-count state search-query ident))
+  (aggregate [_ search-query agg-query ident]
+    (handle-aggregate state search-query agg-query ident))
+  (delete-search [_ search-query ident params]
+    (handle-delete-search state search-query ident params)))
