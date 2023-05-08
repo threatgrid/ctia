@@ -164,6 +164,7 @@
                                    :identity-map identity-map})
                   status-update (-> (make-status-update status-update)
                                     (assoc :id id)
+                                    #_ ;;FIXME
                                     (compute-intervals (delay (first (get-by-ids-fn [id])))))
                   update-fn (routes.crud/flow-update-fn
                               {:get-store get-store

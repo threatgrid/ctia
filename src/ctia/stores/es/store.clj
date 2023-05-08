@@ -75,7 +75,8 @@
          (create-record [this# new-docs# ident# params#]
            ((:create-record ~qimpls) (.state this#) new-docs# ident# params#))
          (update-record [this# id# doc# ident# params#]
-           ((:update-record ~qimpls) (.state this#) id# doc# ident# params#))
+           ((:update-record ~qimpls)
+            {:conn-state (.state this#) :id id# :realized doc# :ident ident# :params params#}))
          (delete-record [this# id# ident# params#]
            ((:delete-record ~qimpls) (.state this#) id# ident# params#))
          (bulk-delete [this# ids# ident# params#]

@@ -193,6 +193,14 @@ It returns the documents with full hits meta data including the real index in wh
   {:stored->es-stored :doc
    :es-stored-schema stored-schema})
 
+(s/defn ->UpdateRecordArgs-schema :- (s/protocol s/Schema)
+  [stored-schema :- (s/protocol s/Schema)]
+  {:conn-state ESConnState
+   :id s/Str
+   :realized stored-schema
+   :ident s/Any
+   :es-params s/Any})
+
 (s/defn handle-update
   "Generate an ES update handler using some mapping and schema"
   ([mapping stored-schema]
@@ -204,11 +212,10 @@ It returns the documents with full hits meta data including the real index in wh
    (let [stored->es-stored (build-stored-transformer stored->es-stored stored-schema es-stored-schema)
          coerce! (coerce-to-fn (s/maybe stored-schema))]
      (s/fn :- (s/maybe stored-schema)
-       [{:keys [conn] :as conn-state} :- ESConnState
-        id :- s/Str
-        realized :- stored-schema
-        ident
-        es-params]
+       [{{:keys [conn] :as conn-state} :conn-state
+         es-params :params
+         :keys [id realized ident]}
+        :- (->UpdateRecordArgs-schema stored-schema)]
        (when-let [[{index :_index current-doc :_source}]
                   (get-docs-with-indices conn-state [id] {})]
          (if (allow-write? current-doc ident)
