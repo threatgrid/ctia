@@ -50,8 +50,10 @@
   [:new_to_opened
    :opened_to_closed])
 
-(def-stored-schema StoredIncident
-  (st/assoc Incident
+(def-stored-schema StoredIncident Incident)
+
+(def-stored-schema ESStoredIncident
+  (st/assoc StoredIncident
             (s/optional-key :intervals) (st/optional-keys
                                           (zipmap incident-intervals (repeat (s/pred nat-int?))))))
 
@@ -60,6 +62,9 @@
 
 (s/defschema PartialStoredIncident
   (st/optional-keys-schema StoredIncident))
+
+(s/defschema ESPartialStoredIncident
+  (st/optional-keys-schema ESStoredIncident))
 
 (def realize-incident
   (default-realize-fn "incident" NewIncident StoredIncident))
@@ -107,35 +112,36 @@
   Avoids retrieving the stored incident if possible."
   [{:keys [id status] :as incident-update} :- IncidentUpdateBeforeComputeIntervals
    ->stored-incident :- (s/pred delay?) #_(s/delay StoredIncident)]
-  (prn "compute-intervals" id status)
-  (if-not (#{"Open" "Closed"} status) ;; only deref stored incident if needed
-    incident-update
-    (let [stored-incident @->stored-incident
-          update-interval (s/fn [incident-update
-                                 interval :- (apply s/enum incident-intervals)
-                                 earlier :- s/Inst
-                                 later :- s/Inst]
-                            (prn "update-interval" incident-update interval earlier later)
-                            (cond-> incident-update
-                              (and (not (get (:intervals stored-incident) interval)) ;; don't clobber existing interval
-                                   (jt/not-after? (jt/instant earlier) (jt/instant later)))
-                              (assoc-in [:intervals interval]
-                                        (jt/time-between (jt/instant earlier) (jt/instant later) :seconds))))]
+  (let [update-interval (s/fn [incident-update
+                               interval :- (apply s/enum incident-intervals)
+                               earlier :- s/Inst
+                               later :- s/Inst]
+                          (prn "update-interval" incident-update interval earlier later)
+                          (cond-> incident-update
+                            (and (not (get (:intervals @->stored-incident) interval)) ;; don't clobber existing interval
+                                 (jt/not-after? (jt/instant earlier) (jt/instant later)))
+                            (assoc-in [:intervals interval]
+                                      (jt/time-between (jt/instant earlier) (jt/instant later) :seconds))))]
 
-      (prn "compute-intervals old" incident-update (:status stored-incident))
-      (case status
-        ;; the duration between the time at which the incident changed from New to Open and the incident creation time
-        ;; https://github.com/advthreat/iroh/issues/7622#issuecomment-1496374419
-        "Open"   (doto (cond-> incident-update
-                         (= "New" (:status stored-incident))
-                         (update-interval :new_to_opened
-                                          (:created stored-incident)
-                                          (get-in incident-update [:incident_time :opened])))
-                   (prn "FINAL compute-intervals"))
-        "Closed" (update-interval incident-update
-                                  :opened_to_closed
-                                  (get-in stored-incident [:incident_time :opened])
-                                  (get-in incident-update [:incident_time :closed]))))))
+    (prn "compute-intervals old" incident-update (:status @->stored-incident))
+    (case status
+      ;; the duration between the time at which the incident changed from New to Open and the incident creation time
+      ;; https://github.com/advthreat/iroh/issues/7622#issuecomment-1496374419
+      "Open"   (cond-> incident-update
+                 (= "New" (:status @->stored-incident))
+                 (update-interval :new_to_opened
+                                  (:created @->stored-incident)
+                                  (get-in incident-update [:incident_time :opened])))
+      "Closed" (update-interval incident-update
+                                :opened_to_closed
+                                (get-in @->stored-incident [:incident_time :opened])
+                                (get-in incident-update [:incident_time :closed]))
+      incident-update)))
+
+(s/defn un-store-incident :- PartialStoredIncident
+  [{:keys [doc]} :- {:doc ESPartialStoredIncident
+                     s/Keyword s/Any}]
+  (dissoc doc :intervals))
 
 (s/defn incident-additional-routes [{{:keys [get-store]} :StoreService
                                      :as services} :- APIHandlerServices]
@@ -214,7 +220,16 @@
       :intervals        {:type "object"
                          :dynamic true}})}})
 
-(def-es-store IncidentStore :incident StoredIncident PartialStoredIncident)
+(def store-opts
+  {;; TODO push `compute-intervals` call here. access to incident before/after update.
+   :stored->es-stored :doc
+   :es-stored->stored un-store-incident
+   :es-partial-stored->partial-stored un-store-incident
+   :es-stored-schema ESStoredIncident
+   :es-partial-stored-schema ESPartialStoredIncident})
+
+(def-es-store IncidentStore :incident StoredIncident PartialStoredIncident
+  :store-opts store-opts)
 
 (def incident-fields
   (concat default-entity-sort-fields
