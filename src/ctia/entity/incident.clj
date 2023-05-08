@@ -106,7 +106,7 @@
               (st/required-keys [:id :status])
               (st/update :status #(apply s/enum (disj (:vs %) "Open" "Closed"))))))
 
-(s/defn compute-intervals :- PartialStoredIncident
+(s/defn compute-intervals :- ESPartialStoredIncident
   "Given an incident update and a function returning the current stored incident, return a new update
   that also computes any relevant intervals that are missing from the stored incident.
   Avoids retrieving the stored incident if possible."
