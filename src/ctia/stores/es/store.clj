@@ -80,7 +80,7 @@
             (assoc args#
                    :conn-state (.state this#)
                    :read-raw-record #((:read-raw-record ~qimpls)
-                                      this# (:id args#) (:ident args#) (:es-params args#)))))
+                                      (.state this#) (:id args#) (:ident args#) (:es-params args#)))))
          (delete-record [this# id# ident# params#]
            ((:delete-record ~qimpls) (.state this#) id# ident# params#))
          (bulk-delete [this# ids# ident# params#]
