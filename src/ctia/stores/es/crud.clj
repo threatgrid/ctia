@@ -9,6 +9,7 @@
    [ctia.schemas.core :refer [SortExtension SortExtensionDefinitions]]
    [ctia.schemas.search-agg
     :refer [AverageQuery AggQuery CardinalityQuery HistogramQuery QueryStringSearchArgs SearchQuery TopnQuery]]
+   [ctia.store :as store]
    [ctia.stores.es.sort :as es.sort]
    [ctia.stores.es.query :as es.query]
    [ctia.stores.es.schemas :refer [ESConnState]]
@@ -138,13 +139,18 @@ It returns the documents with full hits meta data including the real index in wh
 
 (s/defn build-stored-transformer
   :- (s/=> s/Any s/Any) ;(s/=> (s/maybe out) (s/maybe in))
-  [transformer :- (s/=> s/Any {:doc s/Any}) ;;(s/=> out {:doc in})
-   in :- (s/protocol s/Schema)
-   out :- (s/protocol s/Schema)]
-  (s/fn :- (s/maybe out)
-    [doc :- (s/maybe in)]
-    (when (some? doc)
-      (transformer {:doc doc}))))
+  ([transformer in out] (build-stored-transformer transformer in out {}))
+  ([transformer :- (s/=> s/Any {:doc s/Any}) ;;(s/=> out {:doc in})
+    in :- (s/protocol s/Schema)
+    out :- (s/protocol s/Schema)
+    opts :- (s/conditional
+              #(= :update-record (:op %)) {:op (s/eq :update-record)
+                                           :read-raw-record (s/=> s/Any)}
+              :else (s/pred map?))]
+   (s/fn :- (s/maybe out)
+     [doc :- (s/maybe in)]
+     (when (some? doc)
+       (transformer (assoc opts :doc doc))))))
 
 (s/defn handle-create
   "Generate an ES create handler using some mapping and schema"
@@ -193,13 +199,12 @@ It returns the documents with full hits meta data including the real index in wh
   {:stored->es-stored :doc
    :es-stored-schema stored-schema})
 
-(s/defn ->UpdateRecordArgs-schema :- (s/protocol s/Schema)
+(s/defn ->UpdateHandlerArgs-schema :- (s/protocol s/Schema)
   [stored-schema :- (s/protocol s/Schema)]
-  {:conn-state ESConnState
-   :id s/Str
-   :realized stored-schema
-   :ident s/Any
-   :es-params s/Any})
+  (st/assoc store/UpdateRecordArgs
+            :doc stored-schema
+            :conn-state ESConnState
+            :read-raw-record (s/=> (s/maybe stored-schema))))
 
 (s/defn handle-update
   "Generate an ES update handler using some mapping and schema"
@@ -209,26 +214,27 @@ It returns the documents with full hits meta data including the real index in wh
     stored-schema :- (s/protocol s/Schema)
     {:keys [stored->es-stored
             es-stored-schema]} :- Update1MapArg]
-   (let [stored->es-stored (build-stored-transformer stored->es-stored stored-schema es-stored-schema)
-         coerce! (coerce-to-fn (s/maybe stored-schema))]
+   (let [coerce! (coerce-to-fn (s/maybe stored-schema))]
      (s/fn :- (s/maybe stored-schema)
        [{{:keys [conn] :as conn-state} :conn-state
-         es-params :params
-         :keys [id realized ident]}
-        :- (->UpdateRecordArgs-schema stored-schema)]
-       (when-let [[{index :_index current-doc :_source}]
-                  (get-docs-with-indices conn-state [id] {})]
-         (if (allow-write? current-doc ident)
-           (let [update-doc (assoc realized
-                                   :id (ensure-document-id id))]
-             (ductile.doc/index-doc conn
-                                    index
-                                    (name mapping)
-                                    (stored->es-stored update-doc)
-                                    (prepare-opts conn-state es-params))
-             (coerce! update-doc))
-           (throw (ex-info "You are not allowed to update this document"
-                           {:type :access-control-error}))))))))
+         :keys [id doc ident es-params]
+         :as args} :- (->UpdateHandlerArgs-schema stored-schema)]
+       (let [stored->es-stored (build-stored-transformer stored->es-stored stored-schema es-stored-schema
+                                                         (assoc (select-keys args [:read-raw-record])
+                                                                :op :update-record))]
+         (when-let [[{index :_index current-doc :_source}]
+                    (get-docs-with-indices conn-state [id] {})]
+           (if (allow-write? current-doc ident)
+             (let [update-doc (assoc doc
+                                     :id (ensure-document-id id))]
+               (ductile.doc/index-doc conn
+                                      index
+                                      (name mapping)
+                                      (stored->es-stored update-doc)
+                                      (prepare-opts conn-state es-params))
+               (coerce! update-doc))
+             (throw (ex-info "You are not allowed to update this document"
+                             {:type :access-control-error})))))))))
 
 (s/defschema Read1MapArg
   {:es-partial-stored-schema (s/protocol s/Schema)

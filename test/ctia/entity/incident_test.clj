@@ -639,7 +639,6 @@
   (:vs (st/get-in sut/Incident [:status])))
 (assert (every? incident-statuses ["New" "Open" "Closed" "Rejected"]))
 
-#_ ;;FIXME
 (deftest compute-intervals-test
   ;; tests the laziness of the second argument of sut/compute-intervals. since it's expensive
   ;; to compute, it's important we don't realize it unnecessarily.
@@ -652,7 +651,7 @@
                       ;; should be a stored incident, but it doesn't really make a practical difference
                       ;; since we're testing that this delay is never realized.
                       incident-minimal)]
-            (is (= incident-update (sut/compute-intervals incident-update dly)))
+            (is (= incident-update (sut/compute-intervals incident-update #(deref dly))))
             (is (not (realized? dly)) "Store incident was retrieved unnecessarily"))))))
   ;; the interesting cases where intervals are potentially computed. these are suprisingly involved
   ;; since the "earlier" time is in the stored incident, and the "later" time is in the incident update,
@@ -707,7 +706,7 @@
                    (-> (->base-test-case "New" later earlier)
                        (assoc :id :no-update-because-earlier-after-later))]))]
         (testing (pr-str id)
-          (is (= expected (sut/compute-intervals incident-update (delay stored-incident)))))))
+          (is (= expected (sut/compute-intervals incident-update (fn [] stored-incident)))))))
     (testing "updating status 'Closed'"
       (doseq [;; stored status doesn't matter
               stored-status (shuffle incident-statuses)
@@ -736,7 +735,7 @@
                    (-> (->base-test-case later earlier)
                        (assoc :id :no-update-because-earlier-after-later))]))]
         (testing (pr-str id " " stored-status)
-          (is (= expected (sut/compute-intervals incident-update (delay stored-incident)))))))))
+          (is (= expected (sut/compute-intervals incident-update (fn [] stored-incident)))))))))
 
 #_ ;;FIXME
 (deftest incident-average-metrics-test

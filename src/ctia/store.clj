@@ -1,10 +1,17 @@
-(ns ctia.store)
+(ns ctia.store
+  (:require [schema.core :as s]))
+
+(s/defschema UpdateRecordArgs
+  {:doc (s/pred map?)
+   :id s/Str
+   :ident s/Any
+   :es-params s/Any})
 
 (defprotocol IStore
   (create-record [this new-records ident params])
   (read-record [this id ident params])
   (read-records [this ids ident params])
-  (update-record [this id record ident params])
+  (update-record [this args #_#_:- UpdateRecordArgs])
   (delete-record [this id ident params])
   (bulk-delete [this ids ident params])
   (bulk-update [this records ident params])

@@ -106,37 +106,36 @@
               (st/required-keys [:id :status])
               (st/update :status #(apply s/enum (disj (:vs %) "Open" "Closed"))))))
 
-(s/defn compute-intervals :- ESPartialStoredIncident
+(s/defn compute-intervals :- ESStoredIncident
   "Given an incident update and a function returning the current stored incident, return a new update
   that also computes any relevant intervals that are missing from the stored incident.
   Avoids retrieving the stored incident if possible."
-  [{:keys [id status] :as incident-update} :- IncidentUpdateBeforeComputeIntervals
-   ->stored-incident :- (s/pred delay?) #_(s/delay StoredIncident)]
-  (let [update-interval (s/fn [incident-update
-                               interval :- (apply s/enum incident-intervals)
-                               earlier :- s/Inst
-                               later :- s/Inst]
-                          (prn "update-interval" incident-update interval earlier later)
-                          (cond-> incident-update
-                            (and (not (get (:intervals @->stored-incident) interval)) ;; don't clobber existing interval
+  [{old-status :status :as prev} :- (s/maybe ESStoredIncident)
+   {new-status :status :as incident} :- StoredIncident]
+  (let [incident (into incident (select-keys prev [:intervals]))
+        update-interval (s/fn :- ESStoredIncident
+                          [{:keys [intervals] :as incident} :- ESStoredIncident
+                           interval :- (apply s/enum incident-intervals)
+                           earlier :- s/Inst
+                           later :- s/Inst]
+                          (cond-> incident
+                            (and (not (get intervals interval)) ;; don't clobber existing interval
                                  (jt/not-after? (jt/instant earlier) (jt/instant later)))
                             (assoc-in [:intervals interval]
                                       (jt/time-between (jt/instant earlier) (jt/instant later) :seconds))))]
-
-    (prn "compute-intervals old" incident-update (:status @->stored-incident))
-    (case status
+    (cond-> incident
       ;; the duration between the time at which the incident changed from New to Open and the incident creation time
       ;; https://github.com/advthreat/iroh/issues/7622#issuecomment-1496374419
-      "Open"   (cond-> incident-update
-                 (= "New" (:status @->stored-incident))
-                 (update-interval :new_to_opened
-                                  (:created @->stored-incident)
-                                  (get-in incident-update [:incident_time :opened])))
-      "Closed" (update-interval incident-update
-                                :opened_to_closed
-                                (get-in @->stored-incident [:incident_time :opened])
-                                (get-in incident-update [:incident_time :closed]))
-      incident-update)))
+      (and (= "New" old-status)
+           (= "Open" new-status)) 
+      (update-interval :new_to_opened
+                       (:created prev)
+                       (get-in incident [:incident_time :opened]))
+
+      (= "Closed" new-status)
+      (update-interval :opened_to_closed
+                       (get-in incident [:incident_time :opened])
+                       (get-in incident [:incident_time :closed])))))
 
 (s/defn un-store-incident :- PartialStoredIncident
   [{:keys [doc]} :- {:doc ESPartialStoredIncident
@@ -158,19 +157,17 @@
             :capabilities :create-incident
             :auth-identity identity
             :identity-map identity-map
-            (let [get-by-ids-fn (routes.crud/flow-get-by-ids-fn
-                                  {:get-store get-store
-                                   :entity :incident
-                                   :identity-map identity-map})
-                  status-update (-> (make-status-update status-update)
-                                    (assoc :id id)
-                                    #_ ;;FIXME
-                                    (compute-intervals (delay (first (get-by-ids-fn [id])))))
+            (let [status-update (assoc (make-status-update update) :id id)
+                  get-by-ids-fn (routes.crud/flow-get-by-ids-fn
+                                 {:get-store get-store
+                                  :entity :incident
+                                  :identity-map identity-map})
                   update-fn (routes.crud/flow-update-fn
-                              {:get-store get-store
-                               :entity :incident
-                               :identity-map identity-map
-                               :wait_for (routes.common/wait_for->refresh wait_for)})]
+                             {:get-store get-store
+                              :entity :incident
+                              :identity-map identity-map
+                              :wait_for (routes.common/wait_for->refresh wait_for)
+                              :id->patch {id status-update}})]
               (if-let [updated
                        (some->
                         (flows/patch-flow
@@ -223,7 +220,14 @@
 
 (def store-opts
   {;; TODO push `compute-intervals` call here. access to incident before/after update.
-   :stored->es-stored :doc
+   :stored->es-stored (s/fn [{:keys [doc op read-raw-record]}]
+                        (case op
+                          :update-record (compute-intervals
+                                           ;; blatant data race, same sins as ctia.flows.crud.
+                                           ;; https://www.elastic.co/guide/en/elasticsearch/reference/current/optimistic-concurrency-control.html
+                                           (read-raw-record)
+                                           doc)
+                          doc))
    :es-stored->stored un-store-incident
    :es-partial-stored->partial-stored un-store-incident
    :es-stored-schema ESStoredIncident
