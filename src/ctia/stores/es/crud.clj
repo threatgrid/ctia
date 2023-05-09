@@ -200,11 +200,12 @@ It returns the documents with full hits meta data including the real index in wh
    :es-stored-schema stored-schema})
 
 (s/defn ->UpdateHandlerArgs-schema :- (s/protocol s/Schema)
-  [stored-schema :- (s/protocol s/Schema)]
+  [stored-schema :- (s/protocol s/Schema)
+   es-stored-schema :- (s/protocol s/Schema)]
   (st/assoc store/UpdateRecordArgs
             :doc stored-schema
             :conn-state ESConnState
-            :read-raw-record (s/=> (s/maybe stored-schema))))
+            :read-raw-record (s/=> (s/maybe es-stored-schema))))
 
 (s/defn handle-update
   "Generate an ES update handler using some mapping and schema"
@@ -218,7 +219,7 @@ It returns the documents with full hits meta data including the real index in wh
      (s/fn :- (s/maybe stored-schema)
        [{{:keys [conn] :as conn-state} :conn-state
          :keys [id doc ident es-params]
-         :as args} :- (->UpdateHandlerArgs-schema stored-schema)]
+         :as args} :- (->UpdateHandlerArgs-schema stored-schema es-stored-schema)]
        (let [stored->es-stored (build-stored-transformer stored->es-stored stored-schema es-stored-schema
                                                          (assoc (select-keys args [:read-raw-record])
                                                                 :op :update-record))]

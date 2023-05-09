@@ -110,7 +110,7 @@
   "Given an incident update and a function returning the current stored incident, return a new update
   that also computes any relevant intervals that are missing from the stored incident.
   Avoids retrieving the stored incident if possible."
-  [{old-status :status :as prev} :- (s/maybe ESStoredIncident)
+  [{old-status :status :as prev} :- ESStoredIncident
    {new-status :status :as incident} :- StoredIncident]
   (let [incident (into incident (select-keys prev [:intervals]))
         update-interval (s/fn :- ESStoredIncident
@@ -222,11 +222,12 @@
   {;; TODO push `compute-intervals` call here. access to incident before/after update.
    :stored->es-stored (s/fn [{:keys [doc op read-raw-record]}]
                         (case op
-                          :update-record (compute-intervals
-                                           ;; blatant data race, same sins as ctia.flows.crud.
-                                           ;; https://www.elastic.co/guide/en/elasticsearch/reference/current/optimistic-concurrency-control.html
-                                           (read-raw-record)
-                                           doc)
+                          :update-record (let [;; blatant data race, same sins as ctia.flows.crud.
+                                               ;; https://www.elastic.co/guide/en/elasticsearch/reference/current/optimistic-concurrency-control.html
+                                               prev (read-raw-record)]
+                                           (when-not prev
+                                             (throw (ex-info "Internal error: Failed to retrieve previous entity" (select-keys doc [:id]))))
+                                           (compute-intervals prev doc))
                           doc))
    :es-stored->stored un-store-incident
    :es-partial-stored->partial-stored un-store-incident
