@@ -9,7 +9,6 @@
    [ctia.schemas.core :refer [SortExtension SortExtensionDefinitions]]
    [ctia.schemas.search-agg
     :refer [AverageQuery AggQuery CardinalityQuery HistogramQuery QueryStringSearchArgs SearchQuery TopnQuery]]
-   [ctia.store :as store]
    [ctia.stores.es.sort :as es.sort]
    [ctia.stores.es.query :as es.query]
    [ctia.stores.es.schemas :refer [ESConnState]]
@@ -202,10 +201,12 @@ It returns the documents with full hits meta data including the real index in wh
 (s/defn ->UpdateHandlerArgs-schema :- (s/protocol s/Schema)
   [stored-schema :- (s/protocol s/Schema)
    es-stored-schema :- (s/protocol s/Schema)]
-  (st/assoc store/UpdateRecordArgs
-            :doc stored-schema
-            :conn-state ESConnState
-            :read-raw-record (s/=> (s/maybe es-stored-schema))))
+  {:doc stored-schema
+   :id s/Str
+   :ident s/Any
+   :es-params s/Any
+   :conn-state ESConnState
+   :read-raw-record (s/=> (s/maybe es-stored-schema))})
 
 (s/defn handle-update
   "Generate an ES update handler using some mapping and schema"
