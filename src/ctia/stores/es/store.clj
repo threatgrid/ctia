@@ -50,7 +50,6 @@
         read1-map-arg (slice-opts [:es-partial-stored-schema :es-partial-stored->partial-stored])
         update1-map-arg (slice-opts [:es-stored-schema :stored->es-stored])]
     {:read-record (apply crud/handle-read partial-stored-schema read1-map-arg)
-     :read-raw-record (crud/handle-read partial-stored-schema)
      :read-records (apply crud/handle-read-many partial-stored-schema read1-map-arg)
      :create-record (apply crud/handle-create entity-kw stored-schema create1-map-arg)
      :update-record (apply crud/handle-update entity-kw stored-schema update1-map-arg)
@@ -76,15 +75,7 @@
          (create-record [this# new-docs# ident# params#]
            ((:create-record ~qimpls) (.state this#) new-docs# ident# params#))
          (update-record [this# id# doc# ident# params#]
-           ((:update-record ~qimpls)
-            {:conn-state (.state this#)
-             :id id#
-             :doc doc#
-             :ident ident#
-             :es-params params#
-             ;; blatant data race, same sins as ctia.flows.crud.
-             ;; https://www.elastic.co/guide/en/elasticsearch/reference/current/optimistic-concurrency-control.html
-             :prev ((:read-raw-record ~qimpls) (.state this#) id# ident# params#)}))
+           ((:update-record ~qimpls) (.state this#) id# doc# ident# params#))
          (delete-record [this# id# ident# params#]
            ((:delete-record ~qimpls) (.state this#) id# ident# params#))
          (bulk-delete [this# ids# ident# params#]

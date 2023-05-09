@@ -219,13 +219,15 @@ It returns the documents with full hits meta data including the real index in wh
    (let [coerce! (coerce-to-fn (s/maybe stored-schema))
          es-coerce! (coerce-to-fn es-stored-schema)]
      (s/fn :- (s/maybe stored-schema)
-       [{{:keys [conn] :as conn-state} :conn-state
-         :keys [id doc ident es-params]
-         :as args} :- (->UpdateHandlerArgs-schema stored-schema es-stored-schema)]
+       [{:keys [conn] :as conn-state} :- ESConnState
+        id :- s/Str
+        realized :- stored-schema
+        ident
+        es-params]
        (when-let [[{index :_index current-doc :_source}]
                   (get-docs-with-indices conn-state [id] {})]
          (if (allow-write? current-doc ident)
-           (let [update-doc (assoc doc
+           (let [update-doc (assoc realized
                                    :id (ensure-document-id id))
                  stored->es-stored (build-stored-transformer stored->es-stored stored-schema es-stored-schema
                                                              {:op :update-record
