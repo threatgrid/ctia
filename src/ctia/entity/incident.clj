@@ -92,24 +92,9 @@
     (cond-> {:status status}
       verb (assoc :incident_time {verb t}))))
 
-(s/defschema IncidentUpdateBeforeComputeIntervals
-  (s/conditional
-    #(= "Open" (:status %)) (-> PartialIncident
-                                (st/assoc :status (s/enum "Open"))
-                                (st/required-keys [:id])
-                                (st/update :incident_time st/required-keys [:opened]))
-    #(= "Closed" (:status %)) (-> PartialIncident
-                                  (st/assoc :status (s/enum "Closed"))
-                                  (st/required-keys [:id])
-                                  (st/update :incident_time st/required-keys [:closed]))
-    :else (-> PartialIncident
-              (st/required-keys [:id :status])
-              (st/update :status #(apply s/enum (disj (:vs %) "Open" "Closed"))))))
-
 (s/defn compute-intervals :- ESStoredIncident
-  "Given an incident update and a function returning the current stored incident, return a new update
-  that also computes any relevant intervals that are missing from the stored incident.
-  Avoids retrieving the stored incident if possible."
+  "Given the currently stored (raw) incident and the incident to update it to, return a new update
+  that also computes any relevant intervals that are missing from the updated incident."
   [{old-status :status :as prev} :- ESStoredIncident
    {new-status :status :as incident} :- StoredIncident]
   (let [incident (into incident (select-keys prev [:intervals]))
@@ -148,7 +133,7 @@
     (let [capabilities :create-incident]
       (POST "/:id/status" []
             :return Incident
-            :body [status-update IncidentStatusUpdate
+            :body [update IncidentStatusUpdate
                    {:description "an Incident Status Update"}]
             :summary "Update an Incident Status"
             :query-params [{wait_for :- (describe s/Bool "wait for updated entity to be available for search") nil}]
@@ -166,8 +151,7 @@
                              {:get-store get-store
                               :entity :incident
                               :identity-map identity-map
-                              :wait_for (routes.common/wait_for->refresh wait_for)
-                              :id->patch {id status-update}})]
+                              :wait_for (routes.common/wait_for->refresh wait_for)})]
               (if-let [updated
                        (some->
                         (flows/patch-flow
@@ -219,8 +203,7 @@
                          :dynamic true}})}})
 
 (def store-opts
-  {;; TODO push `compute-intervals` call here. access to incident before/after update.
-   :stored->es-stored (s/fn [{:keys [doc op prev]}]
+  {:stored->es-stored (s/fn [{:keys [doc op prev]}]
                         (case op
                           :update-record (if prev
                                            (compute-intervals prev doc)
