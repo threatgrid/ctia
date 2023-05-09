@@ -205,9 +205,7 @@
 (def store-opts
   {:stored->es-stored (s/fn [{:keys [doc op prev]}]
                         (case op
-                          :update-record (if prev
-                                           (compute-intervals prev doc)
-                                           (throw (ex-info "Internal error: Failed to retrieve previous entity" (select-keys doc [:id]))))
+                          :update-record (compute-intervals prev doc)
                           doc))
    :es-stored->stored un-store-incident
    :es-partial-stored->partial-stored un-store-incident
