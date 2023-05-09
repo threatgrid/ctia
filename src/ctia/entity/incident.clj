@@ -220,14 +220,11 @@
 
 (def store-opts
   {;; TODO push `compute-intervals` call here. access to incident before/after update.
-   :stored->es-stored (s/fn [{:keys [doc op read-raw-record]}]
+   :stored->es-stored (s/fn [{:keys [doc op prev]}]
                         (case op
-                          :update-record (let [;; blatant data race, same sins as ctia.flows.crud.
-                                               ;; https://www.elastic.co/guide/en/elasticsearch/reference/current/optimistic-concurrency-control.html
-                                               prev (read-raw-record)]
-                                           (when-not prev
-                                             (throw (ex-info "Internal error: Failed to retrieve previous entity" (select-keys doc [:id]))))
-                                           (compute-intervals prev doc))
+                          :update-record (if prev
+                                           (compute-intervals prev doc)
+                                           (throw (ex-info "Internal error: Failed to retrieve previous entity" (select-keys doc [:id]))))
                           doc))
    :es-stored->stored un-store-incident
    :es-partial-stored->partial-stored un-store-incident

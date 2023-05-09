@@ -82,7 +82,9 @@
              :doc doc#
              :ident ident#
              :es-params params#
-             :read-raw-record #((:read-raw-record ~qimpls) (.state this#) id# ident# params#)}))
+             ;; blatant data race, same sins as ctia.flows.crud.
+             ;; https://www.elastic.co/guide/en/elasticsearch/reference/current/optimistic-concurrency-control.html
+             :prev ((:read-raw-record ~qimpls) (.state this#) id# ident# params#)}))
          (delete-record [this# id# ident# params#]
            ((:delete-record ~qimpls) (.state this#) id# ident# params#))
          (bulk-delete [this# ids# ident# params#]

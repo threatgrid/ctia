@@ -144,7 +144,7 @@ It returns the documents with full hits meta data including the real index in wh
     out :- (s/protocol s/Schema)
     opts :- (s/conditional
               #(= :update-record (:op %)) {:op (s/eq :update-record)
-                                           :read-raw-record (s/=> s/Any)}
+                                           :prev s/Any}
               :else (s/pred map?))]
    (s/fn :- (s/maybe out)
      [doc :- (s/maybe in)]
@@ -206,7 +206,7 @@ It returns the documents with full hits meta data including the real index in wh
    :ident s/Any
    :es-params s/Any
    :conn-state ESConnState
-   :read-raw-record (s/=> (s/maybe es-stored-schema))})
+   :prev (s/maybe es-stored-schema)})
 
 (s/defn handle-update
   "Generate an ES update handler using some mapping and schema"
@@ -222,7 +222,7 @@ It returns the documents with full hits meta data including the real index in wh
          :keys [id doc ident es-params]
          :as args} :- (->UpdateHandlerArgs-schema stored-schema es-stored-schema)]
        (let [stored->es-stored (build-stored-transformer stored->es-stored stored-schema es-stored-schema
-                                                         (assoc (select-keys args [:read-raw-record])
+                                                         (assoc (select-keys args [:prev])
                                                                 :op :update-record))]
          (when-let [[{index :_index current-doc :_source}]
                     (get-docs-with-indices conn-state [id] {})]
