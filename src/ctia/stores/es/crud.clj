@@ -216,7 +216,8 @@ It returns the documents with full hits meta data including the real index in wh
     stored-schema :- (s/protocol s/Schema)
     {:keys [stored->es-stored
             es-stored-schema]} :- Update1MapArg]
-   (let [coerce! (coerce-to-fn (s/maybe stored-schema))]
+   (let [coerce! (coerce-to-fn (s/maybe stored-schema))
+         es-coerce! (coerce-to-fn es-stored-schema)]
      (s/fn :- (s/maybe stored-schema)
        [{{:keys [conn] :as conn-state} :conn-state
          :keys [id doc ident es-params]
@@ -228,7 +229,7 @@ It returns the documents with full hits meta data including the real index in wh
                                    :id (ensure-document-id id))
                  stored->es-stored (build-stored-transformer stored->es-stored stored-schema es-stored-schema
                                                              {:op :update-record
-                                                              :prev current-doc})]
+                                                              :prev (es-coerce! current-doc)})]
              (ductile.doc/index-doc conn
                                     index
                                     (name mapping)
