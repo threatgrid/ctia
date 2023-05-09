@@ -132,7 +132,7 @@
                 (testing "update-record"
                   (let [base-sighting (assoc base-sighting :title "update-record")]
                     (is (= "update-record"
-                           (:title (store/update-record store {:id id :doc base-sighting :ident ident :params params}))))
+                           (:title (store/update-record store id base-sighting ident params))))
                     (is-title "update-record stored->es-stored es-partial-stored->partial-stored")))
                 (testing "bulk-update"
                   (let [base-sighting (assoc base-sighting :id id :title "bulk-update")]

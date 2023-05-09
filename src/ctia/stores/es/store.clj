@@ -75,12 +75,15 @@
            ((:read-records ~qimpls) (.state this#) ids# ident# params#))
          (create-record [this# new-docs# ident# params#]
            ((:create-record ~qimpls) (.state this#) new-docs# ident# params#))
-         (update-record [this# args#]
+         (update-record [this# id# doc# ident# params#]
            ((:update-record ~qimpls)
-            (assoc args#
-                   :conn-state (.state this#)
-                   :read-raw-record #((:read-raw-record ~qimpls)
-                                      (.state this#) (:id args#) (:ident args#) (:es-params args#)))))
+            {:conn-state (.state this#)
+             :id id#
+             :doc doc#
+             :ident ident#
+             :es-params params#
+             :read-raw-record #((:read-raw-record ~qimpls)
+                                (.state this#) (:id args#) (:ident args#) (:es-params args#))}))
          (delete-record [this# id# ident# params#]
            ((:delete-record ~qimpls) (.state this#) id# ident# params#))
          (bulk-delete [this# ids# ident# params#]

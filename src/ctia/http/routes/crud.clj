@@ -33,14 +33,13 @@
       (store/read-records s ids identity-map {}))))
 
 (defn flow-update-fn
-  [{:keys [identity-map wait_for get-store entity id->patch]}]
+  [{:keys [identity-map wait_for get-store entity]}]
   (let [update-fn #(-> (get-store entity)
                        (store/update-record
-                         {:id (:id %)
-                          :doc %
-                          :ident identity-map
-                          :params (wait_for->refresh wait_for)
-                          :patch (get id->patch (:id %))}))]
+                        (:id %)
+                        %
+                        identity-map
+                        (wait_for->refresh wait_for)))]
     (fn [patches]
       (keep update-fn patches))))
 
