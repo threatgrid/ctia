@@ -198,16 +198,6 @@ It returns the documents with full hits meta data including the real index in wh
   {:stored->es-stored :doc
    :es-stored-schema stored-schema})
 
-(s/defn ->UpdateHandlerArgs-schema :- (s/protocol s/Schema)
-  [stored-schema :- (s/protocol s/Schema)
-   es-stored-schema :- (s/protocol s/Schema)]
-  {:doc stored-schema
-   :id s/Str
-   :ident s/Any
-   :es-params s/Any
-   :conn-state ESConnState
-   :prev es-stored-schema})
-
 (s/defn handle-update
   "Generate an ES update handler using some mapping and schema"
   ([mapping stored-schema]
