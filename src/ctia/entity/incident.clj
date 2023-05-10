@@ -204,9 +204,8 @@
 
 (def store-opts
   {:stored->es-stored (s/fn [{:keys [doc op prev]}]
-                        (case op
-                          :update-record (compute-intervals prev doc)
-                          doc))
+                        (cond->> doc
+                          prev (compute-intervals prev)))
    :es-stored->stored un-store-incident
    :es-partial-stored->partial-stored un-store-incident
    :es-stored-schema ESStoredIncident

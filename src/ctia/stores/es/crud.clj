@@ -142,10 +142,7 @@ It returns the documents with full hits meta data including the real index in wh
   ([transformer :- (s/=> s/Any {:doc s/Any}) ;;(s/=> out {:doc in})
     in :- (s/protocol s/Schema)
     out :- (s/protocol s/Schema)
-    opts :- (s/conditional
-              #(= :update-record (:op %)) {:op (s/eq :update-record)
-                                           :prev s/Any}
-              :else (s/pred map?))]
+    opts :- {(s/optional-key :prev) s/Any}]
    (s/fn :- (s/maybe out)
      [doc :- (s/maybe in)]
      (when (some? doc)
@@ -220,8 +217,7 @@ It returns the documents with full hits meta data including the real index in wh
            (let [update-doc (assoc realized
                                    :id (ensure-document-id id))
                  stored->es-stored (build-stored-transformer stored->es-stored stored-schema es-stored-schema
-                                                             {:op :update-record
-                                                              :prev (es-coerce! current-doc)})]
+                                                             {:prev (es-coerce! current-doc)})]
              (ductile.doc/index-doc conn
                                     index
                                     (name mapping)
