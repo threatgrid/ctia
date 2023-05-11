@@ -199,8 +199,9 @@
       :techniques       em/token
       :scores           {:type "object"
                          :dynamic true}
-      :intervals        {:type "object"
-                         :dynamic true}})}})
+      :intervals        {:properties
+                         {:new_to_opened em/long-type
+                          :opened_to_closed em/long-type}}})}})
 
 (def store-opts
   {:stored->es-stored (s/fn [{:keys [doc op prev]}]
