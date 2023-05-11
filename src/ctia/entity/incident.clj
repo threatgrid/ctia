@@ -46,6 +46,7 @@
   is/NewIncident
   "new-incident")
 
+;;NOTE: changing this requires a ES mapping refresh
 (def incident-intervals
   [:new_to_opened
    :opened_to_closed])
@@ -199,9 +200,7 @@
       :techniques       em/token
       :scores           {:type "object"
                          :dynamic true}
-      :intervals        {:properties
-                         {:new_to_opened em/long-type
-                          :opened_to_closed em/long-type}}})}})
+      :intervals        {:properties (zipmap incident-intervals (repeat em/long-type))}})}})
 
 (def store-opts
   {:stored->es-stored (s/fn [{:keys [doc op prev]}]
