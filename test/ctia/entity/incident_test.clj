@@ -125,8 +125,10 @@
          _ (if (some? severity)
              (assert (number? order)
                      (str "Unmapped severity " (pr-str severity)))
-             (assert ((some-fn nil? number?) order)))]
-     (-> new-incident-minimal
+             (assert ((some-fn nil? number?) order)))
+         new-incident new-incident-minimal]
+     (-> new-incident
+         (update :incident_time assoc :created (-> new-incident :incident_time :opened))
          (dissoc :id :severity)
          ;; test missing severity if nil
          (cond-> (some? order) (assoc :severity severity))

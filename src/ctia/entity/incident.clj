@@ -1,7 +1,7 @@
 (ns ctia.entity.incident
   (:require
-   [clojure.string :as str]
    [clj-momo.lib.clj-time.core :as time]
+   [clojure.string :as str]
    [ctia.domain.entities
     :refer [default-realize-fn un-store with-long-id]]
    [ctia.entity.feedback.graphql-schemas :as feedback]
@@ -18,7 +18,8 @@
    [ctia.schemas.graphql.sorting :as graphql-sorting]
    [ctia.schemas.sorting :refer [default-entity-sort-fields describable-entity-sort-fields sourcable-entity-sort-fields]]
    [ctia.stores.es.mapping :as em]
-   [ctia.stores.es.store :refer [def-es-store]]
+   [ctia.stores.es.store :as es.store :refer [def-es-store]]
+   [ctim.schemas.common :refer [Time]]
    [ctim.schemas.incident :as is]
    [ctim.schemas.vocabularies :as vocs]
    [flanders.schema :as fs]
@@ -46,7 +47,9 @@
   "new-incident")
 
 (def-stored-schema StoredIncident
-  Incident)
+  (st/assoc-in
+   Incident
+   [:incident_time (s/optional-key :created)] s/Any))
 
 (s/defschema PartialNewIncident
   (st/optional-keys-schema NewIncident))
@@ -153,7 +156,39 @@
       :scores           {:type "object"
                          :dynamic true}})}})
 
-(def-es-store IncidentStore :incident StoredIncident PartialStoredIncident)
+(s/defschema ESStoredIncident
+  (st/dissoc-in StoredIncident [:incident_time :created]))
+
+(s/defschema ESPartialStoredIncident
+  (st/dissoc-in PartialStoredIncident [:incident_time :created]))
+
+(s/defn stored-incident->es-stored-incident
+  :- ESStoredIncident
+  "removes computed keys from Incident"
+  [i :- StoredIncident]
+  (update i :incident_time dissoc :created))
+
+(s/defn es-stored-incident->stored-incident
+  :- StoredIncident
+  "add computed keys to an Incident"
+  [{:keys [created] :as i} :- ESStoredIncident]
+  (update i :incident_time assoc :created created))
+
+(s/defn es-partial-stored-incident->partial-stored-incient
+  :- PartialStoredIncident
+  "add computed keys to an Incident"
+  [{:keys [created] :as i} :- ESPartialStoredIncident]
+  (update i :incident_time assoc :created created))
+
+(s/def store-opts :- es.store/StoreOpts
+  {:stored->es-stored (comp stored-incident->es-stored-incident :doc)
+   :es-stored->stored (comp es-stored-incident->stored-incident :doc)
+   :es-partial-stored->partial-stored (comp es-partial-stored-incident->partial-stored-incient :doc)
+   :es-stored-schema ESStoredIncident
+   :es-partial-stored-schema ESPartialStoredIncident})
+
+(def-es-store IncidentStore :incident StoredIncident PartialStoredIncident
+  :store-opts store-opts)
 
 (def incident-fields
   (concat default-entity-sort-fields
