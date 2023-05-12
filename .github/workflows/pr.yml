@@ -5,18 +5,18 @@ on:
   pull_request:
   # for deployment only
   push:
-    branches:
-      - master
-      # Note: full regex not supported here, hardcoding vX.X and vX.X.X
-      # See https://docs.github.com/en/actions/reference/workflow-syntax-for-github-actions#filter-pattern-cheat-sheet
-      - "v[0-9]+.[0-9]+"
-      - "v[0-9]+.[0-9]+.[0-9]+"
-  # Cron job: runs a matrix of JVM and Clojure versions, which can
-  # be configured in the `cron-matrix` function in ./scripts/actions/print-matrix.clj
-  # Note: automatically uses master branch https://stackoverflow.com/a/58800550
-  schedule:
-    # daily, 3am UTC
-    - cron: "0 3 * * *"
+  #   branches:
+  #     - master
+  #     # Note: full regex not supported here, hardcoding vX.X and vX.X.X
+  #     # See https://docs.github.com/en/actions/reference/workflow-syntax-for-github-actions#filter-pattern-cheat-sheet
+  #     - "v[0-9]+.[0-9]+"
+  #     - "v[0-9]+.[0-9]+.[0-9]+"
+  # # Cron job: runs a matrix of JVM and Clojure versions, which can
+  # # be configured in the `cron-matrix` function in ./scripts/actions/print-matrix.clj
+  # # Note: automatically uses master branch https://stackoverflow.com/a/58800550
+  # schedule:
+  #   # daily, 3am UTC
+  #   - cron: "0 3 * * *"
 
 env:
   # number of times to try possibly-flaky commands in this file
