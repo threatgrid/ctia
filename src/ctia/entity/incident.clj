@@ -49,7 +49,7 @@
 (def-stored-schema StoredIncident
   (st/assoc-in
    Incident
-   [:incident_time (s/optional-key :created)] s/Any))
+   [:incident_time :created] s/Any))
 
 (s/defschema PartialNewIncident
   (st/optional-keys-schema NewIncident))
@@ -171,14 +171,14 @@
 (s/defn es-stored-incident->stored-incident
   :- StoredIncident
   "add computed keys to an Incident"
-  [{:keys [created] :as i} :- ESStoredIncident]
-  (update i :incident_time assoc :created created))
+  [{:keys [timestamp] :as i} :- ESStoredIncident]
+  (update i :incident_time assoc :created timestamp))
 
 (s/defn es-partial-stored-incident->partial-stored-incient
   :- PartialStoredIncident
   "add computed keys to an Incident"
-  [{:keys [created] :as i} :- ESPartialStoredIncident]
-  (update i :incident_time assoc :created created))
+  [{:keys [timestamp] :as i} :- ESPartialStoredIncident]
+  (update i :incident_time assoc :created timestamp))
 
 (s/def store-opts :- es.store/StoreOpts
   {:stored->es-stored (comp stored-incident->es-stored-incident :doc)
