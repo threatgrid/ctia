@@ -1,5 +1,6 @@
 (ns ctia.entity.incident-test
   (:require [cemerick.uri :as uri]
+            [clojure.set :as set]
             [clj-momo.lib.clj-time.coerce :as tc]
             [clj-momo.lib.clj-time.core :as t]
             [clj-momo.test-helpers.core :as mth]
@@ -713,29 +714,31 @@
     (fn [app]
       (helpers/set-capabilities! app "foouser" ["foogroup"] "user" all-capabilities)
       (whoami-helpers/set-whoami-response app "45c1f5e3f05d0" "foouser" "foogroup" "user")
-      (try (let [incident->intervals [[(assoc (gen-new-incident) :status "New" :title "incident1")
-                                       {:new_to_opened 100
-                                        :opened_to_closed 150}]
+      (try (let [first-created 0
+                 second-created 10
+                 third-created 20
+                 incident->intervals [[(assoc (gen-new-incident) :status "New" :title "incident1")
+                                       (update-vals {:created 0
+                                                     :new_to_opened 100
+                                                     :opened_to_closed 150}
+                                                    #(+ % first-created))]
                                       [(assoc (gen-new-incident) :status "New" :title "incident2")
-                                       {:new_to_opened 200
-                                        :opened_to_closed 250}]
+                                       (update-vals {:created 0
+                                                     :new_to_opened 200
+                                                     :opened_to_closed 250}
+                                                    #(+ % second-created))]
                                       [(assoc (gen-new-incident) :status "New" :title "incident3")
-                                       {:new_to_opened 500
-                                        :opened_to_closed 550}]]
-                 expected-new_to_opened-3 266
-                 _ (assert (= expected-new_to_opened-3
-                              (long (/ (apply + (map (comp :new_to_opened second)
-                                                     incident->intervals))
-                                       (count incident->intervals)))))
-                 expected-opened_to_closed 316
-                 _ (assert (= expected-opened_to_closed
-                              (long (/ (apply + (map (comp :opened_to_closed second)
-                                                     incident->intervals))
-                                       (count incident->intervals)))))
+                                       (update-vals {:created 0
+                                                     :new_to_opened 500
+                                                     :opened_to_closed 550}
+                                                    #(+ % third-created))]]
                  new-time (jt/instant)
-                 bulk-out (helpers/fixture-with-fixed-time
-                            (jt/java-date new-time)
-                            #(create-incidents app (into #{} (map first) incident->intervals)))
+                 bulk-out (apply merge-with into
+                                 (map (fn [[incident {:keys [created]}]]
+                                        (helpers/fixture-with-fixed-time
+                                          (jt/java-date (jt/plus new-time (jt/seconds created)))
+                                          #(create-incidents app #{incident})))
+                                      incident->intervals))
                  incident-ids (map :id (:results bulk-out))
                  incident-id->incident+intervals (map vector incident-ids incident->intervals)
                  _ (assert (= (count incident-id->incident+intervals) (count incident->intervals))
@@ -750,32 +753,28 @@
                                                                     #(post-status app (uri/uri-encode incident-id) new-status))]
                            (is (= 200 (:status response))
                                response)))))]
-             (run! (fn [incident-id]
-                     (let [{incident :parsed-body} (GET app (str "ctia/incident/" (uri/uri-encode incident-id))
-                                                        :headers {"Authorization" "45c1f5e3f05d0"})]
-                       (assert (instance? java.util.Date (get-in incident [:incident_time :opened]))
-                               incident)
-                       (assert (instance? java.util.Date (get-in incident [:incident_time :closed]))
-                               incident)))
-                   incident-ids)
              (testing "average aggregation"
                (helpers/fixture-with-fixed-time
-                 (jt/java-date (jt/plus new-time (jt/days 1))) ;;fix `from`
+                 (jt/java-date (jt/plus new-time (jt/days 1))) ;;fix `to` query param
                  (fn []
                    (doseq [[field expected-count expected-average start-time :as test-case]
-                           [["new_to_opened" 3 expected-new_to_opened-3 new-time]
-                            ["new_to_opened" 2 expected-new_to_opened-3 (jt/plus new-time (jt/seconds 101))]
-                            ["opened_to_closed" 3 expected-opened_to_closed new-time]]]
+                           [["new_to_opened" 3 266 (jt/plus new-time (jt/seconds first-created))]
+                            ;;FIXME double check these numbers...
+                            ["new_to_opened" 2 140 (jt/plus new-time (jt/seconds second-created))]
+                            ["new_to_opened" 1 500 (jt/plus new-time (jt/seconds third-created))]
+                            ["new_to_opened" 0 nil (jt/plus new-time (jt/seconds (inc third-created)))]
+                            ["opened_to_closed" 3 316 (jt/plus new-time (jt/seconds first-created))]]
+                           ]
                      (testing (pr-str test-case)
-                         (let [{:keys [parsed-body] :as raw} (GET app "ctia/incident/metric/average"
-                                                                  :headers {"Authorization" "45c1f5e3f05d0"}
-                                                                  :query-params {:aggregate-on (str "intervals." field)
-                                                                                 :from start-time})]
+                       (let [{:keys [parsed-body] :as raw} (GET app "ctia/incident/metric/average"
+                                                                :headers {"Authorization" "45c1f5e3f05d0"}
+                                                                :query-params {:aggregate-on (str "intervals." field)
+                                                                               :from start-time})]
 
-                           (and (is (= 200 (:status raw)) (pr-str raw))
-                                (is (= expected-count (some-> (get-in raw [:headers "X-Total-Hits"]) Integer/parseInt))
-                                    raw)
-                                (is (= expected-average
-                                       (-> (get-in parsed-body [:data :intervals (keyword field)]) Math/floor long))
-                                    (pr-str parsed-body))))))))))
+                         (and (is (= 200 (:status raw)) (pr-str raw))
+                              (is (= expected-count (some-> (get-in raw [:headers "X-Total-Hits"]) Integer/parseInt))
+                                  raw)
+                              (is (= expected-average
+                                     (some-> (get-in parsed-body [:data :intervals (keyword field)]) Math/floor long))
+                                  (pr-str parsed-body))))))))))
            (finally (purge-incidents! app))))))

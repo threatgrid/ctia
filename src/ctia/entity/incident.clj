@@ -356,8 +356,9 @@
    :incident_time.rejected])
 
 (def incident-average-fields
-  {:intervals.new_to_opened {:date-field :created #_:incident_time.open}
-   :intervals.opened_to_closed {:date-field :created #_:incident_time.closed}})
+  {;; restrict to entities _created_ within from/to interval.
+   :intervals.new_to_opened {:date-field :created}
+   :intervals.opened_to_closed {:date-field :created}})
 
 (assert (= (->> incident-intervals (map #(keyword (str "intervals." (name %)))) sort)
            (->> incident-average-fields keys sort)))
