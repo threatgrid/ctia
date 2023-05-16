@@ -418,12 +418,12 @@
                        :return MetricResult
                        :summary (format "Average for some %s field" capitalized)
                        :query [params average-q-params]
-                       (let [aggregate-on (keyword (:aggregate-on params))
+                       (let [aggregate-on (keyword (:aggregate-on params)) ;;TODO support multiple :aggregate-on
                              search-q (search-query {:date-field :created
                                                      :params (st/select-schema params agg-search-schema)
                                                      :make-date-range-fn coerce-date-range})
-                             agg-q (st/assoc (st/select-schema params AverageParams)
-                                             :agg-type :avg)]
+                             agg-q (assoc (st/select-schema params AverageParams)
+                                          :agg-type :avg)]
                          (-> (get-store entity)
                              (store/aggregate
                                search-q
@@ -440,8 +440,8 @@
                              search-q (search-query {:date-field aggregate-on
                                                      :params (st/select-schema params agg-search-schema)
                                                      :make-date-range-fn coerce-date-range})
-                             agg-q (st/assoc (st/select-schema params HistogramParams)
-                                             :agg-type :histogram)]
+                             agg-q (assoc (st/select-schema params HistogramParams)
+                                          :agg-type :histogram)]
                          (-> (get-store entity)
                              (store/aggregate
                                search-q
@@ -457,8 +457,8 @@
                              search-q (search-query {:date-field date-field
                                                      :params (st/select-schema params agg-search-schema)
                                                      :make-date-range-fn coerce-date-range})
-                             agg-q (st/assoc (st/select-schema params TopnParams)
-                                             :agg-type :topn)]
+                             agg-q (assoc (st/select-schema params TopnParams)
+                                          :agg-type :topn)]
                          (-> (get-store entity)
                              (store/aggregate
                                search-q
@@ -474,8 +474,8 @@
                              search-q (search-query {:date-field date-field
                                                      :params (st/select-schema params agg-search-schema)
                                                      :make-date-range-fn coerce-date-range})
-                             agg-q (st/assoc (st/select-schema params CardinalityParams)
-                                             :agg-type :cardinality)]
+                             agg-q (assoc (st/select-schema params CardinalityParams)
+                                          :agg-type :cardinality)]
                          (-> (get-store entity)
                              (store/aggregate
                                search-q

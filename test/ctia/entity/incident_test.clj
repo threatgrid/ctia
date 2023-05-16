@@ -759,6 +759,7 @@
                                                             :headers {"Authorization" "45c1f5e3f05d0"}
                                                             :query-params {:aggregate-on (str "intervals." field)
                                                                            :from new-time})]
+                     (prn parsed-body)
                      ;;TODO add count
                      (and (is (= 200 (:status raw)) (pr-str raw))
                           (is (= expected

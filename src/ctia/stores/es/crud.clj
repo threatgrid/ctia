@@ -674,8 +674,7 @@ It returns the documents with full hits meta data including the real index in wh
 
 (s/defn make-average
   [{:keys [aggregate-on]} :- AverageQuery]
-  {:avg
-   {:field aggregate-on}})
+  {:avg {:field aggregate-on}})
 
 (s/defn make-topn
   [{:keys [aggregate-on limit sort_order]
@@ -704,6 +703,7 @@ It returns the documents with full hits meta data including the real index in wh
           (throw (ex-info (str "invalid aggregation type: " (pr-str agg-type))
                           {})))]
     (cond-> {agg-key (agg-fn root-agg)}
+      (= :avg agg-type) (assoc :count {:value_count {:field (:aggregate-on agg-query)}})
       (seq aggs) (assoc :aggs (make-aggregation aggs)))))
 
 (defn format-agg-result
@@ -727,6 +727,8 @@ It returns the documents with full hits meta data including the real index in wh
    ident]
   (let [query (make-search-query es-conn-state search-query ident)
         agg (make-aggregation (assoc agg-query :agg-key :metric))
+        _ (prn "query" query)
+        _ (prn "agg" agg)
         es-res (ductile.doc/query conn
                                   index
                                   query
