@@ -755,17 +755,22 @@
                                                                     (jt/java-date next-time)
                                                                     #(post-status app (uri/uri-encode incident-id) new-status))]
                            (assert (= 200 (:status response))
-                                   (pr-str response))))))]
+                                   (pr-str response))))))
+                 avg #(quot (+ (apply + %&))
+                            (count %&))]
              (testing "average aggregation"
                (helpers/fixture-with-fixed-time
                  (jt/java-date (jt/plus new-time (jt/days 1))) ;;fix `to` query param
                  (fn []
                    (doseq [[field expected-count expected-average start-time :as test-case]
-                           [["new_to_opened" 3 (quot (+ first-new_to_opened second-new_to_opened third-new_to_opened) 3) (jt/plus new-time (jt/seconds first-created))]
-                            ["new_to_opened" 2 (quot (+ second-new_to_opened third-new_to_opened) 3) (jt/plus new-time (jt/seconds second-created))]
+                           [["new_to_opened" 3 (avg first-new_to_opened second-new_to_opened third-new_to_opened) (jt/plus new-time (jt/seconds first-created))]
+                            ["new_to_opened" 2 (avg second-new_to_opened third-new_to_opened) (jt/plus new-time (jt/seconds second-created))]
                             ["new_to_opened" 1 third-new_to_opened (jt/plus new-time (jt/seconds third-created))]
                             ["new_to_opened" 0 nil (jt/plus new-time (jt/seconds (inc third-created)))]
-                            ["opened_to_closed" 3 316 (jt/plus new-time (jt/seconds first-created))]]]
+                            ["opened_to_closed" 3 (avg first-opened_to_closed second-opened_to_closed third-opened_to_closed) (jt/plus new-time (jt/seconds first-created))]
+                            ["opened_to_closed" 2 (avg second-opened_to_closed third-opened_to_closed) (jt/plus new-time (jt/seconds second-created))]
+                            ["opened_to_closed" 1 third-opened_to_closed (jt/plus new-time (jt/seconds third-created))]
+                            ["opened_to_closed" 0 nil (jt/plus new-time (jt/seconds (inc third-created)))]]]
                      (testing (pr-str test-case)
                        (let [{:keys [parsed-body] :as raw} (GET app "ctia/incident/metric/average"
                                                                 :headers {"Authorization" "45c1f5e3f05d0"}
