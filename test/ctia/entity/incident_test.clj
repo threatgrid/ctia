@@ -717,21 +717,24 @@
       (try (let [first-created 0
                  second-created 10
                  third-created 20
+                 first-new_to_opened 100
+                 second-new_to_opened 200
+                 third-new_to_opened 500
+                 first-opened_to_closed 150
+                 second-opened_to_closed 250
+                 third-opened_to_closed 550
                  incident->intervals [[(assoc (gen-new-incident) :status "New" :title "incident1")
-                                       (update-vals {:created 0
-                                                     :new_to_opened 100
-                                                     :opened_to_closed 150}
-                                                    #(+ % first-created))]
+                                       {:created first-created
+                                        :new_to_opened first-new_to_opened
+                                        :opened_to_closed first-opened_to_closed}]
                                       [(assoc (gen-new-incident) :status "New" :title "incident2")
-                                       (update-vals {:created 0
-                                                     :new_to_opened 200
-                                                     :opened_to_closed 250}
-                                                    #(+ % second-created))]
+                                       {:created second-created
+                                        :new_to_opened second-new_to_opened
+                                        :opened_to_closed second-opened_to_closed}]
                                       [(assoc (gen-new-incident) :status "New" :title "incident3")
-                                       (update-vals {:created 0
-                                                     :new_to_opened 500
-                                                     :opened_to_closed 550}
-                                                    #(+ % third-created))]]
+                                       {:created third-created
+                                        :new_to_opened third-new_to_opened
+                                        :opened_to_closed third-opened_to_closed}]]
                  new-time (jt/instant)
                  bulk-out (apply merge-with into
                                  (map (fn [[incident {:keys [created]}]]
@@ -744,27 +747,25 @@
                  _ (assert (= (count incident-id->incident+intervals) (count incident->intervals))
                            bulk-out)
                  _ (testing "populate intervals"
-                     (doseq [[incident-id [incident {:keys [new_to_opened opened_to_closed]}]] incident-id->incident+intervals
-                             [new-status next-time] [["Open" (jt/plus new-time (jt/seconds new_to_opened))]
-                                                     ["Closed" (jt/plus new-time (jt/seconds (+ new_to_opened opened_to_closed)))]]]
+                     (doseq [[incident-id [incident {:keys [created new_to_opened opened_to_closed]}]] incident-id->incident+intervals
+                             [new-status next-time] [["Open" (jt/plus new-time (jt/seconds (+ created new_to_opened)))]
+                                                     ["Closed" (jt/plus new-time (jt/seconds (+ created new_to_opened opened_to_closed)))]]]
                        (testing (pr-str [new-status incident])
                          (let [{:keys [parsed-body] :as response} (helpers/fixture-with-fixed-time
                                                                     (jt/java-date next-time)
                                                                     #(post-status app (uri/uri-encode incident-id) new-status))]
-                           (is (= 200 (:status response))
-                               response)))))]
+                           (assert (= 200 (:status response))
+                                   (pr-str response))))))]
              (testing "average aggregation"
                (helpers/fixture-with-fixed-time
                  (jt/java-date (jt/plus new-time (jt/days 1))) ;;fix `to` query param
                  (fn []
                    (doseq [[field expected-count expected-average start-time :as test-case]
-                           [["new_to_opened" 3 266 (jt/plus new-time (jt/seconds first-created))]
-                            ;;FIXME double check these numbers...
-                            ["new_to_opened" 2 140 (jt/plus new-time (jt/seconds second-created))]
-                            ["new_to_opened" 1 500 (jt/plus new-time (jt/seconds third-created))]
+                           [["new_to_opened" 3 (quot (+ first-new_to_opened second-new_to_opened third-new_to_opened) 3) (jt/plus new-time (jt/seconds first-created))]
+                            ["new_to_opened" 2 (quot (+ second-new_to_opened third-new_to_opened) 3) (jt/plus new-time (jt/seconds second-created))]
+                            ["new_to_opened" 1 third-new_to_opened (jt/plus new-time (jt/seconds third-created))]
                             ["new_to_opened" 0 nil (jt/plus new-time (jt/seconds (inc third-created)))]
-                            ["opened_to_closed" 3 316 (jt/plus new-time (jt/seconds first-created))]]
-                           ]
+                            ["opened_to_closed" 3 316 (jt/plus new-time (jt/seconds first-created))]]]
                      (testing (pr-str test-case)
                        (let [{:keys [parsed-body] :as raw} (GET app "ctia/incident/metric/average"
                                                                 :headers {"Authorization" "45c1f5e3f05d0"}
