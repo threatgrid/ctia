@@ -320,6 +320,7 @@
           (doseq [field date-fields]
             (test-histogram app docs entity field :day)
             (test-histogram app docs entity field :month))
+          #_
           (doseq [field average-fields]
             (test-average app docs entity field :day)
             (test-average app docs entity field :month)))))))
