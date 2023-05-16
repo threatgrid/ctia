@@ -722,8 +722,8 @@
                                       [(assoc (gen-new-incident) :status "New" :title "incident3")
                                        {:new_to_opened 500
                                         :opened_to_closed 550}]]
-                 expected-new_to_opened 266
-                 _ (assert (= expected-new_to_opened
+                 expected-new_to_opened-3 266
+                 _ (assert (= expected-new_to_opened-3
                               (long (/ (apply + (map (comp :new_to_opened second)
                                                      incident->intervals))
                                        (count incident->intervals)))))
@@ -736,9 +736,8 @@
                  bulk-out (helpers/fixture-with-fixed-time
                             (jt/java-date new-time)
                             #(create-incidents app (into #{} (map first) incident->intervals)))
-                 incident-id->incident+intervals (map vector
-                                                      (map :id (:results bulk-out))
-                                                      incident->intervals)
+                 incident-ids (map :id (:results bulk-out))
+                 incident-id->incident+intervals (map vector incident-ids incident->intervals)
                  _ (assert (= (count incident-id->incident+intervals) (count incident->intervals))
                            bulk-out)
                  _ (testing "populate intervals"
@@ -751,20 +750,32 @@
                                                                     #(post-status app (uri/uri-encode incident-id) new-status))]
                            (is (= 200 (:status response))
                                response)))))]
+             (run! (fn [incident-id]
+                     (let [{incident :parsed-body} (GET app (str "ctia/incident/" (uri/uri-encode incident-id))
+                                                        :headers {"Authorization" "45c1f5e3f05d0"})]
+                       (assert (instance? java.util.Date (get-in incident [:incident_time :opened]))
+                               incident)
+                       (assert (instance? java.util.Date (get-in incident [:incident_time :closed]))
+                               incident)))
+                   incident-ids)
              (testing "average aggregation"
-               (doseq [[field expected] [["new_to_opened" expected-new_to_opened]
-                                         ["opened_to_closed" expected-opened_to_closed]]]
-                 (testing field
-                   (let [{:keys [parsed-body] :as raw} (GET app "ctia/incident/metric/average"
-                                                            :headers {"Authorization" "45c1f5e3f05d0"}
-                                                            :query-params {:aggregate-on (str "intervals." field)
-                                                                           :from new-time})]
-                     (prn "parsed-body" parsed-body)
-                     ;;TODO add count
-                     (and (is (= 200 (:status raw)) (pr-str raw))
-                          (is (= "3" (get-in raw [:headers "X-Total-Hits"]))
-                              raw)
-                          (is (= expected
-                                 (-> (get-in parsed-body [:data :intervals (keyword field)]) Math/floor long))
-                              (pr-str parsed-body))))))))
+               (helpers/fixture-with-fixed-time
+                 (jt/java-date (jt/plus new-time (jt/days 1))) ;;fix `from`
+                 (fn []
+                   (doseq [[field expected-count expected-average start-time :as test-case]
+                           [["new_to_opened" 3 expected-new_to_opened-3 new-time]
+                            ["new_to_opened" 2 expected-new_to_opened-3 (jt/plus new-time (jt/seconds 101))]
+                            ["opened_to_closed" 3 expected-opened_to_closed new-time]]]
+                     (testing (pr-str test-case)
+                         (let [{:keys [parsed-body] :as raw} (GET app "ctia/incident/metric/average"
+                                                                  :headers {"Authorization" "45c1f5e3f05d0"}
+                                                                  :query-params {:aggregate-on (str "intervals." field)
+                                                                                 :from start-time})]
+
+                           (and (is (= 200 (:status raw)) (pr-str raw))
+                                (is (= expected-count (some-> (get-in raw [:headers "X-Total-Hits"]) Integer/parseInt))
+                                    raw)
+                                (is (= expected-average
+                                       (-> (get-in parsed-body [:data :intervals (keyword field)]) Math/floor long))
+                                    (pr-str parsed-body))))))))))
            (finally (purge-incidents! app))))))

@@ -13,6 +13,7 @@
    [clojure.walk :refer [prewalk]]
    [ctia.entity.entities :as entities]
    [ctia.flows.crud :as crud]
+   ctia.http.routes.common
    [ctia.init :as init]
    [ctia.properties :as p :refer [PropertiesSchema]]
    [ctia.schemas.core :as schemas :refer
@@ -374,13 +375,18 @@
                       "ctia.auth.static.group" name]
       (f))))
 
-(defn fixture-with-fixed-time [time f]
+(s/defn fixture-with-fixed-time [time :- s/Inst
+                                 f :- (s/conditional
+                                        fn? ;;prevent accidents
+                                        (s/=> s/Any))]
   (with-redefs [mcljtime/now
                 (fn [] time)
                 time/now
                 (fn [] time)
                 mcljtime/internal-now
-                (fn [] (mcljtime-coerce/to-date time))]
+                (fn [] (mcljtime-coerce/to-date time))
+                ctia.http.routes.common/now
+                (fn [] time)]
     (f)))
 
 (defn set-capabilities!
