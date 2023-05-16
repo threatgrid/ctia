@@ -764,23 +764,23 @@
                  (jt/java-date (jt/plus new-time (jt/days 1))) ;;default `to` query param
                  (fn []
                    (doseq [[field expected-count expected-average from to :as test-case]
-                           [["new_to_opened" 3 (avg first-new_to_opened second-new_to_opened third-new_to_opened) (+sec first-created)]
-                            ["new_to_opened" 2 (avg second-new_to_opened third-new_to_opened) (+sec second-created)]
-                            ["new_to_opened" 1 first-new_to_opened (+sec first-created) (+sec (inc first-created))]
-                            ["new_to_opened" 1 second-new_to_opened (+sec second-created) (+sec (inc second-created))]
-                            ["new_to_opened" 1 third-new_to_opened (+sec third-created) (+sec (inc third-created))]
-                            ["new_to_opened" 1 third-new_to_opened (+sec third-created)]
-                            ["new_to_opened" 0 nil (+sec (inc third-created))]
-                            ["opened_to_closed" 3 (avg first-opened_to_closed second-opened_to_closed third-opened_to_closed) (+sec first-created)]
-                            ["opened_to_closed" 2 (avg second-opened_to_closed third-opened_to_closed) (+sec second-created)]
-                            ["opened_to_closed" 1 third-opened_to_closed (+sec third-created)]
-                            ["opened_to_closed" 0 nil (+sec (inc third-created))]]]
+                           [["new_to_opened" 3 (avg first-new_to_opened second-new_to_opened third-new_to_opened) first-created]
+                            ["new_to_opened" 2 (avg second-new_to_opened third-new_to_opened) second-created]
+                            ["new_to_opened" 1 first-new_to_opened first-created (inc first-created)]
+                            ["new_to_opened" 1 second-new_to_opened second-created (inc second-created)]
+                            ["new_to_opened" 1 third-new_to_opened third-created (inc third-created)]
+                            ["new_to_opened" 1 third-new_to_opened third-created]
+                            ["new_to_opened" 0 nil (inc third-created)]
+                            ["opened_to_closed" 3 (avg first-opened_to_closed second-opened_to_closed third-opened_to_closed) first-created]
+                            ["opened_to_closed" 2 (avg second-opened_to_closed third-opened_to_closed) second-created]
+                            ["opened_to_closed" 1 third-opened_to_closed third-created]
+                            ["opened_to_closed" 0 nil (inc third-created)]]]
                      (testing (pr-str test-case)
                        (let [{:keys [parsed-body] :as raw} (GET app "ctia/incident/metric/average"
                                                                 :headers {"Authorization" "45c1f5e3f05d0"}
                                                                 :query-params (cond-> {:aggregate-on (str "intervals." field)
-                                                                                       :from from}
-                                                                                to (assoc :to to)))]
+                                                                                       :from (+sec from)}
+                                                                                to (assoc :to (+sec to))))]
 
                          (and (is (= 200 (:status raw)) (pr-str raw))
                               (is (= expected-count (some-> (get-in raw [:headers "X-Total-Hits"]) Integer/parseInt))
