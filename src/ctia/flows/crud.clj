@@ -548,7 +548,6 @@
         prev-entity-fn (prev-entity get-fn ids)]
     (-> {:flow-type :update
          :entity-type entity-type
-         :partial-entities partial-entities
          :entities partial-entities
          :services services
          :get-prev-entity prev-entity-fn
