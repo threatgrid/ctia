@@ -431,7 +431,7 @@
                                identity-map)
                              (doto (prn "store/aggregate"))
                              (routes.common/format-agg-result :avg aggregate-on search-q)
-                             ok)))
+                             routes.common/paginated-ok)))
                   (GET "/histogram" []
                        :return MetricResult
                        :summary (format "Histogram for some %s field" capitalized)

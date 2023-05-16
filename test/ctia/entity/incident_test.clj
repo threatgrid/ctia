@@ -708,7 +708,6 @@
         (testing (pr-str id " " stored-status)
           (is (= expected (sut/compute-intervals stored-incident incident-update))))))))
 
-#_ ;;FIXME
 (deftest incident-average-metrics-test
   (test-for-each-store-with-app
     (fn [app]
@@ -760,7 +759,9 @@
                                                             :headers {"Authorization" "45c1f5e3f05d0"}
                                                             :query-params {:aggregate-on (str "intervals." field)
                                                                            :from new-time})]
+                     ;;TODO add count
                      (and (is (= 200 (:status raw)) (pr-str raw))
-                          (is (= expected parsed-body)
+                          (is (= expected
+                                 (-> (get-in parsed-body [:data :intervals (keyword field)]) Math/floor long))
                               (pr-str parsed-body))))))))
            (finally (purge-incidents! app))))))
