@@ -759,9 +759,11 @@
                                                             :headers {"Authorization" "45c1f5e3f05d0"}
                                                             :query-params {:aggregate-on (str "intervals." field)
                                                                            :from new-time})]
-                     (prn parsed-body)
+                     (prn "parsed-body" parsed-body)
                      ;;TODO add count
                      (and (is (= 200 (:status raw)) (pr-str raw))
+                          (is (= "3" (get-in raw [:headers "X-Total-Hits"]))
+                              raw)
                           (is (= expected
                                  (-> (get-in parsed-body [:data :intervals (keyword field)]) Math/floor long))
                               (pr-str parsed-body))))))))

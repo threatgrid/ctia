@@ -416,7 +416,9 @@
                   :identity-map identity-map
                   (GET "/average" []
                        :return MetricResult
-                       :summary (format "Average for some %s field" capitalized)
+                       :summary (format (str "Average for some %s field. Use X-Total-Hits header on response for count used for average."
+                                             " For aggregate-on field X.Y.Z, response body will be {:data {:X {:Y {:Z <average>}}}}.")
+                                        capitalized)
                        :query [params average-q-params]
                        (let [aggregate-on (keyword (:aggregate-on params)) ;;TODO support multiple :aggregate-on
                              search-q (search-query {:date-field :created

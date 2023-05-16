@@ -703,7 +703,6 @@ It returns the documents with full hits meta data including the real index in wh
           (throw (ex-info (str "invalid aggregation type: " (pr-str agg-type))
                           {})))]
     (cond-> {agg-key (agg-fn root-agg)}
-      (= :avg agg-type) (assoc :count {:value_count {:field (:aggregate-on agg-query)}})
       (seq aggs) (assoc :aggs (make-aggregation aggs)))))
 
 (defn format-agg-result
