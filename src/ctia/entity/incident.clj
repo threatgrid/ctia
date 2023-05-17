@@ -109,6 +109,10 @@
                                  (jt/not-after? (jt/instant earlier) (jt/instant later)))
                             (assoc-in [:intervals interval]
                                       (jt/time-between (jt/instant earlier) (jt/instant later) :seconds))))]
+    ;; note: incident_time.opened is a required field, so its presence is meaningless.
+    ;; note: intervals are independent. they can be triggered in any order and only one can be calculated per change.
+    ;; e.g., :opened_to_closed does not backfill :new_to_opened, nor prevents :new_to_opened from being filled later.
+    ;; note: each interval is calculated at most once per incident.
     (cond-> incident
       ;; the duration between the time at which the incident changed from New to Open and the incident creation time
       ;; https://github.com/advthreat/iroh/issues/7622#issuecomment-1496374419
@@ -121,6 +125,8 @@
       (and (= "Open" old-status)
            (= "Closed" new-status))
       (update-interval :opened_to_closed
+                       ;; we assume this was updated by the status route on Open. will be garbage if status was updated
+                       ;; in any other way.
                        (get-in prev [:incident_time :opened])
                        (get-in incident [:incident_time :closed])))))
 
