@@ -741,20 +741,21 @@
                                        {:created third-created
                                         :new_to_opened third-new_to_opened
                                         :opened_to_closed third-opened_to_closed}]]
+                 +sec #(jt/plus epoch (jt/seconds %))
                  bulk-out (apply merge-with into
-                                 (map (fn [[incident {:keys [created]}]]
-                                        (helpers/fixture-with-fixed-time
-                                          (jt/java-date (jt/plus epoch (jt/seconds created)))
-                                          #(create-incidents app #{incident})))
-                                      incident->intervals))
+                                 (mapv (fn [[incident {:keys [created]}]]
+                                         (helpers/fixture-with-fixed-time
+                                           (jt/java-date (+sec created))
+                                           #(create-incidents app #{incident})))
+                                       incident->intervals))
                  incident-ids (map :id (:results bulk-out))
                  incident-id->incident+intervals (map vector incident-ids incident->intervals)
                  _ (assert (= (count incident-id->incident+intervals) (count incident->intervals))
                            bulk-out)
                  _ (testing "populate intervals"
                      (doseq [[incident-id [incident {:keys [created new_to_opened opened_to_closed]}]] incident-id->incident+intervals
-                             [new-status next-time] [["Open" (jt/plus epoch (jt/seconds (+ created new_to_opened)))]
-                                                     ["Closed" (jt/plus epoch (jt/seconds (+ created new_to_opened opened_to_closed)))]]]
+                             [new-status next-time] [["Open" (+sec (+ created new_to_opened))]
+                                                     ["Closed" (+sec (+ created new_to_opened opened_to_closed))]]]
                        (testing (pr-str [new-status incident])
                          (let [{:keys [parsed-body] :as response} (helpers/fixture-with-fixed-time
                                                                     (jt/java-date next-time)
@@ -762,6 +763,7 @@
                            (assert (= 200 (:status response))
                                    (pr-str response))
                            ;; the intervals are indirectly tested by the averages, but this is useful to debug the actual intervals
+                           ;; relies on implementation details.
                            (testing "raw intervals"
                              (let [expected-intervals (cond-> {:new_to_opened new_to_opened}
                                                         (= "Closed" new-status) (assoc :opened_to_closed opened_to_closed))
@@ -776,11 +778,11 @@
                                (assert (= 1 (count raw)))
                                (testing [epoch
                                          (jt/instant (-> raw first :doc :created))]
-                                 (is (= (jt/plus epoch (jt/seconds created))
-                                        (-> raw first :doc :created)))
+                                 (is (= (jt/java-date (+sec created))
+                                        (jt/java-date (-> raw first :doc :created)))
+                                     created)
                                  (is (= expected-intervals (-> raw first :doc :intervals))))))))))
-                 avg #(quot (apply + %&) (count %&))
-                 +sec #(jt/plus epoch (jt/seconds %))]
+                 avg #(quot (apply + %&) (count %&))]
              (testing "average aggregation"
                (helpers/fixture-with-fixed-time
                  (jt/java-date (jt/plus epoch (jt/days 1))) ;;default `to` query param
