@@ -113,14 +113,15 @@
       ;; the duration between the time at which the incident changed from New to Open and the incident creation time
       ;; https://github.com/advthreat/iroh/issues/7622#issuecomment-1496374419
       (and (= "New" old-status)
-           (= "Open" new-status)) 
+           (= "Open" new-status))
       (update-interval :new_to_opened
                        (:created prev)
                        (get-in incident [:incident_time :opened]))
 
-      (= "Closed" new-status)
+      (and (= "Open" old-status)
+           (= "Closed" new-status))
       (update-interval :opened_to_closed
-                       (get-in incident [:incident_time :opened])
+                       (get-in prev [:incident_time :opened])
                        (get-in incident [:incident_time :closed])))))
 
 (s/defn un-store-incident :- PartialStoredIncident
@@ -206,8 +207,8 @@
   {:stored->es-stored (s/fn [{:keys [doc op prev]}]
                         (cond->> doc
                           prev (compute-intervals prev)))
-   :es-stored->stored un-store-incident
-   :es-partial-stored->partial-stored un-store-incident
+   :es-stored->stored #'un-store-incident
+   :es-partial-stored->partial-stored #'un-store-incident
    :es-stored-schema ESStoredIncident
    :es-partial-stored-schema ESPartialStoredIncident})
 

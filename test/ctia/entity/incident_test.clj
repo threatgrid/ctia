@@ -45,7 +45,12 @@
   (POST app
         (str "ctia/incident/" uri-encoded-id "/status")
         :body {:status new-status}
-        :headers {"Authorization" "45c1f5e3f05d0"}))
+        :headers {"Authorization" "45c1f5e3f05d0"
+                  "wait_for" true}))
+
+(defn get-incident [app id]
+  (GET app (str "ctia/incident/" (uri/uri-encode id))
+       :headers {"Authorization" "45c1f5e3f05d0"}))
 
 (defn additional-tests [app incident-id incident]
   (println "incident id :" incident-id)
@@ -714,13 +719,14 @@
     (fn [app]
       (helpers/set-capabilities! app "foouser" ["foogroup"] "user" all-capabilities)
       (whoami-helpers/set-whoami-response app "45c1f5e3f05d0" "foouser" "foogroup" "user")
-      (try (let [first-created 0
+      (try (let [epoch (jt/instant)
+                 first-created 0 ;;offsets in seconds from epoch to created
                  second-created 10
                  third-created 20
-                 first-new_to_opened 100
+                 first-new_to_opened 100 ;;offsets in seconds from created to opened
                  second-new_to_opened 200
                  third-new_to_opened 500
-                 first-opened_to_closed 150
+                 first-opened_to_closed 150 ;;offsets in seconds from opened to closed
                  second-opened_to_closed 250
                  third-opened_to_closed 550
                  incident->intervals [[(assoc (gen-new-incident) :status "New" :title "incident1")
@@ -735,11 +741,10 @@
                                        {:created third-created
                                         :new_to_opened third-new_to_opened
                                         :opened_to_closed third-opened_to_closed}]]
-                 new-time (jt/instant)
                  bulk-out (apply merge-with into
                                  (map (fn [[incident {:keys [created]}]]
                                         (helpers/fixture-with-fixed-time
-                                          (jt/java-date (jt/plus new-time (jt/seconds created)))
+                                          (jt/java-date (jt/plus epoch (jt/seconds created)))
                                           #(create-incidents app #{incident})))
                                       incident->intervals))
                  incident-ids (map :id (:results bulk-out))
@@ -748,24 +753,42 @@
                            bulk-out)
                  _ (testing "populate intervals"
                      (doseq [[incident-id [incident {:keys [created new_to_opened opened_to_closed]}]] incident-id->incident+intervals
-                             [new-status next-time] [["Open" (jt/plus new-time (jt/seconds (+ created new_to_opened)))]
-                                                     ["Closed" (jt/plus new-time (jt/seconds (+ created new_to_opened opened_to_closed)))]]]
+                             [new-status next-time] [["Open" (jt/plus epoch (jt/seconds (+ created new_to_opened)))]
+                                                     ["Closed" (jt/plus epoch (jt/seconds (+ created new_to_opened opened_to_closed)))]]]
                        (testing (pr-str [new-status incident])
                          (let [{:keys [parsed-body] :as response} (helpers/fixture-with-fixed-time
                                                                     (jt/java-date next-time)
                                                                     #(post-status app (uri/uri-encode incident-id) new-status))]
                            (assert (= 200 (:status response))
-                                   (pr-str response))))))
-                 avg #(quot (+ (apply + %&))
-                            (count %&))
-                 +sec #(jt/plus new-time (jt/seconds %))]
+                                   (pr-str response))
+                           ;; the intervals are indirectly tested by the averages, but this is useful to debug the actual intervals
+                           (testing "raw intervals"
+                             (let [expected-intervals (cond-> {:new_to_opened new_to_opened}
+                                                        (= "Closed" new-status) (assoc :opened_to_closed opened_to_closed))
+                                   raw (let [a (atom [])]
+                                         (with-redefs [sut/un-store-incident
+                                                       (let [prev sut/un-store-incident]
+                                                         (fn [args]
+                                                           (swap! a conj args)
+                                                           (prev args)))]
+                                           (get-incident app incident-id)
+                                           @a))]
+                               (assert (= 1 (count raw)))
+                               (testing [epoch
+                                         (jt/instant (-> raw first :doc :created))]
+                                 (is (= (jt/plus epoch (jt/seconds created))
+                                        (-> raw first :doc :created)))
+                                 (is (= expected-intervals (-> raw first :doc :intervals))))))))))
+                 avg #(quot (apply + %&) (count %&))
+                 +sec #(jt/plus epoch (jt/seconds %))]
              (testing "average aggregation"
                (helpers/fixture-with-fixed-time
-                 (jt/java-date (jt/plus new-time (jt/days 1))) ;;default `to` query param
+                 (jt/java-date (jt/plus epoch (jt/days 1))) ;;default `to` query param
                  (fn []
                    (doseq [[field expected-count expected-average from to :as test-case]
                            [["new_to_opened" 3 (avg first-new_to_opened second-new_to_opened third-new_to_opened) first-created]
                             ["new_to_opened" 2 (avg second-new_to_opened third-new_to_opened) second-created]
+                            ["new_to_opened" 2 (avg first-new_to_opened second-new_to_opened) first-created (inc second-created)]
                             ["new_to_opened" 1 first-new_to_opened first-created (inc first-created)]
                             ["new_to_opened" 1 second-new_to_opened second-created (inc second-created)]
                             ["new_to_opened" 1 third-new_to_opened third-created (inc third-created)]
