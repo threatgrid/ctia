@@ -208,7 +208,10 @@
                                                              (map (fn [[aggregate-on {:keys [date-field]}]]
                                                                     (str "When aggregate-on=" (name aggregate-on)
                                                                          ", from/to filters on "
-                                                                         (name date-field)
+                                                                         (case date-field
+                                                                           ;; :created is internal
+                                                                           :created " when the incident was first ingested in CTIA"
+                                                                           (name date-field))
                                                                          ".")))
                                                              (str/join " "))))
                          :from (describe s/Inst "Start date of the average. See `aggregate-on` doc for which field is used to filter.")
