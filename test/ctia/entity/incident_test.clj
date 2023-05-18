@@ -714,6 +714,21 @@
         (testing (pr-str id " " stored-status)
           (is (= expected (sut/compute-intervals stored-incident incident-update))))))))
 
+(s/defn create-incident-at-time :- s/Str
+  [app
+   time :- s/Inst
+   incident :- sut/NewIncident]
+  (let [time (jt/java-date time)
+        {[{incident-id :id}] :results :as results}
+        (helpers/fixture-with-fixed-time
+          time
+          #(create-incidents app #{incident}))
+        resp (get-incident app incident-id)
+        created (-> resp :parsed-body :timestamp)]
+    (assert (= time created)
+            [time created])
+    incident-id))
+
 (deftest incident-average-metrics-test
   (test-for-each-store-with-app
     (fn [app]
@@ -729,29 +744,25 @@
                  first-opened_to_closed 150 ;;offsets in seconds from opened to closed
                  second-opened_to_closed 250
                  third-opened_to_closed 550
-                 incident->intervals [[(assoc (gen-new-incident) :status "New" :title "incident1")
-                                       {:created first-created
-                                        :new_to_opened first-new_to_opened
-                                        :opened_to_closed first-opened_to_closed}]
-                                      [(assoc (gen-new-incident) :status "New" :title "incident2")
-                                       {:created second-created
-                                        :new_to_opened second-new_to_opened
-                                        :opened_to_closed second-opened_to_closed}]
-                                      [(assoc (gen-new-incident) :status "New" :title "incident3")
-                                       {:created third-created
-                                        :new_to_opened third-new_to_opened
-                                        :opened_to_closed third-opened_to_closed}]]
+                 incident->intervals (take 3 [[(assoc (gen-new-incident) :status "New" :title "incident1")
+                                               {:created first-created
+                                                :new_to_opened first-new_to_opened
+                                                :opened_to_closed first-opened_to_closed}]
+                                              [(assoc (gen-new-incident) :status "New" :title "incident2")
+                                               {:created second-created
+                                                :new_to_opened second-new_to_opened
+                                                :opened_to_closed second-opened_to_closed}]
+                                              [(assoc (gen-new-incident) :status "New" :title "incident3")
+                                               {:created third-created
+                                                :new_to_opened third-new_to_opened
+                                                :opened_to_closed third-opened_to_closed}]])
                  +sec #(jt/plus epoch (jt/seconds %))
-                 bulk-out (apply merge-with into
-                                 (mapv (fn [[incident {:keys [created]}]]
-                                         (helpers/fixture-with-fixed-time
-                                           (jt/java-date (+sec created))
-                                           #(create-incidents app #{incident})))
-                                       incident->intervals))
-                 incident-ids (map :id (:results bulk-out))
+                 incident-ids (mapv (fn [[incident {:keys [created]}]]
+                                     (create-incident-at-time app (jt/java-date (+sec created)) incident))
+                                    incident->intervals)
                  incident-id->incident+intervals (map vector incident-ids incident->intervals)
                  _ (assert (= (count incident-id->incident+intervals) (count incident->intervals))
-                           bulk-out)
+                           incident-ids)
                  _ (testing "populate intervals"
                      (doseq [[incident-id [incident {:keys [created new_to_opened opened_to_closed]}]] incident-id->incident+intervals
                              [new-status next-time] [["Open" (+sec (+ created new_to_opened))]
@@ -761,32 +772,14 @@
                                                                     (jt/java-date next-time)
                                                                     #(post-status app (uri/uri-encode incident-id) new-status))]
                            (assert (= 200 (:status response))
-                                   (pr-str response))
-                           ;; the intervals are indirectly tested by the averages, but this is useful to debug the actual intervals
-                           ;; relies on implementation details.
-                           (testing "raw intervals"
-                             (let [expected-intervals (cond-> {:new_to_opened new_to_opened}
-                                                        (= "Closed" new-status) (assoc :opened_to_closed opened_to_closed))
-                                   raw (let [a (atom [])]
-                                         (with-redefs [sut/un-store-incident
-                                                       (let [prev sut/un-store-incident]
-                                                         (fn [args]
-                                                           (swap! a conj args)
-                                                           (prev args)))]
-                                           (get-incident app incident-id)
-                                           @a))]
-                               (assert (= 1 (count raw)))
-                               (testing [epoch
-                                         (jt/instant (-> raw first :doc :created))]
-                                 (is (= (jt/java-date (+sec created))
-                                        (jt/java-date (-> raw first :doc :created)))
-                                     created)
-                                 (is (= expected-intervals (-> raw first :doc :intervals))))))))))
+                                   (pr-str response))))))
                  avg #(quot (apply + %&) (count %&))]
              (testing "average aggregation"
                (helpers/fixture-with-fixed-time
                  (jt/java-date (jt/plus epoch (jt/days 1))) ;;default `to` query param
                  (fn []
+                   ;; the average of intervals.<field> should involve <expected-count> incidents and
+                   ;; have value <expected-average> between time window <from> and <to> (latter is optional).
                    (doseq [[field expected-count expected-average from to :as test-case]
                            [["new_to_opened" 3 (avg first-new_to_opened second-new_to_opened third-new_to_opened) first-created]
                             ["new_to_opened" 2 (avg second-new_to_opened third-new_to_opened) second-created]
