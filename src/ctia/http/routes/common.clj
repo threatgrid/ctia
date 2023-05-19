@@ -150,7 +150,6 @@
   "coerce from to limit interval querying to one year"
   [from :- s/Inst
    to :- (s/maybe s/Inst)]
-  (prn "coerce-date-range" {:from from :to to :now (now)})
   (let [to-or-now (or to (now))
         to-minus-one-year (t/minus to-or-now (t/years 1))
         from (t/latest from to-minus-one-year)]
