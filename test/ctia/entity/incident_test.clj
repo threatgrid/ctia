@@ -104,13 +104,13 @@
    (fn [app]
      (helpers/set-capabilities! app "foouser" ["foogroup"] "user" all-capabilities)
      (whoami-helpers/set-whoami-response app "45c1f5e3f05d0" "foouser" "foogroup" "user")
-     (let [parameters (assoc sut/incident-entity
-                             :app app
+     (let [parameters (into sut/incident-entity
+                            {:app app
                              :patch-tests? true
                              :search-tests? true
                              :example new-incident-maximal
                              :headers {:Authorization "45c1f5e3f05d0"}
-                             :additional-tests additional-tests)]
+                             :additional-tests additional-tests})]
        (entity-crud-test parameters)))))
 
 (def ctim-severity-order
