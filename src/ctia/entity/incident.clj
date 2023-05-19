@@ -93,23 +93,24 @@
     (cond-> {:status status}
       verb (assoc :incident_time {verb t}))))
 
+(s/defn ^:private update-interval :- ESStoredIncident
+  [{:keys [intervals] :as incident} :- ESStoredIncident
+   interval :- (apply s/enum incident-intervals)
+   earlier :- (s/maybe s/Inst)
+   later :- (s/maybe s/Inst)]
+  (cond-> incident
+    (and (not (get intervals interval)) ;; don't clobber existing interval
+         earlier later
+         (jt/not-after? (jt/instant earlier) (jt/instant later)))
+    (assoc-in [:intervals interval]
+              (jt/time-between (jt/instant earlier) (jt/instant later) :seconds))))
+
 (s/defn compute-intervals :- ESStoredIncident
   "Given the currently stored (raw) incident and the incident to update it to, return a new update
   that also computes any relevant intervals that are missing from the updated incident."
   [{old-status :status :as prev} :- ESStoredIncident
    {new-status :status :as incident} :- StoredIncident]
-  (let [incident (into incident (select-keys prev [:intervals]))
-        update-interval (s/fn :- ESStoredIncident
-                          [{:keys [intervals] :as incident} :- ESStoredIncident
-                           interval :- (apply s/enum incident-intervals)
-                           earlier :- (s/maybe s/Inst)
-                           later :- (s/maybe s/Inst)]
-                          (cond-> incident
-                            (and (not (get intervals interval)) ;; don't clobber existing interval
-                                 earlier later
-                                 (jt/not-after? (jt/instant earlier) (jt/instant later)))
-                            (assoc-in [:intervals interval]
-                                      (jt/time-between (jt/instant earlier) (jt/instant later) :seconds))))]
+  (let [incident (into incident (select-keys prev [:intervals]))]
     ;; note: incident_time.opened is a required field, so its presence is meaningless.
     ;; note: intervals are independent. they can be triggered in any order and only one can be calculated per change.
     ;; e.g., :opened_to_closed does not backfill :new_to_opened, nor prevents :new_to_opened from being filled later.
