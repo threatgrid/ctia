@@ -98,14 +98,12 @@
   that also computes any relevant intervals that are missing from the updated incident."
   [{old-status :status :as prev} :- ESStoredIncident
    {new-status :status :as incident} :- StoredIncident]
-  (prn prev incident)
   (let [incident (into incident (select-keys prev [:intervals]))
         update-interval (s/fn :- ESStoredIncident
                           [{:keys [intervals] :as incident} :- ESStoredIncident
                            interval :- (apply s/enum incident-intervals)
                            earlier :- (s/maybe s/Inst)
                            later :- (s/maybe s/Inst)]
-                          (prn {:earlier earlier :later later})
                           (cond-> incident
                             (and (not (get intervals interval)) ;; don't clobber existing interval
                                  earlier later
