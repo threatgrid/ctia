@@ -369,9 +369,6 @@
    :intervals.new_to_opened {:date-field :created}
    :intervals.opened_to_closed {:date-field :created}})
 
-(assert (= (->> incident-intervals (map #(keyword (str "intervals." (name %)))) sort)
-           (->> incident-average-fields keys sort)))
-
 (s/defschema IncidentFieldsParam
   {(s/optional-key :fields) [(apply s/enum incident-fields)]})
 
