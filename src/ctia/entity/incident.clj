@@ -442,8 +442,6 @@
      :search-capabilities      :search-incident
      :external-id-capabilities :read-incident
      :histogram-fields         incident-histogram-fields
-     ;; TODO test average aggregation in test-metric-routes
-     ;; TODO write a specific integration test for GET /incident/metric/average
      :average-fields           incident-average-fields
      :enumerable-fields        incident-enumerable-fields
      :sort-extension-definitions (sort-extension-definitions services)})))
