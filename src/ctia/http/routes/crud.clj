@@ -437,8 +437,6 @@
                        :query [params average-q-params]
                        (let [aggregate-on (keyword (:aggregate-on params))
                              date-field (get-in average-fields [aggregate-on :date-field])
-                             _ (prn "date-field" aggregate-on date-field)
-                             _ (assert date-field)
                              search-q (search-query {:date-field date-field
                                                      :params (st/select-schema params agg-search-schema)
                                                      :make-date-range-fn coerce-date-range})
@@ -449,7 +447,6 @@
                                search-q
                                agg-q
                                identity-map)
-                             (doto (prn "store/aggregate"))
                              (routes.common/format-agg-result :avg aggregate-on search-q)
                              routes.common/paginated-ok)))
                   (GET "/histogram" []
