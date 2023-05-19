@@ -646,13 +646,9 @@
 (assert (every? incident-statuses ["New" "Open" "Closed" "Rejected"]))
 
 (deftest compute-intervals-test
-  (let [earlier (-> (jt/instant 0) (jt/plus (jt/seconds -10)) jt/java-date)
-        later   (-> (jt/instant 0) (jt/plus (jt/seconds  10)) jt/java-date)
-        computed-interval 20
-        _ (assert (= computed-interval
-                     (jt/time-between (jt/instant earlier) (jt/instant later) :seconds)))
-        precomputed-interval 15 ;; for testing that old intervals are preserved
-        _ (assert (not= computed-interval precomputed-interval))
+  (let [computed-interval 20
+        earlier (jt/java-date)
+        later   (-> (jt/instant earlier) (jt/plus (jt/seconds computed-interval)) jt/java-date)
         prev (-> incident-minimal
                  (assoc :groups []
                         :created earlier
