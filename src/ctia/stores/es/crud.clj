@@ -726,8 +726,6 @@ It returns the documents with full hits meta data including the real index in wh
    ident]
   (let [query (make-search-query es-conn-state search-query ident)
         agg (make-aggregation (assoc agg-query :agg-key :metric))
-        _ (prn "query" query)
-        _ (prn "agg" agg)
         es-res (ductile.doc/query conn
                                   index
                                   query

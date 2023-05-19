@@ -642,7 +642,7 @@
                (finally (purge-incidents! app))))))))
 
 (def incident-statuses
-  (:vs (st/get-in sut/Incident [:status])))
+  (set (:vs (st/get-in sut/Incident [:status]))))
 (assert (every? incident-statuses ["New" "Open" "Closed" "Rejected"]))
 
 (deftest compute-intervals-test
@@ -652,21 +652,15 @@
         _ (assert (= computed-interval
                      (jt/time-between (jt/instant earlier) (jt/instant later) :seconds)))
         precomputed-interval 15 ;; for testing that old intervals are preserved
-        _ (assert (not= computed-interval precomputed-interval))]
+        _ (assert (not= computed-interval precomputed-interval))
+        prev (-> incident-minimal
+                 (assoc :groups []
+                        :created earlier
+                        :owner ""
+                        :id "foo")
+                 (dissoc :intervals))]
     (testing "updating status 'Open'"
-      (let [prev (-> incident-minimal
-                     ;; Note: :incident_time.opened is included in incident-minimal
-                     ;; due to the Incident schema.
-                     ;; The test :no-update-because-earlier-after-later is sufficient
-                     ;; to show that this is ignored by sut/compute-intervals,
-                     ;; and only the :incident_time.opened in :incident-update is used
-                     ;; to calculate the interval.
-                     (assoc :groups []
-                            :created earlier
-                            :status "New"
-                            :owner ""
-                            :id "foo")
-                     (dissoc :intervals))
+      (let [prev (assoc prev :status "New")
             incident (assoc prev :status "Open" :incident_time {:opened later})]
         (testing "if prev does not already have a :new_to_opened interval, compute interval and include in update"
           (is (= (assoc incident :intervals {:new_to_opened computed-interval})
@@ -676,43 +670,58 @@
                  (sut/compute-intervals (assoc prev :intervals {:new_to_opened 55565})
                                         incident))))
         (testing "if previous status is not New, then don't create new interval"
-          (is (= incident
-                 (sut/compute-intervals (assoc prev :status "Closed") incident))))
+          (doseq [stored-status (shuffle (disj incident-statuses "New"))]
+            (testing stored-status
+              (is (= incident (sut/compute-intervals (assoc prev :status stored-status) incident))))))
+        ;; Note: :incident_time.opened is included in stored incident due to the Incident schema.
+        ;; This test is sufficient to show that this is ignored by sut/compute-intervals,
+        ;; and only the :incident_time.opened in the updated incident is used to calculate the interval.
         (testing "if :created is after the updated :incident_time.opened, elide interval from update"
           (let [prev (assoc prev :created later)
                 incident (assoc prev :status "Open" :incident_time {:opened earlier})]
             (is (= incident
                    (sut/compute-intervals prev incident)))))))
-    #_
     (testing "updating status 'Closed'"
-      (doseq [;; stored status doesn't matter
-              stored-status (shuffle incident-statuses)
-              {:keys [id incident-update stored-incident expected]}
-              (let [->base-test-case (s/fn [earlier :- s/Inst
-                                            later :- s/Inst]
-                                       (let [incident-update {:id "foo" :status "Closed" :incident_time {:closed later}}]
-                                         {:incident-update incident-update
-                                          :stored-incident (-> incident-minimal
-                                                               (assoc-in [:incident_time :opened] earlier)
-                                                               (assoc :status stored-status)
-                                                               (dissoc :intervals))
-                                          ;; default to no interval being computed, override for success cases
-                                          :expected incident-update}))]
-                (concat
-                  (let [base (->base-test-case earlier later)]
-                    [(-> base
-                         (assoc :id :update-opened_to_closed)
-                         ;; if :stored-incident does not already have an :opened_to_closed interval, compute it
-                         (assoc-in [:expected :intervals :opened_to_closed] computed-interval))
-                     (-> base
-                         (assoc :id :opened_to_closed-already-exists)
-                         ;; if :stored-incident already has an :opened_to_closed interval, don't add it to the update
-                         (assoc-in [:stored-incident :intervals :opened_to_closed] precomputed-interval))])
-                  [;; if :incident_time.opened is after the updated :incident_time.closed, elide interval from update
-                   (-> (->base-test-case later earlier)
-                       (assoc :id :no-update-because-earlier-after-later))]))]
-        (testing (pr-str id " " stored-status)
-          (is (= expected (sut/compute-intervals stored-incident incident-update))))))))
+      (let [prev (assoc prev :status "Open" :incident_time {:opened earlier})
+            incident (-> prev
+                         (assoc :status "Closed")
+                         (assoc-in [:incident_time :closed] later))]
+        (testing "if previous status is not Open, then don't create new interval"
+          (doseq [stored-status (shuffle (disj incident-statuses "Open"))]
+            (testing stored-status
+              (is (= incident (sut/compute-intervals (assoc prev :status stored-status) incident))))))
+        (testing "if :stored-incident does not already have an :opened_to_closed interval, compute it"
+          (is (= (assoc-in incident [:intervals :opened_to_closed] computed-interval)
+                 (sut/compute-intervals prev incident))))
+        #_
+        (doseq [;; stored status doesn't matter
+                stored-status (shuffle incident-statuses)
+                {:keys [id incident-update stored-incident expected]}
+                (let [->base-test-case (s/fn [earlier :- s/Inst
+                                              later :- s/Inst]
+                                         (let [incident-update {:id "foo" :status "Closed" :incident_time {:closed later}}]
+                                           {:incident-update incident-update
+                                            :stored-incident (-> incident-minimal
+                                                                 (assoc-in [:incident_time :opened] earlier)
+                                                                 (assoc :status stored-status)
+                                                                 (dissoc :intervals))
+                                            ;; default to no interval being computed, override for success cases
+                                            :expected incident-update}))]
+                  (concat
+                    (let [base (->base-test-case earlier later)]
+                      [(-> base
+                           (assoc :id :update-opened_to_closed)
+                           ;; if :stored-incident does not already have an :opened_to_closed interval, compute it
+                           (assoc-in [:expected :intervals :opened_to_closed] computed-interval))
+                       (-> base
+                           (assoc :id :opened_to_closed-already-exists)
+                           ;; if :stored-incident already has an :opened_to_closed interval, don't add it to the update
+                           (assoc-in [:stored-incident :intervals :opened_to_closed] precomputed-interval))])
+                    [;; if :incident_time.opened is after the updated :incident_time.closed, elide interval from update
+                     (-> (->base-test-case later earlier)
+                         (assoc :id :no-update-because-earlier-after-later))]))]
+          (testing (pr-str id " " stored-status)
+            (is (= expected (sut/compute-intervals stored-incident incident-update)))))))))
 
 (s/defn create-incident-at-time :- s/Str
   [app
