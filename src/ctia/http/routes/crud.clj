@@ -436,7 +436,8 @@
                                         capitalized)
                        :query [params average-q-params]
                        (let [aggregate-on (keyword (:aggregate-on params))
-                             date-field (get-in average-fields [aggregate-on :date-field])
+                             date-field (or (get-in average-fields [aggregate-on :date-field])
+                                            :created)
                              search-q (search-query {:date-field date-field
                                                      :params (st/select-schema params agg-search-schema)
                                                      :make-date-range-fn coerce-date-range})
