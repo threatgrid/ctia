@@ -437,6 +437,7 @@
                        :query [params average-q-params]
                        (let [aggregate-on (keyword (:aggregate-on params))
                              date-field (or (get-in average-fields [aggregate-on :date-field])
+                                            ;; should never happen but a reasonable default
                                             :created)
                              search-q (search-query {:date-field date-field
                                                      :params (st/select-schema params agg-search-schema)
