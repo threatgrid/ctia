@@ -3,8 +3,7 @@
 #
 # Fails if run in non-deployment situations.
 #
-# Assumes awscli and dockerhub are set up with correct credentials for the
-# current user.
+# Assumes awscli is set up with correct credentials for the current user.
 set -Eeuxo pipefail
 
 if [[ "${GITHUB_EVENT_NAME}" != "push" ]]; then
