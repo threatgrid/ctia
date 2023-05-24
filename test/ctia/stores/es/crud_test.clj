@@ -610,7 +610,12 @@
                                 :aggregate-on "title"
                                 :limit        20
                                 :sort_order   :desc}))
-      "matches `sut/enumerable-fields-mapping` for a field"))
+      "matches `sut/enumerable-fields-mapping` for a field")
+  (is (= {:metric
+          {:avg
+           {:field "intervals.something"}}}
+         (sut/make-aggregation {:agg-type     :avg
+                                :aggregate-on "intervals.something"}))))
 
 (defn generate-sightings
   [nb confidence title timestamp]

@@ -1,6 +1,7 @@
 (ns ctia.entity.incident
   (:require
    [clojure.string :as str]
+   [java-time.api :as jt]
    [clj-momo.lib.clj-time.core :as time]
    [ctia.domain.entities
     :refer [default-realize-fn un-store with-long-id]]
@@ -45,14 +46,26 @@
   is/NewIncident
   "new-incident")
 
-(def-stored-schema StoredIncident
-  Incident)
+;;NOTE: changing this requires a ES mapping refresh
+(def incident-intervals
+  [:new_to_opened
+   :opened_to_closed])
+
+(def-stored-schema StoredIncident Incident)
+
+(def-stored-schema ESStoredIncident
+  (st/assoc StoredIncident
+            (s/optional-key :intervals) (st/optional-keys
+                                          (zipmap incident-intervals (repeat (s/pred nat-int?))))))
 
 (s/defschema PartialNewIncident
   (st/optional-keys-schema NewIncident))
 
 (s/defschema PartialStoredIncident
   (st/optional-keys-schema StoredIncident))
+
+(s/defschema ESPartialStoredIncident
+  (st/optional-keys-schema ESStoredIncident))
 
 (def realize-incident
   (default-realize-fn "incident" NewIncident StoredIncident))
@@ -79,6 +92,50 @@
                nil)]
     (cond-> {:status status}
       verb (assoc :incident_time {verb t}))))
+
+(s/defn ^:private update-interval :- ESStoredIncident
+  [{:keys [intervals] :as incident} :- ESStoredIncident
+   interval :- (apply s/enum incident-intervals)
+   earlier :- (s/maybe s/Inst)
+   later :- (s/maybe s/Inst)]
+  (cond-> incident
+    (and (not (get intervals interval)) ;; don't clobber existing interval
+         earlier later
+         (jt/not-after? (jt/instant earlier) (jt/instant later)))
+    (assoc-in [:intervals interval]
+              (jt/time-between (jt/instant earlier) (jt/instant later) :seconds))))
+
+(s/defn compute-intervals :- ESStoredIncident
+  "Given the currently stored (raw) incident and the incident to update it to, return a new update
+  that also computes any relevant intervals that are missing from the updated incident."
+  [{old-status :status :as prev} :- ESStoredIncident
+   {new-status :status :as incident} :- StoredIncident]
+  (let [incident (into incident (select-keys prev [:intervals]))]
+    ;; note: incident_time.opened is a required field, so its presence is meaningless.
+    ;; note: intervals are independent. they can be triggered in any order and only one can be calculated per change.
+    ;; e.g., :opened_to_closed does not backfill :new_to_opened, nor prevents :new_to_opened from being filled later.
+    ;; note: each interval is calculated at most once per incident.
+    (cond-> incident
+      ;; the duration between the time at which the incident changed from New to Open and the incident creation time
+      ;; https://github.com/advthreat/iroh/issues/7622#issuecomment-1496374419
+      (and (= "New" old-status)
+           (= "Open" new-status))
+      (update-interval :new_to_opened
+                       (:created prev)
+                       (get-in incident [:incident_time :opened]))
+
+      (and (= "Open" old-status)
+           (= "Closed" new-status))
+      (update-interval :opened_to_closed
+                       ;; we assume this was updated by the status route on Open. will be garbage if status was updated
+                       ;; in any other way.
+                       (get-in prev [:incident_time :opened])
+                       (get-in incident [:incident_time :closed])))))
+
+(s/defn un-store-incident :- PartialStoredIncident
+  [{:keys [doc]} :- {:doc ESPartialStoredIncident
+                     s/Keyword s/Any}]
+  (dissoc doc :intervals))
 
 (s/defn incident-additional-routes [{{:keys [get-store]} :StoreService
                                      :as services} :- APIHandlerServices]
@@ -151,9 +208,20 @@
       :tactics          em/token
       :techniques       em/token
       :scores           {:type "object"
-                         :dynamic true}})}})
+                         :dynamic true}
+      :intervals        {:properties (zipmap incident-intervals (repeat em/long-type))}})}})
 
-(def-es-store IncidentStore :incident StoredIncident PartialStoredIncident)
+(def store-opts
+  {:stored->es-stored (s/fn [{:keys [doc op prev]}]
+                        (cond->> doc
+                          prev (compute-intervals prev)))
+   :es-stored->stored un-store-incident
+   :es-partial-stored->partial-stored un-store-incident
+   :es-stored-schema ESStoredIncident
+   :es-partial-stored-schema ESPartialStoredIncident})
+
+(def-es-store IncidentStore :incident StoredIncident PartialStoredIncident
+  :store-opts store-opts)
 
 (def incident-fields
   (concat default-entity-sort-fields
@@ -296,6 +364,11 @@
    :incident_time.closed
    :incident_time.rejected])
 
+(def incident-average-fields
+  {;; restrict to entities _created_ within from/to interval.
+   :intervals.new_to_opened {:date-field :created}
+   :intervals.opened_to_closed {:date-field :created}})
+
 (s/defschema IncidentFieldsParam
   {(s/optional-key :fields) [(apply s/enum incident-fields)]})
 
@@ -367,6 +440,7 @@
      :search-capabilities      :search-incident
      :external-id-capabilities :read-incident
      :histogram-fields         incident-histogram-fields
+     :average-fields           incident-average-fields
      :enumerable-fields        incident-enumerable-fields
      :sort-extension-definitions (sort-extension-definitions services)})))
 

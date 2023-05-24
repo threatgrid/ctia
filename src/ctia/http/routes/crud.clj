@@ -11,7 +11,8 @@
                                                       coerce-date-range]]
    [ctia.lib.compojure.api.core :refer [context DELETE GET POST PUT PATCH routes]]
    [ctia.schemas.core :refer [APIHandlerServices DelayedRoutes SortExtensionDefinitions]]
-   [ctia.schemas.search-agg :refer [HistogramParams
+   [ctia.schemas.search-agg :refer [AverageParams
+                                    HistogramParams
                                     CardinalityParams
                                     TopnParams
                                     MetricResult]]
@@ -131,6 +132,7 @@
 
 (s/defschema EntityCrudRoutesArgs
   {(s/optional-key :sort-extension-definitions) SortExtensionDefinitions
+   (s/optional-key :average-fields) {s/Keyword {:date-field s/Keyword}}
    s/Any s/Any})
 
 (s/defn ^:private entity-crud-routes
@@ -166,7 +168,8 @@
            date-field
            histogram-fields
            enumerable-fields
-           sort-extension-definitions]
+           sort-extension-definitions
+           average-fields]
     :or {hide-delete? false
          can-post? true
          can-update? true
@@ -197,6 +200,25 @@
                            search-filters
                            {:from s/Inst})
         aggregate-on-enumerable {:aggregate-on (apply s/enum (map name enumerable-fields))}
+        average-filters {:aggregate-on (describe (apply s/enum (map name (keys average-fields)))
+                                                 (apply str
+                                                        "The field to compute an average over. `from` and `to` are dates to narrow the "
+                                                        "entities used in this calculation.\n\n"
+                                                        (->> average-fields
+                                                             (map (fn [[aggregate-on {:keys [date-field]}]]
+                                                                    (str "When aggregate-on=" (name aggregate-on)
+                                                                         ", from/to filters on "
+                                                                         (case date-field
+                                                                           ;; :created is internal
+                                                                           :created " when the incident was first ingested in CTIA"
+                                                                           (name date-field))
+                                                                         ".")))
+                                                             (str/join " "))))
+                         :from (describe s/Inst "Start date of the average. See `aggregate-on` doc for which field is used to filter.")
+                         (s/optional-key :to) (describe s/Inst "End date of the average. See `aggregate-on` doc for which field is used to filter.")}
+        average-q-params (st/merge agg-search-schema
+                                   AverageParams
+                                   average-filters)
         histogram-filters {:aggregate-on (apply s/enum (map name histogram-fields))
                            :from (describe s/Inst "Start date of the histogram. Filters the value of selected aggregated-on field.")
                            (s/optional-key :to) (describe s/Inst "End date of the histogram. Filters the value of selected aggregated-on field.")}
@@ -406,6 +428,29 @@
                   :capabilities capabilities
                   :auth-identity identity
                   :identity-map identity-map
+                  (GET "/average" []
+                       :return MetricResult
+                       :summary (format (str "Average for some %s field. Use X-Total-Hits header on response for count used for average."
+                                             " For aggregate-on field X.Y.Z, response body will be {:data {:X {:Y {:Z <average>}}}}."
+                                             " If X-Total-Hits is 0, then average will be nil.")
+                                        capitalized)
+                       :query [params average-q-params]
+                       (let [aggregate-on (keyword (:aggregate-on params))
+                             date-field (or (get-in average-fields [aggregate-on :date-field])
+                                            ;; should never happen but a reasonable default
+                                            :created)
+                             search-q (search-query {:date-field date-field
+                                                     :params (st/select-schema params agg-search-schema)
+                                                     :make-date-range-fn coerce-date-range})
+                             agg-q (assoc (st/select-schema params AverageParams)
+                                          :agg-type :avg)]
+                         (-> (get-store entity)
+                             (store/aggregate
+                               search-q
+                               agg-q
+                               identity-map)
+                             (routes.common/format-agg-result :avg aggregate-on search-q)
+                             routes.common/paginated-ok)))
                   (GET "/histogram" []
                        :return MetricResult
                        :summary (format "Histogram for some %s field" capitalized)
@@ -414,8 +459,8 @@
                              search-q (search-query {:date-field aggregate-on
                                                      :params (st/select-schema params agg-search-schema)
                                                      :make-date-range-fn coerce-date-range})
-                             agg-q (st/assoc (st/select-schema params HistogramParams)
-                                             :agg-type :histogram)]
+                             agg-q (assoc (st/select-schema params HistogramParams)
+                                          :agg-type :histogram)]
                          (-> (get-store entity)
                              (store/aggregate
                                search-q
@@ -431,8 +476,8 @@
                              search-q (search-query {:date-field date-field
                                                      :params (st/select-schema params agg-search-schema)
                                                      :make-date-range-fn coerce-date-range})
-                             agg-q (st/assoc (st/select-schema params TopnParams)
-                                             :agg-type :topn)]
+                             agg-q (assoc (st/select-schema params TopnParams)
+                                          :agg-type :topn)]
                          (-> (get-store entity)
                              (store/aggregate
                                search-q
@@ -448,8 +493,8 @@
                              search-q (search-query {:date-field date-field
                                                      :params (st/select-schema params agg-search-schema)
                                                      :make-date-range-fn coerce-date-range})
-                             agg-q (st/assoc (st/select-schema params CardinalityParams)
-                                             :agg-type :cardinality)]
+                             agg-q (assoc (st/select-schema params CardinalityParams)
+                                          :agg-type :cardinality)]
                          (-> (get-store entity)
                              (store/aggregate
                                search-q

@@ -8,7 +8,7 @@
    [ctia.lib.pagination :refer [list-response-schema]]
    [ctia.schemas.core :refer [SortExtension SortExtensionDefinitions]]
    [ctia.schemas.search-agg
-    :refer [AggQuery CardinalityQuery HistogramQuery QueryStringSearchArgs SearchQuery TopnQuery]]
+    :refer [AverageQuery AggQuery CardinalityQuery HistogramQuery QueryStringSearchArgs SearchQuery TopnQuery]]
    [ctia.stores.es.sort :as es.sort]
    [ctia.stores.es.query :as es.query]
    [ctia.stores.es.schemas :refer [ESConnState]]
@@ -138,13 +138,15 @@ It returns the documents with full hits meta data including the real index in wh
 
 (s/defn build-stored-transformer
   :- (s/=> s/Any s/Any) ;(s/=> (s/maybe out) (s/maybe in))
-  [transformer :- (s/=> s/Any {:doc s/Any}) ;;(s/=> out {:doc in})
-   in :- (s/protocol s/Schema)
-   out :- (s/protocol s/Schema)]
-  (s/fn :- (s/maybe out)
-    [doc :- (s/maybe in)]
-    (when (some? doc)
-      (transformer {:doc doc}))))
+  ([transformer in out] (build-stored-transformer transformer in out {}))
+  ([transformer :- (s/=> s/Any {:doc s/Any}) ;;(s/=> out {:doc in})
+    in :- (s/protocol s/Schema)
+    out :- (s/protocol s/Schema)
+    opts :- {(s/optional-key :prev) s/Any}]
+   (s/fn :- (s/maybe out)
+     [doc :- (s/maybe in)]
+     (when (some? doc)
+       (transformer (assoc opts :doc doc))))))
 
 (s/defn handle-create
   "Generate an ES create handler using some mapping and schema"
@@ -201,8 +203,8 @@ It returns the documents with full hits meta data including the real index in wh
     stored-schema :- (s/protocol s/Schema)
     {:keys [stored->es-stored
             es-stored-schema]} :- Update1MapArg]
-   (let [stored->es-stored (build-stored-transformer stored->es-stored stored-schema es-stored-schema)
-         coerce! (coerce-to-fn (s/maybe stored-schema))]
+   (let [coerce! (coerce-to-fn (s/maybe stored-schema))
+         es-coerce! (coerce-to-fn es-stored-schema)]
      (s/fn :- (s/maybe stored-schema)
        [{:keys [conn] :as conn-state} :- ESConnState
         id :- s/Str
@@ -213,7 +215,9 @@ It returns the documents with full hits meta data including the real index in wh
                   (get-docs-with-indices conn-state [id] {})]
          (if (allow-write? current-doc ident)
            (let [update-doc (assoc realized
-                                   :id (ensure-document-id id))]
+                                   :id (ensure-document-id id))
+                 stored->es-stored (build-stored-transformer stored->es-stored stored-schema es-stored-schema
+                                                             {:prev (es-coerce! current-doc)})]
              (ductile.doc/index-doc conn
                                     index
                                     (name mapping)
@@ -668,6 +672,10 @@ It returns the documents with full hits meta data including the real index in wh
     :interval granularity ;; TODO switch to calendar_interval with ES7
     :time_zone timezone}})
 
+(s/defn make-average
+  [{:keys [aggregate-on]} :- AverageQuery]
+  {:avg {:field aggregate-on}})
+
 (s/defn make-topn
   [{:keys [aggregate-on limit sort_order]
     :or {limit 10 sort_order :desc}} :- TopnQuery]
@@ -691,6 +699,7 @@ It returns the documents with full hits meta data including the real index in wh
           :topn make-topn
           :cardinality make-cardinality
           :histogram make-histogram
+          :avg make-average
           (throw (ex-info (str "invalid aggregation type: " (pr-str agg-type))
                           {})))]
     (cond-> {agg-key (agg-fn root-agg)}
@@ -706,7 +715,8 @@ It returns the documents with full hits meta data including the real index in wh
                buckets)
     :histogram (map #(array-map :key (:key_as_string %)
                                 :value (:doc_count %))
-                    buckets)))
+                    buckets)
+    :avg value))
 
 (s/defn handle-aggregate
   "Generate an ES aggregation handler for given schema"
