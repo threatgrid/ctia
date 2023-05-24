@@ -276,6 +276,7 @@
               _ (helpers.whoami/set-whoami-response app "45c1f5e3f05d0" "foouser" "foogroup" "user")
               docs (generate-n-entity metric-params 100)]
           (POST-bulk app {plural docs})
+          ;;TODO average-fields
           (doseq [field enumerable-fields]
             (test-cardinality app docs entity field)
             (test-topn app docs entity field 3))
