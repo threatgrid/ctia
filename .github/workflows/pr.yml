@@ -435,15 +435,8 @@ jobs:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
-      - name: Login to Docker Hub
-        uses: docker/login-action@v2
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_PASSWORD }}
-
       - run: ./build/deploy-actions.sh
         env:
           # offline to catch issues where `lein warm-ci-deps` doesn't download all
           # dependencies we need to deploy.
           LEIN_OFFLINE: true
-          CYBRIC_API_KEY: ${{ secrets.CYBRIC_API_KEY }}
