@@ -617,6 +617,36 @@
          (sut/make-aggregation {:agg-type     :avg
                                 :aggregate-on "intervals.something"}))))
 
+(deftest aggregation-filters-test
+  (is (= []
+         (sut/aggregation-filters
+           {:agg-type     :topn
+            :aggregate-on "title"
+            :limit        20
+            :sort_order   :desc})))
+  (is (= [{:bool {:must {:exists {:field "intervals.something"}}}}]
+         (sut/aggregation-filters
+           {:agg-type     :avg
+            :aggregate-on "intervals.something"})))
+  (is (= [{:bool {:must {:exists {:field "intervals.something2"}}}}
+          {:bool {:must {:exists {:field "intervals.something1"}}}}]
+         (sut/aggregation-filters
+           {:agg-type     :avg
+            :aggregate-on "intervals.something1"
+            :aggs {:agg-type     :avg
+                   :aggregate-on "intervals.something2"}})))
+  (is (= [{:bool {:must {:exists {:field "intervals.something2"}}}}
+          {:bool {:must {:exists {:field "intervals.something1"}}}}]
+         (sut/aggregation-filters
+           {:agg-type     :avg
+            :aggregate-on "intervals.something1"
+            :aggs {:agg-type     :topn
+                   :aggregate-on "title"
+                   :limit        20
+                   :sort_order   :desc
+                   :aggs {:agg-type     :avg
+                          :aggregate-on "intervals.something2"}}}))))
+
 (defn generate-sightings
   [nb confidence title timestamp]
   (repeatedly nb

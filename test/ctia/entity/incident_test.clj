@@ -742,7 +742,11 @@
                                                 :opened_to_closed third-opened_to_closed}]])
                  +sec #(jt/plus epoch (jt/seconds %))
                  incident-ids (mapv (fn [[incident {:keys [created]}]]
-                                     (create-incident-at-time app (jt/java-date (+sec created)) incident))
+                                      ;; create extra incidents whose statuses are never changed to simulate a real environment
+                                      (second
+                                        (repeatedly
+                                          2
+                                          #(create-incident-at-time app (jt/java-date (+sec created)) incident))))
                                     incident->intervals)
                  incident-id->incident+intervals (map vector incident-ids incident->intervals)
                  _ (assert (= (count incident-id->incident+intervals) (count incident->intervals))

@@ -590,23 +590,29 @@ It returns the documents with full hits meta data including the real index in wh
 
 (s/defn make-search-query :- {s/Keyword s/Any}
   "Translate SearchQuery map into ES Query DSL map"
-  [es-conn-state :- ESConnState
-   search-query :- SearchQuery
-   ident]
-  (let [{:keys [services]} es-conn-state
-        {{:keys [get-in-config]} :ConfigService} services
-        {:keys [filter-map range full-text]} search-query
-        range-query (when range
-                      {:range range})
-        filter-terms (-> (ensure-document-id-in-map filter-map)
-                         q/prepare-terms)]
-    {:bool
-     {:filter
-      (cond-> [(es.query/find-restriction-query-part ident get-in-config)]
-        (seq filter-map) (into filter-terms)
-        (seq range)      (conj range-query)
-        (seq full-text)  (into (es.query/refine-full-text-query-parts
-                                es-conn-state full-text)))}}))
+  ([es-conn-state :- ESConnState
+    search-query :- SearchQuery
+    ident]
+   (make-search-query es-conn-state search-query ident {}))
+  ([es-conn-state :- ESConnState
+    search-query :- SearchQuery
+    ident
+    {:keys [extra-filters]}]
+   (let [{:keys [services]} es-conn-state
+         {{:keys [get-in-config]} :ConfigService} services
+         {:keys [filter-map range full-text]} search-query
+         range-query (when range
+                       {:range range})
+         filter-terms (-> (ensure-document-id-in-map filter-map)
+                          q/prepare-terms)]
+     {:bool
+      {:filter
+       (cond-> [(es.query/find-restriction-query-part ident get-in-config)]
+         true (into extra-filters)
+         (seq filter-map) (into filter-terms)
+         (seq range)      (conj range-query)
+         (seq full-text)  (into (es.query/refine-full-text-query-parts
+                                  es-conn-state full-text)))}})))
 
 (s/defn handle-query-string-search
   "Generate an ES query handler for given schema schema"
@@ -705,6 +711,13 @@ It returns the documents with full hits meta data including the real index in wh
     (cond-> {agg-key (agg-fn root-agg)}
       (seq aggs) (assoc :aggs (make-aggregation aggs)))))
 
+(s/defn aggregation-filters :- [(s/pred map?)]
+  [{:keys [agg-type aggs]
+    :as agg-query} :- AggQuery]
+  (cond-> (or (some-> (not-empty aggs) aggregation-filters)
+              [])
+    (= :avg agg-type) (conj {:bool {:must {:exists {:field (:aggregate-on agg-query)}}}})))
+
 (defn format-agg-result
   [agg-type
    {:keys [value buckets] :as _metric-res}]
@@ -724,8 +737,9 @@ It returns the documents with full hits meta data including the real index in wh
    search-query :- SearchQuery
    {:keys [agg-type] :as agg-query} :- AggQuery
    ident]
-  (let [query (make-search-query es-conn-state search-query ident)
-        agg (make-aggregation (assoc agg-query :agg-key :metric))
+  (let [agg-query (assoc agg-query :agg-key :metric)
+        query (make-search-query es-conn-state search-query ident {:extra-filters (aggregation-filters agg-query)})
+        agg (make-aggregation agg-query)
         es-res (ductile.doc/query conn
                                   index
                                   query
