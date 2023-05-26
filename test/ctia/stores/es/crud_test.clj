@@ -628,15 +628,15 @@
          (sut/aggregation-filters
            {:agg-type     :avg
             :aggregate-on "intervals.something"})))
-  (is (= [{:bool {:must {:exists {:field "intervals.something1"}}}}
-          {:bool {:must {:exists {:field "intervals.something2"}}}}]
+  (is (= [{:bool {:must {:exists {:field "intervals.something2"}}}}
+          {:bool {:must {:exists {:field "intervals.something1"}}}}]
          (sut/aggregation-filters
            {:agg-type     :avg
             :aggregate-on "intervals.something1"
             :aggs {:agg-type     :avg
-                   :aggregate-on "intervals.something22"}})))
-  (is (= [{:bool {:must {:exists {:field "intervals.something1"}}}}
-          {:bool {:must {:exists {:field "intervals.something2"}}}}]
+                   :aggregate-on "intervals.something2"}})))
+  (is (= [{:bool {:must {:exists {:field "intervals.something2"}}}}
+          {:bool {:must {:exists {:field "intervals.something1"}}}}]
          (sut/aggregation-filters
            {:agg-type     :avg
             :aggregate-on "intervals.something1"
@@ -645,7 +645,7 @@
                    :limit        20
                    :sort_order   :desc
                    :aggs {:agg-type     :avg
-                          :aggregate-on "intervals.something22"}}}))))
+                          :aggregate-on "intervals.something2"}}}))))
 
 (defn generate-sightings
   [nb confidence title timestamp]
