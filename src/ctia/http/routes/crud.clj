@@ -428,29 +428,30 @@
                   :capabilities capabilities
                   :auth-identity identity
                   :identity-map identity-map
-                  (GET "/average" []
-                       :return MetricResult
-                       :summary (format (str "Average for some %s field. Use X-Total-Hits header on response for count used for average."
-                                             " For aggregate-on field X.Y.Z, response body will be {:data {:X {:Y {:Z <average>}}}}."
-                                             " If X-Total-Hits is 0, then average will be nil.")
-                                        capitalized)
-                       :query [params average-q-params]
-                       (let [aggregate-on (keyword (:aggregate-on params))
-                             date-field (or (get-in average-fields [aggregate-on :date-field])
-                                            ;; should never happen but a reasonable default
-                                            :created)
-                             search-q (search-query {:date-field date-field
-                                                     :params (st/select-schema params agg-search-schema)
-                                                     :make-date-range-fn coerce-date-range})
-                             agg-q (assoc (st/select-schema params AverageParams)
-                                          :agg-type :avg)]
-                         (-> (get-store entity)
-                             (store/aggregate
-                               search-q
-                               agg-q
-                               identity-map)
-                             (routes.common/format-agg-result :avg aggregate-on search-q)
-                             routes.common/paginated-ok)))
+                  (when (seq average-fields)
+                    (GET "/average" []
+                         :return MetricResult
+                         :summary (format (str "Average for some %s field. Use X-Total-Hits header on response for count used for average."
+                                               " For aggregate-on field X.Y.Z, response body will be {:data {:X {:Y {:Z <average>}}}}."
+                                               " If X-Total-Hits is 0, then average will be nil.")
+                                          capitalized)
+                         :query [params average-q-params]
+                         (let [aggregate-on (keyword (:aggregate-on params))
+                               date-field (or (get-in average-fields [aggregate-on :date-field])
+                                              ;; should never happen but a reasonable default
+                                              :created)
+                               search-q (search-query {:date-field date-field
+                                                       :params (st/select-schema params agg-search-schema)
+                                                       :make-date-range-fn coerce-date-range})
+                               agg-q (assoc (st/select-schema params AverageParams)
+                                            :agg-type :avg)]
+                           (-> (get-store entity)
+                               (store/aggregate
+                                 search-q
+                                 agg-q
+                                 identity-map)
+                               (routes.common/format-agg-result :avg aggregate-on search-q)
+                               routes.common/paginated-ok))))
                   (GET "/histogram" []
                        :return MetricResult
                        :summary (format "Histogram for some %s field" capitalized)
