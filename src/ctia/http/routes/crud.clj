@@ -428,81 +428,82 @@
                   :capabilities capabilities
                   :auth-identity identity
                   :identity-map identity-map
-                  (when (seq average-fields)
-                    (GET "/average" []
+                  (routes
+                    (when (seq average-fields)
+                      (GET "/average" []
+                           :return MetricResult
+                           :summary (format (str "Average for some %s field. Use X-Total-Hits header on response for count used for average."
+                                                 " For aggregate-on field X.Y.Z, response body will be {:data {:X {:Y {:Z <average>}}}}."
+                                                 " If X-Total-Hits is 0, then average will be nil.")
+                                            capitalized)
+                           :query [params average-q-params]
+                           (let [aggregate-on (keyword (:aggregate-on params))
+                                 date-field (or (get-in average-fields [aggregate-on :date-field])
+                                                ;; should never happen but a reasonable default
+                                                :created)
+                                 search-q (search-query {:date-field date-field
+                                                         :params (st/select-schema params agg-search-schema)
+                                                         :make-date-range-fn coerce-date-range})
+                                 agg-q (assoc (st/select-schema params AverageParams)
+                                              :agg-type :avg)]
+                             (-> (get-store entity)
+                                 (store/aggregate
+                                   search-q
+                                   agg-q
+                                   identity-map)
+                                 (routes.common/format-agg-result :avg aggregate-on search-q)
+                                 routes.common/paginated-ok))))
+                    (GET "/histogram" []
                          :return MetricResult
-                         :summary (format (str "Average for some %s field. Use X-Total-Hits header on response for count used for average."
-                                               " For aggregate-on field X.Y.Z, response body will be {:data {:X {:Y {:Z <average>}}}}."
-                                               " If X-Total-Hits is 0, then average will be nil.")
-                                          capitalized)
-                         :query [params average-q-params]
+                         :summary (format "Histogram for some %s field" capitalized)
+                         :query [params histogram-q-params]
                          (let [aggregate-on (keyword (:aggregate-on params))
-                               date-field (or (get-in average-fields [aggregate-on :date-field])
-                                              ;; should never happen but a reasonable default
-                                              :created)
-                               search-q (search-query {:date-field date-field
+                               search-q (search-query {:date-field aggregate-on
                                                        :params (st/select-schema params agg-search-schema)
                                                        :make-date-range-fn coerce-date-range})
-                               agg-q (assoc (st/select-schema params AverageParams)
-                                            :agg-type :avg)]
+                               agg-q (assoc (st/select-schema params HistogramParams)
+                                            :agg-type :histogram)]
                            (-> (get-store entity)
                                (store/aggregate
                                  search-q
                                  agg-q
                                  identity-map)
-                               (routes.common/format-agg-result :avg aggregate-on search-q)
-                               routes.common/paginated-ok))))
-                  (GET "/histogram" []
-                       :return MetricResult
-                       :summary (format "Histogram for some %s field" capitalized)
-                       :query [params histogram-q-params]
-                       (let [aggregate-on (keyword (:aggregate-on params))
-                             search-q (search-query {:date-field aggregate-on
-                                                     :params (st/select-schema params agg-search-schema)
-                                                     :make-date-range-fn coerce-date-range})
-                             agg-q (assoc (st/select-schema params HistogramParams)
-                                          :agg-type :histogram)]
-                         (-> (get-store entity)
-                             (store/aggregate
-                               search-q
-                               agg-q
-                               identity-map)
-                             (routes.common/format-agg-result :histogram aggregate-on search-q)
-                             routes.common/paginated-ok)))
-                  (GET "/topn" []
-                       :return MetricResult
-                       :summary (format "Topn for some %s field" capitalized)
-                       :query [params topn-q-params]
-                       (let [aggregate-on (:aggregate-on params)
-                             search-q (search-query {:date-field date-field
-                                                     :params (st/select-schema params agg-search-schema)
-                                                     :make-date-range-fn coerce-date-range})
-                             agg-q (assoc (st/select-schema params TopnParams)
-                                          :agg-type :topn)]
-                         (-> (get-store entity)
-                             (store/aggregate
-                               search-q
-                               agg-q
-                               identity-map)
-                             (routes.common/format-agg-result :topn aggregate-on search-q)
-                             routes.common/paginated-ok)))
-                  (GET "/cardinality" []
-                       :return MetricResult
-                       :summary (format "Cardinality for some %s field" capitalized)
-                       :query [params cardinality-q-params]
-                       (let [aggregate-on (:aggregate-on params)
-                             search-q (search-query {:date-field date-field
-                                                     :params (st/select-schema params agg-search-schema)
-                                                     :make-date-range-fn coerce-date-range})
-                             agg-q (assoc (st/select-schema params CardinalityParams)
-                                          :agg-type :cardinality)]
-                         (-> (get-store entity)
-                             (store/aggregate
-                               search-q
-                               agg-q
-                               identity-map)
-                             (routes.common/format-agg-result :cardinality aggregate-on search-q)
-                             routes.common/paginated-ok))))))
+                               (routes.common/format-agg-result :histogram aggregate-on search-q)
+                               routes.common/paginated-ok)))
+                    (GET "/topn" []
+                         :return MetricResult
+                         :summary (format "Topn for some %s field" capitalized)
+                         :query [params topn-q-params]
+                         (let [aggregate-on (:aggregate-on params)
+                               search-q (search-query {:date-field date-field
+                                                       :params (st/select-schema params agg-search-schema)
+                                                       :make-date-range-fn coerce-date-range})
+                               agg-q (assoc (st/select-schema params TopnParams)
+                                            :agg-type :topn)]
+                           (-> (get-store entity)
+                               (store/aggregate
+                                 search-q
+                                 agg-q
+                                 identity-map)
+                               (routes.common/format-agg-result :topn aggregate-on search-q)
+                               routes.common/paginated-ok)))
+                    (GET "/cardinality" []
+                         :return MetricResult
+                         :summary (format "Cardinality for some %s field" capitalized)
+                         :query [params cardinality-q-params]
+                         (let [aggregate-on (:aggregate-on params)
+                               search-q (search-query {:date-field date-field
+                                                       :params (st/select-schema params agg-search-schema)
+                                                       :make-date-range-fn coerce-date-range})
+                               agg-q (assoc (st/select-schema params CardinalityParams)
+                                            :agg-type :cardinality)]
+                           (-> (get-store entity)
+                               (store/aggregate
+                                 search-q
+                                 agg-q
+                                 identity-map)
+                               (routes.common/format-agg-result :cardinality aggregate-on search-q)
+                               routes.common/paginated-ok)))))))
      (let [capabilities get-capabilities]
        (GET "/:id" []
             :return (s/maybe get-schema)
