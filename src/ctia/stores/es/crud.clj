@@ -601,7 +601,17 @@ It returns the documents with full hits meta data including the real index in wh
    (let [{:keys [services]} es-conn-state
          {{:keys [get-in-config]} :ConfigService} services
          {:keys [filter-map range full-text]} search-query
-         range-queries (map #(do {:range {(key %) (val %)}})
+         range-queries (map (fn [[field date-range]]
+                              (let [r {:range {field date-range}}]
+                                (if (some #(= \. %) (name field))
+                                  (let [nested-path (->> (string/split (name field) #"\.")
+                                                         pop
+                                                         (string/join ".")
+                                                         keyword)]
+                                    {:nested
+                                     {:path nested-path
+                                      :query {:bool {:filter [r]}}}})
+                                  r)))
                             range)
          filter-terms (-> (ensure-document-id-in-map filter-map)
                           q/prepare-terms)]

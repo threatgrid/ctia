@@ -770,39 +770,39 @@
                    ;; the average of intervals.<field> should involve <expected-count> incidents and
                    ;; have value <expected-average> between time window <from> and <to> (latter is optional).
                    (doseq [[_desc [field expected-count expected-average from to] :as test-case]
-                           {"match all incidents since all incidents are both created and opened in the period between creating the first incident and one-day-after-epoch"
+                           {"0) match all incidents since all incidents are both created and opened in the period between creating the first incident and one-day-after-epoch"
                             ["new_to_opened" 3 (avg first-new_to_opened second-new_to_opened third-new_to_opened) first-created]
-                            "match incidents 2-3 since they are both created and opened in the period between creating the second incident and one-day-after-epoch"
+                            "1) match incidents 2-3 since they are both created and opened in the period between creating the second incident and one-day-after-epoch"
                             ["new_to_opened" 2 (avg second-new_to_opened third-new_to_opened) second-created]
-                            "match zero incidents since none are both created and resolved in the period between creating the first two incidents"
+                            "2) match zero incidents since none are both created and resolved in the period between creating the first two incidents"
                             ["new_to_opened" 0 nil first-created (inc second-created)]
-                            "match first incident since no other incidents are both created and opened in the period between creating and opening the first incident"
+                            "3) match first incident since no other incidents are both created and opened in the period between creating and opening the first incident"
                             ["new_to_opened" 1 first-new_to_opened first-created (inc (+ first-created first-new_to_opened))]
-                            "match no incidents since no incidents are both created and opened in the period between creating the first incident and 1 second later"
+                            "4) match no incidents since no incidents are both created and opened in the period between creating the first incident and 1 second later"
                             ["new_to_opened" 0 nil first-created (inc first-created)]
-                            "match no incidents since no incidents are both created and opened in the period between creating the second incident and 1 second later"
+                            "5) match no incidents since no incidents are both created and opened in the period between creating the second incident and 1 second later"
                             ["new_to_opened" 0 nil second-created (inc second-created)]
-                            "match second incident since no other incidents are both created and opened in the period between creating and opening the second incident"
+                            "6) match second incident since no other incidents are both created and opened in the period between creating and opening the second incident"
                             ["new_to_opened" 1 second-new_to_opened second-created (inc (+ second-created second-new_to_opened))]
-                            "match no incidents since no incidents are both created and opened in the period between creating the third incident and 1 second later"
+                            "7) match no incidents since no incidents are both created and opened in the period between creating the third incident and 1 second later"
                             ["new_to_opened" 0 nil third-created (inc third-created)]
-                            "match third incident since all other incidents are created before the period between creating and opening the third incident"
+                            "8) match third incident since all other incidents are created before the period between creating and opening the third incident"
                             ["new_to_opened" 1 third-new_to_opened third-created (inc (+ third-created third-new_to_opened))]
-                            "new_to_opened: match third incident since all other incidents are created before creating the third incident"
+                            "9) new_to_opened: match third incident since all other incidents are created before creating the third incident"
                             ["new_to_opened" 1 third-new_to_opened third-created]
-                            "new_to_opened: match no incident since no incidents are created in the period between creating the third incident and one-day-after-epoch"
+                            "10) new_to_opened: match no incident since no incidents are created in the period between creating the third incident and one-day-after-epoch"
                             ["new_to_opened" 0 nil (inc third-created)]
-                            "match all incidents since all incidents are both created and closed in the period between creating the first incident and one-day-after-epoch"
+                            "11) match all incidents since all incidents are both created and closed in the period between creating the first incident and one-day-after-epoch"
                             ["opened_to_closed" 3 (avg first-opened_to_closed second-opened_to_closed third-opened_to_closed) first-created]
-                            "match incidents 1-2 since third incident is closed after the second incident is closed"
+                            "12) match incidents 1-2 since third incident is closed after the second incident is closed"
                             ["opened_to_closed" 2 (avg first-opened_to_closed second-opened_to_closed) first-created (inc (+ second-created second-opened_to_closed))]
-                            "match incidents 2-3 since first incident is created before the second incident is created"
+                            "13) match incidents 2-3 since first incident is created before the second incident is created"
                             ["opened_to_closed" 2 (avg second-opened_to_closed third-opened_to_closed) second-created]
-                            "match second incident since no other incidents are both created and closed in the period between creating and closing the second incident"
+                            "14) match second incident since no other incidents are both created and closed in the period between creating and closing the second incident"
                             ["opened_to_closed" 1 second-opened_to_closed second-created (inc (+ second-created second-opened_to_closed))]
-                            "opened_to_closed: match third incident since all other incidents are created before creating the third incident"
+                            "15) opened_to_closed: match third incident since all other incidents are created before creating the third incident"
                             ["opened_to_closed" 1 third-opened_to_closed third-created]
-                            "opened_to_closed: match no incident since no incidents are created in the period between creating the third incident and one-day-after-epoch"
+                            "16) opened_to_closed: match no incident since no incidents are created in the period between creating the third incident and one-day-after-epoch"
                             ["opened_to_closed" 0 nil (inc third-created)]}]
                      (testing (pr-str test-case)
                        (let [{:keys [parsed-body] :as raw} (GET app "ctia/incident/metric/average"
@@ -811,10 +811,10 @@
                                                                                        :from (+sec from)}
                                                                                 to (assoc :to (+sec to))))]
 
-                         (and (is (= 200 (:status raw)) (pr-str raw))
-                              (is (= expected-count (some-> (get-in raw [:headers "X-Total-Hits"]) Integer/parseInt))
-                                  raw)
-                              (is (= expected-average
-                                     (some-> (get-in parsed-body [:data :intervals (keyword field)]) Math/floor long))
-                                  (pr-str parsed-body))))))))))
+                         (when (is (= 200 (:status raw)) (pr-str raw))
+                           (is (= expected-count (some-> (get-in raw [:headers "X-Total-Hits"]) Integer/parseInt))
+                               raw)
+                           (is (= expected-average
+                                  (some-> (get-in parsed-body [:data :intervals (keyword field)]) Math/floor long))
+                               (pr-str parsed-body))))))))))
            (finally (purge-incidents! app))))))
