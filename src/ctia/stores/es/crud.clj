@@ -601,8 +601,8 @@ It returns the documents with full hits meta data including the real index in wh
    (let [{:keys [services]} es-conn-state
          {{:keys [get-in-config]} :ConfigService} services
          {:keys [filter-map range full-text]} search-query
-         range-query (when range
-                       {:range range})
+         range-queries (map #(do {:range {(key %) (val %)}})
+                            range)
          filter-terms (-> (ensure-document-id-in-map filter-map)
                           q/prepare-terms)]
      {:bool
@@ -610,7 +610,7 @@ It returns the documents with full hits meta data including the real index in wh
        (cond-> [(es.query/find-restriction-query-part ident get-in-config)]
          true (into extra-filters)
          (seq filter-map) (into filter-terms)
-         (seq range)      (conj range-query)
+         true (into range-queries)
          (seq full-text)  (into (es.query/refine-full-text-query-parts
                                   es-conn-state full-text)))}})))
 

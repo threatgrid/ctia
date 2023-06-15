@@ -193,6 +193,7 @@
   (let [full-text* (map #(assoc % :query_mode
                                 (get % :query_mode :query_string)) full-text)
         nested-fields (map keyword (str/split (name aggregate-on) #"\."))
+        _ (assert (apply = (vals range)))
         {from :gte to :lt} (-> range first val)
         filters (cond-> {:from from :to to}
                   (seq filter-map) (into filter-map)
