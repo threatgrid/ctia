@@ -157,7 +157,7 @@
      :lt to-or-now}))
 
 (s/defn search-query :- SearchQuery
-  ([{:keys [date-field make-date-range-fn]
+  ([{:keys [date-field date-fields make-date-range-fn]
      {:keys [query
              from to
              simple_query
@@ -173,7 +173,9 @@
    (let [filter-map (apply dissoc params filter-map-search-options)
          date-range (make-date-range-fn from to)]
      (cond-> {}
-       (seq date-range)        (assoc-in [:range date-field] date-range)
+       (seq date-range)        (update :range into (if date-field
+                                                     {date-field date-range}
+                                                     (zipmap date-fields (repeat date-range))))
        (seq filter-map)        (assoc :filter-map filter-map)
        (or query simple_query) (assoc :full-text
                                       (->> (cond-> []

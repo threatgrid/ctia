@@ -26,12 +26,17 @@
      :default_operator s/Str})))
 
 (s/defschema SearchQueryArgs
-  {:date-field s/Any
-   :params s/Any
-   (s/optional-key :make-date-range-fn) (s/=> RangeQueryOpt
-                                              (s/named (s/maybe s/Inst) 'from)
-                                              (s/named (s/maybe s/Inst) 'to))
-   (s/optional-key :sort-extension-definitions) SortExtensionDefinitions})
+  (let [m {;; only one of :date-field and :date-fields are allowed
+           :date-field s/Any
+           :date-fields [s/Any]
+           :params s/Any
+           (s/optional-key :make-date-range-fn) (s/=> RangeQueryOpt
+                                                      (s/named (s/maybe s/Inst) 'from)
+                                                      (s/named (s/maybe s/Inst) 'to))
+           (s/optional-key :sort-extension-definitions) SortExtensionDefinitions}]
+    (s/conditional
+      :date-field (s/dissoc m :date-fields)
+      :date-fields (s/dissoc m :date-field))))
 
 (s/defschema SearchQuery
   "components of a search query:

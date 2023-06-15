@@ -365,9 +365,15 @@
    :incident_time.rejected])
 
 (def incident-average-fields
-  {;; restrict to entities _created_ within from/to interval.
-   :intervals.new_to_opened {:date-field :created}
-   :intervals.opened_to_closed {:date-field :created}})
+  {;; restrict to entities both created and acted upon within the from/to interval
+   :intervals.new_to_opened {:date-fields #{:created :intervals.new_to_opened}
+                             :doc (str "When aggregate-on=intervals.new_to_opened, returns the average number of "
+                                       "seconds between creating and opening incidents and were both created and opened "
+                                       "within the from/to interval.")}
+   :intervals.opened_to_closed {:date-fields #{:created :intervals.opened_to_closed}
+                                :doc (str "When aggregate-on=intervals.opened_to_closed, returns the average number of "
+                                          "seconds between opening and closing incidents and were both created and closed "
+                                          "within the from/to interval.")}})
 
 (s/defschema IncidentFieldsParam
   {(s/optional-key :fields) [(apply s/enum incident-fields)]})

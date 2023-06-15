@@ -132,7 +132,8 @@
 
 (s/defschema EntityCrudRoutesArgs
   {(s/optional-key :sort-extension-definitions) SortExtensionDefinitions
-   (s/optional-key :average-fields) {s/Keyword {:date-field s/Keyword}}
+   (s/optional-key :average-fields) {s/Keyword {:date-fields #{s/Keyword}
+                                                :doc s/Str}}
    s/Any s/Any})
 
 (s/defn ^:private entity-crud-routes
@@ -205,15 +206,8 @@
                                                         "The field to compute an average over. `from` and `to` are dates to narrow the "
                                                         "entities used in this calculation.\n\n"
                                                         (->> average-fields
-                                                             (map (fn [[aggregate-on {:keys [date-field]}]]
-                                                                    (str "When aggregate-on=" (name aggregate-on)
-                                                                         ", from/to filters on "
-                                                                         (case date-field
-                                                                           ;; :created is internal
-                                                                           :created " when the incident was first ingested in CTIA"
-                                                                           (name date-field))
-                                                                         ".")))
-                                                             (str/join " "))))
+                                                             (map :doc)
+                                                             (str/join "\n\n"))))
                          :from (describe s/Inst "Start date of the average. See `aggregate-on` doc for which field is used to filter.")
                          (s/optional-key :to) (describe s/Inst "End date of the average. See `aggregate-on` doc for which field is used to filter.")}
         average-q-params (st/merge agg-search-schema
@@ -434,14 +428,12 @@
                            :return MetricResult
                            :summary (format (str "Average for some %s field. Use X-Total-Hits header on response for count used for average."
                                                  " For aggregate-on field X.Y.Z, response body will be {:data {:X {:Y {:Z <average>}}}}."
-                                                 " If X-Total-Hits is 0, then average will be nil.")
+                                                 " If X-Total-Hits is 0, then average will be nil. See aggregate-on for more information on specific metrics.")
                                             capitalized)
                            :query [params average-q-params]
                            (let [aggregate-on (keyword (:aggregate-on params))
-                                 date-field (or (get-in average-fields [aggregate-on :date-field])
-                                                ;; should never happen but a reasonable default
-                                                :created)
-                                 search-q (search-query {:date-field date-field
+                                 date-fields (get-in average-fields [aggregate-on :date-fields])
+                                 search-q (search-query {:date-fields date-fields
                                                          :params (st/select-schema params agg-search-schema)
                                                          :make-date-range-fn coerce-date-range})
                                  agg-q (assoc (st/select-schema params AverageParams)
