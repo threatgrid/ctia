@@ -28,7 +28,7 @@
 (s/defschema SearchQueryArgs
   (let [m {;; only one of :date-field and :date-fields are allowed
            :date-field s/Any
-           :date-fields [s/Any]
+           :date-fields #{s/Any}
            :params s/Any
            (s/optional-key :make-date-range-fn) (s/=> RangeQueryOpt
                                                       (s/named (s/maybe s/Inst) 'from)
