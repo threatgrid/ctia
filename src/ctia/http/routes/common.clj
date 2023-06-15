@@ -173,9 +173,9 @@
    (let [filter-map (apply dissoc params filter-map-search-options)
          date-range (make-date-range-fn from to)]
      (cond-> {}
-       (seq date-range)        (update :range into (if date-field
-                                                     {date-field date-range}
-                                                     (zipmap date-fields (repeat date-range))))
+       (seq date-range)        (assoc :range (if date-field
+                                               {date-field date-range}
+                                               (zipmap date-fields (repeat date-range))))
        (seq filter-map)        (assoc :filter-map filter-map)
        (or query simple_query) (assoc :full-text
                                       (->> (cond-> []
