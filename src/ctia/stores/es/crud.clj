@@ -601,8 +601,6 @@ It returns the documents with full hits meta data including the real index in wh
    (let [{:keys [services]} es-conn-state
          {{:keys [get-in-config]} :ConfigService} services
          {:keys [filter-map range full-text]} search-query
-         ;;for a real implementation, queries in the same nesting must be grouped, and
-         ;; recursive nestings must be nested in the final query.
          range-queries (map (fn [[field date-range]]
                               {:range {field date-range}})
                             range)
