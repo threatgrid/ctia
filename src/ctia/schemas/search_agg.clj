@@ -35,8 +35,8 @@
                                                       (s/named (s/maybe s/Inst) 'to))
            (s/optional-key :sort-extension-definitions) SortExtensionDefinitions}]
     (s/conditional
-      :date-field (s/dissoc m :date-fields)
-      :date-fields (s/dissoc m :date-field))))
+      :date-field (st/dissoc m :date-fields)
+      :date-fields (st/dissoc m :date-field))))
 
 (s/defschema SearchQuery
   "components of a search query:
