@@ -1,5 +1,6 @@
 (ns generate-incidents.script
-  (:require [babashka.curl :as curl]
+  (:require [clojure.pprint :as pprint]
+            [babashka.curl :as curl]
             [babashka.http-client :as http]
             [cheshire.core :as json]))
 
@@ -15,12 +16,12 @@
      :discovery_method    "Log Review"
      :external_ids        []
      :external_references []
-     :incident_time       {:closed     "2016-02-11T00:40:48Z"
-                           :discovered "2016-02-11T00:40:48Z"
-                           :opened     "2016-02-11T00:40:48Z"
-                           :rejected   "2016-02-11T00:40:48Z"
-                           :remediated "2016-02-11T00:40:48Z"
-                           :reported   "2016-02-11T00:40:48Z"}
+     :incident_time       {:closed     "2023-06-16T00:40:48Z"
+                           :discovered "2023-06-14T00:40:48Z"
+                           :opened     "2023-06-15T16:40:48Z"
+                           :rejected   "2023-06-11T00:40:48Z"
+                           :remediated "2023-06-11T00:40:48Z"
+                           :reported   "2023-06-11T00:40:48Z"}
      :intended_effect     "Extortion"
      :language            "language"
      :revision            1
@@ -29,7 +30,7 @@
      :source              "source"
      :source_uri          "http://example.com/incident-one"
      :status              "Open"
-     :timestamp           "2016-02-11T00:40:48Z"
+     :timestamp           "2023-06-11T00:40:48Z"
      :title               "alpha one"
      :tlp                 "green"
      :type                "incident"}
@@ -40,12 +41,12 @@
      :discovery_method    "Log Review"
      :external_ids        []
      :external_references []
-     :incident_time       {:closed     "2016-02-11T00:40:48Z"
-                           :discovered "2016-02-11T00:40:48Z"
-                           :opened     "2016-02-11T00:40:48Z"
-                           :rejected   "2016-02-11T00:40:48Z"
-                           :remediated "2016-02-11T00:40:48Z"
-                           :reported   "2016-02-11T00:40:48Z"}
+     :incident_time       {:closed     "2023-06-16T00:40:48Z"
+                           :discovered "2023-06-14T00:40:48Z"
+                           :opened     "2023-06-17T15:40:48Z"
+                           :rejected   "2023-06-11T00:40:48Z"
+                           :remediated "2023-06-11T00:40:48Z"
+                           :reported   "2023-06-11T00:40:48Z"}
      :intended_effect     "Extortion"
      :language            "language"
      :revision            1
@@ -54,23 +55,23 @@
      :source              "source"
      :source_uri          "http://example.com/incident-two"
      :status              "Open"
-     :timestamp           "2016-02-11T00:40:48Z"
+     :timestamp           "2023-06-11T00:40:48Z"
      :title               "alpha two"
      :tlp                 "green"
      :type                "incident"}
-    {:assignees           []
+    #_{:assignees           []
      :categories          ["Denial of Service" "Improper Usage"]
      :confidence          "High"
      :description         "third incident"
      :discovery_method    "Log Review"
      :external_ids        []
      :external_references []
-     :incident_time       {:closed     "2016-02-11T00:40:48Z"
-                           :discovered "2016-02-11T00:40:48Z"
-                           :opened     "2016-02-11T00:40:48Z"
-                           :rejected   "2016-02-11T00:40:48Z"
-                           :remediated "2016-02-11T00:40:48Z"
-                           :reported   "2016-02-11T00:40:48Z"}
+     :incident_time       {:closed     "2023-06-11T00:40:48Z"
+                           :discovered "2023-06-11T00:40:48Z"
+                           :opened     "2023-06-11T00:40:48Z"
+                           :rejected   "2023-06-11T00:40:48Z"
+                           :remediated "2023-06-11T00:40:48Z"
+                           :reported   "2023-06-11T00:40:48Z"}
      :intended_effect     "Extortion"
      :language            "language"
      :revision            1
@@ -79,23 +80,23 @@
      :source              "source"
      :source_uri          "http://example.com/incident-three"
      :status              "Open"
-     :timestamp           "2016-02-11T00:40:48Z"
+     :timestamp           "2023-06-11T00:40:48Z"
      :title               "beta one"
      :tlp                 "green"
      :type                "incident"}
-    {:assignees           []
+    #_{:assignees           []
      :categories          ["Denial of Service" "Improper Usage"]
      :confidence          "High"
      :description         "fourth incident"
      :discovery_method    "Log Review"
      :external_ids        []
      :external_references []
-     :incident_time       {:closed     "2016-02-11T00:40:48Z"
-                           :discovered "2016-02-11T00:40:48Z"
-                           :opened     "2016-02-11T00:40:48Z"
-                           :rejected   "2016-02-11T00:40:48Z"
-                           :remediated "2016-02-11T00:40:48Z"
-                           :reported   "2016-02-11T00:40:48Z"}
+     :incident_time       {:closed     "2023-06-11T00:40:48Z"
+                           :discovered "2023-06-11T00:40:48Z"
+                           :opened     "2023-06-11T00:40:48Z"
+                           :rejected   "2023-06-11T00:40:48Z"
+                           :remediated "2023-06-11T00:40:48Z"
+                           :reported   "2023-06-11T00:40:48Z"}
      :intended_effect     "Extortion"
      :language            "language"
      :revision            1
@@ -104,17 +105,18 @@
      :source              "source"
      :source_uri          "http://example.com/incident-four"
      :status              "Open"
-     :timestamp           "2016-02-11T00:40:48Z"
+     :timestamp           "2023-06-11T00:40:48Z"
      :title               "beta two"
      :tlp                 "green"
-     :type                "incident"}]
+     :type                "incident"}
+    ]
    :language          "language"
    :revision          1
    :schema_version    "1.1.3"
    :short_description "bundle"
    :source            "source"
    :source_uri        "http://example.com"
-   :timestamp         "2016-02-11T00:40:48Z"
+   :timestamp         "2023-06-11T00:40:48Z"
    :title             "title"
    :tlp               "green"
    :valid_time        {:end_time   "2016-07-11T00:40:48Z"
@@ -127,7 +129,7 @@
 (def api-root "https://visibility.int.iroh.site")
 
 (defn get-jwt []
-  (->
+  #_(->
    (http/post
     (format "%s/iroh/oauth2/token" api-root)
     {:headers {"content-type" "application/x-www-form-urlencoded"}
@@ -137,8 +139,10 @@
                    {:grant_type "client_credentials"})})
    :body
    (json/parse-string true)
-   :access_token))
-(format "Bearer %s" (get-jwt))
+   :access_token)
+  (System/getenv "SECUREX_BEARER_TOKEN"))
+
+#_(format "Bearer %s" (get-jwt))
 
 (defn import-incidents []
   (->
@@ -155,7 +159,7 @@
 (defn find-incidents []
   (->
    (http/get
-    (format "%s/iroh/private-intel/incident/search" api-root)
+    (format "%s/iroh/private-intel/incident/search?from=2023-05-16T21:47:00.000Z" api-root)
     {:headers {"Content-Type" "application/json"
                "Authorization" (format "Bearer %s" (get-jwt))}})
    :body
@@ -172,4 +176,18 @@
    :body
    (json/parse-string true)))
 
-(get-incident "incident-98b203a4-4b5e-466b-aa31-d876b7841774")
+#_(pprint/pprint (get-incident "incident-98b203a4-4b5e-466b-aa31-d876b7841774"))
+
+;; -------------------
+;; commands to execute
+;; -------------------
+
+(pprint/pprint (import-incidents))
+#_(pprint/pprint (find-incidents))
+
+;; -------------------
+;; to run the script:
+;;
+;; $ bb -f script.clj
+;;
+;; -------------------
