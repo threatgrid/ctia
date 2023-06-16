@@ -796,11 +796,15 @@
                              "11) match all incidents since all incidents are both created and closed in the period between creating the first incident and one-day-after-epoch"
                              ["opened_to_closed" 3 (avg first-opened_to_closed second-opened_to_closed third-opened_to_closed) first-created]
                              "12) match incidents 1-2 since third incident is closed after the second incident is closed"
-                             ["opened_to_closed" 2 (avg first-opened_to_closed second-opened_to_closed) first-created (inc (+ second-created second-opened_to_closed))]
+                             ["opened_to_closed" 2 (avg first-opened_to_closed second-opened_to_closed) first-created (inc (+ second-created
+                                                                                                                              second-new_to_opened
+                                                                                                                              second-opened_to_closed))]
                              "13) match incidents 2-3 since first incident is created before the second incident is created"
                              ["opened_to_closed" 2 (avg second-opened_to_closed third-opened_to_closed) second-created]
                              "14) match second incident since no other incidents are both created and closed in the period between creating and closing the second incident"
-                             ["opened_to_closed" 1 second-opened_to_closed second-created (inc (+ second-created second-opened_to_closed))]
+                             ["opened_to_closed" 1 second-opened_to_closed second-created (inc (+ second-created
+                                                                                                  second-new_to_opened
+                                                                                                  second-opened_to_closed))]
                              "15) opened_to_closed: match third incident since all other incidents are created before creating the third incident"
                              ["opened_to_closed" 1 third-opened_to_closed third-created]
                              "16) opened_to_closed: match no incident since no incidents are created in the period between creating the third incident and one-day-after-epoch"

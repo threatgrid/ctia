@@ -366,11 +366,11 @@
 
 (def incident-average-fields
   {;; restrict to entities both created and acted upon within the from/to interval
-   :intervals.new_to_opened {:date-fields #{:created :intervals.new_to_opened}
+   :intervals.new_to_opened {:date-fields #{:created :incident_time.opened}
                              :doc (str "When aggregate-on=intervals.new_to_opened, returns the average number of "
                                        "seconds between creating and opening incidents and were both created and opened "
                                        "within the from/to interval.")}
-   :intervals.opened_to_closed {:date-fields #{:created :intervals.opened_to_closed}
+   :intervals.opened_to_closed {:date-fields #{:created :incident_time.closed}
                                 :doc (str "When aggregate-on=intervals.opened_to_closed, returns the average number of "
                                           "seconds between opening and closing incidents and were both created and closed "
                                           "within the from/to interval.")}})
