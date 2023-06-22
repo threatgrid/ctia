@@ -1,0 +1,33 @@
+name: woke linter tool
+
+on:
+  push:
+    branches: [ "master" ]
+
+jobs:
+  woke:
+    name: woke
+    runs-on: ubuntu-latest
+    env:
+      WEBEX_OPSROOMID: "a34fd430-f65e-11ed-8216-57006ce5beb1"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3.5.2
+      - name: woke
+        uses: get-woke/woke-action@v0
+        with:
+          # Cause the check to fail on any broke rules
+          fail-on-error: true
+          woke-args: -c https://raw.githubusercontent.com/cisco-open/inclusive-language/main/cisco-rules.yaml --disable-default-rules
+      - name: webex success notification
+        if: ${{ success() }}
+        run: |
+             curl -X POST -H "Authorization:Bearer ${{ secrets.WEBEX_TOKEN }}" --form "roomId=$WEBEX_OPSROOMID" --form "markdown=🟢  Woke tool - No inclusive language errors! Thanks! | Job Number: ${{ github.run_number }} | URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" ${{ secrets.WEBEX_URL }}
+      - name: webex fail notification
+        if: ${{ steps.woke.outcome == 'failure' }}
+        run: |
+             curl -X POST -H "Authorization:Bearer ${{ secrets.WEBEX_TOKEN }}" --form "roomId=$WEBEX_OPSROOMID" --form "markdown=❌ Woke tool - Found inclusive language Errors! Please check the code! | Job Number: ${{ github.run_number }} | URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" ${{ secrets.WEBEX_URL }}
+      - name: webex cancelled notification
+        if: ${{ cancelled() }}
+        run: |
+             curl -X POST -H "Authorization:Bearer ${{ secrets.WEBEX_TOKEN }}" --form "roomId=$WEBEX_OPSROOMID" --form "markdown=🟡  Woke tool Job cancelled! | Job Number: ${{ github.run_number }} | URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" ${{ secrets.WEBEX_URL }}
