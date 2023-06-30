@@ -1,17 +1,24 @@
 (ns ctia.entity.incident
   (:require
-   [clojure.string :as str]
-   [java-time.api :as jt]
    [clj-momo.lib.clj-time.core :as time]
+   [clj-time.core :as clj-time]
+   [clojure.string :as str]
    [ctia.domain.entities
     :refer [default-realize-fn un-store with-long-id]]
    [ctia.entity.feedback.graphql-schemas :as feedback]
    [ctia.entity.relationship.graphql-schemas :as relationship-graphql]
    [ctia.flows.crud :as flows]
+   [ctia.flows.schemas :refer [with-error]]
+   [ctia.graphql.delayed :as delayed]
    [ctia.http.routes.common :as routes.common]
    [ctia.http.routes.crud :as routes.crud]
    [ctia.lib.compojure.api.core :refer [POST routes]]
-   [ctia.schemas.core :refer [APIHandlerServices def-acl-schema def-stored-schema SortExtensionDefinitions]]
+   [ctia.schemas.core :refer [APIHandlerServices
+                              GraphQLRuntimeContext
+                              RealizeFnResult
+                              SortExtensionDefinitions
+                              def-acl-schema def-stored-schema
+                              lift-realize-fn-with-context]]
    [ctia.schemas.graphql.flanders :as flanders]
    [ctia.schemas.graphql.helpers :as g]
    [ctia.schemas.graphql.ownership :as go]
@@ -24,6 +31,7 @@
    [ctim.schemas.vocabularies :as vocs]
    [flanders.schema :as fs]
    [flanders.utils :as fu]
+   [java-time.api :as jt]
    [ring.swagger.schema :refer [describe]]
    [ring.util.http-response :refer [not-found ok]]
    [schema-tools.core :as st]
@@ -67,8 +75,23 @@
 (s/defschema ESPartialStoredIncident
   (st/optional-keys-schema ESStoredIncident))
 
-(def realize-incident
+(def incident-default-realize
   (default-realize-fn "incident" NewIncident StoredIncident))
+
+(s/defn realize-incident
+  :- (RealizeFnResult (with-error StoredIncident))
+  [{:keys [timestamp]
+    :as new-entity}
+   id tempids & rest-args]
+  (delayed/fn :- (with-error StoredIncident)
+    [rt-ctx :- GraphQLRuntimeContext]
+    (let [e (-> incident-default-realize
+                (lift-realize-fn-with-context rt-ctx)
+                (apply new-entity id tempids rest-args)
+                (assoc :timestamp (or timestamp (clj-time/now))))]
+      (clojure.pprint/pprint e)
+
+      e)))
 
 (s/defschema IncidentStatus
   (fs/->schema vocs/Status))
