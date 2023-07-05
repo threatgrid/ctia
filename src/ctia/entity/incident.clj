@@ -80,16 +80,16 @@
 
 (s/defn realize-incident
   :- (RealizeFnResult (with-error StoredIncident))
-  [{:keys [timestamp]
-    :as new-entity}
-   id tempids & rest-args]
+  [new-obj id tempids ident-map & [prev-obj]]
   (delayed/fn :- (with-error StoredIncident)
     [rt-ctx :- GraphQLRuntimeContext]
-    (let [e (-> incident-default-realize
-                (lift-realize-fn-with-context rt-ctx)
-                (apply new-entity id tempids rest-args)
-                (assoc :timestamp (or timestamp (clj-time/now))))]
-      (clojure.pprint/pprint e)
+    (let [rfn (lift-realize-fn-with-context
+               incident-default-realize rt-ctx)
+          e (-> (rfn new-obj id tempids ident-map prev-obj)
+                #_(assoc :timestamp
+                         (or (:timestamp new-obj)
+                             (:timestamp prev-obj)
+                             (clj-time/now))))]
 
       e)))
 
