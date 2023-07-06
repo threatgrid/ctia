@@ -1,7 +1,6 @@
 (ns ctia.entity.incident
   (:require
    [clj-momo.lib.clj-time.core :as time]
-   [clj-time.core :as clj-time]
    [clojure.string :as str]
    [ctia.domain.entities
     :refer [default-realize-fn un-store with-long-id]]
@@ -85,13 +84,12 @@
     [rt-ctx :- GraphQLRuntimeContext]
     (let [rfn (lift-realize-fn-with-context
                incident-default-realize rt-ctx)
-          e (-> (rfn new-obj id tempids ident-map prev-obj)
-                #_(assoc :timestamp
-                         (or (:timestamp new-obj)
-                             (:timestamp prev-obj)
-                             (clj-time/now))))]
-
-      e)))
+          now (time/internal-now)]
+      (-> (rfn new-obj id tempids ident-map prev-obj)
+          (assoc :timestamp
+                 (or (:timestamp new-obj)
+                     (:timestamp prev-obj)
+                     now))))))
 
 (s/defschema IncidentStatus
   (fs/->schema vocs/Status))

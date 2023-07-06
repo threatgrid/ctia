@@ -1,9 +1,9 @@
 (ns ctia.entity.incident-test
   (:require [cemerick.uri :as uri]
-            [clojure.set :as set]
             [clj-momo.lib.clj-time.coerce :as tc]
             [clj-momo.lib.clj-time.core :as t]
             [clj-momo.test-helpers.core :as mth]
+            [clojure.set :as set]
             [clojure.test :refer [deftest is join-fixtures testing use-fixtures]]
             [clojure.test.check.generators :as gen]
             [com.gfredericks.test.chuck.clojure-test :refer [checking]]
@@ -20,15 +20,16 @@
             [ctia.test-helpers.fake-whoami-service :as whoami-helpers]
             [ctia.test-helpers.search :as search-th]
             [ctia.test-helpers.store :refer [test-for-each-store-with-app]]
+            [ctim.domain.id :as id]
             [ctim.examples.bundles :refer [new-bundle-minimal]]
             [ctim.examples.incidents
              :refer
              [new-incident-maximal new-incident-minimal incident-minimal]]
             ductile.index
+            [java-time.api :as jt]
             [puppetlabs.trapperkeeper.app :as app]
-            [schema.core :as s]
             [schema-tools.core :as st]
-            [java-time.api :as jt]))
+            [schema.core :as s]))
 
 (use-fixtures :once (join-fixtures [mth/fixture-schema-validation
                                     whoami-helpers/fixture-server]))
@@ -795,3 +796,29 @@
                                      (some-> (get-in parsed-body [:data :intervals (keyword field)]) Math/floor long))
                                   (pr-str parsed-body))))))))))
            (finally (purge-incidents! app))))))
+
+(deftest incident-realize-timestamp-test
+  (testing "Ensure that Incident timestamps remain unchanged."
+    (test-for-each-store-with-app
+     (fn [app]
+       (helpers/set-capabilities! app "foouser" ["foogroup"] "user" all-capabilities)
+       (whoami-helpers/set-whoami-response app "45c1f5e3f05d0" "foouser" "foogroup" "user")
+       (let [incidents #{(gen-new-incident)}
+             ext-key-prefixes nil
+             auth-ident (auth/map->Identity {:login "foouser"
+                                             :groups ["foogroup"]})
+             imported (bundle/import-bundle
+                       (-> new-bundle-minimal
+                           (dissoc :id)
+                           (assoc :incidents incidents))
+                       ext-key-prefixes
+                       auth-ident
+                       (app/service-graph app))]
+         (let [incident-id (->> imported :results first :id id/long-id->id :short-id)
+               statuses ["New" "Open" "Stalled" "Incident Reported"]
+               timestamps (->>
+                           statuses
+                           (map #(post-status app incident-id %))
+                           (map (comp :timestamp :parsed-body))
+                           doall)]
+           (is (apply = timestamps))))))))
