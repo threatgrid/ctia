@@ -13,7 +13,6 @@
   [& body]
   `(DelayedGraphQLWrapper.
      (s/fn ~@body)))
-
 (defn unwrap
   [^DelayedGraphQLWrapper v]
   (.f v))

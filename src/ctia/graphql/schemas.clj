@@ -177,22 +177,28 @@
   [{{:keys [entity-enabled?]} :FeaturesService}]
   (->> (entities/all-entities)
        keys
-       (remove entity-enabled?)))
+       (filter #(not (entity-enabled? %)))))
 
 (defn- entities+plural-forms
   "Gets map of entity keys with their plural forms."
   []
-  (update-vals (entities/all-entities) :plural))
+  (let [ents (entities/all-entities)]
+    (->> ents
+         vals
+         (map :plural)
+         (zipmap (keys ents)))))
 
 (defn- remove-disabled
   "Removes GraphQl fields of keys of disabled entities."
   [services graphql-fields]
-  (let [ents (entities+plural-forms)]
-    (reduce (fn [graphql-fields n]
-              (let [plural (-> ents n dash->underscore)]
-                (dissoc graphql-fields (dash->underscore n) plural)))
-            graphql-fields
-            (disabled-entities services))))
+  (let [ents     (entities+plural-forms)
+        +plurals (reduce
+                  (fn [a n] (let [k      (dash->underscore n)
+                                  plural (-> ents n dash->underscore)]
+                              (into a [k plural])))
+                  []
+                  (disabled-entities services))]
+    (apply dissoc graphql-fields +plurals)))
 
 (s/defn QueryType :- (RealizeFnResult GraphQLObjectType)
   [services :- APIHandlerServices]
