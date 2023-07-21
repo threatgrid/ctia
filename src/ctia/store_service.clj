@@ -16,13 +16,10 @@
   StoreService
   [[:ConfigService get-in-config]
    [:FeaturesService flag-value]]
-  (init [this context]
-        (core/init context))
-  (start [this context]
+  (start [this _]
          (core/start
           {:ConfigService {:get-in-config get-in-config}
-           :FeaturesService {:flag-value flag-value}}
-          context))
+           :FeaturesService {:flag-value flag-value}}))
   (stop [this context]
         (core/stop context))
 

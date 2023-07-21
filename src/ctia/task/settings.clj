@@ -7,7 +7,7 @@
             [ctia.stores.es.schemas :refer [ESConnServices]]
             [ctia.init :refer [log-properties]]
             [ctia.properties :as p]
-            [ctia.store :refer [empty-stores]]
+            [ctia.store :refer [known-stores]]
             [schema.core :as s]))
 
 (s/defn update-stores!
@@ -22,7 +22,7 @@
 (def cli-options
   [["-h" "--help"]
    ["-s" "--stores STORES" "comma separated list of store names"
-    :default (set (keys empty-stores))
+    :default known-stores
     :parse-fn #(map keyword (str/split % #","))]])
 
 (defn -main [& args]
