@@ -36,8 +36,7 @@
                                                       #(deref graphql-prm)))]
                            (deliver server-prm (new-jetty-instance http-config services))
                            (deliver graphql-prm
-                                    (-> (doto (graphql.schemas/graphql services)
-                                          (->> (str "BEFORE RESOLVE ") log/info))
+                                    (-> (graphql.schemas/graphql services)
                                         (resolve-with-rt-ctx
                                           {:services (APIHandlerServices->RealizeFnServices
                                                        services)})))
