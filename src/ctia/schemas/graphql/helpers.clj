@@ -78,11 +78,6 @@
   []
   (atom {}))
 
-;; TODO move to Trapperkeeper service
-(s/def default-named-type-registry
-  :- NamedTypeRegistry
-  (create-named-type-registry))
-
 (defprotocol ConvertibleToJava
   (->java [o] "convert clojure data structure to java object"))
 
@@ -432,8 +427,7 @@
                         (add-fields fields rt-ctx))]
         (doseq [^GraphQLInterfaceType interface interfaces]
           (.withInterface builder interface))
-        (let [obj (.build builder)]
-          obj)))))
+        (.build builder)))))
 
 (s/defn fn->type-resolver :- TypeResolver
   "Converts a function that takes the current object, the args

@@ -177,28 +177,22 @@
   [{{:keys [entity-enabled?]} :FeaturesService}]
   (->> (entities/all-entities)
        keys
-       (filter #(not (entity-enabled? %)))))
+       (remove entity-enabled?)))
 
 (defn- entities+plural-forms
   "Gets map of entity keys with their plural forms."
   []
-  (let [ents (entities/all-entities)]
-    (->> ents
-         vals
-         (map :plural)
-         (zipmap (keys ents)))))
+  (update-vals (entities/all-entities) :plural))
 
 (defn- remove-disabled
   "Removes GraphQl fields of keys of disabled entities."
   [services graphql-fields]
-  (let [ents     (entities+plural-forms)
-        +plurals (reduce
-                  (fn [a n] (let [k      (dash->underscore n)
-                                  plural (-> ents n dash->underscore)]
-                              (into a [k plural])))
-                  []
-                  (disabled-entities services))]
-    (apply dissoc graphql-fields +plurals)))
+  (let [ents (entities+plural-forms)]
+    (reduce (fn [graphql-fields n]
+              (let [plural (-> ents n dash->underscore)]
+                (dissoc graphql-fields (dash->underscore n) plural)))
+            graphql-fields
+            (disabled-entities services))))
 
 (s/defn QueryType :- (RealizeFnResult GraphQLObjectType)
   [services :- APIHandlerServices]
@@ -206,7 +200,9 @@
    "Root"
    ""
    []
-   (remove-disabled services graphql-fields)))
+   ;;FIXME removing some entities doesn't work. run ctia.entity.incident-test/test-incident-crud-routes
+   graphql-fields
+   #_(remove-disabled services graphql-fields)))
 
 (s/defn schema :- (RealizeFnResult GraphQLSchema)
   [services :- APIHandlerServices]
