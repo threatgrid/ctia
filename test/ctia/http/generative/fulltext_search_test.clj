@@ -424,11 +424,10 @@
   store-service/StoreService
   [[:ConfigService get-in-config]
    [:FeaturesService flag-value]]
-  (start [this context] (store-svc-core/start
-                         {:ConfigService {:get-in-config get-in-config}
-                          :FeaturesService {:entity-enabled? (constantly true)
-                                            :flag-value flag-value}}
-                         context))
+  (start [this _] (store-svc-core/start
+                    {:ConfigService {:get-in-config get-in-config}
+                     :FeaturesService {:entity-enabled? (constantly true)
+                                       :flag-value flag-value}}))
   (stop [this context] (store-svc-core/stop context))
   (all-stores [this]
               (store-svc-core/all-stores (tk-svcs/service-context this)))
