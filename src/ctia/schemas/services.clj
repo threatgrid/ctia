@@ -13,5 +13,5 @@
                          [[s/Any] s/Any])})
 
 (s/defschema FeaturesServiceFns
-  {:entity-enabled? (s/=> s/Bool)
+  {:entity-enabled? (s/=> s/Bool s/Keyword)
    :flag-value (s/=> s/Any)})
