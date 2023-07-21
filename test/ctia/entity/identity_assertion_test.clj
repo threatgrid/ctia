@@ -59,6 +59,7 @@
 
 (deftest test-identity-assertion-routes
   (test-for-each-store-with-app
+    ;;TODO :identity-assertion is next
    (fn [app]
      (helpers/set-capabilities! app "foouser" ["foogroup"] "user" all-capabilities)
      (whoami-helpers/set-whoami-response app
