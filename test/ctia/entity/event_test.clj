@@ -389,7 +389,6 @@
 
 (deftest test-event-diffs
   (test-for-each-store-with-app
-   #{:incident}
    (fn [app]
      (helpers/set-capabilities! app
                                 "user1"
