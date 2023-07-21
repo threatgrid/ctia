@@ -24,4 +24,4 @@
 
 (s/defschema StoreServiceCtx
   "The service-context for StoreService."
-  {:stores-atom Stores})
+  {:stores Stores})
