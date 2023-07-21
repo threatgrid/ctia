@@ -228,6 +228,7 @@
 
 (deftest test-feed-routes
   (test-for-each-store-with-app
+   #{:feed :indicator :judgement :relationship}
    (fn [app]
      (helpers/set-capabilities! app
                                 "foouser"
@@ -270,4 +271,4 @@
                        new-feed-minimal
                        true
                        true
-                       test-for-each-store-with-app))
+                       (partial test-for-each-store-with-app #{:feed})))

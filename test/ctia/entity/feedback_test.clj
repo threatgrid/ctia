@@ -39,6 +39,7 @@
 
 (deftest test-feedback-routes
   (test-for-each-store-with-app
+   #{:feedback}
    (fn [app]
      (helpers/set-capabilities! app "foouser" ["foogroup"] "user" all-capabilities)
      (helpers/set-capabilities! app "baruser" ["bargroup"] "user" #{})

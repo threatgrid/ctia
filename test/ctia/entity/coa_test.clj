@@ -16,6 +16,7 @@
 
 (deftest test-coa-crud-routes
   (test-for-each-store-with-app
+   #{:coa}
    (fn [app]
      (helpers/set-capabilities! app "foouser" ["foogroup"] "user" all-capabilities)
      (whoami-helpers/set-whoami-response app
@@ -34,7 +35,7 @@
                        new-coa-minimal
                        true
                        true
-                       test-for-each-store-with-app))
+                       (partial test-for-each-store-with-app #{:coa})))
 
 (deftest test-coa-metric-routes
   (test-metric-routes (into sut/coa-entity

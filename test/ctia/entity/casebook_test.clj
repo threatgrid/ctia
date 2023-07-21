@@ -282,6 +282,7 @@
 
 (deftest test-casebook-routes
   (test-for-each-store-with-app
+   #{:casebook}
    (fn [app]
      (helpers/set-capabilities! app
                                 "foouser"
@@ -307,7 +308,7 @@
                        new-casebook-minimal
                        true
                        true
-                       test-for-each-store-with-app))
+                       (partial test-for-each-store-with-app #{:casebook})))
 
 (deftest test-casebook-metric-routes
   (test-metric-routes (into sut/casebook-entity

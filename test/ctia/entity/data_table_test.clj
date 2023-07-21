@@ -31,6 +31,7 @@
 
 (deftest test-data-table-routes
   (test-for-each-store-with-app
+   #{:data-table}
    (fn [app]
      (helpers/set-capabilities! app "foouser" ["foogroup"] "user" all-capabilities)
      (whoami-helpers/set-whoami-response app
