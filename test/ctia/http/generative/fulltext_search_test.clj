@@ -424,7 +424,6 @@
   store-service/StoreService
   [[:ConfigService get-in-config]
    [:FeaturesService flag-value]]
-  (init [this context] (store-svc-core/init context))
   (start [this context] (store-svc-core/start
                          {:ConfigService {:get-in-config get-in-config}
                           :FeaturesService {:flag-value flag-value}}
