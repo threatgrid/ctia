@@ -57,11 +57,11 @@
   (let [configurable-stores (map name store/known-stores)
         store-names (conj configurable-stores "default")]
     (st/optional-keys
-     (reduce into {}
-             (mapcat (fn [s] [(default-store-properties s)
-                              (es-store-impl-properties "ctia.store.es." s)
-                              (es-store-impl-properties "ctia.migration.store.es." s)])
-                     store-names)))))
+     (reduce merge {}
+             (map (fn [s] (merge (default-store-properties s)
+                                 (es-store-impl-properties "ctia.store.es." s)
+                                 (es-store-impl-properties "ctia.migration.store.es." s)))
+                  store-names)))))
 
 (s/defschema PropertiesSchema
   "This is the schema used for value type coercion.
