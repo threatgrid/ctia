@@ -1,14 +1,14 @@
 (ns ctia.store-service-core
   (:require [clojure.string :as str]
             [ctia.store :refer [known-stores close]]
-            [ctia.store-service.schemas :refer [Store Stores StoresAtom StoreID StoreServiceCtx]]
+            [ctia.store-service.schemas :refer [Store Stores StoreID StoreServiceCtx]]
             [ctia.stores.es.init :as es-init]
             [schema.core :as s]
             [schema-tools.core :as st]))
 
 (s/defn all-stores :- Stores
-  [{:keys [stores-atom]} :- StoreServiceCtx]
-  @stores-atom)
+  [{:keys [stores]} :- StoreServiceCtx]
+  stores)
 
 (s/defn get-store :- Store
   [ctx :- StoreServiceCtx
@@ -36,12 +36,12 @@
 (s/defn start :- StoreServiceCtx
   [{{:keys [entity-enabled?]} :FeaturesService
     :as services}]
-  {:stores-atom (atom (reduce (fn [stores store-kw]
-                                (cond-> stores
-                                  (entity-enabled? store-kw)
-                                  (assoc store-kw (into [] (keep #(build-store store-kw services %))
-                                                        (get-store-types store-kw services)))))
-                              {} known-stores))})
+  {:stores (reduce (fn [stores store-kw]
+                     (cond-> stores
+                       (entity-enabled? store-kw)
+                       (assoc store-kw (into [] (keep #(build-store store-kw services %))
+                                             (get-store-types store-kw services)))))
+                   {} known-stores)})
 
 (s/defn stop :- (st/optional-keys StoreServiceCtx)
   [ctx :- StoreServiceCtx]
