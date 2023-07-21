@@ -200,9 +200,7 @@
    "Root"
    ""
    []
-   ;;FIXME removing some entities doesn't work. run ctia.entity.incident-test/test-incident-crud-routes
-   graphql-fields
-   #_(remove-disabled services graphql-fields)))
+   (remove-disabled services graphql-fields)))
 
 (s/defn schema :- (RealizeFnResult GraphQLSchema)
   [services :- APIHandlerServices]
