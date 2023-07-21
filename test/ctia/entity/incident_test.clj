@@ -102,7 +102,6 @@
 
 (deftest test-incident-crud-routes
   (test-for-each-store-with-app
-   #{:incident}
    (fn [app]
      (helpers/set-capabilities! app "foouser" ["foogroup"] "user" all-capabilities)
      (whoami-helpers/set-whoami-response app "45c1f5e3f05d0" "foouser" "foogroup" "user")
@@ -550,7 +549,7 @@
                        new-incident-minimal
                        true
                        true
-                       (partial test-for-each-store-with-app #{:incident})))
+                       test-for-each-store-with-app))
 
 (deftest filter-incidents-by-tactics-test
   (es-helpers/for-each-es-version
@@ -717,7 +716,6 @@
 
 (deftest incident-average-metrics-test
   (test-for-each-store-with-app
-    #{:incident}
     (fn [app]
       (helpers/set-capabilities! app "foouser" ["foogroup"] "user" all-capabilities)
       (whoami-helpers/set-whoami-response app "45c1f5e3f05d0" "foouser" "foogroup" "user")

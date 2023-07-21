@@ -18,7 +18,6 @@
 
 (deftest test-actor-routes
   (test-for-each-store-with-app
-   #{:actor}
    (fn [app]
      (helpers/set-capabilities! app
                                 "foouser"
@@ -41,7 +40,7 @@
                        new-actor-minimal
                        true
                        true
-                       (partial test-for-each-store-with-app #{:actor})))
+                       test-for-each-store-with-app))
 
 (deftest test-actor-metric-routes
   (test-metric-routes (into sut/actor-entity

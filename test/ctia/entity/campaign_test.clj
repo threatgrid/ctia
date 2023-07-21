@@ -17,7 +17,6 @@
 
 (deftest test-campaign-routes
   (test-for-each-store-with-app
-   #{:campaign}
    (fn [app]
      (helpers/set-capabilities! app "foouser" ["foogroup"] "user" all-capabilities)
      (whoami-helpers/set-whoami-response app
@@ -37,7 +36,7 @@
                        ex/new-campaign-minimal
                        true
                        true
-                       (partial test-for-each-store-with-app #{:campaign})))
+                       test-for-each-store-with-app))
 
 (deftest test-campaign-metric-routes
   (test-metric-routes (into sut/campaign-entity

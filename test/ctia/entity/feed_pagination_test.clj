@@ -110,7 +110,6 @@
 
 (deftest test-feed-pagination
   (test-for-each-store-with-app
-   #{:feed :indicator :judgement :relationship}
    (fn [app]
      (helpers/set-capabilities! app
                                 "foouser"

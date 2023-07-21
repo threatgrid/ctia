@@ -29,28 +29,14 @@
         (fn []
           (t (helpers/get-current-app)))))))
 
-(def always-enable-stores #{:event :identity})
-(def disableable-stores (set/difference store/known-stores always-enable-stores))
-
 (s/defn test-for-each-store-with-app
   "Takes a 1-argument function `t` which accepts a Trapperkeeper `app`
   which should succeed for all stores. `enabled-stores` is a set of
   store keywords (such as :incident, :actor, etc.) to initialize for
   this store. Only specify stores actually used by the test so the
   test may skip unnecessary initialization."
-  ;;TODO delete this arity to force optimized tests
-  ([t :- (s/=> s/Any
-               (s/named s/Any 'app))]
-   (test-selected-stores-with-app
-     (-> store-fixtures keys set)
-     t))
-  ([enabled-stores :- #{(apply s/enum disableable-stores)}
-    t :- (s/=> s/Any
-               (s/named s/Any 'app))]
-   (helpers/with-properties
-     ["ctia.features.disable" (str/join "," (into (sorted-set) (map name)
-                                                  (set/difference disableable-stores
-                                                                  enabled-stores)))]
-     (test-selected-stores-with-app
-       (-> store-fixtures keys set)
-       t))))
+  [t :- (s/=> s/Any
+              (s/named s/Any 'app))]
+  (test-selected-stores-with-app
+    (-> store-fixtures keys set)
+    t))

@@ -23,7 +23,6 @@
 
 (deftest test-event-routes
   (test-for-each-store-with-app
-   #{:casebook :incident}
    (fn [app]
      (helpers/set-capabilities! app
                                 "user1"

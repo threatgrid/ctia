@@ -43,7 +43,6 @@
 
 (deftest asset-mapping-routes-test
   (store/test-for-each-store-with-app
-   #{:asset-mapping}
    (fn [app]
      (helpers/set-capabilities! app "foouser" ["foogroup"] "user" auth/all-capabilities)
      (whoami-helpers/set-whoami-response app http/api-key "foouser" "foogroup" "user")

@@ -43,7 +43,6 @@
 
 (deftest test-attack-pattern-crud-routes
   (test-for-each-store-with-app
-   #{:attack-pattern}
    (fn [app]
      (helpers/set-capabilities! app
                                 "foouser"
@@ -70,7 +69,7 @@
                        new-attack-pattern-minimal
                        true
                        true
-                       (partial test-for-each-store-with-app #{:attack-pattern})))
+                       test-for-each-store-with-app))
 
 (deftest test-attack-pattern-metric-routes
   (test-metric-routes (into sut/attack-pattern-entity
