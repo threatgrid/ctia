@@ -30,9 +30,8 @@
             [schema-tools.core :as st]
             [java-time.api :as jt]))
 
-(use-fixtures :once
-              mth/fixture-schema-validation
-              whoami-helpers/fixture-server)
+(use-fixtures :once (join-fixtures [mth/fixture-schema-validation
+                                    whoami-helpers/fixture-server]))
 
 (deftest incident-scores-schema-test
   (let [get-in-config (partial get-in {:ctia {:http {:incident {:score-types "global,ttp,asset"}}}})
