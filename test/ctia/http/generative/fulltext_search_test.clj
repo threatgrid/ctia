@@ -426,7 +426,8 @@
    [:FeaturesService flag-value]]
   (start [this context] (store-svc-core/start
                          {:ConfigService {:get-in-config get-in-config}
-                          :FeaturesService {:flag-value flag-value}}
+                          :FeaturesService {:entity-enabled? (constantly true)
+                                            :flag-value flag-value}}
                          context))
   (stop [this context] (store-svc-core/stop context))
   (all-stores [this]
@@ -443,7 +444,8 @@
          (let [res (es.query/enforce-search-fields
                     {:props {:entity :incident}
                      :searchable-fields #{:foo :bar :zap}
-                     :services {:FeaturesService {:flag-value (constantly "true")}}}
+                     :services {:FeaturesService {:entity-enabled? (constantly true)
+                                                  :flag-value (constantly "true")}}}
                     fields)]
            (is (= expected-search-fields res)))
       [] ["zap" "bar" "foo"]

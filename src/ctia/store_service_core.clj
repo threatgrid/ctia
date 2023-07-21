@@ -36,11 +36,11 @@
 (s/defn start :- StoreServiceCtx
   [{{:keys [entity-enabled?]} :FeaturesService
     :as services}]
-  {:stores-atom (into {} (map (fn [store-kw]
-                                (when (entity-enabled? store-kw)
-                                  [store-kw (into [] (keep #(build-store store-kw services %))
-                                                  (get-store-types store-kw services))])))
-                      known-stores)})
+  {:stores-atom (atom (into {} (map (fn [store-kw]
+                                      (when (entity-enabled? store-kw)
+                                        [store-kw (into [] (keep #(build-store store-kw services %))
+                                                        (get-store-types store-kw services))])))
+                            known-stores))})
 
 (s/defn stop :- (st/optional-keys StoreServiceCtx)
   [ctx :- StoreServiceCtx]

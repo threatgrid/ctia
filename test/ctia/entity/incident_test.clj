@@ -30,8 +30,9 @@
             [schema-tools.core :as st]
             [java-time.api :as jt]))
 
-(use-fixtures :once (join-fixtures [mth/fixture-schema-validation
-                                    whoami-helpers/fixture-server]))
+(use-fixtures :once
+              mth/fixture-schema-validation
+              whoami-helpers/fixture-server)
 
 (deftest incident-scores-schema-test
   (let [get-in-config (partial get-in {:ctia {:http {:incident {:score-types "global,ttp,asset"}}}})
@@ -101,6 +102,7 @@
 
 (deftest test-incident-crud-routes
   (test-for-each-store-with-app
+   ;#{:incident}
    (fn [app]
      (helpers/set-capabilities! app "foouser" ["foogroup"] "user" all-capabilities)
      (whoami-helpers/set-whoami-response app "45c1f5e3f05d0" "foouser" "foogroup" "user")

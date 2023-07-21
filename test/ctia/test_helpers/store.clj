@@ -1,5 +1,7 @@
 (ns ctia.test-helpers.store
-  (:require [clojure.test :refer [join-fixtures testing]]
+  (:require [clojure.string :as str]
+            [clojure.test :refer [join-fixtures testing]]
+            [ctia.store :as store]
             [ctia.test-helpers
              [core :as helpers]
              [es :as es-helpers]]
@@ -27,9 +29,22 @@
           (t (helpers/get-current-app)))))))
 
 (s/defn test-for-each-store-with-app
-  "Takes a 1-argument function which accepts a Trapperkeeper `app`
-  which should succeed for all stores."
-  [t :- (s/=> s/Any
-              (s/named s/Any 'app))]
-  (test-selected-stores-with-app (-> store-fixtures keys set)
-                                 t))
+  "Takes a 1-argument function `t` which accepts a Trapperkeeper `app`
+  which should succeed for all stores. `enabled-stores` is a set of
+  store keywords (such as :incident, :actor, etc.) to initialize for
+  this store. Only specify stores actually used by the test so the
+  test may skip unnecessary initialization."
+  ;;TODO delete this arity to force optimized tests
+  ([t :- (s/=> s/Any
+               (s/named s/Any 'app))]
+   (test-selected-stores-with-app
+     (-> store-fixtures keys set)
+     t))
+  ([enabled-stores :- #{(apply s/enum store/known-stores)}
+    t :- (s/=> s/Any
+               (s/named s/Any 'app))]
+   (helpers/with-properties
+     ["ctia.features.disable" (str/join "," (map name enabled-stores))]
+     (test-selected-stores-with-app
+       (-> store-fixtures keys set)
+       t))))
