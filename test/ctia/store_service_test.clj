@@ -4,6 +4,7 @@
             [ctia.store-service :as sut]
             [ctia.stores.es.init :as es-init]
             [ctia.test-helpers.core :as th]
+            [ctia.test-helpers.es :as es-th]
             [ctia.test-helpers.store :refer [test-for-each-store-with-app]]
             [ductile.conn :as es-conn]
             [ductile.index :as index]
@@ -26,7 +27,7 @@
                                           ::no-store
                                           (get-in (app/service-graph app) [:ConfigService :get-in-config])))]
               (try
-                (let [asset-index (index/get conn (es/get-indexname app :asset))]
+                (let [asset-index (index/get conn (es-th/get-indexname app :asset))]
                   (if disable?
                     (is (nil? asset-index))
                     (is (some? asset-index))))
