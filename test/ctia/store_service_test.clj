@@ -27,9 +27,6 @@
                                           ::no-store
                                           (get-in (app/service-graph app) [:ConfigService :get-in-config])))]
               (try
-                (let [asset-index (index/get conn (es-th/get-indexname app :asset))]
-                  (if disable?
-                    (is (nil? asset-index))
-                    (is (some? asset-index))))
+                (is (= disable? (not (index/get conn (es-th/get-indexname app :asset)))))
                 (finally
                   (es-conn/close conn))))))))))
