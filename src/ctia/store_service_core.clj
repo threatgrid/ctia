@@ -1,19 +1,14 @@
 (ns ctia.store-service-core
   (:require [clojure.string :as str]
-            [ctia.store :refer [empty-stores close]]
-            [ctia.store-service.schemas :refer [Store Stores StoresAtom StoreID StoreServiceCtx]]
+            [ctia.store :refer [known-stores close]]
+            [ctia.store-service.schemas :refer [Store Stores StoreID StoreServiceCtx]]
             [ctia.stores.es.init :as es-init]
             [schema.core :as s]
             [schema-tools.core :as st]))
 
-(s/defn init :- StoreServiceCtx
-  [context :- (st/optional-keys StoreServiceCtx)]
-  (assoc context
-         :stores-atom (atom empty-stores)))
-
 (s/defn all-stores :- Stores
-  [{:keys [stores-atom]} :- StoreServiceCtx]
-  @stores-atom)
+  [{:keys [stores]} :- StoreServiceCtx]
+  stores)
 
 (s/defn get-store :- Store
   [ctx :- StoreServiceCtx
@@ -38,25 +33,19 @@
   (case store-type
     "es" (es-init/init-store! services store-kw)))
 
-(s/defn ^:private init-store-service!
-  [services
-   stores-atom :- StoresAtom]
-  (reset! stores-atom
-          (->> (keys empty-stores)
-               (map (fn [store-kw]
-                      [store-kw (keep (partial build-store store-kw services)
-                                      (get-store-types store-kw services))]))
-               (into {})
-               (merge-with into empty-stores))))
-
 (s/defn start :- StoreServiceCtx
-  [services
-   {:keys [stores-atom] :as context} :- StoreServiceCtx]
-  (init-store-service! services stores-atom)
-  context)
+  [{{:keys [entity-enabled?]} :FeaturesService
+    :as services}]
+  {:stores (reduce (fn [stores store-kw]
+                     (cond-> stores
+                       (entity-enabled? store-kw)
+                       (assoc store-kw (into [] (keep #(build-store store-kw services %))
+                                             (get-store-types store-kw services)))))
+                   {} known-stores)})
 
 (s/defn stop :- (st/optional-keys StoreServiceCtx)
   [ctx :- StoreServiceCtx]
-  (doseq [[kw [s]] (all-stores ctx)]
-    (close s))
-  ctx)
+  (doseq [stores (vals (all-stores ctx))
+          store stores]
+    (close store))
+  {})

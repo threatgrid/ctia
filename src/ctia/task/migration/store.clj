@@ -107,9 +107,7 @@
     {:id em/token
      :timestamp em/ts
      :stores {:type "object"
-              :properties (->> (keys store/empty-stores)
-                               (map store-mapping)
-                               (into {}))}}}})
+              :properties (into {} (map store-mapping) store/known-stores)}}}})
 
 (s/defn migration-store-properties [{{:keys [get-in-config]} :ConfigService} :- MigrationStoreServices]
   (into (target-store-properties nil :migration get-in-config)

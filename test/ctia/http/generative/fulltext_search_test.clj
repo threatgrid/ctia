@@ -424,11 +424,10 @@
   store-service/StoreService
   [[:ConfigService get-in-config]
    [:FeaturesService flag-value]]
-  (init [this context] (store-svc-core/init context))
-  (start [this context] (store-svc-core/start
-                         {:ConfigService {:get-in-config get-in-config}
-                          :FeaturesService {:flag-value flag-value}}
-                         context))
+  (start [this _] (store-svc-core/start
+                    {:ConfigService {:get-in-config get-in-config}
+                     :FeaturesService {:entity-enabled? (constantly true)
+                                       :flag-value flag-value}}))
   (stop [this context] (store-svc-core/stop context))
   (all-stores [this]
               (store-svc-core/all-stores (tk-svcs/service-context this)))
@@ -444,7 +443,8 @@
          (let [res (es.query/enforce-search-fields
                     {:props {:entity :incident}
                      :searchable-fields #{:foo :bar :zap}
-                     :services {:FeaturesService {:flag-value (constantly "true")}}}
+                     :services {:FeaturesService {:entity-enabled? (constantly true)
+                                                  :flag-value (constantly "true")}}}
                     fields)]
            (is (= expected-search-fields res)))
       [] ["zap" "bar" "foo"]

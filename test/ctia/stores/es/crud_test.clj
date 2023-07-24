@@ -24,7 +24,8 @@
 
 (deftest refine-full-text-query-parts-test
   (let [es-conn-state {:props {:entity :incident}
-                       :services {:FeaturesService {:flag-value (constantly nil)}}}
+                       :services {:FeaturesService {:entity-enabled? (constantly true)
+                                                    :flag-value (constantly nil)}}}
         with-def-op (assoc-in es-conn-state [:props :default_operator] "and")]
     (testing "simple queries"
       (are [queries exp]

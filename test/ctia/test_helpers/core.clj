@@ -291,7 +291,7 @@
   [app]
   (let [{{:keys [get-config]} :ConfigService
          {:keys [all-stores]} :StoreService
-         {:keys [flag-value]} :FeaturesService} (app/service-graph app)
+         :keys [FeaturesService]} (app/service-graph app)
         ;; simulate the current output of these functions before we stop or restart
         ;; the app
         get-in-config (partial get-in (get-config))
@@ -300,7 +300,7 @@
     (@purge-indices-and-templates
      all-stores
      {:ConfigService {:get-in-config get-in-config}
-      :FeaturesService {:flag-value flag-value}})))
+      :FeaturesService (select-keys FeaturesService #{:entity-enabled? :flag-value})})))
 
 (s/defschema WithAppOptions
   (st/optional-keys

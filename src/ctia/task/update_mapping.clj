@@ -30,7 +30,7 @@
 (def cli-options
   [["-h" "--help"]
    ["-s" "--stores STORES" "comma separated list of store names"
-    :default (set (keys store/empty-stores))
+    :default store/known-stores
     :parse-fn #(map keyword (str/split % #","))]])
 
 (defn -main [& args]

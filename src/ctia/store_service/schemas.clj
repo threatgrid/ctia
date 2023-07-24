@@ -22,10 +22,6 @@
   "ctia.store-service/all-stores in the service graph."
   (s/=> Stores))
 
-(s/defschema StoresAtom
-  "An atom containing a sequence of stores."
-  (s/atom Stores))
-
 (s/defschema StoreServiceCtx
   "The service-context for StoreService."
-  {:stores-atom StoresAtom})
+  {:stores Stores})

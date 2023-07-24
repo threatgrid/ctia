@@ -10,4 +10,4 @@
                       (select-keys [:get-config
                                     :get-in-config]))
    :FeaturesService (-> (helpers/get-service-map app :FeaturesService)
-                        (select-keys [:flag-value]))})
+                        (select-keys [:entity-enabled? :flag-value]))})
