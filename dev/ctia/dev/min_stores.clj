@@ -28,9 +28,9 @@
   #{;:actor
     :asset
     ;:asset-mapping
-    :asset-properties
-    :attack-pattern
-    :campaign
+    ;:asset-properties
+    ;:attack-pattern
+    ;:campaign
     :casebook
     ;:coa
     ;:data-table
@@ -40,7 +40,7 @@
     ;:identity
     :identity-assertion
     ;:incident
-    :indicator
+    ;:indicator
     ;:investigation
     ;:judgement
     :malware
