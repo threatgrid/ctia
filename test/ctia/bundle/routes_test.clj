@@ -423,7 +423,6 @@
 
 (deftest ^:encoding bundle-import-non-utf-8-encoding
   (test-for-each-store-with-app
-   #{:indicator} ;;FIXME this doesn't work
    (fn [app]
      (helpers/set-capabilities! app "foouser" ["foogroup"] "user" (all-capabilities))
      (whoami-helpers/set-whoami-response app
