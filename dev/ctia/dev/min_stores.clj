@@ -65,35 +65,31 @@
     (spit "min-stores-all.txt" msg :append true)))
 
 (defn find-minimal-stores []
-  (let [;;remove me
-        entity-crud-route-tests #(take 1 (entity-crud-route-tests))]
-    (into {}
-          (pmap (fn [[k tst]]
-                  (some (fn [i]
-                          (log k "i" i)
-                          (some (fn [enabled-stores]
-                                  (when (enabled-stores k) ;;current entity must always be enabled
-                                    (log k "enabled-stores" enabled-stores)
-                                    (let [res (let [out (new java.io.StringWriter)
-                                                    err (new java.io.StringWriter)]
-                                                (binding [*out* out
-                                                          *err* err]
-                                                  (let [res (th/with-enabled-stores enabled-stores
-                                                              #(t/run-test-var tst))]
-                                                    (log k "out" out)
-                                                    (log k "err" err)
-                                                    res)))
-                                          _ (log k "res" res)]
-                                      (if (t/successful? res)
-                                        (do (log k "GOOD" enabled-stores)
-                                            [k enabled-stores])
-                                        (do (log k "BAD" enabled-stores)
-                                            nil)))))
-                                (map set (comb/combinations possible-stores-to-enable i))))
-                        [(count possible-stores-to-enable)]
-                        #_
-                        (range 1 (inc (count possible-stores-to-enable)))))
-                (entity-crud-route-tests)))))
+  (into {}
+        (pmap (fn [[k tst]]
+                (some (fn [i]
+                        (log k "i" i)
+                        (some (fn [enabled-stores]
+                                (when (enabled-stores k) ;;current entity must always be enabled
+                                  (log k "enabled-stores" enabled-stores)
+                                  (let [res (let [out (new java.io.StringWriter)
+                                                  err (new java.io.StringWriter)]
+                                              (binding [*out* out
+                                                        *err* err]
+                                                (let [res (th/with-enabled-stores enabled-stores
+                                                            #(t/run-test-var tst))]
+                                                  (log k "out" out)
+                                                  (log k "err" err)
+                                                  res)))
+                                        _ (log k "res" res)]
+                                    (if (t/successful? res)
+                                      (do (log k "GOOD" enabled-stores)
+                                          [k enabled-stores])
+                                      (do (log k "BAD" enabled-stores)
+                                          nil)))))
+                              (map set (comb/combinations possible-stores-to-enable i))))
+                      (range 1 (inc (count possible-stores-to-enable)))))
+              (entity-crud-route-tests))))
 
 (comment
   (find-minimal-stores)
