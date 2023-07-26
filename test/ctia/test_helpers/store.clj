@@ -42,7 +42,7 @@
   ([t :- (s/=> s/Any
                (s/named s/Any 'app))]
    (test-for-each-store-with-app #{} t))
-  ([enabled-stores :- #{(apply s/enum store/known-stores)}
+  ([enabled-stores :- helpers/KnownStores
     t :- (s/=> s/Any
                (s/named s/Any 'app))]
    (test-selected-stores-with-app (-> store-fixtures keys set)

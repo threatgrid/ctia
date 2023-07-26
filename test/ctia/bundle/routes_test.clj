@@ -4,7 +4,7 @@
    [clojure.edn :as edn]
    [clojure.set :as set]
    [clojure.string :as str]
-   [clojure.test :as t :refer [deftest is join-fixtures testing use-fixtures]]
+   [clojure.test :as t :refer [deftest is testing use-fixtures]]
    [ctia.auth :as auth :refer [IIdentity]]
    [ctia.auth.capabilities :refer [all-capabilities]]
    [ctia.bulk.core :as bulk]
@@ -36,11 +36,10 @@
     (t)))
 
 (use-fixtures :once
-  (join-fixtures
-   [validate-schemas
-    fixture-properties
-    fixture-find-by-external-ids-limit
-    whoami-helpers/fixture-server]))
+              validate-schemas
+              fixture-properties
+              fixture-find-by-external-ids-limit
+              whoami-helpers/fixture-server)
 
 (defn mk-sighting
   [n]
@@ -424,6 +423,7 @@
 
 (deftest ^:encoding bundle-import-non-utf-8-encoding
   (test-for-each-store-with-app
+   #{:indicator} ;;FIXME this doesn't work
    (fn [app]
      (helpers/set-capabilities! app "foouser" ["foogroup"] "user" (all-capabilities))
      (whoami-helpers/set-whoami-response app
