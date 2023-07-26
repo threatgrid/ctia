@@ -22,30 +22,31 @@
 (def infer-these-stores
   #{;:actor
     :asset
-    :asset-mapping
+    ;:asset-mapping
     :asset-properties
     :attack-pattern
     :campaign
     :casebook
-    :coa
-    :data-table
+    ;:coa
+    ;:data-table
     ;:event
-    :feed
-    :feedback
+    ;:feed
+    ;:feedback
     ;:identity
     :identity-assertion
     ;:incident
     :indicator
-    :investigation
-    :judgement
+    ;:investigation
+    ;:judgement
     :malware
-    :note
-    :relationship
+    ;:note
+    ;:relationship
     :sighting
-    :target-record
-    :tool
-    :vulnerability
-    :weakness})
+    ;:target-record
+    ;:tool
+    ;:vulnerability
+    ;:weakness
+    })
 
 (def possible-stores-to-enable
   (-> store/known-stores
