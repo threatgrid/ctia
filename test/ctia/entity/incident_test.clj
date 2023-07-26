@@ -4,7 +4,7 @@
             [clj-momo.lib.clj-time.coerce :as tc]
             [clj-momo.lib.clj-time.core :as t]
             [clj-momo.test-helpers.core :as mth]
-            [clojure.test :refer [deftest is join-fixtures testing use-fixtures]]
+            [clojure.test :refer [deftest is testing use-fixtures]]
             [clojure.test.check.generators :as gen]
             [com.gfredericks.test.chuck.clojure-test :refer [checking]]
             [com.gfredericks.test.chuck.generators :as gen']
@@ -30,8 +30,13 @@
             [schema-tools.core :as st]
             [java-time.api :as jt]))
 
-(use-fixtures :once (join-fixtures [mth/fixture-schema-validation
-                                    whoami-helpers/fixture-server]))
+(use-fixtures :once
+              mth/fixture-schema-validation
+              whoami-helpers/fixture-server)
+
+(def enabled-stores #{:incident
+                      ;; unclear why these are needed, possibly a test graphql query
+                      :attack-pattern :malware :indicator :tool :vulnerability :weakness})
 
 (deftest incident-scores-schema-test
   (let [get-in-config (partial get-in {:ctia {:http {:incident {:score-types "global,ttp,asset"}}}})
@@ -100,10 +105,7 @@
                   (tc/to-date fixed-now)))))))))
 
 (deftest test-incident-crud-routes
-  (test-for-each-store-with-app
-   #{:incident
-     ;; unclear why these are needed, possibly a test graphql query
-     :attack-pattern :malware :indicator :tool :vulnerability :weakness}
+  (test-for-each-store-with-app enabled-stores
    (fn [app]
      (helpers/set-capabilities! app "foouser" ["foogroup"] "user" all-capabilities)
      (whoami-helpers/set-whoami-response app "45c1f5e3f05d0" "foouser" "foogroup" "user")
@@ -540,7 +542,8 @@
     (spit file @results)))
 
 (deftest test-incident-metric-routes
-  (test-metric-routes (into sut/incident-entity
+  (test-metric-routes enabled-stores
+                      (into sut/incident-entity
                             {:entity-minimal new-incident-minimal
                              :enumerable-fields sut/incident-enumerable-fields
                              :date-fields sut/incident-histogram-fields
@@ -551,7 +554,7 @@
                        new-incident-minimal
                        true
                        true
-                       (partial test-for-each-store-with-app #{:incident})))
+                       (partial test-for-each-store-with-app enabled-stores)))
 
 (deftest filter-incidents-by-tactics-test
   (es-helpers/for-each-es-version
@@ -561,6 +564,7 @@
     (helpers/with-properties (into ["ctia.auth.type" "allow-all"]
                                    es-helpers/basic-auth-properties)
       (helpers/fixture-ctia-with-app
+        ;{:enable-stores enabled-stores}
         (fn [app]
           ;(helpers/set-capabilities! app "foouser" ["foogroup"] "user" all-capabilities)
           ;(whoami-helpers/set-whoami-response app "45c1f5e3f05d0" "foouser" "foogroup" "user")

@@ -6,6 +6,7 @@
    [clj-momo.properties :refer [coerce-properties read-property-files]]
    [clojure.pprint :refer [pprint]]
    [clojure.spec.alpha :as cs]
+   [clojure.set :as set]
    [clojure.string :as str]
    [clojure.test :as test]
    [clojure.tools.logging :as log]
@@ -302,10 +303,22 @@
      {:ConfigService {:get-in-config get-in-config}
       :FeaturesService (select-keys FeaturesService #{:entity-enabled? :flag-value})})))
 
+(def KnownStores #{(apply s/enum store/known-stores)})
+
 (s/defschema WithAppOptions
   (st/optional-keys
    {:enable-http? s/Bool
+    :enable-stores KnownStores
     :services {s/Keyword s/Any}}))
+
+(s/defn with-enabled-stores
+  [enabled-stores :- KnownStores
+   f :- (s/=> s/Any)]
+  (with-properties ["ctia.features.disable" (str/join "," (into (sorted-set) (map name)
+                                                                (-> store/known-stores
+                                                                    (disj :event :identity)
+                                                                    (set/difference enabled-stores))))]
+    (f)))
 
 (s/defn fixture-ctia-with-app
   "Note: ES indices are unique, use `with-config-transformer`
