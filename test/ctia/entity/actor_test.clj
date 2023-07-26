@@ -1,5 +1,5 @@
 (ns ctia.entity.actor-test
-  (:require [clojure.test :refer [deftest join-fixtures use-fixtures]]
+  (:require [clojure.test :refer [deftest use-fixtures]]
             [ctia.entity.actor :as sut]
             [ctia.test-helpers
              [access-control :refer [access-control-test]]
@@ -13,11 +13,15 @@
             [schema.test :refer [validate-schemas]]))
 
 (use-fixtures :once
-  (join-fixtures [validate-schemas
-                  whoami-helpers/fixture-server]))
+              validate-schemas
+              whoami-helpers/fixture-server)
+
+(def enabled-stores
+  #{:actor
+    :attack-pattern :incident :indicator :malware :tool :vulnerability :weakness})
 
 (deftest test-actor-routes
-  (test-for-each-store-with-app
+  (test-for-each-store-with-app enabled-stores
    (fn [app]
      (helpers/set-capabilities! app
                                 "foouser"
@@ -40,10 +44,11 @@
                        new-actor-minimal
                        true
                        true
-                       test-for-each-store-with-app))
+                       (partial test-for-each-store-with-app enabled-stores)))
 
 (deftest test-actor-metric-routes
-  (test-metric-routes (into sut/actor-entity
+  (test-metric-routes enabled-stores
+                      (into sut/actor-entity
                             {:entity-minimal new-actor-minimal
                              :enumerable-fields sut/actor-enumerable-fields
                              :date-fields sut/actor-histogram-fields})))
