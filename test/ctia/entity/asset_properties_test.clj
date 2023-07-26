@@ -15,6 +15,8 @@
 (use-fixtures :once (join-fixtures [mth/fixture-schema-validation
                                     whoami-helpers/fixture-server]))
 
+(def enabled-stores #{:tool :attack-pattern :incident :asset-properties :casebook :malware})
+
 (defn additional-tests [app _id asset-properties-sample]
   (testing "GET /ctia/asset-properties/search"
    (let [{:keys [get-in-config]} (helpers/get-service-map app :ConfigService)]
@@ -48,6 +50,7 @@
 
 (deftest asset-properties-routes-test
   (store/test-for-each-store-with-app
+   enabled-stores
    (fn [app]
      (helpers/set-capabilities! app "foouser" ["foogroup"] "user" auth/all-capabilities)
      (whoami-helpers/set-whoami-response app http/api-key "foouser" "foogroup" "user")
@@ -67,6 +70,7 @@
 
 (deftest asset-properties-metric-routes-test
   (aggregate/test-metric-routes
+   enabled-stores
    (into sut/asset-properties-entity
          {:plural            :asset_properties
           :entity-minimal    new-asset-properties-minimal
