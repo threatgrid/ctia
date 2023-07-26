@@ -1,5 +1,6 @@
 (ns ctia.dev.min-stores
   (:require [clojure.test :as t]
+            [clojure.set :as set]
             [clojure.math.combinatorics :as comb]
             [ctia.store :as store]
             [ctia.test-helpers.core :as th]))
@@ -34,9 +35,7 @@
 
 (def possible-stores-to-enable
   (-> store/known-stores
-      (disj :events :identity)
-      sort
-      vec))
+      (disj :events :identity)))
 
 (defn entity-test-namespaces []
   (into {}
@@ -65,31 +64,19 @@
     (spit "min-stores-all.txt" msg :append true)))
 
 (defn find-minimal-stores []
-  (into {}
-        (pmap (fn [[k tst]]
-                (some (fn [i]
-                        (log k "i" i)
-                        (some (fn [enabled-stores]
-                                (when (enabled-stores k) ;;current entity must always be enabled
-                                  (log k "enabled-stores" enabled-stores)
-                                  (let [res (let [out (new java.io.StringWriter)
-                                                  err (new java.io.StringWriter)]
-                                              (binding [*out* out
-                                                        *err* err]
-                                                (let [res (th/with-enabled-stores enabled-stores
-                                                            #(t/run-test-var tst))]
-                                                  (log k "out" out)
-                                                  (log k "err" err)
-                                                  res)))
-                                        _ (log k "res" res)]
-                                    (if (t/successful? res)
-                                      (do (log k "GOOD" enabled-stores)
-                                          [k enabled-stores])
-                                      (do (log k "BAD" enabled-stores)
-                                          nil)))))
-                              (map set (comb/combinations possible-stores-to-enable i))))
-                      (range 1 (inc (count possible-stores-to-enable)))))
-              (entity-crud-route-tests))))
+  (into {} (map (fn [[k tst]]
+                  (let [disableable-entities
+                        (into #{} (filter (fn [disable-entity]
+                                            (let [enabled-stores (disj possible-stores-to-enable disable-entity)
+                                                  _ (log k disable-entity "enabled-stores" enabled-stores)
+                                                  res (th/with-enabled-stores enabled-stores
+                                                        #(t/run-test-var tst))
+                                                  good? (t/successful? res)]
+                                              (log k disable-entity (if good? "DISABLEABLE" "ESSENTIAL") enabled-stores)
+                                              good?)))
+                              (disj possible-stores-to-enable k))]
+                    [k (set/difference possible-stores-to-enable disableable-entities)])))
+        (entity-crud-route-tests)))
 
 (comment
   (find-minimal-stores)
