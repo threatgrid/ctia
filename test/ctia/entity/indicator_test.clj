@@ -18,7 +18,8 @@
                                     whoami-helpers/fixture-server]))
 
 (def enabled-stores #{:indicator
-                      :attack-pattern :event :incident :malware :tool :vulnerability :weakness})
+                      ;:attack-pattern :event :incident :malware :tool :vulnerability :weakness
+                      })
 
 (defn search-tests [app _ indicator-sample]
   (testing "GET /ctia/indicator/search"
