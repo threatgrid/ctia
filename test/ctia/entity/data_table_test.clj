@@ -13,6 +13,8 @@
 (use-fixtures :once (join-fixtures [mth/fixture-schema-validation
                                     whoami-helpers/fixture-server]))
 
+(def enabled-stores #{:data-table :tool :attack-pattern :incident :casebook :malware})
+
 (def new-data-table
   {:type "data-table"
    :row_count 1
@@ -31,6 +33,7 @@
 
 (deftest test-data-table-routes
   (test-for-each-store-with-app
+   enabled-stores
    (fn [app]
      (helpers/set-capabilities! app "foouser" ["foogroup"] "user" all-capabilities)
      (whoami-helpers/set-whoami-response app

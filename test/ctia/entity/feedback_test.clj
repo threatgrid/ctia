@@ -11,6 +11,8 @@
              [store :refer [test-for-each-store-with-app]]]
             [ctim.domain.id :as id]))
 
+(def enabled-stores #{:feedback :tool :attack-pattern :incident :casebook :malware})
+
 (def new-feedback
   {:feedback -1
    :schema_version schema-version
@@ -39,6 +41,7 @@
 
 (deftest test-feedback-routes
   (test-for-each-store-with-app
+   enabled-stores
    (fn [app]
      (helpers/set-capabilities! app "foouser" ["foogroup"] "user" all-capabilities)
      (helpers/set-capabilities! app "baruser" ["bargroup"] "user" #{})

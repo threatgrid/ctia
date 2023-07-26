@@ -15,8 +15,11 @@
 (use-fixtures :once (join-fixtures [validate-schemas
                                     whoami-helpers/fixture-server]))
 
+(def enabled-stores #{:tool :note :attack-pattern :incident :casebook :malware})
+
 (deftest test-note-crud-routes
   (test-for-each-store-with-app
+   enabled-stores
    (fn [app]
      (helpers/set-capabilities! app "foouser" ["foogroup"] "user" all-capabilities)
      (whoami-helpers/set-whoami-response app
@@ -38,10 +41,11 @@
                        new-note-minimal
                        true
                        true
-                       test-for-each-store-with-app))
+                       (partial  test-for-each-store-with-app enabled-stores)))
 
 (deftest test-note-metric-routes
-  (test-metric-routes (into sut/note-entity
+  (test-metric-routes enabled-stores
+                      (into sut/note-entity
                             {:entity-minimal new-note-minimal
                              :enumerable-fields note-schemas/note-enumerable-fields
                              :date-fields note-schemas/note-histogram-fields})))

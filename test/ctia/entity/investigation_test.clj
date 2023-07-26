@@ -17,8 +17,11 @@
 (use-fixtures :once (join-fixtures [mth/fixture-schema-validation
                                     whoami-helpers/fixture-server]))
 
+(def enabled-stores #{:investigation :tool :attack-pattern :incident :casebook :malware})
+
 (deftest test-investigation-routes
   (test-for-each-store-with-app
+   enabled-stores
    (fn [app]
      (helpers/set-capabilities! app "foouser" ["foogroup"] "user" all-capabilities)
      (whoami-helpers/set-whoami-response app
@@ -41,10 +44,11 @@
                        new-investigation-minimal
                        false
                        true
-                       test-for-each-store-with-app))
+                       (partial test-for-each-store-with-app enabled-stores)))
 
 (deftest test-investigation-metric-routes
-  (test-metric-routes (into sut/investigation-entity
+  (test-metric-routes enabled-stores
+                      (into sut/investigation-entity
                             {:entity-minimal new-investigation-minimal
                              :enumerable-fields sut/investigation-enumerable-fields
                              :date-fields sut/investigation-histogram-fields})))

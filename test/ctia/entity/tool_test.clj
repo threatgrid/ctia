@@ -14,8 +14,11 @@
 (use-fixtures :once (join-fixtures [mth/fixture-schema-validation
                                     whoami-helpers/fixture-server]))
 
+(def enabled-stores #{:tool :attack-pattern :incident :casebook :malware})
+
 (deftest test-tool-routes
   (test-for-each-store-with-app
+   enabled-stores
    (fn [app]
      (helpers/set-capabilities! app
                                 "foouser"
@@ -40,10 +43,11 @@
                        new-tool-minimal
                        true
                        true
-                       test-for-each-store-with-app))
+                       (partial test-for-each-store-with-app enabled-stores)))
 
 (deftest test-tool-metric-routes
-  (test-metric-routes (into sut/tool-entity
+  (test-metric-routes enabled-stores
+                      (into sut/tool-entity
                             {:entity-minimal new-tool-minimal
                              :enumerable-fields sut/tool-enumerable-fields
                              :date-fields sut/tool-histogram-fields})))

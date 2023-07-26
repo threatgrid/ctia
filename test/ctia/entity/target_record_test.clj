@@ -16,6 +16,8 @@
               mth/fixture-schema-validation
               whoami-helpers/fixture-server)
 
+(def enabled-stores #{:tool :target-record :attack-pattern :incident :casebook :malware})
+
 (defn additional-tests [app _ target-record-sample]
   (testing "GET /ctia/target-record/search"
    (let [{:keys [get-in-config]} (helpers/get-service-map app :ConfigService)]
@@ -51,6 +53,7 @@
 
 (deftest target-record-routes-test
   (store/test-for-each-store-with-app
+   enabled-stores
    (fn [app]
      (helpers/set-capabilities! app "foouser" ["foogroup"] "user" auth/all-capabilities)
      (whoami-helpers/set-whoami-response app http/api-key "foouser" "foogroup" "user")
@@ -66,6 +69,7 @@
 
 (deftest target-record-metric-routes-test
   (aggregate/test-metric-routes
+   enabled-stores
    (into sut/target-record-entity
          {:plural            :target_records
           :entity-minimal    new-target-record-minimal

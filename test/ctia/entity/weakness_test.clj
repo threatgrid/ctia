@@ -15,8 +15,11 @@
   (join-fixtures [mth/fixture-schema-validation
                   whoami-helpers/fixture-server]))
 
+(def enabled-stores #{:tool :weakness :attack-pattern :incident :casebook :malware})
+
 (deftest test-weakness-routes
   (test-for-each-store-with-app
+   enabled-stores
    (fn [app]
      (helpers/set-capabilities! app
                                 "foouser"
@@ -39,10 +42,11 @@
                        new-weakness-minimal
                        true
                        true
-                       test-for-each-store-with-app))
+                       (partial test-for-each-store-with-app enabled-stores)))
 
 (deftest test-weakness-metric-routes
-  (test-metric-routes (into sut/weakness-entity
+  (test-metric-routes enabled-stores
+                      (into sut/weakness-entity
                             {:entity-minimal new-weakness-minimal
                              :enumerable-fields sut/weakness-enumerable-fields
                              :date-fields sut/weakness-histogram-fields})))

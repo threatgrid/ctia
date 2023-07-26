@@ -16,6 +16,8 @@
 (use-fixtures :once (join-fixtures [validate-schemas
                                     whoami-helpers/fixture-server]))
 
+(def enabled-stores #{:tool :attack-pattern :incident :casebook :malware})
+
 (def auth "45c1f5e3f05d0")
 
 (defn additional-tests [app _attack-pattern-id {[{:keys [external_id]}] :external_references :as attack-pattern}]
@@ -43,6 +45,7 @@
 
 (deftest test-attack-pattern-crud-routes
   (test-for-each-store-with-app
+   enabled-stores
    (fn [app]
      (helpers/set-capabilities! app
                                 "foouser"
@@ -69,10 +72,11 @@
                        new-attack-pattern-minimal
                        true
                        true
-                       test-for-each-store-with-app))
+                       (partial test-for-each-store-with-app enabled-stores)))
 
 (deftest test-attack-pattern-metric-routes
-  (test-metric-routes (into sut/attack-pattern-entity
+  (test-metric-routes enabled-stores
+                      (into sut/attack-pattern-entity
                             {:plural :attack_patterns
                              :entity-minimal new-attack-pattern-minimal
                              :enumerable-fields sut/attack-pattern-enumerable-fields

@@ -14,6 +14,8 @@
    [ctim.schemas.common :as c]
    [schema.test :refer [validate-schemas]]))
 
+(def enabled-stores #{:feed :tool :relationship :judgement :attack-pattern :incident :indicator :casebook :malware})
+
 (def new-feed-maximal
   {:revision 0
    :schema_version c/ctim-schema-version
@@ -228,6 +230,7 @@
 
 (deftest test-feed-routes
   (test-for-each-store-with-app
+   enabled-stores
    (fn [app]
      (helpers/set-capabilities! app
                                 "foouser"
@@ -270,4 +273,4 @@
                        new-feed-minimal
                        true
                        true
-                       test-for-each-store-with-app))
+                       (partial test-for-each-store-with-app enabled-stores)))

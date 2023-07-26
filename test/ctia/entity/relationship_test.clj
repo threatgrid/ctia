@@ -23,6 +23,8 @@
   (join-fixtures [validate-schemas
                   whoami-helpers/fixture-server]))
 
+(def enabled-stores #{:tool :relationship :attack-pattern :incident :asset-properties :casebook :malware})
+
 (defn establish-user! [app]
   (helpers/set-capabilities! app "foouser" ["foogroup"] "user" all-capabilities)
   (whoami-helpers/set-whoami-response app
@@ -45,6 +47,7 @@
 
 (deftest test-relationship-routes-bad-reference
   (test-for-each-store-with-app
+   enabled-stores
    (fn [app]
      (establish-user! app)
      (testing "POST /ctia/relationship"
@@ -66,6 +69,7 @@
 
 (deftest test-relationship-routes
   (test-for-each-store-with-app
+   enabled-stores
    (fn [app]
      (establish-user! app)
      (entity-crud-test
@@ -79,7 +83,7 @@
                        new-relationship-minimal
                        true
                        true
-                       test-for-each-store-with-app))
+                       (partial test-for-each-store-with-app enabled-stores)))
 
 (deftest links-routes-test
   (test-for-each-store-with-app

@@ -22,6 +22,8 @@
                                     helpers/fixture-properties:cors
                                     whoami-helpers/fixture-server]))
 
+(def enabled-stores #{:tool :judgement :attack-pattern :incident :casebook :malware})
+
 (def new-judgement
   (merge ex/new-judgement-maximal
          {:observable {:value "1.2.3.4"
@@ -174,6 +176,7 @@
 
 (deftest test-judgement-crud-routes
   (test-for-each-store-with-app
+   enabled-stores
    (fn [app]
      (helpers/set-capabilities! app "foouser" ["foogroupi"] "user" all-capabilities)
      (helpers/set-capabilities! app "baruser"  ["bargroup"] "user" #{})
@@ -385,4 +388,4 @@
                        ex/new-judgement-minimal
                        true
                        true
-                       test-for-each-store-with-app))
+                       (partial test-for-each-store-with-app enabled-stores)))
