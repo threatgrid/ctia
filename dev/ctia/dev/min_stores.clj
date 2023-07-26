@@ -20,7 +20,7 @@
 ;:coa #inst "2023-07-26T23:28:40.756-00:00" :actor "DISABLEABLE" #{:tool :coa :attack-pattern :incident :campaign :casebook :malware}
 ;:attack-pattern #inst "2023-07-26T23:38:25.019-00:00" :actor "DISABLEABLE" #{:tool :attack-pattern :incident :casebook :malware}
 ;:indicator #inst "2023-07-26T23:46:30.765-00:00" :actor "DISABLEABLE" #{:indicator}
-
+;:campaign #inst "2023-07-26T23:49:27.586-00:00" :actor "DISABLEABLE" #{:tool :attack-pattern :incident :campaign :casebook :malware}
 
 
 (def infer-these-stores
