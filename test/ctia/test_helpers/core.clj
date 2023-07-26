@@ -314,11 +314,13 @@
 (s/defn with-enabled-stores
   [enabled-stores :- KnownStores
    f :- (s/=> s/Any)]
-  (with-properties ["ctia.features.disable" (str/join "," (into (sorted-set) (map name)
-                                                                (-> store/known-stores
-                                                                    (disj :event :identity)
-                                                                    (set/difference enabled-stores))))]
-    (f)))
+  (if (empty? enabled-stores)
+    (f)
+    (with-properties ["ctia.features.disable" (str/join "," (into (sorted-set) (map name)
+                                                                  (-> store/known-stores
+                                                                      (disj :event :identity)
+                                                                      (set/difference enabled-stores))))]
+      (f))))
 
 (s/defn fixture-ctia-with-app
   "Note: ES indices are unique, use `with-config-transformer`
