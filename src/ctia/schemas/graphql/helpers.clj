@@ -484,6 +484,7 @@
   [query :- (RealizeFnResult GraphQLObjectType)]
   (delayed/fn :- GraphQLSchema
     [rt-ctx :- GraphQLRuntimeContext]
+    (prn "NEW-SCHEMA" (resolve-with-rt-ctx query rt-ctx))
     (-> (GraphQLSchema/newSchema)
         (.query ^GraphQLObjectType (resolve-with-rt-ctx query rt-ctx))
         .build)))

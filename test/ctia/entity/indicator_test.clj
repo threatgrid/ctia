@@ -17,6 +17,9 @@
 (use-fixtures :once (join-fixtures [mth/fixture-schema-validation
                                     whoami-helpers/fixture-server]))
 
+(def enabled-stores #{:indicator
+                      :attack-pattern :event :incident :malware :tool :vulnerability :weakness})
+
 (defn search-tests [app _ indicator-sample]
   (testing "GET /ctia/indicator/search"
    (let [{:keys [get-in-config]} (helpers/get-service-map app :ConfigService)]
@@ -51,7 +54,7 @@
         "Searching indicators by missing tags value should not match any document")))))
 
 (deftest test-indicator-crud-routes
-  (test-for-each-store-with-app
+  (test-for-each-store-with-app enabled-stores
    (fn [app]
      (helpers/set-capabilities! app "foouser" ["foogroup"] "user" (caps/all-capabilities))
      (whoami-helpers/set-whoami-response app
@@ -73,11 +76,11 @@
                        new-indicator-minimal
                        true
                        false
-                       test-for-each-store-with-app))
+                       (partial test-for-each-store-with-app enabled-stores)))
 
 (deftest test-indicator-metric-routes
-  (test-metric-routes (into sut/indicator-entity
+  (test-metric-routes enabled-stores
+                      (into sut/indicator-entity
                             {:entity-minimal new-indicator-minimal
                              :enumerable-fields sut/indicator-enumerable-fields
                              :date-fields sut/indicator-histogram-fields})))
-
