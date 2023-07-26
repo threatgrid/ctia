@@ -5,6 +5,20 @@
             [ctia.store :as store]
             [ctia.test-helpers.core :as th]))
 
+;:feed #inst "2023-07-26T22:19:11.381-00:00" :actor "DISABLEABLE" #{:feed :tool :relationship :judgement :attack-pattern :incident :indicator :casebook :malware}
+;:feedback #inst "2023-07-26T22:22:08.958-00:00" :actor "DISABLEABLE" #{:feedback :tool :attack-pattern :incident :casebook :malware}
+;:investigation #inst "2023-07-26T22:25:28.435-00:00" :actor "DISABLEABLE" #{:investigation :tool :attack-pattern :incident :casebook :malware}
+;:asset-mapping #inst "2023-07-26T22:29:49.994-00:00" :actor "DISABLEABLE" #{:asset-mapping :tool :attack-pattern :incident :casebook :malware}
+;:data-table #inst "2023-07-26T22:34:05.949-00:00" :actor "DISABLEABLE" #{:data-table :tool :attack-pattern :incident :casebook :malware}
+;:tool #inst "2023-07-26T22:39:12.336-00:00" :actor "DISABLEABLE" #{:tool :attack-pattern :incident :casebook :malware}
+;:relationship #inst "2023-07-26T22:44:35.583-00:00" :actor "DISABLEABLE" #{:tool :relationship :attack-pattern :incident :asset-properties :casebook :malware}
+;:vulnerability #inst "2023-07-26T22:50:31.079-00:00" :actor "DISABLEABLE" #{:tool :vulnerability :attack-pattern :incident :casebook :malware}
+;:judgement #inst "2023-07-26T22:57:31.054-00:00" :actor "DISABLEABLE" #{:tool :judgement :attack-pattern :incident :casebook :malware}
+;:target-record #inst "2023-07-26T23:04:39.549-00:00" :actor "DISABLEABLE" #{:tool :target-record :attack-pattern :incident :casebook :malware}
+;:weakness #inst "2023-07-26T23:12:08.965-00:00" :actor "DISABLEABLE" #{:tool :weakness :attack-pattern :incident :casebook :malware}
+;:note #inst "2023-07-26T23:19:56.926-00:00" :actor "DISABLEABLE" #{:tool :note :attack-pattern :incident :casebook :malware}
+;:coa #inst "2023-07-26T23:28:40.756-00:00" :actor "DISABLEABLE" #{:tool :coa :attack-pattern :incident :campaign :casebook :malware}
+
 (def infer-these-stores
   #{;:actor
     :asset
@@ -15,7 +29,7 @@
     :casebook
     :coa
     :data-table
-    :event
+    ;:event
     :feed
     :feedback
     ;:identity
