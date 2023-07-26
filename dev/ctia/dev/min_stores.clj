@@ -64,19 +64,22 @@
     (spit "min-stores-all.txt" msg :append true)))
 
 (defn find-minimal-stores []
-  (into {} (map (fn [[k tst]]
-                  (let [disableable-entities
-                        (into #{} (filter (fn [disable-entity]
-                                            (let [enabled-stores (disj possible-stores-to-enable disable-entity)
-                                                  _ (log k disable-entity "enabled-stores" enabled-stores)
-                                                  res (th/with-enabled-stores enabled-stores
-                                                        #(t/run-test-var tst))
-                                                  good? (t/successful? res)]
-                                              (log k disable-entity (if good? "DISABLEABLE" "ESSENTIAL") enabled-stores)
-                                              good?)))
-                              (disj possible-stores-to-enable k))]
-                    [k (set/difference possible-stores-to-enable disableable-entities)])))
-        (entity-crud-route-tests)))
+  (into {} 
+        (pmap (fn [[k tst]]
+                (let [disableable-entities
+                      (into #{} 
+                            (filter identity)
+                            (pmap (fn [disable-entity]
+                                    (let [enabled-stores (disj possible-stores-to-enable disable-entity)
+                                          _ (log k disable-entity "enabled-stores" enabled-stores)
+                                          res (th/with-enabled-stores enabled-stores
+                                                #(t/run-test-var tst))
+                                          good? (t/successful? res)]
+                                      (log k disable-entity (if good? "DISABLEABLE" "ESSENTIAL") enabled-stores)
+                                      (when good? disable-entity)))
+                                  (disj possible-stores-to-enable k)))]
+                  [k (set/difference possible-stores-to-enable disableable-entities)]))
+              (entity-crud-route-tests))))
 
 (comment
   (find-minimal-stores)
