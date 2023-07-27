@@ -20,6 +20,8 @@
 (use-fixtures :once (join-fixtures [mth/fixture-schema-validation
                                     whoami-helpers/fixture-server]))
 
+(def enabled-stores #{:tool :attack-pattern :incident :sighting :casebook :malware})
+
 (def new-sighting
   (-> new-sighting-maximal
       (dissoc :id)
@@ -31,6 +33,7 @@
 
 (deftest test-sighting-crud-routes
   (test-for-each-store-with-app
+   enabled-stores
    (fn [app]
      (helpers/set-capabilities! app "foouser" ["foogroup"] "user" all-capabilities)
      (whoami-helpers/set-whoami-response app
@@ -47,7 +50,8 @@
              :headers {:Authorization "45c1f5e3f05d0"}})))))
 
 (deftest test-sighting-metric-routes
-  (test-metric-routes (into sut/sighting-entity
+  (test-metric-routes enabled-stores
+                      (into sut/sighting-entity
                             {:entity-minimal new-sighting-minimal
                              :enumerable-fields sighting-enumerable-fields
                              :date-fields sighting-histogram-fields})))
@@ -57,4 +61,4 @@
                        new-sighting-minimal
                        true
                        true
-                       test-for-each-store-with-app))
+                       (partial test-for-each-store-with-app enabled-stores)))

@@ -22,6 +22,8 @@
 ;:indicator #inst "2023-07-26T23:46:30.765-00:00" :actor "DISABLEABLE" #{:indicator}
 ;:campaign #inst "2023-07-26T23:49:27.586-00:00" :actor "DISABLEABLE" #{:tool :attack-pattern :incident :campaign :casebook :malware}
 ;:asset-properties #inst "2023-07-26T23:53:10.630-00:00" :actor "DISABLEABLE" #{:tool :attack-pattern :incident :asset-properties :casebook :malware}
+;:sighting #inst "2023-07-27T00:01:00.082-00:00" :actor "DISABLEABLE" #{:tool :attack-pattern :incident :sighting :casebook :malware}
+
 
 
 (def infer-these-stores
@@ -46,7 +48,7 @@
     :malware
     ;:note
     ;:relationship
-    :sighting
+    ;:sighting
     ;:target-record
     ;:tool
     ;:vulnerability
@@ -83,23 +85,24 @@
           :append true)
     (spit "min-stores-all.txt" msg :append true)))
 
+(defn find-minimal-stores-for-test [[ent tst]]
+  (let [disableable-entities
+        (reduce (fn [disableable-entities disable-entity]
+                  (let [enabled-stores (-> possible-stores-to-enable 
+                                           (set/difference disableable-entities)
+                                           (disj disable-entity))
+                        _ (log k disable-entity "enabled-stores" enabled-stores)
+                        res (th/with-enabled-stores enabled-stores
+                              #(t/run-test-var tst))
+                        good? (t/successful? res)]
+                    (log k disable-entity (if good? "DISABLEABLE" "ESSENTIAL") enabled-stores)
+                    (cond-> disableable-entities
+                      good? (conj disable-entity))))
+                #{} (disj possible-stores-to-enable k))]
+    [k (set/difference possible-stores-to-enable disableable-entities)]))
+
 (defn find-minimal-stores []
-  (into {}
-        (map (fn [[k tst]]
-               (let [disableable-entities
-                     (reduce (fn [disableable-entities disable-entity]
-                               (let [enabled-stores (-> possible-stores-to-enable 
-                                                        (set/difference disableable-entities)
-                                                        (disj disable-entity))
-                                     _ (log k disable-entity "enabled-stores" enabled-stores)
-                                     res (th/with-enabled-stores enabled-stores
-                                           #(t/run-test-var tst))
-                                     good? (t/successful? res)]
-                                 (log k disable-entity (if good? "DISABLEABLE" "ESSENTIAL") enabled-stores)
-                                 (cond-> disableable-entities
-                                   good? (conj disable-entity))))
-                             #{} (disj possible-stores-to-enable k))]
-                 [k (set/difference possible-stores-to-enable disableable-entities)])))
+  (into {} (map find-minimal-stores-for-test)
         (entity-crud-route-tests)))
 
 (comment
