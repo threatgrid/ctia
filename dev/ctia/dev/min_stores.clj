@@ -25,8 +25,8 @@
 ;:sighting #inst "2023-07-27T00:01:00.082-00:00" :actor "DISABLEABLE" #{:tool :attack-pattern :incident :sighting :casebook :malware}
 ;:casebook #inst "2023-07-27T00:07:24.566-00:00" :actor "DISABLEABLE" #{:tool :attack-pattern :incident :casebook :malware}
 ;:asset #inst "2023-07-27T00:14:48.350-00:00" :actor "DISABLEABLE" #{:tool :attack-pattern :incident :casebook :asset :malware}
-
-
+;:malware #inst "2023-07-27T00:21:19.236-00:00" :actor "DISABLEABLE" #{:tool :attack-pattern :incident :casebook :malware}
+;:identity-assertion #inst "2023-07-27T00:17:56.041-00:00" :actor "DISABLEABLE" #{:tool :attack-pattern :incident :casebook :identity-assertion :malware}
 
 (def infer-these-stores
   #{;:actor
@@ -42,12 +42,12 @@
     ;:feed
     ;:feedback
     ;:identity
-    :identity-assertion
+    ;:identity-assertion
     ;:incident
     ;:indicator
     ;:investigation
     ;:judgement
-    :malware
+    ;:malware
     ;:note
     ;:relationship
     ;:sighting

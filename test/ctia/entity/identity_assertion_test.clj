@@ -16,6 +16,8 @@
 (use-fixtures :once (join-fixtures [validate-schemas
                                     whoami-helpers/fixture-server]))
 
+(def enabled-stores #{:tool :attack-pattern :incident :casebook :identity-assertion :malware})
+
 (def new-identity-assertion
   (-> new-identity-assertion-maximal
       (dissoc :id)
@@ -59,6 +61,7 @@
 
 (deftest test-identity-assertion-routes
   (test-for-each-store-with-app
+   enabled-stores
    (fn [app]
      (helpers/set-capabilities! app "foouser" ["foogroup"] "user" all-capabilities)
      (whoami-helpers/set-whoami-response app
@@ -78,7 +81,8 @@
              :headers {:Authorization "45c1f5e3f05d0"}})))))
 
 (deftest test-identity-assertion-metric-routes
-  (test-metric-routes (into sut/identity-assertion-entity
+  (test-metric-routes enabled-stores
+                      (into sut/identity-assertion-entity
                             {:plural :identity_assertions
                              :entity-minimal new-identity-assertion-minimal
                              :enumerable-fields sut/identity-assertion-enumerable-fields
