@@ -23,6 +23,8 @@
   validate-schemas
   whoami-helpers/fixture-server)
 
+(def enabled-stores #{:tool :attack-pattern :incident :casebook :malware})
+
 (defn partial-operations-tests [app casebook-id casebook]
   ;; observables
   (testing "POST /ctia/casebook/:id/observables :add"
@@ -282,6 +284,7 @@
 
 (deftest test-casebook-routes
   (test-for-each-store-with-app
+   enabled-stores
    (fn [app]
      (helpers/set-capabilities! app
                                 "foouser"
@@ -307,10 +310,11 @@
                        new-casebook-minimal
                        true
                        true
-                       test-for-each-store-with-app))
+                       (partial test-for-each-store-with-app enabled-stores)))
 
 (deftest test-casebook-metric-routes
-  (test-metric-routes (into sut/casebook-entity
+  (test-metric-routes enabled-stores
+                      (into sut/casebook-entity
                             {:entity-minimal new-casebook-minimal
                              :enumerable-fields sut/casebook-enumerable-fields
                              :date-fields sut/casebook-histogram-fields})))

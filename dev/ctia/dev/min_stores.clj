@@ -23,6 +23,7 @@
 ;:campaign #inst "2023-07-26T23:49:27.586-00:00" :actor "DISABLEABLE" #{:tool :attack-pattern :incident :campaign :casebook :malware}
 ;:asset-properties #inst "2023-07-26T23:53:10.630-00:00" :actor "DISABLEABLE" #{:tool :attack-pattern :incident :asset-properties :casebook :malware}
 ;:sighting #inst "2023-07-27T00:01:00.082-00:00" :actor "DISABLEABLE" #{:tool :attack-pattern :incident :sighting :casebook :malware}
+;:casebook #inst "2023-07-27T00:07:24.566-00:00" :actor "DISABLEABLE" #{:tool :attack-pattern :incident :casebook :malware}
 
 
 
@@ -33,7 +34,7 @@
     ;:asset-properties
     ;:attack-pattern
     ;:campaign
-    :casebook
+    ;:casebook
     ;:coa
     ;:data-table
     ;:event
