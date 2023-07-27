@@ -24,12 +24,13 @@
 ;:asset-properties #inst "2023-07-26T23:53:10.630-00:00" :actor "DISABLEABLE" #{:tool :attack-pattern :incident :asset-properties :casebook :malware}
 ;:sighting #inst "2023-07-27T00:01:00.082-00:00" :actor "DISABLEABLE" #{:tool :attack-pattern :incident :sighting :casebook :malware}
 ;:casebook #inst "2023-07-27T00:07:24.566-00:00" :actor "DISABLEABLE" #{:tool :attack-pattern :incident :casebook :malware}
+;:asset #inst "2023-07-27T00:14:48.350-00:00" :actor "DISABLEABLE" #{:tool :attack-pattern :incident :casebook :asset :malware}
 
 
 
 (def infer-these-stores
   #{;:actor
-    :asset
+    ;:asset
     ;:asset-mapping
     ;:asset-properties
     ;:attack-pattern
@@ -86,7 +87,7 @@
           :append true)
     (spit "min-stores-all.txt" msg :append true)))
 
-(defn find-minimal-stores-for-test [[ent tst]]
+(defn find-minimal-stores-for-test [[k tst]]
   (let [disableable-entities
         (reduce (fn [disableable-entities disable-entity]
                   (let [enabled-stores (-> possible-stores-to-enable 

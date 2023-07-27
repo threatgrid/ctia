@@ -15,6 +15,8 @@
 (use-fixtures :once (join-fixtures [mth/fixture-schema-validation
                                     whoami-helpers/fixture-server]))
 
+(def enabled-stores #{:tool :attack-pattern :incident :casebook :asset :malware})
+
 (deftest set-asset-ref-test
   (testing "with proper tempids, transient asset_ref gets resolved"
     (let [entity  {:asset_ref "transient:asset-1"
@@ -58,6 +60,7 @@
 
 (deftest asset-routes-test
   (store/test-for-each-store-with-app
+   enabled-stores
    (fn [app]
      (helpers/set-capabilities! app "foouser" ["foogroup"] "user" auth/all-capabilities)
      (whoami-helpers/set-whoami-response app http/api-key "foouser" "foogroup" "user")
@@ -73,6 +76,7 @@
 
 (deftest asset-metric-routes-test
   (aggregate/test-metric-routes
+   enabled-stores
    (into asset/asset-entity
          {:plural            :assets
           :entity-minimal    new-asset-minimal
