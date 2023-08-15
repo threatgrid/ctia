@@ -11,4 +11,6 @@ cd dependabot
 # lein pom uses the origin git remote to add metadata. remove for reproducibility.
 bb '(spit "pom.xml" (-> "pom.xml" slurp xml/parse-str (update :content (partial remove #(some-> % :tag name #{"scm" "url"}))) xml/emit-str))'
 mvn --no-transfer-progress dependency:tree -Dexcludes=org.clojure:clojure -DoutputFile=dependency-tree.txt
-mvn --no-transfer-progress dependency:tree -Dverbose -Dexcludes=org.clojure:clojure -DoutputFile=verbose-dependency-tree.txt
+#FIXME this broke when we replaced metosin/ring-swagger with io.github.threatgrid/ring-swagger. the reason for omitted
+# dependencies seems to change between local and CI. perhaps we should push to get the fix into metosin/ring-swagger to reenable this.
+#mvn --no-transfer-progress dependency:tree -Dverbose -Dexcludes=org.clojure:clojure -DoutputFile=verbose-dependency-tree.txt
