@@ -74,6 +74,10 @@
           <groupId>org.slf4j</groupId>
         </exclusion>
         <exclusion>
+          <artifactId>ring-swagger</artifactId>
+          <groupId>metosin</groupId>
+        </exclusion>
+        <exclusion>
           <artifactId>netty</artifactId>
           <groupId>io.netty</groupId>
         </exclusion>
@@ -95,6 +99,10 @@
         <exclusion>
           <artifactId>slf4j-log4j12</artifactId>
           <groupId>org.slf4j</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>ring-swagger</artifactId>
+          <groupId>metosin</groupId>
         </exclusion>
         <exclusion>
           <artifactId>netty</artifactId>
@@ -120,6 +128,10 @@
           <groupId>org.slf4j</groupId>
         </exclusion>
         <exclusion>
+          <artifactId>ring-swagger</artifactId>
+          <groupId>metosin</groupId>
+        </exclusion>
+        <exclusion>
           <artifactId>netty</artifactId>
           <groupId>io.netty</groupId>
         </exclusion>
@@ -141,6 +153,10 @@
         <exclusion>
           <artifactId>slf4j-log4j12</artifactId>
           <groupId>org.slf4j</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>ring-swagger</artifactId>
+          <groupId>metosin</groupId>
         </exclusion>
         <exclusion>
           <artifactId>netty</artifactId>
@@ -166,6 +182,10 @@
           <groupId>org.slf4j</groupId>
         </exclusion>
         <exclusion>
+          <artifactId>ring-swagger</artifactId>
+          <groupId>metosin</groupId>
+        </exclusion>
+        <exclusion>
           <artifactId>netty</artifactId>
           <groupId>io.netty</groupId>
         </exclusion>
@@ -187,6 +207,10 @@
         <exclusion>
           <artifactId>slf4j-log4j12</artifactId>
           <groupId>org.slf4j</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>ring-swagger</artifactId>
+          <groupId>metosin</groupId>
         </exclusion>
         <exclusion>
           <artifactId>netty</artifactId>
@@ -212,6 +236,10 @@
           <groupId>org.slf4j</groupId>
         </exclusion>
         <exclusion>
+          <artifactId>ring-swagger</artifactId>
+          <groupId>metosin</groupId>
+        </exclusion>
+        <exclusion>
           <artifactId>netty</artifactId>
           <groupId>io.netty</groupId>
         </exclusion>
@@ -233,6 +261,10 @@
         <exclusion>
           <artifactId>slf4j-log4j12</artifactId>
           <groupId>org.slf4j</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>ring-swagger</artifactId>
+          <groupId>metosin</groupId>
         </exclusion>
         <exclusion>
           <artifactId>netty</artifactId>
@@ -258,6 +290,10 @@
           <groupId>org.slf4j</groupId>
         </exclusion>
         <exclusion>
+          <artifactId>ring-swagger</artifactId>
+          <groupId>metosin</groupId>
+        </exclusion>
+        <exclusion>
           <artifactId>netty</artifactId>
           <groupId>io.netty</groupId>
         </exclusion>
@@ -279,6 +315,10 @@
         <exclusion>
           <artifactId>slf4j-log4j12</artifactId>
           <groupId>org.slf4j</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>ring-swagger</artifactId>
+          <groupId>metosin</groupId>
         </exclusion>
         <exclusion>
           <artifactId>netty</artifactId>
@@ -305,6 +345,10 @@
           <groupId>org.slf4j</groupId>
         </exclusion>
         <exclusion>
+          <artifactId>ring-swagger</artifactId>
+          <groupId>metosin</groupId>
+        </exclusion>
+        <exclusion>
           <artifactId>netty</artifactId>
           <groupId>io.netty</groupId>
         </exclusion>
@@ -326,6 +370,10 @@
         <exclusion>
           <artifactId>slf4j-log4j12</artifactId>
           <groupId>org.slf4j</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>ring-swagger</artifactId>
+          <groupId>metosin</groupId>
         </exclusion>
         <exclusion>
           <artifactId>netty</artifactId>
@@ -351,6 +399,10 @@
           <groupId>org.slf4j</groupId>
         </exclusion>
         <exclusion>
+          <artifactId>ring-swagger</artifactId>
+          <groupId>metosin</groupId>
+        </exclusion>
+        <exclusion>
           <artifactId>netty</artifactId>
           <groupId>io.netty</groupId>
         </exclusion>
@@ -372,6 +424,10 @@
         <exclusion>
           <artifactId>slf4j-log4j12</artifactId>
           <groupId>org.slf4j</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>ring-swagger</artifactId>
+          <groupId>metosin</groupId>
         </exclusion>
         <exclusion>
           <artifactId>netty</artifactId>
@@ -397,6 +453,10 @@
           <groupId>org.slf4j</groupId>
         </exclusion>
         <exclusion>
+          <artifactId>ring-swagger</artifactId>
+          <groupId>metosin</groupId>
+        </exclusion>
+        <exclusion>
           <artifactId>netty</artifactId>
           <groupId>io.netty</groupId>
         </exclusion>
@@ -418,6 +478,10 @@
         <exclusion>
           <artifactId>slf4j-log4j12</artifactId>
           <groupId>org.slf4j</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>ring-swagger</artifactId>
+          <groupId>metosin</groupId>
         </exclusion>
         <exclusion>
           <artifactId>netty</artifactId>
@@ -443,6 +507,10 @@
           <groupId>org.slf4j</groupId>
         </exclusion>
         <exclusion>
+          <artifactId>ring-swagger</artifactId>
+          <groupId>metosin</groupId>
+        </exclusion>
+        <exclusion>
           <artifactId>netty</artifactId>
           <groupId>io.netty</groupId>
         </exclusion>
@@ -464,6 +532,10 @@
         <exclusion>
           <artifactId>slf4j-log4j12</artifactId>
           <groupId>org.slf4j</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>ring-swagger</artifactId>
+          <groupId>metosin</groupId>
         </exclusion>
         <exclusion>
           <artifactId>netty</artifactId>
@@ -489,6 +561,10 @@
           <groupId>org.slf4j</groupId>
         </exclusion>
         <exclusion>
+          <artifactId>ring-swagger</artifactId>
+          <groupId>metosin</groupId>
+        </exclusion>
+        <exclusion>
           <artifactId>netty</artifactId>
           <groupId>io.netty</groupId>
         </exclusion>
@@ -510,6 +586,10 @@
         <exclusion>
           <artifactId>slf4j-log4j12</artifactId>
           <groupId>org.slf4j</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>ring-swagger</artifactId>
+          <groupId>metosin</groupId>
         </exclusion>
         <exclusion>
           <artifactId>netty</artifactId>
@@ -535,6 +615,10 @@
           <groupId>org.slf4j</groupId>
         </exclusion>
         <exclusion>
+          <artifactId>ring-swagger</artifactId>
+          <groupId>metosin</groupId>
+        </exclusion>
+        <exclusion>
           <artifactId>netty</artifactId>
           <groupId>io.netty</groupId>
         </exclusion>
@@ -556,6 +640,10 @@
         <exclusion>
           <artifactId>slf4j-log4j12</artifactId>
           <groupId>org.slf4j</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>ring-swagger</artifactId>
+          <groupId>metosin</groupId>
         </exclusion>
         <exclusion>
           <artifactId>netty</artifactId>
@@ -581,6 +669,10 @@
           <groupId>org.slf4j</groupId>
         </exclusion>
         <exclusion>
+          <artifactId>ring-swagger</artifactId>
+          <groupId>metosin</groupId>
+        </exclusion>
+        <exclusion>
           <artifactId>netty</artifactId>
           <groupId>io.netty</groupId>
         </exclusion>
@@ -602,6 +694,10 @@
         <exclusion>
           <artifactId>slf4j-log4j12</artifactId>
           <groupId>org.slf4j</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>ring-swagger</artifactId>
+          <groupId>metosin</groupId>
         </exclusion>
         <exclusion>
           <artifactId>netty</artifactId>
@@ -627,6 +723,10 @@
           <groupId>org.slf4j</groupId>
         </exclusion>
         <exclusion>
+          <artifactId>ring-swagger</artifactId>
+          <groupId>metosin</groupId>
+        </exclusion>
+        <exclusion>
           <artifactId>netty</artifactId>
           <groupId>io.netty</groupId>
         </exclusion>
@@ -650,6 +750,10 @@
           <groupId>org.slf4j</groupId>
         </exclusion>
         <exclusion>
+          <artifactId>ring-swagger</artifactId>
+          <groupId>metosin</groupId>
+        </exclusion>
+        <exclusion>
           <artifactId>netty</artifactId>
           <groupId>io.netty</groupId>
         </exclusion>
@@ -660,9 +764,9 @@
       </exclusions>
     </dependency>
     <dependency>
-      <groupId>metosin</groupId>
+      <groupId>io.github.threatgrid</groupId>
       <artifactId>ring-swagger</artifactId>
-      <version>0.26.2</version>
+      <version>0.26.3</version>
       <exclusions>
         <exclusion>
           <artifactId>slf4j-nop</artifactId>
@@ -671,6 +775,10 @@
         <exclusion>
           <artifactId>slf4j-log4j12</artifactId>
           <groupId>org.slf4j</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>ring-swagger</artifactId>
+          <groupId>metosin</groupId>
         </exclusion>
         <exclusion>
           <artifactId>netty</artifactId>
@@ -696,6 +804,10 @@
           <groupId>org.slf4j</groupId>
         </exclusion>
         <exclusion>
+          <artifactId>ring-swagger</artifactId>
+          <groupId>metosin</groupId>
+        </exclusion>
+        <exclusion>
           <artifactId>netty</artifactId>
           <groupId>io.netty</groupId>
         </exclusion>
@@ -717,6 +829,10 @@
         <exclusion>
           <artifactId>slf4j-log4j12</artifactId>
           <groupId>org.slf4j</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>ring-swagger</artifactId>
+          <groupId>metosin</groupId>
         </exclusion>
         <exclusion>
           <artifactId>netty</artifactId>
@@ -742,6 +858,10 @@
           <groupId>org.slf4j</groupId>
         </exclusion>
         <exclusion>
+          <artifactId>ring-swagger</artifactId>
+          <groupId>metosin</groupId>
+        </exclusion>
+        <exclusion>
           <artifactId>netty</artifactId>
           <groupId>io.netty</groupId>
         </exclusion>
@@ -763,6 +883,10 @@
         <exclusion>
           <artifactId>slf4j-log4j12</artifactId>
           <groupId>org.slf4j</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>ring-swagger</artifactId>
+          <groupId>metosin</groupId>
         </exclusion>
         <exclusion>
           <artifactId>netty</artifactId>
@@ -788,6 +912,10 @@
           <groupId>org.slf4j</groupId>
         </exclusion>
         <exclusion>
+          <artifactId>ring-swagger</artifactId>
+          <groupId>metosin</groupId>
+        </exclusion>
+        <exclusion>
           <artifactId>netty</artifactId>
           <groupId>io.netty</groupId>
         </exclusion>
@@ -809,6 +937,10 @@
         <exclusion>
           <artifactId>slf4j-log4j12</artifactId>
           <groupId>org.slf4j</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>ring-swagger</artifactId>
+          <groupId>metosin</groupId>
         </exclusion>
         <exclusion>
           <artifactId>netty</artifactId>
@@ -834,6 +966,10 @@
           <groupId>org.slf4j</groupId>
         </exclusion>
         <exclusion>
+          <artifactId>ring-swagger</artifactId>
+          <groupId>metosin</groupId>
+        </exclusion>
+        <exclusion>
           <artifactId>netty</artifactId>
           <groupId>io.netty</groupId>
         </exclusion>
@@ -855,6 +991,10 @@
         <exclusion>
           <artifactId>slf4j-log4j12</artifactId>
           <groupId>org.slf4j</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>ring-swagger</artifactId>
+          <groupId>metosin</groupId>
         </exclusion>
         <exclusion>
           <artifactId>netty</artifactId>
@@ -880,6 +1020,10 @@
           <groupId>org.slf4j</groupId>
         </exclusion>
         <exclusion>
+          <artifactId>ring-swagger</artifactId>
+          <groupId>metosin</groupId>
+        </exclusion>
+        <exclusion>
           <artifactId>netty</artifactId>
           <groupId>io.netty</groupId>
         </exclusion>
@@ -901,6 +1045,10 @@
         <exclusion>
           <artifactId>slf4j-log4j12</artifactId>
           <groupId>org.slf4j</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>ring-swagger</artifactId>
+          <groupId>metosin</groupId>
         </exclusion>
         <exclusion>
           <artifactId>netty</artifactId>
@@ -926,6 +1074,10 @@
           <groupId>org.slf4j</groupId>
         </exclusion>
         <exclusion>
+          <artifactId>ring-swagger</artifactId>
+          <groupId>metosin</groupId>
+        </exclusion>
+        <exclusion>
           <artifactId>netty</artifactId>
           <groupId>io.netty</groupId>
         </exclusion>
@@ -947,6 +1099,10 @@
         <exclusion>
           <artifactId>slf4j-log4j12</artifactId>
           <groupId>org.slf4j</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>ring-swagger</artifactId>
+          <groupId>metosin</groupId>
         </exclusion>
         <exclusion>
           <artifactId>netty</artifactId>
@@ -972,6 +1128,10 @@
           <groupId>org.slf4j</groupId>
         </exclusion>
         <exclusion>
+          <artifactId>ring-swagger</artifactId>
+          <groupId>metosin</groupId>
+        </exclusion>
+        <exclusion>
           <artifactId>netty</artifactId>
           <groupId>io.netty</groupId>
         </exclusion>
@@ -993,6 +1153,10 @@
         <exclusion>
           <artifactId>slf4j-log4j12</artifactId>
           <groupId>org.slf4j</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>ring-swagger</artifactId>
+          <groupId>metosin</groupId>
         </exclusion>
         <exclusion>
           <artifactId>netty</artifactId>
@@ -1018,6 +1182,10 @@
           <groupId>org.slf4j</groupId>
         </exclusion>
         <exclusion>
+          <artifactId>ring-swagger</artifactId>
+          <groupId>metosin</groupId>
+        </exclusion>
+        <exclusion>
           <artifactId>netty</artifactId>
           <groupId>io.netty</groupId>
         </exclusion>
@@ -1039,6 +1207,10 @@
         <exclusion>
           <artifactId>slf4j-log4j12</artifactId>
           <groupId>org.slf4j</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>ring-swagger</artifactId>
+          <groupId>metosin</groupId>
         </exclusion>
         <exclusion>
           <artifactId>netty</artifactId>
@@ -1064,6 +1236,10 @@
           <groupId>org.slf4j</groupId>
         </exclusion>
         <exclusion>
+          <artifactId>ring-swagger</artifactId>
+          <groupId>metosin</groupId>
+        </exclusion>
+        <exclusion>
           <artifactId>netty</artifactId>
           <groupId>io.netty</groupId>
         </exclusion>
@@ -1085,6 +1261,10 @@
         <exclusion>
           <artifactId>slf4j-log4j12</artifactId>
           <groupId>org.slf4j</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>ring-swagger</artifactId>
+          <groupId>metosin</groupId>
         </exclusion>
         <exclusion>
           <artifactId>netty</artifactId>
@@ -1110,6 +1290,10 @@
           <groupId>org.slf4j</groupId>
         </exclusion>
         <exclusion>
+          <artifactId>ring-swagger</artifactId>
+          <groupId>metosin</groupId>
+        </exclusion>
+        <exclusion>
           <artifactId>netty</artifactId>
           <groupId>io.netty</groupId>
         </exclusion>
@@ -1131,6 +1315,10 @@
         <exclusion>
           <artifactId>slf4j-log4j12</artifactId>
           <groupId>org.slf4j</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>ring-swagger</artifactId>
+          <groupId>metosin</groupId>
         </exclusion>
         <exclusion>
           <artifactId>netty</artifactId>
@@ -1156,6 +1344,10 @@
           <groupId>org.slf4j</groupId>
         </exclusion>
         <exclusion>
+          <artifactId>ring-swagger</artifactId>
+          <groupId>metosin</groupId>
+        </exclusion>
+        <exclusion>
           <artifactId>netty</artifactId>
           <groupId>io.netty</groupId>
         </exclusion>
@@ -1177,6 +1369,10 @@
         <exclusion>
           <artifactId>slf4j-log4j12</artifactId>
           <groupId>org.slf4j</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>ring-swagger</artifactId>
+          <groupId>metosin</groupId>
         </exclusion>
         <exclusion>
           <artifactId>netty</artifactId>
@@ -1202,6 +1398,10 @@
           <groupId>org.slf4j</groupId>
         </exclusion>
         <exclusion>
+          <artifactId>ring-swagger</artifactId>
+          <groupId>metosin</groupId>
+        </exclusion>
+        <exclusion>
           <artifactId>netty</artifactId>
           <groupId>io.netty</groupId>
         </exclusion>
@@ -1223,6 +1423,10 @@
         <exclusion>
           <artifactId>slf4j-log4j12</artifactId>
           <groupId>org.slf4j</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>ring-swagger</artifactId>
+          <groupId>metosin</groupId>
         </exclusion>
         <exclusion>
           <artifactId>netty</artifactId>
@@ -1248,6 +1452,10 @@
           <groupId>org.slf4j</groupId>
         </exclusion>
         <exclusion>
+          <artifactId>ring-swagger</artifactId>
+          <groupId>metosin</groupId>
+        </exclusion>
+        <exclusion>
           <artifactId>netty</artifactId>
           <groupId>io.netty</groupId>
         </exclusion>
@@ -1269,6 +1477,10 @@
         <exclusion>
           <artifactId>slf4j-log4j12</artifactId>
           <groupId>org.slf4j</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>ring-swagger</artifactId>
+          <groupId>metosin</groupId>
         </exclusion>
         <exclusion>
           <artifactId>netty</artifactId>
@@ -1294,6 +1506,10 @@
           <groupId>org.slf4j</groupId>
         </exclusion>
         <exclusion>
+          <artifactId>ring-swagger</artifactId>
+          <groupId>metosin</groupId>
+        </exclusion>
+        <exclusion>
           <artifactId>netty</artifactId>
           <groupId>io.netty</groupId>
         </exclusion>
@@ -1315,6 +1531,10 @@
         <exclusion>
           <artifactId>slf4j-log4j12</artifactId>
           <groupId>org.slf4j</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>ring-swagger</artifactId>
+          <groupId>metosin</groupId>
         </exclusion>
         <exclusion>
           <artifactId>netty</artifactId>
@@ -1340,6 +1560,10 @@
           <groupId>org.slf4j</groupId>
         </exclusion>
         <exclusion>
+          <artifactId>ring-swagger</artifactId>
+          <groupId>metosin</groupId>
+        </exclusion>
+        <exclusion>
           <artifactId>netty</artifactId>
           <groupId>io.netty</groupId>
         </exclusion>
@@ -1361,6 +1585,10 @@
         <exclusion>
           <artifactId>slf4j-log4j12</artifactId>
           <groupId>org.slf4j</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>ring-swagger</artifactId>
+          <groupId>metosin</groupId>
         </exclusion>
         <exclusion>
           <artifactId>netty</artifactId>
@@ -1386,6 +1614,10 @@
           <groupId>org.slf4j</groupId>
         </exclusion>
         <exclusion>
+          <artifactId>ring-swagger</artifactId>
+          <groupId>metosin</groupId>
+        </exclusion>
+        <exclusion>
           <artifactId>netty</artifactId>
           <groupId>io.netty</groupId>
         </exclusion>
@@ -1407,6 +1639,10 @@
         <exclusion>
           <artifactId>slf4j-log4j12</artifactId>
           <groupId>org.slf4j</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>ring-swagger</artifactId>
+          <groupId>metosin</groupId>
         </exclusion>
         <exclusion>
           <artifactId>netty</artifactId>
@@ -1432,6 +1668,10 @@
           <groupId>org.slf4j</groupId>
         </exclusion>
         <exclusion>
+          <artifactId>ring-swagger</artifactId>
+          <groupId>metosin</groupId>
+        </exclusion>
+        <exclusion>
           <artifactId>netty</artifactId>
           <groupId>io.netty</groupId>
         </exclusion>
@@ -1453,6 +1693,10 @@
         <exclusion>
           <artifactId>slf4j-log4j12</artifactId>
           <groupId>org.slf4j</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>ring-swagger</artifactId>
+          <groupId>metosin</groupId>
         </exclusion>
         <exclusion>
           <artifactId>netty</artifactId>
@@ -1478,6 +1722,10 @@
           <groupId>org.slf4j</groupId>
         </exclusion>
         <exclusion>
+          <artifactId>ring-swagger</artifactId>
+          <groupId>metosin</groupId>
+        </exclusion>
+        <exclusion>
           <artifactId>netty</artifactId>
           <groupId>io.netty</groupId>
         </exclusion>
@@ -1499,6 +1747,10 @@
         <exclusion>
           <artifactId>slf4j-log4j12</artifactId>
           <groupId>org.slf4j</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>ring-swagger</artifactId>
+          <groupId>metosin</groupId>
         </exclusion>
         <exclusion>
           <artifactId>netty</artifactId>
@@ -1524,6 +1776,10 @@
           <groupId>org.slf4j</groupId>
         </exclusion>
         <exclusion>
+          <artifactId>ring-swagger</artifactId>
+          <groupId>metosin</groupId>
+        </exclusion>
+        <exclusion>
           <artifactId>netty</artifactId>
           <groupId>io.netty</groupId>
         </exclusion>
@@ -1545,6 +1801,10 @@
         <exclusion>
           <artifactId>slf4j-log4j12</artifactId>
           <groupId>org.slf4j</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>ring-swagger</artifactId>
+          <groupId>metosin</groupId>
         </exclusion>
         <exclusion>
           <artifactId>netty</artifactId>
@@ -1570,6 +1830,10 @@
           <groupId>org.slf4j</groupId>
         </exclusion>
         <exclusion>
+          <artifactId>ring-swagger</artifactId>
+          <groupId>metosin</groupId>
+        </exclusion>
+        <exclusion>
           <artifactId>netty</artifactId>
           <groupId>io.netty</groupId>
         </exclusion>
@@ -1591,6 +1855,10 @@
         <exclusion>
           <artifactId>slf4j-log4j12</artifactId>
           <groupId>org.slf4j</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>ring-swagger</artifactId>
+          <groupId>metosin</groupId>
         </exclusion>
         <exclusion>
           <artifactId>netty</artifactId>
@@ -1616,6 +1884,10 @@
           <groupId>org.slf4j</groupId>
         </exclusion>
         <exclusion>
+          <artifactId>ring-swagger</artifactId>
+          <groupId>metosin</groupId>
+        </exclusion>
+        <exclusion>
           <artifactId>netty</artifactId>
           <groupId>io.netty</groupId>
         </exclusion>
@@ -1637,6 +1909,10 @@
         <exclusion>
           <artifactId>slf4j-log4j12</artifactId>
           <groupId>org.slf4j</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>ring-swagger</artifactId>
+          <groupId>metosin</groupId>
         </exclusion>
         <exclusion>
           <artifactId>netty</artifactId>
@@ -1722,6 +1998,10 @@
           <groupId>org.slf4j</groupId>
         </exclusion>
         <exclusion>
+          <artifactId>ring-swagger</artifactId>
+          <groupId>metosin</groupId>
+        </exclusion>
+        <exclusion>
           <artifactId>netty</artifactId>
           <groupId>io.netty</groupId>
         </exclusion>
@@ -1743,6 +2023,10 @@
         <exclusion>
           <artifactId>slf4j-log4j12</artifactId>
           <groupId>org.slf4j</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>ring-swagger</artifactId>
+          <groupId>metosin</groupId>
         </exclusion>
         <exclusion>
           <artifactId>netty</artifactId>
@@ -1768,6 +2052,10 @@
           <groupId>org.slf4j</groupId>
         </exclusion>
         <exclusion>
+          <artifactId>ring-swagger</artifactId>
+          <groupId>metosin</groupId>
+        </exclusion>
+        <exclusion>
           <artifactId>netty</artifactId>
           <groupId>io.netty</groupId>
         </exclusion>
@@ -1789,6 +2077,10 @@
         <exclusion>
           <artifactId>slf4j-log4j12</artifactId>
           <groupId>org.slf4j</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>ring-swagger</artifactId>
+          <groupId>metosin</groupId>
         </exclusion>
         <exclusion>
           <artifactId>netty</artifactId>
@@ -1813,6 +2105,10 @@
         <exclusion>
           <artifactId>slf4j-log4j12</artifactId>
           <groupId>org.slf4j</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>ring-swagger</artifactId>
+          <groupId>metosin</groupId>
         </exclusion>
         <exclusion>
           <artifactId>netty</artifactId>
@@ -1840,6 +2136,10 @@
           <groupId>org.slf4j</groupId>
         </exclusion>
         <exclusion>
+          <artifactId>ring-swagger</artifactId>
+          <groupId>metosin</groupId>
+        </exclusion>
+        <exclusion>
           <artifactId>netty</artifactId>
           <groupId>io.netty</groupId>
         </exclusion>
@@ -1862,6 +2162,10 @@
         <exclusion>
           <artifactId>slf4j-log4j12</artifactId>
           <groupId>org.slf4j</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>ring-swagger</artifactId>
+          <groupId>metosin</groupId>
         </exclusion>
         <exclusion>
           <artifactId>netty</artifactId>
@@ -1888,6 +2192,10 @@
           <groupId>org.slf4j</groupId>
         </exclusion>
         <exclusion>
+          <artifactId>ring-swagger</artifactId>
+          <groupId>metosin</groupId>
+        </exclusion>
+        <exclusion>
           <artifactId>netty</artifactId>
           <groupId>io.netty</groupId>
         </exclusion>
@@ -1910,6 +2218,10 @@
         <exclusion>
           <artifactId>slf4j-log4j12</artifactId>
           <groupId>org.slf4j</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>ring-swagger</artifactId>
+          <groupId>metosin</groupId>
         </exclusion>
         <exclusion>
           <artifactId>netty</artifactId>
@@ -1936,6 +2248,10 @@
           <groupId>org.slf4j</groupId>
         </exclusion>
         <exclusion>
+          <artifactId>ring-swagger</artifactId>
+          <groupId>metosin</groupId>
+        </exclusion>
+        <exclusion>
           <artifactId>netty</artifactId>
           <groupId>io.netty</groupId>
         </exclusion>
@@ -1958,6 +2274,10 @@
         <exclusion>
           <artifactId>slf4j-log4j12</artifactId>
           <groupId>org.slf4j</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>ring-swagger</artifactId>
+          <groupId>metosin</groupId>
         </exclusion>
         <exclusion>
           <artifactId>netty</artifactId>
@@ -1984,6 +2304,10 @@
           <groupId>org.slf4j</groupId>
         </exclusion>
         <exclusion>
+          <artifactId>ring-swagger</artifactId>
+          <groupId>metosin</groupId>
+        </exclusion>
+        <exclusion>
           <artifactId>netty</artifactId>
           <groupId>io.netty</groupId>
         </exclusion>
@@ -2006,6 +2330,10 @@
         <exclusion>
           <artifactId>slf4j-log4j12</artifactId>
           <groupId>org.slf4j</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>ring-swagger</artifactId>
+          <groupId>metosin</groupId>
         </exclusion>
         <exclusion>
           <artifactId>netty</artifactId>
