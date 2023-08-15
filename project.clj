@@ -101,7 +101,7 @@
                  ;; optional ring-middleware-format dep (Note: ring-middleware-format is also a transitive dep for compojure-api)
                  ;; see: https://github.com/ngrunwald/ring-middleware-format/issues/74
                  [com.ibm.icu/icu4j "65.1"]
-                 ;;fixes memory leaks: https://github.com/advthreat/iroh/issues/606
+                 ;;fixes memory leaks: https://github.com/advthreat/iroh/issues/6063
                  ;https://github.com/threatgrid/ring-swagger/commit/e767d9b78ccbe667fc1b4067d3338172e41225fc
                  [io.github.threatgrid/ring-swagger "0.26.3"]
                  [metosin/ring-swagger-ui "3.24.3"]
