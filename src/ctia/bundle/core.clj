@@ -25,6 +25,8 @@
    [java.util UUID]
    [java.util.concurrent ExecutionException]))
 
+(s/defschema NewOrPartial (s/enum :new :partial))
+
 (def find-by-external-ids-limit 200)
 
 (def bundle-entity-keys
@@ -64,12 +66,16 @@
   "Creates import data related to an entity"
   [{:keys [id external_ids] :as entity}
    entity-type
-   external-key-prefixes]
+   external-key-prefixes
+   new-or-partial :- NewOrPartial]
   (let [key-prefixes (parse-key-prefixes external-key-prefixes)
         filtered-ext-ids (filter-external-ids external_ids key-prefixes)]
     (when-not (seq filtered-ext-ids)
       (log/warnf "No valid external ID has been provided (id:%s)" id))
-    (cond-> {:new-entity entity
+    (cond-> {(case new-or-partial
+               :new :new-entity
+               :partial :partial-entity)
+             entity
              :type entity-type}
       (schemas/transient-id? id) (assoc :original_id id)
       (seq filtered-ext-ids) (assoc :external_ids filtered-ext-ids))))
@@ -155,8 +161,9 @@
   "Create import data for a type of entities"
   [entities
    entity-type
-   external-key-prefixes]
-  (map #(entity->import-data % entity-type external-key-prefixes)
+   external-key-prefixes
+   new-or-partial :- NewOrPartial]
+  (map #(entity->import-data % entity-type external-key-prefixes new-or-partial)
        entities))
 
 (s/defn with-existing-entity :- EntityImportData
@@ -219,14 +226,15 @@
   "Prepares the import data by searching all existing
    entities based on their external IDs. Only new entities
    will be imported"
-  [bundle-entities
+  [new-or-partial :- NewOrPartial
+   bundle-entities
    external-key-prefixes
    auth-identity
    services :- APIHandlerServices]
   (map-kv (fn [k v]
             (let [entity-type (bulk/entity-type-from-bulk-key k)]
               (-> v
-                  (init-import-data entity-type external-key-prefixes)
+                  (init-import-data entity-type external-key-prefixes new-or-partial)
                   (with-existing-entities entity-type auth-identity services))))
           bundle-entities))
 
@@ -238,19 +246,22 @@
 
 (s/defn prepare-bulk
   "Creates the bulk data structure with all entities to create."
-  [bundle-import-data :- BundleImportData]
-  (map-kv
-   (fn [_ v]
+  [new-or-partial :- NewOrPartial
+   bundle-import-data :- BundleImportData]
+  (update-vals
+   bundle-import-data
+   (fn [v]
      (->> v
-          (filter create?)
-          (remove nil?)
-          (map :new-entity)))
-   bundle-import-data))
+          (filter (every-pred some? create?))
+          (map (case new-or-partial
+                 :new :new-entity
+                 :partial :partial-entity))))))
 
 (s/defn with-bulk-result
   "Set the bulk result to the bundle import data"
   [bundle-import-data :- BundleImportData
-   bulk-result]
+   bulk-result
+   new-or-partial :- NewOrPartial]
   (map-kv (fn [k v]
             (let [{submitted true
                    not-submitted false} (group-by create? v)]
@@ -263,7 +274,9 @@
                                      :result "error")
                         msg (assoc :msg msg)
                         (not error) (assoc :id entity-bulk-result
-                                           :result "created")))
+                                           :result (case new-or-partial
+                                                     :new "created"
+                                                     :partial "updated"))))
                     submitted (get bulk-result k))
                not-submitted)))
           bundle-import-data))
@@ -288,27 +301,47 @@
       (log/warn error)))
   response)
 
-(s/defn import-bundle :- BundleImportResult
-  [bundle :- NewBundle
+(s/defn import-bundle* :- BundleImportResult
+  [new-or-partial :- NewOrPartial
+   bundle :- NewBundle
    external-key-prefixes :- (s/maybe s/Str)
    auth-identity :- (s/protocol auth/IIdentity)
    {{:keys [get-in-config]} :ConfigService
     :as services} :- APIHandlerServices]
   (let [bundle-entities (select-keys bundle bundle-entity-keys)
-        bundle-import-data (prepare-import bundle-entities
+        bundle-import-data (prepare-import new-or-partial
+                                           bundle-entities
                                            external-key-prefixes
                                            auth-identity
                                            services)
-        bulk (debug "Bulk" (prepare-bulk bundle-import-data))
+        bulk (->> (prepare-bulk new-or-partial bundle-import-data)
+                  (debug (str "Bulk " new-or-partial)))
         tempids (->> bundle-import-data
                      (map (fn [[_ entities-import-data]]
                             (entities-import-data->tempids entities-import-data)))
-                     (apply merge {}))]
-    (debug "Import bundle response"
-           (->> (bulk/create-bulk bulk tempids auth-identity (bulk-params get-in-config) services)
-                (with-bulk-result bundle-import-data)
-                build-response
-                log-errors))))
+                     (apply merge {}))
+        bulk-fn (case new-or-partial
+                  :new bulk/create-bulk
+                  :partial bulk/patch-entities)]
+    (->> (bulk-fn bulk tempids auth-identity (bulk-params get-in-config) services)
+         (with-bulk-result bundle-import-data new-or-partial)
+         build-response
+         log-errors
+         (debug (str "Import bundle response " new-or-partial)))))
+
+(s/defn import-bundle :- BundleImportResult
+  [bundle :- NewBundle
+   external-key-prefixes :- (s/maybe s/Str)
+   auth-identity :- (s/protocol auth/IIdentity)
+   services :- APIHandlerServices]
+  (import-bundle* :new bundle external-key-prefixes auth-identity services))
+
+(s/defn import-partial-bundle :- BundleImportResult
+  [bundle :- NewBundle
+   external-key-prefixes :- (s/maybe s/Str)
+   auth-identity :- (s/protocol auth/IIdentity)
+   services :- APIHandlerServices]
+  (import-bundle* :partial bundle external-key-prefixes auth-identity services))
 
 (defn bundle-max-size [get-in-config]
   (bulk/get-bulk-max-size get-in-config))
