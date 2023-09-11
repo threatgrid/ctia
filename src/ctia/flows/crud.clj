@@ -539,6 +539,7 @@
              identity
              patch-operation
              partial-entities
+             tempids
              long-id-fn
              spec
              get-success-entities
@@ -549,6 +550,7 @@
     (-> {:flow-type :update
          :entity-type entity-type
          :entities partial-entities
+         :tempids tempids
          :services services
          :get-prev-entity prev-entity-fn
          :patch-operation patch-operation

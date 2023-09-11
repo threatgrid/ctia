@@ -286,6 +286,11 @@
   (st/dissoc
    (csu/recursive-open-schema-version CTIMBundle) :casebooks))
 
+(s/defschema PartialBundle
+  (st/optional-keys-schema
+    (st/dissoc
+      (csu/recursive-open-schema-version CTIMBundle) :casebooks)))
+
 ;; common
 
 (s/defschema TLP
