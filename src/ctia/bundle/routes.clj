@@ -6,6 +6,7 @@
    [ctia.bundle.core :refer [bundle-max-size
                              bundle-size
                              import-bundle
+                             import-partial-bundle
                              export-bundle]]
    [ctia.bundle.schemas :refer [BundleImportResult
                                 NewBundleExport
@@ -154,7 +155,7 @@
                      (let [max-size (bundle-max-size get-in-config)]
                        (if (< max-size (bundle-size bundle))
                          (bad-request (str "Bundle max nb of entities: " max-size))
-                         (ok (import-new-bundle bundle external-key-prefixes auth-identity services)))))
+                         (ok (import-bundle bundle external-key-prefixes auth-identity services)))))
                (PATCH "/import" []
                       :return BundleImportResult
                       :body [bundle
