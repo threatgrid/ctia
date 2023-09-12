@@ -244,8 +244,7 @@
                                         :spec :new-sighting/map
                                         :get-success-entities :entities
                                         :identity (map->Identity ident)
-                                        :make-result make-result
-                                        :tempids {})]
+                                        :make-result make-result)]
                                (check-update res
                                              now
                                              "patched"
@@ -349,8 +348,7 @@
                            :identity (map->Identity {:login "user1" :groups ["g1"]})
                            :store-fn identity
                            :get-prev-entity store
-                           :patch-operation :replace
-                           :tempids {}}
+                           :patch-operation :replace}
            expected-entities (conj (map #(-> (store %)
                                              (assoc :source "patched")
                                              (dissoc :schema_version))
