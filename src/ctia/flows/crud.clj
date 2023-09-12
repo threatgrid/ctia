@@ -41,7 +41,7 @@
    (s/optional-key :find-entity-id)       (s/pred fn?)
    (s/optional-key :results)              s/Any
    (s/optional-key :spec)                 (s/maybe s/Keyword)
-   (s/optional-key :tempids)              TempIDs
+   (s/optional-key :tempids)              (s/maybe TempIDs)
    (s/optional-key :enveloped-result?)    (s/maybe s/Bool)
    (s/optional-key :make-result)        (s/maybe (s/pred fn?))
    (s/optional-key :entity-ids)           [s/Str]
@@ -71,24 +71,6 @@
             :this-host this-host
             :entity entity})))
       (id/str->short-id id))))
-
-(s/defn find-create-entity-id
-  [services :- HTTPShowServices]
-  (s/fn [{identity-obj :identity
-          :keys [entity-type tempids]} :- FlowMap
-         entity] :- s/Str
-    (or
-     (get tempids (:id entity))
-     (when-let [entity-id (find-checked-id entity services)]
-       (when-not (auth/capable? identity-obj :specify-id)
-         (http-response/forbidden!
-          {:error "Missing capability to specify entity ID"
-           :entity entity}))
-       (if (id/valid-short-id? entity-id)
-         entity-id
-         {:error (format "Invalid entity ID: %s" entity-id)
-          :entity entity}))
-     (make-id entity-type))))
 
 (s/defn find-create-entity-id
   [services :- HTTPShowServices]
@@ -150,16 +132,6 @@
                     (check-spec spec)
                     (tlp-check get-in-config)))
               entities)))
-
-(s/defn ^:private create-ids-from-transient :- FlowMap
-  "Creates IDs for entities identified by transient IDs that have not
-   yet been resolved."
-  [{:keys [entities entity-type] :as fm} :- FlowMap]
-  (update fm :tempids (fnil into {})
-          (keep (fn [{:keys [id]}]
-                  (when (and id (schemas/transient-id? id))
-                    [id (make-id entity-type)])))
-          entities))
 
 (s/defn ^:private create-ids-from-transient :- FlowMap
   "Creates IDs for entities identified by transient IDs that have not
