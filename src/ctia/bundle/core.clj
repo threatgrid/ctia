@@ -256,8 +256,8 @@
 (s/defn with-bulk-result
   "Set the bulk result to the bundle import data"
   [bundle-import-data :- BundleImportData
-   bulk-result
-   mode :- BundleImportMode]
+   mode :- BundleImportMode
+   bulk-result]
   (map-kv (fn [k v]
             (let [{submitted true
                    not-submitted false} (group-by create? v)]
