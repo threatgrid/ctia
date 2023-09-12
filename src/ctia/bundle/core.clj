@@ -250,17 +250,15 @@
   "Creates the bulk data structure with all entities to create."
   [bundle-import-data :- BundleImportData
    mode :- BundleImportMode]
-  (let [good? (case mode
-                :create create?
-                :patch patch?)]
-
-    (map-kv
-      (fn [_ v]
-        (->> v
-             (filter good?)
-             (remove nil?)
-             (map :new-entity)))
-      bundle-import-data)))
+  (map-kv
+   (fn [_ v]
+     (->> v
+          (filter (case mode
+                    :create create?
+                    :patch patch?))
+          (remove nil?)
+          (map :new-entity)))
+   bundle-import-data))
 
 (s/defn with-bulk-result
   "Set the bulk result to the bundle import data"
