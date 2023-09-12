@@ -164,7 +164,7 @@
 (s/defn ^:private create-ids-from-transient :- FlowMap
   "Creates IDs for entities identified by transient IDs that have not
    yet been resolved."
-  [{:keys [entities] :as fm} :- FlowMap]
+  [{:keys [entities entity-type] :as fm} :- FlowMap]
   (update fm :tempids (fnil into {})
           (keep (fn [{:keys [id]}]
                   (when (and id (schemas/transient-id? id))
@@ -605,7 +605,6 @@
          :long-id-fn long-id-fn
          :realize-fn realize-fn
          :find-entity-id (find-existing-entity-id prev-entity-fn)
-         :find-
          :spec spec
          :store-fn update-fn
          :create-event-fn to-update-event
