@@ -235,7 +235,7 @@
                   (with-existing-entities entity-type auth-identity services))))
           bundle-entities))
 
-(defn create?
+(s/defn create? :- s/Bool
   "Whether the provided entity should be created or not"
   [{:keys [result]}]
   ;; Add only new entities without error
@@ -385,12 +385,9 @@
                      set
                      (filter #(local-entity? % services))
                      set)
-        by-type (dissoc (group-by
-                         #(ent/long-id->entity-type %) all-ids) nil)
-        by-bulk-key (into {}
-                          (map (fn [[k v]]
-                                 {(bulk/bulk-key
-                                   (keyword k)) v}) by-type))
+        by-type (-> (group-by #(ent/long-id->entity-type %) all-ids)
+                    (dissoc nil))
+        by-bulk-key (update-keys by-type (comp bulk/bulk-key keyword))
         start (System/currentTimeMillis)
         fetched (bulk/fetch-bulk by-bulk-key identity-map services)]
     (send-event {:service "Export bundle fetch relationships targets"
@@ -402,9 +399,8 @@
 
 (defn node-filters [field entity-types]
   (->> entity-types
-       (map name)
-       (map #(format "%s:*%s*" field %))
-       (clojure.string/join " OR ")
+       (map #(format "%s:*%s*" field (name %)))
+       (string/join " OR ")
        (format "(%s)")))
 
 (defn relationships-filters
@@ -413,15 +409,13 @@
            source_type
            target_type]
     :or {related_to #{:source_ref :target_ref}}}]
-  (let [edge-filters (->> (map #(hash-map % id) (set related_to))
-                          (apply merge))
+  (let [edge-filters (zipmap related_to (repeat id))
         node-filters (cond->> []
                        (seq source_type) (cons (node-filters "source_ref" source_type))
                        (seq target_type) (cons (node-filters "target_ref" target_type))
                        :always (string/join " AND "))]
-    (into {:one-of edge-filters}
-          (when (seq node-filters)
-            {:query node-filters}))))
+    (cond-> {:one-of edge-filters}
+      (seq node-filters) (assoc :query node-filters))))
 
 (s/defn fetch-entity-relationships
   "given an entity id, fetch all related relationship"
@@ -493,7 +487,7 @@
 
         (seq relationships)
         (assoc :relationships
-               (set (map #(ent/with-long-id % services) relationships)))
+               (into #{} (map #(ent/with-long-id % services)) relationships))
 
         (seq relationships)
         (->> (deep-merge-with coll/add-colls
