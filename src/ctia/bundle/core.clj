@@ -72,10 +72,7 @@
         filtered-ext-ids (filter-external-ids external_ids key-prefixes)]
     (when-not (seq filtered-ext-ids)
       (log/warnf "No valid external ID has been provided (id:%s)" id))
-    (cond-> {(case mode
-               :create :new-entity
-               :patch :partial-entity)
-             entity
+    (cond-> {:new-entity entity
              :type entity-type}
       (schemas/transient-id? id) (assoc :original_id id)
       (seq filtered-ext-ids) (assoc :external_ids filtered-ext-ids))))
@@ -242,15 +239,12 @@
 
 (s/defn prepare-bulk
   "Creates the bulk data structure with all entities to create."
-  [mode :- BundleImportMode
-   bundle-import-data :- BundleImportData]
+  [bundle-import-data :- BundleImportData]
   (update-vals
    bundle-import-data
    (fn [v]
      (sequence (comp (filter (every-pred some? create?))
-                     (map (case mode
-                            :create :new-entity
-                            :patch :partial-entity)))
+                     (map :new-entity))
                v))))
 
 (s/defn with-bulk-result
@@ -310,12 +304,12 @@
                                            external-key-prefixes
                                            auth-identity
                                            services)
-        bulk (->> (prepare-bulk mode bundle-import-data)
+        bulk (->> (prepare-bulk bundle-import-data)
                   (debug (str "Bulk " mode)))
         tempids (into {} (map entities-import-data->tempids) (vals bundle-import-data))
         bulk-fn (case mode
                   :create bulk/create-bulk
-                  :patch bulk/patch-entities)]
+                  :patch bulk/patch-bulk)]
     (->> (bulk-fn bulk tempids auth-identity (bulk-params get-in-config) services)
          (with-bulk-result bundle-import-data mode)
          build-response

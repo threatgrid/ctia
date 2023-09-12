@@ -41,7 +41,7 @@
    (s/optional-key :find-entity-id)       (s/pred fn?)
    (s/optional-key :results)              s/Any
    (s/optional-key :spec)                 (s/maybe s/Keyword)
-   (s/optional-key :tempids)              (s/maybe TempIDs)
+   (s/optional-key :tempids)              TempIDs
    (s/optional-key :enveloped-result?)    (s/maybe s/Bool)
    (s/optional-key :make-result)        (s/maybe (s/pred fn?))
    (s/optional-key :entity-ids)           [s/Str]
@@ -116,16 +116,6 @@
       (id/str->short-id id)
       id)))
 
-(s/defn find-patch-entity-id
-  [services :- HTTPShowServices]
-  (s/fn [{identity-obj :identity
-          :keys [entity-type tempids]} :- FlowMap
-         {:keys [id] :as entity}] :- s/Str
-    (if (schemas/transient-id? id)
-      (or (get tempids (:id entity)))
-      id)))
-
-
 (defn- check-spec [entity spec]
   (if (and spec
            (not (cs/valid? spec
@@ -170,14 +160,6 @@
                   (when (and id (schemas/transient-id? id))
                     [id (make-id entity-type)])))
           entities))
-
-(s/defn ^:private resolve-ids-from-transient :- FlowMap
-  "Resolves IDs for entities identified by transient IDs that have not
-   yet been resolved."
-  [{:keys [entities tempids] :as fm} :- FlowMap]
-  (assoc fm :entities (mapv (fn [entity]
-                              (update entity :id #(get tempids % %)))
-                            entities)))
 
 (s/defn ^:private create-ids-from-transient :- FlowMap
   "Creates IDs for entities identified by transient IDs that have not
@@ -430,20 +412,21 @@
 (s/defn patch-entities :- FlowMap
   [{:keys [get-prev-entity
            entities
-           patch-operation]
+           patch-operation
+           tempids]
     :as fm} :- FlowMap]
   (let [patch-fn (case patch-operation
                    :add coll/add-colls
                    :remove coll/remove-colls
                    :replace coll/replace-colls
                    coll/replace-colls)
-        patched (for [partial-entity entities
-                       :let [prev-entity (some->> partial-entity
-                                                  :id
-                                                  get-prev-entity)]]
-                      (cond->> partial-entity
-                       (some? prev-entity)
-                       (patch-entity patch-fn prev-entity)))]
+        patched (mapv (fn [partial-entity]
+                        (let [partial-entity (update partial-entity :id #(get tempids % %))
+                              prev-entity (some-> (:id partial-entity) get-prev-entity)]
+                          (cond->> partial-entity
+                            (some? prev-entity)
+                            (patch-entity patch-fn prev-entity))))
+                      entities)]
     (assoc fm :entities patched)))
 
 (defn create-flow
@@ -610,7 +593,6 @@
          :create-event-fn to-update-event
          :get-success-entities get-success-entities
          :make-result make-result}
-        resolve-ids-from-transient
         patch-entities
         not-found
         validate-entities
