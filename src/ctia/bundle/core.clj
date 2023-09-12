@@ -66,8 +66,7 @@
   "Creates import data related to an entity"
   [{:keys [id external_ids] :as entity}
    entity-type
-   external-key-prefixes
-   mode :- BundleImportMode]
+   external-key-prefixes]
   (let [key-prefixes (parse-key-prefixes external-key-prefixes)
         filtered-ext-ids (filter-external-ids external_ids key-prefixes)]
     (when-not (seq filtered-ext-ids)
@@ -154,9 +153,8 @@
   "Create import data for a type of entities"
   [entities
    entity-type
-   external-key-prefixes
-   mode :- BundleImportMode]
-  (map #(entity->import-data % entity-type external-key-prefixes mode)
+   external-key-prefixes]
+  (map #(entity->import-data % entity-type external-key-prefixes)
        entities))
 
 (s/defn with-existing-entity :- EntityImportData
@@ -219,15 +217,14 @@
   "Prepares the import data by searching all existing
    entities based on their external IDs. Only new entities
    will be imported"
-  [mode :- BundleImportMode
-   bundle-entities
+  [bundle-entities
    external-key-prefixes
    auth-identity
    services :- APIHandlerServices]
   (map-kv (fn [k v]
             (let [entity-type (bulk/entity-type-from-bulk-key k)]
               (-> v
-                  (init-import-data entity-type external-key-prefixes mode)
+                  (init-import-data entity-type external-key-prefixes)
                   (with-existing-entities entity-type auth-identity services))))
           bundle-entities))
 
@@ -299,8 +296,7 @@
    {{:keys [get-in-config]} :ConfigService
     :as services} :- APIHandlerServices]
   (let [bundle-entities (select-keys bundle bundle-entity-keys)
-        bundle-import-data (prepare-import mode
-                                           bundle-entities
+        bundle-import-data (prepare-import bundle-entities
                                            external-key-prefixes
                                            auth-identity
                                            services)
