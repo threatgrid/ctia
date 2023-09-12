@@ -378,16 +378,16 @@
   [relationships identity-map
    {{:keys [send-event]} :RiemannService
     :as services} :- APIHandlerServices]
-  (let [all-ids (->> relationships
-                     (map (fn [{:keys [target_ref source_ref]}]
-                            [target_ref source_ref]))
-                     flatten
-                     set
-                     (filter #(local-entity? % services))
-                     set)
-        by-type (-> (group-by #(ent/long-id->entity-type %) all-ids)
-                    (dissoc nil))
-        by-bulk-key (update-keys by-type (comp bulk/bulk-key keyword))
+  (let [all-ids (into #{} (comp (mapcat (fn [{:keys [target_ref source_ref]}]
+                                          [target_ref source_ref]))
+                                (distinct)
+                                (filter #(local-entity? % services)))
+                      relationships)
+        by-bulk-key (-> (group-by #(some-> (ent/long-id->entity-type %)
+                                           keyword
+                                           bulk/bulk-key)
+                                  all-ids)
+                        (dissoc nil))
         start (System/currentTimeMillis)
         fetched (bulk/fetch-bulk by-bulk-key identity-map services)]
     (send-event {:service "Export bundle fetch relationships targets"
