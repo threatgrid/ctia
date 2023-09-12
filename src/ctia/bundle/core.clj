@@ -25,7 +25,7 @@
    [java.util UUID]
    [java.util.concurrent ExecutionException]))
 
-(s/defschema NewOrPartial (s/enum :new :partial))
+(s/defschema BundleImportMode (s/enum :create :patch))
 
 (def find-by-external-ids-limit 200)
 
@@ -67,14 +67,14 @@
   [{:keys [id external_ids] :as entity}
    entity-type
    external-key-prefixes
-   new-or-partial :- NewOrPartial]
+   mode :- BundleImportMode]
   (let [key-prefixes (parse-key-prefixes external-key-prefixes)
         filtered-ext-ids (filter-external-ids external_ids key-prefixes)]
     (when-not (seq filtered-ext-ids)
       (log/warnf "No valid external ID has been provided (id:%s)" id))
-    (cond-> {(case new-or-partial
-               :new :new-entity
-               :partial :partial-entity)
+    (cond-> {(case mode
+               :create :new-entity
+               :patch :partial-entity)
              entity
              :type entity-type}
       (schemas/transient-id? id) (assoc :original_id id)
@@ -159,8 +159,8 @@
   [entities
    entity-type
    external-key-prefixes
-   new-or-partial :- NewOrPartial]
-  (map #(entity->import-data % entity-type external-key-prefixes new-or-partial)
+   mode :- BundleImportMode]
+  (map #(entity->import-data % entity-type external-key-prefixes mode)
        entities))
 
 (s/defn with-existing-entity :- EntityImportData
@@ -223,7 +223,7 @@
   "Prepares the import data by searching all existing
    entities based on their external IDs. Only new entities
    will be imported"
-  [new-or-partial :- NewOrPartial
+  [mode :- BundleImportMode
    bundle-entities
    external-key-prefixes
    auth-identity
@@ -231,7 +231,7 @@
   (map-kv (fn [k v]
             (let [entity-type (bulk/entity-type-from-bulk-key k)]
               (-> v
-                  (init-import-data entity-type external-key-prefixes new-or-partial)
+                  (init-import-data entity-type external-key-prefixes mode)
                   (with-existing-entities entity-type auth-identity services))))
           bundle-entities))
 
@@ -243,22 +243,22 @@
 
 (s/defn prepare-bulk
   "Creates the bulk data structure with all entities to create."
-  [new-or-partial :- NewOrPartial
+  [mode :- BundleImportMode
    bundle-import-data :- BundleImportData]
   (update-vals
    bundle-import-data
    (fn [v]
      (->> v
           (filter (every-pred some? create?))
-          (map (case new-or-partial
-                 :new :new-entity
-                 :partial :partial-entity))))))
+          (map (case mode
+                 :create :new-entity
+                 :patch :partial-entity))))))
 
 (s/defn with-bulk-result
   "Set the bulk result to the bundle import data"
   [bundle-import-data :- BundleImportData
    bulk-result
-   new-or-partial :- NewOrPartial]
+   mode :- BundleImportMode]
   (map-kv (fn [k v]
             (let [{submitted true
                    not-submitted false} (group-by create? v)]
@@ -271,9 +271,9 @@
                                      :result "error")
                         msg (assoc :msg msg)
                         (not error) (assoc :id entity-bulk-result
-                                           :result (case new-or-partial
-                                                     :new "created"
-                                                     :partial "updated"))))
+                                           :result (case mode
+                                                     :create "created"
+                                                     :patch "updated"))))
                     submitted (get bulk-result k))
                not-submitted)))
           bundle-import-data))
@@ -299,29 +299,29 @@
   response)
 
 (s/defn import-bundle* :- BundleImportResult
-  [new-or-partial :- NewOrPartial
+  [mode :- BundleImportMode
    bundle :- NewBundle
    external-key-prefixes :- (s/maybe s/Str)
    auth-identity :- (s/protocol auth/IIdentity)
    {{:keys [get-in-config]} :ConfigService
     :as services} :- APIHandlerServices]
   (let [bundle-entities (select-keys bundle bundle-entity-keys)
-        bundle-import-data (prepare-import new-or-partial
+        bundle-import-data (prepare-import mode
                                            bundle-entities
                                            external-key-prefixes
                                            auth-identity
                                            services)
-        bulk (->> (prepare-bulk new-or-partial bundle-import-data)
-                  (debug (str "Bulk " new-or-partial)))
+        bulk (->> (prepare-bulk mode bundle-import-data)
+                  (debug (str "Bulk " mode)))
         tempids (into {} (map entities-import-data->tempids) (vals bundle-import-data))
-        bulk-fn (case new-or-partial
-                  :new bulk/create-bulk
-                  :partial bulk/patch-entities)]
+        bulk-fn (case mode
+                  :create bulk/create-bulk
+                  :patch bulk/patch-entities)]
     (->> (bulk-fn bulk tempids auth-identity (bulk-params get-in-config) services)
-         (with-bulk-result bundle-import-data new-or-partial)
+         (with-bulk-result bundle-import-data mode)
          build-response
          log-errors
-         (debug (str "Import bundle response " new-or-partial)))))
+         (debug (str "Import bundle response " mode)))))
 
 (s/defn import-bundle :- BundleImportResult
   [bundle :- NewBundle
