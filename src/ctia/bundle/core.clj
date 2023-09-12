@@ -132,10 +132,10 @@
 (s/defn entities-import-data->tempids :- TempIDs
   "Get a mapping table between orignal IDs and real IDs"
   [import-data :- [EntityImportData]]
-  (into {} (keep (fn [{:keys [original_id id]}]
-                   (when (and original_id id)
-                     [original_id id])))
-        import-data))
+  (reduce (fn [acc {:keys [original_id id]}]
+            (cond-> acc
+              (and original_id id) (assoc original_id id)))
+          {} import-data))
 
 (defn map-kv
   "Returns a map where values are the result of applying
