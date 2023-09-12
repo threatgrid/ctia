@@ -240,9 +240,9 @@
   (update-vals
    bundle-import-data
    (fn [v]
-     (sequence (comp (filter (every-pred some? create?))
-                     (map :new-entity))
-               v))))
+     (keep #(when (create? %)
+              (:new-entity %))
+           v))))
 
 (s/defn with-bulk-result
   "Set the bulk result to the bundle import data"
