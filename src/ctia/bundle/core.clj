@@ -316,6 +316,7 @@
                                            services)
         bulk (->> (prepare-bulk new-or-partial bundle-import-data)
                   (debug (str "Bulk " new-or-partial)))
+        ;; TODO add existing entities' tempids from bundle-import-data to tempids
         tempids (->> bundle-import-data
                      (map (fn [[_ entities-import-data]]
                             (entities-import-data->tempids entities-import-data)))
