@@ -22,8 +22,8 @@
                {entity (-> plural
                            name
                            (str/replace #"-" "_")
-                           keyword)}))
-        (vals (all-entities))))
+                           keyword)})
+             (vals (all-entities)))))
 
 (def inverted-bulk-entity-mapping
   (set/map-invert bulk-entity-mapping))
