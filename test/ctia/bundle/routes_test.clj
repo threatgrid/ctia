@@ -490,10 +490,10 @@
                             :target_records        (set-of target-record-maximal)}
           api-handler-svcs {:FeaturesService {:entity-enabled? #(contains? selected-keys %)}}]
       (s/set-fn-validation! false)    ;; otherwise it fails for incomplete APIHandlerServices passed into `prep-bundle-schema`
-      (is (map? (s/validate (bundle.routes/prep-bundle-schema api-handler-svcs) fake-bundle)))
+      (is (map? (s/validate (bundle.routes/prep-bundle-schema api-handler-svcs false) fake-bundle)))
       (is (thrown? Exception
                    (s/validate
-                    (bundle.routes/prep-bundle-schema api-handler-svcs)
+                    (bundle.routes/prep-bundle-schema api-handler-svcs false)
                     (assoc fake-bundle :incidents (set-of incident-maximal))))
           "Bundle schema with a key that's not explicitly allowed shouldn't validate")))
   (testing "Attempts to import bundle with disabled entities should fail"
