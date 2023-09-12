@@ -425,7 +425,8 @@ It returns the documents with full hits meta data including the real index in wh
                                       first
                                       (into meta)))
                                 prepared)
-             bulk-res (when prepared
+             bulk-res (if-not prepared
+                        {}
                         (try
                           (format-bulk-res
                             (ductile.doc/bulk-index-docs conn

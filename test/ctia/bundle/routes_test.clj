@@ -299,7 +299,6 @@
                    app
                    (find-result-by-original-id bundle-result (:id entity))
                    entity))))
-           #_ ;;FIXME
            (testing "PATCH"
              (let [response (PATCH app
                                    "ctia/bundle/import"
