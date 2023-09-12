@@ -97,8 +97,8 @@
                                            (auth/ident->map auth-identity)
                                            paging))
           acc-entities (into entities results)
-          matched-ext-ids (into #{} (mapcat :external_ids results))
-          remaining-ext-ids (remove matched-ext-ids ext-ids)]
+          matched-ext-ids (into #{} (mapcat :external_ids) results)
+          remaining-ext-ids (doall (remove matched-ext-ids ext-ids))]
       (if next-page
         (recur remaining-ext-ids acc-entities)
         acc-entities))))
@@ -124,15 +124,12 @@
     {:external_id \"ctia-2\"} {:external_id \"ctia-2\"
                                :entity {...}}}"
   [entities]
-  (let [entity-with-external-id
-        (->> entities
-             (map (fn [{:keys [external_ids] :as entity}]
-                    (set (map (fn [external_id]
-                                {:external_id external_id
-                                 :entity entity})
-                              external_ids))))
-             (apply set/union))]
-    (set/index entity-with-external-id [:external_id])))
+  (into {} (mapcat (fn [{:keys [external_ids] :as entity}]
+                     (map (fn [external_id]
+                            (let [k {:external_id external_id}]
+                              {k (assoc k :entity entity)}))
+                          external_ids)))
+        entities))
 
 (s/defn entities-import-data->tempids :- TempIDs
   "Get a mapping table between orignal IDs and real IDs"
@@ -248,11 +245,11 @@
   (update-vals
    bundle-import-data
    (fn [v]
-     (->> v
-          (filter (every-pred some? create?))
-          (map (case mode
-                 :create :new-entity
-                 :patch :partial-entity))))))
+     (sequence (comp (filter (every-pred some? create?))
+                     (map (case mode
+                            :create :new-entity
+                            :patch :partial-entity)))
+               v))))
 
 (s/defn with-bulk-result
   "Set the bulk result to the bundle import data"
@@ -383,9 +380,7 @@
                                 (distinct)
                                 (filter #(local-entity? % services)))
                       relationships)
-        by-bulk-key (-> (group-by #(some-> (ent/long-id->entity-type %)
-                                           keyword
-                                           bulk/bulk-key)
+        by-bulk-key (-> (group-by (comp bulk/bulk-key keyword ent/long-id->entity-type)
                                   all-ids)
                         (dissoc nil))
         start (System/currentTimeMillis)
@@ -515,9 +510,8 @@
       (let [start (System/currentTimeMillis)
             identity-map (auth/ident->map identity)
             entities (try
-                       (->> ids
-                            (pmap #(export-entities % identity-map identity params services))
-                            (into []))
+                       (vec (pmap #(export-entities % identity-map identity params services)
+                                  ids))
                        (catch ExecutionException e
                          (throw (.getCause e))))
             res (->> entities
