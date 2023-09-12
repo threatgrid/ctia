@@ -122,20 +122,25 @@
     {:external_id \"ctia-2\"} {:external_id \"ctia-2\"
                                :entity {...}}}"
   [entities]
-  (into {} (mapcat (fn [{:keys [external_ids] :as entity}]
-                     (map (fn [external_id]
-                            (let [k {:external_id external_id}]
-                              {k (assoc k :entity entity)}))
-                          external_ids)))
-        entities))
+  (let [entity-with-external-id
+        (->> entities
+             (map (fn [{:keys [external_ids] :as entity}]
+                    (set (map (fn [external_id]
+                                {:external_id external_id
+                                 :entity entity})
+                              external_ids))))
+             (apply set/union))]
+    (set/index entity-with-external-id [:external_id])))
 
 (s/defn entities-import-data->tempids :- TempIDs
   "Get a mapping table between orignal IDs and real IDs"
   [import-data :- [EntityImportData]]
-  (reduce (fn [acc {:keys [original_id id]}]
-            (cond-> acc
-              (and original_id id) (assoc original_id id)))
-          {} import-data))
+  (->> import-data
+       (filter #(and (:original_id %)
+                     (:id %)))
+       (map (fn [{:keys [original_id id]}]
+              [original_id id]))
+       (into {})))
 
 (defn map-kv
   "Returns a map where values are the result of applying
@@ -145,9 +150,10 @@
                {:foo 3 :bar 4}) ;; => {:foo "foo-3", :bar "bar-4"}
               )}
   [f m]
-  (reduce-kv (fn [m k v]
-               (assoc m k (f k v)))
-             {} m))
+  (into {}
+        (map (fn [[k v]]
+               [k (f k v)])
+             m)))
 
 (s/defn init-import-data :- [EntityImportData]
   "Create import data for a type of entities"
@@ -247,12 +253,14 @@
   (let [good? (case mode
                 :create create?
                 :patch patch?)]
-    (update-vals
-      bundle-import-data
-      (fn [v]
-        (keep #(when (good? %)
-                 (:new-entity %))
-              v)))))
+
+    (map-kv
+      (fn [_ v]
+        (->> v
+             (filter good?)
+             (remove nil?)
+             (map :new-entity)))
+      bundle-import-data)))
 
 (s/defn with-bulk-result
   "Set the bulk result to the bundle import data"
@@ -281,9 +289,9 @@
 (s/defn build-response :- BundleImportResult
   "Build bundle import response"
   [bundle-import-data :- BundleImportData]
-  {:results (sequence (comp (mapcat val)
-                            (map #(dissoc % :new-entity :old-entity)))
-                      bundle-import-data)})
+  {:results (map
+             #(dissoc % :new-entity :old-entity)
+             (apply concat (vals bundle-import-data)))})
 
 (defn bulk-params [get-in-config]
   {:refresh
@@ -310,17 +318,19 @@
                                            external-key-prefixes
                                            auth-identity
                                            services)
-        bulk (->> (prepare-bulk bundle-import-data mode)
-                  (debug (str "Bulk " mode)))
-        tempids (into {} (map entities-import-data->tempids) (vals bundle-import-data))
+        bulk (debug "Bulk" (prepare-bulk bundle-import-data mode))
+        tempids (->> bundle-import-data
+                     (map (fn [[_ entities-import-data]]
+                            (entities-import-data->tempids entities-import-data)))
+                     (apply merge {}))
         bulk-fn (case mode
                   :create bulk/create-bulk
                   :patch bulk/patch-bulk)]
-    (->> (bulk-fn bulk tempids auth-identity (bulk-params get-in-config) services)
-         (with-bulk-result bundle-import-data mode)
-         build-response
-         log-errors
-         (debug (str "Import bundle response " mode)))))
+    (debug (str "Import bundle response " mode)
+           (->> (bulk-fn bulk tempids auth-identity (bulk-params get-in-config) services)
+                (with-bulk-result bundle-import-data mode)
+                build-response
+                log-errors))))
 
 (s/defn import-bundle :- BundleImportResult
   [bundle :- NewBundle
@@ -377,14 +387,19 @@
   [relationships identity-map
    {{:keys [send-event]} :RiemannService
     :as services} :- APIHandlerServices]
-  (let [all-ids (into #{} (comp (mapcat (fn [{:keys [target_ref source_ref]}]
-                                          [target_ref source_ref]))
-                                (distinct)
-                                (filter #(local-entity? % services)))
-                      relationships)
-        by-bulk-key (-> (group-by (comp bulk/bulk-key keyword ent/long-id->entity-type)
-                                  all-ids)
-                        (dissoc nil))
+  (let [all-ids (->> relationships
+                     (map (fn [{:keys [target_ref source_ref]}]
+                            [target_ref source_ref]))
+                     flatten
+                     set
+                     (filter #(local-entity? % services))
+                     set)
+        by-type (dissoc (group-by
+                         #(ent/long-id->entity-type %) all-ids) nil)
+        by-bulk-key (into {}
+                          (map (fn [[k v]]
+                                 {(bulk/bulk-key
+                                   (keyword k)) v}) by-type))
         start (System/currentTimeMillis)
         fetched (bulk/fetch-bulk by-bulk-key identity-map services)]
     (send-event {:service "Export bundle fetch relationships targets"
@@ -396,8 +411,9 @@
 
 (defn node-filters [field entity-types]
   (->> entity-types
-       (map #(format "%s:*%s*" field (name %)))
-       (string/join " OR ")
+       (map name)
+       (map #(format "%s:*%s*" field %))
+       (clojure.string/join " OR ")
        (format "(%s)")))
 
 (defn relationships-filters
@@ -406,13 +422,15 @@
            source_type
            target_type]
     :or {related_to #{:source_ref :target_ref}}}]
-  (let [edge-filters (zipmap related_to (repeat id))
+  (let [edge-filters (->> (map #(hash-map % id) (set related_to))
+                          (apply merge))
         node-filters (cond->> []
                        (seq source_type) (cons (node-filters "source_ref" source_type))
                        (seq target_type) (cons (node-filters "target_ref" target_type))
                        :always (string/join " AND "))]
-    (cond-> {:one-of edge-filters}
-      (seq node-filters) (assoc :query node-filters))))
+    (into {:one-of edge-filters}
+          (when (seq node-filters)
+            {:query node-filters}))))
 
 (s/defn fetch-entity-relationships
   "given an entity id, fetch all related relationship"
@@ -484,7 +502,7 @@
 
         (seq relationships)
         (assoc :relationships
-               (into #{} (map #(ent/with-long-id % services)) relationships))
+               (set (map #(ent/with-long-id % services) relationships)))
 
         (seq relationships)
         (->> (deep-merge-with coll/add-colls
@@ -512,8 +530,9 @@
       (let [start (System/currentTimeMillis)
             identity-map (auth/ident->map identity)
             entities (try
-                       (vec (pmap #(export-entities % identity-map identity params services)
-                                  ids))
+                       (->> ids
+                            (pmap #(export-entities % identity-map identity params services))
+                            (into []))
                        (catch ExecutionException e
                          (throw (.getCause e))))
             res (->> entities
