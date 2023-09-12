@@ -150,10 +150,9 @@
                {:foo 3 :bar 4}) ;; => {:foo "foo-3", :bar "bar-4"}
               )}
   [f m]
-  (into {}
-        (map (fn [[k v]]
-               [k (f k v)])
-             m)))
+  (reduce-kv (fn [m k v]
+               (assoc m k (f k v)))
+             {} m))
 
 (s/defn init-import-data :- [EntityImportData]
   "Create import data for a type of entities"
