@@ -152,7 +152,8 @@
                              :identity identity
                              :patch-operation patch-operation
                              :partial-entities  [(assoc partial-entity :id id)]
-                             :spec :new-casebook/map)]
+                             :spec :new-casebook/map
+                             :tempids {})]
                         (-> patch-res
                             first
                             un-store)))]

@@ -102,7 +102,8 @@
            :identity ident
            :patch-operation :replace
            :partial-entities [patch]
-           :spec new-spec)
+           :spec new-spec
+           :tempids {})
           first
           ent/un-store
           ok)
@@ -323,7 +324,8 @@
                               :identity identity
                               :patch-operation :replace
                               :partial-entities [(assoc partial-update :id id)]
-                              :spec new-spec)
+                              :spec new-spec
+                              :tempids {})
                              first
                              ent/un-store)]
                   (ok updated-rec)

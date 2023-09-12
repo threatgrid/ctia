@@ -196,7 +196,9 @@
 
 (s/defn patch-entities
   "patch many entities provided their type and returns errored and successed entities' ids"
-  [patches entity-type tempids auth-identity params
+  [patches entity-type 
+   tempids :- TempIDs
+   auth-identity params
    services :- APIHandlerServices]
   (when (seq patches)
     (let [get-fn #(read-entities %  entity-type auth-identity services)
@@ -348,6 +350,8 @@
   (gen-bulk-from-fn update-entities bulk auth-identity params services))
 
 (s/defn patch-bulk
-  [bulk auth-identity tempids params
+  [bulk auth-identity
+   tempids :- TempIDs
+   params
    services :- APIHandlerServices]
   (gen-bulk-from-fn patch-entities bulk tempids auth-identity params services))

@@ -174,7 +174,8 @@
                          :identity identity
                          :patch-operation :replace
                          :partial-entities [status-update]
-                         :spec :new-incident/map)
+                         :spec :new-incident/map
+                         :tempids {})
                         first
                         un-store)]
                 (ok updated)
