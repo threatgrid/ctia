@@ -229,12 +229,13 @@
   [func bulk & args]
   (try
     (into {}
-          (keep (fn [[bulk-k entities]]
-                  (when (seq entities)
-                    [bulk-k (apply func
-                                   entities
-                                   (entity-type-from-bulk-key bulk-k)
-                                   args)])))
+          (comp
+           (remove (comp empty? second))
+           (map (fn [[bulk-k entities]]
+                  [bulk-k (apply func
+                                 entities
+                                 (entity-type-from-bulk-key bulk-k)
+                                 args)])))
           bulk)
     (catch java.util.concurrent.ExecutionException e
       (throw (.getCause e)))))
@@ -258,7 +259,9 @@
   The create-entities set the enveloped-result? to True in the flow
   configuration to get :data and :tempids for each entity in the result."
   [entities-by-type]
-  (into {} (map :tempids) (vals entities-by-type)))
+  (into {}
+        (map (fn [[_ v]] (:tempids v)))
+        entities-by-type))
 
 (defn bulk-refresh? [get-in-config]
   (get-in-config
