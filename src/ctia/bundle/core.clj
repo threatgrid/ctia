@@ -137,12 +137,10 @@
 (s/defn entities-import-data->tempids :- TempIDs
   "Get a mapping table between orignal IDs and real IDs"
   [import-data :- [EntityImportData]]
-  (->> import-data
-       (filter #(and (:original_id %)
-                     (:id %)))
-       (map (fn [{:keys [original_id id]}]
-              [original_id id]))
-       (into {})))
+  (into {} (keep (fn [{:keys [original_id id]}]
+                   (when (and original_id id)
+                     [original_id id])))
+        import-data))
 
 (defn map-kv
   "Returns a map where values are the result of applying
@@ -316,7 +314,6 @@
                                            services)
         bulk (->> (prepare-bulk new-or-partial bundle-import-data)
                   (debug (str "Bulk " new-or-partial)))
-        ;; TODO add existing entities' tempids from bundle-import-data to tempids
         tempids (into {} (map entities-import-data->tempids) (vals bundle-import-data))
         bulk-fn (case new-or-partial
                   :new bulk/create-bulk
