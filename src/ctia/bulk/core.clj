@@ -199,13 +199,7 @@
   [patches entity-type tempids auth-identity params
    services :- APIHandlerServices]
   (when (seq patches)
-    (let [get-fn (fn [id]
-                   (if (str/starts-with? "transient:" id)
-                     (some (fn [{patched-id :id}]
-                             (when (= id patched-id)
-                               ))
-                           patches)
-                     (read-entities id entity-type auth-identity services)))
+    (let [get-fn #(read-entities %  entity-type auth-identity services)
           {:keys [realize-fn new-spec]} (get (all-entities) entity-type)]
       (flows/patch-flow
        :services services
