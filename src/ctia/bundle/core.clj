@@ -234,15 +234,25 @@
   ;; Add only new entities without error
   (not (contains? #{"error" "exists"} result)))
 
+(s/defn patch? :- s/Bool
+  "Whether the provided entity should be patched or not"
+  [{:keys [result]}]
+  ;; Add only new entities without error
+  (not= "error" result))
+
 (s/defn prepare-bulk
   "Creates the bulk data structure with all entities to create."
-  [bundle-import-data :- BundleImportData]
-  (update-vals
-   bundle-import-data
-   (fn [v]
-     (keep #(when (create? %)
-              (:new-entity %))
-           v))))
+  [bundle-import-data :- BundleImportData
+   mode :- BundleImportMode]
+  (let [good? (case mode
+                :create create?
+                :patch patch?)]
+    (update-vals
+      bundle-import-data
+      (fn [v]
+        (keep #(when (good? %)
+                 (:new-entity %))
+              v)))))
 
 (s/defn with-bulk-result
   "Set the bulk result to the bundle import data"
@@ -300,7 +310,7 @@
                                            external-key-prefixes
                                            auth-identity
                                            services)
-        bulk (->> (prepare-bulk bundle-import-data)
+        bulk (->> (prepare-bulk bundle-import-data mode)
                   (debug (str "Bulk " mode)))
         tempids (into {} (map entities-import-data->tempids) (vals bundle-import-data))
         bulk-fn (case mode
