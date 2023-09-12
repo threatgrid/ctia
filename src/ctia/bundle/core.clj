@@ -328,14 +328,14 @@
    external-key-prefixes :- (s/maybe s/Str)
    auth-identity :- (s/protocol auth/IIdentity)
    services :- APIHandlerServices]
-  (import-bundle* :new bundle external-key-prefixes auth-identity services))
+  (import-bundle* :create bundle external-key-prefixes auth-identity services))
 
 (s/defn import-partial-bundle :- BundleImportResult
   [bundle :- NewBundle
    external-key-prefixes :- (s/maybe s/Str)
    auth-identity :- (s/protocol auth/IIdentity)
    services :- APIHandlerServices]
-  (import-bundle* :partial bundle external-key-prefixes auth-identity services))
+  (import-bundle* :patch bundle external-key-prefixes auth-identity services))
 
 (defn bundle-max-size [get-in-config]
   (bulk/get-bulk-max-size get-in-config))
