@@ -271,9 +271,9 @@
 (s/defn build-response :- BundleImportResult
   "Build bundle import response"
   [bundle-import-data :- BundleImportData]
-  {:results (map
-             #(dissoc % :new-entity :old-entity)
-             (apply concat (vals bundle-import-data)))})
+  {:results (sequence (comp (mapcat val)
+                            (map #(dissoc % :new-entity :old-entity)))
+                      bundle-import-data)})
 
 (defn bulk-params [get-in-config]
   {:refresh
@@ -288,7 +288,7 @@
       (log/warn error)))
   response)
 
-(s/defn import-bundle* :- BundleImportResult
+(s/defn ^:private import-bundle* :- BundleImportResult
   [mode :- BundleImportMode
    bundle :- NewBundle
    external-key-prefixes :- (s/maybe s/Str)
