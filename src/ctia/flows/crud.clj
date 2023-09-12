@@ -392,13 +392,14 @@
                    :remove coll/remove-colls
                    :replace coll/replace-colls
                    coll/replace-colls)
-        patched (mapv (fn [partial-entity]
-                        (let [partial-entity (update partial-entity :id #(get tempids % %))
-                              prev-entity (some-> (:id partial-entity) get-prev-entity)]
-                          (cond->> partial-entity
-                            (some? prev-entity)
-                            (patch-entity patch-fn prev-entity))))
-                      entities)]
+        patched (for [partial-entity entities
+                       :let [partial-entity (update partial-entity :id #(get tempids % %))
+                             prev-entity (some->> partial-entity
+                                                  :id
+                                                  get-prev-entity)]]
+                      (cond->> partial-entity
+                       (some? prev-entity)
+                       (patch-entity patch-fn prev-entity)))]
     (assoc fm :entities patched)))
 
 (defn create-flow
@@ -544,8 +545,7 @@
              long-id-fn
              spec
              get-success-entities
-             make-result
-             find-by-external-ids]
+             make-result]
       :or {get-success-entities default-success-entities}}]
   (let [ids (map :id partial-entities)
         prev-entity-fn (prev-entity get-fn ids)]
