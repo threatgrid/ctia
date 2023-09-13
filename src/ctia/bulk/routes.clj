@@ -44,13 +44,14 @@
          :description (common/capabilities->description capabilities)
          :capabilities capabilities
          (core/validate-bulk-size! bulk services)
-         (-> (core/create-bulk bulk
-                               {}
-                               login
-                               (common/wait_for->refresh wait_for)
-                               services)
-             (dissoc :tempids)
-             common/created))
+         (let [res (core/create-bulk bulk
+                                     {}
+                                     login
+                                     (common/wait_for->refresh wait_for)
+                                     services)]
+           (-> res
+               (cond-> (empty? (:tempids res)) (dissoc :tempids))
+               common/created)))
        (PUT "/" []
          :return (s/maybe (bulk.schemas/BulkActionsRefs services))
          :summary "UPDATE many entities at once"

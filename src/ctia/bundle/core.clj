@@ -261,28 +261,31 @@
               :patches-bulk {}}
              bundle-import-data))
 
+;;TODO add back result=error results
 (s/defn with-bulk-result :- BundleImportData
   "Set the bulk result to the bundle import data"
   [bundle-import-data :- BundleImportData
    mode :- BundleImportMode
    bulk-result]
+  (prn "with-bulk-result" {:mode mode :bundle-import-data bundle-import-data
+                           :bulk-result bulk-result})
   (map-kv (fn [k v]
             (let [submitted (filter (case mode
                                       :create create?
                                       :patch patch?)
                                     v)]
-              (map (s/fn :- EntityImportData
-                     [entity-import-data
-                      {:keys [error msg] :as entity-bulk-result}]
-                     (cond-> entity-import-data
-                       error (assoc :error error
-                                    :result "error")
-                       msg (assoc :msg msg)
-                       (not error) (assoc :id entity-bulk-result
-                                          :result (case mode
-                                                    :create "created"
-                                                    :patch "updated"))))
-                   submitted (get bulk-result k))))
+              (mapv (s/fn :- EntityImportData
+                      [entity-import-data
+                       {:keys [error msg] :as entity-bulk-result}]
+                      (cond-> entity-import-data
+                        error (assoc :error error
+                                     :result "error")
+                        msg (assoc :msg msg)
+                        (not error) (assoc :id entity-bulk-result
+                                           :result (case mode
+                                                     :create "created"
+                                                     :patch "updated"))))
+                    submitted (get bulk-result k))))
           bundle-import-data))
 
 (s/defn build-response :- BundleImportResult

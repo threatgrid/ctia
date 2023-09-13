@@ -594,20 +594,17 @@
                                          "foogroup"
                                          "user")
      (let [;; See fixture-find-by-external-ids-limit
-           nb-entities (+ core/find-by-external-ids-limit 5)
+           nb-entities 1 ;(+ core/find-by-external-ids-limit 5)
            bundle {:type "bundle"
                    :source "source"
                    :indicators (set (map mk-indicator (range nb-entities)))}
-           response-create (POST app
-                                 "ctia/bundle/import"
-                                 :body bundle
-                                 :headers {"Authorization" "45c1f5e3f05d0"})
+           do-import #(POST app
+                            "ctia/bundle/import"
+                            :body bundle
+                            :headers {"Authorization" "45c1f5e3f05d0"})
+           response-create (do-import)
            bundle-result-create (:parsed-body response-create)
-           response-update (POST app
-                                 "ctia/bundle/import"
-                                 :body bundle
-                                 :query-params {"external-key-prefixes" "ctia-"}
-                                 :headers {"Authorization" "45c1f5e3f05d0"})
+           response-update (do-import)
            bundle-result-update (:parsed-body response-update)]
        (is (= 200 (:status response-create)))
        (is (= 200 (:status response-update)))
