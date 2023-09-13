@@ -246,18 +246,20 @@
   (not= "error" result))
 
 (s/defn prepare-bulk
-  "Creates the bulk data structure with all entities to create."
+  "Creates the bulk data structure with all entities to create or patch."
   [bundle-import-data :- BundleImportData]
-  (reduce-kv (fn [acc k v]
-               (let [op (when v
-                          (cond
-                            (create? v) :creates-bulk
-                            (patch? v) :patches-bulk))]
-                 (cond-> acc
-                   op (assoc-in [op k] (:new-entity v)))))
-          {:creates-bulk {}
-           :patches-bulk {}}
-          bundle-import-data))
+  (reduce-kv (fn [acc k vs]
+               (reduce (fn [acc v]
+                         (let [op (when v
+                                    (cond
+                                      (create? v) :creates-bulk
+                                      (patch? v) :patches-bulk))]
+                           (cond-> acc
+                             op (update-in [op k] (fnil conj []) (:new-entity v)))))
+                       acc vs))
+             {:creates-bulk {}
+              :patches-bulk {}}
+             bundle-import-data))
 
 (s/defn with-bulk-result :- BundleImportData
   "Set the bulk result to the bundle import data"
@@ -318,7 +320,8 @@
                                            external-key-prefixes
                                            auth-identity
                                            services)
-        {:keys [creates-bulk patches-bulk]} (debug "Bulk" (prepare-bulk bundle-import-data))
+        {:keys [creates-bulk patches-bulk] :as _all-bulks} (debug "Bulk" (prepare-bulk bundle-import-data))
+        _ (prn "PATCHES" _all-bulks)
         tempids (->> bundle-import-data
                      (map (fn [[_ entities-import-data]]
                             (entities-import-data->tempids entities-import-data)))
