@@ -163,6 +163,7 @@
   (map #(entity->import-data % entity-type external-key-prefixes)
        entities))
 
+;; TODO don't resolve if :id is realized
 (s/defn with-existing-entity :- EntityImportData
   "If the entity has already been imported, update the import data
    with its ID. If more than one old entity is linked to an external id,
@@ -171,26 +172,24 @@
     :as entity-data} :- EntityImportData
    find-by-external-id :- (s/=> s/Any (s/named s/Any 'external_id))
    services :- HTTPShowServices]
-  (if-let [old-entities (mapcat find-by-external-id external_ids)]
-    (let [old-entity (some-> old-entities
-                             first
-                             :entity
-                             (with-long-id services)
-                             ent/un-store)]
-      (when (< 1 (count old-entities))
-        (log/warn
-         (format
+  (let [old-entities (mapcat find-by-external-id external_ids)
+        old-entity (some-> (first old-entities)
+                           :entity
+                           (with-long-id services)
+                           ent/un-store)]
+    (when (< 1 (count old-entities))
+      (log/warn
+        (format
           (str "More than one entity is "
                "linked to the external ids %s (examples: %s)")
           external_ids
           (->> (take 10 old-entities) ;; prevent very large logs
                (map (comp :id :entity))
                pr-str))))
-      (cond-> entity-data
-        ;; only one entity linked to the external ID
-        old-entity (assoc :result "exists"
-                          :id (:id old-entity))))
-    entity-data))
+    (cond-> entity-data
+      ;; only one entity linked to the external ID
+      old-entity (assoc :result "updated"
+                        :id (:id old-entity)))))
 
 (s/defschema WithExistingEntitiesServices
   (csu/open-service-schema
@@ -221,8 +220,8 @@
 
 (s/defn prepare-import :- BundleImportData
   "Prepares the import data by searching all existing
-   entities based on their external IDs. Only new entities
-   will be imported"
+   entities based on their external IDs. New entities
+   will be created, and existing entities will be patched."
   [bundle-entities
    external-key-prefixes
    auth-identity
@@ -248,30 +247,34 @@
 
 (s/defn prepare-bulk
   "Creates the bulk data structure with all entities to create."
-  [bundle-import-data :- BundleImportData
-   mode :- BundleImportMode]
-  (map-kv
-   (fn [_ v]
-     (->> v
-          (filter (case mode
-                    :create create?
-                    :patch patch?))
-          (remove nil?)
-          (map :new-entity)))
-   bundle-import-data))
+  [bundle-import-data :- BundleImportData]
+  (reduce (fn [acc v]
+            (let [k (when v
+                      (cond
+                        (create? v) :creates-bulk
+                        (patch? v) :patches-bulk))]
+              (cond-> acc
+                k (update k conj (:new-entity v)))))
+          {:creates-bulk []
+           :patches-bulk []}
+          bundle-import-data))
 
-(s/defn with-bulk-result
+(s/defn with-bulk-result :- BundleImportData
   "Set the bulk result to the bundle import data"
   [bundle-import-data :- BundleImportData
    mode :- BundleImportMode
    bulk-result]
   (map-kv (fn [k v]
             (let [{submitted true
-                   not-submitted false} (group-by create? v)]
+                   not-submitted false} (group-by (case mode
+                                                    :create create?
+                                                    :patch patch?)
+                                                  v)]
               (concat
                ;; Only submitted entities are processed
-               (map (fn [entity-import-data
-                         {:keys [error msg] :as entity-bulk-result}]
+               (map (s/fn :- EntityImportData
+                      [entity-import-data
+                       {:keys [error msg] :as entity-bulk-result}]
                       (cond-> entity-import-data
                         error (assoc :error error
                                      :result "error")
@@ -304,9 +307,8 @@
       (log/warn error)))
   response)
 
-(s/defn ^:private import-bundle* :- BundleImportResult
-  [mode :- BundleImportMode
-   bundle :- NewBundle
+(s/defn import-bundle :- BundleImportResult
+  [bundle :- NewBundle
    external-key-prefixes :- (s/maybe s/Str)
    auth-identity :- (s/protocol auth/IIdentity)
    {{:keys [get-in-config]} :ConfigService
@@ -316,33 +318,23 @@
                                            external-key-prefixes
                                            auth-identity
                                            services)
-        bulk (debug "Bulk" (prepare-bulk bundle-import-data mode))
+        {:keys [creates-bulk patches-bulk]} (debug "Bulk" (prepare-bulk bundle-import-data))
         tempids (->> bundle-import-data
                      (map (fn [[_ entities-import-data]]
                             (entities-import-data->tempids entities-import-data)))
                      (apply merge {}))
-        bulk-fn (case mode
-                  :create bulk/create-bulk
-                  :patch bulk/patch-bulk)]
-    (debug (str "Import bundle response " mode)
-           (->> (bulk-fn bulk tempids auth-identity (bulk-params get-in-config) services)
-                (with-bulk-result bundle-import-data mode)
-                build-response
-                log-errors))))
-
-(s/defn import-bundle :- BundleImportResult
-  [bundle :- NewBundle
-   external-key-prefixes :- (s/maybe s/Str)
-   auth-identity :- (s/protocol auth/IIdentity)
-   services :- APIHandlerServices]
-  (import-bundle* :create bundle external-key-prefixes auth-identity services))
-
-(s/defn import-partial-bundle :- BundleImportResult
-  [bundle :- NewBundle
-   external-key-prefixes :- (s/maybe s/Str)
-   auth-identity :- (s/protocol auth/IIdentity)
-   services :- APIHandlerServices]
-  (import-bundle* :patch bundle external-key-prefixes auth-identity services))
+        {:keys [tempids] :as create-bulk-refs} (bulk/create-bulk creates-bulk tempids auth-identity (bulk-params get-in-config) services)
+        create-resp (debug "Import bundle create response"
+                           (->> (dissoc create-bulk-refs :tempids)
+                                (with-bulk-result bundle-import-data)
+                                build-response
+                                log-errors))
+        patch-result (debug "Import bundle patch response"
+                            (->> (bulk/patch-bulk patches-bulk tempids auth-identity (bulk-params get-in-config) services)
+                                 (with-bulk-result bundle-import-data)
+                                 build-response
+                                 log-errors))]
+    {:results (mapcat :results [create-resp patch-result])}))
 
 (defn bundle-max-size [get-in-config]
   (bulk/get-bulk-max-size get-in-config))

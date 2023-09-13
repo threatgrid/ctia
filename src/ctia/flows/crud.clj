@@ -392,14 +392,11 @@
                    :remove coll/remove-colls
                    :replace coll/replace-colls
                    coll/replace-colls)
-        patched (for [partial-entity entities
-                       :let [partial-entity (update partial-entity :id #(get tempids % %))
-                             prev-entity (some->> partial-entity
-                                                  :id
-                                                  get-prev-entity)]]
-                      (cond->> partial-entity
-                       (some? prev-entity)
-                       (patch-entity patch-fn prev-entity)))]
+        patched (for [{:keys [id] :as partial-entity} entities
+                      :let [prev-entity (get-prev-entity (get tempids id id))]]
+                  (cond->> partial-entity
+                    (some? prev-entity)
+                    (patch-entity patch-fn prev-entity)))]
     (assoc fm :entities patched)))
 
 (defn create-flow

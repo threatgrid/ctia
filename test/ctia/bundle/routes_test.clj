@@ -122,7 +122,7 @@
    original-entity]
   (testing (str "Entity " external_id)
     (is (= (:id original-entity) original_id)
-        "The orignal ID is in the result")
+        "The original ID is in the result")
     (is (contains? (set (:external_ids original-entity))
                    external_id)
         "The external ID is in the result")
@@ -272,55 +272,32 @@
               entity))))
        (testing "Update"
          (let [bundle
-                 {:type "bundle"
-                  :source "source"
-                  :indicators (set (map with-modified-description indicators))
-                  :sightings (set (map with-modified-description sightings))
-                  :relationships (set (map with-modified-description relationships))}]
-           (testing "POST"
-             (let [response (POST app
-                                  "ctia/bundle/import"
-                                  :body bundle
-                                  :headers {"Authorization" "45c1f5e3f05d0"})
-                   bundle-result (:parsed-body response)]
-               (is (= 200 (:status response)))
+               {:type "bundle"
+                :source "source"
+                :indicators (set (map with-modified-description indicators))
+                :sightings (set (map with-modified-description sightings))
+                :relationships (set (map with-modified-description relationships))}
+               response (POST app
+                              "ctia/bundle/import"
+                              :body bundle
+                              :headers {"Authorization" "45c1f5e3f05d0"})
+               bundle-result (:parsed-body response)]
+           (is (= 200 (:status response)))
 
-               (is (pos? (count (:results bundle-result))))
+           (is (pos? (count (:results bundle-result))))
 
-               (is (every? #(= "exists" %)
-                           (map :result (:results bundle-result)))
-                   "All existing entities are not updated")
+           (is (every? #(= "exists" %)
+                       (map :result (:results bundle-result)))
+               "All existing entities are not updated")
 
-               (doseq [entity (concat indicators
-                                      sightings
-                                      (map #(resolve-ids bundle-result %)
-                                           relationships))]
-                 (validate-entity-record
-                   app
-                   (find-result-by-original-id bundle-result (:id entity))
-                   entity))))
-           (testing "PATCH"
-             (let [response (PATCH app
-                                   "ctia/bundle/import"
-                                   :body bundle
-                                   :headers {"Authorization" "45c1f5e3f05d0"})
-                   bundle-result (:parsed-body response)]
-               (is (= 200 (:status response)))
-
-               (is (pos? (count (:results bundle-result))))
-
-               (is (every? #(= "updated" %)
-                           (map :result (:results bundle-result)))
-                   "All existing entities are updated")
-
-               (doseq [entity (concat indicators
-                                      sightings
-                                      (map #(resolve-ids bundle-result %)
-                                           relationships))]
-                 (validate-entity-record
-                   app
-                   (find-result-by-original-id bundle-result (:id entity))
-                   entity))))))
+           (doseq [entity (concat indicators
+                                  sightings
+                                  (map #(resolve-ids bundle-result %)
+                                       relationships))]
+             (validate-entity-record
+               app
+               (find-result-by-original-id bundle-result (:id entity))
+               entity))))
        (testing "Update and create"
          (let [indicator (mk-indicator 2000)
                sighting (first sightings)
