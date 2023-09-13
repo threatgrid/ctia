@@ -62,10 +62,12 @@
                             :reason s/Str
                             (s/optional-key :index) s/Str
                             (s/optional-key :index_uuid) s/Str})
+            (s/optional-key :msg) s/Str
+            (s/optional-key :entity) (s/pred map?)
             (s/optional-key :type) (s/conditional
                                      string? s/Str
                                      :else s/Keyword)
-            :id (s/maybe (s/pred (constantly false)))})])
+            (s/optional-key :id) (s/maybe (s/pred (constantly false)))})])
 
 (s/defschema EnvelopedEntities+TempIDs
   (s/maybe
