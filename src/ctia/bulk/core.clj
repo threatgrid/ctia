@@ -68,8 +68,9 @@
                 :tempids tempids
                 :spec new-spec)
               :data
-              (partial map (fn [{:keys [error id] :as result}]
-                             (if error result id)))))))
+              (comp (partial map (fn [{:keys [error id] :as result}]
+                             (if error result id)))
+                    #(do (prn "create-entities :data" (pr-str %)) %))))))
 
 (s/defschema ReadEntitiesServices
   {:ConfigService (-> APIHandlerServices
@@ -122,8 +123,9 @@
     (cond-> formatted
       (seq not-found)
       (update-in [:errors :not-found]
-                 concat
-                 (map #(to-long-id % services) not-found)))))
+                 (fnil into [])
+                 (map #(to-long-id % services))
+                 not-found))))
 
 (s/defn delete-fn
   "return the delete function provided an entity type key"

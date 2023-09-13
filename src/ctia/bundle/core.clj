@@ -25,6 +25,9 @@
    [java.util UUID]
    [java.util.concurrent ExecutionException]))
 
+;; temporary flag, remove me
+(def patch-existing-in-bundle-import? false)
+
 (s/defschema BundleImportMode (s/enum :create :patch))
 
 (def find-by-external-ids-limit 200)
@@ -261,7 +264,6 @@
               :patches-bulk {}}
              bundle-import-data))
 
-;;TODO add back result=error results
 (s/defn with-bulk-result :- BundleImportData
   "Set the bulk result to the bundle import data"
   [bundle-import-data :- BundleImportData
@@ -270,22 +272,31 @@
   (prn "with-bulk-result" {:mode mode :bundle-import-data bundle-import-data
                            :bulk-result bulk-result})
   (map-kv (fn [k v]
-            (let [submitted (filter (case mode
-                                      :create create?
-                                      :patch patch?)
-                                    v)]
-              (mapv (s/fn :- EntityImportData
-                      [entity-import-data
-                       {:keys [error msg] :as entity-bulk-result}]
-                      (cond-> entity-import-data
-                        error (assoc :error error
-                                     :result "error")
-                        msg (assoc :msg msg)
-                        (not error) (assoc :id entity-bulk-result
-                                           :result (case mode
-                                                     :create "created"
-                                                     :patch "updated"))))
-                    submitted (get bulk-result k))))
+            (let [{submitted true
+                   not-submitted false} (group-by (case mode
+                                                    :create create?
+                                                    :patch patch?)
+                                                  v)]
+              (cond-> (mapv (s/fn :- EntityImportData
+                              [entity-import-data
+                               {:keys [error msg] :as entity-bulk-result}]
+                              (let [error (or error
+                                              ;; FIXME patch-entities can return {:indicators {:errors {:not-found (nil)}}},
+                                              ;; which gets translated to :error [:errors {:not-found (nil)} somehow.
+                                              ;; delete this code. I think I need to add :enveloped-result? support to patch-entities.
+                                              (when-not (string? entity-bulk-result)
+                                                entity-bulk-result))]
+                                (cond-> entity-import-data
+                                  error (assoc :error error
+                                               :result "error")
+                                  msg (assoc :msg msg)
+                                  (not error) (assoc :id entity-bulk-result
+                                                     :result (case mode
+                                                               :create "created"
+                                                               :patch "updated")))))
+                            submitted (get bulk-result k))
+                (not patch-existing-in-bundle-import?) (into (do (assert (= :create mode))
+                                                                 not-submitted)))))
           bundle-import-data))
 
 (s/defn build-response :- BundleImportResult
@@ -332,10 +343,12 @@
                          (with-bulk-result bundle-import-data :create)
                          build-response
                          log-errors)
-        patch-result (->> (bulk/patch-bulk patches-bulk tempids auth-identity (bulk-params get-in-config) services)
-                          (with-bulk-result bundle-import-data :patch)
-                          build-response
-                          log-errors)]
+        ;; TODO loosen route schemas to allow partial entities just for patches.
+        patch-result (when patch-existing-in-bundle-import?
+                       (->> (bulk/patch-bulk patches-bulk tempids auth-identity (bulk-params get-in-config) services)
+                            (with-bulk-result bundle-import-data :patch)
+                            build-response
+                            log-errors))]
     (debug "Import bundle response"
            {:results (mapcat :results [create-resp patch-result])})))
 

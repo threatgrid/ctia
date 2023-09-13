@@ -279,7 +279,7 @@
                  (is (= "patched indicator"
                         (:source (read-record indicator-store indicator-id ident-map {})))))))
 
-           (testing "bulk-update shall properly update submitties entitites"
+           (testing "bulk-update shall properly update submitted entitites"
              (let [other-group-res (sut/update-bulk bulk-update
                                                    other-group-ident
                                                    {:refresh "true"}

@@ -26,6 +26,10 @@
    [schema.core :as s]
    [schema.test :refer [validate-schemas]]))
 
+(def expected-exists-status (if core/patch-existing-in-bundle-import?
+                              "updated"
+                              "exists"))
+
 (defn fixture-properties [t]
   (helpers/with-properties ["ctia.http.bulk.max-size" 1000
                             "ctia.http.bundle.export.max-relationships" 500]
@@ -286,7 +290,7 @@
 
            (is (pos? (count (:results bundle-result))))
 
-           (is (every? #(= "updated" %)
+           (is (every? #(= expected-exists-status %)
                        (map :result (:results bundle-result)))
                "All existing entities are updated")
 
@@ -380,7 +384,7 @@
            (is (every? #(= "created" %)
                        (map :result (:results bundle-result-create)))
                "All new entities are created")
-           (is (every? #(= "updated" %)
+           (is (every? #(= expected-exists-status %)
                        (map :result (:results bundle-result-update)))
                "All existing entities are updated")))
        (testing "Partial results with errors"
@@ -616,7 +620,7 @@
        (is (every? #(= "created" %)
                    (map :result (:results bundle-result-create)))
            "All new entities are created")
-       (is (every? #(= "updated" %)
+       (is (every? #(= expected-exists-status %)
                    (map :result (:results bundle-result-update)))
            "All existing entities are updated")))))
 
