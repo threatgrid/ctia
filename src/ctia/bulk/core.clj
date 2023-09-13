@@ -76,7 +76,11 @@
 
 (s/defn create-entities :- EnvelopedEntities+TempIDs
   "Create many entities provided their type and returns a list of ids"
-  [new-entities entity-type tempids auth-identity params
+  [new-entities :- flows/Entities
+   entity-type :- s/Keyword
+   tempids :- TempIDs
+   auth-identity
+   params
    services :- APIHandlerServices]
   (when (seq new-entities)
     (let [{:keys [realize-fn new-spec]} (get (all-entities) entity-type)]
@@ -243,6 +247,8 @@
        :make-result make-bulk-result
        :get-success-entities (get-success-entities-fn :updated)))))
 
+(s/defschema BulkEntities {s/Keyword flows/Entities})
+
 (defn gen-bulk-from-fn
   "Kind of fmap but adapted for bulk
 
@@ -317,7 +323,8 @@
 
 (s/defn import-bulks-with :- BulkRefs+TempIDs
   "Import each new-bulk in order while accumulating tempids."
-  [f :- (s/=> {s/Keyword EnvelopedEntities+TempIDs}
+  [f :- (s/=> {s/Keyword {:data [s/Any]
+                          :tempids TempIDs}}
               (s/named (s/pred map?) 'new-bulk)
               TempIDs)
    new-bulks
@@ -340,7 +347,7 @@
    1. Creates all entities except Relationships
    2. Creates Relationships with mapping between transient and real IDs"
   ([new-bulk login services :- APIHandlerServices] (create-bulk new-bulk {} login {} services))
-  ([new-bulk
+  ([new-bulk :- BulkEntities
     tempids :- TempIDs
     login
     params

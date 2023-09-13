@@ -24,9 +24,11 @@
   (:import
    java.util.UUID))
 
+(s/defschema Entities [{s/Keyword s/Any}])
+
 (s/defschema FlowMap
   {:create-event-fn                       (s/pred fn?)
-   :entities                              [{s/Keyword s/Any}]
+   :entities                              Entities
    :entity-type                           s/Keyword
    :flow-type                             (s/enum :create :update :delete)
    :services                              APIHandlerServices
