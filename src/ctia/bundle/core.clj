@@ -248,15 +248,15 @@
 (s/defn prepare-bulk
   "Creates the bulk data structure with all entities to create."
   [bundle-import-data :- BundleImportData]
-  (reduce (fn [acc v]
-            (let [k (when v
-                      (cond
-                        (create? v) :creates-bulk
-                        (patch? v) :patches-bulk))]
-              (cond-> acc
-                k (update k conj (:new-entity v)))))
-          {:creates-bulk []
-           :patches-bulk []}
+  (reduce-kv (fn [acc k v]
+               (let [op (when v
+                          (cond
+                            (create? v) :creates-bulk
+                            (patch? v) :patches-bulk))]
+                 (cond-> acc
+                   op (assoc-in [op k] (:new-entity v)))))
+          {:creates-bulk {}
+           :patches-bulk {}}
           bundle-import-data))
 
 (s/defn with-bulk-result :- BundleImportData
@@ -326,12 +326,12 @@
         {:keys [tempids] :as create-bulk-refs} (bulk/create-bulk creates-bulk tempids auth-identity (bulk-params get-in-config) services)
         create-resp (debug "Import bundle create response"
                            (->> (dissoc create-bulk-refs :tempids)
-                                (with-bulk-result bundle-import-data)
+                                (with-bulk-result bundle-import-data :create)
                                 build-response
                                 log-errors))
         patch-result (debug "Import bundle patch response"
-                            (->> (bulk/patch-bulk patches-bulk tempids auth-identity (bulk-params get-in-config) services)
-                                 (with-bulk-result bundle-import-data)
+                            (->> (bulk/patch-bulk patches-bulk (or tempids {}) auth-identity (bulk-params get-in-config) services)
+                                 (with-bulk-result bundle-import-data :patch)
                                  build-response
                                  log-errors))]
     {:results (mapcat :results [create-resp patch-result])}))
