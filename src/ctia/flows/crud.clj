@@ -399,9 +399,7 @@
                    :replace coll/replace-colls
                    coll/replace-colls)
         patched (for [{:keys [id] :as partial-entity} entities
-                      :let [id (get tempids id id)
-                            partial-entity (assoc partial-entity :id id)
-                            prev-entity (get-prev-entity id)]]
+                      :let [prev-entity (get-prev-entity id)]]
                   (cond->> partial-entity
                     (some? prev-entity)
                     (patch-entity patch-fn prev-entity)))]

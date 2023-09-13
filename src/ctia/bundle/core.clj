@@ -250,7 +250,8 @@
 
 (s/defn prepare-bulk
   "Creates the bulk data structure with all entities to create or patch."
-  [bundle-import-data :- BundleImportData]
+  [bundle-import-data :- BundleImportData
+   tempids :- TempIDs]
   (reduce-kv (fn [acc k vs]
                (reduce (fn [acc v]
                          (let [op (when v
@@ -258,7 +259,7 @@
                                       (create? v) :creates-bulk
                                       (patch? v) :patches-bulk))]
                            (cond-> acc
-                             op (update-in [op k] (fnil conj []) (:new-entity v)))))
+                             op (update-in [op k] (fnil conj []) (update (:new-entity v) :id #(get tempids % %))))))
                        acc vs))
              {:creates-bulk {}
               :patches-bulk {}}
@@ -331,15 +332,15 @@
                                            external-key-prefixes
                                            auth-identity
                                            services)
-        {:keys [creates-bulk patches-bulk] :as _all-bulks} (debug "Bulk" (prepare-bulk bundle-import-data))
-        #_#_
-        _ (do
-            (prn "bundle-import-data" bundle-import-data)
-            (prn "_all-bulks" _all-bulks))
         tempids (->> bundle-import-data
                      (map (fn [[_ entities-import-data]]
                             (entities-import-data->tempids entities-import-data)))
                      (apply merge {}))
+        {:keys [creates-bulk patches-bulk] :as _all-bulks} (debug "Bulk" (prepare-bulk bundle-import-data tempids))
+        #_#_
+        _ (do
+            (prn "bundle-import-data" bundle-import-data)
+            (prn "_all-bulks" _all-bulks))
         {:keys [tempids] :as create-bulk-refs} (bulk/create-bulk creates-bulk tempids auth-identity (bulk-params get-in-config) services)
         create-result (with-bulk-result bundle-import-data :create (dissoc create-bulk-refs :tempids))
         
@@ -351,7 +352,7 @@
                          (with-bulk-result
                            bundle-import-data
                            :patch
-                           patch-bulk-refs)))]
+                           (dissoc patch-bulk-refs :tempids))))]
     (debug "Import bundle response"
            (-> (into create-result patch-result)
                build-response

@@ -407,5 +407,9 @@
     auth-identity
     params
     services :- APIHandlerServices
-    opts]
-   (gen-bulk-from-fn patch-entities bulk tempids auth-identity params services opts)))
+    {:keys [enveloped-result?] :as opts}]
+   (let [entities (gen-bulk-from-fn patch-entities bulk tempids auth-identity params services opts)]
+     (prn "patch-bulk" entities)
+     (cond-> entities
+       enveloped-result? (-> (update-vals :data)
+                             (assoc :tempids (into tempids (merge-tempids entities))))))))
