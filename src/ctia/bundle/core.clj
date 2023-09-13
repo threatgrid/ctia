@@ -268,7 +268,8 @@
   "Set the bulk result to the bundle import data"
   [bundle-import-data :- BundleImportData
    mode :- BundleImportMode
-   bulk-result]
+   bulk-result :- bulk/BulkRefs]
+  #_
   (prn "with-bulk-result" {:mode mode :bundle-import-data bundle-import-data
                            :bulk-result bulk-result})
   (map-kv (fn [k v]
@@ -331,6 +332,7 @@
                                            auth-identity
                                            services)
         {:keys [creates-bulk patches-bulk] :as _all-bulks} (debug "Bulk" (prepare-bulk bundle-import-data))
+        #_#_
         _ (do
             (prn "bundle-import-data" bundle-import-data)
             (prn "_all-bulks" _all-bulks))

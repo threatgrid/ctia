@@ -50,7 +50,29 @@
          (auth/ident->map auth-identity)
          params)))
 
-(s/defn create-entities
+(s/defschema EntitiesResult
+  [(s/conditional
+     string? schemas/ID
+     ;;TODO error case
+     :else {:error (s/conditional
+                     string? s/Str
+                     :else {:type (s/conditional
+                                    string? s/Str
+                                    :else s/Keyword)
+                            :reason s/Str
+                            (s/optional-key :index) s/Str
+                            (s/optional-key :index_uuid) s/Str})
+            (s/optional-key :type) (s/conditional
+                                     string? s/Str
+                                     :else s/Keyword)
+            :id (s/maybe (s/pred (constantly false)))})])
+
+(s/defschema EnvelopedEntities+TempIDs
+  (s/maybe
+    {:data EntitiesResult
+     (s/optional-key :tempids) TempIDs}))
+
+(s/defn create-entities :- EnvelopedEntities+TempIDs
   "Create many entities provided their type and returns a list of ids"
   [new-entities entity-type tempids auth-identity params
    services :- APIHandlerServices]
@@ -68,9 +90,8 @@
                 :tempids tempids
                 :spec new-spec)
               :data
-              (comp (partial map (fn [{:keys [error id] :as result}]
-                             (if error result id)))
-                    #(do (prn "create-entities :data" (pr-str %)) %))))))
+              (partial map (fn [{:keys [error id] :as result}]
+                             (if error result id)))))))
 
 (s/defschema ReadEntitiesServices
   {:ConfigService (-> APIHandlerServices
@@ -283,9 +304,14 @@
     (bad-request! (str "Bulk max number of entities: "
                        (get-bulk-max-size get-in-config)))))
 
+(s/defschema BulkRefs {s/Keyword EntitiesResult})
+
 (s/defschema BulkRefs+TempIDs
-  {:bulk-refs {s/Keyword [s/Any]}
+  {:bulk-refs BulkRefs
    :tempids TempIDs})
+
+(s/defschema BulkRefsAssocTempIDs
+  (st/assoc BulkRefs :tempids TempIDs))
 
 (s/defn import-bulks-with :- BulkRefs+TempIDs
   "Import each new-bulk in order while accumulating tempids."
@@ -305,7 +331,7 @@
            :tempids tempids}
           new-bulks))
 
-(s/defn create-bulk
+(s/defn create-bulk :- BulkRefsAssocTempIDs
   "Creates entities in bulk. To define relationships between entities,
    transient IDs can be used. They are automatically converted into
    real IDs.
