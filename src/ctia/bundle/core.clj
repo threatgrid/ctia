@@ -26,7 +26,7 @@
    [java.util.concurrent ExecutionException]))
 
 ;; temporary flag, remove me
-(def patch-existing-in-bundle-import? false)
+(def patch-existing-in-bundle-import? true)
 
 (s/defschema BundleImportMode (s/enum :create :patch))
 
@@ -342,12 +342,16 @@
                      (apply merge {}))
         {:keys [tempids] :as create-bulk-refs} (bulk/create-bulk creates-bulk tempids auth-identity (bulk-params get-in-config) services)
         create-result (with-bulk-result bundle-import-data :create (dissoc create-bulk-refs :tempids))
+        
         ;; TODO loosen route schemas to allow partial entities just for patches.
         patch-result (when patch-existing-in-bundle-import?
-                       (with-bulk-result
-                         bundle-import-data
-                         :patch
-                         (bulk/patch-bulk patches-bulk tempids auth-identity (bulk-params get-in-config) services)))]
+                       (let [patch-bulk-refs (bulk/patch-bulk patches-bulk tempids auth-identity (bulk-params get-in-config) services
+                                                              {:enveloped-result? true})]
+                         (prn "patch-bulk-refs" (pr-str patch-bulk-refs))
+                         (with-bulk-result
+                           bundle-import-data
+                           :patch
+                           patch-bulk-refs)))]
     (debug "Import bundle response"
            (-> (into create-result patch-result)
                build-response

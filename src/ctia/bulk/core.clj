@@ -225,27 +225,34 @@
 
 (s/defn patch-entities
   "patch many entities provided their type and returns errored and successed entities' ids"
-  [patches entity-type 
+  [patches
+   entity-type 
    tempids :- TempIDs
-   auth-identity params
-   services :- APIHandlerServices]
+   auth-identity
+   params
+   services :- APIHandlerServices
+   {:keys [enveloped-result?]} :- {(s/optional-key :enveloped-result?) (s/maybe s/Bool)}]
   (when (seq patches)
     (let [get-fn #(read-entities %  entity-type auth-identity services)
           {:keys [realize-fn new-spec]} (get (all-entities) entity-type)]
-      (flows/patch-flow
-       :services services
-       :get-fn get-fn
-       :realize-fn realize-fn
-       :update-fn (update-fn entity-type auth-identity params services)
-       :long-id-fn #(with-long-id % services)
-       :entity-type entity-type
-       :identity auth-identity
-       :patch-operation :replace
-       :partial-entities patches
-       :tempids tempids
-       :spec new-spec
-       :make-result make-bulk-result
-       :get-success-entities (get-success-entities-fn :updated)))))
+      (cond-> (flows/patch-flow
+                :services services
+                :get-fn get-fn
+                :realize-fn realize-fn
+                :update-fn (update-fn entity-type auth-identity params services)
+                :long-id-fn #(with-long-id % services)
+                :entity-type entity-type
+                :identity auth-identity
+                :patch-operation :replace
+                :partial-entities patches
+                :tempids tempids
+                :spec new-spec
+                :make-result make-bulk-result
+                :enveloped-result? enveloped-result?
+                :get-success-entities (get-success-entities-fn :updated))
+        enveloped-result? (update :data
+                                  (partial map (fn [{:keys [error id] :as result}]
+                                                 (if error result id))))))))
 
 (s/defschema BulkEntities {s/Keyword flows/Entities})
 
@@ -389,9 +396,16 @@
   (gen-bulk-from-fn update-entities bulk auth-identity params services))
 
 (s/defn patch-bulk
-  [bulk 
-   tempids :- TempIDs
-   auth-identity
-   params
-   services :- APIHandlerServices]
-  (gen-bulk-from-fn patch-entities bulk tempids auth-identity params services))
+  ([bulk 
+    tempids :- TempIDs
+    auth-identity
+    params
+    services :- APIHandlerServices]
+   (patch-bulk bulk tempids auth-identity params services {}))
+  ([bulk 
+    tempids :- TempIDs
+    auth-identity
+    params
+    services :- APIHandlerServices
+    opts]
+   (gen-bulk-from-fn patch-entities bulk tempids auth-identity params services opts)))

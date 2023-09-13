@@ -367,11 +367,15 @@
     ((:apply-event-hooks HooksService) event))
   fm)
 
+(s/defn make-enveloped-result 
+  [{:keys [entities tempids]} :- FlowMap]
+  (cond-> {:data entities}
+    (seq tempids) (assoc :tempids tempids)))
+
 (s/defn make-create-result :- s/Any
-  [{:keys [entities enveloped-result? tempids]} :- FlowMap]
+  [{:keys [entities enveloped-result?] :as fm} :- FlowMap]
   (if enveloped-result?
-    (cond-> {:data entities}
-      (seq tempids) (assoc :tempids tempids))
+    (make-enveloped-result fm)
     entities))
 
 (defn patch-entity
@@ -395,7 +399,9 @@
                    :replace coll/replace-colls
                    coll/replace-colls)
         patched (for [{:keys [id] :as partial-entity} entities
-                      :let [prev-entity (get-prev-entity (get tempids id id))]]
+                      :let [id (get tempids id id)
+                            partial-entity (assoc partial-entity :id id)
+                            prev-entity (get-prev-entity id)]]
                   (cond->> partial-entity
                     (some? prev-entity)
                     (patch-entity patch-fn prev-entity)))]
@@ -459,10 +465,12 @@
         (get indexed (id/str->short-id id))))))
 
 (s/defn make-update-result
-  [{:keys [make-result results long-id-fn] :as fm} :- FlowMap]
-  (if make-result
-    (make-result fm)
-    (map long-id-fn results)))
+  [{:keys [make-result results long-id-fn enveloped-result?] :as fm} :- FlowMap]
+  (if enveloped-result?
+    (make-enveloped-result fm)
+    (if make-result
+      (make-result fm)
+      (map long-id-fn results))))
 
 (s/defn make-delete-result
   [{:keys [make-result results] :as fm} :- FlowMap]
@@ -471,7 +479,7 @@
     results))
 
 (defn not-found
-  [{:keys [get-prev-entity entities] :as fm}]
+  [{:keys [get-prev-entity entities tempids] :as fm}]
   (let [grouped (group-by #(some-> % :id get-prev-entity nil?)
                           entities)]
     (assoc fm
@@ -544,7 +552,8 @@
              long-id-fn
              spec
              get-success-entities
-             make-result]
+             make-result
+             enveloped-result?]
       :or {get-success-entities default-success-entities}}]
   (let [ids (map :id partial-entities)
         prev-entity-fn (prev-entity get-fn ids)]
@@ -563,6 +572,7 @@
          :store-fn update-fn
          :create-event-fn to-update-event
          :get-success-entities get-success-entities
+         :enveloped-result? enveloped-result?
          :make-result make-result}
         patch-entities
         not-found
