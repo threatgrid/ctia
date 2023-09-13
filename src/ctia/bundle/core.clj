@@ -259,7 +259,10 @@
                                       (create? v) :creates-bulk
                                       (patch? v) :patches-bulk))]
                            (cond-> acc
-                             op (update-in [op k] (fnil conj []) (update (:new-entity v) :id #(get tempids % %))))))
+                             op (update-in [op k] (fnil conj [])
+                                           (cond-> (:new-entity v)
+                                             (= :patches-bulk op)
+                                             (update :id #(get tempids % %)))))))
                        acc vs))
              {:creates-bulk {}
               :patches-bulk {}}
@@ -337,13 +340,13 @@
                             (entities-import-data->tempids entities-import-data)))
                      (apply merge {}))
         {:keys [creates-bulk patches-bulk] :as _all-bulks} (debug "Bulk" (prepare-bulk bundle-import-data tempids))
+        _ (prn {:creates-bulk creates-bulk :patches-bulk patches-bulk})
         #_#_
         _ (do
             (prn "bundle-import-data" bundle-import-data)
             (prn "_all-bulks" _all-bulks))
         {:keys [tempids] :as create-bulk-refs} (bulk/create-bulk creates-bulk tempids auth-identity (bulk-params get-in-config) services)
         create-result (with-bulk-result bundle-import-data :create (dissoc create-bulk-refs :tempids))
-        
         ;; TODO loosen route schemas to allow partial entities just for patches.
         patch-result (when patch-existing-in-bundle-import?
                        (let [patch-bulk-refs (bulk/patch-bulk patches-bulk tempids auth-identity (bulk-params get-in-config) services
@@ -354,7 +357,7 @@
                            :patch
                            (dissoc patch-bulk-refs :tempids))))]
     (debug "Import bundle response"
-           (-> (into create-result patch-result)
+           (-> (merge-with into create-result patch-result)
                build-response
                log-errors))))
 

@@ -613,7 +613,8 @@
        (is (= 200 (:status response-create)))
        (is (= 200 (:status response-update)))
        (is (= nb-entities
-              (count (:results bundle-result-create))))
+              (count (:results bundle-result-create)))
+           bundle-result-create)
        (is (= nb-entities
               (count (:results bundle-result-update))))
 
