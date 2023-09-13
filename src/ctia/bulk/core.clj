@@ -333,8 +333,8 @@
                                         ;; resolve transient ids on relationships. all other entities must be realized.
                                         (select-keys new-bulk [:relationships])]
                                        tempids)]
-     (cond-> bulk-refs
-       (seq tempids) (assoc :tempids tempids)))))
+     (-> bulk-refs
+         (assoc :tempids tempids)))))
 
 (s/defn fetch-bulk
   [bulk auth-identity

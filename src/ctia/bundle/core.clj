@@ -329,7 +329,7 @@
                          (with-bulk-result bundle-import-data :create)
                          build-response
                          log-errors)
-        patch-result (->> (bulk/patch-bulk patches-bulk (or tempids {}) auth-identity (bulk-params get-in-config) services)
+        patch-result (->> (bulk/patch-bulk patches-bulk tempids auth-identity (bulk-params get-in-config) services)
                           (with-bulk-result bundle-import-data :patch)
                           build-response
                           log-errors)]
