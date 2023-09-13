@@ -286,9 +286,9 @@
 
            (is (pos? (count (:results bundle-result))))
 
-           (is (every? #(= "exists" %)
+           (is (every? #(= "updated" %)
                        (map :result (:results bundle-result)))
-               "All existing entities are not updated")
+               "All existing entities are updated")
 
            (doseq [entity (concat indicators
                                   sightings
@@ -356,10 +356,9 @@
        (testing "Custom external prefix keys"
          (let [bundle {:type "bundle"
                        :source "source"
-                       :indicators (hash-set
-                                    (assoc (first indicators)
-                                           :external_ids
-                                           ["custom-2"]))}
+                       :indicators #{(assoc (first indicators)
+                                            :external_ids
+                                            ["custom-2"])}}
                response-create (POST app
                                      "ctia/bundle/import"
                                      :query-params {"external-key-prefixes" "custom-"}
@@ -381,9 +380,9 @@
            (is (every? #(= "created" %)
                        (map :result (:results bundle-result-create)))
                "All new entities are created")
-           (is (every? #(= "exists" %)
+           (is (every? #(= "updated" %)
                        (map :result (:results bundle-result-update)))
-               "All existing entities are not updated")))
+               "All existing entities are updated")))
        (testing "Partial results with errors"
          (let [indicator-store-state (-> (get-store :indicator) :state)
                indexname (:index indicator-store-state)
@@ -620,9 +619,9 @@
        (is (every? #(= "created" %)
                    (map :result (:results bundle-result-create)))
            "All new entities are created")
-       (is (every? #(= "exists" %)
+       (is (every? #(= "updated" %)
                    (map :result (:results bundle-result-update)))
-           "All existing entities are not updated")))))
+           "All existing entities are updated")))))
 
 (def bundle-fixture-1
   (let [indicators [(mk-indicator 0)

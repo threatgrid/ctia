@@ -188,7 +188,7 @@
                pr-str))))
     (cond-> entity-data
       ;; only one entity linked to the external ID
-      old-entity (assoc :result "updated"
+      old-entity (assoc :result "exists"
                         :id (:id old-entity)))))
 
 (s/defschema WithExistingEntitiesServices
@@ -267,26 +267,22 @@
    mode :- BundleImportMode
    bulk-result]
   (map-kv (fn [k v]
-            (let [{submitted true
-                   not-submitted false} (group-by (case mode
-                                                    :create create?
-                                                    :patch patch?)
-                                                  v)]
-              (concat
-               ;; Only submitted entities are processed
-               (map (s/fn :- EntityImportData
-                      [entity-import-data
-                       {:keys [error msg] :as entity-bulk-result}]
-                      (cond-> entity-import-data
-                        error (assoc :error error
-                                     :result "error")
-                        msg (assoc :msg msg)
-                        (not error) (assoc :id entity-bulk-result
-                                           :result (case mode
-                                                     :create "created"
-                                                     :patch "updated"))))
-                    submitted (get bulk-result k))
-               not-submitted)))
+            (let [submitted (filter (case mode
+                                      :create create?
+                                      :patch patch?)
+                                    v)]
+              (map (s/fn :- EntityImportData
+                     [entity-import-data
+                      {:keys [error msg] :as entity-bulk-result}]
+                     (cond-> entity-import-data
+                       error (assoc :error error
+                                    :result "error")
+                       msg (assoc :msg msg)
+                       (not error) (assoc :id entity-bulk-result
+                                          :result (case mode
+                                                    :create "created"
+                                                    :patch "updated"))))
+                   submitted (get bulk-result k))))
           bundle-import-data))
 
 (s/defn build-response :- BundleImportResult
@@ -321,23 +317,24 @@
                                            auth-identity
                                            services)
         {:keys [creates-bulk patches-bulk] :as _all-bulks} (debug "Bulk" (prepare-bulk bundle-import-data))
-        _ (prn "PATCHES" _all-bulks)
+        _ (do
+            (prn "bundle-import-data" bundle-import-data)
+            (prn "_all-bulks" _all-bulks))
         tempids (->> bundle-import-data
                      (map (fn [[_ entities-import-data]]
                             (entities-import-data->tempids entities-import-data)))
                      (apply merge {}))
         {:keys [tempids] :as create-bulk-refs} (bulk/create-bulk creates-bulk tempids auth-identity (bulk-params get-in-config) services)
-        create-resp (debug "Import bundle create response"
-                           (->> (dissoc create-bulk-refs :tempids)
-                                (with-bulk-result bundle-import-data :create)
-                                build-response
-                                log-errors))
-        patch-result (debug "Import bundle patch response"
-                            (->> (bulk/patch-bulk patches-bulk (or tempids {}) auth-identity (bulk-params get-in-config) services)
-                                 (with-bulk-result bundle-import-data :patch)
-                                 build-response
-                                 log-errors))]
-    {:results (mapcat :results [create-resp patch-result])}))
+        create-resp (->> (dissoc create-bulk-refs :tempids)
+                         (with-bulk-result bundle-import-data :create)
+                         build-response
+                         log-errors)
+        patch-result (->> (bulk/patch-bulk patches-bulk (or tempids {}) auth-identity (bulk-params get-in-config) services)
+                          (with-bulk-result bundle-import-data :patch)
+                          build-response
+                          log-errors)]
+    (debug "Import bundle response"
+           {:results (mapcat :results [create-resp patch-result])})))
 
 (defn bundle-max-size [get-in-config]
   (bulk/get-bulk-max-size get-in-config))
