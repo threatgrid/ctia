@@ -141,7 +141,7 @@
                {action
                 (case action
                   :errors (format-bulk-flow-res res services)
-                  (map #(to-long-id % services) res))}))
+                  (map #(or (to-long-id % services) %) res))}))
         results))
 
 (s/defn make-bulk-result
