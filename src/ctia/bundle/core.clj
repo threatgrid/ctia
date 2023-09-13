@@ -87,22 +87,20 @@
    get-store :- GetStoreFn]
   (loop [ext-ids external-ids
          entities []]
-    (if (empty? ext-ids)
-      entities
-      (let [query {:all-of {:external_ids ext-ids}}
-            paging {:limit find-by-external-ids-limit}
-            {results :data
-             {next-page :next} :paging} (-> (get-store entity-type)
-                                            (store/list-records
-                                              query
-                                              (auth/ident->map auth-identity)
-                                              paging))
-            acc-entities (into entities results)
-            matched-ext-ids (into #{} (mapcat :external_ids) results)
-            remaining-ext-ids (into [] (remove matched-ext-ids) ext-ids)]
-        (if next-page
-          (recur remaining-ext-ids acc-entities)
-          acc-entities)))))
+    (let [query {:all-of {:external_ids ext-ids}}
+          paging {:limit find-by-external-ids-limit}
+          {results :data
+           {next-page :next} :paging} (-> (get-store entity-type)
+                                          (store/list-records
+                                            query
+                                            (auth/ident->map auth-identity)
+                                            paging))
+          acc-entities (into entities results)
+          matched-ext-ids (into #{} (mapcat :external_ids) results)
+          remaining-ext-ids (into [] (remove matched-ext-ids) ext-ids)]
+      (if next-page
+        (recur remaining-ext-ids acc-entities)
+        acc-entities))))
 
 (s/defn find-by-external-ids
   [import-data entity-type auth-identity
