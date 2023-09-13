@@ -265,6 +265,7 @@
                                                    services)
                    {:keys [sightings indicators]}
                    (sut/patch-bulk bulk-patch
+                                   {}
                                    ident
                                    {:refresh "true"}
                                    services)]
