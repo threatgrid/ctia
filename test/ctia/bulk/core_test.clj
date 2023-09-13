@@ -336,14 +336,14 @@
   (let [intermediate-tempids (atom [])
         incident1 (assoc incident-minimal :id "transientid1")
         incident2 (assoc incident-minimal :id "transientid2")]
-    (is (= {:bulk-refs {:incidents [incident1 incident2]}
+    (is (= {:bulk-refs {:incidents (mapv :id [incident1 incident2])}
             :tempids {"foo" "bar"
                       "transientid1" "id1"
                       "transientid2" "id2"}}
            (sut/import-bulks-with
              (fn [{:keys [incidents]} tempids]
                (swap! intermediate-tempids conj tempids)
-               {:incidents {:data incidents
+               {:incidents {:data (mapv :id incidents)
                             :tempids (into tempids
                                            (map (fn [{:keys [id]}]
                                                   {id (subs id (count "transient"))}))
