@@ -1330,7 +1330,7 @@
                                     :body (select-keys new-bundle [:assets :asset_properties :asset_mappings])
                                     :headers {"Authorization" "45c1f5e3f05d0"})
               {update-results :results} (:parsed-body update-response)
-              #_#_
+              #_#_ ;;TODO finish resolve-asset-properties+mappings
               _ (when (is (= 200 (:status update-response)))
                   (is (= 3 (count update-results)) update-results)
                   (is (every? (comp #{"updated"} :result) update-results)

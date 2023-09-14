@@ -166,7 +166,6 @@
   (map #(entity->import-data % entity-type external-key-prefixes)
        entities))
 
-;; TODO don't resolve if :id is realized
 (s/defn with-existing-entity :- EntityImportData
   "If the entity has already been imported, update the import data
    with its ID. If more than one old entity is linked to an external id,
@@ -175,6 +174,8 @@
     :as entity-data} :- EntityImportData
    find-by-external-id :- (s/=> s/Any (s/named s/Any 'external_id))
    services :- HTTPShowServices]
+  (assert ((some-fn nil? schemas/transient-id?) (:id entity-data))
+          "TODO support realized id")
   (let [old-entities (mapcat find-by-external-id external_ids)
         old-entity (some-> (first old-entities)
                            :entity
@@ -340,8 +341,24 @@
   [bundle-import-data :- BundleImportData
    tempids :- TempIDs]
   (prn "resolve-asset-properties+mappings" bundle-import-data)
-  {:bundle-import-data bundle-import-data
-   :tempids tempids})
+  (let [bundle-import-data (cond-> bundle-import-data
+                             (seq (:asset_properties bundle-import-data))
+                             (update :asset_properties
+                                     (fn [asset_properties]
+                                       (into []
+                                             (map (fn [{:keys [id] {:keys [asset_ref]} :new-entity :as import-data}]
+                                                    (if (or id (not asset_ref))
+                                                      import-data
+                                                      (let [asset_ref (get tempids asset_ref asset_ref)]
+                                                        (if ((some-fn nil? schemas/transient-id?) asset_ref)
+                                                          import-data
+                                                          ;; TODO use asset_properties search route with asset_ref to find old entity.
+                                                          ;; update :old-entity, :id, and :asset_ref.
+                                                          (-> import-data
+                                                              (update :new-entity assoc :asset_ref asset_ref)))))))
+                                             asset_properties))))]
+    {:bundle-import-data bundle-import-data
+     :tempids tempids}))
 
 (s/defn import-bundle :- BundleImportResult
   [bundle :- (st/optional-keys-schema NewBundle)
@@ -358,8 +375,9 @@
                      (map (fn [[_ entities-import-data]]
                             (entities-import-data->tempids entities-import-data)))
                      (apply merge {}))
-        {:keys [bundle-import-data tempids]} (resolve-asset-properties+mappings bundle-import-data
-                                                                                tempids)
+        {:keys [bundle-import-data tempids]} (resolve-asset-properties+mappings
+                                               bundle-import-data
+                                               tempids)
         {:keys [creates-bulk patches-bulk] :as _all-bulks} (debug "Bulk" (prepare-bulk bundle-import-data tempids))
         ;; throw 400 response on partial creates before mutating db
         _ (when (seq creates-bulk)
