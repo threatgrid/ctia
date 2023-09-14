@@ -294,10 +294,10 @@
                        (map :result (:results bundle-result)))
                "All existing entities are updated")
 
-           (doseq [entity (concat indicators
-                                  sightings
+           (doseq [entity (concat (:indicators bundle)
+                                  (:sightings bundle)
                                   (map #(resolve-ids bundle-result %)
-                                       relationships))]
+                                       (:relationships bundle)))]
              (validate-entity-record
                app
                (find-result-by-original-id bundle-result (:id entity))
