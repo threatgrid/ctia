@@ -191,8 +191,9 @@
                pr-str))))
     (cond-> entity-data
       ;; only one entity linked to the external ID
-      old-entity (assoc :result "exists"
-                        :id (:id old-entity)))))
+      old-entity (-> (assoc :result "exists"
+                            :id (:id old-entity))
+                     (assoc-in [:new-entity :id] (:id old-entity))))))
 
 (s/defschema WithExistingEntitiesServices
   (csu/open-service-schema
@@ -259,10 +260,7 @@
                                       (create? v) :creates-bulk
                                       (patch? v) :patches-bulk))]
                            (cond-> acc
-                             op (update-in [op k] (fnil conj [])
-                                           (cond-> (:new-entity v)
-                                             (= :patches-bulk op)
-                                             (update :id #(get tempids % %)))))))
+                             op (update-in [op k] (fnil conj []) (:new-entity v)))))
                        acc vs))
              {:creates-bulk {}
               :patches-bulk {}}
@@ -336,6 +334,15 @@
        (mapcat entity->bundle-keys)
        (apply st/dissoc NewBundle)))
 
+(s/defn resolve-asset-properties+mappings
+  :- {:bundle-import-data BundleImportData
+      :tempids TempIDs}
+  [bundle-import-data :- BundleImportData
+   tempids :- TempIDs]
+  (prn "resolve-asset-properties+mappings" bundle-import-data)
+  {:bundle-import-data bundle-import-data
+   :tempids tempids})
+
 (s/defn import-bundle :- BundleImportResult
   [bundle :- (st/optional-keys-schema NewBundle)
    external-key-prefixes :- (s/maybe s/Str)
@@ -351,6 +358,8 @@
                      (map (fn [[_ entities-import-data]]
                             (entities-import-data->tempids entities-import-data)))
                      (apply merge {}))
+        {:keys [bundle-import-data tempids]} (resolve-asset-properties+mappings bundle-import-data
+                                                                                tempids)
         {:keys [creates-bulk patches-bulk] :as _all-bulks} (debug "Bulk" (prepare-bulk bundle-import-data tempids))
         ;; throw 400 response on partial creates before mutating db
         _ (when (seq creates-bulk)
