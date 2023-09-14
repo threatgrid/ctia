@@ -28,9 +28,6 @@
    [java.util UUID]
    [java.util.concurrent ExecutionException]))
 
-;; temporary flag, remove me
-(def patch-existing-in-bundle-import? true)
-
 (s/defschema BundleImportMode (s/enum :create :patch))
 
 (def find-by-external-ids-limit 200)
@@ -277,31 +274,28 @@
    mode :- BundleImportMode
    bulk-result :- bulk/BulkRefs]
   (map-kv (fn [k v]
-            (let [{submitted true
-                   not-submitted false} (group-by (case mode
-                                                    :create create?
-                                                    :patch patch?)
-                                                  v)]
-              (cond-> (mapv (s/fn :- EntityImportData
-                              [entity-import-data
-                               {:keys [error msg] :as entity-bulk-result}]
-                              (let [error (or error
-                                              ;; FIXME patch-entities can return {:indicators {:errors {:not-found (nil)}}},
-                                              ;; which gets translated to :error [:errors {:not-found (nil)} somehow.
-                                              ;; delete this code. I think I need to add :enveloped-result? support to patch-entities.
-                                              (when-not (string? entity-bulk-result)
-                                                entity-bulk-result))]
-                                (cond-> entity-import-data
-                                  error (assoc :error error
-                                               :result "error")
-                                  msg (assoc :msg msg)
-                                  (not error) (assoc :id entity-bulk-result
-                                                     :result (case mode
-                                                               :create "created"
-                                                               :patch "updated")))))
-                            submitted (get bulk-result k))
-                (not patch-existing-in-bundle-import?) (into (do (assert (= :create mode))
-                                                                 not-submitted)))))
+            (let [submitted (filter (case mode
+                                      :create create?
+                                      :patch patch?)
+                                    v)]
+              (mapv (s/fn :- EntityImportData
+                      [entity-import-data
+                       {:keys [error msg] :as entity-bulk-result}]
+                      (let [error (or error
+                                      ;; FIXME patch-entities can return {:indicators {:errors {:not-found (nil)}}},
+                                      ;; which gets translated to :error [:errors {:not-found (nil)} somehow.
+                                      ;; delete this code. I think I need to add :enveloped-result? support to patch-entities.
+                                      (when-not (string? entity-bulk-result)
+                                        entity-bulk-result))]
+                        (cond-> entity-import-data
+                          error (assoc :error error
+                                       :result "error")
+                          msg (assoc :msg msg)
+                          (not error) (assoc :id entity-bulk-result
+                                             :result (case mode
+                                                       :create "created"
+                                                       :patch "updated")))))
+                    submitted (get bulk-result k))))
           bundle-import-data))
 
 (s/defn build-response :- BundleImportResult
@@ -367,13 +361,12 @@
                 (bad-request! {:errors fail}))))
         {:keys [tempids] :as create-bulk-refs} (bulk/create-bulk creates-bulk tempids auth-identity (bulk-params get-in-config) services)
         create-result (with-bulk-result bundle-import-data :create (dissoc create-bulk-refs :tempids))
-        patch-result (when patch-existing-in-bundle-import?
-                       (let [patch-bulk-refs (bulk/patch-bulk patches-bulk tempids auth-identity (bulk-params get-in-config) services
-                                                              {:enveloped-result? true})]
-                         (with-bulk-result
-                           bundle-import-data
-                           :patch
-                           (dissoc patch-bulk-refs :tempids))))]
+        patch-result (let [patch-bulk-refs (bulk/patch-bulk patches-bulk tempids auth-identity (bulk-params get-in-config) services
+                                                            {:enveloped-result? true})]
+                       (with-bulk-result
+                         bundle-import-data
+                         :patch
+                         (dissoc patch-bulk-refs :tempids)))]
     (debug "Import bundle response"
            (-> (merge-with into create-result patch-result)
                build-response
