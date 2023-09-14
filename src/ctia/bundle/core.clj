@@ -9,6 +9,7 @@
    [ctia.bundle.schemas :refer
     [BundleImportData BundleImportResult EntityImportData
      FindByExternalIdsServices]]
+   [ctia.entity.entities :as entities]
    [ctia.domain.entities :as ent :refer [with-long-id]]
    [ctia.lib.collection :as coll]
    [ctia.properties :as p]
@@ -19,7 +20,9 @@
    [ctia.store :as store]
    [ctia.store-service.schemas :refer [GetStoreFn]]
    [ctim.domain.id :as id]
-   [schema.core :as s])
+   [ring.util.http-response :refer [bad-request!]]
+   [schema.core :as s]
+   [schema-tools.core :as st])
   (:import
    [java.time Instant]
    [java.util UUID]
@@ -321,8 +324,26 @@
       (log/warn error)))
   response)
 
+(defn entity->bundle-keys
+  "For given entity key returns corresponding keys that may be present in Bundle schema.
+  e.g. :asset => [:assets :asset_refs]"
+  [entity-key]
+  (let [{:keys [entity plural]} (get (entities/all-entities) entity-key)
+        kw->snake-case-str      (fn [kw] (-> kw name (string/replace #"-" "_")))]
+    [(-> plural kw->snake-case-str keyword)
+     (-> entity kw->snake-case-str (str "_refs") keyword)]))
+
+(s/defn prep-bundle-schema :- s/Any
+  "Remove keys of disabled entities from Bundle schema"
+  [{{:keys [entity-enabled?]} :FeaturesService} :- APIHandlerServices]
+  (->> (entities/all-entities)
+       keys
+       (remove entity-enabled?)
+       (mapcat entity->bundle-keys)
+       (apply st/dissoc NewBundle)))
+
 (s/defn import-bundle :- BundleImportResult
-  [bundle :- NewBundle
+  [bundle :- (st/optional-keys-schema NewBundle)
    external-key-prefixes :- (s/maybe s/Str)
    auth-identity :- (s/protocol auth/IIdentity)
    {{:keys [get-in-config]} :ConfigService
@@ -337,9 +358,15 @@
                             (entities-import-data->tempids entities-import-data)))
                      (apply merge {}))
         {:keys [creates-bulk patches-bulk] :as _all-bulks} (debug "Bulk" (prepare-bulk bundle-import-data tempids))
+        ;; throw 400 response on partial creates before mutating db
+        _ (when (seq creates-bulk)
+            (let [create-bundle-schema (-> (prep-bundle-schema services)
+                                           (st/dissoc :source))
+                  creates-bulk (update-vals creates-bulk set)]
+              (when-some [fail (s/check create-bundle-schema creates-bulk)]
+                (bad-request! {:errors fail}))))
         {:keys [tempids] :as create-bulk-refs} (bulk/create-bulk creates-bulk tempids auth-identity (bulk-params get-in-config) services)
         create-result (with-bulk-result bundle-import-data :create (dissoc create-bulk-refs :tempids))
-        ;; TODO loosen route schemas to allow partial entities just for patches.
         patch-result (when patch-existing-in-bundle-import?
                        (let [patch-bulk-refs (bulk/patch-bulk patches-bulk tempids auth-identity (bulk-params get-in-config) services
                                                               {:enveloped-result? true})]

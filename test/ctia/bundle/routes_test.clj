@@ -243,11 +243,11 @@
                               :body new-bundle
                               :headers {"Authorization" "45c1f5e3f05d0"})
                bundle-result (:parsed-body response)]
-           (is (= 200 (:status response)))
-           (is (= (count-bundle-entities new-bundle)
-                  (count-bundle-result-entities (:results bundle-result)
-                                                "created"))
-               "All entities are created")))
+           (when (is (= 200 (:status response)))
+             (is (= (count-bundle-entities new-bundle)
+                    (count-bundle-result-entities (:results bundle-result)
+                                                  "created"))
+                 "All entities are created"))))
        (testing "Create"
          (let [bundle {:type "bundle"
                        :source "source"
@@ -260,27 +260,27 @@
                               :body bundle
                               :headers {"Authorization" "45c1f5e3f05d0"})
                bundle-result (:parsed-body response)]
-           (is (= 200 (:status response)))
+           (when (is (= 200 (:status response)))
 
-           (is (every? #(= "created" %)
-                       (map :result (:results bundle-result)))
-               "All entities are created")
+             (is (every? #(= "created" %)
+                         (map :result (:results bundle-result)))
+                 "All entities are created")
 
-           (doseq [entity (concat indicators
-                                  sightings
-                                  (map #(resolve-ids bundle-result %)
-                                       relationships))]
-             (validate-entity-record
-              app
-              (find-result-by-original-id bundle-result (:id entity))
-              entity))))
-       (testing "Update"
+             (doseq [entity (concat indicators
+                                    sightings
+                                    (map #(resolve-ids bundle-result %)
+                                         relationships))]
+               (validate-entity-record
+                 app
+                 (find-result-by-original-id bundle-result (:id entity))
+                 entity)))))
+       (testing "Update with partial"
          (let [updated-indicators (set (map with-modified-description indicators))
                bundle
                {:type "bundle"
                 :source "source"
                 ;; partial entity updates are allowed (:producer is a required Indicator entry)
-                :indicators (into #{} (map identity #_#(select-keys % [:id :external_ids :description])) updated-indicators)
+                :indicators (into #{} (map #(select-keys % [:id :external_ids :description])) updated-indicators)
                 :sightings (set (map with-modified-description sightings))
                 :relationships (set (map with-modified-description relationships))}
                response (POST app
@@ -288,22 +288,19 @@
                               :body bundle
                               :headers {"Authorization" "45c1f5e3f05d0"})
                bundle-result (:parsed-body response)]
-           (is (= 200 (:status response)))
-
-           (is (pos? (count (:results bundle-result))))
-
-           (is (every? #(= expected-exists-status %)
-                       (map :result (:results bundle-result)))
-               "All existing entities are updated")
-
-           (doseq [entity (concat updated-indicators
-                                  (:sightings bundle)
-                                  (map #(resolve-ids bundle-result %)
-                                       (:relationships bundle)))]
-             (validate-entity-record
-               app
-               (find-result-by-original-id bundle-result (:id entity))
-               entity))))
+           (when (is (= 200 (:status response)))
+             (is (pos? (count (:results bundle-result))))
+             (is (every? #(= expected-exists-status %)
+                         (map :result (:results bundle-result)))
+                 "All existing entities are updated")
+             (doseq [entity (concat updated-indicators
+                                    (:sightings bundle)
+                                    (map #(resolve-ids bundle-result %)
+                                         (:relationships bundle)))]
+               (validate-entity-record
+                 app
+                 (find-result-by-original-id bundle-result (:id entity))
+                 entity)))))
        (testing "Update and create"
          (let [indicator (mk-indicator 2000)
                sighting (first sightings)
@@ -322,16 +319,16 @@
                               :body bundle
                               :headers {"Authorization" "45c1f5e3f05d0"})
                bundle-result (:parsed-body response)]
-           (is (= 200 (:status response)))
+           (when (is (= 200 (:status response)))
 
-           (is (pos? (count (:results bundle-result))))
+             (is (pos? (count (:results bundle-result))))
 
-           (doseq [entity [indicator sighting
-                           (resolve-ids bundle-result relationship)]]
-             (validate-entity-record
-              app
-              (find-result-by-original-id bundle-result (:id entity))
-              entity))))
+             (doseq [entity [indicator sighting
+                             (resolve-ids bundle-result relationship)]]
+               (validate-entity-record
+                 app
+                 (find-result-by-original-id bundle-result (:id entity))
+                 entity)))))
        (testing "Bundle with missing entities"
          (let [relationship (mk-relationship 2001
                                              (first sightings)
@@ -377,18 +374,17 @@
                                      :body bundle
                                      :headers {"Authorization" "45c1f5e3f05d0"})
                bundle-result-update (:parsed-body response-update)]
-           (is (= 200 (:status response-create)))
-           (is (= 200 (:status response-update)))
+           (when (is (= 200 (:status response-create)))
+             (is (pos? (count (:results bundle-result-update))))
+             (is (every? #(= "created" %)
+                         (map :result (:results bundle-result-create)))
+                 "All new entities are created"))
 
-           (is (pos? (count (:results bundle-result-create))))
-           (is (pos? (count (:results bundle-result-update))))
-
-           (is (every? #(= "created" %)
-                       (map :result (:results bundle-result-create)))
-               "All new entities are created")
-           (is (every? #(= expected-exists-status %)
-                       (map :result (:results bundle-result-update)))
-               "All existing entities are updated")))
+           (when (is (= 200 (:status response-update)))
+             (is (pos? (count (:results bundle-result-create))))
+             (is (every? #(= expected-exists-status %)
+                         (map :result (:results bundle-result-update)))
+                 "All existing entities are updated"))))
        (testing "schema failures"
          (testing "Fail on creating partial entities"
            (let [bundle {:type "bundle"
@@ -402,7 +398,9 @@
                                        :body bundle
                                        :headers {"Authorization" "45c1f5e3f05d0"})
                  bundle-result-create (:parsed-body response-create)]
-             (is (= 400 (:status response-create)))))
+             (when (is (= 400 (:status response-create)))
+               (is (= '{:errors {:indicators #{{:producer missing-required-key}}}}
+                      bundle-result-create)))))
          (testing "Fail on patching bad partial entities"
            (let [bundle {:type "bundle"
                          :source "source"
@@ -422,13 +420,15 @@
                                                                                %))
                                        :headers {"Authorization" "45c1f5e3f05d0"})
                bundle-result-update (:parsed-body response-update)]
-             (is (= 200 (:status response-create)))
-             (is (pos? (count (:results bundle-result-create))))
-             (is (every? #(= "created" %)
-                         (map :result (:results bundle-result-create)))
-                 "All new entities are created")
+             (when (is (= 200 (:status response-create)))
+               (is (pos? (count (:results bundle-result-create))))
+               (is (every? #(= "created" %)
+                           (map :result (:results bundle-result-create)))
+                   "All new entities are created"))
 
-             (is (= 400 (:status response-update))))))
+             (when (is (= 400 (:status response-update)))
+               (is (= {:errors {:indicators #{{:producer "(not (instance? java.lang.String {:something :bad}))"}}}}
+                      bundle-result-update))))))
        (testing "Partial results with errors"
          (let [indicator-store-state (-> (get-store :indicator) :state)
                indexname (:index indicator-store-state)
@@ -447,23 +447,23 @@
                                             :body bundle
                                             :headers {"Authorization" "45c1f5e3f05d0"})
                       bundle-result-create (:parsed-body response-create)]
-                  (is (= 200 (:status response-create)))
-                  (is (every? #(= "created" %)
-                              (->> (:results bundle-result-create)
-                                   (filter #(= "sighting" %))
-                                   (map :result)))
-                      "All valid entities are created")
-                  (doseq [entity (:sightings bundle)]
-                    (validate-entity-record
-                      app
-                      (find-result-by-original-id bundle-result-create (:id entity))
-                      entity))
-                  (let [indicators (filter
-                                     #(= :indicator (:type %))
-                                     (:results bundle-result-create))]
-                    (is (seq indicators)
-                        "The result collection for indicators is not empty")
-                    (is (every? #(contains? % :error) indicators))))
+                  (when (is (= 200 (:status response-create)))
+                    (is (every? #(= "created" %)
+                                (->> (:results bundle-result-create)
+                                     (filter #(= "sighting" %))
+                                     (map :result)))
+                        "All valid entities are created")
+                    (doseq [entity (:sightings bundle)]
+                      (validate-entity-record
+                        app
+                        (find-result-by-original-id bundle-result-create (:id entity))
+                        entity))
+                    (let [indicators (filter
+                                       #(= :indicator (:type %))
+                                       (:results bundle-result-create))]
+                      (is (seq indicators)
+                          "The result collection for indicators is not empty")
+                      (is (every? #(contains? % :error) indicators)))))
                 (finally
                   ;; reopen index to enable cleaning
                   (es-index/open! (:conn indicator-store-state) indexname)))))))))
@@ -512,10 +512,10 @@
                             :target_records        (set-of target-record-maximal)}
           api-handler-svcs {:FeaturesService {:entity-enabled? #(contains? selected-keys %)}}]
       (s/set-fn-validation! false)    ;; otherwise it fails for incomplete APIHandlerServices passed into `prep-bundle-schema`
-      (is (map? (s/validate (bundle.routes/prep-bundle-schema api-handler-svcs) fake-bundle)))
-      (is (thrown? Exception
+      (is (map? (s/validate (core/prep-bundle-schema api-handler-svcs) fake-bundle)))
+      (is (thrown? clojure.lang.ExceptionInfo
                    (s/validate
-                    (bundle.routes/prep-bundle-schema api-handler-svcs false)
+                    (core/prep-bundle-schema api-handler-svcs)
                     (assoc fake-bundle :incidents (set-of incident-maximal))))
           "Bundle schema with a key that's not explicitly allowed shouldn't validate")))
   (testing "Attempts to import bundle with disabled entities should fail"
@@ -537,7 +537,7 @@
                                             :body new-bundle
                                             :headers {"Authorization" "45c1f5e3f05d0"})
                  disallowed-keys-expected (->> disable
-                                               (mapcat #'bundle.routes/entity->bundle-keys)
+                                               (mapcat core/entity->bundle-keys)
                                                set)
                  disallowed-keys-res      (->> resp
                                                :body
