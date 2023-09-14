@@ -598,7 +598,7 @@
                                          "foogroup"
                                          "user")
      (let [;; See fixture-find-by-external-ids-limit
-           nb-entities 1 ;(+ core/find-by-external-ids-limit 5)
+           nb-entities (+ core/find-by-external-ids-limit 5)
            bundle {:type "bundle"
                    :source "source"
                    :indicators (set (map mk-indicator (range nb-entities)))}
