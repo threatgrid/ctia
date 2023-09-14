@@ -275,10 +275,12 @@
               (find-result-by-original-id bundle-result (:id entity))
               entity))))
        (testing "Update"
-         (let [bundle
+         (let [updated-indicators (set (map with-modified-description indicators))
+               bundle
                {:type "bundle"
                 :source "source"
-                :indicators (set (map with-modified-description indicators))
+                ;; partial entity updates are allowed (:producer is a required Indicator entry)
+                :indicators (into #{} (map identity #_#(select-keys % [:id :external_ids :description])) updated-indicators)
                 :sightings (set (map with-modified-description sightings))
                 :relationships (set (map with-modified-description relationships))}
                response (POST app
@@ -294,7 +296,7 @@
                        (map :result (:results bundle-result)))
                "All existing entities are updated")
 
-           (doseq [entity (concat (:indicators bundle)
+           (doseq [entity (concat updated-indicators
                                   (:sightings bundle)
                                   (map #(resolve-ids bundle-result %)
                                        (:relationships bundle)))]
@@ -387,6 +389,46 @@
            (is (every? #(= expected-exists-status %)
                        (map :result (:results bundle-result-update)))
                "All existing entities are updated")))
+       (testing "schema failures"
+         (testing "Fail on creating partial entities"
+           (let [bundle {:type "bundle"
+                         :source "source"
+                         :indicators #{(-> (first indicators)
+                                           (assoc :external_ids ["custom-3"])
+                                           (dissoc :producer))}}
+                 response-create (POST app
+                                       "ctia/bundle/import"
+                                       :query-params {"external-key-prefixes" "custom-"}
+                                       :body bundle
+                                       :headers {"Authorization" "45c1f5e3f05d0"})
+                 bundle-result-create (:parsed-body response-create)]
+             (is (= 400 (:status response-create)))))
+         (testing "Fail on patching bad partial entities"
+           (let [bundle {:type "bundle"
+                         :source "source"
+                         :indicators #{(-> (first indicators)
+                                           (assoc :external_ids ["custom-3"]))}}
+                 response-create (POST app
+                                       "ctia/bundle/import"
+                                       :query-params {"external-key-prefixes" "custom-"}
+                                       :body bundle
+                                       :headers {"Authorization" "45c1f5e3f05d0"})
+                 bundle-result-create (:parsed-body response-create)
+                 response-update (POST app
+                                       "ctia/bundle/import"
+                                       :query-params {"external-key-prefixes" "custom-"}
+                                       :body (update bundle :indicators #(into #{} (map (fn [e]
+                                                                                          (assoc e :producer {:something :bad})))
+                                                                               %))
+                                       :headers {"Authorization" "45c1f5e3f05d0"})
+               bundle-result-update (:parsed-body response-update)]
+             (is (= 200 (:status response-create)))
+             (is (pos? (count (:results bundle-result-create))))
+             (is (every? #(= "created" %)
+                         (map :result (:results bundle-result-create)))
+                 "All new entities are created")
+
+             (is (= 400 (:status response-update))))))
        (testing "Partial results with errors"
          (let [indicator-store-state (-> (get-store :indicator) :state)
                indexname (:index indicator-store-state)
