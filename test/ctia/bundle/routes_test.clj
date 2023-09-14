@@ -12,6 +12,7 @@
    [ctia.bundle.routes :as bundle.routes]
    [ctia.test-helpers.core :as helpers
     :refer [deep-dissoc-entity-ids GET PATCH POST DELETE]]
+   [ctia.test-helpers.http :refer [app->APIHandlerServices]]
    [ctia.test-helpers.fake-whoami-service :as whoami-helpers]
    [ctia.test-helpers.store :refer [test-for-each-store-with-app]]
    [ctim.domain.id :as id]
@@ -494,26 +495,6 @@
                            (get :description))))))))))
 
 (deftest bundle-import-should-not-allow-disabled-entities
-  (testing "disabled entities should be removed from Bundle schema"
-    (let [selected-keys    #{:asset :target-record :asset-properties}
-          set-of           (fn [model] (set (repeat 3 model)))
-          fake-bundle      {:id                    "http://ex.tld/ctia/bundle/bundle-5023697b-3857-4652-9b53-ccda297f9c3e"
-                            :source                "source"
-                            :type                  "bundle"
-                            :assets                (set-of asset-maximal)
-                            :asset_refs            #{"http://ex.tld/ctia/asset/asset-5023697b-3857-4652-9b53-ccda297f9c3e"}
-                            :asset_properties      (set-of asset-properties-maximal)
-                            :asset_properties_refs #{"http://ex.tld/ctia/asset-properties/asset-properties-5023697b-3857-4652-9b53-ccda297f9c3e"}
-                            :target_record_refs    #{"http://ex.tld/ctia/target-record/target-record-5023697b-3857-4652-9b53-ccda297f9c3e"}
-                            :target_records        (set-of target-record-maximal)}
-          api-handler-svcs {:FeaturesService {:entity-enabled? #(contains? selected-keys %)}}]
-      (s/set-fn-validation! false)    ;; otherwise it fails for incomplete APIHandlerServices passed into `prep-bundle-schema`
-      (is (map? (s/validate (core/prep-bundle-schema api-handler-svcs) fake-bundle)))
-      (is (thrown? clojure.lang.ExceptionInfo
-                   (s/validate
-                    (core/prep-bundle-schema api-handler-svcs)
-                    (assoc fake-bundle :incidents (set-of incident-maximal))))
-          "Bundle schema with a key that's not explicitly allowed shouldn't validate")))
   (testing "Attempts to import bundle with disabled entities should fail"
     (let [disable [:asset :asset-properties :actor :sighting]]
       (helpers/with-config-transformer
@@ -528,6 +509,26 @@
                                                "foouser"
                                                "foogroup"
                                                "user")
+           ;; moved inside a context with `app` so APIHandlerServices can be stubbed
+           (testing "disabled entities should be removed from Bundle schema"
+             (let [selected-keys    #{:asset :target-record :asset-properties}
+                   set-of           (fn [model] (set (repeat 3 model)))
+                   fake-bundle      {:id                    "http://ex.tld/ctia/bundle/bundle-5023697b-3857-4652-9b53-ccda297f9c3e"
+                                     :source                "source"
+                                     :type                  "bundle"
+                                     :assets                (set-of asset-maximal)
+                                     :asset_refs            #{"http://ex.tld/ctia/asset/asset-5023697b-3857-4652-9b53-ccda297f9c3e"}
+                                     :asset_properties      (set-of asset-properties-maximal)
+                                     :asset_properties_refs #{"http://ex.tld/ctia/asset-properties/asset-properties-5023697b-3857-4652-9b53-ccda297f9c3e"}
+                                     :target_record_refs    #{"http://ex.tld/ctia/target-record/target-record-5023697b-3857-4652-9b53-ccda297f9c3e"}
+                                     :target_records        (set-of target-record-maximal)}
+                   api-handler-svcs (assoc-in (app->APIHandlerServices app) [:FeaturesService :entity-enabled?] #(contains? selected-keys %))]
+               (is (map? (s/validate (core/prep-bundle-schema api-handler-svcs) fake-bundle)))
+               (is (thrown? clojure.lang.ExceptionInfo
+                            (s/validate
+                              (core/prep-bundle-schema api-handler-svcs)
+                              (assoc fake-bundle :incidents (set-of incident-maximal))))
+                   "Bundle schema with a key that's not explicitly allowed shouldn't validate")))
            (let [new-bundle               (deep-dissoc-entity-ids bundle-maximal)
                  resp                     (POST app "ctia/bundle/import"
                                             :body new-bundle
