@@ -452,8 +452,9 @@
         bundle-import-data (prepare-import bundle-entities external-key-prefixes auth-identity services)
         tempids (bundle-import-data->tempids bundle-import-data {})
         ;;TODO
-        ;; in case a transient asset_ref on a partial asset-{property,mapping} refers to a new Asset, we need to
-        ;; 1. create all entities except asset-{property,mapping} (to create the Asset)
+        ;; in case a transient asset_ref on a patched asset-{property,mapping} refers to a new Asset,
+        ;; OR a patched relationship refers to new entities, we need to
+        ;; 1. create all entities except asset-{property,mapping} and relationships (to create {asset,source,target}_ref ids)
         ;; 2. decide whether asset-{property,mapping} entities are create or patch (since we can now resolve asset_ref)
         ;; 3. create or patch remaining entities
         bundle-import-data (resolve-asset-properties+mappings bundle-import-data tempids auth-identity services)
