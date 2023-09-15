@@ -278,8 +278,7 @@
 (s/defn patch? :- s/Bool
   "Whether the provided entity should be patched or not"
   [{:keys [result]}]
-  ;; Add only new entities without error
-  (not= "error" result))
+  (= "exists" result))
 
 (s/defn prepare-bulk
   "Creates the bulk data structure with all entities to create or patch."
