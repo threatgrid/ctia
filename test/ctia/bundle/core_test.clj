@@ -66,9 +66,9 @@
           (testing "with-existing-entity"
             (let [http-show-services (app->HTTPShowServices app)
 
-                  indicator-id-1 (make-id "indicator")
-                  indicator-id-2 (make-id "indicator")
-                  indicator-id-3 (make-id "indicator")
+                  indicator-id-1 (str "transient:" (make-id "indicator"))
+                  indicator-id-2 (str "transient:" (make-id "indicator"))
+                  indicator-id-3 (str "transient:" (make-id "indicator"))
                   new-indicator {:id indicator-id-3
                                  :external_ids ["swe-alarm-indicator-1"]}
                   find-by-ext-ids (fn [existing-ids]
@@ -76,13 +76,14 @@
                                       (map (fn [old-id]
                                              {:entity {:id old-id}})
                                            existing-ids)))
-                  test-fn (fn [{:keys [msg expected existing-ids log?]}]
+                  test-fn (fn [{:keys [msg expected existing-ids id->old-entity log?]}]
                             (with-log
                               (testing msg
                                 (is (= expected
                                        (sut/with-existing-entity
                                          new-indicator
                                          (find-by-ext-ids existing-ids)
+                                         (or id->old-entity {})
                                          http-show-services)))
                                 (is (= log?
                                        (logged? 'ctia.bundle.core

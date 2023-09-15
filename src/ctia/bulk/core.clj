@@ -110,9 +110,11 @@
                      (st/assoc s/Keyword s/Any))
    s/Keyword s/Any})
 
-(s/defn read-entities
+(s/defn read-entities :- [(s/maybe (s/pred map?))]
   "Retrieve many entities of the same type provided their ids and common type"
-  [ids entity-type auth-identity
+  [ids :- [s/Str]
+   entity-type :- s/Keyword
+   auth-identity :- auth/AuthIdentity
    {{:keys [get-store]} :StoreService
     :as services} :- ReadEntitiesServices]
   (let [store (get-store entity-type)]

@@ -84,7 +84,7 @@
   "Retrieves all external ids using pagination."
   [entity-type
    external-ids
-   auth-identity
+   auth-identity :- auth/AuthIdentity
    get-store :- GetStoreFn]
   (loop [ext-ids external-ids
          entities []]
@@ -106,7 +106,9 @@
           acc-entities)))))
 
 (s/defn find-by-external-ids
-  [import-data entity-type auth-identity
+  [import-data
+   entity-type :- s/Keyword
+   auth-identity :- auth/AuthIdentity
    {{:keys [get-store]} :StoreService} :- FindByExternalIdsServices]
   (let [external-ids (mapcat :external_ids import-data)]
     (log/debugf "Searching %s matching these external_ids %s"
@@ -120,7 +122,7 @@
 (s/defn find-by-asset_refs :- {s/Str (s/pred map?)}
   [asset_refs :- #{s/Str}
    entity-type
-   auth-identity
+   auth-identity :- auth/AuthIdentity
    {{:keys [get-store]} :StoreService} :- FindByExternalIdsServices]
   (if (empty? asset_refs)
     {}
@@ -201,32 +203,44 @@
 (s/defn with-existing-entity :- EntityImportData
   "If the entity has already been imported, update the import data
    with its ID. If more than one old entity is linked to an external id,
-   an error is reported."
+   an error is reported. If realized :id is provided, resolves"
   [{:keys [external_ids]
     :as entity-data} :- EntityImportData
    find-by-external-id :- (s/=> s/Any (s/named s/Any 'external_id))
+   id->old-entity :- {s/Str (s/pred map?)}
    services :- HTTPShowServices]
-  (assert ((some-fn nil? schemas/transient-id?) (:id entity-data))
-          "TODO support realized id")
-  (let [old-entities (mapcat find-by-external-id external_ids)
-        old-entity (some-> (first old-entities)
-                           :entity
-                           (with-long-id services)
-                           ent/un-store)]
-    (when (< 1 (count old-entities))
-      (log/warn
-        (format
-          (str "More than one entity is "
-               "linked to the external ids %s (examples: %s)")
-          external_ids
-          (->> (take 10 old-entities) ;; prevent very large logs
-               (map (comp :id :entity))
-               pr-str))))
-    (cond-> entity-data
-      ;; only one entity linked to the external ID
-      old-entity (-> (assoc :result "exists"
-                            :id (:id old-entity))
-                     (assoc-in [:new-entity :id] (:id old-entity))))))
+  (if-some [realized-id (when-some [new-id (get-in entity-data [:new-entity :id])]
+                          (when-not (schemas/transient-id? new-id)
+                            new-id))]
+    (if-some [old-entity (id->old-entity realized-id)]
+      (cond-> entity-data
+        old-entity (assoc :result "exists"
+                          :id (:id old-entity)))
+      (cond-> entity-data
+        ;; if we want to support specifying ids on creation, start here
+        true ;;(not (auth/capable? auth-identity :specify-id))
+        (assoc :error {:type :unresolvable-id
+                       :reason (str "Long id must already correspond to an entity: " realized-id)}
+               :result "error")))
+    (let [old-entities (mapcat find-by-external-id external_ids)
+          old-entity (some-> (first old-entities)
+                             :entity
+                             (with-long-id services)
+                             ent/un-store)]
+      (when (< 1 (count old-entities))
+        (log/warn
+          (format
+            (str "More than one entity is "
+                 "linked to the external ids %s (examples: %s)")
+            external_ids
+            (->> (take 10 old-entities) ;; prevent very large logs
+                 (map (comp :id :entity))
+                 pr-str))))
+      (cond-> entity-data
+        ;; only one entity linked to the external ID
+        old-entity (-> (assoc :result "exists"
+                              :id (:id old-entity))
+                       (assoc-in [:new-entity :id] (:id old-entity)))))))
 
 (s/defschema WithExistingEntitiesServices
   (csu/open-service-schema
@@ -240,19 +254,32 @@
 
 (s/defn with-existing-entities :- [EntityImportData]
   "Add existing entities to the import data map."
-  [import-data entity-type identity-map
-   services :- WithExistingEntitiesServices]
-  (let [entities-by-external-id
+  [import-data
+   entity-type
+   auth-identity :- auth/AuthIdentity
+   {{:keys [get-store]} :StoreService :as services} :- WithExistingEntitiesServices]
+  (let [{:keys [realized-entities unrealized-entities]} (group-by (fn [{{:keys [id]} :new-entity}]
+                                                                    (if (and id (not (schemas/transient-id? id)))
+                                                                      :realized-entities
+                                                                      :unrealized-entities))
+                                                                  import-data)
+        entities-by-external-id
         (by-external-id
-         (find-by-external-ids import-data
+         (find-by-external-ids unrealized-entities
                                entity-type
-                               identity-map
+                               auth-identity
                                services))
+        id->old-entity (into {} (comp (remove nil?)
+                                      (map (juxt :id identity)))
+                             (bulk/read-entities (map (comp :id :new-entity) realized-entities)
+                                                 entity-type
+                                                 auth-identity
+                                                 services))
         find-by-external-id-fn (fn [external_id]
                                  (when external_id
                                    (get entities-by-external-id
                                         {:external_id external_id})))]
-    (map #(with-existing-entity % find-by-external-id-fn services)
+    (map #(with-existing-entity % find-by-external-id-fn id->old-entity services)
          import-data)))
 
 (s/defn prepare-import :- BundleImportData
@@ -261,7 +288,7 @@
    will be created, and existing entities will be patched."
   [bundle-entities
    external-key-prefixes
-   auth-identity
+   auth-identity :- auth/AuthIdentity
    services :- APIHandlerServices]
   (map-kv (fn [k v]
             (let [entity-type (bulk/entity-type-from-bulk-key k)]
@@ -411,7 +438,7 @@
 (s/defn resolve-asset-properties+mappings :- BundleImportData
   [bundle-import-data :- BundleImportData
    tempids :- TempIDs
-   auth-identity
+   auth-identity :- auth/AuthIdentity
    services :- FindByExternalIdsServices]
   (let [resolve* (s/fn :- BundleImportData
                    [bundle-import-data :- BundleImportData
@@ -445,7 +472,7 @@
 (s/defn import-bundle :- BundleImportResult
   [bundle :- (st/optional-keys-schema NewBundle)
    external-key-prefixes :- (s/maybe s/Str)
-   auth-identity :- (s/protocol auth/IIdentity)
+   auth-identity :- auth/AuthIdentity
    {{:keys [get-in-config]} :ConfigService
     :as services} :- APIHandlerServices]
   (let [bundle-entities (select-keys bundle bundle-entity-keys)
@@ -651,7 +678,9 @@
    :source "ctia"})
 
 (s/defn export-bundle
-  [ids identity params
+  [ids 
+   identity :- auth/AuthIdentity
+   params
    {{:keys [send-event]} :RiemannService
     :as services} :- APIHandlerServices]
   (if (seq ids)
