@@ -530,6 +530,7 @@
                                                        :patch
                                                        (dissoc patch-bulk-refs :tempids)))]
                                   ;;FIXME not propagating :tempids properly, might be calling with-bulk-result too early.
+                                  ;; see end of bundle-asset-relationships-test
                                   (prn "create-result" create-result)
                                   (prn "patch-result" patch-result)
                                   (merge-with into create-result patch-result)))
