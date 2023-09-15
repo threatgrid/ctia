@@ -250,9 +250,9 @@
                 :make-result make-bulk-result
                 :enveloped-result? enveloped-result?
                 :get-success-entities (get-success-entities-fn :updated))
-        enveloped-result? (update :data
-                                  (partial map (fn [{:keys [error id] :as result}]
-                                                 (if error result id))))))))
+        enveloped-result? (update :data #(mapv (fn [{:keys [error id] :as result}]
+                                                 (if error result id))
+                                               %))))))
 
 (s/defschema BulkEntities {s/Keyword flows/Entities})
 
