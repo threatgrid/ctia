@@ -310,20 +310,14 @@
               (mapv (s/fn :- EntityImportData
                       [entity-import-data
                        {:keys [error msg] :as entity-bulk-result}]
-                      (let [error (or error
-                                      ;; FIXME patch-entities can return {:indicators {:errors {:not-found (nil)}}},
-                                      ;; which gets translated to :error [:errors {:not-found (nil)} somehow.
-                                      ;; delete this code. I think I need to add :enveloped-result? support to patch-entities.
-                                      (when-not (string? entity-bulk-result)
-                                        entity-bulk-result))]
-                        (cond-> entity-import-data
-                          error (assoc :error error
-                                       :result "error")
-                          msg (assoc :msg msg)
-                          (not error) (assoc :id entity-bulk-result
-                                             :result (case mode
-                                                       :create "created"
-                                                       :patch "updated")))))
+                      (cond-> entity-import-data
+                        error (assoc :error error
+                                     :result "error")
+                        msg (assoc :msg msg)
+                        (not error) (assoc :id entity-bulk-result
+                                           :result (case mode
+                                                     :create "created"
+                                                     :patch "updated"))))
                     submitted (get bulk-result k))))
           bundle-import-data))
 
