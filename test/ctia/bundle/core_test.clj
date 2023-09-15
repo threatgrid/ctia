@@ -213,3 +213,14 @@
                              :external_ids external_ids}
                 :type :sighting
                 :external_ids external_ids}})))
+
+(deftest merge-asset_properties-properties-test
+  (is (= [{:name "bar" :value "7"}
+          {:name "baz" :value "6"}
+          {:name "foo" :value "7"}]
+         (sut/merge-asset_properties-properties
+           [{:name "foo" :value "7"}
+            {:name "bar" :value "7"}]
+           [{:name "foo" :value "6"}
+            {:name "bar" :value "6"}
+            {:name "baz" :value "6"}]))))
