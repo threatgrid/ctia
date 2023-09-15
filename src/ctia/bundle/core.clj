@@ -529,8 +529,10 @@
                                                        bundle-import-data
                                                        :patch
                                                        (dissoc patch-bulk-refs :tempids)))]
-                                  {:data (merge-with into create-result patch-result)
-                                   :tempids tempids}))
+                                  ;;FIXME not propagating :tempids properly, might be calling with-bulk-result too early.
+                                  (prn "create-result" create-result)
+                                  (prn "patch-result" patch-result)
+                                  (merge-with into create-result patch-result)))
                               (keep not-empty
                                     [(dissoc bundle-entities :relationships :asset_mappings :asset_properties)
                                      ;; create assets before processing entities with asset_ref

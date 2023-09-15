@@ -1423,6 +1423,7 @@
                 {create+update-results :results :as create+update-bundle-result} (:parsed-body create+update-response)]
             (when (is (= 200 (:status create+update-response)))
               (let [asset2-id (find-id-by-original-id :asset2-id create+update-bundle-result asset2-original-id)]
+                ;;TODO test something interesting, like all transients were resolved
                 (is (= 4 (count create+update-results)))
                 (is (every? (comp #{"updated" "created"} :result) create+update-results)
                     (pr-str (mapv :result create+update-results)))))
