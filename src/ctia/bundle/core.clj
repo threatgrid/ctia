@@ -394,9 +394,10 @@
                                                     (when-some [asset_ref (get tempids asset_ref asset_ref)]
                                                       (when-some [{:keys [id] :as old-entity} (asset_ref->old-entity (get tempids asset_ref asset_ref))]
                                                         (-> import-data
-                                                            (assoc :old-entity old-entity)
-                                                            (update :new-entity assoc :id id :asset_ref asset_ref)
-                                                            (assoc :id id)))))
+                                                            (assoc :old-entity old-entity
+                                                                   :id id
+                                                                   :result "exists")
+                                                            (update :new-entity assoc :id id :asset_ref asset_ref)))))
                                                   import-data)))
                                        bulk-assets))))))]
     (-> bundle-import-data
