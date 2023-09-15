@@ -159,6 +159,14 @@
        (filter #(= (:original_id %) original-id))
        first))
 
+(s/defn find-id-by-original-id :- s/Str
+  [msg bundle-result original-id]
+  (if-some [{:keys [id]} (find-result-by-original-id bundle-result original-id)]
+    id
+    (throw (ex-info "Missing id" {:msg msg
+                                  :original-id original-id
+                                  :bundle-result bundle-result}))))
+
 (defn resolve-ids
   "Resolves transient IDs in the target_ref and the source_ref
   of a relationship"
@@ -1281,7 +1289,10 @@
 
       (let [[oldv1 oldv2 newv1 newv2 newv3] (repeatedly (comp str gensym))
             [relationship1-original-id
-             asset_mapping1-original-id] (repeatedly #(str "transient:" (random-uuid)))
+             asset_mapping1-original-id
+             asset_property1-original-id
+             asset1-original-id
+             asset2-original-id] (repeatedly #(str "transient:" (random-uuid)))
             asset1 {:asset_type "device"
                     :valid_time {:start_time #inst "2023-03-02T19:14:46.658-00:00"}
                     :schema_version "1.0.19"
@@ -1290,14 +1301,14 @@
                     :external_ids ["asset-1"]
                     :title "something"
                     :source_uri "https://something"
-                    :id "transient:89497b1a-1e42-4258-81f0-1d394fe1a90f"
+                    :id asset1-original-id
                     :timestamp #inst "2023-03-02T19:14:46.658-00:00"}
             asset_mapping1 {:asset_type "device"
                             :valid_time {:start_time #inst "2023-03-02T19:14:46.660-00:00"}
                             :stability "Managed"
                             :schema_version ctim-schema-version
                             :observable {:value "something" :type "hostname"}
-                            :asset_ref "transient:89497b1a-1e42-4258-81f0-1d394fe1a90f"
+                            :asset_ref asset1-original-id
                             :type "asset-mapping"
                             :source "Something"
                             :source_uri "https://something"
@@ -1309,11 +1320,11 @@
                                           {:name "something2" :value oldv2}]
                              :valid_time {:start_time #inst "2023-03-02T19:14:46.660-00:00"}
                              :schema_version ctim-schema-version
-                             :asset_ref "transient:89497b1a-1e42-4258-81f0-1d394fe1a90f"
+                             :asset_ref asset1-original-id
                              :type "asset-properties"
                              :source "something"
                              :source_uri "https://something"
-                             :id "transient:8ae8d2b0-950b-402d-b053-935da85582a3"
+                             :id asset_property1-original-id
                              :timestamp #inst "2023-03-02T19:14:46.783-00:00"}
             new-bundle (-> bundle-minimal
                            (assoc :assets #{asset1}
@@ -1323,19 +1334,18 @@
                                                     :source_ref "https://private.intel.int.iroh.site:443/ctia/incident/incident-4fb91401-36a5-46d1-b0aa-01af02f00a7a"
                                                     :target_ref asset_mapping1-original-id, :relationship_type "related-to", :source "IROH Risk Score Service"}
                                                    {:source_ref "https://private.intel.int.iroh.site:443/ctia/incident/incident-4fb91401-36a5-46d1-b0aa-01af02f00a7a"
-                                                    :target_ref "transient:8ae8d2b0-950b-402d-b053-935da85582a3", :relationship_type "related-to", :source "IROH Risk Score Service"}
+                                                    :target_ref asset_property1-original-id, :relationship_type "related-to", :source "IROH Risk Score Service"}
                                                    {:source_ref "https://private.intel.int.iroh.site:443/ctia/incident/incident-4fb91401-36a5-46d1-b0aa-01af02f00a7a"
-                                                    :target_ref "transient:89497b1a-1e42-4258-81f0-1d394fe1a90f", :relationship_type "related-to", :source "IROH Risk Score Service"}}))
+                                                    :target_ref asset1-original-id, :relationship_type "related-to", :source "IROH Risk Score Service"}}))
             create-response (POST app
                                   "ctia/bundle/import"
                                   :body new-bundle
                                   :headers {"Authorization" "45c1f5e3f05d0"})
-            {create-results :results} (:parsed-body create-response)
-            relationship1-id (some (fn [{:keys [id original_id]}]
-                                     (when (= relationship1-original-id original_id)
-                                       id))
-                                   create-results)
-            _ (assert relationship1-id create-results)]
+            {create-results :results :as create-bundle-results} (:parsed-body create-response)
+            relationship1-id (find-id-by-original-id :relationship1-id create-bundle-results relationship1-original-id)
+            asset1-id (find-id-by-original-id :asset1-id create-bundle-results asset1-original-id)
+            asset_property1-id (find-id-by-original-id :asset_property1-id create-bundle-results asset_property1-original-id)
+            asset_mapping1-id (find-id-by-original-id :asset_mapping1-id create-bundle-results asset_mapping1-original-id)]
         (testing "relationships are created for asset mappings/properties"
           (when (is (= 200 (:status create-response)))
             (is (= 6 (count create-results)))
@@ -1393,8 +1403,27 @@
         (testing "patched relationships, asset mappings/properties resolve refs after creating other entities"
           (let [;; on existing entities, patch asset_ref to a newly created asset,
                 ;; and :{source/target}_ref to newly created entities
+                asset2 (assoc asset1 :id asset2-original-id :external_ids ["asset-2"])
+                updated-asset_property1 {:id asset_property1-id
+                                         :asset_ref asset2-original-id} 
+                updated-asset_mapping1 {:id asset_mapping1-id
+                                        :asset_ref asset2-original-id} 
+                updated-relationship1 {:id relationship1-id
+                                       :source_ref asset2-original-id
+                                       :target_ref asset2-original-id}
                 create+update-bundle (-> bundle-minimal
-                                         ;(assoc :assets )
-                                         )
-                ]
+                                         (assoc :assets #{asset2}
+                                                :asset_properties #{updated-asset_property1}
+                                                :asset_mappings #{updated-asset_mapping1}
+                                                :relationships #{updated-relationship1}))
+                create+update-response (POST app
+                                             "ctia/bundle/import"
+                                             :body create+update-bundle
+                                             :headers {"Authorization" "45c1f5e3f05d0"})
+                {create+update-results :results :as create+update-bundle-result} (:parsed-body create+update-response)
+                asset2-id (find-id-by-original-id :asset2-id create+update-bundle-result asset2-original-id)]
+            (when (is (= 200 (:status create-response)))
+              (is (= 4 (count create-results)))
+              (is (every? (comp #{"created"} :result) create-results)
+                  (pr-str (mapv :result create-results))))
             ))))))
