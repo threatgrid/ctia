@@ -375,7 +375,9 @@
   "If entity has result error, do nothing.
   If entity has result exists (via :old-entity), then merge properties with existing.
   If entity is scheduled for creation, but already exists via :asset_ref, merge properties
-  with existing and schedule for patching."
+  with existing and schedule for patching.
+  
+  Ensure tempids includes transient mapping for created Assets, if any."
   [{:keys [id new-entity result] :as import-data} :- EntityImportData
    tempids :- TempIDs
    bulk-asset-kw :- (s/enum :asset_properties :asset_mappings)
