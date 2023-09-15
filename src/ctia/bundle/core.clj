@@ -366,6 +366,13 @@
        (mapcat entity->bundle-keys)
        (apply st/dissoc NewBundle)))
 
+(defn merge-asset_properties-properties
+  [new-properties old-properties]
+  (-> (sorted-map)
+      (into (map (juxt :name identity))
+            (concat old-properties new-properties))
+      vals))
+
 (s/defn resolve-asset-properties+mappings :- BundleImportData
   [bundle-import-data :- BundleImportData
    tempids :- TempIDs
@@ -392,12 +399,21 @@
                                        (map (fn [{:keys [id] {:keys [asset_ref]} :new-entity :as import-data}]
                                               (or (when-not id
                                                     (when-some [asset_ref (get tempids asset_ref asset_ref)]
-                                                      (when-some [{:keys [id] :as old-entity} (asset_ref->old-entity (get tempids asset_ref asset_ref))]
+                                                      (when-some [{:keys [id] :as old-entity} (asset_ref->old-entity asset_ref)]
                                                         (-> import-data
                                                             (assoc :old-entity old-entity
                                                                    :id id
                                                                    :result "exists")
-                                                            (update :new-entity assoc :id id :asset_ref asset_ref)))))
+                                                            (update :new-entity 
+                                                                    (fn [new-entity]
+                                                                      (-> new-entity
+                                                                          (assoc :id id :asset_ref asset_ref)
+                                                                          ;;TODO logic to merge :asset_mappings ?
+                                                                          (cond->
+                                                                            (= :asset_properties bulk-asset-kw)
+                                                                            (update :properties
+                                                                                    merge-asset_properties-properties
+                                                                                    (:properties old-entity))))))))))
                                                   import-data)))
                                        bulk-assets))))))]
     (-> bundle-import-data

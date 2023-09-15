@@ -1304,12 +1304,13 @@
                                                        :timestamp #inst "2023-03-02T19:14:46.660-00:00"
                                                        :specificity "Unique"
                                                        :confidence "Unknown"}}
-                                    :asset_properties #{{:properties [{:name "something" :value "66"}]
+                                    :asset_properties #{{:properties [{:name "something1" :value "660"}
+                                                                      {:name "something2" :value "661"}]
                                                          :valid_time {:start_time #inst "2023-03-02T19:14:46.660-00:00"}
                                                          :schema_version ctim-schema-version
                                                          :asset_ref "transient:89497b1a-1e42-4258-81f0-1d394fe1a90f"
                                                          :type "asset-properties"
-                                                         :source "somethintg"
+                                                         :source "something"
                                                          :source_uri "https://something"
                                                          :id "transient:8ae8d2b0-950b-402d-b053-935da85582a3"
                                                          :timestamp #inst "2023-03-02T19:14:46.783-00:00"}}
@@ -1325,12 +1326,54 @@
                   (is (= 6 (count create-results)))
                   (is (every? (comp #{"created"} :result) create-results)
                       (pr-str (mapv :result create-results))))
+              update-bundle (-> new-bundle
+                                (select-keys [:assets :asset_properties :asset_mappings])
+                                (update :asset_properties (fn [asset_properties]
+                                                            (into #{} (map #(assoc % :properties [{:name "something1" :value "770"}
+                                                                                                  {:name "something-else" :value "77"}]))
+                                                                  asset_properties))))
               update-response (POST app
                                     "ctia/bundle/import"
-                                    :body (select-keys new-bundle [:assets :asset_properties :asset_mappings])
+                                    :body update-bundle
                                     :headers {"Authorization" "45c1f5e3f05d0"})
-              {update-results :results} (:parsed-body update-response)
-              _ (when (is (= 200 (:status update-response)))
-                  (is (= 3 (count update-results)) update-results)
-                  (is (every? (comp #{"updated"} :result) update-results)
-                      (pr-str (mapv :result update-results))))])))))
+              {update-results :results :as update-bundle-result} (:parsed-body update-response)]
+          (testing "asset-properties and asset-mappings are merged with old-entity when patched"
+            (when (is (= 200 (:status update-response)))
+              (is (= 3 (count update-results)) update-results)
+              (is (every? (comp #{"updated"} :result) update-results)
+                  (pr-str (mapv :result update-results)))
+              (let [get-stored (fn [entity]
+                                 (let [realized-id (some (fn [{:keys [original_id id]}]
+                                                           (when (= original_id (:id entity))
+                                                             id))
+                                                         update-results)
+                                       _ (assert realized-id [(:id entity) update-results])
+                                       response (GET app
+                                                     (format "ctia/%s/%s"
+                                                             (name (:type entity))
+                                                             (encode realized-id))
+                                                     :headers {"Authorization" "45c1f5e3f05d0"})]
+                                   (:parsed-body response)))]
+                (testing ":asset_mappings"
+                  (doseq [entity (:asset_mappings update-bundle)
+                          :let [stored (get-stored entity)]]
+                    ;;TODO what does "merging" an asset mapping on patch look like?
+                    (is (= (dissoc stored :id :schema_version :asset_ref :owner :groups :timestamp)
+                           (-> entity
+                               (dissoc :id :schema_version :asset_ref :timestamp)
+                               (assoc :tlp "green")
+                               (assoc-in [:valid_time :end_time] #inst "2525-01-01T00:00:00.000-00:00"))))))
+                (testing ":asset_properties"
+                  (doseq [entity (:asset_properties update-bundle)
+                          :let [stored (get-stored entity)]]
+                    (testing ":properties are merged, newer wins"
+                      (is (= [{:name "something-else" :value "77"}
+                              {:name "something1" :value "770"}
+                              {:name "something2" :value "661"}]
+                             (:properties stored))))
+                    (is (= (-> stored
+                               (dissoc :id :schema_version :asset_ref :owner :groups :timestamp :properties))
+                           (-> entity
+                               (dissoc :id :schema_version :asset_ref :timestamp :properties)
+                               (assoc :tlp "green")
+                               (assoc-in [:valid_time :end_time] #inst "2525-01-01T00:00:00.000-00:00"))))))))))))))
