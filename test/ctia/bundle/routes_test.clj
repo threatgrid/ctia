@@ -1420,10 +1420,10 @@
                                              "ctia/bundle/import"
                                              :body create+update-bundle
                                              :headers {"Authorization" "45c1f5e3f05d0"})
-                {create+update-results :results :as create+update-bundle-result} (:parsed-body create+update-response)
-                asset2-id (find-id-by-original-id :asset2-id create+update-bundle-result asset2-original-id)]
+                {create+update-results :results :as create+update-bundle-result} (:parsed-body create+update-response)]
             (when (is (= 200 (:status create+update-response)))
-              (is (= 4 (count create+update-results)))
-              (is (every? (comp #{"updated" "created"} :result) create+update-results)
-                  (pr-str (mapv :result create+update-results))))
+              (let [asset2-id (find-id-by-original-id :asset2-id create+update-bundle-result asset2-original-id)]
+                (is (= 4 (count create+update-results)))
+                (is (every? (comp #{"updated" "created"} :result) create+update-results)
+                    (pr-str (mapv :result create+update-results)))))
             ))))))

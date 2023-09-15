@@ -69,7 +69,8 @@
             (s/optional-key :type) (s/conditional
                                      string? s/Str
                                      :else s/Keyword)
-            (s/optional-key :id) (s/maybe (s/pred (constantly false)))})])
+            (s/optional-key :id) (s/maybe (s/pred (constantly false)))
+            s/Keyword s/Any})])
 
 (s/defschema EnvelopedEntities+TempIDs
   (s/maybe
