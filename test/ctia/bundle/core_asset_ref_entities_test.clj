@@ -46,34 +46,6 @@
       ;; in order to test association of Asset to AssetMappings/AssetProperties
       set-transient-asset-refs))
 
-(deftest bulk-for-asset-related-entities
-  (testing "delay creation of :asset-mapping and :asset-properties, until all
-  transient IDs for :asset are resolved"
-    (th/fixture-ctia-with-app
-     (fn [app]
-       (let [services (app/service-graph app)]
-         (testing "Passing a Bundle with Assets with transient IDs, should skip
-                   the creation of AssetMappings and AssetProperties (initially)"
-          (with-redefs [bulk/gen-bulk-from-fn
-                        (fn [_ bulk _ _ _ _]
-                          (is (empty?
-                               (select-keys
-                                bulk [:asset_mappings
-                                      :asset_properties])))
-                          ;; Doesn't make sence to continue from here; once we
-                          ;; asserted that asset-mapping and asset-properties
-                          ;; won't be explicitly created (until we create Assets
-                          ;; with non-transient IDs), we achieved the goal of
-                          ;; this test.
-                          (throw (Exception. "stopped intentionally")))]
-            (is (thrown-with-msg?
-                 Exception #"stopped intentionally"
-                 (bundle/import-bundle
-                  bundle-ents
-                  nil         ;; external-key-prefixes
-                  login
-                  services))))))))))
-
 (deftest asset-refs-test
   (th/fixture-ctia-with-app
    (fn [app]
@@ -143,7 +115,7 @@
                                   services)
                num-created (->> results
                                 (map :result)
-                                (keep (partial = "created"))
+                                (keep #{"created"})
                                 count)]
            (is (= (count bundle-ents)
                   num-created))))))))

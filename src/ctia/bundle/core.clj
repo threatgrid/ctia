@@ -116,6 +116,37 @@
              (all-pages entity-type external-ids auth-identity get-store))
       [])))
 
+(s/defn find-by-asset_refs :- {s/Str (s/pred map?)}
+  [asset_refs :- #{s/Str}
+   entity-type
+   auth-identity
+   {{:keys [get-store]} :StoreService} :- FindByExternalIdsServices]
+  (if (empty? asset_refs)
+    {}
+    (let [_ (log/debugf "Searching %s matching these asset_refs %s"
+                        entity-type
+                        (pr-str asset_refs))
+          entities (loop [asset_refs asset_refs
+                          entities {}]
+                     (if (empty? asset_refs)
+                       entities
+                       (let [query {:all-of {:asset_ref asset_refs}}
+                             paging {:limit find-by-external-ids-limit}
+                             {results :data
+                              {next-page :next} :paging} (-> (get-store entity-type)
+                                                             (store/list-records
+                                                               query
+                                                               (auth/ident->map auth-identity)
+                                                               paging))
+                             entities (into entities (map (juxt :asset_ref identity))
+                                            results)]
+                         (if next-page
+                           (recur (apply disj asset_refs (map :asset_ref results))
+                                  entities)
+                           entities))))]
+      (debug (format "Results searching %s for asset_refs %s:" entity-type (pr-str asset_refs))
+             entities))))
+
 (defn by-external-id
   "Index entities by external_id
 
@@ -335,30 +366,48 @@
        (mapcat entity->bundle-keys)
        (apply st/dissoc NewBundle)))
 
-(s/defn resolve-asset-properties+mappings
-  :- {:bundle-import-data BundleImportData
-      :tempids TempIDs}
+(s/defn resolve-asset-properties+mappings :- BundleImportData
   [bundle-import-data :- BundleImportData
-   tempids :- TempIDs]
-  (prn "resolve-asset-properties+mappings" bundle-import-data)
-  (let [bundle-import-data (cond-> bundle-import-data
-                             (seq (:asset_properties bundle-import-data))
-                             (update :asset_properties
-                                     (fn [asset_properties]
-                                       (into []
-                                             (map (fn [{:keys [id] {:keys [asset_ref]} :new-entity :as import-data}]
-                                                    (if (or id (not asset_ref))
-                                                      import-data
-                                                      (let [asset_ref (get tempids asset_ref asset_ref)]
-                                                        (if ((some-fn nil? schemas/transient-id?) asset_ref)
-                                                          import-data
-                                                          ;; TODO use asset_properties search route with asset_ref to find old entity.
-                                                          ;; update :old-entity, :id, and :asset_ref.
-                                                          (-> import-data
-                                                              (update :new-entity assoc :asset_ref asset_ref)))))))
-                                             asset_properties))))]
-    {:bundle-import-data bundle-import-data
-     :tempids tempids}))
+   tempids :- TempIDs
+   auth-identity
+   services :- FindByExternalIdsServices]
+  (let [resolve* (s/fn :- BundleImportData
+                   [bundle-import-data :- BundleImportData
+                    bulk-asset-kw :- (s/enum :asset_properties :asset_mappings)]
+                   (let [asset_refs (into #{} (keep (fn [{:keys [id] {:keys [asset_ref]} :new-entity :as import-data}]
+                                                      (when (and (nil? id) asset_ref)
+                                                        (let [asset_ref (get tempids asset_ref asset_ref)]
+                                                          (when-not (schemas/transient-id? asset_ref)
+                                                            asset_ref)))))
+                                          (bulk-asset-kw bundle-import-data))
+                         asset_ref->old-entity (find-by-asset_refs asset_refs
+                                                                   (bulk/entity-type-from-bulk-key bulk-asset-kw)
+                                                                   auth-identity
+                                                                   services)]
+                     (cond-> bundle-import-data
+                       (seq (bulk-asset-kw bundle-import-data))
+                       (update bulk-asset-kw
+                               (fn [bulk-assets]
+                                 (into []
+                                       (map (fn [{:keys [id] {:keys [asset_ref]} :new-entity :as import-data}]
+                                              (or (when-not id
+                                                    (when-some [asset_ref (get tempids asset_ref asset_ref)]
+                                                      (when-some [{:keys [id] :as old-entity} (asset_ref->old-entity (get tempids asset_ref asset_ref))]
+                                                        (-> import-data
+                                                            (assoc :old-entity old-entity)
+                                                            (update :new-entity assoc :id id :asset_ref asset_ref)
+                                                            (assoc :id id)))))
+                                                  import-data)))
+                                       bulk-assets))))))]
+    (-> bundle-import-data
+        (resolve* :asset_mappings)
+        (resolve* :asset_properties))))
+
+(defn bundle-import-data->tempids
+  [bundle-import-data
+   tempids]
+  (into {} (map entities-import-data->tempids)
+        (vals bundle-import-data)))
 
 (s/defn import-bundle :- BundleImportResult
   [bundle :- (st/optional-keys-schema NewBundle)
@@ -371,13 +420,9 @@
                                            external-key-prefixes
                                            auth-identity
                                            services)
-        tempids (->> bundle-import-data
-                     (map (fn [[_ entities-import-data]]
-                            (entities-import-data->tempids entities-import-data)))
-                     (apply merge {}))
-        {:keys [bundle-import-data tempids]} (resolve-asset-properties+mappings
-                                               bundle-import-data
-                                               tempids)
+        tempids (bundle-import-data->tempids bundle-import-data {})
+        bundle-import-data (resolve-asset-properties+mappings bundle-import-data tempids auth-identity services)
+        tempids (bundle-import-data->tempids bundle-import-data tempids)
         {:keys [creates-bulk patches-bulk] :as _all-bulks} (debug "Bulk" (prepare-bulk bundle-import-data tempids))
         ;; throw 400 response on partial creates before mutating db
         _ (when (seq creates-bulk)
