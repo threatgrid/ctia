@@ -102,9 +102,8 @@
             matched-ext-ids (into #{} (mapcat :external_ids) results)
             ;; FIXME there still might be other entities mapped to matched-ext-ids
             ;; in future pages. to find these, we need to follow next-page. instead
-            ;; we start a new search without these external_ids. consumers of all-pages
-            ;; check for different entities with overlapping external_ids, and we might
-            ;; have false negatives in this case and have non-deterministic writes.
+            ;; we start a new search without these external_ids. `with-existing-entity`
+            ;; throws a warning in this case.
             remaining-ext-ids (into [] (remove matched-ext-ids) ext-ids)]
         (if next-page
           (recur remaining-ext-ids acc-entities)
@@ -159,10 +158,10 @@
   "Index entities by external_id
 
    Ex:
-   {{:external_id \"ctia-1\"} {:external_id \"ctia-1\"
-                               :entity {...}}
-    {:external_id \"ctia-2\"} {:external_id \"ctia-2\"
-                               :entity {...}}}"
+   {{:external_id \"ctia-1\"} [{:external_id \"ctia-1\"
+                                :entity {...}}]
+    {:external_id \"ctia-2\"} [{:external_id \"ctia-2\"
+                                :entity {...}}]}"
   [entities]
   (let [entity-with-external-id
         (->> entities
@@ -234,13 +233,13 @@
                              ent/un-store)]
       (when (< 1 (count old-entities))
         (log/warn
-          (format
-            (str "More than one entity is "
-                 "linked to the external ids %s (examples: %s)")
-            external_ids
-            (->> (take 10 old-entities) ;; prevent very large logs
-                 (map (comp :id :entity))
-                 pr-str))))
+         (format
+          (str "More than one entity is "
+               "linked to the external ids %s (examples: %s)")
+          external_ids
+          (->> (take 10 old-entities) ;; prevent very large logs
+               (map (comp :id :entity))
+               pr-str))))
       (cond-> entity-data
         ;; only one entity linked to the external ID
         old-entity (-> (assoc :result "exists"
@@ -274,16 +273,16 @@
                                entity-type
                                auth-identity
                                services))
+        find-by-external-id-fn (fn [external_id]
+                                 (when external_id
+                                   (get entities-by-external-id
+                                        {:external_id external_id})))
         id->old-entity (into {} (comp (remove nil?)
                                       (map (juxt :id identity)))
                              (bulk/read-entities (map (comp :id :new-entity) realized-entities)
                                                  entity-type
                                                  auth-identity
-                                                 services))
-        find-by-external-id-fn (fn [external_id]
-                                 (when external_id
-                                   (get entities-by-external-id
-                                        {:external_id external_id})))]
+                                                 services))]
     (map #(with-existing-entity % find-by-external-id-fn id->old-entity services)
          import-data)))
 

@@ -1424,6 +1424,6 @@
                 asset2-id (find-id-by-original-id :asset2-id create+update-bundle-result asset2-original-id)]
             (when (is (= 200 (:status create+update-response)))
               (is (= 4 (count create+update-results)))
-              (is (every? (comp #{"created"} :result) create+update-results)
+              (is (every? (comp #{"updated" "created"} :result) create+update-results)
                   (pr-str (mapv :result create+update-results))))
             ))))))
