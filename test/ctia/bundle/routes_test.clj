@@ -1279,65 +1279,84 @@
                                           "foogroup"
                                           "user")
 
-      (testing "relationships are created for asset mappings/properties"
-        (let [new-bundle (-> bundle-minimal
-                             (assoc :assets #{{:asset_type "device"
-                                               :valid_time {:start_time #inst "2023-03-02T19:14:46.658-00:00"}
-                                               :schema_version "1.0.19"
-                                               :type "asset"
-                                               :source "something"
-                                               :external_ids ["transient:89497b1a-1e42-4258-81f0-1d394fe1a90f"]
-                                               :title "something"
-                                               :source_uri "https://something"
-                                               :id "transient:89497b1a-1e42-4258-81f0-1d394fe1a90f"
-                                               :timestamp #inst "2023-03-02T19:14:46.658-00:00"}}
-                                    :asset_mappings #{{:asset_type "device"
-                                                       :valid_time {:start_time #inst "2023-03-02T19:14:46.660-00:00"}
-                                                       :stability "Managed"
-                                                       :schema_version ctim-schema-version
-                                                       :observable {:value "something" :type "hostname"}
-                                                       :asset_ref "transient:89497b1a-1e42-4258-81f0-1d394fe1a90f"
-                                                       :type "asset-mapping"
-                                                       :source "Something"
-                                                       :source_uri "https://something"
-                                                       :id "transient:07b82ae5-0757-4e72-bda4-9a4cd62986e1"
-                                                       :timestamp #inst "2023-03-02T19:14:46.660-00:00"
-                                                       :specificity "Unique"
-                                                       :confidence "Unknown"}}
-                                    :asset_properties #{{:properties [{:name "something1" :value "660"}
-                                                                      {:name "something2" :value "661"}]
-                                                         :valid_time {:start_time #inst "2023-03-02T19:14:46.660-00:00"}
-                                                         :schema_version ctim-schema-version
-                                                         :asset_ref "transient:89497b1a-1e42-4258-81f0-1d394fe1a90f"
-                                                         :type "asset-properties"
-                                                         :source "something"
-                                                         :source_uri "https://something"
-                                                         :id "transient:8ae8d2b0-950b-402d-b053-935da85582a3"
-                                                         :timestamp #inst "2023-03-02T19:14:46.783-00:00"}}
-                                    :relationships #{{:source_ref "https://private.intel.int.iroh.site:443/ctia/incident/incident-4fb91401-36a5-46d1-b0aa-01af02f00a7a", :target_ref "transient:07b82ae5-0757-4e72-bda4-9a4cd62986e1", :relationship_type "related-to", :source "IROH Risk Score Service"}
-                                                     {:source_ref "https://private.intel.int.iroh.site:443/ctia/incident/incident-4fb91401-36a5-46d1-b0aa-01af02f00a7a", :target_ref "transient:8ae8d2b0-950b-402d-b053-935da85582a3", :relationship_type "related-to", :source "IROH Risk Score Service"}
-                                                     {:source_ref "https://private.intel.int.iroh.site:443/ctia/incident/incident-4fb91401-36a5-46d1-b0aa-01af02f00a7a", :target_ref "transient:89497b1a-1e42-4258-81f0-1d394fe1a90f", :relationship_type "related-to", :source "IROH Risk Score Service"}}))
-              create-response (POST app
-                                    "ctia/bundle/import"
-                                    :body new-bundle
-                                    :headers {"Authorization" "45c1f5e3f05d0"})
-              {create-results :results} (:parsed-body create-response)
-              _ (when (is (= 200 (:status create-response)))
-                  (is (= 6 (count create-results)))
-                  (is (every? (comp #{"created"} :result) create-results)
-                      (pr-str (mapv :result create-results))))
-              update-bundle (-> new-bundle
-                                (select-keys [:assets :asset_properties :asset_mappings])
-                                (update :asset_properties (fn [asset_properties]
-                                                            (into #{} (map #(assoc % :properties [{:name "something1" :value "770"}
-                                                                                                  {:name "something-else" :value "77"}]))
-                                                                  asset_properties))))
-              update-response (POST app
-                                    "ctia/bundle/import"
-                                    :body update-bundle
-                                    :headers {"Authorization" "45c1f5e3f05d0"})
-              {update-results :results :as update-bundle-result} (:parsed-body update-response)]
-          (testing "asset-properties and asset-mappings are merged with old-entity when patched"
+      (let [[oldv1 oldv2 newv1 newv2 newv3] (repeatedly (comp str gensym))
+            [relationship1-original-id
+             asset_mapping1-original-id] (repeatedly #(str "transient:" (random-uuid)))
+            asset1 {:asset_type "device"
+                    :valid_time {:start_time #inst "2023-03-02T19:14:46.658-00:00"}
+                    :schema_version "1.0.19"
+                    :type "asset"
+                    :source "something"
+                    :external_ids ["asset-1"]
+                    :title "something"
+                    :source_uri "https://something"
+                    :id "transient:89497b1a-1e42-4258-81f0-1d394fe1a90f"
+                    :timestamp #inst "2023-03-02T19:14:46.658-00:00"}
+            asset_mapping1 {:asset_type "device"
+                            :valid_time {:start_time #inst "2023-03-02T19:14:46.660-00:00"}
+                            :stability "Managed"
+                            :schema_version ctim-schema-version
+                            :observable {:value "something" :type "hostname"}
+                            :asset_ref "transient:89497b1a-1e42-4258-81f0-1d394fe1a90f"
+                            :type "asset-mapping"
+                            :source "Something"
+                            :source_uri "https://something"
+                            :id asset_mapping1-original-id
+                            :timestamp #inst "2023-03-02T19:14:46.660-00:00"
+                            :specificity "Unique"
+                            :confidence "Unknown"}
+            asset_property1 {:properties [{:name "something1" :value oldv1}
+                                          {:name "something2" :value oldv2}]
+                             :valid_time {:start_time #inst "2023-03-02T19:14:46.660-00:00"}
+                             :schema_version ctim-schema-version
+                             :asset_ref "transient:89497b1a-1e42-4258-81f0-1d394fe1a90f"
+                             :type "asset-properties"
+                             :source "something"
+                             :source_uri "https://something"
+                             :id "transient:8ae8d2b0-950b-402d-b053-935da85582a3"
+                             :timestamp #inst "2023-03-02T19:14:46.783-00:00"}
+            new-bundle (-> bundle-minimal
+                           (assoc :assets #{asset1}
+                                  :asset_mappings #{asset_mapping1}
+                                  :asset_properties #{asset_property1}
+                                  :relationships #{{:id relationship1-original-id
+                                                    :source_ref "https://private.intel.int.iroh.site:443/ctia/incident/incident-4fb91401-36a5-46d1-b0aa-01af02f00a7a"
+                                                    :target_ref asset_mapping1-original-id, :relationship_type "related-to", :source "IROH Risk Score Service"}
+                                                   {:source_ref "https://private.intel.int.iroh.site:443/ctia/incident/incident-4fb91401-36a5-46d1-b0aa-01af02f00a7a"
+                                                    :target_ref "transient:8ae8d2b0-950b-402d-b053-935da85582a3", :relationship_type "related-to", :source "IROH Risk Score Service"}
+                                                   {:source_ref "https://private.intel.int.iroh.site:443/ctia/incident/incident-4fb91401-36a5-46d1-b0aa-01af02f00a7a"
+                                                    :target_ref "transient:89497b1a-1e42-4258-81f0-1d394fe1a90f", :relationship_type "related-to", :source "IROH Risk Score Service"}}))
+            create-response (POST app
+                                  "ctia/bundle/import"
+                                  :body new-bundle
+                                  :headers {"Authorization" "45c1f5e3f05d0"})
+            {create-results :results} (:parsed-body create-response)
+            relationship1-id (some (fn [{:keys [id original_id]}]
+                                     (when (= relationship1-original-id original_id)
+                                       id))
+                                   create-results)
+            _ (assert relationship1-id create-results)]
+        (testing "relationships are created for asset mappings/properties"
+          (when (is (= 200 (:status create-response)))
+            (is (= 6 (count create-results)))
+            (is (every? (comp #{"created"} :result) create-results)
+                (pr-str (mapv :result create-results)))))
+        (testing "asset-properties and asset-mappings are merged with old-entity when patched"
+          (let [updated-asset_property1 (-> asset_property1
+                                            (select-keys [:id :asset_ref :type])
+                                            (assoc :properties [{:name "something1" :value newv1}
+                                                                {:name "something-else" :value newv2}]))
+                ;;TODO something interesting that merges with old entity
+                updated-asset_mapping1 asset_mapping1
+                update-bundle (-> bundle-minimal
+                                  (assoc :assets #{asset1}
+                                         :asset_mappings #{updated-asset_mapping1}
+                                         :asset_properties #{updated-asset_property1}))
+                update-response (POST app
+                                      "ctia/bundle/import"
+                                      :body update-bundle
+                                      :headers {"Authorization" "45c1f5e3f05d0"})
+                {update-results :results :as update-bundle-result} (:parsed-body update-response)]
             (when (is (= 200 (:status update-response)))
               (is (= 3 (count update-results)) update-results)
               (is (every? (comp #{"updated"} :result) update-results)
@@ -1355,25 +1374,27 @@
                                                      :headers {"Authorization" "45c1f5e3f05d0"})]
                                    (:parsed-body response)))]
                 (testing ":asset_mappings"
-                  (doseq [entity (:asset_mappings update-bundle)
-                          :let [stored (get-stored entity)]]
+                  (let [stored (get-stored updated-asset_mapping1)]
                     ;;TODO what does "merging" an asset mapping on patch look like?
                     (is (= (dissoc stored :id :schema_version :asset_ref :owner :groups :timestamp)
-                           (-> entity
+                           (-> updated-asset_mapping1
                                (dissoc :id :schema_version :asset_ref :timestamp)
                                (assoc :tlp "green")
                                (assoc-in [:valid_time :end_time] #inst "2525-01-01T00:00:00.000-00:00"))))))
                 (testing ":asset_properties"
-                  (doseq [entity (:asset_properties update-bundle)
-                          :let [stored (get-stored entity)]]
+                  (let [stored (get-stored updated-asset_property1)]
                     (testing ":properties are merged, newer wins"
-                      (is (= [{:name "something-else" :value "77"}
-                              {:name "something1" :value "770"}
-                              {:name "something2" :value "661"}]
+                      (is (= [{:name "something-else" :value newv2}
+                              {:name "something1" :value newv1}
+                              {:name "something2" :value oldv2}]
                              (:properties stored))))
-                    (is (= (-> stored
-                               (dissoc :id :schema_version :asset_ref :owner :groups :timestamp :properties))
-                           (-> entity
-                               (dissoc :id :schema_version :asset_ref :timestamp :properties)
-                               (assoc :tlp "green")
-                               (assoc-in [:valid_time :end_time] #inst "2525-01-01T00:00:00.000-00:00"))))))))))))))
+                    (is (= #inst "2525-01-01T00:00:00.000-00:00"
+                           (get-in stored [:valid_time :end_time])))))))))
+        (testing "patched relationships, asset mappings/properties resolve refs after creating other entities"
+          (let [;; on existing entities, patch asset_ref to a newly created asset,
+                ;; and :{source/target}_ref to newly created entities
+                create+update-bundle (-> bundle-minimal
+                                         ;(assoc :assets )
+                                         )
+                ]
+            ))))))
