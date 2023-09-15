@@ -217,9 +217,7 @@
                           (when-not (schemas/transient-id? new-id)
                             new-id))]
     (if-some [old-entity (id->old-entity realized-id)]
-      (cond-> entity-data
-        old-entity (assoc :result "exists"
-                          :id (:id old-entity)))
+      (assoc entity-data :result "exists" :id (:id old-entity))
       (cond-> entity-data
         ;; if we want to support specifying ids on creation, start here
         true ;;(not (auth/capable? auth-identity :specify-id))
