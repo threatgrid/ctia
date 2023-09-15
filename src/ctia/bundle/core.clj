@@ -207,7 +207,8 @@
 (s/defn with-existing-entity :- EntityImportData
   "If the entity has already been imported, update the import data
    with its ID. If more than one old entity is linked to an external id,
-   an error is reported. If realized :id is provided, resolves"
+   an error is reported. If realized :id is provided, asserts that entity
+   must exist, otherwise errors."
   [{:keys [external_ids]
     :as entity-data} :- EntityImportData
    find-by-external-id :- (s/=> s/Any (s/named s/Any 'external_id))
@@ -406,7 +407,8 @@
   If entity is scheduled for creation, but already exists via :asset_ref, merge properties
   with existing and schedule for patching.
   
-  Ensure tempids includes transient mapping for created Assets, if any."
+  Ensure tempids includes transient mapping for created Assets, if any. Will
+  resolve asset_ref on :new-entity if needed."
   [{:keys [id new-entity result] :as import-data} :- EntityImportData
    tempids :- TempIDs
    bulk-asset-kw :- (s/enum :asset_properties :asset_mappings)
