@@ -81,7 +81,7 @@
       (seq filtered-ext-ids) (assoc :external_ids filtered-ext-ids))))
 
 (s/defn all-pages
-  "Retrieves all external ids using pagination."
+  "Retrieves all entities by external ids using pagination."
   [entity-type
    external-ids
    auth-identity :- auth/AuthIdentity
@@ -100,6 +100,11 @@
                                               paging))
             acc-entities (into entities results)
             matched-ext-ids (into #{} (mapcat :external_ids) results)
+            ;; FIXME there still might be other entities mapped to matched-ext-ids
+            ;; in future pages. to find these, we need to follow next-page. instead
+            ;; we start a new search without these external_ids. consumers of all-pages
+            ;; check for different entities with overlapping external_ids, and we might
+            ;; have false negatives in this case and have non-deterministic writes.
             remaining-ext-ids (into [] (remove matched-ext-ids) ext-ids)]
         (if next-page
           (recur remaining-ext-ids acc-entities)
