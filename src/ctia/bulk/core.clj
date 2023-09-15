@@ -42,7 +42,9 @@
 
 (s/defn create-fn
   "return the create function provided an entity type key"
-  [k auth-identity params
+  [k 
+   auth-identity :- auth/AuthIdentity
+   params
    {{:keys [get-store]} :StoreService} :- APIHandlerServices]
   #(-> (get-store k)
        (store/create-record
@@ -79,7 +81,7 @@
   [new-entities :- flows/Entities
    entity-type :- s/Keyword
    tempids :- TempIDs
-   auth-identity
+   auth-identity :- auth/AuthIdentity
    params
    services :- APIHandlerServices]
   (when (seq new-entities)
@@ -158,7 +160,9 @@
 
 (s/defn delete-fn
   "return the delete function provided an entity type key"
-  [k auth-identity params
+  [k 
+   auth-identity :- auth/AuthIdentity
+   params
    {{:keys [get-store]} :StoreService} :- APIHandlerServices]
   #(-> (get-store k)
        (store/bulk-delete
@@ -168,7 +172,9 @@
 
 (s/defn update-fn
   "return the update function provided an entity type key"
-  [k auth-identity params
+  [k
+   auth-identity :- auth/AuthIdentity
+   params
    {{:keys [get-store]} :StoreService} :- APIHandlerServices]
   #(-> (get-store k)
        (store/bulk-update
@@ -190,7 +196,10 @@
 
 (s/defn delete-entities
   "delete many entities provided their type and returns a list of ids"
-  [entity-ids entity-type auth-identity params
+  [entity-ids 
+   entity-type
+   auth-identity :- auth/AuthIdentity
+   params
    services :- APIHandlerServices]
   (when (seq entity-ids)
     (let [get-fn #(read-entities %  entity-type auth-identity services)]
@@ -207,7 +216,10 @@
 
 (s/defn update-entities
   "update many entities provided their type and returns errored and successed entities' ids"
-  [entities entity-type auth-identity params
+  [entities 
+   entity-type
+   auth-identity :- auth/AuthIdentity
+   params
    services :- APIHandlerServices]
   (when (seq entities)
     (let [get-fn #(read-entities %  entity-type auth-identity services)
@@ -230,7 +242,7 @@
   [patches
    entity-type 
    tempids :- TempIDs
-   auth-identity
+   auth-identity :- auth/AuthIdentity
    params
    services :- APIHandlerServices
    {:keys [enveloped-result?]} :- {(s/optional-key :enveloped-result?) (s/maybe s/Bool)}]
@@ -382,31 +394,36 @@
          (assoc :tempids tempids)))))
 
 (s/defn fetch-bulk
-  [bulk auth-identity
+  [bulk 
+   auth-identity :- auth/AuthIdentity
    services :- APIHandlerServices]
   (ent/un-store-map
    (gen-bulk-from-fn read-entities bulk auth-identity services)))
 
 (s/defn delete-bulk
-  [bulk auth-identity params
+  [bulk 
+   auth-identity :- auth/AuthIdentity
+   params
    services :- APIHandlerServices]
   (gen-bulk-from-fn delete-entities bulk auth-identity params services))
 
 (s/defn update-bulk
-  [bulk auth-identity params
+  [bulk 
+   auth-identity :- auth/AuthIdentity
+   params
    services :- APIHandlerServices]
   (gen-bulk-from-fn update-entities bulk auth-identity params services))
 
 (s/defn patch-bulk
   ([bulk 
     tempids :- TempIDs
-    auth-identity
+    auth-identity :- auth/AuthIdentity
     params
     services :- APIHandlerServices]
    (patch-bulk bulk tempids auth-identity params services {}))
   ([bulk 
     tempids :- TempIDs
-    auth-identity
+    auth-identity :- auth/AuthIdentity
     params
     services :- APIHandlerServices
     {:keys [enveloped-result?] :as opts}]
