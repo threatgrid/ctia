@@ -352,17 +352,16 @@
                                      :body bundle
                                      :headers {"Authorization" "45c1f5e3f05d0"})
                bundle-result-create (:parsed-body response-create)]
-           (is (= 200 (:status response-create)))
-           (is (= [{:original_id (:id relationship),
-                    :result "error",
-                    :type :relationship,
-                    :error (str "A relationship cannot be created if a "
-                                "source or a target ref is still a transient "
-                                "ID (The source or target entity is probably "
-                                "not provided in the bundle)")}]
-                  (filter (fn [r] (= (:result r) "error"))
-                          (:results bundle-result-create)))
-               (:results bundle-result-create))))
+           (when (is (= 200 (:status response-create)))
+             (is (= [{:original_id (:id relationship),
+                      :result "error",
+                      :type :relationship,
+                      :error (str "A relationship cannot be created if a "
+                                  "source or a target ref is still a transient "
+                                  "ID (The source or target entity is probably "
+                                  "not provided in the bundle)")}]
+                    (:results bundle-result-create))
+                 relationship))))
        (testing "Custom external prefix keys"
          (let [bundle {:type "bundle"
                        :source "source"

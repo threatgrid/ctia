@@ -467,28 +467,6 @@
         (resolve* :asset_mappings)
         (resolve* :asset_properties))))
 
-(s/defn resolve-relationships :- BundleImportData
-  [bundle-import-data :- BundleImportData
-   tempids :- TempIDs]
-  (let [resolve-relationship (fn [{{:keys [source_ref target_ref]} :new-entity :as import-data}]
-                               (let [source_ref (get tempids source_ref source_ref)
-                                     target_ref (get tempids target_ref target_ref)]
-                                 (if ((some-fn schemas/transient-id?) source_ref target_ref)
-                                   (-> import-data
-                                       (assoc :result "error"
-                                              :error {:type :unresolvable-transient-id
-                                                      :reason (str "Unresolvable transient ids: "
-                                                                   (pr-str
-                                                                     (cond-> {}
-                                                                       (schemas/transient-id? source_ref) (assoc :source_ref source_ref)
-                                                                       (schemas/transient-id? target_ref) (assoc :target_ref target_ref))))}))
-                                   (cond-> import-data
-                                     source_ref (assoc-in [:new-entity :source_ref] source_ref)
-                                     target_ref (assoc-in [:new-entity :target_ref] target_ref)))))]
-    (cond-> bundle-import-data
-      (seq (:relationships bundle-import-data))
-      (update :relationships #(mapv resolve-relationship %)))))
-
 (defn bundle-import-data->tempids
   [bundle-import-data
    tempids]
@@ -510,8 +488,7 @@
                                 (let [bundle-import-data (prepare-import bundle-entities external-key-prefixes auth-identity services)
                                       tempids (bundle-import-data->tempids bundle-import-data tempids)
                                       bundle-import-data (-> bundle-import-data
-                                                             (resolve-asset-properties+mappings tempids auth-identity services)
-                                                             (resolve-relationships tempids))
+                                                             (resolve-asset-properties+mappings tempids auth-identity services))
                                       tempids (bundle-import-data->tempids bundle-import-data tempids)
                                       {:keys [creates-bulk patches-bulk] :as _all-bulks} (debug "Bulk" (prepare-bulk bundle-import-data tempids))
                                       {:keys [tempids] :as create-bulk-refs} (bulk/create-bulk creates-bulk tempids auth-identity (bulk-params get-in-config) services)
