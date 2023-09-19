@@ -17,6 +17,8 @@
    [ctia.test-helpers.auth :as auth]
    [ctia.test-helpers.core :as th]
    [ctim.examples.bundles :refer [bundle-maximal]]
+   [ctia.test-helpers.fake-whoami-service :as whoami-helpers]
+   [ctia.auth.capabilities :refer [all-capabilities]]
    [puppetlabs.trapperkeeper.app :as app]))
 
 (def ^:private login
@@ -78,9 +80,9 @@
            (is (every? (partial contains? asset-refs) refs))))))))
 
 (deftest validate-asset-refs-test
-  (testing "Bundle with asset_refs that have no correspoding Asset"
+  (testing "Bundle with asset_refs that have no corresponding Asset"
     (let [;; assign non-transient ID to the asset in the Bundle,
-          ;; leaving :asset_refs pointing to a transient ID that would never resolve
+          ;; leaving :asset_ref's pointing to a transient ID that would never resolve
           bundle (walk/prewalk
                   #(if (and (map? %)
                             (-> % :type (= "asset")))
@@ -89,16 +91,23 @@
                   bundle-ents)]
       (th/fixture-ctia-with-app
        (fn [app]
-         (let [services (app/service-graph app)]
-           (is
-            (thrown? Exception
-             (bundle/import-bundle
-              bundle
-              nil         ;; external-key-prefixes
-              login
-              services))))))))
+         (th/set-capabilities! app "foouser" ["foogroup"] "user" (all-capabilities))
+         (whoami-helpers/set-whoami-response app
+                                             "45c1f5e3f05d0"
+                                             "foouser"
+                                             "foogroup"
+                                             "user")
+         (let [services (app/service-graph app)
+               res (bundle/import-bundle
+                     bundle
+                     nil         ;; external-key-prefixes
+                     login
+                     services)]
+           (is (= (repeat 3 "error")
+                  (map :result (:results res)))
+               res))))))
   (testing "Bundle with asset_refs that aren't transient"
-    (let [;; :asset_refs that are non-transient should still be allowed
+    (let [;; :asset_ref's that are non-transient should still be allowed
           bundle (walk/prewalk
                   #(if (and (map? %)
                             (contains? % :asset_ref))
