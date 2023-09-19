@@ -125,7 +125,7 @@
                    [{external-key-prefixes
                      :- (describe s/Str "Comma separated list of external key prefixes")
                      nil}]
-                   :summary "POST many new entities using a single HTTP call"
+                   :summary "POST many new and partial entities using a single HTTP call"
                    :auth-identity auth-identity
                    :description (common/capabilities->description capabilities)
                    :capabilities capabilities

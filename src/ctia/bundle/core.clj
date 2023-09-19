@@ -430,7 +430,6 @@
                          :result "exists"
                          :new-entity (-> new-entity
                                          (assoc :id id :asset_ref asset_ref)
-                                         ;;TODO logic to merge :asset_mappings ?
                                          (cond->
                                            (and (= :asset_properties bulk-asset-kw)
                                                 (:properties new-entity))

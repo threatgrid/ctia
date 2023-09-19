@@ -360,8 +360,7 @@
                                   "source or a target ref is still a transient "
                                   "ID (The source or target entity is probably "
                                   "not provided in the bundle)")}]
-                    (:results bundle-result-create))
-                 relationship))))
+                    (:results bundle-result-create))))))
        (testing "Custom external prefix keys"
          (let [bundle {:type "bundle"
                        :source "source"
