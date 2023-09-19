@@ -161,11 +161,15 @@
 
 (s/defn find-id-by-original-id :- s/Str
   [msg bundle-result original-id]
-  (if-some [{:keys [id]} (find-result-by-original-id bundle-result original-id)]
-    id
-    (throw (ex-info "Missing id" {:msg msg
-                                  :original-id original-id
-                                  :bundle-result bundle-result}))))
+  (let [{:keys [id error] :as result} (find-result-by-original-id bundle-result original-id)]
+    (or id
+        (throw (ex-info (str "Missing long id for transient "
+                             original-id
+                             (some->> error (str ": ")))
+                        (cond-> {:msg msg
+                                              :original-id original-id
+                                              :bundle-result bundle-result}
+                                       result (assoc :result result)))))))
 
 (defn resolve-ids
   "Resolves transient IDs in the target_ref and the source_ref
@@ -1342,10 +1346,11 @@
                                   :body new-bundle
                                   :headers {"Authorization" "45c1f5e3f05d0"})
             {create-results :results :as create-bundle-results} (:parsed-body create-response)
-            relationship1-id (find-id-by-original-id :relationship1-id create-bundle-results relationship1-original-id)
+            ;; resolve in order of creation/patch for easier debugging
             asset1-id (find-id-by-original-id :asset1-id create-bundle-results asset1-original-id)
             asset_property1-id (find-id-by-original-id :asset_property1-id create-bundle-results asset_property1-original-id)
-            asset_mapping1-id (find-id-by-original-id :asset_mapping1-id create-bundle-results asset_mapping1-original-id)]
+            asset_mapping1-id (find-id-by-original-id :asset_mapping1-id create-bundle-results asset_mapping1-original-id)
+            relationship1-id (find-id-by-original-id :relationship1-id create-bundle-results relationship1-original-id)]
         (testing "relationships are created for asset mappings/properties"
           (when (is (= 200 (:status create-response)))
             (is (= 6 (count create-results)))
@@ -1416,6 +1421,7 @@
                                                 :asset_properties #{updated-asset_property1}
                                                 :asset_mappings #{updated-asset_mapping1}
                                                 :relationships #{updated-relationship1}))
+                _ (prn "START")
                 create+update-response (POST app
                                              "ctia/bundle/import"
                                              :body create+update-bundle

@@ -55,21 +55,20 @@
 (s/defschema EntitiesResult
   [(s/conditional
      string? schemas/ID
-     ;;TODO error case
-     :else {:error (s/conditional
-                     string? s/Str
-                     :else {:type (s/conditional
-                                    string? s/Str
-                                    :else s/Keyword)
-                            :reason s/Str
-                            (s/optional-key :index) s/Str
-                            (s/optional-key :index_uuid) s/Str})
+     :else {(s/optional-key :error) (s/conditional
+                                      string? s/Str
+                                      :else {:type (s/conditional
+                                                     string? s/Str
+                                                     :else s/Keyword)
+                                             :reason s/Str
+                                             (s/optional-key :index) s/Str
+                                             (s/optional-key :index_uuid) s/Str})
             (s/optional-key :msg) s/Str
             (s/optional-key :entity) (s/pred map?)
             (s/optional-key :type) (s/conditional
                                      string? s/Str
                                      :else s/Keyword)
-            (s/optional-key :id) (s/maybe (s/pred (constantly false)))
+            (s/optional-key :id) (s/maybe s/Str)
             s/Keyword s/Any})])
 
 (s/defschema EnvelopedEntities+TempIDs
@@ -293,7 +292,7 @@
     (catch java.util.concurrent.ExecutionException e
       (throw (.getCause e)))))
 
-(defn merge-tempids
+(s/defn merge-tempids :- TempIDs
   "Merges tempids from all entities
    {:entity-type1 {:data []
                    :tempids {transientid1 id1
@@ -311,7 +310,7 @@
 
   The create-entities set the enveloped-result? to True in the flow
   configuration to get :data and :tempids for each entity in the result."
-  [entities-by-type]
+  [entities-by-type :- {s/Keyword EnvelopedEntities+TempIDs}]
   (into {}
         (map (fn [[_ v]] (:tempids v)))
         entities-by-type))
@@ -345,9 +344,9 @@
 
 (s/defn import-bulks-with :- BulkRefs+TempIDs
   "Import each new-bulk in order while accumulating tempids."
-  [f :- (s/=> {s/Keyword {:data [s/Any]
+  [f :- (s/=> {s/Keyword {:data EnvelopedEntities+TempIDs
                           :tempids TempIDs}}
-              (s/named (s/pred map?) 'new-bulk)
+              BulkEntities
               TempIDs)
    new-bulks
    tempids :- TempIDs]
