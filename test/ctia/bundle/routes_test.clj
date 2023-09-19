@@ -407,8 +407,8 @@
                                        :body bundle
                                        :headers {"Authorization" "45c1f5e3f05d0"})
                  bundle-result-create (:parsed-body response-create)]
-             (when (is (= 400 (:status response-create)))
-               (is (= '{:errors {:indicators #{{:producer missing-required-key}}}}
+             (when (is (= 200 (:status response-create)))
+               (is (= ::TODO 
                       bundle-result-create)))))
          (testing "Fail on patching bad partial entities"
            (let [bundle {:type "bundle"

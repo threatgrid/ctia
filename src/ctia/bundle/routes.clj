@@ -94,7 +94,8 @@
                   :auth-identity identity
                   (ok (export-bundle (:ids body) identity query services))))
 
-           (let [capabilities #{:create-actor
+           (let [bundle-schema (prep-bundle-schema services)
+                 capabilities #{:create-actor
                                 :create-asset
                                 :create-asset-mapping
                                 :create-asset-properties
@@ -118,7 +119,7 @@
              (POST "/import" []
                    :return BundleImportResult
                    :body [bundle
-                          (st/optional-keys-schema (prep-bundle-schema services))
+                          (st/optional-keys-schema bundle-schema)
                           {:description "a Bundle to import, partial entities allowed for existing entities"}]
                    :query-params
                    [{external-key-prefixes

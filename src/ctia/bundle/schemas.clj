@@ -9,7 +9,9 @@
   (st/optional-keys
    {:id s/Str
     :original_id s/Str
-    :result (s/enum "error" "created" "exists" "updated")
+    :result (s/enum "error" "created" "updated"
+                    ;;unused
+                    "exists")
     :type s/Keyword
     :external_ids [s/Str]
     :error s/Any
