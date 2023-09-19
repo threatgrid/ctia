@@ -507,19 +507,12 @@
         ;; handled by processing the bundle as separate groups of entities in dependency order
         {:keys [bulk-refs]} (bulk/import-bulks-with
                               (fn [bundle-entities tempids]
-                                (prn "tempids 0" tempids)
-                                (let [_ (prn "bundle-entities" bundle-entities)
-                                      bundle-import-data (prepare-import bundle-entities external-key-prefixes auth-identity services)
-                                      _ (prn "bundle-import-data 0" bundle-import-data)
+                                (let [bundle-import-data (prepare-import bundle-entities external-key-prefixes auth-identity services)
                                       tempids (bundle-import-data->tempids bundle-import-data tempids)
-                                      _ (prn "tempids 1" tempids)
                                       bundle-import-data (-> bundle-import-data
                                                              (resolve-asset-properties+mappings tempids auth-identity services)
                                                              (resolve-relationships tempids))
-                                      _ (prn "bundle-import-data 1" bundle-import-data)
-                                      _ (prn "bundle-import-data" bundle-import-data)
                                       tempids (bundle-import-data->tempids bundle-import-data tempids)
-                                      _ (prn "tempids 2" tempids)
                                       {:keys [creates-bulk patches-bulk] :as _all-bulks} (debug "Bulk" (prepare-bulk bundle-import-data tempids))
                                       ;; FIXME this isn't really possible with current setup since we only know if something is a patch after writing other entities,
                                       ;; should just return 200 with result=error for these entities.
@@ -531,7 +524,6 @@
                                             (when-some [fail (s/check create-bundle-schema creates-bulk)]
                                               (bad-request! {:errors fail}))))
                                       {:keys [tempids] :as create-bulk-refs} (bulk/create-bulk creates-bulk tempids auth-identity (bulk-params get-in-config) services)
-                                      _ (prn "create-bulk-refs" create-bulk-refs)
                                       create-result (with-bulk-result bundle-import-data :create (dissoc create-bulk-refs :tempids))
                                       patch-result (let [patch-bulk-refs (bulk/patch-bulk patches-bulk tempids auth-identity (bulk-params get-in-config) services
                                                                                           {:enveloped-result? true})]
@@ -539,11 +531,8 @@
                                                        bundle-import-data
                                                        :patch
                                                        (dissoc patch-bulk-refs :tempids)))]
-                                  ;;FIXME not propagating :tempids properly, might be calling with-bulk-result too early.
-                                  ;; see end of bundle-asset-relationships-test
-                                  (prn "create-result" create-result)
-                                  (prn "patch-result" patch-result)
                                   (-> (merge-with into create-result patch-result)
+                                      ;; cram back into the format that bulk/import-bulks-with expects.
                                       (update-vals #(hash-map :data %
                                                               :tempids tempids)))))
                               (keep not-empty

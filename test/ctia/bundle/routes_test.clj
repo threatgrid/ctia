@@ -1361,7 +1361,6 @@
                                             (select-keys [:id :asset_ref :type])
                                             (assoc :properties [{:name "something1" :value newv1}
                                                                 {:name "something-else" :value newv2}]))
-                ;;TODO something interesting that merges with old entity
                 updated-asset_mapping1 asset_mapping1
                 update-bundle (-> bundle-minimal
                                   (assoc :assets #{asset1}
@@ -1390,7 +1389,7 @@
                                    (:parsed-body response)))]
                 (testing ":asset_mappings"
                   (let [stored (get-stored updated-asset_mapping1)]
-                    ;;TODO what does "merging" an asset mapping on patch look like?
+                    ;; no interesting merging logic on asset mappings
                     (is (= (dissoc stored :id :schema_version :asset_ref :owner :groups :timestamp)
                            (-> updated-asset_mapping1
                                (dissoc :id :schema_version :asset_ref :timestamp)
@@ -1408,7 +1407,8 @@
         (testing "patched relationships, asset mappings/properties resolve refs after creating other entities"
           (let [;; on existing entities, patch asset_ref to a newly created asset,
                 ;; and :{source/target}_ref to newly created entities
-                asset2 (assoc asset1 :id asset2-original-id :external_ids ["asset-2"])
+                asset2-external-id (str "asset-2-" (random-uuid))
+                asset2 (assoc asset1 :id asset2-original-id :external_ids [asset2-external-id])
                 updated-asset_property1 {:id asset_property1-id
                                          :asset_ref asset2-original-id} 
                 updated-asset_mapping1 {:id asset_mapping1-id
@@ -1421,7 +1421,6 @@
                                                 :asset_properties #{updated-asset_property1}
                                                 :asset_mappings #{updated-asset_mapping1}
                                                 :relationships #{updated-relationship1}))
-                _ (prn "START")
                 create+update-response (POST app
                                              "ctia/bundle/import"
                                              :body create+update-bundle
@@ -1429,9 +1428,19 @@
                 {create+update-results :results :as create+update-bundle-result} (:parsed-body create+update-response)]
             (when (is (= 200 (:status create+update-response)))
               (let [asset2-id (find-id-by-original-id :asset2-id create+update-bundle-result asset2-original-id)]
-                ;;TODO test something interesting, like all transients were resolved
-                ;; waiting for `import-bundle` logic to be fixed
                 (is (= 4 (count create+update-results)))
-                (is (every? (comp #{"updated" "created"} :result) create+update-results)
-                    (pr-str (mapv :result create+update-results)))))
-            ))))))
+                (is (= #{{:id asset_mapping1-id
+                          :result "updated"
+                          :type :asset-mapping}
+                         {:id asset_property1-id
+                          :result "updated"
+                          :type :asset-properties}
+                         {:id asset2-id
+                          :original_id asset2-original-id
+                          :result "created"
+                          :type :asset
+                          :external_ids [asset2-external-id]}
+                         {:id relationship1-id
+                          :result "updated"
+                          :type :relationship}}
+                       (set create+update-results)))))))))))
