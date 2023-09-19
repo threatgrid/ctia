@@ -362,9 +362,7 @@
                                 "not provided in the bundle)")}]
                   (filter (fn [r] (= (:result r) "error"))
                           (:results bundle-result-create)))
-               (str "A relationship cannot be created if the source and the "
-                    "target entities referenced by a transient ID are not "
-                    "included in the bundle."))))
+               (:results bundle-result-create))))
        (testing "Custom external prefix keys"
          (let [bundle {:type "bundle"
                        :source "source"
@@ -396,11 +394,12 @@
                  "All existing entities are updated"))))
        (testing "schema failures"
          (testing "Fail on creating partial entities"
-           (let [bundle {:type "bundle"
+           (let [partial-indicator (-> (first indicators)
+                                       (assoc :external_ids ["custom-3"])
+                                       (dissoc :producer))
+                 bundle {:type "bundle"
                          :source "source"
-                         :indicators #{(-> (first indicators)
-                                           (assoc :external_ids ["custom-3"])
-                                           (dissoc :producer))}}
+                         :indicators #{partial-indicator}}
                  response-create (POST app
                                        "ctia/bundle/import"
                                        :query-params {"external-key-prefixes" "custom-"}
@@ -408,8 +407,11 @@
                                        :headers {"Authorization" "45c1f5e3f05d0"})
                  bundle-result-create (:parsed-body response-create)]
              (when (is (= 200 (:status response-create)))
-               (is (= ::TODO 
-                      bundle-result-create)))))
+               (let [[{:keys [result error msg]}] (:results bundle-result-create)]
+                 (is (= 1 (count (:results bundle-result-create))))
+                 (is (= "error" result))
+                 (is (= "Entity validation Error" error))
+                 (is (str/ends-with? msg "- failed: (contains? % :producer) spec: :new-indicator/map\n"))))))
          (testing "Fail on patching bad partial entities"
            (let [bundle {:type "bundle"
                          :source "source"

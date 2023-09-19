@@ -495,32 +495,6 @@
   (into tempids (map entities-import-data->tempids)
         (vals bundle-import-data)))
 
-(s/defn bulk-key->new-entity-schema
-  :- (s/protocol s/Schema)
-  [bulk-key :- s/Keyword]
-  (let [els (st/get-in NewBundle [bulk-key])
-        _ (assert (and (set? els) (= 1 (count els)))
-                  (pr-str {:bulk-key bulk-key
-                           :els els}))]
-    (first els)))
-
-(s/defn ensure-non-partial-creates
-  [bundle-import-data :- BundleImportData]
-  (map-kv (fn [bulk-key vs]
-            (mapv (s/fn :- EntityImportData
-                    [v :- EntityImportData]
-                    (if-not (create? v)
-                      v
-                      (let [schema-errors (s/check (bulk-key->new-entity-schema bulk-key) v)]
-                        (cond-> v
-                          schema-errors
-                          (assoc :result "error"
-                                 :error {:type :partial-entity-provided
-                                         :reason (str "Must provide full entity when creating new entity\n\n"
-                                                      (pr-str schema-errors))})))))
-                  vs))
-          bundle-import-data))
-
 (s/defn import-bundle :- BundleImportResult
   [bundle :- (st/optional-keys-schema NewBundle)
    external-key-prefixes :- (s/maybe s/Str)
@@ -537,10 +511,7 @@
                                       tempids (bundle-import-data->tempids bundle-import-data tempids)
                                       bundle-import-data (-> bundle-import-data
                                                              (resolve-asset-properties+mappings tempids auth-identity services)
-                                                             (resolve-relationships tempids)
-                                                             ;; it would be nice to return a 400 error, but we currently learn whether an entity is
-                                                             ;; allowed to be partial only after writing other entities to the db.
-                                                             ensure-non-partial-creates)
+                                                             (resolve-relationships tempids))
                                       tempids (bundle-import-data->tempids bundle-import-data tempids)
                                       {:keys [creates-bulk patches-bulk] :as _all-bulks} (debug "Bulk" (prepare-bulk bundle-import-data tempids))
                                       {:keys [tempids] :as create-bulk-refs} (bulk/create-bulk creates-bulk tempids auth-identity (bulk-params get-in-config) services)
