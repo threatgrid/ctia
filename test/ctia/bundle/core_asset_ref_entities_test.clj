@@ -8,22 +8,29 @@
   These tests are to ensure that such a relationship is observed when these
   types of objects when they created via Bundle Import"
   (:require
-   [clojure.test :refer [deftest is testing use-fixtures join-fixtures]]
+   [clojure.test :refer [deftest is testing use-fixtures]]
    [clojure.walk :as walk]
    [ctia.auth.threatgrid :refer [map->Identity]]
    [ctia.bulk.core :as bulk]
    [ctia.bundle.core :as bundle]
    [ctia.store :as store]
+   [ctia.test-helpers.store :refer [test-for-each-store-with-app]]
    [ctia.test-helpers.auth :as auth]
    [ctia.test-helpers.core :as th]
    [ctim.examples.bundles :refer [bundle-maximal]]
    [ctia.test-helpers.fake-whoami-service :as whoami-helpers]
    [ctia.auth.capabilities :refer [all-capabilities]]
-   [puppetlabs.trapperkeeper.app :as app]))
+   [puppetlabs.trapperkeeper.app :as app]
+   [schema.test :refer [validate-schemas]]))
+
+(use-fixtures :once
+              validate-schemas
+              whoami-helpers/fixture-server)
 
 (def ^:private login
   (map->Identity {:login  "foouser"
-                  :groups ["foogroup"]}))
+                  :groups ["foogroup"]
+                  :capabilities (all-capabilities)}))
 
 (defn- set-transient-asset-refs [x]
   (walk/prewalk
@@ -89,7 +96,7 @@
                      (assoc % :id "http://ex.tld/ctia/asset/asset-61884b14-e273-4930-a5ff-dcce69207724")
                      %)
                   bundle-ents)]
-      (th/fixture-ctia-with-app
+      (test-for-each-store-with-app
        (fn [app]
          (th/set-capabilities! app "foouser" ["foogroup"] "user" (all-capabilities))
          (whoami-helpers/set-whoami-response app
@@ -97,15 +104,20 @@
                                              "foouser"
                                              "foogroup"
                                              "user")
-         (let [services (app/service-graph app)
-               res (bundle/import-bundle
-                     bundle
-                     nil         ;; external-key-prefixes
-                     login
-                     services)]
-           (is (= (repeat 3 "error")
-                  (map :result (:results res)))
-               res))))))
+         (let [create-response (th/POST app
+                                        "ctia/bundle/import"
+                                        :body bundle
+                                        :headers {"Authorization" "45c1f5e3f05d0"})
+               res (:parsed-body create-response)]
+           (when (is (= 200 (:status create-response)))
+             (is (= [{:result "error", :type :asset
+                      :external_ids ["http://ex.tld/ctia/asset/asset-61884b14-e273-4930-a5ff-dcce69207724"]}
+                     {:result "error", :type :asset-mapping
+                      :external_ids ["http://ex.tld/ctia/asset-mapping/asset-mapping-636ef2cc-1cb0-47ee-afd4-ecc1fe4be451"]}
+                     {:result "error", :type :asset-properties
+                      :external_ids ["http://ex.tld/ctia/asset-properties/asset-properties-97c3dbb5-6deb-4eed-b6d7-b77fa632cc7b"]}]
+                    (map #(dissoc % :error) (sort-by :type (:results res))))
+                 (pr-str res))))))))
   (testing "Bundle with asset_refs that aren't transient"
     (let [;; :asset_ref's that are non-transient should still be allowed
           bundle (walk/prewalk
@@ -114,17 +126,23 @@
                      (assoc % :asset_ref "http://ex.tld/ctia/asset/asset-61884b14-e273-4930-a5ff-dcce69207724")
                      %)
                   bundle-ents)]
-      (th/fixture-ctia-with-app
+      (test-for-each-store-with-app
        (fn [app]
-         (let [services          (app/service-graph app)
-               {:keys [results]} (bundle/import-bundle
-                                  bundle
-                                  nil         ;; external-key-prefixes
-                                  login
-                                  services)
+         (th/set-capabilities! app "foouser" ["foogroup"] "user" (all-capabilities))
+         (whoami-helpers/set-whoami-response app
+                                             "45c1f5e3f05d0"
+                                             "foouser"
+                                             "foogroup"
+                                             "user")
+         (let [create-response (th/POST app
+                                        "ctia/bundle/import"
+                                        :body bundle
+                                        :headers {"Authorization" "45c1f5e3f05d0"})
+               {:keys [results]} (:parsed-body create-response)
                num-created (->> results
                                 (map :result)
                                 (keep #{"created"})
                                 count)]
-           (is (= (count bundle-ents)
-                  num-created))))))))
+           (when (is (= 200 (:status create-response)))
+             (is (= (count bundle-ents)
+                    num-created)))))))))
