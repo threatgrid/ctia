@@ -498,6 +498,7 @@
                                       patch-result (let [patch-bulk-refs (bulk/patch-bulk patches-bulk tempids auth-identity (bulk-params get-in-config) services
                                                                                           {:enveloped-result? true})]
                                                      (with-bulk-result bundle-import-data (dissoc patch-bulk-refs :tempids)))]
+                                  (prn "errors-result" errors-result)
                                   (-> (merge-with into create-result patch-result #_errors-result)
                                       ;; cram back into the format that bulk/import-bulks-with expects.
                                       (update-vals #(hash-map :data %
