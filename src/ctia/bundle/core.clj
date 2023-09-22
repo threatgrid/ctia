@@ -338,21 +338,19 @@
   [bundle-import-data :- BundleImportData
    bulk-result :- bulk/BulkRefs]
   (map-kv (fn [k v]
-            (let [{submitted true
-                   not-submitted false} (group-by (comp boolean (some-fn create? patch?)) v)]
-              (into (mapv (s/fn :- EntityImportData
-                            [entity-import-data
-                             {:keys [error msg] :as entity-bulk-result}]
-                            (cond-> entity-import-data
-                              error (assoc :error error
-                                           :result "error")
-                              msg (assoc :msg msg)
-                              (not error) (assoc :id entity-bulk-result
-                                                 :result (cond
-                                                           (create? entity-import-data) "created"
-                                                           (patch? entity-import-data) "updated"))))
-                          submitted (get bulk-result k))
-                    not-submitted)))
+            (let [submitted (filter (comp boolean (some-fn create? patch?)) v)]
+              (mapv (s/fn :- EntityImportData
+                      [entity-import-data
+                       {:keys [error msg] :as entity-bulk-result}]
+                      (cond-> entity-import-data
+                        error (assoc :error error
+                                     :result "error")
+                        msg (assoc :msg msg)
+                        (not error) (assoc :id entity-bulk-result
+                                           :result (cond
+                                                     (create? entity-import-data) "created"
+                                                     (patch? entity-import-data) "updated"))))
+                    submitted (get bulk-result k))))
           bundle-import-data))
 
 (s/defn build-response :- BundleImportResult
@@ -498,8 +496,7 @@
                                       patch-result (let [patch-bulk-refs (bulk/patch-bulk patches-bulk tempids auth-identity (bulk-params get-in-config) services
                                                                                           {:enveloped-result? true})]
                                                      (with-bulk-result bundle-import-data (dissoc patch-bulk-refs :tempids)))]
-                                  (prn "errors-result" errors-result)
-                                  (-> (merge-with into create-result patch-result #_errors-result)
+                                  (-> (merge-with into create-result patch-result errors-result)
                                       ;; cram back into the format that bulk/import-bulks-with expects.
                                       (update-vals #(hash-map :data %
                                                               :tempids tempids)))))
