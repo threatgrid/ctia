@@ -312,7 +312,7 @@
 (s/defn prepare-bulk
   :- {:creates-bulk bulk/BulkEntities
       :patches-bulk bulk/BulkEntities
-      :errors-bulk bulk/BulkEntities}
+      :errors-result BundleImportData}
   "Creates separate bulk structures with entities to create, patch, or have errored."
   [bundle-import-data :- BundleImportData
    tempids :- TempIDs]
@@ -322,13 +322,15 @@
                                     (cond
                                       (create? v) :creates-bulk
                                       (patch? v) :patches-bulk
-                                      :else :errors-bulk))]
+                                      :else :errors-result))]
                            (cond-> acc
-                             op (update-in [op k] (fnil conj []) (:new-entity v)))))
+                             op (update-in [op k] (fnil conj [])
+                                           (cond-> v
+                                             (not= :errors-result op) :new-entity)))))
                        acc vs))
              {:creates-bulk {}
               :patches-bulk {}
-              :errors-bulk {}}
+              :errors-result {}}
              bundle-import-data))
 
 (s/defn with-bulk-result :- BundleImportData
@@ -490,14 +492,13 @@
                                       bundle-import-data (-> bundle-import-data
                                                              (resolve-asset-properties+mappings tempids auth-identity services))
                                       tempids (bundle-import-data->tempids bundle-import-data tempids)
-                                      {:keys [creates-bulk patches-bulk errors-bulk] :as _all-bulks} (debug "Bulk" (prepare-bulk bundle-import-data tempids))
+                                      {:keys [creates-bulk patches-bulk errors-result] :as _all-bulks} (debug "Bulk" (prepare-bulk bundle-import-data tempids))
                                       {:keys [tempids] :as create-bulk-refs} (bulk/create-bulk creates-bulk tempids auth-identity (bulk-params get-in-config) services)
                                       create-result (with-bulk-result bundle-import-data (dissoc create-bulk-refs :tempids))
                                       patch-result (let [patch-bulk-refs (bulk/patch-bulk patches-bulk tempids auth-identity (bulk-params get-in-config) services
                                                                                           {:enveloped-result? true})]
                                                      (with-bulk-result bundle-import-data (dissoc patch-bulk-refs :tempids)))]
-                                  (-> (merge-with into create-result patch-result
-                                                  errors-bulk)
+                                  (-> (merge-with into create-result patch-result #_errors-result)
                                       ;; cram back into the format that bulk/import-bulks-with expects.
                                       (update-vals #(hash-map :data %
                                                               :tempids tempids)))))
