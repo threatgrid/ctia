@@ -98,10 +98,6 @@
                                               paging))
             acc-entities (into entities results)
             matched-ext-ids (into #{} (mapcat :external_ids) results)
-            ;; FIXME there still might be other entities mapped to matched-ext-ids
-            ;; in future pages. to find these, we need to follow next-page. instead
-            ;; we start a new search without these external_ids. `with-existing-entity`
-            ;; throws a warning in this case.
             remaining-ext-ids (into [] (remove matched-ext-ids) ext-ids)]
         (if next-page
           (recur remaining-ext-ids acc-entities)
@@ -350,6 +346,10 @@
                                            :result (cond
                                                      (create? entity-import-data) "created"
                                                      (patch? entity-import-data) "updated"))))
+                    ;;FIXME this depends on bundle-import-data having the same order as bulk-result for each entity.
+                    ;; since processing in multiple batches, we lose this correspondence. need to add intermediate
+                    ;; BundleImportData structure that preserves order (since :original_id might not always be present
+                    ;; to order from).
                     submitted (get bulk-result k))))
           bundle-import-data))
 
