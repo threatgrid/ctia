@@ -415,13 +415,13 @@
   (gen-bulk-from-fn update-entities bulk auth-identity params services))
 
 (s/defn patch-bulk
-  ([bulk 
+  ([bulk
     tempids :- TempIDs
     auth-identity :- auth/AuthIdentity
     params
     services :- APIHandlerServices]
    (patch-bulk bulk tempids auth-identity params services {}))
-  ([bulk 
+  ([bulk
     tempids :- TempIDs
     auth-identity :- auth/AuthIdentity
     params

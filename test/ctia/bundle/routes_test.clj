@@ -167,9 +167,9 @@
                              original-id
                              (some->> error (str ": ")))
                         (cond-> {:msg msg
-                                              :original-id original-id
-                                              :bundle-result bundle-result}
-                                       result (assoc :result result)))))))
+                                 :original-id original-id
+                                 :bundle-result bundle-result}
+                          result (assoc :result result)))))))
 
 (defn resolve-ids
   "Resolves transient IDs in the target_ref and the source_ref
