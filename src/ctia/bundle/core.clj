@@ -118,8 +118,10 @@
       [])))
 
 (s/defn find-by-asset_refs :- {s/Str (s/pred map?)}
+  "Returns a map from asset_ref to entity of entity-type that has
+  entry `:asset_ref asset_ref`."
   [asset_refs :- #{s/Str}
-   entity-type
+   entity-type :- (s/enum :asset-properties :asset-mapping)
    auth-identity :- auth/AuthIdentity
    {{:keys [get-store]} :StoreService} :- FindByExternalIdsServices]
   (if (empty? asset_refs)
@@ -334,7 +336,7 @@
   [bundle-import-data :- BundleImportData
    bulk-result :- bulk/BulkRefs]
   (map-kv (fn [k v]
-            (let [submitted (filter (comp boolean (some-fn create? patch?)) v)]
+            (let [submitted (filter (some-fn create? patch?) v)]
               (mapv (s/fn :- EntityImportData
                       [entity-import-data
                        {:keys [error msg] :as entity-bulk-result}]

@@ -11,7 +11,7 @@
    [ctia.bundle.core :as core]
    [ctia.bundle.routes :as bundle.routes]
    [ctia.test-helpers.core :as helpers
-    :refer [deep-dissoc-entity-ids GET PATCH POST DELETE]]
+    :refer [deep-dissoc-entity-ids GET POST DELETE]]
    [ctia.test-helpers.http :refer [app->APIHandlerServices]]
    [ctia.test-helpers.fake-whoami-service :as whoami-helpers]
    [ctia.test-helpers.store :refer [test-for-each-store-with-app]]
@@ -134,10 +134,11 @@
                                   external_id)
                           :headers {"Authorization" "45c1f5e3f05d0"})
             [entity :as entities] (:parsed-body response)]
-        (is (= 1 (count entities))
-            "Only one entity is linked to the external ID")
-        (is (= id (:id entity))
-            "The submitted entity is linked to the external ID")))
+        (when (is (= 200 (:status response)))
+          (is (= 1 (count entities))
+              "Only one entity is linked to the external ID")
+          (is (= id (:id entity))
+              "The submitted entity is linked to the external ID"))))
     (testing "Entity values"
       (when id
         (let [response (GET app
@@ -146,10 +147,11 @@
                                     (encode id))
                             :headers {"Authorization" "45c1f5e3f05d0"})
               entity (:parsed-body response)]
-          (is (= (assoc original-entity
-                        :id id
-                        :schema_version ctim-schema-version)
-                 (select-keys entity (keys original-entity)))))))))
+          (when (is (= 200 (:status response)))
+            (is (= (assoc original-entity
+                          :id id
+                          :schema_version ctim-schema-version)
+                   (select-keys entity (keys original-entity))))))))))
 
 (defn find-result-by-original-id
   "Find an entity result in the bundle result with its original ID"
@@ -313,25 +315,24 @@
        (testing "Update and create"
          (let [indicator (mk-indicator 2000)
                sighting (first sightings)
-               relationship (mk-relationship 2000
-                                             sighting
-                                             indicator
-                                             "sighting-of")
+               relationships (map #(mk-relationship %
+                                                    sighting
+                                                    indicator
+                                                    "sighting-of")
+                                  (range 2000 2010))
                bundle
                {:type "bundle"
                 :source "source"
                 :indicators [indicator]
                 :sightings [sighting]
-                :relationships [relationship]}
+                :relationships (shuffle relationships)}
                response (POST app
                               "ctia/bundle/import"
                               :body bundle
                               :headers {"Authorization" "45c1f5e3f05d0"})
                bundle-result (:parsed-body response)]
            (when (is (= 200 (:status response)))
-
              (is (pos? (count (:results bundle-result))))
-
              (doseq [entity [indicator sighting
                              (resolve-ids bundle-result relationship)]]
                (validate-entity-record
