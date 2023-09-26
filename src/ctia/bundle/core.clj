@@ -491,7 +491,8 @@
                                                              (resolve-asset-properties+mappings tempids auth-identity services))
                                       tempids (bundle-import-data->tempids bundle-import-data tempids)
                                       {:keys [creates-bulk patches-bulk errors-result] :as _all-bulks} (debug "Bulk" (prepare-bulk bundle-import-data tempids))
-                                      {:keys [tempids] :as create-bulk-refs} (bulk/create-bulk creates-bulk tempids auth-identity (bulk-params get-in-config) services)
+                                      {:keys [tempids] :as create-bulk-refs
+                                       :or {tempids {}}} (bulk/create-bulk creates-bulk tempids auth-identity (bulk-params get-in-config) services)
                                       create-result (with-bulk-result bundle-import-data (dissoc create-bulk-refs :tempids))
                                       patch-result (let [patch-bulk-refs (bulk/patch-bulk patches-bulk tempids auth-identity (bulk-params get-in-config) services
                                                                                           {:enveloped-result? true})]

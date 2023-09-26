@@ -154,9 +154,8 @@
     (cond-> formatted
       (seq not-found)
       (update-in [:errors :not-found]
-                 (fnil into [])
-                 (map #(to-long-id % services))
-                 not-found))))
+                 concat
+                 (map #(to-long-id % services) not-found)))))
 
 (s/defn delete-fn
   "return the delete function provided an entity type key"
@@ -340,7 +339,7 @@
    :tempids TempIDs})
 
 (s/defschema BulkRefsAssocTempIDs
-  (st/assoc BulkRefs :tempids TempIDs))
+  (st/assoc BulkRefs (s/optional-key :tempids) TempIDs))
 
 (s/defn import-bulks-with :- BulkRefs+TempIDs
   "Import each new-bulk in order while accumulating tempids."
@@ -390,8 +389,8 @@
                                         ;; resolve transient ids on relationships. all other entities must be realized.
                                         (select-keys new-bulk [:relationships])]
                                        tempids)]
-     (-> bulk-refs
-         (assoc :tempids tempids)))))
+     (cond-> bulk-refs
+       (seq tempids) (assoc :tempids tempids)))))
 
 (s/defn fetch-bulk
   [bulk 
