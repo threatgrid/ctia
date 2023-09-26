@@ -88,7 +88,7 @@
                  [prismatic/schema "1.2.0"]
                  [metosin/schema-tools "0.12.2"]
                  [threatgrid/flanders "0.1.23"]
-                 [threatgrid/ctim "1.3.9"]
+                 [threatgrid/ctim "1.3.10"]
                  [instaparse "1.4.10"] ;; com.gfredericks/test.chuck > threatgrid/ctim
                  [threatgrid/clj-momo "0.3.5"]
                  [threatgrid/ductile "0.4.5"]
@@ -290,7 +290,7 @@
                  ;; 10m
                  :repl-timeout 600000}
   ;; lein-git-down config
-  ;; 
+  ;;
   ;; to simultaneously work on an upstream dependency and have
   ;; Travis pick up on it:
   ;; 1. add an entry mapping the upstream's maven coordinate to its dev GitHub repository
