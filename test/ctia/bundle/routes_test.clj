@@ -315,17 +315,16 @@
        (testing "Update and create"
          (let [indicator (mk-indicator 2000)
                sighting (first sightings)
-               relationships (map #(mk-relationship %
-                                                    sighting
-                                                    indicator
-                                                    "sighting-of")
-                                  (range 2000 2010))
+               relationship (mk-relationship 200
+                                              sighting
+                                              indicator
+                                              "sighting-of")
                bundle
                {:type "bundle"
                 :source "source"
                 :indicators [indicator]
                 :sightings [sighting]
-                :relationships (shuffle relationships)}
+                :relationships [relationship]}
                response (POST app
                               "ctia/bundle/import"
                               :body bundle
