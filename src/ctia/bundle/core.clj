@@ -309,9 +309,13 @@
 
 (s/defn prepare-bulk
   :- {:creates-bulk bulk/BulkEntities
+      :create-bundle-import-data BundleImportData
       :patches-bulk bulk/BulkEntities
+      :patch-bundle-import-data BundleImportData
       :errors-result BundleImportData}
-  "Creates separate bulk structures with entities to create, patch, or have errored."
+  "Creates separate bulk structures with entities to create, patch, or have errored.
+  Returns several bundles in order to preserve correspondence between submission order
+  and results order for the delicate processing in `with-bulk-result`."
   [bundle-import-data :- BundleImportData
    tempids :- TempIDs]
   (reduce-kv (fn [acc k vs]
@@ -322,12 +326,21 @@
                                       (patch? v) :patches-bulk
                                       :else :errors-result))]
                            (cond-> acc
-                             op (update-in [op k] (fnil conj [])
-                                           (cond-> v
-                                             (not= :errors-result op) :new-entity)))))
+                             op (-> (update-in [op k] (fnil conj [])
+                                               (cond-> v
+                                                 (not= :errors-result op) :new-entity))
+                                    (cond->
+                                      (not= :errors-result op)
+                                      (update-in [(case op
+                                                    :creates-bulk :create-bundle-import-data
+                                                    :patches-bulk :patch-bundle-import-data)
+                                                  k]
+                                                 (fnil conj []) v))))))
                        acc vs))
              {:creates-bulk {}
+              :create-bundle-import-data {}
               :patches-bulk {}
+              :patch-bundle-import-data {}
               :errors-result {}}
              bundle-import-data))
 
@@ -338,7 +351,9 @@
    bulk-result :- bulk/BulkRefs]
   (map-kv (fn [k submissions]
             (let [results (get bulk-result k)]
-              (assert (= (count submissions) (count results)))
+              ;; guaranteed via `prepare-bulk`
+              (assert (= (count submissions) (count results))
+                      [submissions results])
               (mapv (s/fn :- EntityImportData
                       [entity-import-data
                        {:keys [error msg] :as entity-bulk-result}]
@@ -488,13 +503,15 @@
                                       bundle-import-data (-> bundle-import-data
                                                              (resolve-asset-properties+mappings tempids auth-identity services))
                                       tempids (bundle-import-data->tempids bundle-import-data tempids)
-                                      {:keys [creates-bulk patches-bulk errors-result] :as _all-bulks} (debug "Bulk" (prepare-bulk bundle-import-data tempids))
+                                      {:keys [creates-bulk create-bundle-import-data
+                                              patches-bulk patch-bundle-import-data
+                                              errors-result]} (debug "Bulk" (prepare-bulk bundle-import-data tempids))
                                       {:keys [tempids] :as create-bulk-refs
                                        :or {tempids {}}} (bulk/create-bulk creates-bulk tempids auth-identity (bulk-params get-in-config) services)
-                                      create-result (with-bulk-result bundle-import-data (dissoc create-bulk-refs :tempids))
+                                      create-result (with-bulk-result create-bundle-import-data (dissoc create-bulk-refs :tempids))
                                       patch-result (let [patch-bulk-refs (bulk/patch-bulk patches-bulk tempids auth-identity (bulk-params get-in-config) services
                                                                                           {:enveloped-result? true})]
-                                                     (with-bulk-result bundle-import-data (dissoc patch-bulk-refs :tempids)))]
+                                                     (with-bulk-result patch-bundle-import-data (dissoc patch-bulk-refs :tempids)))]
                                   (-> (merge-with into create-result patch-result errors-result)
                                       ;; cram back into the format that bulk/import-bulks-with expects.
                                       (update-vals #(hash-map :data %
