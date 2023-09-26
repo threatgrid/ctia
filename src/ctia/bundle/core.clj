@@ -154,10 +154,10 @@
   "Index entities by external_id
 
    Ex:
-   {{:external_id \"ctia-1\"} [{:external_id \"ctia-1\"
-                                :entity {...}}]
-    {:external_id \"ctia-2\"} [{:external_id \"ctia-2\"
-                                :entity {...}}]}"
+   {{:external_id \"ctia-1\"} #{{:external_id \"ctia-1\"
+                                 :entity {...}}}
+    {:external_id \"ctia-2\"} #{{:external_id \"ctia-2\"
+                                 :entity {...}}}}"
   [entities]
   (let [entity-with-external-id
         (->> entities
