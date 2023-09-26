@@ -345,13 +345,7 @@
                                      :result "error")
                         msg (assoc :msg msg)
                         (not error) (assoc :id entity-bulk-result
-                                           :result (cond
-                                                     (create? entity-import-data) "created"
-                                                     (patch? entity-import-data) "updated"))))
-                    ;;FIXME this depends on bundle-import-data having the same order as bulk-result for each entity.
-                    ;; since processing in multiple batches, we lose this correspondence. need to add intermediate
-                    ;; BundleImportData structure that preserves order (since :original_id might not always be present
-                    ;; to order from).
+                                           :result (if (create? entity-import-data) "created" "updated"))))
                     submitted (get bulk-result k))))
           bundle-import-data))
 
