@@ -493,7 +493,7 @@
    {{:keys [get-in-config]} :ConfigService
     :as services} :- APIHandlerServices]
   (let [bundle-entities (select-keys bundle bundle-entity-keys)
-        ;; the hard case is when patching asset_ref on to an Asset that we also create in this bundle.
+        ;; the hard case is when patching asset_ref on an Asset that we also create in this bundle.
         ;; even harder, the same Asset could be used to patch a relationship's source_ref.
         ;; handled by processing the bundle as separate groups of entities in dependency order
         {:keys [bulk-refs]} (bulk/import-bulks-with
