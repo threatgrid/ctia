@@ -332,11 +332,13 @@
              bundle-import-data))
 
 (s/defn with-bulk-result :- BundleImportData
-  "Set the bulk result to the bundle import data"
+  "Set the bulk result to the bundle import data, all of which
+  were submitted and have results in the same order as bulk-result."
   [bundle-import-data :- BundleImportData
    bulk-result :- bulk/BulkRefs]
-  (map-kv (fn [k v]
-            (let [submitted (filter (some-fn create? patch?) v)]
+  (map-kv (fn [k submissions]
+            (let [results (get bulk-result k)]
+              (assert (= (count submissions) (count results)))
               (mapv (s/fn :- EntityImportData
                       [entity-import-data
                        {:keys [error msg] :as entity-bulk-result}]
@@ -346,7 +348,7 @@
                         msg (assoc :msg msg)
                         (not error) (assoc :id entity-bulk-result
                                            :result (if (create? entity-import-data) "created" "updated"))))
-                    submitted (get bulk-result k))))
+                    submissions results)))
           bundle-import-data))
 
 (s/defn build-response :- BundleImportResult
