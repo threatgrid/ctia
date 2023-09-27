@@ -124,7 +124,12 @@
                    :query-params
                    [{external-key-prefixes
                      :- (describe s/Str "Comma separated list of external key prefixes")
-                     nil}]
+                     nil}
+                    {upsert :- (describe s/Bool
+                                         (str "If true, existing entities will be patched with result=updated. Otherwise, existing entities will be "
+                                              "ignored with result-existing."))
+                     ;;FIXME default to false
+                     true}]
                    :summary "POST many new and partial entities using a single HTTP call"
                    :auth-identity auth-identity
                    :description (common/capabilities->description capabilities)
@@ -132,4 +137,4 @@
                    (let [max-size (bundle-max-size get-in-config)]
                      (if (< max-size (bundle-size bundle))
                        (bad-request (str "Bundle max nb of entities: " max-size))
-                       (ok (import-bundle bundle external-key-prefixes auth-identity services)))))))))
+                       (ok (import-bundle bundle external-key-prefixes auth-identity services {:upsert upsert})))))))))
