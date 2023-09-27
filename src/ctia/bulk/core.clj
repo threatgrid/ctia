@@ -244,24 +244,28 @@
    auth-identity :- auth/AuthIdentity
    params
    services :- APIHandlerServices
-   {:keys [make-result]} :- {(s/optional-key :make-result) (s/maybe (s/=> (s/pred map?) flows/FlowMap))}]
+   {:keys [enveloped-result?]} :- {(s/optional-key :enveloped-result?) (s/maybe s/Bool)}]
   (when (seq patches)
     (let [get-fn #(read-entities %  entity-type auth-identity services)
           {:keys [realize-fn new-spec]} (get (all-entities) entity-type)]
-      (flows/patch-flow
-        :services services
-        :get-fn get-fn
-        :realize-fn realize-fn
-        :update-fn (update-fn entity-type auth-identity params services)
-        :long-id-fn #(with-long-id % services)
-        :entity-type entity-type
-        :identity auth-identity
-        :patch-operation :replace
-        :partial-entities patches
-        :tempids tempids
-        :spec new-spec
-        :make-result (or make-result make-bulk-result)
-        :get-success-entities (get-success-entities-fn :updated)))))
+      (cond-> (flows/patch-flow
+                :services services
+                :get-fn get-fn
+                :realize-fn realize-fn
+                :update-fn (update-fn entity-type auth-identity params services)
+                :long-id-fn #(with-long-id % services)
+                :entity-type entity-type
+                :identity auth-identity
+                :patch-operation :replace
+                :partial-entities patches
+                :tempids tempids
+                :spec new-spec
+                :make-result make-bulk-result
+                :enveloped-result? enveloped-result?
+                :get-success-entities (get-success-entities-fn :updated))
+        enveloped-result? (update :data #(mapv (fn [{:keys [error id] :as result}]
+                                                 (if error result id))
+                                               %))))))
 
 (s/defschema BulkEntities {s/Keyword flows/Entities})
 
@@ -420,5 +424,8 @@
     auth-identity :- auth/AuthIdentity
     params
     services :- APIHandlerServices
-    opts]
-   (gen-bulk-from-fn patch-entities bulk tempids auth-identity params services opts)))
+    {:keys [enveloped-result?] :as opts}]
+   (let [entities (gen-bulk-from-fn patch-entities bulk tempids auth-identity params services opts)]
+     (cond-> entities
+       enveloped-result? (-> (update-vals :data)
+                             (assoc :tempids (into tempids (merge-tempids entities))))))))

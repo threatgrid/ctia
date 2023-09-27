@@ -12,7 +12,6 @@
    [ctia.entity.asset-properties :refer [AssetProperties]]
    [ctia.entity.entities :as entities]
    [ctia.domain.entities :as ent :refer [with-long-id]]
-   [ctia.flows.crud :as flows]
    [ctia.lib.collection :as coll]
    [ctia.properties :as p]
    [ctia.schemas.core :as schemas :refer
@@ -487,18 +486,6 @@
   (into tempids (map entities-import-data->tempids)
         (vals bundle-import-data)))
 
-(s/defn make-import-bundle-patch-result :- bulk/BulkRefsAssocTempIDs
-  [tempids :- TempIDs
-   fm :- flows/FlowMap]
-  (let [entities (-> (flows/make-enveloped-result fm)
-                     (update :data #(mapv (fn [{:keys [error id] :as result}]
-                                            (if error result id))
-                                          %)))]
-    (-> entities
-        (dissoc :tempids)
-        (update-vals :data)
-        (assoc :tempids (into tempids (bulk/merge-tempids entities))))))
-
 (s/defn import-bundle :- BundleImportResult
   [bundle :- (st/optional-keys-schema NewBundle)
    external-key-prefixes :- (s/maybe s/Str)
@@ -523,7 +510,7 @@
                                        :or {tempids {}}} (bulk/create-bulk creates-bulk tempids auth-identity (bulk-params get-in-config) services)
                                       create-result (with-bulk-result create-bundle-import-data (dissoc create-bulk-refs :tempids))
                                       patch-result (let [patch-bulk-refs (bulk/patch-bulk patches-bulk tempids auth-identity (bulk-params get-in-config) services
-                                                                                          {:make-result (partial make-import-bundle-patch-result tempids)})]
+                                                                                          {:enveloped-result? true})]
                                                      (with-bulk-result patch-bundle-import-data (dissoc patch-bulk-refs :tempids)))]
                                   (-> (merge-with into create-result patch-result errors-result)
                                       ;; cram back into the format that bulk/import-bulks-with expects.
