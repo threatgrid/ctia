@@ -343,8 +343,7 @@
 
 (s/defn import-bulks-with :- BulkRefs+TempIDs
   "Import each new-bulk in order while accumulating tempids."
-  [f :- (s/=> {s/Keyword {:data EnvelopedEntities+TempIDs
-                          :tempids TempIDs}}
+  [f :- (s/=> {s/Keyword EnvelopedEntities+TempIDs}
               BulkEntities
               TempIDs)
    new-bulks
