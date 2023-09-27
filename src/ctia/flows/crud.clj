@@ -463,12 +463,10 @@
         (get indexed (id/str->short-id id))))))
 
 (s/defn make-update-result
-  [{:keys [make-result results long-id-fn enveloped-result?] :as fm} :- FlowMap]
-  (if enveloped-result?
-    (make-enveloped-result fm)
-    (if make-result
-      (make-result fm)
-      (map long-id-fn results))))
+  [{:keys [make-result results long-id-fn] :as fm} :- FlowMap]
+  (if make-result
+    (make-result fm)
+    (map long-id-fn results)))
 
 (s/defn make-delete-result
   [{:keys [make-result results] :as fm} :- FlowMap]
