@@ -300,12 +300,23 @@
   ;; Add only new entities without error
   (not (contains? #{"error" "exists"} result)))
 
+(s/defn prepare-bulk
+  "Creates the bulk data structure with all entities to create."
+  [bundle-import-data :- BundleImportData]
+  (map-kv
+   (fn [_ v]
+     (->> v
+          (filter create?)
+          (remove nil?)
+          (map :new-entity)))
+   bundle-import-data))
+
 (s/defn patch? :- s/Bool
   "Whether the provided entity should be patched or not"
   [{:keys [result]}]
   (= "exists" result))
 
-(s/defn prepare-bulk
+(s/defn prepare-upsert-bulk
   :- {:creates-bulk bulk/BulkEntities
       :create-bundle-import-data BundleImportData
       :patches-bulk bulk/BulkEntities
@@ -348,7 +359,7 @@
    bulk-result :- bulk/BulkRefs]
   (map-kv (fn [k submissions]
             (let [results (get bulk-result k)]
-              ;; guaranteed via `prepare-bulk`
+              ;; guaranteed via `prepare-{upsert}-bulk`
               (assert (= (count submissions) (count results))
                       [submissions results])
               (mapv (s/fn :- EntityImportData
@@ -537,7 +548,7 @@
                                          tempids (bundle-import-data->tempids bundle-import-data tempids)
                                          {:keys [creates-bulk create-bundle-import-data
                                                  patches-bulk patch-bundle-import-data
-                                                 errors-result]} (debug "Bulk" (prepare-bulk bundle-import-data tempids))
+                                                 errors-result]} (debug "Bulk" (prepare-upsert-bulk bundle-import-data tempids))
                                          {:keys [tempids] :as create-bulk-refs
                                           :or {tempids {}}} (bulk/create-bulk creates-bulk tempids auth-identity (bulk-params get-in-config) services)
                                          create-result (with-bulk-result create-bundle-import-data (dissoc create-bulk-refs :tempids))
