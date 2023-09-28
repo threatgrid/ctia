@@ -1368,7 +1368,7 @@
             (is (= 6 (count create-results)))
             (is (every? (comp #{"created"} :result) create-results)
                 (pr-str (mapv :result create-results)))))
-        (testing "asset-properties and asset-mappings are merged with old-entity when patched"
+        (testing "asset-properties and asset-mappings are patched"
           (let [updated-asset_property1 (-> asset_property1
                                             (select-keys [:id :asset_ref :type])
                                             (assoc :properties [{:name "something1" :value newv1}
@@ -1378,45 +1378,56 @@
                                   (assoc :assets #{asset1}
                                          :asset_mappings #{updated-asset_mapping1}
                                          :asset_properties #{updated-asset_property1}))
-                update-response (POST app
-                                      "ctia/bundle/import"
-                                      :body update-bundle
-                                      :query-params {"patch-existing" true}
-                                      :headers {"Authorization" "45c1f5e3f05d0"})
-                {update-results :results :as update-bundle-result} (:parsed-body update-response)]
-            (when (is (= 200 (:status update-response)))
-              (is (= 3 (count update-results)) update-results)
-              (is (every? (comp #{"updated"} :result) update-results)
-                  (pr-str (mapv :result update-results)))
-              (let [get-stored (fn [entity]
-                                 (let [realized-id (some (fn [{:keys [original_id id]}]
-                                                           (when (= original_id (:id entity))
-                                                             id))
-                                                         update-results)
-                                       _ (assert realized-id [(:id entity) update-results])
-                                       response (GET app
-                                                     (format "ctia/%s/%s"
-                                                             (name (:type entity))
-                                                             (encode realized-id))
-                                                     :headers {"Authorization" "45c1f5e3f05d0"})]
-                                   (:parsed-body response)))]
-                (testing ":asset_mappings"
-                  (let [stored (get-stored updated-asset_mapping1)]
-                    ;; no interesting merging logic on asset mappings
-                    (is (= (dissoc stored :id :schema_version :asset_ref :owner :groups :timestamp)
-                           (-> updated-asset_mapping1
-                               (dissoc :id :schema_version :asset_ref :timestamp)
-                               (assoc :tlp "green")
-                               (assoc-in [:valid_time :end_time] #inst "2525-01-01T00:00:00.000-00:00"))))))
-                (testing ":asset_properties"
-                  (let [stored (get-stored updated-asset_property1)]
-                    (testing ":properties are merged, newer wins"
-                      (is (= [{:name "something-else" :value newv2}
-                              {:name "something1" :value newv1}
-                              {:name "something2" :value oldv2}]
-                             (:properties stored))))
-                    (is (= #inst "2525-01-01T00:00:00.000-00:00"
-                           (get-in stored [:valid_time :end_time])))))))))
+                test-merge-strategy (fn [msg query-params expected-properties]
+                                      (testing msg
+                                        (let [update-response (POST app
+                                                                    "ctia/bundle/import"
+                                                                    :body update-bundle
+                                                                    :query-params (assoc query-params "patch-existing" true)
+                                                                    :headers {"Authorization" "45c1f5e3f05d0"})
+                                              {update-results :results :as update-bundle-result} (:parsed-body update-response)]
+                                          (when (is (= 200 (:status update-response)))
+                                            (is (= 3 (count update-results)) update-results)
+                                            (is (every? (comp #{"updated"} :result) update-results)
+                                                (pr-str (mapv :result update-results)))
+                                            (let [get-stored (fn [entity]
+                                                               (let [realized-id (some (fn [{:keys [original_id id]}]
+                                                                                         (when (= original_id (:id entity))
+                                                                                           id))
+                                                                                       update-results)
+                                                                     _ (assert realized-id [(:id entity) update-results])
+                                                                     response (GET app
+                                                                                   (format "ctia/%s/%s"
+                                                                                           (name (:type entity))
+                                                                                           (encode realized-id))
+                                                                                   :headers {"Authorization" "45c1f5e3f05d0"})]
+                                                                 (:parsed-body response)))]
+                                              (testing ":asset_mappings"
+                                                (let [stored (get-stored updated-asset_mapping1)]
+                                                  ;; no interesting merging logic on asset mappings
+                                                  (is (= (dissoc stored :id :schema_version :asset_ref :owner :groups :timestamp)
+                                                         (-> updated-asset_mapping1
+                                                             (dissoc :id :schema_version :asset_ref :timestamp)
+                                                             (assoc :tlp "green")
+                                                             (assoc-in [:valid_time :end_time] #inst "2525-01-01T00:00:00.000-00:00"))))))
+                                              (testing ":asset_properties"
+                                                (let [stored (get-stored updated-asset_property1)]
+                                                  (testing ":properties are merged, newer wins"
+                                                    (is (= [{:name "something-else" :value newv2}
+                                                            {:name "something1" :value newv1}
+                                                            {:name "something2" :value oldv2}]
+                                                           (:properties stored))))
+                                                  (is (= #inst "2525-01-01T00:00:00.000-00:00"
+                                                         (get-in stored [:valid_time :end_time]))))))))))]
+            (test-merge-strategy "no asset_properties merge strategy"
+                                 {}
+                                 [{:name "something-else" :value newv2}
+                                  {:name "something1" :value newv1}])
+            (test-merge-strategy "with asset_properties-merge-strategy=merge-overriding-previous"
+                                 {"asset_properties-merge-strategy" "merge-overriding-previous"}
+                                 [{:name "something-else" :value newv2}
+                                  {:name "something1" :value newv1}
+                                  {:name "something2" :value oldv2}])))
         (testing "patched relationships, asset mappings/properties resolve refs after creating other entities"
           (let [;; on existing entities, patch asset_ref to a newly created asset,
                 ;; and :{source/target}_ref to newly created entities
