@@ -318,22 +318,21 @@
    tempids :- TempIDs]
   (reduce-kv (fn [acc k vs]
                (reduce (fn [acc v]
-                         (let [op (when v
-                                    (cond
-                                      (create? v) :creates-bulk
-                                      (patch? v) :patches-bulk
-                                      :else :errors-result))]
-                           (cond-> acc
-                             op (-> (update-in [op k] (fnil conj [])
-                                               (cond-> v
-                                                 (not= :errors-result op) :new-entity))
-                                    (cond->
-                                      (not= :errors-result op)
-                                      (update-in [(case op
-                                                    :creates-bulk :create-bundle-import-data
-                                                    :patches-bulk :patch-bundle-import-data)
-                                                  k]
-                                                 (fnil conj []) v))))))
+                         (let [op (cond
+                                    (create? v) :creates-bulk
+                                    (patch? v) :patches-bulk
+                                    :else :errors-result)]
+                           (-> acc
+                               (update-in [op k] (fnil conj [])
+                                          (cond-> v
+                                            (not= :errors-result op) :new-entity))
+                               (cond->
+                                 (not= :errors-result op)
+                                 (update-in [(case op
+                                               :creates-bulk :create-bundle-import-data
+                                               :patches-bulk :patch-bundle-import-data)
+                                             k]
+                                            (fnil conj []) v)))))
                        acc vs))
              {:creates-bulk {}
               :create-bundle-import-data {}
