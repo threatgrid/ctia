@@ -667,7 +667,7 @@ When a bundle is submitted:
 
 1. All entities that have already been imported with the external ID whose prefix has been configured with the `ctia.store.external-key-prefixes` property are searched.
 2. If they are identified by transient IDs, a mapping table between transient and stored IDs is built.
-3. New entities are created in the same way as the `/bulk` API endpoint with transient IDs resolutions. Existing entities are patched similarly.
+3. New entities are created in the same way as the `/bulk` API endpoint with transient IDs resolutions. If `upsert=true`, then existing entities are similarly patched with `result=updated`; otherwise, existing entities are not modified with `result=exists`.
 
 If more than one entity is referenced by the same external ID, an error is reported.
 
@@ -778,7 +778,7 @@ accept: application/json
 |----------------+----------------------------------------------------------|
 | `:id`          | The real ID                                              |
 | `:original_id` | Provided ID if different from real ID (ex: transient ID) |
-| `:result`      | `error`, `created` or `updated`                          |
+| `:result`      | `error`, `created`, `exists` or `updated`                |
 | `:external_id` | External ID used to identify the entity                  |
 | `:error`       | Error message                                            |
 
