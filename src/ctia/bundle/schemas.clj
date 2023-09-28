@@ -58,3 +58,6 @@
   {:StoreService {:get-store GetStoreFn
                   s/Keyword s/Any}
    s/Keyword s/Any})
+
+(s/defschema AssetPropertiesMergeStrategy
+  (s/enum :ignore-previous :merge-overriding-previous))

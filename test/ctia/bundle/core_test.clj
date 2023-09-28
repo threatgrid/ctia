@@ -261,4 +261,20 @@
                        {:name "bar" :value new2}])
              (shuffle [{:name "foo" :value old1}
                        {:name "bar" :value old2}
-                       {:name "baz" :value old3}]))))))
+                       {:name "baz" :value old3}]))))
+    (testing "right-most wins in both new and old"
+      (is (= [{:name "bar" :value new2}
+              {:name "baz" :value old1}
+              {:name "foo" :value new2}]
+             (sut/merge-asset_properties-properties
+               [{:name "foo" :value new1}
+                {:name "foo" :value new1}
+                {:name "foo" :value new1}
+                {:name "foo" :value new2}
+                {:name "bar" :value new2}]
+               [{:name "foo" :value old1}
+                {:name "bar" :value old2}
+                {:name "baz" :value old3}
+                {:name "baz" :value old3}
+                {:name "baz" :value old3}
+                {:name "baz" :value old1}]))))))

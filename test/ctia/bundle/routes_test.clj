@@ -252,6 +252,7 @@
                response (POST app
                               "ctia/bundle/import"
                               :body new-bundle
+                              :query-params {"upsert" false}
                               :headers {"Authorization" "45c1f5e3f05d0"})
                bundle-result (:parsed-body response)]
            (when (is (= 200 (:status response)))
@@ -269,6 +270,7 @@
                response (POST app
                               "ctia/bundle/import"
                               :body bundle
+                              :query-params {"upsert" false}
                               :headers {"Authorization" "45c1f5e3f05d0"})
                bundle-result (:parsed-body response)]
            (when (is (= 200 (:status response)))
@@ -297,6 +299,7 @@
                response (POST app
                               "ctia/bundle/import"
                               :body bundle
+                              :query-params {"upsert" true}
                               :headers {"Authorization" "45c1f5e3f05d0"})
                bundle-result (:parsed-body response)]
            (when (is (= 200 (:status response)))
@@ -328,6 +331,7 @@
                response (POST app
                               "ctia/bundle/import"
                               :body bundle
+                              :query-params {"upsert" true}
                               :headers {"Authorization" "45c1f5e3f05d0"})
                bundle-result (:parsed-body response)]
            (when (is (= 200 (:status response)))
@@ -348,7 +352,8 @@
                        :relationships [relationship]}
                response-create (POST app
                                      "ctia/bundle/import"
-                                     :query-params {"external-key-prefixes" "custom-"}
+                                     :query-params {"external-key-prefixes" "custom-"
+                                                    "upsert" false}
                                      :body bundle
                                      :headers {"Authorization" "45c1f5e3f05d0"})
                bundle-result-create (:parsed-body response-create)]
@@ -369,13 +374,15 @@
                                             ["custom-2"])}}
                response-create (POST app
                                      "ctia/bundle/import"
-                                     :query-params {"external-key-prefixes" "custom-"}
+                                     :query-params {"external-key-prefixes" "custom-"
+                                                    "upsert" false}
                                      :body bundle
                                      :headers {"Authorization" "45c1f5e3f05d0"})
                bundle-result-create (:parsed-body response-create)
                response-update (POST app
                                      "ctia/bundle/import"
-                                     :query-params {"external-key-prefixes" "custom-"}
+                                     :query-params {"external-key-prefixes" "custom-"
+                                                    "upsert" true}
                                      :body bundle
                                      :headers {"Authorization" "45c1f5e3f05d0"})
                bundle-result-update (:parsed-body response-update)]
@@ -400,7 +407,8 @@
                          :indicators #{partial-indicator}}
                  response-create (POST app
                                        "ctia/bundle/import"
-                                       :query-params {"external-key-prefixes" "custom-"}
+                                       :query-params {"external-key-prefixes" "custom-"
+                                                      "upsert" false}
                                        :body bundle
                                        :headers {"Authorization" "45c1f5e3f05d0"})
                  bundle-result-create (:parsed-body response-create)]
@@ -417,13 +425,15 @@
                                            (assoc :external_ids ["custom-3"]))}}
                  response-create (POST app
                                        "ctia/bundle/import"
-                                       :query-params {"external-key-prefixes" "custom-"}
+                                       :query-params {"external-key-prefixes" "custom-"
+                                                      "upsert" false}
                                        :body bundle
                                        :headers {"Authorization" "45c1f5e3f05d0"})
                  bundle-result-create (:parsed-body response-create)
                  response-update (POST app
                                        "ctia/bundle/import"
-                                       :query-params {"external-key-prefixes" "custom-"}
+                                       :query-params {"external-key-prefixes" "custom-"
+                                                      "upsert" true}
                                        :body (update bundle :indicators #(into #{} (map (fn [e]
                                                                                           (assoc e :producer {:something :bad})))
                                                                                %))
@@ -454,6 +464,7 @@
                       response-create (POST app
                                             "ctia/bundle/import"
                                             :body bundle
+                                            :query-params {"upsert" false}
                                             :headers {"Authorization" "45c1f5e3f05d0"})
                       bundle-result-create (:parsed-body response-create)]
                   (when (is (= 200 (:status response-create)))
@@ -656,6 +667,7 @@
            do-import #(POST app
                             "ctia/bundle/import"
                             :body bundle
+                            :query-params {"upsert" true}
                             :headers {"Authorization" "45c1f5e3f05d0"})
            response-create (do-import)
            bundle-result-create (:parsed-body response-create)
@@ -1369,6 +1381,7 @@
                 update-response (POST app
                                       "ctia/bundle/import"
                                       :body update-bundle
+                                      :query-params {"upsert" true}
                                       :headers {"Authorization" "45c1f5e3f05d0"})
                 {update-results :results :as update-bundle-result} (:parsed-body update-response)]
             (when (is (= 200 (:status update-response)))
@@ -1424,6 +1437,7 @@
                 create+update-response (POST app
                                              "ctia/bundle/import"
                                              :body create+update-bundle
+                                             :query-params {"upsert" true}
                                              :headers {"Authorization" "45c1f5e3f05d0"})
                 {create+update-results :results :as create+update-bundle-result} (:parsed-body create+update-response)]
             (when (is (= 200 (:status create+update-response)))
