@@ -151,5 +151,5 @@
                      (if (< max-size (bundle-size bundle))
                        (bad-request (str "Bundle max nb of entities: " max-size))
                        (ok (import-bundle bundle external-key-prefixes auth-identity services
-                                          {:patch-existing upsert
+                                          {:patch-existing patch-existing
                                            :asset_properties-merge-strategy asset_properties-merge-strategy})))))))))
