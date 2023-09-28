@@ -667,7 +667,7 @@ When a bundle is submitted:
 
 1. All entities that have already been imported with the external ID whose prefix has been configured with the `ctia.store.external-key-prefixes` property are searched.
 2. If they are identified by transient IDs, a mapping table between transient and stored IDs is built.
-3. New entities are created in the same way as the `/bulk` API endpoint with transient IDs resolutions. If `upsert=true`, then existing entities are similarly patched with `result=updated`; otherwise, existing entities are not modified with `result=exists`.
+3. New entities are created in the same way as the `/bulk` API endpoint with transient IDs resolutions. If query parameter `patch-existing=true`, then existing entities are similarly patched with `result=updated`; otherwise, existing entities are not modified with `result=exists`.
 
 If more than one entity is referenced by the same external ID, an error is reported.
 

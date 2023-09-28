@@ -497,8 +497,8 @@
     auth-identity :- auth/AuthIdentity
     {{:keys [get-in-config]} :ConfigService
      :as services} :- APIHandlerServices
-    {:keys [upsert asset_properties-merge-strategy]
-     :or {asset_properties-merge-strategy :ignore-previous}} :- {(s/optional-key :upsert) s/Bool
+    {:keys [patch-existing asset_properties-merge-strategy]
+     :or {asset_properties-merge-strategy :ignore-previous}} :- {(s/optional-key :patch-existing) s/Bool
                                                                  (s/optional-key :asset_properties-merge-strategy) AssetPropertiesMergeStrategy}]
    (let [bundle-entities (select-keys bundle bundle-entity-keys)
          ;; the hard case is when patching asset_ref on an Asset that we also create in this bundle.

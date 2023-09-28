@@ -126,13 +126,13 @@
                    [{external-key-prefixes
                      :- (describe s/Str "Comma separated list of external key prefixes")
                      nil}
-                    {upsert :- (describe s/Bool
+                    {patch-existing :- (describe s/Bool
                                          (str "If true, existing entities will be patched with result=updated. Otherwise, existing entities will be "
                                               "ignored with result-existing."))
                      false}
                     {asset_properties-merge-strategy :-
                      (describe AssetPropertiesMergeStrategy
-                               (str "Only relevant if upsert=true.\n\n" 
+                               (str "Only relevant if patch-existing=true.\n\n" 
                                     "If ignore-existing, then asset properties will be patched to their new "
                                     "values as they appear in the request bundle.\n\n"
                                     "If merge-overriding-previous, then existing asset properties "
@@ -151,5 +151,5 @@
                      (if (< max-size (bundle-size bundle))
                        (bad-request (str "Bundle max nb of entities: " max-size))
                        (ok (import-bundle bundle external-key-prefixes auth-identity services
-                                          {:upsert upsert
+                                          {:patch-existing upsert
                                            :asset_properties-merge-strategy asset_properties-merge-strategy})))))))))
