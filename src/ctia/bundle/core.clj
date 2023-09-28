@@ -256,7 +256,7 @@
    auth-identity :- auth/AuthIdentity
    {{:keys [get-store]} :StoreService :as services} :- WithExistingEntitiesServices]
   (let [{:keys [realized-entities unrealized-entities]} (group-by (fn [{{:keys [id]} :new-entity}]
-                                                                    (if (and id (not (schemas/transient-id? id)))
+                                                                    (if (schemas/non-transient-id? id)
                                                                       :realized-entities
                                                                       :unrealized-entities))
                                                                   import-data)
@@ -426,7 +426,7 @@
    asset_ref->old-entity :- {s/Str (s/pred map?)}]
   (or (when (not= "error" result)
         (let [asset_ref (get tempids (:asset_ref new-entity) (:asset_ref new-entity))]
-          (if (and (some-> asset_ref schemas/transient-id?)
+          (if (and (schemas/transient-id? asset_ref)
                    (= "exists" result))
             (-> import-data
                 (assoc :error {:type :unresolvable-transient-id
