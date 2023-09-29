@@ -531,7 +531,7 @@
     {{:keys [get-in-config]} :ConfigService
      :as services} :- APIHandlerServices
     {:keys [patch-existing asset_properties-merge-strategy]
-     :or {asset_properties-merge-strategy :ignore-previous}} :- {(s/optional-key :patch-existing) s/Bool
+     :or {asset_properties-merge-strategy :ignore-existing}} :- {(s/optional-key :patch-existing) s/Bool
                                                                  (s/optional-key :asset_properties-merge-strategy) AssetPropertiesMergeStrategy}]
    (if-not patch-existing
      (import-bundle-no-patch bundle external-key-prefixes auth-identity services)

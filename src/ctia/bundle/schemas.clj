@@ -60,4 +60,4 @@
    s/Keyword s/Any})
 
 (s/defschema AssetPropertiesMergeStrategy
-  (s/enum :ignore-previous :merge-overriding-previous))
+  (s/enum :ignore-existing :merge-overriding-previous))
