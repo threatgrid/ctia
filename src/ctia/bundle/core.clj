@@ -311,11 +311,12 @@
       :patches-bulk bulk/BulkEntities
       :patch-bundle-import-data BundleImportData
       :unsubmitted-result BundleImportData}
-  "Creates separate bulk structures with entities to create, patch, or have errored.
+  "Creates separate bulk structures with entities to create or patch.
   Returns several bundles in order to preserve correspondence between submission order
   and results order for the delicate processing in `with-bulk-result`.
   
-  If patch-existing is false, then :patches-bulk will be empty and moved to :unsubmitted-result."
+  If patch-existing is false, then :patches-bulk will be empty and moved to :unsubmitted-result
+  along with errors."
   [bundle-import-data :- BundleImportData
    tempids :- TempIDs
    patch-existing :- s/Bool]
