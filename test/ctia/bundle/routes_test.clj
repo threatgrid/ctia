@@ -1303,18 +1303,23 @@
                                           "foogroup"
                                           "user")
 
-      (let [[oldv1 oldv2 newv1 newv2 newv3] (repeatedly (comp str gensym))
+      (let [[oldv1 oldv2 newv1 newv2 newv3] (map (comp str gensym) '[oldv1 oldv2 newv1 newv2 newv3])
             [relationship1-original-id
              asset_mapping1-original-id
              asset_property1-original-id
              asset1-original-id
-             asset2-original-id] (repeatedly #(str "transient:" (random-uuid)))
+             asset2-original-id] (map #(str "transient:" % "_" (random-uuid))
+                                      '[relationship1-original-id
+                                        asset_mapping1-original-id
+                                        asset_property1-original-id
+                                        asset1-original-id
+                                        asset2-original-id])
             asset1 {:asset_type "device"
                     :valid_time {:start_time #inst "2023-03-02T19:14:46.658-00:00"}
                     :schema_version "1.0.19"
                     :type "asset"
                     :source "something"
-                    :external_ids ["asset-1"]
+                    :external_ids [(str "asset-1" (random-uuid))]
                     :title "something"
                     :source_uri "https://something"
                     :id asset1-original-id
@@ -1332,8 +1337,9 @@
                             :timestamp #inst "2023-03-02T19:14:46.660-00:00"
                             :specificity "Unique"
                             :confidence "Unknown"}
-            asset_property1 {:properties [{:name "something1" :value oldv1}
-                                          {:name "something2" :value oldv2}]
+            old-properties [{:name "something1" :value oldv1}
+                            {:name "something2" :value oldv2}]
+            asset_property1 {:properties old-properties
                              :valid_time {:start_time #inst "2023-03-02T19:14:46.660-00:00"}
                              :schema_version ctim-schema-version
                              :asset_ref asset1-original-id
@@ -1369,10 +1375,11 @@
             (is (every? (comp #{"created"} :result) create-results)
                 (pr-str (mapv :result create-results)))))
         (testing "asset-properties and asset-mappings are patched"
-          (let [updated-asset_property1 (-> asset_property1
+          (let [new-properties [{:name "something1" :value newv1}
+                                {:name "something-else" :value newv2}]
+                updated-asset_property1 (-> asset_property1
                                             (select-keys [:id :asset_ref :type])
-                                            (assoc :properties [{:name "something1" :value newv1}
-                                                                {:name "something-else" :value newv2}]))
+                                            (assoc :properties new-properties))
                 updated-asset_mapping1 asset_mapping1
                 update-bundle (-> bundle-minimal
                                   (assoc :assets #{asset1}
@@ -1412,22 +1419,19 @@
                                                              (assoc-in [:valid_time :end_time] #inst "2525-01-01T00:00:00.000-00:00"))))))
                                               (testing ":asset_properties"
                                                 (let [stored (get-stored updated-asset_property1)]
-                                                  (testing ":properties are merged, newer wins"
-                                                    (is (= [{:name "something-else" :value newv2}
-                                                            {:name "something1" :value newv1}
-                                                            {:name "something2" :value oldv2}]
-                                                           (:properties stored))))
+                                                  (is (= expected-properties
+                                                         (:properties stored)))
                                                   (is (= #inst "2525-01-01T00:00:00.000-00:00"
                                                          (get-in stored [:valid_time :end_time]))))))))))]
-            (test-merge-strategy "no asset_properties merge strategy"
-                                 {}
-                                 [{:name "something-else" :value newv2}
-                                  {:name "something1" :value newv1}])
+            ;; the order in which we test these merge strategies is important since we're patching the same entities.
             (test-merge-strategy "with asset_properties-merge-strategy=merge-overriding-previous"
                                  {"asset_properties-merge-strategy" "merge-overriding-previous"}
                                  [{:name "something-else" :value newv2}
                                   {:name "something1" :value newv1}
-                                  {:name "something2" :value oldv2}])))
+                                  {:name "something2" :value oldv2}])
+            (test-merge-strategy "no asset_properties merge strategy"
+                                 {}
+                                 new-properties)))
         (testing "patched relationships, asset mappings/properties resolve refs after creating other entities"
           (let [;; on existing entities, patch asset_ref to a newly created asset,
                 ;; and :{source/target}_ref to newly created entities

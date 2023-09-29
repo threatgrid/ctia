@@ -252,7 +252,8 @@
                 :external_ids external_ids}})))
 
 (deftest merge-asset_properties-properties-test
-  (let [[old1 old2 old3 new1 new2] (repeatedly (comp str gensym))]
+  (let [[old1 old2 old3 new1 new2] (map (comp str gensym)
+                                        '[old1 old2 old3 new1 new2])]
     (is (= [{:name "bar" :value new2}
             {:name "baz" :value old3}
             {:name "foo" :value new1}]

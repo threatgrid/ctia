@@ -407,9 +407,12 @@
 (s/defschema AssetPropertiesProperties (st/get-in AssetProperties [:properties]))
 
 (s/defn merge-asset_properties-properties :- AssetPropertiesProperties
-  "Right-most properties win. Return in order of :name."
+  "Right-most properties win after concatenating old...new. Return in order of :name."
   [new-properties :- AssetPropertiesProperties
    old-properties :- AssetPropertiesProperties]
+  (prn "merge-asset_properties-properties"
+       new-properties
+       old-properties)
   (-> (sorted-map)
       (into (map (juxt :name identity))
             (concat old-properties new-properties))
@@ -439,6 +442,7 @@
             (when-some [{:keys [id] :as old-entity} (or ;; already resolved by :external_ids or realized :id
                                                         (:old-entity import-data)
                                                         (asset_ref->old-entity asset_ref))]
+              (prn "old-entity" old-entity)
               (-> import-data
                   (assoc :old-entity old-entity
                          :id id
@@ -448,7 +452,7 @@
                                          (cond->
                                            (and (= :merge-overriding-previous merge-strategy)
                                                 (= :asset_properties bulk-asset-kw)
-                                                (:properties new-entity))
+                                                (contains? new-entity :properties))
                                            (update :properties
                                                    merge-asset_properties-properties
                                                    (:properties old-entity))))))))))
