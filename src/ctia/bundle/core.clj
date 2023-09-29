@@ -330,7 +330,7 @@
                                           (cond-> v
                                             (not= :unsubmitted-result op) :new-entity))
                                (cond->
-                                 (not= :errors-result op)
+                                 (not= :unsubmitted-result op)
                                  (update-in [(case op
                                                :creates-bulk :create-bundle-import-data
                                                :patches-bulk :patch-bundle-import-data)

@@ -301,20 +301,33 @@
                               :body bundle
                               :query-params {"patch-existing" true}
                               :headers {"Authorization" "45c1f5e3f05d0"})
-               bundle-result (:parsed-body response)]
-           (when (is (= 200 (:status response)))
-             (is (pos? (count (:results bundle-result))))
-             (is (every? #(= "updated" %)
-                         (map :result (:results bundle-result)))
-                 "All existing entities are updated")
-             (doseq [entity (concat updated-indicators
-                                    (:sightings bundle)
-                                    (map #(resolve-ids bundle-result %)
-                                         (:relationships bundle)))]
-               (validate-entity-record
-                 app
-                 (find-result-by-original-id bundle-result (:id entity))
-                 entity)))))
+               bundle-result (:parsed-body response)
+               test-update-with-partial (s/fn [patch-existing :- s/Bool]
+                                          (let [response (POST app
+                                                               "ctia/bundle/import"
+                                                               :body bundle
+                                                               :query-params (cond-> {}
+                                                                               patch-existing (assoc "patch-existing" patch-existing))
+                                                               :headers {"Authorization" "45c1f5e3f05d0"})
+                                                bundle-result (:parsed-body response)]
+                                            (when (is (= 200 (:status response)))
+                                              (is (pos? (count (:results bundle-result))))
+                                              (is (every? #(= (if patch-existing "updated" "exists") %)
+                                                          (map :result (:results bundle-result)))
+                                                  "All existing entities are updated")
+                                              (doseq [entity (concat updated-indicators
+                                                                     (:sightings bundle)
+                                                                     (map #(resolve-ids bundle-result %)
+                                                                          (:relationships bundle)))]
+                                                (validate-entity-record
+                                                  app
+                                                  (find-result-by-original-id bundle-result (:id entity))
+                                                  entity)))))]
+           ;; order of these tests is important since they operate on the same entities
+           (testing "no patch existing"
+             (test-update-with-partial false))
+           (testing "patch existing"
+             (test-update-with-partial true))))
        (testing "Update and create"
          (let [indicator (mk-indicator 2000)
                sighting (first sightings)
