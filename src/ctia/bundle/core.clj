@@ -300,43 +300,35 @@
   ;; Add only new entities without error
   (not (contains? #{"error" "exists"} result)))
 
-(s/defn prepare-bulk
-  "Creates the bulk data structure with all entities to create."
-  [bundle-import-data :- BundleImportData]
-  (map-kv
-   (fn [_ v]
-     (->> v
-          (filter create?)
-          (remove nil?)
-          (map :new-entity)))
-   bundle-import-data))
-
 (s/defn patch? :- s/Bool
   "Whether the provided entity should be patched or not"
   [{:keys [result]}]
   (= "exists" result))
 
-(s/defn prepare-upsert-bulk
+(s/defn prepare-bulk
   :- {:creates-bulk bulk/BulkEntities
       :create-bundle-import-data BundleImportData
       :patches-bulk bulk/BulkEntities
       :patch-bundle-import-data BundleImportData
-      :errors-result BundleImportData}
+      :unsubmitted-result BundleImportData}
   "Creates separate bulk structures with entities to create, patch, or have errored.
   Returns several bundles in order to preserve correspondence between submission order
-  and results order for the delicate processing in `with-bulk-result`."
+  and results order for the delicate processing in `with-bulk-result`.
+  
+  If patch-existing is false, then :patches-bulk will be empty and moved to :unsubmitted-result."
   [bundle-import-data :- BundleImportData
-   tempids :- TempIDs]
+   tempids :- TempIDs
+   patch-existing :- s/Bool]
   (reduce-kv (fn [acc k vs]
                (reduce (fn [acc v]
                          (let [op (cond
                                     (create? v) :creates-bulk
-                                    (patch? v) :patches-bulk
-                                    :else :errors-result)]
+                                    (and (patch? v) patch-existing) :patches-bulk
+                                    :else :unsubmitted-result)]
                            (-> acc
                                (update-in [op k] (fnil conj [])
                                           (cond-> v
-                                            (not= :errors-result op) :new-entity))
+                                            (not= :unsubmitted-result op) :new-entity))
                                (cond->
                                  (not= :errors-result op)
                                  (update-in [(case op
@@ -349,7 +341,7 @@
               :create-bundle-import-data {}
               :patches-bulk {}
               :patch-bundle-import-data {}
-              :errors-result {}}
+              :unsubmitted-result {}}
              bundle-import-data))
 
 (s/defn with-bulk-result :- BundleImportData
@@ -497,28 +489,6 @@
   (into tempids (map entities-import-data->tempids)
         (vals bundle-import-data)))
 
-(s/defn ^:private import-bundle-no-patch
-  [bundle :- (st/optional-keys-schema NewBundle) ;;FIXME test partial entities
-   external-key-prefixes :- (s/maybe s/Str)
-   auth-identity :- auth/AuthIdentity
-   {{:keys [get-in-config]} :ConfigService
-    :as services} :- APIHandlerServices]
-  (let [bundle-entities (select-keys bundle bundle-entity-keys)
-        bundle-import-data (prepare-import bundle-entities
-                                           external-key-prefixes
-                                           auth-identity
-                                           services)
-        bulk (debug "Bulk" (prepare-bulk bundle-import-data))
-        tempids (->> bundle-import-data
-                     (map (fn [[_ entities-import-data]]
-                            (entities-import-data->tempids entities-import-data)))
-                     (apply merge {}))]
-    (debug "Import bundle response"
-           (->> (bulk/create-bulk bulk tempids auth-identity (bulk-params get-in-config) services)
-                (with-bulk-result bundle-import-data)
-                build-response
-                log-errors))))
-
 (s/defn import-bundle :- BundleImportResult
   ([bundle :- (st/optional-keys-schema NewBundle)
     external-key-prefixes :- (s/maybe s/Str)
@@ -531,45 +501,45 @@
     {{:keys [get-in-config]} :ConfigService
      :as services} :- APIHandlerServices
     {:keys [patch-existing asset_properties-merge-strategy]
-     :or {asset_properties-merge-strategy :ignore-existing}} :- {(s/optional-key :patch-existing) s/Bool
+     :or {patch-existing false
+          asset_properties-merge-strategy :ignore-existing}} :- {(s/optional-key :patch-existing) s/Bool
                                                                  (s/optional-key :asset_properties-merge-strategy) AssetPropertiesMergeStrategy}]
-   (if-not patch-existing
-     (import-bundle-no-patch bundle external-key-prefixes auth-identity services)
-     (let [bundle-entities (select-keys bundle bundle-entity-keys)
-           ;; the hard case is when patching asset_ref on an Asset that we also create in this bundle.
-           ;; even harder, the same Asset could be used to patch a relationship's source_ref.
-           ;; handled by processing the bundle as separate groups of entities in dependency order
-           {:keys [bulk-refs]} (bulk/import-bulks-with
-                                 (fn [bundle-entities tempids]
-                                   (let [bundle-import-data (prepare-import bundle-entities external-key-prefixes auth-identity services)
-                                         tempids (bundle-import-data->tempids bundle-import-data tempids)
-                                         bundle-import-data (resolve-asset-properties+mappings
-                                                              bundle-import-data tempids auth-identity asset_properties-merge-strategy services)
-                                         tempids (bundle-import-data->tempids bundle-import-data tempids)
-                                         {:keys [creates-bulk create-bundle-import-data
-                                                 patches-bulk patch-bundle-import-data
-                                                 errors-result]} (debug "Bulk" (prepare-upsert-bulk bundle-import-data tempids))
-                                         {:keys [tempids] :as create-bulk-refs
-                                          :or {tempids {}}} (bulk/create-bulk creates-bulk tempids auth-identity (bulk-params get-in-config) services)
-                                         create-result (with-bulk-result create-bundle-import-data (dissoc create-bulk-refs :tempids))
-                                         patch-result (let [patch-bulk-refs (bulk/patch-bulk patches-bulk tempids auth-identity (bulk-params get-in-config) services
+   (let [bundle-entities (select-keys bundle bundle-entity-keys)
+         ;; the hard case is when patching asset_ref on an Asset that we also create in this bundle.
+         ;; even harder, the same Asset could be used to patch a relationship's source_ref.
+         ;; handled by processing the bundle as separate groups of entities in dependency order
+         {:keys [bulk-refs]} (bulk/import-bulks-with
+                               (fn [bundle-entities tempids]
+                                 (let [bundle-import-data (prepare-import bundle-entities external-key-prefixes auth-identity services)
+                                       tempids (bundle-import-data->tempids bundle-import-data tempids)
+                                       bundle-import-data (resolve-asset-properties+mappings
+                                                            bundle-import-data tempids auth-identity asset_properties-merge-strategy services)
+                                       tempids (bundle-import-data->tempids bundle-import-data tempids)
+                                       {:keys [creates-bulk create-bundle-import-data
+                                               patches-bulk patch-bundle-import-data
+                                               unsubmitted-result]} (debug "Bulk" (prepare-bulk bundle-import-data tempids patch-existing))
+                                       {:keys [tempids] :as create-bulk-refs
+                                        :or {tempids {}}} (bulk/create-bulk creates-bulk tempids auth-identity (bulk-params get-in-config) services)
+                                       create-result (with-bulk-result create-bundle-import-data (dissoc create-bulk-refs :tempids))
+                                       patch-result (when patch-existing
+                                                      (let [patch-bulk-refs (bulk/patch-bulk patches-bulk tempids auth-identity (bulk-params get-in-config) services
                                                                                              {:enveloped-result? true})]
-                                                        (with-bulk-result patch-bundle-import-data (dissoc patch-bulk-refs :tempids)))]
-                                     (-> (merge-with into create-result patch-result errors-result)
-                                         ;; cram back into the format that bulk/import-bulks-with expects.
-                                         (update-vals #(hash-map :data %
-                                                                 :tempids tempids)))))
-                                 (keep not-empty
-                                       [(dissoc bundle-entities :relationships :asset_mappings :asset_properties)
-                                        ;; create assets before processing entities with asset_ref
-                                        (select-keys bundle-entities [:asset_mappings :asset_properties])
-                                        ;; create all non-relationships before processing {source,target}_ref
-                                        (select-keys bundle-entities [:relationships])])
-                                 {})]
-       (debug "Import bundle response"
-              (-> bulk-refs
-                  build-response
-                  log-errors))))))
+                                                        (with-bulk-result patch-bundle-import-data (dissoc patch-bulk-refs :tempids))))]
+                                   (-> (merge-with into create-result patch-result unsubmitted-result)
+                                       ;; cram back into the format that bulk/import-bulks-with expects.
+                                       (update-vals #(hash-map :data %
+                                                               :tempids tempids)))))
+                               (keep not-empty
+                                     [(dissoc bundle-entities :relationships :asset_mappings :asset_properties)
+                                      ;; create assets before processing entities with asset_ref
+                                      (select-keys bundle-entities [:asset_mappings :asset_properties])
+                                      ;; create all non-relationships before processing {source,target}_ref
+                                      (select-keys bundle-entities [:relationships])])
+                               {})]
+     (debug "Import bundle response"
+            (-> bulk-refs
+                build-response
+                log-errors)))))
 
 (defn bundle-max-size [get-in-config]
   (bulk/get-bulk-max-size get-in-config))
