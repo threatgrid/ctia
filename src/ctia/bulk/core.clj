@@ -157,6 +157,14 @@
                  concat
                  (map #(to-long-id % services) not-found)))))
 
+(defn make-patch-bulk-enveloped-result
+  [fm]
+  (-> fm
+      flows/make-enveloped-result
+      (update :data #(mapv (fn [{:keys [error id] :as result}]
+                             (if error result id))
+                           %))))
+
 (s/defn delete-fn
   "return the delete function provided an entity type key"
   [k 
@@ -244,7 +252,7 @@
    auth-identity :- auth/AuthIdentity
    params
    services :- APIHandlerServices
-   {:keys [enveloped-result?]} :- {(s/optional-key :enveloped-result?) (s/maybe s/Bool)}]
+   {:keys [make-result]} :- {(s/optional-key :make-result) s/Any}]
   (when (seq patches)
     (let [get-fn #(read-entities %  entity-type auth-identity services)
           {:keys [realize-fn new-spec]} (get (all-entities) entity-type)]
@@ -260,14 +268,7 @@
         :partial-entities patches
         :tempids tempids
         :spec new-spec
-        :make-result (if enveloped-result?
-                       (comp (fn [res]
-                               (update res 
-                                       :data #(mapv (fn [{:keys [error id] :as result}]
-                                                      (if error result id))
-                                                    %)))
-                             flows/make-enveloped-result)
-                       make-bulk-result)
+        :make-result (or make-result make-bulk-result)
         :get-success-entities (get-success-entities-fn :updated)))))
 
 (s/defschema BulkEntities {s/Keyword flows/Entities})
@@ -428,7 +429,7 @@
     params
     services :- APIHandlerServices
     {:keys [enveloped-result?] :as opts}]
-   (let [entities (gen-bulk-from-fn patch-entities bulk tempids auth-identity params services opts)]
+   (let [entities (gen-bulk-from-fn patch-entities bulk tempids auth-identity params services (dissoc opts :enveloped-result?))]
      (cond-> entities
        enveloped-result? (-> (update-vals :data)
                              (assoc :tempids (into tempids (merge-tempids entities))))))))

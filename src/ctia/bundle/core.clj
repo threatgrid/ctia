@@ -524,7 +524,8 @@
                                        create-result (with-bulk-result create-bundle-import-data (dissoc create-bulk-refs :tempids))
                                        patch-result (when patch-existing
                                                       (let [patch-bulk-refs (bulk/patch-bulk patches-bulk tempids auth-identity (bulk-params get-in-config) services
-                                                                                             {:enveloped-result? true})]
+                                                                                             {:enveloped-result? true
+                                                                                              :make-result bulk/make-patch-bulk-enveloped-result})]
                                                         (with-bulk-result patch-bundle-import-data (dissoc patch-bulk-refs :tempids))))]
                                    (-> (merge-with into create-result patch-result unsubmitted-result)
                                        ;; cram back into the format that bulk/import-bulks-with expects.
