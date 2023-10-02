@@ -548,8 +548,7 @@
              long-id-fn
              spec
              get-success-entities
-             make-result
-             enveloped-result?]
+             make-result]
       :or {get-success-entities default-success-entities}}]
   (let [ids (map :id partial-entities)
         prev-entity-fn (prev-entity get-fn ids)]
@@ -568,7 +567,6 @@
          :store-fn update-fn
          :create-event-fn to-update-event
          :get-success-entities get-success-entities
-         :enveloped-result? enveloped-result?
          :make-result make-result}
         patch-entities
         not-found
