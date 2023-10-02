@@ -248,24 +248,27 @@
   (when (seq patches)
     (let [get-fn #(read-entities %  entity-type auth-identity services)
           {:keys [realize-fn new-spec]} (get (all-entities) entity-type)]
-      (cond-> (flows/patch-flow
-                :services services
-                :get-fn get-fn
-                :realize-fn realize-fn
-                :update-fn (update-fn entity-type auth-identity params services)
-                :long-id-fn #(with-long-id % services)
-                :entity-type entity-type
-                :identity auth-identity
-                :patch-operation :replace
-                :partial-entities patches
-                :tempids tempids
-                :spec new-spec
-                :make-result make-bulk-result
-                :enveloped-result? enveloped-result?
-                :get-success-entities (get-success-entities-fn :updated))
-        enveloped-result? (update :data #(mapv (fn [{:keys [error id] :as result}]
-                                                 (if error result id))
-                                               %))))))
+      (flows/patch-flow
+        :services services
+        :get-fn get-fn
+        :realize-fn realize-fn
+        :update-fn (update-fn entity-type auth-identity params services)
+        :long-id-fn #(with-long-id % services)
+        :entity-type entity-type
+        :identity auth-identity
+        :patch-operation :replace
+        :partial-entities patches
+        :tempids tempids
+        :spec new-spec
+        :make-result (if enveloped-result?
+                       (comp (fn [res]
+                               (update res 
+                                       :data #(mapv (fn [{:keys [error id] :as result}]
+                                                      (if error result id))
+                                                    %)))
+                             flows/make-enveloped-result)
+                       make-bulk-result)
+        :get-success-entities (get-success-entities-fn :updated)))))
 
 (s/defschema BulkEntities {s/Keyword flows/Entities})
 
