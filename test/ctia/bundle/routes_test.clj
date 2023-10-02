@@ -296,12 +296,6 @@
                 :indicators (into #{} (map #(select-keys % [:id :external_ids :description])) updated-indicators)
                 :sightings (set (map with-modified-description sightings))
                 :relationships (set (map with-modified-description relationships))}
-               response (POST app
-                              "ctia/bundle/import"
-                              :body bundle
-                              :query-params {"patch-existing" true}
-                              :headers {"Authorization" "45c1f5e3f05d0"})
-               bundle-result (:parsed-body response)
                test-update-with-partial (s/fn [patch-existing :- s/Bool]
                                           (let [response (POST app
                                                                "ctia/bundle/import"
