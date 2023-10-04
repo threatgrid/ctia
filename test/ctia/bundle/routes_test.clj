@@ -314,7 +314,6 @@
                                                                        (:sightings bundle)
                                                                        (map #(resolve-ids bundle-result %)
                                                                             (:relationships bundle)))
-                                                               ;;FIXME these seem to be the updated entities based on :description. not sure how
                                                                (concat indicators
                                                                        sightings
                                                                        (map #(resolve-ids bundle-result %)
