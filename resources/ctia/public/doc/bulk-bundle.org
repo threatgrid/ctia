@@ -671,6 +671,12 @@ When a bundle is submitted:
 
 If more than one entity is referenced by the same external ID, an error is reported.
 
+If provided query parameter `asset_properties-merge-strategy=merge-overriding-previous`, then when patching asset properties,
+existing asset properties will be retrieved and combined with the asset properties in the request bundle
+as if by concatenating existing and new properties together in a single list,
+removing properties to the left of a property with the same name, 
+then sorting the list lexicographically by name before using this list to patch the existing entity.
+
 Example for an incident along with its context, note the transient ids
 #+begin_src HTTP
 POST /ctia/bundle/import HTTP/1.1
