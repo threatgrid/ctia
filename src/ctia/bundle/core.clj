@@ -213,12 +213,9 @@
                             new-id))]
     (if-some [old-entity (id->old-entity realized-id)]
       (assoc entity-data :result "exists" :id (:id old-entity))
-      (cond-> entity-data
-        ;; if we want to support specifying ids on creation, start here
-        true ;;(not (auth/capable? auth-identity :specify-id))
-        (assoc :error {:type :unresolvable-id
-                       :reason (str "Long id must already correspond to an entity: " realized-id)}
-               :result "error")))
+      (assoc entity-data :error {:type :unresolvable-id
+                                 :reason (str "Long id must already correspond to an entity: " realized-id)}
+             :result "error"))
     (let [old-entities (mapcat find-by-external-id external_ids)
           old-entity (some-> (first old-entities)
                              :entity
