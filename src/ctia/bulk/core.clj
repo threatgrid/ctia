@@ -60,7 +60,9 @@
                                       :else {:type (s/conditional
                                                      string? s/Str
                                                      :else s/Keyword)
-                                             :reason s/Str})
+                                             :reason s/Str
+                                             (s/optional-key :index) s/Str
+                                             (s/optional-key :index_uuid) s/Str})
             (s/optional-key :msg) s/Str
             (s/optional-key :entity) (s/pred map?)
             (s/optional-key :type) (s/conditional
