@@ -134,11 +134,11 @@
                                   external_id)
                           :headers {"Authorization" "45c1f5e3f05d0"})
             [entity :as entities] (:parsed-body response)]
-        (when (is (= 200 (:status response)))
-          (is (= 1 (count entities))
-              "Only one entity is linked to the external ID")
-          (is (= id (:id entity))
-              "The submitted entity is linked to the external ID"))))
+        (assert (is (= 200 (:status response))))
+        (is (= 1 (count entities))
+            "Only one entity is linked to the external ID")
+        (is (= id (:id entity))
+            "The submitted entity is linked to the external ID")))
     (testing "Entity values"
       (when id
         (let [response (GET app
@@ -147,11 +147,11 @@
                                     (encode id))
                             :headers {"Authorization" "45c1f5e3f05d0"})
               entity (:parsed-body response)]
-          (when (is (= 200 (:status response)))
-            (is (= (assoc original-entity
-                          :id id
-                          :schema_version ctim-schema-version)
-                   (select-keys entity (keys original-entity))))))))))
+          (assert (is (= 200 (:status response))))
+          (is (= (assoc original-entity
+                        :id id
+                        :schema_version ctim-schema-version)
+                 (select-keys entity (keys original-entity)))))))))
 
 (defn find-result-by-original-id
   "Find an entity result in the bundle result with its original ID"

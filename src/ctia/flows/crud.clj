@@ -475,7 +475,7 @@
     results))
 
 (defn not-found
-  [{:keys [get-prev-entity entities tempids] :as fm}]
+  [{:keys [get-prev-entity entities] :as fm}]
   (let [grouped (group-by #(some-> % :id get-prev-entity nil?)
                           entities)]
     (assoc fm
@@ -549,7 +549,8 @@
              spec
              get-success-entities
              make-result]
-      :or {get-success-entities default-success-entities}}]
+      :or {get-success-entities default-success-entities
+           tempids {}}}]
   (let [ids (map :id partial-entities)
         prev-entity-fn (prev-entity get-fn ids)]
     (-> {:flow-type :update
