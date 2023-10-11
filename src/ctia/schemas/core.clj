@@ -340,13 +340,13 @@
    s/Keyword        s/Any})
 
 (s/defn transient-id? :- s/Bool
-  "True iff id is a transient id."
+  "True only if id is a transient id."
   [id :- (s/maybe s/Str)]
   (boolean
     (and id (re-matches id/transient-id-re id))))
 
 (s/defn non-transient-id? :- s/Bool
-  "True iff id is a long or short id."
+  "True only if id is a long or short id."
   [id :- (s/maybe s/Str)]
   (boolean
     (and id (or (re-matches id/short-id-re id)
