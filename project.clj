@@ -210,7 +210,8 @@
                                          "git" "symbolic-ref" "--short" "HEAD")))})}]
 
 
-  :profiles {:dev {:dependencies [[puppetlabs/trapperkeeper ~trapperkeeper-version
+  :profiles {:dev {:jvm-opts ["-XX:-OmitStackTraceInFastThrow"]
+                   :dependencies [[puppetlabs/trapperkeeper ~trapperkeeper-version
                                    :classifier "test"]
                                   [puppetlabs/kitchensink ~trapperkeeper-version
                                    :classifier "test"]
@@ -228,7 +229,8 @@
                   :global-vars {*warn-on-reflection* true}
                   :jvm-opts [ ;; actually print stack traces instead of useless
                              ;; "Full report at: /tmp/clojure-8187773283812483853.edn"
-                             "-Dclojure.main.report=stderr"]}
+                             "-Dclojure.main.report=stderr"
+                             "-XX:-OmitStackTraceInFastThrow"]}
              :next-clojure {:dependencies [[org.clojure/clojure "1.12.0-master-SNAPSHOT"]]
                             :repositories [["snapshots" "https://oss.sonatype.org/content/repositories/snapshots/"]]}
              :jmx {:jvm-opts ["-Dcom.sun.management.jmxremote"

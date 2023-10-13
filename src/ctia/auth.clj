@@ -39,13 +39,16 @@
 
 (def denied-identity-singleton (->DeniedIdentity))
 
+(s/defschema AuthIdentity
+  (s/protocol IIdentity))
+
 (s/defschema IdentityMap
   {:client-id (s/maybe s/Str)
    :login (s/maybe s/Str)
    :groups [s/Str]})
 
 (s/defn ident->map :- (s/maybe IdentityMap)
-  [ident]
+  [ident :- (s/maybe AuthIdentity)]
   (when ident
     {:login (login ident)
      :groups (groups ident)

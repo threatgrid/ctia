@@ -24,9 +24,11 @@
   (:import
    java.util.UUID))
 
+(s/defschema Entities [{s/Keyword s/Any}])
+
 (s/defschema FlowMap
   {:create-event-fn                       (s/pred fn?)
-   :entities                              [{s/Keyword s/Any}]
+   :entities                              Entities
    :entity-type                           s/Keyword
    :flow-type                             (s/enum :create :update :delete)
    :services                              APIHandlerServices
@@ -365,11 +367,15 @@
     ((:apply-event-hooks HooksService) event))
   fm)
 
+(s/defn make-enveloped-result 
+  [{:keys [entities tempids]} :- FlowMap]
+  (cond-> {:data entities}
+    (seq tempids) (assoc :tempids tempids)))
+
 (s/defn make-create-result :- s/Any
-  [{:keys [entities enveloped-result? tempids]} :- FlowMap]
+  [{:keys [entities enveloped-result?] :as fm} :- FlowMap]
   (if enveloped-result?
-    (cond-> {:data entities}
-      (seq tempids) (assoc :tempids tempids))
+    (make-enveloped-result fm)
     entities))
 
 (defn patch-entity
@@ -384,20 +390,19 @@
 (s/defn patch-entities :- FlowMap
   [{:keys [get-prev-entity
            entities
-           patch-operation]
+           patch-operation
+           tempids]
     :as fm} :- FlowMap]
   (let [patch-fn (case patch-operation
                    :add coll/add-colls
                    :remove coll/remove-colls
                    :replace coll/replace-colls
                    coll/replace-colls)
-        patched (for [partial-entity entities
-                       :let [prev-entity (some->> partial-entity
-                                                  :id
-                                                  get-prev-entity)]]
-                      (cond->> partial-entity
-                       (some? prev-entity)
-                       (patch-entity patch-fn prev-entity)))]
+        patched (for [{:keys [id] :as partial-entity} entities
+                      :let [prev-entity (get-prev-entity id)]]
+                  (cond->> partial-entity
+                    (some? prev-entity)
+                    (patch-entity patch-fn prev-entity)))]
     (assoc fm :entities patched)))
 
 (defn create-flow
@@ -539,16 +544,19 @@
              identity
              patch-operation
              partial-entities
+             tempids
              long-id-fn
              spec
              get-success-entities
              make-result]
-      :or {get-success-entities default-success-entities}}]
+      :or {get-success-entities default-success-entities
+           tempids {}}}]
   (let [ids (map :id partial-entities)
         prev-entity-fn (prev-entity get-fn ids)]
     (-> {:flow-type :update
          :entity-type entity-type
          :entities partial-entities
+         :tempids tempids
          :services services
          :get-prev-entity prev-entity-fn
          :patch-operation patch-operation

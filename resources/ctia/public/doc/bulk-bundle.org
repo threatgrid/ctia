@@ -667,9 +667,17 @@ When a bundle is submitted:
 
 1. All entities that have already been imported with the external ID whose prefix has been configured with the `ctia.store.external-key-prefixes` property are searched.
 2. If they are identified by transient IDs, a mapping table between transient and stored IDs is built.
-3. Only new entities are created in the same way as the `/bulk` API endpoint with transient IDs resolutions. Existing entities are not modified.
+3. New entities are created in the same way as the `/bulk` API endpoint with transient IDs and external ids resolutions. If query parameter `patch-existing=true`, then existing entities are similarly patched with `result=updated`; otherwise, existing entities are not modified with `result=exists`.
 
 If more than one entity is referenced by the same external ID, an error is reported.
+
+If provided query parameter `asset_properties-merge-strategy=merge-overriding-previous`, then when patching asset properties,
+existing asset properties will be retrieved and combined with the asset properties in the request bundle
+as if by concatenating existing and new properties together in a single list,
+removing properties to the left of a property with the same name, 
+then sorting the list lexicographically by name before using this list to patch the existing entity.
+
+If `asset_properties-merge-strategy=ignore-existing`, then asset properties will be patched to their new values as they appear in the request bundle.
 
 Example for an incident along with its context, note the transient ids
 #+begin_src HTTP
@@ -778,7 +786,7 @@ accept: application/json
 |----------------+----------------------------------------------------------|
 | `:id`          | The real ID                                              |
 | `:original_id` | Provided ID if different from real ID (ex: transient ID) |
-| `:result`      | `error`, `created` or `exists`                           |
+| `:result`      | `error`, `created`, `exists` or `updated`                |
 | `:external_id` | External ID used to identify the entity                  |
 | `:error`       | Error message                                            |
 

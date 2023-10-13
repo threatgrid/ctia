@@ -259,11 +259,13 @@
                                "visible entities that the user is not allowed to write on are returned as forbidden errors"))]
            (testing "bulk-patch shall properly patch submitties entitites"
              (let [other-group-res (sut/patch-bulk bulk-patch
+                                                   {}
                                                    other-group-ident
                                                    {:refresh "true"}
                                                    services)
                    {:keys [sightings indicators]}
                    (sut/patch-bulk bulk-patch
+                                   {}
                                    ident
                                    {:refresh "true"}
                                    services)]
@@ -279,7 +281,7 @@
                  (is (= "patched indicator"
                         (:source (read-record indicator-store indicator-id ident-map {})))))))
 
-           (testing "bulk-update shall properly update submitties entitites"
+           (testing "bulk-update shall properly update submitted entitites"
              (let [other-group-res (sut/update-bulk bulk-update
                                                    other-group-ident
                                                    {:refresh "true"}
@@ -334,14 +336,14 @@
   (let [intermediate-tempids (atom [])
         incident1 (assoc incident-minimal :id "transientid1")
         incident2 (assoc incident-minimal :id "transientid2")]
-    (is (= {:bulk-refs {:incidents [incident1 incident2]}
+    (is (= {:bulk-refs {:incidents (mapv :id [incident1 incident2])}
             :tempids {"foo" "bar"
                       "transientid1" "id1"
                       "transientid2" "id2"}}
            (sut/import-bulks-with
              (fn [{:keys [incidents]} tempids]
                (swap! intermediate-tempids conj tempids)
-               {:incidents {:data incidents
+               {:incidents {:data (mapv :id incidents)
                             :tempids (into tempids
                                            (map (fn [{:keys [id]}]
                                                   {id (subs id (count "transient"))}))

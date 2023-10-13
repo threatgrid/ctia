@@ -8,17 +8,17 @@
             [ctia.test-helpers.http :refer [app->HTTPShowServices]]
             [ctia.test-helpers.es :as es-helpers]))
 
-(use-fixtures :each
-  es-helpers/fixture-properties:es-store
-  h/fixture-ctia-fast)
-
 (deftest local-entity?-test
-  (are [x y] (= x (sut/local-entity? y (app->HTTPShowServices (h/get-current-app))))
-    false nil
-    false ""
-    false "http://unknown.site/ctia/indicator/indicator-56067199-47c0-4294-8957-13d6b265bdc4"
-    true "indicator-56067199-47c0-4294-8957-13d6b265bdc4"
-    true "http://localhost:57254/ctia/indicator/indicator-56067199-47c0-4294-8957-13d6b265bdc4"))
+  (es-helpers/fixture-properties:es-store
+    (fn []
+      (h/fixture-ctia-with-app
+        (fn [app]
+          (are [x y] (= x (sut/local-entity? y (app->HTTPShowServices app)))
+               false nil
+               false ""
+               false "http://unknown.site/ctia/indicator/indicator-56067199-47c0-4294-8957-13d6b265bdc4"
+               true "indicator-56067199-47c0-4294-8957-13d6b265bdc4"
+               true "http://localhost:57254/ctia/indicator/indicator-56067199-47c0-4294-8957-13d6b265bdc4"))))))
 
 (deftest clean-bundle-test
   (is (= {:b '(1 2 3) :d '(1 3)}
@@ -59,52 +59,89 @@
                                             :related_to [:source_ref]})))))
 
 (deftest with-existing-entity-test
-  (testing "with-existing-entity"
-    (let [app (h/get-current-app)
-          http-show-services (app->HTTPShowServices app)
+  (es-helpers/fixture-properties:es-store
+    (fn []
+      (h/fixture-ctia-with-app
+        (fn [app]
+          (testing "with-existing-entity"
+            (let [http-show-services (app->HTTPShowServices app)
 
-          indicator-id-1 (make-id "indicator")
-          indicator-id-2 (make-id "indicator")
-          indicator-id-3 (make-id "indicator")
-          new-indicator {:id indicator-id-3
-                         :external_ids ["swe-alarm-indicator-1"]}
-          find-by-ext-ids (fn [existing-ids]
-                            (constantly
-                             (map (fn [old-id]
-                                    {:entity {:id old-id}})
-                                  existing-ids)))
-          test-fn (fn [{:keys [msg expected existing-ids log?]}]
-                    (with-log
-                      (testing msg
-                        (is (= expected
-                               (sut/with-existing-entity
-                                 new-indicator
-                                 (find-by-ext-ids existing-ids)
-                                 http-show-services)))
-                        (is (= log?
-                               (logged? 'ctia.bundle.core
-                                        :warn
-                                        #"More than one entity is linked to the external ids"))))))]
-      (test-fn {:msg "no existing external id"
-                :expected {:id indicator-id-3
-                           :external_ids ["swe-alarm-indicator-1"]}
-                :existing-ids []
-                :log? false})
-      (test-fn {:msg "1 existing external id"
-                :expected (with-long-id {:result "exists"
-                                         :external_ids ["swe-alarm-indicator-1"]
-                                         :id indicator-id-1}
-                            http-show-services)
-                :existing-ids [indicator-id-1]
-                :log? false})
-      (test-fn {:msg "more than 1 existing external id"
-                :expected (with-long-id {:result "exists"
-                                         :external_ids ["swe-alarm-indicator-1"]
-                                         :id indicator-id-2}
-                            http-show-services)
-                :existing-ids [indicator-id-2
-                               indicator-id-1]
-                :log? true}))))
+                  indicator-id-1 (make-id "indicator")
+                  indicator-id-2 (make-id "indicator")
+                  indicator-id-3 (make-id "indicator")
+                  indicator-original-id-1 (str "transient:" indicator-id-1)
+                  new-indicator {:id indicator-original-id-1
+                                 :external_ids ["swe-alarm-indicator-1"]}
+                  find-by-ext-ids (fn [existing-ids]
+                                    (fn [external_id]
+                                      (map (fn [old-id]
+                                             {:external_id external_id
+                                              :entity {:id old-id}})
+                                           existing-ids)))
+                  test-fn (fn [{new-indicator* :new-indicator :keys [msg expected existing-ids id->old-entity log?]
+                                :or {log? false
+                                     existing-ids []
+                                     id->old-entity {}
+                                     new-indicator* new-indicator}}]
+                            (with-log
+                              (testing msg
+                                (is (= expected
+                                       (sut/with-existing-entity
+                                         new-indicator*
+                                         (find-by-ext-ids existing-ids)
+                                         id->old-entity
+                                         http-show-services)))
+                                (is (= log?
+                                       (logged? 'ctia.bundle.core
+                                                :warn
+                                                #"More than one entity is linked to the external ids"))))))]
+              (test-fn {:msg "no existing external id"
+                        :expected {:id indicator-original-id-1
+                                   :external_ids ["swe-alarm-indicator-1"]}
+                        :existing-ids []
+                        :log? false})
+              (let [{:keys [id] :as new-indicator} (with-long-id (assoc new-indicator :id indicator-id-1)
+                                                     http-show-services)]
+                (doseq [existing-ids [[]
+                                      [indicator-id-2]
+                                      [indicator-id-2
+                                       indicator-id-1]]]
+                  (testing (str "existing-ids:" (pr-str existing-ids))
+                    (test-fn {:msg "existing long id"
+                              :new-indicator {:new-entity new-indicator}
+                              :id->old-entity {id {:id id}}
+                              :expected {:result "exists"
+                                         :id id
+                                         :new-entity new-indicator}
+                              :existing-ids existing-ids})
+                    (test-fn {:msg "non-existing long id"
+                              :new-indicator {:new-entity new-indicator}
+                              :id->old-entity {}
+                              :expected {:result "error"
+                                         :error {:type :unresolvable-id
+                                                 :reason (str "Long id must already correspond to an entity: "
+                                                              id)}
+                                         :new-entity new-indicator}
+                              :existing-ids existing-ids}))))
+              (test-fn {:msg "1 existing external id"
+                        :expected (with-long-id {:result "exists"
+                                                 :external_ids ["swe-alarm-indicator-1"]
+                                                 :id indicator-id-1
+                                                 :new-entity (with-long-id {:id indicator-id-1}
+                                                               http-show-services)}
+                                    http-show-services)
+                        :existing-ids [indicator-id-1]
+                        :log? false})
+              (test-fn {:msg "more than 1 existing external id"
+                        :expected (with-long-id {:result "exists"
+                                                 :external_ids ["swe-alarm-indicator-1"]
+                                                 :id indicator-id-2
+                                                 :new-entity (with-long-id {:id indicator-id-2}
+                                                               http-show-services)}
+                                    http-show-services)
+                        :existing-ids [indicator-id-2
+                                       indicator-id-1]
+                        :log? true}))))))))
 
 (deftest filter-external-ids-test
   (let [external-ids ["ctia-indicator-1" "cisco-indicator-1" "indicator-1"]]
@@ -213,3 +250,32 @@
                              :external_ids external_ids}
                 :type :sighting
                 :external_ids external_ids}})))
+
+(deftest merge-asset_properties-properties-test
+  (let [[old1 old2 old3 new1 new2] (map (comp str gensym)
+                                        '[old1 old2 old3 new1 new2])]
+    (is (= [{:name "bar" :value new2}
+            {:name "baz" :value old3}
+            {:name "foo" :value new1}]
+           (sut/merge-asset_properties-properties
+             (shuffle [{:name "foo" :value new1}
+                       {:name "bar" :value new2}])
+             (shuffle [{:name "foo" :value old1}
+                       {:name "bar" :value old2}
+                       {:name "baz" :value old3}]))))
+    (testing "right-most wins in both new and old"
+      (is (= [{:name "bar" :value new2}
+              {:name "baz" :value old1}
+              {:name "foo" :value new2}]
+             (sut/merge-asset_properties-properties
+               [{:name "foo" :value new1}
+                {:name "foo" :value new1}
+                {:name "foo" :value new1}
+                {:name "foo" :value new2}
+                {:name "bar" :value new2}]
+               [{:name "foo" :value old1}
+                {:name "bar" :value old2}
+                {:name "baz" :value old3}
+                {:name "baz" :value old3}
+                {:name "baz" :value old3}
+                {:name "baz" :value old1}]))))))

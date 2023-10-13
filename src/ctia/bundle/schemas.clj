@@ -9,7 +9,7 @@
   (st/optional-keys
    {:id s/Str
     :original_id s/Str
-    :result (s/enum "error" "created" "exists")
+    :result (s/enum "error" "created" "exists" "updated")
     :type s/Keyword
     :external_ids [s/Str]
     :error s/Any
@@ -58,3 +58,6 @@
   {:StoreService {:get-store GetStoreFn
                   s/Keyword s/Any}
    s/Keyword s/Any})
+
+(s/defschema AssetPropertiesMergeStrategy
+  (s/enum :ignore-existing :merge-overriding-previous))

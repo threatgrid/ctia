@@ -12,6 +12,7 @@
    [ctia.bundle.routes :as bundle.routes]
    [ctia.test-helpers.core :as helpers
     :refer [deep-dissoc-entity-ids GET POST DELETE]]
+   [ctia.test-helpers.http :refer [app->APIHandlerServices]]
    [ctia.test-helpers.fake-whoami-service :as whoami-helpers]
    [ctia.test-helpers.store :refer [test-for-each-store-with-app]]
    [ctim.domain.id :as id]
@@ -122,7 +123,7 @@
    original-entity]
   (testing (str "Entity " external_id)
     (is (= (:id original-entity) original_id)
-        "The orignal ID is in the result")
+        "The original ID is in the result")
     (is (contains? (set (:external_ids original-entity))
                    external_id)
         "The external ID is in the result")
@@ -133,6 +134,7 @@
                                   external_id)
                           :headers {"Authorization" "45c1f5e3f05d0"})
             [entity :as entities] (:parsed-body response)]
+        (assert (is (= 200 (:status response))))
         (is (= 1 (count entities))
             "Only one entity is linked to the external ID")
         (is (= id (:id entity))
@@ -145,6 +147,7 @@
                                     (encode id))
                             :headers {"Authorization" "45c1f5e3f05d0"})
               entity (:parsed-body response)]
+          (assert (is (= 200 (:status response))))
           (is (= (assoc original-entity
                         :id id
                         :schema_version ctim-schema-version)
@@ -157,6 +160,18 @@
        :results
        (filter #(= (:original_id %) original-id))
        first))
+
+(s/defn find-id-by-original-id :- s/Str
+  [msg bundle-result original-id]
+  (let [{:keys [id error] :as result} (find-result-by-original-id bundle-result original-id)]
+    (or id
+        (throw (ex-info (str "Missing long id for transient "
+                             original-id
+                             (some->> error (str ": ")))
+                        (cond-> {:msg msg
+                                 :original-id original-id
+                                 :bundle-result bundle-result}
+                          result (assoc :result result)))))))
 
 (defn resolve-ids
   "Resolves transient IDs in the target_ref and the source_ref
@@ -237,13 +252,14 @@
                response (POST app
                               "ctia/bundle/import"
                               :body new-bundle
+                              :query-params {"patch-existing" false}
                               :headers {"Authorization" "45c1f5e3f05d0"})
                bundle-result (:parsed-body response)]
-           (is (= 200 (:status response)))
-           (is (= (count-bundle-entities new-bundle)
-                  (count-bundle-result-entities (:results bundle-result)
-                                                "created"))
-               "All entities are created")))
+           (when (is (= 200 (:status response)))
+             (is (= (count-bundle-entities new-bundle)
+                    (count-bundle-result-entities (:results bundle-result)
+                                                  "created"))
+                 "All entities are created"))))
        (testing "Create"
          (let [bundle {:type "bundle"
                        :source "source"
@@ -254,57 +270,70 @@
                response (POST app
                               "ctia/bundle/import"
                               :body bundle
+                              :query-params {"patch-existing" false}
                               :headers {"Authorization" "45c1f5e3f05d0"})
                bundle-result (:parsed-body response)]
-           (is (= 200 (:status response)))
+           (when (is (= 200 (:status response)))
 
-           (is (every? #(= "created" %)
-                       (map :result (:results bundle-result)))
-               "All entities are created")
+             (is (every? #(= "created" %)
+                         (map :result (:results bundle-result)))
+                 "All entities are created")
 
-           (doseq [entity (concat indicators
-                                  sightings
-                                  (map #(resolve-ids bundle-result %)
-                                       relationships))]
-             (validate-entity-record
-              app
-              (find-result-by-original-id bundle-result (:id entity))
-              entity))))
-       (testing "Update"
-         (let [bundle
+             (doseq [entity (concat indicators
+                                    sightings
+                                    (map #(resolve-ids bundle-result %)
+                                         relationships))]
+               (validate-entity-record
+                 app
+                 (find-result-by-original-id bundle-result (:id entity))
+                 entity)))))
+       (testing "Update with partial"
+         (let [updated-indicators (set (map with-modified-description indicators))
+               bundle
                {:type "bundle"
                 :source "source"
-                :indicators (set (map with-modified-description indicators))
+                ;; partial entity updates are allowed (:producer is a required Indicator entry)
+                :indicators (into #{} (map #(select-keys % [:id :external_ids :description])) updated-indicators)
                 :sightings (set (map with-modified-description sightings))
                 :relationships (set (map with-modified-description relationships))}
-               response (POST app
-                              "ctia/bundle/import"
-                              :body bundle
-                              :headers {"Authorization" "45c1f5e3f05d0"})
-               bundle-result (:parsed-body response)]
-           (is (= 200 (:status response)))
-
-           (is (pos? (count (:results bundle-result))))
-
-           (is (every? #(= "exists" %)
-                       (map :result (:results bundle-result)))
-               "All existing entities are not updated")
-
-           (doseq [entity (concat indicators
-                                  sightings
-                                  (map #(resolve-ids bundle-result %)
-                                       relationships))]
-             (validate-entity-record
-              app
-              (find-result-by-original-id bundle-result (:id entity))
-              entity))))
+               test-update-with-partial (s/fn [patch-existing :- s/Bool]
+                                          (let [response (POST app
+                                                               "ctia/bundle/import"
+                                                               :body bundle
+                                                               :query-params (cond-> {}
+                                                                               patch-existing (assoc "patch-existing" patch-existing))
+                                                               :headers {"Authorization" "45c1f5e3f05d0"})
+                                                bundle-result (:parsed-body response)]
+                                            (when (is (= 200 (:status response)))
+                                              (is (pos? (count (:results bundle-result))))
+                                              (is (every? #(= (if patch-existing "updated" "exists") %)
+                                                          (map :result (:results bundle-result)))
+                                                  "All existing entities are updated")
+                                              (doseq [entity (if patch-existing
+                                                               (concat updated-indicators
+                                                                       (:sightings bundle)
+                                                                       (map #(resolve-ids bundle-result %)
+                                                                            (:relationships bundle)))
+                                                               (concat indicators
+                                                                       sightings
+                                                                       (map #(resolve-ids bundle-result %)
+                                                                            relationships)))]
+                                                (validate-entity-record
+                                                  app
+                                                  (find-result-by-original-id bundle-result (:id entity))
+                                                  entity)))))]
+           ;; order of these tests is important since they operate on the same entities
+           (testing "no patch existing"
+             (test-update-with-partial false))
+           (testing "patch existing"
+             (test-update-with-partial true))))
        (testing "Update and create"
          (let [indicator (mk-indicator 2000)
                sighting (first sightings)
-               relationship (mk-relationship 2000
-                                             sighting
-                                             indicator
-                                             "sighting-of")
+               relationship (mk-relationship 200
+                                              sighting
+                                              indicator
+                                              "sighting-of")
                bundle
                {:type "bundle"
                 :source "source"
@@ -314,18 +343,17 @@
                response (POST app
                               "ctia/bundle/import"
                               :body bundle
+                              :query-params {"patch-existing" true}
                               :headers {"Authorization" "45c1f5e3f05d0"})
                bundle-result (:parsed-body response)]
-           (is (= 200 (:status response)))
-
-           (is (pos? (count (:results bundle-result))))
-
-           (doseq [entity [indicator sighting
-                           (resolve-ids bundle-result relationship)]]
-             (validate-entity-record
-              app
-              (find-result-by-original-id bundle-result (:id entity))
-              entity))))
+           (when (is (= 200 (:status response)))
+             (is (pos? (count (:results bundle-result))))
+             (doseq [entity [indicator sighting
+                             (resolve-ids bundle-result relationship)]]
+               (validate-entity-record
+                 app
+                 (find-result-by-original-id bundle-result (:id entity))
+                 entity)))))
        (testing "Bundle with missing entities"
          (let [relationship (mk-relationship 2001
                                              (first sightings)
@@ -336,91 +364,141 @@
                        :relationships [relationship]}
                response-create (POST app
                                      "ctia/bundle/import"
-                                     :query-params {"external-key-prefixes" "custom-"}
+                                     :query-params {"external-key-prefixes" "custom-"
+                                                    "patch-existing" false}
                                      :body bundle
                                      :headers {"Authorization" "45c1f5e3f05d0"})
                bundle-result-create (:parsed-body response-create)]
-           (is (= 200 (:status response-create)))
-           (is (= [{:original_id (:id relationship),
-                    :result "error",
-                    :type :relationship,
-                    :error (str "A relationship cannot be created if a "
-                                "source or a target ref is still a transient "
-                                "ID (The source or target entity is probably "
-                                "not provided in the bundle)")}]
-                  (filter (fn [r] (= (:result r) "error"))
-                          (:results bundle-result-create)))
-               (str "A relationship cannot be created if the source and the "
-                    "target entities referenced by a transient ID are not "
-                    "included in the bundle."))))
+           (when (is (= 200 (:status response-create)))
+             (is (= [{:original_id (:id relationship),
+                      :result "error",
+                      :type :relationship,
+                      :error (str "A relationship cannot be created if a "
+                                  "source or a target ref is still a transient "
+                                  "ID (The source or target entity is probably "
+                                  "not provided in the bundle)")}]
+                    (:results bundle-result-create))))))
        (testing "Custom external prefix keys"
          (let [bundle {:type "bundle"
                        :source "source"
-                       :indicators (hash-set
-                                    (assoc (first indicators)
-                                           :external_ids
-                                           ["custom-2"]))}
+                       :indicators #{(assoc (first indicators)
+                                            :external_ids
+                                            ["custom-2"])}}
                response-create (POST app
                                      "ctia/bundle/import"
-                                     :query-params {"external-key-prefixes" "custom-"}
+                                     :query-params {"external-key-prefixes" "custom-"
+                                                    "patch-existing" false}
                                      :body bundle
                                      :headers {"Authorization" "45c1f5e3f05d0"})
                bundle-result-create (:parsed-body response-create)
                response-update (POST app
                                      "ctia/bundle/import"
-                                     :query-params {"external-key-prefixes" "custom-"}
+                                     :query-params {"external-key-prefixes" "custom-"
+                                                    "patch-existing" true}
                                      :body bundle
                                      :headers {"Authorization" "45c1f5e3f05d0"})
                bundle-result-update (:parsed-body response-update)]
-           (is (= 200 (:status response-create)))
-           (is (= 200 (:status response-update)))
+           (when (is (= 200 (:status response-create)))
+             (is (pos? (count (:results bundle-result-update))))
+             (is (every? #(= "created" %)
+                         (map :result (:results bundle-result-create)))
+                 "All new entities are created"))
 
-           (is (pos? (count (:results bundle-result-create))))
-           (is (pos? (count (:results bundle-result-update))))
+           (when (is (= 200 (:status response-update)))
+             (is (pos? (count (:results bundle-result-create))))
+             (is (every? #(= "updated" %)
+                         (map :result (:results bundle-result-update)))
+                 "All existing entities are updated"))))
+       (testing "schema failures"
+         (testing "Fail on creating partial entities"
+           (let [partial-indicator (-> (first indicators)
+                                       (assoc :external_ids ["custom-3"])
+                                       (dissoc :producer))
+                 bundle {:type "bundle"
+                         :source "source"
+                         :indicators #{partial-indicator}}
+                 response-create (POST app
+                                       "ctia/bundle/import"
+                                       :query-params {"external-key-prefixes" "custom-"
+                                                      "patch-existing" false}
+                                       :body bundle
+                                       :headers {"Authorization" "45c1f5e3f05d0"})
+                 bundle-result-create (:parsed-body response-create)]
+             (when (is (= 200 (:status response-create)))
+               (let [[{:keys [result error msg]}] (:results bundle-result-create)]
+                 (is (= 1 (count (:results bundle-result-create))))
+                 (is (= "error" result))
+                 (is (= "Entity validation Error" error))
+                 (is (str/ends-with? msg "- failed: (contains? % :producer) spec: :new-indicator/map\n"))))))
+         (testing "Fail on patching bad partial entities"
+           (let [bundle {:type "bundle"
+                         :source "source"
+                         :indicators #{(-> (first indicators)
+                                           (assoc :external_ids ["custom-3"]))}}
+                 response-create (POST app
+                                       "ctia/bundle/import"
+                                       :query-params {"external-key-prefixes" "custom-"
+                                                      "patch-existing" false}
+                                       :body bundle
+                                       :headers {"Authorization" "45c1f5e3f05d0"})
+                 bundle-result-create (:parsed-body response-create)
+                 response-update (POST app
+                                       "ctia/bundle/import"
+                                       :query-params {"external-key-prefixes" "custom-"
+                                                      "patch-existing" true}
+                                       :body (update bundle :indicators #(into #{} (map (fn [e]
+                                                                                          (assoc e :producer {:something :bad})))
+                                                                               %))
+                                       :headers {"Authorization" "45c1f5e3f05d0"})
+               bundle-result-update (:parsed-body response-update)]
+             (when (is (= 200 (:status response-create)))
+               (is (pos? (count (:results bundle-result-create))))
+               (is (every? #(= "created" %)
+                           (map :result (:results bundle-result-create)))
+                   "All new entities are created"))
 
-           (is (every? #(= "created" %)
-                       (map :result (:results bundle-result-create)))
-               "All new entities are created")
-           (is (every? #(= "exists" %)
-                       (map :result (:results bundle-result-update)))
-               "All existing entities are not updated")))
+             (when (is (= 400 (:status response-update)))
+               (is (= {:errors {:indicators #{{:producer "(not (instance? java.lang.String {:something :bad}))"}}}}
+                      bundle-result-update))))))
        (testing "Partial results with errors"
          (let [indicator-store-state (-> (get-store :indicator) :state)
                indexname (:index indicator-store-state)
                ;; close indicator index to produce ES errors on that store
-               _ (es-index/close! (:conn indicator-store-state) indexname)
-               bundle {:type "bundle"
-                       :source "source"
-                       :sightings [(mk-sighting 10)
-                                   (mk-sighting 11)]
-                       ;; Remove external_ids to avoid errors
-                       ;; coming from the search operation
-                       :indicators [(dissoc (mk-indicator 10)
-                                            :external_ids)]}
-               response-create (POST app
-                                     "ctia/bundle/import"
-                                     :body bundle
-                                     :headers {"Authorization" "45c1f5e3f05d0"})
-               bundle-result-create (:parsed-body response-create)]
-           (is (= 200 (:status response-create)))
-           (is (every? #(= "created" %)
-                       (->> (:results bundle-result-create)
-                            (filter #(= "sighting" %))
-                            (map :result)))
-               "All valid entities are created")
-           (doseq [entity (:sightings bundle)]
-             (validate-entity-record
-              app
-              (find-result-by-original-id bundle-result-create (:id entity))
-              entity))
-           (let [indicators (filter
-                             #(= :indicator (:type %))
-                             (:results bundle-result-create))]
-             (is (seq indicators)
-                 "The result collection for indicators is not empty")
-             (is (every? #(contains? % :error) indicators)))
-           ;; reopen index to enable cleaning
-           (es-index/open! (:conn indicator-store-state) indexname)))))))
+               _ (es-index/close! (:conn indicator-store-state) indexname)]
+           (try (let [bundle {:type "bundle"
+                              :source "source"
+                              :sightings [(mk-sighting 10)
+                                          (mk-sighting 11)]
+                              ;; Remove external_ids to avoid errors
+                              ;; coming from the search operation
+                              :indicators [(dissoc (mk-indicator 10)
+                                                   :external_ids)]}
+                      response-create (POST app
+                                            "ctia/bundle/import"
+                                            :body bundle
+                                            :query-params {"patch-existing" false}
+                                            :headers {"Authorization" "45c1f5e3f05d0"})
+                      bundle-result-create (:parsed-body response-create)]
+                  (when (is (= 200 (:status response-create)))
+                    (is (every? #(= "created" %)
+                                (->> (:results bundle-result-create)
+                                     (filter #(= "sighting" %))
+                                     (map :result)))
+                        "All valid entities are created")
+                    (doseq [entity (:sightings bundle)]
+                      (validate-entity-record
+                        app
+                        (find-result-by-original-id bundle-result-create (:id entity))
+                        entity))
+                    (let [indicators (filter
+                                       #(= :indicator (:type %))
+                                       (:results bundle-result-create))]
+                      (is (seq indicators)
+                          "The result collection for indicators is not empty")
+                      (is (every? #(contains? % :error) indicators)))))
+                (finally
+                  ;; reopen index to enable cleaning
+                  (es-index/open! (:conn indicator-store-state) indexname)))))))))
 
 (deftest ^:encoding bundle-import-non-utf-8-encoding
   (test-for-each-store-with-app
@@ -452,26 +530,6 @@
                            (get :description))))))))))
 
 (deftest bundle-import-should-not-allow-disabled-entities
-  (testing "disabled entities should be removed from Bundle schema"
-    (let [selected-keys    #{:asset :target-record :asset-properties}
-          set-of           (fn [model] (set (repeat 3 model)))
-          fake-bundle      {:id                    "http://ex.tld/ctia/bundle/bundle-5023697b-3857-4652-9b53-ccda297f9c3e"
-                            :source                "source"
-                            :type                  "bundle"
-                            :assets                (set-of asset-maximal)
-                            :asset_refs            #{"http://ex.tld/ctia/asset/asset-5023697b-3857-4652-9b53-ccda297f9c3e"}
-                            :asset_properties      (set-of asset-properties-maximal)
-                            :asset_properties_refs #{"http://ex.tld/ctia/asset-properties/asset-properties-5023697b-3857-4652-9b53-ccda297f9c3e"}
-                            :target_record_refs    #{"http://ex.tld/ctia/target-record/target-record-5023697b-3857-4652-9b53-ccda297f9c3e"}
-                            :target_records        (set-of target-record-maximal)}
-          api-handler-svcs {:FeaturesService {:entity-enabled? #(contains? selected-keys %)}}]
-      (s/set-fn-validation! false)    ;; otherwise it fails for incomplete APIHandlerServices passed into `prep-bundle-schema`
-      (is (map? (s/validate (bundle.routes/prep-bundle-schema api-handler-svcs) fake-bundle)))
-      (is (thrown? Exception
-                   (s/validate
-                    (bundle.routes/prep-bundle-schema api-handler-svcs)
-                    (assoc fake-bundle :incidents (set-of incident-maximal))))
-          "Bundle schema with a key that's not explicitly allowed shouldn't validate")))
   (testing "Attempts to import bundle with disabled entities should fail"
     (let [disable [:asset :asset-properties :actor :sighting]]
       (helpers/with-config-transformer
@@ -486,12 +544,32 @@
                                                "foouser"
                                                "foogroup"
                                                "user")
+           ;; moved inside a context with `app` so APIHandlerServices can be stubbed
+           (testing "disabled entities should be removed from Bundle schema"
+             (let [selected-keys    #{:asset :target-record :asset-properties}
+                   set-of           (fn [model] (set (repeat 3 model)))
+                   fake-bundle      {:id                    "http://ex.tld/ctia/bundle/bundle-5023697b-3857-4652-9b53-ccda297f9c3e"
+                                     :source                "source"
+                                     :type                  "bundle"
+                                     :assets                (set-of asset-maximal)
+                                     :asset_refs            #{"http://ex.tld/ctia/asset/asset-5023697b-3857-4652-9b53-ccda297f9c3e"}
+                                     :asset_properties      (set-of asset-properties-maximal)
+                                     :asset_properties_refs #{"http://ex.tld/ctia/asset-properties/asset-properties-5023697b-3857-4652-9b53-ccda297f9c3e"}
+                                     :target_record_refs    #{"http://ex.tld/ctia/target-record/target-record-5023697b-3857-4652-9b53-ccda297f9c3e"}
+                                     :target_records        (set-of target-record-maximal)}
+                   api-handler-svcs (assoc-in (app->APIHandlerServices app) [:FeaturesService :entity-enabled?] #(contains? selected-keys %))]
+               (is (map? (s/validate (core/prep-bundle-schema api-handler-svcs) fake-bundle)))
+               (is (thrown? clojure.lang.ExceptionInfo
+                            (s/validate
+                              (core/prep-bundle-schema api-handler-svcs)
+                              (assoc fake-bundle :incidents (set-of incident-maximal))))
+                   "Bundle schema with a key that's not explicitly allowed shouldn't validate")))
            (let [new-bundle               (deep-dissoc-entity-ids bundle-maximal)
                  resp                     (POST app "ctia/bundle/import"
                                             :body new-bundle
                                             :headers {"Authorization" "45c1f5e3f05d0"})
                  disallowed-keys-expected (->> disable
-                                               (mapcat #'bundle.routes/entity->bundle-keys)
+                                               (mapcat core/entity->bundle-keys)
                                                set)
                  disallowed-keys-res      (->> resp
                                                :body
@@ -556,7 +634,7 @@
                                       (repeat (* 10 core/find-by-external-ids-limit))
                                       (map #(assoc % :id (id/make-transient-id nil))))
            more-indicators (map mk-indicator (range 1 10))
-           all-indicators (set (concat duplicated-indicators more-indicators))
+           all-indicators (into (set duplicated-indicators) more-indicators)
            duplicated-external-id (-> duplicated-indicators first :external_ids first)
            all-external-ids (mapcat :external_ids all-indicators)
            bundle {:type "bundle"
@@ -581,9 +659,7 @@
                       count)
                  max-matched)))
        (is (= (set all-external-ids)
-              (->> matched-entities
-                   (mapcat :external_ids)
-                   set))
+              (into #{} (mapcat :external_ids) matched-entities))
            "all-pages must match at least one entity for each existing external-id")))))
 
 (deftest find-by-external-ids-test
@@ -600,30 +676,29 @@
            bundle {:type "bundle"
                    :source "source"
                    :indicators (set (map mk-indicator (range nb-entities)))}
-           response-create (POST app
-                                 "ctia/bundle/import"
-                                 :body bundle
-                                 :headers {"Authorization" "45c1f5e3f05d0"})
+           do-import #(POST app
+                            "ctia/bundle/import"
+                            :body bundle
+                            :query-params {"patch-existing" true}
+                            :headers {"Authorization" "45c1f5e3f05d0"})
+           response-create (do-import)
            bundle-result-create (:parsed-body response-create)
-           response-update (POST app
-                                 "ctia/bundle/import"
-                                 :body bundle
-                                 :query-params {"external-key-prefixes" "ctia-"}
-                                 :headers {"Authorization" "45c1f5e3f05d0"})
+           response-update (do-import)
            bundle-result-update (:parsed-body response-update)]
        (is (= 200 (:status response-create)))
        (is (= 200 (:status response-update)))
        (is (= nb-entities
-              (count (:results bundle-result-create))))
+              (count (:results bundle-result-create)))
+           bundle-result-create)
        (is (= nb-entities
               (count (:results bundle-result-update))))
 
        (is (every? #(= "created" %)
                    (map :result (:results bundle-result-create)))
            "All new entities are created")
-       (is (every? #(= "exists" %)
+       (is (every? #(= "updated" %)
                    (map :result (:results bundle-result-update)))
-           "All existing entities are not updated")))))
+           "All existing entities are updated")))))
 
 (def bundle-fixture-1
   (let [indicators [(mk-indicator 0)
@@ -1240,49 +1315,173 @@
                                           "foogroup"
                                           "user")
 
-      (testing "relationships are created for asset mappings/properties"
-        (let [new-bundle (-> bundle-minimal
-                             (assoc :assets #{{:asset_type "device"
-                                               :valid_time {:start_time #inst "2023-03-02T19:14:46.658-00:00"}
-                                               :schema_version "1.0.19"
-                                               :type "asset"
-                                               :source "something"
-                                               :external_ids ["transient:89497b1a-1e42-4258-81f0-1d394fe1a90f"]
-                                               :title "something"
-                                               :source_uri "https://something"
-                                               :id "transient:89497b1a-1e42-4258-81f0-1d394fe1a90f"
-                                               :timestamp #inst "2023-03-02T19:14:46.658-00:00"}}
-                                    :asset_mappings #{{:asset_type "device"
-                                                       :valid_time {:start_time #inst "2023-03-02T19:14:46.660-00:00"}
-                                                       :stability "Managed"
-                                                       :schema_version ctim-schema-version
-                                                       :observable {:value "something" :type "hostname"}
-                                                       :asset_ref "transient:89497b1a-1e42-4258-81f0-1d394fe1a90f"
-                                                       :type "asset-mapping"
-                                                       :source "Something"
-                                                       :source_uri "https://something"
-                                                       :id "transient:07b82ae5-0757-4e72-bda4-9a4cd62986e1"
-                                                       :timestamp #inst "2023-03-02T19:14:46.660-00:00"
-                                                       :specificity "Unique"
-                                                       :confidence "Unknown"}}
-                                    :asset_properties #{{:properties [{:name "something" :value "66"}]
-                                                         :valid_time {:start_time #inst "2023-03-02T19:14:46.660-00:00"}
-                                                         :schema_version ctim-schema-version
-                                                         :asset_ref "transient:89497b1a-1e42-4258-81f0-1d394fe1a90f"
-                                                         :type "asset-properties"
-                                                         :source "somethintg"
-                                                         :source_uri "https://something"
-                                                         :id "transient:8ae8d2b0-950b-402d-b053-935da85582a3"
-                                                         :timestamp #inst "2023-03-02T19:14:46.783-00:00"}}
-                                    :relationships #{{:source_ref "https://private.intel.int.iroh.site:443/ctia/incident/incident-4fb91401-36a5-46d1-b0aa-01af02f00a7a", :target_ref "transient:07b82ae5-0757-4e72-bda4-9a4cd62986e1", :relationship_type "related-to", :source "IROH Risk Score Service"}
-                                                     {:source_ref "https://private.intel.int.iroh.site:443/ctia/incident/incident-4fb91401-36a5-46d1-b0aa-01af02f00a7a", :target_ref "transient:8ae8d2b0-950b-402d-b053-935da85582a3", :relationship_type "related-to", :source "IROH Risk Score Service"}
-                                                     {:source_ref "https://private.intel.int.iroh.site:443/ctia/incident/incident-4fb91401-36a5-46d1-b0aa-01af02f00a7a", :target_ref "transient:89497b1a-1e42-4258-81f0-1d394fe1a90f", :relationship_type "related-to", :source "IROH Risk Score Service"}}))
-              response (POST app
-                             "ctia/bundle/import"
-                             :body new-bundle
-                             :headers {"Authorization" "45c1f5e3f05d0"})
-              {:keys [results]} (:parsed-body response)]
-          (is (= 200 (:status response)))
-          (is (= 6 (count results)))
-          (is (every? (comp #{"created"} :result) results)
-              (pr-str (mapv :result results))))))))
+      (let [[oldv1 oldv2 newv1 newv2 newv3] (map (comp str gensym) '[oldv1 oldv2 newv1 newv2 newv3])
+            [relationship1-original-id
+             asset_mapping1-original-id
+             asset_property1-original-id
+             asset1-original-id
+             asset2-original-id] (map #(str "transient:" % "_" (random-uuid))
+                                      '[relationship1-original-id
+                                        asset_mapping1-original-id
+                                        asset_property1-original-id
+                                        asset1-original-id
+                                        asset2-original-id])
+            asset1 {:asset_type "device"
+                    :valid_time {:start_time #inst "2023-03-02T19:14:46.658-00:00"}
+                    :schema_version "1.0.19"
+                    :type "asset"
+                    :source "something"
+                    :external_ids [(str "asset-1" (random-uuid))]
+                    :title "something"
+                    :source_uri "https://something"
+                    :id asset1-original-id
+                    :timestamp #inst "2023-03-02T19:14:46.658-00:00"}
+            asset_mapping1 {:asset_type "device"
+                            :valid_time {:start_time #inst "2023-03-02T19:14:46.660-00:00"}
+                            :stability "Managed"
+                            :schema_version ctim-schema-version
+                            :observable {:value "something" :type "hostname"}
+                            :asset_ref asset1-original-id
+                            :type "asset-mapping"
+                            :source "Something"
+                            :source_uri "https://something"
+                            :id asset_mapping1-original-id
+                            :timestamp #inst "2023-03-02T19:14:46.660-00:00"
+                            :specificity "Unique"
+                            :confidence "Unknown"}
+            old-properties [{:name "something1" :value oldv1}
+                            {:name "something2" :value oldv2}]
+            asset_property1 {:properties old-properties
+                             :valid_time {:start_time #inst "2023-03-02T19:14:46.660-00:00"}
+                             :schema_version ctim-schema-version
+                             :asset_ref asset1-original-id
+                             :type "asset-properties"
+                             :source "something"
+                             :source_uri "https://something"
+                             :id asset_property1-original-id
+                             :timestamp #inst "2023-03-02T19:14:46.783-00:00"}
+            new-bundle (-> bundle-minimal
+                           (assoc :assets #{asset1}
+                                  :asset_mappings #{asset_mapping1}
+                                  :asset_properties #{asset_property1}
+                                  :relationships #{{:id relationship1-original-id
+                                                    :source_ref "https://private.intel.int.iroh.site:443/ctia/incident/incident-4fb91401-36a5-46d1-b0aa-01af02f00a7a"
+                                                    :target_ref asset_mapping1-original-id, :relationship_type "related-to", :source "IROH Risk Score Service"}
+                                                   {:source_ref "https://private.intel.int.iroh.site:443/ctia/incident/incident-4fb91401-36a5-46d1-b0aa-01af02f00a7a"
+                                                    :target_ref asset_property1-original-id, :relationship_type "related-to", :source "IROH Risk Score Service"}
+                                                   {:source_ref "https://private.intel.int.iroh.site:443/ctia/incident/incident-4fb91401-36a5-46d1-b0aa-01af02f00a7a"
+                                                    :target_ref asset1-original-id, :relationship_type "related-to", :source "IROH Risk Score Service"}}))
+            create-response (POST app
+                                  "ctia/bundle/import"
+                                  :body new-bundle
+                                  :headers {"Authorization" "45c1f5e3f05d0"})
+            {create-results :results :as create-bundle-results} (:parsed-body create-response)
+            ;; resolve in order of creation/patch for easier debugging
+            asset1-id (find-id-by-original-id :asset1-id create-bundle-results asset1-original-id)
+            asset_property1-id (find-id-by-original-id :asset_property1-id create-bundle-results asset_property1-original-id)
+            asset_mapping1-id (find-id-by-original-id :asset_mapping1-id create-bundle-results asset_mapping1-original-id)
+            relationship1-id (find-id-by-original-id :relationship1-id create-bundle-results relationship1-original-id)]
+        (testing "relationships are created for asset mappings/properties"
+          (when (is (= 200 (:status create-response)))
+            (is (= 6 (count create-results)))
+            (is (every? (comp #{"created"} :result) create-results)
+                (pr-str (mapv :result create-results)))))
+        (testing "asset-properties and asset-mappings are patched"
+          (let [new-properties [{:name "something1" :value newv1}
+                                {:name "something-else" :value newv2}]
+                updated-asset_property1 (-> asset_property1
+                                            (select-keys [:id :asset_ref :type])
+                                            (assoc :properties new-properties))
+                updated-asset_mapping1 asset_mapping1
+                update-bundle (-> bundle-minimal
+                                  (assoc :assets #{asset1}
+                                         :asset_mappings #{updated-asset_mapping1}
+                                         :asset_properties #{updated-asset_property1}))
+                test-merge-strategy (fn [msg query-params expected-properties]
+                                      (testing msg
+                                        (let [update-response (POST app
+                                                                    "ctia/bundle/import"
+                                                                    :body update-bundle
+                                                                    :query-params (assoc query-params "patch-existing" true)
+                                                                    :headers {"Authorization" "45c1f5e3f05d0"})
+                                              {update-results :results :as update-bundle-result} (:parsed-body update-response)]
+                                          (when (is (= 200 (:status update-response)))
+                                            (is (= 3 (count update-results)) update-results)
+                                            (is (every? (comp #{"updated"} :result) update-results)
+                                                (pr-str (mapv :result update-results)))
+                                            (let [get-stored (fn [entity]
+                                                               (let [realized-id (some (fn [{:keys [original_id id]}]
+                                                                                         (when (= original_id (:id entity))
+                                                                                           id))
+                                                                                       update-results)
+                                                                     _ (assert realized-id [(:id entity) update-results])
+                                                                     response (GET app
+                                                                                   (format "ctia/%s/%s"
+                                                                                           (name (:type entity))
+                                                                                           (encode realized-id))
+                                                                                   :headers {"Authorization" "45c1f5e3f05d0"})]
+                                                                 (:parsed-body response)))]
+                                              (testing ":asset_mappings"
+                                                (let [stored (get-stored updated-asset_mapping1)]
+                                                  ;; no interesting merging logic on asset mappings
+                                                  (is (= (dissoc stored :id :schema_version :asset_ref :owner :groups :timestamp)
+                                                         (-> updated-asset_mapping1
+                                                             (dissoc :id :schema_version :asset_ref :timestamp)
+                                                             (assoc :tlp "green")
+                                                             (assoc-in [:valid_time :end_time] #inst "2525-01-01T00:00:00.000-00:00"))))))
+                                              (testing ":asset_properties"
+                                                (let [stored (get-stored updated-asset_property1)]
+                                                  (is (= expected-properties
+                                                         (:properties stored)))
+                                                  (is (= #inst "2525-01-01T00:00:00.000-00:00"
+                                                         (get-in stored [:valid_time :end_time]))))))))))]
+            ;; the order in which we test these merge strategies is important since we're patching the same entities.
+            (test-merge-strategy "with asset_properties-merge-strategy=merge-overriding-previous"
+                                 {"asset_properties-merge-strategy" "merge-overriding-previous"}
+                                 [{:name "something-else" :value newv2}
+                                  {:name "something1" :value newv1}
+                                  {:name "something2" :value oldv2}])
+            (test-merge-strategy "no asset_properties merge strategy"
+                                 {}
+                                 new-properties)))
+        (testing "patched relationships, asset mappings/properties resolve refs after creating other entities"
+          (let [;; on existing entities, patch asset_ref to a newly created asset,
+                ;; and :{source/target}_ref to newly created entities
+                asset2-external-id (str "asset-2-" (random-uuid))
+                asset2 (assoc asset1 :id asset2-original-id :external_ids [asset2-external-id])
+                updated-asset_property1 {:id asset_property1-id
+                                         :asset_ref asset2-original-id} 
+                updated-asset_mapping1 {:id asset_mapping1-id
+                                        :asset_ref asset2-original-id} 
+                updated-relationship1 {:id relationship1-id
+                                       :source_ref asset2-original-id
+                                       :target_ref asset2-original-id}
+                create+update-bundle (-> bundle-minimal
+                                         (assoc :assets #{asset2}
+                                                :asset_properties #{updated-asset_property1}
+                                                :asset_mappings #{updated-asset_mapping1}
+                                                :relationships #{updated-relationship1}))
+                create+update-response (POST app
+                                             "ctia/bundle/import"
+                                             :body create+update-bundle
+                                             :query-params {"patch-existing" true}
+                                             :headers {"Authorization" "45c1f5e3f05d0"})
+                {create+update-results :results :as create+update-bundle-result} (:parsed-body create+update-response)]
+            (when (is (= 200 (:status create+update-response)))
+              (let [asset2-id (find-id-by-original-id :asset2-id create+update-bundle-result asset2-original-id)]
+                (is (= 4 (count create+update-results)))
+                (is (= #{{:id asset_mapping1-id
+                          :result "updated"
+                          :type :asset-mapping}
+                         {:id asset_property1-id
+                          :result "updated"
+                          :type :asset-properties}
+                         {:id asset2-id
+                          :original_id asset2-original-id
+                          :result "created"
+                          :type :asset
+                          :external_ids [asset2-external-id]}
+                         {:id relationship1-id
+                          :result "updated"
+                          :type :relationship}}
+                       (set create+update-results)))))))))))

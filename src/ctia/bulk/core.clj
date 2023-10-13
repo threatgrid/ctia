@@ -42,7 +42,9 @@
 
 (s/defn create-fn
   "return the create function provided an entity type key"
-  [k auth-identity params
+  [k 
+   auth-identity :- auth/AuthIdentity
+   params
    {{:keys [get-store]} :StoreService} :- APIHandlerServices]
   #(-> (get-store k)
        (store/create-record
@@ -50,9 +52,37 @@
          (auth/ident->map auth-identity)
          params)))
 
-(s/defn create-entities
+(s/defschema EntitiesResult
+  [(s/conditional
+     string? schemas/ID
+     :else {(s/optional-key :error) (s/conditional
+                                      string? s/Str
+                                      :else {:type (s/conditional
+                                                     string? s/Str
+                                                     :else s/Keyword)
+                                             :reason s/Str
+                                             (s/optional-key :index) s/Str
+                                             (s/optional-key :index_uuid) s/Str})
+            (s/optional-key :msg) s/Str
+            (s/optional-key :entity) (s/pred map?)
+            (s/optional-key :type) (s/conditional
+                                     string? s/Str
+                                     :else s/Keyword)
+            (s/optional-key :id) (s/maybe s/Str)
+            s/Keyword s/Any})])
+
+(s/defschema EnvelopedEntities+TempIDs
+  (s/maybe
+    {:data EntitiesResult
+     (s/optional-key :tempids) TempIDs}))
+
+(s/defn create-entities :- EnvelopedEntities+TempIDs
   "Create many entities provided their type and returns a list of ids"
-  [new-entities entity-type tempids auth-identity params
+  [new-entities :- flows/Entities
+   entity-type :- s/Keyword
+   tempids :- TempIDs
+   auth-identity :- auth/AuthIdentity
+   params
    services :- APIHandlerServices]
   (when (seq new-entities)
     (let [{:keys [realize-fn new-spec]} (get (all-entities) entity-type)]
@@ -82,9 +112,11 @@
                      (st/assoc s/Keyword s/Any))
    s/Keyword s/Any})
 
-(s/defn read-entities
+(s/defn read-entities :- [(s/maybe (s/pred map?))]
   "Retrieve many entities of the same type provided their ids and common type"
-  [ids entity-type auth-identity
+  [ids :- [s/Str]
+   entity-type :- s/Keyword
+   auth-identity :- auth/AuthIdentity
    {{:keys [get-store]} :StoreService
     :as services} :- ReadEntitiesServices]
   (let [store (get-store entity-type)]
@@ -125,9 +157,19 @@
                  concat
                  (map #(to-long-id % services) not-found)))))
 
+(defn make-patch-bulk-enveloped-result
+  [fm]
+  (-> fm
+      flows/make-enveloped-result
+      (update :data #(mapv (fn [{:keys [error id] :as result}]
+                             (if error result id))
+                           %))))
+
 (s/defn delete-fn
   "return the delete function provided an entity type key"
-  [k auth-identity params
+  [k 
+   auth-identity :- auth/AuthIdentity
+   params
    {{:keys [get-store]} :StoreService} :- APIHandlerServices]
   #(-> (get-store k)
        (store/bulk-delete
@@ -137,7 +179,9 @@
 
 (s/defn update-fn
   "return the update function provided an entity type key"
-  [k auth-identity params
+  [k
+   auth-identity :- auth/AuthIdentity
+   params
    {{:keys [get-store]} :StoreService} :- APIHandlerServices]
   #(-> (get-store k)
        (store/bulk-update
@@ -159,7 +203,10 @@
 
 (s/defn delete-entities
   "delete many entities provided their type and returns a list of ids"
-  [entity-ids entity-type auth-identity params
+  [entity-ids 
+   entity-type
+   auth-identity :- auth/AuthIdentity
+   params
    services :- APIHandlerServices]
   (when (seq entity-ids)
     (let [get-fn #(read-entities %  entity-type auth-identity services)]
@@ -176,7 +223,10 @@
 
 (s/defn update-entities
   "update many entities provided their type and returns errored and successed entities' ids"
-  [entities entity-type auth-identity params
+  [entities 
+   entity-type
+   auth-identity :- auth/AuthIdentity
+   params
    services :- APIHandlerServices]
   (when (seq entities)
     (let [get-fn #(read-entities %  entity-type auth-identity services)
@@ -196,24 +246,32 @@
 
 (s/defn patch-entities
   "patch many entities provided their type and returns errored and successed entities' ids"
-  [patches entity-type auth-identity params
-   services :- APIHandlerServices]
+  [patches
+   entity-type 
+   tempids :- TempIDs
+   auth-identity :- auth/AuthIdentity
+   params
+   services :- APIHandlerServices
+   {:keys [make-result]} :- {(s/optional-key :make-result) s/Any}]
   (when (seq patches)
     (let [get-fn #(read-entities %  entity-type auth-identity services)
           {:keys [realize-fn new-spec]} (get (all-entities) entity-type)]
       (flows/patch-flow
-       :services services
-       :get-fn get-fn
-       :realize-fn realize-fn
-       :update-fn (update-fn entity-type auth-identity params services)
-       :long-id-fn #(with-long-id % services)
-       :entity-type entity-type
-       :identity auth-identity
-       :patch-operation :replace
-       :partial-entities patches
-       :spec new-spec
-       :make-result make-bulk-result
-       :get-success-entities (get-success-entities-fn :updated)))))
+        :services services
+        :get-fn get-fn
+        :realize-fn realize-fn
+        :update-fn (update-fn entity-type auth-identity params services)
+        :long-id-fn #(with-long-id % services)
+        :entity-type entity-type
+        :identity auth-identity
+        :patch-operation :replace
+        :partial-entities patches
+        :tempids tempids
+        :spec new-spec
+        :make-result (or make-result make-bulk-result)
+        :get-success-entities (get-success-entities-fn :updated)))))
+
+(s/defschema BulkEntities {s/Keyword flows/Entities})
 
 (defn gen-bulk-from-fn
   "Kind of fmap but adapted for bulk
@@ -237,7 +295,7 @@
     (catch java.util.concurrent.ExecutionException e
       (throw (.getCause e)))))
 
-(defn merge-tempids
+(s/defn merge-tempids :- TempIDs
   "Merges tempids from all entities
    {:entity-type1 {:data []
                    :tempids {transientid1 id1
@@ -255,7 +313,7 @@
 
   The create-entities set the enveloped-result? to True in the flow
   configuration to get :data and :tempids for each entity in the result."
-  [entities-by-type]
+  [entities-by-type :- {s/Keyword EnvelopedEntities+TempIDs}]
   (into {}
         (map (fn [[_ v]] (:tempids v)))
         entities-by-type))
@@ -278,15 +336,19 @@
     (bad-request! (str "Bulk max number of entities: "
                        (get-bulk-max-size get-in-config)))))
 
+(s/defschema BulkRefs {s/Keyword EntitiesResult})
+
 (s/defschema BulkRefs+TempIDs
-  {:bulk-refs {s/Keyword [s/Any]}
+  {:bulk-refs BulkRefs
    :tempids TempIDs})
+
+(s/defschema BulkRefsAssocTempIDs
+  (st/assoc BulkRefs (s/optional-key :tempids) TempIDs))
 
 (s/defn import-bulks-with :- BulkRefs+TempIDs
   "Import each new-bulk in order while accumulating tempids."
-  [f :- (s/=> {s/Keyword {:data [s/Any]
-                          :tempids TempIDs}}
-              (s/named (s/pred map?) 'new-bulk)
+  [f :- (s/=> {s/Keyword EnvelopedEntities+TempIDs}
+              BulkEntities
               TempIDs)
    new-bulks
    tempids :- TempIDs]
@@ -300,7 +362,7 @@
            :tempids tempids}
           new-bulks))
 
-(s/defn create-bulk
+(s/defn create-bulk :- BulkRefsAssocTempIDs
   "Creates entities in bulk. To define relationships between entities,
    transient IDs can be used. They are automatically converted into
    real IDs.
@@ -308,7 +370,7 @@
    1. Creates all entities except Relationships
    2. Creates Relationships with mapping between transient and real IDs"
   ([new-bulk login services :- APIHandlerServices] (create-bulk new-bulk {} login {} services))
-  ([new-bulk
+  ([new-bulk :- BulkEntities
     tempids :- TempIDs
     login
     params
@@ -334,22 +396,40 @@
        (seq tempids) (assoc :tempids tempids)))))
 
 (s/defn fetch-bulk
-  [bulk auth-identity
+  [bulk 
+   auth-identity :- auth/AuthIdentity
    services :- APIHandlerServices]
   (ent/un-store-map
    (gen-bulk-from-fn read-entities bulk auth-identity services)))
 
 (s/defn delete-bulk
-  [bulk auth-identity params
+  [bulk 
+   auth-identity :- auth/AuthIdentity
+   params
    services :- APIHandlerServices]
   (gen-bulk-from-fn delete-entities bulk auth-identity params services))
 
 (s/defn update-bulk
-  [bulk auth-identity params
+  [bulk 
+   auth-identity :- auth/AuthIdentity
+   params
    services :- APIHandlerServices]
   (gen-bulk-from-fn update-entities bulk auth-identity params services))
 
 (s/defn patch-bulk
-  [bulk auth-identity params
-   services :- APIHandlerServices]
-  (gen-bulk-from-fn patch-entities bulk auth-identity params services))
+  ([bulk
+    tempids :- TempIDs
+    auth-identity :- auth/AuthIdentity
+    params
+    services :- APIHandlerServices]
+   (patch-bulk bulk tempids auth-identity params services {}))
+  ([bulk
+    tempids :- TempIDs
+    auth-identity :- auth/AuthIdentity
+    params
+    services :- APIHandlerServices
+    {:keys [enveloped-result?] :as opts}]
+   (let [entities (gen-bulk-from-fn patch-entities bulk tempids auth-identity params services (select-keys opts [:make-result]))]
+     (cond-> entities
+       enveloped-result? (-> (update-vals :data)
+                             (assoc :tempids (into tempids (merge-tempids entities))))))))

@@ -286,6 +286,11 @@
   (st/dissoc
    (csu/recursive-open-schema-version CTIMBundle) :casebooks))
 
+(s/defschema PartialBundle
+  (st/optional-keys-schema
+    (st/dissoc
+      (csu/recursive-open-schema-version CTIMBundle) :casebooks)))
+
 ;; common
 
 (s/defschema TLP
@@ -334,9 +339,18 @@
                      s/Keyword s/Any}
    s/Keyword        s/Any})
 
-(defn transient-id?
-  [id]
-  (and id (some? (re-matches id/transient-id-re id))))
+(s/defn transient-id? :- s/Bool
+  "True only if id is a transient id."
+  [id :- (s/maybe s/Str)]
+  (boolean
+    (and id (re-matches id/transient-id-re id))))
+
+(s/defn non-transient-id? :- s/Bool
+  "True only if id is a long or short id."
+  [id :- (s/maybe s/Str)]
+  (boolean
+    (and id (or (re-matches id/short-id-re id)
+                (re-matches id/long-id-re id)))))
 
 (s/defschema ESSortMode (s/enum "max" "min" "sum" "avg" "median"))
 
