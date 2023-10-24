@@ -1524,7 +1524,7 @@
                                         (let [update-response (POST app
                                                                     "ctia/bundle/import"
                                                                     :body update-bundle
-                                                                    :query-params (assoc query-params "patch-existing" true)
+                                                                    :query-params query-params
                                                                     :headers {"Authorization" "45c1f5e3f05d0"})
                                               {update-results :results :as update-bundle-result} (:parsed-body update-response)]
                                           (when (is (= 200 (:status update-response)))
@@ -1539,13 +1539,22 @@
                                                                  (:parsed-body response)))]
                                               (let [stored (get-stored incident1-id)]
                                                 (is (= expected-tactics (:tactics stored)))
-                                                (is (= expected-techniques (:techniques stored)))))))))]
+                                                (is (= expected-techniques (:techniques stored)))))))))
+                test-patch-and-merge-previous! #(test-merge-strategy "with incident-tactics-techniques-merge-strategy=merge-previous"
+                                                                     {"incident-tactics-techniques-merge-strategy" "merge-previous"
+                                                                      "patch-existing" true}
+                                                                     {:expected-tactics merged-tactics
+                                                                      :expected-techniques merged-techniques})]
             ;; the order in which we test these merge strategies is important since we're patching the same entities.
-            (test-merge-strategy "with incident-tactics-techniques-merge-strategy=merge-previous"
-                                 {"incident-tactics-techniques-merge-strategy" "merge-previous"}
-                                 {:expected-tactics merged-tactics
-                                  :expected-techniques merged-techniques})
+            (test-patch-and-merge-previous!)
             (test-merge-strategy "default incident-tactics-techniques-merge-strategy"
-                                 {}
+                                 {"patch-existing" true}
                                  {:expected-tactics new-tactics
-                                  :expected-techniques new-techniques})))))))
+                                  :expected-techniques new-techniques})
+            ;; reset to merged
+            (test-patch-and-merge-previous!)
+            ;; old (merged) values should be preserved
+            (test-merge-strategy "no patching"
+                                 {}
+                                 {:expected-tactics merged-tactics
+                                  :expected-techniques merged-techniques})))))))
