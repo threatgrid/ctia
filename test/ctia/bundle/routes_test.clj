@@ -1541,11 +1541,11 @@
                                                 (is (= expected-tactics (:tactics stored)))
                                                 (is (= expected-techniques (:techniques stored)))))))))]
             ;; the order in which we test these merge strategies is important since we're patching the same entities.
-            (test-merge-strategy "with asset_properties-merge-strategy=merge-overriding-previous"
+            (test-merge-strategy "with incident-tactics-techniques-merge-strategy=merge-previous"
                                  {"incident-tactics-techniques-merge-strategy" "merge-previous"}
                                  {:expected-tactics merged-tactics
                                   :expected-techniques merged-techniques})
-            (test-merge-strategy "no asset_properties merge strategy"
+            (test-merge-strategy "default incident-tactics-techniques-merge-strategy"
                                  {}
                                  {:expected-tactics new-tactics
                                   :expected-techniques new-techniques})))))))
