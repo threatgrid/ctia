@@ -1506,7 +1506,7 @@
             new-techniques (shuffle ["T0003" "T0004"])
             merged-techniques ["T0001" "T0002" "T0003" "T0004"]
             new-bundle (-> bundle-minimal
-                           (assoc :incidents #{(assoc incident-maximal :d incident1-original-id)}))
+                           (assoc :incidents #{(assoc incident-maximal :id incident1-original-id)}))
             create-response (POST app
                                   "ctia/bundle/import"
                                   :body new-bundle
