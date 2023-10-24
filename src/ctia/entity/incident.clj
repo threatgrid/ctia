@@ -1,17 +1,23 @@
 (ns ctia.entity.incident
   (:require
-   [clojure.string :as str]
-   [java-time.api :as jt]
    [clj-momo.lib.clj-time.core :as time]
+   [clojure.string :as str]
    [ctia.domain.entities
     :refer [default-realize-fn un-store with-long-id]]
    [ctia.entity.feedback.graphql-schemas :as feedback]
    [ctia.entity.relationship.graphql-schemas :as relationship-graphql]
    [ctia.flows.crud :as flows]
+   [ctia.flows.schemas :refer [with-error]]
+   [ctia.graphql.delayed :as delayed]
    [ctia.http.routes.common :as routes.common]
    [ctia.http.routes.crud :as routes.crud]
    [ctia.lib.compojure.api.core :refer [POST routes]]
-   [ctia.schemas.core :refer [APIHandlerServices def-acl-schema def-stored-schema SortExtensionDefinitions]]
+   [ctia.schemas.core :refer [APIHandlerServices
+                              GraphQLRuntimeContext
+                              RealizeFnResult
+                              SortExtensionDefinitions
+                              def-acl-schema def-stored-schema
+                              lift-realize-fn-with-context]]
    [ctia.schemas.graphql.flanders :as flanders]
    [ctia.schemas.graphql.helpers :as g]
    [ctia.schemas.graphql.ownership :as go]
@@ -24,6 +30,7 @@
    [ctim.schemas.vocabularies :as vocs]
    [flanders.schema :as fs]
    [flanders.utils :as fu]
+   [java-time.api :as jt]
    [ring.swagger.schema :refer [describe]]
    [ring.util.http-response :refer [not-found ok]]
    [schema-tools.core :as st]
@@ -67,8 +74,22 @@
 (s/defschema ESPartialStoredIncident
   (st/optional-keys-schema ESStoredIncident))
 
-(def realize-incident
+(def incident-default-realize
   (default-realize-fn "incident" NewIncident StoredIncident))
+
+(s/defn realize-incident
+  :- (RealizeFnResult (with-error StoredIncident))
+  [new-obj id tempids ident-map & [prev-obj]]
+  (delayed/fn :- (with-error StoredIncident)
+    [rt-ctx :- GraphQLRuntimeContext]
+    (let [rfn (lift-realize-fn-with-context
+               incident-default-realize rt-ctx)
+          now (time/internal-now)]
+      (-> (rfn new-obj id tempids ident-map prev-obj)
+          (assoc :timestamp
+                 (or (:timestamp new-obj)
+                     (:timestamp prev-obj)
+                     now))))))
 
 (s/defschema IncidentStatus
   (fs/->schema vocs/Status))
