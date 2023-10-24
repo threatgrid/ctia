@@ -12,7 +12,8 @@
                                 NewBundleExport
                                 BundleExportIds
                                 BundleExportOptions
-                                BundleExportQuery]]
+                                BundleExportQuery
+                                IncidentTacticsTechniquesMergeStrategy]]
    [ctia.http.routes.common :as common]
    [ctia.schemas.core :refer [APIHandlerServices NewBundle]]
    [ring.swagger.json-schema :refer [describe]]

@@ -526,7 +526,9 @@
     auth-identity :- auth/AuthIdentity
     {{:keys [get-in-config]} :ConfigService
      :as services} :- APIHandlerServices
-    {:keys [patch-existing asset_properties-merge-strategy]
+    {:keys [patch-existing
+            asset_properties-merge-strategy
+            incident-tactics-techniques-merge-strategy]
      :or {patch-existing false
           asset_properties-merge-strategy :ignore-existing
           incident-tactics-techniques-merge-strategy :ignore-existing}} :- ImportBundleOptions]
