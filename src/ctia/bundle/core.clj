@@ -513,7 +513,7 @@
 (s/defschema ImportBundleOptions
   {(s/optional-key :patch-existing) s/Bool
    (s/optional-key :asset_properties-merge-strategy) AssetPropertiesMergeStrategy
-   (s/optional-key :incident-tactics-techniques-merge-strategy IncidentTacticsTechniquesMergeStrategy)})
+   (s/optional-key :incident-tactics-techniques-merge-strategy) IncidentTacticsTechniquesMergeStrategy})
 
 (s/defn import-bundle :- BundleImportResult
   ([bundle :- (st/optional-keys-schema NewBundle)
