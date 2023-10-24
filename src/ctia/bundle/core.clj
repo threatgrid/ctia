@@ -8,7 +8,7 @@
    [ctia.bulk.core :as bulk]
    [ctia.bundle.schemas :refer
     [BundleImportData BundleImportResult EntityImportData
-     FindByExternalIdsServices AssetPropertiesMergeStrategy]]
+     FindByExternalIdsServices AssetPropertiesMergeStrategy IncidentTacticsTechniquesMergeStrategy]]
    [ctia.entity.asset-properties :refer [AssetProperties]]
    [ctia.entity.entities :as entities]
    [ctia.domain.entities :as ent :refer [with-long-id]]
@@ -481,11 +481,39 @@
         (resolve* :asset_mappings)
         (resolve* :asset_properties))))
 
+(s/defn merge-existing-incident-tactics+techniques :- BundleImportData
+  [bundle-import-data :- BundleImportData]
+  (cond-> bundle-import-data
+    (seq (:incidents bundle-import-data))
+    (update :incidents (fn [is]
+                         (mapv (s/fn [entity-import-data :- EntityImportData]
+                                 (if (not= "exists" (:result entity-import-data))
+                                   entity-import-data
+                                   (let [merge-existing (fn [entity-import-data field]
+                                                          (let [old (get-in entity-import-data [:old-entity field])
+                                                                new (get-in entity-import-data [:new-entity field])]
+                                                            (cond-> entity-import-data
+                                                              (and old new)
+                                                              (assoc-in [:new-entity field]
+                                                                        (-> (sorted-set)
+                                                                            (into old)
+                                                                            (into new)
+                                                                            vec)))))]
+                                     (-> entity-import-data
+                                         (merge-existing :tactics)
+                                         (merge-existing :techniques)))))
+                               is)))))
+
 (defn bundle-import-data->tempids
   [bundle-import-data
    tempids]
   (into tempids (map entities-import-data->tempids)
         (vals bundle-import-data)))
+
+(s/defschema ImportBundleOptions
+  {(s/optional-key :patch-existing) s/Bool
+   (s/optional-key :asset_properties-merge-strategy) AssetPropertiesMergeStrategy
+   (s/optional-key :incident-tactics-techniques-merge-strategy IncidentTacticsTechniquesMergeStrategy)})
 
 (s/defn import-bundle :- BundleImportResult
   ([bundle :- (st/optional-keys-schema NewBundle)
@@ -500,8 +528,8 @@
      :as services} :- APIHandlerServices
     {:keys [patch-existing asset_properties-merge-strategy]
      :or {patch-existing false
-          asset_properties-merge-strategy :ignore-existing}} :- {(s/optional-key :patch-existing) s/Bool
-                                                                 (s/optional-key :asset_properties-merge-strategy) AssetPropertiesMergeStrategy}]
+          asset_properties-merge-strategy :ignore-existing
+          incident-tactics-techniques-merge-strategy :ignore-existing}} :- ImportBundleOptions]
    (let [bundle-entities (select-keys bundle bundle-entity-keys)
          ;; the hard case is when patching asset_ref on an Asset that we also create in this bundle.
          ;; even harder, the same Asset could be used to patch a relationship's source_ref.
@@ -510,8 +538,10 @@
                                (fn [bundle-entities tempids]
                                  (let [bundle-import-data (prepare-import bundle-entities external-key-prefixes auth-identity services)
                                        tempids (bundle-import-data->tempids bundle-import-data tempids)
-                                       bundle-import-data (resolve-asset-properties+mappings
-                                                            bundle-import-data tempids auth-identity asset_properties-merge-strategy services)
+                                       bundle-import-data (-> bundle-import-data 
+                                                              (resolve-asset-properties+mappings tempids auth-identity asset_properties-merge-strategy services)
+                                                              (cond-> (= :merge-previous incident-tactics-techniques-merge-strategy)
+                                                                merge-existing-incident-tactics+techniques))
                                        tempids (bundle-import-data->tempids bundle-import-data tempids)
                                        {:keys [creates-bulk create-bundle-import-data
                                                patches-bulk patch-bundle-import-data

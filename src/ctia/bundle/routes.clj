@@ -142,6 +142,18 @@
                                     "then sorting the list lexicographically by name before using this list to patch the existing entity."
                                     "\n\n"
                                     " Defaults to ignore-existing"))
+                     :ignore-existing}
+                    {incident-tactics-techniques-merge-strategy :-
+                     (describe IncidentTacticsTechniquesMergeStrategy
+                               (str "Only relevant if patch-existing=true.\n\n" 
+                                    "If ignore-existing, then tactics and techniques on incidents will be patched to their new "
+                                    "values as they appear in the request bundle.\n\n"
+                                    "If merge-previous, then, for each incident, existing tactics and techniques "
+                                    "will each be retrieved and combined with those provided in the request bundle "
+                                    "as if by concatenating existing and new values together in a single list, "
+                                    "removing duplicates, then sorting lexicographically."
+                                    "\n\n"
+                                    " Defaults to ignore-existing"))
                      :ignore-existing}]
                    :summary "POST many new and partial entities using a single HTTP call"
                    :auth-identity auth-identity
@@ -152,4 +164,5 @@
                        (bad-request (str "Bundle max nb of entities: " max-size))
                        (ok (import-bundle bundle external-key-prefixes auth-identity services
                                           {:patch-existing patch-existing
-                                           :asset_properties-merge-strategy asset_properties-merge-strategy})))))))))
+                                           :asset_properties-merge-strategy asset_properties-merge-strategy
+                                           :incident-tactics-techniques-merge-strategy incident-tactics-techniques-merge-strategy})))))))))
