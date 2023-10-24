@@ -542,7 +542,8 @@
                                        tempids (bundle-import-data->tempids bundle-import-data tempids)
                                        bundle-import-data (-> bundle-import-data 
                                                               (resolve-asset-properties+mappings tempids auth-identity asset_properties-merge-strategy services)
-                                                              (cond-> (= :merge-previous incident-tactics-techniques-merge-strategy)
+                                                              (cond-> (and patch-existing
+                                                                           (= :merge-previous incident-tactics-techniques-merge-strategy))
                                                                 merge-existing-incident-tactics+techniques))
                                        tempids (bundle-import-data->tempids bundle-import-data tempids)
                                        {:keys [creates-bulk create-bundle-import-data
