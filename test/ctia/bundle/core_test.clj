@@ -113,7 +113,8 @@
                               :id->old-entity {id {:id id}}
                               :expected {:result "exists"
                                          :id id
-                                         :new-entity new-indicator}
+                                         :new-entity new-indicator
+                                         :old-entity {:id id}}
                               :existing-ids existing-ids})
                     (test-fn {:msg "non-existing long id"
                               :new-indicator {:new-entity new-indicator}
@@ -128,6 +129,8 @@
                         :expected (with-long-id {:result "exists"
                                                  :external_ids ["swe-alarm-indicator-1"]
                                                  :id indicator-id-1
+                                                 :old-entity (with-long-id {:id indicator-id-1}
+                                                               http-show-services)
                                                  :new-entity (with-long-id {:id indicator-id-1}
                                                                http-show-services)}
                                     http-show-services)
@@ -137,6 +140,8 @@
                         :expected (with-long-id {:result "exists"
                                                  :external_ids ["swe-alarm-indicator-1"]
                                                  :id indicator-id-2
+                                                 :old-entity (with-long-id {:id indicator-id-2}
+                                                               http-show-services)
                                                  :new-entity (with-long-id {:id indicator-id-2}
                                                                http-show-services)}
                                     http-show-services)
