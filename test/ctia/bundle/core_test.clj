@@ -6,7 +6,8 @@
             [ctia.flows.crud :refer [make-id]]
             [ctia.test-helpers.core :as h]
             [ctia.test-helpers.http :refer [app->HTTPShowServices]]
-            [ctia.test-helpers.es :as es-helpers]))
+            [ctia.test-helpers.es :as es-helpers]
+            [ctim.examples.incidents :refer [incident-maximal]]))
 
 (deftest local-entity?-test
   (es-helpers/fixture-properties:es-store
@@ -279,3 +280,39 @@
                 {:name "baz" :value old3}
                 {:name "baz" :value old3}
                 {:name "baz" :value old1}]))))))
+
+(defn stubbed-incident-merge
+  [old new]
+  (-> (sut/merge-existing-incident-tactics+techniques
+        {:incidents [{:new-entity (assoc new :id "http://localhost:49608/ctia/incident/incident-c6926fe4-bf5c-4281-a3d7-88dfcf1793ae")
+                      :type :incident
+                      :result "exists"
+                      :id "http://localhost:49608/ctia/incident/incident-c6926fe4-bf5c-4281-a3d7-88dfcf1793ae"
+                      :old-entity (into (dissoc incident-maximal :tactics :techniques) old)}]})
+      (get-in [:incidents 0 :new-entity])
+      (select-keys [:tactics :techniques])))
+
+(deftest merge-existing-incident-tactics+techniques-test
+  (testing "if no previous tactics/techniques, leave unchanged"
+    (let [tactics (shuffle ["TA0003" "TA0004"])
+          techniques (shuffle ["T0003" "T0004"])]
+      (is (= {:tactics tactics
+              :techniques techniques}
+             (stubbed-incident-merge
+               {}
+               {:tactics tactics
+                :techniques techniques})))))
+  (testing "if previous tactics/techniques, merge"
+    (let [old-tactics (shuffle ["TA0003" "TA0004"])
+          old-techniques (shuffle ["T0003" "T0004"])
+          new-tactics (shuffle ["TA0001" "TA0002"])
+          new-techniques (shuffle ["T0001" "T0002"])
+          merged-tactics ["TA0001" "TA0002" "TA0003" "TA0004"]
+          merged-techniques ["T0001" "T0002" "T0003" "T0004"]]
+      (is (= {:tactics merged-tactics
+              :techniques merged-techniques}
+             (stubbed-incident-merge
+               {:tactics old-tactics
+                :techniques old-techniques}
+               {:tactics new-tactics
+                :techniques new-techniques}))))))

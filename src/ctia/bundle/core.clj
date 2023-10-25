@@ -212,7 +212,8 @@
                           (when-not (schemas/transient-id? new-id)
                             new-id))]
     (if-some [old-entity (id->old-entity realized-id)]
-      (assoc entity-data :result "exists" :id (:id old-entity))
+      (assoc entity-data :result "exists" :id (:id old-entity)
+             :old-entity old-entity)
       (assoc entity-data :error {:type :unresolvable-id
                                  :reason (str "Long id must already correspond to an entity: " realized-id)}
              :result "error"))
@@ -233,7 +234,8 @@
       (cond-> entity-data
         ;; only one entity linked to the external ID
         old-entity (-> (assoc :result "exists"
-                              :id (:id old-entity))
+                              :id (:id old-entity)
+                              :old-entity old-entity)
                        (assoc-in [:new-entity :id] (:id old-entity)))))))
 
 (s/defschema WithExistingEntitiesServices
@@ -491,14 +493,15 @@
                                    entity-import-data
                                    (let [merge-existing (fn [entity-import-data field]
                                                           (let [old (get-in entity-import-data [:old-entity field])
-                                                                new (get-in entity-import-data [:new-entity field])]
+                                                                new (get-in entity-import-data [:new-entity field])
+                                                                merged (-> (sorted-set)
+                                                                           (into old)
+                                                                           (into new)
+                                                                           vec)]
+                                                            (prn "merge-existing" field old new merged)
                                                             (cond-> entity-import-data
                                                               (and old new)
-                                                              (assoc-in [:new-entity field]
-                                                                        (-> (sorted-set)
-                                                                            (into old)
-                                                                            (into new)
-                                                                            vec)))))]
+                                                              (assoc-in [:new-entity field] merged))))]
                                      (-> entity-import-data
                                          (merge-existing :tactics)
                                          (merge-existing :techniques)))))

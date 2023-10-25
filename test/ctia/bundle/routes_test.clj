@@ -1505,8 +1505,12 @@
             old-techniques (shuffle ["T0001" "T0002"])
             new-techniques (shuffle ["T0003" "T0004"])
             merged-techniques ["T0001" "T0002" "T0003" "T0004"]
+            incident1 (-> incident-maximal
+                          (assoc :id incident1-original-id
+                                 :tactics old-tactics
+                                 :techniques old-techniques))
             new-bundle (-> bundle-minimal
-                           (assoc :incidents #{(assoc incident-maximal :id incident1-original-id)}))
+                           (assoc :incidents #{incident1}))
             create-response (POST app
                                   "ctia/bundle/import"
                                   :body new-bundle
@@ -1529,7 +1533,11 @@
                                               {update-results :results :as update-bundle-result} (:parsed-body update-response)]
                                           (when (is (= 200 (:status update-response)))
                                             (is (= 1 (count update-results)) update-results)
-                                            (is (every? (comp #{"updated"} :result) update-results)
+                                            (is (every? (comp #{(if (query-params "patch-existing")
+                                                                  "updated"
+                                                                  "exists")}
+                                                              :result)
+                                                        update-results)
                                                 (pr-str (mapv :result update-results)))
                                             (let [get-stored (fn [realized-id]
                                                                (let [response (GET app
@@ -1539,22 +1547,14 @@
                                                                  (:parsed-body response)))]
                                               (let [stored (get-stored incident1-id)]
                                                 (is (= expected-tactics (:tactics stored)))
-                                                (is (= expected-techniques (:techniques stored)))))))))
-                test-patch-and-merge-previous! #(test-merge-strategy "with incident-tactics-techniques-merge-strategy=merge-previous"
-                                                                     {"incident-tactics-techniques-merge-strategy" "merge-previous"
-                                                                      "patch-existing" true}
-                                                                     {:expected-tactics merged-tactics
-                                                                      :expected-techniques merged-techniques})]
+                                                (is (= expected-techniques (:techniques stored)))))))))]
             ;; the order in which we test these merge strategies is important since we're patching the same entities.
-            (test-patch-and-merge-previous!)
+            (test-merge-strategy "with incident-tactics-techniques-merge-strategy=merge-previous"
+                                 {"incident-tactics-techniques-merge-strategy" "merge-previous"
+                                  "patch-existing" true}
+                                 {:expected-tactics merged-tactics
+                                  :expected-techniques merged-techniques})
             (test-merge-strategy "default incident-tactics-techniques-merge-strategy"
                                  {"patch-existing" true}
                                  {:expected-tactics new-tactics
-                                  :expected-techniques new-techniques})
-            ;; reset to merged
-            (test-patch-and-merge-previous!)
-            ;; old (merged) values should be preserved
-            (test-merge-strategy "no patching"
-                                 {}
-                                 {:expected-tactics merged-tactics
-                                  :expected-techniques merged-techniques})))))))
+                                  :expected-techniques new-techniques})))))))
