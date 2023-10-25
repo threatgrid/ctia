@@ -493,15 +493,14 @@
                                    entity-import-data
                                    (let [merge-existing (fn [entity-import-data field]
                                                           (let [old (get-in entity-import-data [:old-entity field])
-                                                                new (get-in entity-import-data [:new-entity field])
-                                                                merged (-> (sorted-set)
-                                                                           (into old)
-                                                                           (into new)
-                                                                           vec)]
-                                                            (prn "merge-existing" field old new merged)
+                                                                new (get-in entity-import-data [:new-entity field])]
                                                             (cond-> entity-import-data
                                                               (and old new)
-                                                              (assoc-in [:new-entity field] merged))))]
+                                                              (assoc-in [:new-entity field]
+                                                                        (-> (sorted-set)
+                                                                            (into old)
+                                                                            (into new)
+                                                                            vec)))))]
                                      (-> entity-import-data
                                          (merge-existing :tactics)
                                          (merge-existing :techniques)))))
