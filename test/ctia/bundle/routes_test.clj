@@ -1420,6 +1420,7 @@
                                                                                            (name (:type entity))
                                                                                            (encode realized-id))
                                                                                    :headers {"Authorization" "45c1f5e3f05d0"})]
+                                                                 (assert (= 200 (:status response)))
                                                                  (:parsed-body response)))]
                                               (testing ":asset_mappings"
                                                 (let [stored (get-stored updated-asset_mapping1)]
@@ -1485,3 +1486,75 @@
                           :result "updated"
                           :type :relationship}}
                        (set create+update-results)))))))))))
+
+(deftest bundle-patch-merge-tactics+techniques-test
+  (test-for-each-store-with-app
+    (fn [app]
+      (helpers/set-capabilities! app "foouser" ["foogroup"] "user" (all-capabilities))
+      (whoami-helpers/set-whoami-response app
+                                          "45c1f5e3f05d0"
+                                          "foouser"
+                                          "foogroup"
+                                          "user")
+
+      (let [[incident1-original-id] (map #(str "transient:" % "_" (random-uuid))
+                                         '[incident1-original-id])
+            old-tactics (shuffle ["TA0001" "TA0002"])
+            new-tactics (shuffle ["TA0003" "TA0004"])
+            merged-tactics ["TA0001" "TA0002" "TA0003" "TA0004"]
+            old-techniques (shuffle ["T0001" "T0002"])
+            new-techniques (shuffle ["T0003" "T0004"])
+            merged-techniques ["T0001" "T0002" "T0003" "T0004"]
+            incident1 (-> incident-maximal
+                          (assoc :id incident1-original-id
+                                 :tactics old-tactics
+                                 :techniques old-techniques))
+            new-bundle (-> bundle-minimal
+                           (assoc :incidents #{incident1}))
+            create-response (POST app
+                                  "ctia/bundle/import"
+                                  :body new-bundle
+                                  :headers {"Authorization" "45c1f5e3f05d0"})
+            {create-results :results :as create-bundle-results} (:parsed-body create-response)
+            incident1-id (find-id-by-original-id :incident1-id create-bundle-results incident1-original-id)]
+        (testing "tactics and techniques respect merge strategy"
+          (let [update-bundle (-> bundle-minimal
+                                  (assoc :incidents #{{:id incident1-id
+                                                       :tactics new-tactics
+                                                       :techniques new-techniques}}))
+                test-merge-strategy (fn [msg query-params {:keys [expected-tactics
+                                                                  expected-techniques]}]
+                                      (testing msg
+                                        (let [update-response (POST app
+                                                                    "ctia/bundle/import"
+                                                                    :body update-bundle
+                                                                    :query-params query-params
+                                                                    :headers {"Authorization" "45c1f5e3f05d0"})
+                                              {update-results :results :as update-bundle-result} (:parsed-body update-response)]
+                                          (when (is (= 200 (:status update-response)))
+                                            (is (= 1 (count update-results)) update-results)
+                                            (is (every? (comp #{(if (query-params "patch-existing")
+                                                                  "updated"
+                                                                  "exists")}
+                                                              :result)
+                                                        update-results)
+                                                (pr-str (mapv :result update-results)))
+                                            (let [get-stored (fn [realized-id]
+                                                               (let [response (GET app
+                                                                                   (format "ctia/incident/%s" (encode realized-id))
+                                                                                   :headers {"Authorization" "45c1f5e3f05d0"})]
+                                                                 (assert (= 200 (:status response)))
+                                                                 (:parsed-body response)))]
+                                              (let [stored (get-stored incident1-id)]
+                                                (is (= expected-tactics (:tactics stored)))
+                                                (is (= expected-techniques (:techniques stored)))))))))]
+            ;; the order in which we test these merge strategies is important since we're patching the same entities.
+            (test-merge-strategy "with incident-tactics-techniques-merge-strategy=merge-previous"
+                                 {"incident-tactics-techniques-merge-strategy" "merge-previous"
+                                  "patch-existing" true}
+                                 {:expected-tactics merged-tactics
+                                  :expected-techniques merged-techniques})
+            (test-merge-strategy "default incident-tactics-techniques-merge-strategy"
+                                 {"patch-existing" true}
+                                 {:expected-tactics new-tactics
+                                  :expected-techniques new-techniques})))))))

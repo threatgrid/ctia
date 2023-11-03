@@ -61,3 +61,6 @@
 
 (s/defschema AssetPropertiesMergeStrategy
   (s/enum :ignore-existing :merge-overriding-previous))
+
+(s/defschema IncidentTacticsTechniquesMergeStrategy
+  (s/enum :ignore-existing :merge-previous))

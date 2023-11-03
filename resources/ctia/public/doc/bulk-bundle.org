@@ -679,6 +679,13 @@ then sorting the list lexicographically by name before using this list to patch 
 
 If `asset_properties-merge-strategy=ignore-existing`, then asset properties will be patched to their new values as they appear in the request bundle.
 
+If provided query parameter `incident-tactics-techniques-merge-strategy=merge-previous`, then when patching incidents,
+existing tactics/techniques properties will be retrieved and combined with the new fields in the request bundle
+as if by concatenating existing and new fields together in a single list,
+removing duplicates, then sorting lexicographically.
+
+If `incident-tactics-techniques-merge-strategy=ignore-existing`, then incident fields tactics/techniques will be patched to their new values as they appear in the request bundle.
+
 Example for an incident along with its context, note the transient ids
 #+begin_src HTTP
 POST /ctia/bundle/import HTTP/1.1
