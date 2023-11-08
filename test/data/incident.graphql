@@ -94,6 +94,7 @@ fragment incidentFields on Incident {
   short_description
   confidence
   status
+  status_disposition
   incident_time {
     ...incidentTimeFields
   }
@@ -105,4 +106,6 @@ fragment incidentFields on Incident {
   assignees
   promotion_method
   severity
+  tactics
+  techniques
 }
