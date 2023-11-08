@@ -272,47 +272,6 @@
            :tactics
            :techniques]))
 
-(comment
-  (defn generate-mitre-tactic-scores
-    "script for stripping proprietary info from mitre tactic scores.
-    Use to generate new :remappings for :tactics sorting."
-    [csv-file]
-    (let [s (slurp csv-file)
-          ;; lifecycle order
-          relevant-tactics ["TA0043"
-                            "TA0042"
-                            "TA0001"
-                            "TA0002"
-                            "TA0003"
-                            "TA0004"
-                            "TA0005"
-                            "TA0006"
-                            "TA0007"
-                            "TA0008"
-                            "TA0009"
-                            "TA0011"
-                            "TA0010"
-                            "TA0040"]
-          tactic->pos (into {} (map-indexed (fn [i id] [id i]))
-                            relevant-tactics)
-          groups (-> s 
-                     ((requiring-resolve 'cheshire.core/parse-string))
-                     ((requiring-resolve 'clojure.walk/keywordize-keys))
-                     (->> (filter (comp (set relevant-tactics) :id))
-                          (group-by :risk_score)
-                          (sort-by key)
-                          (map second)))
-          out (into (sorted-map-by (fn [id1 id2]
-                                     (< (tactic->pos id1 0) (tactic->pos id2 0))))
-                    (map (fn [score group]
-                           (zipmap (map :id group) (repeat score)))
-                         (next (range)) groups))
-
-          _ (assert (= relevant-tactics (keys out))
-                    "missing score/s")]
-     ((requiring-resolve 'clojure.pprint/pprint) out)))
-  (generate-mitre-tactic-scores ""))
-
 (defn score-types
   [get-in-config]
   (some-> (get-in-config [:ctia :http :incident :score-types])
