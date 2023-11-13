@@ -94,15 +94,20 @@
 (s/defschema IncidentStatus
   (fs/->schema vocs/Status))
 
+(s/defschema IncidentStatusDisposition
+  (fs/->schema vocs/StatusDisposition))
+
 (s/defschema IncidentStatusUpdate
-  {:status IncidentStatus})
+  {:status IncidentStatus
+   (s/optional-key :status_disposition) IncidentStatusDisposition})
 
 (defn make-status-update
-  [{:keys [status]}]
+  [{:keys [status status_disposition]}]
   (let [t (time/internal-now)
         verb (case status
                "New" nil
                "Stalled" nil
+               "Hold" nil
                ;; Note: GitHub syntax highlighting doesn't like lists with strings
                "Containment Achieved" :remediated
                "Restoration Achieved" :remediated
@@ -112,6 +117,7 @@
                "Incident Reported" :reported
                nil)]
     (cond-> {:status status}
+      status_disposition (assoc :status_disposition status_disposition)
       verb (assoc :incident_time {verb t}))))
 
 (s/defn ^:private update-interval :- ESStoredIncident
@@ -217,20 +223,21 @@
      em/describable-entity-mapping
      em/sourcable-entity-mapping
      em/stored-entity-mapping
-     {:confidence       em/token
-      :status           em/token
-      :incident_time    em/incident-time
-      :categories       em/token
-      :discovery_method em/token
-      :intended_effect  em/token
-      :assignees        em/token
-      :promotion_method em/token
-      :severity         em/token
-      :tactics          em/token
-      :techniques       em/token
-      :scores           {:type "object"
-                         :dynamic true}
-      :intervals        {:properties (zipmap incident-intervals (repeat em/long-type))}})}})
+     {:confidence         em/token
+      :status             em/token
+      :status_disposition em/token
+      :incident_time      em/incident-time
+      :categories         em/token
+      :discovery_method   em/token
+      :intended_effect    em/token
+      :assignees          em/token
+      :promotion_method   em/token
+      :severity           em/token
+      :tactics            em/token
+      :techniques         em/token
+      :scores             {:type "object"
+                           :dynamic true}
+      :intervals          {:properties (zipmap incident-intervals (repeat em/long-type))}})}})
 
 (def store-opts
   {:stored->es-stored (s/fn [{:keys [doc op prev]}]
@@ -250,6 +257,7 @@
           sourcable-entity-sort-fields
           [:confidence
            :status
+           :status_disposition
            :incident_time.opened
            :incident_time.discovered
            :incident_time.reported
@@ -263,47 +271,6 @@
            :severity
            :tactics
            :techniques]))
-
-(comment
-  (defn generate-mitre-tactic-scores
-    "script for stripping proprietary info from mitre tactic scores.
-    Use to generate new :remappings for :tactics sorting."
-    [csv-file]
-    (let [s (slurp csv-file)
-          ;; lifecycle order
-          relevant-tactics ["TA0043"
-                            "TA0042"
-                            "TA0001"
-                            "TA0002"
-                            "TA0003"
-                            "TA0004"
-                            "TA0005"
-                            "TA0006"
-                            "TA0007"
-                            "TA0008"
-                            "TA0009"
-                            "TA0011"
-                            "TA0010"
-                            "TA0040"]
-          tactic->pos (into {} (map-indexed (fn [i id] [id i]))
-                            relevant-tactics)
-          groups (-> s 
-                     ((requiring-resolve 'cheshire.core/parse-string))
-                     ((requiring-resolve 'clojure.walk/keywordize-keys))
-                     (->> (filter (comp (set relevant-tactics) :id))
-                          (group-by :risk_score)
-                          (sort-by key)
-                          (map second)))
-          out (into (sorted-map-by (fn [id1 id2]
-                                     (< (tactic->pos id1 0) (tactic->pos id2 0))))
-                    (map (fn [score group]
-                           (zipmap (map :id group) (repeat score)))
-                         (next (range)) groups))
-
-          _ (assert (= relevant-tactics (keys out))
-                    "missing score/s")]
-     ((requiring-resolve 'clojure.pprint/pprint) out)))
-  (generate-mitre-tactic-scores ""))
 
 (defn score-types
   [get-in-config]
@@ -371,6 +338,7 @@
    :promotion_method
    :source
    :status
+   :status_disposition
    :title
    :severity
    :tactics
@@ -402,17 +370,18 @@
    routes.common/SearchableEntityParams
    IncidentFieldsParam
    (st/optional-keys
-    {:confidence       s/Str
-     :status           s/Str
-     :discovery_method s/Str
-     :intended_effect  s/Str
-     :categories       s/Str
-     :sort_by          (incident-sort-fields services)
-     :assignees        s/Str
-     :promotion_method s/Str
-     :severity         s/Str
-     :tactics          [s/Str]
-     :techniques       [s/Str]})))
+    {:confidence         s/Str
+     :status             s/Str
+     :status_disposition s/Str
+     :discovery_method   s/Str
+     :intended_effect    s/Str
+     :categories         s/Str
+     :sort_by            (incident-sort-fields services)
+     :assignees          s/Str
+     :promotion_method   s/Str
+     :severity           s/Str
+     :tactics            [s/Str]
+     :techniques         [s/Str]})))
 
 (def IncidentGetParams IncidentFieldsParam)
 
