@@ -16,7 +16,8 @@
                               GraphQLRuntimeContext
                               RealizeFnResult
                               SortExtensionDefinitions
-                              def-acl-schema def-stored-schema
+                              CTIAEntity
+                              def-stored-schema
                               lift-realize-fn-with-context]]
    [ctia.schemas.graphql.flanders :as flanders]
    [ctia.schemas.graphql.helpers :as g]
@@ -28,7 +29,8 @@
    [ctia.stores.es.store :refer [def-es-store]]
    [ctim.schemas.incident :as is]
    [ctim.schemas.vocabularies :as vocs]
-   [flanders.schema :as fs]
+   [flanders.schema :as f-schema]
+   [flanders.spec :as f-spec]
    [flanders.utils :as fu]
    [java-time.api :as jt]
    [ring.swagger.schema :refer [describe]]
@@ -38,20 +40,33 @@
 
 (def incident-bundle-default-limit 1000)
 
-(def-acl-schema Incident
-  is/Incident
-  "incident")
+(s/defschema Incident
+  (st/merge
+   (f-schema/->schema
+    (fu/replace-either-with-any
+     is/Incident))
+   CTIAEntity))
 
-(def-acl-schema PartialIncident
-  (fu/optionalize-all is/Incident)
-  "partial-incident")
+(f-spec/->spec is/Incident "incident")
+
+(s/defschema PartialIncident
+  (st/merge CTIAEntity
+            (f-schema/->schema
+             (fu/optionalize-all
+              (fu/replace-either-with-any
+               is/Incident)))))
 
 (s/defschema PartialIncidentList
   [PartialIncident])
 
-(def-acl-schema NewIncident
-  is/NewIncident
-  "new-incident")
+(s/defschema NewIncident
+  (st/merge
+   (f-schema/->schema
+    (fu/replace-either-with-any
+     is/NewIncident))
+   CTIAEntity))
+
+(f-spec/->spec is/NewIncident "new-incident")
 
 ;;NOTE: changing this requires a ES mapping refresh
 (def incident-intervals
@@ -92,10 +107,10 @@
                      now))))))
 
 (s/defschema IncidentStatus
-  (fs/->schema vocs/Status))
+  (f-schema/->schema vocs/Status))
 
 (s/defschema IncidentStatusDisposition
-  (fs/->schema vocs/StatusDisposition))
+  (f-schema/->schema vocs/StatusDisposition))
 
 (s/defschema IncidentStatusUpdate
   {:status IncidentStatus
@@ -437,7 +452,7 @@
 (def IncidentType
   (let [{:keys [fields name description]}
         (flanders/->graphql
-         (fu/optionalize-all is/Incident)
+         (fu/optionalize-all (fu/replace-either-with-any is/Incident))
          {})]
     (g/new-object
      name
