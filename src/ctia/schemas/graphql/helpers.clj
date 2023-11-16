@@ -38,12 +38,13 @@
             TypeResolver]))
 
 (s/defschema GraphQLFields
-  {s/Keyword
-   {:type AnyRealizeFnResult
-    (s/optional-key :args) s/Any
-    (s/optional-key :resolve) AnyGraphQLTypeResolver
-    (s/optional-key :description) s/Any
-    (s/optional-key :default-value) s/Any}})
+  s/Any)
+;;  {s/Keyword
+;;   {:type AnyRealizeFnResult
+;;    (s/optional-key :args) s/Any
+;;    (s/optional-key :resolve) AnyGraphQLTypeResolver
+;;    (s/optional-key :description) s/Any
+;;    (s/optional-key :default-value) s/Any}})
 
 (s/defschema NamedTypeRegistry
   "Type registry to ensure named GraphQL named types are created exactly once.
@@ -395,6 +396,8 @@
   [builder :- GraphQLObjectType$Builder
    fields :- GraphQLFields
    rt-ctx :- GraphQLRuntimeContext]
+  (println "add-fields")
+  (clojure.pprint/pprint fields)
   (doseq [[k {field-type :type
               field-description :description
               field-args :args
@@ -429,7 +432,10 @@
      #(let [builder (-> (GraphQLObjectType/newObject)
                         (.description ^String description)
                         (.name ^String object-name)
-                        (add-fields fields rt-ctx))]
+                        (add-fields (into {}
+                                          (filter first)
+                                          fields)
+                                     rt-ctx))]
         (doseq [^GraphQLInterfaceType interface interfaces]
           (.withInterface builder interface))
         (let [obj (.build builder)]
