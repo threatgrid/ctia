@@ -85,6 +85,7 @@
 
 (defn mk-new-incident [n]
   (-> new-incident-maximal
+      (update :meta {:ai-generated-description true})
       (dissoc :id :schema_version :tlp :type)
       (into {:id (str "transient:incident-" n)
              :title (str "incident-" n)
