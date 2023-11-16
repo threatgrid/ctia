@@ -114,7 +114,9 @@
                             {:app app
                              :patch-tests? false;true
                              :search-tests? false;true
-                             :example new-incident-maximal
+                             :example (assoc new-incident-maximal
+                                             :meta
+                                             {:ai-generated-description true})
                              :headers {:Authorization "45c1f5e3f05d0"}
                              :additional-tests additional-tests})]
        (entity-crud-test parameters)))))
@@ -313,7 +315,7 @@
                        (testing (pr-str test-id)
                          (let [{:keys [parsed-body] :as raw}
                                (search-th/search-raw app :incident {:sort_by
-                                                                    (format "severity:%1$s,created:%1$s"
+                                                                    (format "severity:%1$s,timestamp:%1$s"
                                                                             (if asc? "asc" "desc"))})
                                expected-parsed-body (sort-by (fn [incident]
                                                                {:post [(number? %)]}
