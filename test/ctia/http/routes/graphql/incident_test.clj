@@ -19,24 +19,19 @@
 (def external-ref "http://external.com/ctia/incident/incident-ab053333-2ad2-41d0-a445-31e9b9c38caf")
 
 (defn init-graph-data [app]
-  (let [ap1 (gh/create-object
+  (let [base-incident (dissoc new-incident-maximal :id :scores :meta)
+        ap1 (gh/create-object
              app
              "incident"
-             (-> new-incident-maximal
-                 (assoc :title "Incident 1")
-                 (dissoc :id :scores)))
+             (assoc base-incident :title "Incident 1"))
         ap2 (gh/create-object
              app
              "incident"
-             (-> new-incident-maximal
-                 (assoc :title "Incident 2")
-                 (dissoc :id :scores)))
+             (assoc base-incident :title "Incident 2"))
         ap3 (gh/create-object
              app
              "incident"
-             (-> new-incident-maximal
-                 (assoc :title "Incident 3")
-                 (dissoc :id :scores)))
+             (assoc base-incident :title "Incident 3"))
         f1 (gh/create-object app "feedback" (gh/feedback-1 (:id ap1) #inst "2042-01-01T00:00:00.000Z"))
         f2 (gh/create-object app "feedback" (gh/feedback-2 (:id ap1) #inst "2042-01-01T00:00:00.000Z"))]
     (gh/create-object app
