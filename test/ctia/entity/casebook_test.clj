@@ -14,6 +14,7 @@
     [aggregate :refer [test-metric-routes]]
     [fake-whoami-service :as whoami-helpers]
     [store :refer [test-for-each-store-with-app]]]
+   [ctim.examples.incidents :refer [incident-maximal]]
    [ctim.examples.casebooks
     :refer
     [new-casebook-maximal new-casebook-minimal]]
@@ -297,7 +298,9 @@
      (entity-crud-test
       (into sut/casebook-entity
             {:app app
-             :example new-casebook-maximal
+             :example (assoc-in new-casebook-maximal
+                                [:bundle :incidents]
+                                [(assoc incident-maximal :meta {:ai-description true})])
              :headers {:Authorization "45c1f5e3f05d0"}
              :patch-tests? true
              :additional-tests partial-operations-tests})))))
