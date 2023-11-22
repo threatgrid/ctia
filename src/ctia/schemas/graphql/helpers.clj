@@ -429,7 +429,10 @@
      #(let [builder (-> (GraphQLObjectType/newObject)
                         (.description ^String description)
                         (.name ^String object-name)
-                        (add-fields fields rt-ctx))]
+                        (add-fields (into {}
+                                          (filter first)
+                                          fields)
+                                     rt-ctx))]
         (doseq [^GraphQLInterfaceType interface interfaces]
           (.withInterface builder interface))
         (let [obj (.build builder)]
