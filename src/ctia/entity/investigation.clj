@@ -46,6 +46,7 @@
                          :short_description
                          :created_at
                          :object_ids
+                         :external_ids
                          :investigated_observables
                          :targets])))
 
