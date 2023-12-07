@@ -112,8 +112,8 @@
      (whoami-helpers/set-whoami-response app "45c1f5e3f05d0" "foouser" "foogroup" "user")
      (let [parameters (into sut/incident-entity
                             {:app app
-                             :patch-tests? false;true
-                             :search-tests? false;true
+                             :patch-tests? true
+                             :search-tests? true
                              :example (assoc new-incident-maximal
                                              :meta
                                              {:ai-generated-description true})
