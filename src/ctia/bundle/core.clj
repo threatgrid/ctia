@@ -543,7 +543,8 @@
                                  (let [bundle-import-data (prepare-import bundle-entities external-key-prefixes auth-identity services)
                                        tempids (bundle-import-data->tempids bundle-import-data tempids)
                                        bundle-import-data (-> bundle-import-data 
-                                                              (resolve-asset-properties+mappings tempids auth-identity asset_properties-merge-strategy services)
+                                                              (cond-> patch-existing
+                                                                (resolve-asset-properties+mappings tempids auth-identity asset_properties-merge-strategy services))
                                                               (cond-> (and patch-existing
                                                                            (= :merge-previous incident-tactics-techniques-merge-strategy))
                                                                 merge-existing-incident-tactics+techniques))
