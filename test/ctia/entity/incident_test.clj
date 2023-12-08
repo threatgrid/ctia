@@ -9,7 +9,7 @@
             [com.gfredericks.test.chuck.clojure-test :refer [checking]]
             [com.gfredericks.test.chuck.generators :as gen']
             [ctia.auth.threatgrid :as auth]
-            [ctia.bundle.core :as bundle]
+            [ctia.bulk.core :as bulk]
             [ctia.entity.incident :as sut]
             [ctia.test-helpers.access-control :refer [access-control-test]]
             [ctia.test-helpers.aggregate :refer [test-metric-routes]]
@@ -21,7 +21,6 @@
             [ctia.test-helpers.search :as search-th]
             [ctia.test-helpers.store :refer [test-for-each-store-with-app]]
             [ctim.domain.id :as id]
-            [ctim.examples.bundles :refer [new-bundle-minimal]]
             [ctim.examples.incidents
              :refer
              [new-incident-maximal new-incident-minimal incident-minimal]]
@@ -146,13 +145,12 @@
                 :revision (or order 0))))))
 
 (s/defn create-incidents [app incidents :- (s/pred set?)]
-  (bundle/import-bundle
-    (-> new-bundle-minimal
-        (dissoc :id)
-        (assoc :incidents incidents))
-    nil    ;; external-key-prefixes
+  (bulk/create-bulk
+    {:incidents (vec incidents)}
+    {}
     (auth/map->Identity {:login "foouser"
                          :groups ["foogroup"]})
+    {:refresh "true"}
     (app/service-graph app)))
 
 (defn purge-incidents! [app]
@@ -814,17 +812,15 @@
        (helpers/set-capabilities! app "foouser" ["foogroup"] "user" all-capabilities)
        (whoami-helpers/set-whoami-response app "45c1f5e3f05d0" "foouser" "foogroup" "user")
        (let [incidents #{(gen-new-incident)}
-             ext-key-prefixes nil
              auth-ident (auth/map->Identity {:login "foouser"
                                              :groups ["foogroup"]})
-             imported (bundle/import-bundle
-                       (-> new-bundle-minimal
-                           (dissoc :id)
-                           (assoc :incidents incidents))
-                       ext-key-prefixes
+             imported (bulk/create-bulk
+                       {:incidents (vec incidents)}
+                       {}
                        auth-ident
+                       {:refresh "true"}
                        (app/service-graph app))]
-         (let [incident-id (->> imported :results first :id id/long-id->id :short-id)
+         (let [incident-id (->> imported :incidents first id/long-id->id :short-id)
                statuses ["New" "Open" "Stalled" "Incident Reported"]
                timestamps (->>
                            statuses
