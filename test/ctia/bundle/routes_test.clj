@@ -1373,43 +1373,54 @@
                              :timestamp #inst "2023-03-02T19:14:46.783-00:00"}
             asset_property2 (assoc asset_property1 :id asset_property2-original-id)
             incident-id "https://private.intel.int.iroh.site:443/ctia/incident/incident-4fb91401-36a5-46d1-b0aa-01af02f00a7a"
-            new-bundle (-> bundle-minimal
-                           (assoc :assets #{asset1}
-                                  :asset_mappings #{asset_mapping1 asset_mapping2}
-                                  :asset_properties #{asset_property1 asset_property2}
-                                  :relationships #{{:id relationship1-original-id
-                                                    :source_ref incident-id
-                                                    :target_ref asset_mapping1-original-id, :relationship_type "related-to", :source "IROH Risk Score Service"}
-                                                   {:id relationship2-original-id
-                                                    :source_ref incident-id
-                                                    :target_ref asset_mapping2-original-id, :relationship_type "related-to", :source "IROH Risk Score Service"}
-                                                   {:id relationship3-original-id
-                                                    :source_ref incident-id
-                                                    :target_ref asset_property1-original-id, :relationship_type "related-to", :source "IROH Risk Score Service"}
-                                                   {:id relationship4-original-id
-                                                    :source_ref incident-id
-                                                    :target_ref asset_property2-original-id, :relationship_type "related-to", :source "IROH Risk Score Service"}
-                                                   {:source_ref incident-id
-                                                    :target_ref asset1-original-id, :relationship_type "related-to", :source "IROH Risk Score Service"}}))
-            create-response (POST app
-                                  "ctia/bundle/import"
-                                  :body new-bundle
-                                  :headers {"Authorization" "45c1f5e3f05d0"})
-            {create-results :results :as create-bundle-results} (:parsed-body create-response)
+            base-new-bundle (assoc bundle-minimal :assets #{asset1})
+            new-bundle1 (-> base-new-bundle
+                            (assoc :assets #{asset1}
+                                   :asset_mappings #{asset_mapping1}
+                                   :asset_properties #{asset_property1}
+                                   :relationships #{{:id relationship1-original-id
+                                                     :source_ref incident-id
+                                                     :target_ref asset_mapping1-original-id, :relationship_type "related-to", :source "IROH Risk Score Service"}
+                                                    {:id relationship3-original-id
+                                                     :source_ref incident-id
+                                                     :target_ref asset_property1-original-id, :relationship_type "related-to", :source "IROH Risk Score Service"}
+                                                    {:source_ref incident-id
+                                                     :target_ref asset1-original-id, :relationship_type "related-to", :source "IROH Risk Score Service"}}))
+            new-bundle2 (-> base-new-bundle
+                            (assoc :asset_mappings #{asset_mapping2}
+                                   :asset_properties #{asset_property2}
+                                   :relationships #{{:id relationship2-original-id
+                                                     :source_ref incident-id
+                                                     :target_ref asset_mapping2-original-id, :relationship_type "related-to", :source "IROH Risk Score Service"}
+                                                    {:id relationship4-original-id
+                                                     :source_ref incident-id
+                                                     :target_ref asset_property2-original-id, :relationship_type "related-to", :source "IROH Risk Score Service"}}))
+            create-response1 (POST app
+                                   "ctia/bundle/import"
+                                   :body new-bundle1
+                                   :headers {"Authorization" "45c1f5e3f05d0"})
+            {create-results1 :results :as create-bundle-results1} (:parsed-body create-response1)
+            create-response2 (POST app
+                                   "ctia/bundle/import"
+                                   :body new-bundle2
+                                   :headers {"Authorization" "45c1f5e3f05d0"})
+            {create-results2 :results :as create-bundle-results2} (:parsed-body create-response2)
+            create-results (concat create-results1 create-results2)
             ;; resolve in order of creation/patch for easier debugging
-            asset1-id (find-id-by-original-id :asset1-id create-bundle-results asset1-original-id)
-            asset_property1-id (find-id-by-original-id :asset_property1-id create-bundle-results asset_property1-original-id)
-            asset_property2-id (find-id-by-original-id :asset_property2-id create-bundle-results asset_property2-original-id)
-            asset_mapping1-id  (find-id-by-original-id :asset_mapping1-id  create-bundle-results asset_mapping1-original-id)
-            asset_mapping2-id  (find-id-by-original-id :asset_mapping2-id  create-bundle-results asset_mapping2-original-id)
-            relationship1-id   (find-id-by-original-id :relationship1-id   create-bundle-results relationship1-original-id)
-            relationship2-id   (find-id-by-original-id :relationship2-id   create-bundle-results relationship2-original-id)
-            relationship3-id   (find-id-by-original-id :relationship3-id   create-bundle-results relationship3-original-id)
-            relationship4-id   (find-id-by-original-id :relationship4-id   create-bundle-results relationship4-original-id)]
+            asset1-id          (find-id-by-original-id :asset1-id create-bundle-results1 asset1-original-id)
+            asset_property1-id (find-id-by-original-id :asset_property1-id create-bundle-results1 asset_property1-original-id)
+            asset_property2-id (find-id-by-original-id :asset_property2-id create-bundle-results2 asset_property2-original-id)
+            asset_mapping1-id  (find-id-by-original-id :asset_mapping1-id  create-bundle-results1 asset_mapping1-original-id)
+            asset_mapping2-id  (find-id-by-original-id :asset_mapping2-id  create-bundle-results2 asset_mapping2-original-id)
+            relationship1-id   (find-id-by-original-id :relationship1-id   create-bundle-results1 relationship1-original-id)
+            relationship2-id   (find-id-by-original-id :relationship2-id   create-bundle-results2 relationship2-original-id)
+            relationship3-id   (find-id-by-original-id :relationship3-id   create-bundle-results1 relationship3-original-id)
+            relationship4-id   (find-id-by-original-id :relationship4-id   create-bundle-results2 relationship4-original-id)]
         (testing "relationships are created for asset mappings/properties"
-          (when (is (= 200 (:status create-response)))
-            (is (= 10 (count create-results)))
-            (is (every? (comp #{"created"} :result) create-results)
+          (when (and (is (= 200 (:status create-response1)))
+                     (is (= 200 (:status create-response2))))
+            (is (= 3 (count (filter (comp #{"exists"} :result) create-results))))
+            (is (= 8 (count (filter (comp #{"created"} :result) create-results)))
                 (pr-str (mapv :result create-results)))
             (let [{{:keys [relationships]} :parsed-body} (GET app
                                                               "ctia/bundle/export"
