@@ -77,8 +77,7 @@
                      options)]
        (core/context ~path ~arg
                      ~@(mapcat (fn [[k v]]
-                                 [k (or (option->g k)
-                                        v)])
+                                 [k (option->g k v)])
                                options)
                      routes#))))
 
