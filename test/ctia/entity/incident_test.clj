@@ -157,7 +157,8 @@
 
 (defn purge-incidents! [app]
   (search-th/delete-search app :incident {:query "*"
-                                          :REALLY_DELETE_ALL_THESE_ENTITIES true}))
+                                          :REALLY_DELETE_ALL_THESE_ENTITIES true
+                                          :wait_for true}))
 
 (def asset-000-ttp-000 {:asset 0   :ttp 0})
 (def asset-000-ttp-100 {:asset 0   :ttp 100})
@@ -508,9 +509,9 @@
                                                                          ;; entire query is checked in unit tests, bench uses a subset
                                                                          (take result-size))
                                                                     (map :severity parsed-body))
-                                                                 {:parsed-body parsed-body
-                                                                  :created-bundle created-bundle
-                                                                  :incidents incidents})
+                                                                 (pr-str {:parsed-body parsed-body
+                                                                          :created-bundle created-bundle
+                                                                          :incidents incidents}))
                                                              ;; should succeed even with multipliers because sort-by is stable
                                                              (is (= expected-parsed-body
                                                                     parsed-body)))))]
