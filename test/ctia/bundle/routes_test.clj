@@ -1,15 +1,10 @@
 (ns ctia.bundle.routes-test
   (:require
-   [cheshire.core :refer [parse-string]]
    [clj-momo.test-helpers.http :refer [encode]]
-   [ctia.schemas.core :refer [NewBundle]]
-   [ring.swagger.coerce :as sc]
-   [ring.swagger.schema :refer [coerce!]]
    [clojure.edn :as edn]
    [clojure.set :as set]
    [clojure.string :as str]
    [clojure.test :as t :refer [deftest is join-fixtures testing use-fixtures]]
-   [clojure.walk :as walk]
    [ctia.auth :as auth :refer [IIdentity]]
    [ctia.auth.capabilities :refer [all-capabilities]]
    [ctia.bulk.core :as bulk]
