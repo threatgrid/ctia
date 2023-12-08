@@ -50,7 +50,8 @@
   [middleware & body]
   `(core/middleware ~middleware ~@body))
 
-(def ^:private allowed-context-options #{:tags :capabilities :description :return})
+(def ^:private allowed-context-options #{:tags :capabilities :description :return :summary})
+(def ^:private unevalated-options #{:tags})
 
 (defmacro context
   "Like compojure.api.core/context, except the binding vector must be empty and
@@ -66,13 +67,19 @@
             (throw (ex-info (str "Not allowed these options in `context`, push into HTTP verbs instead: "
                                  (pr-str (sort extra-keys)))
                             {})))
-        option->g (into {} (map (juxt identity (comp gensym name))) (keys options))]
+        option->g (into {} (comp (remove unevalated-options)
+                                 (map (juxt identity (comp gensym name))))
+                        (keys options))]
     `(let [routes# (core/routes ~@body)
            ~@(mapcat (fn [[k v]]
-                       [(option->g k) v])
+                       (when-some [g (option->g k)]
+                         [g v]))
                      options)]
        (core/context ~path ~arg
-                     ~@(mapcat (juxt identity option->g) (keys options))
+                     ~@(mapcat (fn [[k v]]
+                                 [k (or (option->g k)
+                                        v)])
+                               options)
                      routes#))))
 
 (defmacro GET     {:style/indent 2} [& args] `(core/GET ~@args))
