@@ -3,7 +3,9 @@
   
   Always use this namespace over compojure.api.{core,sweet}
   as it also loads the CTIA routing extensions."
-  (:require [ctia.http.middleware.auth :as magic]))
+  (:require [compojure.api.common :as common]
+            [clojure.set :as set]
+            [ctia.http.middleware.auth :as magic]))
 
 ;; banned
 (require '[compojure.api.core :as core])
@@ -48,7 +50,26 @@
   [middleware & body]
   `(core/middleware ~middleware ~@body))
 
-(defmacro context {:style/indent 2} [& args] `(core/context ~@args))
+(def ^:private allowed-context-options #{:tags})
+
+(defmacro context
+  "Like compojure.api.core/context, except the binding vector must be empty and
+  no binding-style options are allowed. This is to prevent the passed routes
+  from being reinitialized on every request."
+  {:style/indent 2}
+  [path arg & args] 
+  (assert (vector? arg))
+  (assert (= [] arg) (str "Not allowed to bind anything in context, push into HTTP verbs instead: " (pr-str arg)))
+  (let [[options body] (common/extract-parameters args true)
+        _ (when-some [extra-keys (not-empty (set/difference (set (keys options))
+                                                            allowed-context-options))]
+            (throw (ex-info (str "Not allowed these options in `context`, push into HTTP verbs instead: "
+                                 (pr-str (sort extra-keys)))
+                            {})))]
+    `(let [routes# (core/routes ~@body)]
+       (core/context ~path ~arg
+                     ~@(apply concat options)
+                     routes#))))
 
 (defmacro GET     {:style/indent 2} [& args] `(core/GET ~@args))
 (defmacro ANY     {:style/indent 2} [& args] `(core/ANY ~@args))
