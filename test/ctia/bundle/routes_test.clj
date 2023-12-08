@@ -1450,8 +1450,7 @@
             incident-id "https://private.intel.int.iroh.site:443/ctia/incident/incident-4fb91401-36a5-46d1-b0aa-01af02f00a7a"
             base-new-bundle (assoc bundle-minimal :assets #{asset1})
             new-bundle1 (-> base-new-bundle
-                            (assoc :assets #{asset1}
-                                   :asset_mappings #{asset_mapping1}
+                            (assoc :asset_mappings #{asset_mapping1}
                                    :asset_properties #{asset_property1}
                                    :relationships #{{:id relationship1-original-id
                                                      :source_ref incident-id
@@ -1470,11 +1469,13 @@
                                                     {:id relationship4-original-id
                                                      :source_ref incident-id
                                                      :target_ref asset_property2-original-id, :relationship_type "related-to", :source "IROH Risk Score Service"}}))
+            ;; create the asset and an asset-mappings
             create-response1 (POST app
                                    "ctia/bundle/import"
                                    :body new-bundle1
                                    :headers {"Authorization" "45c1f5e3f05d0"})
             {create-results1 :results :as create-bundle-results1} (:parsed-body create-response1)
+            ;; try and erroneously match a new asset-mappings with an old one based on asset_ref
             create-response2 (POST app
                                    "ctia/bundle/import"
                                    :body new-bundle2
@@ -1485,8 +1486,10 @@
             asset1-id          (find-id-by-original-id :asset1-id create-bundle-results1 asset1-original-id)
             asset_property1-id (find-id-by-original-id :asset_property1-id create-bundle-results1 asset_property1-original-id)
             asset_property2-id (find-id-by-original-id :asset_property2-id create-bundle-results2 asset_property2-original-id)
+            _ (assert (not= asset_property1-id asset_property2-id))
             asset_mapping1-id  (find-id-by-original-id :asset_mapping1-id  create-bundle-results1 asset_mapping1-original-id)
             asset_mapping2-id  (find-id-by-original-id :asset_mapping2-id  create-bundle-results2 asset_mapping2-original-id)
+            _ (assert (not= asset_mapping1-id asset_mapping2-id))
             relationship1-id   (find-id-by-original-id :relationship1-id   create-bundle-results1 relationship1-original-id)
             relationship2-id   (find-id-by-original-id :relationship2-id   create-bundle-results2 relationship2-original-id)
             relationship3-id   (find-id-by-original-id :relationship3-id   create-bundle-results1 relationship3-original-id)
@@ -1494,9 +1497,14 @@
         (testing "relationships are created for asset mappings/properties"
           (when (and (is (= 200 (:status create-response1)))
                      (is (= 200 (:status create-response2))))
-            (is (= 3 (count (filter (comp #{"exists"} :result) create-results))))
-            (is (= 8 (count (filter (comp #{"created"} :result) create-results)))
+            (is (= 6 (count (filter (comp #{"created"} :result) create-results1)))
+                (pr-str create-results))
+            (is (= 0 (count (filter (comp #{"exists"} :result) create-results1)))
+                (pr-str create-results))
+            (is (= 4 (count (filter (comp #{"created"} :result) create-results2)))
                 (pr-str (mapv :result create-results)))
+            (is (= 1 (count (filter (comp #{"exists"} :result) create-results2)))
+                (pr-str create-results))
             (let [{{:keys [relationships]} :parsed-body} (GET app
                                                               "ctia/bundle/export"
                                                               :query-params {:ids [relationship1-id relationship2-id relationship3-id relationship4-id]}
