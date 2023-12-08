@@ -1317,13 +1317,23 @@
 
       (let [[oldv1 oldv2 newv1 newv2 newv3] (map (comp str gensym) '[oldv1 oldv2 newv1 newv2 newv3])
             [relationship1-original-id
+             relationship2-original-id
+             relationship3-original-id
+             relationship4-original-id
              asset_mapping1-original-id
+             asset_mapping2-original-id
              asset_property1-original-id
+             asset_property2-original-id
              asset1-original-id
              asset2-original-id] (map #(str "transient:" % "_" (random-uuid))
                                       '[relationship1-original-id
+                                        relationship2-original-id
+                                        relationship3-original-id
+                                        relationship4-original-id
                                         asset_mapping1-original-id
+                                        asset_mapping2-original-id
                                         asset_property1-original-id
+                                        asset_property2-original-id
                                         asset1-original-id
                                         asset2-original-id])
             asset1 {:asset_type "device"
@@ -1349,6 +1359,7 @@
                             :timestamp #inst "2023-03-02T19:14:46.660-00:00"
                             :specificity "Unique"
                             :confidence "Unknown"}
+            asset_mapping2 (assoc asset_mapping1 :id asset_mapping2-original-id)
             old-properties [{:name "something1" :value oldv1}
                             {:name "something2" :value oldv2}]
             asset_property1 {:properties old-properties
@@ -1360,32 +1371,86 @@
                              :source_uri "https://something"
                              :id asset_property1-original-id
                              :timestamp #inst "2023-03-02T19:14:46.783-00:00"}
-            new-bundle (-> bundle-minimal
-                           (assoc :assets #{asset1}
-                                  :asset_mappings #{asset_mapping1}
-                                  :asset_properties #{asset_property1}
-                                  :relationships #{{:id relationship1-original-id
-                                                    :source_ref "https://private.intel.int.iroh.site:443/ctia/incident/incident-4fb91401-36a5-46d1-b0aa-01af02f00a7a"
-                                                    :target_ref asset_mapping1-original-id, :relationship_type "related-to", :source "IROH Risk Score Service"}
-                                                   {:source_ref "https://private.intel.int.iroh.site:443/ctia/incident/incident-4fb91401-36a5-46d1-b0aa-01af02f00a7a"
-                                                    :target_ref asset_property1-original-id, :relationship_type "related-to", :source "IROH Risk Score Service"}
-                                                   {:source_ref "https://private.intel.int.iroh.site:443/ctia/incident/incident-4fb91401-36a5-46d1-b0aa-01af02f00a7a"
-                                                    :target_ref asset1-original-id, :relationship_type "related-to", :source "IROH Risk Score Service"}}))
-            create-response (POST app
-                                  "ctia/bundle/import"
-                                  :body new-bundle
-                                  :headers {"Authorization" "45c1f5e3f05d0"})
-            {create-results :results :as create-bundle-results} (:parsed-body create-response)
+            asset_property2 (assoc asset_property1 :id asset_property2-original-id)
+            incident-id "https://private.intel.int.iroh.site:443/ctia/incident/incident-4fb91401-36a5-46d1-b0aa-01af02f00a7a"
+            base-new-bundle (assoc bundle-minimal :assets #{asset1})
+            ;; try and induce a bug where asset_mappings / asset_properties erroneously "exists" then they should be "created".
+            ;; the conditions are if an asset_mappings / asset_properties already exists with the same asset_ref as the
+            ;; one we're about to import, then the new entity will erroneously merge with the existing one.
+            ;; we know the bug is fixed if we get the right number of result=created in the second bundle import result.
+            new-bundle1 (-> base-new-bundle
+                            (assoc :asset_mappings #{asset_mapping1}
+                                   :asset_properties #{asset_property1}
+                                   :relationships #{{:id relationship1-original-id
+                                                     :source_ref incident-id
+                                                     :target_ref asset_mapping1-original-id, :relationship_type "related-to", :source "IROH Risk Score Service"}
+                                                    {:id relationship3-original-id
+                                                     :source_ref incident-id
+                                                     :target_ref asset_property1-original-id, :relationship_type "related-to", :source "IROH Risk Score Service"}
+                                                    {:source_ref incident-id
+                                                     :target_ref asset1-original-id, :relationship_type "related-to", :source "IROH Risk Score Service"}}))
+            new-bundle2 (-> base-new-bundle
+                            (assoc :asset_mappings #{asset_mapping2}
+                                   :asset_properties #{asset_property2}
+                                   :relationships #{{:id relationship2-original-id
+                                                     :source_ref incident-id
+                                                     :target_ref asset_mapping2-original-id, :relationship_type "related-to", :source "IROH Risk Score Service"}
+                                                    {:id relationship4-original-id
+                                                     :source_ref incident-id
+                                                     :target_ref asset_property2-original-id, :relationship_type "related-to", :source "IROH Risk Score Service"}}))
+            ;; create the asset and an asset-mappings
+            create-response1 (POST app
+                                   "ctia/bundle/import"
+                                   :body new-bundle1
+                                   :headers {"Authorization" "45c1f5e3f05d0"})
+            {create-results1 :results :as create-bundle-results1} (:parsed-body create-response1)
+            ;; try and erroneously match a new asset-mappings with an old one based on asset_ref
+            create-response2 (POST app
+                                   "ctia/bundle/import"
+                                   :body new-bundle2
+                                   :headers {"Authorization" "45c1f5e3f05d0"})
+            {create-results2 :results :as create-bundle-results2} (:parsed-body create-response2)
+            create-results (concat create-results1 create-results2)
             ;; resolve in order of creation/patch for easier debugging
-            asset1-id (find-id-by-original-id :asset1-id create-bundle-results asset1-original-id)
-            asset_property1-id (find-id-by-original-id :asset_property1-id create-bundle-results asset_property1-original-id)
-            asset_mapping1-id (find-id-by-original-id :asset_mapping1-id create-bundle-results asset_mapping1-original-id)
-            relationship1-id (find-id-by-original-id :relationship1-id create-bundle-results relationship1-original-id)]
+            asset1-id          (find-id-by-original-id :asset1-id create-bundle-results1 asset1-original-id)
+            asset_property1-id (find-id-by-original-id :asset_property1-id create-bundle-results1 asset_property1-original-id)
+            asset_property2-id (find-id-by-original-id :asset_property2-id create-bundle-results2 asset_property2-original-id)
+            _ (assert (not= asset_property1-id asset_property2-id))
+            asset_mapping1-id  (find-id-by-original-id :asset_mapping1-id  create-bundle-results1 asset_mapping1-original-id)
+            asset_mapping2-id  (find-id-by-original-id :asset_mapping2-id  create-bundle-results2 asset_mapping2-original-id)
+            _ (assert (not= asset_mapping1-id asset_mapping2-id))
+            relationship1-id   (find-id-by-original-id :relationship1-id   create-bundle-results1 relationship1-original-id)
+            relationship2-id   (find-id-by-original-id :relationship2-id   create-bundle-results2 relationship2-original-id)
+            relationship3-id   (find-id-by-original-id :relationship3-id   create-bundle-results1 relationship3-original-id)
+            relationship4-id   (find-id-by-original-id :relationship4-id   create-bundle-results2 relationship4-original-id)]
         (testing "relationships are created for asset mappings/properties"
-          (when (is (= 200 (:status create-response)))
-            (is (= 6 (count create-results)))
-            (is (every? (comp #{"created"} :result) create-results)
-                (pr-str (mapv :result create-results)))))
+          (when (and (is (= 200 (:status create-response1)))
+                     (is (= 200 (:status create-response2))))
+            (is (= 6 (count (filter (comp #{"created"} :result) create-results1)))
+                (pr-str create-results))
+            (is (= 0 (count (filter (comp #{"exists"} :result) create-results1)))
+                (pr-str create-results))
+            ;; this is the most important line: only the asset exists, all other entities are
+            ;; created in the second import.
+            (is (= 4 (count (filter (comp #{"created"} :result) create-results2)))
+                (pr-str (mapv :result create-results)))
+            (is (= 1 (count (filter (comp #{"exists"} :result) create-results2)))
+                (pr-str create-results))
+            (let [{{:keys [relationships]} :parsed-body} (GET app
+                                                              "ctia/bundle/export"
+                                                              :query-params {:ids [relationship1-id relationship2-id relationship3-id relationship4-id]}
+                                                              :headers {"Authorization" "45c1f5e3f05d0"})
+                  groups (update-vals (group-by :id relationships)
+                                      #(mapv (fn [e] (select-keys e [:source_ref :target_ref])) %))]
+              (is (= {relationship1-id [{:source_ref incident-id
+                                         :target_ref asset_mapping1-id}]
+                      relationship2-id [{:source_ref incident-id
+                                         :target_ref asset_mapping2-id}]
+                      relationship3-id [{:source_ref incident-id
+                                         :target_ref asset_property1-id}]
+                      relationship4-id [{:source_ref incident-id
+                                         :target_ref asset_property2-id}]}
+                     groups)))))
         (testing "asset-properties and asset-mappings are patched"
           (let [new-properties [{:name "something1" :value newv1}
                                 {:name "something-else" :value newv2}]
