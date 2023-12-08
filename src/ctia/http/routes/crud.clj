@@ -356,9 +356,9 @@
                                              (map #(if (coll? %) % [%]))
                                              (reduce into #{}))]
          (context "/search" []
-           :auth-identity identity
-           :identity-map identity-map
            (GET "/" []
+             :auth-identity identity
+             :identity-map identity-map
              :return search-schema
              :summary (format "Search for %s entities using a ES query syntax and field filters" capitalized)
              :description (capabilities->description search-capabilities)
@@ -377,6 +377,8 @@
                  ent/un-store-page
                  routes.common/paginated-ok))
            (GET "/count" []
+             :auth-identity identity
+             :identity-map identity-map
              :return s/Int
              :summary (format "Count %s matching a Lucene/ES query string and field filters" capitalized)
              :description (capabilities->description search-capabilities)
@@ -388,6 +390,8 @@
                                       :params params})
                        identity-map))))
            (DELETE "/" []
+             :auth-identity identity
+             :identity-map identity-map
              :capabilities delete-search-capabilities
              :description (capabilities->description delete-search-capabilities)
              :return s/Int
@@ -426,11 +430,11 @@
          (context "/metric" []
                   :description (capabilities->description capabilities)
                   :capabilities capabilities
-                  :auth-identity identity
-                  :identity-map identity-map
                   (routes
                     (when (seq average-fields)
                       (GET "/average" []
+                           :auth-identity identity
+                           :identity-map identity-map
                            :return MetricResult
                            :summary (format (str "Average for some %s field. Use X-Total-Hits header on response for count used for average."
                                                  " For aggregate-on field X.Y.Z, response body will be {:data {:X {:Y {:Z <average>}}}}."
@@ -454,6 +458,8 @@
                                  (routes.common/format-agg-result :avg aggregate-on search-q)
                                  routes.common/paginated-ok))))
                     (GET "/histogram" []
+                         :auth-identity identity
+                         :identity-map identity-map
                          :return MetricResult
                          :summary (format "Histogram for some %s field" capitalized)
                          :query [params histogram-q-params]
@@ -471,6 +477,8 @@
                                (routes.common/format-agg-result :histogram aggregate-on search-q)
                                routes.common/paginated-ok)))
                     (GET "/topn" []
+                         :auth-identity identity
+                         :identity-map identity-map
                          :return MetricResult
                          :summary (format "Topn for some %s field" capitalized)
                          :query [params topn-q-params]
@@ -488,6 +496,8 @@
                                (routes.common/format-agg-result :topn aggregate-on search-q)
                                routes.common/paginated-ok)))
                     (GET "/cardinality" []
+                         :auth-identity identity
+                         :identity-map identity-map
                          :return MetricResult
                          :summary (format "Cardinality for some %s field" capitalized)
                          :query [params cardinality-q-params]

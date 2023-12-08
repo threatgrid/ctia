@@ -158,13 +158,13 @@
                             un-store)))]
       (context "/:id" []
         :return Casebook
-        :query-params [{wait_for :- (describe s/Bool "wait for patched entity to be available for search") nil}]
-        :path-params [id :- s/Str]
         :description (routes.common/capabilities->description capabilities)
         :capabilities capabilities
-        :auth-identity identity
-        :identity-map identity-map
         (PATCH "/" []
+          :auth-identity identity
+          :identity-map identity-map
+          :query-params [{wait_for :- (describe s/Bool "wait for patched entity to be available for search") nil}]
+          :path-params [id :- s/Str]
           :body [partial-casebook PartialNewCasebook {:description "a Casebook partial update"}]
           :summary "Partially Update a Casebook"
           (if-let [res (patch-flow identity
@@ -176,6 +176,10 @@
             (ok res)
             (not-found {:error "casebook not found"})))
         (POST "/observables" []
+          :auth-identity identity
+          :identity-map identity-map
+          :query-params [{wait_for :- (describe s/Bool "wait for patched entity to be available for search") nil}]
+          :path-params [id :- s/Str]
           :body [operation CasebookObservablesUpdate
                  {:description "A casebook Observables operation"}]
           :summary "Edit Observables on a casebook"
@@ -189,6 +193,10 @@
             (not-found {:error "casebook not found"})))
 
         (POST "/texts" []
+          :auth-identity identity
+          :identity-map identity-map
+          :query-params [{wait_for :- (describe s/Bool "wait for patched entity to be available for search") nil}]
+          :path-params [id :- s/Str]
           :body [operation CasebookTextsUpdate
                  {:description "A casebook Texts operation"}]
           :summary "Edit Texts on a casebook"
@@ -202,6 +210,10 @@
             (not-found {:error "casebook not found"})))
 
         (POST "/bundle" []
+          :auth-identity identity
+          :identity-map identity-map
+          :query-params [{wait_for :- (describe s/Bool "wait for patched entity to be available for search") nil}]
+          :path-params [id :- s/Str]
           :body [operation CasebookBundleUpdate
                  {:description "A casebook Bundle operation"}]
           :summary "Edit a Bundle on a casebook"
