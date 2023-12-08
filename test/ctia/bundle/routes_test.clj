@@ -30,7 +30,6 @@
    [ductile.index :as es-index]
    [puppetlabs.trapperkeeper.app :as app]
    [schema.core :as s]
-   [schema.coerce :as c]
    [schema.test :refer [validate-schemas]]))
 
 (defn fixture-properties [t]
@@ -1311,75 +1310,6 @@
          (testing "there is a race condition for checking external ids"
            (is (< 1 (count (filter #(= "created" (:result %)) res))))))))))
 
-(defn make-relationships
-  [source-string incident-id entities]
-  (map (fn [entity] {:source_ref incident-id
-                     :target_ref (:id entity)
-                     :relationship_type "related-to"
-                     :source source-string})
-       entities))
-
-#_
-(deftest bundle-di-test
-  (test-for-each-store-with-app
-    (fn [app]
-      (helpers/set-capabilities! app "foouser" ["foogroup"] "user" (all-capabilities))
-      (whoami-helpers/set-whoami-response app
-                                          "45c1f5e3f05d0"
-                                          "foouser"
-                                          "foogroup"
-                                          "user")
-
-      (let [new-bundle (let [incident-id "https://private.intel.int.iroh.site:443/ctia/incident/incident-4fb91401-36a5-46d1-b0aa-01af02f00a7a"]
-                         (as-> (coerce! NewBundle
-                                        (-> bundle-minimal
-                                            (into (set/rename-keys (walk/keywordize-keys
-                                                                     (get-in (parse-string (slurp "response_asset_describe.json"))
-                                                                             ["data" 0 "data"]))
-                                                                   {:asset-mappings :asset_mappings
-                                                                    :asset-properties :asset_properties}))))
-                           new-bundle
-                           (assoc new-bundle :relationships (into #{} (mapcat (fn [bulk-kw]
-                                                                                (make-relationships
-                                                                                  "source"
-                                                                                  incident-id
-                                                                                  (bulk-kw new-bundle))))
-                                                                  [:asset_mappings :asset_properties]))))
-            create-response (POST app
-                                  "ctia/bundle/import"
-                                  :body new-bundle
-                                  :headers {"Authorization" "45c1f5e3f05d0"})
-            {create-results :results :as create-bundle-results} (:parsed-body create-response)]
-        (when (is (= 200 (:status create-response)))
-          #_
-          [{:id "http://localhost:63067/ctia/asset/asset-ce6e2277-2f93-41d8-8024-f429c9ffe553", :original_id "transient:63c8f5aa-2b02-4f03-bac3-c6735e2b24a8", :result "created", :type :asset}
-           {:id "http://localhost:63067/ctia/asset-mapping/asset-mapping-d5bc6080-724a-41f0-afd8-f3ed7e19205c", :original_id "transient:d0ca36fe-90f5-4cac-b343-c2df18b53a1a", :result "created", :type :asset-mapping}
-           {:id "http://localhost:63067/ctia/asset-mapping/asset-mapping-6891b684-81ca-4e94-a499-fd33383b1a64", :original_id "transient:90f81959-5635-45da-bbef-4a03bafe74cd", :result "created", :type :asset-mapping}
-           {:id "http://localhost:63067/ctia/asset-mapping/asset-mapping-a296c40c-f36f-4f6b-8fd0-d9fed1102f1c", :original_id "transient:82b5f9e3-3935-462d-b98d-0a5c05867a66", :result "created", :type :asset-mapping}
-           {:id "http://localhost:63067/ctia/asset-mapping/asset-mapping-4c7641c0-a450-4d4c-8c51-ae420aba1d2c", :original_id "transient:9465e433-c063-4591-afce-0788218c1df6", :result "created", :type :asset-mapping}
-           {:id "http://localhost:63067/ctia/asset-mapping/asset-mapping-3c12a5e8-a3a6-4a21-af93-f00abb4bf8c6", :original_id "transient:7f88e103-6a28-47bd-bb6c-e72de7559774", :result "created", :type :asset-mapping}
-           {:id "http://localhost:63067/ctia/asset-mapping/asset-mapping-65982946-980c-414f-8aa9-690b68a1bfe5", :original_id "transient:90c5ff9d-54f2-42eb-a0a6-53c15e06d136", :result "created", :type :asset-mapping}
-           {:id "http://localhost:63067/ctia/asset-properties/asset-properties-a52feb34-5d5a-4455-82d4-56bd08565251", :original_id "transient:4c52b95f-1217-48fe-bf07-739dd638df13", :result "created", :type :asset-properties}
-           {:id "http://localhost:63067/ctia/relationship/relationship-e2f47770-9e18-4695-ac89-9a05060b4c7e", :result "created", :type :relationship}
-           {:id "http://localhost:63067/ctia/relationship/relationship-d4778668-c8da-46a6-93ac-847c251fb588", :result "created", :type :relationship}
-           {:id "http://localhost:63067/ctia/relationship/relationship-d59563f8-3636-4aab-8e3d-b734d0af36c6", :result "created", :type :relationship}
-           {:id "http://localhost:63067/ctia/relationship/relationship-9335560c-6fcf-41de-9295-200aa4cd1c0d", :result "created", :type :relationship}
-           {:id "http://localhost:63067/ctia/relationship/relationship-1a43c118-f309-4b76-aed5-bb16d0b2d4fe", :result "created", :type :relationship}
-           {:id "http://localhost:63067/ctia/relationship/relationship-c58be038-c5bb-4c50-bafc-35e492097428", :result "created", :type :relationship}
-           {:id "http://localhost:63067/ctia/relationship/relationship-72c85e7e-e2d3-4102-93f0-0fc58a891632", :result "created", :type :relationship}]
-          (when (is (every? (comp #{"created"} :result) create-results))
-            (let [relationship-ids (keep #(when (= :relationship (:type %))
-                                            (:id %))
-                                         create-results)
-                  _ (is (= 7 (count relationship-ids)))
-                  {{:keys [relationships]} :parsed-body} (GET app
-                                                              "ctia/bundle/export"
-                                                              :query-params {:ids relationship-ids}
-                                                              :headers {"Authorization" "45c1f5e3f05d0"})
-                  actual-relationships (mapv (fn [e] (select-keys e [:source_ref :target_ref])) relationships)]
-              (is (apply distinct? (mapv :target_ref actual-relationships)))
-              )))))))
-
 (deftest bundle-asset-relationships-test
   (test-for-each-store-with-app
     (fn [app]
@@ -1449,6 +1379,9 @@
             asset_property2 (assoc asset_property1 :id asset_property2-original-id)
             incident-id "https://private.intel.int.iroh.site:443/ctia/incident/incident-4fb91401-36a5-46d1-b0aa-01af02f00a7a"
             base-new-bundle (assoc bundle-minimal :assets #{asset1})
+            ;; try and induce a bug where asset_mappings / asset_properties erroneously "existing" then they should be "created".
+            ;; the conditions are if an asset_mappings / asset_properties already exists with the same asset_ref as the
+            ;; one we're about to import, then it the new entity will erroneously merge with the existing one.
             new-bundle1 (-> base-new-bundle
                             (assoc :asset_mappings #{asset_mapping1}
                                    :asset_properties #{asset_property1}
@@ -1501,6 +1434,8 @@
                 (pr-str create-results))
             (is (= 0 (count (filter (comp #{"exists"} :result) create-results1)))
                 (pr-str create-results))
+            ;; this is the most important line: only the asset exists, all other entities are
+            ;; created in the second import.
             (is (= 4 (count (filter (comp #{"created"} :result) create-results2)))
                 (pr-str (mapv :result create-results)))
             (is (= 1 (count (filter (comp #{"exists"} :result) create-results2)))
@@ -1520,7 +1455,6 @@
                       relationship4-id [{:source_ref incident-id
                                          :target_ref asset_property2-id}]}
                      groups)))))
-        #_ ;;FIXME
         (testing "asset-properties and asset-mappings are patched"
           (let [new-properties [{:name "something1" :value newv1}
                                 {:name "something-else" :value newv2}]
@@ -1580,7 +1514,6 @@
             (test-merge-strategy "no asset_properties merge strategy"
                                  {}
                                  new-properties)))
-        #_ ;;FIXME
         (testing "patched relationships, asset mappings/properties resolve refs after creating other entities"
           (let [;; on existing entities, patch asset_ref to a newly created asset,
                 ;; and :{source/target}_ref to newly created entities
