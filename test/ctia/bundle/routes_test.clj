@@ -1374,9 +1374,10 @@
             asset_property2 (assoc asset_property1 :id asset_property2-original-id)
             incident-id "https://private.intel.int.iroh.site:443/ctia/incident/incident-4fb91401-36a5-46d1-b0aa-01af02f00a7a"
             base-new-bundle (assoc bundle-minimal :assets #{asset1})
-            ;; try and induce a bug where asset_mappings / asset_properties erroneously "existing" then they should be "created".
+            ;; try and induce a bug where asset_mappings / asset_properties erroneously "exists" then they should be "created".
             ;; the conditions are if an asset_mappings / asset_properties already exists with the same asset_ref as the
-            ;; one we're about to import, then it the new entity will erroneously merge with the existing one.
+            ;; one we're about to import, then the new entity will erroneously merge with the existing one.
+            ;; we know the bug is fixed if we get the right number of result=created in the second bundle import result.
             new-bundle1 (-> base-new-bundle
                             (assoc :asset_mappings #{asset_mapping1}
                                    :asset_properties #{asset_property1}
