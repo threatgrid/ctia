@@ -414,8 +414,9 @@
      "severity sorts like #'ctim-severity-order"
      [5 7]
      #(ductile.index/delete! % "ctia_*")
-     (helpers/with-properties (into ["ctia.auth.type" "allow-all"]
-                                    es-helpers/basic-auth-properties)
+     (helpers/with-properties (-> ["ctia.auth.type" "allow-all"]
+                                  (into es-helpers/basic-auth-properties)
+                                  (conj "ctia.store.bulk-refresh" "wait_for"))
        (helpers/fixture-ctia-with-app
          (fn [app]
            ;(helpers/set-capabilities! app "foouser" ["foogroup"] "user" all-capabilities)
@@ -531,8 +532,7 @@
                                                    nxt))))))))]))
                   (finally (purge-incidents! app))))))))))
 
-(deftest ^:disabled  ;;FIXME
-  test-incident-severity-int-search
+(deftest test-incident-severity-int-search
   (severity-int-script-search))
 
 (deftest ^:disabled bench-incident-severity-int-search
