@@ -9,7 +9,7 @@
             [com.gfredericks.test.chuck.clojure-test :refer [checking]]
             [com.gfredericks.test.chuck.generators :as gen']
             [ctia.auth.threatgrid :as auth]
-            [ctia.bulk.core :as bulk]
+            [ctia.bundle.core :as bundle]
             [ctia.entity.incident :as sut]
             [ctia.test-helpers.access-control :refer [access-control-test]]
             [ctia.test-helpers.aggregate :refer [test-metric-routes]]
@@ -21,6 +21,7 @@
             [ctia.test-helpers.search :as search-th]
             [ctia.test-helpers.store :refer [test-for-each-store-with-app]]
             [ctim.domain.id :as id]
+            [ctim.examples.bundles :refer [new-bundle-minimal]]
             [ctim.examples.incidents
              :refer
              [new-incident-maximal new-incident-minimal incident-minimal]]
@@ -111,8 +112,8 @@
      (whoami-helpers/set-whoami-response app "45c1f5e3f05d0" "foouser" "foogroup" "user")
      (let [parameters (into sut/incident-entity
                             {:app app
-                             :patch-tests? false;true
-                             :search-tests? false;true
+                             :patch-tests? true
+                             :search-tests? true
                              :example (assoc new-incident-maximal
                                              :meta
                                              {:ai-generated-description true})
@@ -145,12 +146,13 @@
                 :revision (or order 0))))))
 
 (s/defn create-incidents [app incidents :- (s/pred set?)]
-  (bulk/create-bulk
-    {:incidents (vec incidents)}
-    {}
+  (bundle/import-bundle
+    (-> new-bundle-minimal
+        (dissoc :id)
+        (assoc :incidents incidents))
+    nil    ;; external-key-prefixes
     (auth/map->Identity {:login "foouser"
                          :groups ["foogroup"]})
-    {:refresh "true"}
     (app/service-graph app)))
 
 (defn purge-incidents! [app]
@@ -530,8 +532,7 @@
                                                    nxt))))))))]))
                   (finally (purge-incidents! app))))))))))
 
-(deftest ^:disabled ;;FIXME !!!!!!!!!!!
-  test-incident-severity-int-search
+(deftest test-incident-severity-int-search
   (severity-int-script-search))
 
 (deftest ^:disabled bench-incident-severity-int-search
@@ -812,15 +813,17 @@
        (helpers/set-capabilities! app "foouser" ["foogroup"] "user" all-capabilities)
        (whoami-helpers/set-whoami-response app "45c1f5e3f05d0" "foouser" "foogroup" "user")
        (let [incidents #{(gen-new-incident)}
+             ext-key-prefixes nil
              auth-ident (auth/map->Identity {:login "foouser"
                                              :groups ["foogroup"]})
-             imported (bulk/create-bulk
-                       {:incidents (vec incidents)}
-                       {}
+             imported (bundle/import-bundle
+                       (-> new-bundle-minimal
+                           (dissoc :id)
+                           (assoc :incidents incidents))
+                       ext-key-prefixes
                        auth-ident
-                       {:refresh "true"}
                        (app/service-graph app))]
-         (let [incident-id (->> imported :incidents first id/long-id->id :short-id)
+         (let [incident-id (->> imported :results first :id id/long-id->id :short-id)
                statuses ["New" "Open" "Stalled" "Incident Reported"]
                timestamps (->>
                            statuses
