@@ -115,10 +115,8 @@
              (all-pages entity-type external-ids auth-identity get-store))
       [])))
 
-(s/defschema ExistingWithAssetRef {s/Str [(s/pred map?)]})
-
-(s/defn find-by-asset_refs :- ExistingWithAssetRef
-  "Returns a map from asset_ref to entities of entity-type that has
+(s/defn find-by-asset_refs :- {s/Str (s/pred map?)}
+  "Returns a map from asset_ref to entity of entity-type that has
   entry `:asset_ref asset_ref`."
   [asset_refs :- #{s/Str}
    entity-type :- (s/enum :asset-properties :asset-mapping)
@@ -141,9 +139,8 @@
                                                                query
                                                                (auth/ident->map auth-identity)
                                                                paging))
-                             entities (apply merge-with (fnil into [])
-                                             entities
-                                             (map (fn [e] {(:asset_ref e) [e]}) results))]
+                             entities (into entities (map (juxt :asset_ref identity))
+                                            results)]
                          (if next-page
                            (recur (apply disj asset_refs (map :asset_ref results))
                                   entities)
@@ -429,7 +426,7 @@
   [{:keys [id new-entity result] :as import-data} :- EntityImportData
    tempids :- TempIDs
    bulk-asset-kw :- (s/enum :asset_properties :asset_mappings)
-   asset_ref->old-entities :- ExistingWithAssetRef
+   asset_ref->old-entity :- {s/Str (s/pred map?)}
    merge-strategy :- AssetPropertiesMergeStrategy]
   (or (when (not= "error" result)
         (let [asset_ref (get tempids (:asset_ref new-entity) (:asset_ref new-entity))]
@@ -439,13 +436,12 @@
                 (assoc :error {:type :unresolvable-transient-id
                                :reason (str "Unresolvable asset_ref: " asset_ref)}
                        :result "error"))
-            (when-some [old-entity (or ;; already resolved by :external_ids or realized :id
-                                       (:old-entity import-data)
-                                       (some #(when (= id (:id %))
-                                                %)
-                                             (asset_ref->old-entities asset_ref)))]
+            (when-some [{:keys [id] :as old-entity} (or ;; already resolved by :external_ids or realized :id
+                                                        (:old-entity import-data)
+                                                        (asset_ref->old-entity asset_ref))]
               (-> import-data
                   (assoc :old-entity old-entity
+                         :id id
                          :result "exists"
                          :new-entity (-> new-entity
                                          (assoc :id id :asset_ref asset_ref)
@@ -473,15 +469,15 @@
                                                           (when-not (schemas/transient-id? asset_ref)
                                                             asset_ref)))))
                                           (bulk-asset-kw bundle-import-data))
-                         asset_ref->old-entities (find-by-asset_refs asset_refs
-                                                                     (bulk/entity-type-from-bulk-key bulk-asset-kw)
-                                                                     auth-identity
-                                                                     services)]
+                         asset_ref->old-entity (find-by-asset_refs asset_refs
+                                                                   (bulk/entity-type-from-bulk-key bulk-asset-kw)
+                                                                   auth-identity
+                                                                   services)]
                      (cond-> bundle-import-data
                        (seq (bulk-asset-kw bundle-import-data))
                        (update bulk-asset-kw
                                (fn [bulk-assets]
-                                 (mapv #(with-existing-asset-entity % tempids bulk-asset-kw asset_ref->old-entities merge-strategy)
+                                 (mapv #(with-existing-asset-entity % tempids bulk-asset-kw asset_ref->old-entity merge-strategy)
                                        bulk-assets))))))]
     (-> bundle-import-data
         (resolve* :asset_mappings)
