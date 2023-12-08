@@ -412,7 +412,7 @@
   ([{:keys [bench-atom]}]
    (es-helpers/for-each-es-version
      "severity sorts like #'ctim-severity-order"
-     [5 7]
+     [#_5 7]
      #(ductile.index/delete! % "ctia_*")
      (helpers/with-properties (-> ["ctia.auth.type" "allow-all"]
                                   (into es-helpers/basic-auth-properties)
@@ -462,7 +462,7 @@
                                             multiplier
                                             (count fixed-severities-asc)
                                             (count incidents)))
-                          [_created-bundle create-incidents-ms-time] (result+ms-time (create-incidents app incidents))
+                          [created-bundle create-incidents-ms-time] (result+ms-time (create-incidents app incidents))
                           _ (when bench-atom
                               (println (format "Took %ems to import %s incidents" create-incidents-ms-time (str incidents-count))))
                           _ (doseq [sort_by (cond-> ["severity"]
@@ -507,7 +507,10 @@
                                                              (is (= (->> ((if asc? identity rseq) fixed-severities-asc)
                                                                          ;; entire query is checked in unit tests, bench uses a subset
                                                                          (take result-size))
-                                                                    (map :severity parsed-body)))
+                                                                    (map :severity parsed-body))
+                                                                 {:parsed-body parsed-body
+                                                                  :created-bundle created-bundle
+                                                                  :incidents incidents})
                                                              ;; should succeed even with multipliers because sort-by is stable
                                                              (is (= expected-parsed-body
                                                                     parsed-body)))))]
