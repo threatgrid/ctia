@@ -50,8 +50,8 @@
        (str "ctia/incident/" uri-encoded-id "/status")
      :body (cond-> {:status new-status}
              status-disposition (assoc :status_disposition status-disposition))
-     :headers {"Authorization" "45c1f5e3f05d0"
-               "wait_for" true})))
+     :query-params {"wait_for" true}
+     :headers {"Authorization" "45c1f5e3f05d0"})))
 
 (defn get-incident [app id]
   (GET app (str "ctia/incident/" (uri/uri-encode id))
@@ -297,8 +297,9 @@
     "severity sorts like #'ctim-severity-order"
     [5 7]
     #(ductile.index/delete! % "ctia_*")
-    (helpers/with-properties (into ["ctia.auth.type" "allow-all"]
-                                   es-helpers/basic-auth-properties)
+    (helpers/with-properties (-> ["ctia.auth.type" "allow-all"]
+                                 (into es-helpers/basic-auth-properties)
+                                 (conj "ctia.store.bulk-refresh" "wait_for"))
       (helpers/fixture-ctia-with-app
         (fn [app]
           ;(helpers/set-capabilities! app "foouser" ["foogroup"] "user" all-capabilities)
