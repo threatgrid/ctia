@@ -36,7 +36,7 @@
     (DELETE app
             delete-search-uri
             :headers {"Authorization" "45c1f5e3f05d0"}
-            :query-params (assoc query-params :wait_for true))))
+            :query-params query-params)))
 
 (defn search-raw
   [app entity query-params]
