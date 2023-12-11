@@ -168,8 +168,8 @@
            count-body :parsed-body} (search-th/count-raw app :incident {:query "*"})]
       (assert (= 200 count-status) (pr-str count-status))
       (when-not (zero? count-body)
-        ;; refresh time is 1s. if it takes longer, we're probably on CI with a limited
-        ;; number of threads, so wait longer to give the ES refresh as many resources as we can.
+        ;; refresh time is 1s. if it takes longer, we're probably on CI with limited CPU,
+        ;; so wait longer to give the ES refresh as many resources as we can.
         (Thread/sleep (* 1000 tries))
         (recur (inc tries))))))
 
