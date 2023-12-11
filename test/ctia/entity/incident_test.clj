@@ -170,7 +170,7 @@
       (when-not (zero? count-body)
         ;; refresh time is 1s. if it takes longer, we're probably on CI with limited CPU,
         ;; so wait longer to give the ES refresh as many resources as we can.
-        (Thread/sleep (* 1000 tries))
+        (Thread/sleep (* 1000 (inc tries)))
         (recur (inc tries))))))
 
 (def asset-000-ttp-000 {:asset 0   :ttp 0})
