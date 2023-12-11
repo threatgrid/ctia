@@ -73,20 +73,7 @@
    {(s/optional-key :sort_by) feed-sort-fields}))
 
 (s/defschema FeedDeleteSearchParams
-  (st/merge FeedCountParams
-            {(s/optional-key :wait_for)
-             (describe s/Bool "wait for matched entity to be deleted")
-             (s/optional-key :REALLY_DELETE_ALL_THESE_ENTITIES)
-             (describe s/Bool
-                       (str
-                        " If you do not set this value or set it to false"
-                        " this route will perform a dry run."
-                        " Set this value to true to perform the deletion."
-                        " You MUST confirm you will fix the mess after"
-                        " the inevitable disaster that will occur after"
-                        " you perform that operation."
-                        " DO NOT FORGET TO SET THAT TO FALSE AFTER EACH DELETION"
-                        " IF YOU INTEND TO USE THAT ROUTE MULTIPLE TIMES."))}))
+  (routes.crud/add-flags-to-delete-search-query-params FeedCountParams))
 
 (def FeedGetParams FeedFieldsParam)
 
