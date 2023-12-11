@@ -159,9 +159,12 @@
   (search-th/delete-search app :incident {:query "*"
                                           :REALLY_DELETE_ALL_THESE_ENTITIES true})
   ;;FIXME ideally we pass wait_for=true to the delete search, but it yields a coercion error in ES.
+  ;; instead, we query GET /incident/search/count until it is zero as a workaround
   (loop [tries 0]
     (assert (< tries 10))
-    (let [{count-status :status
+    (let [;; first time around, query immediately to hopefully wake up the index to schedule a refresh
+          ;; https://www.elastic.co/guide/en/elasticsearch/reference/7.17/near-real-time.html
+          {count-status :status
            count-body :parsed-body} (search-th/count-raw app :incident {:query "*"})]
       (assert (= 200 count-status) (pr-str count-status))
       (when-not (zero? count-body)
