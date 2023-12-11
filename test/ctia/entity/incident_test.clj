@@ -423,9 +423,8 @@
      "severity sorts like #'ctim-severity-order"
      [#_5 7]
      #(ductile.index/delete! % "ctia_*")
-     (helpers/with-properties (-> ["ctia.auth.type" "allow-all"]
-                                  (into es-helpers/basic-auth-properties)
-                                  (conj "ctia.store.bulk-refresh" "wait_for"))
+     (helpers/with-properties (into ["ctia.auth.type" "allow-all"]
+                                    es-helpers/basic-auth-properties)
        (helpers/fixture-ctia-with-app
          (fn [app]
            ;(helpers/set-capabilities! app "foouser" ["foogroup"] "user" all-capabilities)
@@ -471,8 +470,7 @@
                                             multiplier
                                             (count fixed-severities-asc)
                                             (count incidents)))
-                          [created-bundle create-incidents-ms-time] (result+ms-time (create-incidents app incidents))
-                          incident-ids (map :id created-bundle)
+                          [_created-bundle create-incidents-ms-time] (result+ms-time (create-incidents app incidents))
                           _ (when bench-atom
                               (println (format "Took %ems to import %s incidents" create-incidents-ms-time (str incidents-count))))
                           _ (doseq [sort_by (cond-> ["severity"]
@@ -483,9 +481,7 @@
                                                            nil))
                                     asc? [true false]
                                     iteration (range (if bench-atom 5 1))
-                                    :let [search-params (cond-> {:limit result-size
-                                                                 :query (format "id:(%s)"
-                                                                                (apply str (interpose " OR " (map pr-str incident-ids))))}
+                                    :let [search-params (cond-> {:limit result-size}
                                                           sort_by (assoc :sort_by sort_by
                                                                          :sort_order (if asc? "asc" "desc")))
                                           test-id {:iteration iteration :sort_by sort_by :asc? asc? :search-params search-params
@@ -519,10 +515,7 @@
                                                              (is (= (->> ((if asc? identity rseq) fixed-severities-asc)
                                                                          ;; entire query is checked in unit tests, bench uses a subset
                                                                          (take result-size))
-                                                                    (map :severity parsed-body))
-                                                                 (pr-str {:parsed-body parsed-body
-                                                                          :created-bundle created-bundle
-                                                                          :incidents incidents}))
+                                                                    (map :severity parsed-body)))
                                                              ;; should succeed even with multipliers because sort-by is stable
                                                              (is (= expected-parsed-body
                                                                     parsed-body)))))]
