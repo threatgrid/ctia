@@ -419,35 +419,35 @@
      (helpers/with-properties (-> ["ctia.auth.type" "allow-all"]
                                   (into es-helpers/basic-auth-properties)
                                   (conj "ctia.store.bulk-refresh" "wait_for"))
-       (doseq [;; only one ordering with these severities. don't mix any of Info, Unknown, None, or nil in the same test.
-               canonical-fixed-severities-asc (-> []
-                                                  (cond-> (not bench-atom)
-                                                    (into [["Unknown" "Low"]
-                                                           ["Unknown" "Critical"]
-                                                           ["None" "Low"]
-                                                           ["None" "Critical"]
-                                                           [nil "Low"]
-                                                           [nil "Critical"]
-                                                           ["Info" "Low"]
-                                                           ["Info" "Critical"]
-                                                           ["Low" "Medium" "High" "Critical"]
-                                                           ;; missing severity is the same as None/Unknown
-                                                           [nil "Low" "Medium" "High" "Critical"]
-                                                           ["Unknown" "Low" "Medium" "High" "Critical"]]))
-                                                  ;; only benchmark the largest test case because the benchmark is dominated
-                                                  ;; by the bundle import
-                                                  (into [["None" "Low" "Medium" "High" "Critical"]]))
-               ;; scale up the test size by repeating elements
-               multiplier (if-not bench-atom
-                            [1 2]
-                            [#_1 #_10 #_100 #_1000 #_5000 20000])
-               ;; expand the incidents test data
-               :let [fixed-severities-asc (into [] (mapcat #(repeat multiplier %))
-                                                canonical-fixed-severities-asc)]]
-         (helpers/fixture-ctia-with-app
-           (fn [app]
-             ;(helpers/set-capabilities! app "foouser" ["foogroup"] "user" all-capabilities)
-             ;(whoami-helpers/set-whoami-response app "45c1f5e3f05d0" "foouser" "foogroup" "user")
+       (helpers/fixture-ctia-with-app
+         (fn [app]
+           ;(helpers/set-capabilities! app "foouser" ["foogroup"] "user" all-capabilities)
+           ;(whoami-helpers/set-whoami-response app "45c1f5e3f05d0" "foouser" "foogroup" "user")
+           (doseq [;; only one ordering with these severities. don't mix any of Info, Unknown, None, or nil in the same test.
+                   canonical-fixed-severities-asc (-> []
+                                                      (cond-> (not bench-atom)
+                                                        (into [["Unknown" "Low"]
+                                                               ["Unknown" "Critical"]
+                                                               ["None" "Low"]
+                                                               ["None" "Critical"]
+                                                               [nil "Low"]
+                                                               [nil "Critical"]
+                                                               ["Info" "Low"]
+                                                               ["Info" "Critical"]
+                                                               ["Low" "Medium" "High" "Critical"]
+                                                               ;; missing severity is the same as None/Unknown
+                                                               [nil "Low" "Medium" "High" "Critical"]
+                                                               ["Unknown" "Low" "Medium" "High" "Critical"]]))
+                                                      ;; only benchmark the largest test case because the benchmark is dominated
+                                                      ;; by the bundle import
+                                                      (into [["None" "Low" "Medium" "High" "Critical"]]))
+                   ;; scale up the test size by repeating elements
+                   multiplier (if-not bench-atom
+                                [1 2]
+                                [#_1 #_10 #_100 #_1000 #_5000 20000])
+                   ;; expand the incidents test data
+                   :let [fixed-severities-asc (into [] (mapcat #(repeat multiplier %))
+                                                    canonical-fixed-severities-asc)]]
              (try (testing (pr-str fixed-severities-asc)
                     (let [incidents-count (count fixed-severities-asc)
                           ;; note: there's a default limit of 10k results via index.max_result_window
@@ -465,6 +465,7 @@
                                             (count fixed-severities-asc)
                                             (count incidents)))
                           [created-bundle create-incidents-ms-time] (result+ms-time (create-incidents app incidents))
+                          incident-ids (map :id created-bundle)
                           _ (when bench-atom
                               (println (format "Took %ems to import %s incidents" create-incidents-ms-time (str incidents-count))))
                           _ (doseq [sort_by (cond-> ["severity"]
@@ -475,7 +476,8 @@
                                                            nil))
                                     asc? [true false]
                                     iteration (range (if bench-atom 5 1))
-                                    :let [search-params (cond-> {:limit result-size}
+                                    :let [search-params (cond-> {:limit result-size
+                                                                 :filter-map {:id incident-ids}}
                                                           sort_by (assoc :sort_by sort_by
                                                                          :sort_order (if asc? "asc" "desc")))
                                           test-id {:iteration iteration :sort_by sort_by :asc? asc? :search-params search-params
