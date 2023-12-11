@@ -157,8 +157,15 @@
 
 (defn purge-incidents! [app]
   (search-th/delete-search app :incident {:query "*"
-                                          :REALLY_DELETE_ALL_THESE_ENTITIES true
-                                          :wait_for true}))
+                                          :REALLY_DELETE_ALL_THESE_ENTITIES true})
+  (loop [tries 0]
+    (assert (< tries 10))
+    (let [{count-status :status
+           count-body :parsed-body} (search-th/count-raw app :incident {:query "*"})]
+      (assert (= 200 count-status) (pr-str count-status))
+      (when-not (zero? count-body)
+        (Thread/sleep (* 1000 tries))
+        (recur (inc tries))))))
 
 (def asset-000-ttp-000 {:asset 0   :ttp 0})
 (def asset-000-ttp-100 {:asset 0   :ttp 100})
