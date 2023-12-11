@@ -477,7 +477,8 @@
                                     asc? [true false]
                                     iteration (range (if bench-atom 5 1))
                                     :let [search-params (cond-> {:limit result-size
-                                                                 :filter-map {:id incident-ids}}
+                                                                 :query (format "id:(%s)"
+                                                                                (apply str (interpose " OR " (map pr-str incident-ids))))}
                                                           sort_by (assoc :sort_by sort_by
                                                                          :sort_order (if asc? "asc" "desc")))
                                           test-id {:iteration iteration :sort_by sort_by :asc? asc? :search-params search-params
