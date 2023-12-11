@@ -50,8 +50,8 @@
        (str "ctia/incident/" uri-encoded-id "/status")
      :body (cond-> {:status new-status}
              status-disposition (assoc :status_disposition status-disposition))
-     :query-params {"wait_for" true}
-     :headers {"Authorization" "45c1f5e3f05d0"})))
+     :headers {"Authorization" "45c1f5e3f05d0"
+               "wait_for" true})))
 
 (defn get-incident [app id]
   (GET app (str "ctia/incident/" (uri/uri-encode id))
