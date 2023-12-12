@@ -62,6 +62,18 @@
            `(sut/context
               "/my-route" []
               :return {:my-schema #{}}
+              ~'routes))))
+  ;; :summary is evaluated
+  (is (= '(clojure.core/let [routes__0 (compojure.api.core/routes routes)
+                             summary__1 (clojure.core/str "a" "summary")]
+            (compojure.api.core/context
+              "/my-route" []
+              :summary summary__1
+              routes__0))
+         (dexpand-1
+           `(sut/context
+              "/my-route" []
+              :summary (str "a" "summary")
               ~'routes)))))
 
 ;; adapted from clojure.repl/root-cause, but unwraps compiler exceptions
