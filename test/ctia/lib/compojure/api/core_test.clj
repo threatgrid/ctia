@@ -1,6 +1,7 @@
 (ns ctia.lib.compojure.api.core-test
   (:require [ctia.lib.compojure.api.core :as sut]
             [clojure.test :refer [deftest is]]
+            [ring.swagger.json-schema :refer [describe]]
             [schema.core :as s]))
 
 (defmacro with-deterministic-gensym [& body]
@@ -93,24 +94,24 @@
   (is-context-banned
     `(sut/context
        "/my-route" []
-       :path-params [id# :- s/Str]
+       :path-params [~'id :- s/Str]
        ~'routes)
     "Not allowed these options in `context`, push into HTTP verbs instead: (:path-params)")
   (is-context-banned
     `(sut/context
        "/my-route" []
-       :query-params [{wait_for# :- (describe s/Bool "wait for patched entity to be available for search") nil}]
+       :query-params [{~'wait_for :- (describe s/Bool "wait for patched entity to be available for search") nil}]
        ~'routes)
     "Not allowed these options in `context`, push into HTTP verbs instead: (:query-params)")
   (is-context-banned
     `(sut/context
        "/my-route" []
-       :auth-identity identity#
+       :auth-identity ~'identity
        ~'routes)
     "Not allowed these options in `context`, push into HTTP verbs instead: (:auth-identity)")
   (is-context-banned
     `(sut/context
        "/my-route" []
-       :identity-map identity-map#
+       :identity-map ~'identity-map
        ~'routes)
     "Not allowed these options in `context`, push into HTTP verbs instead: (:identity-map)"))
