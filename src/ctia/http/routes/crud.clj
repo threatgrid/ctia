@@ -26,6 +26,23 @@
 (s/defn capitalize-entity [entity :- (s/pred simple-keyword?)]
   (-> entity name str/capitalize))
 
+(s/defn add-flags-to-delete-search-query-params :- (s/protocol s/Schema)
+  [search-filters :- (s/protocol s/Schema)]
+  (st/merge search-filters
+            {(s/optional-key :wait_for)
+             (describe s/Bool "wait for matched entity to be deleted")
+             (s/optional-key :REALLY_DELETE_ALL_THESE_ENTITIES)
+             (describe s/Bool
+                       (str
+                         " If you do not set this value or set it to false"
+                         " this route will perform a dry run."
+                         " Set this value to true to perform the deletion."
+                         " You MUST confirm you will fix the mess after"
+                         " the inevitable disaster that will occur after"
+                         " you perform that operation."
+                         " DO NOT FORGET TO SET THAT TO FALSE AFTER EACH DELETION"
+                         " IF YOU INTEND TO USE THAT ROUTE MULTIPLE TIMES."))}))
+
 (defn flow-get-by-ids-fn
   [{:keys [get-store entity identity-map]}]
   (let [s (get-store entity)]
@@ -392,20 +409,7 @@
              :description (capabilities->description delete-search-capabilities)
              :return s/Int
              :summary (format "Delete %s entities matching given Lucene/ES query string or/and field filters" capitalized)
-             :query [params (into search-filters
-                                  {(s/optional-key :wait_for)
-                                   (describe s/Bool "wait for matched entity to be deleted")
-                                   (s/optional-key :REALLY_DELETE_ALL_THESE_ENTITIES)
-                                   (describe s/Bool
-                                             (str
-                                              " If you do not set this value or set it to false"
-                                              " this route will perform a dry run."
-                                              " Set this value to true to perform the deletion."
-                                              " You MUST confirm you will fix the mess after"
-                                              " the inevitable disaster that will occur after"
-                                              " you perform that operation."
-                                              " DO NOT FORGET TO SET THAT TO FALSE AFTER EACH DELETION"
-                                              " IF YOU INTEND TO USE THAT ROUTE MULTIPLE TIMES."))})]
+             :query [params (add-flags-to-delete-search-query-params search-filters)]
              (let [query (search-query {:date-field date-field
                                         :params (dissoc params :wait_for :REALLY_DELETE_ALL_THESE_ENTITIES)})]
                (if (empty? query)
