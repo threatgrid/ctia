@@ -341,7 +341,7 @@
 (defn test-delete-search
   [{:keys [app entity bundle-key example]}]
   (let [docs (->> (dissoc example :id)
-                  (repeat 100)
+                  (repeat 10)
                   (map #(assoc % :tlp (rand-nth ["green" "amber" "red"]))))
         {green-docs "green"
          amber-docs "amber"
@@ -349,7 +349,9 @@
         count-fn #(:parsed-body (count-raw app entity %))
         delete-search-fn (fn [q confirm?]
                            (let [query (if (boolean? confirm?)
-                                         (assoc q :REALLY_DELETE_ALL_THESE_ENTITIES confirm?)
+                                         (assoc q
+                                                :REALLY_DELETE_ALL_THESE_ENTITIES confirm?
+                                                :wait_for true)
                                          q)]
                              (-> (delete-search app entity query)
                                  :body

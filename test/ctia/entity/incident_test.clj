@@ -114,6 +114,7 @@
                             {:app app
                              :patch-tests? true
                              :search-tests? true
+                             :delete-search-tests? true
                              :example (assoc new-incident-maximal
                                              :meta
                                              {:ai-generated-description true})

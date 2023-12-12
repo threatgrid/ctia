@@ -416,7 +416,7 @@
                         (store/delete-search
                           query
                           identity-map
-                          (wait_for->refresh (:wait_for params))))
+                          {:wait_for_completion (boolean (:wait_for params))}))
                     (-> (get-store entity)
                         (store/query-string-count
                           query

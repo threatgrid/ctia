@@ -652,12 +652,13 @@ It returns the documents with full hits meta data including the real index in wh
    search-query :- SearchQuery
    ident
    es-params]
-  (let [query (make-search-query es-conn-state search-query ident)]
+  (let [query (make-search-query es-conn-state search-query ident)
+        opts (select-keys es-params [:wait_for_completion])]
     (:deleted
      (ductile.doc/delete-by-query conn
                                   [index]
                                   query
-                                  (prepare-opts es-conn-state es-params)))))
+                                  opts))))
 
 (s/defn handle-query-string-count :- (s/pred nat-int?)
   "ES count handler"
