@@ -1,6 +1,6 @@
 (ns ctia.lib.compojure.api.core-test
   (:require [ctia.lib.compojure.api.core :as sut]
-            [clojure.test :refer [deftest is]]
+            [clojure.test :refer [deftest is testing]]
             [compojure.api.api :refer [api]]
             [ring.swagger.json-schema :refer [describe]]
             [schema.core :as s]))
@@ -117,53 +117,73 @@
        ~'routes)
     "Not allowed these options in `context`, push into HTTP verbs instead: (:identity-map)"))
 
+;; this test shows that we are not allowed to let-bind the schema of :body in a HTTP verb since it would
+;; break scoping.
+(deftest verb-shadow-test
+  (testing ":body schema has access to variables bound by HTTP verb"
+    (let [inner (atom #{})
+          g (str (gensym))
+          route (let [req :outer]
+                  (sut/ANY "*" req
+                           :body [body (do (swap! inner conj req) s/Any)]
+                           {:status 200
+                            :body g}))
+          _ (dotimes [_ 10]
+              (is (= g (:body ((:handler route) {:uri "/"})))))]
+      (is (= #{{:uri "/", :route-params {:* "/"}, :params {:* "/"}, :compojure/route [:any "*"]} :outer}
+             @inner)))))
+
 (deftest verb-body-evaluate-test
   ;; :body schema only evaluates at initialization time
-  (let [times (atom 0)
-        route (sut/POST "*" req
-                        :body [body (do (swap! times inc) s/Any) {:description
-                                                                  ;; this is never evaluated
-                                                                  (do (swap! times inc) "foo")}]
-                        {:status 200
-                         :body ["yes" body]})
-        _ (is (= 1 @times))
-        _ (dotimes [_ 10]
-            (let [g (str (gensym))]
-              (is (= ["yes"
-                      ;;FIXME
-                      nil #_g]
-                     (:body ((:handler route) {:request-method :post :uri "/" :body g}))))))]
-    (is (= 1 @times)))
+  (testing ":body"
+    (let [times (atom 0)
+          route (sut/POST "*" req
+                          :body [body (do (swap! times inc) s/Any) {:description
+                                                                    ;; this is never evaluated
+                                                                    (do (swap! times inc) "foo")}]
+                          {:status 200
+                           :body ["yes" body]})
+          _ (is (= 1 @times))
+          _ (dotimes [_ 10]
+              (let [g (str (gensym))]
+                (is (= ["yes"
+                        ;;FIXME
+                        nil #_g]
+                       (:body ((:handler route) {:request-method :post :uri "/" :body g}))))))]
+      (is (= 1 @times))))
   ;; :description only evaluates at initialization time
-  (let [g (str (gensym))
-        times (atom 0)
-        route (sut/ANY "*" []
-                       :description (do (swap! times inc) "thing")
-                       {:status 200
-                        :body g})
-        _ (is (= 1 @times))
-        _ (dotimes [_ 10]
-            (is (= g (:body ((:handler route) {:uri "/"})))))]
-    (is (= 1 @times)))
+  (testing ":description"
+    (let [g (str (gensym))
+          times (atom 0)
+          route (sut/ANY "*" []
+                         :description (do (swap! times inc) "thing")
+                         {:status 200
+                          :body g})
+          _ (is (= 1 @times))
+          _ (dotimes [_ 10]
+              (is (= g (:body ((:handler route) {:uri "/"})))))]
+      (is (= 1 @times))))
   ;; :return only evaluates at initialization time
-  (let [g (str (gensym))
-        times (atom 0)
-        route (sut/ANY "*" []
-                       :return (do (swap! times inc) s/Any)
-                       {:status 200
-                        :body g})
-        _ (is (= 1 @times))
-        _ (dotimes [_ 10]
-            (is (= g (:body ((:handler route) {:uri "/"})))))]
-    (is (= 1 @times)))
+  (testing ":return"
+    (let [g (str (gensym))
+          times (atom 0)
+          route (sut/ANY "*" []
+                         :return (do (swap! times inc) s/Any)
+                         {:status 200
+                          :body g})
+          _ (is (= 1 @times))
+          _ (dotimes [_ 10]
+              (is (= g (:body ((:handler route) {:uri "/"})))))]
+      (is (= 1 @times))))
   ;; :path-params schema only evaluates at initialization time
-  (let [times (atom 0)
-        route (sut/ANY "/:id" []
-                       :path-params [id :- s/Str]
-                       {:status 200
-                        :body id})
-        _ (is (= 1 @times))
-        _ (dotimes [_ 10]
-            (let [g (str (gensym))]
-              (is (= g (:body ((:handler route) {:uri (str "/" g)}))))))]
-    (is (= 1 @times))))
+  (testing ":path-params"
+    (let [times (atom 0)
+          route (sut/ANY "/:id" []
+                         :path-params [id :- (do (swap! times inc) s/Str)]
+                         {:status 200
+                          :body id})
+          _ (is (= 1 @times))
+          _ (dotimes [_ 10]
+              (let [g (str (gensym))]
+                (is (= g (:body ((:handler route) {:uri (str "/" g)}))))))]
+      (is (= 1 @times)))))
