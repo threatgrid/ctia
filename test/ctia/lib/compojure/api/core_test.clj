@@ -1,6 +1,7 @@
 (ns ctia.lib.compojure.api.core-test
   (:require [ctia.lib.compojure.api.core :as sut]
             [clojure.test :refer [deftest is]]
+            [compojure.api.api :refer [api]]
             [ring.swagger.json-schema :refer [describe]]
             [schema.core :as s]))
 
@@ -115,3 +116,13 @@
        :identity-map ~'identity-map
        ~'routes)
     "Not allowed these options in `context`, push into HTTP verbs instead: (:identity-map)"))
+
+(deftest verb-body-evaluate-test
+  (let [times (atom 0)
+        _ ((:handler
+             (sut/ANY "*" []
+                      :body [body (do (swap! times inc) s/Any)]
+                      {:status 200
+                       :body "yes"}))
+           {:uri "/"})]
+    (is (= 1 @times))))
