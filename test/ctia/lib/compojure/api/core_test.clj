@@ -17,122 +17,116 @@
   (with-deterministic-gensym
     (macroexpand-1 form)))
 
+(defn is-expand [form arrow expansion]
+  (assert (= :=> arrow))
+  (is (= expansion (dexpand-1 form))))
+
 (deftest context-expansion-test
   ;; :tags is unevaluated
-  (is (= '(clojure.core/let [routes__0 (compojure.api.core/routes routes)]
-            (compojure.api.core/context
-              "/my-route" []
-              :tags #{:bar :foo}
-              routes__0))
-         (dexpand-1
-           `(sut/context
-              "/my-route" []
-              :tags #{:foo :bar}
-              ~'routes))))
+  (is-expand `(sut/context
+                "/my-route" []
+                :tags #{:foo :bar}
+                ~'routes)
+             :=> '(clojure.core/let [routes__0 (compojure.api.core/routes routes)]
+                    (compojure.api.core/context
+                      "/my-route" []
+                      :tags #{:bar :foo}
+                      routes__0)))
   ;; :capabilities is evaluated
-  (is (= '(clojure.core/let [routes__0 (compojure.api.core/routes routes)
-                             capabilities__1 #{:bar :foo}]
-            (compojure.api.core/context
-              "/my-route" []
-              :capabilities capabilities__1
-              routes__0))
-         (dexpand-1
-           `(sut/context
-              "/my-route" []
-              :capabilities #{:foo :bar}
-              ~'routes))))
+  (is-expand `(sut/context
+                "/my-route" []
+                :capabilities #{:foo :bar}
+                ~'routes)
+             :=> '(clojure.core/let [routes__0 (compojure.api.core/routes routes)
+                                     capabilities__1 #{:bar :foo}]
+                    (compojure.api.core/context
+                      "/my-route" []
+                      :capabilities capabilities__1
+                      routes__0)))
   ;; :description is evaluated
-  (is (= '(clojure.core/let [routes__0 (compojure.api.core/routes routes)
-                             description__1 (clojure.core/str "Foo" "bar")]
-            (compojure.api.core/context
-              "/my-route" []
-              :description description__1
-              routes__0))
-         (dexpand-1
-           `(sut/context
-              "/my-route" []
-              :description (str "Foo" "bar")
-              ~'routes))))
+  (is-expand `(sut/context
+                "/my-route" []
+                :description (str "Foo" "bar")
+                ~'routes)
+             :=> '(clojure.core/let [routes__0 (compojure.api.core/routes routes)
+                                     description__1 (clojure.core/str "Foo" "bar")]
+                    (compojure.api.core/context
+                      "/my-route" []
+                      :description description__1
+                      routes__0)))
   ;; :return is evaluated
-  (is (= '(clojure.core/let [routes__0 (compojure.api.core/routes routes)
-                             return__1 {:my-schema #{}}]
-            (compojure.api.core/context
-              "/my-route" []
-              :return return__1
-              routes__0))
-         (dexpand-1
-           `(sut/context
-              "/my-route" []
-              :return {:my-schema #{}}
-              ~'routes))))
+  (is-expand `(sut/context
+                "/my-route" []
+                :return {:my-schema #{}}
+                ~'routes)
+             :=> '(clojure.core/let [routes__0 (compojure.api.core/routes routes)
+                                     return__1 {:my-schema #{}}]
+                    (compojure.api.core/context
+                      "/my-route" []
+                      :return return__1
+                      routes__0)))
   ;; :summary is evaluated
-  (is (= '(clojure.core/let [routes__0 (compojure.api.core/routes routes)
-                             summary__1 (clojure.core/str "a" "summary")]
-            (compojure.api.core/context
-              "/my-route" []
-              :summary summary__1
-              routes__0))
-         (dexpand-1
-           `(sut/context
-              "/my-route" []
-              :summary (str "a" "summary")
-              ~'routes)))))
+  (is-expand `(sut/context
+                "/my-route" []
+                :summary (str "a" "summary")
+                ~'routes)
+             :=> '(clojure.core/let [routes__0 (compojure.api.core/routes routes)
+                                     summary__1 (clojure.core/str "a" "summary")]
+                    (compojure.api.core/context
+                      "/my-route" []
+                      :summary summary__1
+                      routes__0))))
 
 (deftest endpoint-expansion-test
   ;; :tags is unevaluated
-  (is (= '(compojure.api.core/ANY
-            "/my-route" []
-            :tags #{:bar :foo}
-            {:status 200})
-         (dexpand-1
-           `(sut/ANY
-              "/my-route" []
-              :tags #{:foo :bar}
-              {:status 200}))))
+  (is-expand `(sut/ANY
+                "/my-route" []
+                :tags #{:foo :bar}
+                {:status 200})
+             :=> '(compojure.api.core/ANY
+                    "/my-route" []
+                    :tags #{:bar :foo}
+                    {:status 200}))
   ;; :capabilities is evaluated
-  (is (= '(clojure.core/let [capabilities__0 #{:bar :foo}]
-            (compojure.api.core/ANY
-              "/my-route" []
-              :capabilities capabilities__0
-              {:status 200}))
-         (dexpand-1
-           `(sut/ANY
-              "/my-route" []
-              :capabilities #{:foo :bar}
-              {:status 200}))))
+  (is-expand `(sut/ANY
+                "/my-route" []
+                :capabilities #{:foo :bar}
+                {:status 200})
+             :=> '(clojure.core/let [capabilities__0 #{:bar :foo}]
+                    (compojure.api.core/ANY
+                      "/my-route" []
+                      :capabilities capabilities__0
+                      {:status 200})))
   ;; :description is evaluated
-  (is (= '(clojure.core/let [description__0 (clojure.core/str "Foo" "bar")]
-            (compojure.api.core/ANY
-              "/my-route" []
-              :description description__0
-              {:status 200}))
-         (dexpand-1
-           `(sut/ANY
-              "/my-route" []
-              :description (str "Foo" "bar")
-              {:status 200}))))
+  (is-expand `(sut/ANY
+                "/my-route" []
+                :description (str "Foo" "bar")
+                {:status 200})
+             :=> '(clojure.core/let [description__0 (clojure.core/str "Foo" "bar")]
+                    (compojure.api.core/ANY
+                      "/my-route" []
+                      :description description__0
+                      {:status 200})))
   ;; :return is evaluated
-  (is (= '(clojure.core/let [return__0 {:my-schema #{}}]
-            (compojure.api.core/ANY
-              "/my-route" []
-              :return return__0
-              {:status 200}))
-         (dexpand-1
-           `(sut/ANY
-              "/my-route" []
-              :return {:my-schema #{}}
-              {:status 200}))))
+  (is-expand `(sut/ANY
+                "/my-route" []
+                :return {:my-schema #{}}
+                {:status 200})
+             :=> '(clojure.core/let [return__0 {:my-schema #{}}]
+                    (compojure.api.core/ANY
+                      "/my-route" []
+                      :return return__0
+                      {:status 200})))
   ;; :summary is evaluated
-  (is (= '(clojure.core/let [summary__0 (clojure.core/str "a" "summary")]
-            (compojure.api.core/ANY
-              "/my-route" []
-              :summary summary__0
-              {:status 200}))
-         (dexpand-1
-           `(sut/ANY
-              "/my-route" []
-              :summary (str "a" "summary")
-              {:status 200})))))
+  (is-expand `(sut/ANY
+                "/my-route" []
+                :summary (str "a" "summary")
+                {:status 200})
+             :=> '(clojure.core/let [summary__0 (clojure.core/str "a" "summary")]
+                    (compojure.api.core/ANY
+                      "/my-route" []
+                      :summary summary__0
+                      {:status 200}))))
 
 ;; adapted from clojure.repl/root-cause, but unwraps compiler exceptions
 (defn root-cause [t]
@@ -145,7 +139,8 @@
   (try (dexpand-1 form)
        (is false (pr-str form))
        (catch Exception e
-         (is (= msg (ex-message (root-cause e))) (pr-str form)))))
+         (is (= msg (ex-message (root-cause e)))
+             (pr-str form)))))
 
 (deftest context-banned-test
   (is-banned-expansion
@@ -172,8 +167,6 @@
        :identity-map ~'identity-map
        ~'routes)
     "Not allowed these options in `context`, push into HTTP verbs instead: (:identity-map)"))
-
-
 
 ;; this test shows that we are not allowed to let-bind the schema of :body in a HTTP verb since it would
 ;; break scoping.

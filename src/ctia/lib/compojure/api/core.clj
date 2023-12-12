@@ -98,11 +98,11 @@
                                                       [lets v] (case k
                                                                  ;; (ANY "*" [] :return SCHEMA ...)
                                                                  ;; =>
-                                                                 ;; (let [return__0 SCHEMA] (ANY "*" [] :return return__0 ...)
+                                                                 ;; (let [return__0 SCHEMA] (core/ANY "*" [] :return return__0 ...)
                                                                  (:capabilities :return :description :summary) [[g v] g]
                                                                  ;; (ANY "*" [] :body [sym SCHEMA ...] ...)
                                                                  ;; =>
-                                                                 ;; (let [body__0 SCHEMA] (ANY "*" [] :body [sym body__0 ...] ...)
+                                                                 ;; (let [body__0 SCHEMA] (core/ANY "*" [] :body [sym body__0 ...] ...)
                                                                  :body (let [_ (assert (vector? v))
                                                                              _ (assert (<= 2 (count v) 3))
                                                                              [b s m] v
@@ -110,7 +110,13 @@
                                                                              _ (when (= 3 (count v))
                                                                                  (assert (map? m)))]
                                                                          [[g s] (assoc v 1 g)])
-                                                                 :tags [[] v])]
+                                                                 ;; (ANY "*" [] :tags #{:foo} ...)
+                                                                 ;; =>
+                                                                 ;; (core/ANY "*" [] :tags #{:foo} ...)
+                                                                 :tags [[] v]
+                                                                 ;;FIXME
+                                                                 :path-params [[] v]
+                                                                 )]
                                                   (-> acc
                                                       (update :lets into lets)
                                                       (assoc-in [:options k] v))))
@@ -125,6 +131,7 @@
       ;; force the user to let-bind them.
       (do (doseq [[k v] options]
             (case k
+              ;; fail if schema is not a local/var dereference and show user how to let-bind it
               :body (let [[_ s :as body] v]
                       (assert (vector? body))
                       (assert (<= 2 (count body) 3))
@@ -132,6 +139,7 @@
                         (throw (ex-info (str "Please let-bind the :body schema like so: "
                                              (pr-str (list 'let ['s# s] (list (symbol (name compojure-macro)) path arg :body (assoc body 1 's#) '...))))
                                         {}))))
+              ;; fail if right-hand-side is not a local/var dereference and show user how to let-bind it
               (:return :capabilities) (when-not (symbol? v)
                                         (throw (ex-info (str (format "Please let-bind %s like so: " k)
                                                              (pr-str (list 'let ['v# v] (list (symbol (name compojure-macro)) path arg k 's# '...))))
