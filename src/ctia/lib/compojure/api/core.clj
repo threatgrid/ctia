@@ -53,12 +53,14 @@
 (def ^:private allowed-context-options #{:tags :capabilities :description :return :summary})
 (def ^:private unevalated-options #{:tags})
 
+(def ^:private ^:dynamic *gensym* gensym)
+
 (defmacro context
   "Like compojure.api.core/context, except the binding vector must be empty and
   no binding-style options are allowed. This is to prevent the passed routes
   from being reinitialized on every request."
   {:style/indent 2}
-  [path arg & args] 
+  [path arg & args]
   (assert (vector? arg))
   (assert (= [] arg) (str "Not allowed to bind anything in context, push into HTTP verbs instead: " (pr-str arg)))
   (let [[options body] (common/extract-parameters args true)
@@ -67,10 +69,11 @@
             (throw (ex-info (str "Not allowed these options in `context`, push into HTTP verbs instead: "
                                  (pr-str (sort extra-keys)))
                             {})))
+        groutes (*gensym* "routes")
         option->g (into {} (comp (remove unevalated-options)
-                                 (map (juxt identity (comp gensym name))))
+                                 (map (juxt identity (comp *gensym* name))))
                         (keys options))]
-    `(let [routes# (core/routes ~@body)
+    `(let [~groutes (core/routes ~@body)
            ~@(mapcat (fn [[k v]]
                        (when-some [g (option->g k)]
                          [g v]))
@@ -79,7 +82,7 @@
                      ~@(mapcat (fn [[k v]]
                                  [k (option->g k v)])
                                options)
-                     routes#))))
+                     ~groutes))))
 
 (defmacro GET     {:style/indent 2} [& args] `(core/GET ~@args))
 (defmacro ANY     {:style/indent 2} [& args] `(core/ANY ~@args))
