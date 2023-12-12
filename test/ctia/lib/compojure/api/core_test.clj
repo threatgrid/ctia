@@ -120,31 +120,50 @@
 (deftest verb-body-evaluate-test
   ;; :body schema only evaluates at initialization time
   (let [times (atom 0)
-        route (sut/ANY "*" []
-                       :body [body (do (swap! times inc) s/Any) {:description "foo"}]
-                       {:status 200
-                        :body "yes"})
+        route (sut/POST "*" req
+                        :body [body (do (swap! times inc) s/Any) {:description
+                                                                  ;; this is never evaluated
+                                                                  (do (swap! times inc) "foo")}]
+                        {:status 200
+                         :body ["yes" body]})
         _ (is (= 1 @times))
         _ (dotimes [_ 10]
-            ((:handler route) {:uri "/"}))]
+            (let [g (str (gensym))]
+              (is (= ["yes"
+                      ;;FIXME
+                      nil #_g]
+                     (:body ((:handler route) {:request-method :post :uri "/" :body g}))))))]
     (is (= 1 @times)))
   ;; :description only evaluates at initialization time
-  (let [times (atom 0)
+  (let [g (str (gensym))
+        times (atom 0)
         route (sut/ANY "*" []
                        :description (do (swap! times inc) "thing")
                        {:status 200
-                        :body "yes"})
+                        :body g})
         _ (is (= 1 @times))
         _ (dotimes [_ 10]
-            ((:handler route) {:uri "/"}))]
+            (is (= g (:body ((:handler route) {:uri "/"})))))]
     (is (= 1 @times)))
   ;; :return only evaluates at initialization time
-  (let [times (atom 0)
+  (let [g (str (gensym))
+        times (atom 0)
         route (sut/ANY "*" []
                        :return (do (swap! times inc) s/Any)
                        {:status 200
-                        :body "yes"})
+                        :body g})
         _ (is (= 1 @times))
         _ (dotimes [_ 10]
-            ((:handler route) {:uri "/"}))]
+            (is (= g (:body ((:handler route) {:uri "/"})))))]
+    (is (= 1 @times)))
+  ;; :path-params schema only evaluates at initialization time
+  (let [times (atom 0)
+        route (sut/ANY "/:id" []
+                       :path-params [id :- s/Str]
+                       {:status 200
+                        :body id})
+        _ (is (= 1 @times))
+        _ (dotimes [_ 10]
+            (let [g (str (gensym))]
+              (is (= g (:body ((:handler route) {:uri (str "/" g)}))))))]
     (is (= 1 @times))))
