@@ -175,6 +175,31 @@
           _ (dotimes [_ 10]
               (is (= g (:body ((:handler route) {:uri "/"})))))]
       (is (= 1 @times))))
+  ;; :summary only evaluates at initialization time
+  (testing ":summary"
+    (let [g (str (gensym))
+          times (atom 0)
+          route (sut/ANY "*" []
+                         :summary (do (swap! times inc) "foo")
+                         {:status 200
+                          :body g})
+          _ (is (= 1 @times))
+          _ (dotimes [_ 10]
+              (is (= g (:body ((:handler route) {:uri "/"})))))]
+      (is (= 1 @times))))
+  ;; :capabilities only evaluates at initialization time
+  #_ ;;FIXME needs an authenticated request
+  (testing ":capabilities"
+    (let [g (str (gensym))
+          times (atom 0)
+          route (sut/ANY "*" []
+                         :capabilities (do (swap! times inc) #{})
+                         {:status 200
+                          :body g})
+          _ (is (= 1 @times))
+          _ (dotimes [_ 10]
+              (is (= g (:body ((:handler route) {:uri "/"})))))]
+      (is (= 1 @times))))
   ;; :path-params schema only evaluates at initialization time
   (testing ":path-params"
     (let [times (atom 0)
@@ -186,4 +211,20 @@
           _ (dotimes [_ 10]
               (let [g (str (gensym))]
                 (is (= g (:body ((:handler route) {:uri (str "/" g)}))))))]
-      (is (= 1 @times)))))
+      (is (= 1 @times))))
+  ;; :query-params schema only evaluates at initialization time
+  #_ ;;FIXME construct valid query params
+  (testing ":query-params"
+    (let [times (atom 0)
+          g (str (gensym))
+          route (sut/ANY "*" []
+                         :query-params [{wait_for :- (do (swap! times inc)
+                                                         (describe s/Bool "wait for created entities to be available for search")) nil}]
+                         {:status 200
+                          :body [g wait_for]})
+          _ (is (= 1 @times))
+          _ (dotimes [_ 10]
+              (let [wait_for (rand-nth [true false])]
+                (is (= [g wait_for] (:body ((:handler route) {:uri (str "wait_for=" wait_for)}))))))]
+      (is (= 1 @times))))
+  )
