@@ -80,11 +80,10 @@
 
 (deftest endpoint-expansion-test
   ;; :tags is unevaluated
-  (is (= '(clojure.core/let []
-            (compojure.api.core/ANY
-              "/my-route" []
-              :tags #{:bar :foo}
-              {:status 200}))
+  (is (= '(compojure.api.core/ANY
+            "/my-route" []
+            :tags #{:bar :foo}
+            {:status 200})
          (dexpand-1
            `(sut/ANY
               "/my-route" []
@@ -114,7 +113,7 @@
               {:status 200}))))
   ;; :return is evaluated
   (is (= '(clojure.core/let [return__0 {:my-schema #{}}]
-            (compojure.api.core/context
+            (compojure.api.core/ANY
               "/my-route" []
               :return return__0
               {:status 200}))

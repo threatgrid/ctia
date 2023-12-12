@@ -113,28 +113,31 @@
                                               {:lets []
                                                :options {}}
                                               options)]
-        `(let ~lets
-           (~compojure-macro ~path ~arg
-                             ~@(mapcat identity options)
-                             ~@body)))
+        (cond->> `(~compojure-macro ~path ~arg
+                                    ~@(mapcat identity options)
+                                    ~@body)
+          (seq lets) (list `let lets)))
       ;; the best we can do is just assert that expressions are symbols. that will
       ;; force the user to let-bind them.
-      (let [_ (doseq [[k v] options]
-                (case k
-                  :body (let [[_ s :as body] v]
-                          (assert (vector? body))
-                          (assert (<= 2 (count body) 3))
-                          (when-not (symbol? s)
-                            (throw (ex-info (str "Please let-bind the :body schema like so: "
-                                                 (pr-str (list 'let ['s# s] (list (symbol (name compojure-macro)) path arg :body (assoc body 1 's#) '...))))
-                                            {}))))
-                  (:return :capabilities :tags) (when-not (symbol? v)
-                                                  (throw (ex-info (str (format "Please let-bind %s like so: " k)
-                                                                       (pr-str (list 'let ['v# v] (list (symbol (name compojure-macro)) path arg k 's# '...))))
-                                                                  {})))
-                  ;; these only exist at initialization time
-                  (:description :summary) nil))]
-        (list* compojure-macro path arg args)))))
+      (do (doseq [[k v] options]
+            (case k
+              :body (let [[_ s :as body] v]
+                      (assert (vector? body))
+                      (assert (<= 2 (count body) 3))
+                      (when-not (symbol? s)
+                        (throw (ex-info (str "Please let-bind the :body schema like so: "
+                                             (pr-str (list 'let ['s# s] (list (symbol (name compojure-macro)) path arg :body (assoc body 1 's#) '...))))
+                                        {}))))
+              (:return :capabilities) (when-not (symbol? v)
+                                        (throw (ex-info (str (format "Please let-bind %s like so: " k)
+                                                             (pr-str (list 'let ['v# v] (list (symbol (name compojure-macro)) path arg k 's# '...))))
+                                                        {})))
+              ;; I think these only exist at initialization time, even though they are expressions. but with all the compojure-api inference that
+              ;; reevaluates routes twice, it might be wise to require them to be let-bound?
+              (:description :summary) nil
+              ;; values
+              :tags nil))
+          (list* compojure-macro path arg args)))))
 
 (defmacro GET     {:style/indent 2} [path arg & args] (restructure-endpoint `core/GET     path arg args))
 (defmacro ANY     {:style/indent 2} [path arg & args] (restructure-endpoint `core/ANY     path arg args))
