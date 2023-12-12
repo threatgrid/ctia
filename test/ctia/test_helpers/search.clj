@@ -349,9 +349,9 @@
         count-fn #(:parsed-body (count-raw app entity %))
         delete-search-fn (fn [q confirm?]
                            (let [query (if (boolean? confirm?)
-                                         (assoc q
-                                                :REALLY_DELETE_ALL_THESE_ENTITIES confirm?
-                                                :wait_for true)
+                                         (into {:REALLY_DELETE_ALL_THESE_ENTITIES confirm?
+                                                :wait_for true}
+                                               q)
                                          q)]
                              (-> (delete-search app entity query)
                                  :body
@@ -384,7 +384,8 @@
              (count-fn filter-red))))
     (testing "delete with :REALLY_DELETE_ALL_THESE_ENTITIES set to true must really delete entities"
       (is (= (count green-docs)
-             (delete-search-fn filter-green true)))
+             (delete-search-fn (assoc filter-green :wait_for false)
+                               true)))
       (is (= (count amber-docs)
              (delete-search-fn filter-amber true)))
       (is (= (count red-docs)
