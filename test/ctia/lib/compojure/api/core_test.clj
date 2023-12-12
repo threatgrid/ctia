@@ -142,70 +142,62 @@
       (recur cause)
       cause)))
 
-(defn is-context-banned [form msg]
+(defn is-banned-expansion [form msg]
   (try (dexpand-1 form)
        (is false (pr-str form))
        (catch Exception e
          (is (= msg (ex-message (root-cause e))) (pr-str form)))))
 
 (deftest context-banned-test
-  (is-context-banned
+  (is-banned-expansion
     `(sut/context
        "/my-route" []
        :path-params [~'id :- s/Str]
        ~'routes)
     "Not allowed these options in `context`, push into HTTP verbs instead: (:path-params)")
-  (is-context-banned
+  (is-banned-expansion
     `(sut/context
        "/my-route" []
        :query-params [{~'wait_for :- (describe s/Bool "wait for patched entity to be available for search") nil}]
        ~'routes)
     "Not allowed these options in `context`, push into HTTP verbs instead: (:query-params)")
-  (is-context-banned
+  (is-banned-expansion
     `(sut/context
        "/my-route" []
        :auth-identity ~'identity
        ~'routes)
     "Not allowed these options in `context`, push into HTTP verbs instead: (:auth-identity)")
-  (is-context-banned
+  (is-banned-expansion
     `(sut/context
        "/my-route" []
        :identity-map ~'identity-map
        ~'routes)
     "Not allowed these options in `context`, push into HTTP verbs instead: (:identity-map)"))
 
+
+
 ;; this test shows that we are not allowed to let-bind the schema of :body in a HTTP verb since it would
 ;; break scoping.
 (deftest cannot-bind-req-and-dynamic-restructure-test 
-  (testing ":body"
-    (try (macroexpand-1
-           `(sut/ANY "*" ~'req
-                     :body [~'body ~'(not-a-symbol)]
-                     {:status 200
-                      :body g}))
-         (catch Exception e
-           (is (= "Please let-bind the :body schema like so: (let [s# (not-a-symbol)] (ANY \"*\" req :body [body s#] ...))"
-                  (ex-message (root-cause e)))))))
+  (is-banned-expansion
+    `(sut/ANY "*" ~'req
+              :body [~'body ~'(not-a-symbol)]
+              {:status 200
+               :body g})
+    "Please let-bind the :body schema like so: (let [s# (not-a-symbol)] (ANY \"*\" req :body [body s#] ...))")
   ;;TODO fix the :capabilities test and verify if we actually need to let-bind :capabilities
-  (testing ":capabilities"
-    (try (macroexpand-1
-           `(sut/ANY "*" ~'req
-                     :capabilities ~'(not-a-symbol)
-                     {:status 200
-                      :body g}))
-         (catch Exception e
-           (is (= "Please let-bind :capabilities like so: (let [v# (not-a-symbol)] (ANY \"*\" req :capabilities s# ...))"
-                  (ex-message (root-cause e)))))))
-  (testing ":return"
-    (try (macroexpand-1
-           `(sut/ANY "*" ~'req
-                     :return ~'(not-a-symbol)
-                     {:status 200
-                      :body g}))
-         (catch Exception e
-           (is (= "Please let-bind :return like so: (let [v# (not-a-symbol)] (ANY \"*\" req :return s# ...))"
-                  (ex-message (root-cause e)))))))
-  )
+  (is-banned-expansion
+    `(sut/ANY "*" ~'req
+              :capabilities ~'(not-a-symbol)
+              {:status 200
+               :body g})
+    "Please let-bind :capabilities like so: (let [v# (not-a-symbol)] (ANY \"*\" req :capabilities s# ...))")
+  (is-banned-expansion
+    `(sut/ANY "*" ~'req
+              :return ~'(not-a-symbol)
+              {:status 200
+               :body g})
+    "Please let-bind :return like so: (let [v# (not-a-symbol)] (ANY \"*\" req :return s# ...))"))
 
 (deftest endpoint-initializes-once-test
   ;; :body schema only evaluates at initialization time
