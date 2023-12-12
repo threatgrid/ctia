@@ -658,7 +658,8 @@ It returns the documents with full hits meta data including the real index in wh
      (ductile.doc/delete-by-query conn
                                   [index]
                                   query
-                                  opts))))
+                                  opts)
+     0)))
 
 (s/defn handle-query-string-count :- (s/pred nat-int?)
   "ES count handler"
