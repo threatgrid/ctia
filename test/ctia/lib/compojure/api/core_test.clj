@@ -118,11 +118,33 @@
     "Not allowed these options in `context`, push into HTTP verbs instead: (:identity-map)"))
 
 (deftest verb-body-evaluate-test
+  ;; :body schema only evaluates at initialization time
   (let [times (atom 0)
-        _ ((:handler
-             (sut/ANY "*" []
-                      :body [body (do (swap! times inc) s/Any)]
-                      {:status 200
-                       :body "yes"}))
-           {:uri "/"})]
+        route (sut/ANY "*" []
+                       :body [body (do (swap! times inc) s/Any) {:description "foo"}]
+                       {:status 200
+                        :body "yes"})
+        _ (is (= 1 @times))
+        _ (dotimes [_ 10]
+            ((:handler route) {:uri "/"}))]
+    (is (= 1 @times)))
+  ;; :description only evaluates at initialization time
+  (let [times (atom 0)
+        route (sut/ANY "*" []
+                       :description (do (swap! times inc) "thing")
+                       {:status 200
+                        :body "yes"})
+        _ (is (= 1 @times))
+        _ (dotimes [_ 10]
+            ((:handler route) {:uri "/"}))]
+    (is (= 1 @times)))
+  ;; :return only evaluates at initialization time
+  (let [times (atom 0)
+        route (sut/ANY "*" []
+                       :return (do (swap! times inc) s/Any)
+                       {:status 200
+                        :body "yes"})
+        _ (is (= 1 @times))
+        _ (dotimes [_ 10]
+            ((:handler route) {:uri "/"}))]
     (is (= 1 @times))))
