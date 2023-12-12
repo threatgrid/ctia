@@ -84,11 +84,55 @@
                                options)
                      ~groutes))))
 
-(defmacro GET     {:style/indent 2} [& args] `(core/GET ~@args))
-(defmacro ANY     {:style/indent 2} [& args] `(core/ANY ~@args))
-(defmacro HEAD    {:style/indent 2} [& args] `(core/HEAD ~@args))
-(defmacro PATCH   {:style/indent 2} [& args] `(core/PATCH ~@args))
-(defmacro DELETE  {:style/indent 2} [& args] `(core/DELETE ~@args))
-(defmacro OPTIONS {:style/indent 2} [& args] `(core/OPTIONS ~@args))
-(defmacro POST    {:style/indent 2} [& args] `(core/POST ~@args))
-(defmacro PUT     {:style/indent 2} [& args] `(core/PUT ~@args))
+(defn ^:private restructure-endpoint [compojure-macro path arg args]
+  (let [[options body] (common/extract-parameters args true)]
+    (if (= [] arg)
+      ;; can savely let-bind values from its middleware to outside this endpoint
+      ;; since it doesn't bind any variables (e.g., req)
+      (let [{:keys [lets options]} (reduce-kv (fn [acc k v]
+                                                (let [g (*gensym* (name k))
+                                                      [lets v] (case k
+                                                                 ;; (ANY "*" [] :return SCHEMA ...)
+                                                                 ;; =>
+                                                                 ;; (let [return__0 SCHEMA] (ANY "*" [] :return return__0 ...)
+                                                                 :return [[g v] g]
+                                                                 ;; (ANY "*" [] :body [sym SCHEMA ...] ...)
+                                                                 ;; =>
+                                                                 ;; (let [body__0 SCHEMA] (ANY "*" [] :body [sym body__0 ...] ...)
+                                                                 :body (let [_ (assert (vector? v))
+                                                                             _ (assert (<= 2 (count v) 3))
+                                                                             [b s m] v
+                                                                             _ (assert (simple-symbol? b))
+                                                                             _ (when (= 3 (count v))
+                                                                                 (assert (map? m)))]
+                                                                         [[g s] (assoc v 1 g)])
+                                                                 [[] v])]
+                                                  (-> acc
+                                                      (update :lets into lets)
+                                                      (assoc-in [:options k] v))))
+                                              {:lets []
+                                               :options {}}
+                                              options)]
+        `(let ~lets
+           (~compojure-macro ~path ~arg
+                             ~@(mapcat identity options)
+                             ~@body)))
+      ;; the best we can do is just assert that expressions are symbols. that will
+      ;; force the user to let-bind them.
+      (let [_ (when-some [[_ s :as body] (:body options)]
+                (assert (vector? body))
+                (assert (<= 2 (count body) 3))
+                (when-not (symbol? s)
+                  (throw (ex-info (str "Please let-bind the :body schema like so: "
+                                       (pr-str (list 'let ['s# s] (list (symbol (name compojure-macro)) path arg :body (assoc body 1 's#) '...))))
+                                  {}))))]
+        (list* compojure-macro path arg args)))))
+
+(defmacro GET     {:style/indent 2} [path arg & args] (restructure-endpoint `core/GET     path arg args))
+(defmacro ANY     {:style/indent 2} [path arg & args] (restructure-endpoint `core/ANY     path arg args))
+(defmacro HEAD    {:style/indent 2} [path arg & args] (restructure-endpoint `core/HEAD    path arg args))
+(defmacro PATCH   {:style/indent 2} [path arg & args] (restructure-endpoint `core/PATCH   path arg args))
+(defmacro DELETE  {:style/indent 2} [path arg & args] (restructure-endpoint `core/DELETE  path arg args))
+(defmacro OPTIONS {:style/indent 2} [path arg & args] (restructure-endpoint `core/OPTIONS path arg args))
+(defmacro POST    {:style/indent 2} [path arg & args] (restructure-endpoint `core/POST    path arg args))
+(defmacro PUT     {:style/indent 2} [path arg & args] (restructure-endpoint `core/PUT     path arg args))

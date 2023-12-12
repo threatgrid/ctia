@@ -119,25 +119,21 @@
 
 ;; this test shows that we are not allowed to let-bind the schema of :body in a HTTP verb since it would
 ;; break scoping.
-(deftest verb-shadow-test
-  (testing ":body schema has access to variables bound by HTTP verb"
-    (let [inner (atom #{})
-          g (str (gensym))
-          route (let [req :outer]
-                  (sut/ANY "*" req
-                           :body [body (do (swap! inner conj req) s/Any)]
-                           {:status 200
-                            :body g}))
-          _ (dotimes [_ 10]
-              (is (= g (:body ((:handler route) {:uri "/"})))))]
-      (is (= #{{:uri "/", :route-params {:* "/"}, :params {:* "/"}, :compojure/route [:any "*"]} :outer}
-             @inner)))))
+(deftest cannot-bind-req-and-dynamic-body-schema-test 
+  (try (macroexpand-1
+         `(sut/ANY "*" ~'req
+                   :body [~'body ~'(not-a-symbol)]
+                   {:status 200
+                    :body g}))
+       (catch Exception e
+         (is (= "Please let-bind the :body schema like so: (let [s# (not-a-symbol)] (ANY \"*\" req :body [body s#] ...))"
+                (ex-message (root-cause e)))))))
 
 (deftest verb-body-evaluate-test
   ;; :body schema only evaluates at initialization time
   (testing ":body"
     (let [times (atom 0)
-          route (sut/POST "*" req
+          route (sut/POST "*" []
                           :body [body (do (swap! times inc) s/Any) {:description
                                                                     ;; this is never evaluated
                                                                     (do (swap! times inc) "foo")}]
