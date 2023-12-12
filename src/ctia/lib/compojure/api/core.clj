@@ -95,7 +95,7 @@
                                                                  ;; (ANY "*" [] :return SCHEMA ...)
                                                                  ;; =>
                                                                  ;; (let [return__0 SCHEMA] (ANY "*" [] :return return__0 ...)
-                                                                 :return [[g v] g]
+                                                                 (:capabilities :return :description :summary) [[g v] g]
                                                                  ;; (ANY "*" [] :body [sym SCHEMA ...] ...)
                                                                  ;; =>
                                                                  ;; (let [body__0 SCHEMA] (ANY "*" [] :body [sym body__0 ...] ...)
@@ -106,7 +106,7 @@
                                                                              _ (when (= 3 (count v))
                                                                                  (assert (map? m)))]
                                                                          [[g s] (assoc v 1 g)])
-                                                                 [[] v])]
+                                                                 :tags [[] v])]
                                                   (-> acc
                                                       (update :lets into lets)
                                                       (assoc-in [:options k] v))))
@@ -119,13 +119,21 @@
                              ~@body)))
       ;; the best we can do is just assert that expressions are symbols. that will
       ;; force the user to let-bind them.
-      (let [_ (when-some [[_ s :as body] (:body options)]
-                (assert (vector? body))
-                (assert (<= 2 (count body) 3))
-                (when-not (symbol? s)
-                  (throw (ex-info (str "Please let-bind the :body schema like so: "
-                                       (pr-str (list 'let ['s# s] (list (symbol (name compojure-macro)) path arg :body (assoc body 1 's#) '...))))
-                                  {}))))]
+      (let [_ (doseq [[k v] options]
+                (case k
+                  :body (let [[_ s :as body] v]
+                          (assert (vector? body))
+                          (assert (<= 2 (count body) 3))
+                          (when-not (symbol? s)
+                            (throw (ex-info (str "Please let-bind the :body schema like so: "
+                                                 (pr-str (list 'let ['s# s] (list (symbol (name compojure-macro)) path arg :body (assoc body 1 's#) '...))))
+                                            {}))))
+                  (:return :capabilities :tags) (when-not (symbol? v)
+                                                  (throw (ex-info (str (format "Please let-bind %s like so: " k)
+                                                                       (pr-str (list 'let ['v# v] (list (symbol (name compojure-macro)) path arg k 's# '...))))
+                                                                  {})))
+                  ;; these only exist at initialization time
+                  (:description :summary) nil))]
         (list* compojure-macro path arg args)))))
 
 (defmacro GET     {:style/indent 2} [path arg & args] (restructure-endpoint `core/GET     path arg args))

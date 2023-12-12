@@ -78,6 +78,63 @@
               :summary (str "a" "summary")
               ~'routes)))))
 
+(deftest endpoint-expansion-test
+  ;; :tags is unevaluated
+  (is (= '(clojure.core/let []
+            (compojure.api.core/ANY
+              "/my-route" []
+              :tags #{:bar :foo}
+              {:status 200}))
+         (dexpand-1
+           `(sut/ANY
+              "/my-route" []
+              :tags #{:foo :bar}
+              {:status 200}))))
+  ;; :capabilities is evaluated
+  (is (= '(clojure.core/let [capabilities__0 #{:bar :foo}]
+            (compojure.api.core/ANY
+              "/my-route" []
+              :capabilities capabilities__0
+              {:status 200}))
+         (dexpand-1
+           `(sut/ANY
+              "/my-route" []
+              :capabilities #{:foo :bar}
+              {:status 200}))))
+  ;; :description is evaluated
+  (is (= '(clojure.core/let [description__0 (clojure.core/str "Foo" "bar")]
+            (compojure.api.core/ANY
+              "/my-route" []
+              :description description__0
+              {:status 200}))
+         (dexpand-1
+           `(sut/ANY
+              "/my-route" []
+              :description (str "Foo" "bar")
+              {:status 200}))))
+  ;; :return is evaluated
+  (is (= '(clojure.core/let [return__0 {:my-schema #{}}]
+            (compojure.api.core/context
+              "/my-route" []
+              :return return__0
+              {:status 200}))
+         (dexpand-1
+           `(sut/ANY
+              "/my-route" []
+              :return {:my-schema #{}}
+              {:status 200}))))
+  ;; :summary is evaluated
+  (is (= '(clojure.core/let [summary__0 (clojure.core/str "a" "summary")]
+            (compojure.api.core/ANY
+              "/my-route" []
+              :summary summary__0
+              {:status 200}))
+         (dexpand-1
+           `(sut/ANY
+              "/my-route" []
+              :summary (str "a" "summary")
+              {:status 200})))))
+
 ;; adapted from clojure.repl/root-cause, but unwraps compiler exceptions
 (defn root-cause [t]
   (loop [cause t]
@@ -119,17 +176,38 @@
 
 ;; this test shows that we are not allowed to let-bind the schema of :body in a HTTP verb since it would
 ;; break scoping.
-(deftest cannot-bind-req-and-dynamic-body-schema-test 
-  (try (macroexpand-1
-         `(sut/ANY "*" ~'req
-                   :body [~'body ~'(not-a-symbol)]
-                   {:status 200
-                    :body g}))
-       (catch Exception e
-         (is (= "Please let-bind the :body schema like so: (let [s# (not-a-symbol)] (ANY \"*\" req :body [body s#] ...))"
-                (ex-message (root-cause e)))))))
+(deftest cannot-bind-req-and-dynamic-restructure-test 
+  (testing ":body"
+    (try (macroexpand-1
+           `(sut/ANY "*" ~'req
+                     :body [~'body ~'(not-a-symbol)]
+                     {:status 200
+                      :body g}))
+         (catch Exception e
+           (is (= "Please let-bind the :body schema like so: (let [s# (not-a-symbol)] (ANY \"*\" req :body [body s#] ...))"
+                  (ex-message (root-cause e)))))))
+  ;;TODO fix the :capabilities test and verify if we actually need to let-bind :capabilities
+  (testing ":capabilities"
+    (try (macroexpand-1
+           `(sut/ANY "*" ~'req
+                     :capabilities ~'(not-a-symbol)
+                     {:status 200
+                      :body g}))
+         (catch Exception e
+           (is (= "Please let-bind :capabilities like so: (let [v# (not-a-symbol)] (ANY \"*\" req :capabilities s# ...))"
+                  (ex-message (root-cause e)))))))
+  (testing ":return"
+    (try (macroexpand-1
+           `(sut/ANY "*" ~'req
+                     :return ~'(not-a-symbol)
+                     {:status 200
+                      :body g}))
+         (catch Exception e
+           (is (= "Please let-bind :return like so: (let [v# (not-a-symbol)] (ANY \"*\" req :return s# ...))"
+                  (ex-message (root-cause e)))))))
+  )
 
-(deftest verb-body-evaluate-test
+(deftest endpoint-initializes-once-test
   ;; :body schema only evaluates at initialization time
   (testing ":body"
     (let [times (atom 0)
