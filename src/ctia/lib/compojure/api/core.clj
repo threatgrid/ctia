@@ -234,7 +234,7 @@
                              (throw (ex-info (str (format "Please let-bind %s in %s like so: " code k)
                                                   (pr-str (list 'let ['s# schema]
                                                                 (list (symbol (name compojure-macro)) path arg k
-                                                                      {code (assoc m :schema 's#)}
+                                                                      {code (into (sorted-map) (assoc m :schema 's#))}
                                                                       '...))))
                                              {}))()))))
           (list* compojure-macro path arg args)))))

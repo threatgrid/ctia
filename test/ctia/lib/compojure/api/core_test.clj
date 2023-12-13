@@ -261,7 +261,13 @@
               :query-params [{~'id :- ~'(dynamic-schema) ~'(dynamic-default)}]
               {:status 200
                :body g})
-    "Please let-bind id in :query-params like so: (let [s# (dynamic-schema) d# (dynamic-default)] (ANY \"*\" req :query-params {id :-, s# d#} ...))"))
+    "Please let-bind id in :query-params like so: (let [s# (dynamic-schema) d# (dynamic-default)] (ANY \"*\" req :query-params {id :-, s# d#} ...))")
+  (is-banned-expansion
+    `(sut/ANY "*" ~'req
+              :responses {404 {:schema ~'(dynamic-schema) :description "foo"}}
+              {:status 200
+               :body g})
+    "Please let-bind 404 in :responses like so: (let [s# (dynamic-schema)] (ANY \"*\" req :responses {404 {:description \"foo\", :schema s#}} ...))"))
 
 (deftest endpoint-initializes-once-test
   ;; :body schema only evaluates at initialization time
