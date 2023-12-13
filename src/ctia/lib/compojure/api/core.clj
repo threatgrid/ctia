@@ -148,9 +148,9 @@
 
                                                                  ;; (ANY "*" [] :responses {401 {:schema Foo} 404 {:schema Bar}} ...)
                                                                  ;; =>
-                                                                 ;; (let [resonses-401__0 Foo, responses-404__1 Bar]
+                                                                 ;; (let [responses-401__0 Foo, responses-404__1 Bar]
                                                                  ;;   (core/ANY "*" []
-                                                                 ;;     :responses {401 {:schema resonses-401__0} 404 {:schema responses-404__1}}
+                                                                 ;;     :responses {401 {:schema responses-401__0} 404 {:schema responses-404__1}}
                                                                  ;;      ...))
                                                                  :responses (reduce (fn [[lets v] [code {:keys [schema] :as m}]]
                                                                                       (assert schema)
