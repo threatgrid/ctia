@@ -125,7 +125,31 @@
              :=> '(compojure.api.core/ANY
                     "/my-route" []
                     :summary (clojure.core/str "a" "summary")
-                    {:status 200})))
+                    {:status 200}))
+  ;; :body let-binds its schema
+  (is-expand `(sut/ANY
+                "/my-route" []
+                :body [~'body {:a s/Str}]
+                {:status 200})
+             :=> '(clojure.core/let [body__0 {:a schema.core/Str}]
+                    (compojure.api.core/ANY
+                      "/my-route" []
+                      :body [body body__0]
+                      {:status 200})))
+  ;; :path-params let-binds its schemas and defaults
+  (is-expand `(sut/ANY
+                "/:left/:right" []
+                :path-params [left :- s/Int
+                              {right :- s/Str :default}]
+                {:status 200})
+             :=> '(clojure.core/let [left__0 schema.core/Int
+                                     right__1 schema.core/Str
+                                     right-default__2 :default]
+                    (compojure.api.core/ANY
+                      "/my-route" []
+                      :path-params [left :- left__0
+                                    {right :- right__1 right-default__2}]
+                      {:status 200}))))
 
 ;; adapted from clojure.repl/root-cause, but unwraps compiler exceptions
 (defn root-cause [t]
@@ -205,6 +229,12 @@
               :path-params [~'id :- ~'(not-a-symbol)]
               {:status 200
                :body g})
+    "Please let-bind id in :path-params like so: (let [s# (not-a-symbol)] (ANY id req :path-params [id :- s#] ...))")
+  (is-banned-expansion
+    `(sut/ANY "/:id" ~'req
+              :path-params [{~'id :- ~'foo ~'(not-a-symbol)}]
+              {:status 200
+               :body g})
     "Please let-bind id in :path-params like so: (let [s# (not-a-symbol)] (ANY id req :path-params [id :- s#] ...))"))
 
 (deftest endpoint-initializes-once-test
@@ -239,14 +269,16 @@
       (is (= 1 @times))))
   ;; :path-params schema only evaluates at initialization time
   (testing ":path-params"
-    (let [times (atom {:left 0 :right 0})
+    (let [times (atom {:left 0 :right 0 :right-default 0})
           g (str (gensym))
           route (sut/ANY "/:left/:right" []
                          :path-params [left :- (do (swap! times update :left inc) s/Any)
-                                       right :- (do (swap! times update :right inc) s/Any)]
+                                       {right :-
+                                        (do (swap! times update :right inc) s/Any)
+                                        (do (swap! times update :right-default inc) :default)}]
                          {:status 200
                           :body [g left right]})
-          _ (is (= {:left 1 :right 1} @times))
+          _ (is (= {:left 1 :right 1 :right-default 1} @times))
           _ (dotimes [_ 10]
               (is (= [g "left" "right"] (:body ((:handler route) {:uri "/left/right"})))))]
       (is (= {:left 1 :right 1} @times))))
@@ -325,16 +357,17 @@
       (is (= 1 @times))))
   ;; :path-params schema only evaluates at initialization time
   (testing ":path-params"
-    (let [times (atom 0)
-          route (sut/ANY "/:id" []
-                         :path-params [id :- (do (swap! times inc) s/Str)]
+    (let [times (atom {:left 0 :right 0 :right-default 0})
+          route (sut/ANY "/:left/:right" []
+                         :path-params [left :- (do (swap! times inc) s/Str)
+                                       {right :- (do (swap! times inc) s/Str) (str "default")}]
                          {:status 200
                           :body id})
-          _ (is (= 1 @times))
+          _ (is (= {:left 1 :right 1 :right-default 1} @times))
           _ (dotimes [_ 10]
               (let [g (str (gensym))]
-                (is (= g (:body ((:handler route) {:uri (str "/" g)}))))))]
-      (is (= 1 @times))))
+                (is (= g (:body ((:handler route) {:uri (str "/:left/:right" g)}))))))]
+      (is (= {:left 1 :right 1  :right-default 1} @times))))
   ;; :query-params schema only evaluates at initialization time
   #_ ;;FIXME construct valid query params
   (testing ":query-params"
