@@ -99,24 +99,19 @@
                                                                  ;; (ANY "*" [] :return SCHEMA ...)
                                                                  ;; =>
                                                                  ;; (let [return__0 SCHEMA] (core/ANY "*" [] :return return__0 ...)
-                                                                 (:no-doc :capabilities :return :description :summary) [[g v] g]
+                                                                 (:produces :no-doc :capabilities :return :description :summary) [[g v] g]
                                                                  ;; (ANY "*" [] :body [sym SCHEMA ...] ...)
                                                                  ;; =>
                                                                  ;; (let [body__0 SCHEMA] (core/ANY "*" [] :body [sym body__0 ...] ...)
-                                                                 (:body :query) (let [_ (assert (vector? v))
-                                                                                      _ (assert (<= 2 (count v) 3))
-                                                                                      [b s m] v
-                                                                                      _ (assert (simple-symbol? b))
-                                                                                      _ (when (= 3 (count v))
-                                                                                          (assert (map? m)))]
-                                                                                  [[g s] (assoc v 1 g)])
+                                                                 (:body :query) (do (assert (vector? v))
+                                                                                    (assert (<= 2 (count v) 3))
+                                                                                    [[g (nth v 1)] (assoc v 1 g)])
                                                                  ;; (ANY "*" [] :tags #{:foo} ...)
                                                                  ;; =>
                                                                  ;; (core/ANY "*" [] :tags #{:foo} ...)
                                                                  (:tags :auth-identity :identity-map) [[] v]
                                                                  ;;FIXME
-                                                                 (:path-params :query-params) [[] v]
-                                                                 )]
+                                                                 (:path-params :query-params :responses) [[] v])]
                                                   (-> acc
                                                       (update :lets into lets)
                                                       (assoc-in [:options k] v))))
@@ -140,12 +135,12 @@
                                                       (pr-str (list 'let ['s# s] (list (symbol (name compojure-macro)) path arg k (assoc body 1 's#) '...))))
                                                  {}))))
               ;; fail if right-hand-side is not a local/var dereference and show user how to let-bind it
-              (:return :capabilities :no-doc) (when-not (or (symbol? v)
-                                                            (and (= :no-doc k)
-                                                                 (boolean? v)))
-                                                (throw (ex-info (str (format "Please let-bind %s like so: " k)
-                                                                     (pr-str (list 'let ['v# v] (list (symbol (name compojure-macro)) path arg k 's# '...))))
-                                                                {})))
+              (:return :capabilities :no-doc :produces) (when-not (or (symbol? v)
+                                                                      (and (= :no-doc k)
+                                                                           (boolean? v)))
+                                                          (throw (ex-info (str (format "Please let-bind %s like so: " k)
+                                                                               (pr-str (list 'let ['v# v] (list (symbol (name compojure-macro)) path arg k 's# '...))))
+                                                                          {})))
               ;; I think these only exist at initialization time, even though they are expressions. but with all the compojure-api inference that
               ;; reevaluates routes twice, it might be wise to require them to be let-bound?
               (:description :summary) nil
@@ -154,7 +149,7 @@
               ;; binders
               (:auth-identity :identity-map) nil
               ;;FIXME
-              (:path-params :query-params) nil
+              (:path-params :query-params :responses) nil
               ))
           (list* compojure-macro path arg args)))))
 

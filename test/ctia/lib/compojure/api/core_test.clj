@@ -269,6 +269,18 @@
           _ (dotimes [_ 10]
               (is (= g (:body ((:handler route) {:uri "/"})))))]
       (is (= 1 @times))))
+  ;; :produces only evaluates at initialization time
+  (testing ":produces"
+    (let [g (str (gensym))
+          times (atom 0)
+          route (sut/ANY "*" []
+                         :produces (do (swap! times inc) #{})
+                         {:status 200
+                          :body g})
+          _ (is (= 1 @times))
+          _ (dotimes [_ 10]
+              (is (= g (:body ((:handler route) {:uri "/"})))))]
+      (is (= 1 @times))))
   ;; :capabilities only evaluates at initialization time
   #_ ;;FIXME needs an authenticated request
   (testing ":capabilities"
