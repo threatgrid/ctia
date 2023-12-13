@@ -275,7 +275,9 @@
                              {:name :migration
                               :namespaces [ctia.tasks.migrate-es-stores-bench]}
                              {:name :bundle
-                              :namespaces [ctia.bundle.routes-bench]}]}
+                              :namespaces [ctia.bundle.routes-bench]}
+                             {:name :incident
+                              :namespaces [ctia.entity.incident-bench]}]}
   ;; use `lein deps :plugins-tree` to inspect conflicts
   :plugins [[lein-shell "0.5.0"]
             [org.clojure/clojure ~clj-version] ;override perforate
