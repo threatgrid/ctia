@@ -372,18 +372,23 @@
   ;; :query-params schema only evaluates at initialization time
   #_ ;;FIXME construct valid query params
   (testing ":query-params"
-    (let [times (atom 0)
+    (let [times (atom {:left 0 :right 0 :right-default 0})
           g (str (gensym))
           route (sut/ANY "*" []
-                         :query-params [{wait_for :- (do (swap! times inc)
-                                                         (describe s/Bool "wait for created entities to be available for search")) nil}]
+                         :query-params [left :- (do (swap! times update :left inc)
+                                                    (describe s/Str "wait for created entities to be available for search"))
+                                        {right :- (do (swap! times update :right inc)
+                                                      (describe s/Bool "wait for created entities to be available for search"))
+                                         (do (swap! times update :right-default inc)
+                                             :default)}]
                          {:status 200
-                          :body [g wait_for]})
-          _ (is (= 1 @times))
+                          :body [g left right]})
+          _ (is (= {:left 1 :right 1 :right-default 1} @times))
           _ (dotimes [_ 10]
-              (let [wait_for (rand-nth [true false])]
-                (is (= [g wait_for] (:body ((:handler route) {:uri (str "wait_for=" wait_for)}))))))]
-      (is (= 1 @times)))))
+              (let [left (rand-nth [true false])
+                    right (rand-nth [true false])]
+                (is (= [g left right] (:body ((:handler route) {:uri (str "/foo?left=" left "&right=" right)}))))))]
+      (is (= {:left 1 :right 1 :right-default 1} @times)))))
 
 (defn benchmark []
   (let [sleep (fn []
