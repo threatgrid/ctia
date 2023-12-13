@@ -98,20 +98,36 @@
                                                       [lets v] (case k
                                                                  ;; (ANY "*" [] :return SCHEMA ...)
                                                                  ;; =>
-                                                                 ;; (let [return__0 SCHEMA] (core/ANY "*" [] :return return__0 ...)
+                                                                 ;; (let [return__0 SCHEMA] (core/ANY "*" [] :return return__0 ...))
                                                                  (:capabilities :return) [[g v] g]
                                                                  ;; (ANY "*" [] :body [sym SCHEMA ...] ...)
                                                                  ;; =>
-                                                                 ;; (let [body__0 SCHEMA] (core/ANY "*" [] :body [sym body__0 ...] ...)
+                                                                 ;; (let [body__0 SCHEMA] (core/ANY "*" [] :body [sym body__0 ...] ...))
                                                                  (:body :query) (do (assert (vector? v))
                                                                                     (assert (<= 2 (count v) 3))
                                                                                     [[g (nth v 1)] (assoc v 1 g)])
+                                                                 ;; (ANY "/:left/:right" [] :path-params [left :- SCHEMA0, right :- SCHEMA1] ...)
+                                                                 ;; =>
+                                                                 ;; (let [left__0 SCHEMA0, right__1 SCHEMA1]
+                                                                 ;;   (core/ANY "/:left/:right" []
+                                                                 ;;     :path-params [left :- left__0, right :- right__0]
+                                                                 ;;      ...))
+                                                                 :path-params (let [_ (assert (vector? v))
+                                                                                    _ (assert (zero? (mod (count v) 3)))
+                                                                                    groups (partition-all 3 v)]
+                                                                                (reduce (fn [[lets v] [b |- s]]
+                                                                                          {:pre [(= :- |-)
+                                                                                                 (simple-symbol? b)]}
+                                                                                          (let [g (*gensym* b)]
+                                                                                            [(conj lets g s) (conj v b |- g)]))
+                                                                                        [[] []]
+                                                                                        (partition-all 3 v)))
                                                                  ;; (ANY "*" [] :tags #{:foo} ...)
                                                                  ;; =>
                                                                  ;; (core/ANY "*" [] :tags #{:foo} ...)
                                                                  (:tags :auth-identity :identity-map :description :summary :no-doc :produces) [[] v]
                                                                  ;;FIXME
-                                                                 (:path-params :query-params :responses :middleware) [[] v])]
+                                                                 (:query-params :responses :middleware) [[] v])]
                                                   (-> acc
                                                       (update :lets into lets)
                                                       (assoc-in [:options k] v))))
@@ -141,6 +157,14 @@
                                                           (throw (ex-info (str (format "Please let-bind %s like so: " k)
                                                                                (pr-str (list 'let ['v# v] (list (symbol (name compojure-macro)) path arg k 's# '...))))
                                                                           {})))
+              ;; fail if any schemas are not symbols
+              :path-params (let [_ (assert (vector? v))
+                                 _ (assert (zero? (mod (count v) 3)))]
+                             (doseq [[path |- s] (partition-all 3 v)]
+                               (when-not (symbol? s)
+                                 (throw (ex-info (str (format "Please let-bind %s in %s like so: " path k)
+                                                      (pr-str (list 'let ['s# s] (list (symbol (name compojure-macro)) path arg k [path |- 's#] '...))))
+                                                 {})))))
               ;; swagger only
               (:description :summary) nil
               ;; values
@@ -148,7 +172,7 @@
               ;; binders
               (:auth-identity :identity-map) nil
               ;;FIXME
-              (:path-params :query-params :responses :middleware) nil))
+              (:query-params :responses :middleware) nil))
           (list* compojure-macro path arg args)))))
 
 (defmacro GET     {:style/indent 2} [path arg & args] (restructure-endpoint `core/GET     path arg args))

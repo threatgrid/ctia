@@ -205,7 +205,7 @@
               :path-params [~'id :- ~'(not-a-symbol)]
               {:status 200
                :body g})
-    "Please let-bind :return like so: (let [v# (not-a-symbol)] (ANY \"*\" req :return s# ...))"))
+    "Please let-bind id in :path-params like so: (let [s# (not-a-symbol)] (ANY id req :path-params [id :- s#] ...))"))
 
 (deftest endpoint-initializes-once-test
   ;; :body schema only evaluates at initialization time
@@ -246,10 +246,10 @@
                                        right :- (do (swap! times update :right inc) s/Any)]
                          {:status 200
                           :body [g left right]})
-          _ (is (= 1 @times))
+          _ (is (= {:left 1 :right 1} @times))
           _ (dotimes [_ 10]
               (is (= [g "left" "right"] (:body ((:handler route) {:uri "/left/right"})))))]
-      (is (= 1 @times))))
+      (is (= {:left 1 :right 1} @times))))
   ;; :description only evaluates at initialization time
   (testing ":description"
     (let [g (str (gensym))
