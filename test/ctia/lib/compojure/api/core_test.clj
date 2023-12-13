@@ -116,7 +116,7 @@
                       "/my-route" []
                       :return return__0
                       {:status 200})))
-  ;; :summary is evaluated
+  ;; :summary is preserved, since it's just for :swagger
   (is-expand `(sut/ANY
                 "/my-route" []
                 :summary (str "a" "summary")
