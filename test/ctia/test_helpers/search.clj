@@ -32,12 +32,13 @@
 
 (defn delete-search
   [app entity query-params]
-  (let [delete-search-uri (format "ctia/%s/search" (name entity))]
-    (DELETE app
-            delete-search-uri
-            :headers {"Authorization" "45c1f5e3f05d0"}
-            :query-params query-params)
-    (Thread/sleep 1000)))
+  (let [delete-search-uri (format "ctia/%s/search" (name entity))
+        res (DELETE app
+                delete-search-uri
+              :headers {"Authorization" "45c1f5e3f05d0"}
+              :query-params query-params)]
+    (Thread/sleep 1000)
+    res))
 
 (defn search-raw
   [app entity query-params]
