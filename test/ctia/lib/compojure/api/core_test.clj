@@ -229,13 +229,13 @@
               :path-params [~'id :- ~'(not-a-symbol)]
               {:status 200
                :body g})
-    "Please let-bind id in :path-params like so: (let [s# (not-a-symbol)] (ANY id req :path-params [id :- s#] ...))")
+    "Please let-bind id in :path-params like so: (let [s# (not-a-symbol)] (ANY \"/:id\" req :path-params [id :- s#] ...))")
   (is-banned-expansion
     `(sut/ANY "/:id" ~'req
               :path-params [{~'id :- ~'(dynamic-schema) ~'(dynamic-default)}]
               {:status 200
                :body g})
-    "Please let-bind id in :path-params like so: (let [s# (dynamic-schema) d# (dynamic-default)] (ANY id req :path-params [{id :- s# d#}] ...))"))
+    "Please let-bind id in :path-params like so: (let [s# (dynamic-schema) d# (dynamic-default)] (ANY \"/:id\" req :path-params {id :-, s# d#} ...))"))
 
 (deftest endpoint-initializes-once-test
   ;; :body schema only evaluates at initialization time
