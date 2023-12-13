@@ -209,6 +209,18 @@
                         nil #_g]
                        (:body ((:handler route) {:request-method :post :uri "/" :body g}))))))]
       (is (= 1 @times))))
+  ;; :query schema only evaluates at initialization time
+  (testing ":query"
+    (let [times (atom 0)
+          g (str (gensym))
+          route (sut/ANY "*" []
+                         :query [query (do (swap! times inc) {})]
+                         {:status 200
+                          :body g})
+          _ (is (= 1 @times))
+          _ (dotimes [_ 10]
+              (is (= g (:body ((:handler route) {:uri "/"})))))]
+      (is (= 1 @times))))
   ;; :description only evaluates at initialization time
   (testing ":description"
     (let [g (str (gensym))
@@ -239,6 +251,18 @@
           times (atom 0)
           route (sut/ANY "*" []
                          :summary (do (swap! times inc) "foo")
+                         {:status 200
+                          :body g})
+          _ (is (= 1 @times))
+          _ (dotimes [_ 10]
+              (is (= g (:body ((:handler route) {:uri "/"})))))]
+      (is (= 1 @times))))
+  ;; :no-doc only evaluates at initialization time
+  (testing ":no-doc"
+    (let [g (str (gensym))
+          times (atom 0)
+          route (sut/ANY "*" []
+                         :no-doc (do (swap! times inc) true)
                          {:status 200
                           :body g})
           _ (is (= 1 @times))

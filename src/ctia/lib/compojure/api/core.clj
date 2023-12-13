@@ -99,23 +99,23 @@
                                                                  ;; (ANY "*" [] :return SCHEMA ...)
                                                                  ;; =>
                                                                  ;; (let [return__0 SCHEMA] (core/ANY "*" [] :return return__0 ...)
-                                                                 (:capabilities :return :description :summary) [[g v] g]
+                                                                 (:no-doc :capabilities :return :description :summary) [[g v] g]
                                                                  ;; (ANY "*" [] :body [sym SCHEMA ...] ...)
                                                                  ;; =>
                                                                  ;; (let [body__0 SCHEMA] (core/ANY "*" [] :body [sym body__0 ...] ...)
-                                                                 :body (let [_ (assert (vector? v))
-                                                                             _ (assert (<= 2 (count v) 3))
-                                                                             [b s m] v
-                                                                             _ (assert (simple-symbol? b))
-                                                                             _ (when (= 3 (count v))
-                                                                                 (assert (map? m)))]
-                                                                         [[g s] (assoc v 1 g)])
+                                                                 (:body :query) (let [_ (assert (vector? v))
+                                                                                      _ (assert (<= 2 (count v) 3))
+                                                                                      [b s m] v
+                                                                                      _ (assert (simple-symbol? b))
+                                                                                      _ (when (= 3 (count v))
+                                                                                          (assert (map? m)))]
+                                                                                  [[g s] (assoc v 1 g)])
                                                                  ;; (ANY "*" [] :tags #{:foo} ...)
                                                                  ;; =>
                                                                  ;; (core/ANY "*" [] :tags #{:foo} ...)
-                                                                 :tags [[] v]
+                                                                 (:tags :auth-identity :identity-map) [[] v]
                                                                  ;;FIXME
-                                                                 :path-params [[] v]
+                                                                 (:path-params :query-params) [[] v]
                                                                  )]
                                                   (-> acc
                                                       (update :lets into lets)
@@ -132,23 +132,30 @@
       (do (doseq [[k v] options]
             (case k
               ;; fail if schema is not a local/var dereference and show user how to let-bind it
-              :body (let [[_ s :as body] v]
-                      (assert (vector? body))
-                      (assert (<= 2 (count body) 3))
-                      (when-not (symbol? s)
-                        (throw (ex-info (str "Please let-bind the :body schema like so: "
-                                             (pr-str (list 'let ['s# s] (list (symbol (name compojure-macro)) path arg :body (assoc body 1 's#) '...))))
-                                        {}))))
+              (:query :body) (let [[_ s :as body] v]
+                               (assert (vector? body))
+                               (assert (<= 2 (count body) 3))
+                               (when-not (symbol? s)
+                                 (throw (ex-info (str (format "Please let-bind the %s schema like so: " k)
+                                                      (pr-str (list 'let ['s# s] (list (symbol (name compojure-macro)) path arg k (assoc body 1 's#) '...))))
+                                                 {}))))
               ;; fail if right-hand-side is not a local/var dereference and show user how to let-bind it
-              (:return :capabilities) (when-not (symbol? v)
-                                        (throw (ex-info (str (format "Please let-bind %s like so: " k)
-                                                             (pr-str (list 'let ['v# v] (list (symbol (name compojure-macro)) path arg k 's# '...))))
-                                                        {})))
+              (:return :capabilities :no-doc) (when-not (or (symbol? v)
+                                                            (and (= :no-doc k)
+                                                                 (boolean? v)))
+                                                (throw (ex-info (str (format "Please let-bind %s like so: " k)
+                                                                     (pr-str (list 'let ['v# v] (list (symbol (name compojure-macro)) path arg k 's# '...))))
+                                                                {})))
               ;; I think these only exist at initialization time, even though they are expressions. but with all the compojure-api inference that
               ;; reevaluates routes twice, it might be wise to require them to be let-bound?
               (:description :summary) nil
               ;; values
-              :tags nil))
+              :tags nil
+              ;; binders
+              (:auth-identity :identity-map) nil
+              ;;FIXME
+              (:path-params :query-params) nil
+              ))
           (list* compojure-macro path arg args)))))
 
 (defmacro GET     {:style/indent 2} [path arg & args] (restructure-endpoint `core/GET     path arg args))
