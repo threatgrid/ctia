@@ -335,6 +335,8 @@
                 (is (= [g wait_for] (:body ((:handler route) {:uri (str "wait_for=" wait_for)}))))))]
       (is (= 1 @times)))))
 
+;First time around, not sleeping
+;"Elapsed time: 2.84075 msecs"
 (defn benchmark []
   (time
     (let [sleep-after-first-call (let [a (atom false)]
