@@ -239,7 +239,7 @@
                               "-Dcom.sun.management.jmxremote.authenticate=false"
                               "-Dcom.sun.management.jmxremote.ssl=false"]}
              :bench {:dependencies [[perforate ~perforate-version]
-                                    [criterium "0.4.5"]
+                                    [criterium "0.4.6"]
                                     [org.clojure/test.check ~test-check-version]
                                     [com.gfredericks/test.chuck ~test-chuck-version]
                                     [prismatic/schema-generators ~schema-generators-version]]
@@ -273,7 +273,9 @@
                              {:name :bulk
                               :namespaces [ctia.bulk.routes-bench]}
                              {:name :migration
-                              :namespaces [ctia.tasks.migrate-es-stores-bench]}]}
+                              :namespaces [ctia.tasks.migrate-es-stores-bench]}
+                             {:name :bundle
+                              :namespaces [ctia.bundle.routes-bench]}]}
   ;; use `lein deps :plugins-tree` to inspect conflicts
   :plugins [[lein-shell "0.5.0"]
             [org.clojure/clojure ~clj-version] ;override perforate

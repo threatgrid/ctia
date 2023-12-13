@@ -24,8 +24,11 @@
 (def delete-store-indexes esh/delete-store-indexes)
 
 (defn cleanup-ctia! [app]
-  (esh/delete-store-indexes false)
-  (let [{{:keys [request-shutdown	
-                 wait-for-shutdown]} :ShutdownService} (app/service-graph app)]
-    (request-shutdown)
-    (wait-for-shutdown)))
+  (helpers/bind-current-app*
+    app
+    (fn []
+      (esh/delete-store-indexes false)
+      (let [{{:keys [request-shutdown	
+                     wait-for-shutdown]} :ShutdownService} (app/service-graph app)]
+        (request-shutdown)
+        (wait-for-shutdown)))))
