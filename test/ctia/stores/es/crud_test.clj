@@ -839,7 +839,7 @@
                                            :user (:login ident-1)
                                            :tlp  "amber"))
                           search-metrics-entities)
-                check-fn (fn [{:keys [msg query matched ident deleted?]}]
+                check-fn (fn [{:keys [msg query matched ident deleted? wait_for_completion]}]
                            (create-fn es-conn-state
                                       data
                                       ident-1
@@ -850,17 +850,22 @@
                                      es-conn-state
                                      query
                                      ident
-                                     {}))
+                                     {:wait_for_completion wait_for_completion
+                                      :refresh "true"}))
                                  "the number of deleted entities shall be equal to the number of matched")
-                             (is (= (if deleted? 0 (count matched))
-                                    (count-fn es-conn-state query ident))
-                                 "only matched entities shall be deleted")))]
+                             (let [remaining (count-fn es-conn-state query ident)]
+                                (cond
+                                  (not deleted?) (is (= remaining (count matched))
+                                                     "only matched entities shall be deleted")
+                                  (true?  wait_for_completion) (is (= remaining 0))
+                                  (false?  wait_for_completion) (is (<= remaining (count matched)))))))]
             (check-fn
              {:msg "queries that does not match anything shall not delete any data."
               :query {:filter-map {:title "DOES NOT MATCH ANYTHING"}}
               :matched []
               :ident ident-1
-              :deleted? false})
+              :deleted? false
+              :wait_for_completion true})
 
             (check-fn
              {:msg "user can only delete the data they have access to."
@@ -868,7 +873,8 @@
                       :filter-map {:confidence "High"}}
               :matched []
               :ident ident-2
-              :deleted? false})
+              :deleted? false
+              :wait_for_completion true})
 
             (check-fn
              {:msg "matched entities must be properly deleted"
@@ -876,7 +882,18 @@
                       :filter-map {:confidence "High"}}
               :matched high-t1-title1
               :ident ident-1
-              :deleted? true}))))))
+              :deleted? true
+              :wait_for_completion true})
+
+            (check-fn
+             {:msg "when wait_for_completion is false, we still return the number of matched entities"
+              :query {:full-text [{:query "title1"}]
+                      :filter-map {:confidence "High"}}
+              :matched high-t1-title1
+              :ident ident-1
+              :deleted? true
+              :wait_for_completion false})
+            )))))
 
 (deftest docs-with-indices-test
   (es-helpers/for-each-es-version
