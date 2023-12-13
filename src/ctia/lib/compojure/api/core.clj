@@ -99,7 +99,7 @@
                                                                  ;; (ANY "*" [] :return SCHEMA ...)
                                                                  ;; =>
                                                                  ;; (let [return__0 SCHEMA] (core/ANY "*" [] :return return__0 ...)
-                                                                 (:produces :no-doc :capabilities :return :description :summary) [[g v] g]
+                                                                 (:capabilities :return) [[g v] g]
                                                                  ;; (ANY "*" [] :body [sym SCHEMA ...] ...)
                                                                  ;; =>
                                                                  ;; (let [body__0 SCHEMA] (core/ANY "*" [] :body [sym body__0 ...] ...)
@@ -109,7 +109,7 @@
                                                                  ;; (ANY "*" [] :tags #{:foo} ...)
                                                                  ;; =>
                                                                  ;; (core/ANY "*" [] :tags #{:foo} ...)
-                                                                 (:tags :auth-identity :identity-map) [[] v]
+                                                                 (:tags :auth-identity :identity-map :description :summary :no-doc :produces) [[] v]
                                                                  ;;FIXME
                                                                  (:path-params :query-params :responses :middleware) [[] v])]
                                                   (-> acc
@@ -141,8 +141,7 @@
                                                           (throw (ex-info (str (format "Please let-bind %s like so: " k)
                                                                                (pr-str (list 'let ['v# v] (list (symbol (name compojure-macro)) path arg k 's# '...))))
                                                                           {})))
-              ;; I think these only exist at initialization time, even though they are expressions. but with all the compojure-api inference that
-              ;; reevaluates routes twice, it might be wise to require them to be let-bound?
+              ;; swagger only
               (:description :summary) nil
               ;; values
               :tags nil

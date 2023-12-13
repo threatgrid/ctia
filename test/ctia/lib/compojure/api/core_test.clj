@@ -97,16 +97,15 @@
                       "/my-route" []
                       :capabilities capabilities__0
                       {:status 200})))
-  ;; :description is evaluated
+  ;; :description is preserved, since it's just for :swagger
   (is-expand `(sut/ANY
                 "/my-route" []
                 :description (str "Foo" "bar")
                 {:status 200})
-             :=> '(clojure.core/let [description__0 (clojure.core/str "Foo" "bar")]
-                    (compojure.api.core/ANY
-                      "/my-route" []
-                      :description description__0
-                      {:status 200})))
+             :=> '(compojure.api.core/ANY
+                    "/my-route" []
+                    :description (clojure.core/str "Foo" "bar")
+                    {:status 200}))
   ;; :return is evaluated
   (is-expand `(sut/ANY
                 "/my-route" []
@@ -122,11 +121,10 @@
                 "/my-route" []
                 :summary (str "a" "summary")
                 {:status 200})
-             :=> '(clojure.core/let [summary__0 (clojure.core/str "a" "summary")]
-                    (compojure.api.core/ANY
-                      "/my-route" []
-                      :summary summary__0
-                      {:status 200}))))
+             :=> '(compojure.api.core/ANY
+                    "/my-route" []
+                    :summary (clojure.core/str "a" "summary")
+                    {:status 200})))
 
 ;; adapted from clojure.repl/root-cause, but unwraps compiler exceptions
 (defn root-cause [t]
