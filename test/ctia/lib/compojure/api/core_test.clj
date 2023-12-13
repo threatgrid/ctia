@@ -412,7 +412,26 @@
                     right (rand-nth [true false])]
                 (is (= [g left right] (:body ((:handler route) {:uri (str "/foo?left=" left "&right=" right)
                                                                 :query-params {:left left :right right}}))))))]
-      (is (= {:left 1 :right 1 :right-default 1} @times)))))
+      (is (= {:left 1 :right 1 :right-default 1} @times))))
+  ;; :middleware only evaluates at initialization time
+  (testing ":middleware"
+    (let [g (str (gensym))
+          times (atom {:initialized-outer 0
+                       :initialized-inner 0
+                       :called 0})
+          route (sut/ANY "*" []
+                         :middleware [(do (swap! times update :initialized-outer inc)
+                                          (fn [handler]
+                                            (swap! times update :initialized-inner inc)
+                                            (fn [req]
+                                              (swap! times update :called inc)
+                                              (handler req))))]
+                         {:status 200
+                          :body g})
+          _ (is (= {:initialized-outer 1 :initialized-inner 1 :called 0} @times))
+          _ (dotimes [_ 10]
+              (is (= g (:body ((:handler route) {:uri "/"})))))]
+      (is (= {:initialized-outer 1 :initialized-inner 1 :called 10} @times)))))
 
 (defn benchmark []
   (let [sleep (fn []
