@@ -152,11 +152,11 @@
                                                                  ;;   (core/ANY "*" []
                                                                  ;;     :responses {401 {:schema responses-401__0} 404 {:schema responses-404__1}}
                                                                  ;;      ...))
-                                                                 :responses (reduce (fn [[lets v] [code {:keys [schema] :as m}]]
-                                                                                      (assert schema)
-                                                                                      (let [g (*gensym* (str "responses-" code))]
-                                                                                        [(conj lets g schema) (conj v {code (assoc m :schema g)})]))
-                                                                                    [[] {}] v)
+                                                                 :responses (reduce-kv (fn [[lets v] code {:keys [schema] :as m}]
+                                                                                         (assert schema)
+                                                                                         (let [g (*gensym* (str "responses-" code))]
+                                                                                           [(conj lets g schema) (conj v {code (assoc m :schema g)})]))
+                                                                                       [[] {}] v)
 
                                                                  ;; (ANY "*" [] :tags #{:foo} ...)
                                                                  ;; =>
