@@ -146,6 +146,18 @@
   (is-banned-expansion
     `(sut/context
        "/my-route" []
+       :body [~'id :- s/Str]
+       ~'routes)
+    "Not allowed these options in `context`, push into HTTP verbs instead: (:body)")
+  (is-banned-expansion
+    `(sut/context
+       "/my-route" []
+       :query [~'query {}]
+       ~'routes)
+    "Not allowed these options in `context`, push into HTTP verbs instead: (:query)")
+  (is-banned-expansion
+    `(sut/context
+       "/my-route" []
        :path-params [~'id :- s/Str]
        ~'routes)
     "Not allowed these options in `context`, push into HTTP verbs instead: (:path-params)")
@@ -214,12 +226,12 @@
     (let [times (atom 0)
           g (str (gensym))
           route (sut/ANY "*" []
-                         :query [query (do (swap! times inc) {})]
+                         :query [query (do (swap! times inc) {:a s/Any})]
                          {:status 200
-                          :body g})
+                          :body [g query]})
           _ (is (= 1 @times))
           _ (dotimes [_ 10]
-              (is (= g (:body ((:handler route) {:uri "/"})))))]
+              (is (= [g {:a "b"}] (:body ((:handler route) {:uri "/" :query-params {"a" "b"}})))))]
       (is (= 1 @times))))
   ;; :description only evaluates at initialization time
   (testing ":description"
@@ -295,6 +307,7 @@
               (is (= g (:body ((:handler route) {:uri "/"})))))]
       (is (= 1 @times))))
   ;; :path-params schema only evaluates at initialization time
+  #_ ;;FIXME cache schema
   (testing ":path-params"
     (let [times (atom 0)
           route (sut/ANY "/:id" []
