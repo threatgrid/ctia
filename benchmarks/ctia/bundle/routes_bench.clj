@@ -30,10 +30,11 @@
 
 
 (defn play [app fixture]
-  (POST app
-        "ctia/bundle/import"
-        :body fixture
-        :headers {"Authorization" "45c1f5e3f05d0"}))
+  (let [{:keys [status] :as resp} (POST app
+                                        "ctia/bundle/import"
+                                        :body fixture
+                                        :headers {"Authorization" "45c1f5e3f05d0"})]
+    (assert (= 201 status) (pr-str resp))(assert )))
 
 (defcase import-bundle :empty-bundle-import-es-store
   [{:keys [app]}] (play app empty-bundle))
