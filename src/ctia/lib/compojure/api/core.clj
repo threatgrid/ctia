@@ -87,11 +87,11 @@
 (defn ^:private restructure-endpoint
   "Ensures endpoint options like :body, :return etc only initialize once
   by either let-binding expressions, or throwing exceptions if reevaluation is possible
-  and automatic let-binding is not safe."
+  but automatic let-binding is not safe."
   [compojure-macro path arg args]
   (let [[options body] (common/extract-parameters args true)]
     (if (= [] arg)
-      ;; can savely let-bind values from its middleware to outside this endpoint
+      ;; can safely let-bind values from its middleware to outside this endpoint
       ;; since it doesn't bind any variables (e.g., req)
       (let [{:keys [lets options]} (reduce-kv (fn [acc k v]
                                                 (let [g (*gensym* (name k))
