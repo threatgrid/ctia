@@ -338,11 +338,16 @@
 (defn benchmark []
   (let [sleep-after-first-call (let [a (atom false)]
                                  (fn []
-                                   (when (first (reset-vals! a true))
-                                     (Thread/sleep 1000))))
+                                   (if (first (reset-vals! a true))
+                                     (do (println "Sleeping...")
+                                         (Thread/sleep 1000)
+                                         (println "Done sleeping"))
+                                     (println "First time around, not sleeping"))))
+        g (str (gensym))
         route (sut/POST "*" []
-                        :body [body (do sleep-after-first-call s/Any)]
+                        :body [body (do (sleep-after-first-call) s/Any)]
                         {:status 200
-                         :body "yes"})]
+                         :body g})]
     (dotimes [_ 10]
-      ((:handler route) {:request-method :post :uri "/"}))))
+      (assert (= g (:body ((:handler route)
+                           {:request-method :post :uri "/"})))))))
