@@ -199,6 +199,12 @@
               :return ~'(not-a-symbol)
               {:status 200
                :body g})
+    "Please let-bind :return like so: (let [v# (not-a-symbol)] (ANY \"*\" req :return s# ...))")
+  (is-banned-expansion
+    `(sut/ANY "/:id" ~'req
+              :path-params [~'id :- ~'(not-a-symbol)]
+              {:status 200
+               :body g})
     "Please let-bind :return like so: (let [v# (not-a-symbol)] (ANY \"*\" req :return s# ...))"))
 
 (deftest endpoint-initializes-once-test
@@ -230,6 +236,19 @@
           _ (is (= 1 @times))
           _ (dotimes [_ 10]
               (is (= [g {:a "b"}] (:body ((:handler route) {:uri "/" :query-params {"a" "b"}})))))]
+      (is (= 1 @times))))
+  ;; :path-params schema only evaluates at initialization time
+  (testing ":path-params"
+    (let [times (atom {:left 0 :right 0})
+          g (str (gensym))
+          route (sut/ANY "/:left/:right" []
+                         :path-params [left :- (do (swap! times update :left inc) s/Any)
+                                       right :- (do (swap! times update :right inc) s/Any)]
+                         {:status 200
+                          :body [g left right]})
+          _ (is (= 1 @times))
+          _ (dotimes [_ 10]
+              (is (= [g "left" "right"] (:body ((:handler route) {:uri "/left/right"})))))]
       (is (= 1 @times))))
   ;; :description only evaluates at initialization time
   (testing ":description"
@@ -305,7 +324,6 @@
                                                  :identity allow-all/identity-singleton})))))]
       (is (= 1 @times))))
   ;; :path-params schema only evaluates at initialization time
-  #_ ;;FIXME cache schema
   (testing ":path-params"
     (let [times (atom 0)
           route (sut/ANY "/:id" []
