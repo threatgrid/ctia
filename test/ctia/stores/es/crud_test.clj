@@ -855,10 +855,18 @@
                                  "the number of deleted entities shall be equal to the number of matched")
                              (let [remaining (count-fn es-conn-state query ident)]
                                 (cond
-                                  (not deleted?) (is (= remaining (count matched))
-                                                     "only matched entities shall be deleted")
-                                  (true?  wait_for_completion) (is (= remaining 0))
-                                  (false?  wait_for_completion) (is (<= remaining (count matched)))))))]
+                                  (not deleted?)
+                                  (is (= remaining (count matched))
+                                      "only matched entities shall be deleted")
+
+                                  (true?  wait_for_completion)
+                                  (is (= remaining 0))
+
+                                  (false?  wait_for_completion)
+
+                                  (do (is (<= remaining (count matched)))
+                                      (Thread/sleep 1000)
+                                      (count-fn es-conn-state query ident))))))]
             (check-fn
              {:msg "queries that does not match anything shall not delete any data."
               :query {:filter-map {:title "DOES NOT MATCH ANYTHING"}}
