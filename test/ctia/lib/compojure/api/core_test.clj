@@ -358,4 +358,4 @@
 
 (deftest run-benchmarks
   ;; time out after 50ms. should take about 2ms, but takes 10s if the optimization it tests is wrong.
-  (is (deref (future (benchmark)) 50 true)))
+  (is (deref (future (benchmark)) 50 false)))
