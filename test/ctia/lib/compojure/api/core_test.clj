@@ -336,11 +336,10 @@
       (is (= 1 @times)))))
 
 (defn benchmark []
-  (let [sleep (let [a (atom false)]
-                (fn []
-                  (do (println "\tSleeping...")
-                      (Thread/sleep 100)
-                      (println "\tDone sleeping"))))
+  (let [sleep (fn []
+                (do (println "\tSleeping...")
+                    (Thread/sleep 100)
+                    (println "\tDone sleeping")))
         g (str (gensym))
         _ (println "vvvvvvvvvvvvvvvvvvvvvv")
         _ (println "Initializing route...")
@@ -363,29 +362,29 @@
   :ok)
 
 (comment (benchmark))
-;vvvvvvvvvvvvvvvvvvvvvv
-;Initializing route...
-;	Sleeping...
-;	Done sleeping
-;"Elapsed time: 100.881417 msecs"
-;Done initializing route
-;^^^^^^^^^^^^^^^^^^^^^^
-;vvvvvvvvvvvvvvvvvvvvvv
-;Calling route...
-;Call 0
-;Call 1
-;Call 2
-;Call 3
-;Call 4
-;Call 5
-;Call 6
-;Call 7
-;Call 8
-;Call 9
-;"Elapsed time: 2.44675 msecs"
-;Done calling route
-;^^^^^^^^^^^^^^^^^^^^^^
+;=vvvvvvvvvvvvvvvvvvvvvv
+;=Initializing route...
+;=	Sleeping...
+;=	Done sleeping
+;="Elapsed time: 101.4965 msecs"
+;=Done initializing route
+;=^^^^^^^^^^^^^^^^^^^^^^
+;=vvvvvvvvvvvvvvvvvvvvvv
+;=Calling route...
+;=Call 0
+;=Call 1
+;=Call 2
+;=Call 3
+;=Call 4
+;=Call 5
+;=Call 6
+;=Call 7
+;=Call 8
+;=Call 9
+;="Elapsed time: 1.025375 msecs"
+;=Done calling route
+;=^^^^^^^^^^^^^^^^^^^^^^
 
 (deftest run-benchmarks
-  ;; time out after 50ms. should take about 2ms, but takes 10s if the optimization it tests is wrong.
-  (is (deref (future (benchmark)) 50 false)))
+  ;; time out after 500ms. should take about 120ms, but takes 1s if the optimization it tests is wrong.
+  (is (deref (future (benchmark)) 500 false)))
