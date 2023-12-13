@@ -68,13 +68,13 @@
                    %)
                 m))
 
-(defn safe-pprint [& xs]
+(defn safe-prn [& xs]
   (->> xs
        (map deep-filter-out-creds)
-       (apply pp/pprint)))
+       (apply prn)))
 
-(defn safe-pprint-str [& xs]
-  (with-out-str (apply safe-pprint xs)))
+(defn safe-prn-str [& xs]
+  (with-out-str (apply safe-prn xs)))
 
 ;; copied from iroh-core.core
 (defn clean-collection
