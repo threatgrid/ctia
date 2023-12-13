@@ -111,7 +111,7 @@
                                                                  ;; (core/ANY "*" [] :tags #{:foo} ...)
                                                                  (:tags :auth-identity :identity-map) [[] v]
                                                                  ;;FIXME
-                                                                 (:path-params :query-params :responses) [[] v])]
+                                                                 (:path-params :query-params :responses :middleware) [[] v])]
                                                   (-> acc
                                                       (update :lets into lets)
                                                       (assoc-in [:options k] v))))
@@ -149,7 +149,7 @@
               ;; binders
               (:auth-identity :identity-map) nil
               ;;FIXME
-              (:path-params :query-params :responses) nil
+              (:path-params :query-params :responses :middleware) nil
               ))
           (list* compojure-macro path arg args)))))
 
