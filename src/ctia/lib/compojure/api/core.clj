@@ -149,8 +149,7 @@
               ;; binders
               (:auth-identity :identity-map) nil
               ;;FIXME
-              (:path-params :query-params :responses :middleware) nil
-              ))
+              (:path-params :query-params :responses :middleware) nil))
           (list* compojure-macro path arg args)))))
 
 (defmacro GET     {:style/indent 2} [path arg & args] (restructure-endpoint `core/GET     path arg args))

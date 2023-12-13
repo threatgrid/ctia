@@ -210,7 +210,7 @@
           route (sut/POST "*" []
                           :body [body (do (swap! times inc) s/Any) {:description
                                                                     ;; this is never evaluated
-                                                                    (do (swap! times inc) "foo")}]
+                                                                    (do (swap! times + 10) "foo")}]
                           {:status 200
                            :body ["yes" body]})
           _ (is (= 1 @times))
@@ -333,5 +333,16 @@
           _ (dotimes [_ 10]
               (let [wait_for (rand-nth [true false])]
                 (is (= [g wait_for] (:body ((:handler route) {:uri (str "wait_for=" wait_for)}))))))]
-      (is (= 1 @times))))
-  )
+      (is (= 1 @times)))))
+
+(defn benchmark []
+  (let [sleep-after-first-call (let [a (atom false)]
+                                 (fn []
+                                   (when (first (reset-vals! a true))
+                                     (Thread/sleep 1000))))
+        route (sut/POST "*" []
+                        :body [body (do sleep-after-first-call s/Any)]
+                        {:status 200
+                         :body "yes"})]
+    (dotimes [_ 10]
+      ((:handler route) {:request-method :post :uri "/"}))))
