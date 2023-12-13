@@ -149,6 +149,20 @@
                       "/:left/:right" []
                       :path-params [left :- left__1
                                     {right :- right__2 right-default__3}]
+                      {:status 200})))
+  ;; :query-params let-binds its schemas and defaults
+  (is-expand `(sut/ANY
+                "*" []
+                :query-params [~'left :- s/Int
+                              {~'right :- s/Str :default}]
+                {:status 200})
+             :=> '(clojure.core/let [left__1 schema.core/Int
+                                     right__2 schema.core/Str
+                                     right-default__3 :default]
+                    (compojure.api.core/ANY
+                      "*" []
+                      :query-params [left :- left__1
+                                     {right :- right__2 right-default__3}]
                       {:status 200}))))
 
 ;; adapted from clojure.repl/root-cause, but unwraps compiler exceptions
@@ -235,7 +249,19 @@
               :path-params [{~'id :- ~'(dynamic-schema) ~'(dynamic-default)}]
               {:status 200
                :body g})
-    "Please let-bind id in :path-params like so: (let [s# (dynamic-schema) d# (dynamic-default)] (ANY \"/:id\" req :path-params {id :-, s# d#} ...))"))
+    "Please let-bind id in :path-params like so: (let [s# (dynamic-schema) d# (dynamic-default)] (ANY \"/:id\" req :path-params {id :-, s# d#} ...))")
+  (is-banned-expansion
+    `(sut/ANY "*" ~'req
+              :query-params [~'id :- ~'(not-a-symbol)]
+              {:status 200
+               :body g})
+    "Please let-bind id in :query-params like so: (let [s# (not-a-symbol)] (ANY \"*\" req :query-params [id :- s#] ...))")
+  (is-banned-expansion
+    `(sut/ANY "*" ~'req
+              :query-params [{~'id :- ~'(dynamic-schema) ~'(dynamic-default)}]
+              {:status 200
+               :body g})
+    "Please let-bind id in :query-params like so: (let [s# (dynamic-schema) d# (dynamic-default)] (ANY \"*\" req :query-params {id :-, s# d#} ...))"))
 
 (deftest endpoint-initializes-once-test
   ;; :body schema only evaluates at initialization time

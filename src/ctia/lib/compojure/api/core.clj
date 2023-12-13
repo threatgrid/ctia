@@ -112,44 +112,46 @@
                                                                  ;;   (core/ANY "/:left/:right" []
                                                                  ;;     :path-params [left :- left__0, {right :- right__1 right-default__2}]
                                                                  ;;      ...))
-                                                                 :path-params (let [_ (assert (vector? v))]
-                                                                                (loop [todo v
-                                                                                       lets []
-                                                                                       v []]
-                                                                                  (if (empty? todo)
-                                                                                    [lets v]
-                                                                                    (let [[fst] todo]
-                                                                                      (if (symbol? fst)
-                                                                                        ;; foo :- schema
-                                                                                        (let [[_ |- s :as all] (take 3 todo)
-                                                                                              _ (assert (= 3 (count all)))
-                                                                                              _ (assert (= :- |-))
-                                                                                              g (*gensym* (name fst))]
-                                                                                          (recur (drop 3 todo)
-                                                                                                 (conj lets g s)
-                                                                                                 (conj v fst |- g)))
-                                                                                        ;; {foo :- schema default}
-                                                                                        (do (assert (map? fst))
-                                                                                            (assert (= 2 (count fst)))
-                                                                                            (let [[left right] (seq fst)
-                                                                                                  [nme-entry default-entry] (if (= :- (val left))
-                                                                                                                              [left right]
-                                                                                                                              [right left])
-                                                                                                  nme (key nme-entry)
-                                                                                                  _ (assert (simple-symbol? nme) nme)
-                                                                                                  g (*gensym* (name nme))
-                                                                                                  gdefault (*gensym* (str nme "-default"))]
-                                                                                              (recur (next todo)
-                                                                                                     (conj lets
-                                                                                                           g (key default-entry)
-                                                                                                           gdefault (val default-entry))
-                                                                                                     (conj v (conj {} nme-entry [g gdefault]))))))))))
+                                                                 (:query-params :path-params)
+                                                                 (let [_ (assert (vector? v))]
+                                                                   (loop [todo v
+                                                                          lets []
+                                                                          v []]
+                                                                     (if (empty? todo)
+                                                                       [lets v]
+                                                                       (let [[fst] todo]
+                                                                         (if (symbol? fst)
+                                                                           ;; foo :- schema
+                                                                           (let [[_ |- s :as all] (take 3 todo)
+                                                                                 _ (assert (= 3 (count all)))
+                                                                                 _ (assert (= :- |-))
+                                                                                 g (*gensym* (name fst))]
+                                                                             (recur (drop 3 todo)
+                                                                                    (conj lets g s)
+                                                                                    (conj v fst |- g)))
+                                                                           ;; {foo :- schema default}
+                                                                           (do (assert (map? fst))
+                                                                               (assert (= 2 (count fst)))
+                                                                               (let [[left right] (seq fst)
+                                                                                     [nme-entry default-entry] (if (= :- (val left))
+                                                                                                                 [left right]
+                                                                                                                 [right left])
+                                                                                     nme (key nme-entry)
+                                                                                     _ (assert (simple-symbol? nme) nme)
+                                                                                     g (*gensym* (name nme))
+                                                                                     gdefault (*gensym* (str nme "-default"))]
+                                                                                 (recur (next todo)
+                                                                                        (conj lets
+                                                                                              g (key default-entry)
+                                                                                              gdefault (val default-entry))
+                                                                                        (conj v (conj {} nme-entry [g gdefault]))))))))))
+
                                                                  ;; (ANY "*" [] :tags #{:foo} ...)
                                                                  ;; =>
                                                                  ;; (core/ANY "*" [] :tags #{:foo} ...)
                                                                  (:tags :auth-identity :identity-map :description :summary :no-doc :produces) [[] v]
                                                                  ;;FIXME
-                                                                 (:query-params :responses :middleware) [[] v])]
+                                                                 (:responses :middleware) [[] v])]
                                                   (-> acc
                                                       (update :lets into lets)
                                                       (assoc-in [:options k] v))))
@@ -180,35 +182,35 @@
                                                                                (pr-str (list 'let ['v# v] (list (symbol (name compojure-macro)) path arg k 's# '...))))
                                                                           {})))
               ;; fail if any schemas are not symbols
-              :path-params (let [_ (assert (vector? v))]
-                             (loop [todo v]
-                               (when-first [fst todo]
-                                 (if (symbol? fst)
-                                   ;; foo :- schema
-                                   (let [[_ |- s :as all] (take 3 todo)]
-                                     (assert (= 3 (count all)))
-                                     (when-not (symbol? s)
-                                       (throw (ex-info (str (format "Please let-bind %s in %s like so: " fst k)
-                                                            (pr-str (list 'let ['s# s] (list (symbol (name compojure-macro)) path arg k [fst |- 's#] '...))))
-                                                       {})))
-                                     (recur (drop 3 todo)))
-                                   ;; {foo :- schema default}
-                                   (do (assert (map? fst))
-                                       (assert (= 2 (count fst)))
-                                       (let [[left right] (seq fst)
-                                             [[nme] [schema default]] (if (= :- (val left))
-                                                                         [left right]
-                                                                         [right left])
-                                             _ (assert (simple-symbol? nme) nme)]
-                                         (when-not (and (symbol? schema)
-                                                        ((some-fn symbol? boolean? nil?) default))
-                                           (throw (ex-info (str (format "Please let-bind %s in %s like so: " nme k)
-                                                                (pr-str (list 'let ['s# schema 'd# default]
-                                                                              (list (symbol (name compojure-macro)) path arg k
-                                                                                    (array-map nme :- 's# 'd#)
-                                                                                    '...))))
-                                                           {}))))
-                                       (recur (next todo)))))))
+              (:query-params :path-params) (let [_ (assert (vector? v))]
+                                             (loop [todo v]
+                                               (when-first [fst todo]
+                                                 (if (symbol? fst)
+                                                   ;; foo :- schema
+                                                   (let [[_ |- s :as all] (take 3 todo)]
+                                                     (assert (= 3 (count all)))
+                                                     (when-not (symbol? s)
+                                                       (throw (ex-info (str (format "Please let-bind %s in %s like so: " fst k)
+                                                                            (pr-str (list 'let ['s# s] (list (symbol (name compojure-macro)) path arg k [fst |- 's#] '...))))
+                                                                       {})))
+                                                     (recur (drop 3 todo)))
+                                                   ;; {foo :- schema default}
+                                                   (do (assert (map? fst))
+                                                       (assert (= 2 (count fst)))
+                                                       (let [[left right] (seq fst)
+                                                             [[nme] [schema default]] (if (= :- (val left))
+                                                                                        [left right]
+                                                                                        [right left])
+                                                             _ (assert (simple-symbol? nme) nme)]
+                                                         (when-not (and (symbol? schema)
+                                                                        ((some-fn symbol? boolean? nil?) default))
+                                                           (throw (ex-info (str (format "Please let-bind %s in %s like so: " nme k)
+                                                                                (pr-str (list 'let ['s# schema 'd# default]
+                                                                                              (list (symbol (name compojure-macro)) path arg k
+                                                                                                    (array-map nme :- 's# 'd#)
+                                                                                                    '...))))
+                                                                           {}))))
+                                                       (recur (next todo)))))))
               ;; swagger only
               (:description :summary) nil
               ;; values
@@ -216,7 +218,7 @@
               ;; binders
               (:auth-identity :identity-map) nil
               ;;FIXME
-              (:query-params :responses :middleware) nil))
+              (:responses :middleware) nil))
           (list* compojure-macro path arg args)))))
 
 (defmacro GET     {:style/indent 2} [path arg & args] (restructure-endpoint `core/GET     path arg args))
