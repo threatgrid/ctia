@@ -431,7 +431,20 @@
           _ (is (= {:initialized-outer 1 :initialized-inner 1 :called 0} @times))
           _ (dotimes [_ 10]
               (is (= g (:body ((:handler route) {:uri "/"})))))]
-      (is (= {:initialized-outer 1 :initialized-inner 1 :called 10} @times)))))
+      (is (= {:initialized-outer 1 :initialized-inner 1 :called 10} @times))))
+  ;; :middleware only evaluates at initialization time
+  (testing ":responses"
+    (let [g (str (gensym))
+          times (atom {404 0 401 0})
+          route (sut/ANY "*" []
+                         :responses {404 {:schema (do (swap! times update 404 inc) s/Any)}
+                                     401 {:schema (do (swap! times update 401 inc) s/Any)}}
+                         {:status (rand-nth [404 401])
+                          :body g})
+          _ (is (= {404 1 401 1} @times))
+          _ (dotimes [_ 10]
+              (is (= g (:body ((:handler route) {:uri "/"})))))]
+      (is (= {404 1 401 1} @times)))))
 
 (defn benchmark []
   (let [sleep (fn []

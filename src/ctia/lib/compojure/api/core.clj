@@ -146,14 +146,23 @@
                                                                                               gdefault (val default-entry))
                                                                                         (conj v (conj {} nme-entry [g gdefault]))))))))))
 
+                                                                 ;; (ANY "*" [] :responses {401 {:schema Foo} 404 {:schema Bar}} ...)
+                                                                 ;; =>
+                                                                 ;; (let [resonses-401__0 Foo, responses-404__1 Bar]
+                                                                 ;;   (core/ANY "*" []
+                                                                 ;;     :responses {401 {:schema resonses-401__0} 404 {:schema responses-404__1}}
+                                                                 ;;      ...))
+                                                                 :responses (reduce (fn [[lets v] [code {:keys [schema] :as m}]]
+                                                                                      (assert schema)
+                                                                                      (let [g (*gensym* (str "responses-" code))]
+                                                                                        [(conj lets g schema) (assoc m :schema g)]))
+                                                                                    [[] {}] v)
+
                                                                  ;; (ANY "*" [] :tags #{:foo} ...)
                                                                  ;; =>
                                                                  ;; (core/ANY "*" [] :tags #{:foo} ...)
                                                                  (:tags :auth-identity :identity-map :description :summary :no-doc :produces :middleware)
-                                                                 [[] v]
-
-                                                                 ;;TODO
-                                                                 (:responses ) [[] v])]
+                                                                 [[] v])]
                                                   (-> acc
                                                       (update :lets into lets)
                                                       (assoc-in [:options k] v))))
@@ -219,8 +228,15 @@
               :tags nil
               ;; binders
               (:auth-identity :identity-map) nil
-              ;;FIXME
-              (:responses :middleware) nil))
+              :middleware nil
+              :responses (doseq [[code {:keys [schema] :as m}] v]
+                           (when-not (symbol? schema)
+                             (throw (ex-info (str (format "Please let-bind %s in %s like so: " code k)
+                                                  (pr-str (list 'let ['s# schema]
+                                                                (list (symbol (name compojure-macro)) path arg k
+                                                                      {code (assoc m :schema 's#)}
+                                                                      '...))))
+                                             {}))()))))
           (list* compojure-macro path arg args)))))
 
 (defmacro GET     {:style/indent 2} [path arg & args] (restructure-endpoint `core/GET     path arg args))
