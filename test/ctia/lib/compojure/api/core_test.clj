@@ -3,6 +3,7 @@
             [clojure.test :refer [deftest is testing]]
             [compojure.api.api :refer [api]]
             [ring.swagger.json-schema :refer [describe]]
+            [ctia.auth.allow-all :as allow-all]
             [schema.core :as s]))
 
 (defmacro with-deterministic-gensym [& body]
@@ -187,7 +188,6 @@
               {:status 200
                :body g})
     "Please let-bind the :body schema like so: (let [s# (not-a-symbol)] (ANY \"*\" req :body [body s#] ...))")
-  ;;TODO fix the :capabilities test and verify if we actually need to let-bind :capabilities
   (is-banned-expansion
     `(sut/ANY "*" ~'req
               :capabilities ~'(not-a-symbol)
@@ -292,7 +292,6 @@
               (is (= g (:body ((:handler route) {:uri "/"})))))]
       (is (= 1 @times))))
   ;; :capabilities only evaluates at initialization time
-  #_ ;;FIXME needs an authenticated request
   (testing ":capabilities"
     (let [g (str (gensym))
           times (atom 0)
@@ -302,7 +301,8 @@
                           :body g})
           _ (is (= 1 @times))
           _ (dotimes [_ 10]
-              (is (= g (:body ((:handler route) {:uri "/"})))))]
+              (is (= g (:body ((:handler route) {:uri "/"
+                                                 :identity allow-all/identity-singleton})))))]
       (is (= 1 @times))))
   ;; :path-params schema only evaluates at initialization time
   #_ ;;FIXME cache schema
