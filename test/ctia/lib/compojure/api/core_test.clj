@@ -126,6 +126,15 @@
                     "/my-route" []
                     :summary (clojure.core/str "a" "summary")
                     {:status 200}))
+  ;; :middleware is preserved, since it behaves nicely by default
+  (is-expand `(sut/ANY
+                "/my-route" []
+                :middleware [(fn [~'handler] ~'handler)] 
+                {:status 200})
+             :=> '(compojure.api.core/ANY
+                    "/my-route" []
+                    :middleware [(clojure.core/fn [handler] handler)] 
+                    {:status 200}))
   ;; :body let-binds its schema
   (is-expand `(sut/ANY
                 "/my-route" []
@@ -163,6 +172,16 @@
                       "*" []
                       :query-params [left :- left__1
                                      {right :- right__2 right-default__3}]
+                      {:status 200})))
+  ;; :responses let-binds its schemas
+  (is-expand `(sut/ANY
+                "*" []
+                :responses {404 {:schema ~'(dynamic-schema) :description "foo"}}
+                {:status 200})
+             :=> '(clojure.core/let [responses-404__1 (dynamic-schema)]
+                    (compojure.api.core/ANY
+                      "*" []
+                      :responses {404 {:schema responses-404__1 :description "foo"}}
                       {:status 200}))))
 
 ;; adapted from clojure.repl/root-cause, but unwraps compiler exceptions

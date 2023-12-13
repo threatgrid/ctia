@@ -155,7 +155,7 @@
                                                                  :responses (reduce (fn [[lets v] [code {:keys [schema] :as m}]]
                                                                                       (assert schema)
                                                                                       (let [g (*gensym* (str "responses-" code))]
-                                                                                        [(conj lets g schema) (assoc m :schema g)]))
+                                                                                        [(conj lets g schema) (conj v {code (assoc m :schema g)})]))
                                                                                     [[] {}] v)
 
                                                                  ;; (ANY "*" [] :tags #{:foo} ...)
