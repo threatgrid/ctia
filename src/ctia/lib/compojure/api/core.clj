@@ -149,9 +149,11 @@
                                                                  ;; (ANY "*" [] :tags #{:foo} ...)
                                                                  ;; =>
                                                                  ;; (core/ANY "*" [] :tags #{:foo} ...)
-                                                                 (:tags :auth-identity :identity-map :description :summary :no-doc :produces) [[] v]
-                                                                 ;;FIXME
-                                                                 (:responses :middleware) [[] v])]
+                                                                 (:tags :auth-identity :identity-map :description :summary :no-doc :produces :middleware)
+                                                                 [[] v]
+
+                                                                 ;;TODO
+                                                                 (:responses ) [[] v])]
                                                   (-> acc
                                                       (update :lets into lets)
                                                       (assoc-in [:options k] v))))
