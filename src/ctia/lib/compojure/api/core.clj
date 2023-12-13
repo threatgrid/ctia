@@ -106,22 +106,44 @@
                                                                  (:body :query) (do (assert (vector? v))
                                                                                     (assert (<= 2 (count v) 3))
                                                                                     [[g (nth v 1)] (assoc v 1 g)])
-                                                                 ;; (ANY "/:left/:right" [] :path-params [left :- SCHEMA0, right :- SCHEMA1] ...)
+                                                                 ;; (ANY "/:left/:right" [] :path-params [left :- SCHEMA0, {right :- SCHEMA1 default}] ...)
                                                                  ;; =>
-                                                                 ;; (let [left__0 SCHEMA0, right__1 SCHEMA1]
+                                                                 ;; (let [left__0 SCHEMA0, right__1 SCHEMA1, right-default__2 default]
                                                                  ;;   (core/ANY "/:left/:right" []
-                                                                 ;;     :path-params [left :- left__0, right :- right__0]
+                                                                 ;;     :path-params [left :- left__0, {right :- right__1 right-default__2}]
                                                                  ;;      ...))
-                                                                 :path-params (let [_ (assert (vector? v))
-                                                                                    _ (assert (zero? (mod (count v) 3)))
-                                                                                    groups (partition-all 3 v)]
-                                                                                (reduce (fn [[lets v] [b |- s]]
-                                                                                          {:pre [(= :- |-)
-                                                                                                 (simple-symbol? b)]}
-                                                                                          (let [g (*gensym* b)]
-                                                                                            [(conj lets g s) (conj v b |- g)]))
-                                                                                        [[] []]
-                                                                                        (partition-all 3 v)))
+                                                                 :path-params (let [_ (assert (vector? v))]
+                                                                                (loop [todo v
+                                                                                       lets []
+                                                                                       v []]
+                                                                                  (if (empty? todo)
+                                                                                    [lets v]
+                                                                                    (let [[fst] todo]
+                                                                                      (if (symbol? fst)
+                                                                                        ;; foo :- schema
+                                                                                        (let [[_ |- s :as all] (take 3 todo)
+                                                                                              _ (assert (= 3 (count all)))
+                                                                                              _ (assert (= :- |-))
+                                                                                              g (*gensym* (name fst))]
+                                                                                          (recur (drop 3 todo)
+                                                                                                 (conj lets g s)
+                                                                                                 (conj v fst |- g)))
+                                                                                        ;; {foo :- schema default}
+                                                                                        (do (assert (map? fst))
+                                                                                            (assert (= 2 (count fst)))
+                                                                                            (let [[left right] (seq fst)
+                                                                                                  [nme-entry default-entry] (if (= :- (val left))
+                                                                                                                              [left right]
+                                                                                                                              [right left])
+                                                                                                  nme (key nme-entry)
+                                                                                                  _ (assert (simple-symbol? nme) nme)
+                                                                                                  g (*gensym* (name nme))
+                                                                                                  gdefault (*gensym* (str nme "-default"))]
+                                                                                              (recur (next todo)
+                                                                                                     (conj lets
+                                                                                                           g (key default-entry)
+                                                                                                           gdefault (val default-entry))
+                                                                                                     (conj v (conj {} nme-entry [g gdefault]))))))))))
                                                                  ;; (ANY "*" [] :tags #{:foo} ...)
                                                                  ;; =>
                                                                  ;; (core/ANY "*" [] :tags #{:foo} ...)
