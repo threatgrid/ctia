@@ -276,10 +276,8 @@
           _ (is (= 1 @times))
           _ (dotimes [_ 10]
               (let [g (str (gensym))]
-                (is (= ["yes"
-                        ;;FIXME
-                        nil #_g]
-                       (:body ((:handler route) {:request-method :post :uri "/" :body g}))))))]
+                (is (= ["yes" g]
+                       (:body ((:handler route) {:request-method :post :uri "/" :body-params g}))))))]
       (is (= 1 @times))))
   ;; :query schema only evaluates at initialization time
   (testing ":query"
@@ -396,7 +394,6 @@
                 (is (= ["left" (str "right" g)] (:body ((:handler route) {:uri (str "/left/right" g)}))))))]
       (is (= {:left 1 :right 1 :right-default 1} @times))))
   ;; :query-params schema only evaluates at initialization time
-  #_ ;;FIXME construct valid query params
   (testing ":query-params"
     (let [times (atom {:left 0 :right 0 :right-default 0})
           g (str (gensym))
@@ -411,9 +408,10 @@
                           :body [g left right]})
           _ (is (= {:left 1 :right 1 :right-default 1} @times))
           _ (dotimes [_ 10]
-              (let [left (rand-nth [true false])
+              (let [left (str (rand-nth [true false]))
                     right (rand-nth [true false])]
-                (is (= [g left right] (:body ((:handler route) {:uri (str "/foo?left=" left "&right=" right)}))))))]
+                (is (= [g left right] (:body ((:handler route) {:uri (str "/foo?left=" left "&right=" right)
+                                                                :query-params {:left left :right right}}))))))]
       (is (= {:left 1 :right 1 :right-default 1} @times)))))
 
 (defn benchmark []
