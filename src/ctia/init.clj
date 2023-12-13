@@ -28,13 +28,13 @@
   [config]
   (log/debug (with-out-str
                (do (newline)
-                   (utils/safe-pprint
+                   (utils/safe-prn
                     (mp/debug-properties-by-source p/PropertiesSchema
                                                    p/files)))))
 
   (log/info (with-out-str
               (do (newline)
-                  (utils/safe-pprint config)))))
+                  (utils/safe-prn config)))))
 
 (s/defn default-services-map
   :- {(s/constrained s/Keyword simple-keyword?)

@@ -38,10 +38,26 @@
   (is (= map-with-hidden-creds
          (sut/deep-filter-out-creds map-with-creds))))
 
+;; dev only
+(defn safe-pprint [& xs]
+  (->> xs
+       (map sut/deep-filter-out-creds)
+       (apply pp/pprint)))
+
+;; dev only
+(defn safe-pprint-str [& xs]
+  (with-out-str (apply safe-pprint xs)))
+
 (deftest safe-pprint-test
   (is (= (with-out-str (pp/pprint map-with-hidden-creds))
          (with-out-str
-           (sut/safe-pprint map-with-creds)))))
+           (safe-pprint map-with-creds)))))
+
+(deftest safe-prn-test
+  (is (= (with-out-str (prn map-with-hidden-creds))
+         (with-out-str
+           (sut/safe-prn map-with-creds))
+         (sut/safe-prn-str map-with-creds))))
 
 (deftest update-items-test
   (is (= [2 4 7 3] (sut/update-items [1 5 6 3] inc dec inc))

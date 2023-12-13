@@ -10,7 +10,7 @@
 (defn request->event
   [request extra-fields]
   (into {:uri (str (:uri request))
-         :_params (utils/safe-pprint-str (:params request))
+         :_params (utils/safe-prn-str (:params request))
          :remote-addr (str (if-let [xff (get-in request [:headers "x-forwarded-for"])]
                              (peek (str/split xff #"\s*,\s*"))
                              (:remote-addr request)))
@@ -31,8 +31,8 @@
       (send-event-fn event)
       (catch Exception e
         (log/warnf "A Problem occured while sending request metrics event:\n\n%s\n\nException:\n%s"
-                   (utils/safe-pprint-str event)
-                   (utils/safe-pprint-str e))
+                   (utils/safe-prn-str event)
+                   (utils/safe-prn-str e))
         (when (nil? send-event-fn)
           (log/warn "The send-event-fn looks empty. This is certainly due to a configuration problem or perhaps simply a code bug."))))))
 
@@ -119,12 +119,12 @@
     (if conn
       (do
         (log/debugf "Sending event to riemann:\n%s\nprepared:\n%s"
-                    (utils/safe-pprint-str event)
-                    (utils/safe-pprint-str prepared-event))
+                    (utils/safe-prn-str event)
+                    (utils/safe-prn-str prepared-event))
         (riemann/send-event conn prepared-event))
       (when-not (= "log" (:event-type prepared-event))
         (log/warnf "Riemann doesn't seem configured. Event: %s"
-                   (utils/safe-pprint-str prepared-event))))))
+                   (utils/safe-prn-str prepared-event))))))
 
 ;; based on riemann-reporter.core/wrap-request-metrics
 (defn wrap-request-logs
