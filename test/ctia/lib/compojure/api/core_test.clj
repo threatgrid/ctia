@@ -335,26 +335,56 @@
                 (is (= [g wait_for] (:body ((:handler route) {:uri (str "wait_for=" wait_for)}))))))]
       (is (= 1 @times)))))
 
-;First time around, not sleeping
-;"Elapsed time: 2.84075 msecs"
 (defn benchmark []
-  (time
-    (let [sleep-after-first-call (let [a (atom false)]
-                                   (fn []
-                                     (if (first (reset-vals! a true))
-                                       (do (println "Sleeping...")
-                                           (Thread/sleep 1000)
-                                           (println "Done sleeping"))
-                                       (println "First time around, not sleeping"))))
-          g (str (gensym))
-          route (sut/POST "*" []
-                          :body [body (do (sleep-after-first-call) s/Any)]
+  (let [sleep (let [a (atom false)]
+                (fn []
+                  (do (println "\tSleeping...")
+                      (Thread/sleep 100)
+                      (println "\tDone sleeping"))))
+        g (str (gensym))
+        _ (println "vvvvvvvvvvvvvvvvvvvvvv")
+        _ (println "Initializing route...")
+        route (time
+                (sut/POST "*" []
+                          :body [body (do (sleep) s/Any)]
                           {:status 200
-                           :body g})]
-      (dotimes [_ 10]
+                           :body g}))
+        _ (println "Done initializing route")
+        _ (println "^^^^^^^^^^^^^^^^^^^^^^")]
+    (println "vvvvvvvvvvvvvvvvvvvvvv")
+    (println "Calling route...")
+    (time
+      (dotimes [i 10]
+        (println "Call" i)
         (assert (= g (:body ((:handler route)
-                             {:request-method :post :uri "/"})))))))
+                             {:request-method :post :uri "/"}))))))
+    (println "Done calling route")
+    (println "^^^^^^^^^^^^^^^^^^^^^^"))
   :ok)
+
+(comment (benchmark))
+;vvvvvvvvvvvvvvvvvvvvvv
+;Initializing route...
+;	Sleeping...
+;	Done sleeping
+;"Elapsed time: 100.881417 msecs"
+;Done initializing route
+;^^^^^^^^^^^^^^^^^^^^^^
+;vvvvvvvvvvvvvvvvvvvvvv
+;Calling route...
+;Call 0
+;Call 1
+;Call 2
+;Call 3
+;Call 4
+;Call 5
+;Call 6
+;Call 7
+;Call 8
+;Call 9
+;"Elapsed time: 2.44675 msecs"
+;Done calling route
+;^^^^^^^^^^^^^^^^^^^^^^
 
 (deftest run-benchmarks
   ;; time out after 50ms. should take about 2ms, but takes 10s if the optimization it tests is wrong.
