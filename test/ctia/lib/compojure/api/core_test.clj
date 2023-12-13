@@ -115,3 +115,73 @@
        :identity-map ~'identity-map
        ~'routes)
     "Not allowed these options in `context`, push into HTTP verbs instead: (:identity-map)"))
+ 
+(defn benchmark []
+  (let [sleep (fn []
+                (do (println "\tSleeping...")
+                    (Thread/sleep 100)
+                    (println "\tDone sleeping")))
+        g (str (gensym))
+        _ (println "vvvvvvvvvvvvvvvvvvvvvv")
+        _ (println "Initializing route...")
+        route (time
+                (sut/POST "*" []
+                          :body [body (do (sleep) s/Any)]
+                          {:status 200
+                           :body g}))
+        _ (println "Done initializing route")
+        _ (println "^^^^^^^^^^^^^^^^^^^^^^")]
+    (println "vvvvvvvvvvvvvvvvvvvvvv")
+    (println "Calling route...")
+    (time
+      (dotimes [i 10]
+        (println "Call" i)
+        (assert (= g (:body ((:handler route)
+                             {:request-method :post :uri "/"}))))))
+    (println "Done calling route")
+    (println "^^^^^^^^^^^^^^^^^^^^^^"))
+  :ok)
+
+(comment (benchmark))
+;vvvvvvvvvvvvvvvvvvvvvv
+;Initializing route...
+;	Sleeping...
+;	Done sleeping
+;"Elapsed time: 106.062042 msecs"
+;Done initializing route
+;^^^^^^^^^^^^^^^^^^^^^^
+;vvvvvvvvvvvvvvvvvvvvvv
+;Calling route...
+;Call 0
+;	Sleeping...
+;	Done sleeping
+;Call 1
+;	Sleeping...
+;	Done sleeping
+;Call 2
+;	Sleeping...
+;	Done sleeping
+;Call 3
+;	Sleeping...
+;	Done sleeping
+;Call 4
+;	Sleeping...
+;	Done sleeping
+;Call 5
+;	Sleeping...
+;	Done sleeping
+;Call 6
+;	Sleeping...
+;	Done sleeping
+;Call 7
+;	Sleeping...
+;	Done sleeping
+;Call 8
+;	Sleeping...
+;	Done sleeping
+;Call 9
+;	Sleeping...
+;	Done sleeping
+;"Elapsed time: 1037.317 msecs"
+;Done calling route
+;^^^^^^^^^^^^^^^^^^^^^^
