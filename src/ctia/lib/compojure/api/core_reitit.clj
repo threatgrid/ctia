@@ -56,18 +56,14 @@
             (throw (ex-info (str "Not allowed these options in `context`, push into HTTP verbs instead: "
                                  (pr-str (sort extra-keys)))
                             {})))
-        groutes (*gensym* "routes")
-        option->g (into {} (comp (remove unevalated-options)
-                                 (map (juxt identity (comp *gensym* name))))
-                        (keys options))
-        malli-opts (cond-> {}
-                     (:tags options) (assoc-in [:swagger :tags] (list 'quote (:tags options)))
-                     (:description options) (assoc-in [:swagger :description] (:description options))
-                     (:summary options) (assoc-in [:swagger :summary] (:summary options))
-                     (:capabilities options) (update :middleware (fnil conj [])
-                                                     [`mid/wrap-capabilities (:capabilities options)]))]
+        reitit-opts (cond-> {}
+                      (:tags options) (assoc-in [:swagger :tags] (list 'quote (:tags options)))
+                      (:description options) (assoc-in [:swagger :description] (:description options))
+                      (:summary options) (assoc-in [:swagger :summary] (:summary options))
+                      (:capabilities options) (update :middleware (fnil conj [])
+                                                      [`mid/wrap-capabilities (:capabilities options)]))]
     `[~path
-      ~@(some-> (not-empty malli-opts) list)
+      ~@(some-> (not-empty reitit-opts) list)
       (routes ~@body)]))
 
 (defmacro GET     {:style/indent 2} [& args] `(core/GET ~@args))
