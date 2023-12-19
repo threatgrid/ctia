@@ -1,12 +1,12 @@
 (def cheshire-version "5.10.2")
 (def clj-http-fake-version "1.0.3")
 (def clj-version "1.11.1")
-(def jackson-version "2.13.4")
-(def jackson-databind-version "2.13.4.2")
+(def jackson-version "2.15.1")
+(def jackson-databind-version "2.15.1")
 (def metrics-clojure-version "2.10.0")
 (def netty-version "4.1.75.Final")
 (def perforate-version "0.3.4")
-(def ring-version "1.9.5")
+(def ring-version "1.10.0")
 (def schema-generators-version "0.1.4")
 (def test-check-version "1.1.1")
 (def test-chuck-version "0.2.13")
@@ -85,8 +85,8 @@
                  [clj-commons/clj-yaml "1.0.26"] ;; upgrade snakeyaml dep
 
                  ;; Schemas
-                 [prismatic/schema "1.2.0"]
-                 [metosin/schema-tools "0.12.2"]
+                 [prismatic/schema "1.3.0"]
+                 [metosin/schema-tools "0.13.1"]
                  [threatgrid/flanders "0.1.23"]
                  [threatgrid/ctim "1.3.13"]
                  [instaparse "1.4.10"] ;; com.gfredericks/test.chuck > threatgrid/ctim
@@ -98,20 +98,25 @@
                  ;; Web server
                  [metosin/compojure-api "1.1.13" ]
                  [metosin/reitit "0.7.0-alpha7"]
+                 [org.clojure/core.rrb-vector "0.1.2"] ;; internal reitit conflict
+                 [crypto-equality "1.0.1"] ;; reitit > ring-core
                  [ring-middleware-format "0.7.4"]
+                 [com.cognitect/transit-clj "1.0.324"] ;; reitit > ring-middleware-format
+                 [com.cognitect/transit-java "1.0.343"] ;; reitit > ring-middleware-format
+                 [metosin/jsonista "0.3.7"] ;; reitit > clj-jwt
                  ;; optional ring-middleware-format dep (Note: ring-middleware-format is also a transitive dep for compojure-api)
                  ;; see: https://github.com/ngrunwald/ring-middleware-format/issues/74
                  [com.ibm.icu/icu4j "65.1"]
                  ;;fixes memory leaks: https://github.com/advthreat/iroh/issues/6063
                  ;https://github.com/threatgrid/ring-swagger/commit/e767d9b78ccbe667fc1b4067d3338172e41225fc
                  [io.github.threatgrid/ring-swagger "0.26.3"]
-                 [metosin/ring-swagger-ui "3.24.3"]
+                 [metosin/ring-swagger-ui "4.19.1"]
                  [ring/ring-core ~ring-version] ;ring/ring-jetty-adapter > metosin/ring-swagger
                  [ring/ring-jetty-adapter ~ring-version]
                  [ring/ring-devel ~ring-version]
                  [ring-cors "0.1.13"]
                  [commons-codec "1.15"] ;ring/ring* > threatgrid/ctim, threatgrid/clj-momo, clj-http
-                 [ring/ring-codec "1.1.3"]
+                 [ring/ring-codec "1.2.0"]
                  [threatgrid/clj-jwt "0.5.0"]
                  [threatgrid/ring-turnstile-middleware "0.1.1"]
                  [threatgrid/ring-jwt-middleware "1.0.1"]
