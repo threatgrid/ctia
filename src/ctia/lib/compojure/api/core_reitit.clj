@@ -7,15 +7,6 @@
             [clojure.set :as set]
             [ctia.http.middleware.auth :as mid]))
 
-;; banned
-(require '[compojure.api.core :as core])
-
-(assert magic/add-id-to-request
-        (str "Never delete the :require of ctia.http.middleware.auth! "
-             "It has magic defmethod calls that are crucial to the "
-             "reliability of CTIA's startup. "
-             "See also: https://github.com/threatgrid/iroh/issues/4458"))
-
 ;;TODO this isn't right
 (defn routes
   "Create a Ring handler by combining several handlers into one."
@@ -26,6 +17,8 @@
   "Routes without route-documentation. Can be used to wrap routes,
   not satisfying compojure.api.routes/Routing -protocol."
   [& handlers]
+  (assert nil)
+  #_
   (apply core/undocumented handlers))
 
 (defmacro middleware
