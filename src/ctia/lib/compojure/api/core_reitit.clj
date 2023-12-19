@@ -38,7 +38,7 @@
   `["" {:middleware ~middleware}
     [~@body]])
 
-(def ^:private allowed-context-options #{:tags :capabilities :description #_:return :summary})
+(def ^:private allowed-context-options #{:tags :capabilities :description :return :summary})
 
 (def ^:private ^:dynamic *gensym* gensym)
 
@@ -50,21 +50,30 @@
   [path arg & args]
   (assert (vector? arg))
   (assert (= [] arg) (str "Not allowed to bind anything in context, push into HTTP verbs instead: " (pr-str arg)))
-  (let [[options body] (common/extract-parameters args true)
+  (let [[options body] ((requiring-resolve 'compojure.api.common/extract-parameters) args true)
         _ (when-some [extra-keys (not-empty (set/difference (set (keys options))
                                                             allowed-context-options))]
             (throw (ex-info (str "Not allowed these options in `context`, push into HTTP verbs instead: "
                                  (pr-str (sort extra-keys)))
                             {})))
+        lets []
         reitit-opts (cond-> {}
                       (:tags options) (assoc-in [:swagger :tags] (list 'quote (:tags options)))
                       (:description options) (assoc-in [:swagger :description] (:description options))
                       (:summary options) (assoc-in [:swagger :summary] (:summary options))
                       (:capabilities options) (update :middleware (fnil conj [])
-                                                      [`mid/wrap-capabilities (:capabilities options)]))]
-    `[~path
-      ~@(some-> (not-empty reitit-opts) list)
-      (routes ~@body)]))
+                                                      [`mid/wrap-capabilities (:capabilities options)]))
+        [reitit-opts lets] (if-some [return (:return options)]
+                             (let [g (gensym 'return)]
+                               [(-> reitit-opts
+                                    (assoc-in [:swagger :responses] [g])
+                                    (assoc :responses [g]))
+                                (conj lets g return)])
+                             [reitit-opts lets])]
+    `(let ~lets
+       [~path
+        ~@(some-> (not-empty reitit-opts) list)
+        (routes ~@body)])))
 
 (defmacro GET     {:style/indent 2} [& args] `(core/GET ~@args))
 (defmacro ANY     {:style/indent 2} [& args] `(core/ANY ~@args))

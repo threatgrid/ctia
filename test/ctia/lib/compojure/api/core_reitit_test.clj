@@ -93,6 +93,24 @@
              "/my-route" []
              :summary summarys-are-expressions
              identity))))
+  (is (= ["/my-route"
+          ;;FIXME probably doesn't work
+          {:swagger {:responses [{:a (s/enum "schema")}]}
+           :responses [{:a (s/enum "schema")}]}
+          [identity]]
+         (sut/context
+           "/my-route" []
+           :return {:a (s/enum "schema")}
+           identity)))
+  (is (= ["/my-route"
+          {:swagger {:responses [{:a (s/enum "schema")}]}
+           :responses [{:a (s/enum "schema")}]}
+          [identity]]
+         (let [returns-are-expressions {:a (s/enum "schema")}]
+           (sut/context
+             "/my-route" []
+             :return returns-are-expressions
+             identity))))
   )
 
 #_
