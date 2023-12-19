@@ -38,7 +38,7 @@
   `["" {:middleware ~middleware}
     [~@body]])
 
-(def ^:private allowed-context-options #{:tags :capabilities :description :return :summary})
+(def ^:private allowed-context-options #{:tags :capabilities :description :responses :summary})
 
 (def ^:private ^:dynamic *gensym* gensym)
 
@@ -56,13 +56,14 @@
             (throw (ex-info (str "Not allowed these options in `context`, push into HTTP verbs instead: "
                                  (pr-str (sort extra-keys)))
                             {})))
-        reitit-opts (cond-> {}
-                      (:tags options) (assoc-in [:swagger :tags] (list 'quote (:tags options)))
-                      (:description options) (assoc-in [:swagger :description] (:description options))
-                      (:summary options) (assoc-in [:swagger :summary] (:summary options))
-                      (:capabilities options) (update :middleware (fnil conj [])
-                                                      [`mid/wrap-capabilities (:capabilities options)])
-                      (:return options) (assoc-in [:responses :default] {:schema (:return options)}))]
+        reitit-opts (let [{:keys [tags description summary capabilities responses]} options]
+                      (cond-> {}
+                        tags (assoc-in [:swagger :tags] (list 'quote tags))
+                        description (assoc-in [:swagger :description] description)
+                        summary (assoc-in [:swagger :summary] summary)
+                        capabilities (update :middleware (fnil conj [])
+                                             [`mid/wrap-capabilities capabilities])
+                        responses (assoc :responses responses)))]
     `[~path
       ~@(some-> (not-empty reitit-opts) list)
       (routes ~@body)]))
