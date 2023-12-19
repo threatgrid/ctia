@@ -8,6 +8,6 @@
   (context "/status" []
            :tags ["Status"]
            (GET "/" []
-                :return StatusInfo
+                :responses {200 {:schema StatusInfo}}
                 :summary "Health Check"
                 (ok {:status :ok}))))

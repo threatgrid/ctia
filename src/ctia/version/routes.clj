@@ -12,6 +12,6 @@
   (context "/version" []
            :tags ["Version"]
            (GET "/" []
-                :return VersionInfo
+                :responses {200 {:schema VersionInfo}}
                 :summary "API version details"
                 (ok (version-data get-in-config))))))

@@ -36,7 +36,7 @@
                          :create-weakness}]
       (routes
        (POST "/" []
-         :return (bulk.schemas/BulkCreateRes services)
+         :responses {201 {:schema (bulk.schemas/BulkCreateRes services)}}
          :query-params [{wait_for :- (describe s/Bool "wait for created entities to be available for search") nil}]
          :body [bulk (bulk.schemas/NewBulk services) {:description "a new Bulk object"}]
          :summary "POST many new entities using a single HTTP call"
@@ -50,7 +50,7 @@
                                            (common/wait_for->refresh wait_for)
                                            services)))
        (PUT "/" []
-         :return (s/maybe (bulk.schemas/BulkActionsRefs services))
+         :responses {200 {:schema (s/maybe (bulk.schemas/BulkActionsRefs services))}}
          :summary "UPDATE many entities at once"
          :query-params [{wait_for :- (describe s/Bool "wait for updated entities to be available for search") nil}]
          :body [bulk (bulk.schemas/BulkUpdate services) {:description "a new Bulk Update object"}]
@@ -86,7 +86,7 @@
                         :read-vulnerability
                         :read-weakness}]
      (GET "/" []
-          :return (s/maybe (bulk.schemas/Bulk services))
+          :responses {200 {:schema (s/maybe (bulk.schemas/Bulk services))}}
           :summary "GET many entities at once"
           :query-params [{actors              :- [Reference] []}
                          {asset_mappings      :- [Reference] []}
@@ -141,7 +141,7 @@
             (ok (core/fetch-bulk bulk auth-identity services)))))
     (let [capabilities (bulk.schemas/bulk-patch-capabilities services)]
       (PATCH "/" []
-        :return (s/maybe (bulk.schemas/BulkActionsRefs services))
+        :responses {200 {:schema (s/maybe (bulk.schemas/BulkActionsRefs services))}}
         :summary "PATCH many entities at once"
         :query-params [{wait_for :- (describe s/Bool "wait for patched entities to be available for search") nil}]
         :body [bulk (bulk.schemas/BulkPatch services) {:description "a new Bulk Patch object"}]
@@ -178,7 +178,7 @@
                          :delete-vulnerability
                          :delete-weakness}]
      (DELETE "/" []
-          :return (s/maybe (bulk.schemas/BulkActionsRefs services))
+          :responses {200 {:schema (s/maybe (bulk.schemas/BulkActionsRefs services))}}
           :summary "DELETE many entities at once"
           :query-params [{wait_for :- (describe s/Bool "wait for deleted entities to not be available anymore for search") nil}]
           :body [bulk (bulk.schemas/BulkRefs services) {:description "a new Bulk Delete object"}]

@@ -93,7 +93,7 @@
           :path-params [id :- s/Str]
           :query-params [reason :- (describe s/Str "Message to append to the Judgement's reason value")
                          {wait_for :- (describe s/Bool "wait for entity to be available for search") nil}]
-          :return entity-schema
+          :responses {200 {:schema entity-schema}}
           :description (routes.common/capabilities->description capabilities)
           :capabilities capabilities
           :auth-identity identity

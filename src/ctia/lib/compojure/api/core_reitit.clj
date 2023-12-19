@@ -56,24 +56,16 @@
             (throw (ex-info (str "Not allowed these options in `context`, push into HTTP verbs instead: "
                                  (pr-str (sort extra-keys)))
                             {})))
-        lets []
         reitit-opts (cond-> {}
                       (:tags options) (assoc-in [:swagger :tags] (list 'quote (:tags options)))
                       (:description options) (assoc-in [:swagger :description] (:description options))
                       (:summary options) (assoc-in [:swagger :summary] (:summary options))
                       (:capabilities options) (update :middleware (fnil conj [])
-                                                      [`mid/wrap-capabilities (:capabilities options)]))
-        [reitit-opts lets] (if-some [return (:return options)]
-                             (let [g (gensym 'return)]
-                               [(-> reitit-opts
-                                    (assoc-in [:swagger :responses] [g])
-                                    (assoc :responses [g]))
-                                (conj lets g return)])
-                             [reitit-opts lets])]
-    `(let ~lets
-       [~path
-        ~@(some-> (not-empty reitit-opts) list)
-        (routes ~@body)])))
+                                                      [`mid/wrap-capabilities (:capabilities options)])
+                      (:return options) (assoc-in [:responses :default] {:schema (:return options)}))]
+    `[~path
+      ~@(some-> (not-empty reitit-opts) list)
+      (routes ~@body)]))
 
 (defmacro GET     {:style/indent 2} [& args] `(core/GET ~@args))
 (defmacro ANY     {:style/indent 2} [& args] `(core/ANY ~@args))
