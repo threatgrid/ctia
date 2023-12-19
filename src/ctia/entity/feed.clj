@@ -233,7 +233,7 @@
    (GET "/:id/view" []
      :summary "Get a Feed View"
      :path-params [id :- s/Str]
-     :parameters {200 {:schema FeedView}}
+     :responses {200 {:schema FeedView}}
      :query [params FeedViewQueryParams]
      (let [search_after (:search_after params)
            limit (:limit params)

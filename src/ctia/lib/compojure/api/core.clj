@@ -50,7 +50,7 @@
   [middleware & body]
   `(core/middleware ~middleware ~@body))
 
-(def ^:private allowed-context-options #{:tags :capabilities :description :return :summary})
+(def ^:private allowed-context-options #{:tags :capabilities :description :responses :summary})
 (def ^:private unevalated-options #{:tags})
 
 (def ^:private ^:dynamic *gensym* gensym)
