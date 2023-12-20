@@ -85,10 +85,6 @@ ctia:ctia:jar:1.1.1-SNAPSHOT
 |  |  \- mvxcvi:arrangement:jar:2.1.0:compile
 |  +- metosin:reitit-spec:jar:0.7.0-alpha7:compile
 |  |  \- metosin:spec-tools:jar:0.10.5:compile
-|  +- metosin:reitit-malli:jar:0.7.0-alpha7:compile
-|  |  \- metosin:malli:jar:0.12.0:compile
-|  |     +- borkdude:dynaload:jar:0.3.5:compile
-|  |     \- borkdude:edamame:jar:1.3.23:compile
 |  +- metosin:reitit-schema:jar:0.7.0-alpha7:compile
 |  +- metosin:reitit-ring:jar:0.7.0-alpha7:compile
 |  +- metosin:reitit-middleware:jar:0.7.0-alpha7:compile

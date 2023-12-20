@@ -738,6 +738,10 @@
           <artifactId>ring-swagger-ui</artifactId>
           <groupId>metosin</groupId>
         </exclusion>
+        <exclusion>
+          <artifactId>reitit-malli</artifactId>
+          <groupId>metosin</groupId>
+        </exclusion>
       </exclusions>
     </dependency>
     <dependency>

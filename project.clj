@@ -99,6 +99,7 @@
                  [metosin/compojure-api "1.1.13" ]
                  [metosin/reitit "0.7.0-alpha7" :exclusions [;;FIXME compojure uses v3 and reitit uses v4.
                                                              metosin/ring-swagger-ui
+                                                             metosin/reitit-malli
                                                              ]]
                  [org.clojure/core.rrb-vector "0.1.2"] ;; internal reitit conflict
                  [crypto-equality "1.0.1"] ;; reitit > ring-core
