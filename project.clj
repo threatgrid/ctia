@@ -1,8 +1,8 @@
 (def cheshire-version "5.10.2")
 (def clj-http-fake-version "1.0.3")
 (def clj-version "1.11.1")
-(def jackson-version "2.15.1")
-(def jackson-databind-version "2.15.1")
+(def jackson-version "2.15.3")
+(def jackson-databind-version "2.15.3")
 (def metrics-clojure-version "2.10.0")
 (def netty-version "4.1.75.Final")
 (def perforate-version "0.3.4")
@@ -97,12 +97,20 @@
 
                  ;; Web server
                  [metosin/compojure-api "1.1.13" ]
-                 [metosin/reitit "0.7.0-alpha7"]
+                 #_
+                 [metosin/reitit "0.7.0-alpha7" :exclusions [;;FIXME compojure uses v3 and reitit uses v4.
+                                                             metosin/ring-swagger-ui
+                                                             ]]
+                 #_
                  [org.clojure/core.rrb-vector "0.1.2"] ;; internal reitit conflict
+                 #_
                  [crypto-equality "1.0.1"] ;; reitit > ring-core
                  [ring-middleware-format "0.7.4"]
+                 #_
                  [com.cognitect/transit-clj "1.0.324"] ;; reitit > ring-middleware-format
+                 #_
                  [com.cognitect/transit-java "1.0.343"] ;; reitit > ring-middleware-format
+                 #_
                  [metosin/jsonista "0.3.7"] ;; reitit > clj-jwt
                  ;; optional ring-middleware-format dep (Note: ring-middleware-format is also a transitive dep for compojure-api)
                  ;; see: https://github.com/ngrunwald/ring-middleware-format/issues/74
@@ -110,7 +118,7 @@
                  ;;fixes memory leaks: https://github.com/advthreat/iroh/issues/6063
                  ;https://github.com/threatgrid/ring-swagger/commit/e767d9b78ccbe667fc1b4067d3338172e41225fc
                  [io.github.threatgrid/ring-swagger "0.26.3"]
-                 [metosin/ring-swagger-ui "4.19.1"]
+                 [metosin/ring-swagger-ui "3.24.3"]
                  [ring/ring-core ~ring-version] ;ring/ring-jetty-adapter > metosin/ring-swagger
                  [ring/ring-jetty-adapter ~ring-version]
                  [ring/ring-devel ~ring-version]
