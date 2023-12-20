@@ -1,6 +1,7 @@
 (ns ctia.lib.compojure.api.core-reitit-test
   (:require [ctia.lib.compojure.api.core-reitit :as sut]
             [ctia.http.middleware.auth :as mid]
+            [reitit.ring :as ring]
             [clojure.test :refer [deftest is]]
             [ring.swagger.json-schema :refer [describe]]
             [schema.core :as s]))
@@ -107,107 +108,19 @@
            (sut/context
              "/my-route" []
              :responses responses-are-expressions
-             identity))))
-  )
+             identity)))))
 
-#_
-(deftest context-expansion-test
-  ;; :tags is unevaluated
-  (is (= '(clojure.core/let [routes__0 (compojure.api.core/routes routes)]
-            (compojure.api.core/context
-              "/my-route" []
-              :tags #{:bar :foo}
-              routes__0))
+(deftest get-test
+  (is (= '["/my-route" {:get (clojure.core/fn [req__0] (clojure.core/let [] (do {:status 200})))}]
          (dexpand-1
-           `(sut/context
-              "/my-route" []
-              :tags #{:foo :bar}
-              ~'routes))))
-  ;; :capabilities is evaluated
-  (is (= '(clojure.core/let [routes__0 (compojure.api.core/routes routes)
-                             capabilities__1 #{:bar :foo}]
-            (compojure.api.core/context
-              "/my-route" []
-              :capabilities capabilities__1
-              routes__0))
-         (dexpand-1
-           `(sut/context
-              "/my-route" []
-              :capabilities #{:foo :bar}
-              ~'routes))))
-  ;; :description is evaluated
-  (is (= '(clojure.core/let [routes__0 (compojure.api.core/routes routes)
-                             description__1 (clojure.core/str "Foo" "bar")]
-            (compojure.api.core/context
-              "/my-route" []
-              :description description__1
-              routes__0))
-         (dexpand-1
-           `(sut/context
-              "/my-route" []
-              :description (str "Foo" "bar")
-              ~'routes))))
-  ;; :return is evaluated
-  (is (= '(clojure.core/let [routes__0 (compojure.api.core/routes routes)
-                             return__1 {:my-schema #{}}]
-            (compojure.api.core/context
-              "/my-route" []
-              :return return__1
-              routes__0))
-         (dexpand-1
-           `(sut/context
-              "/my-route" []
-              :return {:my-schema #{}}
-              ~'routes))))
-  ;; :summary is evaluated
-  (is (= '(clojure.core/let [routes__0 (compojure.api.core/routes routes)
-                             summary__1 (clojure.core/str "a" "summary")]
-            (compojure.api.core/context
-              "/my-route" []
-              :summary summary__1
-              routes__0))
-         (dexpand-1
-           `(sut/context
-              "/my-route" []
-              :summary (str "a" "summary")
-              ~'routes)))))
-
-;; adapted from clojure.repl/root-cause, but unwraps compiler exceptions
-(defn root-cause [t]
-  (loop [cause t]
-    (if-let [cause (.getCause cause)]
-      (recur cause)
-      cause)))
-
-(defn is-context-banned [form msg]
-  (try (dexpand-1 form)
-       (is false (pr-str form))
-       (catch Exception e
-         (is (= msg (ex-message (root-cause e))) (pr-str form)))))
-
-#_
-(deftest context-banned-test
-  (is-context-banned
-    `(sut/context
-       "/my-route" []
-       :path-params [~'id :- s/Str]
-       ~'routes)
-    "Not allowed these options in `context`, push into HTTP verbs instead: (:path-params)")
-  (is-context-banned
-    `(sut/context
-       "/my-route" []
-       :query-params [{~'wait_for :- (describe s/Bool "wait for patched entity to be available for search") nil}]
-       ~'routes)
-    "Not allowed these options in `context`, push into HTTP verbs instead: (:query-params)")
-  (is-context-banned
-    `(sut/context
-       "/my-route" []
-       :auth-identity ~'identity
-       ~'routes)
-    "Not allowed these options in `context`, push into HTTP verbs instead: (:auth-identity)")
-  (is-context-banned
-    `(sut/context
-       "/my-route" []
-       :identity-map ~'identity-map
-       ~'routes)
-    "Not allowed these options in `context`, push into HTTP verbs instead: (:identity-map)"))
+           '(sut/GET "/my-route" []
+                     {:status 200}))))
+  (is (= {:status 200
+          :body "here"}
+         (let [app (ring/ring-handler
+                     (ring/router
+                       (sut/GET "/my-route" []
+                                {:status 200
+                                 :body "here"})))]
+           (app {:request-method :get
+                 :uri "/my-route"})))))

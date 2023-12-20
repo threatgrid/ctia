@@ -61,11 +61,28 @@
       ~@(some-> (not-empty reitit-opts) list)
       (routes ~@body)]))
 
-(defmacro GET     {:style/indent 2} [& args] `(core/GET ~@args))
-(defmacro ANY     {:style/indent 2} [& args] `(core/ANY ~@args))
-(defmacro HEAD    {:style/indent 2} [& args] `(core/HEAD ~@args))
-(defmacro PATCH   {:style/indent 2} [& args] `(core/PATCH ~@args))
-(defmacro DELETE  {:style/indent 2} [& args] `(core/DELETE ~@args))
-(defmacro OPTIONS {:style/indent 2} [& args] `(core/OPTIONS ~@args))
-(defmacro POST    {:style/indent 2} [& args] `(core/POST ~@args))
-(defmacro PUT     {:style/indent 2} [& args] `(core/PUT ~@args))
+(def ^:private allowed-endpoint-options #{})
+
+(defn ^:private restructure-endpoint [http-kw path arg & args]
+  (assert (simple-keyword? http-kw))
+  (assert (or (= [] arg)
+              (simple-symbol? arg))
+          (pr-str arg))
+  (let [[options body] ((requiring-resolve 'compojure.api.common/extract-parameters) args true)
+        _ (when-some [extra-keys (not-empty (set/difference (set (keys options))
+                                                            allowed-endpoint-options))]
+            (throw (ex-info (str "Not allowed these options in endpoints: "
+                                 (pr-str (sort extra-keys)))
+                            {})))
+        greq (*gensym* "req")]
+    [path {http-kw `(fn [~greq]
+                      (let [~@(when (simple-symbol? arg)
+                                [arg greq])]
+                        (do ~@body)))}]))
+
+(defmacro GET     {:style/indent 2} [& args] (apply restructure-endpoint :get args))
+(defmacro ANY     {:style/indent 2} [& args] (apply restructure-endpoint :any args))
+(defmacro PATCH   {:style/indent 2} [& args] (apply restructure-endpoint :patch args))
+(defmacro DELETE  {:style/indent 2} [& args] (apply restructure-endpoint :delete args))
+(defmacro POST    {:style/indent 2} [& args] (apply restructure-endpoint :post args))
+(defmacro PUT     {:style/indent 2} [& args] (apply restructure-endpoint :put args))
