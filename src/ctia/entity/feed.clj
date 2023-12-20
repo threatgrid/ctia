@@ -273,7 +273,7 @@
     (routes
      (let [capabilities :create-feed]
        (POST "/" []
-             :responses {201 {:created Feed}}
+             :responses {201 {:schema Feed}}
              :query-params [{wait_for :- (describe s/Bool "wait for entity to be available for search") nil}]
              :body [new-entity NewFeed {:description "a new Feed"}]
              :summary "Adds a new Feed"
