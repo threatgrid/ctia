@@ -6,7 +6,7 @@
 (def metrics-clojure-version "2.10.0")
 (def netty-version "4.1.75.Final")
 (def perforate-version "0.3.4")
-(def ring-version "1.10.0")
+(def ring-version "1.9.5")
 (def schema-generators-version "0.1.4")
 (def test-check-version "1.1.1")
 (def test-chuck-version "0.2.13")
@@ -85,8 +85,8 @@
                  [clj-commons/clj-yaml "1.0.26"] ;; upgrade snakeyaml dep
 
                  ;; Schemas
-                 [prismatic/schema "1.3.0"]
-                 [metosin/schema-tools "0.13.1"]
+                 [prismatic/schema "1.4.1"]
+                 [metosin/schema-tools "0.12.2"]
                  [threatgrid/flanders "0.1.23"]
                  [threatgrid/ctim "1.3.13"]
                  [instaparse "1.4.10"] ;; com.gfredericks/test.chuck > threatgrid/ctim
@@ -110,7 +110,7 @@
                  [ring/ring-devel ~ring-version]
                  [ring-cors "0.1.13"]
                  [commons-codec "1.15"] ;ring/ring* > threatgrid/ctim, threatgrid/clj-momo, clj-http
-                 [ring/ring-codec "1.2.0"]
+                 [ring/ring-codec "1.1.3"]
                  [threatgrid/clj-jwt "0.5.0"]
                  [threatgrid/ring-turnstile-middleware "0.1.1"]
                  [threatgrid/ring-jwt-middleware "1.0.1"]
