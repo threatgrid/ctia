@@ -75,13 +75,47 @@ ctia:ctia:jar:1.1.1-SNAPSHOT
 |  +- org.tobereplaced:lettercase:jar:1.0.0:compile
 |  +- frankiesardo:linked:jar:1.3.0:compile
 |  \- metosin:ring-http-response:jar:0.9.1:compile
++- metosin:reitit:jar:0.7.0-alpha7:compile
+|  +- metosin:reitit-core:jar:0.7.0-alpha7:compile
+|  |  \- meta-merge:meta-merge:jar:1.0.0:compile
+|  +- metosin:reitit-dev:jar:0.7.0-alpha7:compile
+|  |  +- com.bhauman:spell-spec:jar:0.1.2:compile
+|  |  +- expound:expound:jar:0.9.0:compile
+|  |  +- fipp:fipp:jar:0.6.26:compile
+|  |  \- mvxcvi:arrangement:jar:2.1.0:compile
+|  +- metosin:reitit-spec:jar:0.7.0-alpha7:compile
+|  |  \- metosin:spec-tools:jar:0.10.5:compile
+|  +- metosin:reitit-malli:jar:0.7.0-alpha7:compile
+|  |  \- metosin:malli:jar:0.12.0:compile
+|  |     +- borkdude:dynaload:jar:0.3.5:compile
+|  |     \- borkdude:edamame:jar:1.3.23:compile
+|  +- metosin:reitit-schema:jar:0.7.0-alpha7:compile
+|  +- metosin:reitit-ring:jar:0.7.0-alpha7:compile
+|  +- metosin:reitit-middleware:jar:0.7.0-alpha7:compile
+|  |  +- lambdaisland:deep-diff:jar:0.0-47:compile
+|  |  |  +- mvxcvi:puget:jar:1.1.2:compile
+|  |  |  \- tech.droit:clj-diff:jar:1.0.1:compile
+|  |  \- metosin:muuntaja:jar:0.6.8:compile
+|  +- metosin:reitit-http:jar:0.7.0-alpha7:compile
+|  +- metosin:reitit-interceptors:jar:0.7.0-alpha7:compile
+|  +- metosin:reitit-swagger:jar:0.7.0-alpha7:compile
+|  +- fi.metosin:reitit-openapi:jar:0.7.0-alpha7:compile
+|  +- metosin:reitit-swagger-ui:jar:0.7.0-alpha7:compile
+|  +- metosin:reitit-frontend:jar:0.7.0-alpha7:compile
+|  \- metosin:reitit-sieppari:jar:0.7.0-alpha7:compile
+|     \- metosin:sieppari:jar:0.0.0-alpha13:compile
++- org.clojure:core.rrb-vector:jar:0.1.2:compile
++- crypto-equality:crypto-equality:jar:1.0.1:compile
 +- ring-middleware-format:ring-middleware-format:jar:0.7.4:compile
-|  +- clojure-msgpack:clojure-msgpack:jar:1.2.1:compile
-|  \- com.cognitect:transit-clj:jar:0.8.313:compile
-|     \- com.cognitect:transit-java:jar:0.8.337:compile
-|        +- org.msgpack:msgpack:jar:0.6.12:compile
-|        |  \- com.googlecode.json-simple:json-simple:jar:1.1.1:compile
-|        \- javax.xml.bind:jaxb-api:jar:2.3.0:compile
+|  \- clojure-msgpack:clojure-msgpack:jar:1.2.1:compile
++- com.cognitect:transit-clj:jar:1.0.324:compile
++- com.cognitect:transit-java:jar:1.0.343:compile
+|  +- org.msgpack:msgpack:jar:0.6.12:compile
+|  |  +- com.googlecode.json-simple:json-simple:jar:1.1.1:compile
+|  |  \- org.javassist:javassist:jar:3.18.1-GA:compile
+|  \- javax.xml.bind:jaxb-api:jar:2.3.0:compile
++- metosin:jsonista:jar:0.3.7:compile
+|  \- com.fasterxml.jackson.datatype:jackson-datatype-jsr310:jar:2.14.1:compile
 +- com.ibm.icu:icu4j:jar:65.1:compile
 +- io.github.threatgrid:ring-swagger:jar:0.26.3:compile
 |  \- metosin:scjsv:jar:0.5.0:compile
@@ -98,8 +132,7 @@ ctia:ctia:jar:1.1.1-SNAPSHOT
 +- ring:ring-core:jar:1.10.0:compile
 |  +- commons-io:commons-io:jar:2.11.0:compile
 |  +- commons-fileupload:commons-fileupload:jar:1.5:compile
-|  +- crypto-random:crypto-random:jar:1.2.1:compile
-|  \- crypto-equality:crypto-equality:jar:1.0.1:compile
+|  \- crypto-random:crypto-random:jar:1.2.1:compile
 +- ring:ring-jetty-adapter:jar:1.10.0:compile
 |  +- ring:ring-servlet:jar:1.10.0:compile
 |  \- org.eclipse.jetty:jetty-server:jar:9.4.51.v20230217:compile
@@ -115,10 +148,8 @@ ctia:ctia:jar:1.1.1-SNAPSHOT
 +- ring:ring-codec:jar:1.2.0:compile
 +- threatgrid:clj-jwt:jar:0.5.0:compile
 |  +- org.clojure:data.codec:jar:0.1.1:compile
-|  +- org.bouncycastle:bcpkix-jdk15on:jar:1.68:compile
-|  |  \- org.bouncycastle:bcprov-jdk15on:jar:1.68:compile
-|  \- metosin:jsonista:jar:0.2.6:compile
-|     \- com.fasterxml.jackson.datatype:jackson-datatype-jsr310:jar:2.11.0:compile
+|  \- org.bouncycastle:bcpkix-jdk15on:jar:1.68:compile
+|     \- org.bouncycastle:bcprov-jdk15on:jar:1.68:compile
 +- threatgrid:ring-turnstile-middleware:jar:0.1.1:compile
 |  +- threatgrid:turnstile:jar:0.104:compile
 |  \- ring:ring-mock:jar:0.4.0:compile
@@ -214,7 +245,6 @@ ctia:ctia:jar:1.1.1-SNAPSHOT
 +- org.onyxplatform:onyx-kafka:jar:0.14.5.0:compile
 |  +- org.onyxplatform:onyx:jar:0.14.5:compile
 |  |  +- org.apache.curator:curator-test:jar:2.9.1:compile
-|  |  |  +- org.javassist:javassist:jar:3.18.1-GA:compile
 |  |  |  \- org.apache.commons:commons-math:jar:2.2:compile
 |  |  +- org.apache.curator:curator-framework:jar:4.0.1:compile
 |  |  +- org.apache.curator:curator-client:jar:4.0.1:compile
