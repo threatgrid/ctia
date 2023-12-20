@@ -97,7 +97,15 @@
 
                  ;; Web server
                  [metosin/compojure-api "1.1.13" ]
+                 [metosin/reitit "0.7.0-alpha7" :exclusions [;;FIXME compojure uses v3 and reitit uses v4.
+                                                             metosin/ring-swagger-ui
+                                                             ]]
+                 [org.clojure/core.rrb-vector "0.1.2"] ;; internal reitit conflict
+                 [crypto-equality "1.0.1"] ;; reitit > ring-core
                  [ring-middleware-format "0.7.4"]
+                 [com.cognitect/transit-clj "1.0.324"] ;; reitit > ring-middleware-format
+                 [com.cognitect/transit-java "1.0.343"] ;; reitit > ring-middleware-format
+                 [metosin/jsonista "0.3.7"] ;; reitit > clj-jwt
                  ;; optional ring-middleware-format dep (Note: ring-middleware-format is also a transitive dep for compojure-api)
                  ;; see: https://github.com/ngrunwald/ring-middleware-format/issues/74
                  [com.ibm.icu/icu4j "65.1"]
