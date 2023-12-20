@@ -7,7 +7,7 @@
 (def netty-version "4.1.75.Final")
 (def perforate-version "0.3.4")
 (def ring-version "1.9.5")
-(def schema-generators-version "0.1.4")
+(def schema-generators-version "0.1.5")
 (def test-check-version "1.1.1")
 (def test-chuck-version "0.2.13")
 (def trapperkeeper-version "3.2.0")
