@@ -7,7 +7,7 @@
 (def netty-version "4.1.75.Final")
 (def perforate-version "0.3.4")
 (def ring-version "1.10.0")
-(def schema-generators-version "0.1.4")
+(def schema-generators-version "0.1.5")
 (def test-check-version "1.1.1")
 (def test-chuck-version "0.2.13")
 (def trapperkeeper-version "3.2.0")
@@ -85,7 +85,7 @@
                  [clj-commons/clj-yaml "1.0.26"] ;; upgrade snakeyaml dep
 
                  ;; Schemas
-                 [prismatic/schema "1.3.0"]
+                 [prismatic/schema "1.4.1"]
                  [metosin/schema-tools "0.13.1"]
                  [threatgrid/flanders "0.1.23"]
                  [threatgrid/ctim "1.3.13"]
