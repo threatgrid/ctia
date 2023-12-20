@@ -4,6 +4,8 @@
             [reitit.ring :as ring]
             [clojure.test :refer [deftest is]]
             [ring.swagger.json-schema :refer [describe]]
+            [reitit.ring.coercion :as rrc]
+            [reitit.coercion.schema :as rcs]
             [schema.core :as s]))
 
 (defmacro with-deterministic-gensym [& body]
@@ -29,6 +31,7 @@
            ["/blah" identity]
            ["/foo" identity]))))
 
+;;TODO runtime routing tests
 (deftest context-test
   (is (= ["/my-route" [identity]]
          (sut/context
@@ -111,7 +114,7 @@
              identity)))))
 
 (deftest get-test
-  (is (= '["/my-route" {:get (clojure.core/fn [req__0] (clojure.core/let [] (do {:status 200})))}]
+  (is (= '["/my-route" {:get {:handler (clojure.core/fn [req__0] (clojure.core/let [] (do {:status 200})))}}]
          (dexpand-1
            '(sut/GET "/my-route" []
                      {:status 200}))))
@@ -123,4 +126,27 @@
                                 {:status 200
                                  :body "here"})))]
            (app {:request-method :get
-                 :uri "/my-route"})))))
+                 :uri "/my-route"}))))
+  (is (= {:status 200
+          :body 1}
+         (let [app (ring/ring-handler
+                     (ring/router
+                       (sut/GET "/my-route" []
+                                :responses {200 {:schema s/Int}}
+                                {:status 200
+                                 :body 1})
+                       {:data {:middleware [reitit.ring.coercion/coerce-response-middleware]
+                               :coercion reitit.coercion.schema/coercion}}))]
+           (app {:request-method :get
+                 :uri "/my-route"}))))
+  (is (thrown? Exception "Response coercion failed"
+               (let [app (ring/ring-handler
+                           (ring/router
+                             (sut/GET "/my-route" []
+                                      :responses {200 {:schema s/Bool}}
+                                      {:status 200
+                                       :body 1})
+                             {:data {:middleware [reitit.ring.coercion/coerce-response-middleware]
+                                     :coercion reitit.coercion.schema/coercion}}))]
+                 (app {:request-method :get
+                       :uri "/my-route"})))))

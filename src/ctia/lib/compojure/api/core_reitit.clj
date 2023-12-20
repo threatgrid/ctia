@@ -61,24 +61,47 @@
       ~@(some-> (not-empty reitit-opts) list)
       (routes ~@body)]))
 
-(def ^:private allowed-endpoint-options #{})
+(def ^:private allowed-endpoint-options #{:responses})
+
+(defn validate-responses! [responses]
+  (assert (map? responses))
+  (doseq [[k v] responses]
+    (assert (nat-int? k) (pr-str k))
+    (assert (<= 0 k 599) (pr-str k))
+    (when (some? v)
+      (assert (map? v) (pr-str v))
+      (assert (every? :schema v) (pr-str v))
+      (assert (every? (comp empty? #(disj % :schema :description) set keys) v) (pr-str v)))))
+
+(defn compojure->reitit-responses [responses]
+  (assert (map? responses))
+  (update-vals responses (fn [rhs]
+                           (when (some? rhs)
+                             (assert (map? rhs))
+                             (let [unknown-keys (-> rhs keys set (disj :schema) empty?)]
+                               (assert (empty? unknown-keys) unknown-keys))
+                             (assert (:schema rhs))
+                             (set/rename-keys rhs {:schema :body})))))
 
 (defn ^:private restructure-endpoint [http-kw path arg & args]
   (assert (simple-keyword? http-kw))
   (assert (or (= [] arg)
               (simple-symbol? arg))
           (pr-str arg))
-  (let [[options body] ((requiring-resolve 'compojure.api.common/extract-parameters) args true)
+  (let [[{:keys [responses] :as options} body] ((requiring-resolve 'compojure.api.common/extract-parameters) args true)
         _ (when-some [extra-keys (not-empty (set/difference (set (keys options))
                                                             allowed-endpoint-options))]
             (throw (ex-info (str "Not allowed these options in endpoints: "
                                  (pr-str (sort extra-keys)))
                             {})))
+        responses (when responses
+                    `(compojure->reitit-responses ~responses))
         greq (*gensym* "req")]
-    [path {http-kw `(fn [~greq]
-                      (let [~@(when (simple-symbol? arg)
-                                [arg greq])]
-                        (do ~@body)))}]))
+    [path {http-kw (cond-> {:handler `(fn [~greq]
+                                        (let [~@(when (simple-symbol? arg)
+                                                  [arg greq])]
+                                          (do ~@body)))}
+                     responses (assoc :responses responses))}]))
 
 (defmacro GET     {:style/indent 2} [& args] (apply restructure-endpoint :get args))
 (defmacro ANY     {:style/indent 2} [& args] (apply restructure-endpoint :any args))
