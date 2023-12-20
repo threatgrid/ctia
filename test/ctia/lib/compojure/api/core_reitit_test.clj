@@ -116,7 +116,7 @@
 (deftest get-test
   (is (= '["/my-route" {:get {:handler (clojure.core/fn [req__0] (clojure.core/let [] (do {:status 200})))}}]
          (dexpand-1
-           '(sut/GET "/my-route" []
+           `(sut/GET "/my-route" []
                      {:status 200}))))
   (is (= {:status 200
           :body "here"}
@@ -126,7 +126,16 @@
                                 {:status 200
                                  :body "here"})))]
            (app {:request-method :get
-                 :uri "/my-route"}))))
+                 :uri "/my-route"})))))
+
+(deftest responses-test
+  (is (= '["/my-route" {:get {:handler (clojure.core/fn [req__0] (clojure.core/let [] (do {:status 200, :body 1})))
+                              :responses (ctia.lib.compojure.api.core-reitit/compojure->reitit-responses {200 {:schema schema.core/Int}})}}]
+         (dexpand-1
+           `(sut/GET "/my-route" []
+                     :responses {200 {:schema s/Int}}
+                     {:status 200
+                      :body 1}))))
   (is (= {:status 200
           :body 1}
          (let [app (ring/ring-handler
