@@ -86,7 +86,7 @@
 
                  ;; Schemas
                  [prismatic/schema "1.4.1"]
-                 [metosin/schema-tools "0.12.2"]
+                 [metosin/schema-tools "0.13.1"]
                  [threatgrid/flanders "0.1.23"]
                  [threatgrid/ctim "1.3.13"]
                  [instaparse "1.4.10"] ;; com.gfredericks/test.chuck > threatgrid/ctim
