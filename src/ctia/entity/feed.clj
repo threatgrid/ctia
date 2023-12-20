@@ -201,9 +201,9 @@
    (GET "/:id/view.txt" []
      :summary "Get a Feed View as newline separated entries"
      :path-params [id :- s/Str]
-     :return s/Str
      :produces #{"text/plain"}
-     :responses {404 {:schema s/Str}
+     :responses {200 {:schema s/Str}
+                 404 {:schema s/Str}
                  401 {:schema s/Str}}
      :query [params FeedViewQueryParams]
      (let [search_after (:search_after params)
@@ -233,7 +233,7 @@
    (GET "/:id/view" []
      :summary "Get a Feed View"
      :path-params [id :- s/Str]
-     :return FeedView
+     :responses {200 {:schema FeedView}}
      :query [params FeedViewQueryParams]
      (let [search_after (:search_after params)
            limit (:limit params)
@@ -273,7 +273,7 @@
     (routes
      (let [capabilities :create-feed]
        (POST "/" []
-             :return Feed
+             :responses {201 {:created Feed}}
              :query-params [{wait_for :- (describe s/Bool "wait for entity to be available for search") nil}]
              :body [new-entity NewFeed {:description "a new Feed"}]
              :summary "Adds a new Feed"
@@ -302,7 +302,7 @@
 
      (let [capabilities :create-feed]
        (PUT "/:id" []
-            :return Feed
+            :responses {200 {:schema Feed}}
             :body [entity-update NewFeed {:description "an updated Feed"}]
             :summary "Updates a Feed"
             :query-params [{wait_for :- (describe s/Bool "wait for updated entity to be available for search") nil}]
@@ -330,7 +330,7 @@
 
      (let [capabilities :read-feed]
        (GET "/external_id/:external_id" []
-            :return PartialFeedList
+            :responses {200 {:schema PartialFeedList}}
             :query [q FeedByExternalIdQueryParams]
             :path-params [external_id :- s/Str]
             :summary "List Feeds by external_id"
@@ -350,7 +350,7 @@
 
      (let [capabilities :search-feed]
        (GET "/search" []
-            :return PartialFeedList
+            :responses {200 {:schema PartialFeedList}}
             :summary "Search for a Feed using a Lucene/ES query string"
             :query [params FeedSearchParams]
             :description (routes.common/capabilities->description capabilities)
@@ -370,7 +370,7 @@
 
      (let [capabilities :search-feed]
        (GET "/search/count" []
-            :return s/Int
+            :responses {200 {:schema s/Int}}
             :summary "Count Feed entities matching given search filters."
             :query [params FeedCountParams]
             :description (routes.common/capabilities->description capabilities)
@@ -387,7 +387,7 @@
        (DELETE "/search" []
                :capabilities capabilities
                :description (routes.common/capabilities->description capabilities)
-               :return s/Int
+               :responses {200 {:schema s/Int}}
                :summary (format "Delete Feed entities matching given Lucene/ES query string or/and field filters")
                :auth-identity identity
                :identity-map identity-map
@@ -410,7 +410,7 @@
 
      (let [capabilities :read-feed]
        (GET "/:id" []
-            :return (s/maybe PartialFeed)
+            :responses {200 {:schema (s/maybe PartialFeed)}}
             :summary "Gets a Feed by ID"
             :path-params [id :- s/Str]
             :query [params FeedGetParams]
@@ -432,6 +432,7 @@
 
      (let [capabilities :delete-feed]
        (DELETE "/:id" []
+               :responses {204 {:schema s/Any}}
                :no-doc false
                :path-params [id :- s/Str]
                :query-params [{wait_for :- (describe s/Bool "wait for deleted entity to no more be available for search") nil}]

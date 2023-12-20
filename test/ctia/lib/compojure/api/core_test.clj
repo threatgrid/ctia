@@ -52,17 +52,17 @@
               "/my-route" []
               :description (str "Foo" "bar")
               ~'routes))))
-  ;; :return is evaluated
+  ;; :responses is evaluated
   (is (= '(clojure.core/let [routes__0 (compojure.api.core/routes routes)
-                             return__1 {:my-schema #{}}]
+                             responses__1 {:my-schema #{}}]
             (compojure.api.core/context
               "/my-route" []
-              :return return__1
+              :responses responses__1
               routes__0))
          (dexpand-1
            `(sut/context
               "/my-route" []
-              :return {:my-schema #{}}
+              :responses {200 {:schema {:my-schema #{}}}}
               ~'routes))))
   ;; :summary is evaluated
   (is (= '(clojure.core/let [routes__0 (compojure.api.core/routes routes)

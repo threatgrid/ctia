@@ -95,7 +95,7 @@
                        :read-relationship
                        :create-relationship}]
     (POST "/:id/link" []
-          :return rs/Relationship
+          :responses {201 {:schema rs/Relationship}}
           :body [link-req IncidentLinkRequest
                  {:description "an Incident Link request"}]
           :summary "Link an Incident to a Casebook or Investigation"

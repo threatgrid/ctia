@@ -34,7 +34,7 @@
         :path-params [observable_type :- ObservableTypeIdentifier
                       observable_value :- s/Str]
         :query [params common/DateRangeParams]
-        :return (s/maybe Verdict)
+        :responses {200 {:schema (s/maybe Verdict)}}
         :summary (str "Returns the current Verdict associated with the specified "
                       "observable.")
         :description (common/capabilities->description capabilities)
@@ -57,7 +57,7 @@
         :query [params JudgementsByObservableQueryParams]
         :path-params [observable_type :- ObservableTypeIdentifier
                       observable_value :- s/Str]
-        :return PartialJudgementList
+        :responses {200 {:schema PartialJudgementList}}
         :summary "Returns the Judgements associated with the specified observable."
         :description (common/capabilities->description capabilities)
         :capabilities capabilities
@@ -78,7 +78,7 @@
         :query [params RefsByObservableQueryParams]
         :path-params [observable_type :- ObservableTypeIdentifier
                       observable_value :- s/Str]
-        :return [Reference]
+        :responses {200 {:schema [Reference]}}
         :summary (str "Returns the Indicator references associated with the "
                       "specified observable based on Judgement relationships.")
         :description (common/capabilities->description capabilities)
@@ -105,7 +105,7 @@
         :capabilities capabilities
         :auth-identity identity
         :identity-map identity-map
-        :return PartialSightingList
+        :responses {200 {:schema PartialSightingList}}
         :summary "Returns Sightings associated with the specified observable."
         (-> (core/observable->sightings
              {:type observable_type
@@ -123,7 +123,7 @@
         :query [params RefsByObservableQueryParams]
         :path-params [observable_type :- ObservableTypeIdentifier
                       observable_value :- s/Str]
-        :return [Reference]
+        :responses {200 {:schema [Reference]}}
         :summary (str "Returns Indicator references associated with the "
                       "specified observable based on Sighting relationships.")
         :description (common/capabilities->description capabilities)
@@ -145,7 +145,7 @@
         :query [params RefsByObservableQueryParams]
         :path-params [observable_type :- ObservableTypeIdentifier
                       observable_value :- s/Str]
-        :return [Reference]
+        :responses {200 {:schema [Reference]}}
         :summary (str "Returns Incident references associated with the "
                       "specified observable based on Sighting relationships")
         :description (common/capabilities->description capabilities)
