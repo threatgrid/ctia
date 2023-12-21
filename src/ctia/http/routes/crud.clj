@@ -136,7 +136,7 @@
           :summary (format "Expires the supplied %s" (capitalize-entity entity))
           :path-params [id :- s/Str]
           :query-params [{wait_for :- (describe s/Bool "wait for entity to be available for search") nil}]
-          :return entity-schema
+          :responses {200 {:schema entity-schema}}
           :description (capabilities->description capabilities)
           :capabilities capabilities
           :auth-identity identity
@@ -265,7 +265,7 @@
      (when can-post?
        (let [capabilities post-capabilities]
          (POST "/" []
-               :return entity-schema
+               :responses {201 {:schema entity-schema}}
                :query-params [{wait_for :- (describe s/Bool "wait for entity to be available for search") nil}]
                :body [new-entity new-schema {:description (format "a new %s" capitalized)}]
                :summary (format "Adds a new %s" capitalized)
@@ -293,7 +293,7 @@
      (when can-update?
        (let [capabilities put-capabilities]
          (PUT "/:id" []
-              :return entity-schema
+              :responses {200 {:schema entity-schema}}
               :body [entity-update new-schema {:description (format "an updated %s" capitalized)}]
               :summary (format "Update an existing %s" capitalized)
               :query-params [{wait_for :- (describe s/Bool "wait for updated entity to be available for search") nil}]
@@ -320,7 +320,7 @@
      (when can-patch?
        (let [capabilities patch-capabilities]
          (PATCH "/:id" []
-                :return entity-schema
+                :responses {200 {:schema entity-schema}}
                 :body [partial-update patch-schema {:description (format "%s partial update" capitalized)}]
                 :summary (format "Partially update an existing %s" capitalized)
                 :query-params [{wait_for :- (describe s/Bool "wait for patched entity to be available for search") nil}]
@@ -350,7 +350,7 @@
              _ (assert capabilities
                        (str ":external-id-capabilities is missing for " entity))]
          (GET "/external_id/:external_id" []
-              :return list-schema
+              :responses {200 {:schema list-schema}}
               :query [q external-id-q-params]
               :path-params [external_id :- s/Str]
               :summary (format "List %s by external id" capitalized)
@@ -376,7 +376,7 @@
            (GET "/" []
              :auth-identity identity
              :identity-map identity-map
-             :return search-schema
+             :responses {200 {:schema search-schema}}
              :summary (format "Search for %s entities using a ES query syntax and field filters" capitalized)
              :description (capabilities->description search-capabilities)
              :capabilities search-capabilities
@@ -396,7 +396,7 @@
            (GET "/count" []
              :auth-identity identity
              :identity-map identity-map
-             :return s/Int
+             :responses {200 {:schema s/Int}}
              :summary (format "Count %s matching a Lucene/ES query string and field filters" capitalized)
              :description (capabilities->description search-capabilities)
              :capabilities search-capabilities
@@ -411,7 +411,7 @@
              :identity-map identity-map
              :capabilities delete-search-capabilities
              :description (capabilities->description delete-search-capabilities)
-             :return s/Int
+             :responses {200 {:schema s/Int}}
              :summary (format "Delete %s entities matching given Lucene/ES query string or/and field filters" capitalized)
              :query [params (add-flags-to-delete-search-query-params search-filters)]
              (let [query (search-query {:date-field date-field
@@ -439,7 +439,7 @@
                       (GET "/average" []
                            :auth-identity identity
                            :identity-map identity-map
-                           :return MetricResult
+                           :responses {200 {:schema MetricResult}}
                            :summary (format (str "Average for some %s field. Use X-Total-Hits header on response for count used for average."
                                                  " For aggregate-on field X.Y.Z, response body will be {:data {:X {:Y {:Z <average>}}}}."
                                                  " If X-Total-Hits is 0, then average will be nil.")
@@ -464,7 +464,7 @@
                     (GET "/histogram" []
                          :auth-identity identity
                          :identity-map identity-map
-                         :return MetricResult
+                         :responses {200 {:schema MetricResult}}
                          :summary (format "Histogram for some %s field" capitalized)
                          :query [params histogram-q-params]
                          (let [aggregate-on (keyword (:aggregate-on params))
@@ -483,7 +483,7 @@
                     (GET "/topn" []
                          :auth-identity identity
                          :identity-map identity-map
-                         :return MetricResult
+                         :responses {200 {:schema MetricResult}}
                          :summary (format "Topn for some %s field" capitalized)
                          :query [params topn-q-params]
                          (let [aggregate-on (:aggregate-on params)
@@ -502,7 +502,7 @@
                     (GET "/cardinality" []
                          :auth-identity identity
                          :identity-map identity-map
-                         :return MetricResult
+                         :responses {200 {:schema MetricResult}}
                          :summary (format "Cardinality for some %s field" capitalized)
                          :query [params cardinality-q-params]
                          (let [aggregate-on (:aggregate-on params)
@@ -520,7 +520,7 @@
                                routes.common/paginated-ok)))))))
      (let [capabilities get-capabilities]
        (GET "/:id" []
-            :return (s/maybe get-schema)
+            :responses {200 {:schema (s/maybe get-schema)}}
             :summary (format "Get one %s by ID" capitalized)
             :path-params [id :- s/Str]
             :query [params get-params]
@@ -541,6 +541,7 @@
 
      (let [capabilities delete-capabilities]
        (DELETE "/:id" []
+               :responses {204 {:schema s/Any}}
                :no-doc hide-delete?
                :path-params [id :- s/Str]
                :query-params [{wait_for :- (describe s/Bool "wait for deleted entity to no more be available for search") nil}]

@@ -56,7 +56,7 @@
                                    :as services} :- APIHandlerServices]
   (let [capabilites :read-feedback]
     (GET "/" []
-         :return fs/PartialFeedbackList
+         :responses {200 {:schema fs/PartialFeedbackList}}
          :query [params FeedbackQueryParams]
          :summary "Search Feedback"
          :description (routes.common/capabilities->description capabilites)
