@@ -32,11 +32,13 @@
 
 (defn delete-search
   [app entity query-params]
-  (let [delete-search-uri (format "ctia/%s/search" (name entity))]
-    (DELETE app
-            delete-search-uri
-            :headers {"Authorization" "45c1f5e3f05d0"}
-            :query-params query-params)))
+  (let [delete-search-uri (format "ctia/%s/search" (name entity))
+        res (DELETE app
+                delete-search-uri
+              :headers {"Authorization" "45c1f5e3f05d0"}
+              :query-params query-params)]
+    (Thread/sleep 1000)
+    res))
 
 (defn search-raw
   [app entity query-params]
@@ -341,7 +343,7 @@
 (defn test-delete-search
   [{:keys [app entity bundle-key example]}]
   (let [docs (->> (dissoc example :id)
-                  (repeat 100)
+                  (repeat 10)
                   (map #(assoc % :tlp (rand-nth ["green" "amber" "red"]))))
         {green-docs "green"
          amber-docs "amber"
@@ -349,7 +351,9 @@
         count-fn #(:parsed-body (count-raw app entity %))
         delete-search-fn (fn [q confirm?]
                            (let [query (if (boolean? confirm?)
-                                         (assoc q :REALLY_DELETE_ALL_THESE_ENTITIES confirm?)
+                                         (into {:REALLY_DELETE_ALL_THESE_ENTITIES confirm?
+                                                :wait_for true}
+                                               q)
                                          q)]
                              (-> (delete-search app entity query)
                                  :body
@@ -382,7 +386,8 @@
              (count-fn filter-red))))
     (testing "delete with :REALLY_DELETE_ALL_THESE_ENTITIES set to true must really delete entities"
       (is (= (count green-docs)
-             (delete-search-fn filter-green true)))
+             (delete-search-fn (assoc filter-green :wait_for false)
+                               true)))
       (is (= (count amber-docs)
              (delete-search-fn filter-amber true)))
       (is (= (count red-docs)

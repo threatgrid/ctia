@@ -93,7 +93,7 @@
                               :REALLY_DELETE_ALL_THESE_ENTITIES true
                               :wait_for true}
                :headers {"Authorization" "player-2-token"})
-
+        _ (Thread/sleep 1000)
         ;; re-count
         player-1-entity-count-2 (search-count "player-1-token")
         player-2-entity-count-2 (search-count "player-2-token")
