@@ -2,7 +2,7 @@
   (:require [ctia.lib.compojure.api.core-reitit :as sut]
             [ctia.http.middleware.auth :as mid]
             [reitit.ring :as ring]
-            [clojure.test :refer [deftest is]]
+            [clojure.test :refer [deftest is testing]]
             [ring.swagger.json-schema :refer [describe]]
             [reitit.ring.coercion :as rrc]
             [reitit.coercion.schema :as rcs]
@@ -98,14 +98,14 @@
              :summary summarys-are-expressions
              identity))))
   (is (= ["/my-route"
-          {:responses {200 {:schema {:a (s/enum "schema")}}}}
+          {:responses {200 {:body {:a (s/enum "schema")}}}}
           [identity]]
          (sut/context
            "/my-route" []
            :responses {200 {:schema {:a (s/enum "schema")}}}
            identity)))
   (is (= ["/my-route"
-          {:responses {200 {:schema {:a (s/enum "schema")}}}}
+          {:responses {200 {:body {:a (s/enum "schema")}}}}
           [identity]]
          (let [responses-are-expressions {200 {:schema {:a (s/enum "schema")}}}]
            (sut/context
@@ -129,33 +129,53 @@
                  :uri "/my-route"})))))
 
 (deftest responses-test
+  (testing "GET"
+    (is (= '["/my-route" {:get {:handler (clojure.core/fn [req__0] (clojure.core/let [] (do {:status 200, :body 1})))
+                                :responses (ctia.lib.compojure.api.core-reitit/compojure->reitit-responses {200 {:schema schema.core/Int}})}}]
+           (dexpand-1
+             `(sut/GET "/my-route" []
+                       :responses {200 {:schema s/Int}}
+                       {:status 200
+                        :body 1}))))
+    (is (= {:status 200
+            :body 1}
+           (let [app (ring/ring-handler
+                       (ring/router
+                         (sut/GET "/my-route" []
+                                  :responses {200 {:schema s/Int}}
+                                  {:status 200
+                                   :body 1})
+                         {:data {:middleware [reitit.ring.coercion/coerce-response-middleware]
+                                 :coercion reitit.coercion.schema/coercion}}))]
+             (app {:request-method :get
+                   :uri "/my-route"}))))
+    (is (thrown? Exception "Response coercion failed"
+                 (let [app (ring/ring-handler
+                             (ring/router
+                               (sut/GET "/my-route" []
+                                        :responses {200 {:schema s/Bool}}
+                                        {:status 200
+                                         :body 1})
+                               {:data {:middleware [reitit.ring.coercion/coerce-response-middleware]
+                                       :coercion reitit.coercion.schema/coercion}}))]
+                   (app {:request-method :get
+                         :uri "/my-route"})))))
+  (testing "context"
+    (is (= '["/context" {:responses (ctia.lib.compojure.api.core-reitit/compojure->reitit-responses {200 {:schema schema.core/Int}})}
+             (ctia.lib.compojure.api.core-reitit/routes
+               (ctia.lib.compojure.api.core-reitit/GET "/my-route" [] {:status 200, :body 1}))]
+           (dexpand-1
+             `(sut/context "/context" []
+                           :responses {200 {:schema s/Int}}
+                           (sut/GET "/my-route" []
+                                    {:status 200
+                                     :body 1})))))))
+
+(deftest capabilities-test
   (is (= '["/my-route" {:get {:handler (clojure.core/fn [req__0] (clojure.core/let [] (do {:status 200, :body 1})))
                               :responses (ctia.lib.compojure.api.core-reitit/compojure->reitit-responses {200 {:schema schema.core/Int}})}}]
          (dexpand-1
            `(sut/GET "/my-route" []
                      :responses {200 {:schema s/Int}}
                      {:status 200
-                      :body 1}))))
-  (is (= {:status 200
-          :body 1}
-         (let [app (ring/ring-handler
-                     (ring/router
-                       (sut/GET "/my-route" []
-                                :responses {200 {:schema s/Int}}
-                                {:status 200
-                                 :body 1})
-                       {:data {:middleware [reitit.ring.coercion/coerce-response-middleware]
-                               :coercion reitit.coercion.schema/coercion}}))]
-           (app {:request-method :get
-                 :uri "/my-route"}))))
-  (is (thrown? Exception "Response coercion failed"
-               (let [app (ring/ring-handler
-                           (ring/router
-                             (sut/GET "/my-route" []
-                                      :responses {200 {:schema s/Bool}}
-                                      {:status 200
-                                       :body 1})
-                             {:data {:middleware [reitit.ring.coercion/coerce-response-middleware]
-                                     :coercion reitit.coercion.schema/coercion}}))]
-                 (app {:request-method :get
-                       :uri "/my-route"})))))
+                      :body 1})))))

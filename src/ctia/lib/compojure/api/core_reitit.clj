@@ -56,7 +56,7 @@
                         summary (assoc-in [:swagger :summary] summary)
                         capabilities (update :middleware (fnil conj [])
                                              [`mid/wrap-capabilities capabilities])
-                        responses (assoc :responses responses)))]
+                        responses (assoc :responses `(compojure->reitit-responses ~responses))))]
     `[~path
       ~@(some-> (not-empty reitit-opts) list)
       (routes ~@body)]))
@@ -70,15 +70,16 @@
     (assert (<= 0 k 599) (pr-str k))
     (when (some? v)
       (assert (map? v) (pr-str v))
-      (assert (every? :schema v) (pr-str v))
-      (assert (every? (comp empty? #(disj % :schema :description) set keys) v) (pr-str v)))))
+      (assert (:schema v) (pr-str v))
+      (assert (-> v keys set (disj :schema :description) empty?) (pr-str v)))))
 
+;; {200 {:schema Foo}} => {200 {:body Foo}}
 (defn compojure->reitit-responses [responses]
-  (assert (map? responses))
+  (validate-responses! responses)
   (update-vals responses (fn [rhs]
                            (when (some? rhs)
                              (assert (map? rhs))
-                             (let [unknown-keys (-> rhs keys set (disj :schema) empty?)]
+                             (let [unknown-keys (-> rhs keys set (disj :schema))]
                                (assert (empty? unknown-keys) unknown-keys))
                              (assert (:schema rhs))
                              (set/rename-keys rhs {:schema :body})))))
