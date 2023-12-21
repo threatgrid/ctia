@@ -205,11 +205,12 @@
                        {:status 200
                         :body 1})))))
   (testing "context"
-    (is (let [app (ring/ring-handler
-                    (ring/router
-                      (sut/GET "/my-route" []
-                               :capabilities :create-incident
-                               {:status 200
-                                :body 1})))]
-          (app {:request-method :get
-                :uri "/my-route"})))))
+    (is (thrown-with-msg? Exception #"HTTP 401"
+                          (let [app (ring/ring-handler
+                                      (ring/router
+                                        (sut/GET "/my-route" []
+                                                 :capabilities :create-incident
+                                                 {:status 200
+                                                  :body 1})))]
+                            (app {:request-method :get
+                                  :uri "/my-route"}))))))
