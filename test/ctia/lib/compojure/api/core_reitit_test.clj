@@ -31,7 +31,7 @@
            ["/blah" identity]
            ["/foo" identity]))))
 
-;;TODO runtime routing tests
+;;FIXME runtime routing tests !!!!!!!!
 (deftest context-test
   (is (= ["/my-route" [identity]]
          (sut/context
@@ -169,7 +169,32 @@
                            :responses {200 {:schema s/Int}}
                            (sut/GET "/my-route" []
                                     {:status 200
-                                     :body 1})))))))
+                                     :body 1})))))
+    (is (= {:status 200
+            :body 1}
+           (let [app (ring/ring-handler
+                       (ring/router
+                         (sut/context "/context" []
+                                      :responses {200 {:schema s/Int}}
+                                      (sut/GET "/my-route" []
+                                               {:status 200
+                                                :body 1}))
+                         {:data {:middleware [reitit.ring.coercion/coerce-response-middleware]
+                                 :coercion reitit.coercion.schema/coercion}}))]
+             (app {:request-method :get
+                   :uri "/context/my-route"}))))
+    (is (thrown? Exception "Response coercion failed"
+                 (let [app (ring/ring-handler
+                             (ring/router
+                               (sut/context "/context" []
+                                            :responses {200 {:schema s/Bool}}
+                                            (sut/GET "/my-route" []
+                                                     {:status 200
+                                                      :body 1}))
+                               {:data {:middleware [reitit.ring.coercion/coerce-response-middleware]
+                                       :coercion reitit.coercion.schema/coercion}}))]
+                   (app {:request-method :get
+                         :uri "/context/my-route"}))))))
 
 (deftest capabilities-test
   (is (= '["/my-route" {:get {:handler (clojure.core/fn [req__0] (clojure.core/let [] (do {:status 200, :body 1})))
