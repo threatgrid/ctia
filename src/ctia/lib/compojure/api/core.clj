@@ -55,6 +55,15 @@
 
 (def ^:private ^:dynamic *gensym* gensym)
 
+(defn check-return-banned! [options]
+  (when-some [[_ schema] (find options :return)]
+    (throw (ex-info (format (str ":return is banned, please use :responses instead.\n"
+                                 "In this case, :return %s is equivalent to :responses {200 {:schema %s}}.\n"
+                                 "For 204, you can use :responses {204 nil}.\n"
+                                 "For catch-all, use :responses {:default {:schema SCHEMA}}")
+                            schema schema)
+                    {}))))
+
 (defmacro context
   "Like compojure.api.core/context, except the binding vector must be empty and
   no binding-style options are allowed. This is to prevent the passed routes
@@ -64,6 +73,7 @@
   (assert (vector? arg))
   (assert (= [] arg) (str "Not allowed to bind anything in context, push into HTTP verbs instead: " (pr-str arg)))
   (let [[options body] (common/extract-parameters args true)
+        _ (check-return-banned! options)
         _ (when-some [extra-keys (not-empty (set/difference (set (keys options))
                                                             allowed-context-options))]
             (throw (ex-info (str "Not allowed these options in `context`, push into HTTP verbs instead: "
@@ -84,11 +94,16 @@
                                options)
                      ~groutes))))
 
-(defmacro GET     {:style/indent 2} [& args] `(core/GET ~@args))
-(defmacro ANY     {:style/indent 2} [& args] `(core/ANY ~@args))
-(defmacro HEAD    {:style/indent 2} [& args] `(core/HEAD ~@args))
-(defmacro PATCH   {:style/indent 2} [& args] `(core/PATCH ~@args))
-(defmacro DELETE  {:style/indent 2} [& args] `(core/DELETE ~@args))
-(defmacro OPTIONS {:style/indent 2} [& args] `(core/OPTIONS ~@args))
-(defmacro POST    {:style/indent 2} [& args] `(core/POST ~@args))
-(defmacro PUT     {:style/indent 2} [& args] `(core/PUT ~@args))
+(defn restructure-endpoint [macro path arg & args]
+  (let [_ (let [[options _body] (common/extract-parameters args true)]
+            (check-return-banned! options))]
+    (list* macro path arg args)))
+
+(defmacro GET     {:style/indent 2} [& args] (apply restructure-endpoint `core/GET args))
+(defmacro ANY     {:style/indent 2} [& args] (apply restructure-endpoint `core/ANY args))
+(defmacro HEAD    {:style/indent 2} [& args] (apply restructure-endpoint `core/HEAD args))
+(defmacro PATCH   {:style/indent 2} [& args] (apply restructure-endpoint `core/PATCH args))
+(defmacro DELETE  {:style/indent 2} [& args] (apply restructure-endpoint `core/DELETE args))
+(defmacro OPTIONS {:style/indent 2} [& args] (apply restructure-endpoint `core/OPTIONS args))
+(defmacro POST    {:style/indent 2} [& args] (apply restructure-endpoint `core/POST args))
+(defmacro PUT     {:style/indent 2} [& args] (apply restructure-endpoint `core/PUT args))

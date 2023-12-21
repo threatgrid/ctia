@@ -432,7 +432,7 @@
 
      (let [capabilities :delete-feed]
        (DELETE "/:id" []
-               :responses {204 {:schema s/Any}}
+               :responses {204 nil}
                :no-doc false
                :path-params [id :- s/Str]
                :query-params [{wait_for :- (describe s/Bool "wait for deleted entity to no more be available for search") nil}]

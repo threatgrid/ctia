@@ -184,16 +184,18 @@
                                        (DELETE app
                                                path
                                                :headers headers))
-                                     (check-refresh wait_for msg)))]
+                                     (let [expected (str "wait_for_completion=" (boolean wait_for))]
+                                       (is (some-> @es-params (string/includes? expected))
+                                           (format "%s (expected %s, actual: %s)" msg expected @es-params)))
+                                     (vreset! es-params nil)))]
           (test-delete-search true
-                              (str "Delete search should wait for index refresh when "
+                              (str "Delete search should wait for deletion completion when "
                                    "wait_for is true"))
           (test-delete-search false
-                              (str "Delete search should not wait for index refresh "
+                              (str "Delete search should not wait for deletion completion "
                                    "when wait_for is false"))
           (test-delete-search nil
-                              (str "Configured ctia.store.es.default.refresh value is "
-                                   "applied when wait_for is not specified")))))))
+                              (str "Delete search should not wait for deletion completion by default")))))))
 
 (defn entity-crud-test
   [{:keys [app
@@ -374,7 +376,7 @@
         (th.search/test-delete-search
          {:app        app
           :entity     entity-str
-          :bundle-key (keyword (string/replace plural #"-" "_"))
+          :bundle-key (keyword (string/replace (name plural) #"-" "_"))
           :example    example}))
       (when invalid-tests?
         (testing (format "POST invalid /ctia/%s :schema_version should be ignored" entity-str)
