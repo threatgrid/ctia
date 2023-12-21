@@ -1,9 +1,28 @@
 (ns ctia.bulk.schemas
   (:require [clojure.string :as str]
             [ctia.entity.entities :as entities]
-            [ctia.schemas.core :refer [TempIDs Reference GetEntitiesServices]]
+            [ctia.schemas.core :as schemas :refer [TempIDs Reference GetEntitiesServices]]
             [schema-tools.core :as st]
             [schema.core :as s]))
+
+(s/defschema EntitiesResult
+  [(s/conditional
+     string? schemas/ID
+     :else {(s/optional-key :error) (s/conditional
+                                      string? s/Str
+                                      :else {:type (s/conditional
+                                                     string? s/Str
+                                                     :else s/Keyword)
+                                             :reason s/Str
+                                             (s/optional-key :index) s/Str
+                                             (s/optional-key :index_uuid) s/Str})
+            (s/optional-key :msg) s/Str
+            (s/optional-key :entity) (s/pred map?)
+            (s/optional-key :type) (s/conditional
+                                     string? s/Str
+                                     :else s/Keyword)
+            (s/optional-key :id) (s/maybe s/Str)
+            s/Keyword s/Any})])
 
 (defn entity-schema
   [{:keys [plural] :as entity} sch services]
@@ -59,7 +78,7 @@
 
 (s/defn BulkRefs :- (s/protocol s/Schema)
   [services :- GetEntitiesServices]
-  (entities-bulk-schema (get-entities services) [(s/maybe Reference)] services))
+  (entities-bulk-schema (get-entities services) EntitiesResult services))
 
 (s/defn BulkCreateRes :- (s/protocol s/Schema)
   [services :- GetEntitiesServices]
