@@ -122,7 +122,7 @@
        ~'routes)
     (str ":return is banned, please use :responses instead.\n"
          "In this case, :return schema.core/Str is equivalent to :responses {200 {:schema schema.core/Str}}.\n"
-         "For 204, you can use :responses {204 nil}.\nFor catch-all, use :responses {:default SCHEMA}")))
+         "For 204, you can use :responses {204 nil}.\nFor catch-all, use :responses {:default {:schema SCHEMA}}")))
 
 (deftest endpoints-banned-test
   (doseq [macro [`sut/GET
@@ -140,4 +140,4 @@
          {:status 200})
       (str ":return is banned, please use :responses instead.\n"
            "In this case, :return schema.core/Str is equivalent to :responses {200 {:schema schema.core/Str}}.\n"
-           "For 204, you can use :responses {204 nil}.\nFor catch-all, use :responses {:default SCHEMA}"))))
+           "For 204, you can use :responses {204 nil}.\nFor catch-all, use :responses {:default {:schema SCHEMA}}"))))
