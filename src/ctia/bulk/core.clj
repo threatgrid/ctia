@@ -4,6 +4,7 @@
    [clojure.string :as str]
    [clojure.tools.logging :as log]
    [ctia.auth :as auth]
+   [ctia.bulk.schemas :refer [EntitiesResult]]
    [ctia.domain.entities :as ent :refer [with-long-id short-id->long-id]]
    [ctia.entity.entities :refer [all-entities]]
    [ctia.flows.crud :as flows]
@@ -51,25 +52,6 @@
          %
          (auth/ident->map auth-identity)
          params)))
-
-(s/defschema EntitiesResult
-  [(s/conditional
-     string? schemas/ID
-     :else {(s/optional-key :error) (s/conditional
-                                      string? s/Str
-                                      :else {:type (s/conditional
-                                                     string? s/Str
-                                                     :else s/Keyword)
-                                             :reason s/Str
-                                             (s/optional-key :index) s/Str
-                                             (s/optional-key :index_uuid) s/Str})
-            (s/optional-key :msg) s/Str
-            (s/optional-key :entity) (s/pred map?)
-            (s/optional-key :type) (s/conditional
-                                     string? s/Str
-                                     :else s/Keyword)
-            (s/optional-key :id) (s/maybe s/Str)
-            s/Keyword s/Any})])
 
 (s/defschema EnvelopedEntities+TempIDs
   (s/maybe
