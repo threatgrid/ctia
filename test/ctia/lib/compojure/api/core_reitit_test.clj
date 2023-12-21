@@ -52,21 +52,20 @@
              "/my-route" []
              :tags tags-are-compile-time-literals
              identity))))
-  (is (= ["/my-route"
-          {:middleware [[mid/wrap-capabilities :create-incident]]}
-          [identity]]
-         (sut/context
-           "/my-route" []
-           :capabilities :create-incident
-           identity)))
-  (is (= ["/my-route"
-          {:middleware [[mid/wrap-capabilities :create-incident]]}
-          [identity]]
-         (let [capabilities-are-expressions :create-incident]
-           (sut/context
-             "/my-route" []
-             :capabilities capabilities-are-expressions
-             identity))))
+  (is (= '["/my-route" {:middleware [[(ctia.http.middleware.auth/wrap-capabilities :create-incident)]]}
+           (ctia.lib.compojure.api.core-reitit/routes identity)]
+         (dexpand-1
+           '(sut/context
+              "/my-route" []
+              :capabilities :create-incident
+              identity))))
+  (is (= '["/my-route" {:middleware [[(ctia.http.middleware.auth/wrap-capabilities capabilities-are-expressions)]]}
+           (ctia.lib.compojure.api.core-reitit/routes identity)]
+         (dexpand-1
+           '(sut/context
+              "/my-route" []
+              :capabilities capabilities-are-expressions
+              identity))))
   (is (= ["/my-route"
           {:swagger {:description "a description"}}
           [identity]]
@@ -197,10 +196,20 @@
                          :uri "/context/my-route"}))))))
 
 (deftest capabilities-test
-  (is (= '["/my-route" {:get {:handler (clojure.core/fn [req__0] (clojure.core/let [] (do {:status 200, :body 1})))
-                              :responses (ctia.lib.compojure.api.core-reitit/compojure->reitit-responses {200 {:schema schema.core/Int}})}}]
-         (dexpand-1
-           `(sut/GET "/my-route" []
-                     :responses {200 {:schema s/Int}}
-                     {:status 200
-                      :body 1})))))
+  (testing "GET"
+    (is (= '["/my-route" {:get {:handler (clojure.core/fn [req__0] (clojure.core/let [] (do {:status 200, :body 1})))
+                                :middleware [[(ctia.http.middleware.auth/wrap-capabilities :create-incident)]]}}]
+           (dexpand-1
+             `(sut/GET "/my-route" []
+                       :capabilities :create-incident
+                       {:status 200
+                        :body 1})))))
+  (testing "context"
+    (is (let [app (ring/ring-handler
+                    (ring/router
+                      (sut/GET "/my-route" []
+                               :capabilities :create-incident
+                               {:status 200
+                                :body 1})))]
+          (app {:request-method :get
+                :uri "/my-route"})))))

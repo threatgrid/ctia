@@ -55,13 +55,13 @@
                         description (assoc-in [:swagger :description] description)
                         summary (assoc-in [:swagger :summary] summary)
                         capabilities (update :middleware (fnil conj [])
-                                             [`mid/wrap-capabilities capabilities])
+                                             [`(mid/wrap-capabilities ~capabilities)])
                         responses (assoc :responses `(compojure->reitit-responses ~responses))))]
     `[~path
       ~@(some-> (not-empty reitit-opts) list)
       (routes ~@body)]))
 
-(def ^:private allowed-endpoint-options #{:responses})
+(def ^:private allowed-endpoint-options #{:responses :capabilities})
 
 (defn validate-responses! [responses]
   (assert (map? responses))
@@ -89,7 +89,7 @@
   (assert (or (= [] arg)
               (simple-symbol? arg))
           (pr-str arg))
-  (let [[{:keys [responses] :as options} body] ((requiring-resolve 'compojure.api.common/extract-parameters) args true)
+  (let [[{:keys [responses capabilities] :as options} body] ((requiring-resolve 'compojure.api.common/extract-parameters) args true)
         _ (when-some [extra-keys (not-empty (set/difference (set (keys options))
                                                             allowed-endpoint-options))]
             (throw (ex-info (str "Not allowed these options in endpoints: "
@@ -102,7 +102,9 @@
                                         (let [~@(when (simple-symbol? arg)
                                                   [arg greq])]
                                           (do ~@body)))}
-                     responses (assoc :responses responses))}]))
+                     responses (assoc :responses responses)
+                     capabilities (update :middleware (fnil conj [])
+                                          [`(mid/wrap-capabilities ~capabilities)]))}]))
 
 (defmacro GET     {:style/indent 2} [& args] (apply restructure-endpoint :get args))
 (defmacro ANY     {:style/indent 2} [& args] (apply restructure-endpoint :any args))
