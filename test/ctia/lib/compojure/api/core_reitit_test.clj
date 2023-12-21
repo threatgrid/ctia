@@ -53,18 +53,18 @@
              :tags tags-are-compile-time-literals
              identity))))
   (is (= '["/my-route" {:middleware [[(ctia.http.middleware.auth/wrap-capabilities :create-incident)]]}
-           (ctia.lib.compojure.api.core-reitit/routes identity)]
+           (ctia.lib.compojure.api.core-reitit/routes clojure.core/identity)]
          (dexpand-1
-           '(sut/context
+           `(sut/context
               "/my-route" []
               :capabilities :create-incident
               identity))))
   (is (= '["/my-route" {:middleware [[(ctia.http.middleware.auth/wrap-capabilities capabilities-are-expressions)]]}
-           (ctia.lib.compojure.api.core-reitit/routes identity)]
+           (ctia.lib.compojure.api.core-reitit/routes clojure.core/identity)]
          (dexpand-1
-           '(sut/context
+           `(sut/context
               "/my-route" []
-              :capabilities capabilities-are-expressions
+              :capabilities ~'capabilities-are-expressions
               identity))))
   (is (= ["/my-route"
           {:swagger {:description "a description"}}
