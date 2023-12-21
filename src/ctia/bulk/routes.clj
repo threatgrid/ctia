@@ -36,7 +36,7 @@
                          :create-weakness}]
       (routes
        (POST "/" []
-         :return (bulk.schemas/BulkCreateRes services)
+         :responses {201 {:schema (bulk.schemas/BulkCreateRes services)}}
          :query-params [{wait_for :- (describe s/Bool "wait for created entities to be available for search") nil}]
          :body [bulk (bulk.schemas/NewBulk services) {:description "a new Bulk object"}]
          :summary "POST many new entities using a single HTTP call"
