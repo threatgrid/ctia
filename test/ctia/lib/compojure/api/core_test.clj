@@ -54,7 +54,7 @@
               ~'routes))))
   ;; :responses is evaluated
   (is (= '(clojure.core/let [routes__0 (compojure.api.core/routes routes)
-                             responses__1 {:my-schema #{}}]
+                             responses__1 {200 {:schema {:my-schema #{}}}}]
             (compojure.api.core/context
               "/my-route" []
               :responses responses__1
