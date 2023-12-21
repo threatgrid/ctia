@@ -387,7 +387,7 @@
        (DELETE "/search" []
                :capabilities capabilities
                :description (routes.common/capabilities->description capabilities)
-               :responses {200 nil}
+               :responses {200 {:schema s/Int}}
                :summary (format "Delete Feed entities matching given Lucene/ES query string or/and field filters")
                :auth-identity identity
                :identity-map identity-map
@@ -432,7 +432,7 @@
 
      (let [capabilities :delete-feed]
        (DELETE "/:id" []
-               :responses {204 {:schema s/Any}}
+               :responses {204 nil}
                :no-doc false
                :path-params [id :- s/Str]
                :query-params [{wait_for :- (describe s/Bool "wait for deleted entity to no more be available for search") nil}]
