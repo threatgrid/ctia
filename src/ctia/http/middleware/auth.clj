@@ -85,21 +85,3 @@
   (update acc :lets into
           [bind-to `(auth/ident->map
                      (:identity ~'+compojure-api-request+))]))
-
-(defn wrap-capabilities [capabilities]
-  (let [check-capabilities! (fn [{:keys [identity]}]
-                              (require-capability!
-                                capabilities
-                                identity))]
-    (fn [handler]
-      (fn
-        ([request]
-         (check-capabilities! request)
-         (handler request))
-        ([request respond raise]
-         (when (try (check-capabilities! request)
-                    true
-                    (catch Throwable e
-                      (raise e)
-                      false))
-           (handler request respond raise)))))))
