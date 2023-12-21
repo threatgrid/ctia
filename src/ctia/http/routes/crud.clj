@@ -541,7 +541,7 @@
 
      (let [capabilities delete-capabilities]
        (DELETE "/:id" []
-               :responses {204 {:schema s/Any}}
+               :responses {204 nil}
                :no-doc hide-delete?
                :path-params [id :- s/Str]
                :query-params [{wait_for :- (describe s/Bool "wait for deleted entity to no more be available for search") nil}]

@@ -84,34 +84,60 @@
       (recur cause)
       cause)))
 
-(defn is-context-banned [form msg]
+(defn is-banned-macro [form msg]
   (try (dexpand-1 form)
        (is false (pr-str form))
        (catch Exception e
          (is (= msg (ex-message (root-cause e))) (pr-str form)))))
 
 (deftest context-banned-test
-  (is-context-banned
+  (is-banned-macro
     `(sut/context
        "/my-route" []
        :path-params [~'id :- s/Str]
        ~'routes)
     "Not allowed these options in `context`, push into HTTP verbs instead: (:path-params)")
-  (is-context-banned
+  (is-banned-macro
     `(sut/context
        "/my-route" []
        :query-params [{~'wait_for :- (describe s/Bool "wait for patched entity to be available for search") nil}]
        ~'routes)
     "Not allowed these options in `context`, push into HTTP verbs instead: (:query-params)")
-  (is-context-banned
+  (is-banned-macro
     `(sut/context
        "/my-route" []
        :auth-identity ~'identity
        ~'routes)
     "Not allowed these options in `context`, push into HTTP verbs instead: (:auth-identity)")
-  (is-context-banned
+  (is-banned-macro
     `(sut/context
        "/my-route" []
        :identity-map ~'identity-map
        ~'routes)
-    "Not allowed these options in `context`, push into HTTP verbs instead: (:identity-map)"))
+    "Not allowed these options in `context`, push into HTTP verbs instead: (:identity-map)")
+  (is-banned-macro
+    `(sut/context
+       "/my-route" []
+       :return s/Str
+       ~'routes)
+    (str ":return is banned, please use :responses instead.\n"
+         "In this case, :return schema.core/Str is equivalent to :responses {200 {:schema schema.core/Str}}.\n"
+         "For 204, you can use :responses {204 nil}.\nFor catch-all, use :responses {:default SCHEMA}")))
+
+(deftest endpoints-banned-test
+  (doseq [macro [`sut/GET
+                 `sut/ANY
+                 `sut/HEAD
+                 `sut/PATCH
+                 `sut/DELETE
+                 `sut/OPTIONS
+                 `sut/POST
+                 `sut/PUT]]
+    (is-banned-macro
+      `(~macro
+         "/my-route" []
+         :return s/Str
+         {:status 200})
+      (str ":return is banned, please use :responses instead.\n"
+           "In this case, :return schema.core/Str is equivalent to :responses {200 {:schema schema.core/Str}}.\n"
+           "For 204, you can use :responses {204 nil}.\nFor catch-all, use :responses {:default SCHEMA}"))))
