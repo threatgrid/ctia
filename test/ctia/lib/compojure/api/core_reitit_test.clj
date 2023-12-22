@@ -351,8 +351,22 @@
          :query-params [{~'wait_for :- (describe s/Bool "wait for patched entity to be available for search") nil}]
          ~'routes)
       "Not allowed these options in `context`, push into HTTP verbs instead: (:query-params)"))
-  (testing "endpoints"
-    ;;TODO
+  (testing "GET"
+    (testing "expansion"
+      (is (= '["/my-route" {:get {:handler (clojure.core/fn [req__0]
+                                             (clojure.core/let [parameters__1 (:parameters req__0)
+                                                                query__2 (:query parameters__1)
+                                                                wait_for-default__3 default
+                                                                wait_for (get query__2 :wait_for wait_for-default__3)]
+                                               (do clojure.core/identity)))
+                                  :parameters {:query {:wait_for (ring.swagger.json-schema/describe
+                                                                   schema.core/Bool
+                                                                   "wait for patched entity to be available for search")}}}}]
+             (dexpand-1
+               `(sut/GET
+                  "/my-route" []
+                  :query-params [{~'wait_for :- (describe s/Bool "wait for patched entity to be available for search") ~'default}]
+                  identity)))))
     )
   )
 

@@ -64,7 +64,7 @@
       ~@(some-> (not-empty reitit-opts) list)
       (routes ~@body)]))
 
-(def ^:private allowed-endpoint-options #{:responses :capabilities :auth-identity :identity-map})
+(def ^:private allowed-endpoint-options #{:responses :capabilities :auth-identity :identity-map :query-params})
 
 (defn validate-responses! [responses]
   (assert (map? responses))
@@ -87,12 +87,31 @@
                              (assert (:schema rhs))
                              (set/rename-keys rhs {:schema :body})))))
 
+;; [{wait_for :- (describe s/Bool "wait for patched entity to be available for search") nil}]
+;; =>
+;; {wait_for {:schema (describe s/Bool "wait for patched entity to be available for search")
+;;            :default nil}}
+(defn ^:private parse-params [params]
+  (assert (vector? params))
+  (into (sorted-map)
+        (map (fn [m]
+               (assert (map? m))
+               (assert (= 2 (count m)))
+               (let [[[sym _] [schema default]]
+                     (let [[l r] (seq m)]
+                       (if (-> l val (= :-))
+                         [l r]
+                         [r l]))]
+                 {sym {:schema schema
+                       :default default}})))
+        params))
+
 (defn ^:private restructure-endpoint [http-kw path arg & args]
   (assert (simple-keyword? http-kw))
   (assert (or (= [] arg)
               (simple-symbol? arg))
           (pr-str arg))
-  (let [[{:keys [capabilities] :as options} body] (common/extract-parameters args true)
+  (let [[{:keys [capabilities query-params] :as options} body] (common/extract-parameters args true)
         _ (check-return-banned! options)
         _ (when-some [extra-keys (not-empty (set/difference (set (keys options))
                                                             allowed-endpoint-options))]
@@ -101,25 +120,51 @@
                             {})))
         responses (when-some [[_ responses] (find options :responses)]
                     `(compojure->reitit-responses ~responses))
+        query-params (when-some [[_ query-params] (find options :query-params)]
+                       (parse-params query-params))
         greq (*gensym* "req")
-        lets (vec (concat
-                    (when (simple-symbol? arg)
-                      [arg greq])
-                    (when-some [[_ auth-identity] (find options :auth-identity)]
-                      (assert (simple-symbol? auth-identity) (str ":auth-identity must be a simple symbol: "
-                                                                  (pr-str auth-identity)))
-                      [auth-identity (list :identity greq)])
-                    (when-some [[_ identity-map] (find options :identity-map)]
-                      (assert (simple-symbol? identity-map) (str ":identity-map must be a simple symbol: "
-                                                                  (pr-str identity-map)))
-                      [identity-map (list `auth/ident->map (list :identity greq))])))
-        _ (when (seq lets)
-            (let [names (map first (partition 2 lets))]
+        gparameters (delay (*gensym* "parameters"))
+        ;; `gs` are uncapturable variables via gensym. they are bound first so
+        ;; they can be bound to capturable expressions.
+        ;; `scoped` are capturable variables provided by user. they are bound last,
+        ;; and they are bound to uncapturable expressions.
+        {:keys [scoped gs]
+         :or {gs [] scoped []}} (merge-with
+                                  into
+                                  (when (simple-symbol? arg)
+                                    {:scoped [arg greq]})
+                                  (when (or query-params
+                                            ;; TODO
+                                            )
+                                    {:gs [@gparameters (list :parameters greq)]})
+                                  (when query-params
+                                    (let [gquery (*gensym* "query")]
+                                      (apply merge-with into 
+                                             {:gs [gquery (list `get @gparameters :query)]}
+                                             (map (fn [[sym {:keys [default]}]]
+                                                    (let [gdefault (*gensym* (str (name sym) "-default"))]
+                                                      {:gs [gdefault default]
+                                                       :scoped [sym (list `get gquery (keyword sym) gdefault)]}))
+                                                  query-params))))
+                                  (when-some [[_ auth-identity] (find options :auth-identity)]
+                                    (assert (simple-symbol? auth-identity) (str ":auth-identity must be a simple symbol: "
+                                                                                (pr-str auth-identity)))
+                                    {:scoped [auth-identity (list :identity greq)]})
+                                  (when-some [[_ identity-map] (find options :identity-map)]
+                                    (assert (simple-symbol? identity-map) (str ":identity-map must be a simple symbol: "
+                                                                               (pr-str identity-map)))
+                                    {:scoped [identity-map (list `auth/ident->map (list :identity greq))]}))
+        _ (assert (vector? gs))
+        _ (assert (vector? scoped))
+        _ (when (seq gs)
+            (assert (apply distinct? (map first (partition 2 gs)))))
+        _ (when (seq scoped)
+            (let [names (map first (partition 2 scoped))]
               (assert (apply distinct? names)
                       (str "ERROR: cannot shadow variables in endpoints, please rename to avoid clashes: "
                            (pr-str (sort names))))))]
     [path {http-kw (cond-> {:handler `(fn [~greq]
-                                        (let ~lets
+                                        (let ~(into gs scoped)
                                           (do ~@body)))}
                      responses (assoc :responses responses)
                      capabilities (update :middleware (fnil conj [])
