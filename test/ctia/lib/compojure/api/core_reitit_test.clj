@@ -445,7 +445,19 @@
                `(sut/GET
                   "/my-route" []
                   :identity-map ~'scoped-identity-map
-                  identity)))))
+                  identity))))
+      (testing "with auth-identity, shares :identity"
+        (is (= '["/my-route" {:get {:handler (clojure.core/fn [req__0]
+                                               (clojure.core/let [identity__1 (:identity req__0)
+                                                                  scoped-identity identity__1
+                                                                  scoped-identity-map (ctia.auth/ident->map identity__1)]
+                                                 (do clojure.core/identity)))}}]
+               (dexpand-1
+                 `(sut/GET
+                    "/my-route" []
+                    :identity-map ~'scoped-identity-map
+                    :auth-identity ~'scoped-identity
+                    identity))))))
     (testing "200 response"
       (let [id (->ReadOnlyIdentity)]
         (is (= {:status 200
