@@ -5,6 +5,7 @@
   as it also loads the CTIA routing extensions."
   (:require [compojure.api.common :as common]
             [clojure.set :as set]
+            [clojure.walk :as walk]
             [ctia.http.middleware.auth :as mid]
             [ctia.auth :as auth]
             [schema-tools.core :as st]
@@ -44,8 +45,10 @@
   from being reinitialized on every request."
   {:style/indent 2}
   [path arg & args]
-  (assert (vector? arg))
-  (assert (= [] arg) (str "Not allowed to bind anything in context, push into HTTP verbs instead: " (pr-str arg)))
+  (when-not (and (vector? arg)
+                 (= [] arg))
+    (throw (ex-info (str "Not allowed to bind anything in context, push into HTTP verbs instead: " (pr-str arg))
+                    {})))
   (let [[options body] ((requiring-resolve 'compojure.api.common/extract-parameters) args true)
         _ (check-return-banned! options)
         _ (when-some [extra-keys (not-empty (set/difference (set (keys options))
@@ -58,15 +61,16 @@
                         tags (assoc-in [:swagger :tags] (list 'quote tags))
                         description (assoc-in [:swagger :description] description)
                         summary (assoc-in [:swagger :summary] summary)
-                        capabilities (update :middleware (fnil conj [])
-                                             [`(mid/wrap-capabilities ~capabilities)])
+                        capabilities (update :middleware (fn [prev]
+                                                           (assert (not prev))
+                                                           [[`(mid/wrap-capabilities ~capabilities)]]))
                         responses (assoc :responses `(compojure->reitit-responses ~responses))))]
     `[~path
       ~@(some-> (not-empty reitit-opts) list)
       (routes ~@body)]))
 
 (def ^:private allowed-endpoint-options #{:responses :capabilities :auth-identity :identity-map :query-params :path-params
-                                          :description :tags :no-doc :summary :produces})
+                                          :description :tags :no-doc :summary :produces :middleware})
 (comment
   ;; todo list
   (set/difference @#'ctia.lib.compojure.api.core/allowed-endpoint-options
@@ -128,13 +132,31 @@
             (recur params
                    (assoc result sym {:schema schema}))))))))
 
+(defn ^:private prevent-scoping-difference-error!
+  [arg options]
+  (walk/postwalk (fn [s]
+                   (if (= arg s)
+                     (throw (ex-info (format (str "There is a key difference in scoping between compojure-api and "
+                                                  "our compilation to reitit. The request has been bound to %s "
+                                                  "but this symbol occurs in the restructuring options. "
+                                                  "The request is not in scope here in reitit, so "
+                                                  "please rename %s so this incomplete analysis can rule out this "
+                                                  "mistake.")
+                                             arg arg)
+                                     {}))
+                     s))
+                 options)
+  nil)
+
 (defn ^:private restructure-endpoint [http-kw path arg & args]
   (assert (simple-keyword? http-kw))
   (assert (or (= [] arg)
               (simple-symbol? arg))
           (pr-str arg))
-  (let [[{:keys [capabilities auth-identity identity-map tags] :as options} body] (common/extract-parameters args true)
+  (let [[{:keys [capabilities auth-identity identity-map tags middleware] :as options} body] (common/extract-parameters args true)
         _ (check-return-banned! options)
+        _ (when (simple-symbol? arg)
+            (prevent-scoping-difference-error! arg options))
         _ (when-some [extra-keys (not-empty (set/difference (set (keys options))
                                                             allowed-endpoint-options))]
             (throw (ex-info (str "Not allowed these options in endpoints: "
@@ -209,8 +231,22 @@
                      (contains? options :summary) (assoc-in [:swagger :summary] (:summary options))
                      (contains? options :produces) (assoc-in [:swagger :produces] (:produces options))
                      responses (assoc :responses responses)
-                     capabilities (update :middleware (fnil conj [])
-                                          [`(mid/wrap-capabilities ~capabilities)])
+                     ;; made :middleware an expression, not sure what compojure-api does here.
+                     middleware (update :middleware (fn [prev]
+                                                      (assert (not prev))
+                                                      middleware))
+                     capabilities (update :middleware (fn [prev]
+                                                        (let [this-middleware [`(mid/wrap-capabilities ~capabilities)]]
+                                                          ;; how to combine with existing :middleware? just ask the user do it.
+                                                          (when prev
+                                                            (throw (ex-info (format
+                                                                              (str "Combining :middleware and :capabilities not yet supported. "
+                                                                                   "Please use :middleware %s instead of :capabilities %s.\n"
+                                                                                   "The complete middleware might look like: :middleware (conj %s %s).")
+                                                                              (pr-str this-middleware) (pr-str capabilities)
+                                                                              (pr-str prev) (pr-str (first this-middleware)))
+                                                                            {})))
+                                                          [this-middleware])))
                      query-params (assoc-in [:parameters :query]
                                             (list `st/optional-keys
                                                   (into {} (map (fn [[sym {:keys [schema]}]]

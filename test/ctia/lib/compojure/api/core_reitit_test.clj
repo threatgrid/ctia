@@ -36,12 +36,96 @@
   (is (= [["/blah" identity] ["/foo" identity]]
          (sut/routes ["/blah" identity] ["/foo" identity]))))
 
-(deftest middleware-test
+(deftest middleware-macro-test
   (is (= ["" {:middleware [[:some 1] [:middleware 2]]}
           [["/blah" identity] ["/foo" identity]]]
          (sut/middleware [[:some 1] [:middleware 2]]
            ["/blah" identity]
-           ["/foo" identity]))))
+           ["/foo" identity])))
+  (testing "200 response"
+    (let [g (gensym)
+          called (atom {:outer 0 :inner 0})]
+      (is (= {:status 200 :body g}
+             (let [mid (fn [handler]
+                         (swap! called update :outer inc)
+                         (fn
+                           ([request]
+                            (swap! called update :inner inc)
+                            (handler
+                              (assoc request ::middleware-called g)))
+                           ([request respond raise]
+                            (swap! called update :inner inc)
+                            (handler
+                              (assoc request ::middleware-called g)
+                              respond
+                              raise))))
+                   app (ring/ring-handler
+                         (ring/router
+                           (sut/middleware
+                             [mid]
+                             (sut/GET
+                               "/my-route" req
+                               {:status 200
+                                :body (::middleware-called req)}))))]
+               (app {:request-method :get
+                     :uri "/my-route"}))))
+      ;; TODO why is :outer called twice?
+      (is (= @called {:outer 2 :inner 1}))))
+  )
+
+(deftest middleware-restructure-test
+  (testing "context"
+    ;; could easily be supported if needed
+    (is-banned-macro
+      `(sut/context
+         "/my-route" []
+         :middleware [[~'render-resource-file]]
+         ~'routes)
+      "Not allowed these options in `context`, push into HTTP verbs instead: (:middleware)"))
+  (testing "GET"
+    (testing "expansion"
+      (testing "combining with :capabilities is banned"
+        (is-banned-macro
+          `(sut/GET
+             "/my-route" []
+             :capabilities ~'capabilities
+             :middleware [[~'render-resource-file]]
+             ~'routes)
+          "Combining :middleware and :capabilities not yet supported. Please use :middleware [(ctia.http.middleware.auth/wrap-capabilities capabilities)] instead of :capabilities capabilities.\nThe complete middleware might look like: :middleware (conj [[render-resource-file]] (ctia.http.middleware.auth/wrap-capabilities capabilities))."))
+      (is (= '["/my-route" {:get {:handler (clojure.core/fn [req__0] (clojure.core/let [] (do identity)))
+                                  :middleware [[render-resource-file]]}}]
+             (dexpand-1
+               `(sut/GET
+                  "/my-route" []
+                  :middleware [[~'render-resource-file]]
+                  ~'identity)))))
+    (testing "200 response"
+      (let [g (gensym)
+            called (atom {:outer 0 :inner 0})]
+        (is (= {:status 200 :body g}
+               (let [mid (fn [handler]
+                           (swap! called update :outer inc)
+                           (fn
+                             ([request]
+                              (swap! called update :inner inc)
+                              (handler
+                                (assoc request ::middleware-called g)))
+                             ([request respond raise]
+                              (swap! called update :inner inc)
+                              (handler
+                                (assoc request ::middleware-called g)
+                                respond
+                                raise))))
+                     app (ring/ring-handler
+                           (ring/router
+                             (sut/GET
+                               "/my-route" req
+                               :middleware [mid]
+                               {:status 200
+                                :body (::middleware-called req)})))]
+                 (app {:request-method :get
+                       :uri "/my-route"}))))
+        (is (= @called {:outer 1 :inner 1}))))))
 
 ;;FIXME runtime routing tests !!!!!!!!
 (deftest context-test
@@ -714,3 +798,28 @@
                        :produces g
                        ~'identity)
                      [1 :get :swagger]))))))
+
+(deftest scoping-difference-banned-test
+  (testing "context"
+    (is-banned-macro
+      `(sut/context
+         "/my-route" ~'req
+         ~'routes)
+      "Not allowed to bind anything in context, push into HTTP verbs instead: req")
+    (is-banned-macro
+      `(sut/context
+         "/my-route" ~'[req]
+         ~'routes)
+      "Not allowed to bind anything in context, push into HTTP verbs instead: [req]")
+    (is-banned-macro
+      `(sut/context
+         "/my-route" ~'{:keys [req]}
+         ~'routes)
+      "Not allowed to bind anything in context, push into HTTP verbs instead: {:keys [req]}"))
+  (testing "GET"
+    (is-banned-macro
+      `(sut/GET
+         "/my-route" ~'req
+         :middleware ~'req
+         ~'routes)
+      "There is a key difference in scoping between compojure-api and our compilation to reitit. The request has been bound to req but this symbol occurs in the restructuring options. The request is not in scope here in reitit, so please rename req so this incomplete analysis can rule out this mistake.")))
