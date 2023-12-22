@@ -823,3 +823,34 @@
          :middleware ~'req
          ~'routes)
       "There is a key difference in scoping between compojure-api and our compilation to reitit. The request has been bound to req but this symbol occurs in the restructuring options. The request is not in scope here in reitit, so please rename req so this incomplete analysis can rule out this mistake.")))
+
+(deftest query-test
+  (testing "context"
+    (is-banned-macro
+      `(sut/context
+         "/my-route" []
+         :query ~'[{foo :bar :as params}
+                   Schema]
+         ~'routes)
+      "Not allowed these options in `context`, push into HTTP verbs instead: (:query)"))
+  (testing "GET"
+    (testing "expansion"
+      (testing "missing schema"
+        (is-banned-macro
+          `(sut/GET
+             "/my-route" []
+             :query ~'[{foo :bar :as params}]
+             ~'routes)
+          ":query must be a vector of length 2"))
+      (testing "cannot combine with :query-params"
+        (is-banned-macro
+          `(sut/GET
+             "/my-route" []
+             :query-params [{~'wait_for :- (describe s/Bool "wait for patched entity to be available for search") nil}]
+             :query ~'[{foo :bar :as params}
+                       Schema]
+             ~'routes)
+          "Cannot use both :query-params and :query, please combine them."))
+      )
+    )
+  )

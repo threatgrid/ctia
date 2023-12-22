@@ -70,7 +70,7 @@
       (routes ~@body)]))
 
 (def ^:private allowed-endpoint-options #{:responses :capabilities :auth-identity :identity-map :query-params :path-params
-                                          :description :tags :no-doc :summary :produces :middleware})
+                                          :description :tags :no-doc :summary :produces :middleware :query})
 (comment
   ;; todo list
   (set/difference @#'ctia.lib.compojure.api.core/allowed-endpoint-options
@@ -166,6 +166,13 @@
                     `(compojure->reitit-responses ~responses))
         query-params (when-some [[_ query-params] (find options :query-params)]
                        (parse-params query-params))
+        query (when-some [[_ query] (find options :query)]
+                (when query-params
+                  (throw (ex-info "Cannot use both :query-params and :query, please combine them."
+                                  {})))
+                (when-not (and (vector? query) (= 2 (count query)))
+                  (throw (ex-info ":query must be a vector of length 2" {})))
+                {})
         path-params (when-some [[_ path-params] (find options :path-params)]
                       (parse-params path-params))
         greq (*gensym* "req")
