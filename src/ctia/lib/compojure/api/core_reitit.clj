@@ -63,7 +63,7 @@
       ~@(some-> (not-empty reitit-opts) list)
       (routes ~@body)]))
 
-(def ^:private allowed-endpoint-options #{:responses :capabilities})
+(def ^:private allowed-endpoint-options #{:responses :capabilities :auth-identity})
 
 (defn validate-responses! [responses]
   (assert (map? responses))
@@ -91,7 +91,7 @@
   (assert (or (= [] arg)
               (simple-symbol? arg))
           (pr-str arg))
-  (let [[{:keys [responses capabilities] :as options} body] (common/extract-parameters args true)
+  (let [[{:keys [responses capabilities auth-identity] :as options} body] (common/extract-parameters args true)
         _ (check-return-banned! options)
         _ (when-some [extra-keys (not-empty (set/difference (set (keys options))
                                                             allowed-endpoint-options))]
@@ -100,10 +100,21 @@
                             {})))
         responses (when responses
                     `(compojure->reitit-responses ~responses))
-        greq (*gensym* "req")]
+        greq (*gensym* "req")
+        lets (vec (concat
+                    (when (simple-symbol? arg)
+                      [arg greq])
+                    (when auth-identity
+                      (assert (simple-symbol? auth-identity) (str ":auth-identity must be a simple symbol: "
+                                                                  (pr-str auth-identity)))
+                      [auth-identity (list :identity greq)])))
+        _ (when (seq lets)
+            (let [names (map first (partition 2 lets))]
+              (assert (apply distinct? names)
+                      (str "ERROR: cannot shadow variables in endpoints, please rename to avoid clashes: "
+                           (pr-str (sort names))))))]
     [path {http-kw (cond-> {:handler `(fn [~greq]
-                                        (let [~@(when (simple-symbol? arg)
-                                                  [arg greq])]
+                                        (let ~lets
                                           (do ~@body)))}
                      responses (assoc :responses responses)
                      capabilities (update :middleware (fnil conj [])

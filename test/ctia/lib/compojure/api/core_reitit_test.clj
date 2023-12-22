@@ -305,9 +305,28 @@
          ~'routes)
       "Not allowed these options in `context`, push into HTTP verbs instead: (:auth-identity)"))
   (testing "GET"
-    ;;TODO
-    )
-  )
+    (testing "expansion"
+      (is (= '["/my-route" {:get {:handler (clojure.core/fn [req__0]
+                                             (clojure.core/let [scoped-identity (:identity req__0)]
+                                               (do clojure.core/identity)))}}]
+             (dexpand-1
+               `(sut/GET
+                  "/my-route" []
+                  :auth-identity ~'scoped-identity
+                  identity)))))
+    (testing "200 response"
+      (let [id (gensym)]
+        (is (= {:status 200
+                :body id}
+               (let [app (ring/ring-handler
+                           (ring/router
+                             (sut/GET "/my-route" []
+                                      :auth-identity scoped-identity
+                                      {:status 200
+                                       :body scoped-identity})))]
+                 (app {:request-method :get
+                       :uri "/my-route"
+                       :identity id}))))))))
 
 (deftest path-params-test
   (testing "context"
