@@ -315,18 +315,20 @@
                   :auth-identity ~'scoped-identity
                   identity)))))
     (testing "200 response"
-      (let [id (gensym)]
+      (let [id (->ReadOnlyIdentity)
+            response (let [app (ring/ring-handler
+                                 (ring/router
+                                   (sut/GET "/my-route" []
+                                            :auth-identity scoped-identity
+                                            {:status 200
+                                             :body scoped-identity})))]
+                       (app {:request-method :get
+                             :uri "/my-route"
+                             :identity id}))]
         (is (= {:status 200
                 :body id}
-               (let [app (ring/ring-handler
-                           (ring/router
-                             (sut/GET "/my-route" []
-                                      :auth-identity scoped-identity
-                                      {:status 200
-                                       :body scoped-identity})))]
-                 (app {:request-method :get
-                       :uri "/my-route"
-                       :identity id}))))))))
+               response))
+        (is (identical? id (:body response)))))))
 
 (deftest path-params-test
   (testing "context"
