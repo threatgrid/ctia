@@ -165,7 +165,7 @@
           :identity-map identity-map
           :query-params [{wait_for :- (describe s/Bool "wait for patched entity to be available for search") nil}]
           :path-params [id :- s/Str]
-          :body [partial-casebook PartialNewCasebook {:description "a Casebook partial update"}]
+          :body [partial-casebook (describe PartialNewCasebook "a Casebook partial update")]
           :summary "Partially Update a Casebook"
           (if-let [res (patch-flow identity
                                    identity-map
@@ -180,8 +180,8 @@
           :identity-map identity-map
           :query-params [{wait_for :- (describe s/Bool "wait for patched entity to be available for search") nil}]
           :path-params [id :- s/Str]
-          :body [operation CasebookObservablesUpdate
-                 {:description "A casebook Observables operation"}]
+          :body [operation (describe CasebookObservablesUpdate
+                                     "A casebook Observables operation")]
           :summary "Edit Observables on a casebook"
           (if-let [res (patch-flow identity
                                    identity-map
@@ -197,8 +197,8 @@
           :identity-map identity-map
           :query-params [{wait_for :- (describe s/Bool "wait for patched entity to be available for search") nil}]
           :path-params [id :- s/Str]
-          :body [operation CasebookTextsUpdate
-                 {:description "A casebook Texts operation"}]
+          :body [operation (describe CasebookTextsUpdate
+                                     "A casebook Texts operation")]
           :summary "Edit Texts on a casebook"
           (if-let [res (patch-flow identity
                                          identity-map
@@ -214,8 +214,8 @@
           :identity-map identity-map
           :query-params [{wait_for :- (describe s/Bool "wait for patched entity to be available for search") nil}]
           :path-params [id :- s/Str]
-          :body [operation CasebookBundleUpdate
-                 {:description "A casebook Bundle operation"}]
+          :body [operation (describe CasebookBundleUpdate
+                                     "A casebook Bundle operation")]
           :summary "Edit a Bundle on a casebook"
           (if-let [res (patch-flow identity
                                    identity-map

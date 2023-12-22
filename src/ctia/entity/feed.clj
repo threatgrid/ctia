@@ -275,7 +275,7 @@
        (POST "/" []
              :responses {201 {:schema Feed}}
              :query-params [{wait_for :- (describe s/Bool "wait for entity to be available for search") nil}]
-             :body [new-entity NewFeed {:description "a new Feed"}]
+             :body [new-entity (describe NewFeed "a new Feed")]
              :summary "Adds a new Feed"
              :description (routes.common/capabilities->description capabilities)
              :capabilities capabilities
@@ -303,7 +303,7 @@
      (let [capabilities :create-feed]
        (PUT "/:id" []
             :responses {200 {:schema Feed}}
-            :body [entity-update NewFeed {:description "an updated Feed"}]
+            :body [entity-update (describe NewFeed "an updated Feed")]
             :summary "Updates a Feed"
             :query-params [{wait_for :- (describe s/Bool "wait for updated entity to be available for search") nil}]
             :path-params [id :- s/Str]
