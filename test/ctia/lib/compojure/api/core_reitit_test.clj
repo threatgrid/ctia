@@ -652,3 +652,37 @@
                        :no-doc g
                        ~'identity)
                      [1 :get :swagger]))))))
+
+(deftest summary-test
+  (testing "context"
+    ;; could easily be supported if needed
+    (is-banned-macro
+      `(sut/context
+         "/my-route" []
+         :summary ~'an-expression
+         ~'routes)
+      "Not allowed these options in `context`, push into HTTP verbs instead: (:summary)"))
+  (testing "GET"
+    (is (= '["/my-route" {:get {:handler (clojure.core/fn [req__0] (clojure.core/let [] (do identity)))
+                                :swagger {:summary an-expression}}}]
+           (dexpand-1
+             `(sut/GET
+                "/my-route" []
+                :summary ~'an-expression
+                ~'identity))))
+    (testing "literals"
+      (doseq [v ["summary" true false nil]]
+        (is (= `["/my-route" {:get {:handler (clojure.core/fn [~'req__0] (clojure.core/let [] (do ~'identity)))
+                                    :swagger {:summary ~v}}}]
+               (dexpand-1
+                 `(sut/GET
+                    "/my-route" []
+                    :summary ~v
+                    ~'identity))))))
+    (let [g (gensym)]
+      (is (= {:summary g}
+             (get-in (sut/GET
+                       "/my-route" []
+                       :summary g
+                       ~'identity)
+                     [1 :get :swagger]))))))
