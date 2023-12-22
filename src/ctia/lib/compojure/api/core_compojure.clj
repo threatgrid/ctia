@@ -36,11 +36,11 @@
   [bindings & body]
   `(core/let-routes ~bindings ~@body))
 
-(defn undocumented
+(defmacro undocumented
   "Routes without route-documentation. Can be used to wrap routes,
   not satisfying compojure.api.routes/Routing -protocol."
   [& handlers]
-  (apply core/undocumented handlers))
+  `(core/undocumented ~@handlers))
 
 (defmacro middleware
   "Wraps routes with given middlewares using thread-first macro.

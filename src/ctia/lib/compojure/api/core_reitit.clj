@@ -18,13 +18,13 @@
   [& handlers]
   (vec handlers))
 
-(defn undocumented
+(defmacro undocumented
   "Routes without route-documentation. Can be used to wrap routes,
   not satisfying compojure.api.routes/Routing -protocol."
   [& handlers]
-  (assert nil)
+  (assert nil "TODO undocumented")
   #_
-  (apply core/undocumented handlers))
+  `(apply core/undocumented handlers))
 
 (defmacro middleware
   "Wraps routes with given middlewares using thread-first macro.
