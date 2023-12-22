@@ -5,9 +5,11 @@
             [clojure.test :refer [deftest is testing]]
             [ctia.lib.compojure.api.core-test :refer [is-banned-macro]]
             [ring.swagger.json-schema :refer [describe]]
+            [schema.utils :as su]
             [reitit.ring.coercion :as rrc]
             [reitit.coercion.schema :as rcs]
             [ctia.auth.static :refer [->ReadOnlyIdentity ->WriteIdentity]]
+            [reitit.ring.middleware.parameters :as parameters]
             [schema.core :as s]))
 
 (def compojure->reitit-endpoints
@@ -359,16 +361,70 @@
                                                                 wait_for-default__3 default
                                                                 wait_for (clojure.core/get query__2 :wait_for wait_for-default__3)]
                                                (do clojure.core/identity)))
-                                  :parameters {:query {:wait_for (ring.swagger.json-schema/describe
-                                                                   schema.core/Bool
-                                                                   "wait for patched entity to be available for search")}}}}]
+                                  :parameters {:query (schema-tools.core/optional-keys
+                                                        {:wait_for (ring.swagger.json-schema/describe
+                                                                     schema.core/Bool
+                                                                     "wait for patched entity to be available for search")})}}}]
              (dexpand-1
                `(sut/GET
                   "/my-route" []
                   :query-params [{~'wait_for :- (describe s/Bool "wait for patched entity to be available for search") ~'default}]
                   identity)))))
-    )
-  )
+    (testing "200 response"
+      (doseq [v [true false]]
+        (is (= {:status 200
+                :body v}
+               (let [app (ring/ring-handler
+                           (ring/router
+                             (sut/GET
+                               "/my-route" []
+                               :query-params [{wait_for :- (describe s/Bool "wait for patched entity to be available for search") :default}]
+                               {:status 200
+                                :body wait_for})
+                             {:data {:middleware [parameters/parameters-middleware
+                                                  rrc/coerce-request-middleware]
+                                     :coercion reitit.coercion.schema/coercion}}))]
+                 (app {:request-method :get
+                       :uri "/my-route"
+                       :query-string (str "wait_for=" v)})))))
+      (testing "default"
+        (let [default (gensym)]
+          (is (= {:status 200
+                  :body default}
+                 (let [app (ring/ring-handler
+                             (ring/router
+                               (sut/GET
+                                 "/my-route" []
+                                 :query-params [{wait_for :- (describe s/Bool "wait for patched entity to be available for search") default}]
+                                 {:status 200
+                                  :body wait_for})
+                               {:data {:middleware [parameters/parameters-middleware
+                                                    rrc/coerce-request-middleware]
+                                     :coercion reitit.coercion.schema/coercion}}))]
+                   (app {:request-method :get
+                         :uri "/my-route"}))))))
+      (testing "schema failure"
+        (try (let [app (ring/ring-handler
+                         (ring/router
+                           (sut/GET
+                             "/my-route" []
+                             :query-params [{wait_for :- (describe s/Bool "wait for patched entity to be available for search") :default}]
+                             {:status 200
+                              :body wait_for})
+                           {:data {:middleware [parameters/parameters-middleware
+                                                rrc/coerce-request-middleware]
+                                   :coercion reitit.coercion.schema/coercion}}))]
+               (app {:request-method :get
+                     :uri "/my-route"
+                     :query-string "wait_for=1"}))
+             (is false)
+             (catch Exception e
+               (let [actual (-> (ex-data e)
+                                (select-keys [:errors :type])
+                                (update :errors update-vals su/validation-error-explain))]
+                 (is (= {:errors {:wait_for (list 'not (list 'instance? java.lang.Boolean "1"))}
+                         :type :reitit.coercion/request-coercion}
+                        actual)))))))))
 
 (deftest identity-map-test
   (testing "context"

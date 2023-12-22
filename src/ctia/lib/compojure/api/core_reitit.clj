@@ -7,6 +7,7 @@
             [clojure.set :as set]
             [ctia.http.middleware.auth :as mid]
             [ctia.auth :as auth]
+            [schema-tools.core :as st]
             [ctia.lib.compojure.api.core :refer [check-return-banned!]]))
 
 ;;TODO this isn't right
@@ -170,9 +171,10 @@
                      capabilities (update :middleware (fnil conj [])
                                           [`(mid/wrap-capabilities ~capabilities)])
                      query-params (assoc-in [:parameters :query]
-                                            (into {} (map (fn [[sym {:keys [schema]}]]
-                                                            {(keyword sym) schema}))
-                                                  query-params)))}]))
+                                            (list `st/optional-keys
+                                                  (into {} (map (fn [[sym {:keys [schema]}]]
+                                                                  {(keyword sym) schema}))
+                                                        query-params))))}]))
 
 (defmacro GET     {:style/indent 2} [& args] (apply restructure-endpoint :get args))
 (defmacro ANY     {:style/indent 2} [& args] (apply restructure-endpoint :any args))
