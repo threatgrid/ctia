@@ -133,6 +133,21 @@
             (recur params
                    (assoc result sym {:schema schema}))))))))
 
+;; idea: we could support a lot more `context` restructure middleware if we asserted that
+;; bindings created from a `context` could only be used in route bodies.
+;; OK
+;;   (context "" req
+;;     (GET "" [] req))
+;;   (context "" []
+;;     :body [body Foo]
+;;     (GET "" [] foo))
+;; banned
+;;   (context "" req
+;;     :middleware [req]
+;;     (GET "" [] req))
+;;   (context "" req
+;;     :body [req req]
+;;     (GET "" [] req))
 (defn ^:private prevent-scoping-difference-error!
   [arg options]
   (walk/postwalk (fn [s]
@@ -261,12 +276,14 @@
                                                                             {})))
                                                           [this-middleware])))
                      query-params (assoc-in [:parameters :query]
+                                            ;; TODO does compojure-api optionalize?
                                             (list `st/optional-keys
                                                   (into {} (map (fn [[sym {:keys [schema]}]]
                                                                   {(keyword sym) schema}))
                                                         query-params)))
                      query (update-in [:parameters :query] (fn [prev]
                                                              (assert (not prev))
+                                                             ;; TODO does compojure-api optionalize?
                                                              (:schema query)))
                      path-params (assoc-in [:parameters :path]
                                            (into {} (map (fn [[sym {:keys [schema]}]]

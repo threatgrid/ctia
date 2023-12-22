@@ -907,3 +907,14 @@
                  (is (= {:errors {:wait_for (list 'not (list 'instance? java.lang.Boolean "1"))}
                          :type :reitit.coercion/request-coercion}
                         actual)))))))))
+
+(deftest body-test
+  (testing "context"
+    (is-banned-macro
+      `(sut/context
+         "/my-route" []
+         :body ~'[l r]
+         ~'routes)
+       "Not allowed these options in `context`, push into HTTP verbs instead: (:body)"))
+  (testing "endpoint"
+    ))
