@@ -342,9 +342,56 @@
          ~'routes)
       "Not allowed these options in `context`, push into HTTP verbs instead: (:path-params)"))
   (testing "endpoints"
-    ;;TODO
-    )
-  )
+    (testing "expansion"
+      (is (= '["/my-route" {:get {:handler (clojure.core/fn [req__0]
+                                             (clojure.core/let [parameters__1 (:parameters req__0)
+                                                                path__2 (:path parameters__1)
+                                                                id (clojure.core/get path__2 :id)]
+                                               (do identity)))
+                                  :parameters {:path {:id schema.core/Str}}}}]
+             (dexpand-1
+               `(sut/GET
+                  "/my-route" []
+                  :path-params [~'id :- s/Str]
+                  ~'identity)))))
+    (testing "200 response"
+      (testing "passes schema"
+        (let [g (str (random-uuid))]
+          (is (= {:status 200
+                  :body g}
+                 (let [app (ring/ring-handler
+                             (ring/router
+                               (sut/GET
+                                 "/:id/foo" []
+                                 :path-params [id :- s/Str]
+                                 {:status 200
+                                  :body id})
+                               {:data {:middleware [parameters/parameters-middleware
+                                                    rrc/coerce-request-middleware]
+                                       :coercion reitit.coercion.schema/coercion}}))]
+                   (app {:request-method :get
+                         :uri (str "/" g "/foo")}))))))
+      (testing "fails schema"
+        (try (let [app (ring/ring-handler
+                         (ring/router
+                           (sut/GET
+                             "/:id/foo" []
+                             :path-params [id :- s/Int]
+                             {:status 200
+                              :body id})
+                           {:data {:middleware [parameters/parameters-middleware
+                                                rrc/coerce-request-middleware]
+                                   :coercion reitit.coercion.schema/coercion}}))]
+               (app {:request-method :get
+                     :uri "/not-a-number/foo"}))
+             (is false)
+             (catch Exception e
+               (let [actual (-> (ex-data e)
+                                (select-keys [:errors :type])
+                                (update :errors update-vals su/validation-error-explain))]
+                 (is (= {:errors {:id '(not (integer? "not-a-number"))}
+                         :type :reitit.coercion/request-coercion}
+                        actual)))))))))
 
 (deftest query-params-test
   (testing "context"

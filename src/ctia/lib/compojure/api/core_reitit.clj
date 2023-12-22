@@ -65,7 +65,7 @@
       ~@(some-> (not-empty reitit-opts) list)
       (routes ~@body)]))
 
-(def ^:private allowed-endpoint-options #{:responses :capabilities :auth-identity :identity-map :query-params})
+(def ^:private allowed-endpoint-options #{:responses :capabilities :auth-identity :identity-map :query-params :path-params})
 
 (defn validate-responses! [responses]
   (assert (map? responses))
@@ -88,31 +88,45 @@
                              (assert (:schema rhs))
                              (set/rename-keys rhs {:schema :body})))))
 
-;; [{wait_for :- (describe s/Bool "wait for patched entity to be available for search") nil}]
-;; =>
-;; {wait_for {:schema (describe s/Bool "wait for patched entity to be available for search")
-;;            :default nil}}
 (defn ^:private parse-params [params]
-  (assert (vector? params))
-  (into (sorted-map)
-        (map (fn [m]
-               (assert (map? m))
-               (assert (= 2 (count m)))
-               (let [[[sym _] [schema default]]
-                     (let [[l r] (seq m)]
-                       (if (-> l val (= :-))
-                         [l r]
-                         [r l]))]
-                 {sym {:schema schema
-                       :default default}})))
-        params))
+  (assert (vector? params) (str "params must be a vector: " (pr-str params)))
+  (loop [params params
+         result (sorted-map)]
+    (if (empty? params)
+      result
+      (let [f (first params)]
+        (if (map? f)
+          ;; [{wait_for :- (describe s/Bool "wait for patched entity to be available for search") nil}]
+          ;; =>
+          ;; {wait_for {:schema (describe s/Bool "wait for patched entity to be available for search")
+          ;;            :default nil}}
+          (let [m f
+                _ (assert (= 2 (count m)) (str "incorrect map params syntax, must be length 2: " (pr-str m)))
+                [[sym _] [schema default]]
+                (let [[l r] (seq m)]
+                  (if (-> l val (= :-))
+                    [l r]
+                    [r l]))]
+            (recur (next params)
+                   (assoc result sym {:schema schema
+                                      :default default})))
+          ;; [wait_for :- (describe s/Bool "wait for patched entity to be available for search")]
+          ;; =>
+          ;; {wait_for {:schema (describe s/Bool "wait for patched entity to be available for search")}}
+          (let [[turnstile schema & params] (next params)
+                sym f]
+            (assert (simple-symbol? sym) (str "expected first value to be a simple symbol in " [sym turnstile schema]))
+            (assert (= :- turnstile) (str "expected :- after " sym))
+            (assert schema (str "missing schema in params for: " sym))
+            (recur params
+                   (assoc result sym {:schema schema}))))))))
 
 (defn ^:private restructure-endpoint [http-kw path arg & args]
   (assert (simple-keyword? http-kw))
   (assert (or (= [] arg)
               (simple-symbol? arg))
           (pr-str arg))
-  (let [[{:keys [capabilities query-params auth-identity identity-map] :as options} body] (common/extract-parameters args true)
+  (let [[{:keys [capabilities auth-identity identity-map] :as options} body] (common/extract-parameters args true)
         _ (check-return-banned! options)
         _ (when-some [extra-keys (not-empty (set/difference (set (keys options))
                                                             allowed-endpoint-options))]
@@ -123,6 +137,8 @@
                     `(compojure->reitit-responses ~responses))
         query-params (when-some [[_ query-params] (find options :query-params)]
                        (parse-params query-params))
+        path-params (when-some [[_ path-params] (find options :path-params)]
+                      (parse-params path-params))
         greq (*gensym* "req")
         gparameters (delay (*gensym* "parameters"))
         gidentity (delay (*gensym* "identity"))
@@ -136,6 +152,7 @@
                                   (when (simple-symbol? arg)
                                     {:scoped [arg greq]})
                                   (when (or query-params
+                                            path-params
                                             ;; TODO
                                             )
                                     {:gs [@gparameters (list :parameters greq)]})
@@ -148,6 +165,14 @@
                                                       {:gs [gdefault default]
                                                        :scoped [sym (list `get gquery (keyword sym) gdefault)]}))
                                                   query-params))))
+                                  (when path-params
+                                    (let [gpath (*gensym* "path")]
+                                      (apply merge-with into 
+                                             {:gs [gpath (list :path @gparameters)]}
+                                             (map (fn [[sym {:keys [schema] :as opts}]]
+                                                    (assert (= [:schema] (keys opts)) "no default allowed for path params")
+                                                    {:scoped [sym (list `get gpath (keyword sym))]})
+                                                  path-params))))
                                   (when (or auth-identity identity-map)
                                     {:gs [@gidentity (list :identity greq)]})
                                   (when auth-identity
@@ -177,7 +202,11 @@
                                             (list `st/optional-keys
                                                   (into {} (map (fn [[sym {:keys [schema]}]]
                                                                   {(keyword sym) schema}))
-                                                        query-params))))}]))
+                                                        query-params)))
+                     path-params (assoc-in [:parameters :path]
+                                           (into {} (map (fn [[sym {:keys [schema]}]]
+                                                           {(keyword sym) schema}))
+                                                 path-params)))}]))
 
 (defmacro GET     {:style/indent 2} [& args] (apply restructure-endpoint :get args))
 (defmacro ANY     {:style/indent 2} [& args] (apply restructure-endpoint :any args))
