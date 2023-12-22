@@ -49,21 +49,7 @@
          (sut/context
            "/my-route" []
            identity)))
-  (is (= ["/my-route"
-          {:swagger {:tags #{:foo :bar}}}
-          [identity]]
-         (sut/context
-           "/my-route" []
-           :tags #{:foo :bar}
-           identity)))
-  (is (= ["/my-route"
-          {:swagger {:tags 'tags-are-compile-time-literals}}
-          [identity]]
-         (let [tags-are-compile-time-literals #{:foo :bar}]
-           (sut/context
-             "/my-route" []
-             :tags tags-are-compile-time-literals
-             identity))))
+  
   (is (= '["/my-route" {:middleware [[(ctia.http.middleware.auth/wrap-capabilities :create-incident)]]}
            (ctia.lib.compojure.api.core-reitit/routes clojure.core/identity)]
          (dexpand-1
@@ -598,4 +584,36 @@
                      "/my-route" []
                      :description "a description"
                      ~'identity)
+                   [1 :get :swagger])))))
+
+(deftest tags-test
+  (testing "context"
+    (is (= ["/my-route"
+            {:swagger {:tags #{:foo :bar}}}
+            [identity]]
+           (sut/context
+             "/my-route" []
+             :tags #{:foo :bar}
+             identity)))
+    (is (= ["/my-route"
+            {:swagger {:tags 'tags-are-compile-time-literals}}
+            [identity]]
+           (let [tags-are-compile-time-literals #{:foo :bar}]
+             (sut/context
+               "/my-route" []
+               :tags tags-are-compile-time-literals
+               identity)))))
+  (testing "GET"
+    (is (= '["/my-route" {:get {:handler (clojure.core/fn [req__0] (clojure.core/let [] (do identity)))
+                                :swagger {:tags (quote tags-are-compile-time-literals)}}}]
+           (dexpand-1
+             `(sut/GET
+                "/my-route" []
+                :tags ~'tags-are-compile-time-literals
+                ~'identity))))
+    (is (= {:tags 'tags-are-compile-time-literals}
+           (get-in (sut/GET
+                     "/my-route" []
+                     :tags tags-are-compile-time-literals
+                     identity)
                    [1 :get :swagger])))))
