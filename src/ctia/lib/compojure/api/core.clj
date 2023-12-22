@@ -94,8 +94,23 @@
                                options)
                      ~groutes))))
 
+(def ^:private allowed-endpoint-options #{:auth-identity :capabilities :description :identity-map :path-params :query-params :responses :summary
+                                          :tags :middleware
+                                          ;;TODO
+                                          :body
+                                          :query
+                                          :no-doc
+                                          :produces
+                                          })
+
 (defn restructure-endpoint [macro path arg & args]
+
   (let [_ (let [[options _body] (common/extract-parameters args true)]
+            (when-some [extra-keys (not-empty (set/difference (set (keys options))
+                                                              allowed-endpoint-options))]
+              (throw (ex-info (str "Not allowed these options in `endpoints`: "
+                                   (pr-str (sort extra-keys)))
+                              {})))
             (check-return-banned! options))]
     (list* macro path arg args)))
 
