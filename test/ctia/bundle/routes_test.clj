@@ -1455,7 +1455,6 @@
           (let [new-properties [{:name "something1" :value newv1}
                                 {:name "something-else" :value newv2}]
                 updated-asset_property1 (-> asset_property1
-                                            ;(select-keys [:id :asset_ref :type])
                                             (assoc :properties new-properties))
                 updated-asset_mapping1 asset_mapping1
                 update-bundle (-> bundle-minimal
