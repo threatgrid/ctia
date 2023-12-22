@@ -32,9 +32,9 @@
   do not match the request uri. Be careful with middlewares that
   have side-effects."
   {:style/indent 1}
-  [middleware & body]
+  [middleware & body-exprs]
   `["" {:middleware ~middleware}
-    [~@body]])
+    [~@body-exprs]])
 
 (def ^:private allowed-context-options #{:tags :capabilities :description :responses :summary})
 
@@ -50,7 +50,7 @@
                  (= [] arg))
     (throw (ex-info (str "Not allowed to bind anything in context, push into HTTP verbs instead: " (pr-str arg))
                     {})))
-  (let [[options body] ((requiring-resolve 'compojure.api.common/extract-parameters) args true)
+  (let [[options body-exprs] ((requiring-resolve 'compojure.api.common/extract-parameters) args true)
         _ (check-return-banned! options)
         _ (when-some [extra-keys (not-empty (set/difference (set (keys options))
                                                             allowed-context-options))]
@@ -68,10 +68,10 @@
                         responses (assoc :responses `(compojure->reitit-responses ~responses))))]
     `[~path
       ~@(some-> (not-empty reitit-opts) list)
-      (routes ~@body)]))
+      (routes ~@body-exprs)]))
 
 (def ^:private allowed-endpoint-options #{:responses :capabilities :auth-identity :identity-map :query-params :path-params
-                                          :description :tags :no-doc :summary :produces :middleware :query})
+                                          :description :tags :no-doc :summary :produces :middleware :query :body})
 (comment
   ;; todo list
   (set/difference @#'ctia.lib.compojure.api.core/allowed-endpoint-options
@@ -169,7 +169,7 @@
   (assert (or (= [] arg)
               (simple-symbol? arg))
           (pr-str arg))
-  (let [[{:keys [capabilities auth-identity identity-map tags middleware] :as options} body] (common/extract-parameters args true)
+  (let [[{:keys [capabilities auth-identity identity-map tags middleware] :as options} body-exprs] (common/extract-parameters args true)
         _ (check-return-banned! options)
         _ (when (simple-symbol? arg)
             (prevent-scoping-difference-error! arg options))
@@ -182,22 +182,29 @@
                     `(compojure->reitit-responses ~responses))
         query-params (when-some [[_ query-params] (find options :query-params)]
                        (parse-params query-params))
-        query (when-some [[_ [binder schema :as query]] (find options :query)]
+        query (when-some [[_ [bind schema :as query]] (find options :query)]
                 (when query-params
                   (throw (ex-info "Cannot use both :query-params and :query, please combine them."
                                   {})))
                 (when-not (and (vector? query) (= 2 (count query)))
                   (throw (ex-info ":query must be a vector of length 2" {})))
-                (assert binder)
+                (assert bind)
                 (assert schema)
-                {:binder binder
+                {:bind bind
                  :schema schema})
+        body (when-some [[_ [bind schema :as body]] (find options :body)]
+               (when-not (and (vector? body) (= 2 (count body)))
+                 (throw (ex-info ":body must be a vector of length 2" {})))
+               (assert bind)
+               (assert schema)
+               {:bind bind
+                :schema schema})
         path-params (when-some [[_ path-params] (find options :path-params)]
                       (parse-params path-params))
         greq (*gensym* "req")
         gparameters (delay (*gensym* "parameters"))
         gidentity (delay (*gensym* "identity"))
-        needs-parameters? (or query-params path-params query)
+        needs-parameters? (or query-params path-params query body)
         ;; `gs` are uncapturable variables via gensym. they are bound first so
         ;; they can be bound to capturable expressions.
         ;; `scoped` are capturable variables provided by user. they are bound last,
@@ -226,10 +233,14 @@
                                                     (assert (= [:schema] (keys opts)) "no default allowed for path params")
                                                     {:scoped [sym (list `get gpath (keyword sym))]})
                                                   path-params))))
-                                  (when-some [{:keys [binder]} query]
+                                  (when-some [{:keys [bind]} query]
                                     (let [gquery (*gensym* "query")]
                                       {:gs [gquery (list :query @gparameters)]
-                                       :scoped [binder gquery]}))
+                                       :scoped [bind gquery]}))
+                                  (when-some [{:keys [bind]} body]
+                                    (let [gbody (*gensym* "body")]
+                                      {:gs [gbody (list :body @gparameters)]
+                                       :scoped [bind gbody]}))
                                   (when (or auth-identity identity-map)
                                     {:gs [@gidentity (list :identity greq)]})
                                   (when auth-identity
@@ -251,7 +262,7 @@
                            (pr-str (sort names))))))]
     [path {http-kw (cond-> {:handler `(fn [~greq]
                                         (let ~(into gs scoped)
-                                          (do ~@body)))}
+                                          (do ~@body-exprs)))}
                      (contains? options :description) (assoc-in [:swagger :description] (:description options))
                      ;; literal in compojure-api, so we conserve the semantics
                      tags (assoc-in [:swagger :tags] (list 'quote tags))
@@ -285,6 +296,9 @@
                                                              (assert (not prev))
                                                              ;; TODO does compojure-api optionalize?
                                                              (:schema query)))
+                     body (update-in [:parameters :body] (fn [prev]
+                                                           (assert (not prev))
+                                                           (:schema body)))
                      path-params (assoc-in [:parameters :path]
                                            (into {} (map (fn [[sym {:keys [schema]}]]
                                                            {(keyword sym) schema}))

@@ -917,4 +917,22 @@
          ~'routes)
        "Not allowed these options in `context`, push into HTTP verbs instead: (:body)"))
   (testing "endpoint"
+    (is-banned-macro
+      `(sut/GET
+         "/my-route" []
+         :body ~'[{foo :bar :as params}]
+         ~'routes)
+      ":body must be a vector of length 2")
+    (is (= '["/my-route" {:get {:handler (clojure.core/fn [req__0]
+                                           (clojure.core/let [parameters__1 (:parameters req__0)
+                                                              body__2 (:body parameters__1)
+                                                              {foo :bar :as body} body__2]
+                                             (do routes)))
+                                :parameters {:body Schema}}}]
+           (dexpand-1
+             `(sut/GET
+                "/my-route" []
+                :body ~'[{foo :bar :as body}
+                         Schema]
+                ~'routes))))
     ))
