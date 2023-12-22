@@ -370,7 +370,25 @@
                                                     rrc/coerce-request-middleware]
                                        :coercion reitit.coercion.schema/coercion}}))]
                    (app {:request-method :get
-                         :uri (str "/" g "/foo")}))))))
+                         :uri (str "/" g "/foo")})))))
+        (testing "in context"
+          (let [g (str (random-uuid))]
+            (is (= {:status 200
+                    :body g}
+                   (let [app (ring/ring-handler
+                               (ring/router
+                                 (sut/context
+                                   "/:id" []
+                                   (sut/GET
+                                     "/foo" []
+                                     :path-params [id :- s/Str]
+                                     {:status 200
+                                      :body id}))
+                                 {:data {:middleware [parameters/parameters-middleware
+                                                      rrc/coerce-request-middleware]
+                                         :coercion reitit.coercion.schema/coercion}}))]
+                     (app {:request-method :get
+                           :uri (str "/" g "/foo")})))))))
       (testing "fails schema"
         (try (let [app (ring/ring-handler
                          (ring/router
@@ -391,7 +409,30 @@
                                 (update :errors update-vals su/validation-error-explain))]
                  (is (= {:errors {:id '(not (integer? "not-a-number"))}
                          :type :reitit.coercion/request-coercion}
-                        actual)))))))))
+                        actual)))))
+        (testing "in context"
+          (try (let [app (ring/ring-handler
+                           (ring/router
+                             (sut/context
+                               "/:id" []
+                               (sut/GET
+                                 "/foo" []
+                                 :path-params [id :- s/Int]
+                                 {:status 200
+                                  :body id}))
+                             {:data {:middleware [parameters/parameters-middleware
+                                                  rrc/coerce-request-middleware]
+                                     :coercion reitit.coercion.schema/coercion}}))]
+                 (app {:request-method :get
+                       :uri "/not-a-number/foo"}))
+               (is false)
+               (catch Exception e
+                 (let [actual (-> (ex-data e)
+                                  (select-keys [:errors :type])
+                                  (update :errors update-vals su/validation-error-explain))]
+                   (is (= {:errors {:id '(not (integer? "not-a-number"))}
+                           :type :reitit.coercion/request-coercion}
+                          actual))))))))))
 
 (deftest query-params-test
   (testing "context"
