@@ -5,12 +5,12 @@
   Always use this namespace over compojure.api.{core,sweet}
   as it also loads the CTIA routing extensions."
   (:require [compojure.api.common :as common]
+            [ctia.lib.compojure.api.core-common :refer [check-return-banned!]]
             [clojure.set :as set]
             [clojure.walk :as walk]
             [ctia.http.middleware.auth :as mid]
             [ctia.auth :as auth]
-            [schema-tools.core :as st]
-            [ctia.lib.compojure.api.core :refer [check-return-banned!]]))
+            [schema-tools.core :as st]))
 
 ;;TODO this isn't right
 (defn routes
@@ -194,7 +194,7 @@
                  :schema schema})
         body (when-some [[_ [bind schema :as body]] (find options :body)]
                (when-not (and (vector? body) (= 2 (count body)))
-                 (throw (ex-info ":body must be a vector of length 2" {})))
+                 (throw (ex-info (str ":body must be a vector of length 2: " (pr-str body)) {})))
                (assert bind)
                (assert schema)
                {:bind bind
