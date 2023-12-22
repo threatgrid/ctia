@@ -267,7 +267,7 @@
          (POST "/" []
                :responses {201 {:schema entity-schema}}
                :query-params [{wait_for :- (describe s/Bool "wait for entity to be available for search") nil}]
-               :body [new-entity new-schema {:description (format "a new %s" capitalized)}]
+               :body [new-entity (describe new-schema (format "a new %s" capitalized))]
                :summary (format "Adds a new %s" capitalized)
                :description (capabilities->description capabilities)
                :capabilities capabilities
@@ -294,7 +294,7 @@
        (let [capabilities put-capabilities]
          (PUT "/:id" []
               :responses {200 {:schema entity-schema}}
-              :body [entity-update new-schema {:description (format "an updated %s" capitalized)}]
+              :body [entity-update (describe new-schema (format "an updated %s" capitalized))]
               :summary (format "Update an existing %s" capitalized)
               :query-params [{wait_for :- (describe s/Bool "wait for updated entity to be available for search") nil}]
               :path-params [id :- s/Str]
@@ -321,7 +321,7 @@
        (let [capabilities patch-capabilities]
          (PATCH "/:id" []
                 :responses {200 {:schema entity-schema}}
-                :body [partial-update patch-schema {:description (format "%s partial update" capitalized)}]
+                :body [partial-update (describe patch-schema (format "%s partial update" capitalized))]
                 :summary (format "Partially update an existing %s" capitalized)
                 :query-params [{wait_for :- (describe s/Bool "wait for patched entity to be available for search") nil}]
                 :path-params [id :- s/Str]

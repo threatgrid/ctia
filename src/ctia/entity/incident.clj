@@ -185,8 +185,8 @@
     (let [capabilities :create-incident]
       (POST "/:id/status" []
             :responses {200 {:schema Incident}}
-            :body [update IncidentStatusUpdate
-                   {:description "an Incident Status Update"}]
+            :body [update (describe IncidentStatusUpdate
+                                    "an Incident Status Update")]
             :summary "Update an Incident Status"
             :query-params [{wait_for :- (describe s/Bool "wait for updated entity to be available for search") nil}]
             :path-params [id :- s/Str]

@@ -8,7 +8,7 @@
 (def current-impl 
   (nth [:reitit
         :compojure-api]
-       1))
+       0))
 
 ;; banned
 (ns-unalias *ns* 'core)

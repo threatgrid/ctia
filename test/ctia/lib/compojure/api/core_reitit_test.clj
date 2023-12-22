@@ -3,7 +3,7 @@
             [ctia.http.middleware.auth :as mid]
             [reitit.ring :as ring]
             [clojure.test :refer [deftest is testing]]
-            [ctia.lib.compojure.api.core-test :refer [is-banned-macro]]
+            [ctia.lib.compojure.api.core-compojure-test :refer [is-banned-macro]]
             [ring.swagger.json-schema :refer [describe]]
             [schema.utils :as su]
             [reitit.ring.coercion :as rrc]

@@ -38,7 +38,7 @@
        (POST "/" []
          :responses {201 {:schema (bulk.schemas/BulkCreateRes services)}}
          :query-params [{wait_for :- (describe s/Bool "wait for created entities to be available for search") nil}]
-         :body [bulk (bulk.schemas/NewBulk services) {:description "a new Bulk object"}]
+         :body [bulk (describe (bulk.schemas/NewBulk services) "a new Bulk object")]
          :summary "POST many new entities using a single HTTP call"
          :auth-identity login
          :description (common/capabilities->description capabilities)
@@ -53,7 +53,7 @@
          :responses {200 {:schema (s/maybe (bulk.schemas/BulkActionsRefs services))}}
          :summary "UPDATE many entities at once"
          :query-params [{wait_for :- (describe s/Bool "wait for updated entities to be available for search") nil}]
-         :body [bulk (bulk.schemas/BulkUpdate services) {:description "a new Bulk Update object"}]
+         :body [bulk (describe (bulk.schemas/BulkUpdate services) "a new Bulk Update object")]
          :description (common/capabilities->description capabilities)
          :capabilities capabilities
          :auth-identity auth-identity
@@ -144,7 +144,7 @@
         :responses {200 {:schema (s/maybe (bulk.schemas/BulkActionsRefs services))}}
         :summary "PATCH many entities at once"
         :query-params [{wait_for :- (describe s/Bool "wait for patched entities to be available for search") nil}]
-        :body [bulk (bulk.schemas/BulkPatch services) {:description "a new Bulk Patch object"}]
+        :body [bulk (describe (bulk.schemas/BulkPatch services) "a new Bulk Patch object")]
         :description (common/capabilities->description capabilities)
         :capabilities capabilities
         :auth-identity auth-identity
@@ -181,7 +181,7 @@
           :responses {200 {:schema (s/maybe (bulk.schemas/BulkActionsRefs services))}}
           :summary "DELETE many entities at once"
           :query-params [{wait_for :- (describe s/Bool "wait for deleted entities to not be available anymore for search") nil}]
-          :body [bulk (bulk.schemas/BulkRefs services) {:description "a new Bulk Delete object"}]
+          :body [bulk (describe (bulk.schemas/BulkRefs services) "a new Bulk Delete object")]
           :description (common/capabilities->description capabilities)
           :capabilities capabilities
           :auth-identity auth-identity
