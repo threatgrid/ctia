@@ -65,21 +65,7 @@
               :capabilities ~'capabilities-are-expressions
               identity))))
   
-  (is (= ["/my-route"
-          {:swagger {:summary "a summary"}}
-          [identity]]
-         (sut/context
-           "/my-route" []
-           :summary "a summary"
-           identity)))
-  (is (= ["/my-route"
-          {:swagger {:summary "a summary"}}
-          [identity]]
-         (let [summarys-are-expressions "a summary"]
-           (sut/context
-             "/my-route" []
-             :summary summarys-are-expressions
-             identity))))
+  
   (is (= ["/my-route"
           {:responses {200 {:body {:a (s/enum "schema")}}}}
           [identity]]
@@ -655,13 +641,21 @@
 
 (deftest summary-test
   (testing "context"
-    ;; could easily be supported if needed
-    (is-banned-macro
-      `(sut/context
-         "/my-route" []
-         :summary ~'an-expression
-         ~'routes)
-      "Not allowed these options in `context`, push into HTTP verbs instead: (:summary)"))
+    (is (= ["/my-route"
+            {:swagger {:summary "a summary"}}
+            [identity]]
+           (sut/context
+             "/my-route" []
+             :summary "a summary"
+             identity)))
+  (is (= ["/my-route"
+          {:swagger {:summary "a summary"}}
+          [identity]]
+         (let [summarys-are-expressions "a summary"]
+           (sut/context
+             "/my-route" []
+             :summary summarys-are-expressions
+             identity)))))
   (testing "GET"
     (is (= '["/my-route" {:get {:handler (clojure.core/fn [req__0] (clojure.core/let [] (do identity)))
                                 :swagger {:summary an-expression}}}]
@@ -684,5 +678,39 @@
              (get-in (sut/GET
                        "/my-route" []
                        :summary g
+                       ~'identity)
+                     [1 :get :swagger]))))))
+
+(deftest produces-test
+  (testing "context"
+    ;; could easily be supported if needed
+    (is-banned-macro
+      `(sut/context
+         "/my-route" []
+         :produces ~'an-expression
+         ~'routes)
+      "Not allowed these options in `context`, push into HTTP verbs instead: (:produces)"))
+  (testing "GET"
+    (is (= '["/my-route" {:get {:handler (clojure.core/fn [req__0] (clojure.core/let [] (do identity)))
+                                :swagger {:produces an-expression}}}]
+           (dexpand-1
+             `(sut/GET
+                "/my-route" []
+                :produces ~'an-expression
+                ~'identity))))
+    (testing "literals"
+      (doseq [v ["produces" true false nil]]
+        (is (= `["/my-route" {:get {:handler (clojure.core/fn [~'req__0] (clojure.core/let [] (do ~'identity)))
+                                    :swagger {:produces ~v}}}]
+               (dexpand-1
+                 `(sut/GET
+                    "/my-route" []
+                    :produces ~v
+                    ~'identity))))))
+    (let [g (gensym)]
+      (is (= {:produces g}
+             (get-in (sut/GET
+                       "/my-route" []
+                       :produces g
                        ~'identity)
                      [1 :get :swagger]))))))

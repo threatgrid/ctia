@@ -66,8 +66,7 @@
       (routes ~@body)]))
 
 (def ^:private allowed-endpoint-options #{:responses :capabilities :auth-identity :identity-map :query-params :path-params
-                                          :description :tags :no-doc :summary})
-
+                                          :description :tags :no-doc :summary :produces})
 (comment
   ;; todo list
   (set/difference @#'ctia.lib.compojure.api.core/allowed-endpoint-options
@@ -208,6 +207,7 @@
                      tags (assoc-in [:swagger :tags] (list 'quote tags))
                      (contains? options :no-doc) (assoc-in [:swagger :no-doc] (:no-doc options))
                      (contains? options :summary) (assoc-in [:swagger :summary] (:summary options))
+                     (contains? options :produces) (assoc-in [:swagger :produces] (:produces options))
                      responses (assoc :responses responses)
                      capabilities (update :middleware (fnil conj [])
                                           [`(mid/wrap-capabilities ~capabilities)])
