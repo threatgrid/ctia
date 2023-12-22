@@ -1451,11 +1451,11 @@
                       relationship4-id [{:source_ref incident-id
                                          :target_ref asset_property2-id}]}
                      groups)))))
-        (testing "asset-properties and asset-mappings are patched"
+        (testing "asset-properties and asset-mappings always create new entities"
           (let [new-properties [{:name "something1" :value newv1}
                                 {:name "something-else" :value newv2}]
                 updated-asset_property1 (-> asset_property1
-                                            (select-keys [:id :asset_ref :type])
+                                            ;(select-keys [:id :asset_ref :type])
                                             (assoc :properties new-properties))
                 updated-asset_mapping1 asset_mapping1
                 update-bundle (-> bundle-minimal
@@ -1472,7 +1472,10 @@
                                               {update-results :results :as update-bundle-result} (:parsed-body update-response)]
                                           (when (is (= 200 (:status update-response)))
                                             (is (= 3 (count update-results)) update-results)
-                                            (is (every? (comp #{"updated"} :result) update-results)
+                                            (is (= [[:asset "updated"]
+                                                    [:asset-mapping "created"]
+                                                    [:asset-properties "created"]]
+                                                   (sort-by first (map (juxt :type :result) update-results)))
                                                 (pr-str (mapv :result update-results)))
                                             (let [get-stored (fn [entity]
                                                                (let [realized-id (some (fn [{:keys [original_id id]}]
@@ -1504,9 +1507,7 @@
             ;; the order in which we test these merge strategies is important since we're patching the same entities.
             (test-merge-strategy "with asset_properties-merge-strategy=merge-overriding-previous"
                                  {"asset_properties-merge-strategy" "merge-overriding-previous"}
-                                 [{:name "something-else" :value newv2}
-                                  {:name "something1" :value newv1}
-                                  {:name "something2" :value oldv2}])
+                                 new-properties)
             (test-merge-strategy "no asset_properties merge strategy"
                                  {}
                                  new-properties)))
