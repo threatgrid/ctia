@@ -112,7 +112,7 @@
   (assert (or (= [] arg)
               (simple-symbol? arg))
           (pr-str arg))
-  (let [[{:keys [capabilities query-params] :as options} body] (common/extract-parameters args true)
+  (let [[{:keys [capabilities query-params auth-identity identity-map] :as options} body] (common/extract-parameters args true)
         _ (check-return-banned! options)
         _ (when-some [extra-keys (not-empty (set/difference (set (keys options))
                                                             allowed-endpoint-options))]
@@ -125,6 +125,7 @@
                        (parse-params query-params))
         greq (*gensym* "req")
         gparameters (delay (*gensym* "parameters"))
+        gidentity (delay (*gensym* "identity"))
         ;; `gs` are uncapturable variables via gensym. they are bound first so
         ;; they can be bound to capturable expressions.
         ;; `scoped` are capturable variables provided by user. they are bound last,
@@ -147,14 +148,16 @@
                                                       {:gs [gdefault default]
                                                        :scoped [sym (list `get gquery (keyword sym) gdefault)]}))
                                                   query-params))))
-                                  (when-some [[_ auth-identity] (find options :auth-identity)]
+                                  (when (or auth-identity identity-map)
+                                    {:gs [@gidentity (list :identity greq)]})
+                                  (when auth-identity
                                     (assert (simple-symbol? auth-identity) (str ":auth-identity must be a simple symbol: "
                                                                                 (pr-str auth-identity)))
-                                    {:scoped [auth-identity (list :identity greq)]})
-                                  (when-some [[_ identity-map] (find options :identity-map)]
+                                    {:scoped [auth-identity @gidentity]})
+                                  (when identity-map
                                     (assert (simple-symbol? identity-map) (str ":identity-map must be a simple symbol: "
                                                                                (pr-str identity-map)))
-                                    {:scoped [identity-map (list `auth/ident->map (list :identity greq))]}))
+                                    {:scoped [identity-map (list `auth/ident->map @gidentity)]}))
         _ (when (seq gs)
             (assert (apply distinct? (map first (partition 2 gs)))))
         _ (when (seq scoped)

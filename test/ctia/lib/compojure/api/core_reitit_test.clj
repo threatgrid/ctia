@@ -309,7 +309,8 @@
   (testing "GET"
     (testing "expansion"
       (is (= '["/my-route" {:get {:handler (clojure.core/fn [req__0]
-                                             (clojure.core/let [scoped-identity (:identity req__0)]
+                                             (clojure.core/let [identity__1 (:identity req__0)
+                                                                scoped-identity identity__1]
                                                (do clojure.core/identity)))}}]
              (dexpand-1
                `(sut/GET
@@ -437,7 +438,8 @@
   (testing "GET"
     (testing "expansion"
       (is (= '["/my-route" {:get {:handler (clojure.core/fn [req__0]
-                                             (clojure.core/let [scoped-identity-map (ctia.auth/ident->map (:identity req__0))]
+                                             (clojure.core/let [identity__1 (:identity req__0)
+                                                                scoped-identity-map (ctia.auth/ident->map identity__1)]
                                                (do clojure.core/identity)))}}]
              (dexpand-1
                `(sut/GET
