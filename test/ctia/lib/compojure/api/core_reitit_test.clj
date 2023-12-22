@@ -364,10 +364,31 @@
          :identity-map ~'identity-map
          ~'routes)
       "Not allowed these options in `context`, push into HTTP verbs instead: (:identity-map)"))
-  (testing "endpoints"
-    ;;TODO
-    )
-  )
+  (testing "GET"
+    (testing "expansion"
+      (is (= '["/my-route" {:get {:handler (clojure.core/fn [req__0]
+                                             (clojure.core/let [scoped-identity-map (ctia.auth/ident->map (:identity req__0))]
+                                               (do clojure.core/identity)))}}]
+             (dexpand-1
+               `(sut/GET
+                  "/my-route" []
+                  :identity-map ~'scoped-identity-map
+                  identity)))))
+    (testing "200 response"
+      (let [id (->ReadOnlyIdentity)]
+        (is (= {:status 200
+                :body {:login "Unknown"
+                       :groups ["Unknown Group"]
+                       :client-id nil}}
+               (let [app (ring/ring-handler
+                           (ring/router
+                             (sut/GET "/my-route" []
+                                      :identity-map scoped-identity-map
+                                      {:status 200
+                                       :body scoped-identity-map})))]
+                 (app {:request-method :get
+                       :uri "/my-route"
+                       :identity id}))))))))
 
 (deftest return-test
   (testing "context"

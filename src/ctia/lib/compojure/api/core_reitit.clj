@@ -6,6 +6,7 @@
   (:require [compojure.api.common :as common]
             [clojure.set :as set]
             [ctia.http.middleware.auth :as mid]
+            [ctia.auth :as auth]
             [ctia.lib.compojure.api.core :refer [check-return-banned!]]))
 
 ;;TODO this isn't right
@@ -63,7 +64,7 @@
       ~@(some-> (not-empty reitit-opts) list)
       (routes ~@body)]))
 
-(def ^:private allowed-endpoint-options #{:responses :capabilities :auth-identity})
+(def ^:private allowed-endpoint-options #{:responses :capabilities :auth-identity :identity-map})
 
 (defn validate-responses! [responses]
   (assert (map? responses))
@@ -91,7 +92,7 @@
   (assert (or (= [] arg)
               (simple-symbol? arg))
           (pr-str arg))
-  (let [[{:keys [responses capabilities auth-identity] :as options} body] (common/extract-parameters args true)
+  (let [[{:keys [responses capabilities] :as options} body] (common/extract-parameters args true)
         _ (check-return-banned! options)
         _ (when-some [extra-keys (not-empty (set/difference (set (keys options))
                                                             allowed-endpoint-options))]
@@ -104,10 +105,14 @@
         lets (vec (concat
                     (when (simple-symbol? arg)
                       [arg greq])
-                    (when auth-identity
+                    (when-some [[_ auth-identity] (find options :auth-identity)]
                       (assert (simple-symbol? auth-identity) (str ":auth-identity must be a simple symbol: "
                                                                   (pr-str auth-identity)))
-                      [auth-identity (list :identity greq)])))
+                      [auth-identity (list :identity greq)])
+                    (when-some [[_ identity-map] (find options :identity-map)]
+                      (assert (simple-symbol? identity-map) (str ":identity-map must be a simple symbol: "
+                                                                  (pr-str identity-map)))
+                      [identity-map (list `auth/ident->map (list :identity greq))])))
         _ (when (seq lets)
             (let [names (map first (partition 2 lets))]
               (assert (apply distinct? names)
