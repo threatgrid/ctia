@@ -595,6 +595,7 @@
              "/my-route" []
              :tags #{:foo :bar}
              identity)))
+    ;; literals only to match compojure-api's semantics
     (is (= ["/my-route"
             {:swagger {:tags 'tags-are-compile-time-literals}}
             [identity]]
@@ -617,3 +618,37 @@
                      :tags tags-are-compile-time-literals
                      identity)
                    [1 :get :swagger])))))
+
+(deftest no-doc-test
+  (testing "context"
+    ;; could easily be supported if needed
+    (is-banned-macro
+      `(sut/context
+         "/my-route" []
+         :no-doc ~'an-expression
+         ~'routes)
+      "Not allowed these options in `context`, push into HTTP verbs instead: (:no-doc)"))
+  (testing "GET"
+    (is (= '["/my-route" {:get {:handler (clojure.core/fn [req__0] (clojure.core/let [] (do identity)))
+                                :swagger {:no-doc an-expression}}}]
+           (dexpand-1
+             `(sut/GET
+                "/my-route" []
+                :no-doc ~'an-expression
+                ~'identity))))
+    (testing "literals"
+      (doseq [v [true false nil]]
+        (is (= `["/my-route" {:get {:handler (clojure.core/fn [~'req__0] (clojure.core/let [] (do ~'identity)))
+                                    :swagger {:no-doc ~v}}}]
+               (dexpand-1
+                 `(sut/GET
+                    "/my-route" []
+                    :no-doc ~v
+                    ~'identity))))))
+    (let [g (gensym)]
+      (is (= {:no-doc g}
+             (get-in (sut/GET
+                       "/my-route" []
+                       :no-doc g
+                       ~'identity)
+                     [1 :get :swagger]))))))

@@ -66,7 +66,7 @@
       (routes ~@body)]))
 
 (def ^:private allowed-endpoint-options #{:responses :capabilities :auth-identity :identity-map :query-params :path-params
-                                          :description :tags})
+                                          :description :tags :no-doc})
 
 (comment
   ;; todo list
@@ -204,7 +204,9 @@
                                         (let ~(into gs scoped)
                                           (do ~@body)))}
                      description (assoc-in [:swagger :description] description)
+                     ;; literal in compojure-api, so we conserve the semantics
                      tags (assoc-in [:swagger :tags] (list 'quote tags))
+                     (contains? options :no-doc) (assoc-in [:swagger :no-doc] (:no-doc options))
                      responses (assoc :responses responses)
                      capabilities (update :middleware (fnil conj [])
                                           [`(mid/wrap-capabilities ~capabilities)])
