@@ -357,7 +357,7 @@
                                              (clojure.core/let [parameters__1 (:parameters req__0)
                                                                 query__2 (:query parameters__1)
                                                                 wait_for-default__3 default
-                                                                wait_for (get query__2 :wait_for wait_for-default__3)]
+                                                                wait_for (clojure.core/get query__2 :wait_for wait_for-default__3)]
                                                (do clojure.core/identity)))
                                   :parameters {:query {:wait_for (ring.swagger.json-schema/describe
                                                                    schema.core/Bool

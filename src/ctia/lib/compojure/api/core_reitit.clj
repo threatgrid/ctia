@@ -140,7 +140,7 @@
                                   (when query-params
                                     (let [gquery (*gensym* "query")]
                                       (apply merge-with into 
-                                             {:gs [gquery (list `get @gparameters :query)]}
+                                             {:gs [gquery (list :query @gparameters)]}
                                              (map (fn [[sym {:keys [default]}]]
                                                     (let [gdefault (*gensym* (str (name sym) "-default"))]
                                                       {:gs [gdefault default]
@@ -154,12 +154,12 @@
                                     (assert (simple-symbol? identity-map) (str ":identity-map must be a simple symbol: "
                                                                                (pr-str identity-map)))
                                     {:scoped [identity-map (list `auth/ident->map (list :identity greq))]}))
-        _ (assert (vector? gs))
-        _ (assert (vector? scoped))
         _ (when (seq gs)
             (assert (apply distinct? (map first (partition 2 gs)))))
         _ (when (seq scoped)
             (let [names (map first (partition 2 scoped))]
+              ;; we can lift this once we ensure we parse options deterministically. i.e., that `options` is
+              ;; in the same order as provided by the user.
               (assert (apply distinct? names)
                       (str "ERROR: cannot shadow variables in endpoints, please rename to avoid clashes: "
                            (pr-str (sort names))))))]
@@ -168,7 +168,11 @@
                                           (do ~@body)))}
                      responses (assoc :responses responses)
                      capabilities (update :middleware (fnil conj [])
-                                          [`(mid/wrap-capabilities ~capabilities)]))}]))
+                                          [`(mid/wrap-capabilities ~capabilities)])
+                     query-params (assoc-in [:parameters :query]
+                                            (into {} (map (fn [[sym {:keys [schema]}]]
+                                                            {(keyword sym) schema}))
+                                                  query-params)))}]))
 
 (defmacro GET     {:style/indent 2} [& args] (apply restructure-endpoint :get args))
 (defmacro ANY     {:style/indent 2} [& args] (apply restructure-endpoint :any args))
