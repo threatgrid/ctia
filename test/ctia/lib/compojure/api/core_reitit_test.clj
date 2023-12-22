@@ -6,7 +6,16 @@
             [ring.swagger.json-schema :refer [describe]]
             [reitit.ring.coercion :as rrc]
             [reitit.coercion.schema :as rcs]
+            [ctia.auth.static :refer [->ReadOnlyIdentity ->WriteIdentity]]
             [schema.core :as s]))
+
+(def compojure->reitit-endpoints
+  `{sut/GET :get
+    sut/ANY :any
+    sut/PATCH :patch
+    sut/DELETE :delete
+    sut/POST :post
+    sut/PUT :put})
 
 (defmacro with-deterministic-gensym [& body]
   `(with-bindings {#'sut/*gensym* (let [a# (atom -1)]
@@ -196,7 +205,7 @@
                          :uri "/context/my-route"}))))))
 
 (deftest capabilities-test
-  (testing "GET"
+  (testing "expansion"
     (is (= '["/my-route" {:get {:handler (clojure.core/fn [req__0] (clojure.core/let [] (do {:status 200, :body 1})))
                                 :middleware [[(ctia.http.middleware.auth/wrap-capabilities :create-incident)]]}}]
            (dexpand-1
@@ -204,6 +213,41 @@
                        :capabilities :create-incident
                        {:status 200
                         :body 1})))))
+
+  (testing "GET"
+    (testing "401 on no identity"
+      (is (thrown-with-msg? Exception #"HTTP 401"
+                            (let [app (ring/ring-handler
+                                        (ring/router
+                                          (sut/GET "/my-route" []
+                                                   :capabilities :create-incident
+                                                   {:status 200
+                                                    :body 1})))]
+                              (app {:request-method :get
+                                    :uri "/my-route"})))))
+    (testing "403 on bad capability"
+      (is (thrown-with-msg? Exception #"HTTP 403"
+                            (let [app (ring/ring-handler
+                                        (ring/router
+                                          (sut/GET "/my-route" []
+                                                   :capabilities :create-incident
+                                                   {:status 200
+                                                    :body 1})))]
+                              (app {:request-method :get
+                                    :uri "/my-route"
+                                    :identity (->ReadOnlyIdentity)})))))
+    (testing "200 on good capability"
+      (is (= {:status 200
+              :body 1}
+             (let [app (ring/ring-handler
+                         (ring/router
+                           (sut/GET "/my-route" []
+                                    :capabilities :create-incident
+                                    {:status 200
+                                     :body 1})))]
+               (app {:request-method :get
+                     :uri "/my-route"
+                     :identity (->WriteIdentity 'name 'group)}))))))
   (testing "context"
     (is (thrown-with-msg? Exception #"HTTP 401"
                           (let [app (ring/ring-handler
@@ -213,4 +257,40 @@
                                                  {:status 200
                                                   :body 1})))]
                             (app {:request-method :get
-                                  :uri "/my-route"}))))))
+                                  :uri "/my-route"}))))
+    (testing "401 on no identity"
+      (is (thrown-with-msg? Exception #"HTTP 401"
+                            (let [app (ring/ring-handler
+                                        (ring/router
+                                          (sut/context "/foo" []
+                                                       :capabilities :create-incident
+                                                       (sut/GET "/my-route" []
+                                                                {:status 200
+                                                                 :body 1}))))]
+                              (app {:request-method :get
+                                    :uri "/foo/my-route"})))))
+    (testing "403 on bad capability"
+      (is (thrown-with-msg? Exception #"HTTP 403"
+                            (let [app (ring/ring-handler
+                                        (ring/router
+                                          (sut/context "/foo" []
+                                                       :capabilities :create-incident
+                                                       (sut/GET "/my-route" []
+                                                                {:status 200
+                                                                 :body 1}))))]
+                              (app {:request-method :get
+                                    :uri "/foo/my-route"
+                                    :identity (->ReadOnlyIdentity)})))))
+    (testing "200 on good capability"
+      (is (= {:status 200
+              :body 1}
+             (let [app (ring/ring-handler
+                         (ring/router
+                           (sut/context "/foo" []
+                                        :capabilities :create-incident
+                                        (sut/GET "/my-route" []
+                                                 {:status 200
+                                                  :body 1}))))]
+               (app {:request-method :get
+                     :uri "/foo/my-route"
+                     :identity (->WriteIdentity 'name 'group)})))))))

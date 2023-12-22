@@ -89,7 +89,7 @@
   (assert (or (= [] arg)
               (simple-symbol? arg))
           (pr-str arg))
-  (let [[{:keys [responses capabilities] :as options} body] ((requiring-resolve 'compojure.api.common/extract-parameters) args true)
+  (let [[{:keys [responses capabilities] :as options} body] (common/extract-parameters args true)
         _ (when-some [extra-keys (not-empty (set/difference (set (keys options))
                                                             allowed-endpoint-options))]
             (throw (ex-info (str "Not allowed these options in endpoints: "
