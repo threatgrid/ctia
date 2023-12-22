@@ -6,6 +6,7 @@
             [ctia.schemas.core :refer [APIHandlerServices]]
             [ring-graphql-ui.core :refer [graphiql
                                           voyager]]
+            [ring.swagger.json-schema :refer [describe]]
             [ring.util.http-response :refer [bad-request
                                              internal-server-error
                                              ok]]
@@ -73,7 +74,7 @@
       (POST "/graphql" []
             :tags ["GraphQL"]
             :return gql/RelayGraphQLResponse
-            :body [body gql/RelayGraphQLQuery {:description "a Relay compatible GraphQL body"}]
+            :body [body (describe gql/RelayGraphQLQuery "a Relay compatible GraphQL body")]
             :summary "EXPERIMENTAL: Executes a Relay compatible GraphQL query"
             :description (common/capabilities->description capabilities)
             :capabilities capabilities
