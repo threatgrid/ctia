@@ -92,14 +92,14 @@
   (assert (or (= [] arg)
               (simple-symbol? arg))
           (pr-str arg))
-  (let [[{:keys [responses capabilities] :as options} body] (common/extract-parameters args true)
+  (let [[{:keys [capabilities] :as options} body] (common/extract-parameters args true)
         _ (check-return-banned! options)
         _ (when-some [extra-keys (not-empty (set/difference (set (keys options))
                                                             allowed-endpoint-options))]
             (throw (ex-info (str "Not allowed these options in endpoints: "
                                  (pr-str (sort extra-keys)))
                             {})))
-        responses (when responses
+        responses (when-some [[_ responses] (find options :responses)]
                     `(compojure->reitit-responses ~responses))
         greq (*gensym* "req")
         lets (vec (concat
