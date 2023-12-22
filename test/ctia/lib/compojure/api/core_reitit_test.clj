@@ -8,6 +8,7 @@
             [schema.utils :as su]
             [reitit.ring.coercion :as rrc]
             [reitit.coercion.schema :as rcs]
+            [schema-tools.core :as st]
             [ctia.auth.static :refer [->ReadOnlyIdentity ->WriteIdentity]]
             [reitit.ring.middleware.parameters :as parameters]
             [schema.core :as s]))
@@ -851,6 +852,58 @@
                        Schema]
              ~'routes)
           "Cannot use both :query-params and :query, please combine them."))
-      )
-    )
-  )
+      (is (= '["/my-route" {:get {:handler (clojure.core/fn [req__0]
+                                             (clojure.core/let [parameters__1 (:parameters req__0)
+                                                                query__2 (:query parameters__1)
+                                                                {foo :bar :as params} query__2]
+                                               (do routes)))
+                                  :parameters {:query Schema}}}]
+             (dexpand-1
+               `(sut/GET
+                  "/my-route" []
+                  :query ~'[{foo :bar :as params}
+                            Schema]
+                  ~'routes))))
+      (testing "200 response"
+        (doseq [v [true false]]
+          (is (= {:status 200
+                  :body v}
+                 (let [app (ring/ring-handler
+                             (ring/router
+                               (sut/GET
+                                 "/my-route" []
+                                 :query [{:keys [wait_for]}
+                                         (st/optional-keys
+                                           {:wait_for (describe s/Bool "wait for patched entity to be available for search")})]
+                                 {:status 200
+                                  :body wait_for})
+                               {:data {:middleware [parameters/parameters-middleware
+                                                    rrc/coerce-request-middleware]
+                                       :coercion reitit.coercion.schema/coercion}}))]
+                   (app {:request-method :get
+                         :uri "/my-route"
+                         :query-string (str "wait_for=" v)}))))))
+      (testing "schema failure"
+        (try (let [app (ring/ring-handler
+                         (ring/router
+                           (sut/GET
+                             "/my-route" []
+                             :query [{:keys [wait_for]}
+                                     (st/optional-keys
+                                       {:wait_for (describe s/Bool "wait for patched entity to be available for search")})]
+                             {:status 200
+                              :body wait_for})
+                           {:data {:middleware [parameters/parameters-middleware
+                                                rrc/coerce-request-middleware]
+                                   :coercion reitit.coercion.schema/coercion}}))]
+               (app {:request-method :get
+                     :uri "/my-route"
+                     :query-string "wait_for=1"}))
+             (is false)
+             (catch Exception e
+               (let [actual (-> (ex-data e)
+                                (select-keys [:errors :type])
+                                (update :errors update-vals su/validation-error-explain))]
+                 (is (= {:errors {:wait_for (list 'not (list 'instance? java.lang.Boolean "1"))}
+                         :type :reitit.coercion/request-coercion}
+                        actual)))))))))
