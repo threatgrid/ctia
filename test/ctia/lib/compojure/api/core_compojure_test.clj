@@ -1,4 +1,4 @@
-(ns ctia.lib.compojure.api.core-test
+(ns ctia.lib.compojure.api.core-compojure-test
   (:require [ctia.lib.compojure.api.core-compojure :as sut]
             [clojure.test :refer [deftest is]]
             [ring.swagger.json-schema :refer [describe]]

@@ -98,12 +98,12 @@
 (defn restructure-endpoint [macro path arg & args]
 
   (let [_ (let [[options _body] (common/extract-parameters args true)]
+            (check-return-banned! options)
             (when-some [extra-keys (not-empty (set/difference (set (keys options))
                                                               allowed-endpoint-options))]
               (throw (ex-info (str "Not allowed these options in `endpoints`: "
                                    (pr-str (sort extra-keys)))
-                              {})))
-            (check-return-banned! options))]
+                              {}))))]
     (list* macro path arg args)))
 
 (defmacro GET     {:style/indent 2} [& args] (apply restructure-endpoint `core/GET args))
