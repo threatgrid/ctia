@@ -935,4 +935,46 @@
                 :body ~'[{foo :bar :as body}
                          Schema]
                 ~'routes))))
-    ))
+    (testing "200 response"
+      (doseq [v [true false]]
+        (is (= {:status 200
+                :body v}
+               (let [app (ring/ring-handler
+                           (ring/router
+                             (sut/GET
+                               "/my-route" []
+                               :body [{:keys [wait_for]}
+                                       (st/optional-keys
+                                         {:wait_for (describe s/Bool "wait for patched entity to be available for search")})]
+                               {:status 200
+                                :body wait_for})
+                             {:data {:middleware [parameters/parameters-middleware
+                                                  rrc/coerce-request-middleware]
+                                     :coercion reitit.coercion.schema/coercion}}))]
+                 (app {:request-method :get
+                       :uri "/my-route"
+                       :body-params {:wait_for v}}))))))
+    (testing "schema failure"
+      (try (let [app (ring/ring-handler
+                       (ring/router
+                         (sut/GET
+                           "/my-route" []
+                           :body [{:keys [wait_for]}
+                                   (st/optional-keys
+                                     {:wait_for (describe s/Bool "wait for patched entity to be available for search")})]
+                           {:status 200
+                            :body wait_for})
+                         {:data {:middleware [parameters/parameters-middleware
+                                              rrc/coerce-request-middleware]
+                                 :coercion reitit.coercion.schema/coercion}}))]
+             (app {:request-method :get
+                   :uri "/my-route"
+                   :body-params {:wait_for 1}}))
+           (is false)
+           (catch Exception e
+             (let [actual (-> (ex-data e)
+                              (select-keys [:errors :type])
+                              (update :errors update-vals su/validation-error-explain))]
+               (is (= {:errors {:wait_for (list 'not (list 'instance? java.lang.Boolean 1))}
+                       :type :reitit.coercion/request-coercion}
+                      actual))))))))
