@@ -65,7 +65,15 @@
       ~@(some-> (not-empty reitit-opts) list)
       (routes ~@body)]))
 
-(def ^:private allowed-endpoint-options #{:responses :capabilities :auth-identity :identity-map :query-params :path-params})
+(def ^:private allowed-endpoint-options #{:responses :capabilities :auth-identity :identity-map :query-params :path-params
+                                          :description})
+
+(comment
+  ;; todo list
+  (set/difference @#'ctia.lib.compojure.api.core/allowed-endpoint-options
+                  allowed-endpoint-options)
+  
+  )
 
 (defn validate-responses! [responses]
   (assert (map? responses))
@@ -126,7 +134,7 @@
   (assert (or (= [] arg)
               (simple-symbol? arg))
           (pr-str arg))
-  (let [[{:keys [capabilities auth-identity identity-map] :as options} body] (common/extract-parameters args true)
+  (let [[{:keys [capabilities auth-identity identity-map description] :as options} body] (common/extract-parameters args true)
         _ (check-return-banned! options)
         _ (when-some [extra-keys (not-empty (set/difference (set (keys options))
                                                             allowed-endpoint-options))]
@@ -195,6 +203,7 @@
     [path {http-kw (cond-> {:handler `(fn [~greq]
                                         (let ~(into gs scoped)
                                           (do ~@body)))}
+                     description (assoc-in [:swagger :description] description)
                      responses (assoc :responses responses)
                      capabilities (update :middleware (fnil conj [])
                                           [`(mid/wrap-capabilities ~capabilities)])

@@ -78,21 +78,7 @@
               "/my-route" []
               :capabilities ~'capabilities-are-expressions
               identity))))
-  (is (= ["/my-route"
-          {:swagger {:description "a description"}}
-          [identity]]
-         (sut/context
-           "/my-route" []
-           :description "a description"
-           identity)))
-  (is (= ["/my-route"
-          {:swagger {:description "a description"}}
-          [identity]]
-         (let [descriptions-are-expressions "a description"]
-           (sut/context
-             "/my-route" []
-             :description descriptions-are-expressions
-             identity))))
+  
   (is (= ["/my-route"
           {:swagger {:summary "a summary"}}
           [identity]]
@@ -581,3 +567,35 @@
       (str ":return is banned, please use :responses instead.\n"
            "In this case, :return schema.core/Str is equivalent to :responses {200 {:schema schema.core/Str}}.\n"
            "For 204, you can use :responses {204 nil}.\nFor catch-all, use :responses {:default {:schema SCHEMA}}"))))
+
+(deftest description-test
+  (testing "context"
+    (is (= ["/my-route"
+            {:swagger {:description "a description"}}
+            [identity]]
+           (sut/context
+             "/my-route" []
+             :description "a description"
+             identity)))
+    (is (= ["/my-route"
+            {:swagger {:description "a description"}}
+            [identity]]
+           (let [descriptions-are-expressions "a description"]
+             (sut/context
+               "/my-route" []
+               :description descriptions-are-expressions
+               identity)))))
+  (testing "GET"
+    (is (= '["/my-route" {:get {:handler (clojure.core/fn [req__0] (clojure.core/let [] (do identity)))
+                                :swagger {:description "a description"}}}]
+           (dexpand-1
+             `(sut/GET
+                "/my-route" []
+                :description "a description"
+                ~'identity))))
+    (is (= {:description "a description"}
+           (get-in (sut/GET
+                     "/my-route" []
+                     :description "a description"
+                     ~'identity)
+                   [1 :get :swagger])))))
