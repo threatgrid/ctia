@@ -5,7 +5,8 @@
   as it also loads the CTIA routing extensions."
   (:require [compojure.api.common :as common]
             [clojure.set :as set]
-            [ctia.http.middleware.auth :as mid]))
+            [ctia.http.middleware.auth :as mid]
+            [ctia.lib.compojure.api.core :refer [check-return-banned!]]))
 
 ;;TODO this isn't right
 (defn routes
@@ -44,6 +45,7 @@
   (assert (vector? arg))
   (assert (= [] arg) (str "Not allowed to bind anything in context, push into HTTP verbs instead: " (pr-str arg)))
   (let [[options body] ((requiring-resolve 'compojure.api.common/extract-parameters) args true)
+        _ (check-return-banned! options)
         _ (when-some [extra-keys (not-empty (set/difference (set (keys options))
                                                             allowed-context-options))]
             (throw (ex-info (str "Not allowed these options in `context`, push into HTTP verbs instead: "
@@ -90,6 +92,7 @@
               (simple-symbol? arg))
           (pr-str arg))
   (let [[{:keys [responses capabilities] :as options} body] (common/extract-parameters args true)
+        _ (check-return-banned! options)
         _ (when-some [extra-keys (not-empty (set/difference (set (keys options))
                                                             allowed-endpoint-options))]
             (throw (ex-info (str "Not allowed these options in endpoints: "

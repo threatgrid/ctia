@@ -3,6 +3,7 @@
             [ctia.http.middleware.auth :as mid]
             [reitit.ring :as ring]
             [clojure.test :refer [deftest is testing]]
+            [ctia.lib.compojure.api.core-test :refer [is-banned-macro]]
             [ring.swagger.json-schema :refer [describe]]
             [reitit.ring.coercion :as rrc]
             [reitit.coercion.schema :as rcs]
@@ -294,3 +295,75 @@
                (app {:request-method :get
                      :uri "/foo/my-route"
                      :identity (->WriteIdentity 'name 'group)})))))))
+
+(deftest auth-identity-test
+  (testing "context"
+    (is-banned-macro
+      `(sut/context
+         "/my-route" []
+         :auth-identity ~'identity
+         ~'routes)
+      "Not allowed these options in `context`, push into HTTP verbs instead: (:auth-identity)"))
+  (testing "GET"
+    ;;TODO
+    )
+  )
+
+(deftest path-params-test
+  (testing "context"
+    (is-banned-macro
+      `(sut/context
+         "/my-route" []
+         :path-params [~'id :- s/Str]
+         ~'routes)
+      "Not allowed these options in `context`, push into HTTP verbs instead: (:path-params)"))
+  (testing "endpoints"
+    ;;TODO
+    )
+  )
+
+(deftest query-params-test
+  (testing "context"
+    (is-banned-macro
+      `(sut/context
+         "/my-route" []
+         :query-params [{~'wait_for :- (describe s/Bool "wait for patched entity to be available for search") nil}]
+         ~'routes)
+      "Not allowed these options in `context`, push into HTTP verbs instead: (:query-params)"))
+  (testing "endpoints"
+    ;;TODO
+    )
+  )
+
+(deftest identity-map-test
+  (testing "context"
+    (is-banned-macro
+      `(sut/context
+         "/my-route" []
+         :identity-map ~'identity-map
+         ~'routes)
+      "Not allowed these options in `context`, push into HTTP verbs instead: (:identity-map)"))
+  (testing "endpoints"
+    ;;TODO
+    )
+  )
+
+(deftest return-test
+  (testing "context"
+    (is-banned-macro
+      `(sut/context
+         "/my-route" []
+         :return s/Str
+         ~'routes)
+      (str ":return is banned, please use :responses instead.\n"
+           "In this case, :return schema.core/Str is equivalent to :responses {200 {:schema schema.core/Str}}.\n"
+           "For 204, you can use :responses {204 nil}.\nFor catch-all, use :responses {:default {:schema SCHEMA}}")))
+  (testing "endpoints"
+    (is-banned-macro
+      `(sut/GET
+         "/my-route" []
+         :return s/Str
+         ~'routes)
+      (str ":return is banned, please use :responses instead.\n"
+           "In this case, :return schema.core/Str is equivalent to :responses {200 {:schema schema.core/Str}}.\n"
+           "For 204, you can use :responses {204 nil}.\nFor catch-all, use :responses {:default {:schema SCHEMA}}"))))
