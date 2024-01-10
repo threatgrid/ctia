@@ -3,11 +3,11 @@
 ;; determines the build matrix for the GitHub Actions build. 
 ;; try it locally:
 ;;   # normal builds
-;;   $ GITHUB_ENV=$(mktemp) GITHUB_EVENT_NAME=pull_request ./scripts/actions/print-matrix.clj
-;;   $ GITHUB_ENV=$(mktemp) GITHUB_EVENT_NAME=push ./scripts/actions/print-matrix.clj
+;;   $ GITHUB_OUTPUTS=github-outputs.tmp GITHUB_ENV=$(mktemp) GITHUB_EVENT_NAME=pull_request ./scripts/actions/print_matrix.clj
+;;   $ GITHUB_ENV=$(mktemp) GITHUB_EVENT_NAME=push ./scripts/actions/print_matrix.clj
 ;;   # cron build
-;;   $ GITHUB_ENV=$(mktemp) GITHUB_EVENT_NAME=schedule ./scripts/actions/print-matrix.clj
-;;   $ GITHUB_ENV=$(mktemp) CTIA_COMMIT_MESSAGE='{:test-suite :cron} try cron build' GITHUB_EVENT_NAME=push ./scripts/actions/print-matrix.clj
+;;   $ GITHUB_ENV=$(mktemp) GITHUB_EVENT_NAME=schedule ./scripts/actions/print_matrix.clj
+;;   $ GITHUB_ENV=$(mktemp) CTIA_COMMIT_MESSAGE='{:test-suite :cron} try cron build' GITHUB_EVENT_NAME=push ./scripts/actions/print_matrix.clj
 
 (ns actions.print-matrix
   (:require [actions.actions-helpers :as h]))
