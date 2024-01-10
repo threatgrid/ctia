@@ -133,16 +133,7 @@
                      false}
                     {asset_properties-merge-strategy :-
                      (describe AssetPropertiesMergeStrategy
-                               (str "Only relevant if patch-existing=true.\n\n" 
-                                    "If ignore-existing, then asset properties will be patched to their new "
-                                    "values as they appear in the request bundle.\n\n"
-                                    "If merge-overriding-previous, then existing asset properties "
-                                    "will be retrieved and combined with the asset properties in the request bundle "
-                                    "as if by concatenating existing and new properties together in a single list, "
-                                    "removing properties to the left of a property with the same name, "
-                                    "then sorting the list lexicographically by name before using this list to patch the existing entity."
-                                    "\n\n"
-                                    " Defaults to ignore-existing"))
+                               "DEPRECATED -- will be removed")
                      :ignore-existing}
                     {incident-tactics-techniques-merge-strategy :-
                      (describe IncidentTacticsTechniquesMergeStrategy
