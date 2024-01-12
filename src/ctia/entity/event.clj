@@ -125,7 +125,7 @@
   (routes
     (let [capabilities :search-event]
       (GET "/history/:entity_id" []
-           :return [EventBucket]
+           :responses {200 {:schema [EventBucket]}}
            :path-params [entity_id :- s/Str]
            :summary "Timeline history of an entity"
            :description (routes.common/capabilities->description capabilities)

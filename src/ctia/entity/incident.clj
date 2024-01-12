@@ -184,7 +184,7 @@
   (routes
     (let [capabilities :create-incident]
       (POST "/:id/status" []
-            :return Incident
+            :responses {200 {:schema Incident}}
             :body [update (describe IncidentStatusUpdate
                                     "an Incident Status Update")]
             :summary "Update an Incident Status"

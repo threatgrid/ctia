@@ -77,7 +77,7 @@
            :tags ["Bundle"]
            (let [capabilities export-capabilities]
              (GET "/export" []
-                  :return NewBundleExport
+                  :responses {200 {:schema NewBundleExport}}
                   :query [query BundleExportQuery]
                   :summary "Export records with their local relationships. Ids are URIs (with port if specified)."
                   :description (common/capabilities->description capabilities)
@@ -87,7 +87,7 @@
 
            (let [capabilities export-capabilities]
              (POST "/export" []
-                  :return NewBundleExport
+                  :responses {200 {:schema NewBundleExport}}
                   :query [query BundleExportOptions]
                   :body [body BundleExportIds]
                   :summary "Export records with their local relationships. Ids are URIs (with port if specified)."
@@ -119,7 +119,7 @@
                                 :create-weakness
                                 :import-bundle}]
              (POST "/import" []
-                   :return BundleImportResult
+                   :responses {200 {:schema BundleImportResult}}
                    :body [bundle
                           (st/optional-keys-schema bundle-schema)
                           {:description "a Bundle to import, partial entities allowed for existing entities"}]

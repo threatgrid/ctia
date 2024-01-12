@@ -157,9 +157,9 @@
                             first
                             un-store)))]
       (context "/:id" []
-        :return Casebook
         :description (routes.common/capabilities->description capabilities)
         :capabilities capabilities
+        :responses {200 {:schema Casebook}}
         (PATCH "/" []
           :auth-identity identity
           :identity-map identity-map

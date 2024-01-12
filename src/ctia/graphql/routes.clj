@@ -73,7 +73,7 @@
                          :read-vulnerability}]
       (POST "/graphql" []
             :tags ["GraphQL"]
-            :return gql/RelayGraphQLResponse
+            :responses {200 {:schema gql/RelayGraphQLResponse}}
             :body [body (describe gql/RelayGraphQLQuery "a Relay compatible GraphQL body")]
             :summary "EXPERIMENTAL: Executes a Relay compatible GraphQL query"
             :description (common/capabilities->description capabilities)
