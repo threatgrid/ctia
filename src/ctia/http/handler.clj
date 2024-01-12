@@ -6,7 +6,11 @@
             [ctia.entity.relationship :refer [incident-link-route]]
             [ctia.schemas.core :refer [APIHandlerServices Entity]]
             [ctia.lib.compojure.api.core :refer [context middleware routes undocumented]]
-            [compojure.api.api :refer [api]]
+            [reitit.exception :as exception]
+            [reitit.ring :as ring]
+            [reitit.swagger :as swagger]
+            [reitit.swagger-ui :as swagger-ui]
+            compojure.api.api
             [compojure.api.routes :as api-routes]
             [compojure.route :as rt]
             [ctia.bundle.routes :refer [bundle-routes]]
@@ -95,6 +99,7 @@
         (context
           route-context []
           (-> (entity->routes entity services)
+              #_ ;;FIXME reitit
               (add-dynamic-tags tags)))))))
 
 (s/defn entities-routes
@@ -210,6 +215,18 @@
   []
   {:formats (conj default-formats (make-text-plain-format-encoder))})
 
+(defn swagger-info []
+  {:title "CTIA"
+   :version (string/replace (current-version) #"\n" "")
+   :license {:name "All Rights Reserved",
+             :url ""}
+   :contact {:name "Cisco Security Business Group -- Advanced Threat "
+             :url "http://github.com/threatgrid/ctia"
+             :email "cisco-intel-api-support@cisco.com"}
+   :description api-description}
+  )
+
+#_
 (s/defn api-handler [{{:keys [get-in-config]} :ConfigService
                       :as services} :- APIHandlerServices]
   (let [{:keys [oauth2]}
@@ -223,14 +240,7 @@
                    :options {:ui {:jwtLocalStorageKey
                                   (get-in-config
                                     [:ctia :http :jwt :local-storage-key])}}
-                   :data {:info {:title "CTIA"
-                                 :version (string/replace (current-version) #"\n" "")
-                                 :license {:name "All Rights Reserved",
-                                           :url ""}
-                                 :contact {:name "Cisco Security Business Group -- Advanced Threat "
-                                           :url "http://github.com/threatgrid/ctia"
-                                           :email "cisco-intel-api-support@cisco.com"}
-                                 :description api-description}
+                   :data {:info (swagger-info)
                           ;; consumes and produces are set to the default values
                           ;; to remove text/plain which is automatically set
                           ;; from the `formats` property by `compojure.api.middleware/api-middleware`
@@ -252,7 +262,9 @@
                       wrap-cache-control
                       #(wrap-version % get-in-config)
                       ;; always last
-                      (metrics/wrap-metrics "ctia" api-routes/get-routes)]
+                      (metrics/wrap-metrics "ctia"
+                                            ;;FIXME reitit equivalent of api-routes/get-routes
+                                            api-routes/get-routes)]
            (documentation-routes)
            (graphql-ui-routes services)
            (context
@@ -283,5 +295,74 @@
                (metrics-routes)
                (properties-routes services)
                (graphql-routes services))))
-         (undocumented
-          (rt/not-found (ok (unk/err-html)))))))
+         (rt/not-found (ok (unk/err-html))))))
+
+;; reitit.core/router
+(s/defn api-handler [{{:keys [get-in-config]} :ConfigService
+                      :as services} :- APIHandlerServices]
+  (let [{:keys [oauth2]}
+        (get-http-swagger get-in-config)
+        swagger-mime-types (->mime-types default-formats)
+        ctia-routes [""
+                     ["/swagger.json"
+                      {:get {:no-doc true
+                             :swagger {:info (swagger-info)
+                                       :tags (api-tags services)}
+                             :handler (swagger/create-swagger-handler)}}]
+                     (middleware
+                       [#(wrap-rate-limit % get-in-config)
+                        wrap-not-modified
+                        wrap-cache-control
+                        #(wrap-version % get-in-config)
+                        ;; always last
+                        #_ ;;TODO reitit equivalent
+                        (metrics/wrap-metrics "ctia"
+                                              ;;FIXME reitit equivalent of api-routes/get-routes
+                                              api-routes/get-routes)]
+                       (documentation-routes)
+                       ;;TODO
+                       ;(graphql-ui-routes services)
+                       (context
+                         "/ctia" []
+                         (context "/feed" []
+                                  :tags ["Feed"]
+                                  (feed-view-routes services))
+                         ;; The order is important here for version-routes
+                         ;; must be before the middleware fn
+                         (version-routes services)
+                         (middleware [wrap-authenticated]
+                                     (->>
+                                       (entities/all-entities)
+                                       vals
+                                       (map (partial mark-disabled-entities services))
+                                       (entities-routes services))
+                                     (status-routes)
+                                     (context
+                                       "/bulk" []
+                                       :tags ["Bulk"]
+                                       (bulk-routes services))
+                                     (context
+                                       "/incident" []
+                                       :tags ["Incident"]
+                                       (incident-link-route services))
+                                     (bundle-routes services)
+                                     (observable-routes services)
+                                     (metrics-routes)
+                                     (properties-routes services)
+                                     (graphql-routes services))))]]
+    (spit "reitit-routes.txt" (with-out-str ((requiring-resolve 'clojure.pprint/pprint) ctia-routes)))
+    (ring/ring-handler
+      (ring/router
+        ctia-routes
+        {:conflicts (fn [conflicts]
+                      (println (exception/format-exception :path-conflicts nil conflicts)))})
+      (ring/routes
+        (swagger-ui/create-swagger-ui-handler
+          {:path "/"
+           :config {:validatorUrl nil
+                    ;:operationsSorter "alpha"
+                    ;;TODO
+                    }})
+        (rt/not-found (ok (unk/err-html))))
+      )
+    ))
