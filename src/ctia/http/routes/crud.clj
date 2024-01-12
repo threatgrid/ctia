@@ -320,7 +320,11 @@
      (when can-patch?
        (let [capabilities patch-capabilities]
          (PATCH "/:id" []
+<<<<<<< HEAD
                 :responses {200 {:schema entity-schema}}
+=======
+                :return entity-schema
+>>>>>>> 0ed97a1cf6eb349bd89eead4ad282d81e87765ae
                 :body [partial-update (describe patch-schema (format "%s partial update" capitalized))]
                 :summary (format "Partially update an existing %s" capitalized)
                 :query-params [{wait_for :- (describe s/Bool "wait for patched entity to be available for search") nil}]

@@ -257,35 +257,6 @@
                 :type :sighting
                 :external_ids external_ids}})))
 
-(deftest merge-asset_properties-properties-test
-  (let [[old1 old2 old3 new1 new2] (map (comp str gensym)
-                                        '[old1 old2 old3 new1 new2])]
-    (is (= [{:name "bar" :value new2}
-            {:name "baz" :value old3}
-            {:name "foo" :value new1}]
-           (sut/merge-asset_properties-properties
-             (shuffle [{:name "foo" :value new1}
-                       {:name "bar" :value new2}])
-             (shuffle [{:name "foo" :value old1}
-                       {:name "bar" :value old2}
-                       {:name "baz" :value old3}]))))
-    (testing "right-most wins in both new and old"
-      (is (= [{:name "bar" :value new2}
-              {:name "baz" :value old1}
-              {:name "foo" :value new2}]
-             (sut/merge-asset_properties-properties
-               [{:name "foo" :value new1}
-                {:name "foo" :value new1}
-                {:name "foo" :value new1}
-                {:name "foo" :value new2}
-                {:name "bar" :value new2}]
-               [{:name "foo" :value old1}
-                {:name "bar" :value old2}
-                {:name "baz" :value old3}
-                {:name "baz" :value old3}
-                {:name "baz" :value old3}
-                {:name "baz" :value old1}]))))))
-
 (defn stubbed-incident-merge
   [old new]
   (-> (sut/merge-existing-incident-tactics+techniques

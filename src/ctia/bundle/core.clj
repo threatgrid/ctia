@@ -404,85 +404,6 @@
        (mapcat entity->bundle-keys)
        (apply st/dissoc NewBundle)))
 
-(s/defschema AssetPropertiesProperties (st/get-in AssetProperties [:properties]))
-
-(s/defn merge-asset_properties-properties :- AssetPropertiesProperties
-  "Right-most properties win after concatenating old...new. Return in order of :name."
-  [new-properties :- AssetPropertiesProperties
-   old-properties :- AssetPropertiesProperties]
-  (-> (sorted-map)
-      (into (map (juxt :name identity))
-            (concat old-properties new-properties))
-      vals))
-
-(s/defn with-existing-asset-entity :- EntityImportData
-  "If entity has result error, do nothing.
-  If entity has result exists (via :old-entity), then merge properties with existing.
-  If entity is scheduled for creation, but already exists via :asset_ref, merge properties
-  with existing and schedule for patching.
-  
-  Ensure tempids includes transient mapping for created Assets, if any. Will
-  resolve asset_ref on :new-entity if needed."
-  [{:keys [id new-entity result] :as import-data} :- EntityImportData
-   tempids :- TempIDs
-   bulk-asset-kw :- (s/enum :asset_properties :asset_mappings)
-   asset_ref->old-entity :- {s/Str (s/pred map?)}
-   merge-strategy :- AssetPropertiesMergeStrategy]
-  (or (when (not= "error" result)
-        (let [asset_ref (get tempids (:asset_ref new-entity) (:asset_ref new-entity))]
-          (if (and (schemas/transient-id? asset_ref)
-                   (= "exists" result))
-            (-> import-data
-                (assoc :error {:type :unresolvable-transient-id
-                               :reason (str "Unresolvable asset_ref: " asset_ref)}
-                       :result "error"))
-            (when-some [{:keys [id] :as old-entity} (or ;; already resolved by :external_ids or realized :id
-                                                        (:old-entity import-data)
-                                                        (asset_ref->old-entity asset_ref))]
-              (-> import-data
-                  (assoc :old-entity old-entity
-                         :id id
-                         :result "exists"
-                         :new-entity (-> new-entity
-                                         (assoc :id id :asset_ref asset_ref)
-                                         (cond->
-                                           (and (= :merge-overriding-previous merge-strategy)
-                                                (= :asset_properties bulk-asset-kw)
-                                                (contains? new-entity :properties))
-                                           (update :properties
-                                                   merge-asset_properties-properties
-                                                   (:properties old-entity))))))))))
-      import-data))
-
-(s/defn resolve-asset-properties+mappings :- BundleImportData
-  [bundle-import-data :- BundleImportData
-   tempids :- TempIDs
-   auth-identity :- auth/AuthIdentity
-   merge-strategy :- AssetPropertiesMergeStrategy
-   services :- FindByExternalIdsServices]
-  (let [resolve* (s/fn :- BundleImportData
-                   [bundle-import-data :- BundleImportData
-                    bulk-asset-kw :- (s/enum :asset_mappings :asset_properties)]
-                   (let [asset_refs (into #{} (keep (fn [{:keys [id] {:keys [asset_ref]} :new-entity :as import-data}]
-                                                      (when (and (nil? id) asset_ref)
-                                                        (let [asset_ref (get tempids asset_ref asset_ref)]
-                                                          (when-not (schemas/transient-id? asset_ref)
-                                                            asset_ref)))))
-                                          (bulk-asset-kw bundle-import-data))
-                         asset_ref->old-entity (find-by-asset_refs asset_refs
-                                                                   (bulk/entity-type-from-bulk-key bulk-asset-kw)
-                                                                   auth-identity
-                                                                   services)]
-                     (cond-> bundle-import-data
-                       (seq (bulk-asset-kw bundle-import-data))
-                       (update bulk-asset-kw
-                               (fn [bulk-assets]
-                                 (mapv #(with-existing-asset-entity % tempids bulk-asset-kw asset_ref->old-entity merge-strategy)
-                                       bulk-assets))))))]
-    (-> bundle-import-data
-        (resolve* :asset_mappings)
-        (resolve* :asset_properties))))
-
 (s/defn merge-existing-incident-tactics+techniques :- BundleImportData
   [bundle-import-data :- BundleImportData]
   (cond-> bundle-import-data
@@ -543,8 +464,6 @@
                                  (let [bundle-import-data (prepare-import bundle-entities external-key-prefixes auth-identity services)
                                        tempids (bundle-import-data->tempids bundle-import-data tempids)
                                        bundle-import-data (-> bundle-import-data 
-                                                              (cond-> patch-existing
-                                                                (resolve-asset-properties+mappings tempids auth-identity asset_properties-merge-strategy services))
                                                               (cond-> (and patch-existing
                                                                            (= :merge-previous incident-tactics-techniques-merge-strategy))
                                                                 merge-existing-incident-tactics+techniques))
