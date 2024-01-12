@@ -23,9 +23,7 @@
   "Routes without route-documentation. Can be used to wrap routes,
   not satisfying compojure.api.routes/Routing -protocol."
   [& handlers]
-  (assert nil "TODO undocumented")
-  #_
-  `(apply core/undocumented handlers))
+  (into ["" {:no-doc true}] handlers))
 
 (defmacro middleware
   "Wraps routes with given middlewares using thread-first macro.
