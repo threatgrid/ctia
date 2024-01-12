@@ -4,7 +4,8 @@
   
   Always use this namespace over compojure.api.{core,sweet}
   as it also loads the CTIA routing extensions."
-  (:require [compojure.api.common :as common]
+  (:require ;;TODO remove dependency
+            [compojure.api.common :as common]
             [ctia.lib.compojure.api.core-common :refer [check-return-banned!]]
             [clojure.set :as set]
             [clojure.walk :as walk]
@@ -50,7 +51,7 @@
                  (= [] arg))
     (throw (ex-info (str "Not allowed to bind anything in context, push into HTTP verbs instead: " (pr-str arg))
                     {})))
-  (let [[options body-exprs] ((requiring-resolve 'compojure.api.common/extract-parameters) args true)
+  (let [[options body-exprs] (common/extract-parameters args true)
         _ (check-return-banned! options)
         _ (when-some [extra-keys (not-empty (set/difference (set (keys options))
                                                             allowed-context-options))]
