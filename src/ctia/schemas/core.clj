@@ -221,7 +221,9 @@
      :authorized_groups [Str]
      :client_id s/Str
      :owner s/Str
-     :groups [s/Str]})))
+     :groups [s/Str]
+     :created java.util.Date
+     :modified java.util.Date})))
 
 (s/defschema CTIAStoredEntity
   (st/merge CTIAEntity

@@ -1,6 +1,6 @@
 (ns ctia.entity.casebook
   (:require
-   [ctia.domain.entities :refer [default-realize-fn un-store with-long-id]]
+   [ctia.domain.entities :refer [default-realize-fn with-long-id]]
    [ctia.flows.crud :as flows]
    [ctia.http.routes.common :as routes.common]
    [ctia.http.routes.crud :as routes.crud]
@@ -8,6 +8,7 @@
    [ctia.schemas.core :refer [APIHandlerServices Bundle def-acl-schema def-stored-schema]]
    [ctia.schemas.graphql.flanders :as flanders]
    [ctia.schemas.graphql.helpers :as g]
+   [ctia.schemas.graphql.common :as gc]
    [ctia.schemas.graphql.ownership :as go]
    [ctia.schemas.graphql.pagination :as pagination]
    [ctia.schemas.graphql.refs :as refs]
@@ -153,9 +154,7 @@
                              :patch-operation patch-operation
                              :partial-entities  [(assoc partial-entity :id id)]
                              :spec :new-casebook/map)]
-                        (-> patch-res
-                            first
-                            un-store)))]
+                        (first patch-res)))]
       (context "/:id" []
         :description (routes.common/capabilities->description capabilities)
         :capabilities capabilities
@@ -245,6 +244,7 @@
      []
      (merge
       fields
+      gc/time-metadata-fields
       go/graphql-ownership-fields))))
 
 (def casebook-order-arg

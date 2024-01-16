@@ -3,7 +3,7 @@
    [clj-momo.lib.clj-time.core :as time]
    [clojure.string :as str]
    [ctia.domain.entities
-    :refer [default-realize-fn un-store with-long-id]]
+    :refer [default-realize-fn with-long-id]]
    [ctia.entity.feedback.graphql-schemas :as feedback]
    [ctia.entity.relationship.graphql-schemas :as relationship-graphql]
    [ctia.flows.crud :as flows]
@@ -21,6 +21,7 @@
                               lift-realize-fn-with-context]]
    [ctia.schemas.graphql.flanders :as flanders]
    [ctia.schemas.graphql.helpers :as g]
+   [ctia.schemas.graphql.common :as gc]
    [ctia.schemas.graphql.ownership :as go]
    [ctia.schemas.graphql.pagination :as pagination]
    [ctia.schemas.graphql.sorting :as graphql-sorting]
@@ -217,8 +218,7 @@
                          :patch-operation :replace
                          :partial-entities [status-update]
                          :spec :new-incident/map)
-                        first
-                        un-store)]
+                        first)]
                 (ok updated)
                 (not-found)))))))
 
@@ -461,6 +461,7 @@
      (merge fields
             feedback/feedback-connection-field
             relationship-graphql/relatable-entity-fields
+            gc/time-metadata-fields
             go/graphql-ownership-fields))))
 
 (def incident-order-arg

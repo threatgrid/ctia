@@ -114,8 +114,7 @@
                  :entity.target_ref _id}
         event-store (get-store :event)]
     (sequence
-     (comp (mapcat :data)
-           (map ent/un-store))
+     (mapcat :data)
      (store/paginate event-store
                      #(store/list-records %1 {:one-of filters} identity-map %2)
                      q))))

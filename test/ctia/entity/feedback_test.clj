@@ -32,7 +32,7 @@
           feedbacks (:parsed-body response)]
       (is (= 200 (:status response)))
       (is (= [(assoc new-feedback :id (id/long-id feedback-id))]
-             (map #(dissoc % :owner :groups) feedbacks))))))
+             (map #(dissoc % :owner :groups :created :modified) feedbacks))))))
 
 (use-fixtures :once (join-fixtures [mth/fixture-schema-validation
                                     whoami-helpers/fixture-server]))

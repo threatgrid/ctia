@@ -116,20 +116,3 @@
   (if (id/short-id? id-str)
     (short-id->entity-type id-str services)
     (long-id->entity-type id-str)))
-
-(defn un-store [record]
-  (dissoc record :created :modified))
-
-(defn un-store-all [x]
-  (if (sequential? x)
-    (map un-store x)
-    (un-store x)))
-
-(defn un-store-page [page]
-  (update page :data un-store-all))
-
-(defn un-store-map [m]
-  (into {}
-        (map (fn [[k v]]
-               [k (un-store-all v)])
-             m)))

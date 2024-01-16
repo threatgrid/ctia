@@ -26,6 +26,8 @@ fragment feedbackFields on Feedback {
   feedback
   entity_id
   timestamp
+  created
+  modified
   reason
   owner
   groups

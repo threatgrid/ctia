@@ -1,5 +1,5 @@
 (ns ctia.entity.note
-  (:require [ctia.domain.entities :refer [page-with-long-id un-store-page]]
+  (:require [ctia.domain.entities :refer [page-with-long-id]]
             [ctia.entity.note.schemas :as note-schemas]
             [ctia.http.routes.common :as routes.common]
             [ctia.http.routes.crud :refer [services->entity-crud-routes]]

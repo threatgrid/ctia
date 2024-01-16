@@ -4,6 +4,7 @@
              [sorting :as graphql-sorting]
              [flanders :as flanders]
              [helpers :as g]
+             [common :as gc]
              [pagination :as pagination]]
             [ctia.schemas.graphql.refs :as refs]
             [ctia.entity.investigation.flanders-schemas :as f-inv]
@@ -20,7 +21,7 @@
      description
      []
      (merge
-      fields go/graphql-ownership-fields))))
+      fields gc/time-metadata-fields go/graphql-ownership-fields))))
 
 (def investigation-order-arg
   (graphql-sorting/order-by-arg

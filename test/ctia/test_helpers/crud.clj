@@ -267,6 +267,7 @@
             (is (= 200 (:status response)))
             (is (= [expected] records))))
 
+        (Thread/sleep 1) ;; ensure that modified is in the past
         (testing (format "PATCH /ctia/%s/:id" entity-str)
           (let [updates {update-field "patch"}
                 response (PATCH app
@@ -276,8 +277,10 @@
                 updated-record (:parsed-body response)]
             (when patch-tests?
               (is (= 200 (:status response)))
-              (is (= (merge post-record updates)
-                     updated-record)))))
+              (is (= (dissoc (merge post-record updates) :modified)
+                     (dissoc updated-record :modified)))
+              (is (not= (:modified post-record)
+                        (:modified updated-record))))))
 
         (testing (format "PUT /ctia/%s/:id" entity-str)
           (let [with-updates (-> post-record
@@ -295,8 +298,10 @@
                      :headers headers)]
             (when update-tests?
               (is (= 200 update-status))
-              (is (= with-updates
-                     updated-record))
+              (is (= (dissoc with-updates :modified)
+                     (dissoc updated-record :modified)))
+              (is (not= (:modified with-updates)
+                        (:modified updated-record)))
               (is (= updated-record
                      stored-record))
               (is (= 404

@@ -36,7 +36,8 @@
                          :headers {"Authorization" "45c1f5e3f05d0"})
           updated-casebook (:parsed-body response)]
       (is (= 200 (:status response)))
-      (is (= expected-entity updated-casebook))))
+      (is (= (dissoc expected-entity :modified)
+             (dissoc updated-casebook :modified)))))
 
   (testing "POST /ctia/casebook/:id/observables :add on non existing casebook"
     (let [new-observables [{:type "ip" :value "42.42.42.42"}]
@@ -58,8 +59,8 @@
                          :headers {"Authorization" "45c1f5e3f05d0"})
           updated-casebook (:parsed-body response)]
       (is (= 200 (:status response)))
-      (is (= expected-entity
-                 updated-casebook))))
+      (is (= (dissoc expected-entity :modified)
+             (dissoc updated-casebook :modified)))))
 
   (testing "POST /ctia/casebook/:id/observables :remove on non existing casebook"
     (let [deleted-observables [{:value "85:28:cb:6a:21:41" :type "mac_address"}
@@ -81,8 +82,8 @@
                          :headers {"Authorization" "45c1f5e3f05d0"})
           updated-casebook (:parsed-body response)]
       (is (= 200 (:status response)))
-      (is (= expected-entity
-                 updated-casebook))))
+      (is (= (dissoc expected-entity :modified)
+             (dissoc updated-casebook :modified)))))
 
   (testing "POST /ctia/casebook/:id/observables :replace"
     (let [observables (:observables new-casebook-maximal)
@@ -94,8 +95,8 @@
                          :headers {"Authorization" "45c1f5e3f05d0"})
           updated-casebook (:parsed-body response)]
       (is (= 200 (:status response)))
-      (is (= expected-entity
-                 updated-casebook))))
+      (is (= (dissoc expected-entity :modified)
+             (dissoc updated-casebook :modified)))))
 
   (testing "POST /ctia/casebook/:id/observables :replace on non existing casebook"
     (let [observables (:observables new-casebook-maximal)
@@ -118,7 +119,8 @@
 
 
       (is (= 200 (:status response)))
-      (is (= expected-entity updated-casebook))))
+      (is (= (dissoc expected-entity :modified)
+             (dissoc updated-casebook :modified)))))
 
   (testing "POST /ctia/casebook/:id/texts :add on non existing casebook"
     (let [new-texts [{:type "some" :text "text"}]
@@ -139,7 +141,8 @@
                          :headers {"Authorization" "45c1f5e3f05d0"})
           updated-casebook (:parsed-body response)]
       (is (= 200 (:status response)))
-      (is (= expected-entity updated-casebook))))
+      (is (= (dissoc expected-entity :modified)
+             (dissoc updated-casebook :modified)))))
 
   (testing "POST /ctia/casebook/:id/texts :remove on non existing casebook"
     (let [deleted-texts [{:type "some" :text "text"}]
@@ -219,8 +222,10 @@
                            :headers {"Authorization" "45c1f5e3f05d0"})
             updated-casebook (:parsed-body response)]
         (is (= 200 (:status response)))
-        (is (= (update casebook :bundle dissoc :malwares)
-                   (update updated-casebook :bundle dissoc :malwares)))
+        (is (= (-> (update casebook :bundle dissoc :malwares)
+                   (dissoc :modified))
+               (-> (update updated-casebook :bundle dissoc :malwares)
+                   (dissoc :modified))))
         (is (not (subset? (set (:malwares bundle-entities))
                           (set (-> updated-casebook :bundle :malwares)))))))
 
@@ -240,8 +245,10 @@
                            :headers {"Authorization" "45c1f5e3f05d0"})
             updated-casebook (:parsed-body response)]
         (is (= 200 (:status response)))
-        (is (= (update casebook :bundle dissoc :malwares)
-                   (update updated-casebook :bundle dissoc :malwares)))
+        (is (= (-> (update casebook :bundle dissoc :malwares)
+                   (dissoc :modified))
+               (-> (update updated-casebook :bundle dissoc :malwares)
+                   (dissoc :modified))))
         (is (= (:malwares bundle-entities)
                (-> updated-casebook :bundle :malwares set)))))
 
@@ -264,7 +271,8 @@
                             :headers {"Authorization" "45c1f5e3f05d0"}))
             updated-casebook (:parsed-body response)]
         (is (= 200 (:status response)))
-        (is (= expected-entity updated-casebook))
+        (is (= (dissoc expected-entity :modified)
+               (dissoc updated-casebook :modified)))
 
         (testing "Adding an observable should work and update the schema_version"
           (testing "POST /ctia/casebook/:id/observables :add"
@@ -279,7 +287,9 @@
                                  :headers {"Authorization" "45c1f5e3f05d0"})
                   final-casebook (:parsed-body response)]
               (is (= 200 (:status response)))
-              (is (= expected-entity final-casebook)))))))))
+
+              (is (= (dissoc expected-entity :modified)
+                     (dissoc final-casebook :modified))))))))))
 
 (deftest test-casebook-routes
   (test-for-each-store-with-app

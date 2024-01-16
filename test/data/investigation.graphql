@@ -44,6 +44,8 @@ fragment investigationFields on Investigation {
   short_description
   title
   timestamp
+  created
+  modified
   tlp
   source
   source_uri

@@ -9,7 +9,6 @@
    [clojure.tools.logging :as log]
    [ctia.auth :as auth]
    [ctia.domain.access-control :refer [allowed-tlp? allowed-tlps]]
-   [ctia.domain.entities :refer [un-store]]
    [ctia.entity.event.obj-to-event :refer
     [to-create-event to-delete-event to-update-event]]
    [ctia.lib.collection :as coll]
@@ -384,7 +383,6 @@
     (-> (deep-merge-with patch-fn
                          prev-entity
                          (dissoc partial-entity :id))
-        un-store
         (dissoc :schema_version))))
 
 (s/defn patch-entities :- FlowMap

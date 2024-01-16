@@ -31,6 +31,8 @@ fragment assetFields on Asset {
   source
   source_uri
   timestamp
+  created
+  modified
   title
   tlp
   type
@@ -85,6 +87,8 @@ fragment assetMappingFields on AssetMapping {
   specificity
   stability
   timestamp
+  created
+  modified
   tlp
   type
   valid_time { ...validTimeFields}
@@ -130,6 +134,8 @@ fragment assetPropertiesFields on AssetProperties {
   source
   source_uri
   timestamp
+  created
+  modified
   tlp
   type
   valid_time { ...validTimeFields}

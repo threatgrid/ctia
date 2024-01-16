@@ -2,7 +2,7 @@
   (:require [clojure.tools.logging :as log]
             [ctia.domain.entities
              :refer
-             [page-with-long-id un-store un-store-page with-long-id]]
+             [page-with-long-id with-long-id]]
             [ctia.graphql.delayed :as delayed]
             [ctia.schemas.core :as ctia-schemas
              :refer [GraphQLRuntimeContext
@@ -44,7 +44,6 @@
                :ident ident
                :params params})
             with-long-id-fn
-            un-store-page
             (pagination/result->connection-response paging-params))))
 
 (s/defn search-entity-resolver :- AnyGraphQLTypeResolver
@@ -77,8 +76,7 @@
                 field-selection)
     (some-> (get-store entity-type-kw)
             (store/read-record id ident {:fields (concat default-fields field-selection)})
-            (with-long-id services)
-            un-store)))
+            (with-long-id services))))
 
 (s/defn entity-by-id-resolver :- AnyGraphQLTypeResolver
   [entity-type-kw]
@@ -107,7 +105,6 @@
               {:all-of {:entity_id entity-id}}
               (:ident context)
               params)
-            un-store-page
             (pagination/result->connection-response paging-params)))))
 
 ;;---- Judgement
@@ -131,7 +128,6 @@
               (:ident context)
               params)
             (page-with-long-id services)
-            un-store
             (pagination/result->connection-response paging-params)))))
 
 ;;---- Sighting
@@ -155,7 +151,6 @@
               (:ident context)
               params)
             (page-with-long-id services)
-            un-store
             (pagination/result->connection-response paging-params)))))
 
 ;;---- Relationship
@@ -198,7 +193,6 @@
                {:all-of {:asset_ref entity-id}}
                (:ident context)
                params)
-              un-store-page
               (pagination/result->connection-response paging-params)))))
 
 ;;--- AssetProperties
@@ -221,5 +215,4 @@
                {:all-of {:asset_ref entity-id}}
                (:ident context)
                params)
-              un-store-page
               (pagination/result->connection-response paging-params)))))

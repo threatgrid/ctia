@@ -234,6 +234,8 @@ fragment indicatorFields on Indicator {
   producer
   description
   timestamp
+  created
+  modified
   indicator_type
   valid_time {
     ...validTimeFields
@@ -275,6 +277,8 @@ fragment casebookFields on Casebook {
     ...externalReferenceFields
   }
   timestamp
+  created
+  modified
   language
   title
   description
@@ -335,6 +339,8 @@ fragment judgementFields on Judgement {
   tlp
   priority
   timestamp
+  created
+  modified
   owner
   groups
 }
@@ -355,6 +361,8 @@ fragment sightingFields on Sighting {
   sensor
   source
   timestamp
+  created
+  modified
   tlp
   owner
   groups

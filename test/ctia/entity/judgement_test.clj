@@ -248,10 +248,7 @@
                :schema_version schema-version
                :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
                             :end_time #inst "2525-01-01T00:00:00.000-00:00"}}
-              (dissoc judgement
-                      :id
-                      :groups ["foogroup"]
-                      :owner "foouser")))))
+              (dissoc judgement :id :groups :owner :created :modified)))))
 
      (testing "POST a judgement with disposition_name"
        (let [{status :status
@@ -285,8 +282,7 @@
                  :groups ["foogroup"]
                  :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
                               :end_time #inst "2525-01-01T00:00:00.000-00:00"}}
-                (dissoc judgement
-                        :id)))))
+                (dissoc judgement :id :created :modified)))))
 
      (testing "POST a judgement without disposition"
        (let [{status :status
@@ -320,8 +316,7 @@
                :schema_version schema-version
                :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
                             :end_time #inst "2525-01-01T00:00:00.000-00:00"}}
-              (dissoc judgement
-                      :id)))))
+              (dissoc judgement :id :created :modified)))))
 
      (testing "POST a judgement with mismatched disposition/disposition_name"
        (let [{status :status

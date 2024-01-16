@@ -2,7 +2,7 @@
   (:require
    [clojure.string :as string]
    [ctia.domain.entities
-    :refer [page-with-long-id un-store un-store-page with-long-id]]
+    :refer [page-with-long-id with-long-id]]
    [ctia.entity.feed.schemas
     :refer [Feed FeedViewQueryParams NewFeed PartialFeed PartialFeedList
             PartialStoredFeed realize-feed StoredFeed]]
@@ -181,8 +181,7 @@
                                  (mapcat read-judgements)
                                  (remove nil?)
                                  (remove #(not (cdv/valid-now? now %)))
-                                 (map #(with-long-id % services))
-                                 (map un-store))
+                                 (map #(with-long-id % services)))
                            relationships)]
          (cond-> {}
            (= :observables output)
@@ -296,7 +295,6 @@
                   :entities [new-entity]
                   :spec :new-feed/map)
                  first
-                 un-store
                  (decrypt-feed services)
                  routes.common/created)))
 
@@ -323,7 +321,6 @@
                           :entities [(assoc entity-update :id id)]
                           :spec :new-feed/map)
                          first
-                         un-store
                          (decrypt-feed services))]
               (ok updated-rec)
               (not-found))))
@@ -344,7 +341,6 @@
                  identity-map
                  q)
                 (page-with-long-id services)
-                un-store-page
                 (decrypt-feed-page services)
                 routes.common/paginated-ok)))
 
@@ -364,7 +360,6 @@
                    :ident identity-map
                    :params (select-keys params routes.common/search-options)})
                 (page-with-long-id services)
-                un-store-page
                 (decrypt-feed-page services)
                 routes.common/paginated-ok)))
 
@@ -425,7 +420,6 @@
                               params))]
               (-> rec
                   (with-long-id services)
-                  un-store
                   (decrypt-feed services)
                   ok)
               (not-found))))

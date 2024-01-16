@@ -1,6 +1,7 @@
 (ns ctia.entity.tool.graphql-schemas
   (:require [ctia.entity.feedback.graphql-schemas :as feedback]
             [ctia.entity.relationship.graphql-schemas :as relationship]
+            [ctia.schemas.graphql.common :as gc]
             [ctia.schemas.graphql
              [flanders :as flanders]
              [helpers :as g]
@@ -23,6 +24,7 @@
      (merge fields
             feedback/feedback-connection-field
             relationship/relatable-entity-fields
+            gc/time-metadata-fields
             go/graphql-ownership-fields))))
 
 (def tool-order-arg

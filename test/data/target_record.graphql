@@ -46,6 +46,8 @@ fragment targetRecordFields on TargetRecord {
   source_uri
   targets { ...targetsFields}
   timestamp
+  created
+  modified
   title
   tlp
   type

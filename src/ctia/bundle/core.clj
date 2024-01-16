@@ -220,8 +220,7 @@
     (let [old-entities (mapcat find-by-external-id external_ids)
           old-entity (some-> (first old-entities)
                              :entity
-                             (with-long-id services)
-                             ent/un-store)]
+                             (with-long-id services))]
       (when (< 1 (count old-entities))
         (log/warn
          (format
@@ -600,8 +599,7 @@
                      {:limit max-relationships
                       :sort_by "timestamp"
                       :sort_order "desc"})
-                    :data
-                    ent/un-store-all)]
+                    :data)]
     (send-event {:service "Export bundle fetch relationships"
                  :correlation-id correlation-id
                  :time (get-epoch-second)
@@ -645,9 +643,7 @@
         (assoc (-> (:type record)
                    keyword
                    bulk/bulk-key)
-               #{(-> record
-                     ent/un-store
-                     (ent/with-long-id services))})
+               #{(ent/with-long-id record services)})
 
         (seq relationships)
         (assoc :relationships

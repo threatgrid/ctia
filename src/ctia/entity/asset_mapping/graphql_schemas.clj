@@ -5,6 +5,7 @@
    [ctia.entity.relationship.graphql-schemas :as relationship]
    [ctia.schemas.graphql.flanders :as flanders]
    [ctia.schemas.graphql.helpers :as g]
+   [ctia.schemas.graphql.common :as gc]
    [ctia.schemas.graphql.ownership :as go]
    [ctia.schemas.graphql.pagination :as pagination]
    [ctia.schemas.graphql.sorting :as sorting]
@@ -23,6 +24,7 @@
      (merge fields
             feedback/feedback-connection-field
             relationship/relatable-entity-fields
+            gc/time-metadata-fields
             go/graphql-ownership-fields))))
 
 (def asset-mapping-order-arg

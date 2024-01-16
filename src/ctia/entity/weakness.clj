@@ -9,6 +9,7 @@
    [ctia.schemas.core :refer [APIHandlerServices def-acl-schema def-stored-schema]]
    [ctia.schemas.graphql.flanders :as flanders]
    [ctia.schemas.graphql.helpers :as g]
+   [ctia.schemas.graphql.common :as gc]
    [ctia.schemas.graphql.ownership :as go]
    [ctia.schemas.graphql.pagination :as pagination]
    [ctia.schemas.graphql.sorting :as graphql-sorting]
@@ -99,6 +100,7 @@
      (merge fields
             feedback/feedback-connection-field
             relationship/relatable-entity-fields
+            gc/time-metadata-fields
             go/graphql-ownership-fields))))
 
 (def weakness-order-arg
