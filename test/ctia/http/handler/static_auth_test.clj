@@ -74,6 +74,8 @@
           (is (= 200 status))
           (is (=
                {:id (:id judgement)
+                :created (:created judgement)
+                :modified (:modified judgement)
                 :type "judgement"
                 :observable {:value "1.2.3.4"
                              :type "ip"}

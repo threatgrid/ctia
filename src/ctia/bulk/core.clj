@@ -5,7 +5,7 @@
    [clojure.tools.logging :as log]
    [ctia.auth :as auth]
    [ctia.bulk.schemas :refer [EntitiesResult]]
-   [ctia.domain.entities :as ent :refer [with-long-id short-id->long-id]]
+   [ctia.domain.entities :refer [with-long-id short-id->long-id]]
    [ctia.entity.entities :refer [all-entities]]
    [ctia.flows.crud :as flows]
    [ctia.schemas.core :as schemas :refer [APIHandlerServices TempIDs]]
@@ -381,8 +381,7 @@
   [bulk 
    auth-identity :- auth/AuthIdentity
    services :- APIHandlerServices]
-  (ent/un-store-map
-   (gen-bulk-from-fn read-entities bulk auth-identity services)))
+  (gen-bulk-from-fn read-entities bulk auth-identity services))
 
 (s/defn delete-bulk
   [bulk 

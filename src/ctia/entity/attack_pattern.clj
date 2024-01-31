@@ -1,6 +1,6 @@
 (ns ctia.entity.attack-pattern
   (:require
-   [ctia.domain.entities :refer [default-realize-fn un-store with-long-id]]
+   [ctia.domain.entities :refer [default-realize-fn with-long-id]]
    [ctia.entity.attack-pattern.core :as core]
    [ctia.entity.feedback.graphql-schemas :as feedback]
    [ctia.entity.relationship.graphql-schemas :as relationship-graphql]
@@ -16,6 +16,7 @@
    [ctia.schemas.core :refer [APIHandlerServices]]
    [ctia.schemas.graphql.flanders :as flanders]
    [ctia.schemas.graphql.helpers :as g]
+   [ctia.schemas.graphql.common :as gc]
    [ctia.schemas.graphql.ownership :as go]
    [ctia.schemas.graphql.pagination :as pagination]
    [ctia.schemas.graphql.sorting :as graphql-sorting]
@@ -99,7 +100,6 @@
           :identity-map identity-map
           (or (some-> services
                       (core/mitre-attack-pattern identity-map mitre-id)
-                      un-store
                       (with-long-id services)
                       ok)
               (not-found {:error "attack-pattern not found"}))))))
@@ -142,6 +142,7 @@
      (merge fields
             feedback/feedback-connection-field
             relationship-graphql/relatable-entity-fields
+            gc/time-metadata-fields
             go/graphql-ownership-fields))))
 
 (def attack-pattern-order-arg

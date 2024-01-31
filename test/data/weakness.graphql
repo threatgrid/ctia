@@ -77,6 +77,8 @@ fragment weaknessFields on Weakness {
     ...externalReferenceFields
   }
   timestamp
+  created
+  modified
   language
   tlp
   source

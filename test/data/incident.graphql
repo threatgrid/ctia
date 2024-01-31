@@ -85,6 +85,8 @@ fragment incidentFields on Incident {
     ...externalReferenceFields
   }
   timestamp
+  created
+  modified
   language
   tlp
   source

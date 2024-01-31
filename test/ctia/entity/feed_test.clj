@@ -177,9 +177,8 @@
                   :headers {"Authorization" "45c1f5e3f05d0"})
               updated-feed (:parsed-body updated-feed-response)]
           (is (= 200 (:status updated-feed-response)))
-          (is (= (dissoc feed-update :feed_view_url)
-                 (dissoc updated-feed
-                         :feed_view_url)))
+          (is (= (dissoc feed-update :feed_view_url :created :modified)
+                 (dissoc updated-feed :feed_view_url :created :modified)))
 
           (let [feed-view-url (:feed_view_url updated-feed)
                 valid-response  (client/get feed-view-url

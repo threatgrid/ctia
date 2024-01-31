@@ -81,6 +81,8 @@ fragment attackPatternFields on AttackPattern {
     ...externalReferenceFields
   }
   timestamp
+  created
+  modified
   language
   tlp
   source

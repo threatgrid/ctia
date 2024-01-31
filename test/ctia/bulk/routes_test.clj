@@ -350,10 +350,10 @@
                          :id :timestamp :source_ref :target_ref)
 
                  (is (= (into #{}
-                              (map #(dissoc % :id :timestamp :source_ref :target_ref)
+                              (map #(dissoc % :id :timestamp :created :modified :source_ref :target_ref)
                                    (get new-bulk k)))
                         (into #{}
-                              (map #(dissoc % :id :timestamp :type :tlp :schema_version :disposition_name :source_ref :target_ref :owner :groups)
+                              (map #(dissoc % :id :timestamp :created :modified :type :tlp :schema_version :disposition_name :source_ref :target_ref :owner :groups)
                                    (get response k)))))
 
                  (let [id (id/long-id->id (:id (first (get response k))))]

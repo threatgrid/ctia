@@ -7,6 +7,7 @@
    [ctia.entity.relationship.graphql-schemas :as relationship]
    [ctia.schemas.graphql.flanders :as flanders]
    [ctia.schemas.graphql.helpers :as g]
+   [ctia.schemas.graphql.common :as gc]
    [ctia.schemas.graphql.ownership :as go]
    [ctia.schemas.graphql.pagination :as pagination]
    [ctia.schemas.graphql.refs :as refs]
@@ -26,6 +27,7 @@
      name description []
      (merge
       fields
+      gc/time-metadata-fields
       go/graphql-ownership-fields))))
 
 (def AssetRefAssetMappingConnectionType
@@ -36,6 +38,7 @@
         (flanders/->graphql (fu/optionalize-all ctim-asset-properties/AssetProperties))]
     (g/new-object name description []
                   (merge fields
+                         gc/time-metadata-fields
                          go/graphql-ownership-fields))))
 
 (def AssetRefAssetPropertiesConnectionType
@@ -78,6 +81,7 @@
             feedback/feedback-connection-field
             asset-ref-connection-field
             relationship/relatable-entity-fields
+            gc/time-metadata-fields
             go/graphql-ownership-fields))))
 
 (def asset-order-arg

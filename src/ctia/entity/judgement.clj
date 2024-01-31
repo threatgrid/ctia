@@ -2,7 +2,6 @@
   (:require
    [clj-momo.lib.clj-time.core :as time]
    [compojure.api.resource :refer [resource]]
-   [ctia.domain.entities :refer [un-store with-long-id]]
    [ctia.entity.feedback.graphql-schemas :as feedback]
    [ctia.entity.judgement.es-store :as j-store]
    [ctia.entity.judgement.schemas :as js]
@@ -14,6 +13,7 @@
    [ctia.schemas.core :refer [APIHandlerServices Entity]]
    [ctia.schemas.graphql.flanders :as f]
    [ctia.schemas.graphql.helpers :as g]
+   [ctia.schemas.graphql.common :as gc]
    [ctia.schemas.graphql.ownership :as go]
    [ctia.schemas.graphql.pagination :as pagination]
    [ctia.schemas.graphql.refs :as refs]
@@ -165,6 +165,7 @@
       fields
       feedback/feedback-connection-field
       relationship/relatable-entity-fields
+      gc/time-metadata-fields
       go/graphql-ownership-fields))))
 
 (def judgement-order-arg

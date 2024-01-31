@@ -81,6 +81,8 @@ fragment toolFields on Tool {
     ...externalReferenceFields
   }
   timestamp
+  created
+  modified
   language
   tlp
   source

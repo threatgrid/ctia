@@ -1492,9 +1492,9 @@
                                               (testing ":asset_mappings"
                                                 (let [stored (get-stored updated-asset_mapping1)]
                                                   ;; no interesting merging logic on asset mappings
-                                                  (is (= (dissoc stored :id :schema_version :asset_ref :owner :groups :timestamp)
+                                                  (is (= (dissoc stored :id :schema_version :asset_ref :owner :groups :timestamp :created :modified)
                                                          (-> updated-asset_mapping1
-                                                             (dissoc :id :schema_version :asset_ref :timestamp)
+                                                             (dissoc :id :schema_version :asset_ref :timestamp :created :modified)
                                                              (assoc :tlp "green")
                                                              (assoc-in [:valid_time :end_time] #inst "2525-01-01T00:00:00.000-00:00"))))))
                                               (testing ":asset_properties"

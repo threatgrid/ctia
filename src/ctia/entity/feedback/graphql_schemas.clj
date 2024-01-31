@@ -2,6 +2,7 @@
   (:require
    [ctim.schemas.feedback :as ctim-feedback]
    [ctia.entity.feedback.schemas :as feedbacks]
+   [ctia.schemas.graphql.common :as gc]
    [ctia.schemas.graphql
     [flanders :as f]
     [helpers :as g]
@@ -16,6 +17,7 @@
         (f/->graphql (fu/optionalize-all ctim-feedback/Feedback))]
     (g/new-object name description []
                   (merge fields
+                         gc/time-metadata-fields
                          go/graphql-ownership-fields))))
 
 (def feedback-order-arg

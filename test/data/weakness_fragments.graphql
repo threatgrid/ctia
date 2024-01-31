@@ -25,6 +25,8 @@ fragment externalReferenceFields on ExternalReference {
 fragment feedbackFields on Feedback {
   feedback
   timestamp
+  created
+  modified
   entity_id
   reason
   owner

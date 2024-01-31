@@ -145,7 +145,7 @@
                           :reason "This is a bad IP address that talked to some evil servers"
                           :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
                                        :end_time #inst "2525-01-01T00:00:00.000-00:00"}}
-                         (dissoc judgement :owner :groups)))
+                         (dissoc judgement :owner :groups :created :modified)))
                   (is (= expected-headers
                          (select-keys (:headers response)
                                       ["Access-Control-Expose-Headers"
@@ -196,7 +196,7 @@
                       (str "ctia/judgement/" (:short-id judgement-id))
                       :headers {"Authorization" bearer})]
              (is (= 200 status))
-             (is (= expected-get-res parsed-body)))
+             (is (= (dissoc expected-get-res :created :modified) (dissoc parsed-body :created :modified))))
 
            (testing "Search must properly filter on client-id."
              (let [search-by-client #(GET app
@@ -205,7 +205,7 @@
                    matched (search-by-client jwt-client-id)
                    not-matched (search-by-client "does not exist")]
                (is (= 200 (:status matched) (:status not-matched)))
-               (is (= [expected-get-res] (:parsed-body matched)))
+               (is (= [expected-get-res] (map #(dissoc % :created :modified) (:parsed-body matched))))
                (is (= [] (:parsed-body not-matched)))))
 
            (testing "Normal users are not allowed to set the ids during creation."

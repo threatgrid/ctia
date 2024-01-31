@@ -64,10 +64,11 @@
 (defn clean-entity
   [entity]
   (-> entity
-      (dissoc :created :modified)
       (update-instant [:valid_time :start_time])
       (update-instant [:valid_time :end_time])
-      (update-instant [:timestamp])))
+      (update-instant [:timestamp])
+      (update-instant [:created])
+      (update-instant [:modified])))
 
 (defn make-entry
   [event]

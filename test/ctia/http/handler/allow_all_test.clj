@@ -51,7 +51,7 @@
             :owner "Unknown"
             :valid_time {:start_time #inst "2016-02-11T00:00:00.000-00:00"
                          :end_time #inst "2016-03-11T00:00:00.000-00:00"}}
-           (dissoc judgement :id)))
+           (dissoc judgement :id :created :modified)))
 
       (testing "GET /ctia/judgement"
         (let [{status :status
@@ -61,6 +61,8 @@
           (is (= 200 status))
           (is (=
                {:id (:id judgement)
+                :created (:created judgement)
+                :modified (:modified judgement)
                 :type "judgement"
                 :observable {:value "1.2.3.4"
                              :type "ip"}

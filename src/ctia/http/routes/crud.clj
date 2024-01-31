@@ -121,7 +121,6 @@
            :partial-entities [patch]
            :spec new-spec)
           first
-          ent/un-store
           ok)
       (not-found (str (capitalize-entity entity) " not found")))))
 
@@ -288,7 +287,6 @@
                     :entities [new-entity]
                     :spec new-spec)
                    first
-                   ent/un-store
                    routes.common/created))))
      (when can-update?
        (let [capabilities put-capabilities]
@@ -313,8 +311,7 @@
                             :identity identity
                             :entities [(assoc entity-update :id id)]
                             :spec new-spec)
-                           first
-                           ent/un-store)]
+                           first)]
                 (ok updated-rec)
                 (not-found)))))
      (when can-patch?
@@ -341,8 +338,7 @@
                               :patch-operation :replace
                               :partial-entities [(assoc partial-update :id id)]
                               :spec new-spec)
-                             first
-                             ent/un-store)]
+                             first)]
                   (ok updated-rec)
                   (not-found)))))
      (when can-get-by-external-id?
@@ -365,7 +361,6 @@
                     identity-map
                     q)
                   (ent/page-with-long-id services)
-                  ent/un-store-page
                   routes.common/paginated-ok))))
 
      (when can-search?
@@ -391,7 +386,6 @@
                         :params (select-keys params routes.common/search-options)}
                        add-search-extensions))
                  (ent/page-with-long-id services)
-                 ent/un-store-page
                  routes.common/paginated-ok))
            (GET "/count" []
              :auth-identity identity
@@ -535,7 +529,6 @@
                                params))]
               (-> rec
                   (with-long-id services)
-                  ent/un-store
                   ok)
               (not-found))))
 

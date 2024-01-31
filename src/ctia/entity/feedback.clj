@@ -1,5 +1,5 @@
 (ns ctia.entity.feedback
-  (:require [ctia.domain.entities :refer [page-with-long-id un-store-page]]
+  (:require [ctia.domain.entities :refer [page-with-long-id]]
             [ctia.entity.feedback.schemas :as fs]
             [ctia.http.routes.common :as routes.common]
             [ctia.http.routes.crud :refer [services->entity-crud-routes]]
@@ -69,7 +69,6 @@
                identity-map
                (dissoc params :entity_id))
              (page-with-long-id services)
-             un-store-page
              routes.common/paginated-ok))))
 
 (def capabilities

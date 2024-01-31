@@ -1,7 +1,7 @@
 (ns ctia.entity.relationship
   (:require
    [clojure.string :as str]
-   [ctia.domain.entities :refer [long-id->id short-id->long-id un-store with-long-id]]
+   [ctia.domain.entities :refer [long-id->id short-id->long-id with-long-id]]
    [ctia.entity.relationship.schemas :as rs]
    [ctia.flows.crud :as flows]
    [ctia.http.middleware.auth :refer [require-capability!]]
@@ -191,8 +191,7 @@
                          :identity identity
                          :entities [new-relationship]
                          :spec :new-relationship/map)
-                        first
-                        un-store)]
+                        first)]
                 (routes.common/created stored-relationship)))))))
 
 (def relationship-histogram-fields

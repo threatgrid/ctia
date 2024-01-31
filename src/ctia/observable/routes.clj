@@ -1,7 +1,7 @@
 (ns ctia.observable.routes
   (:require [ctia.domain.entities
              :refer
-             [page-with-long-id short-id->long-id un-store-page]]
+             [page-with-long-id short-id->long-id]]
             [ctia.entity.judgement :refer [JudgementsByObservableQueryParams]]
             [ctia.entity.judgement.schemas :refer [PartialJudgementList]]
             [ctia.entity.sighting :refer [SightingsByObservableQueryParams]]
@@ -69,7 +69,6 @@
                                          params
                                          services)
             (page-with-long-id services)
-            un-store-page
             paginated-ok)))
 
     (let [capabilities #{:list-judgements :list-relationships}]
@@ -114,7 +113,6 @@
              params
              services)
             (page-with-long-id services)
-            un-store-page
             paginated-ok)))
 
     (let [capabilities #{:list-sightings :list-relationships}]
