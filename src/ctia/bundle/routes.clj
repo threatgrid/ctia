@@ -121,8 +121,8 @@
              (POST "/import" []
                    :responses {200 {:schema BundleImportResult}}
                    :body [bundle
-                          (st/optional-keys-schema bundle-schema)
-                          {:description "a Bundle to import, partial entities allowed for existing entities"}]
+                          (describe (st/optional-keys-schema bundle-schema)
+                                    "a Bundle to import, partial entities allowed for existing entities")]
                    :query-params
                    [{external-key-prefixes
                      :- (describe s/Str "Comma separated list of external key prefixes")
