@@ -139,14 +139,6 @@
                  concat
                  (map #(to-long-id % services) not-found)))))
 
-(defn make-patch-bulk-enveloped-result
-  [fm]
-  (-> fm
-      flows/make-enveloped-result
-      (update :data #(mapv (fn [{:keys [error id] :as result}]
-                             (if error result id))
-                           %))))
-
 (s/defn delete-fn
   "return the delete function provided an entity type key"
   [k 
@@ -233,8 +225,7 @@
    tempids :- TempIDs
    auth-identity :- auth/AuthIdentity
    params
-   services :- APIHandlerServices
-   {:keys [make-result]} :- {(s/optional-key :make-result) s/Any}]
+   services :- APIHandlerServices]
   (when (seq patches)
     (let [get-fn #(read-entities %  entity-type auth-identity services)
           {:keys [realize-fn new-spec]} (get (all-entities) entity-type)]
@@ -250,7 +241,7 @@
         :partial-entities patches
         :tempids tempids
         :spec new-spec
-        :make-result (or make-result make-bulk-result)
+        :make-result make-bulk-result
         :get-success-entities (get-success-entities-fn :updated)))))
 
 (s/defschema BulkEntities {s/Keyword flows/Entities})
@@ -398,19 +389,9 @@
   (gen-bulk-from-fn update-entities bulk auth-identity params services))
 
 (s/defn patch-bulk
-  ([bulk
-    tempids :- TempIDs
-    auth-identity :- auth/AuthIdentity
-    params
-    services :- APIHandlerServices]
-   (patch-bulk bulk tempids auth-identity params services {}))
-  ([bulk
-    tempids :- TempIDs
-    auth-identity :- auth/AuthIdentity
-    params
-    services :- APIHandlerServices
-    {:keys [enveloped-result?] :as opts}]
-   (let [entities (gen-bulk-from-fn patch-entities bulk tempids auth-identity params services (select-keys opts [:make-result]))]
-     (cond-> entities
-       enveloped-result? (-> (update-vals :data)
-                             (assoc :tempids (into tempids (merge-tempids entities))))))))
+  [bulk
+   tempids :- TempIDs
+   auth-identity :- auth/AuthIdentity
+   params
+   services :- APIHandlerServices]
+  (gen-bulk-from-fn patch-entities bulk auth-identity params services))
