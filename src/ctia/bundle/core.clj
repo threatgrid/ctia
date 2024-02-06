@@ -206,7 +206,7 @@
   [import-data
    entity-type
    auth-identity :- auth/AuthIdentity
-   {{:keys [get-store]} :StoreService :as services} :- WithExistingEntitiesServices]
+   services :- WithExistingEntitiesServices]
   (let [entities-by-external-id
         (by-external-id
          (find-by-external-ids import-data
@@ -313,7 +313,7 @@
            (->> (bulk/create-bulk bulk tempids auth-identity (bulk-params get-in-config) services)
                 (with-bulk-result bundle-import-data)
                 build-response
-                log-errors)))))
+                log-errors))))
 
 (defn bundle-max-size [get-in-config]
   (bulk/get-bulk-max-size get-in-config))
