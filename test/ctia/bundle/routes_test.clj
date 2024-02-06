@@ -526,7 +526,7 @@
                                             :body new-bundle
                                             :headers {"Authorization" "45c1f5e3f05d0"})
                  disallowed-keys-expected (->> disable
-                                               (mapcat #'bundle.routes/entity->bundle-keys)
+                                               (mapcat core/entity->bundle-keys)
                                                set)
                  disallowed-keys-res      (->> resp
                                                :body

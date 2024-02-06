@@ -9,6 +9,7 @@
    [ctia.bundle.schemas :refer
     [BundleImportData BundleImportResult EntityImportData
      FindByExternalIdsServices]]
+   [ctia.entity.entities :as entities]
    [ctia.domain.entities :as ent :refer [with-long-id]]
    [ctia.lib.collection :as coll]
    [ctia.properties :as p]
