@@ -222,7 +222,6 @@
   "patch many entities provided their type and returns errored and successed entities' ids"
   [patches
    entity-type 
-   tempids :- TempIDs
    auth-identity :- auth/AuthIdentity
    params
    services :- APIHandlerServices]
@@ -239,7 +238,6 @@
         :identity auth-identity
         :patch-operation :replace
         :partial-entities patches
-        :tempids tempids
         :spec new-spec
         :make-result make-bulk-result
         :get-success-entities (get-success-entities-fn :updated)))))
