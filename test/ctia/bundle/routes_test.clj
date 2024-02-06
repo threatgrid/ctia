@@ -252,7 +252,6 @@
                response (POST app
                               "ctia/bundle/import"
                               :body new-bundle
-                              :query-params {"patch-existing" false}
                               :headers {"Authorization" "45c1f5e3f05d0"})
                bundle-result (:parsed-body response)]
            (when (is (= 200 (:status response)))
@@ -270,7 +269,6 @@
                response (POST app
                               "ctia/bundle/import"
                               :body bundle
-                              :query-params {"patch-existing" false}
                               :headers {"Authorization" "45c1f5e3f05d0"})
                bundle-result (:parsed-body response)]
            (when (is (= 200 (:status response)))
@@ -331,7 +329,6 @@
                response (POST app
                               "ctia/bundle/import"
                               :body bundle
-                              :query-params {"patch-existing" true}
                               :headers {"Authorization" "45c1f5e3f05d0"})
                bundle-result (:parsed-body response)]
            (when (is (= 200 (:status response)))
