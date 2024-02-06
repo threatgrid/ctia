@@ -8,9 +8,7 @@
    [ctia.bulk.core :as bulk]
    [ctia.bundle.schemas :refer
     [BundleImportData BundleImportResult EntityImportData
-     FindByExternalIdsServices AssetPropertiesMergeStrategy IncidentTacticsTechniquesMergeStrategy]]
-   [ctia.entity.asset-properties :refer [AssetProperties]]
-   [ctia.entity.entities :as entities]
+     FindByExternalIdsServices]]
    [ctia.domain.entities :as ent :refer [with-long-id]]
    [ctia.lib.collection :as coll]
    [ctia.properties :as p]
@@ -115,39 +113,6 @@
              (all-pages entity-type external-ids auth-identity get-store))
       [])))
 
-(s/defn find-by-asset_refs :- {s/Str (s/pred map?)}
-  "Returns a map from asset_ref to entity of entity-type that has
-  entry `:asset_ref asset_ref`."
-  [asset_refs :- #{s/Str}
-   entity-type :- (s/enum :asset-properties :asset-mapping)
-   auth-identity :- auth/AuthIdentity
-   {{:keys [get-store]} :StoreService} :- FindByExternalIdsServices]
-  (if (empty? asset_refs)
-    {}
-    (let [_ (log/debugf "Searching %s matching these asset_refs %s"
-                        entity-type
-                        (pr-str asset_refs))
-          entities (loop [asset_refs asset_refs
-                          entities {}]
-                     (if (empty? asset_refs)
-                       entities
-                       (let [query {:all-of {:asset_ref asset_refs}}
-                             paging {:limit find-by-external-ids-limit}
-                             {results :data
-                              {next-page :next} :paging} (-> (get-store entity-type)
-                                                             (store/list-records
-                                                               query
-                                                               (auth/ident->map auth-identity)
-                                                               paging))
-                             entities (into entities (map (juxt :asset_ref identity))
-                                            results)]
-                         (if next-page
-                           (recur (apply disj asset_refs (map :asset_ref results))
-                                  entities)
-                           entities))))]
-      (debug (format "Results searching %s for asset_refs %s:" entity-type (pr-str asset_refs))
-             entities))))
-
 (defn by-external-id
   "Index entities by external_id
 
@@ -201,24 +166,14 @@
 (s/defn with-existing-entity :- EntityImportData
   "If the entity has already been imported, update the import data
    with its ID. If more than one old entity is linked to an external id,
-   an error is reported. If realized :id is provided, asserts that entity
-   must exist, otherwise errors."
+   an error is reported."
   [{:keys [external_ids]
     :as entity-data} :- EntityImportData
    find-by-external-id :- (s/=> s/Any (s/named s/Any 'external_id))
-   id->old-entity :- {s/Str (s/pred map?)}
    services :- HTTPShowServices]
-  (if-some [realized-id (when-some [new-id (get-in entity-data [:new-entity :id])]
-                          (when-not (schemas/transient-id? new-id)
-                            new-id))]
-    (if-some [old-entity (id->old-entity realized-id)]
-      (assoc entity-data :result "exists" :id (:id old-entity)
-             :old-entity old-entity)
-      (assoc entity-data :error {:type :unresolvable-id
-                                 :reason (str "Long id must already correspond to an entity: " realized-id)}
-             :result "error"))
-    (let [old-entities (mapcat find-by-external-id external_ids)
-          old-entity (some-> (first old-entities)
+  (if-let [old-entities (mapcat find-by-external-id external_ids)]
+    (let [old-entity (some-> old-entities
+                             first
                              :entity
                              (with-long-id services))]
       (when (< 1 (count old-entities))
@@ -232,10 +187,9 @@
                pr-str))))
       (cond-> entity-data
         ;; only one entity linked to the external ID
-        old-entity (-> (assoc :result "exists"
-                              :id (:id old-entity)
-                              :old-entity old-entity)
-                       (assoc-in [:new-entity :id] (:id old-entity)))))))
+        old-entity (assoc :result "exists"
+                          :id (:id old-entity))))
+    entity-data))
 
 (s/defschema WithExistingEntitiesServices
   (csu/open-service-schema
@@ -253,34 +207,23 @@
    entity-type
    auth-identity :- auth/AuthIdentity
    {{:keys [get-store]} :StoreService :as services} :- WithExistingEntitiesServices]
-  (let [{:keys [realized-entities unrealized-entities]} (group-by (fn [{{:keys [id]} :new-entity}]
-                                                                    (if (schemas/non-transient-id? id)
-                                                                      :realized-entities
-                                                                      :unrealized-entities))
-                                                                  import-data)
-        entities-by-external-id
+  (let [entities-by-external-id
         (by-external-id
-         (find-by-external-ids unrealized-entities
+         (find-by-external-ids import-data
                                entity-type
                                auth-identity
                                services))
         find-by-external-id-fn (fn [external_id]
                                  (when external_id
                                    (get entities-by-external-id
-                                        {:external_id external_id})))
-        id->old-entity (into {} (comp (remove nil?)
-                                      (map (juxt :id identity)))
-                             (bulk/read-entities (map (comp :id :new-entity) realized-entities)
-                                                 entity-type
-                                                 auth-identity
-                                                 services))]
-    (map #(with-existing-entity % find-by-external-id-fn id->old-entity services)
+                                        {:external_id external_id})))]
+    (map #(with-existing-entity % find-by-external-id-fn services)
          import-data)))
 
 (s/defn prepare-import :- BundleImportData
   "Prepares the import data by searching all existing
-   entities based on their external IDs. New entities
-   will be created, and existing entities will be patched."
+   entities based on their external IDs. Only new entities
+   will be imported"
   [bundle-entities
    external-key-prefixes
    auth-identity :- auth/AuthIdentity
@@ -298,71 +241,36 @@
   ;; Add only new entities without error
   (not (contains? #{"error" "exists"} result)))
 
-(s/defn patch? :- s/Bool
-  "Whether the provided entity should be patched or not"
-  [{:keys [result]}]
-  (= "exists" result))
-
 (s/defn prepare-bulk
-  :- {:creates-bulk bulk/BulkEntities
-      :create-bundle-import-data BundleImportData
-      :patches-bulk bulk/BulkEntities
-      :patch-bundle-import-data BundleImportData
-      :unsubmitted-result BundleImportData}
-  "Creates separate bulk structures with entities to create or patch.
-  Returns several bundles in order to preserve correspondence between submission order
-  and results order for the delicate processing in `with-bulk-result`.
-  
-  If patch-existing is false, then :patches-bulk will be empty and moved to :unsubmitted-result
-  along with errors."
-  [bundle-import-data :- BundleImportData
-   tempids :- TempIDs
-   patch-existing :- s/Bool]
-  (reduce-kv (fn [acc k vs]
-               (reduce (fn [acc v]
-                         (let [op (cond
-                                    (create? v) :creates-bulk
-                                    (and (patch? v) patch-existing) :patches-bulk
-                                    :else :unsubmitted-result)]
-                           (-> acc
-                               (update-in [op k] (fnil conj [])
-                                          (cond-> v
-                                            (not= :unsubmitted-result op) :new-entity))
-                               (cond->
-                                 (not= :unsubmitted-result op)
-                                 (update-in [(case op
-                                               :creates-bulk :create-bundle-import-data
-                                               :patches-bulk :patch-bundle-import-data)
-                                             k]
-                                            (fnil conj []) v)))))
-                       acc vs))
-             {:creates-bulk {}
-              :create-bundle-import-data {}
-              :patches-bulk {}
-              :patch-bundle-import-data {}
-              :unsubmitted-result {}}
-             bundle-import-data))
+  "Creates the bulk data structure with all entities to create."
+  [bundle-import-data :- BundleImportData]
+  (map-kv
+   (fn [_ v]
+     (->> v
+          (filter create?)
+          (remove nil?)
+          (map :new-entity)))
+   bundle-import-data))
 
-(s/defn with-bulk-result :- BundleImportData
-  "Set the bulk result to the bundle import data, all of which
-  were submitted and have results in the same order as bulk-result."
+(s/defn with-bulk-result
+  "Set the bulk result to the bundle import data"
   [bundle-import-data :- BundleImportData
-   bulk-result :- bulk/BulkRefs]
-  (map-kv (fn [k submissions]
-            (let [results (get bulk-result k)]
-              ;; guaranteed via `prepare-{upsert}-bulk`
-              (assert (= (count submissions) (count results))
-                      [submissions results])
-              (mapv (s/fn :- EntityImportData
-                      [entity-import-data
-                       {:keys [error msg] :as entity-bulk-result}]
+   bulk-result]
+  (map-kv (fn [k v]
+            (let [{submitted true
+                   not-submitted false} (group-by create? v)]
+              (concat
+               ;; Only submitted entities are processed
+               (map (fn [entity-import-data
+                         {:keys [error msg] :as entity-bulk-result}]
                       (cond-> entity-import-data
                         error (assoc :error error
                                      :result "error")
                         msg (assoc :msg msg)
                         (not error) (assoc :id entity-bulk-result
-                                           :result (if (create? entity-import-data) "created" "updated"))))
-                    submissions results)))
+                                           :result "created")))
+                    submitted (get bulk-result k))
+               not-submitted)))
           bundle-import-data))
 
 (s/defn build-response :- BundleImportResult
@@ -385,112 +293,25 @@
       (log/warn error)))
   response)
 
-(defn entity->bundle-keys
-  "For given entity key returns corresponding keys that may be present in Bundle schema.
-  e.g. :asset => [:assets :asset_refs]"
-  [entity-key]
-  (let [{:keys [entity plural]} (get (entities/all-entities) entity-key)
-        kw->snake-case-str      (fn [kw] (-> kw name (string/replace #"-" "_")))]
-    [(-> plural kw->snake-case-str keyword)
-     (-> entity kw->snake-case-str (str "_refs") keyword)]))
-
-(s/defn prep-bundle-schema :- s/Any
-  "Remove keys of disabled entities from Bundle schema"
-  [{{:keys [entity-enabled?]} :FeaturesService} :- APIHandlerServices]
-  (->> (entities/all-entities)
-       keys
-       (remove entity-enabled?)
-       (mapcat entity->bundle-keys)
-       (apply st/dissoc NewBundle)))
-
-(s/defn merge-existing-incident-tactics+techniques :- BundleImportData
-  [bundle-import-data :- BundleImportData]
-  (cond-> bundle-import-data
-    (seq (:incidents bundle-import-data))
-    (update :incidents (fn [is]
-                         (mapv (s/fn [entity-import-data :- EntityImportData]
-                                 (if (not= "exists" (:result entity-import-data))
-                                   entity-import-data
-                                   (let [merge-existing (fn [entity-import-data field]
-                                                          (let [old (get-in entity-import-data [:old-entity field])
-                                                                new (get-in entity-import-data [:new-entity field])]
-                                                            (cond-> entity-import-data
-                                                              (and old new)
-                                                              (assoc-in [:new-entity field]
-                                                                        (-> (sorted-set)
-                                                                            (into old)
-                                                                            (into new)
-                                                                            vec)))))]
-                                     (-> entity-import-data
-                                         (merge-existing :tactics)
-                                         (merge-existing :techniques)))))
-                               is)))))
-
-(defn bundle-import-data->tempids
-  [bundle-import-data
-   tempids]
-  (into tempids (map entities-import-data->tempids)
-        (vals bundle-import-data)))
-
-(s/defschema ImportBundleOptions
-  {(s/optional-key :patch-existing) s/Bool
-   (s/optional-key :asset_properties-merge-strategy) AssetPropertiesMergeStrategy
-   (s/optional-key :incident-tactics-techniques-merge-strategy) IncidentTacticsTechniquesMergeStrategy})
-
 (s/defn import-bundle :- BundleImportResult
-  ([bundle :- (st/optional-keys-schema NewBundle)
-    external-key-prefixes :- (s/maybe s/Str)
-    auth-identity :- auth/AuthIdentity
-    services :- APIHandlerServices]
-   (import-bundle bundle external-key-prefixes auth-identity services {}))
-  ([bundle :- (st/optional-keys-schema NewBundle)
-    external-key-prefixes :- (s/maybe s/Str)
-    auth-identity :- auth/AuthIdentity
-    {{:keys [get-in-config]} :ConfigService
-     :as services} :- APIHandlerServices
-    {:keys [patch-existing
-            asset_properties-merge-strategy
-            incident-tactics-techniques-merge-strategy]
-     :or {patch-existing false
-          asset_properties-merge-strategy :ignore-existing
-          incident-tactics-techniques-merge-strategy :ignore-existing}} :- ImportBundleOptions]
-   (let [bundle-entities (select-keys bundle bundle-entity-keys)
-         ;; the hard case is when patching asset_ref on an Asset that we also create in this bundle.
-         ;; even harder, the same Asset could be used to patch a relationship's source_ref.
-         ;; handled by processing the bundle as separate groups of entities in dependency order
-         {:keys [bulk-refs]} (bulk/import-bulks-with
-                               (fn [bundle-entities tempids]
-                                 (let [bundle-import-data (prepare-import bundle-entities external-key-prefixes auth-identity services)
-                                       tempids (bundle-import-data->tempids bundle-import-data tempids)
-                                       bundle-import-data (-> bundle-import-data 
-                                                              (cond-> (and patch-existing
-                                                                           (= :merge-previous incident-tactics-techniques-merge-strategy))
-                                                                merge-existing-incident-tactics+techniques))
-                                       tempids (bundle-import-data->tempids bundle-import-data tempids)
-                                       {:keys [creates-bulk create-bundle-import-data
-                                               patches-bulk patch-bundle-import-data
-                                               unsubmitted-result]} (debug "Bulk" (prepare-bulk bundle-import-data tempids patch-existing))
-                                       {:keys [tempids] :as create-bulk-refs
-                                        :or {tempids {}}} (bulk/create-bulk creates-bulk tempids auth-identity (bulk-params get-in-config) services)
-                                       create-result (with-bulk-result create-bundle-import-data (dissoc create-bulk-refs :tempids))
-                                       patch-result (when patch-existing
-                                                      (let [patch-bulk-refs (bulk/patch-bulk patches-bulk tempids auth-identity (bulk-params get-in-config) services
-                                                                                             {:enveloped-result? true
-                                                                                              :make-result bulk/make-patch-bulk-enveloped-result})]
-                                                        (with-bulk-result patch-bundle-import-data (dissoc patch-bulk-refs :tempids))))]
-                                   (-> (merge-with into create-result patch-result unsubmitted-result)
-                                       ;; cram back into the format that bulk/import-bulks-with expects.
-                                       (update-vals #(hash-map :data %
-                                                               :tempids tempids)))))
-                               (keep not-empty
-                                     [(dissoc bundle-entities :relationships :asset_mappings :asset_properties)
-                                      ;; create assets before processing entities with asset_ref
-                                      (select-keys bundle-entities [:asset_mappings :asset_properties])
-                                      ;; create all non-relationships before processing {source,target}_ref
-                                      (select-keys bundle-entities [:relationships])])
-                               {})]
-     (debug "Import bundle response"
-            (-> bulk-refs
+  [bundle :- NewBundle
+   external-key-prefixes :- (s/maybe s/Str)
+   auth-identity :- (s/protocol auth/IIdentity)
+   {{:keys [get-in-config]} :ConfigService
+    :as services} :- APIHandlerServices]
+  (let [bundle-entities (select-keys bundle bundle-entity-keys)
+        bundle-import-data (prepare-import bundle-entities
+                                           external-key-prefixes
+                                           auth-identity
+                                           services)
+        bulk (debug "Bulk" (prepare-bulk bundle-import-data))
+        tempids (->> bundle-import-data
+                     (map (fn [[_ entities-import-data]]
+                            (entities-import-data->tempids entities-import-data)))
+                     (apply merge {}))]
+    (debug "Import bundle response"
+           (->> (bulk/create-bulk bulk tempids auth-identity (bulk-params get-in-config) services)
+                (with-bulk-result bundle-import-data)
                 build-response
                 log-errors)))))
 
