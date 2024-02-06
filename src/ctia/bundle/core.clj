@@ -293,6 +293,35 @@
       (log/warn error)))
   response)
 
+(defn entity->bundle-keys
+  "For given entity key returns corresponding keys that may be present in Bundle schema.
+  e.g. :asset => [:assets :asset_refs]"
+  [entity-key]
+  (let [{:keys [entity plural]} (get (entities/all-entities) entity-key)
+        kw->snake-case-str      (fn [kw] (-> kw name (string/replace #"-" "_")))]
+    [(-> plural kw->snake-case-str keyword)
+     (-> entity kw->snake-case-str (str "_refs") keyword)]))
+
+(s/defn prep-bundle-schema :- s/Any
+  "Remove keys of disabled entities from Bundle schema"
+  [{{:keys [entity-enabled?]} :FeaturesService} :- APIHandlerServices]
+  (->> (entities/all-entities)
+       keys
+       (remove entity-enabled?)
+       (mapcat entity->bundle-keys)
+       (apply st/dissoc NewBundle)))
+
+(defn bundle-import-data->tempids
+  [bundle-import-data
+   tempids]
+  (into tempids (map entities-import-data->tempids)
+        (vals bundle-import-data)))
+
+(s/defschema ImportBundleOptions
+  {(s/optional-key :patch-existing) s/Bool
+   (s/optional-key :asset_properties-merge-strategy) AssetPropertiesMergeStrategy
+   (s/optional-key :incident-tactics-techniques-merge-strategy) IncidentTacticsTechniquesMergeStrategy})
+
 (s/defn import-bundle :- BundleImportResult
   [bundle :- NewBundle
    external-key-prefixes :- (s/maybe s/Str)
