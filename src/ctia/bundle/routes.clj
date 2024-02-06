@@ -7,13 +7,11 @@
                              import-bundle
                              export-bundle
                              prep-bundle-schema]]
-   [ctia.bundle.schemas :refer [AssetPropertiesMergeStrategy
-                                BundleImportResult
+   [ctia.bundle.schemas :refer [BundleImportResult
                                 NewBundleExport
                                 BundleExportIds
                                 BundleExportOptions
-                                BundleExportQuery
-                                IncidentTacticsTechniquesMergeStrategy]]
+                                BundleExportQuery]]
    [ctia.http.routes.common :as common]
    [ctia.schemas.core :refer [APIHandlerServices NewBundle]]
    [ring.swagger.json-schema :refer [describe]]
