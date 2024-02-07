@@ -7,13 +7,11 @@
                              import-bundle
                              export-bundle
                              prep-bundle-schema]]
-   [ctia.bundle.schemas :refer [AssetPropertiesMergeStrategy
-                                BundleImportResult
+   [ctia.bundle.schemas :refer [BundleImportResult
                                 NewBundleExport
                                 BundleExportIds
                                 BundleExportOptions
-                                BundleExportQuery
-                                IncidentTacticsTechniquesMergeStrategy]]
+                                BundleExportQuery]]
    [ctia.http.routes.common :as common]
    [ctia.schemas.core :refer [APIHandlerServices NewBundle]]
    [ring.swagger.json-schema :refer [describe]]
@@ -121,40 +119,17 @@
              (POST "/import" []
                    :responses {200 {:schema BundleImportResult}}
                    :body [bundle
-                          (st/optional-keys-schema bundle-schema)
-                          {:description "a Bundle to import, partial entities allowed for existing entities"}]
+                          (prep-bundle-schema services)
+                          {:description "a Bundle to import"}]
                    :query-params
                    [{external-key-prefixes
                      :- (describe s/Str "Comma separated list of external key prefixes")
-                     nil}
-                    {patch-existing :- (describe s/Bool
-                                         (str "If true, existing entities will be patched with result=updated. Otherwise, existing entities will be "
-                                              "ignored with result-existing."))
-                     false}
-                    {asset_properties-merge-strategy :-
-                     (describe AssetPropertiesMergeStrategy
-                               "DEPRECATED -- will be removed")
-                     :ignore-existing}
-                    {incident-tactics-techniques-merge-strategy :-
-                     (describe IncidentTacticsTechniquesMergeStrategy
-                               (str "Only relevant if patch-existing=true.\n\n" 
-                                    "If ignore-existing, then tactics and techniques on incidents will be patched to their new "
-                                    "values as they appear in the request bundle.\n\n"
-                                    "If merge-previous, then, for each incident, existing tactics and techniques "
-                                    "will each be retrieved and combined with those provided in the request bundle "
-                                    "as if by concatenating existing and new values together in a single list, "
-                                    "removing duplicates, then sorting lexicographically."
-                                    "\n\n"
-                                    " Defaults to ignore-existing"))
-                     :ignore-existing}]
-                   :summary "POST many new and partial entities using a single HTTP call"
+                     nil}]
+                   :summary "POST many new entities using a single HTTP call"
                    :auth-identity auth-identity
                    :description (common/capabilities->description capabilities)
                    :capabilities capabilities
                    (let [max-size (bundle-max-size get-in-config)]
                      (if (< max-size (bundle-size bundle))
                        (bad-request (str "Bundle max nb of entities: " max-size))
-                       (ok (import-bundle bundle external-key-prefixes auth-identity services
-                                          {:patch-existing patch-existing
-                                           :asset_properties-merge-strategy asset_properties-merge-strategy
-                                           :incident-tactics-techniques-merge-strategy incident-tactics-techniques-merge-strategy})))))))))
+                       (ok (import-bundle bundle external-key-prefixes auth-identity services)))))))))
