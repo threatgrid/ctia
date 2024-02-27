@@ -274,12 +274,22 @@
                not-submitted)))
           bundle-import-data))
 
+(defn obfuscate-errors
+  "Given a Bundle import intermediate response,
+   attempt to obfuscate any leaky error"
+  [{:keys [error] :as res}]
+  (cond-> res
+    (map? error) (assoc :error (select-keys error [:type]))))
+
 (s/defn build-response :- BundleImportResult
   "Build bundle import response"
-  [bundle-import-data :- BundleImportData]
-  {:results (map
-             #(dissoc % :new-entity :old-entity)
-             (apply concat (vals bundle-import-data)))})
+  [bundle-import-data :- BundleImportData
+   obfuscate-errors? :- s/Bool]
+  {:results
+   (->> (vals bundle-import-data)
+        (apply concat)
+        (map #(cond-> (dissoc % :new-entity :old-entity)
+                obfuscate-errors? obfuscate-errors)))})
 
 (defn bulk-params [get-in-config]
   {:refresh
@@ -290,8 +300,7 @@
   (let [errors (->> response
                     :results
                     (filter :error))]
-    (doseq [error errors]
-      (log/warn error)))
+    (log/warn (take 10 errors)))
   response)
 
 (defn entity->bundle-keys
@@ -333,12 +342,11 @@
         tempids (->> bundle-import-data
                      (map (fn [[_ entities-import-data]]
                             (entities-import-data->tempids entities-import-data)))
-                     (apply merge {}))]
-    (debug "Import bundle response"
-           (->> (bulk/create-bulk bulk tempids auth-identity (bulk-params get-in-config) services)
-                (with-bulk-result bundle-import-data)
-                build-response
-                log-errors))))
+                     (apply merge {}))
+        bulk-res (->> (bulk/create-bulk bulk tempids auth-identity (bulk-params get-in-config) services)
+                 (with-bulk-result bundle-import-data))]
+    (log-errors (build-response bulk-res false))
+    (build-response bulk-res true)))
 
 (defn bundle-max-size [get-in-config]
   (bulk/get-bulk-max-size get-in-config))

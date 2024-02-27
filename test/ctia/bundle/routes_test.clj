@@ -413,20 +413,20 @@
                                             :body bundle
                                             :headers {"Authorization" "45c1f5e3f05d0"})
                       bundle-result-create (:parsed-body response-create)]
+                  (clojure.pprint/pprint bundle-result-create)
                   (when (is (= 200 (:status response-create)))
-                    (is (every? #(= "created" %)
-                                (->> (:results bundle-result-create)
-                                     (filter #(= "sighting" %))
-                                     (map :result)))
-                        "All valid entities are created")
+                    (is (every? #(nil? (:index %))
+                                (map :error
+                                     (:results bundle-result-create)))
+                        "No ES infrastructure details are exposed in the errors")
                     (doseq [entity (:sightings bundle)]
                       (validate-entity-record
-                        app
-                        (find-result-by-original-id bundle-result-create (:id entity))
-                        entity))
+                       app
+                       (find-result-by-original-id bundle-result-create (:id entity))
+                       entity))
                     (let [indicators (filter
-                                       #(= :indicator (:type %))
-                                       (:results bundle-result-create))]
+                                      #(= :indicator (:type %))
+                                      (:results bundle-result-create))]
                       (is (seq indicators)
                           "The result collection for indicators is not empty")
                       (is (every? #(contains? % :error) indicators)))))
