@@ -83,7 +83,7 @@
                                  http-show-services)))
                         (is (= log?
                                (logged? 'ctia.bundle.core
-                                        :warn
+                                        :debug
                                         #"More than one entity is linked to the external ids"))))))]
       (test-fn {:msg "no existing external id"
                 :expected {:id indicator-id-3
