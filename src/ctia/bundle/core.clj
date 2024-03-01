@@ -178,7 +178,7 @@
                              :entity
                              (with-long-id services))]
       (when (< 1 (count old-entities))
-        (log/warn
+        (log/debug
          (format
           (str "More than one entity is "
                "linked to the external ids %s (examples: %s)")
