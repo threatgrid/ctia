@@ -1,4 +1,5 @@
 (ns ctia.stores.es.mapping
+  (:require [clojure.string :as string])
   (:refer-clojure :exclude [identity]))
 
 ;; This provides a reasonable default mapping for all of our entities.
@@ -260,6 +261,36 @@
   {:properties {:type token
                 :text text}})
 
+(def type-simple-pattern
+  (->> [:actor
+        :asset
+        :asset-mapping
+        :asset-properties
+        :attack-pattern
+        :campaign
+        :casebook
+        :coa
+        :data-table
+        :event
+        :feed
+        :feedback
+        :identity
+        :identity-assertion
+        :incident
+        :indicator
+        :investigation
+        :judgement
+        :malware
+        :note
+        :relationship
+        :sighting
+        :target-record
+        :tool
+        :vulnerability
+        :weakness]
+       (map name)
+       (string/join "|")))
+
 (def store-settings
   {:number_of_replicas 1
    :number_of_shards 1
@@ -284,6 +315,10 @@
      :english_stemmer {:type "stemmer"
                        :language "english"}}
     ;; when applying filters, order matters
+    :tokenizer
+    {:type_tokenizer
+     {:type "simple_pattern",
+      :pattern type-simple-pattern}}
     :analyzer
     {:default ;; same as text_analyzer
      {:type "custom"
@@ -298,6 +333,10 @@
       :filter ["lowercase"
                "ctia_stemmer"
                "english_stemmer"]}
+     :type_analyzer {
+        :tokenizer "type_tokenizer"
+        :filter [ "fingerprint"]
+     }
      :search_analyzer
      {:type "custom"
       :tokenizer "standard"
