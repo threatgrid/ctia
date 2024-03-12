@@ -1,6 +1,6 @@
 (def cheshire-version "5.10.2")
 (def clj-http-fake-version "1.0.3")
-(def clj-version "1.11.1")
+(def clj-version "1.11.2")
 (def jackson-version "2.13.4")
 (def jackson-databind-version "2.13.4.2")
 (def metrics-clojure-version "2.10.0")
