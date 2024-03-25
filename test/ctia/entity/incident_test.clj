@@ -43,15 +43,12 @@
     (is (= {} (sut/mk-scores-schema {:ConfigService {:get-in-config (constantly nil)}})))))
 
 (defn post-status
-  ([app uri-encoded-id new-status]
-   (post-status app uri-encoded-id new-status nil))
-  ([app uri-encoded-id new-status status-disposition]
-   (POST app
-       (str "ctia/incident/" uri-encoded-id "/status")
-     :body (cond-> {:status new-status}
-             status-disposition (assoc :status_disposition status-disposition))
-     :headers {"Authorization" "45c1f5e3f05d0"
-               "wait_for" true})))
+  [app uri-encoded-id new-status]
+  (POST app
+        (str "ctia/incident/" uri-encoded-id "/status")
+        :body {:status new-status}
+        :headers {"Authorization" "45c1f5e3f05d0"
+                  "wait_for" true}))
 
 (defn get-incident [app id]
   (GET app (str "ctia/incident/" (uri/uri-encode id))
@@ -81,13 +78,11 @@
            (is (= (get-in updated-incident [:incident_time :opened])
                   (tc/to-date fixed-now)))))
 
-       (testing "POST /ctia/incident/:id/status Closed / False Positive"
+       (testing "POST /ctia/incident/:id/status Closed"
          (let [new-status "Closed"
-               status-disposition "False Positive"
-               response (post-status app (:short-id incident-id) new-status status-disposition)
+               response (post-status app (:short-id incident-id) new-status)
                updated-incident (:parsed-body response)]
            (is (= 200 (:status response)))
-           (is (= status-disposition (:status_disposition updated-incident)))
            (is (= "Closed" (:status updated-incident)))
            (is (get-in updated-incident [:incident_time :closed]))
 
