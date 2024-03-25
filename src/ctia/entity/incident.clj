@@ -110,15 +110,11 @@
 (s/defschema IncidentStatus
   (f-schema/->schema vocs/Status))
 
-(s/defschema IncidentStatusDisposition
-  (f-schema/->schema vocs/StatusDisposition))
-
 (s/defschema IncidentStatusUpdate
-  {:status IncidentStatus
-   (s/optional-key :status_disposition) IncidentStatusDisposition})
+  {:status IncidentStatus})
 
 (defn make-status-update
-  [{:keys [status status_disposition]}]
+  [{:keys [status]}]
   (let [t (time/internal-now)
         verb (case status
                "New" nil
@@ -133,7 +129,6 @@
                "Incident Reported" :reported
                nil)]
     (cond-> {:status status}
-      status_disposition (assoc :status_disposition status_disposition)
       verb (assoc :incident_time {verb t}))))
 
 (s/defn ^:private update-interval :- ESStoredIncident
@@ -240,7 +235,6 @@
      em/stored-entity-mapping
      {:confidence         em/token
       :status             em/token
-      :status_disposition em/token
       :incident_time      em/incident-time
       :categories         em/token
       :discovery_method   em/token
@@ -272,7 +266,6 @@
           sourcable-entity-sort-fields
           [:confidence
            :status
-           :status_disposition
            :incident_time.opened
            :incident_time.discovered
            :incident_time.reported
@@ -353,7 +346,6 @@
    :promotion_method
    :source
    :status
-   :status_disposition
    :title
    :severity
    :tactics
@@ -387,7 +379,6 @@
    (st/optional-keys
     {:confidence         s/Str
      :status             s/Str
-     :status_disposition s/Str
      :discovery_method   s/Str
      :intended_effect    s/Str
      :categories         s/Str
