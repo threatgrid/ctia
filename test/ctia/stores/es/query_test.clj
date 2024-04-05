@@ -120,3 +120,11 @@
          (let [conn-state (:state (helpers/get-store app :sighting))]
            (is (= ["source.text" "title"]
                   (sut/rename-search-fields conn-state [:source :title])))))))))
+
+(deftest rewrite-lucene-search-test
+  (let [re #"(\w+[:])[*](casebook[-][0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})"]
+    (is (=  "source_ref:\"http://local/ctia/entitiy/casebook/casebook-aa8c5f29-11dd-433e-9a82-6b560a47a2cb\" AND a:\"http://local/ctia/entitiy/casebook/casebook-aa8c5f29-11dd-433e-9a82-6b560a47a2cb\""
+            (clojure.string/replace "source_ref:*casebook-aa8c5f29-11dd-433e-9a82-6b560a47a2cb AND a:*casebook-aa8c5f29-11dd-433e-9a82-6b560a47a2cb"
+                                    re
+                                    "$1\"http://local/ctia/entitiy/casebook/$2\""))
+  )))
