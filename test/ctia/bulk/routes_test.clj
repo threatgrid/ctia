@@ -227,12 +227,12 @@
              fake-routes
              {#".*_bulk.*"
               {:post (fn [{:keys [query-string body]}]
-                       (let [mapping-type (-> (io/reader body)
-                                              line-seq
-                                              first
-                                              (parse-string true)
-                                              (get-in [:index :_type]))]
-                         (when-not (= "event" mapping-type)
+                       (let [parsed-body (-> (io/reader body)
+                                             line-seq
+                                             first
+                                             (parse-string true))
+                             event-creation? (str/starts-with? (get-in parsed-body [:index :_id]) "event")]
+                         (when-not event-creation?
                            (reset! es-params query-string))
                          {:status 200
                           :headers {"Content-Type" "application/json"}

@@ -12,7 +12,7 @@
 (deftest rollover-aliased-test
   (es-helpers/for-each-es-version
    "rollover should properly trigger _rollover"
-   [5 7]
+   [7]
    #(es-index/delete! % "ctia_*")
    (helpers/with-properties
      (into ["ctia.store.es.default.port" es-port

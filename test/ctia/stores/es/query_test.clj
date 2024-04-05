@@ -109,12 +109,12 @@
                  (select-keys (digest-searchable-map es-mappings) [:incident :vulnerability]))))))))
 
 (deftest rename-search-fields-map-test
-  (doseq [es-version [5 7]]
+  (doseq [es-version [7]]
     (helpers/with-properties
-      (cond-> ["ctia.feature-flags" "translate-searchable-fields:true"
-               "ctia.store.es.default.port" (+ 9200 es-version)
-               "ctia.store.es.default.version" es-version]
-        (= es-version 7) (concat es-helpers/basic-auth-properties))
+      (concat  ["ctia.feature-flags" "translate-searchable-fields:true"
+                "ctia.store.es.default.port" (+ 9200 es-version)
+                "ctia.store.es.default.version" es-version]
+               es-helpers/basic-auth-properties)
       (helpers/fixture-ctia-with-app
        (fn [app]
          (let [conn-state (:state (helpers/get-store app :sighting))]

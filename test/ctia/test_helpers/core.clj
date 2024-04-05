@@ -34,7 +34,7 @@
 (defn set-of-es-versions-to-test []
   {:post [(set? %)]}
   (or (some-> (System/getProperty "ctia.test.es-versions") read-string set)
-      #{5 7}))
+      #{7}))
 
 (def
   ^:dynamic ^:private
@@ -70,8 +70,7 @@
          "ctia.versions.config"                       "test"]
         ;; use es7 if es5 is not available
         (let [es-versions (set-of-es-versions-to-test)]
-          (when (and (not (es-versions 5))
-                     (es-versions 7))
+          (when (es-versions 7)
             ["ctia.store.es.default.port" 9207
              "ctia.store.es.default.version" 7]))))
 (assert (even? (count *properties-overrides*)))

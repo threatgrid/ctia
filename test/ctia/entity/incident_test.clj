@@ -304,7 +304,7 @@
 (deftest simple-severity-int-script-search-test
   (es-helpers/for-each-es-version
     "severity sorts like #'ctim-severity-order"
-    [5 7]
+    [7]
     #(ductile.index/delete! % "ctia_*")
     (helpers/with-properties (into ["ctia.auth.type" "allow-all"]
                                    es-helpers/basic-auth-properties)
@@ -353,7 +353,7 @@
 (deftest sort-incidents-by-tactics-test
   (es-helpers/for-each-es-version
     "sort by tactics"
-    [5 7]
+    [7]
     #(ductile.index/delete! % "ctia_*")
     (helpers/with-properties (into ["ctia.auth.type" "allow-all"]
                                    es-helpers/basic-auth-properties)
@@ -422,7 +422,7 @@
   ([{:keys [bench-atom]}]
    (es-helpers/for-each-es-version
      "severity sorts like #'ctim-severity-order"
-     [5 7]
+     [7]
      #(ductile.index/delete! % "ctia_*")
      (helpers/with-properties (into ["ctia.auth.type" "allow-all"]
                                     es-helpers/basic-auth-properties)
@@ -571,7 +571,7 @@
 (deftest filter-incidents-by-tactics-test
   (es-helpers/for-each-es-version
     "sort by tactics"
-    [5 7]
+    [7]
     #(ductile.index/delete! % "ctia_*")
     (helpers/with-properties (into ["ctia.auth.type" "allow-all"]
                                    es-helpers/basic-auth-properties)

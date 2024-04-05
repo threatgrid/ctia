@@ -397,7 +397,7 @@
                           (delete-search
                            query
                            identity-map
-                           (routes.common/wait_for->refresh (:wait_for params))))
+                           {:wait_for_completion (boolean (:wait_for params))}))
                       (-> (get-store :feed)
                           (query-string-count
                            query

@@ -65,7 +65,7 @@
 (defn build-create-result
   [item coerce-fn]
   (-> item
-      (dissoc :_id :_index :_type)
+      (dissoc :_id :_index)
       coerce-fn))
 
 (defn partial-results
@@ -133,8 +133,7 @@ It returns the documents with full hits meta data including the real index in wh
    doc :- (s/pred map?)]
   (assoc doc
          :_id (:id doc)
-         :_index (:write-index props)
-         :_type (name mapping)))
+         :_index (:write-index props)))
 
 (s/defn build-stored-transformer
   :- (s/=> s/Any s/Any) ;(s/=> (s/maybe out) (s/maybe in))
@@ -372,7 +371,7 @@ It returns the documents with full hits meta data including the real index in wh
         missing (set/difference (set doc-ids)
                                 (set (map :_id docs-with-indices)))
         not-found (into (map :_id not-visible) missing)
-        prepared-docs (map #(select-keys % [:_index :_type :_id])
+        prepared-docs (map #(select-keys % [:_index :_id])
                            authorized)]
     (cond-> {}
       forbidden (assoc-in [:errors :forbidden] (map :_id forbidden))

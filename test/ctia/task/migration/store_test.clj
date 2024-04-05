@@ -255,7 +255,7 @@
 (deftest rollover-test
   (es-helpers/for-each-es-version
    "rollover should refresh write index and trigger rollover when index size is strictly bigger than max-docs"
-   [5 7]
+   [7]
    #(ductile.index/delete! % "ctia_*")
    (helpers/with-properties*
      ["ctia.store.es.default.port" es-port
@@ -329,7 +329,7 @@
 (deftest sliced-queries-test
   (es-helpers/for-each-es-version
    "Sliced-queries should properly decompose a store into time window queries for given time interval"
-   [5 7]
+   [7]
    #(ductile.index/delete! % "*ctia_relationship*")
    (helpers/with-properties ;; simple way to have a proper store initialization
      ["ctia.store.es.default.port" es-port
@@ -492,7 +492,7 @@
 (deftest bulk-metas-test
   (es-helpers/for-each-es-version
    "bulk-metas prepares ES bulk data for given document ids"
-   [5 7]
+   [7]
    #(ductile.index/delete! % "ctia_*")
    (helpers/with-properties
      ["ctia.store.es.default.port" es-port
@@ -543,25 +543,22 @@
                bulk-metas-malware-res (sut/bulk-metas malware-store-map malware-ids services)
                bulk-metas-sighting-res-1 (sut/bulk-metas sighting-store-map sighting-ids-1 services)
                bulk-metas-sighting-res-2 (sut/bulk-metas sighting-store-map sighting-ids-2 services)]
-           (testing "bulk-metas should property return _id, _type, _index from a document id"
+           (testing "bulk-metas should property return _id, _index from a document id"
              (doseq [[_id metas] bulk-metas-malware-res]
                (is (= _id (:_id metas)))
-               (is (= "malware" (:_type metas)))
                (is (= malware-index-1 (:_index metas))))
              (doseq [[_id metas] bulk-metas-sighting-res-1]
                (is (= _id (:_id metas)))
-               (is (= "sighting" (:_type metas)))
                (is (= sighting-index-1 (:_index metas))))
              (doseq [[_id metas] bulk-metas-sighting-res-2]
                (is (= _id (:_id metas)))
-               (is (= "sighting" (:_type metas)))
                (is (= sighting-index-2 (:_index metas)))))))))))
 
 (deftest prepare-docs-test
   ;; insert elements in different indices, modify some and check that we retrieve the right one
   (es-helpers/for-each-es-version
    "prepare-docs properly generates meta data for bulk ops for new and modified documents"
-   [5 7]
+   [7]
    #(ductile.index/delete! % "ctia_*")
    (helpers/with-properties
      ["ctia.store.es.default.port" es-port
@@ -619,19 +616,17 @@
                                     sighting-ids-2)
                sighting-docs (concat sighting-docs-1 sighting-docs-2)
                prepared-docs (sut/prepare-docs sighting-store-map sighting-docs services)]
-           (testing "prepare-docs should set proper _id, _type, _index for modified and unmodified documents"
+           (testing "prepare-docs should set proper _id, _index for modified and unmodified documents"
              (is (= (sort (concat [sighting-index-1 sighting-index-2]
                                   (repeat 4 (str (es-helpers/get-indexname app :sighting) "-write"))))
                     (sort (map :_index prepared-docs))))
-             (is (= (repeat 6 "sighting")
-                    (sort (map :_type prepared-docs))))
              (is (= (set (concat sighting-ids-1 sighting-ids-2))
                     (set (map :_id prepared-docs)))))))))))
 
 (deftest store-batch-store-size-test
   (es-helpers/for-each-es-version
    "store-batch should properly write data in given store"
-   [5 7]
+   [7]
    #(do (ductile.index/delete! % "test_index*")
         (ductile.index/delete! % "ctia_*"))
    (helpers/with-properties
@@ -698,9 +693,7 @@
                               :mappings (es-helpers/build-mappings {:id {:type "keyword"}
                                                                     :batch em/integer-type
                                                                     :timestamp em/integer-type
-                                                                    :modified em/integer-type}
-                                                                   :event
-                                                                   version)})
+                                                                    :modified em/integer-type})})
       (sut/store-batch event-store event-batch-1 services)
       (sut/store-batch event-store event-batch-2 services)
       (ductile.index/refresh! conn indexname)
@@ -786,15 +779,11 @@
       (ductile.index/create! conn
                              tool-indexname
                              {:settings {:refresh_interval -1}
-                              :mappings (es-helpers/build-mappings mappings
-                                                                   :tool
-                                                                   version)})
+                              :mappings (es-helpers/build-mappings mappings)})
       (ductile.index/create! conn
                              malware-indexname
                              {:settings {:refresh_interval -1}
-                              :mappings (es-helpers/build-mappings mappings
-                                                                   :malware
-                                                                   version)})
+                              :mappings (es-helpers/build-mappings mappings)})
       (sut/store-batch tool-store tool-batch services)
       (sut/store-batch malware-store malware-batch services)
       (ductile.index/refresh! conn "*")
@@ -810,7 +799,7 @@
 (deftest query-fetch-batch-test
   (es-helpers/for-each-es-version
    "query-fetch should properly fetch and sort data"
-   [5 7]
+   [7]
    (fn [conn]
      (ductile.index/delete! conn "ctia_*")
      (ductile.index/delete! conn "event_index*")
@@ -829,7 +818,7 @@
 (deftest fetch-deletes-test
   (es-helpers/for-each-es-version
    "fetch-deletes should be properly configured to fetch deletes in source store"
-   [5 7]
+   [7]
    #(ductile.index/delete! % "ctia_*")
    (helpers/with-properties
      ["ctia.store.es.default.port" es-port
@@ -904,7 +893,7 @@
 (deftest init-get-migration-test
   (es-helpers/for-each-es-version
    "init-migration should properly create new migration state from selected types."
-   [5 7]
+   [7]
    (fn [c]
      (ductile.index/delete! c "ctia_*")
      (ductile.index/delete! c "v0.0.0*"))
