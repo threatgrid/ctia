@@ -2,6 +2,7 @@
   (:require [clj-http.headers :refer [canonicalize]]
             [clj-momo.lib.clj-time.core :as t]
             [clojure.string :as str]
+            [ctia.properties :refer [get-http-show]]
             [ctia.schemas.core :refer [SortExtensionDefinitions]]
             [ctia.schemas.search-agg :refer [MetricResult
                                              RangeQueryOpt
@@ -155,6 +156,31 @@
         from (t/latest from to-minus-one-year)]
     {:gte from
      :lt to-or-now}))
+
+(def uuid-pattern
+  "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}")
+
+(def entity-type-pattern
+  "\\w+([-_]\\w+)*")
+
+(def wildcard-ctia-id-re
+  (re-pattern (format "(\\w+[:])[*]((%s)[-]%s)" entity-type-pattern uuid-pattern)))
+
+(defn long-id-prefix
+  [services]
+  (let [{:keys [hostname path-prefix port protocol] :as res} (get-http-show services)]
+    (str protocol
+         "://"
+         hostname
+         (when port (str ":" port))
+         path-prefix
+         "/ctia/")))
+
+(defn prepare-lucene-id-search
+  [query services]
+  (str/replace query
+               wildcard-ctia-id-re
+               (format "$1\"%s$3/$2\"" (long-id-prefix services))))
 
 (s/defn search-query :- SearchQuery
   ([{:keys [date-field make-date-range-fn]
