@@ -185,7 +185,7 @@
 (deftest sort-scores-test
   (es-helpers/for-each-es-version
     "Can sort by multiple scores"
-    [7]
+    [5 7]
     #(ductile.index/delete! % "ctia_*")
     (helpers/with-properties (-> ["ctia.auth.type" "allow-all"]
                                  (into es-helpers/basic-auth-properties)
@@ -422,7 +422,7 @@
   ([{:keys [bench-atom]}]
    (es-helpers/for-each-es-version
      "severity sorts like #'ctim-severity-order"
-     [5 7]
+     [7]
      #(ductile.index/delete! % "ctia_*")
      (helpers/with-properties (into ["ctia.auth.type" "allow-all"]
                                     es-helpers/basic-auth-properties)
@@ -491,8 +491,9 @@
                                 (let [_ (when bench-atom
                                           (println)
                                           (println "Benchmarking..." (pr-str test-id)))
-                                      [{:keys [parsed-body] :as raw} ms-time] (result+ms-time
-                                                                                (search-th/search-raw app :incident search-params))
+                                      [{:keys [parsed-body] :as raw} ms-time]
+                                      (result+ms-time
+                                       (search-th/search-raw app :incident search-params))
 
                                       expected-parsed-body (sort-by (fn [{:keys [severity] :as incident}]
                                                                       {:post [(number? %)]}

@@ -357,7 +357,8 @@
             (-> (get-store :feed)
                 (query-string-search
                   {:search-query (routes.common/search-query {:date-field :created
-                                                              :params params})
+                                                              :params params}
+                                                             services)
                    :ident identity-map
                    :params (select-keys params routes.common/search-options)})
                 (page-with-long-id services)
@@ -376,7 +377,8 @@
             (ok (-> (get-store :feed)
                     (query-string-count
                      (routes.common/search-query {:date-field :created
-                                                  :params params})
+                                                  :params params}
+                                                 services)
                      identity-map)))))
 
      (let [capabilities #{:search-feed :delete-feed}]
@@ -389,7 +391,8 @@
                :identity-map identity-map
                :query [params FeedDeleteSearchParams]
                (let [query (routes.common/search-query {:date-field :created
-                                                        :params (dissoc params :wait_for :REALLY_DELETE_ALL_THESE_ENTITIES)})]
+                                                        :params (dissoc params :wait_for :REALLY_DELETE_ALL_THESE_ENTITIES)}
+                                                       services)]
                  (if (empty? query)
                    (forbidden {:error "you must provide at least one of from, to, query or any field filter."})
                    (ok

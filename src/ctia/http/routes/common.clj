@@ -2,6 +2,7 @@
   (:require [clj-http.headers :refer [canonicalize]]
             [clj-momo.lib.clj-time.core :as t]
             [clojure.string :as str]
+            [ctia.properties :refer [get-http-show]]
             [ctia.schemas.core :refer [SortExtensionDefinitions]]
             [ctia.schemas.search-agg :refer [MetricResult
                                              RangeQueryOpt
@@ -156,6 +157,31 @@
     {:gte from
      :lt to-or-now}))
 
+(def uuid-pattern
+  "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}")
+
+(def entity-type-pattern
+  "\\w+([-_]\\w+)*")
+
+(def wildcard-ctia-id-re
+  (re-pattern (format "(\\w+[:])[*]((%s)[-]%s)" entity-type-pattern uuid-pattern)))
+
+(defn long-id-prefix
+  [services]
+  (let [{:keys [hostname path-prefix port protocol] :as res} (get-http-show services)]
+    (str protocol
+         "://"
+         hostname
+         (when port (str ":" port))
+         path-prefix
+         "/ctia/")))
+
+(defn prepare-lucene-id-search
+  [query services]
+  (str/replace query
+               wildcard-ctia-id-re
+               (format "$1\"%s$3/$2\"" (long-id-prefix services))))
+
 (s/defn search-query :- SearchQuery
   ([{:keys [date-field make-date-range-fn]
      {:keys [query
@@ -169,15 +195,17 @@
                                (cond-> {}
                                  from (assoc :gte from)
                                  to   (assoc :lt to)))}}
-    :- SearchQueryArgs]
+    :- SearchQueryArgs
+    services]
    (let [filter-map (apply dissoc params filter-map-search-options)
-         date-range (make-date-range-fn from to)]
+         date-range (make-date-range-fn from to)
+         prepared-query (when query (prepare-lucene-id-search query services))]
      (cond-> {}
        (seq date-range)        (assoc-in [:range date-field] date-range)
        (seq filter-map)        (assoc :filter-map filter-map)
        (or query simple_query) (assoc :full-text
                                       (->> (cond-> []
-                                             query        (conj {:query query, :query_mode :query_string})
+                                             query        (conj {:query prepared-query :query_mode :query_string})
                                              simple_query (conj {:query_mode :simple_query_string
                                                                  :query      simple_query}))
                                            (mapv #(merge % (when search_fields

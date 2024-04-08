@@ -111,43 +111,60 @@
           (is (csu/contains-key? schema path)
               (format "%s contains %s key" entity (name sf))))))))
 
+(def http-show-services
+  {:ConfigService {:get-in-config
+                   #(get-in (assoc-in {}
+                                      [:ctia :http :show]
+                                      {:protocol "http"
+                                       :hostname "localhost"
+                                       :port 3000})
+                            %)}
+   :CTIAHTTPServerService {:get-port (constantly 443)}})
+
 (deftest search-query-test
   (with-redefs [sut/now (constantly #inst "2020-12-31")]
     (let [from #inst "2020-04-01"
           to #inst "2020-06-01"]
       (is (= {:full-text [{:query "bad-domain", :query_mode :query_string}]}
              (sut/search-query {:date-field :created 
-                                :params {:query "bad-domain"}})))
+                                :params {:query "bad-domain"}}
+                               http-show-services)))
       (is (= {:range {:created
                       {:gte from
                        :lt  to}}}
              (sut/search-query {:date-field :created
                                 :params {:from from
-                                         :to to}})))
+                                         :to to}}
+                               http-show-services)))
       (is (= {:range {:timestamp
                       {:gte from
                        :lt  to}}}
              (sut/search-query {:date-field :timestamp
-                                :params {:from from, :to to}})))
+                                :params {:from from, :to to}}
+                               http-show-services)))
       (is (= {:range {:created
                       {:lt to}}}
              (sut/search-query {:date-field :created
-                                :params {:to to}})))
+                                :params {:to to}}
+                               http-show-services)))
       (is (= {:range {:created
                       {:gte from}}}
              (sut/search-query {:date-field :created
-                                :params {:from from}})))
+                                :params {:from from}}
+                               http-show-services)))
       (is (= {:filter-map {:title "firefox exploit"
                            :disposition 2}}
              (sut/search-query {:date-field :created
-                                :params {:title "firefox exploit", :disposition 2}})))
+                                :params {:title "firefox exploit", :disposition 2}}
+                               http-show-services)))
       (is (= {:full-text [{:query "bad-domain", :query_mode :query_string}]
               :filter-map {:title "firefox exploit"
                            :disposition 2}}
              (sut/search-query {:date-field :created
                                 :params {:query "bad-domain"
                                          :disposition 2
-                                         :title "firefox exploit"}})))
+                                         :title "firefox exploit"}}
+                               http-show-services)))
       (is (= {:full-text [{:query "bad-domain", :query_mode :query_string}]
               :filter-map {:title "firefox exploit"
                            :disposition 2}}
@@ -157,7 +174,8 @@
                                          :title       "firefox exploit"
                                          :fields      ["title"]
                                          :sort_by     "disposition"
-                                         :sort_order  :desc}})))
+                                         :sort_order  :desc}}
+                               http-show-services)))
       (is (= {:full-text [{:query "bad-domain", :query_mode :query_string}]
               :range {:created {:gte from, :lt to}}
               :filter-map {:title "firefox exploit"
@@ -170,7 +188,8 @@
                                          :title       "firefox exploit"
                                          :fields      ["title"]
                                          :sort_by     "disposition"
-                                         :sort_order  :desc}})))
+                                         :sort_order  :desc}}
+                               http-show-services)))
       (is (= {:full-text [{:query      "lucene"
                            :query_mode :query_string
                            :fields     ["title"]}
@@ -186,7 +205,8 @@
                                          :title "firefox exploit"
                                          :search_fields ["title"]
                                          :sort_by "disposition"
-                                         :sort_order :desc}}))
+                                         :sort_order :desc}}
+                               http-show-services))
           "query and simple_query can be both submitted and accepted")
       (is (= {:full-text  [{:query "simple"
                             :query_mode :simple_query_string
@@ -199,7 +219,8 @@
                                          :title         "firefox exploit"
                                          :search_fields ["title"]
                                          :sort_by       "disposition"
-                                         :sort_order    :desc}}))
+                                         :sort_order    :desc}}
+                               http-show-services))
           "simple_query can be the only full text search")
       (testing "make-date-range-fn should be properly called"
         (is (= {:range {:timestamp
@@ -210,7 +231,8 @@
                                   :make-date-range-fn
                                   (fn [from to]
                                     {:gte #inst "2050-01-01"
-                                     :lt #inst "2100-01-01"})})))))))
+                                     :lt #inst "2100-01-01"})}
+                               http-show-services)))))))
 
 (deftest format-agg-result-test
   (let [from #inst "2019-01-01"
@@ -332,3 +354,26 @@
             entity-store (get-in-config [:ctia :store entity])]
         (assert (= "es" entity-store) (pr-str entity-store))
         (crud-wait-for-test parameters)))))
+
+(deftest rewrite-id-search-test
+  (let [test-plan
+        [{:expected "source_ref:\"http://localhost:3000/ctia/casebook/casebook-aa8c5f29-11dd-433e-9a82-6b560a47a2cb\""
+          :query "source_ref:*casebook-aa8c5f29-11dd-433e-9a82-6b560a47a2cb"}
+
+         {:expected "source_ref:\"http://localhost:3000/ctia/asset-properties/asset-properties-aa8c5f29-11dd-433e-9a82-6b560a47a2cb\""
+          :query "source_ref:*asset-properties-aa8c5f29-11dd-433e-9a82-6b560a47a2cb"}
+
+         {:expected "source_ref:\"http://localhost:3000/ctia/incident/incident-aa8c5f29-11dd-433e-9a82-6b560a47a2cb\" AND a:\"http://localhost:3000/ctia/casebook/casebook-aa8c5f29-11dd-433e-9a82-6b560a47a2cb\""
+          :query "source_ref:*incident-aa8c5f29-11dd-433e-9a82-6b560a47a2cb AND a:*casebook-aa8c5f29-11dd-433e-9a82-6b560a47a2cb"}
+
+         {:expected "source_ref:incident-aa8c5f29-11dd-433e-9a82-6b560a47a2cb* AND a:\"http://localhost:3000/ctia/casebook/casebook-aa8c5f29-11dd-433e-9a82-6b560a47a2cb\""
+          :query "source_ref:incident-aa8c5f29-11dd-433e-9a82-6b560a47a2cb* AND a:*casebook-aa8c5f29-11dd-433e-9a82-6b560a47a2cb"}
+
+         {:expected "source_ref:*"
+          :query "source_ref:*"}
+
+         {:expected "*"
+          :query "*"}]]
+
+    (doseq [{:keys [expected query]} test-plan]
+      (is (=  expected (sut/prepare-lucene-id-search query http-show-services))))))
