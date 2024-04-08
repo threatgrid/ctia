@@ -195,15 +195,17 @@
                                (cond-> {}
                                  from (assoc :gte from)
                                  to   (assoc :lt to)))}}
-    :- SearchQueryArgs]
+    :- SearchQueryArgs
+    services]
    (let [filter-map (apply dissoc params filter-map-search-options)
-         date-range (make-date-range-fn from to)]
+         date-range (make-date-range-fn from to)
+         prepared-query (when query (prepare-lucene-id-search query services))]
      (cond-> {}
        (seq date-range)        (assoc-in [:range date-field] date-range)
        (seq filter-map)        (assoc :filter-map filter-map)
        (or query simple_query) (assoc :full-text
                                       (->> (cond-> []
-                                             query        (conj {:query query, :query_mode :query_string})
+                                             query        (conj {:query prepared-query :query_mode :query_string})
                                              simple_query (conj {:query_mode :simple_query_string
                                                                  :query      simple_query}))
                                            (mapv #(merge % (when search_fields

@@ -410,7 +410,8 @@
              :summary (format "Delete %s entities matching given Lucene/ES query string or/and field filters" capitalized)
              :query [params (add-flags-to-delete-search-query-params search-filters)]
              (let [query (search-query {:date-field date-field
-                                        :params (dissoc params :wait_for :REALLY_DELETE_ALL_THESE_ENTITIES)})]
+                                        :params (dissoc params :wait_for :REALLY_DELETE_ALL_THESE_ENTITIES)}
+                                       services)]
                (if (empty? query)
                  (forbidden {:error "you must provide at least one of from, to, query or any field filter."})
                  (ok

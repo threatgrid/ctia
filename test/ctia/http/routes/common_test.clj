@@ -370,7 +370,10 @@
           :query "source_ref:incident-aa8c5f29-11dd-433e-9a82-6b560a47a2cb* AND a:*casebook-aa8c5f29-11dd-433e-9a82-6b560a47a2cb"}
 
          {:expected "source_ref:*"
-          :query "source_ref:*"}]]
+          :query "source_ref:*"}
+
+         {:expected "*"
+          :query "*"}]]
 
     (doseq [{:keys [expected query]} test-plan]
       (is (=  expected (sut/prepare-lucene-id-search query http-show-services))))))
