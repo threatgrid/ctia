@@ -169,7 +169,8 @@
              (get-paginated-response
               (store/paginate
                relationship-store
-               #(store/list-records %1 {:all-of {:target_ref indicator_id}} feed-identity %2)
+               #(store/list-records %1 {:all-of {:relationship_type "element-of"
+                                                 :target_ref indicator_id}} feed-identity %2)
                (merge {:fields [:source_ref]
                        :limit relationship-max-result-window
                        :sort_by "timestamp:desc,id"}

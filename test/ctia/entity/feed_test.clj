@@ -5,6 +5,7 @@
    [clojure.string :as string]
    [clojure.test :refer [deftest is join-fixtures testing use-fixtures]]
    [ctia.entity.feed :as sut]
+   [ctim.examples.sightings :refer [new-sighting-minimal]]
    [ctia.test-helpers.access-control :refer [access-control-test]]
    [ctia.test-helpers.auth :refer [all-capabilities]]
    [ctia.test-helpers.core :as helpers]
@@ -98,7 +99,14 @@
                                 :observable {:type "ip" :value ip}}))
        (range 100 200)))
 
-(def relationships
+;; create some `Sightings` to test we don't fetch them
+;; pagination tests will fail if we don't filter `Relationships` using the correct `relationship_type`
+(def sightings
+  (map #(let [transient-id (format "transient:esa-sighting-%03d" %)]
+          (into new-sighting-minimal {:id transient-id}))
+       (range 100)))
+
+(def judgement-relationships
   (map #(let [suffix (string/replace % #"transient:esa-judgement-" "")
               transient-id (str "transient:esa-relationship-" suffix)]
           {:id transient-id
@@ -118,12 +126,35 @@
            :relationship_type "element-of"})
        (map :id judgements)))
 
+(def sighting-relationships
+  (map #(let [suffix (string/replace % #"transient:esa-sighting-" "")
+              transient-id (str "transient:esa-sighting-relationship-" suffix)]
+          {:id transient-id
+           :source_ref %
+           :schema_version "1.0.11",
+           :target_ref
+           "transient:esa-indicator-ec95b042572a11894fffe553555c44f5c88c9199aad23a925bb959daa501338e",
+           :type "relationship",
+           :external_ids
+           ["ctia-feed-indicator-test"],
+           :title "sighting/indicator relationship",
+           :external_references [],
+           :tlp "amber",
+           :timestamp "2019-05-08T18:03:32.785Z",
+           :relationship_type "sighting-of"})
+       (map :id sightings)))
+
+(def relationships
+  (concat judgement-relationships
+          sighting-relationships))
+
 (def blocklist-bundle
   {:type "bundle",
    :source "Feed Indicator Example",
    :source_uri
    "https://github.com/threatgrid/ctim/blob/master/src/doc/tutorials/modeling-threat-intel-ctim.md",
    :indicators [indicator],
+   :sightings sightings
    :judgements (let [duplicated-observable-value (-> judgements
                                                      first
                                                      (assoc :id "transient:esa-judgement-4340e8cc49ff428e21ad1467de4b40246eb0e3b8da96caa2f71f9fe54123d500"))]
@@ -239,18 +270,16 @@
                                          "foogroup"
                                          "user")
      (let [response (helpers/POST app
-                        "ctia/bundle/import"
-                        :body blocklist-bundle
-                        :headers {"Authorization" "45c1f5e3f05d0"})
+                                  "ctia/bundle/import"
+                                  :body blocklist-bundle
+                                  :headers {"Authorization" "45c1f5e3f05d0"})
            bundle-import-result (:parsed-body response)
            indicator-id (some->> (:results bundle-import-result)
                                  (filter #(= (:type %) :indicator))
                                  first
                                  :id)]
-
        (is (not (nil? indicator-id))
            "we successfully have an indicator id to test the view")
-
        (entity-crud-test
         (assoc sut/feed-entity
                :app app
