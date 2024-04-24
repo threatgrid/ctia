@@ -23,7 +23,8 @@
   es-helpers/fixture-properties:es-store)
 
 (deftest refine-full-text-query-parts-test
-  (let [es-conn-state {:props {:entity :incident}
+  (let [es-conn-state {:props {:entity :incident
+                               :version 7}
                        :services {:FeaturesService {:entity-enabled? (constantly true)
                                                     :flag-value (constantly nil)}}}
         with-def-op (assoc-in es-conn-state [:props :default_operator] "and")]
@@ -87,16 +88,13 @@
       ;; substitute keyword with the text field
       (let [fake-mapping {:kw-field
                           {:type "keyword" :fields {:text {:type "text"}}}}
-            base-conn-state (assoc-in es-conn-state [:services :FeaturesService :flag-value] (constantly "true"))]
-        (doseq [es-version [5 7]]
-          (let [conn-state (cond-> (assoc-in base-conn-state [:props :version] es-version)
-                             (= es-version 5) (assoc-in [:config :mappings :incident :properties] fake-mapping)
-                             (= es-version 7) (assoc-in [:config :mappings :properties] fake-mapping))]
-            (are [queries exp]
-                (is (= exp (es.query/refine-full-text-query-parts conn-state queries)))
-              [{:query "*" :fields ["kw-field"]}]
-              [{:query_string {:query "*"
-                               :fields ["kw-field.text"]}}])))))))
+            conn-state (-> (assoc-in es-conn-state [:services :FeaturesService :flag-value] (constantly "true"))
+                           (assoc-in [:config :mappings :properties] fake-mapping))]
+          (are [queries exp]
+              (is (= exp (es.query/refine-full-text-query-parts conn-state queries)))
+            [{:query "*" :fields ["kw-field"]}]
+            [{:query_string {:query "*"
+                             :fields ["kw-field.text"]}}])))))
 
 (deftest ensure-document-id-in-map-test
   (is (= {:id '("actor-677796fd-b5d2-46e3-b57d-4879bcca1ce7")}
@@ -119,13 +117,11 @@
             :errors true
             :items [{:index
                      {:_index "website"
-                      :_type "blog"
                       :_id "123"
                       :status 400
                       :error "Exception"}}
                     {:index
                      {:_index "website"
-                      :_type "blog"
                       :_id "124"
                       :_version 5
                       :status 200}}]}}
@@ -280,25 +276,25 @@
   {:entity :sighting
    :indexname (es-helpers/get-indexname app :sighting)
    :host "localhost"
-   :port 9205
+   :port 9207
    :aliased true
    :rollover {:max_docs 3}
    :refresh "true"
    :auth {:type :basic-auth
           :params {:user "elastic"
                    :pwd "ductile"}}
-   :version 5})
+   :version 7})
 
 (defn props-not-aliased [app]
   {:entity :sighting
    :indexname (es-helpers/get-indexname app :sighting)
    :host "localhost"
-   :port 9205
+   :port 9207
    :refresh "true"
    :auth {:type :basic-auth
           :params {:user "elastic"
                    :pwd "ductile"}}
-   :version 5})
+   :version 7})
 
 (defn get-conn-state
   [app store-kw]
@@ -309,7 +305,7 @@
 (deftest crud-aliased-test
   (es-helpers/for-each-es-version
    "crud operation should properly handle aliased states"
-   [5 7]
+   [7]
    #(es-index/delete! % "ctia_*")
    (helpers/fixture-ctia-with-app
     (fn [app]
@@ -390,7 +386,7 @@
 (deftest crud-unaliased-test
   (es-helpers/for-each-es-version
       "crud operation should properly handle not aliased states"
-      [5 7]
+      [7]
     #(es-index/delete! % "ctia_*")
     (helpers/fixture-ctia-with-app
      (fn [app]
@@ -426,12 +422,6 @@
 
     {}
     {:default-sort "timestamp,id"
-     :version 5}
-    {:sort [{"timestamp" {:order :asc}}
-            {"id" {:order :asc}}]}
-
-    {}
-    {:default-sort "timestamp,id"
      :version 7}
     {:sort [{"timestamp" {:order :asc}}
             {"id" {:order :asc}}]
@@ -459,7 +449,7 @@
 (deftest make-search-query-test
   (es-helpers/for-each-es-version
       "make-search-query shall build a proper query from given query string, filter map and date range"
-      [5 7]
+      [7]
     #(es-index/delete! % "ctia_*")
     (helpers/fixture-ctia-with-app
      (fn [app]
@@ -688,7 +678,7 @@
 (deftest handle-query-string-search-count-test
   (es-helpers/for-each-es-version
    "handle search and count shall properly apply query and params"
-   [5 7]
+   [7]
    #(es-index/delete! % "ctia_*")
    (helpers/fixture-ctia-with-app
     (fn [app]
@@ -749,7 +739,7 @@
 (deftest handle-aggregate-test
   (es-helpers/for-each-es-version
       "handle-aggregate shall properly apply query and params to match data and then aggregate them according to aggregation parameters."
-      [5 7]
+      [7]
     #(es-index/delete! % "ctia_*")
     (helpers/fixture-ctia-with-app
      (fn [app]
@@ -826,7 +816,7 @@
 (deftest handle-delete-search
   (es-helpers/for-each-es-version
       "handle-delete-search shall properly apply query and params, delete matched data, and respect access control"
-      [5 7]
+      [7]
       #(es-index/delete! % "ctia_*")
     (helpers/fixture-ctia-with-app
         (fn [app]
@@ -906,7 +896,7 @@
 (deftest docs-with-indices-test
   (es-helpers/for-each-es-version
       "get-docs-with-indices (and variants) shall properly return documents for given ids"
-      [5 7]
+      [7]
     #(es-index/delete! % "ctia_*")
     (helpers/fixture-ctia-with-app
      (fn [app]
@@ -928,12 +918,10 @@
                           sightings
                           ident
                           {})
-             base-check (fn [{:keys [_index _type _id _source]}]
+             base-check (fn [{:keys [_index _id _source]}]
                           (is (= base-sighting (select-keys _source [:tlp :groups])))
                           (is (= _id (:id _source)))
-                          (is (string/starts-with? _index "ctia_sighting"))
-                          (when (= version 5)
-                            (is (= _type "sighting"))))]
+                          (is (string/starts-with? _index "ctia_sighting")))]
          (let [tested-sighting (rand-nth sightings)
                res (sut/get-doc-with-index conn-state
                                            (:id tested-sighting)
@@ -954,7 +942,7 @@
 (deftest bulk-delete-update-test
   (es-helpers/for-each-es-version
       "bulk-delete and bulk-update shall properly handle authorization and not-found errors"
-      [5 7]
+      [7]
     nil
     (helpers/fixture-ctia-with-app
      (fn [app]

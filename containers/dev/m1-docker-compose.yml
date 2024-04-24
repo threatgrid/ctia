@@ -1,9 +1,6 @@
 version: '2'
 services:
 
-  elasticsearch5:
-    build: ./m1-images/elasticsearch5
-
   elasticsearch7:
     image: elasticsearch:7.9.2
     environment:

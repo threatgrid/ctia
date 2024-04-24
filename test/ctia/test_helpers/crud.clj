@@ -13,7 +13,8 @@
     :refer [DELETE entity->short-id GET PATCH POST PUT]]
    [ctia.test-helpers.http :refer [app->HTTPShowServices]]
    [ctia.test-helpers.search :as th.search]
-   [ctim.domain.id :as id])
+   [ctim.domain.id :as id]
+   [clojure.string :as str])
   (:import [java.util UUID]))
 
 (defn crud-wait-for-test
@@ -43,13 +44,13 @@
                             :headers {"Content-Type" "application/json"}
                             :body body}))
         bulk-routes {#".*_bulk.*"
-                     {:post (fn [{:keys [query-string body]}]
-                              (let [mapping-type (-> (io/reader body)
-                                                     line-seq
-                                                     first
-                                                     (parse-string true)
-                                                     (get-in [:index :_type]))]
-                                (when-not (= "event" mapping-type)
+                     {:post (fn [{:keys [query-string body] :as q}]
+                              (let [parsed-body (-> (io/reader body)
+                                                    line-seq
+                                                    first
+                                                    (parse-string true))
+                                    event-creation? (str/starts-with? (get-in parsed-body [:index :_id]) "event")]
+                                (when-not event-creation?
                                   (vreset! es-params query-string))
                                 {:status 200
                                  :headers {"Content-Type" "application/json"}

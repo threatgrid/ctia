@@ -4,21 +4,6 @@ services:
     image: redis:5.0.5
     ports:
       - "6379:6379"
-  elasticsearch5:
-    image: elasticsearch:5.6.11
-    environment:
-      - cluster.name=elasticsearch5
-      - discovery.type=single-node
-    ports:
-      - "9205:9200"
-      - "9305:9300"
-  # workaround to reset default elasticsearch 5 password in docker cluster
-  set-elasticsearch5-password:
-    build: ./elasticsearch5-password
-    depends_on:
-      - elasticsearch5
-    environment:
-      - ELASTIC_PASSWORD=ductile
   elasticsearch7:
     image: elasticsearch:7.9.2
     environment:

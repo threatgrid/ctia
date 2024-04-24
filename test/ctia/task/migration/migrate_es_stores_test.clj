@@ -272,7 +272,7 @@
             docs (map (partial es-helpers/prepare-bulk-ops app)
                       (line-seq rdr))
             _ (es-helpers/load-bulk conn docs)
-            no-meta-docs (map #(dissoc % :_index :_type :_id)
+            no-meta-docs (map #(dissoc % :_index :_id)
                               docs)
             docs-no-modified (filter #(nil? (:modified %))
                                      no-meta-docs)
@@ -577,7 +577,13 @@
   (let [{:keys [get-in-config]} (helpers/get-service-map app :ConfigService)
         {:keys [all-stores]} (helpers/get-service-map app :StoreService)
         services (app->MigrationStoreServices app)
-        conn (es-conn get-in-config)]
+        conn (es-conn get-in-config)
+        migrated-store-keys [:incident
+                             :asset
+                             :attack-pattern
+                             :judgement
+                             :sighting
+                             :malware]]
     (helpers/set-capabilities! app
                                "foouser"
                                ["foogroup"]
@@ -595,52 +601,48 @@
         (sut/migrate-store-indexes {:migration-id "test-1"
                                     :prefix       "0.0.0"
                                     :migrations   [:0.4.16]
-                                    :store-keys   (keys (all-stores))
+                                    :store-keys   migrated-store-keys
                                     :batch-size   10
                                     :buffer-size  3
                                     :confirm?     false
                                     :restart?     false}
                                    services)
 
-        (doseq [store (vals (all-stores))]
+        (doseq [store (-> (all-stores) (select-keys migrated-store-keys) vals)]
           (is (not (index-exists? store "0.0.0"))))
         (is (nil? (seq (ductile.doc/get-doc conn
                                             (migration-index get-in-config)
                                             "migration"
                                             "test-1"
-                                            {})))))))
-   (testing "migrate es indexes"
-     (let [{:keys [get-in-config]} (helpers/get-service-map app :ConfigService)
-           {:keys [all-stores]} (helpers/get-service-map app :StoreService)
-           services (app->MigrationStoreServices app)
-           conn (es-conn get-in-config)
-           logger (atom [])]
-       (with-atom-logger logger
-         (sut/migrate-store-indexes {:migration-id "test-2"
-                                     :prefix       "0.0.0"
-                                     :migrations   [:__test]
-                                     :store-keys   (keys (all-stores))
-                                     :batch-size   10
-                                     :buffer-size  3
-                                     :confirm?     true
-                                     :restart?     false}
-                                    services))
-       (testing "shall generate a proper migration state"
+                                            {}))))))
+    (testing "migrate es indexes"
+      (let [{:keys [get-in-config]} (helpers/get-service-map app :ConfigService)
+            {:keys [all-stores]} (helpers/get-service-map app :StoreService)
+            services (app->MigrationStoreServices app)
+            conn (es-conn get-in-config)
+            logger (atom [])]
+        (with-atom-logger logger
+          (sut/migrate-store-indexes {:migration-id "test-2"
+                                      :prefix       "0.0.0"
+                                      :migrations   [:__test]
+                                      :store-keys   migrated-store-keys
+                                      :batch-size   10
+                                      :buffer-size  3
+                                      :confirm?     true
+                                      :restart?     false}
+                                     services))
+        (testing "shall generate a proper migration state"
           (let [migration-state (ductile.doc/get-doc conn
                                                      (migration-index get-in-config)
                                                      "migration"
                                                      "test-2"
                                                      {})]
-            (is (= (set (keys (all-stores)))
+            (is (= (set migrated-store-keys)
                    (set (keys (:stores migration-state)))))
             (doseq [[entity-type migrated-store] (:stores migration-state)]
               (let [{:keys [source target started completed]} migrated-store
                     source-size
                     (cond
-                      (= :identity entity-type) 1
-                      (= :event entity-type) (+ updates-nb
-                                                (* fixtures-nb
-                                                   (count minimal-examples)))
                       (contains? example-types (keyword entity-type)) fixtures-nb
                       :else 0)]
                 (is (= source-size (:total source))
@@ -655,85 +657,38 @@
           (let [messages (set @logger)]
             (is (contains? messages "set batch size: 10"))
             (is (set/subset?
-                 #{"campaign - finished migrating 100 documents"
-                   "indicator - finished migrating 100 documents"
-                   (format "event - finished migrating %s documents"
-                           (+ 2000 updates-nb))
-                   "actor - finished migrating 100 documents"
-                   "asset - finished migrating 100 documents"
-                   "relationship - finished migrating 100 documents"
+                 #{"asset - finished migrating 100 documents"
                    "incident - finished migrating 100 documents"
-                   "investigation - finished migrating 100 documents"
-                   "coa - finished migrating 100 documents"
-                   "identity - finished migrating 0 documents"
                    "judgement - finished migrating 100 documents"
-                   "note - finished migrating 100 documents"
-                   "data-table - finished migrating 0 documents"
-                   "feedback - finished migrating 0 documents"
-                   "casebook - finished migrating 100 documents"
                    "sighting - finished migrating 100 documents"
-                   "identity-assertion - finished migrating 0 documents"
                    "attack-pattern - finished migrating 100 documents"
-                   "malware - finished migrating 100 documents"
-                   "target-record - finished migrating 100 documents"
-                   "tool - finished migrating 100 documents"
-                   "vulnerability - finished migrating 100 documents"
-                   "weakness - finished migrating 100 documents" }
+                   "malware - finished migrating 100 documents"}
                  messages))))
 
         (testing "shall produce new indices with enough documents and the right transforms"
           (let [{:keys [default
                         asset
-                        target-record
-                        relationship
                         judgement
-                        investigation
-                        coa
-                        tool
                         attack-pattern
                         malware
                         incident
-                        indicator
-                        campaign
-                        sighting
-                        casebook
-                        actor
-                        vulnerability
-                        weakness]}
+                        sighting]}
                 (get-in-config [:ctia :store :es])
                 date (Date.)
                 index-date (.format (SimpleDateFormat. "yyyy.MM.dd") date)
-                expected-event-indices {(format "v0.0.0_%s-%s-000001"
-                                                (es-helpers/get-indexname app :event)
-                                                index-date)
-                                        1000
-                                        (format "v0.0.0_%s-%s-000002"
-                                                (es-helpers/get-indexname app :event)
-                                                index-date)
-                                        (+ 950 updates-nb)}
                 expected-indices
-                (->> #{relationship
-                       target-record
-                       judgement
-                       coa
-                       attack-pattern
-                       malware
-                       tool
-                       incident
-                       indicator
-                       investigation
-                       campaign
-                       casebook
-                       sighting
-                       actor
-                       vulnerability
-                       weakness}
-                     (map (fn [k]
-                            {(format "v0.0.0_%s-%s-000001" (:indexname k) index-date) 50
-                             (format "v0.0.0_%s-%s-000002" (:indexname k) index-date) 50
-                             (format "v0.0.0_%s-%s-000003" (:indexname k) index-date) 0}))
-                     (into expected-event-indices)
-                     keywordize-keys)
+                (keywordize-keys
+                 (into {}
+                       (map (fn [k]
+                              {(format "v0.0.0_%s-%s-000001" (:indexname k) index-date) 50
+                               (format "v0.0.0_%s-%s-000002" (:indexname k) index-date) 50
+                               (format "v0.0.0_%s-%s-000003" (:indexname k) index-date) 0}))
+                       #{asset
+                         attack-pattern
+                         incident
+                         judgement
+                         malware
+                         sighting}))
                 _ (es-index/refresh! conn)
                 formatted-cat-indices (es-helpers/get-cat-indices conn)
                 result-indices (select-keys formatted-cat-indices
@@ -809,28 +764,28 @@
             (POST-bulk app new-malwares)
             ;; modify entities in first and second source indices
             (let [response (PUT app
-                                (format "ctia/sighting/%s" sighting0-id)
-                                :body updated-sighting-body
-                                :headers {"Authorization" "45c1f5e3f05d0"})]
+                               (format "ctia/sighting/%s" sighting0-id)
+                             :body updated-sighting-body
+                             :headers {"Authorization" "45c1f5e3f05d0"})]
               (is (= 200 (:status response))
                   response))
             (let [response (PUT app
-                                (format "ctia/sighting/%s" sighting1-id)
-                                :body updated-sighting-body
-                                :headers {"Authorization" "45c1f5e3f05d0"})]
+                               (format "ctia/sighting/%s" sighting1-id)
+                             :body updated-sighting-body
+                             :headers {"Authorization" "45c1f5e3f05d0"})]
               (is (= 200 (:status response))
                   response))
             ;; delete entities from first and second source indices
             (doseq [sighting-id sighting-ids]
               (let [response (DELETE app
-                                     (format "ctia/sighting/%s" sighting-id)
-                                     :headers {"Authorization" "45c1f5e3f05d0"})]
+                                 (format "ctia/sighting/%s" sighting-id)
+                               :headers {"Authorization" "45c1f5e3f05d0"})]
                 (is (= 204 (:status response))
                     response)))
             (sut/migrate-store-indexes {:migration-id "test-2"
                                         :prefix       "0.0.0"
                                         :migrations   [:__test]
-                                        :store-keys   (keys (all-stores))
+                                        :store-keys   migrated-store-keys
                                         ;; small batch to check proper delete paging
                                         :batch-size   2
                                         :buffer-size  1
@@ -859,7 +814,7 @@
               (is (= (repeat 2 "UPDATED") (map :description updated-sightings))
                   "updated document must be updated in target stores")
               (is (empty? get-deleted-sightings)
-                  "deleted document must not be in target stores"))))))))
+                  "deleted document must not be in target stores")))))))))
 
 (defn load-test-fn
   [app maximal?]

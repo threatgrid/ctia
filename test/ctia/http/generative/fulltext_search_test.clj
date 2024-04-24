@@ -282,7 +282,7 @@
 (deftest fulltext-search-test
   (es-helpers/for-each-es-version
    "Extended Fulltext query search"
-   [5 7]
+   [7]
    #(es-index/delete! % "ctia_*")
    (helpers/fixture-ctia-with-app
     (fn [app]
@@ -303,7 +303,7 @@
 (deftest mixed-fields-text-and-keyword-multi-match
   (es-helpers/for-each-es-version
    "Mixed fields text and keyword multimatch"
-   [5 7]
+   [7]
    nil;; fixture-ctia-with-app already clean
    (helpers/fixture-ctia-with-app
     (fn [app]

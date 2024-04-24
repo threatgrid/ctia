@@ -217,12 +217,12 @@
   "prepare bulk data for document ids"
   [{:keys [mapping] :as store-map} ids services :- MigrationStoreServices]
   (when (seq ids)
-    (-> (store-map->es-conn-state store-map services)
-        (crud/get-docs-with-indices ids {})
-        (->> (map #(assoc % :_type (name mapping))) ;; TODO remove after ES7 migration
-             (map (fn [{:keys [_id] :as hit}]
-                    {_id (select-keys hit [:_id :_index :_type])}))
-             (into {})))))
+    (into {}
+          (map (fn [{:keys [_id] :as hit}]
+                 {_id (select-keys hit [:_id :_index])}))
+          (crud/get-docs-with-indices (store-map->es-conn-state store-map services)
+                                      ids
+                                      {}))))
 
 (defn search-real-index?
   "Given a mapping and a document specify if the document has been modified"
@@ -232,7 +232,7 @@
                 (not= created modified))))
 
 (s/defn prepare-docs
-  "Generates the _index, _id and _type meta data for bulk ops.
+  "Generates the _index and _id meta data for bulk ops.
   By default we set :_index as write-index for all documents.
   In the case of aliased target, write-index is set to the write alias.
   This write alias points to last index and a document that was inserted in a previous index,
@@ -247,8 +247,7 @@
    services :- MigrationStoreServices]
   (let [with-metas (map #(assoc %
                                 :_id (:id %)
-                                :_index write-index
-                                :_type mapping)
+                                :_index write-index)
                         docs)
         {modified true not-modified false} (group-by #(search-real-index? aliased %)
                                                      with-metas)

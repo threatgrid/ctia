@@ -100,10 +100,10 @@
         (:params basic-auth)))
 
 (defn -es-port []
-  (if ((h/set-of-es-versions-to-test) 5) "9205" "9207"))
+  "9207")
 
 (defn -es-version []
-  (if ((h/set-of-es-versions-to-test) 5) 5 7))
+  7)
 
 (defn fixture-properties:es-store [t]
   ;; Note: These properties may be overwritten by ENV variables
@@ -220,18 +220,16 @@
 
 (defn prepare-bulk-ops
   [app str-doc]
-  (let [{:keys [_type _id _index _source]} (str->doc str-doc)]
+  (let [{:keys [_id _index _source]} (str->doc str-doc)]
     (assoc _source
-           :_type _type
-           :_index (get-indexname app (keyword _type))
+           :_index (get-indexname app (keyword (:type _source)))
            :_id _id)))
 
 (defn load-bulk
   ([conn docs] (load-bulk conn docs "wait_for"))
   ([{:keys [version] :as conn} docs refresh?]
    (es-doc/bulk-index-docs conn
-                           (cond->> docs
-                             (> version 5) (map #(dissoc % :_type)))
+                           docs
                            {:refresh refresh?})))
 
 (defn load-file-bulk
@@ -274,8 +272,7 @@
          (into ["ctia.store.es.default.host" "127.0.0.1"
                 "ctia.store.es.default.port" es-port#
                 "ctia.store.es.default.version" version#]
-               (when (= 7 version#)
-                 basic-auth-properties))
+               basic-auth-properties)
          (let [conn# (es-conn/connect (es-init/get-store-properties ::no-store (h/build-get-in-config-fn)))]
            (try
              (testing (format "%s (ES version: %s).\n" msg# version#)
@@ -291,8 +288,5 @@
                (es-conn/close conn#))))))))
 
 (defn build-mappings
-  [base-mappings entity-type version]
-  (let [p {:properties base-mappings}]
-    (if (= version 5)
-      {entity-type p}
-      p)))
+  [base-mappings]
+  {:properties base-mappings})

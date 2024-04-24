@@ -110,7 +110,7 @@
          "https://cisco.com:9201")))))
 
 (deftest update-settings!-test
-  (doseq [version [5 7]]
+  (doseq [version [7]]
     (let [services (->ESConnServices)
           indexname (str "ctia_malware" (UUID/randomUUID))
           initial-props {:entity :malware
@@ -159,7 +159,7 @@
     (let [indexname (gen-indexname)]
       (for-each-es-version
         "get-existing-indices should retrieve existing indices if any."
-        [5 7]
+        [7]
         #(index/delete! % (str indexname "*"))
         (let [test-fn (fn [msg
                            input-indexname
@@ -217,7 +217,7 @@
                                  :port (+ 9200 version)))]
       (for-each-es-version
         "get-existing-indices should retrieve existing indices if any."
-        [5 7]
+        [7]
         clean-index
         (testing "init-es-conn! should return a proper conn state with unaliased conf, but not create any index"
           (let [services (->ESConnServices)

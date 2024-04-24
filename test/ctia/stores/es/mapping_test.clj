@@ -8,7 +8,7 @@
 (deftest mapping-test
   (es-helpers/for-each-es-version
    "mappings of different type should apply proper analyzers and tokenizers"
-   [5 7]
+   [7]
    #(index/delete! % "ctia_*")
    (let [indexname "ctia_test_mapping"
          doc-type "test_docs"
@@ -25,13 +25,7 @@
                   :text1 sut/text
                   :text2 sut/text
                   :sortable-text sut/sortable-text}
-         settings {:mappings (cond-> {:properties mapping}
-                               (= version 5) (as-> m
-                                               ;; _all is enabled by default in ES5
-                                               ;; this field was removed by default in ES7
-                                               ;; we need to disable it to have a close behavior
-                                               (assoc m :_all {:enabled false}) 
-                                               {doc-type m}))
+         settings {:mappings {:properties mapping}
                    :settings sut/store-settings}
          docs (map #(do {:id (str "doc" %)
                          :boolean (even? %)
@@ -47,8 +41,7 @@
                          :text2 "this is a second text"
                          :sortable-text (str "sortable" %)
                          :_id (str "doc" %)
-                         :_index indexname
-                         :_type doc-type})
+                         :_index indexname})
                    (range 3))
          test-sort (fn [field expected-asc]
                      (is (= expected-asc
@@ -145,8 +138,7 @@
 
              res-missing-text (search {:query_string {:query "missing AND text"}}
                                       nil
-                                      nil)
-             ]
+                                      nil)]
          (is (= 3
                 (count res-text-1)
                 (count res-text-2)
