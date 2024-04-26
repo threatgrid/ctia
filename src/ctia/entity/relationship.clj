@@ -18,6 +18,11 @@
    [schema-tools.core :as st]
    [schema.core :as s]))
 
+(def node-type
+  (assoc em/token
+         :fields {:type {:type "text"
+                         :analyzer "type_analyzer"}}))
+
 (def relationship-mapping
   {"relationship"
    {:dynamic false
@@ -28,8 +33,8 @@
      em/sourcable-entity-mapping
      em/stored-entity-mapping
      {:relationship_type em/token
-      :source_ref        em/token
-      :target_ref        em/token})}})
+      :source_ref        node-type
+      :target_ref        node-type})}})
 
 (def-es-store RelationshipStore
   :relationship

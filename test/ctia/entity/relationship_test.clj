@@ -6,7 +6,7 @@
             [ctia.test-helpers
              [access-control :refer [access-control-test]]
              [auth :refer [all-capabilities]]
-             [core :as helpers :refer [POST]]
+             [core :as helpers :refer [POST GET]]
              [crud :refer [entity-crud-test]]
              [aggregate :refer [test-metric-routes]]
              [fake-whoami-service :as whoami-helpers]
@@ -42,6 +42,48 @@
        ["http://ex.tld/ctia/relationship/relationship-123"
         "http://ex.tld/ctia/relationship/relationship-456"])
       (dissoc :id)))
+
+(deftest test-relationship-source-target-type-search
+  (test-for-each-store-with-app
+   (fn [app]
+     (establish-user! app)
+     (testing "POST /ctia/relationship"
+       (let [new-relationship-1 new-relationship
+             new-relationship-2 (update new-relationship-1
+                                        :source_ref
+                                        str/replace
+                                        "judgement"
+                                        "sighting")
+             {status-1 :status
+              rel1 :parsed-body}
+             (POST app
+                   "ctia/relationship"
+                   :body new-relationship-1
+                   :headers {"Authorization" "45c1f5e3f05d0"})
+             {status-2 :status
+              rel2 :parsed-body}
+             (POST app
+                   "ctia/relationship"
+                   :body new-relationship-2
+                   :headers {"Authorization" "45c1f5e3f05d0"})
+             test-plan [{:expected [rel1 rel2]
+                         :query "target_ref.type=indicator"}
+                        {:expected [rel1]
+                         :query "source_ref.type=judgement"}
+                        {:expected [rel2]
+                         :query "source_ref.type=sighting"}
+                        {:expected []
+                         :query "source_ref.type=incident"}]]
+         (assert (= 201 status-1))
+         (assert (= 201 status-2))
+         (doseq [{:keys [expected query]} test-plan]
+           (is (= (set expected)
+                  (-> (GET app
+                          "ctia/relationship/search"
+                        :query-params {:query query}
+                        :headers {"Authorization" "45c1f5e3f05d0"})
+                      :parsed-body
+                      set)))))))))
 
 (deftest test-relationship-routes-bad-reference
   (test-for-each-store-with-app
