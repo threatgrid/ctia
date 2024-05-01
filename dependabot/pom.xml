@@ -662,7 +662,7 @@
     <dependency>
       <groupId>metosin</groupId>
       <artifactId>ring-swagger</artifactId>
-      <version>0.26.2</version>
+      <version>1.0.0</version>
       <exclusions>
         <exclusion>
           <artifactId>slf4j-nop</artifactId>
