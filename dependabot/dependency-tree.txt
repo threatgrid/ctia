@@ -83,7 +83,7 @@ ctia:ctia:jar:1.1.1-SNAPSHOT
 |        |  \- com.googlecode.json-simple:json-simple:jar:1.1.1:compile
 |        \- javax.xml.bind:jaxb-api:jar:2.3.0:compile
 +- com.ibm.icu:icu4j:jar:65.1:compile
-+- io.github.threatgrid:ring-swagger:jar:0.26.3:compile
++- metosin:ring-swagger:jar:1.0.0:compile
 |  \- metosin:scjsv:jar:0.5.0:compile
 |     \- com.github.java-json-tools:json-schema-validator:jar:2.2.10:compile
 |        +- com.github.java-json-tools:json-schema-core:jar:1.2.10:compile
