@@ -95,7 +95,7 @@
                  [com.arohner/uri "0.1.2"]
 
                  ;; Web server
-                 [metosin/compojure-api "1.1.13" ]
+                 [metosin/compojure-api "1.1.15-SNAPSHOT"]
                  [ring-middleware-format "0.7.4"]
                  ;; optional ring-middleware-format dep (Note: ring-middleware-format is also a transitive dep for compojure-api)
                  ;; see: https://github.com/ngrunwald/ring-middleware-format/issues/74
