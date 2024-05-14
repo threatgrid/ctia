@@ -1,8 +1,8 @@
-(def cheshire-version "5.10.2")
+(def cheshire-version "5.13.0")
 (def clj-http-fake-version "1.0.3")
 (def clj-version "1.11.2")
-(def jackson-version "2.13.4")
-(def jackson-databind-version "2.13.4.2")
+(def jackson-version "2.17.0")
+(def jackson-databind-version jackson-version)
 (def metrics-clojure-version "2.10.0")
 (def netty-version "4.1.75.Final")
 (def perforate-version "0.3.4")
@@ -80,7 +80,7 @@
                  ;; Trapperkeeper
                  [puppetlabs/trapperkeeper ~trapperkeeper-version]
                  [puppetlabs/kitchensink ~trapperkeeper-version]
-                 [prismatic/plumbing "0.5.5"] ;; upgrade puppetlabs/trapperkeeper
+                 [prismatic/plumbing "0.6.0"] ;; upgrade puppetlabs/trapperkeeper
                  [clj-commons/clj-yaml "1.0.26"] ;; upgrade snakeyaml dep
 
                  ;; Schemas
