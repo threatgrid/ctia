@@ -593,7 +593,7 @@
     <dependency>
       <groupId>metosin</groupId>
       <artifactId>compojure-api</artifactId>
-      <version>1.1.13</version>
+      <version>1.1.15-SNAPSHOT</version>
       <exclusions>
         <exclusion>
           <artifactId>slf4j-nop</artifactId>

@@ -66,10 +66,7 @@ ctia:ctia:jar:1.1.1-SNAPSHOT
 +- com.arohner:uri:jar:0.1.2:compile
 |  \- pathetic:pathetic:jar:0.5.0:compile
 |     \- com.cemerick:clojurescript.test:jar:0.0.4:compile
-+- metosin:compojure-api:jar:1.1.13:compile
-|  +- potemkin:potemkin:jar:0.4.5:compile
-|  |  +- clj-tuple:clj-tuple:jar:0.2.2:compile
-|  |  \- riddley:riddley:jar:0.1.12:compile
++- metosin:compojure-api:jar:1.1.15-SNAPSHOT:compile
 |  +- compojure:compojure:jar:1.6.1:compile
 |  |  \- medley:medley:jar:1.0.0:compile
 |  +- org.tobereplaced:lettercase:jar:1.0.0:compile
@@ -84,16 +81,19 @@ ctia:ctia:jar:1.1.1-SNAPSHOT
 |        \- javax.xml.bind:jaxb-api:jar:2.3.0:compile
 +- com.ibm.icu:icu4j:jar:65.1:compile
 +- metosin:ring-swagger:jar:1.0.0:compile
-|  \- metosin:scjsv:jar:0.5.0:compile
-|     \- com.github.java-json-tools:json-schema-validator:jar:2.2.10:compile
-|        +- com.github.java-json-tools:json-schema-core:jar:1.2.10:compile
-|        |  +- com.github.java-json-tools:jackson-coreutils:jar:1.9:compile
-|        |  |  \- com.github.fge:msg-simple:jar:1.1:compile
-|        |  |     \- com.github.fge:btf:jar:1.2:compile
-|        |  \- com.github.fge:uri-template:jar:0.9:compile
-|        +- javax.mail:mailapi:jar:1.4.3:compile
-|        |  \- javax.activation:activation:jar:1.1:compile
-|        \- com.googlecode.libphonenumber:libphonenumber:jar:8.0.0:compile
+|  +- metosin:scjsv:jar:0.5.0:compile
+|  |  \- com.github.java-json-tools:json-schema-validator:jar:2.2.10:compile
+|  |     +- com.github.java-json-tools:json-schema-core:jar:1.2.10:compile
+|  |     |  +- com.github.java-json-tools:jackson-coreutils:jar:1.9:compile
+|  |     |  |  \- com.github.fge:msg-simple:jar:1.1:compile
+|  |     |  |     \- com.github.fge:btf:jar:1.2:compile
+|  |     |  \- com.github.fge:uri-template:jar:0.9:compile
+|  |     +- javax.mail:mailapi:jar:1.4.3:compile
+|  |     |  \- javax.activation:activation:jar:1.1:compile
+|  |     \- com.googlecode.libphonenumber:libphonenumber:jar:8.0.0:compile
+|  \- potemkin:potemkin:jar:0.4.5:compile
+|     +- clj-tuple:clj-tuple:jar:0.2.2:compile
+|     \- riddley:riddley:jar:0.1.12:compile
 +- metosin:ring-swagger-ui:jar:3.24.3:compile
 +- ring:ring-core:jar:1.9.5:compile
 |  +- commons-io:commons-io:jar:2.10.0:compile
