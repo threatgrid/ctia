@@ -1,8 +1,8 @@
 (def cheshire-version "5.10.2")
 (def clj-http-fake-version "1.0.3")
 (def clj-version "1.11.2")
-(def jackson-version "2.13.4")
-(def jackson-databind-version "2.13.4.2")
+(def jackson-version "2.15.2")
+(def jackson-databind-version "2.15.2")
 (def metrics-clojure-version "2.10.0")
 (def netty-version "4.1.75.Final")
 (def perforate-version "0.3.4")
@@ -186,7 +186,11 @@
                  [com.graphql-java/graphql-java "9.7"]
 
                  ;; Logging
-                 [org.slf4j/log4j-over-slf4j "1.7.20"]]
+                 [org.slf4j/log4j-over-slf4j "2.0.13"]
+                 [org.slf4j/slf4j-api "2.0.13"]
+                 [net.logstash.logback/logstash-logback-encoder "7.4"]
+                 [ch.qos.logback/logback-classic "1.5.6"]
+                 [ch.qos.logback/logback-core "1.5.6"]]
 
   :resource-paths ["resources"]
   :classpath ".:resources"
