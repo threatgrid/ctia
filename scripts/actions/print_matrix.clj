@@ -18,7 +18,7 @@
 (def ^:private java-22-version "22")
 (def non-cron-ctia-nsplits
   "Job parallelism for non cron tests."
-  10)
+  5) ;;TODO bump to 10 when removing java 11 support
 (def ^:private cron-ctia-nsplits
   "Job parallelism for cron tests."
   2)
@@ -63,11 +63,13 @@
   {:post [(every? valid-split? %)
           (zero? (mod (count %) non-cron-ctia-nsplits))]}
   (sequence
-    (map #(assoc % :test_suite :ci))
-    (splits-for
-      {:ci_profiles "default"
-       :java_version default-java-version}
-      non-cron-ctia-nsplits)))
+    (comp (mapcat #(splits-for
+                     {:ci_profiles "default"
+                      :java_version %}
+                     non-cron-ctia-nsplits))
+          (map #(assoc % :test_suite :ci)))
+    [default-java-version ;; TODO drop 11 support
+     java-21-version]))
 
 (defn cron-matrix
   "Actions matrix for cron builds"
