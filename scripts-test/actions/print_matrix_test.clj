@@ -14,8 +14,16 @@
       (let [{:keys [grab-history state utils]} (th/mk-utils env-map)
             _ (sut/print-matrix utils)
             expected-matrix
-            (mapv (fn [this_split] {:ci_profiles "default", :java_version "11", :this_split this_split, :total_splits sut/non-cron-ctia-nsplits, :test_suite :ci})
-                  (range sut/non-cron-ctia-nsplits))
+            [{:ci_profiles "default", :java_version "11", :this_split 0, :total_splits 5, :test_suite :ci}
+             {:ci_profiles "default", :java_version "11", :this_split 1, :total_splits 5, :test_suite :ci}
+             {:ci_profiles "default", :java_version "11", :this_split 2, :total_splits 5, :test_suite :ci}
+             {:ci_profiles "default", :java_version "11", :this_split 3, :total_splits 5, :test_suite :ci}
+             {:ci_profiles "default", :java_version "11", :this_split 4, :total_splits 5, :test_suite :ci}
+             {:ci_profiles "default", :java_version "21", :this_split 0, :total_splits 5, :test_suite :ci}
+             {:ci_profiles "default", :java_version "21", :this_split 1, :total_splits 5, :test_suite :ci}
+             {:ci_profiles "default", :java_version "21", :this_split 2, :total_splits 5, :test_suite :ci}
+             {:ci_profiles "default", :java_version "21", :this_split 3, :total_splits 5, :test_suite :ci}
+             {:ci_profiles "default", :java_version "21", :this_split 4, :total_splits 5, :test_suite :ci}]
             _ (is (= (grab-history)
                      [{:op :add-env, :k "CTIA_TEST_SUITE", :v "ci"}
                       {:op :set-json-output
@@ -47,10 +55,10 @@
                              {:ci_profiles "default", :java_version "11", :this_split 1, :total_splits 2, :test_suite :cron}
                              {:ci_profiles "next-clojure", :java_version "11", :this_split 0, :total_splits 2, :test_suite :cron}
                              {:ci_profiles "next-clojure", :java_version "11", :this_split 1, :total_splits 2, :test_suite :cron}
-                             {:ci_profiles "next-clojure", :java_version "17", :this_split 0, :total_splits 2, :test_suite :cron}
-                             {:ci_profiles "next-clojure", :java_version "17", :this_split 1, :total_splits 2, :test_suite :cron}
-                             {:ci_profiles "next-clojure", :java_version "18", :this_split 0, :total_splits 2, :test_suite :cron}
-                             {:ci_profiles "next-clojure", :java_version "18", :this_split 1, :total_splits 2, :test_suite :cron}]
+                             {:ci_profiles "next-clojure", :java_version "21", :this_split 0, :total_splits 2, :test_suite :cron}
+                             {:ci_profiles "next-clojure", :java_version "21", :this_split 1, :total_splits 2, :test_suite :cron}
+                             {:ci_profiles "next-clojure", :java_version "22", :this_split 0, :total_splits 2, :test_suite :cron}
+                             {:ci_profiles "next-clojure", :java_version "22", :this_split 1, :total_splits 2, :test_suite :cron}]
             _ (is (= (grab-history)
                      [{:op :add-env, :k "CTIA_TEST_SUITE", :v "cron"}
                       {:op :set-json-output
@@ -59,10 +67,10 @@
                            {:ci_profiles "default", :java_version "11", :this_split 1, :total_splits 2, :test_suite :cron}
                            {:ci_profiles "next-clojure", :java_version "11", :this_split 0, :total_splits 2, :test_suite :cron}
                            {:ci_profiles "next-clojure", :java_version "11", :this_split 1, :total_splits 2, :test_suite :cron}
-                           {:ci_profiles "next-clojure", :java_version "17", :this_split 0, :total_splits 2, :test_suite :cron}
-                           {:ci_profiles "next-clojure", :java_version "17", :this_split 1, :total_splits 2, :test_suite :cron}
-                           {:ci_profiles "next-clojure", :java_version "18", :this_split 0, :total_splits 2, :test_suite :cron}
-                           {:ci_profiles "next-clojure", :java_version "18", :this_split 1, :total_splits 2, :test_suite :cron}]}]))
+                           {:ci_profiles "next-clojure", :java_version "21", :this_split 0, :total_splits 2, :test_suite :cron}
+                           {:ci_profiles "next-clojure", :java_version "21", :this_split 1, :total_splits 2, :test_suite :cron}
+                           {:ci_profiles "next-clojure", :java_version "22", :this_split 0, :total_splits 2, :test_suite :cron}
+                           {:ci_profiles "next-clojure", :java_version "22", :this_split 1, :total_splits 2, :test_suite :cron}]}]))
 
             ;; convenient to test these here too
             _ (is (= (sut/parse-build-config utils)
