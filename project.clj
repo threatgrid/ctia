@@ -186,7 +186,11 @@
                  [com.graphql-java/graphql-java "9.7"]
 
                  ;; Logging
-                 [org.slf4j/log4j-over-slf4j "1.7.20"]]
+                 [org.slf4j/log4j-over-slf4j "2.0.13"]
+                 [org.slf4j/slf4j-api "2.0.13"]
+                 [net.logstash.logback/logstash-logback-encoder "7.4"]
+                 [ch.qos.logback/logback-classic "1.5.6"]
+                 [ch.qos.logback/logback-core "1.5.6"]]
 
   :resource-paths ["resources"]
   :classpath ".:resources"

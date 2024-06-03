@@ -19,8 +19,6 @@ ctia:ctia:jar:1.1.1-SNAPSHOT
 +- version-clj:version-clj:jar:2.0.1:compile
 +- puppetlabs:trapperkeeper:jar:3.2.0:compile
 |  +- org.clojure:tools.macro:jar:0.1.5:compile
-|  +- ch.qos.logback:logback-classic:jar:1.2.3:compile
-|  +- ch.qos.logback:logback-core:jar:1.2.3:compile
 |  +- ch.qos.logback:logback-access:jar:1.2.3:compile
 |  +- org.codehaus.janino:janino:jar:3.0.8:compile
 |  |  \- org.codehaus.janino:commons-compiler:jar:3.0.8:compile
@@ -206,8 +204,7 @@ ctia:ctia:jar:1.1.1-SNAPSHOT
 +- org.apache.zookeeper:zookeeper:jar:3.5.6:compile
 |  +- org.apache.zookeeper:zookeeper-jute:jar:3.5.6:compile
 |  +- org.apache.yetus:audience-annotations:jar:0.5.0:compile
-|  +- io.netty:netty-transport-native-epoll:jar:4.1.42.Final:compile
-|  \- org.slf4j:slf4j-api:jar:1.7.25:compile
+|  \- io.netty:netty-transport-native-epoll:jar:4.1.42.Final:compile
 +- args4j:args4j:jar:2.33:compile
 +- com.stuartsierra:component:jar:1.1.0:compile
 |  \- com.stuartsierra:dependency:jar:1.0.0:compile
@@ -280,7 +277,11 @@ ctia:ctia:jar:1.1.1-SNAPSHOT
 |  +- org.antlr:antlr4-runtime:jar:4.7.2:compile
 |  +- com.graphql-java:java-dataloader:jar:2.0.2:compile
 |  \- org.reactivestreams:reactive-streams:jar:1.0.2:compile
-+- org.slf4j:log4j-over-slf4j:jar:1.7.20:compile
++- org.slf4j:log4j-over-slf4j:jar:2.0.13:compile
++- org.slf4j:slf4j-api:jar:2.0.13:compile
++- net.logstash.logback:logstash-logback-encoder:jar:7.4:compile
++- ch.qos.logback:logback-classic:jar:1.5.6:compile
++- ch.qos.logback:logback-core:jar:1.5.6:compile
 +- puppetlabs:trapperkeeper:jar:test:3.2.0:test
 +- puppetlabs:kitchensink:jar:test:3.2.0:test
 +- org.clojure:test.check:jar:1.1.1:test
