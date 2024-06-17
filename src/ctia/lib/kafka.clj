@@ -60,17 +60,18 @@
                         (okh/byte-array-deserializer)
                         (okh/byte-array-deserializer))))
 
-(defn poll [^KafkaConsumer consumer name f timeout]
+(defn- poll [^KafkaConsumer consumer name f timeout stop]
   (loop []
-    (let [records (.poll consumer timeout)]
-      (doseq [record (if (string? name)
-                       (.records records ^String name)
-                       ;;unsure if this case is reachable
-                       (.records records ^TopicPartition name))]
-        (f (okh/consumer-record->message decompress
-                                         record)))
-      (.commitSync consumer)
-      (recur))))
+    (when-not @stop
+      (let [records (.poll consumer timeout)]
+        (doseq [record (if (string? name)
+                         (.records records ^String name)
+                         ;;unsure if this case is reachable
+                         (.records records ^TopicPartition name))]
+          (f (okh/consumer-record->message decompress
+                                           record)))
+        (.commitSync consumer)
+        (recur)))))
 
 (defn subscribe
   "Given a handler function,
@@ -81,10 +82,12 @@
   (let [{:keys [name]}
         (:topic kafka-props)
         consumer (build-consumer kafka-props)
+        stop (volatile! nil)
         consumer-thread (Thread. #(poll consumer
                                         name
                                         handler
-                                        timeout))
+                                        timeout
+                                        stop))
         ^Collection topics [name]]
     (if rebalance-listener
       (.subscribe consumer topics rebalance-listener)
@@ -92,11 +95,12 @@
 
     (.start consumer-thread)
     {:consumer consumer
-     :consumer-thread consumer-thread}))
+     :consumer-thread consumer-thread
+     :stop! #(vreset! stop true)}))
 
 (defn stop-consumer
-  [{:keys [^Thread consumer-thread]}]
-  (.stop consumer-thread))
+  [{:keys [stop!]}]
+  (stop!))
 
 (defn create-topic [kafka-props]
   (let [address (get-in kafka-props [:zk :address])
