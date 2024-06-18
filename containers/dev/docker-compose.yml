@@ -66,10 +66,10 @@ services:
       - ELASTICSEARCH_URL=http://localhost:9207
     volumes:
       - ./riemann.config:/etc/riemann.config
-  docker-riemann-dash-dev:
-    image: include/docker-riemann-dash
-    ports:
-      - "4567:4567"
+  #docker-riemann-dash-dev:
+  #  image: include/docker-riemann-dash
+  #  ports:
+  #    - "4567:4567"
   aws:
     image: localstack/localstack:1.0.0
     ports:
