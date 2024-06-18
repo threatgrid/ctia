@@ -20,5 +20,5 @@ services:
       args:
         - RIEMANN_VERSION=0.3.5
 
-  docker-riemann-dash-dev:
-    build: ./m1-images/riemann-dash
+  #docker-riemann-dash-dev:
+  #  build: ./m1-images/riemann-dash
