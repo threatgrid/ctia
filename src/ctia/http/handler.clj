@@ -32,7 +32,7 @@
             [ring.middleware.not-modified :refer [wrap-not-modified]]
             [ring.util.http-response :refer [ok]]
             [schema.core :as s]
-            [compojure.api.middleware :refer [->mime-types api-middleware-defaults]]
+            [compojure.api.middleware :refer [->mime-types api-middleware-defaults-v1]]
             [ring.middleware.format-response :refer [make-encoder]]))
 
 (def api-description
@@ -203,7 +203,7 @@
                 "text/plain"))
 
 (def default-formats
-  (get-in api-middleware-defaults [:format :formats]))
+  (get-in api-middleware-defaults-v1 [:format :formats]))
 
 (defn ->format-options
   "Options for ring-middleware-format"
