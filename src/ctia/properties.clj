@@ -100,7 +100,7 @@
                       "ctia.http.access-control-allow-methods" s/Str
                       "ctia.http.min-threads" s/Int
                       "ctia.http.max-threads" s/Int})
-
+   (st/optional-keys {"ctia.http.cache-control.enabled" s/Bool})
    (st/optional-keys {"ctia.http.rate-limit.enabled" s/Bool
                       "ctia.http.rate-limit.key-prefix" s/Str
                       "ctia.http.rate-limit.unlimited.client-ids" s/Str
