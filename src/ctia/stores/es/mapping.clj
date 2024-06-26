@@ -263,9 +263,7 @@
 
 (def type-simple-pattern
   (->> [:actor
-        :asset
-        :asset-mapping
-        :asset-properties
+        "asset([-](mapping|properties))?"
         :attack-pattern
         :campaign
         :casebook
@@ -274,8 +272,8 @@
         :event
         :feed
         :feedback
-        :identity
         :identity-assertion
+        :identity
         :incident
         :indicator
         :investigation
@@ -288,7 +286,7 @@
         :tool
         :vulnerability
         :weakness]
-       (map name)
+       (map (comp #(string/replace % "-" "\\-") name))
        (string/join "|")))
 
 (def store-settings
