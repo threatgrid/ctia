@@ -172,25 +172,24 @@
     :as entity-data} :- EntityImportData
    find-by-external-id :- (s/=> s/Any (s/named s/Any 'external_id))
    services :- HTTPShowServices]
-  (if-let [old-entities (mapcat find-by-external-id external_ids)]
-    (let [old-entity (some-> old-entities
-                             first
-                             :entity
-                             (with-long-id services))]
-      (when (< 1 (count old-entities))
-        (log/debug
-         (format
+  (let [old-entities (mapcat find-by-external-id external_ids)
+        old-entity (some-> old-entities
+                           first
+                           :entity
+                           (with-long-id services))]
+    (when (< 1 (count old-entities))
+      (log/debug
+        (format
           (str "More than one entity is "
                "linked to the external ids %s (examples: %s)")
           external_ids
           (->> (take 10 old-entities) ;; prevent very large logs
                (map (comp :id :entity))
                pr-str))))
-      (cond-> entity-data
-        ;; only one entity linked to the external ID
-        old-entity (assoc :result "exists"
-                          :id (:id old-entity))))
-    entity-data))
+    (cond-> entity-data
+      ;; only one entity linked to the external ID
+      old-entity (assoc :result "exists"
+                        :id (:id old-entity)))))
 
 (s/defschema WithExistingEntitiesServices
   (csu/open-service-schema
