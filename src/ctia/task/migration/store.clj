@@ -20,7 +20,8 @@
              [conn :as conn]
              [document :as ductile.doc]
              [index :as ductile.index]
-             [query :as ductile.query]]
+             [query :as ductile.query]
+             [schemas :refer [AuthParams]]]
             [ductile.schemas :refer [ESConn ESQuery Refresh]]
             [schema-tools.core :as st]
             [schema.core :as s]))
@@ -41,7 +42,8 @@
     :aliased  s/Bool
     :default_operator (s/enum "OR" "AND")
     :timeout s/Num
-    :version s/Num}))
+    :version s/Num
+    :auth AuthParams}))
 
 (s/defschema MigrationParams
   {:migration-id s/Str

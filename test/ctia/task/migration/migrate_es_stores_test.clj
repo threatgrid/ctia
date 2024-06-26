@@ -159,8 +159,11 @@
         (with-each-fixtures #(-> %
                                  (assoc-in [:ctia :store :es :investigation :indexname]
                                            investigation-indexname)
-                                 (assoc-in [:malware 0 :state :props :indexname]
-                                           malware-indexname))
+                                 (assoc-in [:malware 0 :state :props]
+                                           {:indexname malware-indexname
+                                            :auth {:type "basic"
+                                                   :params {:user "basic"
+                                                            :pwd "ductile"}}}))
           app
           (let [{:keys [get-in-config]} (helpers/get-service-map app :ConfigService)]
             (let [v (get-in-config [:ctia :store :es :investigation :indexname])]
