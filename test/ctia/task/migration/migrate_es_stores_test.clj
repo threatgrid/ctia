@@ -159,11 +159,7 @@
         (with-each-fixtures #(-> %
                                  (assoc-in [:ctia :store :es :investigation :indexname]
                                            investigation-indexname)
-                                 (assoc-in [:malware 0 :state :props]
-                                           {:indexname malware-indexname
-                                            :auth {:type "basic"
-                                                   :params {:user "basic"
-                                                            :pwd "ductile"}}}))
+                                 (assoc-in [:malware 0 :state :props :indexname] malware-indexname))
           app
           (let [{:keys [get-in-config]} (helpers/get-service-map app :ConfigService)]
             (let [v (get-in-config [:ctia :store :es :investigation :indexname])]
@@ -183,12 +179,25 @@
                                                              :migrations
                                                              conj
                                                              :bad-migration-id)
-                                                     get-in-config))))))
+                                                     get-in-config)))))))
       (testing "properly configured migration"
         (with-each-fixtures identity app
           (let [{:keys [get-in-config]} (helpers/get-service-map app :ConfigService)]
             (is (sut/check-migration-params migration-params
-                                            get-in-config))))))))
+                                            get-in-config)))))
+
+      (testing "different target cluster same indexname"
+        (let [malware-indexname (str "v1.2.0_ctia_malware" (UUID/randomUUID))
+              malware-target-store {:host "another-host-cluster"
+                                    :auth {:type :basic-auth
+                                           :params {:user "basic"
+                                                    :pwd "ductile"}}}]
+          (with-each-fixtures #(assoc-in % [:ctia :store :es :malware :indexname] malware-indexname)
+            app
+            (let [{:keys [get-in-config]} (helpers/get-service-map app :ConfigService)]
+              (is (sut/check-migration-params (assoc (assoc migration-params :store-keys [:malware])
+                                                     :store {:es {:malware malware-target-store}})
+                                              get-in-config))))))))
 
 (deftest prepare-params-test
   (let [migration-props {:buffer-size 3,

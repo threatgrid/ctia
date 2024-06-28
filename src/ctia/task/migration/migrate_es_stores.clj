@@ -284,19 +284,26 @@
   [{:keys [prefix
            restart?
            store-keys
-           migrations]} :- mst/MigrationParams
+           migrations
+           store] :as params} :- mst/MigrationParams
    get-in-config]
   (when-not restart?
     (assert prefix "Please provide an indexname prefix for target store creation")
     (assert (seq store-keys) "Please provide the store-keys for source store to migrate")
     (assert (seq migrations) "Please provide the migrations' ids to apply"))
   (doseq [store-key store-keys]
-    (let [index (get-in-config [:ctia :store :es store-key :indexname])]
-      (when (= (mst/prefixed-index index prefix)
-               index)
+    (let [origin-store (get-in-config [:ctia :store :es store-key])
+          target-store (get-in store [:es store-key])
+          origin-indexname (:indexname origin-store)]
+      (when (and (= (mst/prefixed-index origin-indexname prefix)
+                    origin-indexname)
+                 (nil? (:host target-store))
+                 (nil? (:indexname target-store)))
         (throw (AssertionError.
-                (format "the source and target indices are identical: %s. The migration was misconfigured."
-                        index))))))
+                (format "The migration was misconfigured.\nThe source and target indices are identical: %s\n%s\n."
+                        (pr-str params)
+                        (pr-str origin-store)
+                        (pr-str target-store)))))))
   true)
 
 (s/defn prepare-params :- mst/MigrationParams
