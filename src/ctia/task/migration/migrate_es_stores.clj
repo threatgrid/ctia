@@ -300,7 +300,7 @@
                  (nil? (:host target-store))
                  (nil? (:indexname target-store)))
         (throw (AssertionError.
-                (format "The migration was misconfigured.\nThe source and target indices are identical: %s\n%s\n."
+                (format "The migration setup is misconfigured.\nThe source and target indices are identical: %s\n%s\n."
                         (pr-str params)
                         (pr-str origin-store)
                         (pr-str target-store)))))))
