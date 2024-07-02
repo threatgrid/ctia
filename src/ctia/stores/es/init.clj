@@ -47,8 +47,9 @@
         settings {:refresh_interval refresh_interval
                   :number_of_shards shards
                   :number_of_replicas replicas}
-        mappings (cond-> (get-in entity-fields [entity :es-mapping] mappings)
-                   (< 5 version) (some-> first val))
+        mappings (some-> (get-in entity-fields [entity :es-mapping] mappings)
+                         first
+                         val)
         searchable-fields (get-in entity-fields [entity :searchable-fields])]
     {:index indexname
      :props (assoc props :write-index write-index)
@@ -89,21 +90,17 @@
 (s/defn update-mappings!
   [{:keys [conn index]
     {:keys [mappings]} :config} :- ESConnState]
-  (let [[entity-type type-mappings] (when (= (:version conn) 5)
-                                      (first mappings))
-        update-body (or type-mappings mappings)]
     (try
       (log/info "updating mapping: " index)
       (index/update-mappings! conn
                               index
-                              entity-type
-                              update-body)
+                              mappings)
       (catch clojure.lang.ExceptionInfo e
         (log/error "cannot update mapping. You probably tried to update the mapping of an existing field. It's only possible to add new field to existing mappings. If you need to modify the type of a field in an existing index, you must perform a migration"
                    (assoc (ex-data e)
                           :conn conn
                           :mappings mappings))
-        (system-exit-error)))))
+        (system-exit-error))))
 
 (s/defn refresh-mappings!
   [{:keys [conn index]
