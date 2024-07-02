@@ -188,16 +188,20 @@
 
       (testing "different target cluster same indexname"
         (let [malware-indexname (str "v1.2.0_ctia_malware" (UUID/randomUUID))
-              malware-target-store {:host "another-host-cluster"
-                                    :auth {:type :basic-auth
-                                           :params {:user "basic"
-                                                    :pwd "ductile"}}}]
+              target-store {:host "another-host-cluster"
+                            :auth {:type :basic-auth
+                                   :params {:user "basic"
+                                            :pwd "ductile"}}}]
           (with-each-fixtures #(assoc-in % [:ctia :store :es :malware :indexname] malware-indexname)
             app
             (let [{:keys [get-in-config]} (helpers/get-service-map app :ConfigService)]
               (is (sut/check-migration-params (assoc (assoc migration-params :store-keys [:malware])
-                                                     :store {:es {:malware malware-target-store}})
-                                              get-in-config))))))))
+                                                     :store {:es {:malware target-store}})
+                                              get-in-config))
+              (is (sut/check-migration-params (assoc (assoc migration-params :store-keys [:malware])
+                                                     :store {:es {:default target-store}})
+                                              get-in-config)
+                  "configured default target store shall be considered")))))))
 
 (deftest prepare-params-test
   (let [migration-props {:buffer-size 3,

@@ -293,10 +293,12 @@
     (assert (seq migrations) "Please provide the migrations' ids to apply"))
   (doseq [store-key store-keys]
     (let [origin-store (get-in-config [:ctia :store :es store-key])
+          default-target-store (get-in store [:es :default])
           target-store (get-in store [:es store-key])
           origin-indexname (:indexname origin-store)]
       (when (and (= (mst/prefixed-index origin-indexname prefix)
                     origin-indexname)
+                 (nil? (:host default-target-store))
                  (nil? (:host target-store))
                  (nil? (:indexname target-store)))
         (throw (AssertionError.
