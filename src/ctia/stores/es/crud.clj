@@ -723,7 +723,7 @@ It returns the documents with full hits meta data including the real index in wh
     :as agg-query} :- AggQuery]
   (cond-> (or (some-> (not-empty aggs) aggregation-filters)
               [])
-    (= :avg agg-type) (conj {:bool {:must {:exists {:field (:aggregate-on agg-query)}}}})))
+    (= :avg agg-type) (conj {:exists {:field (:aggregate-on agg-query)}})))
 
 (defn format-agg-result
   [agg-type
