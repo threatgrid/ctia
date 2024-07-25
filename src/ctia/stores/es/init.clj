@@ -128,7 +128,7 @@
   (let [existing (-> (index/get conn (str index "*"))
                      keys
                      set)
-        index-pattern (re-pattern (str index "(-\\d{4}.\\d{2}.\\d{2}.*)?"))
+        index-pattern (re-pattern (str index "(-\\d{4}.\\d{2}.\\d{2}(?!-\\d{6}).*)"))
         matching (filter #(re-matches index-pattern (name %))
                          existing)
         ambiguous (difference existing (set matching))]
