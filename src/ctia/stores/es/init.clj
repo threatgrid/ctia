@@ -46,7 +46,8 @@
                          (when aliased "-write"))
         settings {:refresh_interval refresh_interval
                   :number_of_shards shards
-                  :number_of_replicas replicas}
+                  :number_of_replicas replicas
+                  :lifecycle { :name "xdr-ilm-policy" :rollover_alias write-index}}
         mappings (cond-> (get-in entity-fields [entity :es-mapping] mappings)
                    (< 5 version) (some-> first val))
         searchable-fields (get-in entity-fields [entity :searchable-fields])]
