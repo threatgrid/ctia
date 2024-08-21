@@ -24,7 +24,7 @@
 (defn write-alias [indexname]
   (str indexname "-write"))
 
-(defn props-aliased [indexname]
+(defn mk-props [indexname]
   {:entity :sighting
    :indexname indexname
    :refresh_interval "2s"
@@ -33,47 +33,18 @@
    :mappings {:a 1 :b 2}
    :host "localhost"
    :port 9207
-   :aliased true
    :update-mappings true
    :update-settings true
    :refresh-mappings true
    :version 7
    :auth basic-auth})
 
-(defn props-not-aliased [indexname]
-  {:entity :sighting
-   :indexname indexname
-   :shards 2
-   :replicas 1
-   :mappings {:a 1 :b 2}
-   :host "localhost"
-   :port 9207
-   :aliased false
-   :update-mappings true
-   :update-settings true
-   :version 7
-   :auth basic-auth})
-
 (deftest init-store-conn-test
  (let [services (->ESConnServices)]
-   (testing "init store conn should return a proper conn state with unaliased conf"
-     (let [indexname (gen-indexname)
-           base-props (props-not-aliased indexname)
-           {:keys [index props config conn]}
-           (sut/init-store-conn base-props services)]
-       (is (= index indexname))
-       (is (= (:write-index props) indexname))
-       (is (= "http://localhost:9207" (:uri conn)))
-       (is (nil? (:aliases config)))
-       (is (= "1s" (get-in config [:settings :refresh_interval])))
-       (is (= 1 (get-in config [:settings :number_of_replicas])))
-       (is (= 2 (get-in config [:settings :number_of_shards])))
-       (is (= {} (select-keys (:mappings config) [:a :b])))))
-
-   (testing "init store conn should return a proper conn state with aliased conf"
+   (testing "init store conn should return a proper conn state with aliases"
      (let [indexname (gen-indexname)
            {:keys [index props config conn]}
-           (sut/init-store-conn (props-aliased indexname) services)]
+           (sut/init-store-conn (mk-props indexname) services)]
        (is (= index indexname))
        (is (= (:write-index props) (write-alias indexname)))
        (is (= "http://localhost:9207" (:uri conn)))
@@ -94,16 +65,16 @@
              true)
 
          "default protocol is http"
-         (props-aliased indexname)
+         (mk-props indexname)
          "http://localhost:9207"
 
          "uri should respect given protocol"
-         (assoc (props-aliased indexname)
+         (assoc (mk-props indexname)
                 :protocol :https)
          "https://localhost:9207"
 
          "uri should respect given protocol, host and port"
-         (assoc (props-aliased indexname)
+         (assoc (mk-props indexname)
                 :protocol :https
                 :port 9201
                 :host "cisco.com")
@@ -116,7 +87,6 @@
           initial-props {:entity :malware
                          :indexname indexname
                          :host "localhost"
-                         :aliased true
                          :port (+ 9200 version)
                          :shards 5
                          :replicas 2
@@ -219,28 +189,9 @@
         "get-existing-indices should retrieve existing indices if any."
         [7]
         clean-index
-        (testing "init-es-conn! should return a proper conn state with unaliased conf, but not create any index"
-          (let [services (->ESConnServices)
-                props (prepare-props (props-not-aliased indexname) version)
-                {:keys [index props config conn]} (sut/init-es-conn! props services)]
-            (try
-              (let [existing-index (index/get conn (str indexname "*"))]
-                (is (empty? existing-index))
-                (is (= index indexname))
-                (is (= (:write-index props) indexname))
-                (is (= (str "http://localhost:920" version) (:uri conn)))
-                (is (nil? (:aliases config)))
-                (is (= "1s" (get-in config [:settings :refresh_interval])))
-                (is (= 1 (get-in config [:settings :number_of_replicas])))
-                (is (= 2 (get-in config [:settings :number_of_shards])))
-                (is (= {} (select-keys (:mappings config) [:a :b]))))
-              (finally
-                (clean-all conn)
-                (conn/close conn)))))
-
         (testing "update mapping should allow adding fields or identical mapping"
           (let [services (->ESConnServices)
-                props (prepare-props (props-aliased indexname) version)
+                props (prepare-props (mk-props indexname) version)
                 test-fn (fn [msg expected-successful? field field-mapping]
                           ;; init and create aliased indices
                           (testing msg
@@ -269,10 +220,10 @@
             (test-fn "Update mapping fails when modifying existing field mapping and CTIA must not start in that case."
                      false :id m/text)))
 
-        (testing "init-es-conn! should return a proper conn state with aliased conf, and create an initial aliased index"
+        (testing "init-es-conn! should return a proper conn state and create an initial aliased index"
           (let [services (->ESConnServices)
                 {:keys [index props config conn]}
-                (-> (prepare-props (props-aliased indexname) version)
+                (-> (prepare-props (mk-props indexname) version)
                     (sut/init-es-conn! services))]
             (try
               (let [existing-index (index/get conn (str indexname "*"))
@@ -295,32 +246,7 @@
                 (is (= {} (select-keys (:mappings config) [:a :b]))))
               (finally
                 (clean-all conn)
-                (conn/close conn)))))
-
-        (testing "init-es-conn! should return a conn state that ignore aliased conf setting when an unaliased index already exists"
-          (index/create! conn
-                         indexname
-                         {:settings m/store-settings})
-          (let [services (->ESConnServices)
-                {:keys [index props config conn]}
-                (-> (prepare-props (props-aliased indexname) version)
-                    (sut/init-es-conn! services))
-                existing-index (index/get conn (str indexname "*"))
-                created-aliases (->> existing-index
-                                     vals
-                                     first
-                                     :aliases
-                                     keys
-                                     set)]
-            (is (= #{} created-aliases))
-            (is (= index indexname))
-            (is (= (:write-index props) indexname))
-            (is (= (str "http://localhost:920" version) (:uri conn)))
-            (is (= indexname
-                   (-> config :aliases keys first)))
-            (is (= 1 (get-in config [:settings :number_of_replicas])))
-            (is (= 2 (get-in config [:settings :number_of_shards])))
-            (is (= {} (select-keys (:mappings config) [:a :b])))))))))
+                (conn/close conn)))))))))
 
 (deftest update-index-state-test
   (let [test-fn (fn [{:keys [update-mappings
@@ -345,7 +271,7 @@
             update-settings?  [true false nil]
             refresh-mappings? [true false nil]
             :let [indexname (gen-indexname)]]
-      (test-fn (assoc (props-aliased indexname)
+      (test-fn (assoc (mk-props indexname)
                       :update-mappings update-mappings?
                       :update-settings update-settings?
                       :refresh-mappings refresh-mappings?)))))
@@ -409,7 +335,7 @@
       (is (= {:phases {:hot {:actions {:rollover expected}}}}
              (sut/mk-policy store-config))))))
 
-(deftest mk-index-config-test
+(deftest mk-index-ilm-config-test
   (let [services (->ESConnServices)
         indexname (gen-indexname)
         base-props {:entity :sighting
@@ -420,27 +346,33 @@
                     :mappings {:a 1 :b 2}
                     :host "localhost"
                     :port 9207
-                    :aliased true
                     :version 7
                     :auth basic-auth}
         test-cases [{:message "rollover with max_docs"
                      :expected {:rollover {:max_docs 1000}}
-                     :store-props (assoc base-props :rollover {:max_docs 1000})}]
-        ]
+                     :store-props (assoc base-props :rollover {:max_docs 1000})}]]
     (doseq [{:keys [message expected store-props]} test-cases]
       (let [store-config (sut/init-store-conn store-props services)
-            {:keys [policy template index-config] :as res} (sut/mk-index-config store-config)
+            {:keys [policy template aliases settings mappings] :as res} (sut/mk-index-ilm-config store-config)
             template-settings (get-in template [:template :settings])]
         (testing message
           (is (= {:phases {:hot {:actions {:rollover (:rollover store-props)}}}}
                  policy))
           (is (= (str (:indexname store-props) "*") (:index_patterns template)))
           (is (map? (:template template)))
-          (is (map? (get-in template [:template :settings])))
-          (is (map? (get-in template [:template :mappings])))
+          (is (map? settings))
+          (is (map? mappings))
+          (is (= mappings (get-in template [:template :mappings])))
+          (is (= settings (get-in template [:template :settings])))
+          (is (= aliases
+                 {indexname {}
+                  (str indexname "-write") {:is_write_index true}}))
           (is (= (:shards store-props) (:number_of_shards template-settings)))
           (is (= (:replicas store-props) (:number_of_replicas template-settings)))
           (is (= (:refresh_interval store-props) (:refresh_interval template-settings)))
           (is (= {:name (:indexname store-props)
                   :rollover_alias (str indexname "-write")}
+                 (get-in settings [:index :lifecycle])))
+          (is (= {:name (:indexname store-props)
+                  :rollover_alias (str (:indexname store-props) "-write")}
                  (get-in template-settings [:index :lifecycle]))))))))

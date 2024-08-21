@@ -31,36 +31,6 @@
                                           :es-mapping]))))
        (apply merge)))
 
-(s/defn init-store-conn :- ESConnState
-  "initiate an ES store connection, returning a map containing a
-   connection manager and dedicated store index properties"
-  [{:keys [entity indexname mappings aliased shards replicas refresh_interval version]
-    :or {aliased false
-         shards 1
-         replicas 1
-         refresh_interval "1s"
-         version 7}
-    :as props} :- StoreProperties
-   services :- ESConnServices]
-  (let [write-index (str indexname
-                         (when aliased "-write"))
-        settings {:refresh_interval refresh_interval
-                  :number_of_shards shards
-                  :number_of_replicas replicas}
-        mappings (cond-> (get-in entity-fields [entity :es-mapping] mappings)
-                   (< 5 version) (some-> first val))
-        searchable-fields (get-in entity-fields [entity :searchable-fields])]
-    {:index indexname
-     :props (assoc props :write-index write-index)
-     :config (into
-              {:settings (into store-settings settings)
-               :mappings mappings}
-              (when aliased
-                {:aliases {indexname {}}}))
-     :conn (connect props)
-     :services services
-     :searchable-fields searchable-fields}))
-
 (def default-rollover {:max_size "30gb"
                        :max_docs 100000000
                        :max_age "1y"})
@@ -75,7 +45,7 @@
       {:actions
        {:rollover rollover}}}}))
 
-(s/defn mk-index-config
+(s/defn mk-index-ilm-config
   [{:keys [index props config] :as _store-config}]
   (let [{:keys [mappings settings]} config
         write-alias (:write-index props)
@@ -87,12 +57,41 @@
                      :mappings mappings
                      :aliases {index {}}}
         template {:index_patterns (str index "*")
-                  :template base-config}
-        index-config (cond-> base-config
-                       write-alias (assoc-in [:aliases write-alias] {:is_write_index true}))]
-    {:policy policy
-     :template template
-     :index-config index-config}))
+                  :template base-config}]
+    (into (assoc-in base-config [:aliases write-alias] {:is_write_index true})
+          {:template template
+           :policy policy})))
+
+(s/defn init-store-conn :- ESConnState
+  "initiate an ES store connection, returning a map containing a
+   connection manager and dedicated store index properties"
+  [{:keys [entity indexname mappings
+           shards replicas refresh_interval
+           version ilm?]
+    :or {shards 1
+         replicas 1
+         refresh_interval "1s"
+         version 7}
+    :as props} :- StoreProperties
+   services :- ESConnServices]
+  (let [write-index (str indexname "-write")
+        settings {:refresh_interval refresh_interval
+                  :number_of_shards shards
+                  :number_of_replicas replicas}
+        mappings (some-> (get-in entity-fields [entity :es-mapping] mappings)
+                         first
+                         val)
+        searchable-fields (get-in entity-fields [entity :searchable-fields])
+        store-config {:index indexname
+                      :props (assoc props :write-index write-index)
+                      :config {:settings (into store-settings settings)
+                               :mappings mappings
+                               :aliases {indexname {}}}
+                      :conn (connect props)
+                      :services services
+                      :searchable-fields searchable-fields}]
+    (cond-> store-config
+      ilm? mk-index-ilm-config)))
 
 (s/defn update-settings!
   "read store properties of given stores and update indices settings."
@@ -113,8 +112,7 @@
 
 (defn system-exit-error
   []
-  (log/error (str "IGNORE THIS LOG UNTIL MIGRATION -- "
-                  "CTIA tried to start with an invalid configuration: \n"
+  (log/error (str "CTIA tried to start with an invalid configuration: \n"
                   "- invalid mapping\n"
                   "- ambiguous index names"))
   (System/exit 1))
@@ -213,18 +211,12 @@
         (update-index-state conn-state)
         (log/info "Not in update-index-state task, skipping update-index-state"))
       (upsert-template! conn-state))
-    (when (and (:aliased props)
-               (empty? existing-indices))
+    (when (empty? existing-indices)
       ;;https://github.com/elastic/elasticsearch/pull/34499
       (index/create! conn
                      (format "<%s-{now/d}-000001>" index)
                      (update config :aliases assoc (:write-index props) {})))
-    (if (and (:aliased props)
-             (contains? existing-indices (keyword index)))
-      (do (log/error "an existing unaliased store was configured as aliased. Switching from unaliased to aliased indices requires a migration."
-                     properties)
-          (assoc-in conn-state [:props :write-index] index))
-      conn-state)))
+      conn-state))
 
 (s/defn get-store-properties :- StoreProperties
   "Lookup the merged store properties map"
