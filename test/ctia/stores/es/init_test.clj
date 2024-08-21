@@ -397,3 +397,50 @@
                                          [ko-header-auth-params false]]]
         (testing (format "auth-params: %s, authorized?: %s" auth-params authorized?)
           (try-auth-params auth-params authorized?))))))
+
+(deftest mk-policy-test
+  (let [test-plan [{:msg "mk-policy uses configured rollover."
+                    :store-config {:rollover {:max_docs 500}}
+                    :expected {:max_docs 500}}
+                   {:msg "mk-policy uses default rollover when not configured."
+                    :store-config {}
+                    :expected sut/default-rollover}]]
+    (doseq [{:keys [store-config expected]} test-plan]
+      (is (= {:phases {:hot {:actions {:rollover expected}}}}
+             (sut/mk-policy store-config))))))
+
+(deftest mk-index-config-test
+  (let [services (->ESConnServices)
+        indexname (gen-indexname)
+        base-props {:entity :sighting
+                    :indexname indexname
+                    :refresh_interval "2s"
+                    :shards 2
+                    :replicas 1
+                    :mappings {:a 1 :b 2}
+                    :host "localhost"
+                    :port 9207
+                    :aliased true
+                    :version 7
+                    :auth basic-auth}
+        test-cases [{:message "rollover with max_docs"
+                     :expected {:rollover {:max_docs 1000}}
+                     :store-props (assoc base-props :rollover {:max_docs 1000})}]
+        ]
+    (doseq [{:keys [message expected store-props]} test-cases]
+      (let [store-config (sut/init-store-conn store-props services)
+            {:keys [policy template index-config] :as res} (sut/mk-index-config store-config)
+            template-settings (get-in template [:template :settings])]
+        (testing message
+          (is (= {:phases {:hot {:actions {:rollover (:rollover store-props)}}}}
+                 policy))
+          (is (= (str (:indexname store-props) "*") (:index_patterns template)))
+          (is (map? (:template template)))
+          (is (map? (get-in template [:template :settings])))
+          (is (map? (get-in template [:template :mappings])))
+          (is (= (:shards store-props) (:number_of_shards template-settings)))
+          (is (= (:replicas store-props) (:number_of_replicas template-settings)))
+          (is (= (:refresh_interval store-props) (:refresh_interval template-settings)))
+          (is (= {:name (:indexname store-props)
+                  :rollover_alias (str indexname "-write")}
+                 (get-in template-settings [:index :lifecycle]))))))))

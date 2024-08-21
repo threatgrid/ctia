@@ -61,6 +61,39 @@
      :services services
      :searchable-fields searchable-fields}))
 
+(def default-rollover {:max_size "30gb"
+                       :max_docs 100000000
+                       :max_age "1y"})
+
+;; https://www.elastic.co/guide/en/elasticsearch/reference/7.10/getting-started-index-lifecycle-management.html#manage-time-series-data-without-data-streams
+(defn mk-policy
+  [store-props]
+  ;; https://www.elastic.co/guide/en/elasticsearch/reference/7.10//ilm-rollover.html
+  (let [rollover (:rollover store-props default-rollover)]
+    {:phases
+     {:hot
+      {:actions
+       {:rollover rollover}}}}))
+
+(s/defn mk-index-config
+  [{:keys [index props config] :as _store-config}]
+  (let [{:keys [mappings settings]} config
+        write-alias (:write-index props)
+        policy (mk-policy props)
+        lifecycle {:name index
+                   :rollover_alias write-alias}
+        settings-ilm (assoc-in settings [:index :lifecycle] lifecycle)
+        base-config {:settings settings-ilm
+                     :mappings mappings
+                     :aliases {index {}}}
+        template {:index_patterns (str index "*")
+                  :template base-config}
+        index-config (cond-> base-config
+                       write-alias (assoc-in [:aliases write-alias] {:is_write_index true}))]
+    {:policy policy
+     :template template
+     :index-config index-config}))
+
 (s/defn update-settings!
   "read store properties of given stores and update indices settings."
   [{:keys [conn index]
