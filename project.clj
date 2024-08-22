@@ -1,5 +1,6 @@
 (def cheshire-version "5.10.2")
 (def clj-http-fake-version "1.0.3")
+(def clj-kondo-version "2024.08.02-SNAPSHOT")
 (def clj-version "1.11.3")
 (def jackson-version "2.15.2")
 (def jackson-databind-version "2.15.2")
@@ -13,7 +14,7 @@
 (def trapperkeeper-version "3.2.0")
 
 ;; TODO we could add -dev here when it works
-(def base-ci-profiles "+test,+ci")
+(def base-ci-profiles "+test,+ci,+clj-kondo")
 (def all-ci-profiles
   "All the permutations of CI profiles. This helps download dependencies
   for all build configurations on demand, to minimize the load we
@@ -232,6 +233,12 @@
                              ;; "Full report at: /tmp/clojure-8187773283812483853.edn"
                              "-Dclojure.main.report=stderr"
                              "-XX:-OmitStackTraceInFastThrow"]}
+             :clj-kondo {:dependencies [[clj-kondo/clj-kondo ~clj-kondo-version]]
+                         :aliases {"clj-kondo" ~(concat ["run" "-m" "clj-kondo.main/main" "--lint"]
+                                                        ["src" "test" "debug"]
+                                                        ["--config" ".clj-kondo/config.edn"
+                                                         "--fail-level" "warning"
+                                                         "--cache"])}}
              :next-clojure {:dependencies [[org.clojure/clojure "1.12.0-master-SNAPSHOT"]]
                             :repositories [["snapshots" "https://oss.sonatype.org/content/repositories/snapshots/"]]}
              :jmx {:jvm-opts ["-Dcom.sun.management.jmxremote"
@@ -335,6 +342,7 @@
             "split-test" ["trampoline"
                           "with-profile" ~ci-profiles ;https://github.com/circleci/circleci.test/issues/13
                           "run" "-m" "ctia.dev.split-tests/dir" :project/test-paths]
+            "lint-kondo" ["with-profile" "clj-kondo" "clj-kondo"]
             "tests" ["with-profile" ~ci-profiles "run" "-m" "circleci.test"]
 
             "ci-run-tests" ["with-profile" ~ci-profiles "do" "clean," "javac," "split-test" ":no-gen"]

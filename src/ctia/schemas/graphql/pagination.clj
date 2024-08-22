@@ -207,7 +207,7 @@
   [{:keys [data paging]} :- Result
    {:keys [forward-paging?
            backward-paging?
-           offset]}] :- ConnectionParams
+           offset]}]
   (let [edges (data->edges data offset)]
     {:pageInfo
      {:hasNextPage (or (and forward-paging?

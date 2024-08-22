@@ -38,7 +38,8 @@
                          (name plural)
                          (name entity)))))))
 
-(s/defn all-entity-capabilities [] :- #{(s/pred simple-keyword?)}
+(s/defn all-entity-capabilities :- #{(s/pred simple-keyword?)}
+  [] 
   (apply set/union
          (map #(gen-capabilities-for-entity-and-accesses
                 % (keys prefixes))

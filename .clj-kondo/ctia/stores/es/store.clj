@@ -4,5 +4,7 @@
   [store-name
    _entity
    _stored-schema
-   _partial-stored-schema]
-  `(clojure.core/defrecord ~store-name [~(symbol "state")]))
+   _partial-stored-schema
+   & {:keys [extra-impls]}]
+  `(clojure.core/defrecord ~store-name [~(symbol "state")]
+     ~@extra-impls))
