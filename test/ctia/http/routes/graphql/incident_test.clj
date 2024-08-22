@@ -7,6 +7,8 @@
              [fake-whoami-service :as whoami-helpers]
              [graphql :as gh]
              [store :refer [test-for-each-store-with-app]]]
+            ctia.entity.feedback.schemas
+            ctia.entity.relationship.schemas
             [ctim.examples.incidents :refer [new-incident-maximal]]))
 
 (use-fixtures :once (join-fixtures [mth/fixture-schema-validation
