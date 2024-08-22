@@ -150,7 +150,6 @@
         :auth-identity auth-identity
         (core/validate-bulk-size! bulk services)
         (ok (core/patch-bulk bulk
-                             {} ;; transient ids only supported via PATCH bundle/import
                              auth-identity
                              (common/wait_for->refresh wait_for)
                              services))))

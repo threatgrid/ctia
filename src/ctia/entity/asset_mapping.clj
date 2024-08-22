@@ -45,15 +45,14 @@
 
 (s/defn realize-asset-mapping
   :- (RealizeFnResult (with-error StoredAssetMapping))
-  [{:keys [asset_ref]
-    :as   new-entity}
+  [new-entity
    id tempids & rest-args]
   (delayed/fn :- (with-error StoredAssetMapping)
-              [rt-ctx :- GraphQLRuntimeContext]
-              (-> asset-mapping-default-realize
-                  (schemas/lift-realize-fn-with-context rt-ctx)
-                  (apply new-entity id tempids rest-args)
-                  (asset/set-asset-ref tempids))))
+    [rt-ctx :- GraphQLRuntimeContext]
+    (-> asset-mapping-default-realize
+        (schemas/lift-realize-fn-with-context rt-ctx)
+        (apply new-entity id tempids rest-args)
+        (asset/set-asset-ref tempids))))
 
 (def asset-mapping-mapping
   {"asset-mapping"

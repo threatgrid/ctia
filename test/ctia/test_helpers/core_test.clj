@@ -1,8 +1,7 @@
 (ns ctia.test-helpers.core-test
   (:require [clojure.test :refer [deftest is testing]]
             [ctia.test-helpers.core :as sut])
-  (:import [clojure.lang ExceptionInfo]
-           [java.util UUID]))
+  (:import [clojure.lang ExceptionInfo]))
 
 (deftest split-property-to-keywords-test
   (is (= (sut/split-property-to-keywords

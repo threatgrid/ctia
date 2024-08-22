@@ -1,7 +1,6 @@
 (ns ctia.entity.investigation.flanders-schemas
   (:require [ctim.schemas.common :as c]
-            [flanders.core :as f :refer [def-entity-type def-eq]]
-            [schema.core :as s]))
+            [flanders.core :as f :refer [def-entity-type def-eq]]))
 
 (def type-identifier "investigation")
 

@@ -259,13 +259,11 @@
                                "visible entities that the user is not allowed to write on are returned as forbidden errors"))]
            (testing "bulk-patch shall properly patch submitties entitites"
              (let [other-group-res (sut/patch-bulk bulk-patch
-                                                   {}
                                                    other-group-ident
                                                    {:refresh "true"}
                                                    services)
                    {:keys [sightings indicators]}
                    (sut/patch-bulk bulk-patch
-                                   {}
                                    ident
                                    {:refresh "true"}
                                    services)]

@@ -14,7 +14,7 @@
 (def trapperkeeper-version "3.2.0")
 
 ;; TODO we could add -dev here when it works
-(def base-ci-profiles "+test,+ci,+clj-kondo")
+(def base-ci-profiles "+test,+ci")
 (def all-ci-profiles
   "All the permutations of CI profiles. This helps download dependencies
   for all build configurations on demand, to minimize the load we
@@ -25,6 +25,7 @@
 
   To add a new build, add an entry here and use CTIA_CI_PROFILES to select it."
   {:next-clojure (str base-ci-profiles ",+next-clojure")
+   :clj-kondo (str "+test,+ci,+clj-kondo")
    :uberjar "uberjar"
    :default base-ci-profiles})
 (def ci-profiles

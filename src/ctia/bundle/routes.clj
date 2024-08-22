@@ -13,10 +13,9 @@
                                 BundleExportOptions
                                 BundleExportQuery]]
    [ctia.http.routes.common :as common]
-   [ctia.schemas.core :refer [APIHandlerServices NewBundle]]
+   [ctia.schemas.core :refer [APIHandlerServices]]
    [ring.swagger.json-schema :refer [describe]]
    [ring.util.http-response :refer [ok bad-request]]
-   [schema-tools.core :as st]
    [schema.core :as s]))
 
 (def export-capabilities
