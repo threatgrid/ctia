@@ -1,5 +1,5 @@
 (ns ctia.http.routes.ring-swagger-leak-test
-  (:require [clojure.test :refer [deftest is testing]]
+  (:require [clojure.test :refer [deftest is]]
             [ring.swagger.coerce :as sut]))
 
 (defmacro when-class [cls & body]
@@ -10,21 +10,21 @@
 ;;JDK 9+
 (when-class java.lang.ref.Cleaner
   (deftest ring-swagger-leak-test
-    (let [cleaner (java.lang.ref.Cleaner/create)]
-      (let [released? (atom false)
-            collectable (doto (fn [])
-                          sut/time-matcher
-                          sut/custom-matcher
-                          sut/coercer)
-            _ (.register cleaner collectable (reify
-                                               Runnable
-                                               (run [_] (reset! released? true))))]
-        (reduce (fn [_ i] 
-                  (System/gc)
-                  (System/runFinalization)
-                  (Thread/sleep 100)
-                  (if @released?
-                    (reduced nil)
-                    (println "WARNING: potential memory leak in" `ring-swagger-leak-test)))
-                nil (range 100))
-        (is @released?)))))
+    (let [cleaner (java.lang.ref.Cleaner/create)
+          released? (atom false)
+          collectable (doto (fn [])
+                        sut/time-matcher
+                        sut/custom-matcher
+                        sut/coercer)
+          _ (.register cleaner collectable (reify
+                                             Runnable
+                                             (run [_] (reset! released? true))))]
+      (reduce (fn [_ _]
+                (System/gc)
+                (System/runFinalization)
+                (Thread/sleep 100)
+                (if @released?
+                  (reduced nil)
+                  (println "WARNING: potential memory leak in" `ring-swagger-leak-test)))
+              nil (range 100))
+      (is @released?))))

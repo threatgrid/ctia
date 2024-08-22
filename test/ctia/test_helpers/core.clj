@@ -29,7 +29,7 @@
    [schema.core :as s])
   (:import [java.util UUID]))
 
-(def ^:dynamic ^:private *current-app*)
+(def ^:dynamic ^:private *current-app* nil)
 
 (defn set-of-es-versions-to-test []
   {:post [(set? %)]}
