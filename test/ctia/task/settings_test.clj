@@ -2,14 +2,13 @@
   (:require [clojure.test :refer [deftest is testing use-fixtures]]
             [ctia.task.settings :as sut]
             [ctia.stores.es.init :as init]
-            [ctia.test-helpers.es :as es-helpers]
             [clj-momo.test-helpers.core :as mth]
             [ductile
              [index :as es-index]
              [conn :as es-conn]]
             [ctia.test-helpers
              [core :as h :refer [fixture-ctia]]
-             [es :refer [fixture-properties:es-store fixture-delete-store-indexes]]]))
+             [es :as es-helpers :refer [fixture-properties:es-store fixture-delete-store-indexes]]]))
 
 (defn fixture-update-stores [t]
   (h/with-config-transformer*

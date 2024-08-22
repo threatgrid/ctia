@@ -75,9 +75,10 @@
 
 (s/defn find-create-entity-id
   [services :- HTTPShowServices]
-  (s/fn [{identity-obj :identity
-          :keys [entity-type tempids]} :- FlowMap
-         entity] :- s/Str
+  (s/fn :- s/Str
+    [{identity-obj :identity
+      :keys [entity-type tempids]} :- FlowMap
+     entity]
     (or
      (get tempids (:id entity))
      (when-let [entity-id (find-checked-id entity services)]
@@ -93,8 +94,9 @@
 
 (s/defn ^:private find-existing-entity-id
   [prev-entity-fn]
-  (s/fn [_fm :- FlowMap
-         {id :id :as _entity}] :- (s/maybe s/Str)
+  (s/fn :- (s/maybe s/Str)
+    [_fm :- FlowMap
+     {id :id :as _entity}]
     (if (and (seq id) (prev-entity-fn id))
       (id/str->short-id id)
       id)))

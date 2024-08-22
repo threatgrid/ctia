@@ -388,7 +388,6 @@
 
 (s/defn patch-bulk
   [bulk
-   tempids :- TempIDs
    auth-identity :- auth/AuthIdentity
    params
    services :- APIHandlerServices]

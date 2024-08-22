@@ -4,10 +4,10 @@
   `(do
      ~ddl
      ~spec-kw-ns
-     (def ~name-sym)))
+     (schema.core/defschema ~name-sym s/Any)))
 
-(defmacro def-stored-schema [name-sym _sch]
-  `(def ~name-sym))
+(defmacro def-stored-schema [name-sym sch]
+  `(schema.core/defschema ~name-sym ~sch))
 
 (defmacro def-advanced-acl-schema [{:keys [name-sym
                                            ddl
@@ -15,4 +15,4 @@
                                            _open?]}]
   `(do
      ~ddl
-     (def ~name-sym)))
+     (schema.core/defschema ~name-sym t/Any)))

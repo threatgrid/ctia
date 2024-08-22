@@ -91,8 +91,7 @@
                               (id/long-id->id last-id)))
           base-x-next (format "limit=%s&offset=%s"
                               limit
-                              (+ offset limit)
-                              search-after-id)
+                              (+ offset limit))
           expected-x-next (if search-after-id
                             (str base-x-next "&search_after=" search-after-id)
                             base-x-next)

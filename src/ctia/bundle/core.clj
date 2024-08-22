@@ -20,7 +20,6 @@
    [ctia.store :as store]
    [ctia.store-service.schemas :refer [GetStoreFn]]
    [ctim.domain.id :as id]
-   [ring.util.http-response :refer [bad-request!]]
    [schema.core :as s]
    [schema-tools.core :as st])
   (:import

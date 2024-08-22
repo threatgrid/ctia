@@ -1,5 +1,6 @@
 (def cheshire-version "5.10.2")
 (def clj-http-fake-version "1.0.3")
+(def clj-kondo-version "2024.08.02-SNAPSHOT")
 (def clj-version "1.11.3")
 (def jackson-version "2.15.2")
 (def jackson-databind-version "2.15.2")
@@ -24,6 +25,7 @@
 
   To add a new build, add an entry here and use CTIA_CI_PROFILES to select it."
   {:next-clojure (str base-ci-profiles ",+next-clojure")
+   :clj-kondo (str "+test,+ci,+clj-kondo")
    :uberjar "uberjar"
    :default base-ci-profiles})
 (def ci-profiles
@@ -232,6 +234,12 @@
                              ;; "Full report at: /tmp/clojure-8187773283812483853.edn"
                              "-Dclojure.main.report=stderr"
                              "-XX:-OmitStackTraceInFastThrow"]}
+             :clj-kondo {:dependencies [[clj-kondo/clj-kondo ~clj-kondo-version]]
+                         :aliases {"clj-kondo" ~(concat ["run" "-m" "clj-kondo.main/main" "--lint"]
+                                                        ["src" "test" "debug"]
+                                                        ["--config" ".clj-kondo/config.edn"
+                                                         "--fail-level" "warning"
+                                                         "--cache"])}}
              :next-clojure {:dependencies [[org.clojure/clojure "1.12.0-master-SNAPSHOT"]]
                             :repositories [["snapshots" "https://oss.sonatype.org/content/repositories/snapshots/"]]}
              :jmx {:jvm-opts ["-Dcom.sun.management.jmxremote"
@@ -335,6 +343,7 @@
             "split-test" ["trampoline"
                           "with-profile" ~ci-profiles ;https://github.com/circleci/circleci.test/issues/13
                           "run" "-m" "ctia.dev.split-tests/dir" :project/test-paths]
+            "lint-kondo" ["with-profile" "clj-kondo" "clj-kondo"]
             "tests" ["with-profile" ~ci-profiles "run" "-m" "circleci.test"]
 
             "ci-run-tests" ["with-profile" ~ci-profiles "do" "clean," "javac," "split-test" ":no-gen"]
