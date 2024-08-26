@@ -413,7 +413,6 @@
                                             :body bundle
                                             :headers {"Authorization" "45c1f5e3f05d0"})
                       bundle-result-create (:parsed-body response-create)]
-                  (clojure.pprint/pprint bundle-result-create)
                   (when (is (= 200 (:status response-create)))
                     (is (every? #(nil? (:index %))
                                 (map :error

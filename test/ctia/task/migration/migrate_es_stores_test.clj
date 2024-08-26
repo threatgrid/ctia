@@ -537,7 +537,7 @@
           conn (es-conn get-in-config)
           store-types [:malware :tool :incident]
           logger (atom [])
-          bad-doc {:id 1
+          bad-doc {:id "doc1"
                    :hey "I"
                    :am "a"
                    :bad "document"}]
@@ -557,7 +557,6 @@
         (doseq [store-type store-types]
           (ductile.doc/create-doc conn
                                   (str (get-in (es-props get-in-config) [store-type :indexname]) "-write")
-                                  (name store-type)
                                   bad-doc
                                   {:refresh "true"}))
         (with-atom-logger logger

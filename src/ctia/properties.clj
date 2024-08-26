@@ -44,6 +44,7 @@
    (str prefix store ".update-mappings")  s/Bool
    (str prefix store ".update-settings")  s/Bool
    (str prefix store ".refresh-mappings") s/Bool
+   (str prefix store ".migrate-to-ilm") s/Bool
    (str prefix store ".default-sort") s/Str
    (str prefix store ".auth.type") AuthParamsType
    (str prefix store ".auth.params.id") s/Str

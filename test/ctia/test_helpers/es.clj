@@ -72,7 +72,8 @@
         index-wildcard (str index "*")]
     (when conn
         (es-index/delete! conn index-wildcard)
-        (es-index/delete-template! conn index-wildcard))))
+        (es-index/delete-index-template! conn index-wildcard)
+        (es-index/delete-policy! conn index-wildcard))))
 
 (defn fixture-purge-event-indices-and-templates
   "walk through all producers and delete their indices and templates"
@@ -254,6 +255,14 @@
 
 (defn -filter-activated-es-versions [versions]
   (filter (h/set-of-es-versions-to-test) versions))
+
+
+(defn clean-es-state!
+  [conn index-pattern]
+  (es-index/delete! conn index-pattern)
+  (es-index/delete-template! conn index-pattern)
+  (es-index/delete-index-template! conn index-pattern)
+  (es-index/delete-policy! conn index-pattern))
 
 (defmacro for-each-es-version
   "for each given ES version:

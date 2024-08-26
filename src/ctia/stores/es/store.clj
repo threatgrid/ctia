@@ -13,6 +13,8 @@
 (defn delete-state-indexes [{:keys [conn index] :as _state}]
   (when conn
     (es-index/delete-template! conn (str index "*"))
+    (es-index/delete-index-template! conn (str index "*"))
+    (es-index/delete-policy! conn (str index "*"))
     (es-index/delete! conn (str index "*"))))
 
 (s/defn close-connections!

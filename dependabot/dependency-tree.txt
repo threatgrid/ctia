@@ -12,7 +12,7 @@ ctia:ctia:jar:1.1.1-SNAPSHOT
 |     \- org.ow2.asm:asm:jar:9.2:compile
 +- org.clojure:core.memoize:jar:1.0.257:compile
 |  \- org.clojure:core.cache:jar:1.0.225:compile
-+- org.clojure:tools.logging:jar:1.1.0:compile
++- org.clojure:tools.logging:jar:1.2.4:compile
 +- org.clojure:tools.cli:jar:1.0.194:compile
 +- pandect:pandect:jar:0.6.1:compile
 +- org.clojure:math.combinatorics:jar:0.1.6:test
@@ -42,8 +42,8 @@ ctia:ctia:jar:1.1.1-SNAPSHOT
 +- clj-commons:clj-yaml:jar:1.0.26:compile
 |  +- org.yaml:snakeyaml:jar:1.33:compile
 |  \- org.flatland:ordered:jar:1.5.9:compile
-+- prismatic:schema:jar:1.2.0:compile
-+- metosin:schema-tools:jar:0.12.3:compile
++- prismatic:schema:jar:1.4.1:compile
++- metosin:schema-tools:jar:0.13.1:compile
 +- threatgrid:flanders:jar:1.0.2:compile
 |  \- org.clojure:core.match:jar:1.0.0:compile
 +- threatgrid:ctim:jar:1.3.18:compile
@@ -60,7 +60,7 @@ ctia:ctia:jar:1.1.1-SNAPSHOT
 |  +- com.andrewmcveigh:cljs-time:jar:0.5.2:compile
 |  \- threatgrid:metrics-clojure-riemann:jar:2.10.1:compile
 |     \- io.riemann:metrics3-riemann-reporter:jar:0.4.6:compile
-+- threatgrid:ductile:jar:0.4.5:compile
++- threatgrid:ductile:jar:0.5.0-SNAPSHOT:compile
 +- com.arohner:uri:jar:0.1.2:compile
 |  \- pathetic:pathetic:jar:0.5.0:compile
 |     \- com.cemerick:clojurescript.test:jar:0.0.4:compile
@@ -124,14 +124,14 @@ ctia:ctia:jar:1.1.1-SNAPSHOT
 +- org.clojure:data.json:jar:1.0.0:compile
 +- scopula:scopula:jar:0.1.4:compile
 +- org.clojure:tools.reader:jar:1.3.6:compile
-+- clj-http:clj-http:jar:3.10.1:compile
-|  +- org.apache.httpcomponents:httpcore:jar:4.4.12:compile
-|  +- org.apache.httpcomponents:httpclient:jar:4.5.10:compile
++- clj-http:clj-http:jar:3.12.3:compile
+|  +- org.apache.httpcomponents:httpcore:jar:4.4.14:compile
+|  +- org.apache.httpcomponents:httpclient:jar:4.5.13:compile
 |  |  \- commons-logging:commons-logging:jar:1.2:compile
-|  +- org.apache.httpcomponents:httpclient-cache:jar:4.5.10:compile
+|  +- org.apache.httpcomponents:httpclient-cache:jar:4.5.13:compile
 |  +- org.apache.httpcomponents:httpasyncclient:jar:4.1.4:compile
 |  |  \- org.apache.httpcomponents:httpcore-nio:jar:4.4.10:compile
-|  \- org.apache.httpcomponents:httpmime:jar:4.5.10:compile
+|  \- org.apache.httpcomponents:httpmime:jar:4.5.13:compile
 +- com.taoensso:carmine:jar:2.19.1:compile
 |  +- com.taoensso:encore:jar:2.99.0:compile
 |  |  \- com.taoensso:truss:jar:1.5.0:compile
@@ -141,7 +141,7 @@ ctia:ctia:jar:1.1.1-SNAPSHOT
 |  |  +- org.iq80.snappy:snappy:jar:0.4:compile
 |  |  \- net.jpountz.lz4:lz4:jar:1.3:compile
 |  \- org.apache.commons:commons-pool2:jar:2.4.2:compile
-+- cheshire:cheshire:jar:5.10.2:compile
++- cheshire:cheshire:jar:5.11.0:compile
 |  \- tigris:tigris:jar:0.1.2:compile
 +- metrics-clojure:metrics-clojure:jar:2.10.0:compile
 |  \- io.dropwizard.metrics:metrics-core:jar:3.2.2:compile
@@ -288,7 +288,7 @@ ctia:ctia:jar:1.1.1-SNAPSHOT
 +- com.gfredericks:test.chuck:jar:0.2.13:test
 +- clj-http-fake:clj-http-fake:jar:1.0.3:test
 |  \- robert:hooke:jar:1.3.0:test
-+- prismatic:schema-generators:jar:0.1.4:test
++- prismatic:schema-generators:jar:0.1.5:test
 +- circleci:circleci.test:jar:0.5.0:test
 |  \- org.clojure:data.xml:jar:0.0.8:test
 +- org.clojure:data.priority-map:jar:1.1.0:test
