@@ -1,6 +1,6 @@
 (def cheshire-version "5.10.2")
 (def clj-http-fake-version "1.0.3")
-(def clj-version "1.11.3")
+(def clj-version "1.12.0")
 (def jackson-version "2.15.2")
 (def jackson-databind-version "2.15.2")
 (def metrics-clojure-version "2.10.0")
@@ -232,7 +232,7 @@
                              ;; "Full report at: /tmp/clojure-8187773283812483853.edn"
                              "-Dclojure.main.report=stderr"
                              "-XX:-OmitStackTraceInFastThrow"]}
-             :next-clojure {:dependencies [[org.clojure/clojure "1.12.0-master-SNAPSHOT"]]
+             :next-clojure {:dependencies [[org.clojure/clojure "1.13.0-master-SNAPSHOT"]]
                             :repositories [["snapshots" "https://oss.sonatype.org/content/repositories/snapshots/"]]}
              :jmx {:jvm-opts ["-Dcom.sun.management.jmxremote"
                               "-Dcom.sun.management.jmxremote.port=9010"
