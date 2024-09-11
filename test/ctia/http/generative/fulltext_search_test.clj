@@ -283,7 +283,7 @@
   (es-helpers/for-each-es-version
    "Extended Fulltext query search"
    [7]
-   #(es-index/delete! % "ctia_*")
+   #(es-helpers/clean-es-state! % "ctia_*")
    (helpers/fixture-ctia-with-app
     (fn [app]
       (helpers/set-capabilities! app "foouser" ["foogroup"] "user" (capabilities/all-capabilities))

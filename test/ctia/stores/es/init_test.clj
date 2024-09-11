@@ -5,19 +5,18 @@
             [ctia.stores.es.mapping :as m]
             [ctia.stores.es.schemas :refer [ESConnServices ESConnState]]
             [ctia.test-helpers.core :as helpers]
-            [ctia.test-helpers.es :refer [->ESConnServices for-each-es-version basic-auth basic-auth-properties clean-es-state!]]
+            [ctia.test-helpers.es :as es-helpers
+             :refer [->ESConnServices for-each-es-version basic-auth basic-auth-properties]]
             [ductile.index :as index]
+            [ductile.document :as doc]
             [ductile.conn :as conn]
             [ductile.auth :as auth]
             [ductile.auth.api-key :refer [create-api-key!]]
             [clojure.test :refer [deftest testing is are use-fixtures]]
-            [clj-momo.test-helpers.core :as mth]
-            [schema.core :as s])
+            [schema.core :as s]
+            [ctia.entity.event.schemas :as es])
   (:import [java.util UUID]
            [clojure.lang ExceptionInfo]))
-
-#_ ;;FIXME incompatible with this ns
-(use-fixtures :once mth/fixture-schema-validation)
 
 (defn gen-indexname []
   (str "ctia_init_test_sighting"
@@ -116,7 +115,7 @@
             (is (= "1" number_of_replicas))
             (is (= "2s" refresh_interval))))
         (finally
-          (index/delete! conn (str indexname "*"))
+          (es-helpers/clean-es-state! conn (str indexname "*"))
           (conn/close conn))))))
 
 (defn exceptional-system-exit [] (throw (ex-info (str `exceptional-system-exit) {::exceptional-system-exit true})))
@@ -180,9 +179,6 @@
   (helpers/with-config-transformer
     #(assoc-in % [:ctia :task :ctia.task.update-index-state] true)
     (let [indexname (gen-indexname)
-          clean-template #(index/delete-template! % indexname)
-          clean-index #(index/delete! % (str indexname "*"))
-          clean-all #(do (clean-index %) (clean-template %))
           prepare-props (fn [props version]
                           (assoc props
                                  :version version
@@ -190,7 +186,7 @@
       (for-each-es-version
         "get-existing-indices should retrieve existing indices if any."
         [7]
-        clean-index
+        #(es-helpers/clean-es-state! % (str indexname "*"))
         (testing "update mapping should allow adding fields or identical mapping"
           (let [services (->ESConnServices)
                 props (prepare-props (mk-props indexname) version)
@@ -213,7 +209,7 @@
                                   (is (= expected-successful? (not (exceptional-system-exit? output)))))
                                 (finally
                                   ;; reset state
-                                  (clean-all conn)
+                                  (es-helpers/clean-es-state! conn (str indexname "ctia_*"))
                                   (conn/close conn))))))]
             (test-fn "update mapping should not fail on unchanged mapping"
                      true nil nil)
@@ -247,7 +243,7 @@
                 (is (= 2 (get-in config [:settings :number_of_shards])))
                 (is (= {} (select-keys (:mappings config) [:a :b]))))
               (finally
-                (clean-all conn)
+                #(es-helpers/clean-es-state! conn (str indexname "*"))
                 (conn/close conn)))))))))
 
 (deftest update-index-state-test
@@ -412,7 +408,9 @@
   [{:keys [conn index props] :as _store-conn}]
   (let [updated-indices (sort-by first (index/get conn index))
         write-index (:write-index props)
-        [_ real-write-index-updated] (last updated-indices)]
+        [_ real-write-index-updated] (last updated-indices)
+        rollover (:rollover props sut/default-rollover)]
+    (assert (seq rollover))
     (assert (< 1 (count updated-indices)))
     (doseq [[_ real-index-updated] (butlast updated-indices)]
       (is (= {:ctia_ilm_migration_sighting {}}
@@ -422,7 +420,7 @@
             :ctia_ilm_migration_sighting-write {:is_write_index true}}
            (:aliases real-write-index-updated))
         "current write index should have write alias updated with is_write_index")
-    (is (= sut/default-rollover
+    (is (= rollover
            (get-in (index/get-policy conn index)
                    [(keyword index) :policy  :phases :hot :actions :rollover]))
         "Policy should be created.")
@@ -440,7 +438,7 @@
     (for-each-es-version
       "migrate to ilm"
       [7]
-      #(clean-es-state! % indexname)
+      #(es-helpers/clean-es-state! % (str indexname "*"))
       (let [services (->ESConnServices)
             props (prepare-props (mk-props indexname) version)
             {:keys [conn index props] :as store-conn} (legacy-init-es-conn! props services)
@@ -459,7 +457,7 @@
       (for-each-es-version
         "migrate to ilm with update task"
         [7]
-        #(clean-es-state! % (str indexname "*"))
+        #(es-helpers/clean-es-state! % (str indexname "*"))
         (let [services (->ESConnServices)
               base-props (prepare-props (mk-props indexname) version)
               ;; init legacy state and rollover
@@ -470,12 +468,27 @@
                            (count (index/get legacy-conn
                                              legacy-index))))
               _ (assert (seq (index/get-template legacy-conn legacy-index)))
-              ;; restart ES with migrate-to-ilm
-              ilm-migration-props (assoc base-props :migrate-to-ilm true)
+
+              ;; shorter lifecycle poll interval for test purpose
+              _ (clojure.pprint/pprint (es-helpers/update-cluster-lifecycle-poll_interval conn "1s"))
+
+              ;; restart CTIA with migrate-to-ilm
+              ilm-migration-props (assoc base-props
+                                         :migrate-to-ilm true
+                                         :rollover {:max_docs 1}
+                                         )
               {:keys [conn index props] :as store-conn}
               (sut/init-es-conn! ilm-migration-props services)]
           (check-ilm-migration store-conn)
-          (is (nil? (index/get-template conn index))))))))
+          (is (nil? (index/get-template conn index)))
+          ;; check that ILM properly rollover
+          ;; max_docs is set to 1 and indices.lifecycle.poll_interval to 1s in ES container
+          ;; we create 1 doc, wait long enough to let the rollover to be triggered and the index created
+          (doc/create-doc conn (:write-index props) {:id "doc-1"} {:refresh "true"})
+          (Thread/sleep 5000)
+          (is (= 6 (count (index/get conn index))))
+          (es-helpers/update-cluster-lifecycle-poll_interval conn "10m")
+          )))))
 
 (deftest init-with-legacy-state-without-update
   ;; this whole test is about ensuring
@@ -484,7 +497,6 @@
   (helpers/with-config-transformer
     #(assoc-in % [:ctia :task :ctia.task.update-index-state] false)
     (let [indexname "ctia_ilm_migration_sighting"
-          clean-all (mk-clean-fn indexname)
           prepare-props (fn [props version]
                           (assoc props
                                  :version version
@@ -492,7 +504,7 @@
       (for-each-es-version
         "check that we can restart the app on legacy indices without migrating"
         [7]
-        #(clean-es-state! % indexname)
+        #(es-helpers/clean-es-state! % (str indexname "*"))
         (let [services (->ESConnServices)
               base-props (prepare-props (mk-props indexname) version)
               ;; init legacy state and rollover

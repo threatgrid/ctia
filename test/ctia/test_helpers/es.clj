@@ -109,7 +109,7 @@
 (defn fixture-properties:es-store [t]
   ;; Note: These properties may be overwritten by ENV variables
   (h/with-properties (into basic-auth-properties
-                           ["ctia.store.es.default.shards" 5
+                           ["ctia.store.es.default.shards" 1
                             "ctia.store.es.default.replicas" 1
                             "ctia.store.es.default.refresh" "true"
                             "ctia.store.es.default.refresh_interval" "1s"
@@ -223,12 +223,13 @@
   [app str-doc]
   (let [{:keys [_id _index _source]} (str->doc str-doc)]
     (assoc _source
-           :_index (get-indexname app (keyword (:type _source)))
+           :_index (str (get-indexname app (keyword (:type _source)))
+                        "-write")
            :_id _id)))
 
 (defn load-bulk
   ([conn docs] (load-bulk conn docs "wait_for"))
-  ([{:keys [version] :as conn} docs refresh?]
+  ([conn docs refresh?]
    (es-doc/bulk-index-docs conn
                            docs
                            {:refresh refresh?})))
@@ -255,7 +256,6 @@
 
 (defn -filter-activated-es-versions [versions]
   (filter (h/set-of-es-versions-to-test) versions))
-
 
 (defn clean-es-state!
   [conn index-pattern]
@@ -295,6 +295,26 @@
                (when clean-fn#
                  (clean-fn# conn#))
                (es-conn/close conn#))))))))
+
+(defn update-cluster-settings
+  "update cluster settings"
+  [{:keys [uri request-fn] :as conn}
+   settings]
+  (-> (es-conn/make-http-opts conn
+                              {}
+                              []
+                              settings
+                              nil)
+      (assoc :method :put
+             :url (str uri "/_cluster/settings"))
+      request-fn
+      es-conn/safe-es-read))
+
+(defn update-cluster-lifecycle-poll_interval
+  "update cluster lifecycle poll_interval"
+  [conn interval]
+;;  (update-cluster-settings conn {:transient {:indices {:lifecycle {:poll_interval interval}}}}))
+  (update-cluster-settings conn {"transient" {"indices.lifecycle.poll_interval" interval}}))
 
 (defn build-mappings
   [base-mappings]

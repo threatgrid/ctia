@@ -32,8 +32,7 @@
        (apply merge)))
 
 (def default-rollover {:max_size "30gb"
-                       :max_docs 100000000
-                       :max_age "30d"})
+                       :max_docs 100000000})
 
 ;; https://www.elastic.co/guide/en/elasticsearch/reference/7.10/getting-started-index-lifecycle-management.html#manage-time-series-data-without-data-streams
 (defn mk-policy

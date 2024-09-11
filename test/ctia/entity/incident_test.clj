@@ -185,8 +185,8 @@
 (deftest sort-scores-test
   (es-helpers/for-each-es-version
     "Can sort by multiple scores"
-    [5 7]
-    #(ductile.index/delete! % "ctia_*")
+    [7]
+    #(es-helpers/clean-es-state! % "ctia_*")
     (helpers/with-properties (-> ["ctia.auth.type" "allow-all"]
                                  (into es-helpers/basic-auth-properties)
                                  (conj "ctia.http.incident.score-types" "asset,ttp"
@@ -305,7 +305,7 @@
   (es-helpers/for-each-es-version
     "severity sorts like #'ctim-severity-order"
     [7]
-    #(ductile.index/delete! % "ctia_*")
+    #(es-helpers/clean-es-state! % "ctia_*")
     (helpers/with-properties (into ["ctia.auth.type" "allow-all"]
                                    es-helpers/basic-auth-properties)
       (helpers/fixture-ctia-with-app
@@ -354,7 +354,7 @@
   (es-helpers/for-each-es-version
     "sort by tactics"
     [7]
-    #(ductile.index/delete! % "ctia_*")
+    #(es-helpers/clean-es-state! % "ctia_*")
     (helpers/with-properties (into ["ctia.auth.type" "allow-all"]
                                    es-helpers/basic-auth-properties)
       (helpers/fixture-ctia-with-app
@@ -423,7 +423,7 @@
    (es-helpers/for-each-es-version
      "severity sorts like #'ctim-severity-order"
      [7]
-     #(ductile.index/delete! % "ctia_*")
+     #(es-helpers/clean-es-state! % "ctia_*")
      (helpers/with-properties (into ["ctia.auth.type" "allow-all"]
                                     es-helpers/basic-auth-properties)
        (helpers/fixture-ctia-with-app
@@ -573,7 +573,7 @@
   (es-helpers/for-each-es-version
     "sort by tactics"
     [7]
-    #(ductile.index/delete! % "ctia_*")
+    #(es-helpers/clean-es-state! % "ctia_*")
     (helpers/with-properties (into ["ctia.auth.type" "allow-all"]
                                    es-helpers/basic-auth-properties)
       (helpers/fixture-ctia-with-app
@@ -610,7 +610,7 @@
   (es-helpers/for-each-es-version
     "filter by scores"
     [7]
-    #(ductile.index/delete! % "ctia_*")
+    #(es-helpers/clean-es-state! % "ctia_*")
     (helpers/with-properties (-> ["ctia.auth.type" "allow-all"]
                                  (into es-helpers/basic-auth-properties)
                                  (conj "ctia.http.incident.score-types" "asset,ttp"))
