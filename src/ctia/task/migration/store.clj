@@ -430,7 +430,8 @@ Rollover requires refresh so we cannot just call ES with condition since refresh
                       {"id" sort-order})
         params
         (merge
-         {:offset (or offset 0)
+         {:track_total_hits true
+          :offset (or offset 0)
           :limit batch-size}
          (when sort-order
            {:sort sort-by})
