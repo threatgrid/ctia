@@ -127,11 +127,14 @@
 (s/defn read-source
   "returns a lazy-seq of batch from source store"
   [read-params :- (s/maybe BatchParams)]
-  (iteration read-source-batch
-             :vf identity
-             :initk read-params
-             :kf #(dissoc % :documents)
-             :somef seq))
+  (lazy-seq
+   (when-let [batch (read-source-batch read-params)]
+     (cons batch (read-source (dissoc batch :documents))))))
+ ;; (iteration read-source-batch
+ ;;            :vf identity
+ ;;            :initk read-params
+ ;;            :kf #(dissoc % :documents)
+ ;;            :somef seq))
 
 (s/defn write-target :- s/Int
   "This function writes a batch of documents which are (1) modified with `migrations` functions,
