@@ -256,7 +256,7 @@
   (es-helpers/for-each-es-version
    "rollover should refresh write index and trigger rollover when index size is strictly bigger than max-docs"
    [7]
-   #(ductile.index/delete! % "ctia_*")
+   #(es-helpers/clean-es-state! % "ctia_*")
    (helpers/with-properties*
      ["ctia.store.es.default.port" es-port
       "ctia.store.es.default.version" version
@@ -330,7 +330,7 @@
   (es-helpers/for-each-es-version
    "Sliced-queries should properly decompose a store into time window queries for given time interval"
    [7]
-   #(ductile.index/delete! % "*ctia_relationship*")
+   #(es-helpers/clean-es-state! % "*ctia_relationship*")
    (helpers/with-properties ;; simple way to have a proper store initialization
      ["ctia.store.es.default.port" es-port
       "ctia.store.es.default.version" version]
@@ -493,7 +493,7 @@
   (es-helpers/for-each-es-version
    "bulk-metas prepares ES bulk data for given document ids"
    [7]
-   #(ductile.index/delete! % "ctia_*")
+   #(es-helpers/clean-es-state! % "ctia_*")
    (helpers/with-properties
      ["ctia.store.es.default.port" es-port
       "ctia.store.es.default.version" version
@@ -559,7 +559,7 @@
   (es-helpers/for-each-es-version
    "prepare-docs properly generates meta data for bulk ops for new and modified documents"
    [7]
-   #(ductile.index/delete! % "ctia_*")
+   #(es-helpers/clean-es-state! % "ctia_*")
    (helpers/with-properties
      ["ctia.store.es.default.port" es-port
       "ctia.store.es.default.version" version
@@ -627,8 +627,9 @@
   (es-helpers/for-each-es-version
    "store-batch should properly write data in given store"
    [7]
-   #(do (ductile.index/delete! % "test_index*")
-        (ductile.index/delete! % "ctia_*"))
+   #(do
+      (es-helpers/clean-es-state! % "ctia_*")
+      (es-helpers/clean-es-state! % "test_index*"))
    (helpers/with-properties
      ["ctia.store.es.default.port" es-port
       "ctia.store.es.default.version" version
@@ -664,7 +665,7 @@
                (is (= (+ nb-docs-1 nb-docs-2) (sut/store-size store))
                    "store size shall return the proper number of documents after second refresh"))
              (finally
-               (ductile.index/delete! conn indexname)))))))))
+               (es-helpers/clean-es-state! conn (str indexname "*"))))))))))
 
 (defn test-query-fetch-batch-events
   [{:keys [version] :as conn} services]
@@ -801,10 +802,10 @@
    "query-fetch should properly fetch and sort data"
    [7]
    (fn [conn]
-     (ductile.index/delete! conn "ctia_*")
-     (ductile.index/delete! conn "event_index*")
-     (ductile.index/delete! conn "tool_index*")
-     (ductile.index/delete! conn "malware_index*"))
+     (es-helpers/clean-es-state! conn "ctia_*")
+     (es-helpers/clean-es-state! conn "event_index*")
+     (es-helpers/clean-es-state! conn "tool_index*")
+     (es-helpers/clean-es-state! conn "malware_index*"))
    (helpers/with-properties
      ["ctia.store.es.default.port" es-port
       "ctia.store.es.default.version" version
@@ -819,7 +820,7 @@
   (es-helpers/for-each-es-version
    "fetch-deletes should be properly configured to fetch deletes in source store"
    [7]
-   #(ductile.index/delete! % "ctia_*")
+   #(es-helpers/clean-es-state! % "ctia_*")
    (helpers/with-properties
      ["ctia.store.es.default.port" es-port
       "ctia.store.es.default.version" version
@@ -895,8 +896,8 @@
    "init-migration should properly create new migration state from selected types."
    [7]
    (fn [c]
-     (ductile.index/delete! c "ctia_*")
-     (ductile.index/delete! c "v0.0.0*"))
+     (es-helpers/clean-es-state! c "ctia_*")
+     (es-helpers/clean-es-state! c "v0.0.0*"))
    (helpers/with-properties
      ["ctia.migration.store.es.default.port" es-port
       "ctia.migration.store.es.default.version" version

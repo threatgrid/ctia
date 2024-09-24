@@ -1,4 +1,3 @@
-version: '2'
 services:
   redis-dev:
     image: redis:5.0.5
@@ -13,6 +12,7 @@ services:
       - xpack.security.authc.api_key.enabled=true
       #- xpack.security.authc.anonymous.roles=superuser # allows no auth for test purpose
       - ELASTIC_PASSWORD=ductile
+      #- indices.lifecycle.poll_interval=1s
     ports:
       - "9207:9200"
       - "9307:9300"

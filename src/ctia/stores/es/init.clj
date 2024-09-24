@@ -31,32 +31,60 @@
                                           :es-mapping]))))
        (apply merge)))
 
+(def default-rollover {:max_size "30gb"
+                       :max_docs 100000000})
+
+;; https://www.elastic.co/guide/en/elasticsearch/reference/7.10/getting-started-index-lifecycle-management.html#manage-time-series-data-without-data-streams
+(defn mk-policy
+  [store-props]
+  ;; https://www.elastic.co/guide/en/elasticsearch/reference/7.10//ilm-rollover.html
+  (let [rollover (:rollover store-props default-rollover)]
+    {:phases
+     {:hot
+      {:actions
+       {:rollover rollover}}}}))
+
+(s/defn mk-index-ilm-config
+  [{:keys [index props config] :as store-config}]
+  (let [{:keys [mappings settings]} config
+        write-alias (:write-index props)
+        policy (mk-policy props)
+        lifecycle {:name index
+                   :rollover_alias write-alias}
+        settings-ilm (assoc-in settings [:index :lifecycle] lifecycle)
+        base-config {:settings settings-ilm
+                     :mappings mappings
+                     :aliases {index {}}}
+        template {:index_patterns (str index "*")
+                  :template base-config}
+        ilm-config (into (assoc-in base-config [:aliases write-alias] {:is_write_index true})
+                         {:template template
+                          :policy policy})]
+    (assoc store-config :config ilm-config)))
+
 (s/defn init-store-conn :- ESConnState
   "initiate an ES store connection, returning a map containing a
    connection manager and dedicated store index properties"
-  [{:keys [entity indexname mappings aliased shards replicas refresh_interval version]
-    :or {aliased false
-         shards 1
+  [{:keys [entity indexname mappings shards replicas refresh_interval version]
+    :or {shards 1
          replicas 1
          refresh_interval "1s"
          version 7}
     :as props} :- StoreProperties
    services :- ESConnServices]
-  (let [write-index (str indexname
-                         (when aliased "-write"))
+  (let [write-index (str indexname "-write")
         settings {:refresh_interval refresh_interval
                   :number_of_shards shards
                   :number_of_replicas replicas}
-        mappings (cond-> (get-in entity-fields [entity :es-mapping] mappings)
-                   (< 5 version) (some-> first val))
+        mappings (some-> (get-in entity-fields [entity :es-mapping] mappings)
+                         first
+                         val)
         searchable-fields (get-in entity-fields [entity :searchable-fields])]
     {:index indexname
      :props (assoc props :write-index write-index)
-     :config (into
-              {:settings (into store-settings settings)
-               :mappings mappings}
-              (when aliased
-                {:aliases {indexname {}}}))
+     :config {:settings (into store-settings settings)
+              :mappings mappings
+              :aliases {indexname {}}}
      :conn (connect props)
      :services services
      :searchable-fields searchable-fields}))
@@ -73,15 +101,20 @@
       (log/warn "could not update settings on that store"
                 (pr-str (ex-data e))))))
 
-(s/defn upsert-template!
-  [{:keys [conn index config]} :- ESConnState]
-  (index/create-template! conn index config)
+(s/defn upsert-index-template!
+  [{:keys [conn index config props]} :- ESConnState]
+  (when-let [legacy-template (seq (index/get-template conn index))]
+    (log/infof "found legacy template for %s Deleting it." index)
+    (index/delete-template! conn index))
+  (log/info "Creating policy: " index)
+  (index/create-policy! conn index (:policy config))
+  (log/info "Creating template: " index)
+  (index/create-index-template! conn index (:template config))
   (log/infof "updated template: %s" index))
 
 (defn system-exit-error
   []
-  (log/error (str "IGNORE THIS LOG UNTIL MIGRATION -- "
-                  "CTIA tried to start with an invalid configuration: \n"
+  (log/error (str "CTIA tried to start with an invalid configuration: \n"
                   "- invalid mapping\n"
                   "- ambiguous index names"))
   (System/exit 1))
@@ -125,13 +158,12 @@
 (defn get-existing-indices
   [conn index]
   ;; retrieve existing indices using wildcard to identify ambiguous index names
-  (let [existing (-> (index/get conn (str index "*"))
-                     keys
-                     set)
+  (let [existing (index/get conn (str index "*"))
+        existing-k (set (keys existing))
         index-pattern (re-pattern (str index "(-\\d{4}.\\d{2}.\\d{2}.*)?"))
         matching (filter #(re-matches index-pattern (name %))
-                         existing)
-        ambiguous (difference existing (set matching))]
+                         existing-k)
+        ambiguous (difference existing-k (set matching))]
     (if (seq ambiguous)
       (do (log/warn (format "Ambiguous index names. Index: %s, ambiguous: %s."
                             (pr-str index)
@@ -139,21 +171,55 @@
           (system-exit-error))
       existing)))
 
+(s/defn update-ilm-settings!
+  [{:keys [conn index props] :as es-conn} :- ESConnState]
+  (let [existing-indices  (get-existing-indices conn index)
+        write-index (:write-index props)
+        real-index (filter (fn [[_ {:keys [aliases]}]] (get aliases (keyword write-index))) existing-indices)
+        _ (when-not (= 1 (count real-index))
+            (throw (ex-info "Cannot update ilm settings, found multiple write indices" real-index)))
+        [real-write-indexname real-write-index] (first real-index)
+        alias-actions [{:add
+                         {:index real-write-indexname
+                          :alias write-index
+                          :is_write_index true}}]
+        policy (mk-policy props)
+        lifecycle {:name index :rollover_alias write-index}
+        lifecycle-update {:index {:lifecycle lifecycle}}
+        update-alias-res (index/alias-actions! conn alias-actions)
+        _ (when-not (= {:acknowledged true} update-alias-res)
+            (throw (ex-info "Cannot update ilm settings: failed to update write alias." update-alias-res)))
+        _ (log/infof "updated write alias: %s" write-index)
+        create-policy-res (index/create-policy! conn index policy)
+        _ (when-not (= {:acknowledged true} create-policy-res)
+            (throw (ex-info "Cannot update ilm settings: failed to create policy." create-policy-res)))
+        _ (log/infof "created policy: %s" index)
+        update-settings-res (index/update-settings! conn index lifecycle-update)]
+    (when-not (= {:acknowledged true} update-settings-res)
+      (throw (ex-info "Cannot update ilm settings: failed to create policy." create-policy-res)))
+    (log/infof "updated settings with lifecycle" index)
+    true))
+
 (defn update-index-state
   ([conn-state] (update-index-state conn-state
                                     {:update-mappings! update-mappings!
                                      :update-settings! update-settings!
                                      :refresh-mappings! refresh-mappings!
-                                     :upsert-template! upsert-template!}))
+                                     :upsert-template! upsert-index-template!
+                                     :update-ilm-settings! update-ilm-settings!}))
   ([{{update-mappings?  :update-mappings
       update-settings?  :update-settings
-      refresh-mappings? :refresh-mappings}
+      refresh-mappings? :refresh-mappings
+      migrate-to-ilm?   :migrate-to-ilm}
      :props
      :as conn-state}
     {:keys [upsert-template!
             update-mappings!
             update-settings!
-            refresh-mappings!]}]
+            refresh-mappings!
+            update-ilm-settings!]}]
+    (when migrate-to-ilm?
+      (update-ilm-settings! conn-state))
    (when update-mappings?
      (update-mappings! conn-state)
      ;; template update must be after update-mapping
@@ -167,31 +233,32 @@
      (update-settings! conn-state))))
 
 (s/defn init-es-conn! :- ESConnState
-  "initiate an ES Store connection,
-   put the index template, return an ESConnState"
+  "initiate an ES Store connection, upsert policy, index-template
+   create first index if missing, migrate legacy indices. return an ESConnState"
   [properties :- StoreProperties
    {{:keys [get-in-config]} :ConfigService
     :as services} :- ESConnServices]
   (let [{:keys [conn index props config] :as conn-state}
-        (init-store-conn properties services)
+        (-> (init-store-conn properties services)
+            mk-index-ilm-config)
         existing-indices (get-existing-indices conn index)]
     (if (seq existing-indices)
       (if (get-in-config [:ctia :task :ctia.task.update-index-state])
-        (update-index-state conn-state)
+        ;; TODO handle update-index-state fn
+        (update-index-state conn-state
+                            {:update-mappings! update-mappings!
+                             :update-settings! update-settings!
+                             :refresh-mappings! refresh-mappings!
+                             :upsert-template! upsert-index-template!
+                             :update-ilm-settings! update-ilm-settings!})
         (log/info "Not in update-index-state task, skipping update-index-state"))
-      (upsert-template! conn-state))
-    (when (and (:aliased props)
-               (empty? existing-indices))
+      (upsert-index-template! conn-state))
+    (when (empty? existing-indices)
       ;;https://github.com/elastic/elasticsearch/pull/34499
       (index/create! conn
                      (format "<%s-{now/d}-000001>" index)
-                     (update config :aliases assoc (:write-index props) {})))
-    (if (and (:aliased props)
-             (contains? existing-indices (keyword index)))
-      (do (log/error "an existing unaliased store was configured as aliased. Switching from unaliased to aliased indices requires a migration."
-                     properties)
-          (assoc-in conn-state [:props :write-index] index))
-      conn-state)))
+                     (select-keys config [:mappings :settings :aliases])))
+      conn-state))
 
 (s/defn get-store-properties :- StoreProperties
   "Lookup the merged store properties map"

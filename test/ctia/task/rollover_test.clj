@@ -13,7 +13,7 @@
   (es-helpers/for-each-es-version
    "rollover should properly trigger _rollover"
    [7]
-   #(es-index/delete! % "ctia_*")
+   #(es-helpers/clean-es-state! % "ctia_*")
    (helpers/with-properties
      (into ["ctia.store.es.default.port" es-port
             "ctia.store.es.default.version" version
@@ -26,14 +26,6 @@
                               (= version (get-in-config [:ctia :store :es :default :version])))
                          (format "CTIA is not properly configured for testing ES version %s."
                                  version))
-               props-not-aliased {:entity :malware
-                                  :indexname (es-helpers/get-indexname app :malware)
-                                  :host "localhost"
-                                  :port es-port
-                                  :version version
-                                  :auth es-helpers/basic-auth}
-               state-not-aliased (init/init-es-conn! props-not-aliased services)
-               rollover-not-aliased (sut/rollover-store state-not-aliased)
                props-aliased {:entity :sighting
                               :indexname (es-helpers/get-indexname app :sighting)
                               :host "localhost"
@@ -53,13 +45,8 @@
                               (let [examples (fixt/bundle 100 false)]
                                 (helpers/POST-bulk app examples true)
                                 (es-index/refresh! conn)))]
-           (is (nil? rollover-not-aliased))
-           (is (seq rollover-aliased))
-           (is (false? (:rolled_over rollover-aliased)))
-           (is (= 1 (count-indices)))
            (post-bulk-fn)
-           (is (nil? (sut/rollover-store state-not-aliased)))
-           (is (= 1 (count-indices)))
+           (assert (= 1 (count-indices)))
            (is (true? (:rolled_over (sut/rollover-store state-aliased))))
            (is (= 2 (count-indices)))
            (post-bulk-fn)
@@ -108,4 +95,8 @@
                         [ok-type-1 ok-type-2 ok-type-3]))))))))
 
 (deftest mk-app!-test
-  (is (map? (app/service-graph (sut/mk-app!)))))
+  (es-helpers/for-each-es-version
+   "rollover task shall properly init"
+   [7]
+    #(es-helpers/clean-es-state! % "ctia_*")
+    (is (map? (app/service-graph (sut/mk-app!))))))

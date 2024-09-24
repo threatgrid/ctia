@@ -1,21 +1,22 @@
 (ns ctia.stores.es.init-test
   (:require [clojure.string :as string]
+            [clojure.tools.logging :as log]
             [ctia.stores.es.init :as sut]
-            [ctia.test-helpers.core :as helpers]
-            [ctia.test-helpers.es :refer [->ESConnServices for-each-es-version basic-auth basic-auth-properties]]
             [ctia.stores.es.mapping :as m]
+            [ctia.stores.es.schemas :refer [ESConnServices ESConnState]]
+            [ctia.test-helpers.core :as helpers]
+            [ctia.test-helpers.es :as es-helpers
+             :refer [->ESConnServices for-each-es-version basic-auth basic-auth-properties]]
             [ductile.index :as index]
+            [ductile.document :as doc]
             [ductile.conn :as conn]
             [ductile.auth :as auth]
             [ductile.auth.api-key :refer [create-api-key!]]
             [clojure.test :refer [deftest testing is are use-fixtures]]
-            [clj-momo.test-helpers.core :as mth]
-            [schema.core :as s])
+            [schema.core :as s]
+            [ctia.entity.event.schemas :as es])
   (:import [java.util UUID]
            [clojure.lang ExceptionInfo]))
-
-#_ ;;FIXME incompatible with this ns
-(use-fixtures :once mth/fixture-schema-validation)
 
 (defn gen-indexname []
   (str "ctia_init_test_sighting"
@@ -24,7 +25,7 @@
 (defn write-alias [indexname]
   (str indexname "-write"))
 
-(defn props-aliased [indexname]
+(defn mk-props [indexname]
   {:entity :sighting
    :indexname indexname
    :refresh_interval "2s"
@@ -33,47 +34,18 @@
    :mappings {:a 1 :b 2}
    :host "localhost"
    :port 9207
-   :aliased true
    :update-mappings true
    :update-settings true
    :refresh-mappings true
    :version 7
    :auth basic-auth})
 
-(defn props-not-aliased [indexname]
-  {:entity :sighting
-   :indexname indexname
-   :shards 2
-   :replicas 1
-   :mappings {:a 1 :b 2}
-   :host "localhost"
-   :port 9207
-   :aliased false
-   :update-mappings true
-   :update-settings true
-   :version 7
-   :auth basic-auth})
-
 (deftest init-store-conn-test
  (let [services (->ESConnServices)]
-   (testing "init store conn should return a proper conn state with unaliased conf"
-     (let [indexname (gen-indexname)
-           base-props (props-not-aliased indexname)
-           {:keys [index props config conn]}
-           (sut/init-store-conn base-props services)]
-       (is (= index indexname))
-       (is (= (:write-index props) indexname))
-       (is (= "http://localhost:9207" (:uri conn)))
-       (is (nil? (:aliases config)))
-       (is (= "1s" (get-in config [:settings :refresh_interval])))
-       (is (= 1 (get-in config [:settings :number_of_replicas])))
-       (is (= 2 (get-in config [:settings :number_of_shards])))
-       (is (= {} (select-keys (:mappings config) [:a :b])))))
-
-   (testing "init store conn should return a proper conn state with aliased conf"
+   (testing "init store conn should return a proper conn state with aliases"
      (let [indexname (gen-indexname)
            {:keys [index props config conn]}
-           (sut/init-store-conn (props-aliased indexname) services)]
+           (sut/init-store-conn (mk-props indexname) services)]
        (is (= index indexname))
        (is (= (:write-index props) (write-alias indexname)))
        (is (= "http://localhost:9207" (:uri conn)))
@@ -94,16 +66,16 @@
              true)
 
          "default protocol is http"
-         (props-aliased indexname)
+         (mk-props indexname)
          "http://localhost:9207"
 
          "uri should respect given protocol"
-         (assoc (props-aliased indexname)
+         (assoc (mk-props indexname)
                 :protocol :https)
          "https://localhost:9207"
 
          "uri should respect given protocol, host and port"
-         (assoc (props-aliased indexname)
+         (assoc (mk-props indexname)
                 :protocol :https
                 :port 9201
                 :host "cisco.com")
@@ -116,7 +88,6 @@
           initial-props {:entity :malware
                          :indexname indexname
                          :host "localhost"
-                         :aliased true
                          :port (+ 9200 version)
                          :shards 5
                          :replicas 2
@@ -144,7 +115,7 @@
             (is (= "1" number_of_replicas))
             (is (= "2s" refresh_interval))))
         (finally
-          (index/delete! conn (str indexname "*"))
+          (es-helpers/clean-es-state! conn (str indexname "*"))
           (conn/close conn))))))
 
 (defn exceptional-system-exit [] (throw (ex-info (str `exceptional-system-exit) {::exceptional-system-exit true})))
@@ -173,7 +144,7 @@
                                               (cond-> e
                                                 (not (exceptional-system-exit? e)) throw)))]
                             (if expected-successful?
-                              (is (= expected-output output))
+                              (is (= expected-output (set (keys output))))
                               (is (exceptional-system-exit? output))))))
 
               _ (test-fn "0 existing index"
@@ -208,9 +179,6 @@
   (helpers/with-config-transformer
     #(assoc-in % [:ctia :task :ctia.task.update-index-state] true)
     (let [indexname (gen-indexname)
-          clean-template #(index/delete-template! % indexname)
-          clean-index #(index/delete! % (str indexname "*"))
-          clean-all #(do (clean-index %) (clean-template %))
           prepare-props (fn [props version]
                           (assoc props
                                  :version version
@@ -218,29 +186,10 @@
       (for-each-es-version
         "get-existing-indices should retrieve existing indices if any."
         [7]
-        clean-index
-        (testing "init-es-conn! should return a proper conn state with unaliased conf, but not create any index"
-          (let [services (->ESConnServices)
-                props (prepare-props (props-not-aliased indexname) version)
-                {:keys [index props config conn]} (sut/init-es-conn! props services)]
-            (try
-              (let [existing-index (index/get conn (str indexname "*"))]
-                (is (empty? existing-index))
-                (is (= index indexname))
-                (is (= (:write-index props) indexname))
-                (is (= (str "http://localhost:920" version) (:uri conn)))
-                (is (nil? (:aliases config)))
-                (is (= "1s" (get-in config [:settings :refresh_interval])))
-                (is (= 1 (get-in config [:settings :number_of_replicas])))
-                (is (= 2 (get-in config [:settings :number_of_shards])))
-                (is (= {} (select-keys (:mappings config) [:a :b]))))
-              (finally
-                (clean-all conn)
-                (conn/close conn)))))
-
+        #(es-helpers/clean-es-state! % (str indexname "*"))
         (testing "update mapping should allow adding fields or identical mapping"
           (let [services (->ESConnServices)
-                props (prepare-props (props-aliased indexname) version)
+                props (prepare-props (mk-props indexname) version)
                 test-fn (fn [msg expected-successful? field field-mapping]
                           ;; init and create aliased indices
                           (testing msg
@@ -260,7 +209,7 @@
                                   (is (= expected-successful? (not (exceptional-system-exit? output)))))
                                 (finally
                                   ;; reset state
-                                  (clean-all conn)
+                                  (es-helpers/clean-es-state! conn (str indexname "ctia_*"))
                                   (conn/close conn))))))]
             (test-fn "update mapping should not fail on unchanged mapping"
                      true nil nil)
@@ -269,10 +218,10 @@
             (test-fn "Update mapping fails when modifying existing field mapping and CTIA must not start in that case."
                      false :id m/text)))
 
-        (testing "init-es-conn! should return a proper conn state with aliased conf, and create an initial aliased index"
+        (testing "init-es-conn! should return a proper conn state and create an initial aliased index"
           (let [services (->ESConnServices)
                 {:keys [index props config conn]}
-                (-> (prepare-props (props-aliased indexname) version)
+                (-> (prepare-props (mk-props indexname) version)
                     (sut/init-es-conn! services))]
             (try
               (let [existing-index (index/get conn (str indexname "*"))
@@ -294,33 +243,8 @@
                 (is (= 2 (get-in config [:settings :number_of_shards])))
                 (is (= {} (select-keys (:mappings config) [:a :b]))))
               (finally
-                (clean-all conn)
-                (conn/close conn)))))
-
-        (testing "init-es-conn! should return a conn state that ignore aliased conf setting when an unaliased index already exists"
-          (index/create! conn
-                         indexname
-                         {:settings m/store-settings})
-          (let [services (->ESConnServices)
-                {:keys [index props config conn]}
-                (-> (prepare-props (props-aliased indexname) version)
-                    (sut/init-es-conn! services))
-                existing-index (index/get conn (str indexname "*"))
-                created-aliases (->> existing-index
-                                     vals
-                                     first
-                                     :aliases
-                                     keys
-                                     set)]
-            (is (= #{} created-aliases))
-            (is (= index indexname))
-            (is (= (:write-index props) indexname))
-            (is (= (str "http://localhost:920" version) (:uri conn)))
-            (is (= indexname
-                   (-> config :aliases keys first)))
-            (is (= 1 (get-in config [:settings :number_of_replicas])))
-            (is (= 2 (get-in config [:settings :number_of_shards])))
-            (is (= {} (select-keys (:mappings config) [:a :b])))))))))
+                #(es-helpers/clean-es-state! conn (str indexname "*"))
+                (conn/close conn)))))))))
 
 (deftest update-index-state-test
   (let [test-fn (fn [{:keys [update-mappings
@@ -345,7 +269,7 @@
             update-settings?  [true false nil]
             refresh-mappings? [true false nil]
             :let [indexname (gen-indexname)]]
-      (test-fn (assoc (props-aliased indexname)
+      (test-fn (assoc (mk-props indexname)
                       :update-mappings update-mappings?
                       :update-settings update-settings?
                       :refresh-mappings refresh-mappings?)))))
@@ -397,3 +321,211 @@
                                          [ko-header-auth-params false]]]
         (testing (format "auth-params: %s, authorized?: %s" auth-params authorized?)
           (try-auth-params auth-params authorized?))))))
+
+(deftest mk-policy-test
+  (let [test-plan [{:msg "mk-policy uses configured rollover."
+                    :store-config {:rollover {:max_docs 500}}
+                    :expected {:max_docs 500}}
+                   {:msg "mk-policy uses default rollover when not configured."
+                    :store-config {}
+                    :expected sut/default-rollover}]]
+    (doseq [{:keys [store-config expected]} test-plan]
+      (is (= {:phases {:hot {:actions {:rollover expected}}}}
+             (sut/mk-policy store-config))))))
+
+(deftest mk-index-ilm-config-test
+  (let [services (->ESConnServices)
+        indexname (gen-indexname)
+        base-props {:entity :sighting
+                    :indexname indexname
+                    :refresh_interval "2s"
+                    :shards 2
+                    :replicas 1
+                    :mappings {:a 1 :b 2}
+                    :host "localhost"
+                    :port 9207
+                    :version 7
+                    :auth basic-auth}
+        test-cases [{:message "rollover with max_docs"
+                     :expected {:rollover {:max_docs 1000}}
+                     :store-props (assoc base-props :rollover {:max_docs 1000})}]]
+    (doseq [{:keys [message expected store-props]} test-cases]
+      (let [store-config (sut/init-store-conn store-props services)
+            ilm-index-config (sut/mk-index-ilm-config store-config)
+            {:keys [policy template aliases settings mappings]} (:config ilm-index-config)
+            template-settings (get-in template [:template :settings])]
+        (testing message
+          (is (= (dissoc ilm-index-config :config)
+                 (dissoc store-config :config)))
+          (is (= {:phases {:hot {:actions {:rollover (:rollover store-props)}}}}
+                 policy))
+          (is (= (str (:indexname store-props) "*") (:index_patterns template)))
+          (is (map? (:template template)))
+          (is (map? settings))
+          (is (map? mappings))
+          (is (= mappings (get-in template [:template :mappings])))
+          (is (= settings (get-in template [:template :settings])))
+          (is (= aliases
+                 {indexname {}
+                  (str indexname "-write") {:is_write_index true}}))
+          (is (= (:shards store-props) (:number_of_shards template-settings)))
+          (is (= (:replicas store-props) (:number_of_replicas template-settings)))
+          (is (= (:refresh_interval store-props) (:refresh_interval template-settings)))
+          (is (= {:name (:indexname store-props)
+                  :rollover_alias (str indexname "-write")}
+                 (get-in settings [:index :lifecycle])))
+          (is (= {:name (:indexname store-props)
+                  :rollover_alias (str (:indexname store-props) "-write")}
+                 (get-in template-settings [:index :lifecycle]))))))))
+
+(s/defn legacy-init-es-conn! :- ESConnState
+  "initiate an ES Store connection,
+   put the index template, return an ESConnState"
+  [properties :- sut/StoreProperties
+   {{:keys [get-in-config]} :ConfigService
+    :as services} :- ESConnServices]
+  (let [{:keys [conn index props config] :as conn-state}
+        (sut/init-store-conn
+         (dissoc properties :migrate-to-ilm)
+         services)
+        existing-indices (sut/get-existing-indices conn index)]
+    (when-not (seq existing-indices)
+      (index/create-template! conn index config)
+      (log/infof "updated template: %s" index))
+    (when (empty? existing-indices)
+      ;;https://github.com/elastic/elasticsearch/pull/34499
+      (index/create! conn
+                     (format "<%s-{now/d}-000001>" index)
+                     (update config :aliases assoc (:write-index props) {})))
+      conn-state))
+
+(defn force-n-rollover!
+  [{:keys [conn props]} n]
+  (doseq [i (range n)]
+    (ductile.index/rollover! conn (:write-index props) {:max_docs 0})))
+
+(defn check-ilm-migration
+  [{:keys [conn index props] :as _store-conn}]
+  (let [updated-indices (sort-by first (index/get conn index))
+        write-index (:write-index props)
+        [_ real-write-index-updated] (last updated-indices)
+        rollover (:rollover props sut/default-rollover)]
+    (assert (seq rollover))
+    (assert (< 1 (count updated-indices)))
+    (doseq [[_ real-index-updated] (butlast updated-indices)]
+      (is (= {:ctia_ilm_migration_sighting {}}
+             (:aliases real-index-updated))
+          "all indices but the write index should only have the read index"))
+    (is (= {:ctia_ilm_migration_sighting {},
+            :ctia_ilm_migration_sighting-write {:is_write_index true}}
+           (:aliases real-write-index-updated))
+        "current write index should have write alias updated with is_write_index")
+    (is (= rollover
+           (get-in (index/get-policy conn index)
+                   [(keyword index) :policy  :phases :hot :actions :rollover]))
+        "Policy should be created.")
+    (doseq [[_ real-index-updated] updated-indices]
+      (is (= {:name index :rollover_alias write-index}
+             (get-in real-index-updated [:settings :index :lifecycle]))
+          "lifecycle must be added to all indices"))))
+
+(deftest update-ilm-settings!-test
+  (let [indexname "ctia_ilm_migration_sighting"
+        prepare-props (fn [props version]
+                        (assoc props
+                               :version version
+                               :port (+ 9200 version)))]
+    (for-each-es-version
+      "migrate to ilm"
+      [7]
+      #(es-helpers/clean-es-state! % (str indexname "*"))
+      (let [services (->ESConnServices)
+            props (prepare-props (mk-props indexname) version)
+            {:keys [conn index props] :as store-conn} (legacy-init-es-conn! props services)
+            _ (force-n-rollover! store-conn 4)
+            _ (is (true? (sut/update-ilm-settings! store-conn)))]
+        (check-ilm-migration store-conn)))))
+
+(deftest upddate-index-state-task-for-ilm-test
+  (helpers/with-config-transformer
+    #(assoc-in % [:ctia :task :ctia.task.update-index-state] true)
+    (let [indexname "ctia_ilm_migration_sighting"
+          prepare-props (fn [props version]
+                          (assoc props
+                                 :version version
+                                 :port (+ 9200 version)))]
+      (for-each-es-version
+        "migrate to ilm with update task"
+        [7]
+        #(es-helpers/clean-es-state! % (str indexname "*"))
+        (let [services (->ESConnServices)
+              base-props (prepare-props (mk-props indexname) version)
+              ;; init legacy state and rollover
+              {legacy-conn :conn legacy-index :index :as legacy-store-conn}
+              (legacy-init-es-conn! base-props services)
+              _ (force-n-rollover! legacy-store-conn 4)
+              _ (assert (= 5
+                           (count (index/get legacy-conn
+                                             legacy-index))))
+              _ (assert (seq (index/get-template legacy-conn legacy-index)))
+
+              ;; shorter lifecycle poll interval for test purpose
+              _ (clojure.pprint/pprint (es-helpers/update-cluster-lifecycle-poll_interval conn "1s"))
+
+              ;; restart CTIA with migrate-to-ilm
+              ilm-migration-props (assoc base-props
+                                         :migrate-to-ilm true
+                                         :rollover {:max_docs 1}
+                                         )
+              {:keys [conn index props] :as store-conn}
+              (sut/init-es-conn! ilm-migration-props services)]
+          (check-ilm-migration store-conn)
+          (is (nil? (index/get-template conn index)))
+          ;; check that ILM properly rollover
+          ;; max_docs is set to 1 and indices.lifecycle.poll_interval to 1s in ES container
+          ;; we create 1 doc, wait long enough to let the rollover to be triggered and the index created
+          (doc/create-doc conn (:write-index props) {:id "doc-1"} {:refresh "true"})
+          (Thread/sleep 5000)
+          (is (= 6 (count (index/get conn index))))
+          (es-helpers/update-cluster-lifecycle-poll_interval conn "10m")
+          )))))
+
+(deftest init-with-legacy-state-without-update
+  ;; this whole test is about ensuring
+  ;; that nothing is created / modified
+  ;; outside update index state task
+  (helpers/with-config-transformer
+    #(assoc-in % [:ctia :task :ctia.task.update-index-state] false)
+    (let [indexname "ctia_ilm_migration_sighting"
+          prepare-props (fn [props version]
+                          (assoc props
+                                 :version version
+                                 :port (+ 9200 version)))]
+      (for-each-es-version
+        "check that we can restart the app on legacy indices without migrating"
+        [7]
+        #(es-helpers/clean-es-state! % (str indexname "*"))
+        (let [services (->ESConnServices)
+              base-props (prepare-props (mk-props indexname) version)
+              ;; init legacy state and rollover
+              {legacy-conn :conn legacy-index :index :as legacy-store-conn}
+              (legacy-init-es-conn! base-props services)
+              _ (force-n-rollover! legacy-store-conn 4)
+              legacy-template (index/get-template legacy-conn legacy-index)
+              legacy-indices (index/get legacy-conn legacy-index)
+              _ (assert (= 5
+                           (count (index/get legacy-conn
+                                             legacy-index))))
+              _ (assert (seq (index/get-template legacy-conn legacy-index)))
+              ;; CTIA restarts with new init process before we migrate old indices to ILM
+              {not-migrated-conn :conn not-migrated-index :index
+               :as not-migrated-store-conn}
+              (sut/init-es-conn! base-props services)
+              not-migrated-template (index/get-template not-migrated-conn not-migrated-index)
+              not-migrated-indices (index/get not-migrated-conn not-migrated-index)]
+          (is (= legacy-indices not-migrated-indices))
+          (is (= legacy-template not-migrated-template))
+          (is (nil? (index/get-policy not-migrated-conn not-migrated-index))
+              "policy should not been created if index already exist and update-index-state is false")
+          (is (nil? (index/get-index-template not-migrated-conn not-migrated-index))
+              "index-template should not been created if index already exist and update-index-state is false"))))))

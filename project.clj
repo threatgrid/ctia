@@ -1,4 +1,4 @@
-(def cheshire-version "5.10.2")
+(def cheshire-version "5.11.0")
 (def clj-http-fake-version "1.0.3")
 (def clj-version "1.11.3")
 (def jackson-version "2.15.2")
@@ -7,7 +7,7 @@
 (def netty-version "4.1.75.Final")
 (def perforate-version "0.3.4")
 (def ring-version "1.9.5")
-(def schema-generators-version "0.1.4")
+(def schema-generators-version "0.1.5")
 (def test-check-version "1.1.1")
 (def test-chuck-version "0.2.13")
 (def trapperkeeper-version "3.2.0")
@@ -71,7 +71,7 @@
                  [clojure.java-time "1.1.0"]
                  [org.clojure/core.async "1.5.648"]
                  [org.clojure/core.memoize "1.0.257"]
-                 [org.clojure/tools.logging "1.1.0"]
+                 [org.clojure/tools.logging "1.2.4"]
                  [org.clojure/tools.cli "1.0.194"]
                  [pandect "0.6.1"]
                  [org.clojure/math.combinatorics "0.1.6"]
@@ -84,13 +84,13 @@
                  [clj-commons/clj-yaml "1.0.26"] ;; upgrade snakeyaml dep
 
                  ;; Schemas
-                 [prismatic/schema "1.2.0"]
-                 [metosin/schema-tools "0.12.3"]
+                 [prismatic/schema "1.4.1"]
+                 [metosin/schema-tools "0.13.1"]
                  [threatgrid/flanders "1.0.2"]
                  [threatgrid/ctim "1.3.18"]
                  [instaparse "1.4.10"] ;; com.gfredericks/test.chuck > threatgrid/ctim
                  [threatgrid/clj-momo "0.3.5"]
-                 [threatgrid/ductile "0.4.5"]
+                 [threatgrid/ductile "0.5.0"]
 
                  [com.arohner/uri "0.1.2"]
 
@@ -116,7 +116,7 @@
                  [org.clojure/tools.reader "1.3.6"] ;; org.clojure/tools.namespace > ring-middleware-format
 
                  ;; clients
-                 [clj-http "3.10.1"]
+                 [clj-http "3.12.3"]
                  [com.taoensso/carmine "2.19.1" #_"2.20.0-RC1"]
                  [cheshire ~cheshire-version] ;; upgrade threatgrid/ring-jwt-middleware, puppetlabs/kitchensink (+ a dozen others)
 

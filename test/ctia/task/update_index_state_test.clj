@@ -12,7 +12,7 @@
   (es-helpers/for-each-es-version
     "update-index-state task"
     [7]
-    #(ductile.index/delete! % "ctia_*")
+    #(es-helpers/clean-es-state! % "ctia_*")
     (es-helpers/fixture-properties:es-store
       (fn []
         (is (= 0 (sut/do-task (h/build-transformed-init-config))))
