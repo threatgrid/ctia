@@ -262,7 +262,8 @@
   (es-index/delete! conn index-pattern)
   (es-index/delete-template! conn index-pattern)
   (es-index/delete-index-template! conn index-pattern)
-  (es-index/delete-policy! conn index-pattern))
+  ;; delete policy does not work with wildcard, try real index
+  (es-index/delete-policy! conn (string/replace index-pattern "*" "")))
 
 (defmacro for-each-es-version
   "for each given ES version:

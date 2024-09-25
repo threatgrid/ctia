@@ -108,9 +108,9 @@
     (index/delete-template! conn index))
   (log/info "Creating policy: " index)
   (index/create-policy! conn index (:policy config))
-  (log/info "Creating template: " index)
+  (log/info "Creating index template: " index)
   (index/create-index-template! conn index (:template config))
-  (log/infof "updated template: %s" index))
+  (log/infof "Updated index template: %s" index))
 
 (defn system-exit-error
   []
@@ -173,6 +173,7 @@
 
 (s/defn update-ilm-settings!
   [{:keys [conn index props] :as es-conn} :- ESConnState]
+  (upsert-index-template! es-conn)
   (let [existing-indices  (get-existing-indices conn index)
         write-index (:write-index props)
         real-index (filter (fn [[_ {:keys [aliases]}]] (get aliases (keyword write-index))) existing-indices)
@@ -190,13 +191,9 @@
         _ (when-not (= {:acknowledged true} update-alias-res)
             (throw (ex-info "Cannot update ilm settings: failed to update write alias." update-alias-res)))
         _ (log/infof "updated write alias: %s" write-index)
-        create-policy-res (index/create-policy! conn index policy)
-        _ (when-not (= {:acknowledged true} create-policy-res)
-            (throw (ex-info "Cannot update ilm settings: failed to create policy." create-policy-res)))
-        _ (log/infof "created policy: %s" index)
         update-settings-res (index/update-settings! conn index lifecycle-update)]
     (when-not (= {:acknowledged true} update-settings-res)
-      (throw (ex-info "Cannot update ilm settings: failed to create policy." create-policy-res)))
+      (throw (ex-info "Cannot update ilm settings." update-settings-res)))
     (log/infof "updated settings with lifecycle" index)
     true))
 

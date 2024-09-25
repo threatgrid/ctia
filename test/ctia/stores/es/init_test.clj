@@ -427,7 +427,11 @@
     (doseq [[_ real-index-updated] updated-indices]
       (is (= {:name index :rollover_alias write-index}
              (get-in real-index-updated [:settings :index :lifecycle]))
-          "lifecycle must be added to all indices"))))
+          "lifecycle must be added to all indices"))
+    (is (nil? (index/get-template conn index))
+        "Legacy template must be deleted")
+    (is (seq (index/get-index-template conn index))
+        "Index template must be created")))
 
 (deftest update-ilm-settings!-test
   (let [indexname "ctia_ilm_migration_sighting"
@@ -441,8 +445,9 @@
       #(es-helpers/clean-es-state! % (str indexname "*"))
       (let [services (->ESConnServices)
             props (prepare-props (mk-props indexname) version)
-            {:keys [conn index props] :as store-conn} (legacy-init-es-conn! props services)
-            _ (force-n-rollover! store-conn 4)
+            legacy-store-conn (legacy-init-es-conn! props services)
+            _ (force-n-rollover! legacy-store-conn 4)
+            store-conn (sut/init-es-conn! props services)
             _ (is (true? (sut/update-ilm-settings! store-conn)))]
         (check-ilm-migration store-conn)))))
 
@@ -470,25 +475,26 @@
               _ (assert (seq (index/get-template legacy-conn legacy-index)))
 
               ;; shorter lifecycle poll interval for test purpose
-              _ (clojure.pprint/pprint (es-helpers/update-cluster-lifecycle-poll_interval conn "1s"))
+              _ (es-helpers/update-cluster-lifecycle-poll_interval conn "1s")
 
               ;; restart CTIA with migrate-to-ilm
               ilm-migration-props (assoc base-props
                                          :migrate-to-ilm true
+                                         :update-mappings false
+                                         :update-settings false
+                                         :refresh-mappings false
                                          :rollover {:max_docs 1}
                                          )
               {:keys [conn index props] :as store-conn}
               (sut/init-es-conn! ilm-migration-props services)]
           (check-ilm-migration store-conn)
-          (is (nil? (index/get-template conn index)))
           ;; check that ILM properly rollover
           ;; max_docs is set to 1 and indices.lifecycle.poll_interval to 1s in ES container
           ;; we create 1 doc, wait long enough to let the rollover to be triggered and the index created
           (doc/create-doc conn (:write-index props) {:id "doc-1"} {:refresh "true"})
           (Thread/sleep 5000)
           (is (= 6 (count (index/get conn index))))
-          (es-helpers/update-cluster-lifecycle-poll_interval conn "10m")
-          )))))
+          (es-helpers/update-cluster-lifecycle-poll_interval conn "10m"))))))
 
 (deftest init-with-legacy-state-without-update
   ;; this whole test is about ensuring
