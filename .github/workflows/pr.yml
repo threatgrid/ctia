@@ -103,7 +103,7 @@ jobs:
       - name: Upload current test timing
         uses: actions/upload-artifact@v3
         with:
-          retention-days: 30
+          retention-days: 180
           name: current-test-timing
           path: dev-resources/ctia_test_timings.edn
 
@@ -236,13 +236,9 @@ jobs:
       - name: Install babashka
         run: ./scripts/actions/install-bb.sh
       - run: ./scripts/actions/setup_env.clj
-      # run docker as early as possible asynchronously. if this command
-      # fails, the split-test test runner will timeout in a reasonable amount
-      # of time and throw an error. See `Upload docker compose` step below
-      # for retrieving this log after a build.
-      - name: Docker (async)
+      - name: Docker
         # depends on LOG_PATH and actions/checkout@v3
-        run: docker compose -f containers/dev/docker-compose.yml up -d &> "${LOG_PATH}/docker-compose.log" &
+        run: docker compose -f containers/dev/docker-compose.yml up --no-color -d &> "${LOG_PATH}/docker-compose.log"
       - name: Download test timings
         uses: actions/download-artifact@v3
         with:
@@ -370,7 +366,7 @@ jobs:
       - name: Upload all test timings
         uses: actions/upload-artifact@v3
         with:
-          retention-days: 60
+          retention-days: 180
           name: all-test-timings
           path: target/test-results/*.edn
 
