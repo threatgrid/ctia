@@ -12,6 +12,7 @@
 (def test-chuck-version "0.2.13")
 (def trapperkeeper-version "3.2.0")
 
+
 ;; TODO we could add -dev here when it works
 (def base-ci-profiles "+test,+ci")
 (def all-ci-profiles
