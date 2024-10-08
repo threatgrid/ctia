@@ -18,7 +18,7 @@
 (def ^:private java-22-version "22")
 (def non-cron-ctia-nsplits
   "Job parallelism for non cron tests."
-  5) ;;TODO bump to 10 when removing java 11 support
+  1) ;;TODO bump to 10 when removing java 11 support
 (def ^:private cron-ctia-nsplits
   "Job parallelism for cron tests."
   2)
