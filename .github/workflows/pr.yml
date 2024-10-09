@@ -373,6 +373,9 @@ jobs:
       - run: echo "All tests pass!"
   deploy:
     runs-on: "ubuntu-22.04"
+    outputs:
+      build_version: ${{ steps.deploy.outputs.build_version }}
+      build_type: ${{ steps.deploy.outputs.build_type }}
     needs: [all-pr-checks]
     # see on.push.branches for which branches are built on push
     if: github.event_name == 'push' && github.repository == 'threatgrid/ctia'
@@ -431,8 +434,45 @@ jobs:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
-      - run: ./build/deploy-actions.sh
+      - id: deploy
+        run: ./build/deploy-actions.sh
         env:
           # offline to catch issues where `lein warm-ci-deps` doesn't download all
           # dependencies we need to deploy.
           LEIN_OFFLINE: true
+
+  update-tenzin:
+    runs-on: ubuntu-latest
+    needs: deploy
+    if: ${{ needs.deploy.outputs.build_type == 'int' }}
+    steps:
+    - name: Setup Git user
+      run: |
+       git config --global user.email "github-actions[bot]@users.noreply.github.com"
+       git config --global user.name "GitHub Actions Bot"
+    - name: Checkout tenzin
+      uses: actions/checkout@v2
+      with:
+        repository: advthreat/tenzin
+        ssh-key: ${{ secrets.TENZIN_PRIVATE_SSH }}
+        path: tenzin
+        ref: master
+    - name: update ctia image tag
+      env:
+        BUILD_VERSION: ctia-${{ needs.deploy.outputs.build_version }}
+      run: |
+        cd tenzin/applications/ctia/kustomize/overlays/ctr-int-eks
+        yq -i '.images[0].newTag = env(BUILD_VERSION)' kustomization.yaml
+        git add kustomization.yaml
+    - name: Commit and push changes if any
+      env:
+       BUILD_VERSION: ctia-${{ needs.deploy.outputs.build_version }}
+      run: |
+        cd tenzin
+        if ! git diff --cached --quiet
+        then
+          git commit -m "Update ctia image tag to ${BUILD_VERSION}"
+          git push
+        else
+          echo "No changes to commit"
+        fi
