@@ -18,7 +18,6 @@
   (:import java.lang.AssertionError))
 
 (def default-batch-size 100)
-(def default-buffer-size 3)
 
 ;; TODO def => defn
 (def all-types
@@ -180,8 +179,7 @@
 (s/defn migrate-query :- BatchParams
   "migrate documents that match given `query`"
   [{:keys [entity-type
-           migrated-count
-           buffer-size]
+           migrated-count]
     :as migration-params} :- BatchParams
    query :- ESQuery
    services :- mst/MigrationStoreServices]
@@ -189,11 +187,10 @@
              (name entity-type)
              (pr-str query))
   (let [read-params (assoc migration-params :query query)
-        data-queue (seque buffer-size
-                          (read-source read-params))
+        data (read-source read-params)
         new-migrated-count (reduce #(write-target %1 %2 services)
                                    migrated-count
-                                   data-queue)]
+                                   data)]
     (assoc migration-params
            :migrated-count
            new-migrated-count)))
@@ -204,7 +201,6 @@
    entity-type
    migrations
    batch-size
-   buffer-size
    confirm?
    services :- mst/MigrationStoreServices]
   (log/infof "migrating store: %s" entity-type)
@@ -221,7 +217,6 @@
         base-params {:source-store source-store
                      :target-store target-store
                      :migrated-count migrated-count-state
-                     :buffer-size buffer-size
                      :search_after search_after
                      :migrations migrations
                      :entity-type entity-type
@@ -258,7 +253,6 @@
            migrations
            store-keys
            batch-size
-           buffer-size
            confirm?
            restart?]
     :as migration-params} :- mst/MigrationParams
@@ -275,7 +269,6 @@
                      entity-type
                      migrations
                      batch-size
-                     buffer-size
                      confirm?
                      services))
     (handle-deletes migration-state store-keys batch-size confirm? services)))

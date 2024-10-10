@@ -51,7 +51,6 @@
    :migrations [(apply s/enum (keys available-migrations))]
    :store-keys [s/Keyword]
    :batch-size s/Int
-   :buffer-size s/Int
    :confirm? (s/maybe s/Bool)
    :restart? (s/maybe s/Bool)
    (s/optional-key :store) {:es {s/Keyword ESStoreProperties}}})

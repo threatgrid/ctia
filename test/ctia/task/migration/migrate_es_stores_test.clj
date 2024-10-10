@@ -150,7 +150,6 @@
                           :migrations   [:identity]
                           :store-keys   [:incident :investigation :malware]
                           :batch-size   100
-                          :buffer-size  3
                           :confirm? true
                           :restart? false}]
     (testing "misconfigured migration"
@@ -204,8 +203,7 @@
                   "configured default target store shall be considered")))))))
 
 (deftest prepare-params-test
-  (let [migration-props {:buffer-size 3,
-                         :batch-size 100,
+  (let [migration-props {:batch-size 100,
                          :migration-id "migration-test",
                          :restart? false,
                          :store-keys "malware,  tool,sighting  ",
@@ -249,7 +247,6 @@
                                   :migrations   [:__test]
                                   :store-keys   store-types
                                   :batch-size   10
-                                  :buffer-size  3
                                   :confirm?     true
                                   :restart?     false}
                                  services)
@@ -403,7 +400,6 @@
                                        :confirm? true
                                        :migrations [:__test]
                                        :batch-size 1000
-                                       :buffer-size 3
                                        :restart? false}
                                       services)
                       (let [test-docs (take total docs)
@@ -485,7 +481,6 @@
                                             :migrations   [:__test]
                                             :store-keys   [:relationship]
                                             :batch-size   100
-                                            :buffer-size  3
                                             :confirm?     true
                                             :restart?     false}
                                            services))
@@ -505,7 +500,6 @@
                                             :migrations   [:__test]
                                             :store-keys   [:relationship]
                                             :batch-size   100
-                                            :buffer-size  3
                                             :confirm?     true
                                             :restart?     true}
                                            services))
@@ -566,7 +560,6 @@
                                       :migrations   [:__test]
                                       :store-keys   store-types
                                       :batch-size   10
-                                      :buffer-size  3
                                       :confirm?     true
                                       :restart?     false}
                                      services))
@@ -619,7 +612,6 @@
                                     :migrations   [:0.4.16]
                                     :store-keys   migrated-store-keys
                                     :batch-size   10
-                                    :buffer-size  3
                                     :confirm?     false
                                     :restart?     false}
                                    services)
@@ -643,7 +635,6 @@
                                       :migrations   [:__test]
                                       :store-keys   migrated-store-keys
                                       :batch-size   10
-                                      :buffer-size  3
                                       :confirm?     true
                                       :restart?     false}
                                      services))
@@ -804,7 +795,6 @@
                                         :store-keys   migrated-store-keys
                                         ;; small batch to check proper delete paging
                                         :batch-size   2
-                                        :buffer-size  1
                                         :confirm?     true
                                         :restart?     true}
                                        services)
@@ -855,7 +845,6 @@
                                             :migrations   [:__test]
                                             :store-keys   (into [] example-types)
                                             :batch-size   batch-size
-                                            :buffer-size  3
                                             :confirm?     true
                                             :restart?     false}
                                            services)
