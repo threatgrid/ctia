@@ -442,7 +442,7 @@ jobs:
           LEIN_OFFLINE: true
 
   update-tenzin:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     needs: deploy
     if: ${{ needs.deploy.outputs.build_type == 'int' }}
     steps:
@@ -451,7 +451,7 @@ jobs:
        git config --global user.email "github-actions[bot]@users.noreply.github.com"
        git config --global user.name "GitHub Actions Bot"
     - name: Checkout tenzin
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
       with:
         repository: advthreat/tenzin
         ssh-key: ${{ secrets.TENZIN_PRIVATE_SSH }}
