@@ -182,7 +182,6 @@
                                                :confirm? false
                                                :migrations [:identity]
                                                :batch-size 1000
-                                               :buffer-size 3
                                                :restart? false}
                                               services)
            wo-stores (sut/wo-storemaps fake-migration)]
@@ -916,7 +915,6 @@
                                       :migrations [:identity]
                                       :store-keys entity-types
                                       :batch-size 1000
-                                      :buffer-size 3
                                       :restart? false}
                fake-migration (sut/init-migration (assoc base-migration-params
                                                          :migration-id migration-id-1

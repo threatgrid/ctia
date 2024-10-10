@@ -51,7 +51,6 @@
    :migrations [(apply s/enum (keys available-migrations))]
    :store-keys [s/Keyword]
    :batch-size s/Int
-   :buffer-size s/Int
    :confirm? (s/maybe s/Bool)
    :restart? (s/maybe s/Bool)
    (s/optional-key :store) {:es {s/Keyword ESStoreProperties}}})
@@ -430,7 +429,8 @@ Rollover requires refresh so we cannot just call ES with condition since refresh
                       {"id" sort-order})
         params
         (merge
-         {:offset (or offset 0)
+         {:track_total_hits true
+          :offset (or offset 0)
           :limit batch-size}
          (when sort-order
            {:sort sort-by})
