@@ -101,7 +101,7 @@ jobs:
             touch dev-resources/ctia_test_timings.edn
           fi
       - name: Upload current test timing
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           retention-days: 180
           name: current-test-timing
@@ -240,7 +240,7 @@ jobs:
         # depends on LOG_PATH and actions/checkout@v3
         run: docker compose -f containers/dev/docker-compose.yml up --no-color -d &> "${LOG_PATH}/docker-compose.log"
       - name: Download test timings
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: current-test-timing
           path: target/current-test-timing
@@ -313,14 +313,14 @@ jobs:
           CTIA_WAIT_DOCKER: 1
 
       - name: Upload test timing
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           retention-days: 1
-          name: test-timing
+          name: test-timing-${{matrix.this-split.this_split}}
           path: target/test-results/*.edn
       - name: Upload docker compose
         if: ${{ always() }}
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           retention-days: 10
           name: docker-compose${{matrix.this-split.this_split}}.log
@@ -355,16 +355,18 @@ jobs:
           key: ctia-timings-${{ env.ACTIONS_CACHE_VERSION }}-${{ env.CTIA_TEST_SUITE }}-${{ github.ref }}-${{ github.sha }}
 
       - name: Download test timings
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: test-timing
+          pattern: test-timing-*
+          merge-multiple: true
           path: target/test-results
 
       - name: Print test timings
         run: ./scripts/summarize-tests.clj
 
       - name: Upload all test timings
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           retention-days: 180
           name: all-test-timings
