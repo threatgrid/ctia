@@ -33,6 +33,7 @@
                                     "schedule" :cron
                                     ("pull_request" "push") :pr)))))))
 
+;; note: if adding new ways to split, ensure actions/upload-artifact names are still unique across run
 (defn- valid-split? [{:keys [this_split total_splits
                              java_version ci_profiles] :as m}]
   (and (= #{:this_split :total_splits
