@@ -37,8 +37,6 @@ function build-and-push-docker-image {
     echo "Building docker image for integration"
   else
     #disable release build until it is ready to go to prod
-    echo "skipping docker release build"
-    exit 0
     repo_prefix='test'
     echo "Building release docker image"
   fi
