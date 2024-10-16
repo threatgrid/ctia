@@ -1,7 +1,7 @@
 ctia:ctia:jar:1.1.1-SNAPSHOT
-+- org.clojure:clojure:jar:1.11.3:compile
-|  +- org.clojure:spec.alpha:jar:0.3.218:compile
-|  \- org.clojure:core.specs.alpha:jar:0.2.62:compile
++- org.clojure:clojure:jar:1.12.0:compile
+|  +- org.clojure:spec.alpha:jar:0.5.238:compile
+|  \- org.clojure:core.specs.alpha:jar:0.4.74:compile
 +- clj-time:clj-time:jar:0.15.2:compile
 |  \- joda-time:joda-time:jar:2.10:compile
 +- org.threeten:threeten-extra:jar:1.2:compile
