@@ -49,6 +49,8 @@ You can jump to the [Development](#Development) section to see instructions
 on how to run elasticsearch and other optional supporting tools using
 Docker.  CTIA may use Kafka, Redis and ES to push events.
 
+CTIA supports Java 21.
+
 #### Purging ES Stores
 
 Using an uberjar build you can purge all the ES Stores with this command:

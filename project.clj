@@ -25,6 +25,7 @@
   To add a new build, add an entry here and use CTIA_CI_PROFILES to select it."
   {:next-clojure (str base-ci-profiles ",+next-clojure")
    :uberjar "uberjar"
+   :test-encoding "+test-encoding"
    :default base-ci-profiles})
 (def ci-profiles
   (get all-ci-profiles
