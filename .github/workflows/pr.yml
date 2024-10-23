@@ -224,12 +224,15 @@ jobs:
         with:
           path: ${{ env.BIN_PATH }}
           key: ctia-bin-${{ env.ACTIONS_CACHE_VERSION }}-${{ env.SHELLCHECK_VERSION }}
+      - name: Install clojure tools
+        uses: DeLaGuardo/setup-clojure@12.5
+        with:
+          lein: ${{env.LEIN_VERSION}}
+          bb: ${{env.BB_VERSION}}
       - name: Setup PATH and directories
         run: |
           mkdir -p "${BIN_PATH}"
           echo "${BIN_PATH}" >> $GITHUB_PATH
-      - name: Install babashka
-        run: ./scripts/actions/install-bb.sh
       - run: ./scripts/actions/setup_env.clj
       - name: Docker
         # depends on LOG_PATH and actions/checkout@v4
@@ -278,12 +281,6 @@ jobs:
           distribution: 'temurin'
           java-version: ${{ env.JAVA_VERSION }}
       - run: java -version
-
-      - name: Install clojure tools
-        uses: DeLaGuardo/setup-clojure@12.5
-        with:
-          lein: ${{env.LEIN_VERSION}}
-          bb: ${{env.BB_VERSION}}
 
       # we should get a cache hit from maven here, since the `setup` job only succeeds if it exists.
       # in the unlikely event we don't, download deps for this specific job only.
