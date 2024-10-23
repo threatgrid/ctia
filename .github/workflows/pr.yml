@@ -53,13 +53,15 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ${{ env.BIN_PATH }}
-          key: ctia-bin-${{ env.ACTIONS_CACHE_VERSION }}-${{ env.BB_VERSION }}
+          key: ctia-bin-${{ env.ACTIONS_CACHE_VERSION }}-${{ env.SHELLCHECK_VERSION }}
       - name: Setup PATH and directories
         run: |
           mkdir -p "${BIN_PATH}"
           echo "${BIN_PATH}" >> $GITHUB_PATH
-      - name: Install babashka
-        run: ./scripts/actions/install-bb.sh
+      - name: Install clojure tools
+        uses: DeLaGuardo/setup-clojure@12.5
+        with:
+          bb: ${{env.BB_VERSION}}
       - name: Run tests for scripts
         run: ./scripts-test/test_runner.clj
       - run: ./scripts/actions/setup_env.clj
@@ -217,7 +219,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ${{ env.BIN_PATH }}
-          key: ctia-bin-${{ env.ACTIONS_CACHE_VERSION }}-${{ env.BB_VERSION }}
+          key: ctia-bin-${{ env.ACTIONS_CACHE_VERSION }}-${{ env.SHELLCHECK_VERSION }}
       - name: Setup PATH and directories
         run: |
           mkdir -p "${BIN_PATH}"
@@ -323,7 +325,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ${{ env.BIN_PATH }}
-          key: ctia-bin-${{ env.ACTIONS_CACHE_VERSION }}-${{ env.BB_VERSION }}
+          key: ctia-bin-${{ env.ACTIONS_CACHE_VERSION }}-${{ env.SHELLCHECK_VERSION }}
       - name: Setup PATH and directories
         run: |
           mkdir -p "${BIN_PATH}"
@@ -372,7 +374,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ${{ env.BIN_PATH }}
-          key: ctia-bin-${{ env.ACTIONS_CACHE_VERSION }}-${{ env.BB_VERSION }}
+          key: ctia-bin-${{ env.ACTIONS_CACHE_VERSION }}-${{ env.SHELLCHECK_VERSION }}
       - name: Setup PATH and directories
         run: |
           mkdir -p "${BIN_PATH}"
