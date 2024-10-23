@@ -87,7 +87,7 @@ jobs:
             target/test-results/all-test-timings.edn
           # unreachable key because each cache is saved with hashFiles('target/test-results/all-test-timings.edn'),
           # which we don't have yet. this ensures we always get the latest and most relevant timing information.
-          key: ctia-timings-${{ env.ACTIONS_CACHE_VERSION }}-${{ env.CTIA_TEST_SUITE }}-${{ github.ref }}-${{ github.sha }}-___unreachable____
+          key: writeonly-ctia-timings-${{ env.ACTIONS_CACHE_VERSION }}-${{ env.CTIA_TEST_SUITE }}-${{ github.ref }}-${{ github.sha }}-${{ github.run_number }}-${{ github.run_attempt }}
           # cache should match test timings from previous runs, if they exist.
           # pr's and pushes share timings via the "ci" setting of env.CTIA_TEST_SUITE,
           # and cron is separate as "cron".
@@ -109,7 +109,7 @@ jobs:
       - name: Upload current test timing
         uses: actions/upload-artifact@v4
         with:
-          retention-days: 180
+          retention-days: 90
           name: current-test-timing
           path: dev-resources/ctia_test_timings.edn
 
@@ -337,14 +337,6 @@ jobs:
           bb: ${{env.BB_VERSION}}
       - run: ./scripts/actions/setup_env.clj
 
-      # save if new timing results for this sha
-      - name: Cache timing results
-        uses: actions/cache/save@v4
-        with:
-          path: target/test-results/all-test-timings.edn
-          # unique enough to always keep our timing information up-to-date
-          key: ctia-timings-${{ env.ACTIONS_CACHE_VERSION }}-${{ env.CTIA_TEST_SUITE }}-${{ github.ref }}-${{ github.sha }}-${{ hashFiles('target/test-results/all-test-timings.edn') }}
-
       - name: Download test timings
         uses: actions/download-artifact@v4
         with:
@@ -355,10 +347,20 @@ jobs:
       - name: Print test timings
         run: ./scripts/summarize-tests.clj
 
+      # save if new timing results for this sha
+      - name: Ensure timing results exist
+        run: ls target/test-results/all-test-timings.edn
+      - name: Cache timing results
+        uses: actions/cache/save@v4
+        with:
+          path: target/test-results/all-test-timings.edn
+          # unique enough to always keep our timing information up-to-date
+          key: ctia-timings-${{ env.ACTIONS_CACHE_VERSION }}-${{ env.CTIA_TEST_SUITE }}-${{ github.ref }}-${{ github.sha }}-${{ hashFiles('target/test-results/all-test-timings.edn') }}
+
       - name: Upload all test timings
         uses: actions/upload-artifact@v4
         with:
-          retention-days: 180
+          retention-days: 90
           name: all-test-timings
           path: target/test-results/*.edn
 
