@@ -23,7 +23,7 @@ env:
   ACTIONS_RETRY_TIMES: 10
   # workaround https://github.com/actions/cache/issues/2
   # to "delete" caches, increment this version
-  ACTIONS_CACHE_VERSION: v17
+  ACTIONS_CACHE_VERSION: v18
   BIN_PATH: ${{github.workspace}}/bin
   LOG_PATH: ${{github.workspace}}/log
   # avoid the (somehow) default /usr/local/lib/lein/
@@ -120,7 +120,6 @@ jobs:
       - name: Run shellcheck
         run: ./scripts/shellcheck-build.sh
 
-
       # warm dependency cache on project.clj change (ie., when cache-hit is not true).
       - name: Maven Cache
         id: maven-cache
@@ -129,10 +128,9 @@ jobs:
           path: |
             ~/.m2/repository
             ~/.gitlibs
-          key: ctia-m2-cache-${{ env.ACTIONS_CACHE_VERSION }}-${{ hashFiles('project.clj') }}-${{ env.LEIN_VERSION }}-${{ env.DEFAULT_JAVA_VERSION }}
+          key: ctia-m2-cache-${{ env.ACTIONS_CACHE_VERSION }}-${{ hashFiles('project.clj') }}--${{ env.DEFAULT_JAVA_VERSION }}
           # these will be considered a cache-miss by `cache-hit`
           restore-keys: |
-            ctia-m2-cache-${{ env.ACTIONS_CACHE_VERSION }}-${{ hashFiles('project.clj') }}-${{ env.LEIN_VERSION }}-
             ctia-m2-cache-${{ env.ACTIONS_CACHE_VERSION }}-${{ hashFiles('project.clj') }}-
             ctia-m2-cache-${{ env.ACTIONS_CACHE_VERSION }}-
       - name: Setup Java
@@ -143,16 +141,11 @@ jobs:
           java-version: ${{ env.DEFAULT_JAVA_VERSION }}
       - run: java -version
         if: steps.maven-cache.outputs.cache-hit != 'true'
-      - name: Leiningen Cache
-        if: steps.maven-cache.outputs.cache-hit != 'true'
-        uses: actions/cache@v4
-        id: lein-cache
-        with:
-          path: ${{env.LEIN_HOME}}
-          key: ctia-lein-cache-${{ env.ACTIONS_CACHE_VERSION }}-${{ env.LEIN_VERSION }}
-      - name: Install Leiningen
+      - name: Install clojure tools
         if: steps.maven-cache.outputs.cache-hit != 'true' && steps.lein-cache.outputs.cache-hit != 'true'
-        run: ./scripts/actions/install-lein.sh
+        uses: DeLaGuardo/setup-clojure@12.5
+        with:
+          lein: ${{env.LEIN_VERSION}}
       - name: Warm dependency cache
         if: steps.maven-cache.outputs.cache-hit != 'true'
         # poor man's travis_retry
@@ -177,9 +170,8 @@ jobs:
           path: |
             ~/.m2/repository
             ~/.gitlibs
-          key: ctia-m2-cache-${{ env.ACTIONS_CACHE_VERSION }}-${{ hashFiles('project.clj') }}-${{ env.LEIN_VERSION }}
+          key: ctia-m2-cache-${{ env.ACTIONS_CACHE_VERSION }}-${{ hashFiles('project.clj') }}
           restore-keys: |
-            ctia-m2-cache-${{ env.ACTIONS_CACHE_VERSION }}-${{ hashFiles('project.clj') }}-
             ctia-m2-cache-${{ env.ACTIONS_CACHE_VERSION }}-
 
       - name: Setup Java
@@ -188,17 +180,11 @@ jobs:
           distribution: 'temurin'
           java-version: ${{ env.DEFAULT_JAVA_VERSION }}
 
-      # install lein using cache to avoid extra download and startup time
-      - name: Install Leiningen from Cache
-        uses: actions/cache@v4
-        id: lein-cache
+      - name: Install clojure tools
+        uses: DeLaGuardo/setup-clojure@12.5
         with:
-          path: ${{env.LEIN_HOME}}
-          key: ctia-lein-cache-${{ env.ACTIONS_CACHE_VERSION }}-${{ env.LEIN_VERSION }}
-
-      - name: Install Leiningen
-        if: steps.lein-cache.outputs.cache-hit != 'true'
-        run: ./scripts/actions/install-lein.sh
+          lein: ${{env.LEIN_VERSION}}
+          bb: ${{env.BB_VERSION}}
 
       # we should get a cache hit from maven here, since the `setup` job only succeeds if it exists.
       # in the unlikely event we don't, download deps for this specific job only.
@@ -287,16 +273,11 @@ jobs:
           java-version: ${{ env.JAVA_VERSION }}
       - run: java -version
 
-      # install lein using cache to avoid extra download and startup time
-      - name: Leiningen Cache
-        uses: actions/cache@v4
-        id: lein-cache
+      - name: Install clojure tools
+        uses: DeLaGuardo/setup-clojure@12.5
         with:
-          path: ${{env.LEIN_HOME}}
-          key: ctia-lein-cache-${{ env.ACTIONS_CACHE_VERSION }}-${{ env.LEIN_VERSION }}
-      - name: Install Leiningen
-        if: steps.lein-cache.outputs.cache-hit != 'true'
-        run: ./scripts/actions/install-lein.sh
+          lein: ${{env.LEIN_VERSION}}
+          bb: ${{env.BB_VERSION}}
 
       # we should get a cache hit from maven here, since the `setup` job only succeeds if it exists.
       # in the unlikely event we don't, download deps for this specific job only.
@@ -347,8 +328,10 @@ jobs:
         run: |
           mkdir -p "${BIN_PATH}"
           echo "${BIN_PATH}" >> $GITHUB_PATH
-      - name: Install babashka
-        run: ./scripts/actions/install-bb.sh
+      - name: Install clojure tools
+        uses: DeLaGuardo/setup-clojure@12.5
+        with:
+          bb: ${{env.BB_VERSION}}
       - run: ./scripts/actions/setup_env.clj
       - name: Timing results Cache
         uses: actions/cache@v4
@@ -394,8 +377,11 @@ jobs:
         run: |
           mkdir -p "${BIN_PATH}"
           echo "${BIN_PATH}" >> $GITHUB_PATH
-      - name: Install babashka
-        run: ./scripts/actions/install-bb.sh
+      - name: Install clojure tools
+        uses: DeLaGuardo/setup-clojure@12.5
+        with:
+          lein: ${{env.LEIN_VERSION}}
+          bb: ${{env.BB_VERSION}}
       - run: ./scripts/actions/install-trojansourcefinder.sh
       - run: ./scripts/actions/setup_env.clj
       - name: Maven Cache
@@ -413,16 +399,6 @@ jobs:
           java-version: ${{ env.DEFAULT_JAVA_VERSION }}
       - run: java -version
 
-      # install lein using cache to avoid extra download and startup time
-      - name: Leiningen Cache
-        uses: actions/cache@v4
-        id: lein-cache
-        with:
-          path: ${{env.LEIN_HOME}}
-          key: ctia-lein-cache-${{ env.ACTIONS_CACHE_VERSION }}-${{ env.LEIN_VERSION }}
-      - name: Install Leiningen
-        if: steps.lein-cache.outputs.cache-hit != 'true'
-        run: ./scripts/actions/install-lein.sh
       # we should get a cache hit from maven here, since the `setup` job only succeeds if it exists.
       # in the unlikely event we don't, download deps for this specific job only.
       - name: Warm dependency cache
