@@ -175,6 +175,23 @@
                    false
                    nil))))))
 
+(deftest ambiguous-indices-test
+  (let [test-cases [{:message "partial and restored should not match the ambiguous index names"
+                     :existing {:v2.0.0_ctia_sighting-2022.07.07-000001 {}
+                                :partial-v2.0.0_ctia_sighting-2022.07.07-000001 {}
+                                :restored-v2.0.0_ctia_sighting-2022.07.07-000001 {}}
+                     :index "v2.0.0_ctia_sighting"
+                     :expected #{}}
+                    {:message "ambiguous names with unknown prefix should be detected"
+                     :existing {:v2.0.0_ctia_sighting-2022.07.07-000001 {}
+                                :prefix-v2.0.0_ctia_sighting-2022.07.07-000001 {}}
+                     :index "v2.0.0_ctia_sighting"
+                     :expected #{:prefix-v2.0.0_ctia_sighting-2022.07.07-000001}}]]
+    (doseq [{:keys [message existing index expected]} test-cases]
+      (is (= expected
+             (sut/ambiguous-indices existing index))
+          message))))
+
 (deftest init-es-conn!-test
   (helpers/with-config-transformer
     #(assoc-in % [:ctia :task :ctia.task.update-index-state] true)
@@ -483,8 +500,7 @@
                                          :update-mappings false
                                          :update-settings false
                                          :refresh-mappings false
-                                         :rollover {:max_docs 1}
-                                         )
+                                         :rollover {:max_docs 1})
               {:keys [conn index props] :as store-conn}
               (sut/init-es-conn! ilm-migration-props services)]
           (check-ilm-migration store-conn)
