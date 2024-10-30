@@ -102,9 +102,6 @@ EOF
     docker tag "$docker_registry/$docker_nomad_repository:$build_version" "$prod_apjc_registry/$prod_nomad_repository:$build_version"
     docker push "$prod_apjc_registry/$prod_nomad_repository:$build_version"
   fi
-
-  echo "build_version=$build_version" >> "$GITHUB_OUTPUT"
-  echo "build_type=$build_type" >> "$GITHUB_OUTPUT"
 }
 
 function build-and-publish-package {
