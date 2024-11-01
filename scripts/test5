@@ -2,4 +2,3 @@
 
 set -e
 lein with-profile +es5 test "$@"
-lein with-profile +es5,+test-encoding "$@"

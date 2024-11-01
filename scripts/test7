@@ -3,4 +3,3 @@
 set -e
 
 lein with-profile +es7 test "$@"
-lein with-profile +es7,+test-encoding test "$@"

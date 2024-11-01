@@ -158,53 +158,6 @@ jobs:
         run: for i in {1..${ACTIONS_RETRY_TIMES}}; do lein warm-ci-deps && break; done
       - run: ./scripts/check-dependabot
 
-  test-encoding:
-    runs-on: ubuntu-22.04
-    needs: [setup]
-    steps:
-
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Start Docker environment
-        run: docker compose -f containers/dev/docker-compose.yml up --no-color --quiet-pull -d
-
-      - name: Maven Cache
-        id: maven-cache
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.m2/repository
-            ~/.gitlibs
-          key: ctia-m2-cache-${{ env.ACTIONS_CACHE_VERSION }}-${{ hashFiles('project.clj') }}
-          restore-keys: |
-            ctia-m2-cache-${{ env.ACTIONS_CACHE_VERSION }}-
-
-      - name: Setup Java
-        uses: actions/setup-java@v4
-        with:
-          distribution: 'temurin'
-          java-version: ${{ env.DEFAULT_JAVA_VERSION }}
-
-      - name: Install clojure tools
-        uses: DeLaGuardo/setup-clojure@12.5
-        with:
-          lein: ${{env.LEIN_VERSION}}
-          bb: ${{env.BB_VERSION}}
-
-      # we should get a cache hit from maven here, since the `setup` job only succeeds if it exists.
-      # in the unlikely event we don't, download deps for this specific job only.
-      - name: Warm dependency cache
-        if: steps.maven-cache.outputs.cache-hit != 'true'
-        run: for i in {1..${ACTIONS_RETRY_TIMES}}; do lein warm-ci-deps && break; done
-
-      - name: Run encoding tests
-        run: lein with-profile +test-encoding test
-        env:
-          # offline to catch issues where `lein warm-ci-deps` doesn't download all
-          # dependencies we need to run tests.
-          LEIN_OFFLINE: true
-
   test-matrix:
     runs-on: ubuntu-22.04
     needs: [setup]

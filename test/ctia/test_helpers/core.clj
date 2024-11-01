@@ -5,6 +5,7 @@
    [clj-momo.lib.time :as time]
    [clj-momo.properties :refer [coerce-properties read-property-files]]
    [clojure.pprint :refer [pprint]]
+   [clojure.java.shell :as sh]
    [clojure.spec.alpha :as cs]
    [clojure.string :as str]
    [clojure.test :as test]
@@ -588,3 +589,12 @@
                        :new-entity new-entity
                        :response response})))
     result))
+
+(defn lein-run-test [profiles sym]
+  (assert (string? profiles))
+  (assert (qualified-symbol? sym))
+  (let [;; TODO use clojure.java.process to inherit stdout
+        {:keys [exit out err]} (sh/sh "lein" "with-profiles" profiles "test" ":only" (pr-str sym))]
+    (println out)
+    (println err)
+    (test/is (zero? exit))))
