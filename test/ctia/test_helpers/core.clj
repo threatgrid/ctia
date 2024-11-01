@@ -69,14 +69,13 @@
          "ctia.metrics.jmx.enabled"                   false
          "ctia.store.es.identity.refresh"             "true"
          "ctia.versions.config"                       "test"]
-        ;; use es7 if es5 is not available
         (let [es-versions (set-of-es-versions-to-test)]
-          (when (es-versions 7)
-            ["ctia.store.es.default.port" 9207
-             "ctia.store.es.default.auth.type" "basic-auth"
-             "ctia.store.es.default.auth.params.user" "elastic"
-             "ctia.store.es.default.auth.params.pwd" "ductile"
-             "ctia.store.es.default.version" 7]))))
+          (assert (es-versions 7))
+          ["ctia.store.es.default.port" 9207
+           "ctia.store.es.default.auth.type" "basic-auth"
+           "ctia.store.es.default.auth.params.user" "elastic"
+           "ctia.store.es.default.auth.params.pwd" "ductile"
+           "ctia.store.es.default.version" 7])))
 (assert (even? (count *properties-overrides*)))
 
 (defn- isolate-config-indices

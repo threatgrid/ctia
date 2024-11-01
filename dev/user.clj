@@ -69,7 +69,7 @@
 
 (defn start
   "Starts CTIA with given config and services, otherwise defaults
-  to the same configuration as #'init/start-ctia (ES5)."
+  to the same configuration as #'init/start-ctia (ES7)."
   [& {:keys [config services] :as m}]
   (serially-alter-app
     (fn [app]
@@ -78,16 +78,6 @@
         (do (println "CTIA already started! Use (go ...) to restart")
             app)
         (init/start-ctia! m)))))
-
-(defn -es7-init-config []
-  (-> (p/build-init-config)
-      (assoc-in [:ctia :store :es :default :version] 7)
-      (assoc-in [:ctia :store :es :default :port] 9207)))
-
-(defn start7
-  "Start CTIA with ES7"
-  []
-  (start :config (-es7-init-config)))
 
 (defn stop
   "Stops CTIA."
@@ -107,15 +97,7 @@
       (some-> app app/stop)
       (init/start-ctia! m))))
 
-(defn go7
-  "Restarts CTIA using ES7."
-  [] (go :config (-es7-init-config)))
-
 (defn reset
-  "Refresh, then start CTIA with ES5"
-  [] (refresh :after `go))
-
-(defn reset7 
   "Refresh, then start CTIA with ES7"
   [] (refresh :after `go7))
 
