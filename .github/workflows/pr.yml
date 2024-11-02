@@ -32,7 +32,8 @@ env:
   LEIN_VERSION: 2.11.2
   CTIA_MAJOR_VERSION: 1
   SHELLCHECK_VERSION: v0.10.0
-  BB_VERSION: 1.12.194
+  # FIXME testing setup-clojure's cache
+  BB_VERSION: 1.12.193
   DEFAULT_JAVA_VERSION: 21
 
 jobs:
