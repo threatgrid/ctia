@@ -59,7 +59,7 @@ jobs:
           mkdir -p "${BIN_PATH}"
           echo "${BIN_PATH}" >> $GITHUB_PATH
       - name: Install clojure tools
-        uses: DeLaGuardo/setup-clojure@12.5
+        uses: DeLaGuardo/setup-clojure@ba4fbfd343c802d2533385b040b59d2e290e18f7
         with:
           bb: ${{env.BB_VERSION}}
       - name: Run tests for scripts
@@ -149,7 +149,7 @@ jobs:
         if: steps.maven-cache.outputs.cache-hit != 'true'
       - name: Install clojure tools
         if: steps.maven-cache.outputs.cache-hit != 'true' && steps.lein-cache.outputs.cache-hit != 'true'
-        uses: DeLaGuardo/setup-clojure@12.5
+        uses: DeLaGuardo/setup-clojure@ba4fbfd343c802d2533385b040b59d2e290e18f7
         with:
           lein: ${{env.LEIN_VERSION}}
       - name: Warm dependency cache
@@ -178,7 +178,7 @@ jobs:
           path: ${{ env.BIN_PATH }}
           key: ctia-bin-${{ env.ACTIONS_CACHE_VERSION }}-${{ env.SHELLCHECK_VERSION }}
       - name: Install clojure tools
-        uses: DeLaGuardo/setup-clojure@12.5
+        uses: DeLaGuardo/setup-clojure@ba4fbfd343c802d2533385b040b59d2e290e18f7
         with:
           lein: ${{env.LEIN_VERSION}}
           bb: ${{env.BB_VERSION}}
@@ -285,7 +285,7 @@ jobs:
           mkdir -p "${BIN_PATH}"
           echo "${BIN_PATH}" >> $GITHUB_PATH
       - name: Install clojure tools
-        uses: DeLaGuardo/setup-clojure@12.5
+        uses: DeLaGuardo/setup-clojure@ba4fbfd343c802d2533385b040b59d2e290e18f7
         with:
           bb: ${{env.BB_VERSION}}
       - run: ./scripts/actions/setup_env.clj
@@ -335,7 +335,7 @@ jobs:
           mkdir -p "${BIN_PATH}"
           echo "${BIN_PATH}" >> $GITHUB_PATH
       - name: Install clojure tools
-        uses: DeLaGuardo/setup-clojure@12.5
+        uses: DeLaGuardo/setup-clojure@ba4fbfd343c802d2533385b040b59d2e290e18f7
         with:
           lein: ${{env.LEIN_VERSION}}
           bb: ${{env.BB_VERSION}}
