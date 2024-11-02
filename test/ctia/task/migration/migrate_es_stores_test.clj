@@ -63,7 +63,7 @@
       (t)
       (finally
         (doto (es-conn get-in-config)
-          (es-index/delete! "v0.0.0*")
+          (es-helpers/clean-es-state! "v0.0.0*")
           (es-index/delete! (str (migration-index get-in-config) "*")))))))
 
 (s/defn with-each-fixtures*
@@ -150,7 +150,6 @@
                           :migrations   [:identity]
                           :store-keys   [:incident :investigation :malware]
                           :batch-size   100
-                          :buffer-size  3
                           :confirm? true
                           :restart? false}]
     (testing "misconfigured migration"
@@ -204,8 +203,7 @@
                   "configured default target store shall be considered")))))))
 
 (deftest prepare-params-test
-  (let [migration-props {:buffer-size 3,
-                         :batch-size 100,
+  (let [migration-props {:batch-size 100,
                          :migration-id "migration-test",
                          :restart? false,
                          :store-keys "malware,  tool,sighting  ",
@@ -249,7 +247,6 @@
                                   :migrations   [:__test]
                                   :store-keys   store-types
                                   :batch-size   10
-                                  :buffer-size  3
                                   :confirm?     true
                                   :restart?     false}
                                  services)
@@ -369,7 +366,6 @@
     (with-open [rdr (io/reader "./test/data/indices/sample-relationships-1000.json")]
       (let [{:keys [get-in-config]} (helpers/get-service-map app :ConfigService)
             services (app->MigrationStoreServices app)
-
             prefix "0.0.1"
             indexname (str "v0.0.1_" (es-helpers/get-indexname app :relationship))
             conn (es-conn get-in-config)
@@ -403,7 +399,6 @@
                                        :confirm? true
                                        :migrations [:__test]
                                        :batch-size 1000
-                                       :buffer-size 3
                                        :restart? false}
                                       services)
                       (let [test-docs (take total docs)
@@ -462,7 +457,8 @@
         (test-fn 100
                  0
                  "write-target should not write anything while properly simulating migration when `confirm?` is set to false"
-                 {:confirm? false})))))
+                 {:confirm? false})
+        (es-helpers/clean-es-state! conn "v0.0.1_*")))))
 
 (deftest sliced-migration-test
   (with-each-fixtures identity app
@@ -472,8 +468,8 @@
             conn (es-conn get-in-config)
             {wo-modified true
              w-modified false} (->> (line-seq rdr)
-             (map (partial es-helpers/prepare-bulk-ops app))
-             (group-by #(nil? (:modified %))))
+                                    (map (partial es-helpers/prepare-bulk-ops app))
+                                    (group-by #(nil? (:modified %))))
             sorted-w-modified (sort-by :modified w-modified)
             bulk-1 (concat wo-modified (take 500 sorted-w-modified))
             bulk-2 (drop 500 sorted-w-modified)
@@ -485,7 +481,6 @@
                                             :migrations   [:__test]
                                             :store-keys   [:relationship]
                                             :batch-size   100
-                                            :buffer-size  3
                                             :confirm?     true
                                             :restart?     false}
                                            services))
@@ -505,7 +500,6 @@
                                             :migrations   [:__test]
                                             :store-keys   [:relationship]
                                             :batch-size   100
-                                            :buffer-size  3
                                             :confirm?     true
                                             :restart?     true}
                                            services))
@@ -537,7 +531,7 @@
           conn (es-conn get-in-config)
           store-types [:malware :tool :incident]
           logger (atom [])
-          bad-doc {:id 1
+          bad-doc {:id "doc1"
                    :hey "I"
                    :am "a"
                    :bad "document"}]
@@ -557,7 +551,6 @@
         (doseq [store-type store-types]
           (ductile.doc/create-doc conn
                                   (str (get-in (es-props get-in-config) [store-type :indexname]) "-write")
-                                  (name store-type)
                                   bad-doc
                                   {:refresh "true"}))
         (with-atom-logger logger
@@ -566,7 +559,6 @@
                                       :migrations   [:__test]
                                       :store-keys   store-types
                                       :batch-size   10
-                                      :buffer-size  3
                                       :confirm?     true
                                       :restart?     false}
                                      services))
@@ -619,7 +611,6 @@
                                     :migrations   [:0.4.16]
                                     :store-keys   migrated-store-keys
                                     :batch-size   10
-                                    :buffer-size  3
                                     :confirm?     false
                                     :restart?     false}
                                    services)
@@ -643,7 +634,6 @@
                                       :migrations   [:__test]
                                       :store-keys   migrated-store-keys
                                       :batch-size   10
-                                      :buffer-size  3
                                       :confirm?     true
                                       :restart?     false}
                                      services))
@@ -804,7 +794,6 @@
                                         :store-keys   migrated-store-keys
                                         ;; small batch to check proper delete paging
                                         :batch-size   2
-                                        :buffer-size  1
                                         :confirm?     true
                                         :restart?     true}
                                        services)
@@ -855,7 +844,6 @@
                                             :migrations   [:__test]
                                             :store-keys   (into [] example-types)
                                             :batch-size   batch-size
-                                            :buffer-size  3
                                             :confirm?     true
                                             :restart?     false}
                                            services)

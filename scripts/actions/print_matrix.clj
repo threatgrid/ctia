@@ -12,13 +12,11 @@
 (ns actions.print-matrix
   (:require [actions.actions-helpers :as h]))
 
-(def ^:private default-java-version "11")
-;; LTS version, do not remove from cron
 (def ^:private java-21-version "21")
-(def ^:private java-22-version "22")
+(def ^:private java-23-version "23")
 (def non-cron-ctia-nsplits
   "Job parallelism for non cron tests."
-  5) ;;TODO bump to 10 when removing java 11 support
+  10)
 (def ^:private cron-ctia-nsplits
   "Job parallelism for cron tests."
   2)
@@ -33,6 +31,7 @@
                                     "schedule" :cron
                                     ("pull_request" "push") :pr)))))))
 
+;; note: if adding new ways to split, ensure actions/upload-artifact names are still unique across run
 (defn- valid-split? [{:keys [this_split total_splits
                              java_version ci_profiles] :as m}]
   (and (= #{:this_split :total_splits
@@ -68,8 +67,7 @@
                       :java_version %}
                      non-cron-ctia-nsplits))
           (map #(assoc % :test_suite :ci)))
-    [default-java-version ;; TODO drop 11 support
-     java-21-version]))
+    [java-21-version]))
 
 (defn cron-matrix
   "Actions matrix for cron builds"
@@ -81,11 +79,10 @@
           (map #(assoc % :test_suite :cron)))
     (concat
       [{:ci_profiles "default"
-        :java_version default-java-version}]
+        :java_version java-21-version}]
       (map #(into {:ci_profiles "next-clojure"} %)
-           [{:java_version default-java-version}
-            {:java_version java-21-version}
-            {:java_version java-22-version}]))))
+           [{:java_version java-21-version}
+            {:java_version java-23-version}]))))
 
 (defn edn-matrix [build-config]
   {:post [(seq %)
