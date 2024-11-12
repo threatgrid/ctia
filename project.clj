@@ -88,7 +88,7 @@
                  [prismatic/schema "1.4.1"]
                  [metosin/schema-tools "0.13.1"]
                  [threatgrid/flanders "1.0.2"]
-                 [threatgrid/ctim "1.3.18"]
+                 [threatgrid/ctim "1.3.19"]
                  [instaparse "1.4.10"] ;; com.gfredericks/test.chuck > threatgrid/ctim
                  [threatgrid/clj-momo "0.3.5"]
                  [threatgrid/ductile "0.5.0"]
@@ -96,7 +96,7 @@
                  [com.arohner/uri "0.1.2"]
 
                  ;; Web server
-                 [metosin/compojure-api "1.1.13" ]
+                 [metosin/compojure-api "1.1.13"]
                  [ring-middleware-format "0.7.4"]
                  ;; optional ring-middleware-format dep (Note: ring-middleware-format is also a transitive dep for compojure-api)
                  ;; see: https://github.com/ngrunwald/ring-middleware-format/issues/74
@@ -211,7 +211,6 @@
                                   (:out (clojure.java.shell/sh
                                          "git" "symbolic-ref" "--short" "HEAD")))})}]
 
-
   :profiles {:dev {:jvm-opts ["-XX:-OmitStackTraceInFastThrow"]
                    :dependencies [[puppetlabs/trapperkeeper ~trapperkeeper-version
                                    :classifier "test"]
@@ -229,7 +228,7 @@
                    :source-paths ["dev"]}
              :ci {:pedantic? :abort
                   :global-vars {*warn-on-reflection* true}
-                  :jvm-opts [ ;; actually print stack traces instead of useless
+                  :jvm-opts [;; actually print stack traces instead of useless
                              ;; "Full report at: /tmp/clojure-8187773283812483853.edn"
                              "-Dclojure.main.report=stderr"
                              "-XX:-OmitStackTraceInFastThrow"]}
