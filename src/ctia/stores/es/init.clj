@@ -157,14 +157,12 @@
 
 (defn ambiguous-indices
   [existing index]
-  (let [existing-k (set (keys existing))
-        index-pattern (re-pattern (str "((partial|restored)-)?"
-                                       index
-                                       "(-\\d{4}.\\d{2}.\\d{2}.*)?"))
-        matching (filter #(re-matches index-pattern (name %))
-                         existing-k)
-        ambiguous (difference existing-k (set matching))]
-    ambiguous))
+  (let [index-pattern (re-pattern (str "((partial|restored)-)?"
+                                       (java.util.regex.Pattern/quote index)
+                                       "(-\\d{4}.\\d{2}.\\d{2}.*)?"))]
+    (into #{}
+          (remove #(re-matches index-pattern (name %)))
+          (keys existing))))
 
 (defn get-existing-indices
   [conn index]

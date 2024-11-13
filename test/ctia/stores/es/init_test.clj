@@ -186,7 +186,15 @@
                      :existing {:v2.0.0_ctia_sighting-2022.07.07-000001 {}
                                 :prefix-v2.0.0_ctia_sighting-2022.07.07-000001 {}}
                      :index "v2.0.0_ctia_sighting"
-                     :expected #{:prefix-v2.0.0_ctia_sighting-2022.07.07-000001}}]]
+                     :expected #{:prefix-v2.0.0_ctia_sighting-2022.07.07-000001}}
+                    {:message "regular expression characters are correctly escaped"
+                     :existing {:v2x0x0_ctia_sighting-2022.07.07-000001 {}
+                                :v2.0.0_ctia_sighting-2022.07.07-000001 {}
+                                :partial-v2x0x0_ctia_sighting-2022.07.07-000001 {}
+                                :partial-v2.0.0_ctia_sighting-2022.07.07-000001 {}}
+                     :index "v2.0.0_ctia_sighting"
+                     :expected #{:v2x0x0_ctia_sighting-2022.07.07-000001
+                                 :partial-v2x0x0_ctia_sighting-2022.07.07-000001}}]]
     (doseq [{:keys [message existing index expected]} test-cases]
       (is (= expected
              (sut/ambiguous-indices existing index))
