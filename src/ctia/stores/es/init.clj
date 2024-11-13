@@ -155,15 +155,20 @@
                         :mappings mappings))
       (system-exit-error))))
 
+(defn ambiguous-indices
+  [existing index]
+  (let [index-pattern (re-pattern (str "((partial|restored)-)?"
+                                       (java.util.regex.Pattern/quote index)
+                                       "(-\\d{4}.\\d{2}.\\d{2}.*)?"))]
+    (into #{}
+          (remove #(re-matches index-pattern (name %)))
+          (keys existing))))
+
 (defn get-existing-indices
   [conn index]
   ;; retrieve existing indices using wildcard to identify ambiguous index names
   (let [existing (index/get conn (str index "*"))
-        existing-k (set (keys existing))
-        index-pattern (re-pattern (str index "(-\\d{4}.\\d{2}.\\d{2}.*)?"))
-        matching (filter #(re-matches index-pattern (name %))
-                         existing-k)
-        ambiguous (difference existing-k (set matching))]
+        ambiguous (ambiguous-indices existing index)]
     (if (seq ambiguous)
       (do (log/warn (format "Ambiguous index names. Index: %s, ambiguous: %s."
                             (pr-str index)
