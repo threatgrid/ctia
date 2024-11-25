@@ -617,27 +617,27 @@
         (fn [app]
           ;(helpers/set-capabilities! app "foouser" ["foogroup"] "user" all-capabilities)
           ;(whoami-helpers/set-whoami-response app "45c1f5e3f05d0" "foouser" "foogroup" "user")
-          (try (let [incident1 (assoc (gen-new-incident) :detection_sources ["TA0002" "TA0043" "TA0006"])
-                     incident2 (assoc (gen-new-incident) :detection_sources ["TA0004" "TA0043" "TA0008"])
-                     incident3 (assoc (gen-new-incident) :detection_sources ["TA0008" "TA0043" "TA0006" "TA8888"])
+          (try (let [incident1 (assoc (gen-new-incident) :detection_sources ["Crowdstrike for Endpoint" "Cisco XDR Detections" "TA0006"])
+                     incident2 (assoc (gen-new-incident) :detection_sources ["TA0004" "Cisco XDR Detections" "TA0008"])
+                     incident3 (assoc (gen-new-incident) :detection_sources ["TA0008" "Cisco XDR Detections" "TA0006" "Talnos, which is like Talos but weird"])
                      normalize (fn [incidents]
                                  (->> incidents
                                       (map #(select-keys % [:title :tactics]))
                                       (sort-by :tactics)))]
                  (create-incidents app #{incident1 incident2 incident3})
                  (testing "incident1"
-                   (let [{:keys [parsed-body] :as raw} (search-th/search-raw app :incident {:query "detection_sources:(\"TA0002\")"})]
+                   (let [{:keys [parsed-body] :as raw} (search-th/search-raw app :incident {:query "detection_sources:(\"Crowdstrike for Endpoint\")"})]
                      (and (is (= 200 (:status raw)) (pr-str raw))
                           (is (= (normalize [incident1])
                                  (normalize parsed-body))
                               (pr-str parsed-body)))))
                  (testing "incident1+2+3"
-                   (let [{:keys [parsed-body] :as raw} (search-th/search-raw app :incident {:query "detection_sources:(\"TA0043\")"})]
+                   (let [{:keys [parsed-body] :as raw} (search-th/search-raw app :incident {:query "detection_sources:(\"Cisco XDR Detections\")"})]
                      (and (is (= 200 (:status raw)) (pr-str raw))
                           (is (= (normalize [incident1 incident2 incident3])
                                  (normalize parsed-body))))))
                  (testing "incident1+3 multi"
-                   (let [{:keys [parsed-body] :as raw} (search-th/search-raw app :incident {:query "detection_sources:(\"TA0002\" || \"TA8888\")"}) ]
+                   (let [{:keys [parsed-body] :as raw} (search-th/search-raw app :incident {:query "detection_sources:(\"Crowdstrike for Endpoint\" || \"Talnos, which is like Talos but weird\")"}) ]
                      (and (is (= 200 (:status raw)) (pr-str raw))
                           (is (= (normalize [incident1 incident3])
                                  (normalize parsed-body)))))))
