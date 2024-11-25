@@ -134,9 +134,9 @@
       verb (assoc :incident_time {verb t}))))
 
 (defn status-categories
-  (merge (zipmap ["New"] (repeat "New"))
-         (zipmap ["Opened"] (repeat "Opened"))
-         (zipmap ["Closed"] (repeat "Closed"))))
+  (merge (zipmap ["New"] (repeat :new))
+         (zipmap ["Opened"] (repeat :opened))
+         (zipmap ["Closed"] (repeat :closed))))
 
 (s/defn ^:private update-interval :- ESStoredIncident
   [{:keys [intervals] :as incident} :- ESStoredIncident
@@ -163,14 +163,14 @@
     (cond-> incident
       ;; the duration between the time at which the incident changed from New to Open and the incident creation time
       ;; https://github.com/advthreat/iroh/issues/7622#issuecomment-1496374419
-      (and (= "New" (status-categories old-status))
-           (= "Open" (status-categories new-status)))
+      (and (= :new (status-categories old-status))
+           (= :opened (status-categories new-status)))
       (update-interval :new_to_opened
                        (:created prev)
                        (get-in incident [:incident_time :opened]))
 
-      (and (= "Open" (status-categories old-status))
-           (= "Closed" (status-categories new-status)))
+      (and (= :opened (status-categories old-status))
+           (= :closed (status-categories new-status)))
       (update-interval :opened_to_closed
                        ;; we assume this was updated by the status route on Open. will be garbage if status was updated
                        ;; in any other way.
