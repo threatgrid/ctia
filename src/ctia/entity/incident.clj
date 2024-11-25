@@ -113,30 +113,32 @@
 (s/defschema IncidentStatusUpdate
   {:status IncidentStatus})
 
+(defn status-category []
+  (case status
+    ;; TODO add more :new statuses
+    "New" :new
+    "Stalled" nil
+    "Hold" nil
+    ;; Note: GitHub syntax highlighting doesn't like lists with strings
+    "Containment Achieved" :remediated
+    "Restoration Achieved" :remediated
+    ;; TODO add more :opened statuses
+    "Open" :opened
+    "Rejected" :rejected
+    ;; TODO add more :closed statuses
+    "Closed" :closed
+    "Incident Reported" :reported
+    nil))
+
 (defn make-status-update
   [{:keys [status]}]
   (let [t (time/internal-now)
-        verb (case status
-               "New" nil
-               "Stalled" nil
-               "Hold" nil
-               ;; Note: GitHub syntax highlighting doesn't like lists with strings
-               "Containment Achieved" :remediated
-               "Restoration Achieved" :remediated
-               ;; TODO add more opened statuses
-               "Open" :opened
-               "Rejected" :rejected
-               ;; TODO add more closed statuses
-               "Closed" :closed
-               "Incident Reported" :reported
-               nil)]
+        verb (status-category status)]
     (cond-> {:status status}
-      verb (assoc :incident_time {verb t}))))
-
-(defn status-categories
-  (merge (zipmap ["New"] (repeat :new))
-         (zipmap ["Opened"] (repeat :opened))
-         (zipmap ["Closed"] (repeat :closed))))
+      (and verb
+           ;; :created is used instead of :incident_time.new
+           (not= :new verb))
+      (assoc :incident_time {verb t}))))
 
 (s/defn ^:private update-interval :- ESStoredIncident
   [{:keys [intervals] :as incident} :- ESStoredIncident
@@ -163,14 +165,14 @@
     (cond-> incident
       ;; the duration between the time at which the incident changed from New to Open and the incident creation time
       ;; https://github.com/advthreat/iroh/issues/7622#issuecomment-1496374419
-      (and (= :new (status-categories old-status))
-           (= :opened (status-categories new-status)))
+      (and (= :new (status-category old-status))
+           (= :opened (status-category new-status)))
       (update-interval :new_to_opened
                        (:created prev)
                        (get-in incident [:incident_time :opened]))
 
-      (and (= :opened (status-categories old-status))
-           (= :closed (status-categories new-status)))
+      (and (= :opened (status-category old-status))
+           (= :closed (status-category new-status)))
       (update-interval :opened_to_closed
                        ;; we assume this was updated by the status route on Open. will be garbage if status was updated
                        ;; in any other way.
