@@ -113,7 +113,7 @@
 (s/defschema IncidentStatusUpdate
   {:status IncidentStatus})
 
-(defn status-category []
+(defn status-category [status]
   (case status
     ;; TODO add more :new statuses
     "New" :new
