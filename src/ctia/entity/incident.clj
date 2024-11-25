@@ -240,6 +240,7 @@
       :discovery_method   em/token
       :intended_effect    em/token
       :assignees          em/token
+      :detection_sources  em/token
       :promotion_method   em/token
       :severity           em/token
       :tactics            em/token
@@ -275,6 +276,7 @@
            :discovery_method
            :intended_effect
            :assignees
+           :detection_sources
            :promotion_method
            :severity
            :tactics
@@ -339,6 +341,7 @@
 
 (def incident-enumerable-fields
   [:assignees
+   :detection_sources
    :categories
    :confidence
    :discovery_method
@@ -384,6 +387,7 @@
      :categories         s/Str
      :sort_by            (incident-sort-fields services)
      :assignees          s/Str
+     :detection_sources  s/Str
      :promotion_method   s/Str
      :severity           s/Str
      :tactics            [s/Str]
