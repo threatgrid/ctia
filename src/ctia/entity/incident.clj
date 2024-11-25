@@ -123,13 +123,20 @@
                ;; Note: GitHub syntax highlighting doesn't like lists with strings
                "Containment Achieved" :remediated
                "Restoration Achieved" :remediated
+               ;; TODO add more opened statuses
                "Open" :opened
                "Rejected" :rejected
+               ;; TODO add more closed statuses
                "Closed" :closed
                "Incident Reported" :reported
                nil)]
     (cond-> {:status status}
       verb (assoc :incident_time {verb t}))))
+
+(defn status-categories
+  (merge (zipmap ["New"] (repeat "New"))
+         (zipmap ["Opened"] (repeat "Opened"))
+         (zipmap ["Closed"] (repeat "Closed"))))
 
 (s/defn ^:private update-interval :- ESStoredIncident
   [{:keys [intervals] :as incident} :- ESStoredIncident
@@ -156,14 +163,14 @@
     (cond-> incident
       ;; the duration between the time at which the incident changed from New to Open and the incident creation time
       ;; https://github.com/advthreat/iroh/issues/7622#issuecomment-1496374419
-      (and (= "New" old-status)
-           (= "Open" new-status))
+      (and (= "New" (status-categories old-status))
+           (= "Open" (status-categories new-status)))
       (update-interval :new_to_opened
                        (:created prev)
                        (get-in incident [:incident_time :opened]))
 
-      (and (= "Open" old-status)
-           (= "Closed" new-status))
+      (and (= "Open" (status-categories old-status))
+           (= "Closed" (status-categories new-status)))
       (update-interval :opened_to_closed
                        ;; we assume this was updated by the status route on Open. will be garbage if status was updated
                        ;; in any other way.
