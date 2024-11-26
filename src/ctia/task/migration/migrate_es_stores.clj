@@ -208,7 +208,7 @@
          migrated-count-state :migrated} target
         store-schema (type->schema (keyword (:type target-store)))
         list-coerce (list-coerce-fn store-schema)
-        queries (mst/sliced-queries source-store search_after "week")
+        queries (mst/sliced-queries source-store search_after "day")
         base-params {:source-store source-store
                      :target-store target-store
                      :migrated-count migrated-count-state
