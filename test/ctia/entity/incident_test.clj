@@ -622,8 +622,8 @@
                      incident3 (assoc (gen-new-incident) :detection_sources ["TA0008" "Cisco XDR Detections" "TA0006" "Talnos, which is like Talos but weird"])
                      normalize (fn [incidents]
                                  (->> incidents
-                                      (map #(select-keys % [:title :tactics]))
-                                      (sort-by :tactics)))]
+                                      (map #(select-keys % [:title :detection_sources]))
+                                      (sort-by :detection_sources)))]
                  (create-incidents app #{incident1 incident2 incident3})
                  (testing "incident1"
                    (let [{:keys [parsed-body] :as raw} (search-th/search-raw app :incident {:query "detection_sources:(\"Crowdstrike for Endpoint\")"})]
