@@ -606,6 +606,43 @@
                                  (normalize parsed-body)))))))
                (finally (purge-incidents! app))))))))
 
+(deftest filter-incidents-by-sources-test
+  (es-helpers/for-each-es-version
+    "sort by tactics"
+    [7]
+    #(es-helpers/clean-es-state! % "ctia_*")
+    (helpers/with-properties (into ["ctia.auth.type" "allow-all"]
+                                   es-helpers/basic-auth-properties)
+      (helpers/fixture-ctia-with-app
+        (fn [app]
+          ;(helpers/set-capabilities! app "foouser" ["foogroup"] "user" all-capabilities)
+          ;(whoami-helpers/set-whoami-response app "45c1f5e3f05d0" "foouser" "foogroup" "user")
+          (try (let [incident1 (assoc (gen-new-incident) :detection_sources ["Crowdstrike for Endpoint" "Cisco XDR Detections" "TA0006"])
+                     incident2 (assoc (gen-new-incident) :detection_sources ["TA0004" "Cisco XDR Detections" "TA0008"])
+                     incident3 (assoc (gen-new-incident) :detection_sources ["TA0008" "Cisco XDR Detections" "TA0006" "Talnos, which is like Talos but weird"])
+                     normalize (fn [incidents]
+                                 (->> incidents
+                                      (map #(select-keys % [:title :detection_sources]))
+                                      (sort-by :detection_sources)))]
+                 (create-incidents app #{incident1 incident2 incident3})
+                 (testing "incident1"
+                   (let [{:keys [parsed-body] :as raw} (search-th/search-raw app :incident {:query "detection_sources:(\"Crowdstrike for Endpoint\")"})]
+                     (and (is (= 200 (:status raw)) (pr-str raw))
+                          (is (= (normalize [incident1])
+                                 (normalize parsed-body))
+                              (pr-str parsed-body)))))
+                 (testing "incident1+2+3"
+                   (let [{:keys [parsed-body] :as raw} (search-th/search-raw app :incident {:query "detection_sources:(\"Cisco XDR Detections\")"})]
+                     (and (is (= 200 (:status raw)) (pr-str raw))
+                          (is (= (normalize [incident1 incident2 incident3])
+                                 (normalize parsed-body))))))
+                 (testing "incident1+3 multi"
+                   (let [{:keys [parsed-body] :as raw} (search-th/search-raw app :incident {:query "detection_sources:(\"Crowdstrike for Endpoint\" || \"Talnos, which is like Talos but weird\")"}) ]
+                     (and (is (= 200 (:status raw)) (pr-str raw))
+                          (is (= (normalize [incident1 incident3])
+                                 (normalize parsed-body)))))))
+               (finally (purge-incidents! app))))))))
+
 (deftest filter-incidents-by-scores-range
   (es-helpers/for-each-es-version
     "filter by scores"

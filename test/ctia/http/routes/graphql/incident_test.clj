@@ -19,7 +19,7 @@
 (def external-ref "http://external.com/ctia/incident/incident-ab053333-2ad2-41d0-a445-31e9b9c38caf")
 
 (defn init-graph-data [app]
-  (let [base-incident (dissoc new-incident-maximal :id :scores :meta)
+  (let [base-incident (dissoc new-incident-maximal :id :scores :meta :detection_sources)
         ap1 (gh/create-object
              app
              "incident"
