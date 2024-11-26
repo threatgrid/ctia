@@ -32,7 +32,6 @@ env:
   LEIN_VERSION: 2.11.2
   CTIA_MAJOR_VERSION: 1
   SHELLCHECK_VERSION: v0.10.0
-  # FIXME testing setup-clojure's cache
   BB_VERSION: 1.12.193
   DEFAULT_JAVA_VERSION: 21
 
@@ -150,7 +149,7 @@ jobs:
         if: steps.maven-cache.outputs.cache-hit != 'true'
       - name: Install clojure tools
         if: steps.maven-cache.outputs.cache-hit != 'true' && steps.lein-cache.outputs.cache-hit != 'true'
-        uses: DeLaGuardo/setup-clojure@2d31e3ee6005571f8b20ab9c0827f29238f58d88
+        uses: DeLaGuardo/setup-clojure@13.0
         with:
           lein: ${{env.LEIN_VERSION}}
       - name: Warm dependency cache
@@ -179,7 +178,7 @@ jobs:
           path: ${{ env.BIN_PATH }}
           key: ctia-bin-${{ env.ACTIONS_CACHE_VERSION }}-${{ env.SHELLCHECK_VERSION }}
       - name: Install clojure tools
-        uses: DeLaGuardo/setup-clojure@2d31e3ee6005571f8b20ab9c0827f29238f58d88
+        uses: DeLaGuardo/setup-clojure@13.0
         with:
           lein: ${{env.LEIN_VERSION}}
           bb: ${{env.BB_VERSION}}
@@ -286,7 +285,7 @@ jobs:
           mkdir -p "${BIN_PATH}"
           echo "${BIN_PATH}" >> $GITHUB_PATH
       - name: Install clojure tools
-        uses: DeLaGuardo/setup-clojure@2d31e3ee6005571f8b20ab9c0827f29238f58d88
+        uses: DeLaGuardo/setup-clojure@13.0
         with:
           bb: ${{env.BB_VERSION}}
       - run: ./scripts/actions/setup_env.clj
@@ -336,7 +335,7 @@ jobs:
           mkdir -p "${BIN_PATH}"
           echo "${BIN_PATH}" >> $GITHUB_PATH
       - name: Install clojure tools
-        uses: DeLaGuardo/setup-clojure@2d31e3ee6005571f8b20ab9c0827f29238f58d88
+        uses: DeLaGuardo/setup-clojure@13.0
         with:
           lein: ${{env.LEIN_VERSION}}
           bb: ${{env.BB_VERSION}}
