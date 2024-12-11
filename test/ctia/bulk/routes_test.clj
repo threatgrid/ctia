@@ -439,6 +439,15 @@
                             :headers {"Authorization" "45c1f5e3f05d0"})))
                  "only entities with patch-bulk? set to true can be submitted to PATCH bulk")))
 
+         (testing "PATCH /ctia/bulk without ids"
+           (let [patch-bulk {:incidents (repeat 5 (hash-map :source "patched"))}
+                 {:keys [status parsed-body]} (PATCH app
+                                                     bulk-url
+                                                     :form-params patch-bulk
+                                                     :headers {"Authorization" "45c1f5e3f05d0"})]
+             (is (= 400 status))
+             (is (= parsed-body {:errors {:incidents (repeat 5 {:id 'missing-required-key})}}))))
+
          (testing "DELETE /ctia/bulk"
            ;; edge cases are tested in bulk/core-test
            (let [delete-bulk-query (into {}

@@ -82,7 +82,10 @@
   (let [patchable-entities (into {}
                                  (filter #(:can-patch? (second %)))
                                  (get-entities services))]
-    (entities-bulk-schema patchable-entities :partial-schema services {:required-ids? true})))
+    (entities-bulk-schema patchable-entities
+                          :partial-schema
+                          services
+                          {:required-ids? true})))
 
 (s/defn BulkRefs :- (s/protocol s/Schema)
   [services :- GetEntitiesServices]
