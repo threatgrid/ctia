@@ -53,7 +53,7 @@
          :responses {200 {:schema (s/maybe (bulk.schemas/BulkActionsRefs services))}}
          :summary "UPDATE many entities at once"
          :query-params [{wait_for :- (describe s/Bool "wait for updated entities to be available for search") nil}]
-         :body [bulk (describe (bulk.schemas/BulkUpdate services) "a new Bulk Update object")]
+         :body [bulk (describe (bulk.schemas/BulkUpdate services) "a Bulk Update object")]
          :description (common/capabilities->description capabilities)
          :capabilities capabilities
          :auth-identity auth-identity

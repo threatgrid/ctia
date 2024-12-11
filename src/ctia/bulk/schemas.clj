@@ -25,26 +25,34 @@
             s/Keyword s/Any})])
 
 (defn entity-schema
-  [{:keys [plural] :as entity} sch services]
-  (let [bulk-schema
-        (if (keyword? sch)
-          [(s/maybe
-            (let [ent-schema (get entity sch)]
-              (if (fn? ent-schema) (ent-schema services) ent-schema)))]
-          sch)]
-    {(-> plural
-         name
-         (str/replace #"-" "_")
-         keyword)
-     bulk-schema}))
+  ([entity sch services]
+   (entity-schema entity sch services {}))
+  ([{:keys [plural] :as entity} sch services {:keys [required-ids?]}]
+   (let [bulk-schema
+         (if (keyword? sch)
+           [(s/maybe
+             (let [ent-schema (get entity sch)]
+               (cond-> (if (fn? ent-schema)
+                         (ent-schema services) ent-schema)
+                 required-ids? (st/required-keys [:id]))))]
+           (if required-ids?
+             (st/required-keys sch :id)
+             sch))]
+     {(-> plural
+          name
+          (str/replace #"-" "_")
+          keyword)
+      bulk-schema})))
 
 (defn entities-bulk-schema
-  [entities sch services]
-  (st/optional-keys
-   (->> (vals entities)
-        (remove :no-bulk?)
-        (map #(entity-schema % sch services))
-        (apply merge {}))))
+  ([entities sch services]
+   (entities-bulk-schema entities sch services {}))
+  ([entities sch services opts]
+   (st/optional-keys
+    (->> (vals entities)
+         (remove :no-bulk?)
+         (map #(entity-schema % sch services opts))
+         (apply merge {})))))
 
 (s/defschema EntityError
   "Error related to one entity of the bulk"
@@ -74,7 +82,10 @@
   (let [patchable-entities (into {}
                                  (filter #(:can-patch? (second %)))
                                  (get-entities services))]
-    (entities-bulk-schema patchable-entities :partial-schema services)))
+    (entities-bulk-schema patchable-entities
+                          :partial-schema
+                          services
+                          {:required-ids? true})))
 
 (s/defn BulkRefs :- (s/protocol s/Schema)
   [services :- GetEntitiesServices]
@@ -91,7 +102,13 @@
   [services :- GetEntitiesServices]
   (entities-bulk-schema (get-entities services) :new-schema services))
 
-(def BulkUpdate NewBulk)
+(s/defn BulkUpdate :- (s/protocol s/Schema)
+  "Returns NewBulk schema without disabled entities and required ids"
+  [services :- GetEntitiesServices]
+  (entities-bulk-schema (get-entities services)
+                        :new-schema
+                        services
+                        {:required-ids? true}))
 
 (def NewBulkDelete BulkRefs)
 
