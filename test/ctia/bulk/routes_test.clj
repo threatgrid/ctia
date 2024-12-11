@@ -319,6 +319,7 @@
                             :headers {"Authorization" "45c1f5e3f05d0"})
              bulk-ids (:parsed-body response)
              show-props (get-http-show (app->HTTPShowServices app))]
+
          (is (= 201 (:status response)))
 
          (doseq [type (keys new-bulk)]
@@ -327,10 +328,10 @@
                     (count (get bulk-ids type))))))
          (testing "created events are generated"
            (let [expected-created-ids (mapcat val (dissoc bulk-ids :tempids))]
-               (check-events event-store
-                             ident
-                             expected-created-ids
-                             :record-created)))
+             (check-events event-store
+                           ident
+                           expected-created-ids
+                           :record-created)))
          (testing "GET /ctia/bulk"
            (let [{status :status
                   response :parsed-body}
@@ -387,6 +388,29 @@
                            (concat indicator-ids sighting-ids note-ids)
                            :record-updated)))
 
+         (testing "PUT /ctia/bulk without ids"
+           (let [update-fn (fn [record] (-> record
+                                            (assoc :source "updated")
+                                            (dissoc :id)))
+                 indicator-ids (:indicators bulk-ids)
+                 sighting-ids (:sightings bulk-ids)
+                 note-ids (:notes bulk-ids)
+                 update-bulk {:indicators (map (fn [_] (update-fn (mk-new-indicator 0))) indicator-ids)
+                              :sightings (map (fn [_] (update-fn (mk-new-sighting 0))) sighting-ids)
+                              :notes (map (fn [_] (update-fn (mk-new-note 0))) note-ids)}
+                 expected-update {:indicators {:updated (set indicator-ids)}
+                                  :sightings {:updated (set sighting-ids)}
+                                  :notes {:updated (set note-ids)}}
+                 {:keys [status parsed-body]} (PUT app
+                                                   bulk-url
+                                                   :form-params update-bulk
+                                                   :headers {"Authorization" "45c1f5e3f05d0"})]
+             (is (= 400 status))
+             (is (= parsed-body
+                    {:errors {:notes (repeat 7 {:id 'missing-required-key})
+                              :indicators (repeat 7 {:id 'missing-required-key})
+                              :sightings (repeat 7 {:id 'missing-required-key})}}))))
+
          (testing "PATCH /ctia/bulk"
            (let [incident-ids (:incidents bulk-ids)
                  sighting-ids (:sightings bulk-ids)
@@ -422,13 +446,13 @@
                                                 {k (take 2 ids)}))
                                          (dissoc bulk-ids :tempids))
                  expected-deleted (into {}
-                                       (map (fn [[k ids]]
-                                              {k {:deleted ids}}))
-                                       delete-bulk-query)
+                                        (map (fn [[k ids]]
+                                               {k {:deleted ids}}))
+                                        delete-bulk-query)
                  expected-not-found (into {}
-                                       (map (fn [[k ids]]
-                                              {k {:errors {:not-found ids}}}))
-                                       delete-bulk-query)
+                                          (map (fn [[k ids]]
+                                                 {k {:errors {:not-found ids}}}))
+                                          delete-bulk-query)
                  delete-bulk-url "ctia/bulk?wait_for=true"
                  {delete-status-1 :status delete-res-1 :parsed-body}
                  (DELETE app
