@@ -8,6 +8,7 @@
             [ctia.entity.entities :as entities]
             [ctia.entity.sighting.schemas :refer [StoredSighting]]
             [ctia.features-service :as features-svc]
+            [ctia.init :as init]
             [ctia.properties :as p]
             [ctia.stores.es.crud :refer [coerce-to-fn]]
             [ctia.stores.es.store :refer [StoreMap]]
@@ -316,8 +317,8 @@
     (let [_ (log/info "starting CTIA Stores...")
           config (p/build-init-config)
           get-in-config (partial get-in config)
-          app (ctia.init/start-ctia! {:services [features-svc/features-service]
-                                      :config config})
+          app (init/start-ctia! {:services [features-svc/features-service]
+                                 :config config})
           services (puppetlabs.trapperkeeper.app/service-graph app)]
       (mst/setup! services)
       (doto (-> (get-in-config [:ctia :migration])
@@ -342,11 +343,27 @@
   ;; An option with a required argument
   [["-c" "--confirm" "really do the migration?"]
    ["-r" "--restart" "restart ongoing migration?"]
+   [nil "--jackson-maxStringLength" "Sets the maximum string length (in chars or bytes, depending on input context). Corresponds to jackson's StreamReadConstraints$Builder/maxStringLength"]
+   [nil "--jackson-maxNameLength" "Sets the maximum name length (in chars or bytes, depending on input context). Corresponds to jackson's StreamReadConstraints$Builder/maxNameLength"]
+   [nil "--jackson-maxNestingDepth" "Sets the maximum nesting depth. Corresponds to jackson's StreamReadConstraints$Builder/maxNestingDepth"]
+   [nil "--jackson-maxDocumentLength" "Sets the maximum allowed document length (for positive values over 0) or indicate that any length is acceptable (0 or negative number). Corresponds to jackson's StreamReadConstraints$Builder/maxDocumentLength."]
+   [nil "--jackson-maxTokenCount" "Sets the maximum allowed token count (for positive values over 0) or indicate that any count is acceptable ({@code 0} or negative number). Corresponds to jackson's StreamReadConstraints$Builder/maxTokenCount."]
    ["-h" "--help"]])
+
+(defn extract-jackson-config [options]
+  (-> options
+      (select-keys [:jackson-maxStringLength
+                    :jackson-maxNameLength
+                    :jackson-maxNestingDepth
+                    :jackson-maxDocumentLength
+                    :jackson-maxTokenCount])
+      (update-keys #(keyword (subs (name %) (count "jackson-"))))
+      not-empty))
 
 (defn -main [& args]
   (let [{:keys [options errors summary]} (parse-opts args cli-options)
-        {:keys [restart confirm]} options]
+        {:keys [restart confirm]} options
+        jackson-config (extract-jackson-config options)]
     (when errors
       (binding  [*out* *err*]
         (println (string/join "\n" errors))
@@ -356,5 +373,6 @@
       (println summary)
       (System/exit 0))
     (pp/pprint options)
-    (run-migration {:confirm? confirm
-                    :restart? restart})))
+    (run-migration (cond-> {:confirm? confirm
+                            :restart? restart}
+                     jackson-config (assoc :jackson-config jackson-config)))))
