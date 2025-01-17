@@ -2,6 +2,7 @@
   (:require [ductile.schemas :refer [ESConn ESQuery]]
             [puppetlabs.trapperkeeper.app :as app]
             [clj-momo.lib.time :as time]
+            [cheshire.factory :as factory]
             [clojure.pprint :as pp]
             [clojure.string :as string]
             [clojure.tools.cli :refer [parse-opts]]
@@ -17,7 +18,10 @@
             [ctia.task.migration.store :as mst]
             [schema-tools.core :as st]
             [schema.core :as s])
-  (:import java.lang.AssertionError))
+  (:import java.lang.AssertionError
+           com.fasterxml.jackson.core.StreamReadConstraints))
+
+(set! *warn-on-reflection* true)
 
 (def default-batch-size 100)
 
@@ -100,10 +104,11 @@
     :migration-es-conn ESConn
     :confirm? s/Bool
     :documents [{s/Any s/Any}]
-    :query ESQuery}))
+    :query ESQuery
+    :jackson-config (s/maybe mst/JacksonConfig)}))
 
 (s/defn read-source-batch :- (s/maybe BatchParams)
-  "This function retrieves in `source-store`a batch of documents that match the given `query`.
+  "This function retrieves in `source-store` a batch of documents that match the given `query`.
    When not nil, the `search_after` parameter is used to skip previously retrieved data. The
    returned result prepares the next batch parameters with new `search_after` along with the
    documents that have to be written in target."
@@ -199,6 +204,7 @@
    migrations
    batch-size
    confirm?
+   jackson-config
    services :- mst/MigrationStoreServices]
   (log/infof "migrating store: %s" entity-type)
   (let [{stores :stores migration-id :id} migration-state
@@ -211,6 +217,22 @@
         store-schema (type->schema (keyword (:type target-store)))
         list-coerce (list-coerce-fn store-schema)
         queries (mst/sliced-queries source-store search_after "week")
+        source-store (cond-> source-store
+                       jackson-config (update-in [:conn :request-fn]
+                                                 (fn [f]
+                                                   (let [{:keys [maxNestingDepth maxDocumentLength maxTokenCount maxNumberLength maxStringLength maxNameLength]} jackson-config]
+                                                     #(binding [factory/*json-factory* 
+                                                                (doto (factory/make-json-factory factory/default-factory-options)
+                                                                  (.setStreamReadConstraints
+                                                                    (-> (cond-> (StreamReadConstraints/builder)
+                                                                          maxNestingDepth (.maxNestingDepth maxNestingDepth)
+                                                                          maxDocumentLength (.maxDocumentLength maxDocumentLength)
+                                                                          maxTokenCount (.maxTokenCount maxTokenCount)
+                                                                          maxNumberLength (.maxNumberLength maxNumberLength)
+                                                                          maxStringLength (.maxStringLength maxStringLength)
+                                                                          maxNameLength (.maxNameLength maxNameLength))
+                                                                        .build)))]
+                                                        (f %))))))
         base-params {:source-store source-store
                      :target-store target-store
                      :migrated-count migrated-count-state
@@ -251,7 +273,8 @@
            store-keys
            batch-size
            confirm?
-           restart?]
+           restart?
+           jackson-config]
     :as migration-params} :- mst/MigrationParams
    services :- mst/MigrationStoreServices]
   (let [migration-state (if restart?
@@ -267,6 +290,7 @@
                      migrations
                      batch-size
                      confirm?
+                     jackson-config
                      services))
     (handle-deletes migration-state store-keys batch-size confirm? services)))
 
