@@ -223,7 +223,8 @@
                                                    (let [{:keys [maxNestingDepth maxNumberLength maxStringLength]} jackson-config
                                                          factory (doto (factory/make-json-factory factory/default-factory-options)
                                                                    (.setStreamReadConstraints
-                                                                     (-> (cond-> (StreamReadConstraints/builder)
+                                                                     (-> (StreamReadConstraints/builder)
+                                                                         (cond->
                                                                            maxNestingDepth (StreamReadConstraints$Builder/.maxNestingDepth maxNestingDepth)
                                                                            maxNumberLength (StreamReadConstraints$Builder/.maxNumberLength maxNumberLength)
                                                                            maxStringLength (StreamReadConstraints$Builder/.maxStringLength maxStringLength))
