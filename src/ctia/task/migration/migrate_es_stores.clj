@@ -351,7 +351,8 @@
    [nil "--jackson-maxTokenCount" "Sets the maximum allowed token count (for positive values over 0) or indicate that any count is acceptable ({@code 0} or negative number). Corresponds to jackson's StreamReadConstraints$Builder/maxTokenCount."]
    ["-h" "--help"]])
 
-(defn extract-jackson-config [options]
+(s/defn extract-jackson-config :- (s/maybe mst/JacksonConfig)
+  [options]
   (-> options
       (select-keys [:jackson-maxStringLength
                     :jackson-maxNameLength
