@@ -47,11 +47,9 @@
 
 (s/defschema JacksonConfig
   (st/optional-keys
-    {:maxStringLength s/Int
-     :maxNameLength s/Int
-     :maxNestingDepth s/Int
-     :maxDocumentLength s/Int
-     :maxTokenCount s/Int}))
+    {:maxNestingDepth s/Int
+     :maxNumberLength s/Int
+     :maxStringLength s/Int}))
 
 (s/defschema MigrationParams
   {:migration-id s/Str

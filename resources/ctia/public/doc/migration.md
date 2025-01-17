@@ -165,10 +165,7 @@ or from source
 | -c, --confirm               | really do the migration?                         |              | false (positional) |
 | -r, --restart               | restart ongoing migration?                       |              | false (positional) |
 | --jackson-maxStringLength   | Sets the maximum string length (in chars or bytes, depending on input context). Corresponds to jackson's StreamReadConstraints$Builder/maxStringLength |              | jackson's default  |
-| --jackson-maxNameLength     | Sets the maximum name length (in chars or bytes, depending on input context). Corresponds to jackson's StreamReadConstraints$Builder/maxNameLength |              | jackson's default  |
 | --jackson-maxNestingDepth   | Sets the maximum nesting depth. Corresponds to jackson's StreamReadConstraints$Builder/maxNestingDepth |              | jackson's default  |
-| --jackson-maxDocumentLength | Sets the maximum allowed document length (for positive values over 0) or indicate that any length is acceptable (0 or negative number). Corresponds to jackson's StreamReadConstraints$Builder/maxDocumentLength. |              | jackson's default  |
-| --jackson-maxTokenCount     | Sets the maximum allowed token count (for positive values over 0) or indicate that any count is acceptable ({@code 0} or negative number). Corresponds to jackson's StreamReadConstraints$Builder/maxTokenCount. |              | jackson's default  |
 | -h, --help                  | prints usage                                     |              |                    |
 
 # Available migrations

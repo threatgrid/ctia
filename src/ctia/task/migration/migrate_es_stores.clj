@@ -19,7 +19,7 @@
             [schema-tools.core :as st]
             [schema.core :as s])
   (:import java.lang.AssertionError
-           com.fasterxml.jackson.core.StreamReadConstraints))
+           (com.fasterxml.jackson.core StreamReadConstraints StreamReadConstraints$Builder)))
 
 (set! *warn-on-reflection* true)
 
@@ -220,18 +220,15 @@
         source-store (cond-> source-store
                        jackson-config (update-in [:conn :request-fn]
                                                  (fn [f]
-                                                   (let [{:keys [maxNestingDepth maxDocumentLength maxTokenCount maxNumberLength maxStringLength maxNameLength]} jackson-config]
-                                                     #(binding [factory/*json-factory* 
-                                                                (doto (factory/make-json-factory factory/default-factory-options)
-                                                                  (.setStreamReadConstraints
-                                                                    (-> (cond-> (StreamReadConstraints/builder)
-                                                                          maxNestingDepth (.maxNestingDepth maxNestingDepth)
-                                                                          maxDocumentLength (.maxDocumentLength maxDocumentLength)
-                                                                          maxTokenCount (.maxTokenCount maxTokenCount)
-                                                                          maxNumberLength (.maxNumberLength maxNumberLength)
-                                                                          maxStringLength (.maxStringLength maxStringLength)
-                                                                          maxNameLength (.maxNameLength maxNameLength))
-                                                                        .build)))]
+                                                   (let [{:keys [maxNestingDepth maxNumberLength maxStringLength]} jackson-config
+                                                         factory (doto (factory/make-json-factory factory/default-factory-options)
+                                                                   (.setStreamReadConstraints
+                                                                     (-> (cond-> (StreamReadConstraints/builder)
+                                                                           maxNestingDepth (StreamReadConstraints$Builder/.maxNestingDepth maxNestingDepth)
+                                                                           maxNumberLength (StreamReadConstraints$Builder/.maxNumberLength maxNumberLength)
+                                                                           maxStringLength (StreamReadConstraints$Builder/.maxStringLength maxStringLength))
+                                                                         .build)))]
+                                                     #(binding [factory/*json-factory* factory]
                                                         (f %))))))
         base-params {:source-store source-store
                      :target-store target-store
