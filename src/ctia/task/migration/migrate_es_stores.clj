@@ -1,5 +1,6 @@
 (ns ctia.task.migration.migrate-es-stores
   (:require [ductile.schemas :refer [ESConn ESQuery]]
+            [puppetlabs.trapperkeeper.app :as app]
             [clj-momo.lib.time :as time]
             [clojure.pprint :as pp]
             [clojure.string :as string]
@@ -319,7 +320,7 @@
           get-in-config (partial get-in config)
           app (init/start-ctia! {:services [features-svc/features-service]
                                  :config config})
-          services (puppetlabs.trapperkeeper.app/service-graph app)]
+          services (app/service-graph app)]
       (mst/setup! services)
       (doto (-> (get-in-config [:ctia :migration])
                 (into options)

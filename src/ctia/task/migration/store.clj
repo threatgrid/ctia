@@ -45,6 +45,14 @@
     :version s/Num
     :auth AuthParams}))
 
+(s/defschema JacksonConfig
+  (st/optional-keys
+    {:maxStringLength s/Int
+     :maxNameLength s/Int
+     :maxNestingDepth s/Int
+     :maxDocumentLength s/Int
+     :maxTokenCount s/Int}))
+
 (s/defschema MigrationParams
   {:migration-id s/Str
    :prefix s/Str
@@ -53,7 +61,8 @@
    :batch-size s/Int
    :confirm? (s/maybe s/Bool)
    :restart? (s/maybe s/Bool)
-   (s/optional-key :store) {:es {s/Keyword ESStoreProperties}}})
+   (s/optional-key :store) {:es {s/Keyword ESStoreProperties}}
+   (s/optional-key :jackson-config) JacksonConfig})
 
 (def timeout (* 5 60000))
 (def es-max-retry 3)
@@ -583,10 +592,10 @@ when confirm? is true, it stores this state and creates the target indices."
         target-stores (get-target-stores prefix store-keys services)
         migration-properties (migration-store-properties services)
         now (time/internal-now)
-        migration-stores (->> source-stores
-                              (map (fn [[k v]]
-                                     {k (init-migration-store v (k target-stores))}))
-                              (into {}))
+        migration-stores (into {}
+                               (map (fn [[k v]]
+                                      {k (init-migration-store v (k target-stores))}))
+                               source-stores)
         migration {:id migration-id
                    :prefix prefix
                    :created now
