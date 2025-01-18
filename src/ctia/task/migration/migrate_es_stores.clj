@@ -366,21 +366,17 @@
   ;; An option with a required argument
   [["-c" "--confirm" "really do the migration?"]
    ["-r" "--restart" "restart ongoing migration?"]
-   [nil "--jackson-maxStringLength" "Sets the maximum string length (in chars or bytes, depending on input context). Corresponds to jackson's StreamReadConstraints$Builder/maxStringLength"]
-   [nil "--jackson-maxNameLength" "Sets the maximum name length (in chars or bytes, depending on input context). Corresponds to jackson's StreamReadConstraints$Builder/maxNameLength"]
    [nil "--jackson-maxNestingDepth" "Sets the maximum nesting depth. Corresponds to jackson's StreamReadConstraints$Builder/maxNestingDepth"]
-   [nil "--jackson-maxDocumentLength" "Sets the maximum allowed document length (for positive values over 0) or indicate that any length is acceptable (0 or negative number). Corresponds to jackson's StreamReadConstraints$Builder/maxDocumentLength."]
-   [nil "--jackson-maxTokenCount" "Sets the maximum allowed token count (for positive values over 0) or indicate that any count is acceptable ({@code 0} or negative number). Corresponds to jackson's StreamReadConstraints$Builder/maxTokenCount."]
+   [nil "--jackson-maxStringLength" "Sets the maximum string length (in chars or bytes, depending on input context). Corresponds to jackson's StreamReadConstraints$Builder/.maxStringLength"]
+   [nil "--jackson-maxNumberLength" "Sets the maximum number length (in chars or bytes, depending on input context). Corresponds to jackson's StreamReadConstraints$Builder/.maxNumberLength"]
    ["-h" "--help"]])
 
 (s/defn extract-jackson-config :- (s/maybe mst/JacksonConfig)
   [options]
   (-> options
-      (select-keys [:jackson-maxStringLength
-                    :jackson-maxNameLength
-                    :jackson-maxNestingDepth
-                    :jackson-maxDocumentLength
-                    :jackson-maxTokenCount])
+      (select-keys [:jackson-maxNestingDepth
+                    :jackson-maxNumberLength
+                    :jackson-maxStringLength])
       (update-keys #(keyword (subs (name %) (count "jackson-"))))
       not-empty))
 
