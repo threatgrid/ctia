@@ -873,18 +873,14 @@
           {:restart true
            :confirm true})))
   (is (= {:maxStringLength 10
-          :maxNameLength 11
-          :maxNestingDepth 12
-          :maxDocumentLength 13
-          :maxTokenCount 14}
+          :maxNumberLength 11
+          :maxNestingDepth 12}
          (sut/extract-jackson-config
            {:restart true
             :confirm true
             :jackson-maxStringLength 10
-            :jackson-maxNameLength 11
-            :jackson-maxNestingDepth 12
-            :jackson-maxDocumentLength 13
-            :jackson-maxTokenCount 14}))))
+            :jackson-maxNumberLength 11
+            :jackson-maxNestingDepth 12}))))
 
 ;;(deftest ^:integration minimal-load-test
 ;; (with-each-fixtures identity app
