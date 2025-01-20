@@ -867,6 +867,21 @@
     (finally
       (es-index/delete! (es-conn (helpers/current-get-in-config-fn app)) "ctia_*"))))
 
+(deftest extract-jackson-config-test
+  (is (nil?
+        (sut/extract-jackson-config
+          {:restart true
+           :confirm true})))
+  (is (= {:maxStringLength 10
+          :maxNumberLength 11
+          :maxNestingDepth 12}
+         (sut/extract-jackson-config
+           {:restart true
+            :confirm true
+            :jackson-maxStringLength 10
+            :jackson-maxNumberLength 11
+            :jackson-maxNestingDepth 12}))))
+
 ;;(deftest ^:integration minimal-load-test
 ;; (with-each-fixtures identity app
 ;;  (testing "load testing with minimal entities"

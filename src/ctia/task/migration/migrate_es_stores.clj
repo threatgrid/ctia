@@ -1,6 +1,8 @@
 (ns ctia.task.migration.migrate-es-stores
   (:require [ductile.schemas :refer [ESConn ESQuery]]
+            [puppetlabs.trapperkeeper.app :as app]
             [clj-momo.lib.time :as time]
+            [cheshire.factory :as factory]
             [clojure.pprint :as pp]
             [clojure.string :as string]
             [clojure.tools.cli :refer [parse-opts]]
@@ -8,6 +10,7 @@
             [ctia.entity.entities :as entities]
             [ctia.entity.sighting.schemas :refer [StoredSighting]]
             [ctia.features-service :as features-svc]
+            [ctia.init :as init]
             [ctia.properties :as p]
             [ctia.stores.es.crud :refer [coerce-to-fn]]
             [ctia.stores.es.store :refer [StoreMap]]
@@ -15,7 +18,10 @@
             [ctia.task.migration.store :as mst]
             [schema-tools.core :as st]
             [schema.core :as s])
-  (:import java.lang.AssertionError))
+  (:import java.lang.AssertionError
+           (com.fasterxml.jackson.core StreamReadConstraints StreamReadConstraints$Builder)))
+
+(set! *warn-on-reflection* true)
 
 (def default-batch-size 100)
 
@@ -98,10 +104,11 @@
     :migration-es-conn ESConn
     :confirm? s/Bool
     :documents [{s/Any s/Any}]
-    :query ESQuery}))
+    :query ESQuery
+    :jackson-config (s/maybe mst/JacksonConfig)}))
 
 (s/defn read-source-batch :- (s/maybe BatchParams)
-  "This function retrieves in `source-store`a batch of documents that match the given `query`.
+  "This function retrieves in `source-store` a batch of documents that match the given `query`.
    When not nil, the `search_after` parameter is used to skip previously retrieved data. The
    returned result prepares the next batch parameters with new `search_after` along with the
    documents that have to be written in target."
@@ -197,6 +204,7 @@
    migrations
    batch-size
    confirm?
+   jackson-config
    services :- mst/MigrationStoreServices]
   (log/infof "migrating store: %s" entity-type)
   (let [{stores :stores migration-id :id} migration-state
@@ -209,6 +217,20 @@
         store-schema (type->schema (keyword (:type target-store)))
         list-coerce (list-coerce-fn store-schema)
         queries (mst/sliced-queries source-store search_after "week")
+        source-store (cond-> source-store
+                       jackson-config (update-in [:conn :request-fn]
+                                                 (fn [f]
+                                                   (let [{:keys [maxNestingDepth maxNumberLength maxStringLength]} jackson-config
+                                                         factory (doto (factory/make-json-factory factory/default-factory-options)
+                                                                   (.setStreamReadConstraints
+                                                                     (-> (StreamReadConstraints/builder)
+                                                                         (cond->
+                                                                           maxNestingDepth (StreamReadConstraints$Builder/.maxNestingDepth maxNestingDepth)
+                                                                           maxNumberLength (StreamReadConstraints$Builder/.maxNumberLength maxNumberLength)
+                                                                           maxStringLength (StreamReadConstraints$Builder/.maxStringLength maxStringLength))
+                                                                         .build)))]
+                                                     #(binding [factory/*json-factory* factory]
+                                                        (f %))))))
         base-params {:source-store source-store
                      :target-store target-store
                      :migrated-count migrated-count-state
@@ -249,7 +271,8 @@
            store-keys
            batch-size
            confirm?
-           restart?]
+           restart?
+           jackson-config]
     :as migration-params} :- mst/MigrationParams
    services :- mst/MigrationStoreServices]
   (let [migration-state (if restart?
@@ -265,6 +288,7 @@
                      migrations
                      batch-size
                      confirm?
+                     jackson-config
                      services))
     (handle-deletes migration-state store-keys batch-size confirm? services)))
 
@@ -316,9 +340,9 @@
     (let [_ (log/info "starting CTIA Stores...")
           config (p/build-init-config)
           get-in-config (partial get-in config)
-          app (ctia.init/start-ctia! {:services [features-svc/features-service]
-                                      :config config})
-          services (puppetlabs.trapperkeeper.app/service-graph app)]
+          app (init/start-ctia! {:services [features-svc/features-service]
+                                 :config config})
+          services (app/service-graph app)]
       (mst/setup! services)
       (doto (-> (get-in-config [:ctia :migration])
                 (into options)
@@ -342,11 +366,24 @@
   ;; An option with a required argument
   [["-c" "--confirm" "really do the migration?"]
    ["-r" "--restart" "restart ongoing migration?"]
+   [nil "--jackson-maxNestingDepth" "Sets the maximum nesting depth. Corresponds to jackson's StreamReadConstraints$Builder/maxNestingDepth"]
+   [nil "--jackson-maxStringLength" "Sets the maximum string length (in chars or bytes, depending on input context). Corresponds to jackson's StreamReadConstraints$Builder/.maxStringLength"]
+   [nil "--jackson-maxNumberLength" "Sets the maximum number length (in chars or bytes, depending on input context). Corresponds to jackson's StreamReadConstraints$Builder/.maxNumberLength"]
    ["-h" "--help"]])
+
+(s/defn extract-jackson-config :- (s/maybe mst/JacksonConfig)
+  [options]
+  (-> options
+      (select-keys [:jackson-maxNestingDepth
+                    :jackson-maxNumberLength
+                    :jackson-maxStringLength])
+      (update-keys #(keyword (subs (name %) (count "jackson-"))))
+      not-empty))
 
 (defn -main [& args]
   (let [{:keys [options errors summary]} (parse-opts args cli-options)
-        {:keys [restart confirm]} options]
+        {:keys [restart confirm]} options
+        jackson-config (extract-jackson-config options)]
     (when errors
       (binding  [*out* *err*]
         (println (string/join "\n" errors))
@@ -356,5 +393,6 @@
       (println summary)
       (System/exit 0))
     (pp/pprint options)
-    (run-migration {:confirm? confirm
-                    :restart? restart})))
+    (run-migration (cond-> {:confirm? confirm
+                            :restart? restart}
+                     jackson-config (assoc :jackson-config jackson-config)))))
