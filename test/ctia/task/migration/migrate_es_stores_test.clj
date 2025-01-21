@@ -882,6 +882,19 @@
             :jackson-maxNumberLength 11
             :jackson-maxNestingDepth 12}))))
 
+(deftest prep-run-migration-options-test
+  (is (= 0
+         (sut/prep-run-migration-options ["--help"])
+         (sut/prep-run-migration-options ["-h"])))
+  (is (= 1 (sut/prep-run-migration-options ["--jackson-maxStringLength"])))
+  (is (= 1 (sut/prep-run-migration-options ["--jackson-maxStringLength" "true"])))
+  (is (= {:confirm? nil,
+          :restart? nil,
+          :jackson-config {:maxNestingDepth 10, :maxNumberLength 500, :maxStringLength 250000}}
+         (sut/prep-run-migration-options ["--jackson-maxNestingDepth" "10"
+                                          "--jackson-maxStringLength" "250000"
+                                          "--jackson-maxNumberLength" "500"]))))
+
 ;;(deftest ^:integration minimal-load-test
 ;; (with-each-fixtures identity app
 ;;  (testing "load testing with minimal entities"
