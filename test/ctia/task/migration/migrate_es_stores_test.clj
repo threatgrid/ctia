@@ -1,6 +1,7 @@
 (ns ctia.task.migration.migrate-es-stores-test
   (:require [clj-momo.lib.clj-time.coerce :as time-coerce]
             [clj-momo.test-helpers.core :as mth]
+            [cheshire.core :as json]
             [clojure.data :refer [diff]]
             [clojure.java.io :as io]
             [clojure.set :as set]
@@ -881,6 +882,51 @@
             :jackson-maxStringLength 10
             :jackson-maxNumberLength 11
             :jackson-maxNestingDepth 12}))))
+
+(deftest prep-run-migration-options-test
+  (is (= 0
+         (sut/prep-run-migration-options ["--help"])
+         (sut/prep-run-migration-options ["-h"])))
+  (is (= {:confirm? nil :restart? nil} (sut/prep-run-migration-options [])))
+  (is (= 1 (sut/prep-run-migration-options ["--jackson-maxStringLength"])))
+  (is (= 1 (sut/prep-run-migration-options ["--jackson-maxStringLength" "true"])))
+  (is (= {:confirm? true,
+          :restart? true,
+          :jackson-config {:maxNestingDepth 10, :maxNumberLength 500, :maxStringLength 250000}}
+         (sut/prep-run-migration-options ["--confirm"
+                                          "--restart"
+                                          "--jackson-maxNestingDepth" "10"
+                                          "--jackson-maxStringLength" "250000"
+                                          "--jackson-maxNumberLength" "500"]))))
+
+(deftest wrap-jackson-config-test
+  (testing "maxStringLength"
+    (is (= "123456789"
+           ((sut/wrap-jackson-config json/parse-stream-strict
+                                     {:maxStringLength 10})
+            (java.io.StringReader. (pr-str "123456789")))))
+    (is (thrown? Exception
+                 ((sut/wrap-jackson-config json/parse-stream-strict
+                                           {:maxStringLength 5})
+                  (java.io.StringReader. (pr-str "123456789"))))))
+  (testing "maxNumberLength"
+    (is (= 123456789
+           ((sut/wrap-jackson-config json/parse-stream-strict
+                                     {:maxNumberLength 10})
+            (java.io.StringReader. "123456789"))))
+    (is (thrown? Exception
+                 ((sut/wrap-jackson-config json/parse-stream-strict
+                                           {:maxNumberLength 5})
+                  (java.io.StringReader. "123456789")))))
+  (testing "maxNestingDepth"
+    (is (= [[[[[1]]]]]
+           ((sut/wrap-jackson-config json/parse-stream-strict
+                                     {:maxNestingDepth 10})
+            (java.io.StringReader. "[[[[[1]]]]]"))))
+    (is (thrown? Exception
+                 ((sut/wrap-jackson-config json/parse-stream-strict
+                                           {:maxNestingDepth 3})
+                  (java.io.StringReader. "[[[[[1]]]]]"))))))
 
 ;;(deftest ^:integration minimal-load-test
 ;; (with-each-fixtures identity app

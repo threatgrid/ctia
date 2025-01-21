@@ -197,6 +197,18 @@
            :migrated-count
            new-migrated-count)))
 
+(s/defn wrap-jackson-config [request-fn {:keys [maxNestingDepth maxNumberLength maxStringLength]} :- mst/JacksonConfig]
+  (let [factory (doto (factory/make-json-factory factory/default-factory-options)
+                  (.setStreamReadConstraints
+                    (-> (StreamReadConstraints/builder)
+                        (cond->
+                          maxNestingDepth (StreamReadConstraints$Builder/.maxNestingDepth maxNestingDepth)
+                          maxNumberLength (StreamReadConstraints$Builder/.maxNumberLength maxNumberLength)
+                          maxStringLength (StreamReadConstraints$Builder/.maxStringLength maxStringLength))
+                        .build)))]
+    #(binding [factory/*json-factory* factory]
+       (request-fn %))))
+
 (s/defn migrate-store
   "migrate a single store"
   [migration-state
@@ -218,19 +230,7 @@
         list-coerce (list-coerce-fn store-schema)
         queries (mst/sliced-queries source-store search_after "week")
         source-store (cond-> source-store
-                       jackson-config (update-in [:conn :request-fn]
-                                                 (fn [f]
-                                                   (let [{:keys [maxNestingDepth maxNumberLength maxStringLength]} jackson-config
-                                                         factory (doto (factory/make-json-factory factory/default-factory-options)
-                                                                   (.setStreamReadConstraints
-                                                                     (-> (StreamReadConstraints/builder)
-                                                                         (cond->
-                                                                           maxNestingDepth (StreamReadConstraints$Builder/.maxNestingDepth maxNestingDepth)
-                                                                           maxNumberLength (StreamReadConstraints$Builder/.maxNumberLength maxNumberLength)
-                                                                           maxStringLength (StreamReadConstraints$Builder/.maxStringLength maxStringLength))
-                                                                         .build)))]
-                                                     #(binding [factory/*json-factory* factory]
-                                                        (f %))))))
+                       jackson-config (update-in [:conn :request-fn] wrap-jackson-config jackson-config))
         base-params {:source-store source-store
                      :target-store target-store
                      :migrated-count migrated-count-state
@@ -366,9 +366,12 @@
   ;; An option with a required argument
   [["-c" "--confirm" "really do the migration?"]
    ["-r" "--restart" "restart ongoing migration?"]
-   [nil "--jackson-maxNestingDepth" "Sets the maximum nesting depth. Corresponds to jackson's StreamReadConstraints$Builder/maxNestingDepth"]
-   [nil "--jackson-maxStringLength" "Sets the maximum string length (in chars or bytes, depending on input context). Corresponds to jackson's StreamReadConstraints$Builder/.maxStringLength"]
-   [nil "--jackson-maxNumberLength" "Sets the maximum number length (in chars or bytes, depending on input context). Corresponds to jackson's StreamReadConstraints$Builder/.maxNumberLength"]
+   [nil "--jackson-maxNestingDepth INT" "Sets the maximum nesting depth. Corresponds to jackson's StreamReadConstraints$Builder/.maxNestingDepth"
+    :parse-fn Integer/parseInt]
+   [nil "--jackson-maxStringLength INT" "Sets the maximum string length (in chars or bytes, depending on input context). Corresponds to jackson's StreamReadConstraints$Builder/.maxStringLength"
+    :parse-fn Integer/parseInt]
+   [nil "--jackson-maxNumberLength INT" "Sets the maximum number length (in chars or bytes, depending on input context). Corresponds to jackson's StreamReadConstraints$Builder/.maxNumberLength"
+    :parse-fn Integer/parseInt]
    ["-h" "--help"]])
 
 (s/defn extract-jackson-config :- (s/maybe mst/JacksonConfig)
@@ -380,19 +383,24 @@
       (update-keys #(keyword (subs (name %) (count "jackson-"))))
       not-empty))
 
-(defn -main [& args]
+(defn prep-run-migration-options [args]
   (let [{:keys [options errors summary]} (parse-opts args cli-options)
         {:keys [restart confirm]} options
         jackson-config (extract-jackson-config options)]
-    (when errors
-      (binding  [*out* *err*]
-        (println (string/join "\n" errors))
-        (println summary))
-      (System/exit 1))
-    (when (:help options)
-      (println summary)
-      (System/exit 0))
-    (pp/pprint options)
-    (run-migration (cond-> {:confirm? confirm
-                            :restart? restart}
-                     jackson-config (assoc :jackson-config jackson-config)))))
+    (cond
+      errors (binding [*out* *err*]
+               (println (string/join "\n" errors))
+               (println summary)
+               1)
+      (:help options) (do (println summary)
+                          0)
+      :else (do (pp/pprint options)
+                (cond-> {:confirm? confirm
+                         :restart? restart}
+                  jackson-config (assoc :jackson-config jackson-config))))))
+
+(defn -main [& args]
+  (let [options-or-exit (prep-run-migration-options args)]
+    (if (integer? options-or-exit)
+      (System/exit options-or-exit)
+      (run-migration options-or-exit))))
