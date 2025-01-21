@@ -1,6 +1,7 @@
 (ns ctia.task.migration.migrate-es-stores-test
   (:require [clj-momo.lib.clj-time.coerce :as time-coerce]
             [clj-momo.test-helpers.core :as mth]
+            [cheshire.core :as json]
             [clojure.data :refer [diff]]
             [clojure.java.io :as io]
             [clojure.set :as set]
@@ -897,6 +898,16 @@
                                           "--jackson-maxNestingDepth" "10"
                                           "--jackson-maxStringLength" "250000"
                                           "--jackson-maxNumberLength" "500"]))))
+
+(deftest wrap-jackson-config-test
+  (is (= "123456789"
+         ((sut/wrap-jackson-config json/parse-stream-strict
+                                   {:maxStringLength 10})
+          (java.io.StringReader. (pr-str "123456789")))))
+  (is (thrown? Exception
+               ((sut/wrap-jackson-config json/parse-stream-strict
+                                         {:maxStringLength 5})
+                (java.io.StringReader. (pr-str "123456789"))))))
 
 ;;(deftest ^:integration minimal-load-test
 ;; (with-each-fixtures identity app

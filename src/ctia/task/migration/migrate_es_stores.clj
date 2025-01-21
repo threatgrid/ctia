@@ -197,6 +197,18 @@
            :migrated-count
            new-migrated-count)))
 
+(s/defn wrap-jackson-config [request-fn {:keys [maxNestingDepth maxNumberLength maxStringLength]} :- mst/JacksonConfig]
+  (let [factory (doto (factory/make-json-factory factory/default-factory-options)
+                  (.setStreamReadConstraints
+                    (-> (StreamReadConstraints/builder)
+                        (cond->
+                          maxNestingDepth (StreamReadConstraints$Builder/.maxNestingDepth maxNestingDepth)
+                          maxNumberLength (StreamReadConstraints$Builder/.maxNumberLength maxNumberLength)
+                          maxStringLength (StreamReadConstraints$Builder/.maxStringLength maxStringLength))
+                        .build)))]
+    #(binding [factory/*json-factory* factory]
+       (request-fn %))))
+
 (s/defn migrate-store
   "migrate a single store"
   [migration-state
@@ -218,19 +230,7 @@
         list-coerce (list-coerce-fn store-schema)
         queries (mst/sliced-queries source-store search_after "week")
         source-store (cond-> source-store
-                       jackson-config (update-in [:conn :request-fn]
-                                                 (fn [f]
-                                                   (let [{:keys [maxNestingDepth maxNumberLength maxStringLength]} jackson-config
-                                                         factory (doto (factory/make-json-factory factory/default-factory-options)
-                                                                   (.setStreamReadConstraints
-                                                                     (-> (StreamReadConstraints/builder)
-                                                                         (cond->
-                                                                           maxNestingDepth (StreamReadConstraints$Builder/.maxNestingDepth maxNestingDepth)
-                                                                           maxNumberLength (StreamReadConstraints$Builder/.maxNumberLength maxNumberLength)
-                                                                           maxStringLength (StreamReadConstraints$Builder/.maxStringLength maxStringLength))
-                                                                         .build)))]
-                                                     #(binding [factory/*json-factory* factory]
-                                                        (f %))))))
+                       jackson-config (update-in [:conn :request-fn] wrap-jackson-config jackson-config))
         base-params {:source-store source-store
                      :target-store target-store
                      :migrated-count migrated-count-state
