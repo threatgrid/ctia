@@ -3,7 +3,6 @@
             [clj-momo.lib.clj-time.coerce :as tc]
             [clj-momo.lib.clj-time.core :as t]
             [clj-momo.test-helpers.core :as mth]
-            [clojure.set :as set]
             [clojure.test :refer [deftest is join-fixtures testing use-fixtures]]
             [clojure.test.check.generators :as gen]
             [com.gfredericks.test.chuck.clojure-test :refer [checking]]
@@ -29,7 +28,8 @@
             [java-time.api :as jt]
             [puppetlabs.trapperkeeper.app :as app]
             [schema-tools.core :as st]
-            [schema.core :as s]))
+            [schema.core :as s]
+            [clojure.string :as string]))
 
 (use-fixtures :once (join-fixtures [mth/fixture-schema-validation
                                     whoami-helpers/fixture-server]))
@@ -698,12 +698,21 @@
                (finally (purge-incidents! app))))))))
 
 (def incident-statuses
-  (set (:vs (st/get-in sut/Incident [:status]))))
-
-(assert (every? incident-statuses ["New" "Open" "Closed" "Rejected"]))
+  (:vs (st/get-in sut/Incident [:status])))
 
 (deftest compute-intervals-test
-  (let [computed-interval 20
+  (let [new-statuses ["New" "New: Processing" "New: Presented"]
+        open-statuses ["Open" "Open: Recovered" "Open: Contained" "Open: Reported" "Open: Investigating"]
+        closed-statuses ["Closed" "Closed: Confirmed Threat" "Closed: False Positive" "Closed: Merged"
+                         "Closed: Near-Miss" "Closed: Other" "Closed: Suspected" "Closed: Under Review"]
+        ;; If new statuses are added that begin with New, Closed, Open,
+        ;; we might want to re-evaluate this function.
+        _ (assert (every? (set (concat new-statuses open-statuses closed-statuses))
+                          (filter #(some (fn [prefix]
+                                           (string/starts-with? % prefix))
+                                         ["Open" "Closed" "New"])
+                                  incident-statuses)))
+        computed-interval 20
         earlier (jt/java-date)
         later   (-> (jt/instant earlier) (jt/plus (jt/seconds computed-interval)) jt/java-date)
         prev (-> incident-minimal
@@ -712,8 +721,8 @@
                         :owner ""
                         :id "foo")
                  (dissoc :intervals))]
-    (testing "updating status 'Open'"
-      (let [prev (assoc prev :status "New")
+    (testing "updating new_to_opened"
+      (let [prev (assoc prev :status "New: Presented")
             incident (assoc prev :status "Open" :incident_time {:opened later})]
         (testing "if prev does not already have a :new_to_opened interval, compute interval and include in update"
           (is (= (assoc incident :intervals {:new_to_opened computed-interval})
@@ -722,8 +731,13 @@
           (is (= (assoc incident :intervals {:new_to_opened 55565})
                  (sut/compute-intervals (assoc prev :intervals {:new_to_opened 55565})
                                         incident))))
-        (testing "if previous status is not New, then don't create new interval"
-          (doseq [stored-status (shuffle (disj incident-statuses "New"))]
+        (doseq [open-status open-statuses]
+          (testing (format "Status, '%s', is treated as open" open-status)
+            (let [incident (assoc prev :status open-status :incident_time {:opened later})]
+              (is (= (assoc incident :intervals {:new_to_opened computed-interval})
+                     (sut/compute-intervals prev incident))))))
+        (testing "if previous status is not one of the 'New' sub-statuses, then don't create new interval"
+          (doseq [stored-status (shuffle (apply disj incident-statuses new-statuses))]
             (testing stored-status
               (is (= incident (sut/compute-intervals (assoc prev :status stored-status) incident))))))
         ;; Note: :incident_time.opened is included in stored incident due to the Incident schema.
@@ -734,13 +748,23 @@
                 incident (assoc prev :status "Open" :incident_time {:opened earlier})]
             (is (= incident
                    (sut/compute-intervals prev incident)))))))
-    (testing "updating status 'Closed'"
-      (let [prev (assoc prev :status "Open" :incident_time {:opened earlier})
+    (testing "updating opened_to_closed"
+      (let [prev (assoc prev :status "Open: Recovered" :incident_time {:opened earlier})
             incident (-> prev
-                         (assoc :status "Closed")
+                         (assoc :status "Closed: Other")
                          (assoc-in [:incident_time :closed] later))]
+        (doseq [closed-status closed-statuses]
+          (testing (format "Status, '%s', is treated as closed" closed-status)
+            (let [incident (assoc incident :status closed-status)]
+              (is (= (assoc incident :intervals {:opened_to_closed computed-interval})
+                     (sut/compute-intervals prev incident))))))
+        (doseq [open-status open-statuses]
+          (testing (format "Status, '%s', is treated as open" open-status)
+            (let [prev (assoc prev :status open-status)]
+              (is (= (assoc incident :intervals {:opened_to_closed computed-interval})
+                     (sut/compute-intervals prev incident))))))
         (testing "if previous status is not Open, then don't create new interval"
-          (doseq [stored-status (shuffle (disj incident-statuses "Open"))]
+          (doseq [stored-status (shuffle (apply disj incident-statuses open-statuses))]
             (testing stored-status
               (is (= incident (sut/compute-intervals (assoc prev :status stored-status) incident))))))
         (testing "if :stored-incident does not already have an :opened_to_closed interval, compute it"
