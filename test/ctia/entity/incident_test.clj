@@ -809,18 +809,24 @@
                  first-opened_to_closed 150 ;;offsets in seconds from opened to closed
                  second-opened_to_closed 250
                  third-opened_to_closed 550
-                 incident->intervals (take 3 [[(assoc (gen-new-incident) :status "New" :title "incident1")
-                                               {:created first-created
-                                                :new_to_opened first-new_to_opened
-                                                :opened_to_closed first-opened_to_closed}]
-                                              [(assoc (gen-new-incident) :status "New" :title "incident2")
-                                               {:created second-created
-                                                :new_to_opened second-new_to_opened
-                                                :opened_to_closed second-opened_to_closed}]
-                                              [(assoc (gen-new-incident) :status "New" :title "incident3")
-                                               {:created third-created
-                                                :new_to_opened third-new_to_opened
-                                                :opened_to_closed third-opened_to_closed}]])
+                 incident->status-changes (take 3 [[(assoc (gen-new-incident) :status "New" :title "incident1")
+                                                    {:created first-created
+                                                     :new_to_opened first-new_to_opened
+                                                     :opened-status "Open"
+                                                     :opened_to_closed first-opened_to_closed
+                                                     :closed-status "Closed"}]
+                                                   [(assoc (gen-new-incident) :status "New: Processing" :title "incident2")
+                                                    {:created second-created
+                                                     :new_to_opened second-new_to_opened
+                                                     :opened-status "Open: Reported"
+                                                     :opened_to_closed second-opened_to_closed
+                                                     :closed-status "Closed: False Positive"}]
+                                                   [(assoc (gen-new-incident) :status "New: Presented" :title "incident3")
+                                                    {:created third-created
+                                                     :new_to_opened third-new_to_opened
+                                                     :opened-status "Open: Investigating"
+                                                     :opened_to_closed third-opened_to_closed
+                                                     :closed-status "Closed: Merged"}]])
                  +sec #(jt/plus epoch (jt/seconds %))
                  incident-ids (mapv (fn [[incident {:keys [created]}]]
                                       ;; create extra incidents whose statuses are never changed to simulate a real environment
@@ -828,18 +834,18 @@
                                         (repeatedly
                                           2
                                           #(create-incident-at-time app (jt/java-date (+sec created)) incident))))
-                                    incident->intervals)
-                 incident-id->incident+intervals (map vector incident-ids incident->intervals)
-                 _ (assert (= (count incident-id->incident+intervals) (count incident->intervals))
+                                    incident->status-changes)
+                 incident-id->incident+intervals (map vector incident-ids incident->status-changes)
+                 _ (assert (= (count incident-id->incident+intervals) (count incident->status-changes))
                            incident-ids)
                  _ (testing "populate intervals"
-                     (doseq [[incident-id [incident {:keys [created new_to_opened opened_to_closed]}]] incident-id->incident+intervals
-                             [new-status next-time] [["Open" (+sec (+ created new_to_opened))]
-                                                     ["Closed" (+sec (+ created new_to_opened opened_to_closed))]]]
+                     (doseq [[incident-id [incident {:keys [created new_to_opened opened-status opened_to_closed closed-status]}]] incident-id->incident+intervals
+                             [new-status next-time] [[opened-status (+sec (+ created new_to_opened))]
+                                                     [closed-status (+sec (+ created new_to_opened opened_to_closed))]]]
                        (testing (pr-str [new-status incident])
-                         (let [{:keys [parsed-body] :as response} (helpers/fixture-with-fixed-time
-                                                                    (jt/java-date next-time)
-                                                                    #(post-status app (uri/uri-encode incident-id) new-status))]
+                         (let [response (helpers/fixture-with-fixed-time
+                                          (jt/java-date next-time)
+                                          #(post-status app (uri/uri-encode incident-id) new-status))]
                            (assert (= 200 (:status response))
                                    (pr-str response))))))
                  avg #(quot (apply + %&) (count %&))]
