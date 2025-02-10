@@ -801,25 +801,26 @@
       (helpers/set-capabilities! app "foouser" ["foogroup"] "user" all-capabilities)
       (whoami-helpers/set-whoami-response app "45c1f5e3f05d0" "foouser" "foogroup" "user")
       (try (let [epoch (jt/instant)
+                 [first-created second-created third-created] [0 10 20]
                  incident-specs [{:title "incident1"
                                   :new-status "New"
                                   :open-status "Open"
                                   :closed-status "Closed"
-                                  :create-at 0
+                                  :create-at first-created
                                   :open-at 100
                                   :close-at 250}
                                  {:title "incident2"
                                   :new-status "New: Presented"
                                   :open-status "Open: Investigating"
                                   :closed-status "Closed: Merged"
-                                  :create-at 10
+                                  :create-at second-created
                                   :open-at 210
                                   :close-at 460}
                                  {:title "incident3"
                                   :new-status "New: Processing"
                                   :open-status "Open: Investigating"
                                   :closed-status "Closed: False Positive"
-                                  :create-at 20
+                                  :create-at third-created
                                   :open-at 520
                                   :close-at 1070}]
                  incident-specs (->> incident-specs
@@ -855,33 +856,35 @@
                    ;; the average of intervals.<field> should involve <expected-count> incidents and
                    ;; have value <expected-average> between time window <from> and <to> (latter is optional).
                    (let [avg (fn [xs]
-                               (long (/ (apply + xs) (count xs))))]
-                     (doseq [i1 [0 1 2]
-                             i2 [0 1 2]
-                             interval [:new-to-open :open-to-close]
-                             :when (<= i1 i2)]
-                       (let [from (get-in incident-specs [i1 :create-at])
-                             to (inc (get-in incident-specs [i2 :create-at]))]
-                         (testing (pr-str interval " - " from ":" to)
-                           (let [expected-count (count (range i1 (inc i2)))
-                                 expected-avg (->> (range i1 (inc i2))
-                                                   (map #(get incident-specs %))
-                                                   (map interval)
-                                                   avg)
-                                 agg-field (case interval
-                                             :new-to-open "new_to_opened"
-                                             :open-to-close "opened_to_closed")
-                                 {:keys [parsed-body] :as raw} (GET app "ctia/incident/metric/average"
-                                                                 :headers {"Authorization" "45c1f5e3f05d0"}
-                                                                 :query-params (cond-> {:aggregate-on (str "intervals." agg-field)
-                                                                                        :from (+sec from)}
-                                                                                 to (assoc :to (+sec to))))]
-                             (and (is (= 200 (:status raw)) (pr-str raw))
-                                  (is (= expected-count (some-> (get-in raw [:headers "X-Total-Hits"]) Integer/parseInt))
-                                      raw)
-                                  (is (= expected-avg
-                                         (some-> (get-in parsed-body [:data :intervals (keyword agg-field)]) Math/floor long))
-                                      (pr-str parsed-body))))))))))))
+                               (long (/ (apply + xs) (count xs))))
+                         ;; Add a time after the last incident was created to exercise null case.
+                         test-boundries [first-created second-created third-created (inc third-created)]]
+                     (doseq [from test-boundries  
+                             to (mapv inc test-boundries)
+                             interval-type [:new-to-open :open-to-close]
+                             :when (<= from to)]
+                       (testing (pr-str interval-type " - " from ":" to)
+                         (let [incidents-in-interval (->> incident-specs
+                                                          (filter (fn [{:keys [create-at]}]
+                                                                    (<= from create-at (dec to)))))
+                               expected-count (count incidents-in-interval)
+                               expected-avg (->> incidents-in-interval
+                                                 (map interval-type)
+                                                 avg)
+                               agg-field (case interval-type
+                                           :new-to-open "new_to_opened"
+                                           :open-to-close "opened_to_closed")
+                               {:keys [parsed-body] :as raw} (GET app "ctia/incident/metric/average"
+                                                               :headers {"Authorization" "45c1f5e3f05d0"}
+                                                               :query-params (cond-> {:aggregate-on (str "intervals." agg-field)
+                                                                                      :from (+sec from)}
+                                                                               to (assoc :to (+sec to))))]
+                           (and (is (= 200 (:status raw)) (pr-str raw))
+                                (is (= expected-count (some-> (get-in raw [:headers "X-Total-Hits"]) Integer/parseInt))
+                                    raw)
+                                (is (= expected-avg
+                                       (some-> (get-in parsed-body [:data :intervals (keyword agg-field)]) Math/floor long))
+                                    (pr-str parsed-body)))))))))))
            (finally (purge-incidents! app))))))
 
 (deftest incident-realize-timestamp-test
