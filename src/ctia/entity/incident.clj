@@ -113,21 +113,31 @@
 (s/defschema IncidentStatusUpdate
   {:status IncidentStatus})
 
+(defn new-status? [status]
+   (some? (re-matches #"New(: .+)?" status)))
+
+(defn open-status? [status]
+   (some? (re-matches #"Open(: .+)?" status)))
+
+(defn closed-status? [status]
+  (some? (re-matches #"Closed(: .+)?" status)))
+
 (defn make-status-update
   [{:keys [status]}]
   (let [t (time/internal-now)
-        verb (case status
-               "New" nil
-               "Stalled" nil
-               "Hold" nil
-               ;; Note: GitHub syntax highlighting doesn't like lists with strings
-               "Containment Achieved" :remediated
-               "Restoration Achieved" :remediated
-               "Open" :opened
-               "Rejected" :rejected
-               "Closed" :closed
-               "Incident Reported" :reported
-               nil)]
+        verb (or (case status
+                   "New" nil
+                   "Stalled" nil
+                   "Hold" nil
+                   ;; Note: GitHub syntax highlighting doesn't like lists with strings
+                   "Containment Achieved" :remediated
+                   "Restoration Achieved" :remediated
+                   "Rejected" :rejected
+                   "Incident Reported" :reported
+                   nil)
+                 (cond
+                   (open-status? status) :opened
+                   (closed-status? status) :closed))]
     (cond-> {:status status}
       verb (assoc :incident_time {verb t}))))
 
@@ -143,13 +153,6 @@
     (assoc-in [:intervals interval]
               (jt/time-between (jt/instant earlier) (jt/instant later) :seconds))))
 
-(def new-status-set #{"New" "New: Processing" "New: Presented"})
-
-(def open-status-set #{"Open" "Open: Investigating" "Open: Reported" "Open: Contained" "Open: Recovered"})
-
-(def closed-status-set #{"Closed" "Closed: Under Review" "Closed: Confirmed Threat" "Closed: Suspected"
-                         "Closed: False Positive" "Closed: Near-Miss" "Closed: Other" "Closed: Merged"})
-
 (s/defn compute-intervals :- ESStoredIncident
   "Given the currently stored (raw) incident and the incident to update it to, return a new update
   that also computes any relevant intervals that are missing from the updated incident."
@@ -163,14 +166,14 @@
     (cond-> incident
       ;; the duration between the time at which the incident changed from New to Open and the incident creation time
       ;; https://github.com/advthreat/iroh/issues/7622#issuecomment-1496374419
-      (and (new-status-set old-status)
-           (open-status-set new-status))
+      (and (new-status? old-status)
+           (open-status? new-status))
       (update-interval :new_to_opened
                        (:created prev)
                        (get-in incident [:incident_time :opened]))
 
-      (and (open-status-set old-status)
-           (closed-status-set new-status))
+      (and (open-status? old-status)
+           (closed-status? new-status))
       (update-interval :opened_to_closed
                        ;; we assume this was updated by the status route on Open. will be garbage if status was updated
                        ;; in any other way.
