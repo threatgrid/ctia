@@ -6,7 +6,7 @@
             [ctia.test-helpers
              [access-control :refer [access-control-test]]
              [auth :refer [all-capabilities]]
-             [core :as helpers :refer [POST]]
+             [core :as helpers :refer [POST GET]]
              [crud :refer [entity-crud-test]]
              [aggregate :refer [test-metric-routes]]
              [fake-whoami-service :as whoami-helpers]
@@ -42,6 +42,75 @@
        ["http://ex.tld/ctia/relationship/relationship-123"
         "http://ex.tld/ctia/relationship/relationship-456"])
       (dissoc :id)))
+
+(deftest test-relationship-source-target-type-search
+  (test-for-each-store-with-app
+   (fn [app]
+     (establish-user! app)
+     (testing "POST /ctia/relationship"
+       (let [new-relationship-1
+             (-> new-relationship-minimal
+                 (assoc
+                  :source_ref (str "http://example.com/ctia/judgement/judgement-"
+                                   "f9832ac2-ee90-4e18-9ce6-0c4e4ff61a7a")
+                  :target_ref (str "http://example.com/ctia/indicator/indicator-"
+                                   "8c94ca8d-fb2b-4556-8517-8e6923d8d3c7"))
+                 (dissoc :id))
+             new-relationship-2 (update new-relationship-1
+                                        :source_ref
+                                        str/replace
+                                        "judgement"
+                                        "sighting")
+             new-relationship-3 (-> new-relationship-1
+                                    (update :source_ref
+                                            str/replace
+                                            "judgement"
+                                            "asset")
+                                    (update :target_ref
+                                            str/replace
+                                            "indicator"
+                                            "asset-properties"))
+             {status-1 :status rel1 :parsed-body}
+             (POST app
+                   "ctia/relationship"
+                   :body new-relationship-1
+                   :headers {"Authorization" "45c1f5e3f05d0"})
+             {status-2 :status rel2 :parsed-body}
+             (POST app
+                   "ctia/relationship"
+                   :body new-relationship-2
+                   :headers {"Authorization" "45c1f5e3f05d0"})
+             {status-3 :status rel3 :parsed-body}
+             (POST app
+                   "ctia/relationship"
+                   :body new-relationship-3
+                   :headers {"Authorization" "45c1f5e3f05d0"})
+             test-plan [{:expected [rel1 rel2]
+                         :query "target_ref.type=indicator"}
+                        {:expected [rel1]
+                         :query "source_ref.type=judgement"}
+                        {:expected [rel2]
+                         :query "source_ref.type=sighting"}
+                        {:expected [rel3]
+                         :query "source_ref.type=asset"}
+                        {:expected [rel3]
+                         :query "target_ref.type=\"asset-properties\""}
+                        {:expected []
+                         :query "target_ref.type=asset"}
+                        {:expected []
+                         :query "source_ref.type=malware"}]]
+         (assert (= 201 status-1))
+         (assert (= 201 status-2))
+         (assert (= 201 status-3))
+         (doseq [{:keys [expected query]} test-plan]
+           (testing query
+             (is (= (set expected)
+                    (-> (GET app
+                            "ctia/relationship/search"
+                          :query-params {:query query}
+                          :headers {"Authorization" "45c1f5e3f05d0"})
+                        :parsed-body
+                        set))))))))))
 
 (deftest test-relationship-routes-bad-reference
   (test-for-each-store-with-app
