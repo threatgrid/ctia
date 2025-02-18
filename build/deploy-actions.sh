@@ -78,11 +78,8 @@ EOF
   aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin "$docker_registry"
   docker build -t "$docker_registry/$docker_nomad_repository:$build_version" .
   docker push "$docker_registry/$docker_nomad_repository:$build_version"
-  if [ "$build_type" == 'int' ];
-  then
-    docker tag "$docker_registry/$docker_nomad_repository:$build_version" "$docker_registry/$docker_eks_repository:ctia-$build_version"
-    docker push "$docker_registry/$docker_eks_repository:ctia-$build_version"
-  fi
+  docker tag "$docker_registry/$docker_nomad_repository:$build_version" "$docker_registry/$docker_eks_repository:ctia-$build_version"
+  docker push "$docker_registry/$docker_eks_repository:ctia-$build_version"
 
   if [ "$build_type" == 'rel' ]
   then
