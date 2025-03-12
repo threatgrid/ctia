@@ -33,7 +33,7 @@
    "reason" "This is a very bad IP address that talked to some evil servers"
    "reason_uri" "https://panacea.threatgrid.com/somefeed"
    "valid_time" {"start_time" "2016-02-11T00:40:48.000Z"
-                 "end_time" "2025-03-11T00:40:48.000Z"}})
+                 "end_time" "2525-01-01T00:00:00.000Z"}})
 
 (def judgement-2
   {"observable" {"value" "1.2.3.4"
@@ -51,7 +51,7 @@
    "reason" "This is a bad IP address that talked to some evil servers"
    "reason_uri" "https://panacea.threatgrid.com/somefeed"
    "valid_time" {"start_time" "2016-02-11T00:40:48.000Z"
-                 "end_time" "2025-03-11T00:40:48.000Z"}})
+                 "end_time" "2525-01-01T00:00:00.000Z"}})
 
 (def judgement-3
   {"observable" {"value" "8.8.8.8"
@@ -69,7 +69,7 @@
    "reason" "This is a clean IP address"
    "reason_uri" "https://panacea.threatgrid.com/somefeed"
    "valid_time" {"start_time" "2016-02-11T00:40:48.000Z"
-                 "end_time" "2025-03-11T00:40:48.000Z"}})
+                 "end_time" "2525-01-01T00:00:00.000Z"}})
 
 (def indicator-1
   {"title" "Bad IP because someone said so"
@@ -79,7 +79,7 @@
    "description" "We heard from this guy that this IP was not to be trusted"
    "indicator_type" ["C2" "IP Watchlist"]
    "valid_time" {"start_time" "2016-05-11T00:40:48.000Z"
-                 "end_time" "2025-07-11T00:40:48.000Z"}})
+                 "end_time" "2525-01-01T00:00:00.000Z"}})
 
 (def indicator-2
   {"title" "Malware detected because someone said so"
@@ -89,7 +89,7 @@
    "description" "We heard from this guy that a malware has been detected"
    "indicator_type" ["Malware Artifacts"]
    "valid_time" {"start_time" "2016-05-11T00:40:48.000Z"
-                 "end_time" "2025-07-11T00:40:48.000Z"}})
+                 "end_time" "2525-01-01T00:00:00.000Z"}})
 
 (def indicator-3
   {"title" "Malware may modify files"
@@ -99,7 +99,7 @@
    "description" "We heard from this guy that a malware may modify files"
    "indicator_type" ["Malware Artifacts"]
    "valid_time" {"start_time" "2016-05-11T00:40:48.000Z"
-                 "end_time" "2025-07-11T00:40:48.000Z"}})
+                 "end_time" "2525-01-01T00:00:00.000Z"}})
 
 (def sighting-1
   {"description" "Hostnames that have resolved to 194.87.217.88"
