@@ -37,7 +37,7 @@ env:
 
 jobs:
   setup:
-    runs-on: "ubuntu-22.04"
+    runs-on: "ubuntu-24.04"
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
     steps:
@@ -59,7 +59,7 @@ jobs:
           mkdir -p "${BIN_PATH}"
           echo "${BIN_PATH}" >> $GITHUB_PATH
       - name: Install clojure tools
-        uses: DeLaGuardo/setup-clojure@12.5
+        uses: DeLaGuardo/setup-clojure@13.2
         with:
           bb: ${{env.BB_VERSION}}
       - name: Run tests for scripts
@@ -149,7 +149,7 @@ jobs:
         if: steps.maven-cache.outputs.cache-hit != 'true'
       - name: Install clojure tools
         if: steps.maven-cache.outputs.cache-hit != 'true' && steps.lein-cache.outputs.cache-hit != 'true'
-        uses: DeLaGuardo/setup-clojure@12.5
+        uses: DeLaGuardo/setup-clojure@main
         with:
           lein: ${{env.LEIN_VERSION}}
       - name: Warm dependency cache
@@ -159,7 +159,7 @@ jobs:
       - run: ./scripts/check-dependabot
 
   test-encoding:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     needs: [setup]
     steps:
 
@@ -187,7 +187,7 @@ jobs:
           java-version: ${{ env.DEFAULT_JAVA_VERSION }}
 
       - name: Install clojure tools
-        uses: DeLaGuardo/setup-clojure@12.5
+        uses: DeLaGuardo/setup-clojure@main
         with:
           lein: ${{env.LEIN_VERSION}}
           bb: ${{env.BB_VERSION}}
@@ -206,7 +206,7 @@ jobs:
           LEIN_OFFLINE: true
 
   test-matrix:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     needs: [setup]
     strategy:
       matrix:
@@ -225,7 +225,7 @@ jobs:
           path: ${{ env.BIN_PATH }}
           key: ctia-bin-${{ env.ACTIONS_CACHE_VERSION }}-${{ env.SHELLCHECK_VERSION }}
       - name: Install clojure tools
-        uses: DeLaGuardo/setup-clojure@12.5
+        uses: DeLaGuardo/setup-clojure@13.2
         with:
           lein: ${{env.LEIN_VERSION}}
           bb: ${{env.BB_VERSION}}
@@ -303,14 +303,14 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           retention-days: 1
-          name: test-timing-${{matrix.this-split.test_suite}}-${{matrix.this-split.java_version}}-${{matrix.this-split.this_split}}
+          name: test-timing-${{matrix.this-split.ci_profiles}}-${{matrix.this-split.test_suite}}-${{matrix.this-split.java_version}}-${{matrix.this-split.this_split}}
           path: target/test-results/*.edn
       - name: Upload docker compose
         if: ${{ always() }}
         uses: actions/upload-artifact@v4
         with:
           retention-days: 10
-          name: docker-compose-${{matrix.this-split.test_suite}}-${{matrix.this-split.java_version}}-${{matrix.this-split.this_split}}.log
+          name: docker-compose-${{matrix.this-split.ci_profiles}}-${{matrix.this-split.test_suite}}-${{matrix.this-split.java_version}}-${{matrix.this-split.this_split}}.log
           path: ${{env.LOG_PATH}}/docker-compose.log
   # fan-in tests so there's a single job we can add to protected branches.
   # otherwise, we'll have add all (range ${CTIA_NSPLITS}) jobs, and keep
@@ -318,7 +318,7 @@ jobs:
   # here's a GitHub Actions feature request that is relevant:
   # https://github.community/t/branch-protections-job-names-and-matrix-jobs/16317
   all-pr-checks:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     needs: [test-matrix]
     steps:
       - uses: actions/checkout@v4
@@ -332,7 +332,7 @@ jobs:
           mkdir -p "${BIN_PATH}"
           echo "${BIN_PATH}" >> $GITHUB_PATH
       - name: Install clojure tools
-        uses: DeLaGuardo/setup-clojure@12.5
+        uses: DeLaGuardo/setup-clojure@13.2
         with:
           bb: ${{env.BB_VERSION}}
       - run: ./scripts/actions/setup_env.clj
@@ -366,7 +366,7 @@ jobs:
 
       - run: echo "All tests pass!"
   deploy:
-    runs-on: "ubuntu-22.04"
+    runs-on: "ubuntu-24.04"
     needs: [all-pr-checks]
     # see on.push.branches for which branches are built on push
     if: github.event_name == 'push' && github.repository == 'threatgrid/ctia'
@@ -382,7 +382,7 @@ jobs:
           mkdir -p "${BIN_PATH}"
           echo "${BIN_PATH}" >> $GITHUB_PATH
       - name: Install clojure tools
-        uses: DeLaGuardo/setup-clojure@12.5
+        uses: DeLaGuardo/setup-clojure@13.2
         with:
           lein: ${{env.LEIN_VERSION}}
           bb: ${{env.BB_VERSION}}
