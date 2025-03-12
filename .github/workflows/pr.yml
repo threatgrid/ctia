@@ -148,13 +148,12 @@ jobs:
       - run: java -version
         if: steps.maven-cache.outputs.cache-hit != 'true'
       - name: Install clojure tools
-        if: steps.maven-cache.outputs.cache-hit != 'true' && steps.lein-cache.outputs.cache-hit != 'true'
+        if: steps.maven-cache.outputs.cache-hit != 'true'
         uses: DeLaGuardo/setup-clojure@13.2
         with:
           lein: ${{env.LEIN_VERSION}}
       - name: Warm dependency cache
         if: steps.maven-cache.outputs.cache-hit != 'true'
-        # poor man's travis_retry
         run: for i in {1..${ACTIONS_RETRY_TIMES}}; do lein warm-ci-deps && break; done
       - run: ./scripts/check-dependabot
 
