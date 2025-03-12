@@ -126,19 +126,18 @@ jobs:
       - name: Run shellcheck
         run: ./scripts/shellcheck-build.sh
 
-      # warm dependency cache on project.clj change (ie., when cache-hit is not true).
+      # warm dependency cache on project.clj change. a cache miss is forced if restoring a cache
+      # that failed the dependabot check. we do this by appending an unexpected string to the cache key when
+      # saving the cache if dependabot fails.
       - name: Maven Cache
         id: maven-cache-restore
-        uses: actions/cache@v4
         uses: actions/cache/restore@v4
         with:
           path: |
             ~/.m2/repository
             ~/.gitlibs
-          key: ctia-m2-cache-${{ env.ACTIONS_CACHE_VERSION }}-${{ hashFiles('project.clj') }}--${{ env.DEFAULT_JAVA_VERSION }}
-          # these will be considered a cache-miss by `cache-hit`
+          key: ctia-m2-cache-${{ env.ACTIONS_CACHE_VERSION }}-${{ hashFiles('project.clj', 'dependabot/*') }}
           restore-keys: |
-            ctia-m2-cache-${{ env.ACTIONS_CACHE_VERSION }}-${{ hashFiles('project.clj') }}-
             ctia-m2-cache-${{ env.ACTIONS_CACHE_VERSION }}-
       - name: Setup Java
         if: steps.maven-cache-restore.outputs.cache-hit != 'true'
@@ -154,20 +153,20 @@ jobs:
         with:
           lein: ${{env.LEIN_VERSION}}
       - name: Warm dependency cache
+        id: download-deps
         if: steps.maven-cache-restore.outputs.cache-hit != 'true'
         run: for i in {1..${ACTIONS_RETRY_TIMES}}; do lein warm-ci-deps && break; done
       - run: ./scripts/check-dependabot
         id: check-dependabot
-        if: steps.maven-cache-restore.outputs.cache-hit != 'true'
+        if: steps.download-deps.outcome == 'success'
       - name: Save dependency cache
         uses: actions/cache/save@v4
-        # save cache outside of matrix even if tests fail
-        if: always() && steps.download-deps.outcome == 'success' && env.IROH_THIS_SPLIT == ''
+        if: always() && steps.download-deps.outcome == 'success'
         with:
           path: |
             ~/.m2/repository
             ~/.gitlibs
-          # force future dependabot check when this cache is restored by adding a stable suffix to prevent cache hit
+          # force cache miss if dependabot fails. see comment above steps.maven-cache-restore.
           key: ${{steps.maven-cache-restore.outputs.cache-primary-key}}${{steps.check-dependabot.outcome != 'success' && '-save-redownloading-these-deps-but-force-dependabot-check-when-restored' || ''}}
 
   test-encoding:
