@@ -149,7 +149,7 @@ jobs:
         if: steps.maven-cache.outputs.cache-hit != 'true'
       - name: Install clojure tools
         if: steps.maven-cache.outputs.cache-hit != 'true' && steps.lein-cache.outputs.cache-hit != 'true'
-        uses: DeLaGuardo/setup-clojure@main
+        uses: DeLaGuardo/setup-clojure@13.2
         with:
           lein: ${{env.LEIN_VERSION}}
       - name: Warm dependency cache
@@ -187,7 +187,7 @@ jobs:
           java-version: ${{ env.DEFAULT_JAVA_VERSION }}
 
       - name: Install clojure tools
-        uses: DeLaGuardo/setup-clojure@main
+        uses: DeLaGuardo/setup-clojure@13.2
         with:
           lein: ${{env.LEIN_VERSION}}
           bb: ${{env.BB_VERSION}}
