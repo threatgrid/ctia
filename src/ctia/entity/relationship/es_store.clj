@@ -23,7 +23,7 @@
       :target_type       em/token})}})
 
 (s/defschema ESStoredRelationship
-  (st/merge rs/PartialStoredRelationship
+  (st/merge rs/StoredRelationship
             (st/optional-keys
              {:source_type s/Str
               :target_type s/Str})))
