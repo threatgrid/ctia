@@ -327,7 +327,8 @@
                          :reported #inst "2010-01-01T00:00:06.129-00:00",
                          :remediated #inst "2010-01-01T00:02:07.145-00:00",
                          :closed #inst "2010-01-01T00:00:02.349-00:00",
-                         :rejected #inst "2010-01-01T00:00:00.327-00:00"},
+                         :rejected #inst "2010-01-01T00:00:00.327-00:00"
+                         :contained #inst "2010-01-01T00:00:00.327-00:00"},
                         :status "New",
                         :confidence "High"}
                        {:description "desc",
