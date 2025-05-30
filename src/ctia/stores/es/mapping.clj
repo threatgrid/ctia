@@ -166,7 +166,8 @@
     :reported ts
     :remediated ts
     :closed ts
-    :rejected ts}})
+    :rejected ts
+    :contained ts}})
 
 (def action-type
   {:properties

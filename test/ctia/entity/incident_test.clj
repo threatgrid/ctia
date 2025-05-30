@@ -777,7 +777,26 @@
         (testing "if :incident_time.opened is after the updated :incident_time.closed, elide interval from update"
           (let [prev (assoc prev :incident_time {:opened later})
                 incident (-> incident (assoc :incident_time {:opened later :closed earlier}))]
-            (is (= incident (sut/compute-intervals prev incident)))))))))
+            (is (= incident (sut/compute-intervals prev incident)))))))
+    (testing "updating new_to_contained"
+      (let [prev (assoc prev :status "New: Presented")
+            incident (assoc prev :status "Open: Contained" :incident_time {:contained later})]
+        (testing "if prev does not already have a :new_to_contained interval, compute interval and include in update"
+          (is (= (assoc incident :intervals {:new_to_contained computed-interval})
+                 (sut/compute-intervals prev incident))))
+        (testing "prefer existing :new_to_contained interval"
+          (is (= (assoc incident :intervals {:new_to_contained 55565})
+                 (sut/compute-intervals (assoc prev :intervals {:new_to_contained 55565})
+                                        incident))))
+        (testing "if previous status is not one of the 'New' sub-statuses, then don't create new interval"
+          (doseq [stored-status (shuffle (apply disj incident-statuses new-statuses))]
+            (testing stored-status
+              (is (= incident (sut/compute-intervals (assoc prev :status stored-status) incident))))))
+        (testing "if :created is after the updated :incident_time.contained, elide interval from update"
+          (let [prev (assoc prev :created later)
+                incident (assoc prev :status "Open: Contained" :incident_time {:contained earlier})]
+            (is (= incident
+                   (sut/compute-intervals prev incident)))))))))
 
 (s/defn create-incident-at-time :- s/Str
   [app
@@ -800,32 +819,38 @@
       (helpers/set-capabilities! app "foouser" ["foogroup"] "user" all-capabilities)
       (whoami-helpers/set-whoami-response app "45c1f5e3f05d0" "foouser" "foogroup" "user")
       (try (let [epoch (jt/instant)
-                 first-created 0 ;;offsets in seconds from epoch to created
-                 second-created 10
-                 third-created 20
-                 first-new_to_opened 100 ;;offsets in seconds from created to opened
-                 second-new_to_opened 200
-                 third-new_to_opened 500
-                 first-opened_to_closed 150 ;;offsets in seconds from opened to closed
-                 second-opened_to_closed 250
-                 third-opened_to_closed 550
-                 incident->status-changes (take 3 [[(assoc (gen-new-incident) :status "New" :title "incident1")
-                                                    {:created first-created
-                                                     :new_to_opened first-new_to_opened
-                                                     :opened-status "Open"
-                                                     :opened_to_closed first-opened_to_closed
+                 i1-created 0 ;;offsets in seconds from epoch to created
+                 i2-created 10
+                 i3&4-created 20
+                 i1-new_to_contained 100 ;;offsets in seconds from created to opened
+                 i2-new_to_contained 200
+                 i3&4-new_to_opened&contained 500
+                 i1-opened_to_closed 150 ;;offsets in seconds from opened to closed
+                 i2-opened_to_closed 250
+                 i3&4-opened_to_closed 550
+                 incident->status-changes (take 4 [[(assoc (gen-new-incident) :status "New" :title "incident1")
+                                                    {:created i1-created
+                                                     :new_to_opened i1-new_to_contained
+                                                     :opened-status "Open: Contained"
+                                                     :opened_to_closed i1-opened_to_closed
                                                      :closed-status "Closed"}]
                                                    [(assoc (gen-new-incident) :status "New: Processing" :title "incident2")
-                                                    {:created second-created
-                                                     :new_to_opened second-new_to_opened
-                                                     :opened-status "Open: Reported"
-                                                     :opened_to_closed second-opened_to_closed
+                                                    {:created i2-created
+                                                     :new_to_opened i2-new_to_contained
+                                                     :opened-status "Open: Contained"
+                                                     :opened_to_closed i2-opened_to_closed
                                                      :closed-status "Closed: False Positive"}]
                                                    [(assoc (gen-new-incident) :status "New: Presented" :title "incident3")
-                                                    {:created third-created
-                                                     :new_to_opened third-new_to_opened
+                                                    {:created i3&4-created
+                                                     :new_to_opened i3&4-new_to_opened&contained
                                                      :opened-status "Open: Investigating"
-                                                     :opened_to_closed third-opened_to_closed
+                                                     :opened_to_closed i3&4-opened_to_closed
+                                                     :closed-status "Closed: Merged"}]
+                                                   [(assoc (gen-new-incident) :status "New: Presented" :title "incident3")
+                                                    {:created i3&4-created
+                                                     :new_to_opened i3&4-new_to_opened&contained
+                                                     :opened-status "Open: Contained"
+                                                     :opened_to_closed i3&4-opened_to_closed
                                                      :closed-status "Closed: Merged"}]])
                  +sec #(jt/plus epoch (jt/seconds %))
                  incident-ids (mapv (fn [[incident {:keys [created]}]]
@@ -856,18 +881,26 @@
                    ;; the average of intervals.<field> should involve <expected-count> incidents and
                    ;; have value <expected-average> between time window <from> and <to> (latter is optional).
                    (doseq [[field expected-count expected-average from to :as test-case]
-                           [["new_to_opened" 3 (avg first-new_to_opened second-new_to_opened third-new_to_opened) first-created]
-                            ["new_to_opened" 2 (avg second-new_to_opened third-new_to_opened) second-created]
-                            ["new_to_opened" 2 (avg first-new_to_opened second-new_to_opened) first-created (inc second-created)]
-                            ["new_to_opened" 1 first-new_to_opened first-created (inc first-created)]
-                            ["new_to_opened" 1 second-new_to_opened second-created (inc second-created)]
-                            ["new_to_opened" 1 third-new_to_opened third-created (inc third-created)]
-                            ["new_to_opened" 1 third-new_to_opened third-created]
-                            ["new_to_opened" 0 nil (inc third-created)]
-                            ["opened_to_closed" 3 (avg first-opened_to_closed second-opened_to_closed third-opened_to_closed) first-created]
-                            ["opened_to_closed" 2 (avg second-opened_to_closed third-opened_to_closed) second-created]
-                            ["opened_to_closed" 1 third-opened_to_closed third-created]
-                            ["opened_to_closed" 0 nil (inc third-created)]]]
+                           [["new_to_opened" 4 (apply avg i1-new_to_contained i2-new_to_contained (repeat 2 i3&4-new_to_opened&contained)) i1-created]
+                            ["new_to_opened" 3 (apply avg i2-new_to_contained (repeat 2 i3&4-new_to_opened&contained)) i2-created]
+                            ["new_to_opened" 2 (avg i1-new_to_contained i2-new_to_contained) i1-created (inc i2-created)]
+                            ["new_to_opened" 1 i1-new_to_contained i1-created (inc i1-created)]
+                            ["new_to_opened" 1 i2-new_to_contained i2-created (inc i2-created)]
+                            ["new_to_opened" 2 (apply avg (repeat 2 i3&4-new_to_opened&contained)) i3&4-created (inc i3&4-created)]
+                            ["new_to_opened" 2 (apply avg (repeat 2 i3&4-new_to_opened&contained)) i3&4-created]
+                            ["new_to_opened" 0 nil (inc i3&4-created)]
+                            ["new_to_contained" 3 (avg i1-new_to_contained i2-new_to_contained i3&4-new_to_opened&contained) i1-created]
+                            ["new_to_contained" 2 (avg i2-new_to_contained i3&4-new_to_opened&contained) i2-created]
+                            ["new_to_contained" 2 (avg i1-new_to_contained i2-new_to_contained) i1-created (inc i2-created)]
+                            ["new_to_contained" 1 i1-new_to_contained i1-created (inc i1-created)]
+                            ["new_to_contained" 1 i2-new_to_contained i2-created (inc i2-created)]
+                            ["new_to_contained" 1 i3&4-new_to_opened&contained i3&4-created (inc i3&4-created)]
+                            ["new_to_contained" 1 i3&4-new_to_opened&contained i3&4-created]
+                            ["new_to_contained" 0 nil (inc i3&4-created)]
+                            ["opened_to_closed" 4 (apply avg i1-opened_to_closed i2-opened_to_closed (repeat 2 i3&4-opened_to_closed)) i1-created]
+                            ["opened_to_closed" 3 (apply avg i2-opened_to_closed (repeat 2 i3&4-opened_to_closed)) i2-created]
+                            ["opened_to_closed" 2 (apply avg (repeat 2 i3&4-opened_to_closed)) i3&4-created]
+                            ["opened_to_closed" 0 nil (inc i3&4-created)]]]
                      (testing (pr-str test-case)
                        (let [{:keys [parsed-body] :as raw} (GET app "ctia/incident/metric/average"
                                                                 :headers {"Authorization" "45c1f5e3f05d0"}

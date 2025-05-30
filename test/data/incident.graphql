@@ -73,6 +73,7 @@ fragment incidentTimeFields on IncidentTime {
   remediated
   closed
   rejected
+  contained
 }
 
 fragment incidentFields on Incident {
