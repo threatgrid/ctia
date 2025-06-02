@@ -852,13 +852,13 @@
                                                    [(assoc (gen-new-incident) :status "New: Processing" :title "incident2")
                                                     {:created i2-created
                                                      :new_to_opened i2-new_to_opened
-                                                     :opened-status "Open: Contained"
+                                                     :opened-status "Open: Investigating"
                                                      :opened_to_closed i2-opened_to_closed
                                                      :closed-status "Closed: False Positive"}]
                                                    [(assoc (gen-new-incident) :status "New: Presented" :title "incident3")
                                                     {:created i3-created
                                                      :new_to_opened i3-new_to_contained
-                                                     :opened-status "Open: Investigating"
+                                                     :opened-status "Open: Contained"
                                                      :opened_to_closed i3-opened_to_closed
                                                      :closed-status "Closed: Merged"}]])
                  +sec #(jt/plus epoch (jt/seconds %))
