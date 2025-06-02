@@ -98,6 +98,17 @@
            (is (get-in updated-incident [:incident_time :remediated]))
 
            (is (= (get-in updated-incident [:incident_time :remediated])
+                  (tc/to-date fixed-now)))))
+       
+       (testing "POST /ctia/incident/:id/status Contained"
+         (let [new-status "Open: Contained"
+               response (post-status app (:short-id incident-id) new-status)
+               updated-incident (:parsed-body response)]
+           (is (= 200 (:status response)))
+           (is (= "Open: Contained" (:status updated-incident)))
+           (is (get-in updated-incident [:incident_time :contained]))
+
+           (is (= (get-in updated-incident [:incident_time :contained])
                   (tc/to-date fixed-now)))))))))
 
 (deftest test-incident-crud-routes
@@ -823,14 +834,16 @@
       (try (let [epoch (jt/instant)
                  i1-created 0 ;;offsets in seconds from epoch to created
                  i2-created 10
-                 i3&4-created 20
+                 i3-created 20
+                 ;; new_to_opened should always be recorded when
+                 ;; new_to_contained is, as 'Open: Contained' is an Open status.
                  i1-new_to_contained 100 ;;offsets in seconds from created to opened
-                 i2-new_to_contained 200
-                 i3&4-new_to_opened&contained 500
+                 i2-new_to_opened 200
+                 i3-new_to_contained 500
                  i1-opened_to_closed 150 ;;offsets in seconds from opened to closed
                  i2-opened_to_closed 250
-                 i3&4-opened_to_closed 550
-                 incident->status-changes (take 4 [[(assoc (gen-new-incident) :status "New" :title "incident1")
+                 i3-opened_to_closed 550
+                 incident->status-changes (take 3 [[(assoc (gen-new-incident) :status "New" :title "incident1")
                                                     {:created i1-created
                                                      :new_to_opened i1-new_to_contained
                                                      :opened-status "Open: Contained"
@@ -838,21 +851,15 @@
                                                      :closed-status "Closed"}]
                                                    [(assoc (gen-new-incident) :status "New: Processing" :title "incident2")
                                                     {:created i2-created
-                                                     :new_to_opened i2-new_to_contained
+                                                     :new_to_opened i2-new_to_opened
                                                      :opened-status "Open: Contained"
                                                      :opened_to_closed i2-opened_to_closed
                                                      :closed-status "Closed: False Positive"}]
                                                    [(assoc (gen-new-incident) :status "New: Presented" :title "incident3")
-                                                    {:created i3&4-created
-                                                     :new_to_opened i3&4-new_to_opened&contained
+                                                    {:created i3-created
+                                                     :new_to_opened i3-new_to_contained
                                                      :opened-status "Open: Investigating"
-                                                     :opened_to_closed i3&4-opened_to_closed
-                                                     :closed-status "Closed: Merged"}]
-                                                   [(assoc (gen-new-incident) :status "New: Presented" :title "incident3")
-                                                    {:created i3&4-created
-                                                     :new_to_opened i3&4-new_to_opened&contained
-                                                     :opened-status "Open: Contained"
-                                                     :opened_to_closed i3&4-opened_to_closed
+                                                     :opened_to_closed i3-opened_to_closed
                                                      :closed-status "Closed: Merged"}]])
                  +sec #(jt/plus epoch (jt/seconds %))
                  incident-ids (mapv (fn [[incident {:keys [created]}]]
@@ -883,26 +890,26 @@
                    ;; the average of intervals.<field> should involve <expected-count> incidents and
                    ;; have value <expected-average> between time window <from> and <to> (latter is optional).
                    (doseq [[field expected-count expected-average from to :as test-case]
-                           [["new_to_opened" 4 (apply avg i1-new_to_contained i2-new_to_contained (repeat 2 i3&4-new_to_opened&contained)) i1-created]
-                            ["new_to_opened" 3 (apply avg i2-new_to_contained (repeat 2 i3&4-new_to_opened&contained)) i2-created]
-                            ["new_to_opened" 2 (avg i1-new_to_contained i2-new_to_contained) i1-created (inc i2-created)]
+                           [["new_to_opened" 3 (avg i1-new_to_contained i2-new_to_opened i3-new_to_contained) i1-created]
+                            ["new_to_opened" 2 (avg i2-new_to_opened i3-new_to_contained) i2-created]
+                            ["new_to_opened" 2 (avg i1-new_to_contained i2-new_to_opened) i1-created (inc i2-created)]
                             ["new_to_opened" 1 i1-new_to_contained i1-created (inc i1-created)]
-                            ["new_to_opened" 1 i2-new_to_contained i2-created (inc i2-created)]
-                            ["new_to_opened" 2 (apply avg (repeat 2 i3&4-new_to_opened&contained)) i3&4-created (inc i3&4-created)]
-                            ["new_to_opened" 2 (apply avg (repeat 2 i3&4-new_to_opened&contained)) i3&4-created]
-                            ["new_to_opened" 0 nil (inc i3&4-created)]
-                            ["new_to_contained" 3 (avg i1-new_to_contained i2-new_to_contained i3&4-new_to_opened&contained) i1-created]
-                            ["new_to_contained" 2 (avg i2-new_to_contained i3&4-new_to_opened&contained) i2-created]
-                            ["new_to_contained" 2 (avg i1-new_to_contained i2-new_to_contained) i1-created (inc i2-created)]
+                            ["new_to_opened" 1 i2-new_to_opened i2-created (inc i2-created)]
+                            ["new_to_opened" 1 i3-new_to_contained i3-created (inc i3-created)]
+                            ["new_to_opened" 1 i3-new_to_contained i3-created]
+                            ["new_to_opened" 0 nil (inc i3-created)]
+                            ["new_to_contained" 2 (avg i1-new_to_contained i3-new_to_contained) i1-created]
+                            ["new_to_contained" 1 i3-new_to_contained i2-created]
+                            ["new_to_contained" 1 i1-new_to_contained i1-created (inc i2-created)]
                             ["new_to_contained" 1 i1-new_to_contained i1-created (inc i1-created)]
-                            ["new_to_contained" 1 i2-new_to_contained i2-created (inc i2-created)]
-                            ["new_to_contained" 1 i3&4-new_to_opened&contained i3&4-created (inc i3&4-created)]
-                            ["new_to_contained" 1 i3&4-new_to_opened&contained i3&4-created]
-                            ["new_to_contained" 0 nil (inc i3&4-created)]
-                            ["opened_to_closed" 4 (apply avg i1-opened_to_closed i2-opened_to_closed (repeat 2 i3&4-opened_to_closed)) i1-created]
-                            ["opened_to_closed" 3 (apply avg i2-opened_to_closed (repeat 2 i3&4-opened_to_closed)) i2-created]
-                            ["opened_to_closed" 2 (apply avg (repeat 2 i3&4-opened_to_closed)) i3&4-created]
-                            ["opened_to_closed" 0 nil (inc i3&4-created)]]]
+                            ["new_to_contained" 0 nil i2-created (inc i2-created)]
+                            ["new_to_contained" 1 i3-new_to_contained i3-created (inc i3-created)]
+                            ["new_to_contained" 1 i3-new_to_contained i3-created]
+                            ["new_to_contained" 0 nil (inc i3-created)]
+                            ["opened_to_closed" 3 (avg i1-opened_to_closed i2-opened_to_closed i3-opened_to_closed) i1-created]
+                            ["opened_to_closed" 2 (avg i2-opened_to_closed i3-opened_to_closed) i2-created]
+                            ["opened_to_closed" 1 i3-opened_to_closed i3-created]
+                            ["opened_to_closed" 0 nil (inc i3-created)]]]
                      (testing (pr-str test-case)
                        (let [{:keys [parsed-body] :as raw} (GET app "ctia/incident/metric/average"
                                                                 :headers {"Authorization" "45c1f5e3f05d0"}
