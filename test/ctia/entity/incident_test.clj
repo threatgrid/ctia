@@ -780,7 +780,8 @@
             (is (= incident (sut/compute-intervals prev incident)))))))
     (testing "updating new_to_contained"
       (let [prev (assoc prev :status "New: Presented")
-            incident (assoc prev :status "Open: Contained" :incident_time {:contained later})]
+            incident (-> (assoc prev :status "Open: Contained")
+                         (assoc-in [:incident_time :contained] later))]
         (testing "if prev does not already have a :new_to_contained interval, compute interval and include in update"
           (is (= (assoc incident :intervals {:new_to_contained computed-interval})
                  (sut/compute-intervals prev incident))))
@@ -794,7 +795,8 @@
               (is (= incident (sut/compute-intervals (assoc prev :status stored-status) incident))))))
         (testing "if :created is after the updated :incident_time.contained, elide interval from update"
           (let [prev (assoc prev :created later)
-                incident (assoc prev :status "Open: Contained" :incident_time {:contained earlier})]
+                incident (-> (assoc prev :status "Open: Contained")
+                             (assoc-in [:incident_time :contained] earlier))]
             (is (= incident
                    (sut/compute-intervals prev incident)))))))))
 
