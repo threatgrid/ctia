@@ -142,9 +142,7 @@
                   (open-status? status) [:opened]
                   (closed-status? status) [:closed]))]
     (cond-> {:status status}
-      verbs (assoc :incident_time (into {}
-                                        (map (fn [verb] [verb t]))
-                                        verbs)))))
+      verbs (assoc :incident_time (zipmap verbs (repeat t))))))
 
 (s/defn ^:private update-interval :- ESStoredIncident
   [{:keys [intervals] :as incident} :- ESStoredIncident
