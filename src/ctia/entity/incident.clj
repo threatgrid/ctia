@@ -185,7 +185,7 @@
                        (get-in prev [:incident_time :opened])
                        (get-in incident [:incident_time :closed]))
 
-      (and (new-status? old-status)
+      (and (or (open-status? old-status) (new-status? old-status))
            (contained-status? new-status))
       (update-interval :new_to_contained
                        (:created prev)
