@@ -739,10 +739,20 @@
             (let [incident (assoc prev :status open-status :incident_time {:opened later})]
               (is (= (assoc incident :intervals {:new_to_opened computed-interval})
                      (sut/compute-intervals prev incident))))))
+        (testing "if previous status is one of the 'New' sub-statuses, then create interval"
+          (doseq [stored-status (shuffle new-statuses)]
+            (testing stored-status
+              (is (= (assoc incident :intervals {:new_to_opened computed-interval})
+                     (sut/compute-intervals (assoc prev :status stored-status) incident))))))
         (testing "if previous status is not one of the 'New' sub-statuses, then don't create new interval"
           (doseq [stored-status (shuffle (apply disj incident-statuses new-statuses))]
             (testing stored-status
               (is (= incident (sut/compute-intervals (assoc prev :status stored-status) incident))))))
+        (testing "if new status is not one of the 'Open' sub-statuses, then don't create new interval"
+          (doseq [new-status (shuffle (apply disj incident-statuses open-statuses))]
+            (testing new-status
+              (let [updated-incident (assoc incident :status new-status)]
+                (is (= updated-incident (sut/compute-intervals prev updated-incident)))))))
         ;; Note: :incident_time.opened is included in stored incident due to the Incident schema.
         ;; This test is sufficient to show that this is ignored by sut/compute-intervals,
         ;; and only the :incident_time.opened in the updated incident is used to calculate the interval.
@@ -785,17 +795,24 @@
       (let [prev (assoc prev :status "New: Presented")
             incident (-> (assoc prev :status "Open: Contained")
                          (assoc-in [:incident_time :contained] later))]
-        (testing "if prev does not already have a :new_to_contained interval, compute interval and include in update"
-          (is (= (assoc incident :intervals {:new_to_contained computed-interval})
-                 (sut/compute-intervals prev incident))))
         (testing "prefer existing :new_to_contained interval"
           (is (= (assoc incident :intervals {:new_to_contained 55565})
                  (sut/compute-intervals (assoc prev :intervals {:new_to_contained 55565})
                                         incident))))
-        (testing "if previous status is not one of the 'New' sub-statuses, then don't create new interval"
-          (doseq [stored-status (shuffle (apply disj incident-statuses new-statuses))]
+        (testing "if previous is a 'New' or 'Open' status, then create new interval"
+          (doseq [stored-status (shuffle (concat new-statuses open-statuses))]
+            (testing stored-status 
+              (is (= (assoc incident :intervals {:new_to_contained computed-interval})
+                     (sut/compute-intervals (assoc prev :status stored-status) incident))))))
+        (testing "if previous status is not one of the 'New' or 'Open' sub-statuses, then don't create new interval"
+          (doseq [stored-status (shuffle (apply disj incident-statuses (concat new-statuses open-statuses)))]
             (testing stored-status
               (is (= incident (sut/compute-intervals (assoc prev :status stored-status) incident))))))
+        (testing "if new status is not Open: Contained, then don't create new interval"
+          (doseq [new-status (shuffle (disj incident-statuses "Open: Contained"))]
+            (testing new-status
+              (let [updated-incident (assoc incident :status new-status)]
+                (is (= updated-incident (sut/compute-intervals prev (assoc updated-incident :status new-status))))))))
         (testing "if :created is after the updated :incident_time.contained, elide interval from update"
           (let [prev (assoc prev :created later)
                 incident (-> (assoc prev :status "Open: Contained")
