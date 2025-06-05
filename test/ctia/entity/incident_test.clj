@@ -73,8 +73,6 @@
            (is (= (:id incident) (:id updated-incident)))
            (is (= 200 (:status response)))
            (is (= "Open" (:status updated-incident)))
-           (is (get-in updated-incident [:incident_time :opened]))
-
            (is (= (get-in updated-incident [:incident_time :opened])
                   (tc/to-date fixed-now)))))
 
@@ -84,8 +82,6 @@
                updated-incident (:parsed-body response)]
            (is (= 200 (:status response)))
            (is (= "Closed" (:status updated-incident)))
-           (is (get-in updated-incident [:incident_time :closed]))
-
            (is (= (get-in updated-incident [:incident_time :closed])
                   (tc/to-date fixed-now)))))
 
@@ -95,9 +91,16 @@
                updated-incident (:parsed-body response)]
            (is (= 200 (:status response)))
            (is (= "Containment Achieved" (:status updated-incident)))
-           (is (get-in updated-incident [:incident_time :remediated]))
-
            (is (= (get-in updated-incident [:incident_time :remediated])
+                  (tc/to-date fixed-now)))))
+       
+       (testing "POST /ctia/incident/:id/status Contained"
+         (let [new-status "Open: Contained"
+               response (post-status app (:short-id incident-id) new-status)
+               updated-incident (:parsed-body response)]
+           (is (= 200 (:status response)))
+           (is (= "Open: Contained" (:status updated-incident)))
+           (is (= (get-in updated-incident [:incident_time :contained])
                   (tc/to-date fixed-now)))))))))
 
 (deftest test-incident-crud-routes
@@ -736,10 +739,20 @@
             (let [incident (assoc prev :status open-status :incident_time {:opened later})]
               (is (= (assoc incident :intervals {:new_to_opened computed-interval})
                      (sut/compute-intervals prev incident))))))
+        (testing "if previous status is one of the 'New' sub-statuses, then create interval"
+          (doseq [stored-status (shuffle new-statuses)]
+            (testing stored-status
+              (is (= (assoc incident :intervals {:new_to_opened computed-interval})
+                     (sut/compute-intervals (assoc prev :status stored-status) incident))))))
         (testing "if previous status is not one of the 'New' sub-statuses, then don't create new interval"
           (doseq [stored-status (shuffle (apply disj incident-statuses new-statuses))]
             (testing stored-status
               (is (= incident (sut/compute-intervals (assoc prev :status stored-status) incident))))))
+        (testing "if new status is not one of the 'Open' sub-statuses, then don't create new interval"
+          (doseq [new-status (shuffle (apply disj incident-statuses open-statuses))]
+            (testing new-status
+              (let [updated-incident (assoc incident :status new-status)]
+                (is (= updated-incident (sut/compute-intervals prev updated-incident)))))))
         ;; Note: :incident_time.opened is included in stored incident due to the Incident schema.
         ;; This test is sufficient to show that this is ignored by sut/compute-intervals,
         ;; and only the :incident_time.opened in the updated incident is used to calculate the interval.
@@ -777,7 +790,35 @@
         (testing "if :incident_time.opened is after the updated :incident_time.closed, elide interval from update"
           (let [prev (assoc prev :incident_time {:opened later})
                 incident (-> incident (assoc :incident_time {:opened later :closed earlier}))]
-            (is (= incident (sut/compute-intervals prev incident)))))))))
+            (is (= incident (sut/compute-intervals prev incident)))))))
+    (testing "updating new_to_contained"
+      (let [prev (assoc prev :status "New: Presented")
+            incident (-> (assoc prev :status "Open: Contained")
+                         (assoc-in [:incident_time :contained] later))]
+        (testing "prefer existing :new_to_contained interval"
+          (is (= (assoc incident :intervals {:new_to_contained 55565})
+                 (sut/compute-intervals (assoc prev :intervals {:new_to_contained 55565})
+                                        incident))))
+        (testing "if previous is a 'New' or 'Open' status, then create new interval"
+          (doseq [stored-status (shuffle (concat new-statuses open-statuses))]
+            (testing stored-status 
+              (is (= (assoc incident :intervals {:new_to_contained computed-interval})
+                     (sut/compute-intervals (assoc prev :status stored-status) incident))))))
+        (testing "if previous status is not one of the 'New' or 'Open' sub-statuses, then don't create new interval"
+          (doseq [stored-status (shuffle (apply disj incident-statuses (concat new-statuses open-statuses)))]
+            (testing stored-status
+              (is (= incident (sut/compute-intervals (assoc prev :status stored-status) incident))))))
+        (testing "if new status is not Open: Contained, then don't create new interval"
+          (doseq [new-status (shuffle (disj incident-statuses "Open: Contained"))]
+            (testing new-status
+              (let [updated-incident (assoc incident :status new-status)]
+                (is (= updated-incident (sut/compute-intervals prev (assoc updated-incident :status new-status))))))))
+        (testing "if :created is after the updated :incident_time.contained, elide interval from update"
+          (let [prev (assoc prev :created later)
+                incident (-> (assoc prev :status "Open: Contained")
+                             (assoc-in [:incident_time :contained] earlier))]
+            (is (= incident
+                   (sut/compute-intervals prev incident)))))))))
 
 (s/defn create-incident-at-time :- s/Str
   [app
@@ -803,28 +844,30 @@
                  first-created 0 ;;offsets in seconds from epoch to created
                  second-created 10
                  third-created 20
-                 first-new_to_opened 100 ;;offsets in seconds from created to opened
+                 ;; new_to_opened should always be recorded when
+                 ;; new_to_contained is, as 'Open: Contained' is an Open status.
+                 first-new_to_contained 100 ;;offsets in seconds from created to opened
                  second-new_to_opened 200
-                 third-new_to_opened 500
+                 third-new_to_contained 500
                  first-opened_to_closed 150 ;;offsets in seconds from opened to closed
                  second-opened_to_closed 250
                  third-opened_to_closed 550
                  incident->status-changes (take 3 [[(assoc (gen-new-incident) :status "New" :title "incident1")
                                                     {:created first-created
-                                                     :new_to_opened first-new_to_opened
-                                                     :opened-status "Open"
+                                                     :new_to_opened first-new_to_contained
+                                                     :opened-status "Open: Contained"
                                                      :opened_to_closed first-opened_to_closed
                                                      :closed-status "Closed"}]
                                                    [(assoc (gen-new-incident) :status "New: Processing" :title "incident2")
                                                     {:created second-created
                                                      :new_to_opened second-new_to_opened
-                                                     :opened-status "Open: Reported"
+                                                     :opened-status "Open: Investigating"
                                                      :opened_to_closed second-opened_to_closed
                                                      :closed-status "Closed: False Positive"}]
                                                    [(assoc (gen-new-incident) :status "New: Presented" :title "incident3")
                                                     {:created third-created
-                                                     :new_to_opened third-new_to_opened
-                                                     :opened-status "Open: Investigating"
+                                                     :new_to_opened third-new_to_contained
+                                                     :opened-status "Open: Contained"
                                                      :opened_to_closed third-opened_to_closed
                                                      :closed-status "Closed: Merged"}]])
                  +sec #(jt/plus epoch (jt/seconds %))
@@ -856,14 +899,22 @@
                    ;; the average of intervals.<field> should involve <expected-count> incidents and
                    ;; have value <expected-average> between time window <from> and <to> (latter is optional).
                    (doseq [[field expected-count expected-average from to :as test-case]
-                           [["new_to_opened" 3 (avg first-new_to_opened second-new_to_opened third-new_to_opened) first-created]
-                            ["new_to_opened" 2 (avg second-new_to_opened third-new_to_opened) second-created]
-                            ["new_to_opened" 2 (avg first-new_to_opened second-new_to_opened) first-created (inc second-created)]
-                            ["new_to_opened" 1 first-new_to_opened first-created (inc first-created)]
+                           [["new_to_opened" 3 (avg first-new_to_contained second-new_to_opened third-new_to_contained) first-created]
+                            ["new_to_opened" 2 (avg second-new_to_opened third-new_to_contained) second-created]
+                            ["new_to_opened" 2 (avg first-new_to_contained second-new_to_opened) first-created (inc second-created)]
+                            ["new_to_opened" 1 first-new_to_contained first-created (inc first-created)]
                             ["new_to_opened" 1 second-new_to_opened second-created (inc second-created)]
-                            ["new_to_opened" 1 third-new_to_opened third-created (inc third-created)]
-                            ["new_to_opened" 1 third-new_to_opened third-created]
+                            ["new_to_opened" 1 third-new_to_contained third-created (inc third-created)]
+                            ["new_to_opened" 1 third-new_to_contained third-created]
                             ["new_to_opened" 0 nil (inc third-created)]
+                            ["new_to_contained" 2 (avg first-new_to_contained third-new_to_contained) first-created]
+                            ["new_to_contained" 1 third-new_to_contained second-created]
+                            ["new_to_contained" 1 first-new_to_contained first-created (inc second-created)]
+                            ["new_to_contained" 1 first-new_to_contained first-created (inc first-created)]
+                            ["new_to_contained" 0 nil second-created (inc second-created)]
+                            ["new_to_contained" 1 third-new_to_contained third-created (inc third-created)]
+                            ["new_to_contained" 1 third-new_to_contained third-created]
+                            ["new_to_contained" 0 nil (inc third-created)]
                             ["opened_to_closed" 3 (avg first-opened_to_closed second-opened_to_closed third-opened_to_closed) first-created]
                             ["opened_to_closed" 2 (avg second-opened_to_closed third-opened_to_closed) second-created]
                             ["opened_to_closed" 1 third-opened_to_closed third-created]

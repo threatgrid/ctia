@@ -39,7 +39,6 @@
    [schema-tools.core :as st]
    [schema.core :as s]))
 
-(def incident-bundle-default-limit 1000)
 
 (s/defschema Incident
   (st/merge
@@ -72,7 +71,8 @@
 ;;NOTE: changing this requires a ES mapping refresh
 (def incident-intervals
   [:new_to_opened
-   :opened_to_closed])
+   :opened_to_closed
+   :new_to_contained])
 
 (def-stored-schema StoredIncident Incident)
 
@@ -119,27 +119,30 @@
 (defn open-status? [status]
    (some? (re-matches #"Open(: .+)?" status)))
 
+(defn contained-status? [status]
+  (= status "Open: Contained"))
+
 (defn closed-status? [status]
   (some? (re-matches #"Closed(: .+)?" status)))
 
 (defn make-status-update
   [{:keys [status]}]
   (let [t (time/internal-now)
-        verb (or (case status
-                   "New" nil
-                   "Stalled" nil
-                   "Hold" nil
-                   ;; Note: GitHub syntax highlighting doesn't like lists with strings
-                   "Containment Achieved" :remediated
-                   "Restoration Achieved" :remediated
-                   "Rejected" :rejected
-                   "Incident Reported" :reported
-                   nil)
-                 (cond
-                   (open-status? status) :opened
-                   (closed-status? status) :closed))]
+        verbs (case status
+                "New" nil
+                "Stalled" nil
+                "Hold" nil
+                ;; Note: GitHub syntax highlighting doesn't like lists with strings
+                "Containment Achieved" [:remediated]
+                "Restoration Achieved" [:remediated]
+                "Rejected" [:rejected]
+                "Incident Reported" [:reported]
+                "Open: Contained" [:opened :contained]
+                (cond
+                  (open-status? status) [:opened]
+                  (closed-status? status) [:closed]))]
     (cond-> {:status status}
-      verb (assoc :incident_time {verb t}))))
+      verbs (assoc :incident_time (zipmap verbs (repeat t))))))
 
 (s/defn ^:private update-interval :- ESStoredIncident
   [{:keys [intervals] :as incident} :- ESStoredIncident
@@ -178,7 +181,13 @@
                        ;; we assume this was updated by the status route on Open. will be garbage if status was updated
                        ;; in any other way.
                        (get-in prev [:incident_time :opened])
-                       (get-in incident [:incident_time :closed])))))
+                       (get-in incident [:incident_time :closed]))
+
+      (and (or (open-status? old-status) (new-status? old-status))
+           (contained-status? new-status))
+      (update-interval :new_to_contained
+                       (:created prev)
+                       (get-in incident [:incident_time :contained])))))
 
 (s/defn un-store-incident :- PartialStoredIncident
   [{:keys [doc]} :- {:doc ESPartialStoredIncident
@@ -283,6 +292,7 @@
            :incident_time.remediated
            :incident_time.closed
            :incident_time.rejected
+           :incident_time.contained
            :discovery_method
            :intended_effect
            :assignees
@@ -371,12 +381,14 @@
    :incident_time.reported
    :incident_time.remediated
    :incident_time.closed
-   :incident_time.rejected])
+   :incident_time.rejected
+   :incident_time.contained])
 
 (def incident-average-fields
   {;; restrict to entities _created_ within from/to interval.
    :intervals.new_to_opened {:date-field :created}
-   :intervals.opened_to_closed {:date-field :created}})
+   :intervals.opened_to_closed {:date-field :created}
+   :intervals.new_to_contained {:date-field :created}})
 
 (s/defschema IncidentFieldsParam
   {(s/optional-key :fields) [(apply s/enum incident-fields)]})
