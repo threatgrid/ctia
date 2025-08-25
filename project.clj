@@ -4,7 +4,7 @@
 (def jackson-version "2.15.2")
 (def jackson-databind-version "2.15.2")
 (def metrics-clojure-version "2.10.0")
-(def netty-version "4.1.75.Final")
+(def netty-version "4.1.100.Final")
 (def perforate-version "0.3.4")
 (def ring-version "1.9.5")
 (def schema-generators-version "0.1.5")
