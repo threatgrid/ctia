@@ -201,10 +201,10 @@ ctia:ctia:jar:1.1.1-SNAPSHOT
 +- lock-key:lock-key:jar:1.5.0:compile
 |  \- charset:charset:jar:1.2.1:compile
 +- threatgrid:redismq:jar:0.1.1:compile
-+- org.apache.zookeeper:zookeeper:jar:3.5.6:compile
-|  +- org.apache.zookeeper:zookeeper-jute:jar:3.5.6:compile
-|  +- org.apache.yetus:audience-annotations:jar:0.5.0:compile
-|  \- io.netty:netty-transport-native-epoll:jar:4.1.42.Final:compile
++- org.apache.zookeeper:zookeeper:jar:3.8.4:compile
+|  +- org.apache.zookeeper:zookeeper-jute:jar:3.8.4:compile
+|  +- org.apache.yetus:audience-annotations:jar:0.12.0:compile
+|  \- io.netty:netty-transport-native-epoll:jar:4.1.105.Final:compile
 +- args4j:args4j:jar:2.33:compile
 +- com.stuartsierra:component:jar:1.1.0:compile
 |  \- com.stuartsierra:dependency:jar:1.0.0:compile
