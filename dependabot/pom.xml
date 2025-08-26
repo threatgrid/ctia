@@ -1872,7 +1872,7 @@
     <dependency>
       <groupId>ch.qos.logback</groupId>
       <artifactId>logback-classic</artifactId>
-      <version>1.5.6</version>
+      <version>1.5.16</version>
       <exclusions>
         <exclusion>
           <artifactId>slf4j-nop</artifactId>
@@ -1895,7 +1895,7 @@
     <dependency>
       <groupId>ch.qos.logback</groupId>
       <artifactId>logback-core</artifactId>
-      <version>1.5.13</version>
+      <version>1.5.16</version>
       <exclusions>
         <exclusion>
           <artifactId>slf4j-nop</artifactId>

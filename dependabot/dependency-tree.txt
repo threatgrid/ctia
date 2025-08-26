@@ -282,8 +282,8 @@ ctia:ctia:jar:1.1.1-SNAPSHOT
 +- org.slf4j:log4j-over-slf4j:jar:2.0.13:compile
 +- org.slf4j:slf4j-api:jar:2.0.13:compile
 +- net.logstash.logback:logstash-logback-encoder:jar:7.4:compile
-+- ch.qos.logback:logback-classic:jar:1.5.6:compile
-+- ch.qos.logback:logback-core:jar:1.5.6:compile
++- ch.qos.logback:logback-classic:jar:1.5.16:compile
++- ch.qos.logback:logback-core:jar:1.5.16:compile
 +- puppetlabs:trapperkeeper:jar:test:3.2.0:test
 +- puppetlabs:kitchensink:jar:test:3.2.0:test
 +- org.clojure:test.check:jar:1.1.1:test

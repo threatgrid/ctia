@@ -3,6 +3,7 @@
 (def clj-version "1.12.0")
 (def jackson-version "2.15.2")
 (def jackson-databind-version "2.15.2")
+(def logback-version "1.5.16")
 (def metrics-clojure-version "2.10.0")
 (def netty-version "4.1.105.Final")
 (def perforate-version "0.3.4")
@@ -191,8 +192,8 @@
                  [org.slf4j/log4j-over-slf4j "2.0.13"]
                  [org.slf4j/slf4j-api "2.0.13"]
                  [net.logstash.logback/logstash-logback-encoder "7.4"]
-                 [ch.qos.logback/logback-classic "1.5.6"]
-                 [ch.qos.logback/logback-core "1.5.6"]]
+                 [ch.qos.logback/logback-classic ~logback-version]
+                 [ch.qos.logback/logback-core ~logback-version]]
 
   :resource-paths ["resources"]
   :classpath ".:resources"
