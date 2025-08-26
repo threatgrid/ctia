@@ -222,7 +222,7 @@
                  (str "set +e; "
                       "SECONDS=0; "
                       "until echo dump | nc 127.0.0.1 2181 | grep brokers; do sleep 1; " exit-if-too-long " ; done"))
-          (assert-sh "Error connecting to kafaka"))
+          (assert-sh "Error connecting to kafka"))
       (println "[ctia.dev.split-tests] Docker initialized."))))
 
 ;Derived from https://github.com/circleci/circleci.test/blob/master/src/circleci/test.clj
