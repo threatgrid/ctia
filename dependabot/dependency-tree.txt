@@ -206,7 +206,7 @@ ctia:ctia:jar:1.1.1-SNAPSHOT
 |  +- org.apache.zookeeper:zookeeper-jute:jar:3.8.4:compile
 |  +- org.apache.yetus:audience-annotations:jar:0.12.0:compile
 |  \- io.netty:netty-transport-native-epoll:jar:4.1.105.Final:compile
-+- commons-io:commons-io:jar:2.11.0:compile
++- commons-io:commons-io:jar:2.14.0:compile
 +- args4j:args4j:jar:2.33:compile
 +- com.stuartsierra:component:jar:1.1.0:compile
 |  \- com.stuartsierra:dependency:jar:1.0.0:compile
