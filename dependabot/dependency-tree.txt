@@ -94,7 +94,6 @@ ctia:ctia:jar:1.1.1-SNAPSHOT
 |        \- com.googlecode.libphonenumber:libphonenumber:jar:8.0.0:compile
 +- metosin:ring-swagger-ui:jar:3.24.3:compile
 +- ring:ring-core:jar:1.9.5:compile
-|  +- commons-io:commons-io:jar:2.10.0:compile
 |  +- commons-fileupload:commons-fileupload:jar:1.4:compile
 |  +- crypto-random:crypto-random:jar:1.2.1:compile
 |  \- crypto-equality:crypto-equality:jar:1.0.0:compile
@@ -157,39 +156,41 @@ ctia:ctia:jar:1.1.1-SNAPSHOT
 |  +- org.checkerframework:checker-qual:jar:3.12.0:compile
 |  +- com.google.errorprone:error_prone_annotations:jar:2.7.1:compile
 |  \- com.google.j2objc:j2objc-annotations:jar:1.3:compile
-+- io.netty:netty-all:jar:4.1.75.Final:compile
-|  +- io.netty:netty-buffer:jar:4.1.75.Final:compile
-|  +- io.netty:netty-codec-dns:jar:4.1.75.Final:compile
-|  +- io.netty:netty-codec-haproxy:jar:4.1.75.Final:compile
-|  +- io.netty:netty-codec-http:jar:4.1.75.Final:compile
-|  +- io.netty:netty-codec-http2:jar:4.1.75.Final:compile
-|  +- io.netty:netty-codec-memcache:jar:4.1.75.Final:compile
-|  +- io.netty:netty-codec-mqtt:jar:4.1.75.Final:compile
-|  +- io.netty:netty-codec-redis:jar:4.1.75.Final:compile
-|  +- io.netty:netty-codec-smtp:jar:4.1.75.Final:compile
-|  +- io.netty:netty-codec-socks:jar:4.1.75.Final:compile
-|  +- io.netty:netty-codec-stomp:jar:4.1.75.Final:compile
-|  +- io.netty:netty-codec-xml:jar:4.1.75.Final:compile
-|  +- io.netty:netty-common:jar:4.1.75.Final:compile
-|  +- io.netty:netty-handler:jar:4.1.75.Final:compile
-|  +- io.netty:netty-handler-proxy:jar:4.1.75.Final:compile
-|  +- io.netty:netty-resolver-dns:jar:4.1.75.Final:compile
-|  +- io.netty:netty-transport:jar:4.1.75.Final:compile
-|  +- io.netty:netty-transport-rxtx:jar:4.1.75.Final:compile
-|  +- io.netty:netty-transport-sctp:jar:4.1.75.Final:compile
-|  +- io.netty:netty-transport-udt:jar:4.1.75.Final:compile
-|  +- io.netty:netty-transport-classes-epoll:jar:4.1.75.Final:compile
-|  +- io.netty:netty-transport-native-unix-common:jar:4.1.75.Final:compile
-|  +- io.netty:netty-transport-classes-kqueue:jar:4.1.75.Final:compile
-|  +- io.netty:netty-resolver-dns-classes-macos:jar:4.1.75.Final:compile
-|  +- io.netty:netty-transport-native-epoll:jar:linux-x86_64:4.1.75.Final:runtime
-|  +- io.netty:netty-transport-native-epoll:jar:linux-aarch_64:4.1.75.Final:runtime
-|  +- io.netty:netty-transport-native-kqueue:jar:osx-x86_64:4.1.75.Final:runtime
-|  +- io.netty:netty-transport-native-kqueue:jar:osx-aarch_64:4.1.75.Final:runtime
-|  +- io.netty:netty-resolver-dns-native-macos:jar:osx-x86_64:4.1.75.Final:runtime
-|  \- io.netty:netty-resolver-dns-native-macos:jar:osx-aarch_64:4.1.75.Final:runtime
-+- io.netty:netty-codec:jar:4.1.75.Final:compile
-+- io.netty:netty-resolver:jar:4.1.75.Final:compile
++- io.netty:netty-all:jar:4.1.105.Final:compile
+|  +- io.netty:netty-buffer:jar:4.1.105.Final:compile
+|  +- io.netty:netty-codec-dns:jar:4.1.105.Final:compile
+|  +- io.netty:netty-codec-haproxy:jar:4.1.105.Final:compile
+|  +- io.netty:netty-codec-http:jar:4.1.105.Final:compile
+|  +- io.netty:netty-codec-http2:jar:4.1.105.Final:compile
+|  +- io.netty:netty-codec-memcache:jar:4.1.105.Final:compile
+|  +- io.netty:netty-codec-mqtt:jar:4.1.105.Final:compile
+|  +- io.netty:netty-codec-redis:jar:4.1.105.Final:compile
+|  +- io.netty:netty-codec-smtp:jar:4.1.105.Final:compile
+|  +- io.netty:netty-codec-socks:jar:4.1.105.Final:compile
+|  +- io.netty:netty-codec-stomp:jar:4.1.105.Final:compile
+|  +- io.netty:netty-codec-xml:jar:4.1.105.Final:compile
+|  +- io.netty:netty-common:jar:4.1.105.Final:compile
+|  +- io.netty:netty-handler:jar:4.1.105.Final:compile
+|  +- io.netty:netty-transport-native-unix-common:jar:4.1.105.Final:compile
+|  +- io.netty:netty-handler-proxy:jar:4.1.105.Final:compile
+|  +- io.netty:netty-handler-ssl-ocsp:jar:4.1.105.Final:compile
+|  +- io.netty:netty-resolver-dns:jar:4.1.105.Final:compile
+|  +- io.netty:netty-transport:jar:4.1.105.Final:compile
+|  +- io.netty:netty-transport-rxtx:jar:4.1.105.Final:compile
+|  +- io.netty:netty-transport-sctp:jar:4.1.105.Final:compile
+|  +- io.netty:netty-transport-udt:jar:4.1.105.Final:compile
+|  +- io.netty:netty-transport-classes-epoll:jar:4.1.105.Final:compile
+|  +- io.netty:netty-transport-classes-kqueue:jar:4.1.105.Final:compile
+|  +- io.netty:netty-resolver-dns-classes-macos:jar:4.1.105.Final:compile
+|  +- io.netty:netty-transport-native-epoll:jar:linux-x86_64:4.1.105.Final:runtime
+|  +- io.netty:netty-transport-native-epoll:jar:linux-aarch_64:4.1.105.Final:runtime
+|  +- io.netty:netty-transport-native-epoll:jar:linux-riscv64:4.1.105.Final:runtime
+|  +- io.netty:netty-transport-native-kqueue:jar:osx-x86_64:4.1.105.Final:runtime
+|  +- io.netty:netty-transport-native-kqueue:jar:osx-aarch_64:4.1.105.Final:runtime
+|  +- io.netty:netty-resolver-dns-native-macos:jar:osx-x86_64:4.1.105.Final:runtime
+|  \- io.netty:netty-resolver-dns-native-macos:jar:osx-aarch_64:4.1.105.Final:runtime
++- io.netty:netty-codec:jar:4.1.105.Final:compile
++- io.netty:netty-resolver:jar:4.1.105.Final:compile
 +- com.google.protobuf:protobuf-java:jar:3.19.6:compile
 +- riemann-clojure-client:riemann-clojure-client:jar:0.5.1:compile
 |  +- less-awful-ssl:less-awful-ssl:jar:1.0.4:compile
@@ -201,10 +202,11 @@ ctia:ctia:jar:1.1.1-SNAPSHOT
 +- lock-key:lock-key:jar:1.5.0:compile
 |  \- charset:charset:jar:1.2.1:compile
 +- threatgrid:redismq:jar:0.1.1:compile
-+- org.apache.zookeeper:zookeeper:jar:3.5.6:compile
-|  +- org.apache.zookeeper:zookeeper-jute:jar:3.5.6:compile
-|  +- org.apache.yetus:audience-annotations:jar:0.5.0:compile
-|  \- io.netty:netty-transport-native-epoll:jar:4.1.42.Final:compile
++- org.apache.zookeeper:zookeeper:jar:3.8.4:compile
+|  +- org.apache.zookeeper:zookeeper-jute:jar:3.8.4:compile
+|  +- org.apache.yetus:audience-annotations:jar:0.12.0:compile
+|  \- io.netty:netty-transport-native-epoll:jar:4.1.105.Final:compile
++- commons-io:commons-io:jar:2.11.0:compile
 +- args4j:args4j:jar:2.33:compile
 +- com.stuartsierra:component:jar:1.1.0:compile
 |  \- com.stuartsierra:dependency:jar:1.0.0:compile

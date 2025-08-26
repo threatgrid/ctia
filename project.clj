@@ -4,7 +4,7 @@
 (def jackson-version "2.15.2")
 (def jackson-databind-version "2.15.2")
 (def metrics-clojure-version "2.10.0")
-(def netty-version "4.1.75.Final")
+(def netty-version "4.1.105.Final")
 (def perforate-version "0.3.4")
 (def ring-version "1.9.5")
 (def schema-generators-version "0.1.5")
@@ -146,7 +146,8 @@
                  ;; Hooks
                  [threatgrid/redismq "0.1.1"]
 
-                 [org.apache.zookeeper/zookeeper "3.5.6"] ; override zookeeper-clj, org.onyxplatform/onyx-kafka
+                 [org.apache.zookeeper/zookeeper "3.8.4"] ; override zookeeper-clj, org.onyxplatform/onyx-kafka
+                 [commons-io "2.11.0"] ; org.apache.zookeeper/zookeeper > ring/ring-core
                  [args4j "2.33"] ;bump org.onyxplatform/onyx-kafka, threatgrid/ctim
                  [com.stuartsierra/component "1.1.0"] ;org.onyxplatform/onyx-kafka internal override
                  [org.onyxplatform/onyx-kafka "0.14.5.0"]
