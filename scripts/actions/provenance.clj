@@ -7,9 +7,14 @@
 
 (defn -main [& args]
   (let [uber (io/file "target/ctia.jar")
-        {:keys [exit out err]} (sh/sh "unzip" (.getPath uber))]
-
-    (assert (zero? exit) (str out "\n" err))
+        extract-dir "target/uberjar"
+        {:keys [exit out err]} (when (.exists (io/file extract-dir))
+                                 (sh/sh "rm" "-r" extract-dir))
+        _ (when exit
+            (assert (zero? exit) (str out "\n" err)))
+        {:keys [exit out err]} (sh/sh "unzip" (.getPath uber) "-d" extract-dir)
+        _ (assert (zero? exit) (str out "\n" err))
+        ]
     (println "unzipped")
     ))
 
