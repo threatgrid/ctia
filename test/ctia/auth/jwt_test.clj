@@ -26,7 +26,9 @@
         response-no-jwt (wrapped-handler request-no-jwt)
         response-jwt (wrapped-handler request-jwt)]
     (is (= {:body {:body "foo"
-                   :url "http://localhost:8080/foo"}
+                   :url "http://localhost:8080/foo"
+                   :login "Anonymous"
+                   :groups []}
             :status 200}
            response-no-jwt))
     (is (= {:body
@@ -154,10 +156,15 @@
 
 (deftest parse-jwks-urls-test
   (testing "Valid JWKS URLs configuration"
-    (is (= {"issuer1" "https://auth.example.com/.well-known/jwks.json"
-            "issuer2" "https://other.example.com/jwks"}
+    (is (= {"issuer1" ["https://auth.example.com/.well-known/jwks.json"]
+            "issuer2" ["https://other.example.com/jwks"]}
            (sut/parse-jwks-urls "issuer1=https://auth.example.com/.well-known/jwks.json,issuer2=https://other.example.com/jwks"))
         "Should parse multiple issuer-URL pairs"))
+  
+  (testing "Multiple URLs per issuer"
+    (is (= {"IROH Auth" ["https://us.example.com/jwks" "https://eu.example.com/jwks"]}
+           (sut/parse-jwks-urls "IROH Auth=https://us.example.com/jwks,IROH Auth=https://eu.example.com/jwks"))
+        "Should handle multiple URLs for the same issuer"))
   
   (testing "Invalid JWKS URLs configuration"
     (is (thrown-with-msg? Exception #"Wrong format for JWKS URLs config"
