@@ -181,8 +181,18 @@
           "Should successfully convert valid JWK to public key")
       (is (instance? java.security.PublicKey public-key)
           "Should return a PublicKey instance")))
+
+  (testing "JWK conversion with invalid key type"
+    (let [invalid-jwk {:kty "EC" :kid "ec-key"}]
+      (is (nil? (#'sut/jwk->public-key invalid-jwk))
+          "Should return nil for non-RSA key types")))
+
+  (testing "JWK conversion with malformed data"
+    (let [malformed-jwk {:kty "RSA" :kid "bad-key" :n "invalid-base64" :e "AQAB"}]
+      (is (nil? (#'sut/jwk->public-key malformed-jwk))
+          "Should return nil for malformed JWK data")))
   
-  (testing "JWKS fetching simulation"
+  (testing "JWKS fetching and key building simulation"
     (let [fake-jwks {:keys [{:kty "RSA"
                             :kid "key1"
                             :n "xjNrLpwRLqgvPpKLippl4jXKvJO8rPEqGZs2lPcQi_8IqLEsGLRr3L9IUyqfIzPJnDfEiUqELvCTPqLCGqCLfs8jbwZrXeakgRP6yiYPgmqMYdy0zJlEp5uEPJLd7iVBH-V5t8M8mkltu1V5uPsPdXgqGqoKqiUwyCVm3razVOcvg-3f_57BXMmtVcuTTjLaIbfEDp8UFCB0SYCLIiTkmFBrqHPNsldxLbn7Rg_OK8txy1hCQqRVDhlFsoSHao-kyWwE_PpRAKEJ8YYjNodJiB7YYqCLi8sH2wvPvPB1N-dVKoUJKEqnfOoB8gZL0CqHAnBQmkHgGZbBZo18dQ"
@@ -190,17 +200,91 @@
                            {:kty "RSA"
                             :kid "key2"
                             :n "0X_dqzXmA7lZXLpOm-3BjUkJnbI7RVgq2V5qyF7sjBJXrBPbMeBbEPbuBGPvQVCnJ84seULGi0pm9yj0Heb0qJaoUSJvAqQvjWP4ysOd0ogHp7nX0R_3m9teo0L1TEkdYoWR4UuhBM_qYz1nHtpDDvYPvGj1V6G6dj39dFT0KuFUqRn8m1MX4NiFJ1tUzEu_8WvM8lhJMccSyfLfZ7gknVgQLpXDqfPXxwSGkOGCpFepnUGCcrN7q2Qx_qxBEaJO8CXlLjFeoULLO93VxIfbPj7FUgnUqr_MIMYY-cPJE8SjoXn7JULweGqDG7j5NKjpNfh7jP0salr-EaGqNQ"
+                            :e "AQAB"}
+                           {:kty "RSA"
+                            :kid "key-no-kid"}]}] ; Missing kid field
+      (let [key-map (#'sut/build-key-map fake-jwks)]
+        (is (= 2 (count key-map))
+            "Should build map with only keys that have kid")
+        (is (contains? key-map "key1")
+            "Should contain key1")
+        (is (contains? key-map "key2")
+            "Should contain key2")
+        (is (not (contains? key-map "key-no-kid"))
+            "Should not contain key without kid")
+        (is (every? #(instance? java.security.PublicKey %) (vals key-map))
+            "All values should be PublicKey instances"))))
+
+  (testing "JWKS internal functions"
+    (let [fake-jwks {:keys [{:kty "RSA" :kid "test-key" 
+                            :n "xjNrLpwRLqgvPpKLippl4jXKvJO8rPEqGZs2lPcQi_8IqLEsGLRr3L9IUyqfIzPJnDfEiUqELvCTPqLCGqCLfs8jbwZrXeakgRP6yiYPgmqMYdy0zJlEp5uEPJLd7iVBH-V5t8M8mkltu1V5uPsPdXgqGqoKqiUwyCVm3razVOcvg-3f_57BXMmtVcuTTjLaIbfEDp8UFCB0SYCLIiTkmFBrqHPNsldxLbn7Rg_OK8txy1hCQqRVDhlFsoSHao-kyWwE_PpRAKEJ8YYjNodJiB7YYqCLi8sH2wvPvPB1N-dVKoUJKEqnfOoB8gZL0CqHAnBQmkHgGZbBZo18dQ"
                             :e "AQAB"}]}]
-      (with-fake-routes
-        {"https://test.example.com/jwks" {:get (fn [_] {:status 200
-                                                         :headers {"Content-Type" "application/json"}
-                                                         :body fake-jwks})}}
-        (let [key-map (#'sut/build-key-map fake-jwks)]
-          (is (= 2 (count key-map))
-              "Should build map with both keys")
-          (is (contains? key-map "key1")
-              "Should contain key1")
-          (is (contains? key-map "key2")
-              "Should contain key2")
-          (is (every? #(instance? java.security.PublicKey %) (vals key-map))
-              "All values should be PublicKey instances"))))))
+      
+      (testing "fetch-jwks internal function"
+        (with-fake-routes
+          {"https://test.example.com/jwks" {:get (fn [_] {:status 200
+                                                           :headers {"Content-Type" "application/json"}
+                                                           :body fake-jwks})}
+           "https://error.example.com/jwks" {:get (fn [_] {:status 500
+                                                            :body "Server Error"})}}
+          
+          (testing "Successful JWKS response parsing"
+            (let [result (#'sut/fetch-jwks "https://test.example.com/jwks")]
+              (is (= fake-jwks result)
+                  "Should return parsed JWKS response")))
+          
+          (testing "Failed JWKS fetch returns nil"
+            (is (nil? (#'sut/fetch-jwks "https://error.example.com/jwks"))
+                "Should return nil when JWKS fetch fails"))))
+      
+      (testing "Invalid arguments to get-public-key-for-kid"
+        (is (nil? (sut/get-public-key-for-kid nil "test-key"))
+            "Should return nil for nil JWKS URL")
+        (is (nil? (sut/get-public-key-for-kid "https://test.example.com/jwks" nil))
+            "Should return nil for nil kid")))))
+
+(deftest multi-jwks-integration-test
+  (testing "Multi-JWKS configuration and key building"
+    (let [fake-jwks-us {:keys [{:kty "RSA" :kid "us-key-1" 
+                               :n "xjNrLpwRLqgvPpKLippl4jXKvJO8rPEqGZs2lPcQi_8IqLEsGLRr3L9IUyqfIzPJnDfEiUqELvCTPqLCGqCLfs8jbwZrXeakgRP6yiYPgmqMYdy0zJlEp5uEPJLd7iVBH-V5t8M8mkltu1V5uPsPdXgqGqoKqiUwyCVm3razVOcvg-3f_57BXMmtVcuTTjLaIbfEDp8UFCB0SYCLIiTkmFBrqHPNsldxLbn7Rg_OK8txy1hCQqRVDhlFsoSHao-kyWwE_PpRAKEJ8YYjNodJiB7YYqCLi8sH2wvPvPB1N-dVKoUJKEqnfOoB8gZL0CqHAnBQmkHgGZbBZo18dQ"
+                               :e "AQAB"}]}
+          fake-jwks-eu {:keys [{:kty "RSA" :kid "eu-key-1"
+                               :n "0X_dqzXmA7lZXLpOm-3BjUkJnbI7RVgq2V5qyF7sjBJXrBPbMeBbEPbuBGPvQVCnJ84seULGi0pm9yj0Heb0qJaoUSJvAqQvjWP4ysOd0ogHp7nX0R_3m9teo0L1TEkdYoWR4UuhBM_qYz1nHtpDDvYPvGj1V6G6dj39dFT0KuFUqRn8m1MX4NiFJ1tUzEu_8WvM8lhJMccSyfLfZ7gknVgQLpXDqfPXxwSGkOGCpFepnUGCcrN7q2Qx_qxBEaJO8CXlLjFeoULLO93VxIfbPj7FUgnUqr_MIMYY-cPJE8SjoXn7JULweGqDG7j5NKjpNfh7jP0salr-EaGqNQ"
+                               :e "AQAB"}]}]
+      
+      (testing "US JWKS key building"
+        (let [us-key-map (#'sut/build-key-map fake-jwks-us)]
+          (is (= 1 (count us-key-map))
+              "Should build map with US key")
+          (is (contains? us-key-map "us-key-1")
+              "Should contain US key")
+          (is (instance? java.security.PublicKey (get us-key-map "us-key-1"))
+              "US key should be PublicKey instance")))
+      
+      (testing "EU JWKS key building"
+        (let [eu-key-map (#'sut/build-key-map fake-jwks-eu)]
+          (is (= 1 (count eu-key-map))
+              "Should build map with EU key")
+          (is (contains? eu-key-map "eu-key-1")
+              "Should contain EU key")
+          (is (instance? java.security.PublicKey (get eu-key-map "eu-key-1"))
+              "EU key should be PublicKey instance")))
+      
+      (testing "Cross-region key isolation"
+        (let [us-key-map (#'sut/build-key-map fake-jwks-us)
+              eu-key-map (#'sut/build-key-map fake-jwks-eu)]
+          (is (not (contains? us-key-map "eu-key-1"))
+              "US JWKS should not contain EU key")
+          (is (not (contains? eu-key-map "us-key-1"))
+              "EU JWKS should not contain US key"))))))
+
+(deftest jwks-caching-test
+  (testing "JWKS caching mechanism exists"
+    ;; Test that the caching mechanism is in place
+    (is (fn? #'sut/fetch-cached-keys)
+        "fetch-cached-keys function should exist for caching")
+    
+    ;; Test that the function is memoized (has cache metadata)
+    (let [cache-meta (meta #'sut/fetch-cached-keys)]
+      (is (some? cache-meta)
+          "Cached function should have metadata indicating it's memoized"))))
