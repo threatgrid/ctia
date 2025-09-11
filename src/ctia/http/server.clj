@@ -187,11 +187,12 @@
          (:enabled jwt)
          ((rjwt/wrap-jwt-auth-fn
            (merge
-            {:pubkey-fn ;; if :public-key-map is nil, will use just :public-key
+            {
+             :pubkey-fn-arg-fn #(get-in % [:header :kid])
+             :pubkey-fn ;; if :public-key-map is nil, will use just :public-key
              (when-let [pubkey-for-issuer-map
                         (auth-jwt/parse-jwt-pubkey-map (:public-key-map jwt))]
-               (fn [{:keys [iss]}]
-                 (get pubkey-for-issuer-map iss)))
+               (fn [kid] (get pubkey-for-issuer-map kid)))
              :pubkey-path (:public-key-path jwt)
              :no-jwt-handler rjwt/authorize-no-jwt-header-strategy}
 

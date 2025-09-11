@@ -22,12 +22,12 @@
   "generate an hash-map (string => public-key)
   An example is:
 
-  issuer1=path-to-public-key,issuer2=path-to-public-key2
+  kid1=path-to-public-key,kid2=path-to-public-key2
 
   First we split by , for each entry.
   Then each entry has the format
 
-  issuer=path-to-public-key-file
+  kid=path-to-public-key-file
   "
   [txt]
   (when txt
