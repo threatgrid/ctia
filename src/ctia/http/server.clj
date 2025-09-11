@@ -187,36 +187,42 @@
          (:enabled jwt)
          ((rjwt/wrap-jwt-auth-fn
            (merge
-            {:pubkey-fn ;; Support both JWKS and static public key configurations
-             (let [jwks-urls (auth-jwt/parse-jwks-urls (:jwks-urls jwt))
-                   pubkey-for-issuer-map (auth-jwt/parse-jwt-pubkey-map (:public-key-map jwt))]
-               (cond
-                 ;; If JWKS URLs are configured, use kid-based lookup
-                 jwks-urls
-                 (fn [jwt-data]
-                   ;; Extract kid from header and iss from claims
-                   (let [{:keys [header claims]} jwt-data
-                         {:keys [kid]} header         ; Extract kid from JWT header
-                         {:keys [iss]} claims         ; Extract iss from JWT claims
-                         jwks-urls-list (get jwks-urls iss)]  ; Now gets a list of URLs
-                     (when (seq jwks-urls-list)
-                       (auth-jwt/get-public-key-for-kid-from-multiple-urls jwks-urls-list kid))))
-                 
-                 ;; Fall back to issuer-based static key lookup
-                 pubkey-for-issuer-map
-                 (fn [{:keys [claims]}]  ; Extract iss from claims for static key lookup
-                   (get pubkey-for-issuer-map (:iss claims)))
-                 
-                 ;; No issuer-specific config
-                 :else nil))
-             
-             ;; Configure pubkey-fn-arg-fn to pass both header and claims to pubkey-fn
-             :pubkey-fn-arg-fn (fn [jwt-object]
-                                 ;; Return both header and claims for JWKS kid-based lookup
-                                 {:header (:header jwt-object)
-                                  :claims (:claims jwt-object)})
-             
-             :pubkey-path (:public-key-path jwt)}
+            (let [jwks-urls (auth-jwt/parse-jwks-urls (:jwks-urls jwt))
+                  pubkey-for-issuer-map (auth-jwt/parse-jwt-pubkey-map (:public-key-map jwt))
+                  static-pubkey-path (:public-key-path jwt)]
+              (cond->
+                {:pubkey-path static-pubkey-path}
+                
+                ;; Only add pubkey-fn if not using static key validation
+                (not static-pubkey-path)
+                (assoc :pubkey-fn
+                       (cond
+                         ;; If JWKS URLs are configured, use kid-based lookup
+                         jwks-urls
+                         (fn [jwt-data]
+                           ;; Extract kid from header and iss from claims
+                           (let [{:keys [header claims]} jwt-data
+                                 {:keys [kid]} header         ; Extract kid from JWT header
+                                 {:keys [iss]} claims         ; Extract iss from JWT claims
+                                 jwks-urls-list (get jwks-urls iss)]  ; Now gets a list of URLs
+                             (when (seq jwks-urls-list)
+                               (auth-jwt/get-public-key-for-kid-from-multiple-urls jwks-urls-list kid))))
+                         
+                         ;; Fall back to issuer-based static key lookup
+                         pubkey-for-issuer-map
+                         (fn [{:keys [claims]}]  ; Extract iss from claims for static key lookup
+                           (get pubkey-for-issuer-map (:iss claims)))
+                         
+                         ;; No issuer-specific config - provide default no-op function
+                         :else (constantly nil)))
+                
+                ;; Only add pubkey-fn-arg-fn when using JWKS (not for static key validation)
+                jwks-urls
+                (assoc :pubkey-fn-arg-fn
+                       (fn [jwt-object]
+                         ;; Return both header and claims for JWKS kid-based lookup
+                         {:header (:header jwt-object)
+                          :claims (:claims jwt-object)}))))
 
             (let [{:keys [endpoints timeout cache-ttl]}
                   (:http-check jwt)]
