@@ -1,15 +1,23 @@
 (ns ctia.auth.jwt
   (:refer-clojure :exclude [identity])
   (:require
+   [cheshire.core :as json]
+   [clj-http.client :as http]
    [clj-jwt.key :refer [public-key]]
    [clj-momo.lib.set :refer [as-set]]
+   [clojure.core.memoize :as memo]
    [clojure.set :as set]
    [clojure.string :as string]
    [clojure.tools.logging :as log]
    [ctia.auth :as auth :refer [IIdentity]]
    [ctia.auth.capabilities :refer
     [all-entities gen-capabilities-for-entity-and-accesses]]
-   [scopula.core :as scopula]))
+   [scopula.core :as scopula])
+  (:import
+   [java.security KeyFactory]
+   [java.security.spec RSAPublicKeySpec]
+   [java.math BigInteger]
+   [java.util Base64]))
 
 (defn load-public-key
   [path]
@@ -50,6 +58,129 @@
                           (.getMessage e))]
              (log/error err-msg)
              (throw (ex-info err-msg {:jwt-pubkey-map txt})))))))
+
+;; JWKS Support Functions
+
+(defn- base64url-decode
+  "Decode base64url encoded string to bytes"
+  [^String s]
+  (let [padded (case (mod (count s) 4)
+                 2 (str s "==")
+                 3 (str s "=")
+                 s)
+        standard (-> padded
+                    (string/replace "-" "+")
+                    (string/replace "_" "/"))]
+    (.decode (Base64/getDecoder) standard)))
+
+(defn- bytes->bigint
+  "Convert byte array to BigInteger"
+  [bytes]
+  (BigInteger. 1 bytes))
+
+(defn- jwk->public-key
+  "Convert a JWK map to a Java PublicKey.
+   Supports RSA keys with kty=RSA."
+  [{:keys [kty n e] :as jwk}]
+  (when (= kty "RSA")
+    (try
+      (let [modulus (-> n base64url-decode bytes->bigint)
+            exponent (-> e base64url-decode bytes->bigint)
+            key-spec (RSAPublicKeySpec. modulus exponent)
+            key-factory (KeyFactory/getInstance "RSA")]
+        (.generatePublic key-factory key-spec))
+      (catch Exception ex
+        (log/errorf ex "Failed to convert JWK to public key: %s" jwk)
+        nil))))
+
+(defn- fetch-jwks
+  "Fetch JWKS from the given URL"
+  [url]
+  (try
+    (log/debugf "Fetching JWKS from %s" url)
+    (let [response (http/get url
+                            {:as :json
+                             :throw-exceptions false
+                             :socket-timeout 5000
+                             :connection-timeout 5000})]
+      (if (= 200 (:status response))
+        (do
+          (log/debugf "Successfully fetched JWKS from %s" url)
+          (:body response))
+        (do
+          (log/errorf "Failed to fetch JWKS from %s: status %d" 
+                     url (:status response))
+          nil)))
+    (catch Exception ex
+      (log/errorf ex "Exception fetching JWKS from %s" url)
+      nil)))
+
+(defn- build-key-map
+  "Build a map of kid -> PublicKey from JWKS response"
+  [jwks-response]
+  (when jwks-response
+    (try
+      (reduce (fn [acc jwk]
+                (if-let [kid (:kid jwk)]
+                  (if-let [public-key (jwk->public-key jwk)]
+                    (do
+                      (log/debugf "Added key with kid: %s" kid)
+                      (assoc acc kid public-key))
+                    (do
+                      (log/warnf "Failed to convert JWK with kid: %s" kid)
+                      acc))
+                  (do
+                    (log/warnf "JWK missing kid: %s" jwk)
+                    acc)))
+              {}
+              (:keys jwks-response))
+      (catch Exception ex
+        (log/errorf ex "Failed to build key map from JWKS")
+        {}))))
+
+(defn- fetch-and-build-key-map
+  "Fetch JWKS and build key map"
+  [url]
+  (-> url
+      fetch-jwks
+      build-key-map))
+
+(def ^:private fetch-cached-keys
+  "Cached version of fetch-and-build-key-map with 5 minute TTL"
+  (memo/ttl fetch-and-build-key-map
+            :ttl/threshold (* 5 60 1000))) ; 5 minutes in milliseconds
+
+(defn get-public-key-for-kid
+  "Get public key for the given kid from JWKS endpoint.
+   Returns nil if kid not found or on error."
+  [jwks-url kid]
+  (when (and jwks-url kid)
+    (log/debugf "Looking up key for kid: %s from %s" kid jwks-url)
+    (let [key-map (fetch-cached-keys jwks-url)]
+      (or (get key-map kid)
+          (do
+            (log/warnf "Kid %s not found in JWKS from %s" kid jwks-url)
+            nil)))))
+
+(defn parse-jwks-urls
+  "Parse JWKS URLs configuration.
+   Format: 'issuer1=url1,issuer2=url2'
+   Returns a map of issuer -> JWKS URL"
+  [config-str]
+  (when config-str
+    (try
+      (let [jwks-url-regex #"^([^=,]+=[^,]+)(,[^=,]+=[^,]+)*$"]
+        (when-not (re-matches jwks-url-regex config-str)
+          (let [err-msg (str "Wrong format for JWKS URLs config. "
+                            "Format: 'issuer1=url1,issuer2=url2'")]
+            (log/error err-msg)
+            (throw (ex-info err-msg {:jwks-urls config-str}))))
+        (some->> (string/split config-str #",")
+                 (map #(string/split % #"=" 2))
+                 (into {})))
+      (catch Exception ex
+        (log/errorf ex "Failed to parse JWKS URLs: %s" config-str)
+        (throw ex)))))
 
 
 (defn entity-root-scope [get-in-config]
