@@ -130,6 +130,7 @@
    (st/optional-keys {"ctia.http.jwt.enabled" s/Bool
                       "ctia.http.jwt.public-key-path" s/Str
                       "ctia.http.jwt.public-key-map" s/Str
+                      "ctia.http.jwt.jwks-urls" s/Str
                       "ctia.http.jwt.local-storage-key" s/Str
                       "ctia.http.jwt.lifetime-in-sec" s/Num
                       "ctia.http.jwt.claim-prefix" s/Str
