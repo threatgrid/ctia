@@ -193,19 +193,30 @@
                (cond
                  ;; If JWKS URLs are configured, use kid-based lookup
                  jwks-urls
-                 (fn [{:keys [iss kid]}]
-                   (when-let [jwks-url (get jwks-urls iss)]
-                     (auth-jwt/get-public-key-for-kid jwks-url kid)))
+                 (fn [jwt-data]
+                   ;; Extract kid from header and iss from claims
+                   (let [{:keys [header claims]} jwt-data
+                         {:keys [kid]} header    ; Extract kid from JWT header
+                         {:keys [iss]} claims    ; Extract iss from JWT claims
+                         jwks-url (get jwks-urls iss)]
+                     (when jwks-url
+                       (auth-jwt/get-public-key-for-kid jwks-url kid))))
                  
                  ;; Fall back to issuer-based static key lookup
                  pubkey-for-issuer-map
-                 (fn [{:keys [iss]}]
-                   (get pubkey-for-issuer-map iss))
+                 (fn [{:keys [claims]}]  ; Extract iss from claims for static key lookup
+                   (get pubkey-for-issuer-map (:iss claims)))
                  
                  ;; No issuer-specific config
                  :else nil))
-             :pubkey-path (:public-key-path jwt)
-             :no-jwt-handler rjwt/authorize-no-jwt-header-strategy}
+             
+             ;; Configure pubkey-fn-arg-fn to pass both header and claims to pubkey-fn
+             :pubkey-fn-arg-fn (fn [jwt-object]
+                                 ;; Return both header and claims for JWKS kid-based lookup
+                                 {:header (:header jwt-object)
+                                  :claims (:claims jwt-object)})
+             
+             :pubkey-path (:public-key-path jwt)}
 
             (let [{:keys [endpoints timeout cache-ttl]}
                   (:http-check jwt)]

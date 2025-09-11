@@ -155,11 +155,12 @@
    Returns nil if kid not found or on error."
   [jwks-url kid]
   (when (and jwks-url kid)
-    (log/debugf "Looking up key for kid: %s from %s" kid jwks-url)
+    (log/infof "Looking up key for kid: %s from %s" kid jwks-url)
     (let [key-map (fetch-cached-keys jwks-url)]
+      (log/infof "Available keys in JWKS: %s" (keys key-map))
       (or (get key-map kid)
           (do
-            (log/warnf "Kid %s not found in JWKS from %s" kid jwks-url)
+            (log/warnf "Kid %s not found in JWKS from %s. Available keys: %s" kid jwks-url (keys key-map))
             nil)))))
 
 (defn parse-jwks-urls
@@ -331,13 +332,21 @@
   [handler get-in-config]
   (let [unlimited-properties (parse-unlimited-props get-in-config)]
     (fn [request]
-      (handler
-       (if-let [jwt (:jwt request)]
-         (let [identity
-               (->JWTIdentity jwt (partial unlimited? unlimited-properties get-in-config) get-in-config)]
-           (assoc request
-                  :identity  identity
-                  :client-id (auth/client-id identity)
-                  :login     (auth/login identity)
-                  :groups    (auth/groups identity)))
-         request)))))
+      (let [processed-request
+            (if-let [jwt (:jwt request)]
+              ;; JWT present - use JWT identity
+              (let [identity
+                    (->JWTIdentity jwt (partial unlimited? unlimited-properties get-in-config) get-in-config)]
+                (assoc request
+                       :identity  identity
+                       :client-id (auth/client-id identity)
+                       :login     (auth/login identity)
+                       :groups    (auth/groups identity)))
+              ;; No JWT - ensure login/groups are never nil to prevent NPE
+              (cond-> request
+                (nil? (:login request))
+                (assoc :login "Anonymous")
+                
+                (or (nil? (:groups request)) (empty? (:groups request)))
+                (assoc :groups [])))]
+        (handler processed-request)))))
