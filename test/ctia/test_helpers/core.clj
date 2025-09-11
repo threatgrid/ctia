@@ -60,6 +60,7 @@
          "ctia.http.show.path-prefix"                 ""
          "ctia.http.jwt.enabled"                      true
          "ctia.http.jwt.public-key-path"              "resources/cert/ctia-jwt.pub"
+         "ctia.http.jwt.jwks-urls"                    ""
          "ctia.http.bulk.max-size"                    30000
          "ctia.hook.redis.enabled"                    false
          "ctia.hook.redis.channel-name"               "events-test"

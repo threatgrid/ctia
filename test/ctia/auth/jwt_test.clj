@@ -26,9 +26,7 @@
         response-no-jwt (wrapped-handler request-no-jwt)
         response-jwt (wrapped-handler request-jwt)]
     (is (= {:body {:body "foo"
-                   :url "http://localhost:8080/foo"
-                   :login "Anonymous"
-                   :groups []}
+                   :url "http://localhost:8080/foo"}
             :status 200}
            response-no-jwt))
     (is (= {:body
