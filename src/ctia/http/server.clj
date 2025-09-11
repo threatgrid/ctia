@@ -196,11 +196,11 @@
                  (fn [jwt-data]
                    ;; Extract kid from header and iss from claims
                    (let [{:keys [header claims]} jwt-data
-                         {:keys [kid]} header    ; Extract kid from JWT header
-                         {:keys [iss]} claims    ; Extract iss from JWT claims
-                         jwks-url (get jwks-urls iss)]
-                     (when jwks-url
-                       (auth-jwt/get-public-key-for-kid jwks-url kid))))
+                         {:keys [kid]} header         ; Extract kid from JWT header
+                         {:keys [iss]} claims         ; Extract iss from JWT claims
+                         jwks-urls-list (get jwks-urls iss)]  ; Now gets a list of URLs
+                     (when (seq jwks-urls-list)
+                       (auth-jwt/get-public-key-for-kid-from-multiple-urls jwks-urls-list kid))))
                  
                  ;; Fall back to issuer-based static key lookup
                  pubkey-for-issuer-map

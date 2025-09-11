@@ -163,22 +163,41 @@
             (log/warnf "Kid %s not found in JWKS from %s. Available keys: %s" kid jwks-url (keys key-map))
             nil)))))
 
+(defn get-public-key-for-kid-from-multiple-urls
+  "Try to get public key for the given kid from multiple JWKS URLs.
+   Returns the first matching key found, or nil if not found in any URL."
+  [jwks-urls kid]
+  (when (and jwks-urls kid)
+    (log/infof "Looking up key for kid: %s from %d JWKS URLs" kid (count jwks-urls))
+    (loop [urls jwks-urls]
+      (when-let [url (first urls)]
+        (if-let [public-key (get-public-key-for-kid url kid)]
+          (do
+            (log/infof "Found key for kid: %s at %s" kid url)
+            public-key)
+          (do
+            (log/debugf "Kid %s not found at %s, trying next URL" kid url)
+            (recur (rest urls))))))))
+
 (defn parse-jwks-urls
   "Parse JWKS URLs configuration.
-   Format: 'issuer1=url1,issuer2=url2'
-   Returns a map of issuer -> JWKS URL"
+   Format: 'issuer1=url1,issuer1=url2,issuer2=url3'
+   Returns a map of issuer -> [list of JWKS URLs]"
   [config-str]
   (when (and config-str (not (string/blank? config-str)))
     (try
       (let [jwks-url-regex #"^([^=,]+=[^,]+)(,[^=,]+=[^,]+)*$"]
         (when-not (re-matches jwks-url-regex config-str)
           (let [err-msg (str "Wrong format for JWKS URLs config. "
-                            "Format: 'issuer1=url1,issuer2=url2'")]
+                            "Format: 'issuer1=url1,issuer1=url2,issuer2=url3'")]
             (log/error err-msg)
             (throw (ex-info err-msg {:jwks-urls config-str}))))
-        (some->> (string/split config-str #",")
-                 (map #(string/split % #"=" 2))
-                 (into {})))
+        ;; Build a map where each issuer can have multiple URLs
+        (->> (string/split config-str #",")
+             (map #(string/split % #"=" 2))
+             (reduce (fn [acc [issuer url]]
+                       (update acc issuer (fn [urls] (conj (or urls []) url))))
+                     {})))
       (catch Exception ex
         (log/errorf ex "Failed to parse JWKS URLs: %s" config-str)
         (throw ex)))))
