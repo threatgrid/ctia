@@ -145,7 +145,7 @@
       fetch-jwks
       build-key-map))
 
-(def ^:private fetch-cached-keys
+(def fetch-cached-keys
   "Cached version of fetch-and-build-key-map with 5 minute TTL"
   (memo/ttl fetch-and-build-key-map
             :ttl/threshold (* 5 60 1000))) ; 5 minutes in milliseconds
@@ -167,7 +167,7 @@
    Format: 'issuer1=url1,issuer2=url2'
    Returns a map of issuer -> JWKS URL"
   [config-str]
-  (when config-str
+  (when (and config-str (not (string/blank? config-str)))
     (try
       (let [jwks-url-regex #"^([^=,]+=[^,]+)(,[^=,]+=[^,]+)*$"]
         (when-not (re-matches jwks-url-regex config-str)
