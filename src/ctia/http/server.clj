@@ -191,7 +191,8 @@
                   pubkey-for-issuer-map (auth-jwt/parse-jwt-pubkey-map (:public-key-map jwt))
                   static-pubkey-path (:public-key-path jwt)]
               (cond->
-                {:pubkey-path static-pubkey-path}
+                {:pubkey-path static-pubkey-path
+                 :allow-unauthenticated-access? true}  ; Allow non-JWT tokens to pass through to whoami authentication
                 
                 ;; Only add pubkey-fn if not using static key validation
                 (not static-pubkey-path)

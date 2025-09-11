@@ -361,11 +361,6 @@
                        :client-id (auth/client-id identity)
                        :login     (auth/login identity)
                        :groups    (auth/groups identity)))
-              ;; No JWT - ensure login/groups are never nil to prevent NPE
-              (cond-> request
-                (nil? (:login request))
-                (assoc :login "Anonymous")
-                
-                (or (nil? (:groups request)) (empty? (:groups request)))
-                (assoc :groups [])))]
+              ;; No JWT - pass request unchanged
+              request)]
         (handler processed-request)))))
