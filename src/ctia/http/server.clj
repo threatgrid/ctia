@@ -187,11 +187,23 @@
          (:enabled jwt)
          ((rjwt/wrap-jwt-auth-fn
            (merge
-            {:pubkey-fn ;; if :public-key-map is nil, will use just :public-key
-             (when-let [pubkey-for-issuer-map
-                        (auth-jwt/parse-jwt-pubkey-map (:public-key-map jwt))]
-               (fn [{:keys [iss]}]
-                 (get pubkey-for-issuer-map iss)))
+            {:pubkey-fn ;; Support both JWKS and static public key configurations
+             (let [jwks-urls (auth-jwt/parse-jwks-urls (:jwks-urls jwt))
+                   pubkey-for-issuer-map (auth-jwt/parse-jwt-pubkey-map (:public-key-map jwt))]
+               (cond
+                 ;; If JWKS URLs are configured, use kid-based lookup
+                 jwks-urls
+                 (fn [{:keys [iss kid]}]
+                   (when-let [jwks-url (get jwks-urls iss)]
+                     (auth-jwt/get-public-key-for-kid jwks-url kid)))
+                 
+                 ;; Fall back to issuer-based static key lookup
+                 pubkey-for-issuer-map
+                 (fn [{:keys [iss]}]
+                   (get pubkey-for-issuer-map iss))
+                 
+                 ;; No issuer-specific config
+                 :else nil))
              :pubkey-path (:public-key-path jwt)
              :no-jwt-handler rjwt/authorize-no-jwt-header-strategy}
 
