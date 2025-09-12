@@ -187,43 +187,29 @@
          (:enabled jwt)
          ((rjwt/wrap-jwt-auth-fn
            (merge
-            (let [jwks-urls (auth-jwt/parse-jwks-urls (:jwks-urls jwt))
+(let [jwks-urls (auth-jwt/parse-jwks-urls (:jwks-urls jwt))
                   pubkey-for-issuer-map (auth-jwt/parse-jwt-pubkey-map (:public-key-map jwt))
                   static-pubkey-path (:public-key-path jwt)]
-              (cond->
-                {:pubkey-path static-pubkey-path
-                 :allow-unauthenticated-access? true}  ; Allow non-JWT tokens to pass through to whoami authentication
-                
-                ;; Only add pubkey-fn if not using static key validation
-                (not static-pubkey-path)
-                (assoc :pubkey-fn
-                       (cond
-                         ;; If JWKS URLs are configured, use kid-based lookup
-                         jwks-urls
-                         (fn [jwt-data]
-                           ;; Extract kid from header and iss from claims
-                           (let [{:keys [header claims]} jwt-data
-                                 {:keys [kid]} header         ; Extract kid from JWT header
-                                 {:keys [iss]} claims         ; Extract iss from JWT claims
-                                 jwks-urls-list (get jwks-urls iss)]  ; Now gets a list of URLs
-                             (when (seq jwks-urls-list)
-                               (auth-jwt/get-public-key-for-kid-from-multiple-urls jwks-urls-list kid))))
-                         
-                         ;; Fall back to issuer-based static key lookup
-                         pubkey-for-issuer-map
-                         (fn [{:keys [claims]}]  ; Extract iss from claims for static key lookup
-                           (get pubkey-for-issuer-map (:iss claims)))
-                         
-                         ;; No issuer-specific config - provide default no-op function
-                         :else (constantly nil)))
-                
-                ;; Only add pubkey-fn-arg-fn when using JWKS (not for static key validation)
+              (cond
+                ;; If JWKS URLs are configured, use all keys from JWKS endpoints
                 jwks-urls
-                (assoc :pubkey-fn-arg-fn
-                       (fn [jwt-object]
-                         ;; Return both header and claims for JWKS kid-based lookup
-                         {:header (:header jwt-object)
-                          :claims (:claims jwt-object)}))))
+                {:pubkey-fn (fn [{:keys [iss]}]  ; 1.0.1 passes claims map
+                              (when-let [jwks-urls-list (get jwks-urls iss)]
+                                (when (seq jwks-urls-list)
+                                  ;; Get first available key from all JWKS URLs and all keys
+                                  ;; This tries all keys from all URLs for the issuer
+                                  (first (auth-jwt/get-all-public-keys-from-multiple-urls jwks-urls-list)))))}
+                
+                ;; If issuer-specific keys are configured
+                pubkey-for-issuer-map
+                {:pubkey-fn (fn [{:keys [iss]}]  ; Extract iss from claims for static key lookup
+                              (get pubkey-for-issuer-map iss))}
+                
+                ;; Default: use static key path (most compatible with 1.0.1)
+                :else
+                (if static-pubkey-path
+                  {:pubkey-path static-pubkey-path}
+                  {})))
 
             (let [{:keys [endpoints timeout cache-ttl]}
                   (:http-check jwt)]

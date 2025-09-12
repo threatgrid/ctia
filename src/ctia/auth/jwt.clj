@@ -163,6 +163,42 @@
             (log/warnf "Kid %s not found in JWKS from %s. Available keys: %s" kid jwks-url (keys key-map))
             nil)))))
 
+(defn get-first-public-key-from-jwks-url
+  "Get the first public key from a JWKS endpoint.
+   This is a simplified approach for compatibility with ring-jwt-middleware 1.0.1
+   which doesn't support kid-based key selection."
+  [jwks-url]
+  (try
+    (when-let [jwks-data (fetch-jwks jwks-url)]
+      (when-let [first-key (first (:keys jwks-data))]
+        (jwk->public-key first-key)))
+    (catch Exception ex
+      (log/errorf ex "Failed to get first public key from JWKS URL: %s" jwks-url)
+      nil)))
+
+(defn get-all-public-keys-from-jwks-url
+  "Get all public keys from a JWKS endpoint.
+   This returns all keys that can be used to validate JWTs, useful when
+   you want to try all keys until one works (for key rotation scenarios)."
+  [jwks-url]
+  (try
+    (when-let [jwks-data (fetch-jwks jwks-url)]
+      (when-let [keys (:keys jwks-data)]
+        (log/debugf "Found %d keys from JWKS URL: %s" (count keys) jwks-url)
+        ;; Return all public keys that can be successfully converted
+        (keep jwk->public-key keys)))
+    (catch Exception ex
+      (log/errorf ex "Failed to get all public keys from JWKS URL: %s" jwks-url)
+      nil)))
+
+(defn get-all-public-keys-from-multiple-urls
+  "Get all public keys from multiple JWKS URLs.
+   Returns a sequence of all available public keys from all URLs."
+  [jwks-urls]
+  (when (seq jwks-urls)
+    (mapcat get-all-public-keys-from-jwks-url jwks-urls)))
+
+
 (defn get-public-key-for-kid-from-multiple-urls
   "Try to get public key for the given kid from multiple JWKS URLs.
    Returns the first matching key found, or nil if not found in any URL."
