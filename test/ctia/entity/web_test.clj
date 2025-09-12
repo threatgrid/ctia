@@ -22,6 +22,7 @@
 (use-fixtures :each
   validate-schemas
   helpers/fixture-properties:cors
+  helpers/fixture-properties:jwt
   whoami-helpers/fixture-server)
 
 (def new-judgement-1

@@ -58,7 +58,7 @@
          "ctia.http.show.hostname"                    "localhost"
          "ctia.http.show.port"                        "57254"
          "ctia.http.show.path-prefix"                 ""
-         "ctia.http.jwt.enabled"                      true
+         "ctia.http.jwt.enabled"                      false
          "ctia.http.jwt.public-key-path"              "resources/cert/ctia-jwt.pub"
          "ctia.http.jwt.jwks-urls"                    ""
          "ctia.http.bulk.max-size"                    30000
@@ -368,6 +368,11 @@
 
 (defn fixture-allow-all-auth [f]
   (with-properties ["ctia.auth.type" "allow-all"]
+    (f)))
+
+(defn fixture-properties:jwt [f]
+  ;; Enable JWT for specific JWT tests
+  (with-properties ["ctia.http.jwt.enabled" true]
     (f)))
 
 (defn fixture-properties:static-auth [name secret]
