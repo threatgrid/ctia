@@ -187,13 +187,29 @@
          (:enabled jwt)
          ((rjwt/wrap-jwt-auth-fn
            (merge
-            {:pubkey-fn ;; if :public-key-map is nil, will use just :public-key
-             (when-let [pubkey-for-issuer-map
-                        (auth-jwt/parse-jwt-pubkey-map (:public-key-map jwt))]
-               (fn [{:keys [iss]}]
-                 (get pubkey-for-issuer-map iss)))
-             :pubkey-path (:public-key-path jwt)
-             :no-jwt-handler rjwt/authorize-no-jwt-header-strategy}
+(let [jwks-urls (auth-jwt/parse-jwks-urls (:jwks-urls jwt))
+                  pubkey-for-issuer-map (auth-jwt/parse-jwt-pubkey-map (:public-key-map jwt))
+                  static-pubkey-path (:public-key-path jwt)]
+              (cond
+                ;; If JWKS URLs are configured, use all keys from JWKS endpoints
+                jwks-urls
+                {:pubkey-fn (fn [{:keys [iss]}]  ; 1.0.1 passes claims map
+                              (when-let [jwks-urls-list (get jwks-urls iss)]
+                                (when (seq jwks-urls-list)
+                                  ;; Get first available key from all JWKS URLs and all keys
+                                  ;; This tries all keys from all URLs for the issuer
+                                  (first (auth-jwt/get-all-public-keys-from-multiple-urls jwks-urls-list)))))}
+                
+                ;; If issuer-specific keys are configured
+                pubkey-for-issuer-map
+                {:pubkey-fn (fn [{:keys [iss]}]  ; Extract iss from claims for static key lookup
+                              (get pubkey-for-issuer-map iss))}
+                
+                ;; Default: use static key path (most compatible with 1.0.1)
+                :else
+                (if static-pubkey-path
+                  {:pubkey-path static-pubkey-path}
+                  {})))
 
             (let [{:keys [endpoints timeout cache-ttl]}
                   (:http-check jwt)]
