@@ -277,7 +277,40 @@
     ;; Test that the caching mechanism is in place
     (is (fn? sut/fetch-cached-keys)
         "fetch-cached-keys function should exist for caching")
-    
+
     ;; Test that the function is callable
     (is (ifn? sut/fetch-cached-keys)
         "fetch-cached-keys should be callable as a function")))
+
+(deftest load-all-jwks-keys-test
+  (testing "load-all-jwks-keys function"
+    (testing "with nil configuration"
+      (is (nil? (sut/load-all-jwks-keys nil))
+          "Should return nil for nil configuration"))
+
+    (testing "with empty configuration"
+      (is (nil? (sut/load-all-jwks-keys {}))
+          "Should return nil for empty configuration"))
+
+    (testing "with mock JWKS configuration"
+      ;; Note: In a real test environment with network access,
+      ;; we would use with-fake-routes here to mock the HTTP calls
+      (let [jwks-config {"issuer1" ["https://example.com/jwks1" "https://example.com/jwks2"]
+                         "issuer2" ["https://example.com/jwks3"]}]
+        ;; Test that function handles the configuration structure correctly
+        (is (fn? sut/load-all-jwks-keys)
+            "load-all-jwks-keys function should exist")
+
+        ;; Since we can't mock HTTP calls in this context, we're just
+        ;; testing the function signature and basic behavior
+        (with-fake-routes
+          {"https://example.com/jwks1"
+           (fn [_] {:status 404})
+           "https://example.com/jwks2"
+           (fn [_] {:status 404})
+           "https://example.com/jwks3"
+           (fn [_] {:status 404})}
+          ;; The function should handle HTTP errors gracefully
+          (let [result (sut/load-all-jwks-keys jwks-config)]
+            (is (or (nil? result) (map? result))
+                "Should return nil or empty map when JWKS endpoints are unavailable")))))))

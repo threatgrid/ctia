@@ -187,25 +187,43 @@
          (:enabled jwt)
          ((rjwt/wrap-jwt-auth-fn
            (merge
-(let [jwks-urls (auth-jwt/parse-jwks-urls (:jwks-urls jwt))
-                  pubkey-for-issuer-map (auth-jwt/parse-jwt-pubkey-map (:public-key-map jwt))
-                  static-pubkey-path (:public-key-path jwt)]
+            {:allow-unauthenticated-access? true}
+            (let [jwks-urls (try
+                              (auth-jwt/parse-jwks-urls (:jwks-urls jwt))
+                              (catch Exception e
+                                (log/errorf e "Error parsing JWKS URLs: %s" (:jwks-urls jwt))
+                                nil))
+                  pubkey-for-issuer-map (try
+                                          (auth-jwt/parse-jwt-pubkey-map (:public-key-map jwt))
+                                          (catch Exception e
+                                            (log/errorf e "Error parsing JWT pubkey map: %s" (:public-key-map jwt))
+                                            nil))
+                  static-pubkey-path (:public-key-path jwt)
+                  ;; Load all JWKS keys indexed by kid
+                  all-jwks-keys (when jwks-urls
+                                  (auth-jwt/load-all-jwks-keys jwks-urls))]
               (cond
-                ;; If JWKS URLs are configured, use all keys from JWKS endpoints
-                jwks-urls
-                {:pubkey-fn (fn [{:keys [iss]}]  ; 1.0.1 passes claims map
-                              (when-let [jwks-urls-list (get jwks-urls iss)]
-                                (when (seq jwks-urls-list)
-                                  ;; Get first available key from all JWKS URLs and all keys
-                                  ;; This tries all keys from all URLs for the issuer
-                                  (first (auth-jwt/get-all-public-keys-from-multiple-urls jwks-urls-list)))))}
-                
-                ;; If issuer-specific keys are configured
+                ;; If JWKS URLs are configured, use kid-based lookup
+                (and jwks-urls all-jwks-keys)
+                {:pubkey-fn-arg-fn #(get-in % [:header :kid])
+                 :pubkey-fn (fn [kid]
+                              (when kid
+                                (log/debugf "Looking up key for kid: %s" kid)
+                                (or (get all-jwks-keys kid)
+                                    (do
+                                      (log/warnf "Key not found for kid: %s" kid)
+                                      nil))))}
+
+                ;; If issuer-specific keys are configured (backward compatibility)
                 pubkey-for-issuer-map
-                {:pubkey-fn (fn [{:keys [iss]}]  ; Extract iss from claims for static key lookup
-                              (get pubkey-for-issuer-map iss))}
-                
-                ;; Default: use static key path (most compatible with 1.0.1)
+                {:pubkey-fn (fn [{:keys [iss]}] ; Extract iss from claims for static key lookup
+                              (try
+                                (get pubkey-for-issuer-map iss)
+                                (catch Exception e
+                                  (log/errorf e "Error in pubkey-fn for issuer-specific keys, iss: %s" iss)
+                                  nil)))}
+
+                ;; Default: use static key path (most compatible)
                 :else
                 (if static-pubkey-path
                   {:pubkey-path static-pubkey-path}

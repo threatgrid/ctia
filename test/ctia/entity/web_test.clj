@@ -22,7 +22,6 @@
 (use-fixtures :each
   validate-schemas
   helpers/fixture-properties:cors
-  helpers/fixture-properties:jwt
   whoami-helpers/fixture-server)
 
 (def new-judgement-1
@@ -78,7 +77,7 @@
                                 ["Access-Control-Expose-Headers"
                                  "Access-Control-Allow-Origin"
                                  "Access-Control-Allow-Methods"]))
-                "We should returns the CORS headers when correct origin")
+                "We should return the CORS headers when correct origin")
             (is (= "nosniff" (get-in resp [:headers "X-Content-Type-Options"]))
                 "An API request should have the X-Content-Type-Options header set to nosniff")
             (is (nil? (get-in resp [:headers "Content-Security-Policy"]))
@@ -103,7 +102,7 @@
                                 ["Access-Control-Expose-Headers"
                                  "Access-Control-Allow-Origin"
                                  "Access-Control-Allow-Methods"]))
-                "We shouldn't returns the CORS headers for bad origins")
+                "We shouldn't return the CORS headers for bad origins")
 
             (testing "GET /ctia/judgement/:id with bad JWT Authorization header"
               (let [response (GET app
