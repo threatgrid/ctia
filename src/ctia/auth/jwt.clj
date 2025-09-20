@@ -1,22 +1,23 @@
 (ns ctia.auth.jwt
   (:refer-clojure :exclude [identity])
   (:require
+   [cheshire.core :as json]
+   [clj-http.client :as http]
    [clj-jwt.key :refer [public-key]]
    [clj-momo.lib.set :refer [as-set]]
+   [clojure.core.memoize :as memo]
    [clojure.set :as set]
    [clojure.string :as string]
    [clojure.tools.logging :as log]
    [ctia.auth :as auth :refer [IIdentity]]
    [ctia.auth.capabilities :refer
     [all-entities gen-capabilities-for-entity-and-accesses]]
-   [scopula.core :as scopula]))
-
-(defn load-public-key
-  [path]
-  (try (public-key path)
-       (catch Exception e
-         (log/errorf "Could not read the public key: %s" path)
-         (throw e))))
+   [scopula.core :as scopula])
+  (:import
+   [java.security KeyFactory]
+   [java.security.spec RSAPublicKeySpec]
+   [java.math BigInteger]
+   [java.util Base64]))
 
 (defn parse-jwt-pubkey-map
   "generate an hash-map (string => public-key)
@@ -42,7 +43,10 @@
           (throw (ex-info err-msg {:jwt-pubkey-map txt})))))
     (try (some->> (string/split txt #",")
                   (map #(string/split % #"="))
-                  (map (fn [[k v]] [k (load-public-key v)]))
+                  (map (fn [[k v]] [k (try (public-key v)
+                                          (catch Exception e
+                                            (log/errorf "Could not read the public key: %s" v)
+                                            (throw e)))]))
                   (into {}))
          (catch Exception e
            (let [err-msg (format
@@ -50,6 +54,236 @@
                           (.getMessage e))]
              (log/error err-msg)
              (throw (ex-info err-msg {:jwt-pubkey-map txt})))))))
+
+;; JWKS Support Functions
+
+(defn- base64url-decode
+  "Decode base64url encoded string to bytes"
+  [^String s]
+  (let [padded (case (mod (count s) 4)
+                 2 (str s "==")
+                 3 (str s "=")
+                 s)
+        standard (-> padded
+                    (string/replace "-" "+")
+                    (string/replace "_" "/"))]
+    (.decode (Base64/getDecoder) standard)))
+
+(defn- bytes->bigint
+  "Convert byte array to BigInteger"
+  [bytes]
+  (BigInteger. 1 bytes))
+
+(defn- jwk->public-key
+  "Convert a JWK map to a Java PublicKey.
+   Supports RSA keys with kty=RSA."
+  [{:keys [kty n e] :as jwk}]
+  (when (= kty "RSA")
+    (try
+      (let [modulus (-> n base64url-decode bytes->bigint)
+            exponent (-> e base64url-decode bytes->bigint)
+            key-spec (RSAPublicKeySpec. modulus exponent)
+            key-factory (KeyFactory/getInstance "RSA")]
+        (.generatePublic key-factory key-spec))
+      (catch Exception ex
+        (log/errorf ex "Failed to convert JWK to public key: %s" jwk)
+        nil))))
+
+(defn- fetch-jwks
+  "Fetch JWKS from the given URL"
+  [url]
+  (try
+    (log/debugf "Fetching JWKS from %s" url)
+    (let [response (http/get url
+                            {:as :json
+                             :throw-exceptions false
+                             :socket-timeout 5000
+                             :connection-timeout 5000})
+          status (:status response)]
+      (if (<= 200 status 299)
+        (do
+          (log/debugf "Successfully fetched JWKS from %s (status %d)" url status)
+          (:body response))
+        (do
+          (log/errorf "Failed to fetch JWKS from %s: status %d" url status)
+          nil)))
+    (catch Exception ex
+      (log/errorf ex "Exception fetching JWKS from %s" url)
+      nil)))
+
+(defn- build-key-map
+  "Build a map of kid -> PublicKey from JWKS response"
+  [jwks-response]
+  (when jwks-response
+    (try
+      (let [jwks-keys (:keys jwks-response)]
+        (when-not (sequential? jwks-keys)
+          (log/errorf "JWKS response does not contain a valid 'keys' array: %s"
+                     (pr-str jwks-response))
+          (throw (ex-info "Invalid JWKS format - missing or invalid 'keys' array"
+                          {:jwks-response jwks-response})))
+
+        (log/debugf "Processing %d keys from JWKS response" (count jwks-keys))
+
+        (reduce (fn [acc jwk]
+                  (cond
+                    ;; No kid - skip but warn
+                    (not (:kid jwk))
+                    (do
+                      (log/warnf "JWK missing 'kid' field, skipping: %s"
+                                (pr-str (select-keys jwk [:kty :use :alg])))
+                      acc)
+
+                    ;; Has kid, try to convert
+                    :else
+                    (if-let [public-key (jwk->public-key jwk)]
+                      (do
+                        (log/debugf "Successfully added key with kid: %s, type: %s"
+                                   (:kid jwk) (:kty jwk))
+                        (assoc acc (:kid jwk) public-key))
+                      (do
+                        (log/warnf "Failed to convert JWK to public key - kid: %s, kty: %s, alg: %s"
+                                  (:kid jwk) (:kty jwk) (:alg jwk))
+                        acc))))
+                {}
+                jwks-keys))
+      (catch Exception ex
+        (log/errorf ex "Failed to build key map from JWKS")
+        {}))))
+
+(defn- fetch-and-build-key-map
+  "Fetch JWKS and build key map"
+  [url]
+  (-> url
+      fetch-jwks
+      build-key-map))
+
+(def fetch-cached-keys
+  "Cached version of fetch-and-build-key-map with 5 minute TTL"
+  (memo/ttl fetch-and-build-key-map
+            :ttl/threshold (* 5 60 1000))) ; 5 minutes in milliseconds
+
+;; Background JWKS refresh system
+(defonce ^:private jwks-state (atom {:keys {}
+                                     :refresh-future nil
+                                     :config nil}))
+
+(defn- refresh-all-jwks-keys
+  "Refresh all JWKS keys from configured URLs"
+  [jwks-urls-config]
+  (when (seq jwks-urls-config)
+    (try
+      (let [all-urls (distinct (apply concat (vals jwks-urls-config)))]
+        (log/infof "Refreshing JWKS keys from %d URLs for issuers: %s"
+                  (count all-urls) (pr-str (keys jwks-urls-config)))
+
+        (let [new-keys (reduce (fn [acc url]
+                                (try
+                                  (let [keys-from-url (fetch-and-build-key-map url)]
+                                    (when (seq keys-from-url)
+                                      (log/debugf "Loaded %d keys from %s"
+                                                 (count keys-from-url) url))
+                                    (merge acc keys-from-url))
+                                  (catch Exception ex
+                                    (log/errorf ex "Failed to refresh keys from %s" url)
+                                    acc)))
+                              {}
+                              all-urls)]
+          (log/infof "Refreshed %d total keys with kids: %s"
+                    (count new-keys) (pr-str (keys new-keys)))
+          (swap! jwks-state assoc :keys new-keys)
+          new-keys))
+      (catch Exception ex
+        (log/errorf ex "Failed to refresh JWKS keys")
+        nil))))
+
+(defn- start-jwks-refresh-scheduler
+  "Start background scheduler to refresh JWKS keys"
+  [jwks-urls-config refresh-interval-ms]
+  (when (seq jwks-urls-config)
+    (log/infof "Starting JWKS refresh scheduler with %d ms interval" refresh-interval-ms)
+    (let [executor (java.util.concurrent.Executors/newSingleThreadScheduledExecutor
+                    (reify java.util.concurrent.ThreadFactory
+                      (newThread [_ r]
+                        (let [t (Thread. r "jwks-refresh")]
+                          (.setDaemon t true)
+                          t))))
+          future (.scheduleAtFixedRate executor
+                                      #(refresh-all-jwks-keys jwks-urls-config)
+                                      refresh-interval-ms
+                                      refresh-interval-ms
+                                      java.util.concurrent.TimeUnit/MILLISECONDS)]
+      (swap! jwks-state assoc :refresh-future future)
+      future)))
+
+(defn stop-jwks-refresh-scheduler
+  "Stop the JWKS refresh scheduler"
+  []
+  (when-let [future (:refresh-future @jwks-state)]
+    (log/info "Stopping JWKS refresh scheduler")
+    (.cancel future true)
+    (swap! jwks-state assoc :refresh-future nil)))
+
+(defn initialize-jwks-keys
+  "Initialize JWKS keys at startup and start background refresh.
+   refresh-interval-ms defaults to 5 minutes."
+  ([jwks-urls-config]
+   (initialize-jwks-keys jwks-urls-config (* 5 60 1000))) ; 5 minutes default
+  ([jwks-urls-config refresh-interval-ms]
+   (when (seq jwks-urls-config)
+     (log/info "Initializing JWKS keys at startup")
+     ;; Stop any existing scheduler
+     (stop-jwks-refresh-scheduler)
+     ;; Store config
+     (swap! jwks-state assoc :config jwks-urls-config)
+     ;; Load keys immediately
+     (refresh-all-jwks-keys jwks-urls-config)
+     ;; Start background refresh
+     (start-jwks-refresh-scheduler jwks-urls-config refresh-interval-ms))))
+
+(defn get-jwks-key-by-kid
+  "Get a JWKS public key by kid from the preloaded keys.
+   Returns nil if not found."
+  [kid]
+  (when kid
+    (get-in @jwks-state [:keys kid])))
+
+(defn get-public-key-for-kid
+  "Get public key for the given kid from JWKS endpoint.
+   Returns nil if kid not found or on error."
+  [jwks-url kid]
+  (when (and jwks-url kid)
+    (log/infof "Looking up key for kid: %s from %s" kid jwks-url)
+    (let [key-map (fetch-cached-keys jwks-url)]
+      (log/debugf "Available keys in JWKS: %s" (keys key-map))
+      (or (get key-map kid)
+          (do
+            (log/warnf "Kid %s not found in JWKS from %s. Available keys: %s" kid jwks-url (keys key-map))
+            nil)))))
+
+
+(defn parse-jwks-urls
+  "Parse JWKS URLs configuration.
+   Format: 'issuer1=url1,issuer1=url2,issuer2=url3'
+   Returns a map of issuer -> [list of JWKS URLs]"
+  [config-str]
+  (when (and config-str (not (string/blank? config-str)))
+    (try
+      (let [jwks-url-regex #"^([^=,]+=[^,]+)(,[^=,]+=[^,]+)*$"]
+        (when-not (re-matches jwks-url-regex config-str)
+          (let [err-msg (str "Wrong format for JWKS URLs config. "
+                            "Format: 'issuer1=url1,issuer1=url2,issuer2=url3'")]
+            (log/error err-msg)
+            (throw (ex-info err-msg {:jwks-urls config-str}))))
+        ;; Build a map where each issuer can have multiple URLs
+        (->> (string/split config-str #",")
+             (map #(string/split % #"=" 2))
+             (reduce (fn [acc [issuer url]]
+                       (update acc issuer (fn [urls] (conj (or urls []) url))))
+                     {})))
+      (catch Exception ex
+        (log/errorf ex "Failed to parse JWKS URLs: %s" config-str)
+        (throw ex)))))
 
 
 (defn entity-root-scope [get-in-config]
@@ -156,20 +390,6 @@
   [keyword-name get-in-config]
   (str (claim-prefix get-in-config) "/" keyword-name))
 
-(defn unlimited-client-ids
-  "Retrieves and parses unlimited client-ids defined in the properties"
-  [get-in-config]
-  (some-> (get-in-config
-            [:ctia :http :rate-limit :unlimited :client-ids])
-          (string/split #",")
-          set))
-
-(defn parse-unlimited-props
-  [get-in-config]
-  (let [client-ids (unlimited-client-ids get-in-config)]
-    (cond-> {}
-      (seq client-ids) (assoc :client-ids client-ids))))
-
 (defrecord JWTIdentity [jwt unlimited-fn get-in-config]
   IIdentity
   (authenticated? [_]
@@ -190,20 +410,20 @@
     (when (not (unlimited-fn jwt))
       limit-fn)))
 
-(defn unlimited?
-  [unlimited-properties get-in-config jwt]
-  (let [client-id (get jwt (iroh-claim "oauth/client/id" get-in-config))
-        unlimited-client-ids (get unlimited-properties :client-ids)]
-    (contains? unlimited-client-ids client-id)))
-
 (defn wrap-jwt-to-ctia-auth
   [handler get-in-config]
-  (let [unlimited-properties (parse-unlimited-props get-in-config)]
+  (let [unlimited-client-ids (some-> (get-in-config
+                                       [:ctia :http :rate-limit :unlimited :client-ids])
+                                     (string/split #",")
+                                     set)
+        unlimited-fn (fn [jwt]
+                       (let [client-id (get jwt (iroh-claim "oauth/client/id" get-in-config))]
+                         (contains? unlimited-client-ids client-id)))]
     (fn [request]
       (handler
        (if-let [jwt (:jwt request)]
          (let [identity
-               (->JWTIdentity jwt (partial unlimited? unlimited-properties get-in-config) get-in-config)]
+               (->JWTIdentity jwt unlimited-fn get-in-config)]
            (assoc request
                   :identity  identity
                   :client-id (auth/client-id identity)

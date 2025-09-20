@@ -119,7 +119,7 @@ ctia:ctia:jar:1.1.1-SNAPSHOT
 +- threatgrid:ring-turnstile-middleware:jar:0.1.1:compile
 |  +- threatgrid:turnstile:jar:0.104:compile
 |  \- ring:ring-mock:jar:0.4.0:compile
-+- threatgrid:ring-jwt-middleware:jar:1.0.1:compile
++- threatgrid:ring-jwt-middleware:jar:1.1.7:compile
 +- org.clojure:data.json:jar:1.0.0:compile
 +- scopula:scopula:jar:0.1.4:compile
 +- org.clojure:tools.reader:jar:1.3.6:compile

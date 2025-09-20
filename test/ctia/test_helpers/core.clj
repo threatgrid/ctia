@@ -25,6 +25,7 @@
    [flanders.spec :as fs]
    [flanders.utils :as fu]
    [puppetlabs.trapperkeeper.app :as app]
+   [ring-jwt-middleware.config :as jwt-config]
    [schema-tools.core :as st]
    [schema.core :as s])
   (:import [java.util UUID]))
@@ -388,7 +389,9 @@
                 mcljtime/internal-now
                 (fn [] (mcljtime-coerce/to-date time))
                 ctia.http.routes.common/now
-                (fn [] time)]
+                (fn [] time)
+                jwt-config/current-millis!
+                (constantly (mcljtime-coerce/to-long time))]
     (f)))
 
 (defn set-capabilities!

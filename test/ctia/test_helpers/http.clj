@@ -27,7 +27,7 @@
   [{{content-type "Content-Type"} :headers
     body :body}]
   (cond
-    (edn? content-type) (edn/read-string body)
+    (edn? content-type) (edn/read-string {:readers {'error identity}} body)
     (json? content-type) (json/parse-string body)
     :else body))
 
