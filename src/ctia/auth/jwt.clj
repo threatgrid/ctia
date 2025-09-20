@@ -163,6 +163,91 @@
   (memo/ttl fetch-and-build-key-map
             :ttl/threshold (* 5 60 1000))) ; 5 minutes in milliseconds
 
+;; Background JWKS refresh system
+(defonce ^:private jwks-state (atom {:keys {}
+                                     :refresh-future nil
+                                     :config nil}))
+
+(defn- refresh-all-jwks-keys
+  "Refresh all JWKS keys from configured URLs"
+  [jwks-urls-config]
+  (when (seq jwks-urls-config)
+    (try
+      (let [all-urls (distinct (apply concat (vals jwks-urls-config)))]
+        (log/infof "Refreshing JWKS keys from %d URLs for issuers: %s"
+                  (count all-urls) (pr-str (keys jwks-urls-config)))
+
+        (let [new-keys (reduce (fn [acc url]
+                                (try
+                                  (let [keys-from-url (fetch-and-build-key-map url)]
+                                    (when (seq keys-from-url)
+                                      (log/debugf "Loaded %d keys from %s"
+                                                 (count keys-from-url) url))
+                                    (merge acc keys-from-url))
+                                  (catch Exception ex
+                                    (log/errorf ex "Failed to refresh keys from %s" url)
+                                    acc)))
+                              {}
+                              all-urls)]
+          (log/infof "Refreshed %d total keys with kids: %s"
+                    (count new-keys) (pr-str (keys new-keys)))
+          (swap! jwks-state assoc :keys new-keys)
+          new-keys))
+      (catch Exception ex
+        (log/errorf ex "Failed to refresh JWKS keys")
+        nil))))
+
+(defn- start-jwks-refresh-scheduler
+  "Start background scheduler to refresh JWKS keys"
+  [jwks-urls-config refresh-interval-ms]
+  (when (seq jwks-urls-config)
+    (log/infof "Starting JWKS refresh scheduler with %d ms interval" refresh-interval-ms)
+    (let [executor (java.util.concurrent.Executors/newSingleThreadScheduledExecutor
+                    (reify java.util.concurrent.ThreadFactory
+                      (newThread [_ r]
+                        (let [t (Thread. r "jwks-refresh")]
+                          (.setDaemon t true)
+                          t))))
+          future (.scheduleAtFixedRate executor
+                                      #(refresh-all-jwks-keys jwks-urls-config)
+                                      refresh-interval-ms
+                                      refresh-interval-ms
+                                      java.util.concurrent.TimeUnit/MILLISECONDS)]
+      (swap! jwks-state assoc :refresh-future future)
+      future)))
+
+(defn stop-jwks-refresh-scheduler
+  "Stop the JWKS refresh scheduler"
+  []
+  (when-let [future (:refresh-future @jwks-state)]
+    (log/info "Stopping JWKS refresh scheduler")
+    (.cancel future true)
+    (swap! jwks-state assoc :refresh-future nil)))
+
+(defn initialize-jwks-keys
+  "Initialize JWKS keys at startup and start background refresh.
+   refresh-interval-ms defaults to 5 minutes."
+  ([jwks-urls-config]
+   (initialize-jwks-keys jwks-urls-config (* 5 60 1000))) ; 5 minutes default
+  ([jwks-urls-config refresh-interval-ms]
+   (when (seq jwks-urls-config)
+     (log/info "Initializing JWKS keys at startup")
+     ;; Stop any existing scheduler
+     (stop-jwks-refresh-scheduler)
+     ;; Store config
+     (swap! jwks-state assoc :config jwks-urls-config)
+     ;; Load keys immediately
+     (refresh-all-jwks-keys jwks-urls-config)
+     ;; Start background refresh
+     (start-jwks-refresh-scheduler jwks-urls-config refresh-interval-ms))))
+
+(defn get-jwks-key-by-kid
+  "Get a JWKS public key by kid from the preloaded keys.
+   Returns nil if not found."
+  [kid]
+  (when kid
+    (get-in @jwks-state [:keys kid])))
+
 (defn get-public-key-for-kid
   "Get public key for the given kid from JWKS endpoint.
    Returns nil if kid not found or on error."
@@ -176,34 +261,6 @@
             (log/warnf "Kid %s not found in JWKS from %s. Available keys: %s" kid jwks-url (keys key-map))
             nil)))))
 
-(defn load-all-jwks-keys
-  "Load all keys from all configured JWKS URLs and index them by kid.
-   Returns a map of kid -> PublicKey. Each URL's keys are already cached
-   by fetch-cached-keys, so this just aggregates them."
-  [jwks-urls-config]
-  (when (seq jwks-urls-config)
-    (let [all-urls (distinct (apply concat (vals jwks-urls-config)))]
-      (when (seq all-urls)
-        (log/infof "Loading keys from %d JWKS URLs for issuers: %s"
-                  (count all-urls)
-                  (pr-str (keys jwks-urls-config)))
-
-        (let [result (reduce (fn [acc url]
-                              (try
-                                (let [keys-from-url (fetch-cached-keys url)]
-                                  (when (seq keys-from-url)
-                                    (log/debugf "Loaded %d keys from %s"
-                                               (count keys-from-url) url))
-                                  (merge acc keys-from-url))
-                                (catch Exception ex
-                                  (log/errorf ex "Failed to load keys from %s" url)
-                                  acc)))
-                            {}
-                            all-urls)]
-          (log/infof "Total keys loaded: %d with kids: %s"
-                    (count result)
-                    (pr-str (keys result)))
-          result)))))
 
 (defn parse-jwks-urls
   "Parse JWKS URLs configuration.

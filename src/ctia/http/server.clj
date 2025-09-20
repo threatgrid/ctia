@@ -198,18 +198,20 @@
                                           (catch Exception e
                                             (log/errorf e "Error parsing JWT pubkey map: %s" (:public-key-map jwt))
                                             nil))
-                  static-pubkey-path (:public-key-path jwt)
-                  ;; Load all JWKS keys indexed by kid
-                  all-jwks-keys (when jwks-urls
-                                  (auth-jwt/load-all-jwks-keys jwks-urls))]
+                  static-pubkey-path (:public-key-path jwt)]
+
+              ;; Initialize JWKS background refresh if configured
+              (when (seq jwks-urls)
+                (auth-jwt/initialize-jwks-keys jwks-urls))
+
               (cond
-                ;; If JWKS URLs are configured, use kid-based lookup
-                (and jwks-urls all-jwks-keys)
+                ;; If JWKS URLs are configured, use kid-based lookup with preloaded keys
+                jwks-urls
                 {:pubkey-fn-arg-fn #(get-in % [:header :kid])
                  :pubkey-fn (fn [kid]
                               (when kid
                                 (log/debugf "Looking up key for kid: %s" kid)
-                                (or (get all-jwks-keys kid)
+                                (or (auth-jwt/get-jwks-key-by-kid kid)
                                     (do
                                       (log/warnf "Key not found for kid: %s" kid)
                                       nil))))}
