@@ -27,8 +27,24 @@
   [{{content-type "Content-Type"} :headers
     body :body}]
   (cond
-    (edn? content-type) (edn/read-string {:readers {'error identity}} body)
-    (json? content-type) (json/parse-string body)
+    (edn? content-type)
+    (if (or (nil? body) (empty? body))
+      nil
+      (try
+        (edn/read-string {:readers {'error identity}} body)
+        (catch Exception e
+          ;; Return nil instead of throwing for malformed EDN
+          nil)))
+
+    (json? content-type)
+    (if (or (nil? body) (empty? body))
+      nil
+      (try
+        (json/parse-string body)
+        (catch Exception e
+          ;; Return nil instead of throwing for malformed JSON
+          nil)))
+
     :else body))
 
 (defn encode-body
@@ -45,8 +61,11 @@
 
 (defn with-parsed-body
   [response]
-  ;; assoc parsed-body for backward compatibiity
-  (assoc response :parsed-body (parse-body response)))
+  ;; assoc parsed-body for backward compatibility
+  ;; Special case: 204 No Content should not have a body to parse
+  (if (= 204 (:status response))
+    (assoc response :parsed-body nil)
+    (assoc response :parsed-body (parse-body response))))
 
 (defn get [path port & {:as opts}]
   (let [options (merge base-opts opts)

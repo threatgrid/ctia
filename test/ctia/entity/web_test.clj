@@ -3,6 +3,7 @@
             [clj-jwt.core :as jwt]
             [clj-jwt.key :as jwt-key]
             [clj-momo.lib.clj-time.core :as time]
+            [clj-momo.lib.clj-time.coerce :as tc]
             [clj-time.core :as t]
             [clojure.data.json :as json]
             [clojure.test :refer [deftest is join-fixtures testing use-fixtures]]
@@ -118,7 +119,7 @@
                     "Even if the JWT is refused we should returns the CORS headers")))
 
             (testing "GET /ctia/judgement/:id with JWT Authorization header"
-              (helpers/fixture-with-fixed-time (time/date-time 2017 02 15 14 15 10)
+              (helpers/fixture-with-fixed-time (tc/to-date (time/date-time 2017 02 15 14 15 10))
                 (fn []
                 (let [jwt-token "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwczpcL1wvc2NoZW1hcy5jaXNjby5jb21cL2lyb2hcL2lkZW50aXR5XC9jbGFpbXNcL3VzZXJcL2VtYWlsIjoiZ2J1aXNzb24rcWFfc2RjX2lyb2hAY2lzY28uY29tIiwiaHR0cHM6XC9cL3NjaGVtYXMuY2lzY28uY29tXC9pcm9oXC9pZGVudGl0eVwvY2xhaW1zXC91c2VyXC9pZHBcL2lkIjoiYW1wIiwiaHR0cHM6XC9cL3NjaGVtYXMuY2lzY28uY29tXC9pcm9oXC9pZGVudGl0eVwvY2xhaW1zXC91c2VyXC9uaWNrIjoiZ2J1aXNzb24rcWFfc2RjX2lyb2hAY2lzY28uY29tIiwiZW1haWwiOiJnYnVpc3NvbitxYV9zZGNfaXJvaEBjaXNjby5jb20iLCJzdWIiOiI1NmJiNWY4Yy1jYzRlLTRlZDMtYTkxYS1jNjYwNDI4N2ZlMzIiLCJpc3MiOiJJUk9IIEF1dGgiLCJodHRwczpcL1wvc2NoZW1hcy5jaXNjby5jb21cL2lyb2hcL2lkZW50aXR5XC9jbGFpbXNcL3Njb3BlcyI6WyJjYXNlYm9vayIsImdsb2JhbC1pbnRlbCIsInByaXZhdGUtaW50ZWwiLCJjb2xsZWN0IiwiZW5yaWNoIiwiaW5zcGVjdCIsImludGVncmF0aW9uIiwiaXJvaC1hdXRoIiwicmVzcG9uc2UiLCJ1aS1zZXR0aW5ncyJdLCJleHAiOjE0ODc3NzI4NTAsImh0dHBzOlwvXC9zY2hlbWFzLmNpc2NvLmNvbVwvaXJvaFwvaWRlbnRpdHlcL2NsYWltc1wvb2F1dGhcL2NsaWVudFwvbmFtZSI6Imlyb2gtdWkiLCJodHRwczpcL1wvc2NoZW1hcy5jaXNjby5jb21cL2lyb2hcL2lkZW50aXR5XC9jbGFpbXNcL29yZ1wvaWQiOiI2MzQ4OWNmOS01NjFjLTQ5NTgtYTEzZC02ZDg0YjdlZjA5ZDQiLCJodHRwczpcL1wvc2NoZW1hcy5jaXNjby5jb21cL2lyb2hcL2lkZW50aXR5XC9jbGFpbXNcL29yZ1wvbmFtZSI6IklST0ggVGVzdGluZyIsImp0aSI6ImEyNjhhZTdhMy0wOWM5LTQxNDktYjQ5NS1iOThjOGM1ZGU2NjYiLCJuYmYiOjE0ODcxNjc3NTAsImh0dHBzOlwvXC9zY2hlbWFzLmNpc2NvLmNvbVwvaXJvaFwvaWRlbnRpdHlcL2NsYWltc1wvdXNlclwvaWQiOiI1NmJiNWY4Yy1jYzRlLTRlZDMtYTkxYS1jNjYwNDI4N2ZlMzIiLCJodHRwczpcL1wvc2NoZW1hcy5jaXNjby5jb21cL2lyb2hcL2lkZW50aXR5XC9jbGFpbXNcL29hdXRoXC9jbGllbnRcL2lkIjoiaXJvaC11aSIsImh0dHBzOlwvXC9zY2hlbWFzLmNpc2NvLmNvbVwvaXJvaFwvaWRlbnRpdHlcL2NsYWltc1wvdmVyc2lvbiI6IjEiLCJpYXQiOjE0ODcxNjgwNTAsImh0dHBzOlwvXC9zY2hlbWFzLmNpc2NvLmNvbVwvaXJvaFwvaWRlbnRpdHlcL2NsYWltc1wvb2F1dGhcL2tpbmQiOiJzZXNzaW9uLXRva2VuIn0.jl0r3LiL6qOy6DIDZs5NRiQBHlJEzXFXUvKXGPd2PL66xSE0v0Bkc6FD3vPccYxvk-tWBMJX8oiDuAgYt2eRU05blPtzy1yQ-V-zJtxnpuQbDzvVytZvE9n1_8NdvcLa9eXBjUkJ2FsXAIguXpVDIbR3zs9MkjfyrsKeVCmhC3QTehj55Rf-WINeTq0UflIyoZqfK5Mewl-DBwbvTRjTIRJpNPhjErJ0ypHNXzTKM-nVljSRhrfpoBYpPxQSQVTedWIA2Sks4fBvEwdeE60aBRK1HeTps0G1h3RXPYu7q1I5ti9a2axiQtRLA11CxoOvMmnjyWkffi5vyrFKqZ7muQ"
                       {judgement :parsed-body
@@ -158,7 +159,7 @@
   (test-for-each-store-with-app
    (fn [app]
      (testing "POST /ctia/judgement with JWT Authorization header."
-       (helpers/fixture-with-fixed-time (time/date-time 2017 02 15 14 15 10)
+       (helpers/fixture-with-fixed-time (tc/to-date (time/date-time 2017 02 15 14 15 10))
          (fn []
            (let [jwt-token "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwczpcL1wvc2NoZW1hcy5jaXNjby5jb21cL2lyb2hcL2lkZW50aXR5XC9jbGFpbXNcL3VzZXJcL2VtYWlsIjoiZ2J1aXNzb24rcWFfc2RjX2lyb2hAY2lzY28uY29tIiwiaHR0cHM6XC9cL3NjaGVtYXMuY2lzY28uY29tXC9pcm9oXC9pZGVudGl0eVwvY2xhaW1zXC91c2VyXC9pZHBcL2lkIjoiYW1wIiwiaHR0cHM6XC9cL3NjaGVtYXMuY2lzY28uY29tXC9pcm9oXC9pZGVudGl0eVwvY2xhaW1zXC91c2VyXC9uaWNrIjoiZ2J1aXNzb24rcWFfc2RjX2lyb2hAY2lzY28uY29tIiwiZW1haWwiOiJnYnVpc3NvbitxYV9zZGNfaXJvaEBjaXNjby5jb20iLCJzdWIiOiI1NmJiNWY4Yy1jYzRlLTRlZDMtYTkxYS1jNjYwNDI4N2ZlMzIiLCJpc3MiOiJJUk9IIEF1dGgiLCJodHRwczpcL1wvc2NoZW1hcy5jaXNjby5jb21cL2lyb2hcL2lkZW50aXR5XC9jbGFpbXNcL3Njb3BlcyI6WyJjYXNlYm9vayIsImdsb2JhbC1pbnRlbCIsInByaXZhdGUtaW50ZWwiLCJjb2xsZWN0IiwiZW5yaWNoIiwiaW5zcGVjdCIsImludGVncmF0aW9uIiwiaXJvaC1hdXRoIiwicmVzcG9uc2UiLCJ1aS1zZXR0aW5ncyJdLCJleHAiOjE0ODc3NzI4NTAsImh0dHBzOlwvXC9zY2hlbWFzLmNpc2NvLmNvbVwvaXJvaFwvaWRlbnRpdHlcL2NsYWltc1wvb2F1dGhcL2NsaWVudFwvbmFtZSI6Imlyb2gtdWkiLCJodHRwczpcL1wvc2NoZW1hcy5jaXNjby5jb21cL2lyb2hcL2lkZW50aXR5XC9jbGFpbXNcL29yZ1wvaWQiOiI2MzQ4OWNmOS01NjFjLTQ5NTgtYTEzZC02ZDg0YjdlZjA5ZDQiLCJodHRwczpcL1wvc2NoZW1hcy5jaXNjby5jb21cL2lyb2hcL2lkZW50aXR5XC9jbGFpbXNcL29yZ1wvbmFtZSI6IklST0ggVGVzdGluZyIsImp0aSI6ImEyNjhhZTdhMy0wOWM5LTQxNDktYjQ5NS1iOThjOGM1ZGU2NjYiLCJuYmYiOjE0ODcxNjc3NTAsImh0dHBzOlwvXC9zY2hlbWFzLmNpc2NvLmNvbVwvaXJvaFwvaWRlbnRpdHlcL2NsYWltc1wvdXNlclwvaWQiOiI1NmJiNWY4Yy1jYzRlLTRlZDMtYTkxYS1jNjYwNDI4N2ZlMzIiLCJodHRwczpcL1wvc2NoZW1hcy5jaXNjby5jb21cL2lyb2hcL2lkZW50aXR5XC9jbGFpbXNcL29hdXRoXC9jbGllbnRcL2lkIjoiaXJvaC11aSIsImh0dHBzOlwvXC9zY2hlbWFzLmNpc2NvLmNvbVwvaXJvaFwvaWRlbnRpdHlcL2NsYWltc1wvdmVyc2lvbiI6IjEiLCJpYXQiOjE0ODcxNjgwNTAsImh0dHBzOlwvXC9zY2hlbWFzLmNpc2NvLmNvbVwvaXJvaFwvaWRlbnRpdHlcL2NsYWltc1wvb2F1dGhcL2tpbmQiOiJzZXNzaW9uLXRva2VuIn0.jl0r3LiL6qOy6DIDZs5NRiQBHlJEzXFXUvKXGPd2PL66xSE0v0Bkc6FD3vPccYxvk-tWBMJX8oiDuAgYt2eRU05blPtzy1yQ-V-zJtxnpuQbDzvVytZvE9n1_8NdvcLa9eXBjUkJ2FsXAIguXpVDIbR3zs9MkjfyrsKeVCmhC3QTehj55Rf-WINeTq0UflIyoZqfK5Mewl-DBwbvTRjTIRJpNPhjErJ0ypHNXzTKM-nVljSRhrfpoBYpPxQSQVTedWIA2Sks4fBvEwdeE60aBRK1HeTps0G1h3RXPYu7q1I5ti9a2axiQtRLA11CxoOvMmnjyWkffi5vyrFKqZ7muQ"
                bearer (str "Bearer " jwt-token)
@@ -378,52 +379,56 @@
         (.stop s)))))
 
 (deftest jwt-http-checks-server-down-test
-  (let [url-1 "https://jwt.check-1/check"
-        url-2 "https://jwt.check-2/check"]
-    (jwt-http-checks-test
-     url-1
-     url-2
-     (fn [{:keys [get-judgement jwt-1 jwt-2]}]
-       (testing "Check URL server down"
-         (testing "issuer 1"
-           (is (= 200 (:status (get-judgement jwt-1)))
-               "JWT is accepted if the server is down or cannot be found.")
-           (is (tlog/logged? "ctia.http.server"
-                             :error
-                             (str "The server for checking JWT seems down: " url-1))))
-         (testing "issuer 2"
-           (is (= 200 (:status (get-judgement jwt-2)))
-               "JWT is accepted if the server is down or cannot be found.")
-           (is (tlog/logged? "ctia.http.server"
-                             :error
-                             (str "The server for checking JWT seems down: " url-2)))))))))
+  (helpers/fixture-with-fixed-time (tc/to-date (time/date-time 2017 02 15 14 15 10))
+    (fn []
+      (let [url-1 "https://jwt.check-1/check"
+            url-2 "https://jwt.check-2/check"]
+        (jwt-http-checks-test
+         url-1
+         url-2
+         (fn [{:keys [get-judgement jwt-1 jwt-2]}]
+           (testing "Check URL server down"
+             (testing "issuer 1"
+               (is (= 200 (:status (get-judgement jwt-1)))
+                   "JWT is accepted if the server is down or cannot be found.")
+               (is (tlog/logged? "ctia.http.server"
+                                 :error
+                                 (str "The server for checking JWT seems down: " url-1))))
+             (testing "issuer 2"
+               (is (= 200 (:status (get-judgement jwt-2)))
+                   "JWT is accepted if the server is down or cannot be found.")
+               (is (tlog/logged? "ctia.http.server"
+                                 :error
+                                 (str "The server for checking JWT seems down: " url-2))))))))))
 
 (deftest jwt-http-checks-server-refused-test
-  (let [refuse-handler (fn [req]
-                         {:status 401
-                          :headers {"Content-Type" "application/json"}
-                          :body (json/write-str
-                                 {:error "refused"
-                                  :error_description (format "SERVER ERROR DESCRIPTION: %s"
-                                                             (get-in req [:headers "authorization"]))})})]
-    (with-server
-      refuse-handler
-      (fn [port]
-        (let [url-1 (format "http://127.0.0.1:%d/check" port)
-              url-2 (format "http://127.0.0.1:%d/check" port)]
-          (jwt-http-checks-test
-           url-1
-           url-2
-           (fn [{:keys [get-judgement jwt-1]}]
-             (testing "Check URL server returns 401"
-               (doseq [;; regression tests for https://github.com/threatgrid/iroh/issues/4541
-                       as [:json :edn]
-                       :let [{:keys [status body] :as response} (get-judgement jwt-1
-                                                                               {:as as
-                                                                                :headers {"Accept"
-                                                                                          (case as
-                                                                                            :json "application/json"
-                                                                                            :edn "application/edn")}})]]
+  (helpers/fixture-with-fixed-time (tc/to-date (time/date-time 2017 02 15 14 15 10))
+    (fn []
+      (let [refuse-handler (fn [req]
+                             {:status 401
+                              :headers {"Content-Type" "application/json"}
+                              :body (json/write-str
+                                     {:error "refused"
+                                      :error_description (format "SERVER ERROR DESCRIPTION: %s"
+                                                                 (get-in req [:headers "authorization"]))})})]
+        (with-server
+          refuse-handler
+          (fn [port]
+            (let [url-1 (format "http://127.0.0.1:%d/check" port)
+                  url-2 (format "http://127.0.0.1:%d/check" port)]
+              (jwt-http-checks-test
+               url-1
+               url-2
+               (fn [{:keys [get-judgement jwt-1]}]
+                 (testing "Check URL server returns 401"
+                   (doseq [;; regression tests for https://github.com/threatgrid/iroh/issues/4541
+                           as [:json :edn]
+                           :let [{:keys [status body] :as response} (get-judgement jwt-1
+                                                                                   {:as as
+                                                                                    :headers {"Accept"
+                                                                                              (case as
+                                                                                                :json "application/json"
+                                                                                                :edn "application/edn")}})]]
                  (testing (prn-str as)
                    (is (= 401 status) response)
                    (testing (prn-str body)
@@ -436,34 +441,38 @@
                                :json (comp walk/keywordize-keys json/read-str)
                                :edn read-string)
                              body))
-                         "The error should use the description returned by the server and we check the server get the correct header"))))))))))))
+                         "The error should use the description returned by the server and we check the server get the correct header"))))))))))))))
 
 (deftest jwt-http-checks-server-slow-test
-  (let [slow-handler (fn [req]
-                       (Thread/sleep 3000)
-                       {:status 401
-                        :headers {"Content-Type" "application/json"}
-                        :body (json/write-str
-                               {:error "refused"
-                                :error_description (get-in req [:headers "Authorization"])})})]
-    (with-server
-      slow-handler
-      (fn [port]
-        (let [url-1 (format "http://127.0.0.1:%d/check" port)
-              url-2 (format "http://127.0.0.1:%d/check" port)]
-          (jwt-http-checks-test
-           url-1
-           url-2
-           (fn [{:keys [get-judgement jwt-1]}]
-             (testing "Check URL server too long to answer"
-               (is (= 200 (:status (get-judgement jwt-1)))
-                   "JWT is accepted if the server timeout")
-               (is (tlog/logged? "ctia.http.server"
-                                 :warn
-                                 (format "Couldn't check jwt status due to a call timeout to %s" url-1)))))))))))
+  (helpers/fixture-with-fixed-time (tc/to-date (time/date-time 2017 02 15 14 15 10))
+    (fn []
+      (let [slow-handler (fn [req]
+                           (Thread/sleep 3000)
+                           {:status 401
+                            :headers {"Content-Type" "application/json"}
+                            :body (json/write-str
+                                   {:error "refused"
+                                    :error_description (get-in req [:headers "Authorization"])})})]
+        (with-server
+          slow-handler
+          (fn [port]
+            (let [url-1 (format "http://127.0.0.1:%d/check" port)
+                  url-2 (format "http://127.0.0.1:%d/check" port)]
+              (jwt-http-checks-test
+               url-1
+               url-2
+               (fn [{:keys [get-judgement jwt-1]}]
+                 (testing "Check URL server too long to answer"
+                   (is (= 200 (:status (get-judgement jwt-1)))
+                       "JWT is accepted if the server timeout")
+                   (is (tlog/logged? "ctia.http.server"
+                                     :warn
+                                     (format "Couldn't check jwt status due to a call timeout to %s" url-1)))))))))))))
 
 (deftest jwt-http-checks-server-cached-response-test
-  (let [counter (atom 0)
+  (helpers/fixture-with-fixed-time (tc/to-date (time/date-time 2017 02 15 14 15 10))
+    (fn []
+      (let [counter (atom 0)
         count-handler
         (fn [req]
           (swap! counter inc)
@@ -501,4 +510,5 @@
                (is (= 401 (:status (get-judgement jwt-1))))
                (is (= 401 (:status (get-judgement jwt-1))))
                (is (= 3 @counter)
-                   "After the cache-ttl we should make a new call for the same JWT"))))))))))))
+                   "After the cache-ttl we should make a new call for the same JWT")))))))))))))
+))

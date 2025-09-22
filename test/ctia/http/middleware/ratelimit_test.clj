@@ -8,7 +8,8 @@
             [ctia.test-helpers.core :as helpers]
             [ctia.test-helpers.es :as es-helpers]
             [taoensso.carmine :as car]
-            [clj-momo.lib.clj-time.core :as time]))
+            [clj-momo.lib.clj-time.core :as time]
+            [clj-momo.lib.clj-time.coerce :as tc]))
 
 (use-fixtures :once validate-schemas)
 
@@ -96,7 +97,7 @@
           (helpers/get-current-app))))))
 
 (deftest rate-limit-test
-  (helpers/fixture-with-fixed-time (time/date-time 2017 02 15 14 15 10)
+  (helpers/fixture-with-fixed-time (tc/to-date (time/date-time 2017 02 15 14 15 10))
     (fn []
       (let [call (fn [app]
                  (helpers/GET app

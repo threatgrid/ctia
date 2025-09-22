@@ -3,6 +3,7 @@
    [clj-momo.lib.clj-time.coerce :as mcljtime-coerce]
    [clj-momo.lib.clj-time.core :as mcljtime]
    [clj-momo.lib.time :as time]
+   [clj-time.core]
    [clj-momo.properties :refer [coerce-properties read-property-files]]
    [clojure.pprint :refer [pprint]]
    [clojure.spec.alpha :as cs]
@@ -386,6 +387,8 @@
                 (fn [] time)
                 time/now
                 (fn [] time)
+                clj-time.core/now
+                (fn [] (mcljtime-coerce/from-date time))
                 mcljtime/internal-now
                 (fn [] (mcljtime-coerce/to-date time))
                 ctia.http.routes.common/now
