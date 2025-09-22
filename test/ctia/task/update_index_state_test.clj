@@ -16,4 +16,6 @@
     (es-helpers/fixture-properties:es-store
       (fn []
         (is (= 0 (sut/do-task (h/build-transformed-init-config))))
-        (is (= 1 (sut/do-task {})))))))
+        (is (= 1 (sut/do-task {:ctia {:auth {:type :allow-all}
+                                       :encryption {:type :default
+                                                    :key {:filepath "resources/cert/ctia-encryption.key"}}}})))))))

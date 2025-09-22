@@ -57,9 +57,6 @@
 (s/defschema NoteFieldsParam
   {(s/optional-key :fields) [(apply s/enum note-fields)]})
 
-(s/defschema NoteFieldsParam
-  {(s/optional-key :fields) [note-sort-fields]})
-
 (s/defschema NoteSearchParams
   (st/merge
    routes.common/PagingParams
