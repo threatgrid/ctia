@@ -126,28 +126,27 @@
 
         (log/debugf "Processing %d keys from JWKS response" (count jwks-keys))
 
-        (reduce (fn [acc jwk]
-                  (cond
-                    ;; No kid - skip but warn
-                    (not (:kid jwk))
-                    (do
-                      (log/warnf "JWK missing 'kid' field, skipping: %s"
-                                (pr-str (select-keys jwk [:kty :use :alg])))
-                      acc)
+        (into {}
+              (comp
+               (keep (fn [jwk]
+                       (cond
+                         (not (:kid jwk))
+                         (do
+                           (log/warnf "JWK missing 'kid' field, skipping: %s"
+                                     (pr-str (select-keys jwk [:kty :use :alg])))
+                           nil)
 
-                    ;; Has kid, try to convert
-                    :else
-                    (if-let [public-key (jwk->public-key jwk)]
-                      (do
-                        (log/debugf "Successfully added key with kid: %s, type: %s"
-                                   (:kid jwk) (:kty jwk))
-                        (assoc acc (:kid jwk) public-key))
-                      (do
-                        (log/warnf "Failed to convert JWK to public key - kid: %s, kty: %s, alg: %s"
-                                  (:kid jwk) (:kty jwk) (:alg jwk))
-                        acc))))
-                {}
-                jwks-keys))
+                         :else
+                         (if-let [public-key (jwk->public-key jwk)]
+                           (do
+                             (log/debugf "Successfully added key with kid: %s, type: %s"
+                                        (:kid jwk) (:kty jwk))
+                             [(:kid jwk) public-key])
+                           (do
+                             (log/warnf "Failed to convert JWK to public key - kid: %s, kty: %s, alg: %s"
+                                       (:kid jwk) (:kty jwk) (:alg jwk))
+                             nil))))))
+              jwks-keys))
       (catch Exception ex
         (log/errorf ex "Failed to build key map from JWKS")
         {}))))
