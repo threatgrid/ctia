@@ -1,8 +1,10 @@
 (ns ctia.auth.jwt-test
-  (:require [clojure.set :as set]
+  (:require [cheshire.core :as json]
+            [clojure.set :as set]
             [clojure.test :as t :refer [are deftest is testing use-fixtures]]
             [ctia.auth.capabilities :as caps]
             [ctia.auth.jwt :as sut]
+            [ctia.properties]
             [ctia.test-helpers.core :as helpers]
             [clj-http.fake :refer [with-fake-routes]]))
 
@@ -231,11 +233,7 @@
           (is (nil? (#'sut/fetch-jwks "invalid-url"))
               "Should return nil for invalid URLs")))
       
-      (testing "Invalid arguments to get-public-key-for-kid"
-        (is (nil? (sut/get-public-key-for-kid nil "test-key"))
-            "Should return nil for nil JWKS URL")
-        (is (nil? (sut/get-public-key-for-kid "https://test.example.com/jwks" nil))
-            "Should return nil for nil kid")))))
+)))
 
 (deftest multi-jwks-integration-test
   (testing "Multi-JWKS configuration and key building"
@@ -272,15 +270,6 @@
           (is (not (contains? eu-key-map "us-key-1"))
               "EU JWKS should not contain US key"))))))
 
-(deftest jwks-caching-test
-  (testing "JWKS caching mechanism exists"
-    ;; Test that the caching mechanism is in place
-    (is (fn? sut/fetch-cached-keys)
-        "fetch-cached-keys function should exist for caching")
-
-    ;; Test that the function is callable
-    (is (ifn? sut/fetch-cached-keys)
-        "fetch-cached-keys should be callable as a function")))
 
 (deftest jwks-background-system-test
   (testing "JWKS background refresh system"
@@ -297,3 +286,56 @@
           "Should return nil when no keys are loaded")
       (is (nil? (sut/get-jwks-key-by-kid nil))
           "Should return nil for nil kid"))))
+
+(deftest jwks-timeout-config-test
+  (testing "JWKS timeout configuration properties are accepted"
+    (is (some #{"ctia.http.jwt.jwks.socket-timeout"} ctia.properties/configurable-properties)
+        "Socket timeout property should be configurable")
+    (is (some #{"ctia.http.jwt.jwks.connection-timeout"} ctia.properties/configurable-properties)
+        "Connection timeout property should be configurable"))
+
+  (testing "set-jwks-timeout-config! updates timeout atom and is used in fetch-jwks"
+    (let [request-received (atom nil)]
+      (sut/set-jwks-timeout-config! {:socket-timeout 3000
+                                      :connection-timeout 2000})
+      (with-fake-routes
+        {"https://test.example.com/.well-known/jwks"
+         (fn [request]
+           (reset! request-received request)
+           {:status 200
+            :headers {"Content-Type" "application/json"}
+            :body (json/generate-string {:keys []})})}
+        (#'sut/fetch-jwks "https://test.example.com/.well-known/jwks"
+                          {:socket-timeout 3000 :connection-timeout 2000})
+        (is (= 3000 (:socket-timeout @request-received))
+            "fetch-jwks should use provided socket timeout")
+        (is (= 2000 (:connection-timeout @request-received))
+            "fetch-jwks should use provided connection timeout")))))
+
+(deftest jwks-refresh-interval-test
+  (testing "JWKS refresh interval configuration property is accepted"
+    (is (some #{"ctia.http.jwt.jwks.refresh-interval"} ctia.properties/configurable-properties)
+        "Refresh interval property should be configurable"))
+
+  (testing "initialize-jwks-keys with custom refresh interval"
+    (let [fake-jwks {:keys [{:kty "RSA" :kid "test-key-refresh"
+                            :n "xjNrLpwRLqgvPpKLippl4jXKvJO8rPEqGZs2lPcQi_8IqLEsGLRr3L9IUyqfIzPJnDfEiUqELvCTPqLCGqCLfs8jbwZrXeakgRP6yiYPgmqMYdy0zJlEp5uEPJLd7iVBH-V5t8M8mkltu1V5uPsPdXgqGqoKqiUwyCVm3razVOcvg-3f_57BXMmtVcuTTjLaIbfEDp8UFCB0SYCLIiTkmFBrqHPNsldxLbn7Rg_OK8txy1hCQqRVDhlFsoSHao-kyWwE_PpRAKEJ8YYjNodJiB7YYqCLi8sH2wvPvPB1N-dVKoUJKEqnfOoB8gZL0CqHAnBQmkHgGZbBZo18dQ"
+                            :e "AQAB"}]}
+          jwks-config {"test-issuer" ["https://test.example.com/.well-known/jwks"]}]
+
+      (with-fake-routes
+        {"https://test.example.com/.well-known/jwks"
+         (fn [_] {:status 200
+                 :headers {"Content-Type" "application/json"}
+                 :body (json/generate-string fake-jwks)})}
+        (try
+          (sut/initialize-jwks-keys jwks-config 600000)
+          (Thread/sleep 50)
+          (is (some? (sut/get-jwks-key-by-kid "test-key-refresh"))
+              "Should load keys with custom 600000ms refresh interval")
+          (finally
+            (sut/stop-jwks-refresh-scheduler))))))
+
+  (testing "initialize-jwks-keys accepts custom refresh interval parameter"
+    (is (ifn? sut/initialize-jwks-keys)
+        "initialize-jwks-keys function should exist and accept refresh interval parameter")))

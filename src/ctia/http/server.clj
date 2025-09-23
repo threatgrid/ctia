@@ -200,9 +200,18 @@
                                             nil))
                   static-pubkey-path (:public-key-path jwt)]
 
-              ;; Initialize JWKS background refresh if configured
-              (when (seq jwks-urls)
-                (auth-jwt/initialize-jwks-keys jwks-urls))
+              ;; Configure JWKS timeouts and refresh if specified
+              (when-let [jwks-config (not-empty (select-keys jwt [:jwks]))]
+                (auth-jwt/set-jwks-timeout-config!
+                 {:socket-timeout (get-in jwks-config [:jwks :socket-timeout])
+                  :connection-timeout (get-in jwks-config [:jwks :connection-timeout])})
+
+                ;; Initialize JWKS background refresh if configured
+                (when (seq jwks-urls)
+                  (let [refresh-interval (get-in jwks-config [:jwks :refresh-interval])]
+                    (if refresh-interval
+                      (auth-jwt/initialize-jwks-keys jwks-urls refresh-interval)
+                      (auth-jwt/initialize-jwks-keys jwks-urls)))))
 
               (cond
                 ;; If JWKS URLs are configured, use kid-based lookup with preloaded keys

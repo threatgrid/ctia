@@ -5,7 +5,6 @@
    [clj-http.client :as http]
    [clj-jwt.key :refer [public-key]]
    [clj-momo.lib.set :refer [as-set]]
-   [clojure.core.memoize :as memo]
    [clojure.set :as set]
    [clojure.string :as string]
    [clojure.tools.logging :as log]
@@ -91,14 +90,16 @@
 
 (defn- fetch-jwks
   "Fetch JWKS from the given URL"
-  [url]
+  [url & [{:keys [socket-timeout connection-timeout]
+           :or {socket-timeout 5000
+                connection-timeout 5000}}]]
   (try
     (log/debugf "Fetching JWKS from %s" url)
     (let [response (http/get url
                             {:as :json
                              :throw-exceptions false
-                             :socket-timeout 5000
-                             :connection-timeout 5000})
+                             :socket-timeout socket-timeout
+                             :connection-timeout connection-timeout})
           status (:status response)]
       (if (<= 200 status 299)
         (do
@@ -151,22 +152,28 @@
         (log/errorf ex "Failed to build key map from JWKS")
         {}))))
 
+;; Background JWKS refresh system and configuration
+(defonce ^:private jwks-state (atom {:keys {}
+                                     :refresh-future nil
+                                     :config nil
+                                     :timeout-config {:socket-timeout 5000
+                                                      :connection-timeout 5000}
+                                     :refresh-interval (* 5 60 1000)})) ; 5 minutes default
+
+(defn set-jwks-timeout-config!
+  "Set JWKS HTTP timeout configuration"
+  [{:keys [socket-timeout connection-timeout]}]
+  (swap! jwks-state update :timeout-config merge
+         (cond-> {}
+           socket-timeout (assoc :socket-timeout socket-timeout)
+           connection-timeout (assoc :connection-timeout connection-timeout))))
+
 (defn- fetch-and-build-key-map
   "Fetch JWKS and build key map"
   [url]
   (-> url
-      fetch-jwks
+      (fetch-jwks (:timeout-config @jwks-state))
       build-key-map))
-
-(def fetch-cached-keys
-  "Cached version of fetch-and-build-key-map with 5 minute TTL"
-  (memo/ttl fetch-and-build-key-map
-            :ttl/threshold (* 5 60 1000))) ; 5 minutes in milliseconds
-
-;; Background JWKS refresh system
-(defonce ^:private jwks-state (atom {:keys {}
-                                     :refresh-future nil
-                                     :config nil}))
 
 (defn- refresh-all-jwks-keys
   "Refresh all JWKS keys from configured URLs"
@@ -248,18 +255,6 @@
   (when kid
     (get-in @jwks-state [:keys kid])))
 
-(defn get-public-key-for-kid
-  "Get public key for the given kid from JWKS endpoint.
-   Returns nil if kid not found or on error."
-  [jwks-url kid]
-  (when (and jwks-url kid)
-    (log/infof "Looking up key for kid: %s from %s" kid jwks-url)
-    (let [key-map (fetch-cached-keys jwks-url)]
-      (log/debugf "Available keys in JWKS: %s" (keys key-map))
-      (or (get key-map kid)
-          (do
-            (log/warnf "Kid %s not found in JWKS from %s. Available keys: %s" kid jwks-url (keys key-map))
-            nil)))))
 
 
 (defn parse-jwks-urls
