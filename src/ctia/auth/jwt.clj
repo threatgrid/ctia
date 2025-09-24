@@ -106,7 +106,7 @@
           (log/debugf "Successfully fetched JWKS from %s (status %d)" url status)
           (:body response))
         (do
-          (log/errorf "Failed to fetch JWKS from %s: status %d" url status)
+          (log/errorf "Failed to fetch JWKS from %s: status %d %s" url status (pr-str (:body response)))
           nil)))
     (catch Exception ex
       (log/errorf ex "Exception fetching JWKS from %s" url)
