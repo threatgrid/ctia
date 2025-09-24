@@ -195,14 +195,18 @@
   (str/join "&"
             (map
              (fn [type]
-               (str/join "&"
-                         (map (fn [id]
-                                (let [id (cond-> id (vector? id) last)
-                                      short-id (:short-id (id/long-id->id id))]
-                                  (str (encode (name type))
-                                       "="
-                                       (encode short-id))))
-                              (get bulk-ids type))))
+               (let [ids (get bulk-ids type)]
+                 (if (sequential? ids)
+                   (str/join "&"
+                             (map (fn [id]
+                                    (let [id (cond-> id (vector? id) last)
+                                          short-id (:short-id (id/long-id->id id))]
+                                      (str (encode (name type))
+                                           "="
+                                           (encode short-id))))
+                                  ids))
+                   ;; If it's not sequential, skip it (might be a keyword or other non-sequence value)
+                   "")))
              (keys bulk-ids))))
 
 

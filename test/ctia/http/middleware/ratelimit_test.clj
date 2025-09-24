@@ -8,7 +8,8 @@
             [ctia.test-helpers.core :as helpers]
             [ctia.test-helpers.es :as es-helpers]
             [taoensso.carmine :as car]
-            [clj-momo.lib.clj-time.core :as time]))
+            [clj-momo.lib.clj-time.core :as time]
+            [clj-momo.lib.clj-time.coerce :as tc]))
 
 (use-fixtures :once validate-schemas)
 
@@ -96,8 +97,9 @@
           (helpers/get-current-app))))))
 
 (deftest rate-limit-test
-  (with-redefs [time/now (constantly (time/date-time 2017 02 16 0 0 0))]
-    (let [call (fn [app]
+  (helpers/fixture-with-fixed-time (tc/to-date (time/date-time 2017 02 15 14 15 10))
+    (fn []
+      (let [call (fn [app]
                  (helpers/GET app
                               "ctia/status"
                               :headers {"Authorization" (str "Bearer " jwt-token)
@@ -155,5 +157,5 @@
          (fn [app]
            (let [response (call app)]
              (is (= 200 (:status response)))
-             (is (nil? (get-in response [:headers "X-RateLimit-GROUP-Limit"]))))))))))
+             (is (nil? (get-in response [:headers "X-RateLimit-GROUP-Limit"])))))))))))
 

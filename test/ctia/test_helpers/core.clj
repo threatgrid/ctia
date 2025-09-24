@@ -3,6 +3,7 @@
    [clj-momo.lib.clj-time.coerce :as mcljtime-coerce]
    [clj-momo.lib.clj-time.core :as mcljtime]
    [clj-momo.lib.time :as time]
+   [clj-time.core]
    [clj-momo.properties :refer [coerce-properties read-property-files]]
    [clojure.pprint :refer [pprint]]
    [clojure.spec.alpha :as cs]
@@ -25,6 +26,7 @@
    [flanders.spec :as fs]
    [flanders.utils :as fu]
    [puppetlabs.trapperkeeper.app :as app]
+   [ring-jwt-middleware.config :as jwt-config]
    [schema-tools.core :as st]
    [schema.core :as s])
   (:import [java.util UUID]))
@@ -385,10 +387,14 @@
                 (fn [] time)
                 time/now
                 (fn [] time)
+                clj-time.core/now
+                (fn [] (mcljtime-coerce/from-date time))
                 mcljtime/internal-now
                 (fn [] (mcljtime-coerce/to-date time))
                 ctia.http.routes.common/now
-                (fn [] time)]
+                (fn [] time)
+                jwt-config/current-millis!
+                (constantly (mcljtime-coerce/to-long time))]
     (f)))
 
 (defn set-capabilities!

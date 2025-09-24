@@ -97,6 +97,14 @@
                   iss)
       ["JWT issuer not supported by this instance."])))
 
+(defn jwt-error-handler
+  [{:keys [error error_description] :as jwt-error}]
+  {:status 401
+   :headers {}
+   :body (-> jwt-error
+            (dissoc :raw_jwt :jwt :token)
+            (select-keys [:error :error_description :level]))})
+
 (defn wrap-additional-headers
   "Add additional headers to all requests.
 
@@ -187,13 +195,54 @@
          (:enabled jwt)
          ((rjwt/wrap-jwt-auth-fn
            (merge
-            {:pubkey-fn ;; if :public-key-map is nil, will use just :public-key
-             (when-let [pubkey-for-issuer-map
-                        (auth-jwt/parse-jwt-pubkey-map (:public-key-map jwt))]
-               (fn [{:keys [iss]}]
-                 (get pubkey-for-issuer-map iss)))
-             :pubkey-path (:public-key-path jwt)
-             :no-jwt-handler rjwt/authorize-no-jwt-header-strategy}
+            {:allow-unauthenticated-access? true
+             :error-handler jwt-error-handler}
+            (let [jwks-urls (try
+                              (auth-jwt/parse-jwks-urls (:jwks-urls jwt))
+                              (catch Exception e
+                                (log/errorf e "Error parsing JWKS URLs: %s" (:jwks-urls jwt))
+                                nil))
+                  pubkey-for-issuer-map (try
+                                          (auth-jwt/parse-jwt-pubkey-map (:public-key-map jwt))
+                                          (catch Exception e
+                                            (log/errorf e "Error parsing JWT pubkey map: %s" (:public-key-map jwt))
+                                            nil))
+                  static-pubkey-path (:public-key-path jwt)]
+
+              ;; Configure JWKS timeouts and refresh if specified
+              (when-let [jwks-config (not-empty (select-keys jwt [:jwks]))]
+                (auth-jwt/set-jwks-timeout-config!
+                 {:socket-timeout (get-in jwks-config [:jwks :socket-timeout])
+                  :connection-timeout (get-in jwks-config [:jwks :connection-timeout])})
+
+                ;; Initialize JWKS background refresh if configured
+                (when (seq jwks-urls)
+                  (let [refresh-interval (get-in jwks-config [:jwks :refresh-interval])]
+                    (if refresh-interval
+                      (auth-jwt/initialize-jwks-keys jwks-urls refresh-interval)
+                      (auth-jwt/initialize-jwks-keys jwks-urls)))))
+
+              (cond
+                ;; If JWKS URLs are configured, use kid-based lookup with preloaded keys
+                jwks-urls
+                {:pubkey-fn-arg-fn #(get-in % [:header :kid])
+                 :pubkey-fn (fn [kid]
+                              (when kid
+                                (auth-jwt/get-jwks-key-by-kid kid)))}
+
+                ;; If issuer-specific keys are configured (backward compatibility)
+                pubkey-for-issuer-map
+                {:pubkey-fn (fn [{:keys [iss]}]
+                              (try
+                                (get pubkey-for-issuer-map iss)
+                                (catch Exception e
+                                  nil)))}
+
+                ;; Default: use static key path (most compatible)
+                :else
+                (if static-pubkey-path
+                  {:pubkey-path static-pubkey-path}
+                  {})))
 
             (let [{:keys [endpoints timeout cache-ttl]}
                   (:http-check jwt)]
