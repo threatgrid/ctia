@@ -97,6 +97,14 @@
                   iss)
       ["JWT issuer not supported by this instance."])))
 
+(defn jwt-error-handler
+  [{:keys [error error_description] :as jwt-error}]
+  {:status 401
+   :headers {}
+   :body (-> jwt-error
+            (dissoc :raw_jwt :jwt :token)
+            (select-keys [:error :error_description :level]))})
+
 (defn wrap-additional-headers
   "Add additional headers to all requests.
 
@@ -187,7 +195,8 @@
          (:enabled jwt)
          ((rjwt/wrap-jwt-auth-fn
            (merge
-            {:allow-unauthenticated-access? true}
+            {:allow-unauthenticated-access? true
+             :error-handler jwt-error-handler}
             (let [jwks-urls (try
                               (auth-jwt/parse-jwks-urls (:jwks-urls jwt))
                               (catch Exception e
@@ -219,19 +228,14 @@
                 {:pubkey-fn-arg-fn #(get-in % [:header :kid])
                  :pubkey-fn (fn [kid]
                               (when kid
-                                (log/debugf "Looking up key for kid: %s" kid)
-                                (or (auth-jwt/get-jwks-key-by-kid kid)
-                                    (do
-                                      (log/warnf "Key not found for kid: %s" kid)
-                                      nil))))}
+                                (auth-jwt/get-jwks-key-by-kid kid)))}
 
                 ;; If issuer-specific keys are configured (backward compatibility)
                 pubkey-for-issuer-map
-                {:pubkey-fn (fn [{:keys [iss]}] ; Extract iss from claims for static key lookup
+                {:pubkey-fn (fn [{:keys [iss]}]
                               (try
                                 (get pubkey-for-issuer-map iss)
                                 (catch Exception e
-                                  (log/errorf e "Error in pubkey-fn for issuer-specific keys, iss: %s" iss)
                                   nil)))}
 
                 ;; Default: use static key path (most compatible)
