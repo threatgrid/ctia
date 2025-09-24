@@ -236,7 +236,7 @@
                              "-Dclojure.main.report=stderr"
                              "-XX:-OmitStackTraceInFastThrow"]}
              :next-clojure {:dependencies [[org.clojure/clojure "1.13.0-master-SNAPSHOT"]]
-                            :repositories [["snapshots" "https://oss.sonatype.org/content/repositories/snapshots/"]]}
+                            :repositories [["sonatype-oss-public" "https://oss.sonatype.org/content/groups/public/"]]}
              :jmx {:jvm-opts ["-Dcom.sun.management.jmxremote"
                               "-Dcom.sun.management.jmxremote.port=9010"
                               "-Dcom.sun.management.jmxremote.local.only=false"
