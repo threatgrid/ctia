@@ -116,6 +116,9 @@
 (defn new-status? [status]
    (some? (re-matches #"New(: .+)?" status)))
 
+(defn hold-status? [status]
+   (some? (re-matches #"Hold(: .+)?" status)))
+
 (defn open-status? [status]
    (some? (re-matches #"Open(: .+)?" status)))
 
@@ -175,7 +178,7 @@
                        (:created prev)
                        (get-in incident [:incident_time :opened]))
 
-      (and (open-status? old-status)
+      (and (or (open-status? old-status) (hold-status? old-status))
            (closed-status? new-status))
       (update-interval :opened_to_closed
                        ;; we assume this was updated by the status route on Open. will be garbage if status was updated
