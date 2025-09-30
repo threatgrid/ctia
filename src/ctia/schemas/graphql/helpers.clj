@@ -16,6 +16,7 @@
            [graphql.schema
             DataFetcher
             DataFetchingEnvironment
+            DataFetchingFieldSelectionSet
             GraphQLArgument 
             GraphQLEnumType
             GraphQLEnumValueDefinition
@@ -236,8 +237,10 @@
   [env :- DataFetchingEnvironment
    fragments :- {s/Keyword FragmentDefinition}]
   (if-let [selection-set (.getSelectionSet env)]
-    (let [selections (.getSelections selection-set)]
-      (fields->selections selections fragments))
+    (let [selected-fields (.getFields selection-set)]
+      (->> selected-fields
+           (map #(.getName %))
+           (map keyword)))
     []))
 
 (s/defn fn->data-fetcher :- DataFetcher
