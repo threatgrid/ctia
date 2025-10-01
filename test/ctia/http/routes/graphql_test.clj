@@ -260,7 +260,7 @@
            (let [{:keys [_ errors status]} (gh/query app "dummy" {} "")]
              (is (= 400 status))
              (is (= errors
-                    ["InvalidSyntaxError{ message=Invalid Syntax ,locations=[SourceLocation{line=1, column=0}]}"]))))
+                    ["InvalidSyntaxError{ message=Invalid syntax with offending token 'dummy' at line 1 column 1 ,offendingToken=dummy ,locations=[SourceLocation{line=1, column=1}] ,sourcePreview=dummy\n}"]))))
 
          (testing "Query validation error"
            (let [{:keys [_ errors status]}
@@ -270,7 +270,7 @@
                            "TestQuery")]
              (is (= 400 status))
              (is (= errors
-                    '("ValidationError{validationErrorType=FieldUndefined, queryPath=[nonexistent], message=Validation error of type FieldUndefined: Field 'nonexistent' in type 'Root' is undefined @ 'nonexistent', locations=[SourceLocation{line=1, column=19}], description='Field 'nonexistent' in type 'Root' is undefined'}")))))
+                    '("ValidationError{validationErrorType=FieldUndefined, queryPath=[nonexistent], message=Validation error (FieldUndefined@[nonexistent]) : Field 'nonexistent' in type 'Root' is undefined, locations=[SourceLocation{line=1, column=19}], description='Validation error (FieldUndefined@[nonexistent]) : Field 'nonexistent' in type 'Root' is undefined', extensions=[]}")))))
          (testing "unauthorized access without capabilities"
            (let [{:keys [status]}
                  (helpers/POST app

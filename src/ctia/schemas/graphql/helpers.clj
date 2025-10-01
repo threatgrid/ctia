@@ -10,12 +10,13 @@
                                        resolve-with-rt-ctx]]
             [schema.core :as s]
             [clojure.tools.logging :as log])
-  (:import [graphql GraphQL GraphQLException]
+    (:import [graphql ExecutionInput GraphQL GraphQLException Scalars]
            [graphql.language
             Field FragmentDefinition FragmentSpread NamedNode SelectionSetContainer]
            [graphql.schema
             DataFetcher
             DataFetchingEnvironment
+            DataFetchingFieldSelectionSet
             GraphQLArgument 
             GraphQLEnumType
             GraphQLEnumValueDefinition
@@ -186,8 +187,7 @@
             (instance? FragmentDefinition s))
     (some-> s .getSelectionSet .getSelections)))
 
-(defn get-selections-get [^DataFetchingEnvironment s]
-  (some-> ^DataFetchingEnvironment s .getSelectionSet .get))
+(defn get-selections-get [^DataFetchingEnvironment s] nil)
 
 (defn fragment-spread? [x]
   (instance? FragmentSpread x))
@@ -233,23 +233,15 @@
 
 (s/defn env->field-selection :- [s/Keyword]
   "Given a DataFetchingEnvironmentImpl and a Fragment definition map
-  recursively pull all selected fields as a flat sequence
-  TODO: Starting from graphql-java 7.0.0 DataFetchingFieldSelectionSetImpl
-  seems to return more fields but looks still insufficient,
-  we should replace this function with what graphql-java
-  provides whenever possible."
+  recursively pull all selected fields as a flat sequence"
   [env :- DataFetchingEnvironment
    fragments :- {s/Keyword FragmentDefinition}]
-  (let [selection-set (get-selections-get env)
-        first-fields (keys (->clj selection-set))
-        fields (mapcat (fn [[k v]] v) selection-set)
-        detected-selections (fields->selections
-                             (concat fields
-                                     (->clj (.getFields env))) fragments)]
-    (distinct
-     (cond-> [:type]
-       (seq first-fields) (concat first-fields)
-       (seq detected-selections) (concat detected-selections)))))
+  (if-let [selection-set (.getSelectionSet env)]
+    (let [selected-fields (.getFields selection-set)]
+      (->> selected-fields
+           (map #(.getName %))
+           (map keyword)))
+    []))
 
 (s/defn fn->data-fetcher :- DataFetcher
   "Converts a function that takes 4 parameters (context, args, field-selection, source)
@@ -426,13 +418,20 @@
       :as rt-ctx} :- GraphQLRuntimeContext]
     (get-or-update-named-type-registry
      object-name
-     #(let [builder (-> (GraphQLObjectType/newObject)
-                        (.description ^String description)
-                        (.name ^String object-name)
-                        (add-fields (into {}
-                                          (filter first)
-                                          fields)
-                                     rt-ctx))]
+          #(let [filtered-fields (into {}
+                                       (filter first)
+                                       fields)
+                 ;; Add placeholder field specifically for MetaData type to satisfy GraphQL validation
+                 final-fields (if (and (empty? filtered-fields) 
+                                       (= object-name "MetaData"))
+                                {:_placeholder {:type Scalars/GraphQLString
+                                                :description "Placeholder field for empty type"
+                                                :resolve (constantly "placeholder")}}
+                                filtered-fields)
+                 builder (-> (GraphQLObjectType/newObject)
+                             (.description ^String description)
+                             (.name ^String object-name)
+                             (add-fields final-fields rt-ctx))]
         (doseq [^GraphQLInterfaceType interface interfaces]
           (.withInterface builder interface))
         (let [obj (.build builder)]
@@ -511,11 +510,13 @@
    variables
    context]
   (try
-    (let [result (.execute graphql
-                           query
-                           operation-name
-                           (->java (or context {}))
-                           (->java (or variables {})))]
+    (let [execution-input (-> (ExecutionInput/newExecutionInput)
+                              (.query query)
+                              (.operationName operation-name)
+                              (.context (->java (or context {})))
+                              (.variables (->java (or variables {})))
+                              (.build))
+          result (.execute graphql execution-input)]
       {:data (->clj (.getData result))
        :errors (.getErrors result)})
     (catch GraphQLException e
