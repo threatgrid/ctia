@@ -8,6 +8,7 @@
    [ctia.lib.metrics.console :as console]
    [ctia.lib.utils :as utils]
    [ctia.lib.riemann-service :as riemann-svc]
+   [ctia.lib.json :as json]
    [ctia.events-service :as events-svc]
    [ctia.features-service :as features-svc]
    [ctia.logging :as event-logging]
@@ -95,6 +96,9 @@
   Returns the Trapperkeeper app."
   ([] (start-ctia! {}))
   ([{:keys [services config]}]
+   ;; Initialize JSON encoders before anything else
+   (json/init!)
+   
    (log/info "starting CTIA version: "
              (version/current-version))
 
