@@ -235,8 +235,7 @@
                              ;; "Full report at: /tmp/clojure-8187773283812483853.edn"
                              "-Dclojure.main.report=stderr"
                              "-XX:-OmitStackTraceInFastThrow"]}
-             :next-clojure {:dependencies [[org.clojure/clojure "1.13.0-master-SNAPSHOT"]]
-                            :repositories [["sonatype-oss-public" "https://oss.sonatype.org/content/groups/public/"]]}
+             :next-clojure {:dependencies [[org.clojure/clojure "1.12.3"]]}
              :jmx {:jvm-opts ["-Dcom.sun.management.jmxremote"
                               "-Dcom.sun.management.jmxremote.port=9010"
                               "-Dcom.sun.management.jmxremote.local.only=false"
