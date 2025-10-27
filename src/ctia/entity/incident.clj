@@ -93,20 +93,6 @@
 (def incident-default-realize
   (default-realize-fn "incident" NewIncident StoredIncident))
 
-(s/defn realize-incident
-  :- (RealizeFnResult (with-error StoredIncident))
-  [new-obj id tempids ident-map & [prev-obj]]
-  (delayed/fn :- (with-error StoredIncident)
-    [rt-ctx :- GraphQLRuntimeContext]
-    (let [rfn (lift-realize-fn-with-context
-               incident-default-realize rt-ctx)
-          now (time/internal-now)]
-      (-> (rfn new-obj id tempids ident-map prev-obj)
-          (assoc :timestamp
-                 (or (:timestamp new-obj)
-                     (:timestamp prev-obj)
-                     now))))))
-
 (s/defschema IncidentStatus
   (f-schema/->schema vocs/Status))
 
@@ -146,6 +132,42 @@
                   (closed-status? status) [:closed]))]
     (cond-> {:status status}
       verbs (assoc :incident_time (zipmap verbs (repeat t))))))
+
+(s/defn apply-status-update-logic
+  "Applies status change logic when status changes are detected.
+  If the status has changed, applies make-status-update to set appropriate incident_time fields."
+  [new-obj :- {s/Keyword s/Any}
+   prev-obj :- (s/maybe {s/Keyword s/Any})]
+  (if (and prev-obj
+           (:status new-obj)
+           (not= (:status new-obj) (:status prev-obj)))
+    ;; Status has changed, apply status update logic
+    (let [status-update (make-status-update {:status (:status new-obj)})
+          ;; Merge the incident_time updates from status change logic
+          ;; Only update incident_time fields that aren't already explicitly set
+          incident-time-updates (get status-update :incident_time {})
+          current-incident-time (get new-obj :incident_time {})
+          merged-incident-time (merge incident-time-updates current-incident-time)]
+      (cond-> new-obj
+        (seq merged-incident-time) (assoc :incident_time merged-incident-time)))
+    ;; No status change or no previous object, return as-is
+    new-obj))
+
+(s/defn realize-incident
+  :- (RealizeFnResult (with-error StoredIncident))
+  [new-obj id tempids ident-map & [prev-obj]]
+  (delayed/fn :- (with-error StoredIncident)
+    [rt-ctx :- GraphQLRuntimeContext]
+    (let [rfn (lift-realize-fn-with-context
+               incident-default-realize rt-ctx)
+          now (time/internal-now)
+          ;; Apply status update logic before realization
+          new-obj-with-status-logic (apply-status-update-logic new-obj prev-obj)]
+      (-> (rfn new-obj-with-status-logic id tempids ident-map prev-obj)
+          (assoc :timestamp
+                 (or (:timestamp new-obj-with-status-logic)
+                     (:timestamp prev-obj)
+                     now))))))
 
 (s/defn ^:private update-interval :- ESStoredIncident
   [{:keys [intervals] :as incident} :- ESStoredIncident
