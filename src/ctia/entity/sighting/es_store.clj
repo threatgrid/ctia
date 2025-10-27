@@ -65,13 +65,6 @@
   [{:keys [observables] :as s} :- StoredSighting]
   (assoc s :observables_hash (map observable->observable-hash observables)))
 
-(s/defn partial-stored-sighting->es-partial-stored-sighting
-  :- ESPartialStoredSighting
-  "adds an observables hash to a partial-sighting"
-  [{:keys [observables] :as s} :- PartialStoredSighting]
-  (cond-> s
-    observables (assoc :observables_hash (map observable->observable-hash observables))))
-
 (s/defn es-stored-sighting->stored-sighting
   :- StoredSighting
   "remove the computed observables hash from a sighting"
