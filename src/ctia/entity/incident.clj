@@ -144,7 +144,7 @@
     ;; Status has changed, apply status update logic
     (let [status-update (make-status-update {:status (:status new-obj)})
           ;; Merge the incident_time updates from status change logic
-          ;; Only update incident_time fields that aren't already explicitly set
+          ;; Explicitly provided values (current-incident-time) take precedence over auto-generated ones
           incident-time-updates (get status-update :incident_time {})
           current-incident-time (get new-obj :incident_time {})
           merged-incident-time (merge incident-time-updates current-incident-time)]
