@@ -54,11 +54,39 @@
   (GET app (str "ctia/incident/" (uri/uri-encode id))
        :headers {"Authorization" "45c1f5e3f05d0"}))
 
+(defn create-test-incident
+  "Creates a fresh incident with status 'New' for testing. Returns the incident ID."
+  [app]
+  (let [incident-to-create (-> new-incident-minimal
+                                (dissoc :id :severity :incident_time)
+                                (assoc :title (str "Test Incident " (java.util.UUID/randomUUID))
+                                       :status "New"
+                                       ;; incident_time is required and must have :opened
+                                       :incident_time {:opened (t/internal-now)}))
+        response (POST app
+                       "ctia/incident"
+                       :body incident-to-create
+                       :headers {"Authorization" "45c1f5e3f05d0"})
+        incident (:parsed-body response)]
+    (assert (= 201 (:status response)) (str "Failed to create incident: " response))
+    (:id incident)))
+
+(defn delete-incident
+  "Deletes an incident by ID."
+  [app incident-id]
+  (helpers/DELETE app
+                  (str "ctia/incident/" (uri/uri-encode incident-id))
+                  :headers {"Authorization" "45c1f5e3f05d0"}))
+
 (defn additional-tests [app incident-id incident]
-  (let [fixed-now (t/internal-now)]
-    (helpers/fixture-with-fixed-time
-     fixed-now
-     (fn []
+  (let [fixed-now (t/internal-now)
+        ;; Track test incidents for cleanup
+        test-incidents (atom [])]
+    (try
+      (helpers/fixture-with-fixed-time
+       fixed-now
+       (fn []
+       ;; Keep the original POST status tests with the shared incident
        (testing "Incident status update: test setup"
          (let [response (PATCH app
                                (str "ctia/incident/" (:short-id incident-id))
@@ -101,7 +129,167 @@
            (is (= 200 (:status response)))
            (is (= "Open: Contained" (:status updated-incident)))
            (is (= (get-in updated-incident [:incident_time :contained])
-                  (tc/to-date fixed-now)))))))))
+                  (tc/to-date fixed-now)))))
+
+       ;; PATCH tests with fresh incidents for each test
+       (testing "PATCH /ctia/incident/:id with status change to Open"
+         (let [test-id (create-test-incident app)
+               _ (swap! test-incidents conj test-id)
+               response (PATCH app
+                               (str "ctia/incident/" (uri/uri-encode test-id))
+                               :body {:status "Open"}
+                               :headers {"Authorization" "45c1f5e3f05d0"})
+               updated-incident (:parsed-body response)]
+           (is (= 200 (:status response)))
+           (is (= "Open" (:status updated-incident)))
+           (is (= (get-in updated-incident [:incident_time :opened])
+                  (tc/to-date fixed-now)))))
+
+       (testing "PATCH /ctia/incident/:id with status change to Closed"
+         (let [test-id (create-test-incident app)
+               _ (swap! test-incidents conj test-id)
+               ;; First set to Open to have a valid transition
+               _ (PATCH app
+                        (str "ctia/incident/" (uri/uri-encode test-id))
+                        :body {:status "Open"}
+                        :headers {"Authorization" "45c1f5e3f05d0"})
+               ;; Then test New -> Closed transition
+               response (PATCH app
+                               (str "ctia/incident/" (uri/uri-encode test-id))
+                               :body {:status "Closed"}
+                               :headers {"Authorization" "45c1f5e3f05d0"})
+               updated-incident (:parsed-body response)]
+           (is (= 200 (:status response)))
+           (is (= "Closed" (:status updated-incident)))
+           (is (= (get-in updated-incident [:incident_time :closed])
+                  (tc/to-date fixed-now)))))
+
+       (testing "PATCH /ctia/incident/:id with status change to Containment Achieved"
+         (let [test-id (create-test-incident app)
+               _ (swap! test-incidents conj test-id)
+               response (PATCH app
+                               (str "ctia/incident/" (uri/uri-encode test-id))
+                               :body {:status "Containment Achieved"}
+                               :headers {"Authorization" "45c1f5e3f05d0"})
+               updated-incident (:parsed-body response)]
+           (is (= 200 (:status response)))
+           (is (= "Containment Achieved" (:status updated-incident)))
+           (is (= (get-in updated-incident [:incident_time :remediated])
+                  (tc/to-date fixed-now)))))
+
+       (testing "PATCH /ctia/incident/:id with status change to Open: Contained"
+         (let [test-id (create-test-incident app)
+               _ (swap! test-incidents conj test-id)
+               response (PATCH app
+                               (str "ctia/incident/" (uri/uri-encode test-id))
+                               :body {:status "Open: Contained"}
+                               :headers {"Authorization" "45c1f5e3f05d0"})
+               updated-incident (:parsed-body response)]
+           (is (= 200 (:status response)))
+           (is (= "Open: Contained" (:status updated-incident)))
+           (is (= (get-in updated-incident [:incident_time :contained])
+                  (tc/to-date fixed-now)))
+           (is (= (get-in updated-incident [:incident_time :opened])
+                  (tc/to-date fixed-now)))))
+
+       (testing "PATCH /ctia/incident/:id without status change does not update incident_time"
+         (let [test-id (create-test-incident app)
+               _ (swap! test-incidents conj test-id)
+               ;; First, set a status to establish incident_time
+               _ (PATCH app
+                        (str "ctia/incident/" (uri/uri-encode test-id))
+                        :body {:status "Open"}
+                        :headers {"Authorization" "45c1f5e3f05d0"})
+               ;; Get current incident
+               current (get-incident app test-id)
+               current-incident (:parsed-body current)
+               current-incident-time (:incident_time current-incident)
+               ;; Update something other than status
+               response (PATCH app
+                               (str "ctia/incident/" (uri/uri-encode test-id))
+                               :body {:description "Updated description"}
+                               :headers {"Authorization" "45c1f5e3f05d0"})
+               updated-incident (:parsed-body response)]
+           (is (= 200 (:status response)))
+           (is (= "Updated description" (:description updated-incident)))
+           ;; incident_time should remain unchanged
+           (is (= current-incident-time (:incident_time updated-incident)))))
+
+       (testing "PATCH /ctia/incident/:id preserves explicitly set incident_time fields"
+         (let [test-id (create-test-incident app)
+               _ (swap! test-incidents conj test-id)
+               custom-time (tc/to-date (t/plus fixed-now (t/hours 2)))
+               response (PATCH app
+                               (str "ctia/incident/" (uri/uri-encode test-id))
+                               :body {:status "Open"
+                                      :incident_time {:opened custom-time}}
+                               :headers {"Authorization" "45c1f5e3f05d0"})
+               updated-incident (:parsed-body response)]
+           (is (= 200 (:status response)))
+           (is (= "Open" (:status updated-incident)))
+           ;; Should use the explicitly provided time, not the generated one
+           (is (= custom-time (get-in updated-incident [:incident_time :opened])))))
+
+       (testing "POST /ctia/incident/:id/status Hold to Closed transition"
+         (let [test-id (create-test-incident app)
+               _ (swap! test-incidents conj test-id)
+               ;; First set status to Hold
+               hold-response (post-status app (uri/uri-encode test-id) "Hold")
+               _ (is (= 200 (:status hold-response)))
+               _ (is (= "Hold" (:status (:parsed-body hold-response))))
+               ;; Then transition to Closed
+               closed-response (post-status app (uri/uri-encode test-id) "Closed")
+               updated-incident (:parsed-body closed-response)]
+           (is (= 200 (:status closed-response)))
+           (is (= "Closed" (:status updated-incident)))
+           (is (= (get-in updated-incident [:incident_time :closed])
+                  (tc/to-date fixed-now)))))
+
+       (testing "PATCH /ctia/incident/:id with status change from Hold to Closed"
+         (let [test-id (create-test-incident app)
+               _ (swap! test-incidents conj test-id)
+               ;; First set status to Hold
+               hold-response (PATCH app
+                                    (str "ctia/incident/" (uri/uri-encode test-id))
+                                    :body {:status "Hold"}
+                                    :headers {"Authorization" "45c1f5e3f05d0"})
+               _ (is (= 200 (:status hold-response)))
+               _ (is (= "Hold" (:status (:parsed-body hold-response))))
+               ;; Then transition to Closed via PATCH
+               closed-response (PATCH app
+                                      (str "ctia/incident/" (uri/uri-encode test-id))
+                                      :body {:status "Closed"}
+                                      :headers {"Authorization" "45c1f5e3f05d0"})
+               updated-incident (:parsed-body closed-response)]
+           (is (= 200 (:status closed-response)))
+           (is (= "Closed" (:status updated-incident)))
+           (is (= (get-in updated-incident [:incident_time :closed])
+                  (tc/to-date fixed-now)))))
+
+       (testing "PATCH /ctia/incident/:id with status change from Hold: Internal to Closed: Other"
+         (let [test-id (create-test-incident app)
+               _ (swap! test-incidents conj test-id)
+               ;; First set status to Hold: Internal
+               hold-response (PATCH app
+                                    (str "ctia/incident/" (uri/uri-encode test-id))
+                                    :body {:status "Hold: Internal"}
+                                    :headers {"Authorization" "45c1f5e3f05d0"})
+               _ (is (= 200 (:status hold-response)))
+               _ (is (= "Hold: Internal" (:status (:parsed-body hold-response))))
+               ;; Then transition to Closed: Other via PATCH
+               closed-response (PATCH app
+                                      (str "ctia/incident/" (uri/uri-encode test-id))
+                                      :body {:status "Closed: Other"}
+                                      :headers {"Authorization" "45c1f5e3f05d0"})
+               updated-incident (:parsed-body closed-response)]
+           (is (= 200 (:status closed-response)))
+           (is (= "Closed: Other" (:status updated-incident)))
+           (is (= (get-in updated-incident [:incident_time :closed])
+                  (tc/to-date fixed-now)))))))
+      (finally
+        ;; Clean up test incidents
+        (doseq [test-id @test-incidents]
+          (delete-incident app test-id))))))
 
 (deftest test-incident-crud-routes
   (test-for-each-store-with-app
@@ -706,14 +894,15 @@
 (deftest compute-intervals-test
   (let [new-statuses ["New" "New: Processing" "New: Presented"]
         open-statuses ["Open" "Open: Recovered" "Open: Contained" "Open: Reported" "Open: Investigating"]
+        hold-statuses ["Hold" "Hold: External" "Hold: Internal" "Hold: Legal"]
         closed-statuses ["Closed" "Closed: Confirmed Threat" "Closed: False Positive" "Closed: Merged"
                          "Closed: Near-Miss" "Closed: Other" "Closed: Suspected" "Closed: Under Review"]
-        ;; If new statuses are added that begin with New, Closed, Open,
+        ;; If new statuses are added that begin with New, Closed, Open, or Hold,
         ;; we might want to re-evaluate this function.
-        _ (assert (every? (set (concat new-statuses open-statuses closed-statuses))
+        _ (assert (every? (set (concat new-statuses open-statuses closed-statuses hold-statuses))
                           (filter #(some (fn [prefix]
                                            (string/starts-with? % prefix))
-                                         ["Open" "Closed" "New"])
+                                         ["Open" "Closed" "New" "Hold"])
                                   incident-statuses)))
         computed-interval 20
         earlier (jt/java-date)
@@ -776,8 +965,13 @@
             (let [prev (assoc prev :status open-status)]
               (is (= (assoc incident :intervals {:opened_to_closed computed-interval})
                      (sut/compute-intervals prev incident))))))
-        (testing "if previous status is not Open, then don't create new interval"
-          (doseq [stored-status (shuffle (apply disj incident-statuses open-statuses))]
+        (doseq [hold-status hold-statuses]
+          (testing (format "Status, '%s', is treated as hold and should trigger opened_to_closed" hold-status)
+            (let [prev (assoc prev :status hold-status)]
+              (is (= (assoc incident :intervals {:opened_to_closed computed-interval})
+                     (sut/compute-intervals prev incident))))))
+        (testing "if previous status is not Open or Hold, then don't create new interval"
+          (doseq [stored-status (shuffle (apply disj incident-statuses (concat open-statuses hold-statuses)))]
             (testing stored-status
               (is (= incident (sut/compute-intervals (assoc prev :status stored-status) incident))))))
         (testing "if :stored-incident does not already have an :opened_to_closed interval, compute it"
