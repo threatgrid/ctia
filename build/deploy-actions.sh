@@ -58,7 +58,7 @@ exec runuser -u nobody -- "\${@}"
 EOF
 
   cat <<EOF >"$tempdir"/Dockerfile
-FROM 372070498991.dkr.ecr.us-east-1.amazonaws.com/$repo_prefix-docker-build/cloud9_alpine_java:latest
+FROM 372070498991.dkr.ecr.us-east-1.amazonaws.com/$repo_prefix-docker-build/cloud9_alpine_java:58-4cba19e3
 USER root
 RUN apk update
 RUN apk add runuser
