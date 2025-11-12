@@ -286,6 +286,194 @@
            (is (= "Closed: Other" (:status updated-incident)))
            (is (= (get-in updated-incident [:incident_time :closed])
                   (tc/to-date fixed-now)))))))
+
+       (testing "POST /ctia/incident/:id/status: Closed date preserved when transitioning between closed statuses"
+         (let [test-id (create-test-incident app)
+               _ (swap! test-incidents conj test-id)
+               ;; First transition to closed status
+               first-closed-response (post-status app (uri/uri-encode test-id) "Closed: False Positive")
+               first-closed-incident (:parsed-body first-closed-response)
+               first-closed-date (get-in first-closed-incident [:incident_time :closed])]
+           (is (= 200 (:status first-closed-response)))
+           (is (= "Closed: False Positive" (:status first-closed-incident)))
+           (is (some? first-closed-date) "First closed date should be set")
+           ;; Transition to another closed status with a later time
+           (helpers/fixture-with-fixed-time
+            (t/plus fixed-now (t/minutes 5))
+            (fn []
+              (let [second-closed-response (post-status app (uri/uri-encode test-id) "Closed: Confirmed Threat")
+                    second-closed-incident (:parsed-body second-closed-response)
+                    second-closed-date (get-in second-closed-incident [:incident_time :closed])]
+                (is (= 200 (:status second-closed-response)))
+                (is (= "Closed: Confirmed Threat" (:status second-closed-incident)))
+                ;; The closed date should be preserved from the first closed status
+                (is (= first-closed-date second-closed-date)
+                    "Closed date should NOT be updated when transitioning between closed statuses"))))))
+
+       (testing "PATCH /ctia/incident/:id: Closed date preserved when transitioning between closed statuses"
+         (let [test-id (create-test-incident app)
+               _ (swap! test-incidents conj test-id)
+               ;; First transition to closed status via PATCH
+               first-closed-response (PATCH app
+                                           (str "ctia/incident/" (uri/uri-encode test-id))
+                                           :body {:status "Closed: False Positive"}
+                                           :headers {"Authorization" "45c1f5e3f05d0"})
+               first-closed-incident (:parsed-body first-closed-response)
+               first-closed-date (get-in first-closed-incident [:incident_time :closed])]
+           (is (= 200 (:status first-closed-response)))
+           (is (= "Closed: False Positive" (:status first-closed-incident)))
+           (is (some? first-closed-date) "First closed date should be set")
+           ;; Transition to another closed status with a later time via PATCH
+           (helpers/fixture-with-fixed-time
+            (t/plus fixed-now (t/minutes 5))
+            (fn []
+              (let [second-closed-response (PATCH app
+                                                 (str "ctia/incident/" (uri/uri-encode test-id))
+                                                 :body {:status "Closed: Confirmed Threat"}
+                                                 :headers {"Authorization" "45c1f5e3f05d0"})
+                    second-closed-incident (:parsed-body second-closed-response)
+                    second-closed-date (get-in second-closed-incident [:incident_time :closed])]
+                (is (= 200 (:status second-closed-response)))
+                (is (= "Closed: Confirmed Threat" (:status second-closed-incident)))
+                ;; The closed date should be preserved from the first closed status
+                (is (= first-closed-date second-closed-date)
+                    "Closed date should NOT be updated when transitioning between closed statuses"))))))
+
+       (testing "POST /ctia/incident/:id/status: Opened date preserved when transitioning between open statuses"
+         (let [test-id (create-test-incident app)
+               _ (swap! test-incidents conj test-id)
+               ;; First transition from New to Open
+               first-open-response (post-status app (uri/uri-encode test-id) "Open")
+               first-open-incident (:parsed-body first-open-response)
+               initial-opened-date (get-in first-open-incident [:incident_time :opened])]
+
+           (is (= 200 (:status first-open-response)))
+           (is (= "Open" (:status first-open-incident)))
+           (is (some? initial-opened-date) "Initial opened date should be set")
+
+           ;; Transition to another open status with a later time
+           (helpers/fixture-with-fixed-time
+            (t/plus fixed-now (t/minutes 5))
+            (fn []
+              (let [response (post-status app (uri/uri-encode test-id) "Open: Investigating")
+                    updated-incident (:parsed-body response)
+                    new-opened-date (get-in updated-incident [:incident_time :opened])]
+
+                (is (= 200 (:status response)))
+                (is (= "Open: Investigating" (:status updated-incident)))
+                (is (some? new-opened-date) "Opened date should still be set")
+
+                ;; The opened date should be preserved from the first open status
+                (is (= initial-opened-date new-opened-date)
+                    "Opened date should NOT be updated when transitioning between open statuses"))))))
+
+       (testing "PATCH /ctia/incident/:id: Opened date preserved when transitioning between open statuses"
+         (let [test-id (create-test-incident app)
+               _ (swap! test-incidents conj test-id)
+               ;; First transition from New to Open via PATCH
+               first-open-response (PATCH app
+                                         (str "ctia/incident/" (uri/uri-encode test-id))
+                                         :body {:status "Open"}
+                                         :headers {"Authorization" "45c1f5e3f05d0"})
+               first-open-incident (:parsed-body first-open-response)
+               initial-opened-date (get-in first-open-incident [:incident_time :opened])]
+
+           (is (= 200 (:status first-open-response)))
+           (is (= "Open" (:status first-open-incident)))
+           (is (some? initial-opened-date) "Initial opened date should be set")
+
+           ;; Transition to another open status with a later time via PATCH
+           (helpers/fixture-with-fixed-time
+            (t/plus fixed-now (t/minutes 5))
+            (fn []
+              (let [response (PATCH app
+                                   (str "ctia/incident/" (uri/uri-encode test-id))
+                                   :body {:status "Open: Investigating"}
+                                   :headers {"Authorization" "45c1f5e3f05d0"})
+                    updated-incident (:parsed-body response)
+                    new-opened-date (get-in updated-incident [:incident_time :opened])]
+
+                (is (= 200 (:status response)))
+                (is (= "Open: Investigating" (:status updated-incident)))
+                (is (some? new-opened-date) "Opened date should still be set")
+
+                ;; The opened date should be preserved from the first open status
+                (is (= initial-opened-date new-opened-date)
+                    "Opened date should NOT be updated when transitioning between open statuses"))))))
+
+       (testing "POST /ctia/incident/:id/status: Open → Open: Contained preserves opened but sets contained"
+         (let [test-id (create-test-incident app)
+               _ (swap! test-incidents conj test-id)
+               ;; First transition from New to Open
+               first-open-response (post-status app (uri/uri-encode test-id) "Open")
+               first-open-incident (:parsed-body first-open-response)
+               initial-opened-date (get-in first-open-incident [:incident_time :opened])]
+
+           (is (= 200 (:status first-open-response)))
+           (is (= "Open" (:status first-open-incident)))
+           (is (some? initial-opened-date) "Initial opened date should be set")
+           (is (nil? (get-in first-open-incident [:incident_time :contained])) "Contained should NOT be set yet")
+
+           ;; Transition to Open: Contained with a later time
+           (helpers/fixture-with-fixed-time
+            (t/plus fixed-now (t/minutes 5))
+            (fn []
+              (let [response (post-status app (uri/uri-encode test-id) "Open: Contained")
+                    updated-incident (:parsed-body response)
+                    new-opened-date (get-in updated-incident [:incident_time :opened])
+                    contained-date (get-in updated-incident [:incident_time :contained])]
+
+                (is (= 200 (:status response)))
+                (is (= "Open: Contained" (:status updated-incident)))
+                ;; CRITICAL: opened should be preserved from first Open
+                (is (= initial-opened-date new-opened-date)
+                    "Opened date should be preserved from first Open status")
+                ;; CRITICAL: contained should be set to the NEW time
+                (is (some? contained-date) "Contained date should be set")
+                (is (not= initial-opened-date contained-date)
+                    "Contained date should be DIFFERENT from opened date")
+                (is (= (tc/to-date (t/plus fixed-now (t/minutes 5))) contained-date)
+                    "Contained date should be the time of transition to Open: Contained"))))))
+
+       (testing "PATCH /ctia/incident/:id: Open → Open: Contained preserves opened but sets contained"
+         (let [test-id (create-test-incident app)
+               _ (swap! test-incidents conj test-id)
+               ;; First transition from New to Open
+               first-open-response (PATCH app
+                                         (str "ctia/incident/" (uri/uri-encode test-id))
+                                         :body {:status "Open"}
+                                         :headers {"Authorization" "45c1f5e3f05d0"})
+               first-open-incident (:parsed-body first-open-response)
+               initial-opened-date (get-in first-open-incident [:incident_time :opened])]
+
+           (is (= 200 (:status first-open-response)))
+           (is (= "Open" (:status first-open-incident)))
+           (is (some? initial-opened-date) "Initial opened date should be set")
+           (is (nil? (get-in first-open-incident [:incident_time :contained])) "Contained should NOT be set yet")
+
+           ;; Transition to Open: Contained with a later time
+           (helpers/fixture-with-fixed-time
+            (t/plus fixed-now (t/minutes 5))
+            (fn []
+              (let [response (PATCH app
+                                   (str "ctia/incident/" (uri/uri-encode test-id))
+                                   :body {:status "Open: Contained"}
+                                   :headers {"Authorization" "45c1f5e3f05d0"})
+                    updated-incident (:parsed-body response)
+                    new-opened-date (get-in updated-incident [:incident_time :opened])
+                    contained-date (get-in updated-incident [:incident_time :contained])]
+
+                (is (= 200 (:status response)))
+                (is (= "Open: Contained" (:status updated-incident)))
+                ;; CRITICAL: opened should be preserved from first Open
+                (is (= initial-opened-date new-opened-date)
+                    "Opened date should be preserved from first Open status")
+                ;; CRITICAL: contained should be set to the NEW time
+                (is (some? contained-date) "Contained date should be set")
+                (is (not= initial-opened-date contained-date)
+                    "Contained date should be DIFFERENT from opened date")
+                (is (= (tc/to-date (t/plus fixed-now (t/minutes 5))) contained-date)
+                    "Contained date should be the time of transition to Open: Contained"))))))
       (finally
         ;; Clean up test incidents
         (doseq [test-id @test-incidents]

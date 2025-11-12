@@ -135,19 +135,33 @@
 
 (s/defn apply-status-update-logic
   "Applies status change logic when status changes are detected.
-  If the status has changed, applies make-status-update to set appropriate incident_time fields."
+  If the status has changed, applies make-status-update to set appropriate incident_time fields.
+  Special case: When transitioning between same-category statuses (open-to-open, closed-to-closed),
+  preserve the original timestamp to represent when the incident first entered that category."
   [new-obj :- {s/Keyword s/Any}
    prev-obj :- (s/maybe {s/Keyword s/Any})]
   (if (and prev-obj
            (:status new-obj)
            (not= (:status new-obj) (:status prev-obj)))
     ;; Status has changed, apply status update logic
-    (let [status-update (make-status-update {:status (:status new-obj)})
+    (let [old-status (:status prev-obj)
+          new-status (:status new-obj)
+          status-update (make-status-update {:status new-status})
           ;; Merge the incident_time updates from status change logic
           ;; Explicitly provided values (current-incident-time) take precedence over auto-generated ones
           incident-time-updates (get status-update :incident_time {})
           current-incident-time (get new-obj :incident_time {})
-          merged-incident-time (merge incident-time-updates current-incident-time)]
+          ;; If transitioning from closed to closed, preserve the original closed date
+          prev-closed-date (when (and (closed-status? old-status)
+                                      (closed-status? new-status))
+                             (get-in prev-obj [:incident_time :closed]))
+          ;; If transitioning from open to open, preserve the original opened date
+          prev-opened-date (when (and (open-status? old-status)
+                                      (open-status? new-status))
+                             (get-in prev-obj [:incident_time :opened]))
+          merged-incident-time (cond-> (merge incident-time-updates current-incident-time)
+                                 prev-closed-date (assoc :closed prev-closed-date)
+                                 prev-opened-date (assoc :opened prev-opened-date))]
       (cond-> new-obj
         (seq merged-incident-time) (assoc :incident_time merged-incident-time)))
     ;; No status change or no previous object, return as-is
