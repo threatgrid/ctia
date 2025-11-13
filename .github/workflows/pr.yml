@@ -437,5 +437,5 @@ jobs:
           # offline to catch issues where `lein warm-ci-deps` doesn't download all
           # dependencies we need to deploy.
           LEIN_OFFLINE: true
-          DOCKER_USER: ${{ env.INT_US_EAST_1_XDR_SRE_USER_JFROG_USERNAME }}
-          DOCKER_PASS: ${{ env.INT_US_EAST_1_XDR_SRE_USER_JFROG_TOKEN }}
+          DOCKER_USER: ${{ env.int_us_east_1_xdr_sre_user_jfrog_username }}
+          DOCKER_PASS: ${{ env.int_us_east_1_xdr_sre_user_jfrog_token }}
