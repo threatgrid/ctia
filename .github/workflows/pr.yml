@@ -18,6 +18,11 @@ on:
     # daily, 3am UTC
     - cron: "0 3 * * *"
 
+# required for OIDC-based authentication to AWS
+permissions:
+  contents: read
+  id-token: write
+
 env:
   # number of times to try possibly-flaky commands in this file
   ACTIONS_RETRY_TIMES: 10
@@ -412,13 +417,19 @@ jobs:
         # poor man's travis_retry
         run: for i in {1..${ACTIONS_RETRY_TIMES}}; do lein warm-ci-deps && break; done
 
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v1
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v5
         with:
-          # region matching buckets in ./build/deploy-actions.sh
+          role-to-assume: ${{ secrets.SRE_AWS_INT_GITHUB_CI_ROLE_ARN }}
           aws-region: us-east-1
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
+      - name: Fetch Vercel Secrets
+        uses: aws-actions/aws-secretsmanager-get-secrets@v2
+        with:
+          secret-ids: |
+            INT-us-east-1-xdr-sre-user-jfrog
+          name-transformation: lowercase
+          parse-json-secrets: true
 
       - id: deploy
         run: ./build/deploy-actions.sh
@@ -426,5 +437,5 @@ jobs:
           # offline to catch issues where `lein warm-ci-deps` doesn't download all
           # dependencies we need to deploy.
           LEIN_OFFLINE: true
-          DOCKER_USER: ${{ secrets.artifactory_user }}
-          DOCKER_PASS: ${{ secrets.artifactory_pwd }}
+          DOCKER_USER: ${{ env.INT_US_EAST_1_XDR_SRE_USER_JFROG_USERNAME }}
+          DOCKER_PASS: ${{ env.INT_US_EAST_1_XDR_SRE_USER_JFROG_TOKEN }}
