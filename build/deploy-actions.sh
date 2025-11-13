@@ -31,8 +31,7 @@ echo "commit: ${CTIA_COMMIT}"
 
 function build-and-push-docker-image {
   build_type=$1
-  if [ "$build_type" == 'int' ];
-  then
+  if [ "$build_type" == 'int' ]; then
     repo_prefix='int'
     echo "Building docker image for integration"
   else
@@ -46,43 +45,34 @@ function build-and-push-docker-image {
   docker_eks_repository=ctr-$repo_prefix-eks/$repo_prefix-iroh
   tempdir=$(mktemp -d)
   cp target/ctia.jar "$tempdir/"
-  cat <<EOF >"$tempdir"/entrypoint.sh
-#!/bin/sh
-set -x
-if [ -n "\${INTERNAL_CA_PATH+set}" ];
-then
-  cp \$INTERNAL_CA_PATH/* /usr/local/share/ca-certificates/
-  update-ca-certificates
-fi
-exec runuser -u nobody -- "\${@}"
-EOF
 
   cat <<EOF >"$tempdir"/Dockerfile
-FROM 372070498991.dkr.ecr.us-east-1.amazonaws.com/$repo_prefix-docker-build/cloud9_alpine_java:58-4cba19e3
-USER root
-RUN apk update
-RUN apk add runuser
-RUN mkdir /ctia
+FROM artifactory.devhub-cloud.cisco.com/sto-ccc-docker/hardened_alpine:$ALPINE_VERSION
+
+RUN apk update && \
+    apk add --no-cache openjdk21-jre libc6-compat tini && \
+    ln -s /usr/bin/java /bin/java && \
+    mkdir /ctia
+
 WORKDIR /ctia
 
 ADD ctia.jar /ctia/
 ADD 'https://dtdg.co/latest-java-tracer' /ctia/dd-java-agent.jar
-RUN chmod 644 /ctia/ctia.jar
-RUN chmod 644 /ctia/dd-java-agent.jar
-ADD entrypoint.sh /
-RUN chmod 755 /entrypoint.sh
-ENTRYPOINT ["/sbin/tini", "--", "/entrypoint.sh"]
+RUN chmod 644 /ctia/ctia.jar /ctia/dd-java-agent.jar
+USER nobody
+ENTRYPOINT ["/sbin/tini", "--"]
 EOF
 
   cd "$tempdir"
   aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin "$docker_registry"
+  echo "Login to $ARTIFACTORY_URL"
+  echo "$DOCKER_PASS" | docker login --username "$DOCKER_USER" --password-stdin "$ARTIFACTORY_URL"
   docker build -t "$docker_registry/$docker_nomad_repository:$build_version" .
   docker push "$docker_registry/$docker_nomad_repository:$build_version"
   docker tag "$docker_registry/$docker_nomad_repository:$build_version" "$docker_registry/$docker_eks_repository:ctia-$build_version"
   docker push "$docker_registry/$docker_eks_repository:ctia-$build_version"
 
-  if [ "$build_type" == 'rel' ]
-  then
+  if [ "$build_type" == 'rel' ]; then
     prod_nomad_repository=prod-docker-build/ctia
     prod_nam_registry=862934447303.dkr.ecr.us-east-1.amazonaws.com
     aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin "$prod_nam_registry"
