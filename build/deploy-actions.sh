@@ -47,7 +47,7 @@ function build-and-push-docker-image {
   cp target/ctia.jar "$tempdir/"
 
   cat <<EOF >"$tempdir"/Dockerfile
-FROM artifactory.devhub-cloud.cisco.com/sto-ccc-docker/hardened_alpine:$ALPINE_VERSION
+FROM artifactory.devhub-cloud.cisco.com/sto-ccc-docker/hardened_alpine:${ALPINE_VERSION}
 
 RUN apk update && \
     apk add --no-cache openjdk21-jre libc6-compat tini && \
