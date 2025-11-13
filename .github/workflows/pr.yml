@@ -426,5 +426,5 @@ jobs:
           # offline to catch issues where `lein warm-ci-deps` doesn't download all
           # dependencies we need to deploy.
           LEIN_OFFLINE: true
-          DOCKER_USER: ${{ secrets.artifactory_user }}
-          DOCKER_PASS: ${{ secrets.artifactory_pwd }}
+          DOCKER_USER: ${{ secrets.ARTIFACTORY_USER }}
+          DOCKER_PASS: ${{ secrets.ARTIFACTORY_PWD }}
