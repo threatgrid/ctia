@@ -34,6 +34,8 @@ env:
   SHELLCHECK_VERSION: v0.10.0
   BB_VERSION: 1.12.194
   DEFAULT_JAVA_VERSION: 21
+  ARTIFACTORY_URL: artifactory.devhub-cloud.cisco.com
+  ALPINE_VERSION: 3.20
 
 jobs:
   setup:
@@ -424,3 +426,5 @@ jobs:
           # offline to catch issues where `lein warm-ci-deps` doesn't download all
           # dependencies we need to deploy.
           LEIN_OFFLINE: true
+          DOCKER_USER: ${{ secrets.artifactory_user }}
+          DOCKER_PASS: ${{ secrets.artifactory_pwd }}
