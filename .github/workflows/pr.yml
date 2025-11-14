@@ -420,7 +420,8 @@ jobs:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v5
         with:
-          role-to-assume: ${{ secrets.SRE_AWS_INT_GITHUB_CI_ROLE_ARN }}
+          # INT_us-east-1_github_actions
+          role-to-assume: ${{ secrets.SRE_AWS_INT_GITHUB_ACTIONS_ROLE_ARN }}
           aws-region: us-east-1
 
       - name: Fetch Vercel Secrets
@@ -437,5 +438,5 @@ jobs:
           # offline to catch issues where `lein warm-ci-deps` doesn't download all
           # dependencies we need to deploy.
           LEIN_OFFLINE: true
-          DOCKER_USER: ${{ env.int_us_east_1_xdr_sre_user_jfrog_username }}
-          DOCKER_PASS: ${{ env.int_us_east_1_xdr_sre_user_jfrog_token }}
+          DOCKER_USER: ${{ env.int_us_east_1_xdr_sre_user_jfrog_jfrog_username }}
+          DOCKER_PASS: ${{ env.int_us_east_1_xdr_sre_user_jfrog_jfrog_token }}
