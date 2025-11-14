@@ -106,13 +106,13 @@
    (some? (re-matches #"Hold(: .+)?" status)))
 
 (defn open-status? [status]
-   (some? (re-matches #"Open(: .+)?" status)))
+  (some? (and status (re-matches #"Open(: .+)?" status))))
 
 (defn contained-status? [status]
   (= status "Open: Contained"))
 
 (defn closed-status? [status]
-  (some? (re-matches #"Closed(: .+)?" status)))
+  (some? (and status (re-matches #"Closed(: .+)?" status))))
 
 (defn make-status-update
   [{:keys [status]}]
