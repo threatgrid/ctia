@@ -424,7 +424,7 @@ jobs:
           role-to-assume: ${{ secrets.SRE_AWS_INT_GITHUB_ACTIONS_ROLE_ARN }}
           aws-region: us-east-1
 
-      - name: Fetch Vercel Secrets
+      - name: Fetch AWS Secrets
         uses: aws-actions/aws-secretsmanager-get-secrets@v2
         with:
           secret-ids: |
