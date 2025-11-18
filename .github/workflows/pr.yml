@@ -35,7 +35,7 @@ env:
   BB_VERSION: 1.12.194
   DEFAULT_JAVA_VERSION: 21
   ARTIFACTORY_URL: artifactory.devhub-cloud.cisco.com
-  ALPINE_VERSION: "3.20"
+  ALPINE_VERSION: "3.22"
 
 jobs:
   setup:
