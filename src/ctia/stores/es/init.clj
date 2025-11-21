@@ -45,14 +45,19 @@
        {:rollover rollover}}}}))
 
 (s/defn mk-index-ilm-config
-  [{:keys [index props config] :as store-config}]
+  [{:keys [index props config conn] :as store-config}]
   (let [{:keys [mappings settings]} config
         write-alias (:write-index props)
         policy (mk-policy props)
         lifecycle {:name index
                    :rollover_alias write-alias}
-        settings-ilm (assoc-in settings [:index :lifecycle] lifecycle)
-        base-config {:settings settings-ilm
+        ;; Only add ILM lifecycle settings for Elasticsearch, not OpenSearch
+        ;; OpenSearch uses ISM which doesn't support these settings in templates
+        is-elasticsearch? (= :elasticsearch (:engine conn :elasticsearch))
+        settings-with-lifecycle (if is-elasticsearch?
+                                  (assoc-in settings [:index :lifecycle] lifecycle)
+                                  settings)
+        base-config {:settings settings-with-lifecycle
                      :mappings mappings
                      :aliases {index {}}}
         template {:index_patterns (str index "*")
