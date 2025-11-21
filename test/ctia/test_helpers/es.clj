@@ -94,11 +94,21 @@
   {:type :basic-auth
    :params {:user "elastic" :pwd "ductile"}})
 
+(def opensearch-auth
+  {:type :basic-auth
+   :params {:user "admin" :pwd "admin"}})
+
 (def basic-auth-properties
   (into ["ctia.store.es.default.auth.type" (:type basic-auth)]
         (mapcat #(list (str "ctia.store.es.default.auth.params." (-> % key name))
                        (val %)))
         (:params basic-auth)))
+
+(def opensearch-auth-properties
+  (into ["ctia.store.es.default.auth.type" (:type opensearch-auth)]
+        (mapcat #(list (str "ctia.store.es.default.auth.params." (-> % key name))
+                       (val %)))
+        (:params opensearch-auth)))
 
 (defn -es-port []
   "9207")
@@ -180,6 +190,28 @@
                             "ctia.migration.store.es.default.rollover.max_docs" 50
                             "ctia.migration.store.es.event.rollover.max_docs" 1000])
     (t)))
+
+(defn fixture-properties:opensearch-store
+  "Test fixture for OpenSearch 2 (port 9202).
+   Derives from fixture-properties:es-store with OpenSearch-specific overrides.
+   Usage: (use-fixtures :once fixture-properties:opensearch-store)"
+  [t]
+  (h/with-properties (into opensearch-auth-properties
+                           ["ctia.store.es.default.port" "9202"
+                            "ctia.store.es.default.version" 2
+                            "ctia.store.es.default.engine" "opensearch"])
+    (fixture-properties:es-store t)))
+
+(defn fixture-properties:opensearch3-store
+  "Test fixture for OpenSearch 3 (port 9203).
+   Derives from fixture-properties:es-store with OpenSearch-specific overrides.
+   Usage: (use-fixtures :once fixture-properties:opensearch3-store)"
+  [t]
+  (h/with-properties (into opensearch-auth-properties
+                           ["ctia.store.es.default.port" "9203"
+                            "ctia.store.es.default.version" 3
+                            "ctia.store.es.default.engine" "opensearch"])
+    (fixture-properties:es-store t)))
 
 (defn fixture-properties:es-hook [t]
   ;; Note: These properties may be overwritten by ENV variables
