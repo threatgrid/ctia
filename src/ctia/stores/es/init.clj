@@ -271,10 +271,14 @@
   "Lookup the merged store properties map"
   [store-kw :- s/Keyword
    get-in-config]
-  (merge
-   {:entity store-kw}
-   (get-in-config [:ctia :store :es :default] {})
-   (get-in-config [:ctia :store :es store-kw] {})))
+  (let [props (merge
+               {:entity store-kw}
+               (get-in-config [:ctia :store :es :default] {})
+               (get-in-config [:ctia :store :es store-kw] {}))]
+    ;; Convert :engine from string to keyword if present
+    ;; Properties system reads it as string but ductile expects keyword
+    (cond-> props
+      (:engine props) (update :engine keyword))))
 
 (s/defn ^:private make-factory
   "Return a store instance factory. Most of the ES stores are
