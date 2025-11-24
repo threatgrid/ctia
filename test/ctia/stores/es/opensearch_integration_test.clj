@@ -11,6 +11,7 @@
             [ctia.test-helpers.http :refer [app->APIHandlerServices]]
             [ductile.conn :as conn]
             [ductile.index :as index]
+            [ductile.lifecycle :as lifecycle]
             [puppetlabs.trapperkeeper.app :as app])
   (:import [java.util UUID]))
 
@@ -113,7 +114,7 @@
         (init/init-es-conn! props services)
 
         ;; Get the policy (should be ISM format for OpenSearch)
-        (let [policy (index/get-policy conn indexname)]
+        (let [policy (lifecycle/get-policy conn indexname)]
           (is (some? policy) "Policy should be created")
           ;; OpenSearch uses ISM format with "states", not ILM "phases"
           (is (or (contains? (get-in policy [(keyword indexname) :policy]) :states)
@@ -133,7 +134,7 @@
         (init/init-es-conn! props services)
 
         ;; Get the policy (should be ISM format for OpenSearch)
-        (let [policy (index/get-policy conn indexname)]
+        (let [policy (lifecycle/get-policy conn indexname)]
           (is (some? policy) "Policy should be created")
           ;; OpenSearch uses ISM format with "states", not ILM "phases"
           (is (or (contains? (get-in policy [(keyword indexname) :policy]) :states)

@@ -6,6 +6,7 @@
    [ctia.stores.es.crud :as crud]
    [ductile.conn :as es-conn]
    [ductile.index :as es-index]
+   [ductile.lifecycle :as es-lifecycle]
    [ductile.pagination :refer [default-limit]]
    [ductile.schemas :refer [ESConn]]
    [schema.core :as s]))
@@ -14,7 +15,7 @@
   (when conn
     (es-index/delete-template! conn (str index "*"))
     (es-index/delete-index-template! conn (str index "*"))
-    (es-index/delete-policy! conn (str index "*"))
+    (es-lifecycle/delete-policy! conn (str index "*"))
     (es-index/delete! conn (str index "*"))))
 
 (s/defn close-connections!

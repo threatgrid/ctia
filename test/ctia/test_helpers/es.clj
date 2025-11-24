@@ -11,6 +11,7 @@
             [ductile.conn :as es-conn]
             [ductile.document :as es-doc]
             [ductile.index :as es-index]
+            [ductile.lifecycle :as es-lifecycle]
             [puppetlabs.trapperkeeper.app :as app]
             [schema.core :as s]))
 
@@ -73,7 +74,7 @@
     (when conn
         (es-index/delete! conn index-wildcard)
         (es-index/delete-index-template! conn index-wildcard)
-        (es-index/delete-policy! conn index-wildcard))))
+        (es-lifecycle/delete-policy! conn index-wildcard))))
 
 (defn fixture-purge-event-indices-and-templates
   "walk through all producers and delete their indices and templates"
@@ -295,7 +296,7 @@
   (es-index/delete-template! conn index-pattern)
   (es-index/delete-index-template! conn index-pattern)
   ;; delete policy does not work with wildcard, try real index
-  (es-index/delete-policy! conn (string/replace index-pattern "*" "")))
+  (es-lifecycle/delete-policy! conn (string/replace index-pattern "*" "")))
 
 (defmacro for-each-es-version
   "for each given ES version:

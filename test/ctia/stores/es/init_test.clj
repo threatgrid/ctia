@@ -8,6 +8,7 @@
             [ctia.test-helpers.es :as es-helpers
              :refer [->ESConnServices for-each-es-version basic-auth basic-auth-properties]]
             [ductile.index :as index]
+            [ductile.lifecycle :as lifecycle]
             [ductile.document :as doc]
             [ductile.conn :as conn]
             [ductile.auth :as auth]
@@ -446,7 +447,7 @@
            (:aliases real-write-index-updated))
         "current write index should have write alias updated with is_write_index")
     (is (= rollover
-           (get-in (index/get-policy conn index)
+           (get-in (lifecycle/get-policy conn index)
                    [(keyword index) :policy  :phases :hot :actions :rollover]))
         "Policy should be created.")
     (doseq [[_ real-index-updated] updated-indices]
@@ -555,7 +556,7 @@
               not-migrated-indices (index/get not-migrated-conn not-migrated-index)]
           (is (= legacy-indices not-migrated-indices))
           (is (= legacy-template not-migrated-template))
-          (is (nil? (index/get-policy not-migrated-conn not-migrated-index))
+          (is (nil? (lifecycle/get-policy not-migrated-conn not-migrated-index))
               "policy should not been created if index already exist and update-index-state is false")
           (is (nil? (index/get-index-template not-migrated-conn not-migrated-index))
               "index-template should not been created if index already exist and update-index-state is false"))))))

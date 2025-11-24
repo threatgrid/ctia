@@ -8,6 +8,7 @@
    [ductile.conn :refer [connect]]
    [ductile.document :as document]
    [ductile.index :as index]
+   [ductile.lifecycle :as lifecycle]
    [schema-tools.core :as st]
    [schema.core :as s]))
 
@@ -112,7 +113,7 @@
     (log/infof "found legacy template for %s Deleting it." index)
     (index/delete-template! conn index))
   (log/info "Creating policy: " index)
-  (index/create-policy! conn index (:policy config))
+  (lifecycle/create-policy! conn index (:policy config))
   (log/info "Creating index template: " index)
   (index/create-index-template! conn index (:template config))
   (log/infof "Updated index template: %s" index))
