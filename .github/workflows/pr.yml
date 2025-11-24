@@ -218,12 +218,14 @@ jobs:
     strategy:
       matrix:
         this-split: ${{fromJson(needs.setup.outputs.matrix)}}
+        engine: [es, os]
     env:
       CTIA_TEST_SUITE: ${{ matrix.this-split.test_suite }}
       CTIA_THIS_SPLIT: ${{ matrix.this-split.this_split }}
       CTIA_NSPLITS: ${{ matrix.this-split.total_splits }}
       CTIA_CI_PROFILES: ${{ matrix.this-split.ci_profiles }}
       JAVA_VERSION: ${{ matrix.this-split.java_version }}
+      CTIA_TEST_ENGINES: ${{ matrix.engine }}
     steps:
       - uses: actions/checkout@v4
       - name: Binary Cache
@@ -310,14 +312,14 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           retention-days: 1
-          name: test-timing-${{matrix.this-split.test_suite}}-${{matrix.this-split.java_version}}-${{matrix.this-split.this_split}}
+          name: test-timing-${{matrix.engine}}-${{matrix.this-split.test_suite}}-${{matrix.this-split.java_version}}-${{matrix.this-split.this_split}}
           path: target/test-results/*.edn
       - name: Upload docker compose
         if: ${{ always() }}
         uses: actions/upload-artifact@v4
         with:
           retention-days: 10
-          name: docker-compose-${{matrix.this-split.test_suite}}-${{matrix.this-split.java_version}}-${{matrix.this-split.this_split}}.log
+          name: docker-compose-${{matrix.engine}}-${{matrix.this-split.test_suite}}-${{matrix.this-split.java_version}}-${{matrix.this-split.this_split}}.log
           path: ${{env.LOG_PATH}}/docker-compose.log
   # fan-in tests so there's a single job we can add to protected branches.
   # otherwise, we'll have add all (range ${CTIA_NSPLITS}) jobs, and keep
