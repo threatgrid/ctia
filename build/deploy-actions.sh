@@ -41,8 +41,7 @@ function build-and-push-docker-image {
   fi
   build_version="${CTIA_BUILD_NUMBER}-${CTIA_COMMIT:0:8}"
   docker_registry=372070498991.dkr.ecr.us-east-1.amazonaws.com
-  docker_nomad_repository=$repo_prefix-docker-build/ctia
-  docker_eks_repository=ctr-$repo_prefix-eks/$repo_prefix-iroh
+  docker_repository=$repo_prefix-docker-build/ctia
   tempdir=$(mktemp -d)
   cp target/ctia.jar "$tempdir/"
 
@@ -67,27 +66,26 @@ EOF
   aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin "$docker_registry"
   echo "Login to $ARTIFACTORY_URL"
   echo "$DOCKER_PASS" | docker login --username "$DOCKER_USER" --password-stdin "$ARTIFACTORY_URL"
-  docker build -t "$docker_registry/$docker_nomad_repository:$build_version" .
-  docker push "$docker_registry/$docker_nomad_repository:$build_version"
-  docker tag "$docker_registry/$docker_nomad_repository:$build_version" "$docker_registry/$docker_eks_repository:ctia-$build_version"
-  docker push "$docker_registry/$docker_eks_repository:ctia-$build_version"
+  docker build -t "$docker_registry/$docker_repository:$build_version" .
+  docker push "$docker_registry/$docker_repository:$build_version"
+
 
   if [ "$build_type" == 'rel' ]; then
-    prod_nomad_repository=prod-docker-build/ctia
+    prod_repository=prod-docker-build/ctia
     prod_nam_registry=862934447303.dkr.ecr.us-east-1.amazonaws.com
     aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin "$prod_nam_registry"
-    docker tag "$docker_registry/$docker_nomad_repository:$build_version" "$prod_nam_registry/$prod_nomad_repository:$build_version"
-    docker push "$prod_nam_registry/$prod_nomad_repository:$build_version"
+    docker tag "$docker_registry/$docker_repository:$build_version" "$prod_nam_registry/$prod_repository:$build_version"
+    docker push "$prod_nam_registry/$prod_repository:$build_version"
 
     prod_eu_registry=862934447303.dkr.ecr.eu-west-1.amazonaws.com
     aws ecr get-login-password --region eu-west-1 | docker login --username AWS --password-stdin "$prod_eu_registry"
-    docker tag "$docker_registry/$docker_nomad_repository:$build_version" "$prod_eu_registry/$prod_nomad_repository:$build_version"
-    docker push "$prod_eu_registry/$prod_nomad_repository:$build_version"
+    docker tag "$docker_registry/$docker_repository:$build_version" "$prod_eu_registry/$prod_repository:$build_version"
+    docker push "$prod_eu_registry/$prod_repository:$build_version"
 
     prod_apjc_registry=862934447303.dkr.ecr.ap-northeast-1.amazonaws.com
     aws ecr get-login-password --region ap-northeast-1 | docker login --username AWS --password-stdin "$prod_apjc_registry"
-    docker tag "$docker_registry/$docker_nomad_repository:$build_version" "$prod_apjc_registry/$prod_nomad_repository:$build_version"
-    docker push "$prod_apjc_registry/$prod_nomad_repository:$build_version"
+    docker tag "$docker_registry/$docker_repository:$build_version" "$prod_apjc_registry/$prod_repository:$build_version"
+    docker push "$prod_apjc_registry/$prod_repository:$build_version"
   fi
 }
 
