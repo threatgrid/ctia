@@ -106,18 +106,6 @@ function build-and-publish-package {
   echo "Commit: ${CTIA_COMMIT}"
   echo "Version: $BUILD_NAME"
 
-  # Upload the jar directly to the artifacts S3 bucket
-  if [ "${PKG_TYPE}" == "int" ]; then
-    ARTIFACTS_BUCKET="372070498991-us-east-1-int-saltstack"
-  elif [ "${PKG_TYPE}" == "rel" ]; then
-    ARTIFACTS_BUCKET="372070498991-us-east-1-test-saltstack"
-  else
-    echo "Bad PKG_TYPE: ${PKG_TYPE}"
-    exit 1
-  fi
-
-  ARTIFACT_NAME="${CTIA_BUILD_NUMBER}-${CTIA_COMMIT:0:8}.jar"
-  aws s3 cp ./target/ctia.jar s3://${ARTIFACTS_BUCKET}/artifacts/ctia/"${ARTIFACT_NAME}" --sse aws:kms --sse-kms-key-id alias/kms-s3
   build-and-push-docker-image "$PKG_TYPE"
 }
 
