@@ -1,8 +1,8 @@
-(def cheshire-version "5.11.0")
+(def cheshire-version "6.1.0")
 (def clj-http-fake-version "1.0.3")
-(def clj-version "1.12.0")
-(def jackson-version "2.15.2")
-(def jackson-databind-version "2.15.2")
+(def clj-version "1.12.3")
+(def jackson-version "2.20.0")
+(def jackson-databind-version "2.20.0")
 (def logback-version "1.5.16")
 (def metrics-clojure-version "2.10.0")
 (def netty-version "4.1.125.Final")
@@ -11,7 +11,7 @@
 (def slf4j-version "2.0.16")
 (def schema-generators-version "0.1.5")
 (def test-check-version "1.1.1")
-(def test-chuck-version "0.2.13")
+(def test-chuck-version "0.2.15")
 (def trapperkeeper-version "3.2.0")
 
 ;; TODO we could add -dev here when it works
@@ -74,10 +74,10 @@
                  [clojure.java-time "1.1.0"]
                  [org.clojure/core.async "1.5.648"]
                  [org.clojure/core.memoize "1.0.257"]
-                 [org.clojure/tools.logging "1.2.4"]
+                 [org.clojure/tools.logging "1.3.0"]
                  [org.clojure/tools.cli "1.0.194"]
                  [pandect "0.6.1"]
-                 [org.clojure/math.combinatorics "0.1.6"]
+                 [org.clojure/math.combinatorics "0.3.0"]
                  [version-clj "2.0.1"]
 
                  ;; Trapperkeeper
@@ -89,15 +89,17 @@
                  ;; Schemas
                  [prismatic/schema "1.4.1"]
                  [metosin/schema-tools "0.13.1"]
-                 [threatgrid/flanders "1.0.2"]
-                 [threatgrid/ctim "1.3.26"]
+                 [threatgrid/flanders "1.1.0"]
+                 [threatgrid/ctim "1.3.28-SNAPSHOT"
+                  :exclusions [com.cognitect/transit-java]] ;; ring-middleware-format takes precedence
                  [instaparse "1.4.10"] ;; com.gfredericks/test.chuck > threatgrid/ctim
-                 [threatgrid/clj-momo "0.3.5"]
+                 [threatgrid/clj-momo "0.4.1"]
                  [threatgrid/ductile "0.5.0"]
 
                  [com.arohner/uri "0.1.2"]
 
                  ;; Web server
+                 [potemkin "0.4.7"] ;; align clj-http > compojure-api
                  [metosin/compojure-api "1.1.13"]
                  [ring-middleware-format "0.7.4"]
                  ;; optional ring-middleware-format dep (Note: ring-middleware-format is also a transitive dep for compojure-api)
@@ -109,7 +111,7 @@
                  [ring/ring-jetty-adapter ~ring-version]
                  [ring/ring-devel ~ring-version]
                  [ring-cors "0.1.13"]
-                 [commons-codec "1.15"] ;ring/ring* > threatgrid/ctim, threatgrid/clj-momo, clj-http
+                 [commons-codec "1.17.1"] ;ring/ring* > threatgrid/ctim, threatgrid/clj-momo, clj-http
                  [ring/ring-codec "1.1.3"]
                  [threatgrid/clj-jwt "0.5.0"]
                  [threatgrid/ring-turnstile-middleware "0.1.1"]
@@ -119,7 +121,7 @@
                  [org.clojure/tools.reader "1.3.6"] ;; org.clojure/tools.namespace > ring-middleware-format
 
                  ;; clients
-                 [clj-http "3.12.3"]
+                 [clj-http "3.13.1"]
                  [com.taoensso/carmine "2.19.1" #_"2.20.0-RC1"]
                  [cheshire ~cheshire-version] ;; upgrade threatgrid/ring-jwt-middleware, puppetlabs/kitchensink (+ a dozen others)
 
@@ -133,8 +135,8 @@
                  [io.netty/netty-all ~netty-version] ;bump org.onyxplatform/onyx-kafka, metrics-clojure-riemann, zookeeper-clj
                  [io.netty/netty-codec ~netty-version] ;bump org.apache.zookeeper/zookeeper, riemann-clojure-client
                  [io.netty/netty-resolver ~netty-version] ;bump riemann-clojure-client, org.apache.zookeeper/zookeeper
-                 [com.google.protobuf/protobuf-java "3.25.5"] ;; address CVE-2024-7254
-                 [riemann-clojure-client "0.5.1"]
+                 [com.google.protobuf/protobuf-java "4.32.1"] ;; address CVE-2024-7254, align with ctim
+                 [riemann-clojure-client "0.5.4"]
                  ;; https://stackoverflow.com/a/43574427
                  [jakarta.xml.bind/jakarta.xml.bind-api "2.3.2"]
 
@@ -149,7 +151,7 @@
                  [threatgrid/redismq "0.1.1"]
 
                  [org.apache.zookeeper/zookeeper "3.8.4"] ; override zookeeper-clj, org.onyxplatform/onyx-kafka
-                 [commons-io "2.14.0"] ;; address CVE-2024-47554
+                 [commons-io "2.18.0"] ;; address CVE-2024-47554
                  [args4j "2.33"] ;bump org.onyxplatform/onyx-kafka, threatgrid/ctim
                  [com.stuartsierra/component "1.1.0"] ;org.onyxplatform/onyx-kafka internal override
                  [org.onyxplatform/onyx-kafka "0.14.5.0"]
@@ -224,7 +226,7 @@
                                   [clj-http-fake ~clj-http-fake-version]
                                   [prismatic/schema-generators ~schema-generators-version]
                                   [circleci/circleci.test "0.5.0"]
-                                  [org.clojure/math.combinatorics "0.1.6"]
+                                  [org.clojure/math.combinatorics "0.3.0"]
                                   [org.clojure/data.priority-map "1.1.0"]
                                   [org.clojure/tools.namespace "1.2.0"]]
                    :pedantic? :warn

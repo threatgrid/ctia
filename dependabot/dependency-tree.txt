@@ -1,5 +1,5 @@
 ctia:ctia:jar:1.1.1-SNAPSHOT
-+- org.clojure:clojure:jar:1.12.0:compile
++- org.clojure:clojure:jar:1.12.3:compile
 |  +- org.clojure:spec.alpha:jar:0.5.238:compile
 |  \- org.clojure:core.specs.alpha:jar:0.4.74:compile
 +- clj-time:clj-time:jar:0.15.2:compile
@@ -12,10 +12,10 @@ ctia:ctia:jar:1.1.1-SNAPSHOT
 |     \- org.ow2.asm:asm:jar:9.2:compile
 +- org.clojure:core.memoize:jar:1.0.257:compile
 |  \- org.clojure:core.cache:jar:1.0.225:compile
-+- org.clojure:tools.logging:jar:1.2.4:compile
++- org.clojure:tools.logging:jar:1.3.0:compile
 +- org.clojure:tools.cli:jar:1.0.194:compile
 +- pandect:pandect:jar:0.6.1:compile
-+- org.clojure:math.combinatorics:jar:0.1.6:test
++- org.clojure:math.combinatorics:jar:0.3.0:test
 +- version-clj:version-clj:jar:2.0.1:compile
 +- puppetlabs:trapperkeeper:jar:3.2.0:compile
 |  +- org.clojure:tools.macro:jar:0.1.5:compile
@@ -44,19 +44,17 @@ ctia:ctia:jar:1.1.1-SNAPSHOT
 |  \- org.flatland:ordered:jar:1.5.9:compile
 +- prismatic:schema:jar:1.4.1:compile
 +- metosin:schema-tools:jar:0.13.1:compile
-+- threatgrid:flanders:jar:1.0.2:compile
++- threatgrid:flanders:jar:1.1.0:compile
 |  \- org.clojure:core.match:jar:1.0.0:compile
-+- threatgrid:ctim:jar:1.3.26:compile
-|  +- org.mozilla:rhino:jar:1.7.7.1:compile
-|  \- kovacnica:clojure.network.ip:jar:0.1.3:compile
-|     \- org.clojure:clojurescript:jar:1.7.122:compile
-|        +- com.google.javascript:closure-compiler:jar:v20150729:compile
-|        |  +- com.google.javascript:closure-compiler-externs:jar:v20150729:compile
-|        |  \- com.google.code.gson:gson:jar:2.2.4:compile
-|        \- org.clojure:google-closure-library:jar:0.0-20150805-acd8b553:compile
-|           \- org.clojure:google-closure-library-third-party:jar:0.0-20150805-acd8b553:compile
++- threatgrid:ctim:jar:1.3.28-SNAPSHOT:compile
+|  +- org.mozilla:rhino:jar:1.8.0:compile
+|  \- kovacnica:clojure.network.ip:jar:0.1.5:compile
+|     \- org.clojure:clojurescript:jar:1.11.132:compile
+|        +- com.google.javascript:closure-compiler-unshaded:jar:v20220502:compile
+|        \- org.clojure:google-closure-library:jar:0.0-20230227-c7c0a541:compile
+|           \- org.clojure:google-closure-library-third-party:jar:0.0-20230227-c7c0a541:compile
 +- instaparse:instaparse:jar:1.4.10:compile
-+- threatgrid:clj-momo:jar:0.3.5:compile
++- threatgrid:clj-momo:jar:0.4.1:compile
 |  +- com.andrewmcveigh:cljs-time:jar:0.5.2:compile
 |  \- threatgrid:metrics-clojure-riemann:jar:2.10.1:compile
 |     \- io.riemann:metrics3-riemann-reporter:jar:0.4.6:compile
@@ -64,10 +62,9 @@ ctia:ctia:jar:1.1.1-SNAPSHOT
 +- com.arohner:uri:jar:0.1.2:compile
 |  \- pathetic:pathetic:jar:0.5.0:compile
 |     \- com.cemerick:clojurescript.test:jar:0.0.4:compile
++- potemkin:potemkin:jar:0.4.7:compile
+|  \- riddley:riddley:jar:0.1.12:compile
 +- metosin:compojure-api:jar:1.1.13:compile
-|  +- potemkin:potemkin:jar:0.4.5:compile
-|  |  +- clj-tuple:clj-tuple:jar:0.2.2:compile
-|  |  \- riddley:riddley:jar:0.1.12:compile
 |  +- compojure:compojure:jar:1.6.1:compile
 |  |  \- medley:medley:jar:1.0.0:compile
 |  +- org.tobereplaced:lettercase:jar:1.0.0:compile
@@ -77,9 +74,8 @@ ctia:ctia:jar:1.1.1-SNAPSHOT
 |  +- clojure-msgpack:clojure-msgpack:jar:1.2.1:compile
 |  \- com.cognitect:transit-clj:jar:0.8.313:compile
 |     \- com.cognitect:transit-java:jar:0.8.337:compile
-|        +- org.msgpack:msgpack:jar:0.6.12:compile
-|        |  \- com.googlecode.json-simple:json-simple:jar:1.1.1:compile
-|        \- javax.xml.bind:jaxb-api:jar:2.3.0:compile
+|        \- org.msgpack:msgpack:jar:0.6.12:compile
+|           \- com.googlecode.json-simple:json-simple:jar:1.1.1:compile
 +- com.ibm.icu:icu4j:jar:65.1:compile
 +- metosin:ring-swagger:jar:1.0.0:compile
 |  \- metosin:scjsv:jar:0.5.0:compile
@@ -108,7 +104,7 @@ ctia:ctia:jar:1.1.1-SNAPSHOT
 |  +- clj-stacktrace:clj-stacktrace:jar:0.2.8:compile
 |  \- ns-tracker:ns-tracker:jar:0.4.0:compile
 +- ring-cors:ring-cors:jar:0.1.13:compile
-+- commons-codec:commons-codec:jar:1.15:compile
++- commons-codec:commons-codec:jar:1.17.1:compile
 +- ring:ring-codec:jar:1.1.3:compile
 +- threatgrid:clj-jwt:jar:0.5.0:compile
 |  +- org.clojure:data.codec:jar:0.1.1:compile
@@ -123,14 +119,14 @@ ctia:ctia:jar:1.1.1-SNAPSHOT
 +- org.clojure:data.json:jar:1.0.0:compile
 +- scopula:scopula:jar:0.1.4:compile
 +- org.clojure:tools.reader:jar:1.3.6:compile
-+- clj-http:clj-http:jar:3.12.3:compile
-|  +- org.apache.httpcomponents:httpcore:jar:4.4.14:compile
-|  +- org.apache.httpcomponents:httpclient:jar:4.5.13:compile
++- clj-http:clj-http:jar:3.13.1:compile
+|  +- org.apache.httpcomponents:httpcore:jar:4.4.16:compile
+|  +- org.apache.httpcomponents:httpclient:jar:4.5.14:compile
 |  |  \- commons-logging:commons-logging:jar:1.2:compile
-|  +- org.apache.httpcomponents:httpclient-cache:jar:4.5.13:compile
-|  +- org.apache.httpcomponents:httpasyncclient:jar:4.1.4:compile
-|  |  \- org.apache.httpcomponents:httpcore-nio:jar:4.4.10:compile
-|  \- org.apache.httpcomponents:httpmime:jar:4.5.13:compile
+|  +- org.apache.httpcomponents:httpclient-cache:jar:4.5.14:compile
+|  +- org.apache.httpcomponents:httpasyncclient:jar:4.1.5:compile
+|  |  \- org.apache.httpcomponents:httpcore-nio:jar:4.4.15:compile
+|  \- org.apache.httpcomponents:httpmime:jar:4.5.14:compile
 +- com.taoensso:carmine:jar:2.19.1:compile
 |  +- com.taoensso:encore:jar:2.99.0:compile
 |  |  \- com.taoensso:truss:jar:1.5.0:compile
@@ -140,7 +136,7 @@ ctia:ctia:jar:1.1.1-SNAPSHOT
 |  |  +- org.iq80.snappy:snappy:jar:0.4:compile
 |  |  \- net.jpountz.lz4:lz4:jar:1.3:compile
 |  \- org.apache.commons:commons-pool2:jar:2.4.2:compile
-+- cheshire:cheshire:jar:5.11.0:compile
++- cheshire:cheshire:jar:6.1.0:compile
 |  \- tigris:tigris:jar:0.1.2:compile
 +- metrics-clojure:metrics-clojure:jar:2.10.0:compile
 |  \- io.dropwizard.metrics:metrics-core:jar:3.2.2:compile
@@ -191,10 +187,12 @@ ctia:ctia:jar:1.1.1-SNAPSHOT
 |  \- io.netty:netty-resolver-dns-native-macos:jar:osx-aarch_64:4.1.125.Final:runtime
 +- io.netty:netty-codec:jar:4.1.125.Final:compile
 +- io.netty:netty-resolver:jar:4.1.125.Final:compile
-+- com.google.protobuf:protobuf-java:jar:3.25.5:compile
-+- riemann-clojure-client:riemann-clojure-client:jar:0.5.1:compile
++- com.google.protobuf:protobuf-java:jar:4.32.1:compile
++- riemann-clojure-client:riemann-clojure-client:jar:0.5.4:compile
 |  +- less-awful-ssl:less-awful-ssl:jar:1.0.4:compile
-|  \- io.riemann:riemann-java-client:jar:0.5.1:compile
+|  \- io.riemann:riemann-java-client:jar:0.5.3:compile
+|     \- javax.xml.bind:jaxb-api:jar:2.4.0-b180830.0359:compile
+|        \- javax.activation:javax.activation-api:jar:1.2.0:compile
 +- jakarta.xml.bind:jakarta.xml.bind-api:jar:2.3.2:compile
 |  \- jakarta.activation:jakarta.activation-api:jar:1.2.1:compile
 +- markdown-clj:markdown-clj:jar:1.10.1:compile
@@ -206,7 +204,7 @@ ctia:ctia:jar:1.1.1-SNAPSHOT
 |  +- org.apache.zookeeper:zookeeper-jute:jar:3.8.4:compile
 |  +- org.apache.yetus:audience-annotations:jar:0.12.0:compile
 |  \- io.netty:netty-transport-native-epoll:jar:4.1.105.Final:compile
-+- commons-io:commons-io:jar:2.14.0:compile
++- commons-io:commons-io:jar:2.18.0:compile
 +- args4j:args4j:jar:2.33:compile
 +- com.stuartsierra:component:jar:1.1.0:compile
 |  \- com.stuartsierra:dependency:jar:1.0.0:compile
@@ -235,6 +233,7 @@ ctia:ctia:jar:1.1.1-SNAPSHOT
 |  |  |  |  \- software.amazon.ion:ion-java:jar:1.0.2:compile
 |  |  |  \- com.amazonaws:jmespath-java:jar:1.11.271:compile
 |  |  +- primitive-math:primitive-math:jar:0.1.6:compile
+|  |  +- clj-tuple:clj-tuple:jar:0.2.2:compile
 |  |  +- clj-fuzzy:clj-fuzzy:jar:0.4.1:compile
 |  |  +- org.deephacks.lmdbjni:lmdbjni:jar:0.4.6:compile
 |  |  +- org.deephacks.lmdbjni:lmdbjni-linux64:jar:0.4.6:compile
@@ -248,11 +247,11 @@ ctia:ctia:jar:1.1.1-SNAPSHOT
 |  \- org.apache.kafka:kafka-clients:jar:1.0.0:compile
 |     +- org.lz4:lz4-java:jar:1.4:compile
 |     \- org.xerial.snappy:snappy-java:jar:1.1.4:compile
-+- com.fasterxml.jackson.core:jackson-core:jar:2.15.2:compile
-+- com.fasterxml.jackson.dataformat:jackson-dataformat-smile:jar:2.15.2:compile
-+- com.fasterxml.jackson.dataformat:jackson-dataformat-cbor:jar:2.15.2:compile
-+- com.fasterxml.jackson.core:jackson-databind:jar:2.15.2:compile
-|  \- com.fasterxml.jackson.core:jackson-annotations:jar:2.15.2:compile
++- com.fasterxml.jackson.core:jackson-core:jar:2.20.0:compile
++- com.fasterxml.jackson.dataformat:jackson-dataformat-smile:jar:2.20.0:compile
++- com.fasterxml.jackson.dataformat:jackson-dataformat-cbor:jar:2.20.0:compile
++- com.fasterxml.jackson.core:jackson-databind:jar:2.20.0:compile
+|  \- com.fasterxml.jackson.core:jackson-annotations:jar:2.20:compile
 +- zookeeper-clj:zookeeper-clj:jar:0.9.4:compile
 +- software.amazon.awssdk:firehose:jar:2.17.232:compile
 |  +- software.amazon.awssdk:aws-json-protocol:jar:2.17.232:compile
@@ -287,7 +286,7 @@ ctia:ctia:jar:1.1.1-SNAPSHOT
 +- puppetlabs:trapperkeeper:jar:test:3.2.0:test
 +- puppetlabs:kitchensink:jar:test:3.2.0:test
 +- org.clojure:test.check:jar:1.1.1:test
-+- com.gfredericks:test.chuck:jar:0.2.13:test
++- com.gfredericks:test.chuck:jar:0.2.15:test
 +- clj-http-fake:clj-http-fake:jar:1.0.3:test
 |  \- robert:hooke:jar:1.3.0:test
 +- prismatic:schema-generators:jar:0.1.5:test
