@@ -57,6 +57,12 @@
   (concat sorting/default-entity-sort-fields
           [:observed_time.start_time
            :observed_time.end_time
+           :activity_interval.start_time
+           :activity_interval.end_time
+           :detection_interval.start_time
+           :detection_interval.end_time
+           :modification_interval.start_time
+           :modification_interval.end_time
            :confidence
            :count
            :sensor]))
@@ -64,7 +70,13 @@
 (def sighting-histogram-fields
   [:timestamp
    :observed_time.start_time
-   :observed_time.end_time])
+   :observed_time.end_time
+   :activity_interval.start_time
+   :activity_interval.end_time
+   :detection_interval.start_time
+   :detection_interval.end_time
+   :modification_interval.start_time
+   :modification_interval.end_time])
 
 (def sighting-enumerable-fields
   [:source

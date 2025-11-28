@@ -38,7 +38,10 @@
       :observables_hash em/token
       :relations em/observed-relation
       :context {:type "object"
-                :enabled false}})}})
+                :enabled false}
+      :activity_interval em/valid-time
+      :detection_interval em/valid-time
+      :modification_interval em/valid-time})}})
 
 (s/defschema ESStoredSighting
   (st/assoc StoredSighting :observables_hash [s/Str]))
