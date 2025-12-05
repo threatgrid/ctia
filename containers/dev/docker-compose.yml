@@ -16,6 +16,28 @@ services:
     ports:
       - "9207:9200"
       - "9307:9300"
+  opensearch:
+    image: opensearchproject/opensearch:2.19.0
+    environment:
+      - cluster.name=opensearch2
+      - discovery.type=single-node
+      - plugins.security.disabled=true
+      - OPENSEARCH_INITIAL_ADMIN_PASSWORD=Ductile123!
+      - "OPENSEARCH_JAVA_OPTS=-Xms512m -Xmx512m"
+    ports:
+      - "9202:9200"
+      - "9302:9300"
+  opensearch3:
+    image: opensearchproject/opensearch:3.1.0
+    environment:
+      - cluster.name=opensearch3
+      - discovery.type=single-node
+      - plugins.security.disabled=true
+      - OPENSEARCH_INITIAL_ADMIN_PASSWORD=Ductile123!
+      - "OPENSEARCH_JAVA_OPTS=-Xms512m -Xmx512m"
+    ports:
+      - "9203:9200"
+      - "9303:9300"
   zookeeper:
     image: confluentinc/cp-zookeeper:7.2.0
     hostname: "zookeeper"

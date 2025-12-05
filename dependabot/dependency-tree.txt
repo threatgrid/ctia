@@ -58,7 +58,7 @@ ctia:ctia:jar:1.1.1-SNAPSHOT
 |  +- com.andrewmcveigh:cljs-time:jar:0.5.2:compile
 |  \- threatgrid:metrics-clojure-riemann:jar:2.10.1:compile
 |     \- io.riemann:metrics3-riemann-reporter:jar:0.4.6:compile
-+- threatgrid:ductile:jar:0.5.0:compile
++- threatgrid:ductile:jar:0.6.0:compile
 +- com.arohner:uri:jar:0.1.2:compile
 |  \- pathetic:pathetic:jar:0.5.0:compile
 |     \- com.cemerick:clojurescript.test:jar:0.0.4:compile

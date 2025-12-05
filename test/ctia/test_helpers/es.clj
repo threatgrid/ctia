@@ -11,6 +11,7 @@
             [ductile.conn :as es-conn]
             [ductile.document :as es-doc]
             [ductile.index :as es-index]
+            [ductile.lifecycle :as es-lifecycle]
             [puppetlabs.trapperkeeper.app :as app]
             [schema.core :as s]))
 
@@ -73,7 +74,7 @@
     (when conn
         (es-index/delete! conn index-wildcard)
         (es-index/delete-index-template! conn index-wildcard)
-        (es-index/delete-policy! conn index-wildcard))))
+        (es-lifecycle/delete-policy! conn index-wildcard))))
 
 (defn fixture-purge-event-indices-and-templates
   "walk through all producers and delete their indices and templates"
@@ -94,11 +95,21 @@
   {:type :basic-auth
    :params {:user "elastic" :pwd "ductile"}})
 
+(def opensearch-auth
+  {:type :basic-auth
+   :params {:user "admin" :pwd "admin"}})
+
 (def basic-auth-properties
   (into ["ctia.store.es.default.auth.type" (:type basic-auth)]
         (mapcat #(list (str "ctia.store.es.default.auth.params." (-> % key name))
                        (val %)))
         (:params basic-auth)))
+
+(def opensearch-auth-properties
+  (into ["ctia.store.es.default.auth.type" (:type opensearch-auth)]
+        (mapcat #(list (str "ctia.store.es.default.auth.params." (-> % key name))
+                       (val %)))
+        (:params opensearch-auth)))
 
 (defn -es-port []
   "9207")
@@ -181,6 +192,28 @@
                             "ctia.migration.store.es.event.rollover.max_docs" 1000])
     (t)))
 
+(defn fixture-properties:opensearch-store
+  "Test fixture for OpenSearch 2 (port 9202).
+   Derives from fixture-properties:es-store with OpenSearch-specific overrides.
+   Usage: (use-fixtures :once fixture-properties:opensearch-store)"
+  [t]
+  (h/with-properties (into opensearch-auth-properties
+                           ["ctia.store.es.default.port" "9202"
+                            "ctia.store.es.default.version" 2
+                            "ctia.store.es.default.engine" "opensearch"])
+    (fixture-properties:es-store t)))
+
+(defn fixture-properties:opensearch3-store
+  "Test fixture for OpenSearch 3 (port 9203).
+   Derives from fixture-properties:es-store with OpenSearch-specific overrides.
+   Usage: (use-fixtures :once fixture-properties:opensearch3-store)"
+  [t]
+  (h/with-properties (into opensearch-auth-properties
+                           ["ctia.store.es.default.port" "9203"
+                            "ctia.store.es.default.version" 3
+                            "ctia.store.es.default.engine" "opensearch"])
+    (fixture-properties:es-store t)))
+
 (defn fixture-properties:es-hook [t]
   ;; Note: These properties may be overwritten by ENV variables
   (h/with-properties ["ctia.hook.es.enabled" true
@@ -254,6 +287,47 @@
        (remove (fn [[k _]]
                  (string/starts-with? (name k) ".")))))
 
+(defn engine-version-pairs
+  "Default engine/version pairs for testing.
+   Set CTIA_TEST_ENGINES env var to filter, e.g.:
+   - 'es' for Elasticsearch only
+   - 'os' for OpenSearch only
+   - 'all' or unset for both"
+  []
+  (let [test-env (or (System/getenv "CTIA_TEST_ENGINES") "all")
+        all-pairs [[:elasticsearch 7]
+                   [:opensearch 2]
+                   [:opensearch 3]]]
+    (case test-env
+      "es" (filter (fn [[engine _]] (= engine :elasticsearch)) all-pairs)
+      "os" (filter (fn [[engine _]] (= engine :opensearch)) all-pairs)
+      "all" all-pairs
+      all-pairs)))
+
+(defn engine-port
+  "Map engine/version pairs to their Docker container ports.
+   Throws an exception for unknown engine/version combinations."
+  [engine version]
+  (case [engine version]
+    [:elasticsearch 7] 9207
+    [:opensearch 2]    9202
+    [:opensearch 3]    9203
+    (throw (ex-info (str "Unknown engine/version combination: " engine " " version
+                         ". Add mapping to engine-port function.")
+                    {:engine engine
+                     :version version
+                     :known-combinations #{[:elasticsearch 7]
+                                           [:opensearch 2]
+                                           [:opensearch 3]}}))))
+
+(defn engine-auth
+  "Get auth options for the given engine"
+  [engine]
+  (case engine
+    :elasticsearch basic-auth-properties
+    :opensearch opensearch-auth-properties
+    basic-auth-properties))
+
 (defn -filter-activated-es-versions [versions]
   (filter (h/set-of-es-versions-to-test) versions))
 
@@ -263,39 +337,51 @@
   (es-index/delete-template! conn index-pattern)
   (es-index/delete-index-template! conn index-pattern)
   ;; delete policy does not work with wildcard, try real index
-  (es-index/delete-policy! conn (string/replace index-pattern "*" "")))
+  (es-lifecycle/delete-policy! conn (string/replace index-pattern "*" "")))
 
 (defmacro for-each-es-version
-  "for each given ES version:
-  - init an ES connection assuming that ES version n listens on port 9200 + n
-  - expose anaphoric `version`, `es-port` and `conn` to use in body
-  - wrap body with a `testing` block with with `msg` formatted with `version`
-  - call `clean` fn if not `nil` before and after body (takes conn as parameter)."
+  "For each configured engine/version pair:
+  - init a connection
+  - expose anaphoric `engine`, `version`, `es-port` and `conn` to use in body
+  - wrap body with a `testing` block with `msg` formatted with engine and version
+  - call `clean` fn if not `nil` before and after body.
+
+  Backward compatible: still accepts `versions` parameter for ES-only tests.
+  When `versions` is provided (e.g., [7]), only tests Elasticsearch with those versions.
+  When `versions` is nil or :all, tests all configured engine/version pairs."
   {:style/indent 2}
   [msg versions clean & body]
-  `(let [;; avoid version and the other explicitly bound locals will to be captured
-         clean-fn# ~clean
-         msg# ~msg]
-     (doseq [version# (-filter-activated-es-versions ~versions)
-             :let [es-port# (+ 9200 version#)]]
-       (h/with-properties
-         (into ["ctia.store.es.default.host" "127.0.0.1"
-                "ctia.store.es.default.port" es-port#
-                "ctia.store.es.default.version" version#]
-               basic-auth-properties)
-         (let [conn# (es-conn/connect (es-init/get-store-properties ::no-store (h/build-get-in-config-fn)))]
-           (try
-             (testing (format "%s (ES version: %s).\n" msg# version#)
-               (when clean-fn#
-                 (clean-fn# conn#))
-               (let [~'conn conn#
-                     ~'version version#
-                     ~'es-port es-port#]
-                 ~@body))
-             (finally
-               (when clean-fn#
-                 (clean-fn# conn#))
-               (es-conn/close conn#))))))))
+  `(let [clean-fn# ~clean
+         msg# ~msg
+         ;; If versions is provided (non-nil), use ES-only mode for backward compat
+         ;; Otherwise use multi-engine mode
+         pairs# (if ~versions
+                  (map (fn [v#] [:elasticsearch v#]) (-filter-activated-es-versions ~versions))
+                  (engine-version-pairs))]
+     (doseq [[engine# version#] pairs#]
+       (let [es-port# (engine-port engine# version#)
+             auth-props# (engine-auth engine#)
+             engine-kw# (name engine#)]
+         (h/with-properties
+           (into ["ctia.store.es.default.host" "127.0.0.1"
+                  "ctia.store.es.default.port" (str es-port#)
+                  "ctia.store.es.default.version" (str version#)
+                  "ctia.store.es.default.engine" engine-kw#]
+                 auth-props#)
+           (let [conn# (es-conn/connect (es-init/get-store-properties ::no-store (h/build-get-in-config-fn)))]
+             (try
+               (testing (format "%s (%s version: %s)\n" msg# engine-kw# version#)
+                 (when clean-fn#
+                   (clean-fn# conn#))
+                 (let [~'conn conn#
+                       ~'version version#
+                       ~'engine engine#
+                       ~'es-port es-port#]
+                   ~@body))
+               (finally
+                 (when clean-fn#
+                   (clean-fn# conn#))
+                 (es-conn/close conn#)))))))))
 
 (defn update-cluster-settings
   "update cluster settings"

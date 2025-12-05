@@ -8,6 +8,7 @@
    [ductile.conn :refer [connect]]
    [ductile.document :as document]
    [ductile.index :as index]
+   [ductile.lifecycle :as lifecycle]
    [schema-tools.core :as st]
    [schema.core :as s]))
 
@@ -45,14 +46,19 @@
        {:rollover rollover}}}}))
 
 (s/defn mk-index-ilm-config
-  [{:keys [index props config] :as store-config}]
+  [{:keys [index props config conn] :as store-config}]
   (let [{:keys [mappings settings]} config
         write-alias (:write-index props)
         policy (mk-policy props)
         lifecycle {:name index
                    :rollover_alias write-alias}
-        settings-ilm (assoc-in settings [:index :lifecycle] lifecycle)
-        base-config {:settings settings-ilm
+        ;; Only add ILM lifecycle settings for Elasticsearch, not OpenSearch
+        ;; OpenSearch uses ISM which doesn't support these settings in templates
+        is-elasticsearch? (= :elasticsearch (:engine conn :elasticsearch))
+        settings-with-lifecycle (if is-elasticsearch?
+                                  (assoc-in settings [:index :lifecycle] lifecycle)
+                                  settings)
+        base-config {:settings settings-with-lifecycle
                      :mappings mappings
                      :aliases {index {}}}
         template {:index_patterns (str index "*")
@@ -107,7 +113,7 @@
     (log/infof "found legacy template for %s Deleting it." index)
     (index/delete-template! conn index))
   (log/info "Creating policy: " index)
-  (index/create-policy! conn index (:policy config))
+  (lifecycle/create-policy! conn index (:policy config))
   (log/info "Creating index template: " index)
   (index/create-index-template! conn index (:template config))
   (log/infof "Updated index template: %s" index))
@@ -262,14 +268,31 @@
                      (select-keys config [:mappings :settings :aliases])))
       conn-state))
 
+(def valid-engines
+  "Valid search engine types supported by CTIA"
+  #{:elasticsearch :opensearch})
+
 (s/defn get-store-properties :- StoreProperties
   "Lookup the merged store properties map"
   [store-kw :- s/Keyword
    get-in-config]
-  (merge
-   {:entity store-kw}
-   (get-in-config [:ctia :store :es :default] {})
-   (get-in-config [:ctia :store :es store-kw] {})))
+  (let [props (merge
+               {:entity store-kw}
+               (get-in-config [:ctia :store :es :default] {})
+               (get-in-config [:ctia :store :es store-kw] {}))
+        ;; Convert :engine from string to keyword if present
+        ;; Properties system reads it as string but ductile expects keyword
+        props-with-engine (cond-> props
+                            (:engine props) (update :engine keyword))]
+    ;; Validate engine if specified
+    (when-let [engine (:engine props-with-engine)]
+      (when-not (valid-engines engine)
+        (throw (ex-info (str "Invalid search engine: " engine
+                             ". Valid engines are: " valid-engines)
+                        {:engine engine
+                         :valid-engines valid-engines
+                         :store store-kw}))))
+    props-with-engine))
 
 (s/defn ^:private make-factory
   "Return a store instance factory. Most of the ES stores are
