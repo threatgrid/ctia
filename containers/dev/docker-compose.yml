@@ -17,7 +17,7 @@ services:
       - "9207:9200"
       - "9307:9300"
   opensearch:
-    image: opensearchproject/opensearch:2.11.0
+    image: opensearchproject/opensearch:2.19.0
     environment:
       - cluster.name=opensearch2
       - discovery.type=single-node
@@ -28,7 +28,7 @@ services:
       - "9202:9200"
       - "9302:9300"
   opensearch3:
-    image: opensearchproject/opensearch:3.0.0
+    image: opensearchproject/opensearch:3.1.0
     environment:
       - cluster.name=opensearch3
       - discovery.type=single-node
