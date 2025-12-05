@@ -305,14 +305,20 @@
       all-pairs)))
 
 (defn engine-port
-  "Map engine/version pairs to their Docker container ports"
+  "Map engine/version pairs to their Docker container ports.
+   Throws an exception for unknown engine/version combinations."
   [engine version]
   (case [engine version]
     [:elasticsearch 7] 9207
     [:opensearch 2]    9202
     [:opensearch 3]    9203
-    ;; Default fallback
-    (+ 9200 version)))
+    (throw (ex-info (str "Unknown engine/version combination: " engine " " version
+                         ". Add mapping to engine-port function.")
+                    {:engine engine
+                     :version version
+                     :known-combinations #{[:elasticsearch 7]
+                                           [:opensearch 2]
+                                           [:opensearch 3]}}))))
 
 (defn engine-auth
   "Get auth options for the given engine"

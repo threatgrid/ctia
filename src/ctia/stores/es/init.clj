@@ -268,6 +268,10 @@
                      (select-keys config [:mappings :settings :aliases])))
       conn-state))
 
+(def valid-engines
+  "Valid search engine types supported by CTIA"
+  #{:elasticsearch :opensearch})
+
 (s/defn get-store-properties :- StoreProperties
   "Lookup the merged store properties map"
   [store-kw :- s/Keyword
@@ -275,11 +279,20 @@
   (let [props (merge
                {:entity store-kw}
                (get-in-config [:ctia :store :es :default] {})
-               (get-in-config [:ctia :store :es store-kw] {}))]
-    ;; Convert :engine from string to keyword if present
-    ;; Properties system reads it as string but ductile expects keyword
-    (cond-> props
-      (:engine props) (update :engine keyword))))
+               (get-in-config [:ctia :store :es store-kw] {}))
+        ;; Convert :engine from string to keyword if present
+        ;; Properties system reads it as string but ductile expects keyword
+        props-with-engine (cond-> props
+                            (:engine props) (update :engine keyword))]
+    ;; Validate engine if specified
+    (when-let [engine (:engine props-with-engine)]
+      (when-not (valid-engines engine)
+        (throw (ex-info (str "Invalid search engine: " engine
+                             ". Valid engines are: " valid-engines)
+                        {:engine engine
+                         :valid-engines valid-engines
+                         :store store-kw}))))
+    props-with-engine))
 
 (s/defn ^:private make-factory
   "Return a store instance factory. Most of the ES stores are
