@@ -203,7 +203,7 @@
            {:refresh "true"}))
   migration)
 
-(def conn-overrides {:cm (conn/make-connection-manager {:timeout timeout})})
+(def conn-overrides {})
 
 (defn store->map
   [store-record]

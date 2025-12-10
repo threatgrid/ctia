@@ -94,7 +94,7 @@
                   :exclusions [com.cognitect/transit-java]] ;; ring-middleware-format takes precedence
                  [instaparse "1.4.10"] ;; com.gfredericks/test.chuck > threatgrid/ctim
                  [threatgrid/clj-momo "0.4.1"]
-                 [threatgrid/ductile "0.6.0"]
+                 [threatgrid/ductile "0.6.1-SNAPSHOT"]
 
                  [com.arohner/uri "0.1.2"]
 
