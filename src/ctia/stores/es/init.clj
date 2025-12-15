@@ -85,13 +85,19 @@
         mappings (some-> (get-in entity-fields [entity :es-mapping] mappings)
                          first
                          val)
-        searchable-fields (get-in entity-fields [entity :searchable-fields])]
+        searchable-fields (get-in entity-fields [entity :searchable-fields])
+        ;; Workaround for ductile PR #45 - explicitly set timeouts until
+        ;; ctia properties schema is updated to support these parameters
+        conn-opts (merge props
+                        {:socket-timeout 600000         ; 10 minutes for long ES queries
+                         :connection-timeout 10000      ; 10 seconds to establish connection
+                         :validate-after-inactivity 5000})] ; 5 seconds to check idle connections
     {:index indexname
      :props (assoc props :write-index write-index)
      :config {:settings (into store-settings settings)
               :mappings mappings
               :aliases {indexname {}}}
-     :conn (connect props)
+     :conn (connect conn-opts)
      :services services
      :searchable-fields searchable-fields}))
 
