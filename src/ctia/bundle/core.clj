@@ -413,7 +413,7 @@
 (defn node-filters [field entity-types]
   (->> entity-types
        (map name)
-       (map #(format "%s:*%s*" field %))
+       (map #(format "%s:%s" field %))
        (clojure.string/join " OR ")
        (format "(%s)")))
 
@@ -426,8 +426,8 @@
   (let [edge-filters (->> (map #(hash-map % id) (set related_to))
                           (apply merge))
         node-filters (cond->> []
-                       (seq source_type) (cons (node-filters "source_ref" source_type))
-                       (seq target_type) (cons (node-filters "target_ref" target_type))
+                       (seq source_type) (cons (node-filters "source_type" source_type))
+                       (seq target_type) (cons (node-filters "target_type" target_type))
                        :always (string/join " AND "))]
     (into {:one-of edge-filters}
           (when (seq node-filters)
