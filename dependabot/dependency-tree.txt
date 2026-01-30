@@ -278,11 +278,11 @@ ctia:ctia:jar:1.1.1-SNAPSHOT
 |  +- com.graphql-java:java-dataloader:jar:5.0.3:compile
 |  +- org.reactivestreams:reactive-streams:jar:1.0.3:compile
 |  \- org.jspecify:jspecify:jar:1.0.0:compile
-+- org.slf4j:log4j-over-slf4j:jar:2.0.16:compile
-+- org.slf4j:slf4j-api:jar:2.0.16:compile
++- org.slf4j:log4j-over-slf4j:jar:2.0.17:compile
++- org.slf4j:slf4j-api:jar:2.0.17:compile
 +- net.logstash.logback:logstash-logback-encoder:jar:7.4:compile
-+- ch.qos.logback:logback-classic:jar:1.5.16:compile
-+- ch.qos.logback:logback-core:jar:1.5.16:compile
++- ch.qos.logback:logback-classic:jar:1.5.25:compile
++- ch.qos.logback:logback-core:jar:1.5.25:compile
 +- puppetlabs:trapperkeeper:jar:test:3.2.0:test
 +- puppetlabs:kitchensink:jar:test:3.2.0:test
 +- org.clojure:test.check:jar:1.1.1:test
