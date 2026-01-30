@@ -3,7 +3,7 @@
 (def clj-version "1.12.3")
 (def jackson-version "2.20.0")
 (def jackson-databind-version "2.20.0")
-(def logback-version "1.5.16")
+(def logback-version "1.5.25")
 (def metrics-clojure-version "2.10.0")
 (def netty-version "4.1.125.Final")
 (def perforate-version "0.3.4")
