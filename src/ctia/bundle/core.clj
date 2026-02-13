@@ -410,12 +410,23 @@
                  :metric (- (System/currentTimeMillis) start)})
     (clean-bundle fetched)))
 
-(defn node-filters [field entity-types]
-  (->> entity-types
-       (map name)
-       (map #(format "%s:*%s*" field %))
-       (clojure.string/join " OR ")
-       (format "(%s)")))
+(defn node-filters
+  "Generate ES query filters for relationship type filtering.
+   During migration, generates backward-compatible OR clause:
+   - new-field: exact match on source_type/target_type (fast, for new docs)
+   - old-field: wildcard match on source_ref/target_ref (slow, for legacy docs)
+   Example: ((source_type:malware) OR (source_ref:*malware*))"
+  [new-field old-field entity-types]
+  (let [type-names (map name entity-types)
+        new-field-query (->> type-names
+                             (map #(format "%s:%s" new-field %))
+                             (clojure.string/join " OR ")
+                             (format "(%s)"))
+        old-field-query (->> type-names
+                             (map #(format "%s:*%s*" old-field %))
+                             (clojure.string/join " OR ")
+                             (format "(%s)"))]
+    (format "(%s OR %s)" new-field-query old-field-query)))
 
 (defn relationships-filters
   [id
@@ -425,13 +436,13 @@
     :or {related_to #{:source_ref :target_ref}}}]
   (let [edge-filters (->> (map #(hash-map % id) (set related_to))
                           (apply merge))
-        node-filters (cond->> []
-                       (seq source_type) (cons (node-filters "source_ref" source_type))
-                       (seq target_type) (cons (node-filters "target_ref" target_type))
-                       :always (string/join " AND "))]
+        node-filter-clauses (cond->> []
+                              (seq source_type) (cons (node-filters "source_type" "source_ref" source_type))
+                              (seq target_type) (cons (node-filters "target_type" "target_ref" target_type))
+                              :always (string/join " AND "))]
     (into {:one-of edge-filters}
-          (when (seq node-filters)
-            {:query node-filters}))))
+          (when (seq node-filter-clauses)
+            {:query node-filter-clauses}))))
 
 (s/defn fetch-entity-relationships
   "given an entity id, fetch all related relationship"
