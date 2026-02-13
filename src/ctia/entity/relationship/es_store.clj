@@ -41,9 +41,11 @@
   :- ESStoredRelationship
   "adds source and target types to a relationship"
   [{:keys [source_ref target_ref] :as r} :- rs/StoredRelationship]
-  (assoc r
-         :source_type (:type (long-id->id source_ref))
-         :target_type (:type (long-id->id target_ref))))
+  (let [source-type (:type (long-id->id source_ref))
+        target-type (:type (long-id->id target_ref))]
+    (cond-> r
+      source-type (assoc :source_type source-type)
+      target-type (assoc :target_type target-type))))
 
 (s/defn es-stored-relationship->stored-relationship
   :- ESStoredRelationship

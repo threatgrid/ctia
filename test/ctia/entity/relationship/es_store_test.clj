@@ -7,12 +7,12 @@
 (use-fixtures :once validate-schemas)
 
 (def base-relationship
-  {:id "http://example.com/ctia/relationship/relationship-123"
+  {:id "http://localhost:3000/ctia/relationship/relationship-00000000-0000-0000-0000-000000000001"
    :type "relationship"
    :schema_version "1.1.0"
    :relationship_type "related-to"
-   :source_ref "http://example.com/ctia/malware/malware-456"
-   :target_ref "http://example.com/ctia/sighting/sighting-789"
+   :source_ref "http://localhost:3000/ctia/malware/malware-00000000-0000-0000-0000-000000000002"
+   :target_ref "http://localhost:3000/ctia/sighting/sighting-00000000-0000-0000-0000-000000000003"
    :tlp "amber"
    :owner "test-user"
    :groups ["test-group"]
@@ -38,20 +38,29 @@
                (= target-type (:target_type result))))
 
       "indicator" "incident"
-      "http://example.com/ctia/indicator/indicator-123"
-      "http://example.com/ctia/incident/incident-456"
+      "http://localhost:3000/ctia/indicator/indicator-00000000-0000-0000-0000-000000000010"
+      "http://localhost:3000/ctia/incident/incident-00000000-0000-0000-0000-000000000011"
 
       "judgement" "verdict"
-      "http://example.com/ctia/judgement/judgement-123"
-      "http://example.com/ctia/verdict/verdict-456"
+      "http://localhost:3000/ctia/judgement/judgement-00000000-0000-0000-0000-000000000012"
+      "http://localhost:3000/ctia/verdict/verdict-00000000-0000-0000-0000-000000000013"
 
       "attack-pattern" "vulnerability"
-      "http://example.com/ctia/attack-pattern/attack-pattern-123"
-      "http://example.com/ctia/vulnerability/vulnerability-456"
+      "http://localhost:3000/ctia/attack-pattern/attack-pattern-00000000-0000-0000-0000-000000000014"
+      "http://localhost:3000/ctia/vulnerability/vulnerability-00000000-0000-0000-0000-000000000015"
 
       "casebook" "investigation"
-      "http://example.com/ctia/casebook/casebook-123"
-      "http://example.com/ctia/investigation/investigation-456")))
+      "http://localhost:3000/ctia/casebook/casebook-00000000-0000-0000-0000-000000000016"
+      "http://localhost:3000/ctia/investigation/investigation-00000000-0000-0000-0000-000000000017"))
+
+  (testing "handles unparseable refs gracefully (no nil values added)"
+    (let [rel (assoc base-relationship
+                     :source_ref "not-a-valid-ctia-url"
+                     :target_ref "also-invalid")
+          result (sut/stored-relationship->es-stored-relationship rel)]
+      ;; Should not contain :source_type or :target_type keys at all
+      (is (not (contains? result :source_type)))
+      (is (not (contains? result :target_type))))))
 
 (deftest es-stored-relationship->stored-relationship-test
   (testing "removes source_type and target_type"
@@ -68,8 +77,8 @@
 
 (deftest es-partial-stored-relationship->partial-stored-relationship-test
   (testing "removes source_type and target_type from partial"
-    (let [partial-rel {:id "http://example.com/ctia/relationship/relationship-123"
-                       :source_ref "http://example.com/ctia/malware/malware-456"
+    (let [partial-rel {:id "http://localhost:3000/ctia/relationship/relationship-00000000-0000-0000-0000-000000000001"
+                       :source_ref "http://localhost:3000/ctia/malware/malware-00000000-0000-0000-0000-000000000002"
                        :source_type "malware"
                        :target_type "sighting"}
           result (sut/es-partial-stored-relationship->partial-stored-relationship partial-rel)]
@@ -78,8 +87,8 @@
       (is (= (:source_ref partial-rel) (:source_ref result)))))
 
   (testing "handles partial without type fields"
-    (let [partial-rel {:id "http://example.com/ctia/relationship/relationship-123"
-                       :source_ref "http://example.com/ctia/malware/malware-456"}
+    (let [partial-rel {:id "http://localhost:3000/ctia/relationship/relationship-00000000-0000-0000-0000-000000000001"
+                       :source_ref "http://localhost:3000/ctia/malware/malware-00000000-0000-0000-0000-000000000002"}
           result (sut/es-partial-stored-relationship->partial-stored-relationship partial-rel)]
       (is (nil? (:source_type result)))
       (is (nil? (:target_type result))))))
