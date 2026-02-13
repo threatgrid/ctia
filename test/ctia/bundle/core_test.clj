@@ -38,23 +38,24 @@
             :target_ref "id"}
            (:one-of (sut/relationships-filters "id" {:related_to [:source_ref :target_ref]})))))
 
-  (testing "relationships-filters should properly add query filters"
-    (is (= "(source_ref:*malware*)"
+  (testing "relationships-filters should properly add query filters with backward-compatible OR"
+    ;; During migration, queries include both new field (exact) and old field (wildcard)
+    (is (= "((source_type:malware) OR (source_ref:*malware*))"
            (:query (sut/relationships-filters "id" {:source_type [:malware]}))))
-    (is (= "(target_ref:*sighting*)"
+    (is (= "((target_type:sighting) OR (target_ref:*sighting*))"
            (:query (sut/relationships-filters "id" {:target_type [:sighting]}))))
-    (is (= "(target_ref:*sighting*) AND (source_ref:*malware*)"
+    (is (= "((target_type:sighting) OR (target_ref:*sighting*)) AND ((source_type:malware) OR (source_ref:*malware*))"
            (:query (sut/relationships-filters "id" {:source_type [:malware]
                                                     :target_type [:sighting]}))))
-    (is (= "(source_ref:*malware* OR source_ref:*vulnerability*)"
+    (is (= "((source_type:malware OR source_type:vulnerability) OR (source_ref:*malware* OR source_ref:*vulnerability*))"
            (:query (sut/relationships-filters "id" {:source_type [:malware :vulnerability]}))))
 
-    (is (= "(target_ref:*sighting* OR target_ref:*incident*)"
+    (is (= "((target_type:sighting OR target_type:incident) OR (target_ref:*sighting* OR target_ref:*incident*))"
            (:query (sut/relationships-filters "id" {:target_type [:sighting :incident]})))))
 
   (testing "relationships-filters should return proper fields and combine filters"
     (is (= {:one-of {:source_ref "id"}
-            :query "(source_ref:*malware*)"}
+            :query "((source_type:malware) OR (source_ref:*malware*))"}
            (sut/relationships-filters "id" {:source_type [:malware]
                                             :related_to [:source_ref]})))))
 
