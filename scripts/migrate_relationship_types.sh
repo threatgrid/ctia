@@ -4,24 +4,74 @@
 # Uses Elasticsearch _update_by_query with Painless script.
 #
 # Usage:
-#   ./migrate_relationship_types.sh <ES_HOST> <INDEX_NAME> [--dry-run]
+#   ./migrate_relationship_types.sh <ES_HOST> <INDEX_NAME> [OPTIONS]
+#
+# Options:
+#   --dry-run            Show count and sample doc without making changes
+#   --throttle <N>       Limit to N documents per second (default: unlimited)
+#   --async              Run in background, return task ID for monitoring
 #
 # Examples:
 #   # Dry run (shows how many docs would be updated)
 #   ./migrate_relationship_types.sh localhost:9200 ctia_relationship --dry-run
 #
-#   # Execute migration
+#   # Execute migration (full speed)
 #   ./migrate_relationship_types.sh localhost:9200 ctia_relationship
+#
+#   # Throttled execution (1000 docs/sec) - safer for production
+#   ./migrate_relationship_types.sh localhost:9200 ctia_relationship --throttle 1000
+#
+#   # Async execution (returns task ID to monitor)
+#   ./migrate_relationship_types.sh localhost:9200 ctia_relationship --async
+#
+#   # Throttled + async (recommended for large production indices)
+#   ./migrate_relationship_types.sh localhost:9200 ctia_relationship --throttle 500 --async
 #
 #   # With authentication
 #   ES_USER=elastic ES_PASS=changeme ./migrate_relationship_types.sh localhost:9200 ctia_relationship
 #
+# Monitoring async tasks:
+#   # Check task status
+#   curl -X GET "http://localhost:9200/_tasks/<task_id>"
+#
+#   # List all update_by_query tasks
+#   curl -X GET "http://localhost:9200/_tasks?actions=*update_by_query&detailed"
+#
+#   # Cancel a running task
+#   curl -X POST "http://localhost:9200/_tasks/<task_id>/_cancel"
+#
 
 set -euo pipefail
 
+# Parse arguments
 ES_HOST="${1:-localhost:9200}"
 INDEX_NAME="${2:-ctia_relationship}"
-DRY_RUN="${3:-}"
+shift 2 || true
+
+DRY_RUN=false
+THROTTLE=""
+ASYNC=false
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --dry-run)
+      DRY_RUN=true
+      shift
+      ;;
+    --throttle)
+      THROTTLE="$2"
+      shift 2
+      ;;
+    --async)
+      ASYNC=true
+      shift
+      ;;
+    *)
+      echo "Unknown option: $1"
+      exit 1
+      ;;
+  esac
+done
 
 # Build auth header if credentials provided
 AUTH_OPTS=""
@@ -84,6 +134,8 @@ QUERY='{
 echo "=== Relationship Type Migration ==="
 echo "ES Host: ${ES_HOST}"
 echo "Index: ${INDEX_NAME}"
+echo "Throttle: ${THROTTLE:-unlimited}"
+echo "Async: ${ASYNC}"
 echo ""
 
 # Count documents to be updated
@@ -101,8 +153,12 @@ if [[ "${DOC_COUNT}" == "0" ]]; then
   exit 0
 fi
 
-if [[ "${DRY_RUN}" == "--dry-run" ]]; then
+if [[ "${DRY_RUN}" == "true" ]]; then
   echo "[DRY RUN] Would update ${DOC_COUNT} documents."
+  if [[ -n "${THROTTLE}" ]]; then
+    ESTIMATED_TIME=$((DOC_COUNT / THROTTLE))
+    echo "Estimated time with throttle: ~${ESTIMATED_TIME} seconds"
+  fi
   echo ""
   echo "Sample document (first match):"
   curl -s ${AUTH_OPTS} -X GET "http://${ES_HOST}/${INDEX_NAME}/_search?size=1" \
@@ -114,11 +170,21 @@ fi
 echo "Starting migration..."
 echo ""
 
+# Build query parameters
+QUERY_PARAMS="conflicts=proceed&scroll_size=1000"
+
+if [[ "${ASYNC}" == "true" ]]; then
+  QUERY_PARAMS="${QUERY_PARAMS}&wait_for_completion=false"
+else
+  QUERY_PARAMS="${QUERY_PARAMS}&wait_for_completion=true"
+fi
+
+if [[ -n "${THROTTLE}" ]]; then
+  QUERY_PARAMS="${QUERY_PARAMS}&requests_per_second=${THROTTLE}"
+fi
+
 # Execute _update_by_query
-# - wait_for_completion=true: wait for the operation to complete
-# - conflicts=proceed: continue even if there are version conflicts
-# - scroll_size=1000: process 1000 docs at a time
-RESPONSE=$(curl -s ${AUTH_OPTS} -X POST "http://${ES_HOST}/${INDEX_NAME}/_update_by_query?wait_for_completion=true&conflicts=proceed&scroll_size=1000" \
+RESPONSE=$(curl -s ${AUTH_OPTS} -X POST "http://${ES_HOST}/${INDEX_NAME}/_update_by_query?${QUERY_PARAMS}" \
   -H 'Content-Type: application/json' \
   -d "{
     \"query\": ${QUERY#*\"query\": },
@@ -128,21 +194,43 @@ RESPONSE=$(curl -s ${AUTH_OPTS} -X POST "http://${ES_HOST}/${INDEX_NAME}/_update
     }
   }")
 
-echo "Response:"
-echo "${RESPONSE}" | python3 -m json.tool 2>/dev/null || echo "${RESPONSE}"
-echo ""
+if [[ "${ASYNC}" == "true" ]]; then
+  # Extract task ID from async response
+  TASK_ID=$(echo "${RESPONSE}" | grep -o '"task":"[^"]*"' | cut -d'"' -f4 || echo "")
 
-# Extract stats from response
-UPDATED=$(echo "${RESPONSE}" | grep -o '"updated":[0-9]*' | grep -o '[0-9]*' || echo "0")
-FAILURES=$(echo "${RESPONSE}" | grep -o '"failures":\[[^]]*\]' || echo "[]")
+  if [[ -n "${TASK_ID}" ]]; then
+    echo "=== Migration Started (Async) ==="
+    echo "Task ID: ${TASK_ID}"
+    echo ""
+    echo "Monitor progress:"
+    echo "  curl -X GET \"http://${ES_HOST}/_tasks/${TASK_ID}\""
+    echo ""
+    echo "Cancel if needed:"
+    echo "  curl -X POST \"http://${ES_HOST}/_tasks/${TASK_ID}/_cancel\""
+    echo ""
+    echo "The migration is running in the background."
+  else
+    echo "ERROR: Failed to start async task"
+    echo "${RESPONSE}" | python3 -m json.tool 2>/dev/null || echo "${RESPONSE}"
+    exit 1
+  fi
+else
+  echo "Response:"
+  echo "${RESPONSE}" | python3 -m json.tool 2>/dev/null || echo "${RESPONSE}"
+  echo ""
 
-echo "=== Migration Complete ==="
-echo "Documents updated: ${UPDATED}"
+  # Extract stats from response
+  UPDATED=$(echo "${RESPONSE}" | grep -o '"updated":[0-9]*' | grep -o '[0-9]*' || echo "0")
+  FAILURES=$(echo "${RESPONSE}" | grep -o '"failures":\[[^]]*\]' || echo "[]")
 
-if [[ "${FAILURES}" != "[]" && "${FAILURES}" != "" ]]; then
-  echo "WARNING: Some failures occurred:"
-  echo "${FAILURES}"
-  exit 1
+  echo "=== Migration Complete ==="
+  echo "Documents updated: ${UPDATED}"
+
+  if [[ "${FAILURES}" != "[]" && "${FAILURES}" != "" ]]; then
+    echo "WARNING: Some failures occurred:"
+    echo "${FAILURES}"
+    exit 1
+  fi
+
+  echo "Migration successful!"
 fi
-
-echo "Migration successful!"
