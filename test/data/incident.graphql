@@ -78,6 +78,7 @@ fragment incidentTimeFields on IncidentTime {
 
 fragment incidentFields on Incident {
   id
+  short_id
   type
   schema_version
   revision
