@@ -108,6 +108,7 @@ fragment incidentFields on Incident {
   groups
   assignees
   promotion_method
+  detection_status
   severity
   tactics
   techniques
