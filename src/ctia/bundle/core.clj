@@ -228,12 +228,16 @@
    external-key-prefixes
    auth-identity :- auth/AuthIdentity
    services :- APIHandlerServices]
-  (map-kv (fn [k v]
-            (let [entity-type (bulk/entity-type-from-bulk-key k)]
-              (-> v
-                  (init-import-data entity-type external-key-prefixes)
-                  (with-existing-entities entity-type auth-identity services))))
-          bundle-entities))
+  (try
+    (into {}
+          (->> bundle-entities
+               (pmap (fn [[k v]]
+                       (let [entity-type (bulk/entity-type-from-bulk-key k)]
+                         [k (-> v
+                                (init-import-data entity-type external-key-prefixes)
+                                (with-existing-entities entity-type auth-identity services))])))))
+    (catch java.util.concurrent.ExecutionException e
+      (throw (.getCause e)))))
 
 (s/defn create? :- s/Bool
   "Whether the provided entity should be created or not"

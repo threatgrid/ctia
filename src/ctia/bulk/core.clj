@@ -255,14 +255,13 @@
   [func bulk & args]
   (try
     (into {}
-          (comp
-           (remove (comp empty? second))
-           (map (fn [[bulk-k entities]]
-                  [bulk-k (apply func
-                                 entities
-                                 (entity-type-from-bulk-key bulk-k)
-                                 args)])))
-          bulk)
+          (->> bulk
+               (remove (comp empty? second))
+               (pmap (fn [[bulk-k entities]]
+                       [bulk-k (apply func
+                                      entities
+                                      (entity-type-from-bulk-key bulk-k)
+                                      args)]))))
     (catch java.util.concurrent.ExecutionException e
       (throw (.getCause e)))))
 
