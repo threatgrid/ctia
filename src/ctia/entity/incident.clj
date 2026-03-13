@@ -148,7 +148,7 @@
           new-status (:status new-obj)
           status-update (make-status-update {:status new-status})
           ;; Merge the incident_time updates from status change logic
-          ;; Explicitly provided values (current-incident-time) take precedence over auto-generated ones
+          ;; Existing values take precedence (set-once semantics for opened, contained, etc.)
           incident-time-updates (get status-update :incident_time {})
           current-incident-time (get new-obj :incident_time {})
           ;; If transitioning from closed to closed, preserve the original closed date
@@ -159,9 +159,16 @@
           prev-opened-date (when (and (open-status? old-status)
                                       (open-status? new-status))
                              (get-in prev-obj [:incident_time :opened]))
+          ;; On re-close (non-closed → closed), update closed date for time-to-resolution
+          new-closed-date (when (and (closed-status? new-status)
+                                     (not (closed-status? old-status)))
+                            (get-in status-update [:incident_time :closed]))
+          ;; prev-closed-date and new-closed-date are mutually exclusive:
+          ;; prev-closed-date requires old-status to be closed, new-closed-date requires it not to be.
           merged-incident-time (cond-> (merge incident-time-updates current-incident-time)
                                  prev-closed-date (assoc :closed prev-closed-date)
-                                 prev-opened-date (assoc :opened prev-opened-date))]
+                                 prev-opened-date (assoc :opened prev-opened-date)
+                                 new-closed-date (assoc :closed new-closed-date))]
       (cond-> new-obj
         (seq merged-incident-time) (assoc :incident_time merged-incident-time)))
     ;; No status change or no previous object, return as-is
@@ -200,11 +207,19 @@
   that also computes any relevant intervals that are missing from the updated incident."
   [{old-status :status :as prev} :- ESStoredIncident
    {new-status :status :as incident} :- StoredIncident]
-  (let [incident (into incident (select-keys prev [:intervals]))]
+  (let [incident (into incident (select-keys prev [:intervals]))
+        ;; On re-close (non-closed → closed), clear stale opened_to_closed so it gets recomputed.
+        ;; This dissoc is necessary because update-interval has a "don't clobber" guard
+        ;; that skips intervals already present.
+        incident (cond-> incident
+                   (and (not (closed-status? old-status))
+                        (closed-status? new-status)
+                        (get-in incident [:intervals :opened_to_closed]))
+                   (update :intervals dissoc :opened_to_closed))]
     ;; note: incident_time.opened is a required field, so its presence is meaningless.
     ;; note: intervals are independent. they can be triggered in any order and only one can be calculated per change.
     ;; e.g., :opened_to_closed does not backfill :new_to_opened, nor prevents :new_to_opened from being filled later.
-    ;; note: each interval is calculated at most once per incident.
+    ;; note: each interval is calculated at most once per incident, except opened_to_closed which is recomputed on re-close.
     (cond-> incident
       ;; the duration between the time at which the incident changed from New to Open and the incident creation time
       ;; https://github.com/advthreat/iroh/issues/7622#issuecomment-1496374419
