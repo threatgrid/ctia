@@ -10,7 +10,9 @@
             [ctim.examples.sightings :refer [sighting-minimal]]
             [ctia.domain.entities :refer [short-id->long-id]]
             [java-time.api :as jt]
-            [puppetlabs.trapperkeeper.app :as app]))
+            [puppetlabs.trapperkeeper.app :as app]
+            [ctim.schemas.common :as ctim-common]
+            [ctim.schemas.sighting :as sighting-schema]))
 
 (deftest deep-merge-with-add-colls-test
   (let [fixture {:foo {:bar ["one" "two" "three"]
@@ -304,6 +306,45 @@
                       {sighting-id-1 false sighting-id-2 false})
          (delete-flow "delete flow deletes entities and creates events only for existing entities when some are not found"
                       {sighting-id-3 true missing-id-1 false missing-id-2 false}))))))
+
+(deftest check-spec-test
+  (let [check-spec #'flows.crud/check-spec
+        valid-sighting {:type "sighting"
+                        :confidence "High"
+                        :count 1
+                        :observed_time {:start_time #inst "2024-01-01T00:00:00.000Z"}
+                        :schema_version ctim-common/ctim-schema-version}]
+    (testing "valid entity passes through unchanged"
+      (is (= valid-sighting
+             (check-spec valid-sighting :new-sighting/map))))
+    (testing "nil spec passes through unchanged"
+      (is (= valid-sighting
+             (check-spec valid-sighting nil))))
+    (testing "oversized observables returns entity-too-large-error"
+      (let [entity (assoc valid-sighting
+                          :observables
+                          (vec (repeat (inc sighting-schema/max-sighting-observables)
+                                       {:type "ip" :value "1.2.3.4"})))
+            result (check-spec entity :new-sighting/map)]
+        (is (= :entity-too-large-error (:type result)))
+        (is (= "Entity too large" (:error result)))
+        (is (re-find #"max 5000" (:msg result)))))
+    (testing "oversized relations returns entity-too-large-error"
+      (let [entity (assoc valid-sighting
+                          :relations
+                          (vec (repeat (inc sighting-schema/max-sighting-relations)
+                                       {:origin "test"
+                                        :relation "Connected_To"
+                                        :source {:type "ip" :value "1.2.3.4"}
+                                        :related {:type "ip" :value "5.6.7.8"}})))
+            result (check-spec entity :new-sighting/map)]
+        (is (= :entity-too-large-error (:type result)))
+        (is (re-find #"max 10000" (:msg result)))))
+    (testing "non-size spec failure returns spec-validation-error"
+      (let [entity (assoc valid-sighting :confidence "INVALID")
+            result (check-spec entity :new-sighting/map)]
+        (is (= :spec-validation-error (:type result)))
+        (is (= "Entity validation Error" (:error result)))))))
 
 (defn mk-fake-store
   [entity size]
