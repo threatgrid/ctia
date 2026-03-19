@@ -44,9 +44,9 @@ ctia:ctia:jar:1.1.1-SNAPSHOT
 |  \- org.flatland:ordered:jar:1.5.9:compile
 +- prismatic:schema:jar:1.4.1:compile
 +- metosin:schema-tools:jar:0.13.1:compile
-+- threatgrid:flanders:jar:1.1.0:compile
++- threatgrid:flanders:jar:1.1.1-SNAPSHOT:compile
 |  \- org.clojure:core.match:jar:1.0.0:compile
-+- threatgrid:ctim:jar:1.3.30:compile
++- threatgrid:ctim:jar:1.3.30-SNAPSHOT:compile
 |  +- org.mozilla:rhino:jar:1.8.0:compile
 |  \- kovacnica:clojure.network.ip:jar:0.1.5:compile
 |     \- org.clojure:clojurescript:jar:1.11.132:compile

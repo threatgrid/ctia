@@ -89,8 +89,8 @@
                  ;; Schemas
                  [prismatic/schema "1.4.1"]
                  [metosin/schema-tools "0.13.1"]
-                 [threatgrid/flanders "1.1.0"]
-                 [threatgrid/ctim "1.3.30"
+                 [threatgrid/flanders "1.1.1-SNAPSHOT"]
+                 [threatgrid/ctim "1.3.30-SNAPSHOT"
                   :exclusions [com.cognitect/transit-java]] ;; ring-middleware-format takes precedence
                  [instaparse "1.4.10"] ;; com.gfredericks/test.chuck > threatgrid/ctim
                  [threatgrid/clj-momo "0.4.1"]

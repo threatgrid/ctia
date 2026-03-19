@@ -99,17 +99,40 @@
       (id/str->short-id id)
       id)))
 
+(defn- size-limit-violation?
+  "Returns true if any of the spec problems are caused by a max-len predicate."
+  [explain-data]
+  (some (fn [{:keys [pred]}]
+          (when (fn? pred)
+            (:max-len (meta pred))))
+        (:clojure.spec.alpha/problems explain-data)))
+
+(defn- describe-size-violations
+  "Builds a human-readable message listing which fields exceeded their size limits."
+  [explain-data]
+  (->> (:clojure.spec.alpha/problems explain-data)
+       (keep (fn [{:keys [pred val in]}]
+               (when-let [max-len (and (fn? pred) (:max-len (meta pred)))]
+                 (format "field %s has %d elements (max %d)"
+                         (pr-str in) (count val) max-len))))
+       (str/join "; ")))
+
 (defn- check-spec [entity spec]
-  (if (and spec
-           (not (cs/valid? spec
-                           ;; the spec enforce long id for the API
-                           ;; while we store short ids
-                           (dissoc entity :id))))
-    {:msg (cs/explain-str spec entity)
-     :error "Entity validation Error"
-     :type :spec-validation-error
-     :entity entity}
-    entity))
+  (if-not spec
+    entity
+    (let [entity-no-id (dissoc entity :id)
+          explain-data (cs/explain-data spec entity-no-id)]
+      (if-not explain-data
+        entity
+        (if (size-limit-violation? explain-data)
+          {:msg (str "Entity too large: " (describe-size-violations explain-data))
+           :error "Entity too large"
+           :type :entity-too-large-error
+           :entity entity}
+          {:msg (cs/explain-str spec entity)
+           :error "Entity validation Error"
+           :type :spec-validation-error
+           :entity entity})))))
 
 (defn tlp-check
   [{:keys [tlp] :as entity} get-in-config]
