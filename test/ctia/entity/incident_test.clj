@@ -34,6 +34,72 @@
 (use-fixtures :once (join-fixtures [mth/fixture-schema-validation
                                     whoami-helpers/fixture-server]))
 
+(deftest apply-status-update-logic-test
+  (let [t1 #inst "2026-01-01T00:00:00.000Z"
+        t2 #inst "2026-01-02T00:00:00.000Z"
+        t3 #inst "2026-01-03T00:00:00.000Z"]
+
+    (testing "re-close scenario: Closed → Open → Closed updates closed timestamp"
+      ;; Simulate: incident was closed at t1, reopened at t2, re-closed at t3
+      ;; After the reopen, prev-obj has status "Open" and incident_time includes {:closed t1, :opened t2}
+      ;; The PATCH body is {:status "Closed"}, which after deep-merge with prev becomes:
+      ;; {:status "Closed", :incident_time {:closed t1, :opened t2}} (old incident_time preserved)
+      (helpers/fixture-with-fixed-time
+       t3
+       (fn []
+         (let [prev-obj {:status "Open"
+                         :incident_time {:opened t2
+                                         :closed t1}}
+               new-obj {:status "Closed"
+                        :incident_time {:opened t2
+                                        :closed t1}}
+               result (sut/apply-status-update-logic new-obj prev-obj)]
+           (is (= "Closed" (:status result)))
+           (is (= t3 (get-in result [:incident_time :closed]))
+               "Closed date should be updated to NOW on re-close, not preserved from first close")
+           (is (= t2 (get-in result [:incident_time :opened]))
+               "Opened date should be preserved")))))
+
+    (testing "first close: Open → Closed sets closed timestamp"
+      (helpers/fixture-with-fixed-time
+       t2
+       (fn []
+         (let [prev-obj {:status "Open"
+                         :incident_time {:opened t1}}
+               new-obj {:status "Closed"
+                        :incident_time {:opened t1}}
+               result (sut/apply-status-update-logic new-obj prev-obj)]
+           (is (= t2 (get-in result [:incident_time :closed]))
+               "Closed date should be set on first close")
+           (is (= t1 (get-in result [:incident_time :opened]))
+               "Opened date should be preserved")))))
+
+    (testing "closed-to-closed transition preserves original closed date"
+      (helpers/fixture-with-fixed-time
+       t2
+       (fn []
+         (let [prev-obj {:status "Closed: False Positive"
+                         :incident_time {:closed t1}}
+               new-obj {:status "Closed: Confirmed Threat"
+                        :incident_time {:closed t1}}
+               result (sut/apply-status-update-logic new-obj prev-obj)]
+           (is (= t1 (get-in result [:incident_time :closed]))
+               "Closed date should be PRESERVED when transitioning between closed statuses")))))
+
+    (testing "re-open does not update opened date (set-once semantics)"
+      (helpers/fixture-with-fixed-time
+       t3
+       (fn []
+         (let [prev-obj {:status "Closed"
+                         :incident_time {:opened t1
+                                         :closed t2}}
+               new-obj {:status "Open"
+                        :incident_time {:opened t1
+                                        :closed t2}}
+               result (sut/apply-status-update-logic new-obj prev-obj)]
+           (is (= t1 (get-in result [:incident_time :opened]))
+               "Opened date should NOT change on re-open")))))))
+
 (deftest incident-scores-schema-test
   (let [get-in-config (partial get-in {:ctia {:http {:incident {:score-types "global,ttp,asset"}}}})
         fake-services {:ConfigService {:get-in-config get-in-config}}
@@ -77,6 +143,39 @@
   (helpers/DELETE app
                   (str "ctia/incident/" (uri/uri-encode incident-id))
                   :headers {"Authorization" "45c1f5e3f05d0"}))
+
+(defn run-reclose-scenario
+  "Executes a close → reopen → reclose scenario and verifies
+   that the closed date is updated on re-close."
+  [app fixed-now test-incidents transition-fn]
+  (let [test-id (create-test-incident app)
+        _ (swap! test-incidents conj test-id)
+        ;; Step 1: Close the incident
+        first-response (transition-fn app test-id "Closed")
+        first-closed-date (get-in (:parsed-body first-response) [:incident_time :closed])]
+    (is (= 200 (:status first-response)))
+    (is (= "Closed" (:status (:parsed-body first-response))))
+    (is (some? first-closed-date) "First closed date should be set")
+    ;; Step 2: Re-open (5 min later)
+    (helpers/fixture-with-fixed-time
+     (t/plus fixed-now (t/minutes 5))
+     (fn []
+       (let [reopen-response (transition-fn app test-id "Open")]
+         (is (= 200 (:status reopen-response)))
+         (is (= "Open" (:status (:parsed-body reopen-response))))
+         ;; Step 3: Re-close (10 min later)
+         (helpers/fixture-with-fixed-time
+          (t/plus fixed-now (t/minutes 10))
+          (fn []
+            (let [reclose-response (transition-fn app test-id "Closed")
+                  second-closed-date (get-in (:parsed-body reclose-response) [:incident_time :closed])]
+              (is (= 200 (:status reclose-response)))
+              (is (= "Closed" (:status (:parsed-body reclose-response))))
+              (is (some? second-closed-date) "Second closed date should be set")
+              (is (not= first-closed-date second-closed-date)
+                  "Closed date should be UPDATED on re-close, not preserved from first close")
+              (is (= (tc/to-date (t/plus fixed-now (t/minutes 10))) second-closed-date)
+                  "Closed date should reflect the time of the re-close")))))))))
 
 (defn additional-tests [app incident-id incident]
   (let [fixed-now (t/internal-now)
@@ -474,6 +573,22 @@
                     "Contained date should be DIFFERENT from opened date")
                 (is (= (tc/to-date (t/plus fixed-now (t/minutes 5))) contained-date)
                     "Contained date should be the time of transition to Open: Contained"))))))
+
+       ;; XDR-42815: Re-close tests (Closed → Open → Closed)
+       ;; Note: interval recomputation (opened_to_closed) is verified at unit level only,
+       ;; as un-store-incident strips :intervals from API responses.
+       (testing "PATCH /ctia/incident/:id: Closed date updated on re-close (Closed → Open → Closed)"
+         (run-reclose-scenario app fixed-now test-incidents
+           (fn [app id status]
+             (PATCH app
+                    (str "ctia/incident/" (uri/uri-encode id))
+                    :body {:status status}
+                    :headers {"Authorization" "45c1f5e3f05d0"}))))
+
+       (testing "POST /ctia/incident/:id/status: Closed date updated on re-close (Closed → Open → Closed)"
+         (run-reclose-scenario app fixed-now test-incidents
+           (fn [app id status]
+             (post-status app (uri/uri-encode id) status))))
       (finally
         ;; Clean up test incidents
         (doseq [test-id @test-incidents]
@@ -1165,14 +1280,27 @@
         (testing "if :stored-incident does not already have an :opened_to_closed interval, compute it"
           (is (= (assoc-in incident [:intervals :opened_to_closed] computed-interval)
                  (sut/compute-intervals prev incident))))
-        (testing "if :stored-incident already has an :opened_to_closed interval, don't add it to the update"
-          (let [prev (assoc prev :intervals {:opened_to_closed (* 2 (rand-int (inc computed-interval)))})]
-            (is (= (assoc incident :intervals (:intervals prev))
-                   (sut/compute-intervals prev incident)))))
+        (testing "if :stored-incident already has an :opened_to_closed interval, recompute on re-close (non-closed → closed)"
+          (let [prev (assoc prev :intervals {:opened_to_closed (* 2 computed-interval)})]
+            (is (= (assoc incident :intervals {:opened_to_closed computed-interval})
+                   (sut/compute-intervals prev incident))
+                "opened_to_closed should be recomputed on re-close, not preserved from first close")))
         (testing "if :incident_time.opened is after the updated :incident_time.closed, elide interval from update"
           (let [prev (assoc prev :incident_time {:opened later})
                 incident (-> incident (assoc :incident_time {:opened later :closed earlier}))]
-            (is (= incident (sut/compute-intervals prev incident)))))))
+            (is (= incident (sut/compute-intervals prev incident)))))
+        (testing "XDR-42815: on re-close, opened_to_closed is recomputed with fresh closed date"
+          (let [reclose-later (-> (jt/instant earlier) (jt/plus (jt/seconds (* 2 computed-interval))) jt/java-date)
+                prev (assoc prev
+                            :status "Open"
+                            :incident_time {:opened earlier :closed later}
+                            :intervals {:opened_to_closed computed-interval})
+                incident (-> (dissoc prev :intervals)
+                             (assoc :status "Closed")
+                             (assoc-in [:incident_time :closed] reclose-later))]
+            (is (= (assoc incident :intervals {:opened_to_closed (* 2 computed-interval)})
+                   (sut/compute-intervals prev incident))
+                "opened_to_closed should be recomputed on re-close, not preserved from first close")))))
     (testing "updating new_to_contained"
       (let [prev (assoc prev :status "New: Presented")
             incident (-> (assoc prev :status "Open: Contained")
