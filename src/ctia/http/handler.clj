@@ -8,7 +8,6 @@
             [ctia.lib.compojure.api.core :refer [context middleware routes undocumented]]
             [compojure.api.api :refer [api]]
             [compojure.api.routes :as api-routes]
-            [compojure.core :refer [wrap-routes]]
             [compojure.route :as rt]
             [ctia.bundle.routes :refer [bundle-routes]]
             [ctia.bulk.routes :refer [bulk-routes]]
@@ -223,10 +222,10 @@
           cache-control-enabled? (concat [wrap-not-modified
                                           wrap-cache-control])
           true (concat [#(wrap-version % get-in-config)
+                        trace-http/wrap-compojure-route
                         ;; always last
                         (metrics/wrap-metrics "ctia" api-routes/get-routes)]))]
-    (wrap-routes
-      (api {:exceptions {:handlers exception-handlers}
+    (api {:exceptions {:handlers exception-handlers}
             :format (->format-options)
             :swagger
             (cond-> {:ui "/"
@@ -290,5 +289,4 @@
                  (properties-routes services)
                  (graphql-routes services))))
            (undocumented
-            (rt/not-found (ok (unk/err-html)))))
-      trace-http/wrap-compojure-route)))
+            (rt/not-found (ok (unk/err-html)))))))
