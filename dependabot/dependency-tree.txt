@@ -278,6 +278,15 @@ ctia:ctia:jar:1.1.1-SNAPSHOT
 |  +- com.graphql-java:java-dataloader:jar:5.0.3:compile
 |  +- org.reactivestreams:reactive-streams:jar:1.0.3:compile
 |  \- org.jspecify:jspecify:jar:1.0.0:compile
++- com.github.steffan-westcott:clj-otel-api:jar:0.2.10:compile
+|  +- io.opentelemetry.semconv:opentelemetry-semconv:jar:1.37.0:compile
+|  +- io.opentelemetry:opentelemetry-api:jar:1.54.1:compile
+|  |  \- io.opentelemetry:opentelemetry-context:jar:1.54.1:compile
+|  |     \- io.opentelemetry:opentelemetry-common:jar:1.54.1:compile
+|  +- io.opentelemetry.instrumentation:opentelemetry-instrumentation-api:jar:2.20.1:compile
+|  |  \- io.opentelemetry:opentelemetry-api-incubator:jar:1.54.1-alpha:runtime
+|  +- io.opentelemetry.semconv:opentelemetry-semconv-incubating:jar:1.37.0-alpha:compile
+|  \- camel-snake-kebab:camel-snake-kebab:jar:0.4.3:compile
 +- org.slf4j:log4j-over-slf4j:jar:2.0.17:compile
 +- org.slf4j:slf4j-api:jar:2.0.17:compile
 +- net.logstash.logback:logstash-logback-encoder:jar:7.4:compile
