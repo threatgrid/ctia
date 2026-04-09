@@ -8,7 +8,7 @@
             [clout.core :as clout]
             [steffan-westcott.clj-otel.api.trace.http :as trace-http]))
 
-(defn- compile-route-table
+(defn compile-route-table
   "Compile a route table (from compojure-api's get-routes) into a map
   of HTTP verb to vector of [compiled-path template] tuples."
   [route-table]
@@ -17,7 +17,7 @@
                      (mapv (fn [[path _]] [(clout/route-compile path) path])
                            entries)))))
 
-(defn- find-route-template
+(defn find-route-template
   "Return the route template matching `request`, or nil if none matches."
   [compiled-routes request]
   (when-let [method (:request-method request)]

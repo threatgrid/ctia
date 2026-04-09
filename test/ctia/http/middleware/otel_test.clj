@@ -15,7 +15,7 @@
    ["/ctia/entity/:id/sub/:sub-id" :get]
    ["/ctia/version" :get]])
 
-(defn- ok-handler [_request] {:status 200})
+(defn ok-handler [_request] {:status 200})
 
 (deftest wrap-otel-route-matches-parameterized-path
   (with-mock-span captured

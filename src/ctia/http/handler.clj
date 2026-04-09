@@ -216,14 +216,13 @@
   (let [{:keys [oauth2]}
         (get-http-swagger get-in-config)
         swagger-mime-types (->mime-types default-formats)
-        cache-control-enabled? (get-in-config [:ctia :http :cache-control :enabled])
         middlewares
-        (cond-> [#(wrap-rate-limit % get-in-config)]
-          cache-control-enabled? (concat [wrap-not-modified
-                                          wrap-cache-control])
-          true (concat [#(wrap-version % get-in-config)
-                        ;; always last
-                        (metrics/wrap-metrics "ctia" api-routes/get-routes)]))
+        [#(wrap-rate-limit % get-in-config)
+         wrap-not-modified
+         wrap-cache-control
+         #(wrap-version % get-in-config)
+         ;; always last
+         (metrics/wrap-metrics "ctia" api-routes/get-routes)]
         api-form
         (api {:exceptions {:handlers exception-handlers}
               :format (->format-options)

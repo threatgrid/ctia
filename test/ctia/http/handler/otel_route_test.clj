@@ -19,7 +19,7 @@
   helpers/fixture-allow-all-auth
   helpers/fixture-ctia-fast)
 
-(defn- ctia-ring-handler
+(defn ctia-ring-handler
   "Build CTIA's Ring handler from the current test app services."
   []
   (let [app (helpers/get-current-app)]
