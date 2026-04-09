@@ -1,4 +1,4 @@
-(ns ctia.http.handler.otel-route-test
+(ns ctia.http.middleware.otel-route-test
   "Integration tests verifying that the http.route OTel span attribute
    is correctly set by CTIA's api-handler for both authenticated and
    unauthenticated requests."
