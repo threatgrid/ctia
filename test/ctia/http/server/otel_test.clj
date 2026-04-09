@@ -1,7 +1,6 @@
-(ns ctia.http.middleware.otel-route-test
+(ns ctia.http.server.otel-test
   "Integration tests verifying that the http.route OTel span attribute
-   is correctly set by CTIA's api-handler for both authenticated and
-   unauthenticated requests."
+   is correctly set for both authenticated and unauthenticated requests."
   (:require
    [clojure.test :refer [deftest is testing use-fixtures]]
    [compojure.api.routes :as api-routes]
