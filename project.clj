@@ -7,7 +7,7 @@
 (def metrics-clojure-version "2.10.0")
 (def netty-version "4.1.125.Final")
 (def perforate-version "0.3.4")
-(def ring-version "1.9.5")
+(def ring-version "1.15.3")
 (def slf4j-version "2.0.17")
 (def schema-generators-version "0.1.5")
 (def test-check-version "1.1.1")
@@ -84,6 +84,7 @@
                  [puppetlabs/trapperkeeper ~trapperkeeper-version]
                  [puppetlabs/kitchensink ~trapperkeeper-version]
                  [prismatic/plumbing "0.5.5"] ;; upgrade puppetlabs/trapperkeeper
+                 [org.clojure/tools.macro "0.2.1"] ;; align compojure 1.7.2 > puppetlabs/trapperkeeper
                  [clj-commons/clj-yaml "1.0.26"] ;; upgrade snakeyaml dep
 
                  ;; Schemas
@@ -99,7 +100,7 @@
                  [com.arohner/uri "0.1.2"]
 
                  ;; Web server
-                 [potemkin "0.4.7"] ;; align clj-http > compojure-api
+                 [potemkin "0.4.9" :exclusions [org.clojure/clojure]] ;; override metosin/compojure-api
                  [compojure/compojure "1.7.2"] ;; bump for wrap-routes support (OTel http.route)
                  [metosin/compojure-api "1.1.13"]
                  [ring-middleware-format "0.7.4"]
@@ -110,10 +111,10 @@
                  [metosin/ring-swagger-ui "3.24.3"]
                  [ring/ring-core ~ring-version] ;ring/ring-jetty-adapter > metosin/ring-swagger
                  [ring/ring-jetty-adapter ~ring-version]
-                 [ring/ring-devel ~ring-version]
                  [ring-cors "0.1.13"]
-                 [commons-codec "1.17.1"] ;ring/ring* > threatgrid/ctim, threatgrid/clj-momo, clj-http
-                 [ring/ring-codec "1.1.3"]
+                 [commons-codec "1.18.0"] ;ring/ring* > threatgrid/ctim, threatgrid/clj-momo, clj-http
+                 [ring/ring-codec "1.3.0"]
+                 [crypto-equality "1.0.1"] ;; align ring-core 1.15
                  [threatgrid/clj-jwt "0.5.0"]
                  [threatgrid/ring-turnstile-middleware "0.1.1"]
                  [threatgrid/ring-jwt-middleware "1.1.7"]
@@ -152,7 +153,7 @@
                  [threatgrid/redismq "0.1.1"]
 
                  [org.apache.zookeeper/zookeeper "3.8.4"] ; override zookeeper-clj, org.onyxplatform/onyx-kafka
-                 [commons-io "2.18.0"] ;; address CVE-2024-47554
+                 [commons-io "2.20.0"] ;; address CVE-2024-47554, align with ring 1.15
                  [args4j "2.33"] ;bump org.onyxplatform/onyx-kafka, threatgrid/ctim
                  [com.stuartsierra/component "1.1.0"] ;org.onyxplatform/onyx-kafka internal override
                  [org.onyxplatform/onyx-kafka "0.14.5.0"]
