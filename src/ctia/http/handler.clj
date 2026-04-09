@@ -16,6 +16,7 @@
                                          graphql-routes]]
             [ctia.http.exceptions :as ex]
             [ctia.http.middleware
+             [otel :refer [wrap-otel-route]]
              [ratelimit :refer [wrap-rate-limit]]
              [auth :refer [wrap-authenticated]]
              [cache-control :refer [wrap-cache-control]]
@@ -33,8 +34,7 @@
             [ring.util.http-response :refer [ok]]
             [schema.core :as s]
             [compojure.api.middleware :refer [->mime-types api-middleware-defaults]]
-            [ring.middleware.format-response :refer [make-encoder]]
-            [steffan-westcott.clj-otel.api.trace.http :as trace-http]))
+            [ring.middleware.format-response :refer [make-encoder]]))
 
 (def api-description
   "A Threat Intelligence API service
@@ -222,9 +222,9 @@
           cache-control-enabled? (concat [wrap-not-modified
                                           wrap-cache-control])
           true (concat [#(wrap-version % get-in-config)
-                        trace-http/wrap-compojure-route
                         ;; always last
-                        (metrics/wrap-metrics "ctia" api-routes/get-routes)]))]
+                        (metrics/wrap-metrics "ctia" api-routes/get-routes)]))
+        api-form
     (api {:exceptions {:handlers exception-handlers}
             :format (->format-options)
             :swagger
@@ -289,4 +289,7 @@
                  (properties-routes services)
                  (graphql-routes services))))
            (undocumented
-            (rt/not-found (ok (unk/err-html)))))))
+            (rt/not-found (ok (unk/err-html)))))]
+    ;; Wrap with OTel http.route outside the api form so route matching
+    ;; works for ALL responses, including 401s from wrap-authenticated.
+    (wrap-otel-route api-form (api-routes/get-routes api-form))))
