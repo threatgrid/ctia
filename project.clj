@@ -115,6 +115,7 @@
                  [metosin/ring-swagger-ui "3.24.3"]
                  [ring/ring-core ~ring-version] ;ring/ring-jetty-adapter > metosin/ring-swagger
                  [ring/ring-jetty-adapter ~ring-version]
+                 [ring/ring-devel ~ring-version]
                  [ring-cors "0.1.13"]
                  [commons-codec "1.18.0"] ;ring/ring* > threatgrid/ctim, threatgrid/clj-momo, clj-http
                  [ring/ring-codec "1.3.0"]
