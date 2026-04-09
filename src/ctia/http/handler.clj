@@ -8,6 +8,7 @@
             [ctia.lib.compojure.api.core :refer [context middleware routes undocumented]]
             [compojure.api.api :refer [api]]
             [compojure.api.routes :as api-routes]
+            [compojure.core :refer [wrap-routes]]
             [compojure.route :as rt]
             [ctia.bundle.routes :refer [bundle-routes]]
             [ctia.bulk.routes :refer [bulk-routes]]
@@ -222,71 +223,72 @@
           cache-control-enabled? (concat [wrap-not-modified
                                           wrap-cache-control])
           true (concat [#(wrap-version % get-in-config)
-                        trace-http/wrap-compojure-route
                         ;; always last
                         (metrics/wrap-metrics "ctia" api-routes/get-routes)]))]
-    (api {:exceptions {:handlers exception-handlers}
-            :format (->format-options)
-            :swagger
-            (cond-> {:ui "/"
-                     :spec "/swagger.json"
-                     :options {:ui {:jwtLocalStorageKey
-                                    (get-in-config
-                                      [:ctia :http :jwt :local-storage-key])}}
-                     :data {:info {:title "CTIA"
-                                   :version (string/replace (current-version) #"\n" "")
-                                   :license {:name "All Rights Reserved",
-                                             :url ""}
-                                   :contact {:name "Cisco Security Business Group -- Advanced Threat "
-                                             :url "http://github.com/threatgrid/ctia"
-                                             :email "cisco-intel-api-support@cisco.com"}
-                                   :description api-description}
-                            ;; consumes and produces are set to the default values
-                            ;; to remove text/plain which is automatically set
-                            ;; from the `formats` property by `compojure.api.middleware/api-middleware`
-                            :consumes swagger-mime-types
-                            :produces swagger-mime-types
-                            :security [{"JWT" []}]
-                            :securityDefinitions
-                            {"JWT" {:type "apiKey"
-                                    :in "header"
-                                    :name "Authorization"
-                                    :description "Ex: Bearer \\<token\\>"}}
-                            :tags (api-tags services)}}
-              (:enabled oauth2)
-              (apply-oauth2-swagger-conf
-               oauth2))}
+    (wrap-routes
+     (api {:exceptions {:handlers exception-handlers}
+             :format (->format-options)
+             :swagger
+             (cond-> {:ui "/"
+                      :spec "/swagger.json"
+                      :options {:ui {:jwtLocalStorageKey
+                                     (get-in-config
+                                       [:ctia :http :jwt :local-storage-key])}}
+                      :data {:info {:title "CTIA"
+                                    :version (string/replace (current-version) #"\n" "")
+                                    :license {:name "All Rights Reserved",
+                                              :url ""}
+                                    :contact {:name "Cisco Security Business Group -- Advanced Threat "
+                                              :url "http://github.com/threatgrid/ctia"
+                                              :email "cisco-intel-api-support@cisco.com"}
+                                    :description api-description}
+                             ;; consumes and produces are set to the default values
+                             ;; to remove text/plain which is automatically set
+                             ;; from the `formats` property by `compojure.api.middleware/api-middleware`
+                             :consumes swagger-mime-types
+                             :produces swagger-mime-types
+                             :security [{"JWT" []}]
+                             :securityDefinitions
+                             {"JWT" {:type "apiKey"
+                                     :in "header"
+                                     :name "Authorization"
+                                     :description "Ex: Bearer \\<token\\>"}}
+                             :tags (api-tags services)}}
+               (:enabled oauth2)
+               (apply-oauth2-swagger-conf
+                oauth2))}
 
-           (middleware middlewares
-             (documentation-routes)
-             (graphql-ui-routes services)
-             (context
-                 "/ctia" []
-               (context "/feed" []
-                 :tags ["Feed"]
-                 (feed-view-routes services))
-               ;; The order is important here for version-routes
-               ;; must be before the middleware fn
-               (version-routes services)
-               (middleware [wrap-authenticated]
-                 (->>
-                  (entities/all-entities)
-                  vals
-                  (map (partial mark-disabled-entities services))
-                  (entities-routes services))
-                 (status-routes)
-                 (context
-                     "/bulk" []
-                   :tags ["Bulk"]
-                   (bulk-routes services))
-                 (context
-                     "/incident" []
-                   :tags ["Incident"]
-                   (incident-link-route services))
-                 (bundle-routes services)
-                 (observable-routes services)
-                 (metrics-routes)
-                 (properties-routes services)
-                 (graphql-routes services))))
-           (undocumented
-            (rt/not-found (ok (unk/err-html)))))))
+            (middleware middlewares
+              (documentation-routes)
+              (graphql-ui-routes services)
+              (context
+                  "/ctia" []
+                (context "/feed" []
+                  :tags ["Feed"]
+                  (feed-view-routes services))
+                ;; The order is important here for version-routes
+                ;; must be before the middleware fn
+                (version-routes services)
+                (middleware [wrap-authenticated]
+                  (->>
+                   (entities/all-entities)
+                   vals
+                   (map (partial mark-disabled-entities services))
+                   (entities-routes services))
+                  (status-routes)
+                  (context
+                      "/bulk" []
+                    :tags ["Bulk"]
+                    (bulk-routes services))
+                  (context
+                      "/incident" []
+                    :tags ["Incident"]
+                    (incident-link-route services))
+                  (bundle-routes services)
+                  (observable-routes services)
+                  (metrics-routes)
+                  (properties-routes services)
+                  (graphql-routes services))))
+            (undocumented
+             (rt/not-found (ok (unk/err-html)))))
+     trace-http/wrap-compojure-route)))

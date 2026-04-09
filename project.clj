@@ -100,6 +100,7 @@
 
                  ;; Web server
                  [potemkin "0.4.7"] ;; align clj-http > compojure-api
+                 [compojure/compojure "1.7.2"] ;; bump for wrap-routes support (OTel http.route)
                  [metosin/compojure-api "1.1.13"]
                  [ring-middleware-format "0.7.4"]
                  ;; optional ring-middleware-format dep (Note: ring-middleware-format is also a transitive dep for compojure-api)
