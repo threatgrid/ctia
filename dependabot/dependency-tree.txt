@@ -17,31 +17,31 @@ ctia:ctia:jar:1.1.1-SNAPSHOT
 +- pandect:pandect:jar:0.6.1:compile
 +- org.clojure:math.combinatorics:jar:0.3.0:test
 +- version-clj:version-clj:jar:2.0.1:compile
-+- puppetlabs:trapperkeeper:jar:3.2.0:compile
-|  +- ch.qos.logback:logback-access:jar:1.2.3:compile
++- puppetlabs:trapperkeeper:jar:4.0.0:compile
+|  +- org.clojure:tools.macro:jar:0.1.5:compile
 |  +- org.codehaus.janino:janino:jar:3.0.8:compile
 |  |  \- org.codehaus.janino:commons-compiler:jar:3.0.8:compile
 |  +- clj-commons:fs:jar:1.6.307:compile
-|  |  +- org.apache.commons:commons-compress:jar:1.20:compile
 |  |  \- org.tukaani:xz:jar:1.8:compile
 |  +- beckon:beckon:jar:0.1.1:compile
 |  +- puppetlabs:typesafe-config:jar:0.2.0:compile
 |  |  \- com.typesafe:config:jar:1.4.1:compile
-|  +- puppetlabs:i18n:jar:0.8.0:compile
+|  +- puppetlabs:i18n:jar:0.9.2:compile
 |  |  +- cpath-clj:cpath-clj:jar:0.1.2:compile
 |  |  \- org.gnu.gettext:libintl:jar:0.18.3:compile
-|  \- nrepl:nrepl:jar:0.6.0:compile
-+- puppetlabs:kitchensink:jar:3.2.0:compile
+|  \- io.github.clj-kondo:config-slingshot-slingshot:jar:1.0.0:compile
++- puppetlabs:kitchensink:jar:3.4.0:compile
+|  +- org.apache.commons:commons-compress:jar:1.26.0:compile
+|  |  \- org.apache.commons:commons-lang3:jar:3.14.0:compile
 |  +- slingshot:slingshot:jar:0.12.2:compile
-|  +- org.ini4j:ini4j:jar:0.5.2:compile
+|  +- org.ini4j:ini4j:jar:0.5.4:compile
 |  +- org.tcrawley:dynapath:jar:0.2.5:compile
 |  \- digest:digest:jar:1.4.3:compile
-+- prismatic:plumbing:jar:0.5.5:compile
++- prismatic:plumbing:jar:0.6.0:compile
 |  \- de.kotka:lazymap:jar:3.1.0:compile
-+- org.clojure:tools.macro:jar:0.2.1:compile
-+- clj-commons:clj-yaml:jar:1.0.26:compile
-|  +- org.yaml:snakeyaml:jar:1.33:compile
-|  \- org.flatland:ordered:jar:1.5.9:compile
++- clj-commons:clj-yaml:jar:1.0.29:compile
+|  +- org.yaml:snakeyaml:jar:2.3:compile
+|  \- org.flatland:ordered:jar:1.15.12:compile
 +- prismatic:schema:jar:1.4.1:compile
 +- metosin:schema-tools:jar:0.13.1:compile
 +- threatgrid:flanders:jar:1.1.0:compile
@@ -93,7 +93,8 @@ ctia:ctia:jar:1.1.1-SNAPSHOT
 |  +- org.ring-clojure:ring-core-protocols:jar:1.15.3:compile
 |  +- org.ring-clojure:ring-websocket-protocols:jar:1.15.3:compile
 |  +- org.apache.commons:commons-fileupload2-core:jar:2.0.0-M4:compile
-|  \- crypto-random:crypto-random:jar:1.2.1:compile
+|  +- crypto-random:crypto-random:jar:1.2.1:compile
+|  \- crypto-equality:crypto-equality:jar:1.0.1:compile
 +- ring:ring-jetty-adapter:jar:1.15.3:compile
 |  +- org.ring-clojure:ring-jakarta-servlet:jar:1.15.3:compile
 |  +- org.eclipse.jetty:jetty-server:jar:12.1.0:compile
@@ -119,7 +120,6 @@ ctia:ctia:jar:1.1.1-SNAPSHOT
 +- ring-cors:ring-cors:jar:0.1.13:compile
 +- commons-codec:commons-codec:jar:1.18.0:compile
 +- ring:ring-codec:jar:1.3.0:compile
-+- crypto-equality:crypto-equality:jar:1.0.1:compile
 +- threatgrid:clj-jwt:jar:0.5.0:compile
 |  +- org.clojure:data.codec:jar:0.1.1:compile
 |  +- org.bouncycastle:bcpkix-jdk15on:jar:1.68:compile
@@ -306,8 +306,8 @@ ctia:ctia:jar:1.1.1-SNAPSHOT
 +- net.logstash.logback:logstash-logback-encoder:jar:7.4:compile
 +- ch.qos.logback:logback-classic:jar:1.5.25:compile
 +- ch.qos.logback:logback-core:jar:1.5.25:compile
-+- puppetlabs:trapperkeeper:jar:test:3.2.0:test
-+- puppetlabs:kitchensink:jar:test:3.2.0:test
++- puppetlabs:trapperkeeper:jar:test:4.0.0:test
++- puppetlabs:kitchensink:jar:test:3.4.0:test
 +- org.clojure:test.check:jar:1.1.1:test
 +- com.gfredericks:test.chuck:jar:0.2.15:test
 +- clj-http-fake:clj-http-fake:jar:1.0.3:test

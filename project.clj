@@ -12,7 +12,7 @@
 (def schema-generators-version "0.1.5")
 (def test-check-version "1.1.1")
 (def test-chuck-version "0.2.15")
-(def trapperkeeper-version "3.2.0")
+(def trapperkeeper-version "4.0.0")
 
 ;; TODO we could add -dev here when it works
 (def base-ci-profiles "+test,+ci")
@@ -81,11 +81,14 @@
                  [version-clj "2.0.1"]
 
                  ;; Trapperkeeper
-                 [puppetlabs/trapperkeeper ~trapperkeeper-version]
-                 [puppetlabs/kitchensink ~trapperkeeper-version]
-                 [prismatic/plumbing "0.5.5"] ;; upgrade puppetlabs/trapperkeeper
-                 [org.clojure/tools.macro "0.2.1"] ;; align compojure 1.7.2 > puppetlabs/trapperkeeper
-                 [clj-commons/clj-yaml "1.0.26"] ;; upgrade snakeyaml dep
+                 [puppetlabs/trapperkeeper ~trapperkeeper-version
+                  :exclusions [nrepl
+                               ch.qos.logback/logback-classic
+                               ch.qos.logback/logback-core
+                               ch.qos.logback/logback-access]]
+                 [puppetlabs/kitchensink "3.4.0"]
+                 [prismatic/plumbing "0.6.0"] ;; upgrade puppetlabs/trapperkeeper, see https://github.com/puppetlabs/trapperkeeper/issues/294
+                 [clj-commons/clj-yaml "1.0.29"] ;; bump trapperkeeper, markdown-clj
 
                  ;; Schemas
                  [prismatic/schema "1.4.1"]
@@ -114,7 +117,6 @@
                  [ring-cors "0.1.13"]
                  [commons-codec "1.18.0"] ;ring/ring* > threatgrid/ctim, threatgrid/clj-momo, clj-http
                  [ring/ring-codec "1.3.0"]
-                 [crypto-equality "1.0.1"] ;; align ring-core 1.15
                  [threatgrid/clj-jwt "0.5.0"]
                  [threatgrid/ring-turnstile-middleware "0.1.1"]
                  [threatgrid/ring-jwt-middleware "1.1.7"]
@@ -223,8 +225,12 @@
 
   :profiles {:dev {:jvm-opts ["-XX:-OmitStackTraceInFastThrow"]
                    :dependencies [[puppetlabs/trapperkeeper ~trapperkeeper-version
-                                   :classifier "test"]
-                                  [puppetlabs/kitchensink ~trapperkeeper-version
+                                   :classifier "test"
+                                   :exclusions [nrepl
+                                                ch.qos.logback/logback-classic
+                                                ch.qos.logback/logback-core
+                                                ch.qos.logback/logback-access]]
+                                  [puppetlabs/kitchensink "3.4.0"
                                    :classifier "test"]
                                   [org.clojure/test.check ~test-check-version]
                                   [com.gfredericks/test.chuck ~test-chuck-version]
