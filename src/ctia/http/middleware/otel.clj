@@ -22,16 +22,15 @@
   Falls back to GET routes for HEAD requests, matching Compojure's behavior."
   [compiled-routes request]
   (when-let [method (:request-method request)]
-    (let [method-name (name method)]
-      (or (some (fn [[compiled-path template]]
-                  (when (clout/route-matches compiled-path request)
-                    template))
-                (get compiled-routes method-name))
+    (let [method-name (name method)
+          match-route (fn [routes]
+                        (some (fn [[compiled-path template]]
+                                (when (clout/route-matches compiled-path request)
+                                  template))
+                              routes))]
+      (or (match-route (get compiled-routes method-name))
           (when (= "head" method-name)
-            (some (fn [[compiled-path template]]
-                    (when (clout/route-matches compiled-path request)
-                      template))
-                  (get compiled-routes "get")))))))
+            (match-route (get compiled-routes "get")))))))
 
 (defn wrap-otel-route
   "Wraps a handler to set the OTel http.route span attribute.
