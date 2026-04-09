@@ -4,7 +4,8 @@
   Works for all responses including those short-circuited by auth
   middleware (401s), unlike compojure.core/wrap-routes which only
   fires at leaf route handlers."
-  (:require [clout.core :as clout]
+  (:require [clojure.tools.logging :as log]
+            [clout.core :as clout]
             [steffan-westcott.clj-otel.api.trace.http :as trace-http]))
 
 (defn- compile-route-table
@@ -24,11 +25,16 @@
   [handler route-table]
   (let [compiled (compile-route-table route-table)]
     (fn [request]
-      (let [verb (name (:request-method request))]
-        (when-let [route-template
-                   (some (fn [[compiled-path template]]
-                           (when (clout/route-matches compiled-path request)
-                             template))
-                         (get compiled verb))]
-          (trace-http/add-route-data! (:request-method request) route-template)))
+      (try
+        (when-let [method (:request-method request)]
+          (let [verb (name method)]
+            (when-let [route-template
+                       (some (fn [[compiled-path template]]
+                               (when (clout/route-matches compiled-path request)
+                                 template))
+                             (get compiled verb))]
+              (trace-http/add-route-data! method route-template))))
+        (catch Exception e
+          (log/warnf e "OTel route matching failed for %s %s"
+                     (:request-method request) (:uri request))))
       (handler request))))

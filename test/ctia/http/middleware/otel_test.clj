@@ -2,29 +2,10 @@
   "Unit tests for the OTel http.route middleware."
   (:require
    [clojure.test :refer [deftest is testing]]
-   [ctia.http.middleware.otel :refer [wrap-otel-route]])
+   [ctia.http.middleware.otel :refer [wrap-otel-route]]
+   [ctia.test-helpers.otel :refer [mock-span]])
   (:import
-   [io.opentelemetry.api.common AttributeKey Attributes]
-   [io.opentelemetry.api.trace Span SpanContext StatusCode]
    [io.opentelemetry.context Scope]))
-
-(defn- mock-span
-  "Creates a Span that captures setAttribute calls into the given atom."
-  [captured-atom]
-  (reify Span
-    (^Span setAttribute [this ^AttributeKey key value]
-      (swap! captured-atom assoc (.getKey key) value)
-      this)
-    (^Span addEvent [this ^String _name] this)
-    (^Span addEvent [this ^String _name ^Attributes _attrs] this)
-    (^Span setStatus [this ^StatusCode _code] this)
-    (^Span setStatus [this ^StatusCode _code ^String _desc] this)
-    (^Span recordException [this ^Throwable _ex] this)
-    (^Span recordException [this ^Throwable _ex ^Attributes _attrs] this)
-    (^Span updateName [this ^String _name] this)
-    (end [_this])
-    (^SpanContext getSpanContext [_this] (SpanContext/getInvalid))
-    (^boolean isRecording [_this] true)))
 
 (def ^:private sample-route-table
   ;; Exact paths before parameterized ones, matching compojure-api ordering.
@@ -33,6 +14,7 @@
    ["/ctia/indicator/:id" :put]
    ["/ctia/indicator/:id" :delete]
    ["/ctia/sighting/:id" :get]
+   ["/ctia/entity/:id/sub/:sub-id" :get]
    ["/ctia/version" :get]])
 
 (defn- ok-handler [_request] {:status 200})
@@ -108,5 +90,32 @@
                                :uri "/ctia/version"})]
         (testing "handler response is passed through"
           (is (= 418 (:status response)))))
+      (finally
+        (.close scope)))))
+
+(deftest wrap-otel-route-matches-multi-param-path
+  (let [captured (atom {})
+        span (mock-span captured)
+        ^Scope scope (.makeCurrent span)
+        handler (wrap-otel-route ok-handler sample-route-table)]
+    (try
+      (handler {:request-method :get
+                :uri "/ctia/entity/ent-1/sub/sub-2"})
+      (is (= "/ctia/entity/:id/sub/:sub-id" (get @captured "http.route")))
+      (finally
+        (.close scope)))))
+
+(deftest wrap-otel-route-propagates-handler-exception
+  (let [captured (atom {})
+        span (mock-span captured)
+        ^Scope scope (.makeCurrent span)
+        handler (wrap-otel-route (fn [_] (throw (ex-info "boom" {})))
+                                 sample-route-table)]
+    (try
+      (testing "http.route is set before handler throws"
+        (is (thrown-with-msg? clojure.lang.ExceptionInfo #"boom"
+              (handler {:request-method :get
+                        :uri "/ctia/indicator/indicator-123"})))
+        (is (= "/ctia/indicator/:id" (get @captured "http.route"))))
       (finally
         (.close scope)))))
