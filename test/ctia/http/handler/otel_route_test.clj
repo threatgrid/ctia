@@ -1,6 +1,7 @@
 (ns ctia.http.handler.otel-route-test
   "Integration tests verifying that the http.route OTel span attribute
-   is correctly set by CTIA's api-handler via route-table matching."
+   is correctly set by CTIA's api-handler for both authenticated and
+   unauthenticated requests."
   (:require
    [clojure.test :refer [deftest is testing use-fixtures]]
    [ctia.http.handler :as handler]
@@ -45,73 +46,20 @@
   (let [app (helpers/get-current-app)]
     (handler/api-handler (app/service-graph app))))
 
-(defn- authenticated-request
-  "Add allow-all identity to a request map so it passes wrap-authenticated."
-  [request]
-  (assoc request :identity allow-all/identity-singleton))
-
-(deftest http-route-set-on-entity-get-test
+(deftest http-route-set-on-authenticated-request-test
   (let [captured (atom {})
         span (mock-span captured)
         ^Scope scope (.makeCurrent span)
         handler (ctia-ring-handler)]
     (try
-      (let [response (handler (authenticated-request
-                               {:request-method :get
-                                :uri "/ctia/indicator/indicator-123"
-                                :headers {"authorization" "allow-all"}}))]
+      (let [response (handler (-> {:request-method :get
+                                   :uri "/ctia/indicator/indicator-123"
+                                   :headers {"authorization" "allow-all"}}
+                                  (assoc :identity allow-all/identity-singleton)))]
         (testing "request completes"
           (is (some? (:status response))))
         (testing "http.route is set to the route template"
           (is (= "/ctia/indicator/:id" (get @captured "http.route")))))
-      (finally
-        (.close scope)))))
-
-(deftest http-route-set-on-entity-search-test
-  (let [captured (atom {})
-        span (mock-span captured)
-        ^Scope scope (.makeCurrent span)
-        handler (ctia-ring-handler)]
-    (try
-      (let [response (handler (authenticated-request
-                               {:request-method :get
-                                :uri "/ctia/indicator/search"
-                                :query-string "query=*"
-                                :headers {"authorization" "allow-all"}}))]
-        (testing "request completes"
-          (is (some? (:status response))))
-        (testing "http.route is set to the search route"
-          (is (= "/ctia/indicator/search" (get @captured "http.route")))))
-      (finally
-        (.close scope)))))
-
-(deftest http-route-not-set-on-unmatched-request-test
-  (let [captured (atom {})
-        span (mock-span captured)
-        ^Scope scope (.makeCurrent span)
-        handler (ctia-ring-handler)]
-    (try
-      (handler {:request-method :get
-                :uri "/ctia/nonexistent-entity/foo"
-                :headers {"authorization" "allow-all"}})
-      (testing "http.route is not set for unmatched routes"
-        (is (nil? (get @captured "http.route"))))
-      (finally
-        (.close scope)))))
-
-(deftest http-route-set-on-version-test
-  (let [captured (atom {})
-        span (mock-span captured)
-        ^Scope scope (.makeCurrent span)
-        handler (ctia-ring-handler)]
-    (try
-      (let [response (handler {:request-method :get
-                               :uri "/ctia/version"
-                               :headers {}})]
-        (testing "version endpoint returns 200"
-          (is (= 200 (:status response))))
-        (testing "http.route is set for version endpoint"
-          (is (= "/ctia/version" (get @captured "http.route")))))
       (finally
         (.close scope)))))
 

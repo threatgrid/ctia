@@ -8,7 +8,6 @@
             [ctia.lib.compojure.api.core :refer [context middleware routes undocumented]]
             [compojure.api.api :refer [api]]
             [compojure.api.routes :as api-routes]
-            [clout.core :as clout]
             [compojure.route :as rt]
             [ctia.bundle.routes :refer [bundle-routes]]
             [ctia.bulk.routes :refer [bulk-routes]]
@@ -17,6 +16,7 @@
                                          graphql-routes]]
             [ctia.http.exceptions :as ex]
             [ctia.http.middleware
+             [otel :refer [wrap-otel-route]]
              [ratelimit :refer [wrap-rate-limit]]
              [auth :refer [wrap-authenticated]]
              [cache-control :refer [wrap-cache-control]]
@@ -34,8 +34,7 @@
             [ring.util.http-response :refer [ok]]
             [schema.core :as s]
             [compojure.api.middleware :refer [->mime-types api-middleware-defaults]]
-            [ring.middleware.format-response :refer [make-encoder]]
-            [steffan-westcott.clj-otel.api.trace.http :as trace-http]))
+            [ring.middleware.format-response :refer [make-encoder]]))
 
 (def api-description
   "A Threat Intelligence API service
@@ -212,32 +211,6 @@
   []
   {:formats (conj default-formats (make-text-plain-format-encoder))})
 
-(defn- match-route?
-  "Check if a compiled route matches the request method and URI."
-  [[compiled-path _ verb] request]
-  (and (= (name (:request-method request)) verb)
-       (some? (clout/route-matches compiled-path request))))
-
-(defn- compile-route-table
-  "Compile a route table (from compojure-api's get-routes) into a vector
-  of [compiled-path template verb] tuples for efficient matching."
-  [route-table]
-  (mapv (fn [[path method]]
-          [(clout/route-compile path) path (name method)])
-        route-table))
-
-(defn- wrap-otel-route
-  "Wraps a handler to set the OTel http.route span attribute by matching
-  the request URI against a pre-compiled route table.  Works for all
-  responses including those short-circuited by auth middleware (401s)."
-  [handler compiled-routes]
-  (fn [request]
-    (when-let [[_ route-template _]
-               (first (filter #(match-route? % request)
-                              compiled-routes))]
-      (trace-http/add-route-data! (:request-method request) route-template))
-    (handler request)))
-
 (s/defn api-handler [{{:keys [get-in-config]} :ConfigService
                       :as services} :- APIHandlerServices]
   (let [{:keys [oauth2]}
@@ -319,6 +292,4 @@
             (rt/not-found (ok (unk/err-html)))))]
     ;; Wrap with OTel http.route outside the api form so route matching
     ;; works for ALL responses, including 401s from wrap-authenticated.
-    ;; We extract routes from the api form (a Route record) before wrapping.
-    (wrap-otel-route api-form
-                     (compile-route-table (api-routes/get-routes api-form)))))
+    (wrap-otel-route api-form (api-routes/get-routes api-form))))
