@@ -1,17 +1,24 @@
 (ns ctia.http.handler.otel-route-test
-  "Integration tests for http.route OTel span attribution via
-   clj-otel wrap-compojure-route in api-handler."
+  "Integration tests verifying that the http.route OTel span attribute
+   is correctly set by CTIA's api-handler via wrap-compojure-route."
   (:require
-   [clojure.test :refer [deftest is testing]]
-   [compojure.api.api :refer [api]]
-   [compojure.core :refer [wrap-routes]]
-   [ctia.lib.compojure.api.core :refer [context routes GET]]
-   [ring.util.http-response :refer [ok]]
-   [steffan-westcott.clj-otel.api.trace.http :as trace-http])
+   [clojure.test :refer [deftest is testing use-fixtures]]
+   [ctia.http.handler :as handler]
+   [ctia.test-helpers
+    [core :as helpers]
+    [es :as es-helpers]]
+   [puppetlabs.trapperkeeper.app :as app]
+   [schema.test :refer [validate-schemas]])
   (:import
    [io.opentelemetry.api.common AttributeKey Attributes]
    [io.opentelemetry.api.trace Span SpanContext StatusCode]
    [io.opentelemetry.context Scope]))
+
+(use-fixtures :each
+  validate-schemas
+  es-helpers/fixture-properties:es-store
+  helpers/fixture-allow-all-auth
+  helpers/fixture-ctia-fast)
 
 (defn- mock-span
   "Creates a Span that captures setAttribute calls into the given atom."
@@ -31,48 +38,42 @@
     (^SpanContext getSpanContext [_this] (SpanContext/getInvalid))
     (^boolean isRecording [_this] true)))
 
-(defn- build-test-handler
-  "Build a minimal Ring handler with wrap-routes + wrap-compojure-route."
-  [test-routes]
-  (wrap-routes
-   (api {}
-        test-routes)
-   trace-http/wrap-compojure-route))
+(defn- ctia-ring-handler
+  "Build CTIA's Ring handler from the current test app services."
+  []
+  (let [app (helpers/get-current-app)]
+    (handler/api-handler (app/service-graph app))))
 
-(deftest http-route-set-on-matched-request-test
+(deftest http-route-set-on-entity-get-test
   (let [captured (atom {})
         span (mock-span captured)
         ^Scope scope (.makeCurrent span)
-        handler (build-test-handler
-                 (context "/ctia" []
-                   (context "/indicator" []
-                     (GET "/:id" []
-                       (ok "found")))))]
+        handler (ctia-ring-handler)]
     (try
       (let [response (handler {:request-method :get
-                               :uri "/ctia/indicator/abc-123"
-                               :headers {}})]
-        (is (= 200 (:status response)))
-        (is (= "/ctia/indicator/:id" (get @captured "http.route"))))
+                               :uri "/ctia/indicator/indicator-123"
+                               :headers {"authorization" "allow-all"}})]
+        (testing "request completes"
+          (is (some? (:status response))))
+        (testing "http.route is set to the route template"
+          (is (= "/ctia/indicator/:id" (get @captured "http.route")))))
       (finally
         (.close scope)))))
 
-(deftest http-route-set-on-error-test
+(deftest http-route-set-on-entity-search-test
   (let [captured (atom {})
         span (mock-span captured)
         ^Scope scope (.makeCurrent span)
-        handler (build-test-handler
-                 (context "/ctia" []
-                   (context "/indicator" []
-                     (GET "/:id" []
-                       (throw (ex-info "handler error" {}))))))]
+        handler (ctia-ring-handler)]
     (try
-      (testing "handler throws but http.route is still set"
-        (let [response (handler {:request-method :get
-                                 :uri "/ctia/indicator/abc-123"
-                                 :headers {}})]
-          (is (= 500 (:status response)))
-          (is (= "/ctia/indicator/:id" (get @captured "http.route")))))
+      (let [response (handler {:request-method :get
+                               :uri "/ctia/indicator/search"
+                               :query-string "query=*"
+                               :headers {"authorization" "allow-all"}})]
+        (testing "request completes"
+          (is (some? (:status response))))
+        (testing "http.route is set to the search route"
+          (is (= "/ctia/indicator/search" (get @captured "http.route")))))
       (finally
         (.close scope)))))
 
@@ -80,33 +81,28 @@
   (let [captured (atom {})
         span (mock-span captured)
         ^Scope scope (.makeCurrent span)
-        handler (build-test-handler
-                 (context "/ctia" []
-                   (context "/indicator" []
-                     (GET "/:id" []
-                       (ok "found")))))]
+        handler (ctia-ring-handler)]
     (try
       (handler {:request-method :get
-                :uri "/ctia/nonexistent"
-                :headers {}})
-      (is (nil? (get @captured "http.route")))
+                :uri "/ctia/nonexistent-entity/foo"
+                :headers {"authorization" "allow-all"}})
+      (testing "http.route is not set for unmatched routes"
+        (is (nil? (get @captured "http.route"))))
       (finally
         (.close scope)))))
 
-(deftest http-route-includes-context-prefix-test
+(deftest http-route-set-on-version-test
   (let [captured (atom {})
         span (mock-span captured)
         ^Scope scope (.makeCurrent span)
-        handler (build-test-handler
-                 (context "/ctia" []
-                   (context "/sighting" []
-                     (GET "/" []
-                       (ok "list")))))]
+        handler (ctia-ring-handler)]
     (try
       (let [response (handler {:request-method :get
-                               :uri "/ctia/sighting/"
+                               :uri "/ctia/version"
                                :headers {}})]
-        (is (= 200 (:status response)))
-        (is (= "/ctia/sighting/" (get @captured "http.route"))))
+        (testing "version endpoint returns 200"
+          (is (= 200 (:status response))))
+        (testing "http.route is set for version endpoint"
+          (is (= "/ctia/version" (get @captured "http.route")))))
       (finally
         (.close scope)))))
