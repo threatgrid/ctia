@@ -12,12 +12,19 @@
   "Compile a route table (from compojure-api's get-routes) into a map
   of HTTP verb to vector of [compiled-path template] tuples."
   [route-table]
-  (->> route-table
-       (map (fn [[path method]]
-              [(name method) [(clout/route-compile path) path]]))
-       (reduce (fn [m [verb entry]]
-                 (update m verb (fnil conj []) entry))
-               {})))
+  (-> (group-by (fn [[_ method]] (name method)) route-table)
+      (update-vals (fn [entries]
+                     (mapv (fn [[path _]] [(clout/route-compile path) path])
+                           entries)))))
+
+(defn- find-route-template
+  "Return the route template matching `request`, or nil if none matches."
+  [compiled-routes request]
+  (when-let [method (:request-method request)]
+    (some (fn [[compiled-path template]]
+            (when (clout/route-matches compiled-path request)
+              template))
+          (get compiled-routes (name method)))))
 
 (defn wrap-otel-route
   "Wraps a handler to set the OTel http.route span attribute.
@@ -26,14 +33,8 @@
   (let [compiled (compile-route-table route-table)]
     (fn [request]
       (try
-        (when-let [method (:request-method request)]
-          (let [verb (name method)]
-            (when-let [route-template
-                       (some (fn [[compiled-path template]]
-                               (when (clout/route-matches compiled-path request)
-                                 template))
-                             (get compiled verb))]
-              (trace-http/add-route-data! method route-template))))
+        (when-let [route-template (find-route-template compiled request)]
+          (trace-http/add-route-data! (:request-method request) route-template))
         (catch Exception e
           (log/warnf e "OTel route matching failed for %s %s"
                      (:request-method request) (:uri request))))

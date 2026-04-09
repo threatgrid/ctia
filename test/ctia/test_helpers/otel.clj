@@ -21,3 +21,15 @@
     (end [_this])
     (^SpanContext getSpanContext [_this] (SpanContext/getInvalid))
     (^boolean isRecording [_this] true)))
+
+(defmacro with-mock-span
+  "Binds `captured-sym` to an atom that collects setAttribute calls from a
+  mock span installed as the current span for the duration of `body`."
+  [captured-sym & body]
+  `(let [~captured-sym (atom {})
+         span# (mock-span ~captured-sym)
+         scope# (.makeCurrent span#)]
+     (try
+       ~@body
+       (finally
+         (.close scope#)))))
