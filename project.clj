@@ -75,7 +75,7 @@
                  [org.clojure/core.async "1.5.648"]
                  [org.clojure/core.memoize "1.0.257"]
                  [org.clojure/tools.logging "1.3.0"]
-                 [org.clojure/tools.cli "1.0.194"]
+                 [org.clojure/tools.cli "1.0.206"] ;; align puppetlabs/kitchensink
                  [pandect "0.6.1"]
                  [org.clojure/math.combinatorics "0.3.0"]
                  [version-clj "2.0.1"]
@@ -88,6 +88,7 @@
                                ch.qos.logback/logback-access]]
                  [puppetlabs/kitchensink "3.4.0"]
                  [prismatic/plumbing "0.6.0"] ;; upgrade puppetlabs/trapperkeeper, see https://github.com/puppetlabs/trapperkeeper/issues/294
+                 [org.clojure/tools.macro "0.2.1"] ;; align compojure 1.7.2 > puppetlabs/trapperkeeper
                  [clj-commons/clj-yaml "1.0.29"] ;; bump trapperkeeper, markdown-clj
 
                  ;; Schemas
