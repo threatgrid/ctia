@@ -8,7 +8,7 @@
             [ctia.lib.compojure.api.core :refer [context middleware routes undocumented]]
             [compojure.api.api :refer [api]]
             [compojure.api.routes :as api-routes]
-            [compojure.core :refer [wrap-routes]]
+            [clout.core :as clout]
             [compojure.route :as rt]
             [ctia.bundle.routes :refer [bundle-routes]]
             [ctia.bulk.routes :refer [bulk-routes]]
@@ -212,6 +212,32 @@
   []
   {:formats (conj default-formats (make-text-plain-format-encoder))})
 
+(defn- match-route?
+  "Check if a compiled route matches the request method and URI."
+  [[compiled-path _ verb] request]
+  (and (= (name (:request-method request)) verb)
+       (some? (clout/route-matches compiled-path request))))
+
+(defn- compile-route-table
+  "Compile a route table (from compojure-api's get-routes) into a vector
+  of [compiled-path template verb] tuples for efficient matching."
+  [route-table]
+  (mapv (fn [[path method]]
+          [(clout/route-compile path) path (name method)])
+        route-table))
+
+(defn- wrap-otel-route
+  "Wraps a handler to set the OTel http.route span attribute by matching
+  the request URI against a pre-compiled route table.  Works for all
+  responses including those short-circuited by auth middleware (401s)."
+  [handler compiled-routes]
+  (fn [request]
+    (when-let [[_ route-template _]
+               (first (filter #(match-route? % request)
+                              compiled-routes))]
+      (trace-http/add-route-data! (:request-method request) route-template))
+    (handler request)))
+
 (s/defn api-handler [{{:keys [get-in-config]} :ConfigService
                       :as services} :- APIHandlerServices]
   (let [{:keys [oauth2]}
@@ -224,71 +250,75 @@
                                           wrap-cache-control])
           true (concat [#(wrap-version % get-in-config)
                         ;; always last
-                        (metrics/wrap-metrics "ctia" api-routes/get-routes)]))]
-    (wrap-routes
-     (api {:exceptions {:handlers exception-handlers}
-             :format (->format-options)
-             :swagger
-             (cond-> {:ui "/"
-                      :spec "/swagger.json"
-                      :options {:ui {:jwtLocalStorageKey
-                                     (get-in-config
-                                       [:ctia :http :jwt :local-storage-key])}}
-                      :data {:info {:title "CTIA"
-                                    :version (string/replace (current-version) #"\n" "")
-                                    :license {:name "All Rights Reserved",
-                                              :url ""}
-                                    :contact {:name "Cisco Security Business Group -- Advanced Threat "
-                                              :url "http://github.com/threatgrid/ctia"
-                                              :email "cisco-intel-api-support@cisco.com"}
-                                    :description api-description}
-                             ;; consumes and produces are set to the default values
-                             ;; to remove text/plain which is automatically set
-                             ;; from the `formats` property by `compojure.api.middleware/api-middleware`
-                             :consumes swagger-mime-types
-                             :produces swagger-mime-types
-                             :security [{"JWT" []}]
-                             :securityDefinitions
-                             {"JWT" {:type "apiKey"
-                                     :in "header"
-                                     :name "Authorization"
-                                     :description "Ex: Bearer \\<token\\>"}}
-                             :tags (api-tags services)}}
-               (:enabled oauth2)
-               (apply-oauth2-swagger-conf
-                oauth2))}
+                        (metrics/wrap-metrics "ctia" api-routes/get-routes)]))
+        api-form
+    (api {:exceptions {:handlers exception-handlers}
+            :format (->format-options)
+            :swagger
+            (cond-> {:ui "/"
+                     :spec "/swagger.json"
+                     :options {:ui {:jwtLocalStorageKey
+                                    (get-in-config
+                                      [:ctia :http :jwt :local-storage-key])}}
+                     :data {:info {:title "CTIA"
+                                   :version (string/replace (current-version) #"\n" "")
+                                   :license {:name "All Rights Reserved",
+                                             :url ""}
+                                   :contact {:name "Cisco Security Business Group -- Advanced Threat "
+                                             :url "http://github.com/threatgrid/ctia"
+                                             :email "cisco-intel-api-support@cisco.com"}
+                                   :description api-description}
+                            ;; consumes and produces are set to the default values
+                            ;; to remove text/plain which is automatically set
+                            ;; from the `formats` property by `compojure.api.middleware/api-middleware`
+                            :consumes swagger-mime-types
+                            :produces swagger-mime-types
+                            :security [{"JWT" []}]
+                            :securityDefinitions
+                            {"JWT" {:type "apiKey"
+                                    :in "header"
+                                    :name "Authorization"
+                                    :description "Ex: Bearer \\<token\\>"}}
+                            :tags (api-tags services)}}
+              (:enabled oauth2)
+              (apply-oauth2-swagger-conf
+               oauth2))}
 
-            (middleware middlewares
-              (documentation-routes)
-              (graphql-ui-routes services)
-              (context
-                  "/ctia" []
-                (context "/feed" []
-                  :tags ["Feed"]
-                  (feed-view-routes services))
-                ;; The order is important here for version-routes
-                ;; must be before the middleware fn
-                (version-routes services)
-                (middleware [wrap-authenticated]
-                  (->>
-                   (entities/all-entities)
-                   vals
-                   (map (partial mark-disabled-entities services))
-                   (entities-routes services))
-                  (status-routes)
-                  (context
-                      "/bulk" []
-                    :tags ["Bulk"]
-                    (bulk-routes services))
-                  (context
-                      "/incident" []
-                    :tags ["Incident"]
-                    (incident-link-route services))
-                  (bundle-routes services)
-                  (observable-routes services)
-                  (metrics-routes)
-                  (properties-routes services)
-                  (graphql-routes services))))
-            (undocumented
-             (rt/not-found (ok (unk/err-html)))))
-     trace-http/wrap-compojure-route)))
+           (middleware middlewares
+             (documentation-routes)
+             (graphql-ui-routes services)
+             (context
+                 "/ctia" []
+               (context "/feed" []
+                 :tags ["Feed"]
+                 (feed-view-routes services))
+               ;; The order is important here for version-routes
+               ;; must be before the middleware fn
+               (version-routes services)
+               (middleware [wrap-authenticated]
+                 (->>
+                  (entities/all-entities)
+                  vals
+                  (map (partial mark-disabled-entities services))
+                  (entities-routes services))
+                 (status-routes)
+                 (context
+                     "/bulk" []
+                   :tags ["Bulk"]
+                   (bulk-routes services))
+                 (context
+                     "/incident" []
+                   :tags ["Incident"]
+                   (incident-link-route services))
+                 (bundle-routes services)
+                 (observable-routes services)
+                 (metrics-routes)
+                 (properties-routes services)
+                 (graphql-routes services))))
+           (undocumented
+            (rt/not-found (ok (unk/err-html)))))]
+    ;; Wrap with OTel http.route outside the api form so route matching
+    ;; works for ALL responses, including 401s from wrap-authenticated.
+    ;; We extract routes from the api form (a Route record) before wrapping.
+    (wrap-otel-route api-form
+                     (compile-route-table (api-routes/get-routes api-form)))))

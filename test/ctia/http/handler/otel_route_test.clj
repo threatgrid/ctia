@@ -1,12 +1,13 @@
 (ns ctia.http.handler.otel-route-test
   "Integration tests verifying that the http.route OTel span attribute
-   is correctly set by CTIA's api-handler via wrap-compojure-route."
+   is correctly set by CTIA's api-handler via route-table matching."
   (:require
    [clojure.test :refer [deftest is testing use-fixtures]]
    [ctia.http.handler :as handler]
    [ctia.test-helpers
     [core :as helpers]
     [es :as es-helpers]]
+   [ctia.auth.allow-all :as allow-all]
    [puppetlabs.trapperkeeper.app :as app]
    [schema.test :refer [validate-schemas]])
   (:import
@@ -44,15 +45,21 @@
   (let [app (helpers/get-current-app)]
     (handler/api-handler (app/service-graph app))))
 
+(defn- authenticated-request
+  "Add allow-all identity to a request map so it passes wrap-authenticated."
+  [request]
+  (assoc request :identity allow-all/identity-singleton))
+
 (deftest http-route-set-on-entity-get-test
   (let [captured (atom {})
         span (mock-span captured)
         ^Scope scope (.makeCurrent span)
         handler (ctia-ring-handler)]
     (try
-      (let [response (handler {:request-method :get
-                               :uri "/ctia/indicator/indicator-123"
-                               :headers {"authorization" "allow-all"}})]
+      (let [response (handler (authenticated-request
+                               {:request-method :get
+                                :uri "/ctia/indicator/indicator-123"
+                                :headers {"authorization" "allow-all"}}))]
         (testing "request completes"
           (is (some? (:status response))))
         (testing "http.route is set to the route template"
@@ -66,10 +73,11 @@
         ^Scope scope (.makeCurrent span)
         handler (ctia-ring-handler)]
     (try
-      (let [response (handler {:request-method :get
-                               :uri "/ctia/indicator/search"
-                               :query-string "query=*"
-                               :headers {"authorization" "allow-all"}})]
+      (let [response (handler (authenticated-request
+                               {:request-method :get
+                                :uri "/ctia/indicator/search"
+                                :query-string "query=*"
+                                :headers {"authorization" "allow-all"}}))]
         (testing "request completes"
           (is (some? (:status response))))
         (testing "http.route is set to the search route"
@@ -104,5 +112,21 @@
           (is (= 200 (:status response))))
         (testing "http.route is set for version endpoint"
           (is (= "/ctia/version" (get @captured "http.route")))))
+      (finally
+        (.close scope)))))
+
+(deftest http-route-set-on-unauthenticated-request-test
+  (let [captured (atom {})
+        span (mock-span captured)
+        ^Scope scope (.makeCurrent span)
+        handler (ctia-ring-handler)]
+    (try
+      (let [response (handler {:request-method :get
+                               :uri "/ctia/indicator/indicator-123"
+                               :headers {}})]
+        (testing "unauthenticated request returns 401"
+          (is (= 401 (:status response))))
+        (testing "http.route is still set even for 401 responses"
+          (is (= "/ctia/indicator/:id" (get @captured "http.route")))))
       (finally
         (.close scope)))))
