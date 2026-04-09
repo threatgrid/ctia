@@ -68,6 +68,13 @@
                 :uri "/ctia/entity/ent-1/sub/sub-2"})
       (is (= "/ctia/entity/:id/sub/:sub-id" (get @captured "http.route"))))))
 
+(deftest wrap-otel-route-head-falls-back-to-get
+  (with-mock-span captured
+    (let [handler (wrap-otel-route ok-handler sample-route-table)]
+      (handler {:request-method :head
+                :uri "/ctia/indicator/indicator-123"})
+      (is (= "/ctia/indicator/:id" (get @captured "http.route"))))))
+
 (deftest wrap-otel-route-propagates-handler-exception
   (with-mock-span captured
     (let [handler (wrap-otel-route (fn [_] (throw (ex-info "boom" {})))

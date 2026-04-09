@@ -6,6 +6,7 @@
   fires at leaf route handlers."
   (:require [clojure.tools.logging :as log]
             [clout.core :as clout]
+            [compojure.api.routes :as routes]
             [steffan-westcott.clj-otel.api.trace.http :as trace-http]))
 
 (defn compile-route-table
@@ -18,24 +19,38 @@
                            entries)))))
 
 (defn find-route-template
-  "Return the route template matching `request`, or nil if none matches."
+  "Return the route template matching `request`, or nil if none matches.
+  Falls back to GET routes for HEAD requests, matching Compojure's behavior."
   [compiled-routes request]
   (when-let [method (:request-method request)]
-    (some (fn [[compiled-path template]]
-            (when (clout/route-matches compiled-path request)
-              template))
-          (get compiled-routes (name method)))))
+    (let [method-name (name method)]
+      (or (some (fn [[compiled-path template]]
+                  (when (clout/route-matches compiled-path request)
+                    template))
+                (get compiled-routes method-name))
+          (when (= "head" method-name)
+            (some (fn [[compiled-path template]]
+                    (when (clout/route-matches compiled-path request)
+                      template))
+                  (get compiled-routes "get")))))))
 
 (defn wrap-otel-route
   "Wraps a handler to set the OTel http.route span attribute.
-  `route-table` is the result of compojure.api.routes/get-routes."
+  `route-table` is the result of compojure.api.routes/get-routes.
+  Preserves the Routing protocol so callers can still introspect routes."
   [handler route-table]
-  (let [compiled (compile-route-table route-table)]
-    (fn [request]
-      (try
-        (when-let [route-template (find-route-template compiled request)]
-          (trace-http/add-route-data! (:request-method request) route-template))
-        (catch Exception e
-          (log/warnf e "OTel route matching failed for %s %s"
-                     (:request-method request) (:uri request))))
-      (handler request))))
+  (let [compiled (compile-route-table route-table)
+        handle (fn [request]
+                 (try
+                   (when-let [route-template (find-route-template compiled request)]
+                     (trace-http/add-route-data! (:request-method request) route-template))
+                   (catch Exception e
+                     (log/warnf e "OTel route matching failed for %s %s"
+                                (:request-method request) (:uri request))))
+                 (handler request))]
+    (reify
+      clojure.lang.IFn
+      (invoke [_ request] (handle request))
+      (applyTo [_ args] (clojure.lang.AFn/applyToHelper handle args))
+      routes/Routing
+      (-get-routes [_ options] (routes/-get-routes handler options)))))
