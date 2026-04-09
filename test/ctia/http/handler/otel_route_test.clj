@@ -4,7 +4,9 @@
    unauthenticated requests."
   (:require
    [clojure.test :refer [deftest is testing use-fixtures]]
+   [compojure.api.routes :as api-routes]
    [ctia.http.handler :as handler]
+   [ctia.http.middleware.otel :as otel]
    [ctia.test-helpers
     [core :as helpers]
     [es :as es-helpers]
@@ -20,10 +22,11 @@
   helpers/fixture-ctia-fast)
 
 (defn ctia-ring-handler
-  "Build CTIA's Ring handler from the current test app services."
+  "Build CTIA's Ring handler with OTel wrapping, mirroring server.clj."
   []
-  (let [app (helpers/get-current-app)]
-    (handler/api-handler (app/service-graph app))))
+  (let [app (helpers/get-current-app)
+        api-handler (handler/api-handler (app/service-graph app))]
+    (otel/wrap-otel-route api-handler (api-routes/get-routes api-handler))))
 
 (deftest http-route-set-on-authenticated-request-test
   (with-mock-span captured
