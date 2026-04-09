@@ -865,6 +865,22 @@
           <artifactId>log4j</artifactId>
           <groupId>log4j</groupId>
         </exclusion>
+        <exclusion>
+          <artifactId>tools.reader</artifactId>
+          <groupId>org.clojure</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>tools.namespace</artifactId>
+          <groupId>org.clojure</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>java.classpath</artifactId>
+          <groupId>org.clojure</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>hiccup</artifactId>
+          <groupId>hiccup</groupId>
+        </exclusion>
       </exclusions>
     </dependency>
     <dependency>
