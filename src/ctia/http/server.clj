@@ -6,6 +6,8 @@
             [ctia.auth.jwt :as auth-jwt]
             [ctia.http.handler :as handler]
             [ctia.http.middleware.auth :as auth]
+            [ctia.http.middleware.otel :as otel]
+            [compojure.api.routes :as api-routes]
             [ctia.schemas.core :refer [APIHandlerServices]]
             [ring-jwt-middleware.core :as rjwt]
             [ring.adapter.jetty :as jetty]
@@ -177,7 +179,9 @@
     :as services} :- APIHandlerServices]
   (doto
       (jetty/run-jetty
-       (cond-> (handler/api-handler services)
+       (let [api-handler (handler/api-handler services)]
+         (cond-> (otel/wrap-otel-route api-handler
+                                       (api-routes/get-routes api-handler))
 
          ;; After compojure api middleawares
          true wrap-txt-accept-header
@@ -285,7 +289,7 @@
 
          true wrap-params
 
-         dev-reload wrap-reload)
+         dev-reload wrap-reload))
        {:port port
         :min-threads min-threads
         :max-threads max-threads
