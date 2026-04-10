@@ -10,9 +10,11 @@
 
 (defn compile-route-table
   "Compile a route table (from compojure-api's get-routes) into a map
-  of HTTP verb to vector of [compiled-path template] tuples."
+  of HTTP verb (or :any for nil-method ANY routes) to vector of
+  [compiled-path template] tuples."
   [route-table]
-  (-> (group-by (fn [[_ method]] (name method)) route-table)
+  (-> (filter (fn [[path]] (and path (not= "*" path))) route-table)
+      (->> (group-by (fn [[_ method]] (if method (name method) :any))))
       (update-vals (fn [entries]
                      (mapv (fn [[path _]] [(clout/route-compile path) path])
                            entries)))))
@@ -40,7 +42,8 @@
                               routes))]
       (or (match-route (get compiled-routes method-name))
           (when (= "head" method-name)
-            (match-route (get compiled-routes "get")))))))
+            (match-route (get compiled-routes "get")))
+          (match-route (get compiled-routes :any))))))
 
 (defn wrap-otel-route
   "Wraps a handler to set the OTel http.route span attribute.

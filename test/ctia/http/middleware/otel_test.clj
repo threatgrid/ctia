@@ -13,7 +13,8 @@
    ["/ctia/indicator/:id" :delete]
    ["/ctia/sighting/:id" :get]
    ["/ctia/entity/:id/sub/:sub-id" :get]
-   ["/ctia/version" :get]])
+   ["/ctia/version" :get]
+   ["/ctia/proxy/*" nil]])
 
 (defn ok-handler [_request] {:status 200})
 
@@ -124,3 +125,40 @@
            (find-route-template compiled
                                 {:request-method :get
                                  :uri "/ctia/entity/ent-1/sub/sub-2/"})))))
+
+;; --- ANY route tests ---
+
+(deftest compile-route-table-groups-any-routes
+  (let [compiled (compile-route-table sample-route-table)]
+    (is (seq (get compiled :any))
+        "nil-method routes are grouped under :any")))
+
+(deftest any-route-matches-get
+  (with-mock-span captured
+    (let [handler (make-handler)]
+      (handler {:request-method :get
+                :uri "/ctia/proxy/foo/bar"})
+      (is (= "/ctia/proxy/*" (get @captured "http.route"))))))
+
+(deftest any-route-matches-post
+  (with-mock-span captured
+    (let [handler (make-handler)]
+      (handler {:request-method :post
+                :uri "/ctia/proxy/foo/bar"})
+      (is (= "/ctia/proxy/*" (get @captured "http.route"))))))
+
+(deftest any-route-matches-delete
+  (with-mock-span captured
+    (let [handler (make-handler)]
+      (handler {:request-method :delete
+                :uri "/ctia/proxy/foo/bar"})
+      (is (= "/ctia/proxy/*" (get @captured "http.route"))))))
+
+(deftest specific-method-takes-priority-over-any
+  (let [compiled (compile-route-table (conj sample-route-table
+                                            ["/ctia/indicator/:id" nil]))]
+    (is (= "/ctia/indicator/:id"
+           (find-route-template compiled
+                                {:request-method :get
+                                 :uri "/ctia/indicator/indicator-123"}))
+        "GET-specific route wins over ANY")))
