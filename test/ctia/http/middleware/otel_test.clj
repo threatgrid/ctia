@@ -2,7 +2,8 @@
   "Unit tests for the OTel http.route middleware."
   (:require
    [clojure.test :refer [deftest is testing]]
-   [ctia.http.middleware.otel :refer [wrap-otel-route]]
+   [ctia.http.middleware.otel :refer [->path compile-route-table
+                                         find-route-template wrap-otel-route]]
    [ctia.test-helpers.otel :refer [with-mock-span]]))
 
 (def ^:private sample-route-table
@@ -86,3 +87,40 @@
               (handler {:request-method :get
                         :uri "/ctia/indicator/indicator-123"})))
         (is (= "/ctia/indicator/:id" (get @captured "http.route")))))))
+
+;; --- ->path unit tests ---
+
+(deftest ->path-strips-trailing-slash
+  (is (= "/things" (->path "/things/"))))
+
+(deftest ->path-preserves-root
+  (is (= "/" (->path "/"))))
+
+(deftest ->path-preserves-no-trailing-slash
+  (is (= "/items/:id" (->path "/items/:id"))))
+
+(deftest ->path-handles-nil
+  (is (nil? (->path nil))))
+
+;; --- find-route-template trailing-slash tests ---
+
+(deftest find-route-template-trailing-slash-exact
+  (let [compiled (compile-route-table sample-route-table)]
+    (is (= "/ctia/indicator/search"
+           (find-route-template compiled
+                                {:request-method :get
+                                 :uri "/ctia/indicator/search/"})))))
+
+(deftest find-route-template-trailing-slash-parameterized
+  (let [compiled (compile-route-table sample-route-table)]
+    (is (= "/ctia/indicator/:id"
+           (find-route-template compiled
+                                {:request-method :get
+                                 :uri "/ctia/indicator/indicator-123/"})))))
+
+(deftest find-route-template-trailing-slash-multi-param
+  (let [compiled (compile-route-table sample-route-table)]
+    (is (= "/ctia/entity/:id/sub/:sub-id"
+           (find-route-template compiled
+                                {:request-method :get
+                                 :uri "/ctia/entity/ent-1/sub/sub-2/"})))))
