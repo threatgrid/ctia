@@ -224,7 +224,7 @@
     <dependency>
       <groupId>org.clojure</groupId>
       <artifactId>tools.cli</artifactId>
-      <version>1.0.194</version>
+      <version>1.0.206</version>
       <exclusions>
         <exclusion>
           <artifactId>slf4j-nop</artifactId>
@@ -317,7 +317,7 @@
     <dependency>
       <groupId>puppetlabs</groupId>
       <artifactId>trapperkeeper</artifactId>
-      <version>3.2.0</version>
+      <version>4.0.2</version>
       <exclusions>
         <exclusion>
           <artifactId>slf4j-nop</artifactId>
@@ -340,7 +340,7 @@
     <dependency>
       <groupId>puppetlabs</groupId>
       <artifactId>kitchensink</artifactId>
-      <version>3.2.0</version>
+      <version>3.4.0</version>
       <exclusions>
         <exclusion>
           <artifactId>slf4j-nop</artifactId>
@@ -1968,7 +1968,7 @@
     <dependency>
       <groupId>puppetlabs</groupId>
       <artifactId>trapperkeeper</artifactId>
-      <version>3.2.0</version>
+      <version>4.0.2</version>
       <classifier>test</classifier>
       <exclusions>
         <exclusion>
@@ -1993,7 +1993,7 @@
     <dependency>
       <groupId>puppetlabs</groupId>
       <artifactId>kitchensink</artifactId>
-      <version>3.2.0</version>
+      <version>3.4.0</version>
       <classifier>test</classifier>
       <exclusions>
         <exclusion>

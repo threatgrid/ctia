@@ -8,11 +8,12 @@
 (def netty-version "4.1.125.Final")
 (def perforate-version "0.3.4")
 (def ring-version "1.9.5")
+(def kitchensink-version "3.4.0")
 (def slf4j-version "2.0.17")
 (def schema-generators-version "0.1.5")
 (def test-check-version "1.1.1")
 (def test-chuck-version "0.2.15")
-(def trapperkeeper-version "3.2.0")
+(def trapperkeeper-version "4.0.2")
 
 ;; TODO we could add -dev here when it works
 (def base-ci-profiles "+test,+ci")
@@ -75,14 +76,14 @@
                  [org.clojure/core.async "1.5.648"]
                  [org.clojure/core.memoize "1.0.257"]
                  [org.clojure/tools.logging "1.3.0"]
-                 [org.clojure/tools.cli "1.0.194"]
+                 [org.clojure/tools.cli "1.0.206"]
                  [pandect "0.6.1"]
                  [org.clojure/math.combinatorics "0.3.0"]
                  [version-clj "2.0.1"]
 
                  ;; Trapperkeeper
                  [puppetlabs/trapperkeeper ~trapperkeeper-version]
-                 [puppetlabs/kitchensink ~trapperkeeper-version]
+                 [puppetlabs/kitchensink ~kitchensink-version]
                  [prismatic/plumbing "0.5.5"] ;; upgrade puppetlabs/trapperkeeper
                  [clj-commons/clj-yaml "1.0.26"] ;; upgrade snakeyaml dep
 
@@ -222,7 +223,7 @@
   :profiles {:dev {:jvm-opts ["-XX:-OmitStackTraceInFastThrow"]
                    :dependencies [[puppetlabs/trapperkeeper ~trapperkeeper-version
                                    :classifier "test"]
-                                  [puppetlabs/kitchensink ~trapperkeeper-version
+                                  [puppetlabs/kitchensink ~kitchensink-version
                                    :classifier "test"]
                                   [org.clojure/test.check ~test-check-version]
                                   [com.gfredericks/test.chuck ~test-chuck-version]
