@@ -3,23 +3,24 @@
             [clojure.core.memoize :as memo]
             [clojure.string :as string]
             [clojure.tools.logging :as log]
+            [compojure.api.routes :as api-routes]
             [ctia.auth.jwt :as auth-jwt]
             [ctia.http.handler :as handler]
             [ctia.http.middleware.auth :as auth]
             [ctia.http.middleware.otel :as otel]
-            [compojure.api.routes :as api-routes]
             [ctia.schemas.core :refer [APIHandlerServices]]
             [ring-jwt-middleware.core :as rjwt]
             [ring.adapter.jetty :as jetty]
-            [ring.middleware.format-response :refer [wrap-restful-response]]
             [ring.middleware
              [cors :refer [wrap-cors]]
              [params :refer [wrap-params]]
              [reload :refer [wrap-reload]]]
+            [ring.middleware.format-response :refer [wrap-restful-response]]
             [schema.core :as s])
   (:import [java.net SocketTimeoutException UnknownHostException]
            java.util.concurrent.TimeoutException
-           org.eclipse.jetty.server.Server))
+           [org.eclipse.jetty.http UriCompliance]
+           [org.eclipse.jetty.server HttpConnectionFactory Server]))
 
 (defn- allow-origin-regexps
   "take a CORS allowed origin config string
@@ -294,6 +295,14 @@
         :min-threads min-threads
         :max-threads max-threads
         :join? false
-        :send-server-version? send-server-version})
+        :send-server-version? send-server-version
+        ;; Jetty 12 rejects %2F (encoded slashes) in URI paths by default.
+        ;; LEGACY restores Jetty 9.4 behavior, allowing encoded path separators.
+        :configurator (fn [^Server server]
+                        (doseq [connector (.getConnectors server)]
+                          (doseq [factory (.getConnectionFactories connector)]
+                            (when (instance? HttpConnectionFactory factory)
+                              (doto (.getHttpConfiguration ^HttpConnectionFactory factory)
+                                (.setUriCompliance UriCompliance/LEGACY))))))})
     (.setStopAtShutdown true)
     (.setStopTimeout (* 1000 10))))
