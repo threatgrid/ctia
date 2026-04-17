@@ -91,23 +91,40 @@ ctia:ctia:jar:1.1.1-SNAPSHOT
 |        |  \- javax.activation:activation:jar:1.1:compile
 |        \- com.googlecode.libphonenumber:libphonenumber:jar:8.0.0:compile
 +- metosin:ring-swagger-ui:jar:3.24.3:compile
-+- ring:ring-core:jar:1.9.5:compile
-|  +- commons-fileupload:commons-fileupload:jar:1.4:compile
++- ring:ring-core:jar:1.15.3:compile
+|  +- org.ring-clojure:ring-core-protocols:jar:1.15.3:compile
+|  +- org.ring-clojure:ring-websocket-protocols:jar:1.15.3:compile
+|  +- org.apache.commons:commons-fileupload2-core:jar:2.0.0-M4:compile
 |  +- crypto-random:crypto-random:jar:1.2.1:compile
-|  \- crypto-equality:crypto-equality:jar:1.0.0:compile
-+- ring:ring-jetty-adapter:jar:1.9.5:compile
-|  +- ring:ring-servlet:jar:1.9.5:compile
-|  \- org.eclipse.jetty:jetty-server:jar:9.4.44.v20210927:compile
-|     +- javax.servlet:javax.servlet-api:jar:3.1.0:compile
-|     +- org.eclipse.jetty:jetty-http:jar:9.4.44.v20210927:compile
-|     |  \- org.eclipse.jetty:jetty-util:jar:9.4.44.v20210927:compile
-|     \- org.eclipse.jetty:jetty-io:jar:9.4.44.v20210927:compile
-+- ring:ring-devel:jar:1.9.5:compile
+|  \- crypto-equality:crypto-equality:jar:1.0.1:compile
++- ring:ring-jetty-adapter:jar:1.15.3:compile
+|  +- org.ring-clojure:ring-jakarta-servlet:jar:1.15.3:compile
+|  +- org.eclipse.jetty:jetty-server:jar:12.1.0:compile
+|  |  +- org.eclipse.jetty:jetty-http:jar:12.1.0:compile
+|  |  |  \- org.eclipse.jetty:jetty-util:jar:12.1.0:compile
+|  |  \- org.eclipse.jetty:jetty-io:jar:12.1.0:compile
+|  +- org.eclipse.jetty:jetty-unixdomain-server:jar:12.1.0:compile
+|  +- org.eclipse.jetty.ee9:jetty-ee9-servlet:jar:12.1.0:compile
+|  |  +- org.eclipse.jetty.ee9:jetty-ee9-nested:jar:12.1.0:compile
+|  |  |  +- org.eclipse.jetty:jetty-security:jar:12.1.0:compile
+|  |  |  \- org.eclipse.jetty:jetty-session:jar:12.1.0:compile
+|  |  \- org.eclipse.jetty.ee9:jetty-ee9-security:jar:12.1.0:compile
+|  \- org.eclipse.jetty.ee9.websocket:jetty-ee9-websocket-jetty-server:jar:12.1.0:compile
+|     +- org.eclipse.jetty.ee9:jetty-ee9-webapp:jar:12.1.0:compile
+|     |  +- org.eclipse.jetty:jetty-xml:jar:12.1.0:compile
+|     |  \- org.eclipse.jetty.ee:jetty-ee-webapp:jar:12.1.0:compile
+|     +- org.eclipse.jetty.ee9.websocket:jetty-ee9-websocket-jetty-api:jar:12.1.0:compile
+|     +- org.eclipse.jetty.ee9.websocket:jetty-ee9-websocket-jetty-common:jar:12.1.0:compile
+|     |  \- org.eclipse.jetty.websocket:jetty-websocket-core-common:jar:12.1.0:compile
+|     +- org.eclipse.jetty.ee9.websocket:jetty-ee9-websocket-servlet:jar:12.1.0:compile
+|     |  \- org.eclipse.jetty.websocket:jetty-websocket-core-server:jar:12.1.0:compile
+|     \- org.eclipse.jetty.toolchain:jetty-jakarta-servlet-api:jar:5.0.2:compile
++- ring:ring-devel:jar:1.15.3:compile
 |  +- clj-stacktrace:clj-stacktrace:jar:0.2.8:compile
-|  \- ns-tracker:ns-tracker:jar:0.4.0:compile
+|  \- ns-tracker:ns-tracker:jar:1.0.0:compile
 +- ring-cors:ring-cors:jar:0.1.13:compile
 +- commons-codec:commons-codec:jar:1.17.1:compile
-+- ring:ring-codec:jar:1.1.3:compile
++- ring:ring-codec:jar:1.3.0:compile
 +- threatgrid:clj-jwt:jar:0.5.0:compile
 |  +- org.clojure:data.codec:jar:0.1.1:compile
 |  +- org.bouncycastle:bcpkix-jdk15on:jar:1.68:compile
@@ -120,7 +137,7 @@ ctia:ctia:jar:1.1.1-SNAPSHOT
 +- threatgrid:ring-jwt-middleware:jar:1.1.7:compile
 +- org.clojure:data.json:jar:1.0.0:compile
 +- scopula:scopula:jar:0.1.4:compile
-+- org.clojure:tools.reader:jar:1.3.6:compile
++- org.clojure:tools.reader:jar:1.4.0:compile
 +- clj-http:clj-http:jar:3.13.1:compile
 |  +- org.apache.httpcomponents:httpcore:jar:4.4.16:compile
 |  +- org.apache.httpcomponents:httpclient:jar:4.5.14:compile
@@ -198,7 +215,7 @@ ctia:ctia:jar:1.1.1-SNAPSHOT
 +- jakarta.xml.bind:jakarta.xml.bind-api:jar:2.3.2:compile
 |  \- jakarta.activation:jakarta.activation-api:jar:1.2.1:compile
 +- markdown-clj:markdown-clj:jar:1.10.1:compile
-+- hiccup:hiccup:jar:2.0.0-alpha2:compile
++- hiccup:hiccup:jar:2.0.0:compile
 +- lock-key:lock-key:jar:1.5.0:compile
 |  \- charset:charset:jar:1.2.1:compile
 +- threatgrid:redismq:jar:0.1.1:compile
@@ -206,7 +223,7 @@ ctia:ctia:jar:1.1.1-SNAPSHOT
 |  +- org.apache.zookeeper:zookeeper-jute:jar:3.8.4:compile
 |  +- org.apache.yetus:audience-annotations:jar:0.12.0:compile
 |  \- io.netty:netty-transport-native-epoll:jar:4.1.105.Final:compile
-+- commons-io:commons-io:jar:2.18.0:compile
++- commons-io:commons-io:jar:2.20.0:compile
 +- args4j:args4j:jar:2.33:compile
 +- com.stuartsierra:component:jar:1.1.0:compile
 |  \- com.stuartsierra:dependency:jar:1.0.0:compile
@@ -304,5 +321,5 @@ ctia:ctia:jar:1.1.1-SNAPSHOT
 +- circleci:circleci.test:jar:0.5.0:test
 |  \- org.clojure:data.xml:jar:0.0.8:test
 +- org.clojure:data.priority-map:jar:1.1.0:test
-\- org.clojure:tools.namespace:jar:1.2.0:test
-   \- org.clojure:java.classpath:jar:1.0.0:compile
+\- org.clojure:tools.namespace:jar:1.5.0:test
+   \- org.clojure:java.classpath:jar:1.1.0:compile
