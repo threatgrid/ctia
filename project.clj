@@ -84,7 +84,7 @@
                  ;; Trapperkeeper
                  [puppetlabs/trapperkeeper ~trapperkeeper-version]
                  [puppetlabs/kitchensink ~kitchensink-version]
-                 [prismatic/plumbing "0.5.5"] ;; upgrade puppetlabs/trapperkeeper
+                 [prismatic/plumbing "0.6.0"] ;; upgrade puppetlabs/trapperkeeper
                  [clj-commons/clj-yaml "1.0.26"] ;; upgrade snakeyaml dep
 
                  ;; Schemas
@@ -119,7 +119,7 @@
                  [threatgrid/ring-jwt-middleware "1.1.7"]
                  [org.clojure/data.json "1.0.0"] ;; threatgrid/ring-jwt-middleware > threatgrid/ctim
                  [scopula "0.1.4"]
-                 [org.clojure/tools.reader "1.4.0"] ;; bump ring/ring-devel
+                 [org.clojure/tools.reader "1.4.0"] ;; tools.namespace > ring-middleware-format
 
                  ;; clients
                  [clj-http "3.13.1"]
@@ -152,7 +152,7 @@
                  [threatgrid/redismq "0.1.1"]
 
                  [org.apache.zookeeper/zookeeper "3.8.4"] ; override zookeeper-clj, org.onyxplatform/onyx-kafka
-                 [commons-io "2.20.0"] ;; bump ring/ring-core
+                 [commons-io "2.20.0"] ;; address CVE-2024-47554; aligned with ring/ring-core 1.15.3
                  [args4j "2.33"] ;bump org.onyxplatform/onyx-kafka, threatgrid/ctim
                  [com.stuartsierra/component "1.1.0"] ;org.onyxplatform/onyx-kafka internal override
                  [org.onyxplatform/onyx-kafka "0.14.5.0"]
@@ -232,7 +232,7 @@
                                   [circleci/circleci.test "0.5.0"]
                                   [org.clojure/math.combinatorics "0.3.0"]
                                   [org.clojure/data.priority-map "1.1.0"]
-                                  [org.clojure/tools.namespace "1.5.0"]] ;; bump ring/ring-devel
+                                  [org.clojure/tools.namespace "1.5.0"]] ;; bump via ring/ring-devel → ns-tracker
                    :pedantic? :warn
                    :source-paths ["dev"]}
              :ci {:pedantic? :abort

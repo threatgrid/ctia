@@ -39,7 +39,7 @@ ctia:ctia:jar:1.1.1-SNAPSHOT
 |  +- org.ini4j:ini4j:jar:0.5.4:compile
 |  +- org.tcrawley:dynapath:jar:0.2.5:compile
 |  \- digest:digest:jar:1.4.3:compile
-+- prismatic:plumbing:jar:0.5.5:compile
++- prismatic:plumbing:jar:0.6.0:compile
 |  \- de.kotka:lazymap:jar:3.1.0:compile
 +- clj-commons:clj-yaml:jar:1.0.26:compile
 |  +- org.yaml:snakeyaml:jar:1.33:compile
