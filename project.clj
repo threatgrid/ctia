@@ -7,12 +7,13 @@
 (def metrics-clojure-version "2.10.0")
 (def netty-version "4.1.125.Final")
 (def perforate-version "0.3.4")
-(def ring-version "1.9.5")
+(def ring-version "1.15.3")
+(def kitchensink-version "3.4.0")
 (def slf4j-version "2.0.17")
 (def schema-generators-version "0.1.5")
 (def test-check-version "1.1.1")
 (def test-chuck-version "0.2.15")
-(def trapperkeeper-version "3.2.0")
+(def trapperkeeper-version "4.0.2")
 
 ;; TODO we could add -dev here when it works
 (def base-ci-profiles "+test,+ci")
@@ -75,15 +76,15 @@
                  [org.clojure/core.async "1.5.648"]
                  [org.clojure/core.memoize "1.0.257"]
                  [org.clojure/tools.logging "1.3.0"]
-                 [org.clojure/tools.cli "1.0.194"]
+                 [org.clojure/tools.cli "1.0.206"]
                  [pandect "0.6.1"]
                  [org.clojure/math.combinatorics "0.3.0"]
                  [version-clj "2.0.1"]
 
                  ;; Trapperkeeper
                  [puppetlabs/trapperkeeper ~trapperkeeper-version]
-                 [puppetlabs/kitchensink ~trapperkeeper-version]
-                 [prismatic/plumbing "0.5.5"] ;; upgrade puppetlabs/trapperkeeper
+                 [puppetlabs/kitchensink ~kitchensink-version]
+                 [prismatic/plumbing "0.6.0"] ;; upgrade puppetlabs/trapperkeeper
                  [clj-commons/clj-yaml "1.0.26"] ;; upgrade snakeyaml dep
 
                  ;; Schemas
@@ -112,13 +113,13 @@
                  [ring/ring-devel ~ring-version]
                  [ring-cors "0.1.13"]
                  [commons-codec "1.17.1"] ;ring/ring* > threatgrid/ctim, threatgrid/clj-momo, clj-http
-                 [ring/ring-codec "1.1.3"]
+                 [ring/ring-codec "1.3.0"]
                  [threatgrid/clj-jwt "0.5.0"]
                  [threatgrid/ring-turnstile-middleware "0.1.1"]
                  [threatgrid/ring-jwt-middleware "1.1.7"]
                  [org.clojure/data.json "1.0.0"] ;; threatgrid/ring-jwt-middleware > threatgrid/ctim
                  [scopula "0.1.4"]
-                 [org.clojure/tools.reader "1.3.6"] ;; org.clojure/tools.namespace > ring-middleware-format
+                 [org.clojure/tools.reader "1.4.0"] ;; tools.namespace > ring-middleware-format
 
                  ;; clients
                  [clj-http "3.13.1"]
@@ -142,7 +143,7 @@
 
                  ;; Docs
                  [markdown-clj "1.10.1"]
-                 [hiccup "2.0.0-alpha2"]
+                 [hiccup "2.0.0"] ;; bump ring/ring-devel
 
                  ;; Encryption
                  [lock-key "1.5.0"]
@@ -151,7 +152,7 @@
                  [threatgrid/redismq "0.1.1"]
 
                  [org.apache.zookeeper/zookeeper "3.8.4"] ; override zookeeper-clj, org.onyxplatform/onyx-kafka
-                 [commons-io "2.18.0"] ;; address CVE-2024-47554
+                 [commons-io "2.20.0"] ;; address CVE-2024-47554; aligned with ring/ring-core 1.15.3
                  [args4j "2.33"] ;bump org.onyxplatform/onyx-kafka, threatgrid/ctim
                  [com.stuartsierra/component "1.1.0"] ;org.onyxplatform/onyx-kafka internal override
                  [org.onyxplatform/onyx-kafka "0.14.5.0"]
@@ -222,7 +223,7 @@
   :profiles {:dev {:jvm-opts ["-XX:-OmitStackTraceInFastThrow"]
                    :dependencies [[puppetlabs/trapperkeeper ~trapperkeeper-version
                                    :classifier "test"]
-                                  [puppetlabs/kitchensink ~trapperkeeper-version
+                                  [puppetlabs/kitchensink ~kitchensink-version
                                    :classifier "test"]
                                   [org.clojure/test.check ~test-check-version]
                                   [com.gfredericks/test.chuck ~test-chuck-version]
@@ -231,7 +232,7 @@
                                   [circleci/circleci.test "0.5.0"]
                                   [org.clojure/math.combinatorics "0.3.0"]
                                   [org.clojure/data.priority-map "1.1.0"]
-                                  [org.clojure/tools.namespace "1.2.0"]]
+                                  [org.clojure/tools.namespace "1.5.0"]] ;; bump via ring/ring-devel → ns-tracker
                    :pedantic? :warn
                    :source-paths ["dev"]}
              :ci {:pedantic? :abort
