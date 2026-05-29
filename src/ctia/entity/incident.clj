@@ -100,10 +100,10 @@
   {:status IncidentStatus})
 
 (defn new-status? [status]
-   (some? (re-matches #"New(: .+)?" status)))
+  (some? (and status (re-matches #"New(: .+)?" status))))
 
 (defn hold-status? [status]
-   (some? (re-matches #"Hold(: .+)?" status)))
+  (some? (and status (re-matches #"Hold(: .+)?" status))))
 
 (defn open-status? [status]
   (some? (and status (re-matches #"Open(: .+)?" status))))
@@ -163,12 +163,22 @@
           new-closed-date (when (and (closed-status? new-status)
                                      (not (closed-status? old-status)))
                             (get-in status-update [:incident_time :closed]))
-          ;; prev-closed-date and new-closed-date are mutually exclusive:
-          ;; prev-closed-date requires old-status to be closed, new-closed-date requires it not to be.
+          ;; On first open (New → Open), set :opened to NOW if the engagement interval has not
+          ;; yet been recorded. This is the same invariant compute-intervals uses ("don't clobber
+          ;; existing interval"); applying it here ensures MTTE reflects the actual click time and
+          ;; not whatever upstream pre-stamped on a promoted incident (CTIM marks :opened as
+          ;; mandatory, so promoted incidents always carry it).
+          new-opened-date (when (and (new-status? old-status)
+                                     (open-status? new-status)
+                                     (not (get-in prev-obj [:intervals :new_to_opened])))
+                            (get-in status-update [:incident_time :opened]))
+          ;; prev-* and new-* dates for each verb are mutually exclusive (one requires the old
+          ;; status to be in the category, the other requires it not to be).
           merged-incident-time (cond-> (merge incident-time-updates current-incident-time)
                                  prev-closed-date (assoc :closed prev-closed-date)
                                  prev-opened-date (assoc :opened prev-opened-date)
-                                 new-closed-date (assoc :closed new-closed-date))]
+                                 new-closed-date (assoc :closed new-closed-date)
+                                 new-opened-date (assoc :opened new-opened-date))]
       (cond-> new-obj
         (seq merged-incident-time) (assoc :incident_time merged-incident-time)))
     ;; No status change or no previous object, return as-is

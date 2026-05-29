@@ -98,7 +98,55 @@
                                         :closed t2}}
                result (sut/apply-status-update-logic new-obj prev-obj)]
            (is (= t1 (get-in result [:incident_time :opened]))
-               "Opened date should NOT change on re-open")))))))
+               "Opened date should NOT change on re-open")))))
+
+    (testing "XDR-54438: New → Open sets :opened to NOW when :new_to_opened interval is not yet recorded"
+      ;; CTIM marks :opened as mandatory, so promoted incidents always carry an upstream-stamped
+      ;; :opened that is unrelated to actual analyst engagement. On the first New → Open transition,
+      ;; if no engagement interval has been recorded yet, set :opened to NOW (the click time).
+      ;; This mirrors compute-intervals' "don't clobber existing interval" semantics.
+      (helpers/fixture-with-fixed-time
+       t3
+       (fn []
+         (let [prev-obj {:status "New"
+                         :created t2
+                         :incident_time {:opened t1}}
+               new-obj {:status "Open"
+                        :incident_time {:opened t1}}
+               result (sut/apply-status-update-logic new-obj prev-obj)]
+           (is (= t3 (get-in result [:incident_time :opened]))
+               "Opened date should be NOW on first New → Open when no :new_to_opened recorded")))))
+
+    (testing "XDR-54438: New → Open preserves :opened when :new_to_opened interval already exists"
+      ;; If the engagement interval was already computed (e.g., previous transition cycle), do not
+      ;; overwrite. This preserves first-engagement semantics across re-open scenarios.
+      (helpers/fixture-with-fixed-time
+       t3
+       (fn []
+         (let [prev-obj {:status "New"
+                         :created t1
+                         :incident_time {:opened t1}
+                         :intervals {:new_to_opened 42}}
+               new-obj {:status "Open"
+                        :incident_time {:opened t1}}
+               result (sut/apply-status-update-logic new-obj prev-obj)]
+           (is (= t1 (get-in result [:incident_time :opened]))
+               "Opened date should be preserved when :new_to_opened was already computed")))))
+
+    (testing "XDR-54438: New → New: Triaged preserves :opened (clause must not fire)"
+      ;; Sub-status transitions within the New category should not override :opened, since this is
+      ;; not a New → Open transition. The new-opened-date clause must remain inert here.
+      (helpers/fixture-with-fixed-time
+       t3
+       (fn []
+         (let [prev-obj {:status "New"
+                         :created t2
+                         :incident_time {:opened t1}}
+               new-obj {:status "New: Triaged"
+                        :incident_time {:opened t1}}
+               result (sut/apply-status-update-logic new-obj prev-obj)]
+           (is (= t1 (get-in result [:incident_time :opened]))
+               "Opened date should be preserved on New → New: Triaged")))))))
 
 (deftest incident-scores-schema-test
   (let [get-in-config (partial get-in {:ctia {:http {:incident {:score-types "global,ttp,asset"}}}})
@@ -314,7 +362,10 @@
            ;; incident_time should remain unchanged
            (is (= current-incident-time (:incident_time updated-incident)))))
 
-       (testing "PATCH /ctia/incident/:id preserves explicitly set incident_time fields"
+       (testing "PATCH /ctia/incident/:id: first New → Open sets :opened to NOW (engagement time wins over PATCH-body :opened)"
+         ;; XDR-54438: engagement time is what the analyst's click represents, not whatever the
+         ;; client passes (or what upstream pre-stamped). On first New → Open the override applies
+         ;; even when the PATCH body explicitly carries an :opened.
          (let [test-id (create-test-incident app)
                _ (swap! test-incidents conj test-id)
                custom-time (tc/to-date (t/plus fixed-now (t/hours 2)))
@@ -326,8 +377,8 @@
                updated-incident (:parsed-body response)]
            (is (= 200 (:status response)))
            (is (= "Open" (:status updated-incident)))
-           ;; Should use the explicitly provided time, not the generated one
-           (is (= custom-time (get-in updated-incident [:incident_time :opened])))))
+           (is (= (tc/to-date fixed-now) (get-in updated-incident [:incident_time :opened]))
+               "On first New → Open, :opened is the click time (engagement), not the PATCH-body value")))
 
        (testing "POST /ctia/incident/:id/status Hold to Closed transition"
          (let [test-id (create-test-incident app)
@@ -589,6 +640,108 @@
          (run-reclose-scenario app fixed-now test-incidents
            (fn [app id status]
              (post-status app (uri/uri-encode id) status))))
+
+       ;; XDR-54438: First New → Open must overwrite upstream-provided :opened, otherwise
+       ;; compute-intervals' (created ≤ opened) guard elides :new_to_opened and MTTE shows 0.
+       (testing "PATCH /ctia/incident/:id: New → Open overrides upstream :opened earlier than :created"
+         (let [upstream-opened (t/minus fixed-now (t/days 1))
+               unique-title (str "Promoted Incident " (java.util.UUID/randomUUID))
+               incident-to-create (-> new-incident-minimal
+                                      (dissoc :id :severity)
+                                      (assoc :title unique-title
+                                             :status "New"
+                                             :incident_time {:opened (tc/to-date upstream-opened)}))
+               create-resp (POST app
+                                 "ctia/incident"
+                                 :body incident-to-create
+                                 :headers {"Authorization" "45c1f5e3f05d0"})
+               test-id (:id (:parsed-body create-resp))
+               _ (swap! test-incidents conj test-id)]
+           (is (= 201 (:status create-resp)))
+           (is (= (tc/to-date upstream-opened)
+                  (get-in (:parsed-body create-resp) [:incident_time :opened]))
+               "Upstream :opened is preserved on create, earlier than :created")
+           (helpers/fixture-with-fixed-time
+            (t/plus fixed-now (t/minutes 5))
+            (fn []
+              (let [response (PATCH app
+                                    (str "ctia/incident/" (uri/uri-encode test-id))
+                                    :body {:status "Open"}
+                                    :headers {"Authorization" "45c1f5e3f05d0"})
+                    updated (:parsed-body response)]
+                (is (= 200 (:status response)))
+                (is (= "Open" (:status updated)))
+                (is (= (tc/to-date (t/plus fixed-now (t/minutes 5)))
+                       (get-in updated [:incident_time :opened]))
+                    "On first New → Open, :opened must be NOW (PATCH time), not the upstream value"))))))
+
+       ;; XDR-54438: full status lifecycle scenario covering all Mean Time To X tiles. Walks a
+       ;; single promoted incident through New → Open → Open: Contained → Closed and asserts that
+       ;; every interval lands at /metric/average with the expected elapsed time. This test exists
+       ;; specifically to catch any future regression of the dashboard tiles, regardless of which
+       ;; layer (status logic, compute-intervals, storage, aggregate route) breaks.
+       (testing "All Mean Time To X tiles: full status lifecycle reports expected averages"
+         (let [;; Each step adds 5 minutes; intervals: new_to_opened=5min, new_to_contained=10min,
+               ;; opened_to_closed=10min (opened at +5min, closed at +15min).
+               unique-title (str "MTTX Scenario " (java.util.UUID/randomUUID))
+               upstream-opened (t/minus fixed-now (t/days 1))
+               incident-to-create (-> new-incident-minimal
+                                      (dissoc :id)
+                                      (assoc :title unique-title
+                                             :status "New"
+                                             :incident_time {:opened (tc/to-date upstream-opened)}))
+               create-resp (POST app
+                                 "ctia/incident"
+                                 :body incident-to-create
+                                 :headers {"Authorization" "45c1f5e3f05d0"})
+               test-id (:id (:parsed-body create-resp))
+               _ (swap! test-incidents conj test-id)
+               _ (is (= 201 (:status create-resp)))
+               do-patch! (fn [at status]
+                           (helpers/fixture-with-fixed-time
+                            at
+                            (fn []
+                              (PATCH app
+                                     (str "ctia/incident/" (uri/uri-encode test-id))
+                                     :body {:status status}
+                                     :headers {"Authorization" "45c1f5e3f05d0"}))))]
+           ;; Step 1: New → Open at +5min
+           (let [resp (do-patch! (t/plus fixed-now (t/minutes 5)) "Open")]
+             (is (= 200 (:status resp)))
+             (is (= "Open" (:status (:parsed-body resp)))))
+           ;; Step 2: Open → Open: Contained at +10min
+           (let [resp (do-patch! (t/plus fixed-now (t/minutes 10)) "Open: Contained")]
+             (is (= 200 (:status resp)))
+             (is (= "Open: Contained" (:status (:parsed-body resp)))))
+           ;; Step 3: Open: Contained → Closed: Confirmed Threat at +15min
+           (let [resp (do-patch! (t/plus fixed-now (t/minutes 15)) "Closed: Confirmed Threat")]
+             (is (= 200 (:status resp)))
+             (is (= "Closed: Confirmed Threat" (:status (:parsed-body resp)))))
+           ;; ±10s tolerance on intervals derived from :created (new_to_opened, new_to_contained):
+           ;; default-realize-fn stamps :created via clj-momo.lib.time/now, which is a `def` aliasing
+           ;; the underlying internal-now at namespace load. fixture-with-fixed-time redefs
+           ;; clj-momo.lib.clj-time.core/internal-now but not the alias, so :created leaks the wall
+           ;; clock by a few seconds. opened_to_closed is exact since both endpoints are PATCH-time
+           ;; values, fully under fixed-time control.
+           (helpers/fixture-with-fixed-time
+            (t/plus fixed-now (t/days 1))
+            (fn []
+              (let [metric-avg (fn [field]
+                                 (-> (GET app "ctia/incident/metric/average"
+                                          :headers {"Authorization" "45c1f5e3f05d0"}
+                                          :query-params {:aggregate-on (str "intervals." field)
+                                                         :from (str (jt/instant (t/minus fixed-now (t/seconds 1))))
+                                                         :query (format "title:\"%s\"" unique-title)})
+                                     :parsed-body
+                                     (get-in [:data :intervals (keyword field)])))
+                    near? (fn [expected actual]
+                            (and actual (<= (- expected 10) actual (+ expected 10))))]
+                (is (near? 300 (metric-avg "new_to_opened"))
+                    "MTTE tile metric must reflect ~5 min from creation to first Open")
+                (is (near? 600 (metric-avg "new_to_contained"))
+                    "MTTC tile metric must reflect ~10 min from creation to Open: Contained")
+                (is (= 600.0 (metric-avg "opened_to_closed"))
+                    "Opened-to-closed metric must reflect 10 min from Open to Closed"))))))
       (finally
         ;; Clean up test incidents
         (doseq [test-id @test-incidents]
@@ -1252,7 +1405,27 @@
           (let [prev (assoc prev :created later)
                 incident (assoc prev :status "Open" :incident_time {:opened earlier})]
             (is (= incident
-                   (sut/compute-intervals prev incident)))))))
+                   (sut/compute-intervals prev incident)))))
+        ;; XDR-54438: composed verification — apply-status-update-logic + compute-intervals must
+        ;; produce :new_to_opened even when prev had upstream-set :opened earlier than :created.
+        (testing "XDR-54438: New → Open with upstream :opened earlier than :created computes :new_to_opened"
+          (let [prev (-> prev
+                         (assoc :status "New"
+                                :created earlier
+                                :incident_time {:opened (-> (jt/instant earlier)
+                                                            (jt/minus (jt/seconds 60))
+                                                            jt/java-date)}))
+                ;; Simulate post-deep-merge PATCH body: upstream :opened carried over.
+                new-obj (assoc prev :status "Open")]
+            (helpers/fixture-with-fixed-time
+             later
+             (fn []
+               (let [adjusted (sut/apply-status-update-logic new-obj prev)
+                     result (sut/compute-intervals prev adjusted)]
+                 (is (= later (get-in adjusted [:incident_time :opened]))
+                     "apply-status-update-logic should override upstream :opened with NOW")
+                 (is (= computed-interval (get-in result [:intervals :new_to_opened]))
+                     "compute-intervals should produce :new_to_opened from the corrected :opened"))))))))
     (testing "updating opened_to_closed"
       (let [prev (assoc prev :status "Open: Recovered" :incident_time {:opened earlier})
             incident (-> prev
