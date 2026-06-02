@@ -5,7 +5,7 @@
 (def jackson-databind-version "2.21.1")
 (def logback-version "1.5.25")
 (def metrics-clojure-version "2.10.0")
-(def netty-version "4.1.125.Final")
+(def netty-version "4.1.133.Final")
 (def perforate-version "0.3.4")
 (def ring-version "1.15.3")
 (def kitchensink-version "3.4.0")
