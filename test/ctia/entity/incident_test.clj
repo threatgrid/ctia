@@ -740,8 +740,12 @@
        ;; specifically to catch any future regression of the dashboard tiles, regardless of which
        ;; layer (status logic, compute-intervals, storage, aggregate route) breaks.
        (testing "All Mean Time To X tiles: full status lifecycle reports expected averages"
-         (let [;; Each step adds 5 minutes; intervals: new_to_opened=5min, new_to_contained=10min,
-               ;; opened_to_closed=10min (opened at +5min, closed at +15min).
+         (let [;; Step times (PATCH timestamps): step-1 → Open, step-2 → Open: Contained,
+               ;; step-3 → Closed. fixture-with-fixed-time redefs internal-now, so :opened/
+               ;; :contained/:closed all land exactly on these instants.
+               step-1 (t/plus fixed-now (t/minutes 5))
+               step-2 (t/plus fixed-now (t/minutes 10))
+               step-3 (t/plus fixed-now (t/minutes 15))
                unique-title (str "MTTX Scenario " (java.util.UUID/randomUUID))
                upstream-opened (t/minus fixed-now (t/days 1))
                incident-to-create (-> new-incident-minimal
@@ -753,6 +757,7 @@
                                  "ctia/incident"
                                  :body incident-to-create
                                  :headers {"Authorization" "45c1f5e3f05d0"})
+               created-instant (-> create-resp :parsed-body :created jt/instant)
                test-id (:id (:parsed-body create-resp))
                _ (swap! test-incidents conj test-id)
                _ (is (= 201 (:status create-resp)))
@@ -763,25 +768,27 @@
                               (PATCH app
                                      (str "ctia/incident/" (uri/uri-encode test-id))
                                      :body {:status status}
-                                     :headers {"Authorization" "45c1f5e3f05d0"}))))]
-           ;; Step 1: New → Open at +5min
-           (let [resp (do-patch! (t/plus fixed-now (t/minutes 5)) "Open")]
+                                     :headers {"Authorization" "45c1f5e3f05d0"}))))
+               seconds-between (fn [from to]
+                                 (jt/time-between (jt/instant from) (jt/instant to) :seconds))]
+           ;; Step 1: New → Open
+           (let [resp (do-patch! step-1 "Open")]
              (is (= 200 (:status resp)))
              (is (= "Open" (:status (:parsed-body resp)))))
-           ;; Step 2: Open → Open: Contained at +10min
-           (let [resp (do-patch! (t/plus fixed-now (t/minutes 10)) "Open: Contained")]
+           ;; Step 2: Open → Open: Contained
+           (let [resp (do-patch! step-2 "Open: Contained")]
              (is (= 200 (:status resp)))
              (is (= "Open: Contained" (:status (:parsed-body resp)))))
-           ;; Step 3: Open: Contained → Closed: Confirmed Threat at +15min
-           (let [resp (do-patch! (t/plus fixed-now (t/minutes 15)) "Closed: Confirmed Threat")]
+           ;; Step 3: Open: Contained → Closed: Confirmed Threat
+           (let [resp (do-patch! step-3 "Closed: Confirmed Threat")]
              (is (= 200 (:status resp)))
              (is (= "Closed: Confirmed Threat" (:status (:parsed-body resp)))))
-           ;; ±10s tolerance on intervals derived from :created (new_to_opened, new_to_contained):
-           ;; default-realize-fn stamps :created via clj-momo.lib.time/now, which is a `def` aliasing
-           ;; the underlying internal-now at namespace load. fixture-with-fixed-time redefs
-           ;; clj-momo.lib.clj-time.core/internal-now but not the alias, so :created leaks the wall
-           ;; clock by a few seconds. opened_to_closed is exact since both endpoints are PATCH-time
-           ;; values, fully under fixed-time control.
+           ;; default-realize-fn stamps :created via clj-momo.lib.time/now — a `def` aliasing
+           ;; internal-now at namespace load. fixture-with-fixed-time redefs internal-now but not
+           ;; the alias, so :created leaks the wall clock by a few seconds. To make
+           ;; intervals-from-:created assertions exact, derive the expected value from the actual
+           ;; :created returned by the create response. opened_to_closed has no such drift since
+           ;; both endpoints are PATCH-time values fully under fixed-time control.
            (helpers/fixture-with-fixed-time
             (t/plus fixed-now (t/days 1))
             (fn []
@@ -793,14 +800,15 @@
                                                          :query (format "title:\"%s\"" unique-title)})
                                      :parsed-body
                                      (get-in [:data :intervals (keyword field)])))
-                    near? (fn [expected actual]
-                            (and actual (<= (- expected 10) actual (+ expected 10))))]
-                (is (near? 300 (metric-avg "new_to_opened"))
-                    "MTTE tile metric must reflect ~5 min from creation to first Open")
-                (is (near? 600 (metric-avg "new_to_contained"))
-                    "MTTC tile metric must reflect ~10 min from creation to Open: Contained")
-                (is (= 600.0 (metric-avg "opened_to_closed"))
-                    "Opened-to-closed metric must reflect 10 min from Open to Closed"))))))
+                    expected-new-to-opened (seconds-between created-instant step-1)
+                    expected-new-to-contained (seconds-between created-instant step-2)
+                    expected-opened-to-closed (seconds-between step-1 step-3)]
+                (is (= (double expected-new-to-opened) (metric-avg "new_to_opened"))
+                    "MTTE tile metric must reflect time from :created to first Open")
+                (is (= (double expected-new-to-contained) (metric-avg "new_to_contained"))
+                    "MTTC tile metric must reflect time from :created to Open: Contained")
+                (is (= (double expected-opened-to-closed) (metric-avg "opened_to_closed"))
+                    "Opened-to-closed metric must reflect time from Open to Closed"))))))
       (finally
         ;; Clean up test incidents
         (doseq [test-id @test-incidents]
