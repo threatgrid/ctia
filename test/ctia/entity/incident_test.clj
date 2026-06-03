@@ -169,7 +169,33 @@
                         :incident_time {:opened t1}}
                result (sut/apply-status-update-logic new-obj prev-obj)]
            (is (= t3 (get-in result [:incident_time :opened]))
-               "Opened date should be reset to NOW on New → Open: Contained")))))
+               "Opened date should be reset to NOW on New → Open: Contained")))
+
+       (testing "(New|Open) → Open: Contained resets :contained to NOW"
+         ;; Symmetric to the :opened fix: an upstream-stamped :contained earlier than :created
+         ;; would silently elide :new_to_contained via update-interval's (earlier ≤ later) guard,
+         ;; making MTTC report 0 for promoted incidents.
+         (doseq [old-status ["New" "Open"]]
+           (let [prev-obj {:status old-status
+                           :incident_time {:opened t1 :contained t1}}
+                 new-obj {:status "Open: Contained"
+                          :incident_time {:opened t1 :contained t1}}
+                 result (sut/apply-status-update-logic new-obj prev-obj)]
+             (is (= t3 (get-in result [:incident_time :contained]))
+                 (format "Contained date should be reset to NOW on %s → Open: Contained"
+                         old-status)))))
+
+       (testing "Hold → Open: Contained does not reset :contained"
+         ;; The new-contained-date trigger gates on (or new-status? open-status?), excluding Hold.
+         ;; Mirrors compute-intervals' MTTC clause; a Hold → Open: Contained transition is rare
+         ;; in practice but the override must stay inert when its compute-intervals counterpart is.
+         (let [prev-obj {:status "Hold"
+                         :incident_time {:opened t1 :contained t1}}
+               new-obj {:status "Open: Contained"
+                        :incident_time {:opened t1 :contained t1}}
+               result (sut/apply-status-update-logic new-obj prev-obj)]
+           (is (= t1 (get-in result [:incident_time :contained]))
+               "Contained date should NOT be reset on Hold → Open: Contained")))))
 
     (testing "status predicates are nil-safe"
       ;; apply-status-update-logic short-circuits on nil :status, but the predicates are also

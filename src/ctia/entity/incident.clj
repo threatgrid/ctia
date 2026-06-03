@@ -173,13 +173,21 @@
           new-opened-date (when (and (new-status? old-status)
                                      (open-status? new-status))
                             (get-in status-update [:incident_time :opened]))
+          ;; On (New|Open) → Open: Contained, override :contained with NOW for the same reason as
+          ;; :opened: an upstream-stamped :contained earlier than :created would silently elide
+          ;; :new_to_contained via update-interval's (earlier ≤ later) guard, hiding MTTC.
+          ;; Trigger mirrors compute-intervals' :new_to_contained clause exactly.
+          new-contained-date (when (and (or (new-status? old-status) (open-status? old-status))
+                                        (contained-status? new-status))
+                               (get-in status-update [:incident_time :contained]))
           ;; prev-* and new-* dates for each verb are mutually exclusive (one requires the old
           ;; status to be in the category, the other requires it not to be).
           merged-incident-time (cond-> (merge status-stamped-incident-time client-incident-time)
                                  prev-closed-date (assoc :closed prev-closed-date)
                                  prev-opened-date (assoc :opened prev-opened-date)
                                  new-closed-date (assoc :closed new-closed-date)
-                                 new-opened-date (assoc :opened new-opened-date))]
+                                 new-opened-date (assoc :opened new-opened-date)
+                                 new-contained-date (assoc :contained new-contained-date))]
       (cond-> new-obj
         (seq merged-incident-time) (assoc :incident_time merged-incident-time)))
     ;; No status change or no previous object, return as-is
