@@ -163,14 +163,12 @@
           new-closed-date (when (and (closed-status? new-status)
                                      (not (closed-status? old-status)))
                             (get-in status-update [:incident_time :closed]))
-          ;; On first open (New → Open), set :opened to NOW if the engagement interval has not
-          ;; yet been recorded. This is the same invariant compute-intervals uses ("don't clobber
-          ;; existing interval"); applying it here ensures MTTE reflects the actual click time and
-          ;; not whatever upstream pre-stamped on a promoted incident (CTIM marks :opened as
-          ;; mandatory, so promoted incidents always carry it).
+          ;; On New → Open, override :opened with NOW. CTIM marks :opened as mandatory, so promoted
+          ;; incidents always carry an upstream-stamped value; MTTE is computed from :created →
+          ;; :opened, so resetting :opened on each New → Open transition gives the engagement-click
+          ;; time we actually want.
           new-opened-date (when (and (new-status? old-status)
-                                     (open-status? new-status)
-                                     (not (get-in prev-obj [:intervals :new_to_opened])))
+                                     (open-status? new-status))
                             (get-in status-update [:incident_time :opened]))
           ;; prev-* and new-* dates for each verb are mutually exclusive (one requires the old
           ;; status to be in the category, the other requires it not to be).

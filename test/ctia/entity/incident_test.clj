@@ -117,21 +117,18 @@
            (is (= t3 (get-in result [:incident_time :opened]))
                "Opened date should be NOW on first New → Open when no :new_to_opened recorded")))))
 
-    (testing "XDR-54438: New → Open preserves :opened when :new_to_opened interval already exists"
-      ;; If the engagement interval was already computed (e.g., previous transition cycle), do not
-      ;; overwrite. This preserves first-engagement semantics across re-open scenarios.
+    (testing "XDR-54438: New → Open overrides upstream-stamped :opened with NOW"
       (helpers/fixture-with-fixed-time
        t3
        (fn []
          (let [prev-obj {:status "New"
                          :created t1
-                         :incident_time {:opened t1}
-                         :intervals {:new_to_opened 42}}
+                         :incident_time {:opened t1}}
                new-obj {:status "Open"
                         :incident_time {:opened t1}}
                result (sut/apply-status-update-logic new-obj prev-obj)]
-           (is (= t1 (get-in result [:incident_time :opened]))
-               "Opened date should be preserved when :new_to_opened was already computed")))))
+           (is (= t3 (get-in result [:incident_time :opened]))
+               "Opened date should be reset to NOW on New → Open even when prev-obj carries :opened")))))
 
     (testing "XDR-54438: New → New: Triaged preserves :opened (clause must not fire)"
       ;; Sub-status transitions within the New category should not override :opened, since this is
