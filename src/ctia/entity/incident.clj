@@ -147,10 +147,13 @@
     (let [old-status (:status prev-obj)
           new-status (:status new-obj)
           status-update (make-status-update {:status new-status})
-          ;; Merge the incident_time updates from status change logic
-          ;; Existing values take precedence (set-once semantics for opened, contained, etc.)
-          incident-time-updates (get status-update :incident_time {})
-          current-incident-time (get new-obj :incident_time {})
+          ;; Layered precedence for :incident_time on a status change:
+          ;;   1. status-stamped defaults (e.g. {:opened NOW} for any open status) seed the map
+          ;;   2. client-supplied values from the PATCH body override the defaults
+          ;;   3. cond-> overrides below trump both for category-transition fields the server owns
+          ;;      (e.g., :opened on New → Open, :closed on non-closed → closed)
+          status-stamped-incident-time (get status-update :incident_time {})
+          client-incident-time (get new-obj :incident_time {})
           ;; If transitioning from closed to closed, preserve the original closed date
           prev-closed-date (when (and (closed-status? old-status)
                                       (closed-status? new-status))
@@ -172,7 +175,7 @@
                             (get-in status-update [:incident_time :opened]))
           ;; prev-* and new-* dates for each verb are mutually exclusive (one requires the old
           ;; status to be in the category, the other requires it not to be).
-          merged-incident-time (cond-> (merge incident-time-updates current-incident-time)
+          merged-incident-time (cond-> (merge status-stamped-incident-time client-incident-time)
                                  prev-closed-date (assoc :closed prev-closed-date)
                                  prev-opened-date (assoc :opened prev-opened-date)
                                  new-closed-date (assoc :closed new-closed-date)

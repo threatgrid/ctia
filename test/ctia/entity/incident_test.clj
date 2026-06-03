@@ -100,14 +100,14 @@
            (is (= t1 (get-in result [:incident_time :opened]))
                "Opened date should NOT change on re-open")))))
 
-    (testing "XDR-54438: New → Open sets :opened to NOW when :new_to_opened interval is not yet recorded"
-      ;; CTIM marks :opened as mandatory, so promoted incidents always carry an upstream-stamped
-      ;; :opened that is unrelated to actual analyst engagement. On the first New → Open transition,
-      ;; if no engagement interval has been recorded yet, set :opened to NOW (the click time).
-      ;; This mirrors compute-intervals' "don't clobber existing interval" semantics.
-      (helpers/fixture-with-fixed-time
-       t3
-       (fn []
+    (helpers/fixture-with-fixed-time
+     t3
+     (fn []
+       (testing "XDR-54438: New → Open sets :opened to NOW when :new_to_opened interval is not yet recorded"
+         ;; CTIM marks :opened as mandatory, so promoted incidents always carry an upstream-stamped
+         ;; :opened that is unrelated to actual analyst engagement. On the first New → Open transition,
+         ;; if no engagement interval has been recorded yet, set :opened to NOW (the click time).
+         ;; This mirrors compute-intervals' "don't clobber existing interval" semantics.
          (let [prev-obj {:status "New"
                          :created t2
                          :incident_time {:opened t1}}
@@ -115,12 +115,9 @@
                         :incident_time {:opened t1}}
                result (sut/apply-status-update-logic new-obj prev-obj)]
            (is (= t3 (get-in result [:incident_time :opened]))
-               "Opened date should be NOW on first New → Open when no :new_to_opened recorded")))))
+               "Opened date should be NOW on first New → Open when no :new_to_opened recorded")))
 
-    (testing "XDR-54438: New → Open overrides upstream-stamped :opened with NOW"
-      (helpers/fixture-with-fixed-time
-       t3
-       (fn []
+       (testing "XDR-54438: New → Open overrides upstream-stamped :opened with NOW"
          (let [prev-obj {:status "New"
                          :created t1
                          :incident_time {:opened t1}}
@@ -128,14 +125,11 @@
                         :incident_time {:opened t1}}
                result (sut/apply-status-update-logic new-obj prev-obj)]
            (is (= t3 (get-in result [:incident_time :opened]))
-               "Opened date should be reset to NOW on New → Open even when prev-obj carries :opened")))))
+               "Opened date should be reset to NOW on New → Open even when prev-obj carries :opened")))
 
-    (testing "XDR-54438: New → New: Triaged preserves :opened (clause must not fire)"
-      ;; Sub-status transitions within the New category should not override :opened, since this is
-      ;; not a New → Open transition. The new-opened-date clause must remain inert here.
-      (helpers/fixture-with-fixed-time
-       t3
-       (fn []
+       (testing "XDR-54438: New → New: Triaged preserves :opened (clause must not fire)"
+         ;; Sub-status transitions within the New category should not override :opened, since this is
+         ;; not a New → Open transition. The new-opened-date clause must remain inert here.
          (let [prev-obj {:status "New"
                          :created t2
                          :incident_time {:opened t1}}
@@ -143,7 +137,49 @@
                         :incident_time {:opened t1}}
                result (sut/apply-status-update-logic new-obj prev-obj)]
            (is (= t1 (get-in result [:incident_time :opened]))
-               "Opened date should be preserved on New → New: Triaged")))))))
+               "Opened date should be preserved on New → New: Triaged")))
+
+       (testing "open-to-open transition preserves original opened date"
+         ;; The prev-opened-date override must keep the engagement-click time across sub-status
+         ;; changes within the Open category, even when the client payload omits :incident_time.
+         (let [prev-obj {:status "Open"
+                         :incident_time {:opened t1}}
+               new-obj {:status "Open: Contained"}
+               result (sut/apply-status-update-logic new-obj prev-obj)]
+           (is (= t1 (get-in result [:incident_time :opened]))
+               "Opened date should be PRESERVED when transitioning between open statuses")))
+
+       (testing "Hold → Open does not reset :opened (only New → Open does)"
+         ;; Hold isn't a New status, so the new-opened-date clause must not fire. The original
+         ;; engagement timestamp must survive a Hold → Open round-trip.
+         (let [prev-obj {:status "Hold"
+                         :incident_time {:opened t1}}
+               new-obj {:status "Open"
+                        :incident_time {:opened t1}}
+               result (sut/apply-status-update-logic new-obj prev-obj)]
+           (is (= t1 (get-in result [:incident_time :opened]))
+               "Opened date should NOT be reset on Hold → Open")))
+
+       (testing "New → Open: Contained resets :opened to NOW"
+         ;; Open: Contained is an open status, so new-opened-date fires on New → Open: Contained
+         ;; just like New → Open. Pin this so a future predicate refactor cannot silently drop it.
+         (let [prev-obj {:status "New"
+                         :incident_time {:opened t1}}
+               new-obj {:status "Open: Contained"
+                        :incident_time {:opened t1}}
+               result (sut/apply-status-update-logic new-obj prev-obj)]
+           (is (= t3 (get-in result [:incident_time :opened]))
+               "Opened date should be reset to NOW on New → Open: Contained")))))
+
+    (testing "status predicates are nil-safe"
+      ;; apply-status-update-logic short-circuits on nil :status, but the predicates are also
+      ;; called inside compute-intervals (downstream of un-store-incident, which never produces
+      ;; nil :status) — pin the nil-guard contract so a refactor cannot reintroduce an NPE.
+      (is (false? (sut/new-status? nil)))
+      (is (false? (sut/hold-status? nil)))
+      (is (false? (sut/open-status? nil)))
+      (is (false? (sut/contained-status? nil)))
+      (is (false? (sut/closed-status? nil))))))
 
 (deftest incident-scores-schema-test
   (let [get-in-config (partial get-in {:ctia {:http {:incident {:score-types "global,ttp,asset"}}}})
