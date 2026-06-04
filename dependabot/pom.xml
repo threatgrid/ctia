@@ -1218,7 +1218,7 @@
     <dependency>
       <groupId>io.netty</groupId>
       <artifactId>netty-all</artifactId>
-      <version>4.1.125.Final</version>
+      <version>4.1.133.Final</version>
       <exclusions>
         <exclusion>
           <artifactId>slf4j-nop</artifactId>
@@ -1241,7 +1241,7 @@
     <dependency>
       <groupId>io.netty</groupId>
       <artifactId>netty-codec</artifactId>
-      <version>4.1.125.Final</version>
+      <version>4.1.133.Final</version>
       <exclusions>
         <exclusion>
           <artifactId>slf4j-nop</artifactId>
@@ -1264,7 +1264,7 @@
     <dependency>
       <groupId>io.netty</groupId>
       <artifactId>netty-resolver</artifactId>
-      <version>4.1.125.Final</version>
+      <version>4.1.133.Final</version>
       <exclusions>
         <exclusion>
           <artifactId>slf4j-nop</artifactId>
