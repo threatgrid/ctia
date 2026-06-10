@@ -366,7 +366,7 @@
                  reopen-body (:parsed-body reopen-response)]
              (is (= 200 (:status reopen-response)))
              (is (= "Open" (:status reopen-body)))
-             (is (= hold-opened (get-in reopen-body [:incident_time :opened])))))))
+             (is (= hold-opened (get-in reopen-body [:incident_time :opened]))))))
 
        ;; PATCH tests with fresh incidents for each test
        (testing "PATCH /ctia/incident/:id with status change to Open"
