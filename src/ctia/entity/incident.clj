@@ -137,7 +137,13 @@
   "Applies status change logic when status changes are detected.
   If the status has changed, applies make-status-update to set appropriate incident_time fields.
   Special case: When transitioning between same-category statuses (open-to-open, closed-to-closed),
-  preserve the original timestamp to represent when the incident first entered that category."
+  preserve the original timestamp to represent when the incident first entered that category.
+
+  Limitation (non-prod): the cond-> overrides protect :opened/:closed/:contained but not
+  :remediated/:rejected/:reported. On a re-entry transition into 'Containment Achieved',
+  'Restoration Achieved', 'Rejected' or 'Incident Reported' the inner merge lets a stale
+  prev value win over the fresh status-stamped NOW. These statuses are not enabled in
+  current production status vocabularies; if they are, extend the cond-> trump list."
   [new-obj :- {s/Keyword s/Any}
    prev-obj :- (s/maybe {s/Keyword s/Any})]
   (if (and prev-obj
