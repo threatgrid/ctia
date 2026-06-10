@@ -253,36 +253,45 @@
 
 (defn run-reclose-scenario
   "Executes a close → reopen → reclose scenario and verifies
-   that the closed date is updated on re-close."
+   that the closed date is updated on re-close while :opened is preserved."
   [app fixed-now test-incidents transition-fn]
   (let [test-id (create-test-incident app)
         _ (swap! test-incidents conj test-id)
         ;; Step 1: Close the incident
         first-response (transition-fn app test-id "Closed")
-        first-closed-date (get-in (:parsed-body first-response) [:incident_time :closed])]
+        first-body (:parsed-body first-response)
+        first-closed-date (get-in first-body [:incident_time :closed])
+        first-opened-date (get-in first-body [:incident_time :opened])]
     (is (= 200 (:status first-response)))
-    (is (= "Closed" (:status (:parsed-body first-response))))
+    (is (= "Closed" (:status first-body)))
     (is (some? first-closed-date) "First closed date should be set")
+    (is (some? first-opened-date) ":opened should be set after first Close")
     ;; Step 2: Re-open (5 min later)
     (helpers/fixture-with-fixed-time
      (t/plus fixed-now (t/minutes 5))
      (fn []
-       (let [reopen-response (transition-fn app test-id "Open")]
+       (let [reopen-response (transition-fn app test-id "Open")
+             reopen-body (:parsed-body reopen-response)]
          (is (= 200 (:status reopen-response)))
-         (is (= "Open" (:status (:parsed-body reopen-response))))
+         (is (= "Open" (:status reopen-body)))
+         (is (= first-opened-date (get-in reopen-body [:incident_time :opened]))
+             ":opened should be PRESERVED on Closed → Open (set-once across reopen)")
          ;; Step 3: Re-close (10 min later)
          (helpers/fixture-with-fixed-time
           (t/plus fixed-now (t/minutes 10))
           (fn []
             (let [reclose-response (transition-fn app test-id "Closed")
-                  second-closed-date (get-in (:parsed-body reclose-response) [:incident_time :closed])]
+                  reclose-body (:parsed-body reclose-response)
+                  second-closed-date (get-in reclose-body [:incident_time :closed])]
               (is (= 200 (:status reclose-response)))
-              (is (= "Closed" (:status (:parsed-body reclose-response))))
+              (is (= "Closed" (:status reclose-body)))
               (is (some? second-closed-date) "Second closed date should be set")
               (is (not= first-closed-date second-closed-date)
                   "Closed date should be UPDATED on re-close, not preserved from first close")
               (is (= (tc/to-date (t/plus fixed-now (t/minutes 10))) second-closed-date)
-                  "Closed date should reflect the time of the re-close")))))))))
+                  "Closed date should reflect the time of the re-close")
+              (is (= first-opened-date (get-in reclose-body [:incident_time :opened]))
+                  ":opened should remain PRESERVED across the full reclose cycle")))))))))
 
 (defn additional-tests [app incident-id incident]
   (let [fixed-now (t/internal-now)

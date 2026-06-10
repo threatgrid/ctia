@@ -282,7 +282,10 @@
             :capabilities :create-incident
             :auth-identity identity
             :identity-map identity-map
-            (let [status-update (assoc (make-status-update update) :id id)
+            ;; Don't pre-stamp :incident_time here. apply-status-update-logic owns all
+            ;; :incident_time mutations (it calls make-status-update internally); pre-stamping
+            ;; would deep-merge into the partial entity and clobber prev values such as :opened.
+            (let [status-update {:status (:status update) :id id}
                   get-by-ids-fn (routes.crud/flow-get-by-ids-fn
                                  {:get-store get-store
                                   :entity :incident
