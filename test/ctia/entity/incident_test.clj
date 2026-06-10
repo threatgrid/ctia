@@ -301,7 +301,8 @@
       (helpers/fixture-with-fixed-time
        fixed-now
        (fn []
-       ;; Keep the original POST status tests with the shared incident
+       ;; Smoke-check that the shared fixture survives a no-op PATCH (regression cover for
+       ;; clients that send an empty :incident_time to clear server-side defaults).
        (testing "Incident status update: test setup"
          (let [response (PATCH app
                                (str "ctia/incident/" (:short-id incident-id))
@@ -309,19 +310,24 @@
                                :headers {"Authorization" "45c1f5e3f05d0"})]
            (is (= 200 (:status response)))))
 
+       ;; POST /status tests — fresh New incident per case so each exercises a specific
+       ;; apply-status-update-logic path without leaking state from the prior test.
        (testing "POST /ctia/incident/:id/status Open"
-         (let [new-status "Open"
-               response (post-status app (:short-id incident-id) new-status)
+         ;; Covers New → Open: new-opened-date cond-> override stamps :opened to NOW.
+         (let [test-id (create-test-incident app)
+               _ (swap! test-incidents conj test-id)
+               response (post-status app (uri/uri-encode test-id) "Open")
                updated-incident (:parsed-body response)]
-           (is (= (:id incident) (:id updated-incident)))
            (is (= 200 (:status response)))
            (is (= "Open" (:status updated-incident)))
            (is (= (get-in updated-incident [:incident_time :opened])
                   (tc/to-date fixed-now)))))
 
        (testing "POST /ctia/incident/:id/status Closed"
-         (let [new-status "Closed"
-               response (post-status app (:short-id incident-id) new-status)
+         ;; Covers New → Closed: new-closed-date cond-> override stamps :closed to NOW.
+         (let [test-id (create-test-incident app)
+               _ (swap! test-incidents conj test-id)
+               response (post-status app (uri/uri-encode test-id) "Closed")
                updated-incident (:parsed-body response)]
            (is (= 200 (:status response)))
            (is (= "Closed" (:status updated-incident)))
@@ -329,17 +335,22 @@
                   (tc/to-date fixed-now)))))
 
        (testing "POST /ctia/incident/:id/status Containment Achieved"
-         (let [new-status "Containment Achieved"
-               response (post-status app (:short-id incident-id) new-status)
+         ;; Covers make-status-update's [:remediated] verb: status-stamped {:remediated NOW}
+         ;; wins via the inner merge because the fresh incident has no prior :remediated.
+         (let [test-id (create-test-incident app)
+               _ (swap! test-incidents conj test-id)
+               response (post-status app (uri/uri-encode test-id) "Containment Achieved")
                updated-incident (:parsed-body response)]
            (is (= 200 (:status response)))
            (is (= "Containment Achieved" (:status updated-incident)))
            (is (= (get-in updated-incident [:incident_time :remediated])
                   (tc/to-date fixed-now)))))
-       
+
        (testing "POST /ctia/incident/:id/status Contained"
-         (let [new-status "Open: Contained"
-               response (post-status app (:short-id incident-id) new-status)
+         ;; Covers New → Open: Contained: new-contained-date cond-> override stamps :contained.
+         (let [test-id (create-test-incident app)
+               _ (swap! test-incidents conj test-id)
+               response (post-status app (uri/uri-encode test-id) "Open: Contained")
                updated-incident (:parsed-body response)]
            (is (= 200 (:status response)))
            (is (= "Open: Contained" (:status updated-incident)))
