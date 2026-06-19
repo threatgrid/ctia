@@ -56,8 +56,7 @@ RUN apk update && \
 WORKDIR /ctia
 
 ADD ctia.jar /ctia/
-ADD 'https://dtdg.co/latest-java-tracer' /ctia/dd-java-agent.jar
-RUN chmod 644 /ctia/ctia.jar /ctia/dd-java-agent.jar
+RUN chmod 644 /ctia/ctia.jar
 USER nobody
 ENTRYPOINT ["/sbin/tini", "--"]
 EOF
