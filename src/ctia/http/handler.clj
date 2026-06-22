@@ -113,6 +113,7 @@
    :invalid-tlp-error ex/invalid-tlp-error-handler
    :realize-entity-error ex/realize-entity-error-handler
    :spec-validation-error ex/spec-validation-error-handler
+   :entity-too-large-error ex/entity-too-large-error-handler
    :compojure.api.exception/default ex/default-error-handler})
 
 (s/defn api-tags
