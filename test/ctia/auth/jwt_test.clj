@@ -101,6 +101,25 @@
     (is (not (contains? (sut/scopes-to-capabilities #{(str (sut/entity-root-scope get-in-config) ":read")}
                                                     get-in-config)
                         :import-bundle)))
+    (is (= #{:specify-id}
+           (sut/scopes-to-capabilities
+            #{(str (sut/entity-root-scope get-in-config) "/specify-id")}
+            get-in-config))
+        "specify-id sub-scope grants the :specify-id capability")
+    (is (= #{:specify-id}
+           (sut/scopes-to-capabilities
+            #{(str (sut/entity-root-scope get-in-config) "/specify-id:write")}
+            get-in-config))
+        "specify-id sub-scope with explicit :write grants the :specify-id capability")
+    (is (= #{}
+           (sut/scopes-to-capabilities
+            #{(str (sut/entity-root-scope get-in-config) "/specify-id:read")}
+            get-in-config))
+        "specify-id sub-scope with :read grants nothing")
+    (is (not (contains? (sut/scopes-to-capabilities #{(str (sut/entity-root-scope get-in-config) ":write")}
+                                                    get-in-config)
+                        :specify-id))
+        "broad entity scope with :write does NOT confer :specify-id")
     (is (= #{:read-sighting :list-sightings :search-sighting :create-sighting
              :delete-sighting}
            (sut/scopes-to-capabilities
