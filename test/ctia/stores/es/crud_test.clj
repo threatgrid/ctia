@@ -615,19 +615,19 @@
             :aggregate-on "title"
             :limit        20
             :sort_order   :desc})))
-  (is (= [{:bool {:must {:exists {:field "intervals.something"}}}}]
+  (is (= [{:exists {:field "intervals.something"}}]
          (sut/aggregation-filters
            {:agg-type     :avg
             :aggregate-on "intervals.something"})))
-  (is (= [{:bool {:must {:exists {:field "intervals.something2"}}}}
-          {:bool {:must {:exists {:field "intervals.something1"}}}}]
+  (is (= [{:exists {:field "intervals.something2"}}
+          {:exists {:field "intervals.something1"}}]
          (sut/aggregation-filters
            {:agg-type     :avg
             :aggregate-on "intervals.something1"
             :aggs {:agg-type     :avg
                    :aggregate-on "intervals.something2"}})))
-  (is (= [{:bool {:must {:exists {:field "intervals.something2"}}}}
-          {:bool {:must {:exists {:field "intervals.something1"}}}}]
+  (is (= [{:exists {:field "intervals.something2"}}
+          {:exists {:field "intervals.something1"}}]
          (sut/aggregation-filters
            {:agg-type     :avg
             :aggregate-on "intervals.something1"
