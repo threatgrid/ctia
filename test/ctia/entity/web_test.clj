@@ -211,15 +211,22 @@
                (is (= [expected-get-res] (map #(dissoc % :created :modified) (:parsed-body matched))))
                (is (= [] (:parsed-body not-matched)))))
 
-           (testing "Normal users are not allowed to set the ids during creation."
-             (let [response
+           (testing "Holders of private-intel:write are allowed to set ids during creation."
+             ;; The JWT under test claims the `private-intel` scope, which
+             ;; confers the :specify-id capability alongside :import-bundle.
+             ;; The hostname in the supplied :id must match this server's;
+             ;; otherwise CTIA rejects with 400 Bad Request.
+             (let [host (str "http://localhost:" (helpers/get-http-port app))
+                   supplied-id (str host "/ctia/judgement/judgement-00001111-0000-1111-2222-000011112222")
+                   response
                    (POST app
                          "ctia/judgement"
-                         :body (assoc new-judgement-1
-                                      :id "http://localhost:3001/ctia/judgement/judgement-00001111-0000-1111-2222-000011112222")
+                         :body (assoc new-judgement-1 :id supplied-id)
                          :headers {"Authorization" bearer
                                    "origin" "http://external.cisco.com"})]
-               (is (= 403 (:status response)))))
+               (is (= 201 (:status response)))
+               (is (= supplied-id (-> response :parsed-body :id))
+                   "the caller-supplied :id is honored")))
 
            (testing "POST /ctia/judgement/:id with bad JWT Authorization header"
              (let [response
@@ -229,7 +236,6 @@
                          :headers {"Authorization" "Bearer 45c1f5e3f05d0"
                                    "origin" "http://external.cisco.com"})]
                (is (= 401 (:status response))))))))))))
-
 
 (defn gen-jwts []
   (let [clm (fn [k] (str "https://schemas.cisco.com/iroh/identity/claims/" k))
@@ -512,3 +518,51 @@
                (is (= 3 @counter)
                    "After the cache-ttl we should make a new call for the same JWT")))))))))))))
 ))
+
+(deftest bundle-import-with-jwt-specify-id-test
+  ;; End-to-end check that a JWT carrying the `private-intel` scope can
+  ;; supply entity ids on POST /ctia/bundle/import. The scope confers the
+  ;; :specify-id capability via the mapping in ctia.auth.jwt; the flow-layer
+  ;; gate in ctia.flows.crud/find-create-entity-id then permits the caller-
+  ;; supplied id rather than minting a fresh UUID.
+  (test-for-each-store-with-app
+   (fn [app]
+     (helpers/fixture-with-fixed-time (tc/to-date (time/date-time 2017 02 15 14 15 10))
+       (fn []
+         (let [{:keys [jwt-1]} (gen-jwts)
+               bearer (str "Bearer " jwt-1)
+               host (str "http://localhost:" (helpers/get-http-port app))
+               supplied-short-id "sighting-00112233-4455-6677-8899-aabbccddeeff"
+               supplied-id (str host "/ctia/sighting/" supplied-short-id)
+               bundle {:type "bundle"
+                       :source "specify-id-jwt-test"
+                       :sightings [{:id supplied-id
+                                    :external_ids ["specify-id-jwt-test/sighting/1"]
+                                    :description "caller-supplied id"
+                                    :timestamp #inst "2017-02-15T14:15:10.000Z"
+                                    :observed_time {:start_time #inst "2017-02-15T14:15:10.000Z"}
+                                    :schema_version schema-version
+                                    :count 1
+                                    :source "specify-id-jwt-test"
+                                    :sensor "endpoint.sensor"
+                                    :confidence "High"}]}
+               {:keys [status parsed-body]}
+               (POST app
+                     "ctia/bundle/import"
+                     :body bundle
+                     :headers {"Authorization" bearer})]
+           (is (= 200 status)
+               "bundle import succeeds when caller supplies :id with private-intel scope")
+           (let [sighting-result (first (filter #(= :sighting (:type %))
+                                                (:results parsed-body)))]
+             (is (= "created" (:result sighting-result))
+                 "sighting was created")
+             (is (= supplied-id (:id sighting-result))
+                 "the caller-supplied :id is honored")
+             (testing "the entity is retrievable by the supplied short-id"
+               (let [get-response (GET app
+                                       (str "ctia/sighting/" supplied-short-id)
+                                       :headers {"Authorization" bearer})]
+                 (is (= 200 (:status get-response)))
+                 (is (= supplied-id (-> get-response :parsed-body :id))))))))))))
+
