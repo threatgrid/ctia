@@ -564,5 +564,33 @@
                                        (str "ctia/sighting/" supplied-short-id)
                                        :headers {"Authorization" bearer})]
                  (is (= 200 (:status get-response)))
-                 (is (= supplied-id (-> get-response :parsed-body :id))))))))))))
+                 (is (= supplied-id (-> get-response :parsed-body :id)))))
+             (testing "KNOWN UNSAFE: a second import reusing the same :id silently overwrites"
+               ;; Documents a collision gap in the ES store create path: the
+               ;; underlying call (ctia.stores.es.crud/handle-create →
+               ;; ductile.doc/bulk-index-docs) is an upsert and there is no
+               ;; pre-existence guard at the flow layer. A second POST with the
+               ;; same caller-supplied :id silently replaces the first record
+               ;; and the caller sees "created" again. This test pins that
+               ;; behavior so any future change that adds a collision guard
+               ;; will surface here and we can flip the assertions.
+               (let [second-bundle (-> bundle
+                                       (assoc-in [:sightings 0 :description]
+                                                 "OVERWRITE ATTEMPT")
+                                       (assoc-in [:sightings 0 :external_ids]
+                                                 ["specify-id-jwt-test/sighting/2"]))
+                     second-response (POST app
+                                           "ctia/bundle/import"
+                                           :body second-bundle
+                                           :headers {"Authorization" bearer})
+                     get-after (GET app
+                                    (str "ctia/sighting/" supplied-short-id)
+                                    :headers {"Authorization" bearer})
+                     second-sighting-result (first (filter #(= :sighting (:type %))
+                                                           (-> second-response :parsed-body :results)))]
+                 (is (= "OVERWRITE ATTEMPT"
+                        (-> get-after :parsed-body :description))
+                     "the second import overwrites the original — pre-existence guard missing")
+                 (is (= "created" (:result second-sighting-result))
+                     "the second import is reported as a successful create — no conflict surfaced"))))))))))
 
