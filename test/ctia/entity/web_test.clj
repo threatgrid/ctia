@@ -270,6 +270,39 @@
      :jwt-2 (-> claims-2 jwt/jwt (jwt/sign :RS256 priv-key-2) jwt/to-str)
      :bad-iss-jwt-2 (-> claims-2 (assoc :iss "IROH Auth") jwt/jwt (jwt/sign :RS256 priv-key-2) jwt/to-str)}))
 
+(defn jwt-for-org
+  "Signs a JWT identical to gen-jwts/jwt-1 but with a different org/id claim
+  and a distinct user id. Used to assert that a caller from another org
+  cannot overwrite documents owned by the original org."
+  [org-id]
+  (let [clm (fn [k] (str "https://schemas.cisco.com/iroh/identity/claims/" k))
+        priv-key-1 (jwt-key/private-key "resources/cert/ctia-jwt.key")
+        now (t/now)
+        in-one-hour (t/plus now (t/hours 1))
+        other-user-id "deadbeef-dead-beef-dead-beefdeadbeef"
+        claims
+        {:exp in-one-hour
+         :iat now
+         :iss "IROH Auth"
+         :email "other-org@example.com"
+         :nbf now
+         "sub" other-user-id
+         :jti "00000000-0000-0000-0000-000000000001"
+         (clm "oauth/client/id") "iroh-ui"
+         (clm "oauth/client/name") "iroh-ui"
+         (clm "oauth/kind") "session-token"
+         (clm "org/id") org-id
+         (clm "org/name") "Other Org"
+         (clm "scopes") ["casebook" "global-intel" "private-intel" "collect"
+                         "enrich" "inspect" "integration" "iroh-auth"
+                         "response" "ui-settings"]
+         (clm "user/email") "other-org@example.com"
+         (clm "user/id") other-user-id
+         (clm "user/idp/id") "amp"
+         (clm "user/nick") "other-org@example.com"
+         (clm "version") "1"}]
+    (-> claims jwt/jwt (jwt/sign :RS256 priv-key-1) jwt/to-str)))
+
 (s/defn apply-fixtures-with-app
   [properties f-with-app :- (s/=> s/Any (s/=> s/Any (s/named s/Any 'app)))]
   (let [fixture-fn
@@ -565,32 +598,41 @@
                                        :headers {"Authorization" bearer})]
                  (is (= 200 (:status get-response)))
                  (is (= supplied-id (-> get-response :parsed-body :id)))))
-             (testing "KNOWN UNSAFE: a second import reusing the same :id silently overwrites"
-               ;; Documents a collision gap in the ES store create path: the
-               ;; underlying call (ctia.stores.es.crud/handle-create →
-               ;; ductile.doc/bulk-index-docs) is an upsert and there is no
-               ;; pre-existence guard at the flow layer. A second POST with the
-               ;; same caller-supplied :id silently replaces the first record
-               ;; and the caller sees "created" again. This test pins that
-               ;; behavior so any future change that adds a collision guard
-               ;; will surface here and we can flip the assertions.
-               (let [second-bundle (-> bundle
+             (testing "RED: cross-org overwrite via caller-supplied :id MUST be prevented"
+               ;; Safety property: one org must never be able to mutate a
+               ;; document owned by another org. The JWT's org/id claim
+               ;; populates the entity's :groups; access control on update is
+               ;; enforced by allow-write? against owner/groups (see
+               ;; ctia.stores.es.crud/handle-update). The create path does NOT
+               ;; perform that check (handle-create ignores _ident and writes
+               ;; via ductile.doc/bulk-index-docs, an upsert), so a second
+               ;; caller from another org can replace the original record by
+               ;; reusing its :id.
+               ;;
+               ;; This test asserts the safe outcome and SHOULD FAIL until a
+               ;; flow-layer pre-existence + allow-write? guard is added.
+               (let [other-org-jwt (jwt-for-org "ffffffff-ffff-ffff-ffff-ffffffffffff")
+                     other-bearer (str "Bearer " other-org-jwt)
+                     attack-bundle (-> bundle
                                        (assoc-in [:sightings 0 :description]
                                                  "OVERWRITE ATTEMPT")
                                        (assoc-in [:sightings 0 :external_ids]
-                                                 ["specify-id-jwt-test/sighting/2"]))
-                     second-response (POST app
+                                                 ["specify-id-jwt-test/sighting/from-other-org"]))
+                     attack-response (POST app
                                            "ctia/bundle/import"
-                                           :body second-bundle
-                                           :headers {"Authorization" bearer})
+                                           :body attack-bundle
+                                           :headers {"Authorization" other-bearer})
                      get-after (GET app
                                     (str "ctia/sighting/" supplied-short-id)
                                     :headers {"Authorization" bearer})
-                     second-sighting-result (first (filter #(= :sighting (:type %))
-                                                           (-> second-response :parsed-body :results)))]
-                 (is (= "OVERWRITE ATTEMPT"
+                     attack-result (first (filter #(= :sighting (:type %))
+                                                  (-> attack-response :parsed-body :results)))]
+                 (is (not= "OVERWRITE ATTEMPT"
+                           (-> get-after :parsed-body :description))
+                     "Org A's record must NOT be modified by another org")
+                 (is (= "caller-supplied id"
                         (-> get-after :parsed-body :description))
-                     "the second import overwrites the original — pre-existence guard missing")
-                 (is (= "created" (:result second-sighting-result))
-                     "the second import is reported as a successful create — no conflict surfaced"))))))))))
+                     "Org A's original description is intact")
+                 (is (not= "created" (:result attack-result))
+                     "the cross-org import of an :id owned by another org must NOT be reported as a successful create"))))))))))
 
