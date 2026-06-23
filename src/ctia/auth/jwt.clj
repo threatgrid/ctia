@@ -310,6 +310,9 @@
         "import-bundle" (if (contains? (:access scope-repr) :write)
                           #{:import-bundle}
                           #{})
+        "specify-id" (if (contains? (:access scope-repr) :write)
+                       #{:specify-id}
+                       #{})
         (let [entity (get (all-entities)
                           (-> scope-repr
                               :path
