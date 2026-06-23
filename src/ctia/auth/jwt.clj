@@ -310,9 +310,6 @@
         "import-bundle" (if (contains? (:access scope-repr) :write)
                           #{:import-bundle}
                           #{})
-        "specify-id" (if (contains? (:access scope-repr) :write)
-                       #{:specify-id}
-                       #{})
         (let [entity (get (all-entities)
                           (-> scope-repr
                               :path
@@ -327,7 +324,7 @@
            (map #(gen-capabilities-for-entity-and-accesses % (:access scope-repr)))
            unionize
            (set/union (if (contains? (:access scope-repr) :write)
-                        #{:import-bundle}
+                        #{:import-bundle :specify-id}
                         #{})))
     #{}))
 
