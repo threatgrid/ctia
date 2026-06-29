@@ -444,25 +444,25 @@
              enveloped-result?
              get-fn
              get-success-entities]}]
-  (-> {:flow-type :create
-       :services services
-       :entity-type entity-type
-       :entities (map #(dissoc % :schema_version) entities)
-       :tempids tempids
-       :identity identity
-       :long-id-fn long-id-fn
-       :spec spec
-       :realize-fn realize-fn
-       :find-entity-id (find-create-entity-id services)
-       :store-fn store-fn
-       :create-event-fn to-create-event
-       :enveloped-result? enveloped-result?
-       :get-prev-entity (when get-fn
-                          (prev-entity get-fn
-                                       (->> entities
-                                            (keep :id)
-                                            (remove schemas/transient-id?))))
-       :get-success-entities (or get-success-entities default-success-entities)}
+  (-> (cond-> {:flow-type :create
+               :services services
+               :entity-type entity-type
+               :entities (map #(dissoc % :schema_version) entities)
+               :tempids tempids
+               :identity identity
+               :long-id-fn long-id-fn
+               :spec spec
+               :realize-fn realize-fn
+               :find-entity-id (find-create-entity-id services)
+               :store-fn store-fn
+               :create-event-fn to-create-event
+               :enveloped-result? enveloped-result?
+               :get-success-entities (or get-success-entities default-success-entities)}
+        get-fn (assoc :get-prev-entity
+                      (prev-entity get-fn
+                                   (->> entities
+                                        (keep :id)
+                                        (remove schemas/transient-id?)))))
       validate-entities
       create-ids-from-transient
       realize-entities
