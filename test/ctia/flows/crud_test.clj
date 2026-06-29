@@ -357,3 +357,59 @@
            expected (assoc patch-flow-map :entities expected-entities)]
        (is (= expected
               (flows.crud/patch-entities patch-flow-map)))))))
+
+(deftest find-create-entity-id-collision-test
+  ;; Unit-level coverage for the caller-supplied :id pre-existence guard.
+  ;; The integration coverage lives in ctia.entity.web-test
+  ;; (bundle-import-with-jwt-specify-id-test and
+  ;; single-entity-post-with-caller-supplied-id-test) — this test pins the
+  ;; pure logic so a future refactor of the flow layer cannot silently drop
+  ;; the guard without a tightly-scoped test failure.
+  (let [host "http://localhost:3000"
+        services {:ConfigService {:get-in-config
+                                  (fn [path]
+                                    (when (= path [:ctia :http :show])
+                                      {:hostname "localhost"
+                                       :protocol "http"
+                                       :port 3000}))}
+                  :CTIAHTTPServerService {:get-port (constantly 3000)}}
+        capable-ident (map->Identity {:login "owner"
+                                      :groups ["g1"]
+                                      :capabilities #{:specify-id}})
+        existing-short-id "sighting-deadbeef-1111-2222-3333-444455556666"
+        existing-long-id (str host "/ctia/sighting/" existing-short-id)
+        existing-doc {:id existing-long-id :owner "owner" :groups ["g1"]}
+        fresh-short-id "sighting-12345678-1111-2222-3333-444455556666"
+        fresh-long-id (str host "/ctia/sighting/" fresh-short-id)
+        get-prev (fn [id] (when (= id existing-short-id) existing-doc))
+        find-fn (flows.crud/find-create-entity-id services)]
+    (testing "no get-prev-entity in flow map ⇒ caller-supplied :id is accepted (legacy behavior)"
+      (is (= existing-short-id
+             (find-fn {:identity capable-ident
+                       :entity-type :sighting
+                       :tempids nil}
+                      {:id existing-long-id}))))
+    (testing "caller-supplied :id that collides with an existing doc ⇒ :id-collision-error"
+      (let [result (find-fn {:identity capable-ident
+                             :entity-type :sighting
+                             :tempids nil
+                             :get-prev-entity get-prev}
+                            {:id existing-long-id})]
+        (is (map? result) "collision returns an error map, not a short-id")
+        (is (= :id-collision-error (:type result)))
+        (is (string? (:error result)))))
+    (testing "brand-new caller-supplied :id ⇒ short-id is returned"
+      (is (= fresh-short-id
+             (find-fn {:identity capable-ident
+                       :entity-type :sighting
+                       :tempids nil
+                       :get-prev-entity get-prev}
+                      {:id fresh-long-id}))))
+    (testing "no caller-supplied :id ⇒ a fresh id is minted (no collision check)"
+      (let [result (find-fn {:identity capable-ident
+                             :entity-type :sighting
+                             :tempids nil
+                             :get-prev-entity get-prev}
+                            {})]
+        (is (string? result))
+        (is (.startsWith result "sighting-"))))))

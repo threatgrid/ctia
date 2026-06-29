@@ -281,6 +281,7 @@
                                      %
                                      identity-map
                                      (wait_for->refresh wait_for)))
+                    :get-fn (get-by-ids-fn identity-map)
                     :long-id-fn #(with-long-id % services)
                     :entity-type entity
                     :identity identity

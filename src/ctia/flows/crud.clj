@@ -76,7 +76,7 @@
 (s/defn find-create-entity-id
   [services :- HTTPShowServices]
   (s/fn [{identity-obj :identity
-          :keys [entity-type tempids]} :- FlowMap
+          :keys [entity-type tempids get-prev-entity]} :- FlowMap
          entity] :- s/Str
     (or
      (get tempids (:id entity))
@@ -85,10 +85,23 @@
          (http-response/forbidden!
           {:error "Missing capability to specify entity ID"
            :entity entity}))
-       (if (id/valid-short-id? entity-id)
-         entity-id
+       (cond
+         (not (id/valid-short-id? entity-id))
          {:error (format "Invalid entity ID: %s" entity-id)
-          :entity entity}))
+          :entity entity}
+         ;; Reject caller-supplied :id that collides with an existing
+         ;; document. handle-create at the ES layer is an upsert (no
+         ;; pre-existence check), so without this guard a holder of the
+         ;; :specify-id capability could overwrite any existing record by
+         ;; reusing its id - including documents owned by another org.
+         ;; Updates have their own endpoint (PUT /:id), gated by
+         ;; allow-write? in handle-update; the create path should not
+         ;; double as an update path.
+         (and get-prev-entity (get-prev-entity entity-id))
+         {:error (format "An entity with ID %s already exists" entity-id)
+          :type :id-collision-error
+          :entity entity}
+         :else entity-id))
      (make-id entity-type))))
 
 (s/defn ^:private find-existing-entity-id
@@ -400,6 +413,18 @@
                        (patch-entity patch-fn prev-entity)))]
     (assoc fm :entities patched)))
 
+(defn prev-entity
+  [get-fn ids]
+  (let [indexed (into {}
+                      (comp
+                       (filter seq)
+                       (map (fn [e]
+                              [(id/str->short-id (:id e)) e])))
+                      (get-fn ids))]
+    (fn [id]
+      (when (seq id)
+        (get indexed (id/str->short-id id))))))
+
 (defn create-flow
   "This function centralizes the create workflow.
   It is helpful to easily add new hooks name
@@ -417,6 +442,7 @@
              spec
              services
              enveloped-result?
+             get-fn
              get-success-entities]}]
   (-> {:flow-type :create
        :services services
@@ -431,6 +457,11 @@
        :store-fn store-fn
        :create-event-fn to-create-event
        :enveloped-result? enveloped-result?
+       :get-prev-entity (when get-fn
+                          (prev-entity get-fn
+                                       (->> entities
+                                            (keep :id)
+                                            (remove schemas/transient-id?))))
        :get-success-entities (or get-success-entities default-success-entities)}
       validate-entities
       create-ids-from-transient
@@ -444,18 +475,6 @@
       apply-event-hooks
       apply-after-hooks
       make-create-result))
-
-(defn prev-entity
-  [get-fn ids]
-  (let [indexed (into {}
-                      (comp
-                       (filter seq)
-                       (map (fn [e]
-                              [(id/str->short-id (:id e)) e])))
-                      (get-fn ids))]
-    (fn [id]
-      (when (seq id)
-        (get indexed (id/str->short-id id))))))
 
 (s/defn make-update-result
   [{:keys [make-result results long-id-fn] :as fm} :- FlowMap]

@@ -634,5 +634,109 @@
                         (-> get-after :parsed-body :description))
                      "Org A's original description is intact")
                  (is (not= "created" (:result attack-result))
-                     "the cross-org import of an :id owned by another org must NOT be reported as a successful create"))))))))))
+                     "the cross-org import of an :id owned by another org must NOT be reported as a successful create")))
+             (testing "same-org caller reusing their own :id is rejected on the create path"
+               ;; Updates have their own endpoint (PUT /ctia/:entity/:id), gated
+               ;; by allow-write? in handle-update. The create path should not
+               ;; double as an update path: a second create with an existing
+               ;; :id must surface a conflict, not silently upsert.
+               (let [reuse-bundle (-> bundle
+                                      (assoc-in [:sightings 0 :description]
+                                                "SAME-ORG SECOND CREATE")
+                                      (assoc-in [:sightings 0 :external_ids]
+                                                ["specify-id-jwt-test/sighting/reuse"]))
+                     reuse-response (POST app
+                                          "ctia/bundle/import"
+                                          :body reuse-bundle
+                                          :headers {"Authorization" bearer})
+                     reuse-result (first (filter #(= :sighting (:type %))
+                                                 (-> reuse-response :parsed-body :results)))
+                     get-after (GET app
+                                    (str "ctia/sighting/" supplied-short-id)
+                                    :headers {"Authorization" bearer})]
+                 (is (not= "created" (:result reuse-result))
+                     "a same-org second create on an existing :id must NOT be reported as created")
+                 (is (= "caller-supplied id"
+                        (-> get-after :parsed-body :description))
+                     "the original same-org record is not overwritten by a second create")))
+             (testing "brand-new caller-supplied :id still succeeds (regression)"
+               ;; Sanity: the collision guard must not break the happy path of
+               ;; caller-supplied ids on a fresh id.
+               (let [fresh-short-id "sighting-99887766-5544-3322-1100-ffeeddccbbaa"
+                     fresh-id (str host "/ctia/sighting/" fresh-short-id)
+                     fresh-bundle (-> bundle
+                                      (assoc-in [:sightings 0 :id] fresh-id)
+                                      (assoc-in [:sightings 0 :external_ids]
+                                                ["specify-id-jwt-test/sighting/fresh"]))
+                     fresh-response (POST app
+                                          "ctia/bundle/import"
+                                          :body fresh-bundle
+                                          :headers {"Authorization" bearer})
+                     fresh-result (first (filter #(= :sighting (:type %))
+                                                 (-> fresh-response :parsed-body :results)))]
+                 (is (= "created" (:result fresh-result))
+                     "a brand-new caller-supplied :id on the create path still succeeds")
+                 (is (= fresh-id (:id fresh-result))
+                     "the fresh caller-supplied :id is honored"))))))))))
+
+(deftest single-entity-post-with-caller-supplied-id-test
+  ;; Same safety properties as bundle-import-with-jwt-specify-id-test, but
+  ;; routed through the single-entity POST /ctia/:entity path. Both routes
+  ;; share ctia.flows.crud/create-flow, so a fix at the flow layer should
+  ;; protect both. This direct test pins the property at the single-entity
+  ;; surface so a future refactor that bypasses the flow layer here can't
+  ;; silently regress.
+  (test-for-each-store-with-app
+   (fn [app]
+     (helpers/fixture-with-fixed-time (tc/to-date (time/date-time 2017 02 15 14 15 10))
+       (fn []
+         (let [{:keys [jwt-1]} (gen-jwts)
+               bearer (str "Bearer " jwt-1)
+               host (str "http://localhost:" (helpers/get-http-port app))
+               supplied-short-id "sighting-aa112233-4455-6677-8899-aabbccddee01"
+               supplied-id (str host "/ctia/sighting/" supplied-short-id)
+               new-sighting {:id supplied-id
+                             :external_ids ["single-post-test/sighting/1"]
+                             :description "original"
+                             :timestamp #inst "2017-02-15T14:15:10.000Z"
+                             :observed_time {:start_time #inst "2017-02-15T14:15:10.000Z"}
+                             :schema_version schema-version
+                             :count 1
+                             :source "single-post-test"
+                             :sensor "endpoint.sensor"
+                             :confidence "High"}
+               first-resp (POST app
+                                "ctia/sighting"
+                                :body new-sighting
+                                :headers {"Authorization" bearer})]
+           (is (= 201 (:status first-resp))
+               "first POST with caller-supplied :id succeeds")
+           (is (= supplied-id (-> first-resp :parsed-body :id))
+               "the caller-supplied :id is honored")
+           (testing "same-org second POST with the same :id is rejected (no silent upsert)"
+             (let [reuse-resp (POST app
+                                    "ctia/sighting"
+                                    :body (assoc new-sighting :description "OVERWRITE ATTEMPT")
+                                    :headers {"Authorization" bearer})
+                   get-after (GET app
+                                  (str "ctia/sighting/" supplied-short-id)
+                                  :headers {"Authorization" bearer})]
+               (is (not= 201 (:status reuse-resp))
+                   "second POST with same caller-supplied :id must NOT report 201 Created")
+               (is (= "original" (-> get-after :parsed-body :description))
+                   "the original record is not overwritten by the second POST")))
+           (testing "cross-org POST with another org's :id is rejected"
+             (let [other-org-jwt (jwt-for-org "ffffffff-ffff-ffff-ffff-fffffffffff0")
+                   other-bearer (str "Bearer " other-org-jwt)
+                   attack-resp (POST app
+                                     "ctia/sighting"
+                                     :body (assoc new-sighting :description "CROSS-ORG OVERWRITE")
+                                     :headers {"Authorization" other-bearer})
+                   get-after (GET app
+                                  (str "ctia/sighting/" supplied-short-id)
+                                  :headers {"Authorization" bearer})]
+               (is (not= 201 (:status attack-resp))
+                   "cross-org POST with an :id owned by another org must NOT report 201 Created")
+               (is (= "original" (-> get-after :parsed-body :description))
+                   "Org A's original record is not overwritten by Org B's POST")))))))))
 
