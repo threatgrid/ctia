@@ -291,6 +291,9 @@
 (defn assets-root-scope [get-in-config]
   (get-in-config [:ctia :auth :assets :scope] "asset"))
 
+(defn specify-id-root-scope [get-in-config]
+  (get-in-config [:ctia :auth :specify-id :scope] "ctia-specify-id"))
+
 (defn claim-prefix [get-in-config]
   (get-in-config [:ctia :http :jwt :claim-prefix]
                  "https://schemas.cisco.com/iroh/identity/claims"))
@@ -310,9 +313,6 @@
         "import-bundle" (if (contains? (:access scope-repr) :write)
                           #{:import-bundle}
                           #{})
-        "specify-id" (if (contains? (:access scope-repr) :write)
-                       #{:specify-id}
-                       #{})
         (let [entity (get (all-entities)
                           (-> scope-repr
                               :path
@@ -327,7 +327,7 @@
            (map #(gen-capabilities-for-entity-and-accesses % (:access scope-repr)))
            unionize
            (set/union (if (contains? (:access scope-repr) :write)
-                        #{:import-bundle :specify-id}
+                        #{:import-bundle}
                         #{})))
     #{}))
 
@@ -349,14 +349,25 @@
               % (:access scope-repr)))
        unionize))
 
+(defn gen-specify-id-capabilities
+  "Dedicated single-capability scope conferring only :specify-id when the
+  scope is exactly `<root>:write`. The bare scope and `<root>:read` confer
+  nothing."
+  [scope-repr]
+  (if (and (= 1 (count (:path scope-repr)))
+           (= #{:write} (:access scope-repr)))
+    #{:specify-id}
+    #{}))
+
 (defn scope-to-capabilities
   "given a scope generate capabilities"
   [scope get-in-config]
   (let [scope-repr (scopula/to-scope-repr scope)]
     (condp = (first (:path scope-repr))
-      (entity-root-scope get-in-config)   (gen-entity-capabilities scope-repr)
-      (casebook-root-scope get-in-config) (gen-casebook-capabilities scope-repr)
-      (assets-root-scope get-in-config)   (gen-assets-capabilities scope-repr)
+      (entity-root-scope get-in-config)     (gen-entity-capabilities scope-repr)
+      (casebook-root-scope get-in-config)   (gen-casebook-capabilities scope-repr)
+      (assets-root-scope get-in-config)     (gen-assets-capabilities scope-repr)
+      (specify-id-root-scope get-in-config) (gen-specify-id-capabilities scope-repr)
       #{})))
 
 (defn scopes-to-capabilities

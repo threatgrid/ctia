@@ -72,7 +72,7 @@
              :delete-casebook}
            (sut/scope-to-capabilities (sut/casebook-root-scope get-in-config) get-in-config))
         "Check the casebook capabilities from the casebook scope")
-    (is (= #{:developer}
+    (is (= #{:developer :specify-id}
            (set/difference (caps/all-capabilities)
                            (sut/scopes-to-capabilities #{(sut/entity-root-scope get-in-config)
                                                          (sut/casebook-root-scope get-in-config)}
@@ -103,22 +103,31 @@
                         :import-bundle)))
     (is (= #{:specify-id}
            (sut/scopes-to-capabilities
-            #{(str (sut/entity-root-scope get-in-config) "/specify-id")}
+            #{(str (sut/specify-id-root-scope get-in-config) ":write")}
             get-in-config))
-        "narrow specify-id sub-scope confers only :specify-id")
+        "ctia-specify-id:write confers exactly #{:specify-id}")
     (is (= #{}
            (sut/scopes-to-capabilities
-            #{(str (sut/entity-root-scope get-in-config) "/specify-id:read")}
+            #{(sut/specify-id-root-scope get-in-config)}
             get-in-config))
-        "specify-id sub-scope with :read confers nothing")
-    (is (contains? (sut/scopes-to-capabilities #{(str (sut/entity-root-scope get-in-config) ":write")}
-                                               get-in-config)
-                   :specify-id)
-        "broad entity scope with :write confers :specify-id")
-    (is (not (contains? (sut/scopes-to-capabilities #{(str (sut/entity-root-scope get-in-config) ":read")}
-                                                    get-in-config)
+        "ctia-specify-id alone (no access suffix) confers nothing")
+    (is (= #{}
+           (sut/scopes-to-capabilities
+            #{(str (sut/specify-id-root-scope get-in-config) ":read")}
+            get-in-config))
+        "ctia-specify-id:read confers nothing")
+    (is (not (contains? (sut/scopes-to-capabilities
+                         #{(str (sut/entity-root-scope get-in-config) ":write")}
+                         get-in-config)
                         :specify-id))
-        "broad entity scope with :read does NOT confer :specify-id")
+        "private-intel:write does NOT confer :specify-id (decoupled from broad write scope)")
+    (is (not (contains? (try
+                          (sut/scopes-to-capabilities
+                           #{(str (sut/entity-root-scope get-in-config) "/specify-id:write")}
+                           get-in-config)
+                          (catch Exception _ #{}))
+                        :specify-id))
+        "private-intel/specify-id:write does NOT confer :specify-id (namespace path is not a grant)")
     (is (= #{:read-sighting :list-sightings :search-sighting :create-sighting
              :delete-sighting}
            (sut/scopes-to-capabilities

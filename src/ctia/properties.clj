@@ -80,6 +80,7 @@
                       "ctia.auth.entities.scope" s/Str
                       "ctia.auth.assets.scope" s/Str
                       "ctia.auth.casebook.scope" s/Str
+                      "ctia.auth.specify-id.scope" s/Str
                       "ctia.auth.threatgrid.whoami-url" s/Str
                       "ctia.auth.static.secret" s/Str
                       "ctia.auth.static.name" s/Str

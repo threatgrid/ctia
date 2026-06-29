@@ -211,22 +211,15 @@
                (is (= [expected-get-res] (map #(dissoc % :created :modified) (:parsed-body matched))))
                (is (= [] (:parsed-body not-matched)))))
 
-           (testing "Holders of private-intel:write are allowed to set ids during creation."
-             ;; The JWT under test claims the `private-intel` scope, which
-             ;; confers the :specify-id capability alongside :import-bundle.
-             ;; The hostname in the supplied :id must match this server's;
-             ;; otherwise CTIA rejects with 400 Bad Request.
-             (let [host (str "http://localhost:" (helpers/get-http-port app))
-                   supplied-id (str host "/ctia/judgement/judgement-00001111-0000-1111-2222-000011112222")
-                   response
+           (testing "Normal users are not allowed to set the ids during creation."
+             (let [response
                    (POST app
                          "ctia/judgement"
-                         :body (assoc new-judgement-1 :id supplied-id)
+                         :body (assoc new-judgement-1
+                                      :id "http://localhost:3001/ctia/judgement/judgement-00001111-0000-1111-2222-000011112222")
                          :headers {"Authorization" bearer
                                    "origin" "http://external.cisco.com"})]
-               (is (= 201 (:status response)))
-               (is (= supplied-id (-> response :parsed-body :id))
-                   "the caller-supplied :id is honored")))
+               (is (= 403 (:status response)))))
 
            (testing "POST /ctia/judgement/:id with bad JWT Authorization header"
              (let [response
@@ -237,71 +230,75 @@
                                    "origin" "http://external.cisco.com"})]
                (is (= 401 (:status response))))))))))))
 
-(defn gen-jwts []
-  (let [clm (fn [k] (str "https://schemas.cisco.com/iroh/identity/claims/" k))
-        priv-key-1 (jwt-key/private-key "resources/cert/ctia-jwt.key")
-        priv-key-2 (jwt-key/private-key "resources/cert/ctia-jwt-2.key")
-        now (t/now)
-        in-one-hour (t/plus now (t/hours 1))
-        claims-1
-        {:exp in-one-hour
-         :iat now
-         :iss "IROH Auth",
-         :email "gbuisson+qa_sdc_iroh@cisco.com",
-         :nbf now
-         "sub" "56bb5f8c-cc4e-4ed3-a91a-c6604287fe32"
-         :jti "a268ae7a3-09c9-4149-b495-b98c8c5de666",
-         (clm "oauth/client/id") "iroh-ui",
-         (clm "oauth/client/name") "iroh-ui",
-         (clm "oauth/kind") "session-token",
-         (clm "org/id") "63489cf9-561c-4958-a13d-6d84b7ef09d4",
-         (clm "org/name") "IROH Testing",
-         (clm "scopes") ["casebook","global-intel","private-intel","collect",
-                         "enrich","inspect","integration","iroh-auth",
-                         "response","ui-settings"],
-         (clm "user/email") "gbuisson+qa_sdc_iroh@cisco.com",
-         (clm "user/id") "56bb5f8c-cc4e-4ed3-a91a-c6604287fe32",
-         (clm "user/idp/id") "amp",
-         (clm "user/nick") "gbuisson+qa_sdc_iroh@cisco.com",
-         (clm "version") "1"}
-        claims-2 (assoc claims-1 :iss "IROH Auth TEST")]
-    {:jwt-1 (-> claims-1 jwt/jwt (jwt/sign :RS256 priv-key-1) jwt/to-str)
-     :bad-iss-jwt-1 (-> claims-1 (assoc :iss "IROH Auth TEST") jwt/jwt (jwt/sign :RS256 priv-key-1) jwt/to-str)
-     :jwt-2 (-> claims-2 jwt/jwt (jwt/sign :RS256 priv-key-2) jwt/to-str)
-     :bad-iss-jwt-2 (-> claims-2 (assoc :iss "IROH Auth") jwt/jwt (jwt/sign :RS256 priv-key-2) jwt/to-str)}))
+(def default-jwt-scopes
+  ["casebook" "global-intel" "private-intel" "collect"
+   "enrich" "inspect" "integration" "iroh-auth"
+   "response" "ui-settings"])
+
+(defn gen-jwts
+  ([] (gen-jwts default-jwt-scopes))
+  ([scopes]
+   (let [clm (fn [k] (str "https://schemas.cisco.com/iroh/identity/claims/" k))
+         priv-key-1 (jwt-key/private-key "resources/cert/ctia-jwt.key")
+         priv-key-2 (jwt-key/private-key "resources/cert/ctia-jwt-2.key")
+         now (t/now)
+         in-one-hour (t/plus now (t/hours 1))
+         claims-1
+         {:exp in-one-hour
+          :iat now
+          :iss "IROH Auth",
+          :email "gbuisson+qa_sdc_iroh@cisco.com",
+          :nbf now
+          "sub" "56bb5f8c-cc4e-4ed3-a91a-c6604287fe32"
+          :jti "a268ae7a3-09c9-4149-b495-b98c8c5de666",
+          (clm "oauth/client/id") "iroh-ui",
+          (clm "oauth/client/name") "iroh-ui",
+          (clm "oauth/kind") "session-token",
+          (clm "org/id") "63489cf9-561c-4958-a13d-6d84b7ef09d4",
+          (clm "org/name") "IROH Testing",
+          (clm "scopes") (vec scopes),
+          (clm "user/email") "gbuisson+qa_sdc_iroh@cisco.com",
+          (clm "user/id") "56bb5f8c-cc4e-4ed3-a91a-c6604287fe32",
+          (clm "user/idp/id") "amp",
+          (clm "user/nick") "gbuisson+qa_sdc_iroh@cisco.com",
+          (clm "version") "1"}
+         claims-2 (assoc claims-1 :iss "IROH Auth TEST")]
+     {:jwt-1 (-> claims-1 jwt/jwt (jwt/sign :RS256 priv-key-1) jwt/to-str)
+      :bad-iss-jwt-1 (-> claims-1 (assoc :iss "IROH Auth TEST") jwt/jwt (jwt/sign :RS256 priv-key-1) jwt/to-str)
+      :jwt-2 (-> claims-2 jwt/jwt (jwt/sign :RS256 priv-key-2) jwt/to-str)
+      :bad-iss-jwt-2 (-> claims-2 (assoc :iss "IROH Auth") jwt/jwt (jwt/sign :RS256 priv-key-2) jwt/to-str)})))
 
 (defn jwt-for-org
   "Signs a JWT identical to gen-jwts/jwt-1 but with a different org/id claim
   and a distinct user id. Used to assert that a caller from another org
   cannot overwrite documents owned by the original org."
-  [org-id]
-  (let [clm (fn [k] (str "https://schemas.cisco.com/iroh/identity/claims/" k))
-        priv-key-1 (jwt-key/private-key "resources/cert/ctia-jwt.key")
-        now (t/now)
-        in-one-hour (t/plus now (t/hours 1))
-        other-user-id "deadbeef-dead-beef-dead-beefdeadbeef"
-        claims
-        {:exp in-one-hour
-         :iat now
-         :iss "IROH Auth"
-         :email "other-org@example.com"
-         :nbf now
-         "sub" other-user-id
-         :jti "00000000-0000-0000-0000-000000000001"
-         (clm "oauth/client/id") "iroh-ui"
-         (clm "oauth/client/name") "iroh-ui"
-         (clm "oauth/kind") "session-token"
-         (clm "org/id") org-id
-         (clm "org/name") "Other Org"
-         (clm "scopes") ["casebook" "global-intel" "private-intel" "collect"
-                         "enrich" "inspect" "integration" "iroh-auth"
-                         "response" "ui-settings"]
-         (clm "user/email") "other-org@example.com"
-         (clm "user/id") other-user-id
-         (clm "user/idp/id") "amp"
-         (clm "user/nick") "other-org@example.com"
-         (clm "version") "1"}]
-    (-> claims jwt/jwt (jwt/sign :RS256 priv-key-1) jwt/to-str)))
+  ([org-id] (jwt-for-org org-id default-jwt-scopes))
+  ([org-id scopes]
+   (let [clm (fn [k] (str "https://schemas.cisco.com/iroh/identity/claims/" k))
+         priv-key-1 (jwt-key/private-key "resources/cert/ctia-jwt.key")
+         now (t/now)
+         in-one-hour (t/plus now (t/hours 1))
+         other-user-id "deadbeef-dead-beef-dead-beefdeadbeef"
+         claims
+         {:exp in-one-hour
+          :iat now
+          :iss "IROH Auth"
+          :email "other-org@example.com"
+          :nbf now
+          "sub" other-user-id
+          :jti "00000000-0000-0000-0000-000000000001"
+          (clm "oauth/client/id") "iroh-ui"
+          (clm "oauth/client/name") "iroh-ui"
+          (clm "oauth/kind") "session-token"
+          (clm "org/id") org-id
+          (clm "org/name") "Other Org"
+          (clm "scopes") (vec scopes)
+          (clm "user/email") "other-org@example.com"
+          (clm "user/id") other-user-id
+          (clm "user/idp/id") "amp"
+          (clm "user/nick") "other-org@example.com"
+          (clm "version") "1"}]
+     (-> claims jwt/jwt (jwt/sign :RS256 priv-key-1) jwt/to-str))))
 
 (s/defn apply-fixtures-with-app
   [properties f-with-app :- (s/=> s/Any (s/=> s/Any (s/named s/Any 'app)))]
@@ -553,16 +550,17 @@
 ))
 
 (deftest bundle-import-with-jwt-specify-id-test
-  ;; End-to-end check that a JWT carrying the `private-intel` scope can
-  ;; supply entity ids on POST /ctia/bundle/import. The scope confers the
-  ;; :specify-id capability via the mapping in ctia.auth.jwt; the flow-layer
+  ;; End-to-end check that a JWT carrying the dedicated `ctia-specify-id:write`
+  ;; scope can supply entity ids on POST /ctia/bundle/import. The scope confers
+  ;; the :specify-id capability via the mapping in ctia.auth.jwt; the flow-layer
   ;; gate in ctia.flows.crud/find-create-entity-id then permits the caller-
   ;; supplied id rather than minting a fresh UUID.
   (test-for-each-store-with-app
    (fn [app]
      (helpers/fixture-with-fixed-time (tc/to-date (time/date-time 2017 02 15 14 15 10))
        (fn []
-         (let [{:keys [jwt-1]} (gen-jwts)
+         (let [scopes (conj default-jwt-scopes "ctia-specify-id:write")
+               {:keys [jwt-1]} (gen-jwts scopes)
                bearer (str "Bearer " jwt-1)
                host (str "http://localhost:" (helpers/get-http-port app))
                supplied-short-id "sighting-00112233-4455-6677-8899-aabbccddeeff"
@@ -585,7 +583,7 @@
                      :body bundle
                      :headers {"Authorization" bearer})]
            (is (= 200 status)
-               "bundle import succeeds when caller supplies :id with private-intel scope")
+               "bundle import succeeds when caller supplies :id with ctia-specify-id:write scope")
            (let [sighting-result (first (filter #(= :sighting (:type %))
                                                 (:results parsed-body)))]
              (is (= "created" (:result sighting-result))
@@ -611,7 +609,7 @@
                ;;
                ;; This test asserts the safe outcome and SHOULD FAIL until a
                ;; flow-layer pre-existence + allow-write? guard is added.
-               (let [other-org-jwt (jwt-for-org "ffffffff-ffff-ffff-ffff-ffffffffffff")
+               (let [other-org-jwt (jwt-for-org "ffffffff-ffff-ffff-ffff-ffffffffffff" scopes)
                      other-bearer (str "Bearer " other-org-jwt)
                      attack-bundle (-> bundle
                                        (assoc-in [:sightings 0 :description]
@@ -690,7 +688,8 @@
    (fn [app]
      (helpers/fixture-with-fixed-time (tc/to-date (time/date-time 2017 02 15 14 15 10))
        (fn []
-         (let [{:keys [jwt-1]} (gen-jwts)
+         (let [scopes (conj default-jwt-scopes "ctia-specify-id:write")
+               {:keys [jwt-1]} (gen-jwts scopes)
                bearer (str "Bearer " jwt-1)
                host (str "http://localhost:" (helpers/get-http-port app))
                supplied-short-id "sighting-aa112233-4455-6677-8899-aabbccddee01"
@@ -726,7 +725,7 @@
                (is (= "original" (-> get-after :parsed-body :description))
                    "the original record is not overwritten by the second POST")))
            (testing "cross-org POST with another org's :id is rejected"
-             (let [other-org-jwt (jwt-for-org "ffffffff-ffff-ffff-ffff-fffffffffff0")
+             (let [other-org-jwt (jwt-for-org "ffffffff-ffff-ffff-ffff-fffffffffff0" scopes)
                    other-bearer (str "Bearer " other-org-jwt)
                    attack-resp (POST app
                                      "ctia/sighting"
