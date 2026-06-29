@@ -161,6 +161,47 @@
                entities)]
     (update fm :tempids (fnil into {}) newtempids)))
 
+(defn- normalize-id-for-dedup
+  "Normalize a caller-supplied :id to its short-id form so two distinct
+   encodings (long vs short) for the same entity are detected as a
+   duplicate. Returns nil for missing or transient IDs (those get fresh
+   server-minted ids and cannot collide intra-batch). Falls back to the
+   raw id if normalization fails so it still participates in equality."
+  [id]
+  (when (and (seq id)
+             (not (schemas/transient-id? id)))
+    (try
+      (if (id/long-id? id)
+        (:short-id (id/long-id->id id))
+        (id/str->short-id id))
+      (catch Exception _ id))))
+
+(s/defn detect-duplicate-ids :- FlowMap
+  "Fast-fail intra-batch duplicate caller-supplied :id detection.
+   `get-prev-entity` pre-fetches existing docs once at flow start, so
+   two entities in the same batch sharing a fresh caller-supplied :id
+   would both pass the collision guard in find-create-entity-id and let
+   the ES upsert last-write-wins. This stage rejects any entity whose
+   normalized :id appears more than once in the same create batch."
+  [{:keys [entities] :as fm} :- FlowMap]
+  (let [duplicates (->> entities
+                        (keep #(normalize-id-for-dedup (:id %)))
+                        frequencies
+                        (keep (fn [[k v]] (when (< 1 v) k)))
+                        set)]
+    (cond-> fm
+      (seq duplicates)
+      (assoc :entities
+             (mapv (fn [{:keys [id] :as entity}]
+                     (let [short (normalize-id-for-dedup id)]
+                       (if (contains? duplicates short)
+                         {:error (format "Duplicate caller-supplied :id %s in batch"
+                                         short)
+                          :type :id-collision-error
+                          :entity entity}
+                         entity)))
+                   entities)))))
+
 (s/defn ^:private realize-entities :- FlowMap
   [{:keys [entities
            flow-type
@@ -465,6 +506,7 @@
                                         (remove schemas/transient-id?)))))
       validate-entities
       create-ids-from-transient
+      detect-duplicate-ids
       realize-entities
       throw-validation-error
       apply-before-hooks

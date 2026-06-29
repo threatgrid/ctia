@@ -413,3 +413,37 @@
                             {})]
         (is (string? result))
         (is (.startsWith result "sighting-"))))))
+
+(deftest detect-duplicate-ids-test
+  ;; Intra-batch duplicate caller-supplied :id detection. find-create-entity-id
+  ;; uses a pre-fetched get-prev-entity that resolves to nil for fresh IDs, so
+  ;; two entities in the same batch sharing the same fresh :id both pass the
+  ;; existing collision guard. This stage rejects them before the store write.
+  (let [host "http://localhost:3000"
+        short-a "sighting-aaaaaaaa-1111-2222-3333-444455556666"
+        long-a  (str host "/ctia/sighting/" short-a)
+        short-b "sighting-bbbbbbbb-1111-2222-3333-444455556666"]
+    (testing "no duplicates ⇒ entities are returned unchanged"
+      (let [entities [{:id long-a :data 1} {:id short-b :data 2} {:data 3}]
+            fm {:entities entities}]
+        (is (= fm (flows.crud/detect-duplicate-ids fm)))))
+    (testing "two entities share the same caller-supplied :id ⇒ both flagged"
+      (let [entities [{:id long-a :data 1} {:id short-b :data 2} {:id long-a :data 3}]
+            result (flows.crud/detect-duplicate-ids {:entities entities})
+            errors (filter :error (:entities result))]
+        (is (= 2 (count errors)))
+        (is (every? #(= :id-collision-error (:type %)) errors))
+        (is (= {:id short-b :data 2}
+               (->> result :entities (remove :error) first)))))
+    (testing "long and short encodings of the same id are detected as a duplicate"
+      (let [entities [{:id long-a :data 1} {:id short-a :data 2}]
+            result (flows.crud/detect-duplicate-ids {:entities entities})]
+        (is (= 2 (count (filter :error (:entities result)))))))
+    (testing "transient ids do not count as duplicates (they get fresh server ids)"
+      (let [entities [{:id "transient:foo" :data 1} {:id "transient:foo" :data 2}]
+            fm {:entities entities}]
+        (is (= fm (flows.crud/detect-duplicate-ids fm)))))
+    (testing "entities without :id are ignored"
+      (let [entities [{:data 1} {:data 2} {:data 3}]
+            fm {:entities entities}]
+        (is (= fm (flows.crud/detect-duplicate-ids fm)))))))
