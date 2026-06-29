@@ -76,7 +76,7 @@
 (s/defn find-create-entity-id
   [services :- HTTPShowServices]
   (s/fn [{identity-obj :identity
-          :keys [entity-type tempids]} :- FlowMap
+          :keys [entity-type tempids get-prev-entity]} :- FlowMap
          entity] :- s/Str
     (or
      (get tempids (:id entity))
@@ -85,10 +85,23 @@
          (http-response/forbidden!
           {:error "Missing capability to specify entity ID"
            :entity entity}))
-       (if (id/valid-short-id? entity-id)
-         entity-id
+       (cond
+         (not (id/valid-short-id? entity-id))
          {:error (format "Invalid entity ID: %s" entity-id)
-          :entity entity}))
+          :entity entity}
+         ;; Reject caller-supplied :id that collides with an existing
+         ;; document. handle-create at the ES layer is an upsert (no
+         ;; pre-existence check), so without this guard a holder of the
+         ;; :specify-id capability could overwrite any existing record by
+         ;; reusing its id - including documents owned by another org.
+         ;; Updates have their own endpoint (PUT /:id), gated by
+         ;; allow-write? in handle-update; the create path should not
+         ;; double as an update path.
+         (and get-prev-entity (get-prev-entity entity-id))
+         {:error (format "An entity with ID %s already exists" entity-id)
+          :type :id-collision-error
+          :entity entity}
+         :else entity-id))
      (make-id entity-type))))
 
 (s/defn ^:private find-existing-entity-id
@@ -147,6 +160,47 @@
                         [id (make-id entity-type)])))
                entities)]
     (update fm :tempids (fnil into {}) newtempids)))
+
+(defn- normalize-id-for-dedup
+  "Normalize a caller-supplied :id to its short-id form so two distinct
+   encodings (long vs short) for the same entity are detected as a
+   duplicate. Returns nil for missing or transient IDs (those get fresh
+   server-minted ids and cannot collide intra-batch). Falls back to the
+   raw id if normalization fails so it still participates in equality."
+  [id]
+  (when (and (seq id)
+             (not (schemas/transient-id? id)))
+    (try
+      (if (id/long-id? id)
+        (:short-id (id/long-id->id id))
+        (id/str->short-id id))
+      (catch Exception _ id))))
+
+(s/defn detect-duplicate-ids :- FlowMap
+  "Fast-fail intra-batch duplicate caller-supplied :id detection.
+   `get-prev-entity` pre-fetches existing docs once at flow start, so
+   two entities in the same batch sharing a fresh caller-supplied :id
+   would both pass the collision guard in find-create-entity-id and let
+   the ES upsert last-write-wins. This stage rejects any entity whose
+   normalized :id appears more than once in the same create batch."
+  [{:keys [entities] :as fm} :- FlowMap]
+  (let [duplicates (->> entities
+                        (keep #(normalize-id-for-dedup (:id %)))
+                        frequencies
+                        (keep (fn [[k v]] (when (< 1 v) k)))
+                        set)]
+    (cond-> fm
+      (seq duplicates)
+      (assoc :entities
+             (mapv (fn [{:keys [id] :as entity}]
+                     (let [short (normalize-id-for-dedup id)]
+                       (if (contains? duplicates short)
+                         {:error (format "Duplicate caller-supplied :id %s in batch"
+                                         short)
+                          :type :id-collision-error
+                          :entity entity}
+                         entity)))
+                   entities)))))
 
 (s/defn ^:private realize-entities :- FlowMap
   [{:keys [entities
@@ -400,6 +454,18 @@
                        (patch-entity patch-fn prev-entity)))]
     (assoc fm :entities patched)))
 
+(defn prev-entity
+  [get-fn ids]
+  (let [indexed (into {}
+                      (comp
+                       (filter seq)
+                       (map (fn [e]
+                              [(id/str->short-id (:id e)) e])))
+                      (get-fn ids))]
+    (fn [id]
+      (when (seq id)
+        (get indexed (id/str->short-id id))))))
+
 (defn create-flow
   "This function centralizes the create workflow.
   It is helpful to easily add new hooks name
@@ -417,23 +483,30 @@
              spec
              services
              enveloped-result?
+             get-fn
              get-success-entities]}]
-  (-> {:flow-type :create
-       :services services
-       :entity-type entity-type
-       :entities (map #(dissoc % :schema_version) entities)
-       :tempids tempids
-       :identity identity
-       :long-id-fn long-id-fn
-       :spec spec
-       :realize-fn realize-fn
-       :find-entity-id (find-create-entity-id services)
-       :store-fn store-fn
-       :create-event-fn to-create-event
-       :enveloped-result? enveloped-result?
-       :get-success-entities (or get-success-entities default-success-entities)}
+  (-> (cond-> {:flow-type :create
+               :services services
+               :entity-type entity-type
+               :entities (map #(dissoc % :schema_version) entities)
+               :tempids tempids
+               :identity identity
+               :long-id-fn long-id-fn
+               :spec spec
+               :realize-fn realize-fn
+               :find-entity-id (find-create-entity-id services)
+               :store-fn store-fn
+               :create-event-fn to-create-event
+               :enveloped-result? enveloped-result?
+               :get-success-entities (or get-success-entities default-success-entities)}
+        get-fn (assoc :get-prev-entity
+                      (prev-entity get-fn
+                                   (->> entities
+                                        (keep :id)
+                                        (remove schemas/transient-id?)))))
       validate-entities
       create-ids-from-transient
+      detect-duplicate-ids
       realize-entities
       throw-validation-error
       apply-before-hooks
@@ -444,18 +517,6 @@
       apply-event-hooks
       apply-after-hooks
       make-create-result))
-
-(defn prev-entity
-  [get-fn ids]
-  (let [indexed (into {}
-                      (comp
-                       (filter seq)
-                       (map (fn [e]
-                              [(id/str->short-id (:id e)) e])))
-                      (get-fn ids))]
-    (fn [id]
-      (when (seq id)
-        (get indexed (id/str->short-id id))))))
 
 (s/defn make-update-result
   [{:keys [make-result results long-id-fn] :as fm} :- FlowMap]

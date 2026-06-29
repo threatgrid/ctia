@@ -230,39 +230,75 @@
                                    "origin" "http://external.cisco.com"})]
                (is (= 401 (:status response))))))))))))
 
+(def default-jwt-scopes
+  ["casebook" "global-intel" "private-intel" "collect"
+   "enrich" "inspect" "integration" "iroh-auth"
+   "response" "ui-settings"])
 
-(defn gen-jwts []
-  (let [clm (fn [k] (str "https://schemas.cisco.com/iroh/identity/claims/" k))
-        priv-key-1 (jwt-key/private-key "resources/cert/ctia-jwt.key")
-        priv-key-2 (jwt-key/private-key "resources/cert/ctia-jwt-2.key")
-        now (t/now)
-        in-one-hour (t/plus now (t/hours 1))
-        claims-1
-        {:exp in-one-hour
-         :iat now
-         :iss "IROH Auth",
-         :email "gbuisson+qa_sdc_iroh@cisco.com",
-         :nbf now
-         "sub" "56bb5f8c-cc4e-4ed3-a91a-c6604287fe32"
-         :jti "a268ae7a3-09c9-4149-b495-b98c8c5de666",
-         (clm "oauth/client/id") "iroh-ui",
-         (clm "oauth/client/name") "iroh-ui",
-         (clm "oauth/kind") "session-token",
-         (clm "org/id") "63489cf9-561c-4958-a13d-6d84b7ef09d4",
-         (clm "org/name") "IROH Testing",
-         (clm "scopes") ["casebook","global-intel","private-intel","collect",
-                         "enrich","inspect","integration","iroh-auth",
-                         "response","ui-settings"],
-         (clm "user/email") "gbuisson+qa_sdc_iroh@cisco.com",
-         (clm "user/id") "56bb5f8c-cc4e-4ed3-a91a-c6604287fe32",
-         (clm "user/idp/id") "amp",
-         (clm "user/nick") "gbuisson+qa_sdc_iroh@cisco.com",
-         (clm "version") "1"}
-        claims-2 (assoc claims-1 :iss "IROH Auth TEST")]
-    {:jwt-1 (-> claims-1 jwt/jwt (jwt/sign :RS256 priv-key-1) jwt/to-str)
-     :bad-iss-jwt-1 (-> claims-1 (assoc :iss "IROH Auth TEST") jwt/jwt (jwt/sign :RS256 priv-key-1) jwt/to-str)
-     :jwt-2 (-> claims-2 jwt/jwt (jwt/sign :RS256 priv-key-2) jwt/to-str)
-     :bad-iss-jwt-2 (-> claims-2 (assoc :iss "IROH Auth") jwt/jwt (jwt/sign :RS256 priv-key-2) jwt/to-str)}))
+(defn gen-jwts
+  ([] (gen-jwts default-jwt-scopes))
+  ([scopes]
+   (let [clm (fn [k] (str "https://schemas.cisco.com/iroh/identity/claims/" k))
+         priv-key-1 (jwt-key/private-key "resources/cert/ctia-jwt.key")
+         priv-key-2 (jwt-key/private-key "resources/cert/ctia-jwt-2.key")
+         now (t/now)
+         in-one-hour (t/plus now (t/hours 1))
+         claims-1
+         {:exp in-one-hour
+          :iat now
+          :iss "IROH Auth",
+          :email "gbuisson+qa_sdc_iroh@cisco.com",
+          :nbf now
+          "sub" "56bb5f8c-cc4e-4ed3-a91a-c6604287fe32"
+          :jti "a268ae7a3-09c9-4149-b495-b98c8c5de666",
+          (clm "oauth/client/id") "iroh-ui",
+          (clm "oauth/client/name") "iroh-ui",
+          (clm "oauth/kind") "session-token",
+          (clm "org/id") "63489cf9-561c-4958-a13d-6d84b7ef09d4",
+          (clm "org/name") "IROH Testing",
+          (clm "scopes") (vec scopes),
+          (clm "user/email") "gbuisson+qa_sdc_iroh@cisco.com",
+          (clm "user/id") "56bb5f8c-cc4e-4ed3-a91a-c6604287fe32",
+          (clm "user/idp/id") "amp",
+          (clm "user/nick") "gbuisson+qa_sdc_iroh@cisco.com",
+          (clm "version") "1"}
+         claims-2 (assoc claims-1 :iss "IROH Auth TEST")]
+     {:jwt-1 (-> claims-1 jwt/jwt (jwt/sign :RS256 priv-key-1) jwt/to-str)
+      :bad-iss-jwt-1 (-> claims-1 (assoc :iss "IROH Auth TEST") jwt/jwt (jwt/sign :RS256 priv-key-1) jwt/to-str)
+      :jwt-2 (-> claims-2 jwt/jwt (jwt/sign :RS256 priv-key-2) jwt/to-str)
+      :bad-iss-jwt-2 (-> claims-2 (assoc :iss "IROH Auth") jwt/jwt (jwt/sign :RS256 priv-key-2) jwt/to-str)})))
+
+(defn jwt-for-org
+  "Signs a JWT identical to gen-jwts/jwt-1 but with a different org/id claim
+  and a distinct user id. Used to assert that a caller from another org
+  cannot overwrite documents owned by the original org."
+  ([org-id] (jwt-for-org org-id default-jwt-scopes))
+  ([org-id scopes]
+   (let [clm (fn [k] (str "https://schemas.cisco.com/iroh/identity/claims/" k))
+         priv-key-1 (jwt-key/private-key "resources/cert/ctia-jwt.key")
+         now (t/now)
+         in-one-hour (t/plus now (t/hours 1))
+         other-user-id "deadbeef-dead-beef-dead-beefdeadbeef"
+         claims
+         {:exp in-one-hour
+          :iat now
+          :iss "IROH Auth"
+          :email "other-org@example.com"
+          :nbf now
+          "sub" other-user-id
+          :jti "00000000-0000-0000-0000-000000000001"
+          (clm "oauth/client/id") "iroh-ui"
+          (clm "oauth/client/name") "iroh-ui"
+          (clm "oauth/kind") "session-token"
+          (clm "org/id") org-id
+          (clm "org/name") "Other Org"
+          (clm "scopes") (vec scopes)
+          (clm "user/email") "other-org@example.com"
+          (clm "user/id") other-user-id
+          (clm "user/idp/id") "amp"
+          (clm "user/nick") "other-org@example.com"
+          (clm "version") "1"}]
+     (-> claims jwt/jwt (jwt/sign :RS256 priv-key-1) jwt/to-str))))
 
 (s/defn apply-fixtures-with-app
   [properties f-with-app :- (s/=> s/Any (s/=> s/Any (s/named s/Any 'app)))]
@@ -512,3 +548,194 @@
                (is (= 3 @counter)
                    "After the cache-ttl we should make a new call for the same JWT")))))))))))))
 ))
+
+(deftest bundle-import-with-jwt-specify-id-test
+  ;; End-to-end check that a JWT carrying the dedicated `ctia-specify-id:write`
+  ;; scope can supply entity ids on POST /ctia/bundle/import. The scope confers
+  ;; the :specify-id capability via the mapping in ctia.auth.jwt; the flow-layer
+  ;; gate in ctia.flows.crud/find-create-entity-id then permits the caller-
+  ;; supplied id rather than minting a fresh UUID.
+  (test-for-each-store-with-app
+   (fn [app]
+     (helpers/fixture-with-fixed-time (tc/to-date (time/date-time 2017 02 15 14 15 10))
+       (fn []
+         (let [scopes (conj default-jwt-scopes "ctia-specify-id:write")
+               {:keys [jwt-1]} (gen-jwts scopes)
+               bearer (str "Bearer " jwt-1)
+               host (str "http://localhost:" (helpers/get-http-port app))
+               supplied-short-id "sighting-00112233-4455-6677-8899-aabbccddeeff"
+               supplied-id (str host "/ctia/sighting/" supplied-short-id)
+               bundle {:type "bundle"
+                       :source "specify-id-jwt-test"
+                       :sightings [{:id supplied-id
+                                    :external_ids ["specify-id-jwt-test/sighting/1"]
+                                    :description "caller-supplied id"
+                                    :timestamp #inst "2017-02-15T14:15:10.000Z"
+                                    :observed_time {:start_time #inst "2017-02-15T14:15:10.000Z"}
+                                    :schema_version schema-version
+                                    :count 1
+                                    :source "specify-id-jwt-test"
+                                    :sensor "endpoint.sensor"
+                                    :confidence "High"}]}
+               {:keys [status parsed-body]}
+               (POST app
+                     "ctia/bundle/import"
+                     :body bundle
+                     :headers {"Authorization" bearer})]
+           (is (= 200 status)
+               "bundle import succeeds when caller supplies :id with ctia-specify-id:write scope")
+           (let [sighting-result (first (filter #(= :sighting (:type %))
+                                                (:results parsed-body)))]
+             (is (= "created" (:result sighting-result))
+                 "sighting was created")
+             (is (= supplied-id (:id sighting-result))
+                 "the caller-supplied :id is honored")
+             (testing "the entity is retrievable by the supplied short-id"
+               (let [get-response (GET app
+                                       (str "ctia/sighting/" supplied-short-id)
+                                       :headers {"Authorization" bearer})]
+                 (is (= 200 (:status get-response)))
+                 (is (= supplied-id (-> get-response :parsed-body :id)))))
+             (testing "RED: cross-org overwrite via caller-supplied :id MUST be prevented"
+               ;; Safety property: one org must never be able to mutate a
+               ;; document owned by another org. The JWT's org/id claim
+               ;; populates the entity's :groups; access control on update is
+               ;; enforced by allow-write? against owner/groups (see
+               ;; ctia.stores.es.crud/handle-update). The create path does NOT
+               ;; perform that check (handle-create ignores _ident and writes
+               ;; via ductile.doc/bulk-index-docs, an upsert), so a second
+               ;; caller from another org can replace the original record by
+               ;; reusing its :id.
+               ;;
+               ;; This test asserts the safe outcome and SHOULD FAIL until a
+               ;; flow-layer pre-existence + allow-write? guard is added.
+               (let [other-org-jwt (jwt-for-org "ffffffff-ffff-ffff-ffff-ffffffffffff" scopes)
+                     other-bearer (str "Bearer " other-org-jwt)
+                     attack-bundle (-> bundle
+                                       (assoc-in [:sightings 0 :description]
+                                                 "OVERWRITE ATTEMPT")
+                                       (assoc-in [:sightings 0 :external_ids]
+                                                 ["specify-id-jwt-test/sighting/from-other-org"]))
+                     attack-response (POST app
+                                           "ctia/bundle/import"
+                                           :body attack-bundle
+                                           :headers {"Authorization" other-bearer})
+                     get-after (GET app
+                                    (str "ctia/sighting/" supplied-short-id)
+                                    :headers {"Authorization" bearer})
+                     attack-result (first (filter #(= :sighting (:type %))
+                                                  (-> attack-response :parsed-body :results)))]
+                 (is (not= "OVERWRITE ATTEMPT"
+                           (-> get-after :parsed-body :description))
+                     "Org A's record must NOT be modified by another org")
+                 (is (= "caller-supplied id"
+                        (-> get-after :parsed-body :description))
+                     "Org A's original description is intact")
+                 (is (not= "created" (:result attack-result))
+                     "the cross-org import of an :id owned by another org must NOT be reported as a successful create")))
+             (testing "same-org caller reusing their own :id is rejected on the create path"
+               ;; Updates have their own endpoint (PUT /ctia/:entity/:id), gated
+               ;; by allow-write? in handle-update. The create path should not
+               ;; double as an update path: a second create with an existing
+               ;; :id must surface a conflict, not silently upsert.
+               (let [reuse-bundle (-> bundle
+                                      (assoc-in [:sightings 0 :description]
+                                                "SAME-ORG SECOND CREATE")
+                                      (assoc-in [:sightings 0 :external_ids]
+                                                ["specify-id-jwt-test/sighting/reuse"]))
+                     reuse-response (POST app
+                                          "ctia/bundle/import"
+                                          :body reuse-bundle
+                                          :headers {"Authorization" bearer})
+                     reuse-result (first (filter #(= :sighting (:type %))
+                                                 (-> reuse-response :parsed-body :results)))
+                     get-after (GET app
+                                    (str "ctia/sighting/" supplied-short-id)
+                                    :headers {"Authorization" bearer})]
+                 (is (not= "created" (:result reuse-result))
+                     "a same-org second create on an existing :id must NOT be reported as created")
+                 (is (= "caller-supplied id"
+                        (-> get-after :parsed-body :description))
+                     "the original same-org record is not overwritten by a second create")))
+             (testing "brand-new caller-supplied :id still succeeds (regression)"
+               ;; Sanity: the collision guard must not break the happy path of
+               ;; caller-supplied ids on a fresh id.
+               (let [fresh-short-id "sighting-99887766-5544-3322-1100-ffeeddccbbaa"
+                     fresh-id (str host "/ctia/sighting/" fresh-short-id)
+                     fresh-bundle (-> bundle
+                                      (assoc-in [:sightings 0 :id] fresh-id)
+                                      (assoc-in [:sightings 0 :external_ids]
+                                                ["specify-id-jwt-test/sighting/fresh"]))
+                     fresh-response (POST app
+                                          "ctia/bundle/import"
+                                          :body fresh-bundle
+                                          :headers {"Authorization" bearer})
+                     fresh-result (first (filter #(= :sighting (:type %))
+                                                 (-> fresh-response :parsed-body :results)))]
+                 (is (= "created" (:result fresh-result))
+                     "a brand-new caller-supplied :id on the create path still succeeds")
+                 (is (= fresh-id (:id fresh-result))
+                     "the fresh caller-supplied :id is honored"))))))))))
+
+(deftest single-entity-post-with-caller-supplied-id-test
+  ;; Same safety properties as bundle-import-with-jwt-specify-id-test, but
+  ;; routed through the single-entity POST /ctia/:entity path. Both routes
+  ;; share ctia.flows.crud/create-flow, so a fix at the flow layer should
+  ;; protect both. This direct test pins the property at the single-entity
+  ;; surface so a future refactor that bypasses the flow layer here can't
+  ;; silently regress.
+  (test-for-each-store-with-app
+   (fn [app]
+     (helpers/fixture-with-fixed-time (tc/to-date (time/date-time 2017 02 15 14 15 10))
+       (fn []
+         (let [scopes (conj default-jwt-scopes "ctia-specify-id:write")
+               {:keys [jwt-1]} (gen-jwts scopes)
+               bearer (str "Bearer " jwt-1)
+               host (str "http://localhost:" (helpers/get-http-port app))
+               supplied-short-id "sighting-aa112233-4455-6677-8899-aabbccddee01"
+               supplied-id (str host "/ctia/sighting/" supplied-short-id)
+               new-sighting {:id supplied-id
+                             :external_ids ["single-post-test/sighting/1"]
+                             :description "original"
+                             :timestamp #inst "2017-02-15T14:15:10.000Z"
+                             :observed_time {:start_time #inst "2017-02-15T14:15:10.000Z"}
+                             :schema_version schema-version
+                             :count 1
+                             :source "single-post-test"
+                             :sensor "endpoint.sensor"
+                             :confidence "High"}
+               first-resp (POST app
+                                "ctia/sighting"
+                                :body new-sighting
+                                :headers {"Authorization" bearer})]
+           (is (= 201 (:status first-resp))
+               "first POST with caller-supplied :id succeeds")
+           (is (= supplied-id (-> first-resp :parsed-body :id))
+               "the caller-supplied :id is honored")
+           (testing "same-org second POST with the same :id is rejected (no silent upsert)"
+             (let [reuse-resp (POST app
+                                    "ctia/sighting"
+                                    :body (assoc new-sighting :description "OVERWRITE ATTEMPT")
+                                    :headers {"Authorization" bearer})
+                   get-after (GET app
+                                  (str "ctia/sighting/" supplied-short-id)
+                                  :headers {"Authorization" bearer})]
+               (is (not= 201 (:status reuse-resp))
+                   "second POST with same caller-supplied :id must NOT report 201 Created")
+               (is (= "original" (-> get-after :parsed-body :description))
+                   "the original record is not overwritten by the second POST")))
+           (testing "cross-org POST with another org's :id is rejected"
+             (let [other-org-jwt (jwt-for-org "ffffffff-ffff-ffff-ffff-fffffffffff0" scopes)
+                   other-bearer (str "Bearer " other-org-jwt)
+                   attack-resp (POST app
+                                     "ctia/sighting"
+                                     :body (assoc new-sighting :description "CROSS-ORG OVERWRITE")
+                                     :headers {"Authorization" other-bearer})
+                   get-after (GET app
+                                  (str "ctia/sighting/" supplied-short-id)
+                                  :headers {"Authorization" bearer})]
+               (is (not= 201 (:status attack-resp))
+                   "cross-org POST with an :id owned by another org must NOT report 201 Created")
+               (is (= "original" (-> get-after :parsed-body :description))
+                   "Org A's original record is not overwritten by Org B's POST")))))))))
+

@@ -101,6 +101,33 @@
     (is (not (contains? (sut/scopes-to-capabilities #{(str (sut/entity-root-scope get-in-config) ":read")}
                                                     get-in-config)
                         :import-bundle)))
+    (is (= #{:specify-id}
+           (sut/scopes-to-capabilities
+            #{(str (sut/specify-id-root-scope get-in-config) ":write")}
+            get-in-config))
+        "ctia-specify-id:write confers exactly #{:specify-id}")
+    (is (= #{}
+           (sut/scopes-to-capabilities
+            #{(sut/specify-id-root-scope get-in-config)}
+            get-in-config))
+        "ctia-specify-id alone (no access suffix) confers nothing")
+    (is (= #{}
+           (sut/scopes-to-capabilities
+            #{(str (sut/specify-id-root-scope get-in-config) ":read")}
+            get-in-config))
+        "ctia-specify-id:read confers nothing")
+    (is (not (contains? (sut/scopes-to-capabilities
+                         #{(str (sut/entity-root-scope get-in-config) ":write")}
+                         get-in-config)
+                        :specify-id))
+        "private-intel:write does NOT confer :specify-id (decoupled from broad write scope)")
+    (is (not (contains? (try
+                          (sut/scopes-to-capabilities
+                           #{(str (sut/entity-root-scope get-in-config) "/specify-id:write")}
+                           get-in-config)
+                          (catch Exception _ #{}))
+                        :specify-id))
+        "private-intel/specify-id:write does NOT confer :specify-id (namespace path is not a grant)")
     (is (= #{:read-sighting :list-sightings :search-sighting :create-sighting
              :delete-sighting}
            (sut/scopes-to-capabilities

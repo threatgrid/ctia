@@ -58,6 +58,8 @@
     {:data EntitiesResult
      (s/optional-key :tempids) TempIDs}))
 
+(declare read-entities)
+
 (s/defn create-entities :- EnvelopedEntities+TempIDs
   "Create many entities provided their type and returns a list of ids"
   [new-entities :- flows/Entities
@@ -67,12 +69,14 @@
    params
    services :- APIHandlerServices]
   (when (seq new-entities)
-    (let [{:keys [realize-fn new-spec]} (get (all-entities) entity-type)]
+    (let [{:keys [realize-fn new-spec]} (get (all-entities) entity-type)
+          get-fn #(read-entities % entity-type auth-identity services)]
       (update (flows/create-flow
                 :services services
                 :entity-type entity-type
                 :realize-fn realize-fn
                 :store-fn (create-fn entity-type auth-identity params services)
+                :get-fn get-fn
                 :long-id-fn #(with-long-id % services)
                 :enveloped-result? true
                 :identity auth-identity
