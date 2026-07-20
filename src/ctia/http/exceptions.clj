@@ -95,6 +95,16 @@
       :entity entity
       :class (.getName (class e))})))
 
+(defn invalid-authorized-groups-error-handler
+  [^Exception e _data _request]
+  (logging/log! :info e (ex-message-and-data e))
+  (bad-request
+   (let [entity (:entity (ex-data e))]
+     {:type "Invalid Authorized Groups Error"
+      :message (.getMessage e)
+      :entity entity
+      :class (.getName (class e))})))
+
 (defn realize-entity-error-handler
   "Handle error at the realize step"
   [^Exception e _data _request]
