@@ -8,7 +8,8 @@
    [clojure.string :as str]
    [clojure.tools.logging :as log]
    [ctia.auth :as auth]
-   [ctia.domain.access-control :refer [allowed-tlp? allowed-tlps]]
+   [ctia.domain.access-control :refer [allowed-tlp? allowed-tlps
+                                         validate-authorized-groups]]
    [ctia.entity.event.obj-to-event :refer
     [to-create-event to-delete-event to-update-event]]
    [ctia.lib.collection :as coll]
@@ -124,15 +125,27 @@
      :entity entity}
     :else entity))
 
+(defn authorized-groups-check
+  [entity ident-map]
+  (if-let [foreign (validate-authorized-groups entity ident-map)]
+    {:msg (format "Invalid authorized_groups: %s — not in user's groups"
+                  (str/join ", " (sort foreign)))
+     :error "Entity Access Control validation Error"
+     :type :invalid-authorized-groups-error
+     :entity entity}
+    entity))
+
 (s/defn ^:private validate-entities :- FlowMap
   [{{{:keys [get-in-config]} :ConfigService} :services
-    :keys [spec entities] :as fm} :- FlowMap]
-  (assoc fm :entities
-         (map (fn [entity]
-                (-> entity
-                    (check-spec spec)
-                    (tlp-check get-in-config)))
-              entities)))
+    :keys [spec entities identity flow-type] :as fm} :- FlowMap]
+  (let [ident-map (auth/ident->map identity)]
+    (assoc fm :entities
+           (map (fn [entity]
+                  (cond-> entity
+                    true (check-spec spec)
+                    true (tlp-check get-in-config)
+                    (= flow-type :create) (authorized-groups-check ident-map)))
+                entities))))
 
 (s/defn ^:private create-ids-from-transient :- FlowMap
   "Creates IDs for entities identified by transient IDs that have not

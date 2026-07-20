@@ -357,3 +357,95 @@
            expected (assoc patch-flow-map :entities expected-entities)]
        (is (= expected
               (flows.crud/patch-entities patch-flow-map)))))))
+
+(deftest authorized-groups-validation-test
+  (let [get-in-config (helpers/build-get-in-config-fn)
+        services {:ConfigService {:get-in-config get-in-config}}
+        validate-entities #'flows.crud/validate-entities]
+    (testing "validate-entities rejects entities with foreign authorized_groups on create"
+      (let [attacker-ident (map->Identity {:login "attacker"
+                                           :groups ["attacker-org"]
+                                           :capabilities #{}})
+            entity {:tlp "green"
+                    :groups ["attacker-org"]
+                    :authorized_groups ["attacker-org" "victim-org"]}
+            fm {:services services
+                :identity attacker-ident
+                :entities [entity]
+                :flow-type :create
+                :spec nil}
+            result (validate-entities fm)
+            validated-entity (first (:entities result))]
+        (is (:error validated-entity)
+            "entity with foreign authorized_groups should be rejected")
+        (is (= :invalid-authorized-groups-error (:type validated-entity)))
+        (is (re-find #"victim-org" (:msg validated-entity)))))
+
+    (testing "validate-entities allows entities where authorized_groups is subset of user's groups"
+      (let [legit-ident (map->Identity {:login "legit-user"
+                                        :groups ["org-a" "org-b"]
+                                        :capabilities #{}})
+            entity {:tlp "green"
+                    :groups ["org-a"]
+                    :authorized_groups ["org-a" "org-b"]}
+            fm {:services services
+                :identity legit-ident
+                :entities [entity]
+                :flow-type :create
+                :spec nil}
+            result (validate-entities fm)
+            validated-entity (first (:entities result))]
+        (is (nil? (:error validated-entity))
+            "entity with valid authorized_groups should pass validation")))
+
+    (testing "validate-entities allows entities with no authorized_groups"
+      (let [ident (map->Identity {:login "user"
+                                  :groups ["org-a"]
+                                  :capabilities #{}})
+            entity {:tlp "green"
+                    :groups ["org-a"]}
+            fm {:services services
+                :identity ident
+                :entities [entity]
+                :flow-type :create
+                :spec nil}
+            result (validate-entities fm)
+            validated-entity (first (:entities result))]
+        (is (nil? (:error validated-entity))
+            "entity without authorized_groups should pass validation")))
+
+    (testing "validate-entities rejects cross-tenant poisoning attempt on create"
+      (let [attacker-ident (map->Identity {:login "attacker"
+                                           :groups ["evil-corp"]
+                                           :capabilities #{}})
+            entity {:tlp "amber"
+                    :groups ["evil-corp"]
+                    :authorized_groups ["target-tenant"]}
+            fm {:services services
+                :identity attacker-ident
+                :entities [entity]
+                :flow-type :create
+                :spec nil}
+            result (validate-entities fm)
+            validated-entity (first (:entities result))]
+        (is (:error validated-entity)
+            "cross-tenant poisoning should be rejected")
+        (is (= :invalid-authorized-groups-error (:type validated-entity)))
+        (is (re-find #"target-tenant" (:msg validated-entity)))))
+
+    (testing "validate-entities allows foreign authorized_groups on update (owner sharing)"
+      (let [owner-ident (map->Identity {:login "owner"
+                                        :groups ["my-org"]
+                                        :capabilities #{}})
+            entity {:tlp "green"
+                    :groups ["my-org"]
+                    :authorized_groups ["partner-org"]}
+            fm {:services services
+                :identity owner-ident
+                :entities [entity]
+                :flow-type :update
+                :spec nil}
+            result (validate-entities fm)
+            validated-entity (first (:entities result))]
+        (is (nil? (:error validated-entity))
+            "owner should be able to share with other groups on update")))))

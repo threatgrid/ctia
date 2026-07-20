@@ -105,3 +105,15 @@
        (and (max-record-visibility-everyone? get-in-config)
             (some #{(:tlp doc)} public-tlps))
        (allow-write? doc ident))))
+
+(s/defn validate-authorized-groups
+  "Validates that all values in the entity's authorized_groups belong to
+   the authenticated user's groups. Returns nil if valid, or a set of
+   invalid group IDs if the entity contains foreign groups."
+  [entity ident]
+  (let [entity-authorized-groups (set (:authorized_groups entity))
+        identity-groups (set (:groups ident))]
+    (when (seq entity-authorized-groups)
+      (let [foreign (set/difference entity-authorized-groups identity-groups)]
+        (when (seq foreign)
+          foreign)))))
