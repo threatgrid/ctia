@@ -9,7 +9,8 @@
    [clojure.tools.logging :as log]
    [ctia.auth :as auth]
    [ctia.domain.access-control :refer [allowed-tlp? allowed-tlps
-                                         validate-authorized-groups]]
+                                         validate-authorized-groups
+                                         validate-authorized-users]]
    [ctia.entity.event.obj-to-event :refer
     [to-create-event to-delete-event to-update-event]]
    [ctia.lib.collection :as coll]
@@ -135,16 +136,28 @@
      :entity entity}
     entity))
 
+(defn authorized-users-check
+  [entity ident-map]
+  (if-let [foreign (validate-authorized-users entity ident-map)]
+    {:msg (format "Invalid authorized_users: %s — not the caller's own login"
+                  (str/join ", " (sort foreign)))
+     :error "Entity Access Control validation Error"
+     :type :invalid-authorized-users-error
+     :entity entity}
+    entity))
+
 (s/defn ^:private validate-entities :- FlowMap
   [{{{:keys [get-in-config]} :ConfigService} :services
-    :keys [spec entities identity] :as fm} :- FlowMap]
-  (let [ident-map (auth/ident->map identity)]
+    identity-obj :identity
+    :keys [spec entities] :as fm} :- FlowMap]
+  (let [ident-map (auth/ident->map identity-obj)]
     (assoc fm :entities
            (map (fn [entity]
                   (-> entity
                       (check-spec spec)
                       (tlp-check get-in-config)
-                      (authorized-groups-check ident-map)))
+                      (authorized-groups-check ident-map)
+                      (authorized-users-check ident-map)))
                 entities))))
 
 (s/defn ^:private create-ids-from-transient :- FlowMap

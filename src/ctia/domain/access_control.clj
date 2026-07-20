@@ -1,5 +1,6 @@
 (ns ctia.domain.access-control
   (:require [clojure.set :as set]
+            [clojure.string :as str]
             [ctia.properties :refer [get-access-control]]
             [ctim.schemas.common :as csc]
             [schema.core :as s])
@@ -111,9 +112,19 @@
    the authenticated user's groups. Returns nil if valid, or a set of
    invalid group IDs if the entity contains foreign groups."
   [entity ident]
-  (let [entity-authorized-groups (set (:authorized_groups entity))
-        identity-groups (set (:groups ident))]
-    (when (seq entity-authorized-groups)
-      (let [foreign (set/difference entity-authorized-groups identity-groups)]
-        (when (seq foreign)
-          foreign)))))
+  (let [entity-authorized-groups (set (map str/lower-case (:authorized_groups entity)))
+        identity-groups (set (map str/lower-case (:groups ident)))
+        foreign (set/difference entity-authorized-groups identity-groups)]
+    (when (seq foreign)
+      foreign)))
+
+(s/defn validate-authorized-users
+  "Validates that the only allowed value in the entity's authorized_users
+   is the caller's own login. Returns nil if valid, or a set of invalid
+   user logins if the entity contains foreign users."
+  [entity ident]
+  (let [entity-authorized-users (set (:authorized_users entity))
+        allowed #{(:login ident)}
+        foreign (set/difference entity-authorized-users allowed)]
+    (when (seq foreign)
+      foreign)))

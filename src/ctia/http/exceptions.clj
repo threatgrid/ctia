@@ -96,11 +96,23 @@
       :class (.getName (class e))})))
 
 (defn invalid-authorized-groups-error-handler
+  "Handle authorized_groups validation error"
   [^Exception e _data _request]
   (logging/log! :info e (ex-message-and-data e))
   (bad-request
    (let [entity (:entity (ex-data e))]
      {:type "Invalid Authorized Groups Error"
+      :message (.getMessage e)
+      :entity entity
+      :class (.getName (class e))})))
+
+(defn invalid-authorized-users-error-handler
+  "Handle authorized_users validation error"
+  [^Exception e _data _request]
+  (logging/log! :info e (ex-message-and-data e))
+  (bad-request
+   (let [entity (:entity (ex-data e))]
+     {:type "Invalid Authorized Users Error"
       :message (.getMessage e)
       :entity entity
       :class (.getName (class e))})))

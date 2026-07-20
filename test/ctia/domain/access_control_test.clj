@@ -296,4 +296,47 @@
     (is (= #{"some-org"}
            (sut/validate-authorized-groups
             {:owner "foo" :groups ["bar"] :authorized_groups ["some-org"]}
-            {:login "foo" :groups []})))))
+            {:login "foo" :groups []}))))
+
+  (testing "case-insensitive comparison allows mixed-case groups"
+    (is (nil? (sut/validate-authorized-groups
+               {:owner "foo" :groups ["bar"] :authorized_groups ["My-Org"]}
+               {:login "foo" :groups ["my-org"]}))))
+
+  (testing "case-insensitive comparison detects foreign groups"
+    (is (= #{"victim-org"}
+           (sut/validate-authorized-groups
+            {:owner "attacker" :groups ["attacker-org"]
+             :authorized_groups ["Victim-Org"]}
+            {:login "attacker" :groups ["attacker-org"]})))))
+
+(deftest validate-authorized-users-test
+  (testing "returns nil when authorized_users is empty"
+    (is (nil? (sut/validate-authorized-users
+               {:owner "foo" :groups ["bar"]}
+               {:login "foo" :groups ["bar"]}))))
+
+  (testing "returns nil when authorized_users contains only the caller's login"
+    (is (nil? (sut/validate-authorized-users
+               {:owner "foo" :groups ["bar"] :authorized_users ["foo"]}
+               {:login "foo" :groups ["bar"]}))))
+
+  (testing "returns foreign users when authorized_users contains other logins"
+    (is (= #{"victim-login"}
+           (sut/validate-authorized-users
+            {:owner "attacker" :groups ["attacker-org"]
+             :authorized_users ["attacker" "victim-login"]}
+            {:login "attacker" :groups ["attacker-org"]}))))
+
+  (testing "returns all foreign users when none match"
+    (is (= #{"victim-1" "victim-2"}
+           (sut/validate-authorized-users
+            {:owner "attacker" :groups ["attacker-org"]
+             :authorized_users ["victim-1" "victim-2"]}
+            {:login "attacker" :groups ["attacker-org"]}))))
+
+  (testing "returns foreign users when entity has authorized_users but no login"
+    (is (= #{"someone"}
+           (sut/validate-authorized-users
+            {:owner "foo" :groups ["bar"] :authorized_users ["someone"]}
+            {:login nil :groups ["bar"]})))))
