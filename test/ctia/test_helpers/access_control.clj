@@ -423,44 +423,21 @@
         (is (= 201 (:status player-3-entity-repost2)))
 
         (when can-update?
-          (let [player-1-entity-update2
-                (PUT app
-                     (format "ctia/%s/%s"
-                             entity
-                             (-> player-1-entity-repost2
-                                 :parsed-body
-                                 :id
-                                 id/long-id->id
-                                 :short-id))
-                     :body (assoc (dissoc (:parsed-body player-1-entity-repost2) :id)
-                                  :authorized_groups ["bargroup"])
-                     :headers {"Authorization" "player-1-token"})]
-            ;; player 1 allows player 2-3 group (if record is updatable)
-            (crud-access-control-test
-             (into args
-                   {:player-1-creation player-1-entity-update2
-                    :player-2-creation player-2-entity-repost2
-                    :player-3-creation player-3-entity-repost2
-
-                    :player-2-1-expected-read-statuses allowed-statuses
-                    :player-2-1-expected-write-statuses allowed-statuses
-
-                    :player-2-3-expected-read-statuses allowed-statuses
-                    :player-2-3-expected-write-statuses allowed-statuses
-
-                    :player-3-1-expected-read-statuses allowed-statuses
-                    :player-3-1-expected-write-statuses allowed-statuses
-
-                    :list-query "external_ids:gmrvgrepost2"
-                    :player-1-expected-entity-list [(:parsed-body player-1-entity-update2)]
-
-                    :player-2-expected-entity-list [(:parsed-body player-1-entity-update2)
-                                                    (:parsed-body player-2-entity-repost2)
-                                                    (:parsed-body player-3-entity-repost2)]
-
-                    :player-3-expected-entity-list [(:parsed-body player-1-entity-update2)
-                                                    (:parsed-body player-2-entity-repost2)
-                                                    (:parsed-body player-3-entity-repost2)]}))))
+          (testing "setting authorized_groups to a foreign group is rejected"
+            (let [player-1-entity-update2
+                  (PUT app
+                       (format "ctia/%s/%s"
+                               entity
+                               (-> player-1-entity-repost2
+                                   :parsed-body
+                                   :id
+                                   id/long-id->id
+                                   :short-id))
+                       :body (assoc (dissoc (:parsed-body player-1-entity-repost2) :id)
+                                    :authorized_groups ["bargroup"])
+                       :headers {"Authorization" "player-1-token"})]
+              (is (= 400 (:status player-1-entity-update2))
+                  "update with foreign authorized_groups must be rejected"))))
 
         (let [ext-id "gmrvg-search"
               player-1-entity-search (:parsed-body (create ext-id "player-1-token"))
@@ -589,47 +566,21 @@
       (is (= 201 (:status player-3-entity-repost2)))
 
       (when can-update?
-        (let [player-1-entity-update2
-              (PUT app
-                   (format "ctia/%s/%s"
-                           entity
-                           (-> player-1-entity-repost2
-                               :parsed-body
-                               :id
-                               id/long-id->id
-                               :short-id))
-                   :body (assoc (dissoc (:parsed-body player-1-entity-repost2) :id)
-                                :authorized_groups ["bargroup"])
-                   :headers {"Authorization" "player-1-token"})]
-          ;; player 1 allows player 2-3 group (if record is updatable)
-
-          (crud-access-control-test
-           (into args
-                 {:player-1-creation player-1-entity-update2
-                  :player-2-creation player-2-entity-repost2
-                  :player-3-creation player-3-entity-repost2
-
-                  :player-2-1-expected-read-statuses allowed-statuses
-                  :player-2-1-expected-write-statuses allowed-statuses
-
-                  :player-2-3-expected-read-statuses allowed-statuses
-                  :player-2-3-expected-write-statuses allowed-statuses
-
-                  :player-3-1-expected-read-statuses allowed-statuses
-                  :player-3-1-expected-write-statuses forbidden-statuses
-
-                  :list-query "external_ids:grepost2"
-                  :player-1-expected-entity-list [(:parsed-body player-1-entity-update2)
-                                                  (:parsed-body player-2-entity-repost2)
-                                                  (:parsed-body player-3-entity-repost2)]
-
-                  :player-2-expected-entity-list [(:parsed-body player-1-entity-update2)
-                                                  (:parsed-body player-2-entity-repost2)
-                                                  (:parsed-body player-3-entity-repost2)]
-
-                  :player-3-expected-entity-list [(:parsed-body player-1-entity-update2)
-                                                  (:parsed-body player-2-entity-repost2)
-                                                  (:parsed-body player-3-entity-repost2)]}))))
+        (testing "setting authorized_groups to a foreign group is rejected"
+          (let [player-1-entity-update2
+                (PUT app
+                     (format "ctia/%s/%s"
+                             entity
+                             (-> player-1-entity-repost2
+                                 :parsed-body
+                                 :id
+                                 id/long-id->id
+                                 :short-id))
+                     :body (assoc (dissoc (:parsed-body player-1-entity-repost2) :id)
+                                  :authorized_groups ["bargroup"])
+                     :headers {"Authorization" "player-1-token"})]
+            (is (= 400 (:status player-1-entity-update2))
+                "update with foreign authorized_groups must be rejected"))))
 
       ;; additional search tests
       (let [ext-id "green-search"
@@ -749,45 +700,21 @@
       (is (= 201 (:status player-3-entity-repost2)))
 
       (when can-update?
-        (let [player-1-entity-update2
-              (PUT app
-                   (format "ctia/%s/%s"
-                           entity
-                           (-> player-1-entity-repost2
-                               :parsed-body
-                               :id
-                               id/long-id->id
-                               :short-id))
-                   :body (assoc (dissoc (:parsed-body player-1-entity-repost2) :id)
-                                :authorized_groups ["bargroup"])
-                   :headers {"Authorization" "player-1-token"})]
-
-          ;; player 1 allows player 2-3 group (if record is updatable)
-          (crud-access-control-test
-           (into args
-                 {:player-1-creation player-1-entity-update2
-                  :player-2-creation player-2-entity-repost2
-                  :player-3-creation player-3-entity-repost2
-
-                  :player-2-1-expected-read-statuses allowed-statuses
-                  :player-2-1-expected-write-statuses allowed-statuses
-
-                  :player-2-3-expected-read-statuses allowed-statuses
-                  :player-2-3-expected-write-statuses allowed-statuses
-
-                  :player-3-1-expected-read-statuses allowed-statuses
-                  :player-3-1-expected-write-statuses allowed-statuses
-
-                  :list-query "external_ids:arepost2"
-                  :player-1-expected-entity-list [(:parsed-body player-1-entity-update2)]
-
-                  :player-2-expected-entity-list [(:parsed-body player-1-entity-update2)
-                                                  (:parsed-body player-2-entity-repost2)
-                                                  (:parsed-body player-3-entity-repost2)]
-
-                  :player-3-expected-entity-list [(:parsed-body player-1-entity-update2)
-                                                  (:parsed-body player-2-entity-repost2)
-                                                  (:parsed-body player-3-entity-repost2)]}))))
+        (testing "setting authorized_groups to a foreign group is rejected"
+          (let [player-1-entity-update2
+                (PUT app
+                     (format "ctia/%s/%s"
+                             entity
+                             (-> player-1-entity-repost2
+                                 :parsed-body
+                                 :id
+                                 id/long-id->id
+                                 :short-id))
+                     :body (assoc (dissoc (:parsed-body player-1-entity-repost2) :id)
+                                  :authorized_groups ["bargroup"])
+                     :headers {"Authorization" "player-1-token"})]
+            (is (= 400 (:status player-1-entity-update2))
+                "update with foreign authorized_groups must be rejected"))))
 
       ;; additional search tests
       (let [ext-id "amber-search"
@@ -903,43 +830,21 @@
       (is (= 201 (:status player-3-entity-repost2)))
 
       (when can-update?
-        (let [player-1-entity-update2
-              (PUT app
-                   (format "ctia/%s/%s"
-                           entity
-                           (-> player-1-entity-repost2
-                               :parsed-body
-                               :id
-                               id/long-id->id
-                               :short-id))
-                   :body (assoc (dissoc (:parsed-body player-1-entity-repost2) :id)
-                                :authorized_groups ["bargroup"])
-                   :headers {"Authorization" "player-1-token"})]
-          ;; player 1 allows player 2-3 group (if record is updatable)
-          (crud-access-control-test
-           (into args
-                 {:player-1-creation player-1-entity-update2
-                  :player-2-creation player-2-entity-repost2
-                  :player-3-creation player-3-entity-repost2
-
-                  :player-2-1-expected-read-statuses allowed-statuses
-                  :player-2-1-expected-write-statuses allowed-statuses
-
-                  :player-2-3-expected-read-statuses forbidden-statuses
-                  :player-2-3-expected-write-statuses forbidden-statuses
-
-                  :player-3-1-expected-read-statuses allowed-statuses
-                  :player-3-1-expected-write-statuses allowed-statuses
-
-                  :list-query "external_ids:rrepost2"
-                  :player-1-expected-entity-list [(:parsed-body player-1-entity-update2)
-                                                  (:parsed-body player-1-entity-update2)]
-
-                  :player-2-expected-entity-list [(:parsed-body player-1-entity-update2)
-                                                  (:parsed-body player-2-entity-repost2)]
-
-                  :player-3-expected-entity-list [(:parsed-body player-1-entity-update2)
-                                                  (:parsed-body player-3-entity-repost2)]}))))
+        (testing "setting authorized_groups to a foreign group is rejected"
+          (let [player-1-entity-update2
+                (PUT app
+                     (format "ctia/%s/%s"
+                             entity
+                             (-> player-1-entity-repost2
+                                 :parsed-body
+                                 :id
+                                 id/long-id->id
+                                 :short-id))
+                     :body (assoc (dissoc (:parsed-body player-1-entity-repost2) :id)
+                                  :authorized_groups ["bargroup"])
+                     :headers {"Authorization" "player-1-token"})]
+            (is (= 400 (:status player-1-entity-update2))
+                "update with foreign authorized_groups must be rejected"))))
 
       ;; additional search tests
       (let [ext-id "red-search"

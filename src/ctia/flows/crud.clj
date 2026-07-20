@@ -137,14 +137,14 @@
 
 (s/defn ^:private validate-entities :- FlowMap
   [{{{:keys [get-in-config]} :ConfigService} :services
-    :keys [spec entities identity flow-type] :as fm} :- FlowMap]
+    :keys [spec entities identity] :as fm} :- FlowMap]
   (let [ident-map (auth/ident->map identity)]
     (assoc fm :entities
            (map (fn [entity]
-                  (cond-> entity
-                    true (check-spec spec)
-                    true (tlp-check get-in-config)
-                    (= flow-type :create) (authorized-groups-check ident-map)))
+                  (-> entity
+                      (check-spec spec)
+                      (tlp-check get-in-config)
+                      (authorized-groups-check ident-map)))
                 entities))))
 
 (s/defn ^:private create-ids-from-transient :- FlowMap

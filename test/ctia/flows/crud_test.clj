@@ -372,7 +372,6 @@
             fm {:services services
                 :identity attacker-ident
                 :entities [entity]
-                :flow-type :create
                 :spec nil}
             result (validate-entities fm)
             validated-entity (first (:entities result))]
@@ -391,7 +390,6 @@
             fm {:services services
                 :identity legit-ident
                 :entities [entity]
-                :flow-type :create
                 :spec nil}
             result (validate-entities fm)
             validated-entity (first (:entities result))]
@@ -407,7 +405,6 @@
             fm {:services services
                 :identity ident
                 :entities [entity]
-                :flow-type :create
                 :spec nil}
             result (validate-entities fm)
             validated-entity (first (:entities result))]
@@ -424,7 +421,6 @@
             fm {:services services
                 :identity attacker-ident
                 :entities [entity]
-                :flow-type :create
                 :spec nil}
             result (validate-entities fm)
             validated-entity (first (:entities result))]
@@ -433,19 +429,19 @@
         (is (= :invalid-authorized-groups-error (:type validated-entity)))
         (is (re-find #"target-tenant" (:msg validated-entity)))))
 
-    (testing "validate-entities allows foreign authorized_groups on update (owner sharing)"
+    (testing "validate-entities rejects foreign authorized_groups on update too"
       (let [owner-ident (map->Identity {:login "owner"
                                         :groups ["my-org"]
                                         :capabilities #{}})
             entity {:tlp "green"
                     :groups ["my-org"]
-                    :authorized_groups ["partner-org"]}
+                    :authorized_groups ["foreign-org"]}
             fm {:services services
                 :identity owner-ident
                 :entities [entity]
-                :flow-type :update
                 :spec nil}
             result (validate-entities fm)
             validated-entity (first (:entities result))]
-        (is (nil? (:error validated-entity))
-            "owner should be able to share with other groups on update")))))
+        (is (:error validated-entity)
+            "foreign authorized_groups should be rejected on update too")
+        (is (= :invalid-authorized-groups-error (:type validated-entity)))))))
