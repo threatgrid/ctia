@@ -1158,8 +1158,8 @@
                                          "user")
 
      (testing "Bundle export allows acl fields"
-       (let [sighting (assoc (mk-sighting 1) :authorized_users ["foo"])
-             judgement (assoc (mk-judgement) :authorized_users ["foo"])
+       (let [sighting (assoc (mk-sighting 1) :authorized_users ["foouser"])
+             judgement (assoc (mk-judgement) :authorized_users ["foouser"])
              judgement-post-res (POST app
                                       "ctia/judgement"
                                       :body judgement
@@ -1180,6 +1180,8 @@
                                    :body {:ids [sighting-id
                                                 judgement-id]}
                                    :headers {"Authorization" "45c1f5e3f05d0"})]
+         (is (= 201 (:status judgement-post-res)) judgement-post-res)
+         (is (= 201 (:status sighting-post-res)) sighting-post-res)
          (is (= 200 (:status bundle-post-res)))
          (is (= 200 (:status bundle-get-res))))))))
 
