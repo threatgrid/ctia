@@ -250,16 +250,28 @@ Document Access control is defined at the document level, rules are defined usin
 
 #### Custom Access Rules
 
-it is possible to grant additional access to any user/group using either `authorized_users`
-or `authorized_groups` document fields, when an identity is marked in one of these fields, 
-it gets full R/W access to the documents.
+The `authorized_users` and `authorized_groups` document fields grant full R/W access to
+the identities they list, in addition to the access implied by the document's TLP.
+
+For security reasons (see [XFV-20](https://cisco-sbg.atlassian.net/browse/XFV-20)) a writer
+may only reference identities they already belong to when creating or updating a document:
+
+- `authorized_users` may only contain the caller's own login.
+- `authorized_groups` may only contain groups the caller is a member of.
+
+A create, update or patch that introduces a login or group the caller does not own is rejected
+with HTTP 400. This prevents cross-tenant "verdict poisoning", where an attacker would otherwise
+make a document visible to a victim tenant by naming the victim's login or org-id. Values that
+were already stored on a document are preserved: editing a record that already carries such a
+value does not fail, only newly-introduced foreign values are rejected.
 
 Please note that the `authorized_groups` property may work only if max record visibility is set to `everyone`
 
 Examples:
 
-The following actor Entity is marked as `Red`, thus allowing only its owner RW access,
-since "foo" and "bar" are marked as `authorized_users` the owners of those identites also have RW access.
+The following actor Entity is marked as `Red`, thus allowing only its owner RW access.
+The writer is the user "foo", so listing "foo" (their own login) in `authorized_users` is accepted,
+and any additional session of that same user also has RW access.
 
 ```json
   {"id": "actor-5023697b-3857-4652-9b53-ccda297f9c3e",
@@ -270,11 +282,13 @@ since "foo" and "bar" are marked as `authorized_users` the owners of those ident
    "source": "a source",
    "tlp": "red",
    "valid_time": {},
-   "authorized_users": ["foo" "bar"]}
+   "authorized_users": ["foo"]}
 ```
 
-The following actor Entity is marked as `Amber`, thus allowing only its owner or group RW access,
-since "foogroup" and "bargroup" are marked as `authorized_groups` identities in these groups also get full RW access.
+The following actor Entity is marked as `Amber`, thus allowing only its owner or group RW access.
+The writer belongs to "foogroup", so listing "foogroup" in `authorized_groups` is accepted and
+identities in that group also get full RW access. Listing a group the writer is not a member of
+(e.g. another tenant's "bargroup") would be rejected with HTTP 400.
 
 ```json
   {"id": "actor-5023697b-3857-4652-9b53-ccda297f9c3e",
@@ -285,7 +299,7 @@ since "foogroup" and "bargroup" are marked as `authorized_groups` identities in 
    "source": "a source",
    "tlp": "red",
    "valid_time": {},
-   "authorized_groups": ["foogroup" "bargroup"]}
+   "authorized_groups": ["foogroup"]}
 ```
 
 ## Bulk and Bundle

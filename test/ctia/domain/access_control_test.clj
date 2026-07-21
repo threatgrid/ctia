@@ -254,3 +254,101 @@
     (test-authorized_users-match "red" sut/allow-write? true?)
     (test-authorized_groups-match "red" sut/allow-write? true?)
     (test-authorized-anonymous "red" sut/allow-write? false?)))
+
+;; -- validate-authorized-groups tests
+
+(deftest validate-authorized-groups-test
+  (testing "returns nil when authorized_groups is empty"
+    (is (nil? (sut/validate-authorized-groups
+               {:owner "foo" :groups ["bar"]}
+               {:login "foo" :groups ["bar" "baz"]}))))
+
+  (testing "returns nil when authorized_groups is a subset of user's groups"
+    (is (nil? (sut/validate-authorized-groups
+               {:owner "foo" :groups ["bar"] :authorized_groups ["bar"]}
+               {:login "foo" :groups ["bar" "baz"]}))))
+
+  (testing "returns nil when authorized_groups exactly equals user's groups"
+    (is (nil? (sut/validate-authorized-groups
+               {:owner "foo" :groups ["bar"] :authorized_groups ["bar" "baz"]}
+               {:login "foo" :groups ["bar" "baz"]}))))
+
+  (testing "returns foreign groups when authorized_groups contains groups not in user's groups"
+    (is (= #{"victim-org"}
+           (sut/validate-authorized-groups
+            {:owner "attacker" :groups ["attacker-org"]
+             :authorized_groups ["attacker-org" "victim-org"]}
+            {:login "attacker" :groups ["attacker-org"]}))))
+
+  (testing "returns all foreign groups when none match"
+    (is (= #{"victim-org-1" "victim-org-2"}
+           (sut/validate-authorized-groups
+            {:owner "attacker" :groups ["attacker-org"]
+             :authorized_groups ["victim-org-1" "victim-org-2"]}
+            {:login "attacker" :groups ["attacker-org"]}))))
+
+  (testing "returns nil when user has no groups and entity has no authorized_groups"
+    (is (nil? (sut/validate-authorized-groups
+               {:owner "foo" :groups ["bar"]}
+               {:login "foo" :groups []}))))
+
+  (testing "returns foreign groups when user has no groups but entity has authorized_groups"
+    (is (= #{"some-org"}
+           (sut/validate-authorized-groups
+            {:owner "foo" :groups ["bar"] :authorized_groups ["some-org"]}
+            {:login "foo" :groups []}))))
+
+  (testing "case-insensitive comparison allows mixed-case groups"
+    (is (nil? (sut/validate-authorized-groups
+               {:owner "foo" :groups ["bar"] :authorized_groups ["My-Org"]}
+               {:login "foo" :groups ["my-org"]}))))
+
+  (testing "case-insensitive comparison detects foreign groups"
+    (is (= #{"victim-org"}
+           (sut/validate-authorized-groups
+            {:owner "attacker" :groups ["attacker-org"]
+             :authorized_groups ["Victim-Org"]}
+            {:login "attacker" :groups ["attacker-org"]})))))
+
+(deftest validate-authorized-users-test
+  (testing "returns nil when authorized_users is empty"
+    (is (nil? (sut/validate-authorized-users
+               {:owner "foo" :groups ["bar"]}
+               {:login "foo" :groups ["bar"]}))))
+
+  (testing "returns nil when authorized_users contains only the caller's login"
+    (is (nil? (sut/validate-authorized-users
+               {:owner "foo" :groups ["bar"] :authorized_users ["foo"]}
+               {:login "foo" :groups ["bar"]}))))
+
+  (testing "returns foreign users when authorized_users contains other logins"
+    (is (= #{"victim-login"}
+           (sut/validate-authorized-users
+            {:owner "attacker" :groups ["attacker-org"]
+             :authorized_users ["attacker" "victim-login"]}
+            {:login "attacker" :groups ["attacker-org"]}))))
+
+  (testing "returns all foreign users when none match"
+    (is (= #{"victim-1" "victim-2"}
+           (sut/validate-authorized-users
+            {:owner "attacker" :groups ["attacker-org"]
+             :authorized_users ["victim-1" "victim-2"]}
+            {:login "attacker" :groups ["attacker-org"]}))))
+
+  (testing "returns foreign users when entity has authorized_users but no login"
+    (is (= #{"someone"}
+           (sut/validate-authorized-users
+            {:owner "foo" :groups ["bar"] :authorized_users ["someone"]}
+            {:login nil :groups ["bar"]}))))
+
+  (testing "case-insensitive comparison allows the caller's own login in mixed case"
+    (is (nil? (sut/validate-authorized-users
+               {:owner "foo" :groups ["bar"] :authorized_users ["Foo"]}
+               {:login "foo" :groups ["bar"]}))))
+
+  (testing "case-insensitive comparison detects foreign users"
+    (is (= #{"victim"}
+           (sut/validate-authorized-users
+            {:owner "attacker" :groups ["attacker-org"]
+             :authorized_users ["Victim"]}
+            {:login "attacker" :groups ["attacker-org"]})))))

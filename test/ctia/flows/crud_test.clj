@@ -357,3 +357,232 @@
            expected (assoc patch-flow-map :entities expected-entities)]
        (is (= expected
               (flows.crud/patch-entities patch-flow-map)))))))
+
+(deftest authorized-groups-validation-test
+  (let [get-in-config (helpers/build-get-in-config-fn)
+        services {:ConfigService {:get-in-config get-in-config}}
+        validate-entities #'flows.crud/validate-entities]
+    (testing "validate-entities rejects entities with foreign authorized_groups on create"
+      (let [attacker-ident (map->Identity {:login "attacker"
+                                           :groups ["attacker-org"]
+                                           :capabilities #{}})
+            entity {:tlp "green"
+                    :groups ["attacker-org"]
+                    :authorized_groups ["attacker-org" "victim-org"]}
+            fm {:services services
+                :identity attacker-ident
+                :entities [entity]
+                :spec nil}
+            result (validate-entities fm)
+            validated-entity (first (:entities result))]
+        (is (:error validated-entity)
+            "entity with foreign authorized_groups should be rejected")
+        (is (= :invalid-authorized-groups-error (:type validated-entity)))
+        (is (re-find #"victim-org" (:msg validated-entity)))))
+
+    (testing "validate-entities allows entities where authorized_groups is subset of user's groups"
+      (let [legit-ident (map->Identity {:login "legit-user"
+                                        :groups ["org-a" "org-b"]
+                                        :capabilities #{}})
+            entity {:tlp "green"
+                    :groups ["org-a"]
+                    :authorized_groups ["org-a" "org-b"]}
+            fm {:services services
+                :identity legit-ident
+                :entities [entity]
+                :spec nil}
+            result (validate-entities fm)
+            validated-entity (first (:entities result))]
+        (is (nil? (:error validated-entity))
+            "entity with valid authorized_groups should pass validation")))
+
+    (testing "validate-entities allows entities with no authorized_groups"
+      (let [ident (map->Identity {:login "user"
+                                  :groups ["org-a"]
+                                  :capabilities #{}})
+            entity {:tlp "green"
+                    :groups ["org-a"]}
+            fm {:services services
+                :identity ident
+                :entities [entity]
+                :spec nil}
+            result (validate-entities fm)
+            validated-entity (first (:entities result))]
+        (is (nil? (:error validated-entity))
+            "entity without authorized_groups should pass validation")))
+
+    (testing "validate-entities rejects cross-tenant poisoning attempt on create"
+      (let [attacker-ident (map->Identity {:login "attacker"
+                                           :groups ["evil-corp"]
+                                           :capabilities #{}})
+            entity {:tlp "amber"
+                    :groups ["evil-corp"]
+                    :authorized_groups ["target-tenant"]}
+            fm {:services services
+                :identity attacker-ident
+                :entities [entity]
+                :spec nil}
+            result (validate-entities fm)
+            validated-entity (first (:entities result))]
+        (is (:error validated-entity)
+            "cross-tenant poisoning should be rejected")
+        (is (= :invalid-authorized-groups-error (:type validated-entity)))
+        (is (re-find #"target-tenant" (:msg validated-entity)))))
+
+    (testing "validate-entities rejects foreign authorized_groups on update too"
+      (let [owner-ident (map->Identity {:login "owner"
+                                        :groups ["my-org"]
+                                        :capabilities #{}})
+            entity {:tlp "green"
+                    :groups ["my-org"]
+                    :authorized_groups ["foreign-org"]}
+            fm {:services services
+                :identity owner-ident
+                :entities [entity]
+                :spec nil}
+            result (validate-entities fm)
+            validated-entity (first (:entities result))]
+        (is (:error validated-entity)
+            "foreign authorized_groups should be rejected on update too")
+        (is (= :invalid-authorized-groups-error (:type validated-entity)))))
+
+    (testing "validate-entities rejects entities with foreign authorized_users"
+      (let [attacker-ident (map->Identity {:login "attacker"
+                                           :groups ["attacker-org"]
+                                           :capabilities #{}})
+            entity {:tlp "green"
+                    :groups ["attacker-org"]
+                    :authorized_users ["victim-login"]}
+            fm {:services services
+                :identity attacker-ident
+                :entities [entity]
+                :spec nil}
+            result (validate-entities fm)
+            validated-entity (first (:entities result))]
+        (is (:error validated-entity)
+            "entity with foreign authorized_users should be rejected")
+        (is (= :invalid-authorized-users-error (:type validated-entity)))
+        (is (re-find #"victim-login" (:msg validated-entity)))))
+
+    (testing "validate-entities allows authorized_users containing only the caller's login"
+      (let [legit-ident (map->Identity {:login "legit-user"
+                                        :groups ["org-a"]
+                                        :capabilities #{}})
+            entity {:tlp "green"
+                    :groups ["org-a"]
+                    :authorized_users ["legit-user"]}
+            fm {:services services
+                :identity legit-ident
+                :entities [entity]
+                :spec nil}
+            result (validate-entities fm)
+            validated-entity (first (:entities result))]
+        (is (nil? (:error validated-entity))
+            "entity with only caller's own login in authorized_users should pass")))
+
+    (testing "validate-entities rejects cross-tenant poisoning via authorized_users"
+      (let [attacker-ident (map->Identity {:login "attacker"
+                                           :groups ["evil-corp"]
+                                           :capabilities #{}})
+            entity {:tlp "amber"
+                    :groups ["evil-corp"]
+                    :authorized_users ["attacker" "victim-login"]}
+            fm {:services services
+                :identity attacker-ident
+                :entities [entity]
+                :spec nil}
+            result (validate-entities fm)
+            validated-entity (first (:entities result))]
+        (is (:error validated-entity)
+            "cross-tenant poisoning via authorized_users should be rejected")
+        (is (= :invalid-authorized-users-error (:type validated-entity)))
+        (is (re-find #"victim-login" (:msg validated-entity)))))
+
+    (testing "validate-entities handles case-insensitive authorized_groups comparison"
+      (let [ident (map->Identity {:login "user"
+                                  :groups ["My-Org"]
+                                  :capabilities #{}})
+            entity {:tlp "green"
+                    :groups ["My-Org"]
+                    :authorized_groups ["my-org"]}
+            fm {:services services
+                :identity ident
+                :entities [entity]
+                :spec nil}
+            result (validate-entities fm)
+            validated-entity (first (:entities result))]
+        (is (nil? (:error validated-entity))
+            "case-insensitive match should allow authorized_groups")))))
+
+(deftest authorized-groups-validation-diff-on-update-test
+  ;; Regression tests for CR1: on update/patch the check must only reject
+  ;; authorized_* values the caller *introduces* relative to the stored entity.
+  ;; Pre-existing foreign values (legacy multi-value shares, or values echoed
+  ;; back verbatim via PUT) must not trigger a false 400.
+  (let [get-in-config (helpers/build-get-in-config-fn)
+        services {:ConfigService {:get-in-config get-in-config}}
+        validate-entities #'flows.crud/validate-entities]
+
+    (testing "editing a record that already carried foreign authorized_groups does not 400"
+      (let [ident (map->Identity {:login "bob" :groups ["b"] :capabilities #{}})
+            prev {:id "actor-x" :owner "alice" :groups ["a"]
+                  :authorized_groups ["b" "c"]}
+            entity {:id "actor-x" :owner "alice" :groups ["a"]
+                    :authorized_groups ["b" "c"] :title "new"}
+            fm {:services services
+                :identity ident
+                :entities [entity]
+                :get-prev-entity (fn [_] prev)
+                :spec nil}
+            validated (first (:entities (validate-entities fm)))]
+        (is (nil? (:error validated))
+            "retaining a pre-existing foreign authorized_group must be allowed")))
+
+    (testing "adding a new foreign authorized_group on update is still rejected"
+      (let [ident (map->Identity {:login "bob" :groups ["b"] :capabilities #{}})
+            prev {:id "actor-x" :owner "alice" :groups ["a"]
+                  :authorized_groups ["b"]}
+            entity {:id "actor-x" :owner "alice" :groups ["a"]
+                    :authorized_groups ["b" "d"]}
+            fm {:services services
+                :identity ident
+                :entities [entity]
+                :get-prev-entity (fn [_] prev)
+                :spec nil}
+            validated (first (:entities (validate-entities fm)))]
+        (is (:error validated)
+            "introducing a new foreign authorized_group must be rejected")
+        (is (= :invalid-authorized-groups-error (:type validated)))
+        (is (re-find #"\bd\b" (:msg validated)))))
+
+    (testing "editing a record that already carried a foreign authorized_user does not 400"
+      (let [ident (map->Identity {:login "bob" :groups ["b"] :capabilities #{}})
+            prev {:id "actor-x" :owner "alice" :groups ["a"]
+                  :authorized_users ["alice" "bob"]}
+            entity {:id "actor-x" :owner "alice" :groups ["a"]
+                    :authorized_users ["alice" "bob"] :title "new"}
+            fm {:services services
+                :identity ident
+                :entities [entity]
+                :get-prev-entity (fn [_] prev)
+                :spec nil}
+            validated (first (:entities (validate-entities fm)))]
+        (is (nil? (:error validated))
+            "retaining a pre-existing foreign authorized_user must be allowed")))
+
+    (testing "adding a new foreign authorized_user on update is still rejected"
+      (let [ident (map->Identity {:login "bob" :groups ["b"] :capabilities #{}})
+            prev {:id "actor-x" :owner "alice" :groups ["a"]
+                  :authorized_users ["bob"]}
+            entity {:id "actor-x" :owner "alice" :groups ["a"]
+                    :authorized_users ["bob" "victim"]}
+            fm {:services services
+                :identity ident
+                :entities [entity]
+                :get-prev-entity (fn [_] prev)
+                :spec nil}
+            validated (first (:entities (validate-entities fm)))]
+        (is (:error validated)
+            "introducing a new foreign authorized_user must be rejected")
+        (is (= :invalid-authorized-users-error (:type validated)))
+        (is (re-find #"victim" (:msg validated)))))))

@@ -111,6 +111,8 @@
    :ductile.conn/invalid-request ex/es-invalid-request
    :access-control-error ex/access-control-error-handler
    :invalid-tlp-error ex/invalid-tlp-error-handler
+   :invalid-authorized-groups-error ex/invalid-authorized-groups-error-handler
+   :invalid-authorized-users-error ex/invalid-authorized-users-error-handler
    :realize-entity-error ex/realize-entity-error-handler
    :spec-validation-error ex/spec-validation-error-handler
    :compojure.api.exception/default ex/default-error-handler})

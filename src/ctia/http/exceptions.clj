@@ -95,6 +95,38 @@
       :entity entity
       :class (.getName (class e))})))
 
+(defn invalid-authorized-groups-error-handler
+  "Handle authorized_groups validation error.
+
+  A rejected cross-tenant authorized_groups write is a security-relevant
+  anomaly, so it is logged at :warn with the caller login, groups and the
+  rejected foreign values (carried in ex-data) to help operators correlate a
+  poisoning campaign."
+  [^Exception e _data _request]
+  (logging/log! :warn e (ex-message-and-data e))
+  (bad-request
+   (let [entity (:entity (ex-data e))]
+     {:type "Invalid Authorized Groups Error"
+      :message (.getMessage e)
+      :entity entity
+      :class (.getName (class e))})))
+
+(defn invalid-authorized-users-error-handler
+  "Handle authorized_users validation error.
+
+  A rejected cross-tenant authorized_users write is a security-relevant
+  anomaly, so it is logged at :warn with the caller login, groups and the
+  rejected foreign values (carried in ex-data) to help operators correlate a
+  poisoning campaign."
+  [^Exception e _data _request]
+  (logging/log! :warn e (ex-message-and-data e))
+  (bad-request
+   (let [entity (:entity (ex-data e))]
+     {:type "Invalid Authorized Users Error"
+      :message (.getMessage e)
+      :entity entity
+      :class (.getName (class e))})))
+
 (defn realize-entity-error-handler
   "Handle error at the realize step"
   [^Exception e _data _request]
