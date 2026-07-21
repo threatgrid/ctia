@@ -123,8 +123,8 @@
    is the caller's own login. Returns nil if valid, or a set of invalid
    user logins if the entity contains foreign users."
   [entity ident]
-  (let [entity-authorized-users (set (:authorized_users entity))
-        allowed #{(:login ident)}
+  (let [entity-authorized-users (set (map str/lower-case (:authorized_users entity)))
+        allowed #{(some-> (:login ident) str/lower-case)}
         foreign (set/difference entity-authorized-users allowed)]
     (when (seq foreign)
       foreign)))

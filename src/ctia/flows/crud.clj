@@ -3,7 +3,7 @@
   and deleting entities."
   (:require
    [clj-momo.lib.map :refer [deep-merge-with]]
-   [clojure.set :refer [index]]
+   [clojure.set :as set :refer [index]]
    [clojure.spec.alpha :as cs]
    [clojure.string :as str]
    [clojure.tools.logging :as log]
@@ -126,38 +126,65 @@
      :entity entity}
     :else entity))
 
+(defn- introduced-foreign
+  "Given a validation fn returning foreign values for an entity, returns only
+   the foreign values the caller is *introducing* -- i.e. present in the entity
+   being written but not already present in the stored prev-entity. This keeps
+   the write-gate targeted at newly-added cross-tenant grants and avoids false
+   400s when a caller with legitimate write access edits (or echoes back via
+   PUT) a record that already carried foreign authorized_* values."
+  [validate-fn entity prev-entity ident-map]
+  (set/difference (or (validate-fn entity ident-map) #{})
+                  (or (validate-fn prev-entity ident-map) #{})))
+
 (defn authorized-groups-check
-  [entity ident-map]
-  (if-let [foreign (validate-authorized-groups entity ident-map)]
-    {:msg (format "Invalid authorized_groups: %s — not in user's groups"
-                  (str/join ", " (sort foreign)))
-     :error "Entity Access Control validation Error"
-     :type :invalid-authorized-groups-error
-     :entity entity}
-    entity))
+  [entity prev-entity ident-map]
+  (let [foreign (introduced-foreign validate-authorized-groups
+                                    entity prev-entity ident-map)]
+    (if (seq foreign)
+      {:msg (format "Invalid authorized_groups: %s — not in user's groups"
+                    (str/join ", " (sort foreign)))
+       :error "Entity Access Control validation Error"
+       :type :invalid-authorized-groups-error
+       :entity entity
+       :login (:login ident-map)
+       :groups (:groups ident-map)
+       :foreign foreign}
+      entity)))
 
 (defn authorized-users-check
-  [entity ident-map]
-  (if-let [foreign (validate-authorized-users entity ident-map)]
-    {:msg (format "Invalid authorized_users: %s — not the caller's own login"
-                  (str/join ", " (sort foreign)))
-     :error "Entity Access Control validation Error"
-     :type :invalid-authorized-users-error
-     :entity entity}
-    entity))
+  [entity prev-entity ident-map]
+  (let [foreign (introduced-foreign validate-authorized-users
+                                    entity prev-entity ident-map)]
+    (if (seq foreign)
+      {:msg (format "Invalid authorized_users: %s — not the caller's own login"
+                    (str/join ", " (sort foreign)))
+       :error "Entity Access Control validation Error"
+       :type :invalid-authorized-users-error
+       :entity entity
+       :login (:login ident-map)
+       :groups (:groups ident-map)
+       :foreign foreign}
+      entity)))
 
 (s/defn ^:private validate-entities :- FlowMap
   [{{{:keys [get-in-config]} :ConfigService} :services
     identity-obj :identity
+    get-prev-entity :get-prev-entity
     :keys [spec entities] :as fm} :- FlowMap]
   (let [ident-map (auth/ident->map identity-obj)]
     (assoc fm :entities
            (map (fn [entity]
-                  (-> entity
-                      (check-spec spec)
-                      (tlp-check get-in-config)
-                      (authorized-groups-check ident-map)
-                      (authorized-users-check ident-map)))
+                  ;; On update/patch, validate only the authorized_* values the
+                  ;; caller introduces relative to the stored entity (see CR1);
+                  ;; on create there is no prev-entity so everything is checked.
+                  (let [prev-entity (when (and get-prev-entity (:id entity))
+                                      (get-prev-entity (:id entity)))]
+                    (-> entity
+                        (check-spec spec)
+                        (tlp-check get-in-config)
+                        (authorized-groups-check prev-entity ident-map)
+                        (authorized-users-check prev-entity ident-map))))
                 entities))))
 
 (s/defn ^:private create-ids-from-transient :- FlowMap

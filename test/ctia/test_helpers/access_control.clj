@@ -378,44 +378,21 @@
         (is (= 201 (:status player-3-entity-repost)))
 
         (when can-update?
-          (let [player-1-entity-update
-                (PUT app
-                     (format "ctia/%s/%s"
-                             entity
-                             (-> player-1-entity-repost
-                                 :parsed-body
-                                 :id
-                                 id/long-id->id
-                                 :short-id))
-                     :body (assoc (dissoc (:parsed-body player-1-entity-repost) :id)
-                                  :authorized_users ["player2"])
-                     :headers {"Authorization" "player-1-token"})]
-
-            ;; player 1 allows player 2 (if record is updatable)
-            (crud-access-control-test
-             (into args
-                   {:player-1-creation player-1-entity-update
-                    :player-2-creation player-2-entity-repost
-                    :player-3-creation player-3-entity-repost
-
-                    :player-2-1-expected-read-statuses allowed-statuses
-                    :player-2-1-expected-write-statuses allowed-statuses
-
-                    :player-2-3-expected-read-statuses allowed-statuses
-                    :player-2-3-expected-write-statuses allowed-statuses
-
-                    :player-3-1-expected-read-statuses forbidden-statuses
-                    :player-3-1-expected-write-statuses forbidden-statuses
-
-                    :list-query "external_ids:gmrvgrepost"
-                    :player-1-expected-entity-list [(:parsed-body player-1-entity-update)]
-
-                    :player-2-expected-entity-list [(:parsed-body player-1-entity-update)
-                                                    (:parsed-body player-2-entity-repost)
-                                                    (:parsed-body player-3-entity-repost)]
-
-                    :player-3-expected-entity-list [(:parsed-body player-2-entity-repost)
-                                                    (:parsed-body player-3-entity-repost)]}))))
+          (testing "setting authorized_users to a foreign user is rejected"
+            (let [player-1-entity-update
+                  (PUT app
+                       (format "ctia/%s/%s"
+                               entity
+                               (-> player-1-entity-repost
+                                   :parsed-body
+                                   :id
+                                   id/long-id->id
+                                   :short-id))
+                       :body (assoc (dissoc (:parsed-body player-1-entity-repost) :id)
+                                    :authorized_users ["player2"])
+                       :headers {"Authorization" "player-1-token"})]
+              (is (= 400 (:status player-1-entity-update))
+                  "update with foreign authorized_users must be rejected"))))
 
         ;; player1 and player2 repost deleted entities
         (is (= 201 (:status player-1-entity-repost2)))
@@ -518,47 +495,21 @@
       (is (= 201 (:status player-3-entity-repost)))
 
       (when can-update?
-        (let [player-1-entity-update
-              (PUT app
-                   (format "ctia/%s/%s"
-                           entity
-                           (-> player-1-entity-repost
-                               :parsed-body
-                               :id
-                               id/long-id->id
-                               :short-id))
-                   :body (assoc (dissoc (:parsed-body player-1-entity-repost) :id)
-                                :authorized_users ["player2"])
-                   :headers {"Authorization" "player-1-token"})]
-
-          ;; player 1 allows player 2 (if record is updatable)
-          (crud-access-control-test
-           (into args
-                 {:player-1-creation player-1-entity-update
-                  :player-2-creation player-2-entity-repost
-                  :player-3-creation player-3-entity-repost
-
-                  :player-2-1-expected-read-statuses allowed-statuses
-                  :player-2-1-expected-write-statuses allowed-statuses
-
-                  :player-2-3-expected-read-statuses allowed-statuses
-                  :player-2-3-expected-write-statuses allowed-statuses
-
-                  :player-3-1-expected-read-statuses allowed-statuses
-                  :player-3-1-expected-write-statuses forbidden-statuses
-
-                  :list-query "external_ids:grepost"
-                  :player-1-expected-entity-list [(:parsed-body player-1-entity-update)
-                                                  (:parsed-body player-2-entity-repost)
-                                                  (:parsed-body player-3-entity-repost)]
-
-                  :player-2-expected-entity-list [(:parsed-body player-1-entity-update)
-                                                  (:parsed-body player-2-entity-repost)
-                                                  (:parsed-body player-3-entity-repost)]
-
-                  :player-3-expected-entity-list [(:parsed-body player-1-entity-update)
-                                                  (:parsed-body player-2-entity-repost)
-                                                  (:parsed-body player-3-entity-repost)]}))))
+        (testing "setting authorized_users to a foreign user is rejected"
+          (let [player-1-entity-update
+                (PUT app
+                     (format "ctia/%s/%s"
+                             entity
+                             (-> player-1-entity-repost
+                                 :parsed-body
+                                 :id
+                                 id/long-id->id
+                                 :short-id))
+                     :body (assoc (dissoc (:parsed-body player-1-entity-repost) :id)
+                                  :authorized_users ["player2"])
+                     :headers {"Authorization" "player-1-token"})]
+            (is (= 400 (:status player-1-entity-update))
+                "update with foreign authorized_users must be rejected"))))
 
       ;; player1 and player2 repost deleted entities
       (is (= 201 (:status player-1-entity-repost2)))
@@ -657,42 +608,21 @@
       (is (= 201 (:status player-3-entity-repost)))
 
       (when can-update?
-        (let [player-1-entity-update
-              (PUT app
-                   (format "ctia/%s/%s"
-                           entity
-                           (-> player-1-entity-repost
-                               :parsed-body
-                               :id
-                               id/long-id->id
-                               :short-id))
-                   :body (assoc (dissoc (:parsed-body player-1-entity-repost) :id)
-                                :authorized_users ["player2"])
-                   :headers {"Authorization" "player-1-token"})]
-
-          ;; player 1 allows player 2 (if record is updatable)
-          (crud-access-control-test
-           (into args
-                 {:player-1-creation player-1-entity-update
-                  :player-2-creation player-2-entity-repost
-                  :player-3-creation player-3-entity-repost
-
-                  :player-2-1-expected-read-statuses allowed-statuses
-                  :player-2-1-expected-write-statuses allowed-statuses
-
-                  :player-2-3-expected-read-statuses allowed-statuses
-                  :player-2-3-expected-write-statuses allowed-statuses
-
-                  :player-3-1-expected-read-statuses forbidden-statuses
-                  :player-3-1-expected-write-statuses forbidden-statuses
-
-                  :list-query "external_ids:arepost"
-                  :player-1-expected-entity-list [(:parsed-body player-1-entity-update)]
-                  :player-2-expected-entity-list [(:parsed-body player-1-entity-update)
-                                                  (:parsed-body player-2-entity-repost)
-                                                  (:parsed-body player-3-entity-repost)]
-                  :player-3-expected-entity-list [(:parsed-body player-2-entity-repost)
-                                                  (:parsed-body player-3-entity-repost)]}))))
+        (testing "setting authorized_users to a foreign user is rejected"
+          (let [player-1-entity-update
+                (PUT app
+                     (format "ctia/%s/%s"
+                             entity
+                             (-> player-1-entity-repost
+                                 :parsed-body
+                                 :id
+                                 id/long-id->id
+                                 :short-id))
+                     :body (assoc (dissoc (:parsed-body player-1-entity-repost) :id)
+                                  :authorized_users ["player2"])
+                     :headers {"Authorization" "player-1-token"})]
+            (is (= 400 (:status player-1-entity-update))
+                "update with foreign authorized_users must be rejected"))))
 
       ;; player1 and player2 repost deleted entities
       (is (= 201 (:status player-1-entity-repost2)))
@@ -787,42 +717,21 @@
       (is (= 201 (:status player-3-entity-repost)))
 
       (when can-update?
-        (let [player-1-entity-update
-              (PUT app
-                   (format "ctia/%s/%s"
-                           entity
-                           (-> player-1-entity-repost
-                               :parsed-body
-                               :id
-                               id/long-id->id
-                               :short-id))
-                   :body (assoc (dissoc (:parsed-body player-1-entity-repost) :id)
-                                :authorized_users ["player2"])
-                   :headers {"Authorization" "player-1-token"})]
-
-          ;; player 1 allows player 2 (if record is updatable)
-          (crud-access-control-test
-           (into args
-                 {:player-1-creation player-1-entity-update
-                  :player-2-creation player-2-entity-repost
-                  :player-3-creation player-3-entity-repost
-
-                  :player-2-1-expected-read-statuses allowed-statuses
-                  :player-2-1-expected-write-statuses allowed-statuses
-
-                  :player-2-3-expected-read-statuses forbidden-statuses
-                  :player-2-3-expected-write-statuses forbidden-statuses
-
-                  :player-3-1-expected-read-statuses forbidden-statuses
-                  :player-3-1-expected-write-statuses forbidden-statuses
-
-                  :list-query "external_ids:rrepost"
-                  :player-1-expected-entity-list [(:parsed-body player-1-entity-update)]
-
-                  :player-2-expected-entity-list [(:parsed-body player-1-entity-update)
-                                                  (:parsed-body player-2-entity-repost)]
-
-                  :player-3-expected-entity-list [(:parsed-body player-3-entity-repost)]}))))
+        (testing "setting authorized_users to a foreign user is rejected"
+          (let [player-1-entity-update
+                (PUT app
+                     (format "ctia/%s/%s"
+                             entity
+                             (-> player-1-entity-repost
+                                 :parsed-body
+                                 :id
+                                 id/long-id->id
+                                 :short-id))
+                     :body (assoc (dissoc (:parsed-body player-1-entity-repost) :id)
+                                  :authorized_users ["player2"])
+                     :headers {"Authorization" "player-1-token"})]
+            (is (= 400 (:status player-1-entity-update))
+                "update with foreign authorized_users must be rejected"))))
 
       ;; player1 and player2 repost deleted entities
       (is (= 201 (:status player-1-entity-repost2)))

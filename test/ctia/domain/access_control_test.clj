@@ -339,4 +339,16 @@
     (is (= #{"someone"}
            (sut/validate-authorized-users
             {:owner "foo" :groups ["bar"] :authorized_users ["someone"]}
-            {:login nil :groups ["bar"]})))))
+            {:login nil :groups ["bar"]}))))
+
+  (testing "case-insensitive comparison allows the caller's own login in mixed case"
+    (is (nil? (sut/validate-authorized-users
+               {:owner "foo" :groups ["bar"] :authorized_users ["Foo"]}
+               {:login "foo" :groups ["bar"]}))))
+
+  (testing "case-insensitive comparison detects foreign users"
+    (is (= #{"victim"}
+           (sut/validate-authorized-users
+            {:owner "attacker" :groups ["attacker-org"]
+             :authorized_users ["Victim"]}
+            {:login "attacker" :groups ["attacker-org"]})))))
