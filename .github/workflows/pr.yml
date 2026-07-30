@@ -442,3 +442,82 @@ jobs:
           LEIN_OFFLINE: true
           DOCKER_USER: ${{ env.int_us_east_1_xdr_sre_user_jfrog_jfrog_username }}
           DOCKER_PASS: ${{ env.int_us_east_1_xdr_sre_user_jfrog_jfrog_token }}
+
+  # Pushes a github.pipeline.run datapoint to Splunk Observability so release
+  # failures alert via the detector in tenzin
+  # (terraform/splunk/platform/prod/github_pipeline_detectors.tf). XDR-57773.
+  # Only meaningful on a release-branch push (vx.x / vx.x.x): the detector is
+  # scoped to branch:"v*", so we gate the whole job to those pushes and never
+  # emit for ordinary PRs, master pushes, or the nightly cron.
+  #
+  # The signal we care about is whether `deploy` finished: result is success
+  # ONLY when deploy ran and succeeded. If deploy failed OR was skipped because
+  # an upstream test job failed (deploy `needs: [all-pr-checks]`), the release
+  # did not deploy, so we emit failure and alert.
+  emit-metric:
+    name: Emit pipeline metric
+    runs-on: "ubuntu-22.04"
+    needs: [deploy]
+    if: >-
+      always()
+      && github.event_name == 'push'
+      && github.repository == 'threatgrid/ctia'
+      && startsWith(github.ref_name, 'v')
+    # Monitoring must never fail the release. continue-on-error makes the WHOLE
+    # job non-blocking, so even a transient OIDC/STS failure in the credential
+    # step below cannot mark the release failed. The in-script guards handle
+    # ordinary ingest errors; this is the backstop for the setup steps.
+    continue-on-error: true
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v5
+        with:
+          # prod role: reads the SignalFx ingest token only (XDR-57773)
+          role-to-assume: ${{ secrets.SRE_AWS_PROD_GITHUB_ACTIONS_ROLE_ARN }}
+          aws-region: us-east-1
+
+      - name: Emit github.pipeline.run to Splunk o11y
+        env:
+          # success only when the deploy job actually ran and passed; a failed
+          # OR skipped deploy (skipped when upstream tests failed) => failure.
+          PIPE_RESULT: ${{ needs.deploy.result == 'success' && 'success' || 'failure' }}
+          PIPE_REPO: ${{ github.repository }}
+          PIPE_WORKFLOW: pr.yml
+          PIPE_BRANCH: ${{ github.ref_name }}
+          # Secrets Manager id of the prod SignalFx ingest token. Kept in a repo
+          # secret rather than inline because ctia is a public repo — the value
+          # is not a credential (access is IAM-gated) but the path is needless
+          # recon in the open. XDR-57773.
+          SFX_SECRET_ID: ${{ secrets.SFX_INGEST_SECRET_ID }}
+        run: |
+          set -uo pipefail
+          if [ -z "${SFX_SECRET_ID}" ]; then
+            echo "::warning::SFX_INGEST_SECRET_ID not set; skipping metric emit"
+            exit 0
+          fi
+          # Runtime fetch of the SignalFx ingest token (XDR-57984 cross-account
+          # grant). SEC-01: never echo the token or write it to an output; pipe
+          # it straight into the request and mask it as a guard.
+          TOKEN=$(aws secretsmanager get-secret-value --region us-east-1 \
+            --secret-id "${SFX_SECRET_ID}" --query SecretString --output text \
+            | python3 -c 'import sys,json;print(json.load(sys.stdin)["value"])')
+          echo "::add-mask::${TOKEN}"
+          payload=$(cat <<JSON
+          {"counter":[{"metric":"github.pipeline.run","value":1,"dimensions":{"repo":"${PIPE_REPO}","workflow":"${PIPE_WORKFLOW}","result":"${PIPE_RESULT}","branch":"${PIPE_BRANCH}"}}]}
+          JSON
+          )
+          echo "Emitting github.pipeline.run: repo=${PIPE_REPO} workflow=${PIPE_WORKFLOW} result=${PIPE_RESULT} branch=${PIPE_BRANCH}"
+          http_code=$(curl -sS -o /tmp/sfx_resp -w '%{http_code}' \
+            --connect-timeout 5 --max-time 15 \
+            -X POST "https://ingest.eu1.signalfx.com/v2/datapoint" \
+            -H "Content-Type: application/json" \
+            -H "X-SF-TOKEN: ${TOKEN}" \
+            --data "${payload}") || { echo "::warning::metric emit failed (curl error)"; exit 0; }
+          if [ "${http_code}" != "200" ]; then
+            echo "::warning::metric emit returned HTTP ${http_code}: $(cat /tmp/sfx_resp)"
+            exit 0
+          fi
+          echo "Emit OK (HTTP ${http_code})"
