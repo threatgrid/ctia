@@ -448,12 +448,16 @@ jobs:
   # (terraform/splunk/platform/prod/github_pipeline_detectors.tf). XDR-57773.
   # Only meaningful on a release-branch push (vx.x / vx.x.x): the detector is
   # scoped to branch:"v*", so we gate the whole job to those pushes and never
-  # emit for ordinary PRs, master pushes, or the nightly cron. result is
-  # success only when every needed release job succeeded.
+  # emit for ordinary PRs, master pushes, or the nightly cron.
+  #
+  # The signal we care about is whether `deploy` finished: result is success
+  # ONLY when deploy ran and succeeded. If deploy failed OR was skipped because
+  # an upstream test job failed (deploy `needs: [all-pr-checks]`), the release
+  # did not deploy, so we emit failure and alert.
   emit-metric:
     name: Emit pipeline metric
     runs-on: "ubuntu-22.04"
-    needs: [setup, test-encoding, test-matrix, all-pr-checks, deploy]
+    needs: [deploy]
     if: >-
       always()
       && github.event_name == 'push'
@@ -477,7 +481,9 @@ jobs:
 
       - name: Emit github.pipeline.run to Splunk o11y
         env:
-          PIPE_RESULT: ${{ !contains(needs.*.result, 'failure') && !contains(needs.*.result, 'cancelled') && 'success' || 'failure' }}
+          # success only when the deploy job actually ran and passed; a failed
+          # OR skipped deploy (skipped when upstream tests failed) => failure.
+          PIPE_RESULT: ${{ needs.deploy.result == 'success' && 'success' || 'failure' }}
           PIPE_REPO: ${{ github.repository }}
           PIPE_WORKFLOW: pr.yml
           PIPE_BRANCH: ${{ github.ref_name }}
