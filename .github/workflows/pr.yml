@@ -487,13 +487,22 @@ jobs:
           PIPE_REPO: ${{ github.repository }}
           PIPE_WORKFLOW: pr.yml
           PIPE_BRANCH: ${{ github.ref_name }}
+          # Secrets Manager id of the prod SignalFx ingest token. Kept in a repo
+          # secret rather than inline because ctia is a public repo — the value
+          # is not a credential (access is IAM-gated) but the path is needless
+          # recon in the open. XDR-57773.
+          SFX_SECRET_ID: ${{ secrets.SFX_INGEST_SECRET_ID }}
         run: |
           set -uo pipefail
+          if [ -z "${SFX_SECRET_ID}" ]; then
+            echo "::warning::SFX_INGEST_SECRET_ID not set; skipping metric emit"
+            exit 0
+          fi
           # Runtime fetch of the SignalFx ingest token (XDR-57984 cross-account
           # grant). SEC-01: never echo the token or write it to an output; pipe
           # it straight into the request and mask it as a guard.
           TOKEN=$(aws secretsmanager get-secret-value --region us-east-1 \
-            --secret-id prod/splunk/ingest/token --query SecretString --output text \
+            --secret-id "${SFX_SECRET_ID}" --query SecretString --output text \
             | python3 -c 'import sys,json;print(json.load(sys.stdin)["value"])')
           echo "::add-mask::${TOKEN}"
           payload=$(cat <<JSON
