@@ -236,9 +236,18 @@
    control/whitespace characters stripped before scheme extraction, because
    browsers ignore such characters when resolving a URL (so \"java\\tscript:...\",
    \"&#106;avascript:...\" and \"javascript&colon;...\" all resolve to
-   \"javascript:...\")."
+   \"javascript:...\").
+
+   Transient references (`transient:<uuid>`) are CTIA-internal placeholders that
+   callers put in URI-typed fields (e.g. :source_uri) to cross-link entities in
+   a bulk submission; the flow rewrites them to real http(s) IDs during ingest,
+   and `transient:` is not a browser-executable scheme, so they are exempt. This
+   check runs before transient IDs are resolved (see `validate-entities` ->
+   `create-ids-from-transient`), so without this exemption every bulk relationship
+   carrying a transient :source_uri would be wrongly rejected."
   [v]
-  (when (string? v)
+  (when (and (string? v)
+             (not (schemas/transient-id? v)))
     (let [normalized (-> v
                          decode-html-entities
                          (str/replace #"[\x00-\x20\x7f]" ""))]
