@@ -597,17 +597,23 @@ It returns the documents with full hits meta data including the real index in wh
   ([es-conn-state :- ESConnState
     search-query :- SearchQuery
     ident
-    {:keys [extra-filters]}]
+    {:keys [extra-filters access-control]
+     :or {access-control :read}}]
    (let [{:keys [services]} es-conn-state
          {{:keys [get-in-config]} :ConfigService} services
          {:keys [filter-map range full-text]} search-query
          range-query (when range
                        {:range range})
+         ;; Delete operations must use the write access-control filter so a
+         ;; caller can only remove documents it is allowed to write (XFV-120).
+         restriction-query-part (case access-control
+                                  :write (es.query/find-write-restriction-query-part ident)
+                                  (es.query/find-restriction-query-part ident get-in-config))
          filter-terms (-> (ensure-document-id-in-map filter-map)
                           q/prepare-terms)]
      {:bool
       {:filter
-       (cond-> [(es.query/find-restriction-query-part ident get-in-config)]
+       (cond-> [restriction-query-part]
          true (into extra-filters)
          (seq filter-map) (into filter-terms)
          (seq range)      (conj range-query)
@@ -646,24 +652,36 @@ It returns the documents with full hits meta data including the real index in wh
                                       get-in-config)))))))
 
 (s/defn handle-delete-search
-  "ES delete by query handler"
+  "ES delete by query handler.
+
+   Builds the `_delete_by_query` body with the write access-control filter so a
+   caller can only delete documents it is allowed to write (XFV-120), rather
+   than every document it can read.
+
+   When `es-params` does not carry `:really-delete? true` no deletion is
+   performed: the number of matching (deletable) documents is returned as a
+   dry-run preview, computed with the same write filter so the preview matches
+   what an actual delete would remove."
   [{:keys [conn index] :as es-conn-state} :- ESConnState
    search-query :- SearchQuery
    ident
    es-params]
-  (let [query (make-search-query es-conn-state search-query ident)
+  (let [query (make-search-query es-conn-state search-query ident {:access-control :write})
         opts (select-keys es-params [:wait_for_completion :refresh])
-        nb-deleted (ductile.doc/count-docs conn index query)]
-    (log/info (format "deleting %s documents in %s (%s)"
-                      nb-deleted
-                      index
-                      (pr-str query)))
-    (:deleted
-     (ductile.doc/delete-by-query conn
-                                  [index]
-                                  query
-                                  opts)
-     nb-deleted)))
+        nb-matched (ductile.doc/count-docs conn index query)]
+    (if (:really-delete? es-params)
+      (do
+        (log/info (format "deleting %s documents in %s (%s)"
+                          nb-matched
+                          index
+                          (pr-str query)))
+        (:deleted
+         (ductile.doc/delete-by-query conn
+                                      [index]
+                                      query
+                                      opts)
+         nb-matched))
+      nb-matched)))
 
 (s/defn handle-query-string-count :- (s/pred nat-int?)
   "ES count handler"

@@ -7,35 +7,59 @@
    [schema-tools.core :as st]
    [schema.core :as s]))
 
-(defn find-restriction-query-part
-  [{:keys [login groups]} get-in-config]
+(defn- normalize-ident
   ;; TODO do we really want to discard case on that?
-  (let [login (str/lower-case login)
-        groups (map str/lower-case groups)]
+  [{:keys [login groups]}]
+  {:login (str/lower-case login)
+   :groups (map str/lower-case groups)})
+
+(defn- write-restriction-should-clauses
+  "The should-clauses shared by the read and write access-control filters.
+   These mirror the disjuncts of `ctia.domain.access-control/allow-write?`:
+   document owner, `authorized_users`, `authorized_groups`, same-group records
+   at TLP amber or below, and same-group owner records at TLP red."
+  [login groups]
+  [;; Document Owner
+   {:bool {:filter [{:term {"owner" login}}
+                    {:terms {"groups" groups}}]}}
+
+   ;; or if user is listed in authorized_users or authorized_groups field
+   {:term {"authorized_users" login}}
+   {:terms {"authorized_groups" groups}}
+
+   ;; CTIM records with TLP equal or below amber that are owned by org BAR
+   {:bool {:must [{:terms {"tlp" (conj ac/public-tlps "amber")}}
+                  {:terms {"groups" groups}}]}}
+
+   ;; CTIM records with TLP red that is owned by user FOO
+   {:bool {:must [{:term {"tlp" "red"}}
+                  {:term {"owner" login}}
+                  {:terms {"groups" groups}}]}}])
+
+(defn find-restriction-query-part
+  "Access-control filter for read operations. In addition to the write
+   disjuncts, when `ctia.access-control.max-record-visibility` is `everyone`
+   it also matches any TLP white/green document regardless of owner/groups."
+  [ident get-in-config]
+  (let [{:keys [login groups]} (normalize-ident ident)]
     {:bool
      {:minimum_should_match 1
       :should
-      (cond->>
-       [;; Document Owner
-        {:bool {:filter [{:term {"owner" login}}
-                         {:terms {"groups" groups}}]}}
-
-           ;; or if user is listed in authorized_users or authorized_groups field
-        {:term {"authorized_users" login}}
-        {:terms {"authorized_groups" groups}}
-
-           ;; CTIM records with TLP equal or below amber that are owned by org BAR
-        {:bool {:must [{:terms {"tlp" (conj ac/public-tlps "amber")}}
-                       {:terms {"groups" groups}}]}}
-
-           ;; CTIM records with TLP red that is owned by user FOO
-        {:bool {:must [{:term {"tlp" "red"}}
-                       {:term {"owner" login}}
-                       {:terms {"groups" groups}}]}}]
-
+      (cond->> (write-restriction-should-clauses login groups)
         ;; Any Green/White TLP if max-visibility is set to `everyone`
         (ac/max-record-visibility-everyone? get-in-config)
         (cons {:terms {"tlp" ac/public-tlps}}))}}))
+
+(defn find-write-restriction-query-part
+  "Access-control filter for write/delete operations. Mirrors the disjuncts of
+   `ctia.domain.access-control/allow-write?`. Unlike `find-restriction-query-part`
+   it never adds the `max-record-visibility=everyone` public-TLP clause, so a
+   caller cannot match another group's TLP white/green records. See XFV-120."
+  [ident]
+  (let [{:keys [login groups]} (normalize-ident ident)]
+    {:bool
+     {:minimum_should_match 1
+      :should (write-restriction-should-clauses login groups)}}))
 
 
 (s/defn make-date-range-query :- search-schemas/RangeQuery
