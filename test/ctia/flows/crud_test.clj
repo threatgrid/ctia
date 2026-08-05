@@ -679,6 +679,16 @@
       (let [entity {:source_uri "/relative/path" :url "example.com/a"}]
         (is (= entity (url-scheme-check entity)))))
 
+    (testing "allows transient: references in URL-typed fields (resolved during ingest)"
+      ;; Bulk/bundle submissions cross-link entities with transient IDs before
+      ;; real IDs exist; these land in URI-typed fields (e.g. :source_uri on a
+      ;; relationship) and this check runs before they are resolved. transient:
+      ;; is a CTIA-internal, non-executable scheme, so it must not be flagged.
+      (let [entity {:source_uri "transient:0"
+                    :url (str "transient:" (random-uuid))}]
+        (is (= entity (url-scheme-check entity))
+            "transient references must pass validation unchanged")))
+
     (testing "does not flag dangerous-looking free-text in non-URL fields"
       ;; threat-intel descriptions and observable IOC values legitimately mention
       ;; malicious URLs; only URL-typed fields are gated.
