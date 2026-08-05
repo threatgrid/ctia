@@ -167,6 +167,130 @@
        :foreign foreign}
       entity)))
 
+(def ^:private safe-url-schemes
+  "Allowlist of URL schemes permitted in URL-typed fields on ingest. Any other
+   scheme (javascript:, data:, vbscript:, ...) is rejected as defense-in-depth
+   against stored XSS via threat-intel URL fields (XFV-135). Scheme-less /
+   relative values carry no scheme and are always allowed."
+  #{"http" "https"})
+
+(def ^:private url-typed-keys
+  "Entity keys whose values are CTIM URI-typed and are rendered as clickable
+   hyperlinks by downstream UIs. Kept in sync with the URI-typed entries in
+   ctim.schemas.common (:url, :source_uri, :origin_uri, :reason_uri, :identity).
+   These are the render-sinks reachable by an attacker via CTIA writes; free-text
+   fields and observable IOC values (which legitimately carry malicious URLs) are
+   intentionally NOT in this set. Matching is by key name at any nesting depth,
+   which assumes every field so named in a CTIM object is a URI-typed http(s)
+   field; a future same-named free-text field would need adding here."
+  #{:url :source_uri :origin_uri :reason_uri :identity})
+
+;; RFC 3986 scheme: ALPHA *( ALPHA / DIGIT / "+" / "-" / "." ) followed by ":"
+(def ^:private url-scheme-re #"(?i)^([a-z][a-z0-9+.\-]*):")
+
+(defn- code-point->str
+  "Unicode code point -> String, or nil when out of range."
+  [n]
+  (when (<= 0 n 0x10FFFF)
+    (String. (Character/toChars n))))
+
+(def ^:private scheme-relevant-named-entities
+  "The only HTML named character references that can help reconstruct a URL
+   scheme at the render sink, mapped to the character they decode to. No HTML5
+   named reference decodes to a single ASCII letter usable to spell a scheme name
+   (the sole ASCII-letter-producing entity, &fjlig; -> \"fj\", cannot form any
+   executable scheme), so an attacker can only hide the ':' scheme delimiter or
+   insert tab/newline (which the WHATWG URL parser strips from anywhere in a URL)
+   between the letters:
+     javascript&colon;alert(1)   -> javascript:alert(1)
+     java&NewLine;script:alert(1) -> java\\nscript:alert(1) -> javascript:...
+   CR and other C0 controls have no HTML5 named reference (only numeric, handled
+   separately). This closed set is therefore sufficient; matched case-insensitively
+   since over-decoding can only reveal a scheme, never create a false positive."
+  {"colon" ":" "tab" "\t" "newline" "\n"})
+
+(defn- decode-html-entities
+  "Decodes the HTML character references an attacker could use to obfuscate a URL
+   scheme, so the scheme is unmasked before extraction: numeric (&#NN;), hex
+   (&#xHH;), and the scheme-relevant NAMED references (&colon; &Tab; &NewLine;;
+   see `scheme-relevant-named-entities`). Decoding can only *reveal* a scheme
+   (e.g. \"javascript&colon;...\" -> \"javascript:...\"); it never turns a
+   legitimate http(s) URL into a dangerous one, so it adds no false positives.
+   Downstream HTML output-encoding remains the primary XSS control."
+  [s]
+  (letfn [(num-ref [m digits radix]
+            (or (some-> (try (Integer/parseInt digits radix)
+                             (catch NumberFormatException _ nil))
+                        code-point->str)
+                ;; unparseable / oversized code point: leave the text untouched
+                m))]
+    (-> s
+        (str/replace #"(?i)&(colon|tab|newline);"
+                     (fn [[_ nm]] (scheme-relevant-named-entities (str/lower-case nm))))
+        (str/replace #"(?i)&#x([0-9a-f]+);?" (fn [[m d]] (num-ref m d 16)))
+        (str/replace #"&#([0-9]+);?"         (fn [[m d]] (num-ref m d 10))))))
+
+(defn- unsafe-url-scheme
+  "When `v` is a string carrying a URL scheme not in `safe-url-schemes`, returns
+   that (lower-cased) scheme; otherwise nil. HTML entities are decoded and ASCII
+   control/whitespace characters stripped before scheme extraction, because
+   browsers ignore such characters when resolving a URL (so \"java\\tscript:...\",
+   \"&#106;avascript:...\" and \"javascript&colon;...\" all resolve to
+   \"javascript:...\")."
+  [v]
+  (when (string? v)
+    (let [normalized (-> v
+                         decode-html-entities
+                         (str/replace #"[\x00-\x20\x7f]" ""))]
+      (when-let [scheme (some-> (re-find url-scheme-re normalized)
+                                second
+                                str/lower-case)]
+        (when-not (contains? safe-url-schemes scheme)
+          scheme)))))
+
+(defn- collect-unsafe-url-fields
+  "Recursively walks `x` (maps/vectors/sets) and returns a seq of
+   {:field <key> :scheme <scheme>} for every URL-typed field whose value carries
+   a disallowed scheme. Only string values under `url-typed-keys` are checked;
+   non-string values (e.g. a nested Identity map under :identity) are recursed
+   into rather than flagged."
+  [x]
+  (cond
+    (map? x)
+    (mapcat (fn [[k v]]
+              (concat
+               (when (contains? url-typed-keys k)
+                 (for [s (cond
+                           (string? v)     [(unsafe-url-scheme v)]
+                           (coll? v)       (map unsafe-url-scheme (filter string? v))
+                           :else           nil)
+                       :when s]
+                   {:field k :scheme s}))
+               (collect-unsafe-url-fields v)))
+            x)
+    (coll? x) (mapcat collect-unsafe-url-fields x)
+    :else nil))
+
+(defn url-scheme-check
+  "Rejects entities carrying a disallowed URL scheme (javascript:, data:,
+   vbscript:, ...) in any URL-typed field. Defense-in-depth against stored XSS
+   via threat-intel URL fields (XFV-135). Passes through an entity that a prior
+   check already turned into an error map."
+  [entity]
+  (if (:error entity)
+    entity
+    (let [offending (seq (distinct (collect-unsafe-url-fields entity)))]
+      (if offending
+        {:msg (format "Disallowed URL scheme in field(s): %s. Allowed schemes: %s"
+                      (str/join ", " (map (fn [{:keys [field scheme]}]
+                                            (format "%s (%s:)" (name field) scheme))
+                                          offending))
+                      (str/join ", " (sort safe-url-schemes)))
+         :error "Entity validation Error"
+         :type :unsafe-url-scheme-error
+         :entity entity}
+        entity))))
+
 (s/defn ^:private validate-entities :- FlowMap
   [{{{:keys [get-in-config]} :ConfigService} :services
     identity-obj :identity
@@ -184,7 +308,8 @@
                         (check-spec spec)
                         (tlp-check get-in-config)
                         (authorized-groups-check prev-entity ident-map)
-                        (authorized-users-check prev-entity ident-map))))
+                        (authorized-users-check prev-entity ident-map)
+                        url-scheme-check)))
                 entities))))
 
 (s/defn ^:private create-ids-from-transient :- FlowMap

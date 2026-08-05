@@ -127,6 +127,22 @@
       :entity entity
       :class (.getName (class e))})))
 
+(defn unsafe-url-scheme-error-handler
+  "Handle disallowed-URL-scheme validation error (XFV-135).
+
+  A rejected dangerous URL scheme (javascript:, data:, vbscript:, ...) in a
+  URL-typed field is a security-relevant anomaly (an attempted stored-XSS
+  payload), so it is logged at :warn to help operators correlate a poisoning
+  campaign, and returns 400 rather than surfacing as a 500 server error."
+  [^Exception e _data _request]
+  (logging/log! :warn e (ex-message-and-data e))
+  (bad-request
+   (let [entity (:entity (ex-data e))]
+     {:type "Invalid URL Scheme Error"
+      :message (.getMessage e)
+      :entity entity
+      :class (.getName (class e))})))
+
 (defn realize-entity-error-handler
   "Handle error at the realize step"
   [^Exception e _data _request]

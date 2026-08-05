@@ -4,6 +4,8 @@
             [ctia.auth.threatgrid :refer [map->Identity]]
             [ctia.entity.sighting.schemas :as ss]
             [ctia.flows.crud :as flows.crud]
+            [ctia.http.exceptions :as exceptions]
+            [ctia.http.handler :as handler]
             [ctia.lib.collection :as coll]
             [ctia.store :refer [query-string-search]]
             [ctia.test-helpers.core :as helpers]
@@ -586,3 +588,152 @@
             "introducing a new foreign authorized_user must be rejected")
         (is (= :invalid-authorized-users-error (:type validated)))
         (is (re-find #"victim" (:msg validated)))))))
+
+(deftest url-scheme-check-test
+  ;; XFV-135: defense-in-depth against stored XSS via threat-intel URL fields.
+  ;; Ingest must reject dangerous URL schemes (javascript:, data:, vbscript:)
+  ;; in URL-typed fields while allowing http/https and scheme-less values.
+  (let [url-scheme-check #'flows.crud/url-scheme-check]
+    (testing "rejects a javascript: scheme in a URL-typed field"
+      (let [result (url-scheme-check {:source_uri "javascript:alert(document.cookie)"})]
+        (is (= :unsafe-url-scheme-error (:type result)))
+        (is (re-find #"javascript" (:msg result)))
+        (is (re-find #"source_uri" (:msg result)))))
+
+    (testing "rejects a data: scheme in an external_reference url (nested)"
+      (let [result (url-scheme-check
+                    {:title "x"
+                     :external_references [{:source_name "s"
+                                            :url "data:text/html;base64,PHNjcmlwdD4="}]})]
+        (is (= :unsafe-url-scheme-error (:type result)))
+        (is (re-find #"data" (:msg result)))))
+
+    (testing "rejects a vbscript: scheme"
+      (is (= :unsafe-url-scheme-error
+             (:type (url-scheme-check {:reason_uri "vbscript:msgbox(1)"})))))
+
+    (testing "rejects control-char-obfuscated javascript scheme (browser strips \\t/\\n)"
+      (is (= :unsafe-url-scheme-error
+             (:type (url-scheme-check {:url "java\tscript:alert(1)"}))))
+      (is (= :unsafe-url-scheme-error
+             (:type (url-scheme-check {:url "  JAVASCRIPT:alert(1)"})))))
+
+    (testing "rejects HTML-numeric-entity-obfuscated javascript scheme"
+      ;; &#106; = 'j'; a consumer that HTML-decodes before rendering would
+      ;; otherwise resolve this to javascript:.
+      (is (= :unsafe-url-scheme-error
+             (:type (url-scheme-check {:url "&#106;avascript:alert(1)"}))))
+      ;; hex entity for the colon: java&#x3a;script -> javascript:
+      (is (= :unsafe-url-scheme-error
+             (:type (url-scheme-check {:url "javascript&#x3a;alert(1)"}))))
+      ;; entity-encoded control char between letters: java&#9;script:
+      (is (= :unsafe-url-scheme-error
+             (:type (url-scheme-check {:url "java&#9;script:alert(1)"}))))
+      ;; numeric ref without the optional trailing semicolon: &#106 -> 'j'
+      (is (= :unsafe-url-scheme-error
+             (:type (url-scheme-check {:url "&#106avascript:alert(1)"})))))
+
+    (testing "rejects HTML-named-entity-obfuscated javascript scheme"
+      ;; &colon; = ':' — the scheme delimiter is the one structural char that
+      ;; HAS a named reference; browsers HTML-decode it at the href sink.
+      (is (= :unsafe-url-scheme-error
+             (:type (url-scheme-check {:url "javascript&colon;alert(document.domain)"}))))
+      ;; &NewLine; / &Tab; decode to chars the URL parser strips, splitting the
+      ;; scheme letters: java&NewLine;script: -> javascript:
+      (is (= :unsafe-url-scheme-error
+             (:type (url-scheme-check {:url "java&NewLine;script:alert(1)"}))))
+      (is (= :unsafe-url-scheme-error
+             (:type (url-scheme-check {:url "java&Tab;script:alert(1)"}))))
+      ;; case-insensitive matching of the named references
+      (is (= :unsafe-url-scheme-error
+             (:type (url-scheme-check {:url "javascript&COLON;alert(1)"})))))
+
+    (testing "HTML entities appearing after a safe scheme do not cause a false positive"
+      ;; &#39; (apostrophe) and &amp; in a query string must not be flagged.
+      (let [entity {:url "https://example.com/q?a=1&#39;&b=2"}]
+        (is (= entity (url-scheme-check entity)))))
+
+    (testing "an oversized numeric entity does not crash and is not treated as a scheme"
+      (let [entity {:url "&#999999999999999999999;oke"}]
+        (is (= entity (url-scheme-check entity)))))
+
+    (testing "flags a dangerous scheme in a collection-valued URL field"
+      (let [result (url-scheme-check {:url ["https://ok.example" "javascript:alert(1)"]})]
+        (is (= :unsafe-url-scheme-error (:type result))))
+      ;; set-valued field exercises the same coll? branch
+      (let [result (url-scheme-check {:url #{"https://ok.example" "javascript:alert(1)"}})]
+        (is (= :unsafe-url-scheme-error (:type result)))))
+
+    (testing "recurses into a nested :identity map value"
+      (let [result (url-scheme-check {:sighting {:identity "javascript:alert(1)"}})]
+        (is (= :unsafe-url-scheme-error (:type result)))))
+
+    (testing "allows a valid https: URL (control)"
+      (let [entity {:source_uri "https://example.com/intel?q=1"
+                    :external_references [{:source_name "s"
+                                           :url "http://example.org/a"}]}]
+        (is (= entity (url-scheme-check entity))
+            "well-formed http/https URLs must pass unchanged")))
+
+    (testing "allows scheme-less / relative values"
+      (let [entity {:source_uri "/relative/path" :url "example.com/a"}]
+        (is (= entity (url-scheme-check entity)))))
+
+    (testing "does not flag dangerous-looking free-text in non-URL fields"
+      ;; threat-intel descriptions and observable IOC values legitimately mention
+      ;; malicious URLs; only URL-typed fields are gated.
+      (let [entity {:description "Attacker used javascript:alert(1) payload"
+                    :observable {:type "url" :value "javascript:alert(1)"}}]
+        (is (= entity (url-scheme-check entity)))))
+
+    (testing "passes through an entity already marked as an error by a prior check"
+      (let [err {:error "Entity validation Error" :type :invalid-tlp-error
+                 :entity {:source_uri "javascript:alert(1)"}}]
+        (is (= err (url-scheme-check err))
+            "must not clobber a prior validation error")))))
+
+(deftest url-scheme-validation-through-validate-entities-test
+  ;; End-to-end through the shared write chokepoint used by API writes and
+  ;; bundle/bulk import (create-flow/update-flow/patch-flow all call this).
+  (let [get-in-config (helpers/build-get-in-config-fn)
+        services {:ConfigService {:get-in-config get-in-config}}
+        validate-entities #'flows.crud/validate-entities
+        ident (map->Identity {:login "user" :groups ["org-a"] :capabilities #{}})]
+    (testing "validate-entities rejects a javascript: source_uri on create"
+      (let [fm {:services services
+                :identity ident
+                :entities [{:tlp "green" :groups ["org-a"]
+                            :source_uri "javascript:alert(1)"}]
+                :spec nil}
+            validated (first (:entities (validate-entities fm)))]
+        (is (= :unsafe-url-scheme-error (:type validated)))))
+
+    (testing "validate-entities allows an https: source_uri on create"
+      (let [fm {:services services
+                :identity ident
+                :entities [{:tlp "green" :groups ["org-a"]
+                            :source_uri "https://example.com/intel"}]
+                :spec nil}
+            validated (first (:entities (validate-entities fm)))]
+        (is (nil? (:error validated)))))
+
+    (testing "validate-entities rejects a javascript: source_uri on update too"
+      (let [fm {:services services
+                :identity ident
+                :entities [{:tlp "green" :groups ["org-a"]
+                            :source_uri "javascript:alert(1)"}]
+                :get-prev-entity (fn [_] {:tlp "green" :groups ["org-a"]
+                                          :source_uri "https://old.example"})
+                :spec nil}
+            validated (first (:entities (validate-entities fm)))]
+        (is (= :unsafe-url-scheme-error (:type validated))
+            "a newly-introduced dangerous scheme must be rejected on update")))))
+
+(deftest unsafe-url-scheme-error-is-registered-test
+  ;; XFV-135 regression: url-scheme-check emits :type :unsafe-url-scheme-error.
+  ;; If that key is missing from the compojure-api exception handlers, the throw
+  ;; falls through to default-error-handler and surfaces as HTTP 500 instead of
+  ;; 400 (a rejected payload then looks like a server bug). Pin the registration.
+  (testing "the :unsafe-url-scheme-error type maps to the bad-request handler"
+    (is (= exceptions/unsafe-url-scheme-error-handler
+           (:unsafe-url-scheme-error handler/exception-handlers)))))
