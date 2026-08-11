@@ -48,9 +48,10 @@ env:
   # Kept here as env vars rather than repo secrets so the exact role is visible in
   # the workflow.
   #   INT  (372070498991): nonprod build + push to int/test-docker-build/ctia
-  #   PROD (862934447303): release image push to prod-docker-build/ctia
+  #   PROD (862934447303): release image push to prod-docker-build/ctia + SignalFx
+  #         token read in emit-metric (replaces the shared prod github_actions role)
   CI_INT_ROLE_ARN: arn:aws:iam::372070498991:role/IAM_INT_us-east-1_ctia
-  CI_PROD_ECR_PUSH_ROLE_ARN: arn:aws:iam::862934447303:role/IAM_PROD_us-east-1_ctia
+  CI_PROD_ROLE_ARN: arn:aws:iam::862934447303:role/IAM_PROD_us-east-1_ctia
 
 jobs:
   setup:
@@ -464,8 +465,8 @@ jobs:
         if: startsWith(github.ref_name, 'v')
         uses: aws-actions/configure-aws-credentials@v5
         with:
-          # IAM_PROD_us-east-1_ctia: ECR push only, release-branch scoped
-          role-to-assume: ${{ env.CI_PROD_ECR_PUSH_ROLE_ARN }}
+          # IAM_PROD_us-east-1_ctia: ECR push + SignalFx token read, release-branch scoped
+          role-to-assume: ${{ env.CI_PROD_ROLE_ARN }}
           aws-region: us-east-1
 
       - name: Push prod images
@@ -504,8 +505,8 @@ jobs:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v5
         with:
-          # prod role: reads the SignalFx ingest token only (XDR-57773)
-          role-to-assume: ${{ secrets.SRE_AWS_PROD_GITHUB_ACTIONS_ROLE_ARN }}
+          # Per-service prod role reads the token, replacing the shared role. XDR-59666.
+          role-to-assume: ${{ env.CI_PROD_ROLE_ARN }}
           aws-region: us-east-1
 
       - name: Emit github.pipeline.run to Splunk o11y
