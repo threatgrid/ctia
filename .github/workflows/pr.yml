@@ -41,6 +41,16 @@ env:
   DEFAULT_JAVA_VERSION: 21
   ARTIFACTORY_URL: artifactory.devhub-cloud.cisco.com
   ALPINE_VERSION: "3.22"
+  # Per-service GitHub Actions OIDC role ARNs for CI image pushes (XDR-59654 /
+  # XDR-59666). These are plaintext identifiers, not credentials: assuming a role
+  # is IAM-gated by each role's OIDC trust policy (pinned to threatgrid/ctia and,
+  # for the prod role, to release branches), so there is nothing secret to hide.
+  # Kept here as env vars rather than repo secrets so the exact role is visible in
+  # the workflow.
+  #   INT  (372070498991): nonprod build + push to int/test-docker-build/ctia
+  #   PROD (862934447303): release image push to prod-docker-build/ctia
+  CI_INT_ROLE_ARN: arn:aws:iam::372070498991:role/IAM_INT_us-east-1_ctia
+  CI_PROD_ECR_PUSH_ROLE_ARN: arn:aws:iam::862934447303:role/IAM_PROD_us-east-1_ctia
 
 jobs:
   setup:
@@ -422,8 +432,8 @@ jobs:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v5
         with:
-          # INT_us-east-1_github_actions
-          role-to-assume: ${{ secrets.SRE_AWS_INT_GITHUB_ACTIONS_ROLE_ARN }}
+          # IAM_INT_us-east-1_ctia (nonprod build + int/test-docker-build push)
+          role-to-assume: ${{ env.CI_INT_ROLE_ARN }}
           aws-region: us-east-1
 
       - name: Fetch AWS Secrets
@@ -435,13 +445,32 @@ jobs:
           parse-json-secrets: true
 
       - id: deploy
-        run: ./build/deploy-actions.sh
+        name: Build and push nonprod image
+        run: ./build/deploy-actions.sh build
         env:
           # offline to catch issues where `lein warm-ci-deps` doesn't download all
           # dependencies we need to deploy.
           LEIN_OFFLINE: true
           DOCKER_USER: ${{ env.int_us_east_1_xdr_sre_user_jfrog_jfrog_username }}
           DOCKER_PASS: ${{ env.int_us_east_1_xdr_sre_user_jfrog_jfrog_token }}
+
+      # Prod image push runs under a native prod-account role (IAM_PROD_us-east-1_ctia,
+      # account 862934447303) instead of pushing cross-account from the INT role.
+      # This second configure-aws-credentials step re-assumes via OIDC (the prod
+      # role trusts the GitHub OIDC provider, not the INT role, so role-chaining is
+      # not possible), overwriting the INT credentials now that the nonprod push is
+      # done. Release-branch pushes only (vX.Y / vX.Y.Z). XDR-59666.
+      - name: Configure AWS credentials (prod ECR push)
+        if: startsWith(github.ref_name, 'v')
+        uses: aws-actions/configure-aws-credentials@v5
+        with:
+          # IAM_PROD_us-east-1_ctia: ECR push only, release-branch scoped
+          role-to-assume: ${{ env.CI_PROD_ECR_PUSH_ROLE_ARN }}
+          aws-region: us-east-1
+
+      - name: Push prod images
+        if: startsWith(github.ref_name, 'v')
+        run: ./build/deploy-actions.sh push-prod
 
   # Pushes a github.pipeline.run datapoint to Splunk Observability so release
   # failures alert via the detector in tenzin
