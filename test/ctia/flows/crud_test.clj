@@ -654,7 +654,17 @@
         (is (= entity (url-scheme-check entity)))))
 
     (testing "an oversized numeric entity does not crash and is not treated as a scheme"
+      ;; 21 digits overflow Integer/parseInt -> NumberFormatException catch.
       (let [entity {:url "&#999999999999999999999;oke"}]
+        (is (= entity (url-scheme-check entity)))))
+
+    (testing "a numeric entity past the max Unicode code point does not crash"
+      ;; &#1114112; = 0x110000, one past Character/MAX_CODE_POINT. It parses as an
+      ;; int (no NumberFormatException) but fails the (<= 0 n 0x10FFFF) range guard
+      ;; in code-point->str, which must return nil rather than let Character/toChars
+      ;; throw IllegalArgumentException (an uncaught throw would surface as HTTP 500).
+      ;; Pins that range guard, which the 21-digit case above never exercises.
+      (let [entity {:url "&#1114112;oke"}]
         (is (= entity (url-scheme-check entity)))))
 
     (testing "flags a dangerous scheme in a collection-valued URL field"
@@ -678,6 +688,14 @@
     (testing "allows scheme-less / relative values"
       (let [entity {:source_uri "/relative/path" :url "example.com/a"}]
         (is (= entity (url-scheme-check entity)))))
+
+    (testing "an ambiguous bare authority (host:port) parses as a scheme and is rejected"
+      ;; Pins the documented behavior in `safe-url-schemes`: "example.com:8080/path"
+      ;; matches url-scheme-re with scheme "example.com" (not allowlisted). Such a
+      ;; value is not a valid absolute URI and does not occur in CTIM URI fields;
+      ;; a future change to url-scheme-re must not silently alter this contract.
+      (is (= :unsafe-url-scheme-error
+             (:type (url-scheme-check {:url "example.com:8080/path"})))))
 
     (testing "allows transient: references in URL-typed fields (resolved during ingest)"
       ;; Bulk/bundle submissions cross-link entities with transient IDs before
