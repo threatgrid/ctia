@@ -1,5 +1,6 @@
 (ns ctia.entity.judgement.es-store
   (:require [ductile.document :refer [search-docs]]
+            [clojure.string :as str]
             [clj-momo.lib.time :as time]
             [ctia.entity.judgement.schemas
              :refer
@@ -47,18 +48,31 @@
                       ident
                       params))
 
+(defn- verdict-owner-filter
+  "XFV-20: a verdict is a tenant-local trust decision. Restrict verdict
+   candidates to judgements owned by the caller's own org (`groups`), so a
+   judgement that merely lists the caller's org in `authorized_groups` /
+   `authorized_users` cannot dominate (poison) the caller's verdict. This
+   neutralizes any pre-existing cross-tenant grant for verdict calculation
+   regardless of the `authorized_*` clauses in `find-restriction-query-part`."
+  [{:keys [groups]}]
+  {:terms {"groups" (map str/lower-case groups)}})
+
 (defn list-active-by-observable
   [state observable ident get-in-config params]
   (let [now-str (time/format-date-time (time/timestamp))
         date-range (select-keys params [:from :to])
         time-opts {:now-str now-str :date-range date-range}
         composed-query
-        (assoc-in
-         (find-restriction-query-part ident get-in-config)
-         [:bool :must]
-         (active-judgements-by-observable-query
-          observable
-          time-opts))
+        (-> (find-restriction-query-part ident get-in-config)
+            (assoc-in
+             [:bool :must]
+             (active-judgements-by-observable-query
+              observable
+              time-opts))
+            (assoc-in
+             [:bool :filter]
+             (verdict-owner-filter ident)))
         es-params
         {:sort
          {:priority

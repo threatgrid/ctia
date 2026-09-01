@@ -5,6 +5,7 @@
             [clj-time.coerce :as time-coerce]
             [clj-time.format :as time-format]
             [clojure.test :refer [deftest is join-fixtures testing use-fixtures]]
+            [ctia.store :as store]
             [ctia.test-helpers
              [es :as es-helpers]
              [auth :refer [all-capabilities]]
@@ -888,3 +889,137 @@
                (is (= (get-in green-judgement-post [:parsed-body :id])
                       (:judgement_id verdict-1)))
                (is (= 404 status-2))))))))))
+
+(deftest test-observable-verdict-cross-tenant-isolation
+  ;; XFV-20: a verdict is a tenant-local trust decision. A judgement owned by
+  ;; another org that merely lists the caller's org in authorized_groups must
+  ;; not appear in (poison) the caller's verdict. Such a record can only be
+  ;; pre-existing -- the write path now rejects a foreign authorized_groups --
+  ;; so we inject the grant directly in the store to simulate pre-fix data.
+  (test-for-each-store-with-app
+   (fn [app]
+     (helpers/set-capabilities! app "attacker" ["attacker-org"] "user" all-capabilities)
+     (helpers/set-capabilities! app "victim" ["victim-org"] "user" all-capabilities)
+     (whoami-helpers/set-whoami-response app "attacker-key" "attacker" "attacker-org" "user")
+     (whoami-helpers/set-whoami-response app "victim-key" "victim" "victim-org" "user")
+     (let [judgement-store (helpers/get-store app :judgement)
+           params {:refresh "wait_for"}
+           attacker-ident {:login "attacker" :groups ["attacker-org"]}]
+       (testing "attacker creates a Clean judgement it legitimately owns"
+         (let [{status :status
+                attacker-judgement :parsed-body}
+               (POST app
+                     "ctia/judgement"
+                     :body {:observable {:value "203.0.113.213" :type "ip"}
+                            :source "poc-cross-tenant"
+                            :disposition 1
+                            :priority 99
+                            :severity "High"
+                            :confidence "High"
+                            :valid_time {:start_time "2016-02-12T00:00:00.000-00:00"}}
+                     :headers {"Authorization" "attacker-key"})
+               attacker-short-id (some-> (:id attacker-judgement) id/long-id->id :short-id)]
+           (is (= 201 status))
+
+           (testing "simulate pre-fix poisoning: grant the victim org via authorized_groups directly in the store"
+             (let [stored (store/read-record judgement-store attacker-short-id attacker-ident params)]
+               (store/update-record judgement-store
+                                    attacker-short-id
+                                    (assoc stored :authorized_groups ["victim-org"])
+                                    attacker-ident
+                                    params))
+             ;; sanity: confirm the foreign grant actually persisted, otherwise
+             ;; the isolation assertions below could pass vacuously.
+             (is (contains? (set (:authorized_groups
+                                  (store/read-record judgement-store attacker-short-id attacker-ident params)))
+                            "victim-org")
+                 "the injected foreign authorized_groups grant must be stored"))
+
+           (testing "the victim's verdict must NOT be poisoned by the foreign-owned judgement"
+             (let [{status :status}
+                   (GET app
+                        "ctia/ip/203.0.113.213/verdict"
+                        :headers {"Authorization" "victim-key"})]
+               (is (= 404 status)
+                   "a judgement owned by another org must not contribute to the caller's verdict")))
+
+           (testing "the owning (attacker) org still gets its own judgement's verdict"
+             (let [{status :status
+                    verdict :parsed-body}
+                   (GET app
+                        "ctia/ip/203.0.113.213/verdict"
+                        :headers {"Authorization" "attacker-key"})]
+               (is (= 200 status))
+               (is (= (:id attacker-judgement) (:judgement_id verdict)))))))
+
+       (testing "the victim's own judgement still produces a verdict (guard is not over-broad)"
+         (let [{status :status
+                victim-judgement :parsed-body}
+               (POST app
+                     "ctia/judgement"
+                     :body {:observable {:value "198.51.100.7" :type "ip"}
+                            :source "victim-local"
+                            :disposition 2
+                            :priority 99
+                            :severity "High"
+                            :confidence "High"
+                            :valid_time {:start_time "2016-02-12T00:00:00.000-00:00"}}
+                     :headers {"Authorization" "victim-key"})]
+           (is (= 201 status))
+           (let [{status :status
+                  verdict :parsed-body}
+                 (GET app
+                      "ctia/ip/198.51.100.7/verdict"
+                      :headers {"Authorization" "victim-key"})]
+             (is (= 200 status))
+             (is (= (:id victim-judgement) (:judgement_id verdict))))))
+
+       (testing "a higher-priority foreign judgement cannot outrank the victim's own verdict"
+         ;; The attacker owns a high-priority (99) Clean judgement and grants it
+         ;; to the victim via authorized_groups; the victim has its own
+         ;; lower-priority (50) Malicious judgement on the same observable.
+         ;; Pre-fix the attacker's priority-99 Clean would dominate the verdict;
+         ;; post-fix the foreign judgement is excluded entirely, so the victim's
+         ;; own Malicious verdict stands.
+         (let [{astatus :status
+                poison :parsed-body}
+               (POST app
+                     "ctia/judgement"
+                     :body {:observable {:value "203.0.113.220" :type "ip"}
+                            :source "poc-priority"
+                            :disposition 1
+                            :priority 99
+                            :severity "High"
+                            :confidence "High"
+                            :valid_time {:start_time "2016-02-12T00:00:00.000-00:00"}}
+                     :headers {"Authorization" "attacker-key"})
+               poison-short-id (some-> (:id poison) id/long-id->id :short-id)
+               {vstatus :status
+                victim-judgement :parsed-body}
+               (POST app
+                     "ctia/judgement"
+                     :body {:observable {:value "203.0.113.220" :type "ip"}
+                            :source "victim-local"
+                            :disposition 2
+                            :priority 50
+                            :severity "High"
+                            :confidence "High"
+                            :valid_time {:start_time "2016-02-12T00:00:00.000-00:00"}}
+                     :headers {"Authorization" "victim-key"})]
+           (is (= 201 astatus))
+           (is (= 201 vstatus))
+           (let [stored (store/read-record judgement-store poison-short-id attacker-ident params)]
+             (store/update-record judgement-store
+                                  poison-short-id
+                                  (assoc stored :authorized_groups ["victim-org"])
+                                  attacker-ident
+                                  params))
+           (let [{status :status
+                  verdict :parsed-body}
+                 (GET app
+                      "ctia/ip/203.0.113.220/verdict"
+                      :headers {"Authorization" "victim-key"})]
+             (is (= 200 status))
+             (is (= (:id victim-judgement) (:judgement_id verdict))
+                 "the victim's own Malicious judgement must win, not the attacker's higher-priority Clean")
+             (is (= 2 (:disposition verdict))))))))))
