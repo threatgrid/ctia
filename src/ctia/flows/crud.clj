@@ -170,14 +170,21 @@
 (def ^:private safe-url-schemes
   "Allowlist of URL schemes permitted in URL-typed fields on ingest. Any other
    scheme (javascript:, data:, vbscript:, ...) is rejected as defense-in-depth
-   against stored XSS via threat-intel URL fields (XFV-135). Scheme-less /
-   relative values carry no scheme and are always allowed."
+   against stored XSS via threat-intel URL fields (XFV-135). A value is
+   scheme-checked only when its prefix matches the RFC 3986 scheme grammar
+   (see `url-scheme-re`); truly scheme-less / relative values (e.g. \"/a/b\",
+   \"example.com/a\") carry no scheme and pass. An ambiguous bare authority such
+   as \"example.com:8080/path\" parses as scheme \"example.com\" and is rejected,
+   which is acceptable: such values are not valid absolute URIs and do not occur
+   in CTIM URI-typed fields."
   #{"http" "https"})
 
 (def ^:private url-typed-keys
   "Entity keys whose values are CTIM URI-typed and are rendered as clickable
-   hyperlinks by downstream UIs. Kept in sync with the URI-typed entries in
-   ctim.schemas.common (:url, :source_uri, :origin_uri, :reason_uri, :identity).
+   hyperlinks by downstream UIs. Kept in sync with the URI-typed entries across
+   CTIM schemas (:url, :source_uri, :origin_uri, :identity in ctim.schemas.common;
+   :reason_uri in ctim.schemas.judgement). This is a cross-schema hand-curation,
+   not the key set of a single schema.
    These are the render-sinks reachable by an attacker via CTIA writes; free-text
    fields and observable IOC values (which legitimately carry malicious URLs) are
    intentionally NOT in this set. Matching is by key name at any nesting depth,
@@ -269,11 +276,11 @@
     (mapcat (fn [[k v]]
               (concat
                (when (contains? url-typed-keys k)
-                 (for [s (cond
-                           (string? v)     [(unsafe-url-scheme v)]
-                           (coll? v)       (map unsafe-url-scheme (filter string? v))
-                           :else           nil)
-                       :when s]
+                 ;; unsafe-url-scheme nil-guards non-strings, so a uniform scan
+                 ;; over one-or-many values suffices (keep drops the nils). A map
+                 ;; value yields only non-string entries here and is flagged by
+                 ;; the recursion below, never by this branch.
+                 (for [s (keep unsafe-url-scheme (if (coll? v) v [v]))]
                    {:field k :scheme s}))
                (collect-unsafe-url-fields v)))
             x)
