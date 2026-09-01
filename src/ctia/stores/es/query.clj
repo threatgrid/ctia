@@ -16,8 +16,15 @@
 (defn- write-restriction-should-clauses
   "The should-clauses shared by the read and write access-control filters.
    These mirror the disjuncts of `ctia.domain.access-control/allow-write?`:
-   document owner, `authorized_users`, `authorized_groups`, same-group records
-   at TLP amber or below, and same-group owner records at TLP red."
+   document owner (TLP-independent), `authorized_users`, `authorized_groups`,
+   and same-group records at TLP amber or below.
+
+   The trailing TLP-red owner clause is redundant: `allow-write?` has no red
+   branch, and its owner rule matches at any TLP, so the owner should-clause
+   above already covers same-group owner records at TLP red. It is kept
+   unchanged only so `find-restriction-query-part` (read) emits the exact same
+   query body as before these clauses were factored out — the read filter must
+   stay byte-identical (see XFV-120)."
   [login groups]
   [;; Document Owner
    {:bool {:filter [{:term {"owner" login}}
@@ -31,7 +38,10 @@
    {:bool {:must [{:terms {"tlp" (conj ac/public-tlps "amber")}}
                   {:terms {"groups" groups}}]}}
 
-   ;; CTIM records with TLP red that is owned by user FOO
+   ;; CTIM records with TLP red owned by user FOO. Redundant with the owner
+   ;; clause above (which is TLP-independent, matching owner+group at any TLP);
+   ;; retained only to keep the read filter byte-identical to its pre-refactor
+   ;; form. See the fn docstring and XFV-120.
    {:bool {:must [{:term {"tlp" "red"}}
                   {:term {"owner" login}}
                   {:terms {"groups" groups}}]}}])

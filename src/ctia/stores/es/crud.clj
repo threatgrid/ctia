@@ -606,9 +606,12 @@ It returns the documents with full hits meta data including the real index in wh
                        {:range range})
          ;; Delete operations must use the write access-control filter so a
          ;; caller can only remove documents it is allowed to write (XFV-120).
+         ;; Fail closed: only the explicit :read/:write values are accepted.
+         ;; An unknown value (typo, wrong type, nil) throws rather than
+         ;; silently widening a delete to the broader read filter (XFV-120).
          restriction-query-part (case access-control
                                   :write (es.query/find-write-restriction-query-part ident)
-                                  (es.query/find-restriction-query-part ident get-in-config))
+                                  :read  (es.query/find-restriction-query-part ident get-in-config))
          filter-terms (-> (ensure-document-id-in-map filter-map)
                           q/prepare-terms)]
      {:bool
@@ -651,7 +654,7 @@ It returns the documents with full hits meta data including the real index in wh
                                       ident
                                       get-in-config)))))))
 
-(s/defn handle-delete-search
+(s/defn handle-delete-search :- (s/pred nat-int?)
   "ES delete by query handler.
 
    Builds the `_delete_by_query` body with the write access-control filter so a

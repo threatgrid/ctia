@@ -96,6 +96,18 @@
         player-3-entity-count-1 (search-count "player-3-token")
 
 
+        ;; dry-run delete-search: REALLY_DELETE_ALL_THESE_ENTITIES is not set,
+        ;; so nothing is deleted and the returned preview count must be the
+        ;; write-filtered (deletable) count, not the broader read count. This
+        ;; guards the route's dry-run path end-to-end: reverting it to a
+        ;; read-filtered count would make this diverge under `everyone`
+        ;; (XFV-120).
+        {player-2-entity-dry-run-delete :body}
+        (DELETE app
+                (format "ctia/%s/search" entity)
+                :query-params {:query list-query}
+                :headers {"Authorization" "player-2-token"})
+
         ;; delete-searches
        {player-2-entity-delete-search :body}
        (DELETE app
@@ -128,6 +140,12 @@
              player-3-entity-count-1)))
 
     (testing "delete-search should only match and delete entities the caller may write"
+      ;; dry run: preview count is the write-filtered (deletable) count, and
+      ;; nothing was deleted (the destructive delete below still removes the
+      ;; full deletable set, which would be impossible had the dry run deleted).
+      (is (= (str (count player-2-expected-delete-list))
+             player-2-entity-dry-run-delete))
+
       (is (= (str (count player-2-expected-delete-list))
               player-2-entity-delete-search))
 
