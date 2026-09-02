@@ -568,8 +568,28 @@
 
          (is (= 201 (:status green-judgement-post)))
 
-         (testing "a green Judgement implies a verdict readable by everyone"
-           (let [{status-1 :status
+         ;; XFV-20: a verdict is a tenant-local trust decision. Pre-fix, a green
+         ;; Judgement produced a verdict "readable by everyone" -- with the
+         ;; default `max-record-visibility=everyone`, the read filter's public-TLP
+         ;; clause let any green/white record contribute to any org's verdict.
+         ;; That path was itself a cross-tenant poisoning vector: an attacker
+         ;; could set `tlp=green` (visible to all by default) on a high-priority
+         ;; Clean judgement and dominate every tenant's verdict -- the same abuse
+         ;; XFV-20 closes for `authorized_groups`, and NOT closable by only
+         ;; dropping the authorized_* clauses. `list-active-by-observable` now
+         ;; ANDs a mandatory owner-org filter, so a verdict is computed only from
+         ;; the caller's own org's judgements, regardless of TLP. This matches the
+         ;; behavior `test-observable-verdict-access-control-max-record-visibility`
+         ;; already asserts under `max-record-visibility=group` -- the verdict path
+         ;; is now tenant-local unconditionally.
+         ;;
+         ;; Cross-tenant sharing on reads/lists is UNCHANGED: baruser/foobaruser
+         ;; can still read the green judgement directly (asserted below); only the
+         ;; aggregated verdict is scoped to the querying org.
+         (testing "a green Judgement contributes to the owning org's verdict only"
+           (let [green-judgement-id (get-in green-judgement-post [:parsed-body :id])
+                 green-judgement-short-id (some-> green-judgement-id id/long-id->id :short-id)
+                 {status-1 :status
                   verdict-1 :parsed-body}
                  (GET app
                       (str "ctia/"
@@ -577,8 +597,7 @@
                            "/" (:value green-observable)
                            "/verdict")
                       :headers {"Authorization" "foouser"})
-                 {status-2 :status
-                  verdict-2 :parsed-body}
+                 {status-2 :status}
                  (GET app
                       (str "ctia/"
                            (:type green-observable)
@@ -586,8 +605,7 @@
                            (:value green-observable)
                            "/verdict")
                       :headers {"Authorization" "baruser"})
-                 {status-3 :status
-                  verdict-3 :parsed-body}
+                 {status-3 :status}
                  (GET app
                       (str "ctia/"
                            (:type green-observable)
@@ -596,17 +614,27 @@
                            "/verdict")
                       :headers {"Authorization" "foobaruser"})]
 
+             ;; the owning org (foogroup) still gets its own judgement's verdict
              (is (= 200 status-1))
-             (is (= (get-in green-judgement-post [:parsed-body :id])
+             (is (= green-judgement-id
                     (:judgement_id verdict-1)))
 
-             (is (= 200 status-2))
-             (is (= (get-in green-judgement-post [:parsed-body :id])
-                    (:judgement_id verdict-2)))
+             ;; other orgs no longer inherit the green judgement in THEIR verdict
+             (is (= 404 status-2)
+                 "a green judgement owned by another org must not contribute to the caller's verdict")
+             (is (= 404 status-3)
+                 "a green judgement owned by another org must not contribute to the caller's verdict")
 
-             (is (= 200 status-3))
-             (is (= (get-in green-judgement-post [:parsed-body :id])
-                    (:judgement_id verdict-3)))))
+             ;; but cross-tenant READ of the green judgement is unchanged: the
+             ;; guard is scoped to the verdict path, not to reads/lists.
+             (is (= 200 (:status (GET app
+                                      (str "ctia/judgement/" green-judgement-short-id)
+                                      :headers {"Authorization" "baruser"})))
+                 "the green judgement itself remains readable cross-tenant (only the verdict is scoped)")
+             (is (= 200 (:status (GET app
+                                      (str "ctia/judgement/" green-judgement-short-id)
+                                      :headers {"Authorization" "foobaruser"})))
+                 "the green judgement itself remains readable cross-tenant (only the verdict is scoped)")))
 
          (is (= 201 (:status amber-judgement-post)))
 
