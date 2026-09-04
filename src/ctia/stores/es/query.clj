@@ -64,7 +64,11 @@
   "Access-control filter for write/delete operations. Mirrors the disjuncts of
    `ctia.domain.access-control/allow-write?`. Unlike `find-restriction-query-part`
    it never adds the `max-record-visibility=everyone` public-TLP clause, so a
-   caller cannot match another group's TLP white/green records. See XFV-120."
+   caller cannot reach another group's TLP white/green records by blanket
+   visibility alone. It can still match a foreign group's record when that
+   record explicitly grants the caller via `authorized_users`/`authorized_groups`
+   — that is intended, since `allow-write?` grants write on the same basis.
+   See XFV-120."
   [ident]
   (let [{:keys [login groups]} (normalize-ident ident)]
     {:bool

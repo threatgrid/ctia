@@ -37,7 +37,7 @@
      filter (a caller may only delete what it can write, not merely read;
      XFV-120), and return a nat-int count.
 
-     Deletion only happens when `params` carries `:really-delete? true`.
+     Deletion only happens when `params` carries a truthy `:really-delete?`.
      Without it the call is a dry run: nothing is deleted and the count of
      matching (deletable) documents is returned as a preview. Callers relying
      on an always-deletes contract must pass `:really-delete? true` explicitly,

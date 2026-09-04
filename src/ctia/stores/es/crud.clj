@@ -593,22 +593,25 @@ It returns the documents with full hits meta data including the real index in wh
   ([es-conn-state :- ESConnState
     search-query :- SearchQuery
     ident]
-   (make-search-query es-conn-state search-query ident {}))
+   (make-search-query es-conn-state search-query ident {:access-control :read}))
   ([es-conn-state :- ESConnState
     search-query :- SearchQuery
     ident
-    {:keys [extra-filters access-control]
-     :or {access-control :read}}]
+    {:keys [extra-filters access-control]}]
    (let [{:keys [services]} es-conn-state
          {{:keys [get-in-config]} :ConfigService} services
          {:keys [filter-map range full-text]} search-query
          range-query (when range
                        {:range range})
-         ;; Delete operations must use the write access-control filter so a
-         ;; caller can only remove documents it is allowed to write (XFV-120).
-         ;; Fail closed: only the explicit :read/:write values are accepted.
-         ;; An unknown value (typo, wrong type, nil) throws rather than
-         ;; silently widening a delete to the broader read filter (XFV-120).
+         ;; Access-control filter selection is mandatory and fail-closed: the
+         ;; caller MUST pass an explicit :read or :write. There is no default --
+         ;; an omitted key leaves `access-control` nil and the `case` below
+         ;; throws, so a future destructive path that forgets :access-control
+         ;; fails loudly instead of silently widening a delete to the broader
+         ;; read filter. An unknown value (typo, wrong type) throws for the same
+         ;; reason. Delete operations pass :write so a caller can only remove
+         ;; documents it is allowed to write; read/count/aggregate pass :read
+         ;; (XFV-120).
          restriction-query-part (case access-control
                                   :write (es.query/find-write-restriction-query-part ident)
                                   :read  (es.query/find-restriction-query-part ident get-in-config))
@@ -766,7 +769,8 @@ It returns the documents with full hits meta data including the real index in wh
    {:keys [agg-type] :as agg-query} :- AggQuery
    ident]
   (let [agg-query (assoc agg-query :agg-key :metric)
-        query (make-search-query es-conn-state search-query ident {:extra-filters (aggregation-filters agg-query)})
+        query (make-search-query es-conn-state search-query ident {:access-control :read
+                                                                    :extra-filters (aggregation-filters agg-query)})
         agg (make-aggregation agg-query)
         es-res (ductile.doc/query conn
                                   index

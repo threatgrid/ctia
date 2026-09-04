@@ -1,6 +1,7 @@
 (ns ctia.stores.es.query-test
   (:require
    [clojure.test :refer [deftest is testing]]
+   [ctia.domain.access-control :as ac]
    [ctia.entity.entities :as entities]
    [ctia.test-helpers.core :as helpers]
    [ctia.test-helpers.es :as es-helpers]
@@ -107,6 +108,41 @@
                                assoc :type "text" :fields {:ignored-and-sad {:type "text"}}))]
           (is (= expected-result
                  (select-keys (digest-searchable-map es-mappings) [:incident :vulnerability]))))))))
+
+(deftest find-write-restriction-query-part-test
+  ;; Pin the exact clause set emitted by the write/delete access-control
+  ;; filter. `write-restriction-should-clauses` is the single source shared by
+  ;; both the read and the write filters (XFV-120), and nothing else in the
+  ;; code distinguishes which disjuncts belong to which policy. This test forces
+  ;; any edit to that shared vector to be acknowledged on the write side: a
+  ;; read-side widening (e.g. a new public-visibility disjunct) that landed
+  ;; silently on the delete path would break this assertion.
+  (let [ident {:login "Foo" :groups ["Bar"]}
+        expected {:bool
+                  {:minimum_should_match 1
+                   :should [;; document owner (TLP-independent)
+                            {:bool {:filter [{:term {"owner" "foo"}}
+                                             {:terms {"groups" ["bar"]}}]}}
+                            ;; explicit grants
+                            {:term {"authorized_users" "foo"}}
+                            {:terms {"authorized_groups" ["bar"]}}
+                            ;; same-group records at TLP amber or below
+                            {:bool {:must [{:terms {"tlp" (conj ac/public-tlps "amber")}}
+                                           {:terms {"groups" ["bar"]}}]}}
+                            ;; same-group owner records at TLP red (redundant
+                            ;; with the owner clause; kept for read parity)
+                            {:bool {:must [{:term {"tlp" "red"}}
+                                           {:term {"owner" "foo"}}
+                                           {:terms {"groups" ["bar"]}}]}}]}}]
+    (testing "emitted write filter matches the pinned clause set, login/groups lower-cased"
+      (is (= expected (sut/find-write-restriction-query-part ident))))
+    (testing "the write filter never grants blanket public-TLP visibility"
+      ;; The security property of XFV-120: unlike the read filter under
+      ;; max-record-visibility=everyone, the write filter must not contain a
+      ;; disjunct that matches any white/green document regardless of owner.
+      (let [should (get-in (sut/find-write-restriction-query-part ident)
+                           [:bool :should])]
+        (is (not (some #{{:terms {"tlp" ac/public-tlps}}} should)))))))
 
 (deftest rename-search-fields-map-test
   (doseq [es-version [7]]
