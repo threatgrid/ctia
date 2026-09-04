@@ -593,12 +593,24 @@
   ;; XFV-135: defense-in-depth against stored XSS via threat-intel URL fields.
   ;; Ingest must reject dangerous URL schemes (javascript:, data:, vbscript:)
   ;; in URL-typed fields while allowing http/https and scheme-less values.
-  (let [url-scheme-check #'flows.crud/url-scheme-check]
+  ;; These cases exercise the create path (no prev-entity), so bind a 1-arg
+  ;; wrapper passing prev-entity = nil (everything is checked); the prev-entity
+  ;; diff behavior is covered by url-scheme-check-prev-entity-diff-test below.
+  (let [url-scheme-check #(#'flows.crud/url-scheme-check % nil)]
     (testing "rejects a javascript: scheme in a URL-typed field"
       (let [result (url-scheme-check {:source_uri "javascript:alert(document.cookie)"})]
         (is (= :unsafe-url-scheme-error (:type result)))
         (is (re-find #"javascript" (:msg result)))
         (is (re-find #"source_uri" (:msg result)))))
+
+    (testing "rejects a dangerous scheme under every URL-typed key"
+      ;; Loops all five keys in `url-typed-keys` so dropping any one (e.g.
+      ;; :origin_uri) from the set breaks a test rather than silently going
+      ;; unchecked.
+      (doseq [k [:url :source_uri :origin_uri :reason_uri :identity]]
+        (is (= :unsafe-url-scheme-error
+               (:type (url-scheme-check {k "javascript:alert(1)"})))
+            (str "must flag a javascript: scheme under " k))))
 
     (testing "rejects a data: scheme in an external_reference url (nested)"
       (let [result (url-scheme-check
@@ -674,7 +686,7 @@
       (let [result (url-scheme-check {:url #{"https://ok.example" "javascript:alert(1)"}})]
         (is (= :unsafe-url-scheme-error (:type result)))))
 
-    (testing "recurses into a nested :identity map value"
+    (testing "recurses into a nested map and flags a string :identity value"
       (let [result (url-scheme-check {:sighting {:identity "javascript:alert(1)"}})]
         (is (= :unsafe-url-scheme-error (:type result)))))
 
@@ -685,14 +697,55 @@
         (is (= entity (url-scheme-check entity))
             "well-formed http/https URLs must pass unchanged")))
 
+    (testing "allows an uppercase safe scheme (schemes are matched case-insensitively)"
+      ;; Pins the `str/lower-case` before the allowlist lookup in unsafe-url-scheme:
+      ;; dropping it would leave scheme "HTTPS"/"Http", miss the http/https set, and
+      ;; 400 every uppercase-scheme URL. The reject-side already has an uppercase
+      ;; case (" JAVASCRIPT:"); this is the safe-side twin.
+      (let [entity {:url "HTTPS://example.com/a" :source_uri "Http://example.org"}]
+        (is (= entity (url-scheme-check entity))
+            "uppercase http/https schemes must pass unchanged")))
+
+    (testing "reveals a double-encoded scheme delimiter (decode iterates to a fixed point)"
+      ;; "javascript&#38;colon;alert(1)": &#38; is '&', so the decimal pass yields
+      ;; "javascript&colon;alert(1)". A single decode pass (named-then-numeric)
+      ;; would stop there and MISS the scheme; iterating re-runs the named pass and
+      ;; unmasks "javascript:". Pins the fixed-point loop in decode-html-entities.
+      (is (= :unsafe-url-scheme-error
+             (:type (url-scheme-check {:url "javascript&#38;colon;alert(1)"})))))
+
+    (testing "strips non-ASCII ignorable characters emitted by the decoder"
+      ;; The strip class must cover more than ASCII controls: the decoder emits
+      ;; Unicode format/separator chars a browser ignores when resolving a URL.
+      ;; Each of these decodes to an ignorable that splits/prefixes the scheme.
+      (doseq [v ["java&#8203;script:alert(1)"    ; U+200B ZERO WIDTH SPACE (Cf)
+                 "&#65279;javascript:alert(1)"   ; U+FEFF BOM (Cf)
+                 "&#160;javascript:alert(1)"     ; U+00A0 NO-BREAK SPACE (Zs)
+                 "java&#173;script:alert(1)"]]   ; U+00AD SOFT HYPHEN (Cf)
+        (is (= :unsafe-url-scheme-error
+               (:type (url-scheme-check {:url v})))
+            (str "must unmask ignorable-split scheme in: " v))))
+
+    (testing "named-entity decode is locale-independent (no NPE under a tr locale)"
+      ;; str/lower-case uses the JVM default locale; under Turkish/Azeri "NEWLINE"
+      ;; lowercases to "newlıne" (dotless i), which would miss the map and, before
+      ;; the fix, NPE str/replace out to a 500. The decoder uses Locale/ROOT and an
+      ;; `or` fallback, so the scheme is still unmasked here.
+      (let [default (java.util.Locale/getDefault)]
+        (try
+          (java.util.Locale/setDefault (java.util.Locale/forLanguageTag "tr"))
+          (is (= :unsafe-url-scheme-error
+                 (:type (url-scheme-check {:url "java&NEWLINE;script:alert(1)"}))))
+          (finally (java.util.Locale/setDefault default)))))
+
     (testing "allows scheme-less / relative values"
       (let [entity {:source_uri "/relative/path" :url "example.com/a"}]
         (is (= entity (url-scheme-check entity)))))
 
     (testing "an ambiguous bare authority (host:port) parses as a scheme and is rejected"
       ;; Pins the documented behavior in `safe-url-schemes`: "example.com:8080/path"
-      ;; matches url-scheme-re with scheme "example.com" (not allowlisted). Such a
-      ;; value is not a valid absolute URI and does not occur in CTIM URI fields;
+      ;; matches url-scheme-re with scheme "example.com" (not allowlisted). CTIM
+      ;; URI fields carry absolute http(s) URLs, not bare host:port authorities;
       ;; a future change to url-scheme-re must not silently alter this contract.
       (is (= :unsafe-url-scheme-error
              (:type (url-scheme-check {:url "example.com:8080/path"})))))
@@ -720,6 +773,37 @@
         (is (= err (url-scheme-check err))
             "must not clobber a prior validation error")))))
 
+(deftest url-scheme-check-prev-entity-diff-test
+  ;; XFV-135 / CR1: on update/patch the gate flags only values the caller
+  ;; *introduces* relative to prev-entity (mirroring authorized-groups-check),
+  ;; so patch-entities' deep-merge of a pre-gate stored URI does not 400 an
+  ;; unrelated update. Uses the 2-arg url-scheme-check directly.
+  (let [url-scheme-check #'flows.crud/url-scheme-check]
+    (testing "a newly-introduced dangerous scheme is rejected on update"
+      (let [prev   {:source_uri "https://old.example"}
+            entity {:source_uri "javascript:alert(1)"}]
+        (is (= :unsafe-url-scheme-error
+               (:type (url-scheme-check entity prev))))))
+
+    (testing "a pre-existing dangerous value the caller did not change is NOT re-rejected"
+      ;; models POST /incident/:id/status: patch-entities deep-merged the stored
+      ;; source_uri back into the entity; it is byte-identical to prev-entity.
+      (let [prev   {:source_uri "javascript:legacy(1)" :status "New"}
+            entity {:source_uri "javascript:legacy(1)" :status "Closed"}]
+        (is (= entity (url-scheme-check entity prev))
+            "a value identical to the stored one must pass through unchanged")))
+
+    (testing "changing a dangerous value to a different dangerous payload IS rejected"
+      ;; diffing on the exact value (not just the scheme) catches a swapped payload.
+      (let [prev   {:source_uri "javascript:legacy(1)"}
+            entity {:source_uri "javascript:brand_new(1)"}]
+        (is (= :unsafe-url-scheme-error
+               (:type (url-scheme-check entity prev))))))
+
+    (testing "a nil prev-entity (create) checks every value"
+      (is (= :unsafe-url-scheme-error
+             (:type (url-scheme-check {:source_uri "javascript:alert(1)"} nil)))))))
+
 (deftest url-scheme-validation-through-validate-entities-test
   ;; End-to-end through the shared write chokepoint used by API writes and
   ;; bundle/bulk import (create-flow/update-flow/patch-flow all call this).
@@ -745,17 +829,40 @@
             validated (first (:entities (validate-entities fm)))]
         (is (nil? (:error validated)))))
 
-    (testing "validate-entities rejects a javascript: source_uri on update too"
-      (let [fm {:services services
+    (testing "validate-entities rejects a NEWLY-INTRODUCED javascript: source_uri on update"
+      ;; The entity carries an :id, so validate-entities actually invokes
+      ;; get-prev-entity (it only does so when (:id entity) is present); assert
+      ;; the stub fired so this genuinely exercises the update/diff path, not a
+      ;; byte-identical duplicate of the create case.
+      (let [called (atom false)
+            fm {:services services
                 :identity ident
-                :entities [{:tlp "green" :groups ["org-a"]
+                :entities [{:id "x" :tlp "green" :groups ["org-a"]
                             :source_uri "javascript:alert(1)"}]
-                :get-prev-entity (fn [_] {:tlp "green" :groups ["org-a"]
-                                          :source_uri "https://old.example"})
+                :get-prev-entity (fn [_]
+                                   (reset! called true)
+                                   {:tlp "green" :groups ["org-a"]
+                                    :source_uri "https://old.example"})
                 :spec nil}
             validated (first (:entities (validate-entities fm)))]
+        (is (true? @called) "get-prev-entity must be consulted on update")
         (is (= :unsafe-url-scheme-error (:type validated))
-            "a newly-introduced dangerous scheme must be rejected on update")))))
+            "a newly-introduced dangerous scheme must be rejected on update")))
+
+    (testing "validate-entities does NOT re-reject a pre-existing dangerous source_uri on update"
+      ;; CR1: models POST /incident/:id/status — patch-entities deep-merges the
+      ;; stored (pre-gate) :source_uri back into the entity; the caller never
+      ;; touched it, so it must not 400 an unrelated field change.
+      (let [fm {:services services
+                :identity ident
+                :entities [{:id "x" :tlp "green" :groups ["org-a"]
+                            :source_uri "javascript:legacy(1)"}]
+                :get-prev-entity (fn [_] {:tlp "green" :groups ["org-a"]
+                                          :source_uri "javascript:legacy(1)"})
+                :spec nil}
+            validated (first (:entities (validate-entities fm)))]
+        (is (nil? (:error validated))
+            "a pre-existing value the caller did not introduce must pass")))))
 
 (deftest unsafe-url-scheme-error-is-registered-test
   ;; XFV-135 regression: url-scheme-check emits :type :unsafe-url-scheme-error.
