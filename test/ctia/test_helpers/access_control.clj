@@ -55,14 +55,25 @@
           (:groups entity-2))))
 
 (defn search-access-control-test
-  "test search access control"
+  "test search access control.
+
+   `player-2-expected-delete-list` is the subset of records that player-2 is
+   allowed to *delete* via delete-search (the write access-control filter). It
+   defaults to `player-2-expected-entity-list` (what player-2 can *read*). The
+   two diverge under `max-record-visibility=everyone`, where a foreign group's
+   TLP white/green records are readable but not deletable (XFV-120)."
   [{:keys [app
            entity
            list-query
            player-1-expected-entity-list
            player-2-expected-entity-list
-           player-3-expected-entity-list]}]
-  (let [;; searches
+           player-3-expected-entity-list
+           player-2-expected-delete-list]
+    :or {player-2-expected-delete-list :unset}}]
+  (let [player-2-expected-delete-list (if (= :unset player-2-expected-delete-list)
+                                         player-2-expected-entity-list
+                                         player-2-expected-delete-list)
+        ;; searches
         search (fn [token]
                  (:parsed-body
                   (GET app
@@ -84,6 +95,18 @@
         player-2-entity-count-1 (search-count "player-2-token")
         player-3-entity-count-1 (search-count "player-3-token")
 
+
+        ;; dry-run delete-search: REALLY_DELETE_ALL_THESE_ENTITIES is not set,
+        ;; so nothing is deleted and the returned preview count must be the
+        ;; write-filtered (deletable) count, not the broader read count. This
+        ;; guards the route's dry-run path end-to-end: reverting it to a
+        ;; read-filtered count would make this diverge under `everyone`
+        ;; (XFV-120).
+        {player-2-entity-dry-run-delete :body}
+        (DELETE app
+                (format "ctia/%s/search" entity)
+                :query-params {:query list-query}
+                :headers {"Authorization" "player-2-token"})
 
         ;; delete-searches
        {player-2-entity-delete-search :body}
@@ -116,18 +139,28 @@
       (is (= (count player-3-expected-entity-list)
              player-3-entity-count-1)))
 
-    (testing "delete-search should only match and delete visible entities"
-      (is (= (str (count player-2-expected-entity-list))
+    (testing "delete-search should only match and delete entities the caller may write"
+      ;; dry run: preview count is the write-filtered (deletable) count, and
+      ;; nothing was deleted (the destructive delete below still removes the
+      ;; full deletable set, which would be impossible had the dry run deleted).
+      (is (= (str (count player-2-expected-delete-list))
+             player-2-entity-dry-run-delete))
+
+      (is (= (str (count player-2-expected-delete-list))
               player-2-entity-delete-search))
 
-      ;; check second count
-      (is (zero? player-2-entity-count-2))
+      ;; check second count: only the records player-2 could write are gone,
+      ;; the rest of each player's visible set remains readable.
+      (is (= (-> (set player-2-expected-entity-list)
+                 (set/difference (set player-2-expected-delete-list))
+                 count)
+             player-2-entity-count-2))
       (is (= (-> (set player-1-expected-entity-list)
-                 (set/difference player-2-expected-entity-list)
+                 (set/difference (set player-2-expected-delete-list))
                  count)
              player-1-entity-count-2))
       (is (= (-> (set player-3-expected-entity-list)
-                 (set/difference player-2-expected-entity-list)
+                 (set/difference (set player-2-expected-delete-list))
                  count)
              player-3-entity-count-2)))))
 
@@ -550,6 +583,12 @@
                                                 player-3-entity-search]
                 :player-3-expected-entity-list [player-1-entity-search
                                                 player-2-entity-search
+                                                player-3-entity-search]
+                ;; XFV-120: under max-record-visibility=everyone player-2
+                ;; (bargroup) can read every green record but may only delete
+                ;; its own group's records (its own + player-3's), never
+                ;; player-1's (foogroup) green record.
+                :player-2-expected-delete-list [player-2-entity-search
                                                 player-3-entity-search]}))))))
 
 (defn test-access-control-entity-tlp-amber

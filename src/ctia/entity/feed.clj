@@ -396,16 +396,16 @@
                  (if (empty? query)
                    (forbidden {:error "you must provide at least one of from, to, query or any field filter."})
                    (ok
-                    (if (:REALLY_DELETE_ALL_THESE_ENTITIES params)
-                      (-> (get-store :feed)
-                          (delete-search
-                           query
-                           identity-map
-                           {:wait_for_completion (boolean (:wait_for params))}))
-                      (-> (get-store :feed)
-                          (query-string-count
-                           query
-                           identity-map))))))))
+                    ;; Both the dry-run count and the destructive delete go
+                    ;; through delete-search so the reported count reflects the
+                    ;; write access-control filter that an actual delete would
+                    ;; apply (XFV-120), not the broader read visibility.
+                    (-> (get-store :feed)
+                        (delete-search
+                         query
+                         identity-map
+                         {:wait_for_completion (boolean (:wait_for params))
+                          :really-delete? (boolean (:REALLY_DELETE_ALL_THESE_ENTITIES params))})))))))
 
      (let [capabilities :read-feed]
        (GET "/:id" []

@@ -32,7 +32,16 @@
   (query-string-search [this args #_#_:- QueryStringSearchArgs])
   (query-string-count [this search-query ident])
   (aggregate [this search-query agg-query ident])
-  (delete-search [this search-query ident params]))
+  (delete-search [this search-query ident params]
+    "Delete documents matching `search-query` under the write access-control
+     filter (a caller may only delete what it can write, not merely read;
+     XFV-120), and return a nat-int count.
+
+     Deletion only happens when `params` carries a truthy `:really-delete?`.
+     Without it the call is a dry run: nothing is deleted and the count of
+     matching (deletable) documents is returned as a preview. Callers relying
+     on an always-deletes contract must pass `:really-delete? true` explicitly,
+     otherwise they get a plausible non-zero count with nothing removed."))
 
 (defprotocol IPaginateableStore
   "Protocol that can implement lazy iteration over some number of calls to impure
