@@ -174,17 +174,21 @@
    scheme-checked only when its prefix matches the RFC 3986 scheme grammar
    (see `url-scheme-re`); truly scheme-less / relative values (e.g. \"/a/b\",
    \"example.com/a\") carry no scheme and pass. An ambiguous bare authority such
-   as \"example.com:8080/path\" parses as scheme \"example.com\" and is rejected,
-   which is acceptable: such values are not valid absolute URIs and do not occur
-   in CTIM URI-typed fields."
+   as \"example.com:8080/path\" matches the RFC 3986 scheme grammar with scheme
+   \"example.com\" (java.net.URI/create accepts it as an absolute URI) and is
+   rejected as an unknown scheme, which is acceptable: CTIM URI-typed fields
+   carry absolute http(s) URLs, not bare host:port authorities."
   #{"http" "https"})
 
 (def ^:private url-typed-keys
-  "Entity keys whose values are CTIM URI-typed and are rendered as clickable
+  "Entity keys whose values may be CTIM URI-typed and are rendered as clickable
    hyperlinks by downstream UIs. Kept in sync with the URI-typed entries across
-   CTIM schemas (:url, :source_uri, :origin_uri, :identity in ctim.schemas.common;
-   :reason_uri in ctim.schemas.judgement). This is a cross-schema hand-curation,
-   not the key set of a single schema.
+   CTIM schemas (:url, :source_uri, :origin_uri, :reason_uri). `:identity` is
+   included defensively: it is URI-typed only in RelatedIdentity (:identity a
+   URI ref) and is a nested map elsewhere (actor.cljc, identity_assertion.cljc);
+   a non-string :identity value is recursed into, not flagged (see
+   `collect-unsafe-url-fields`). This is a cross-schema hand-curation, not the
+   key set of a single schema.
    These are the render-sinks reachable by an attacker via CTIA writes; free-text
    fields and observable IOC values (which legitimately carry malicious URLs) are
    intentionally NOT in this set. Matching is by key name at any nesting depth,
@@ -223,41 +227,70 @@
    see `scheme-relevant-named-entities`). Decoding can only *reveal* a scheme
    (e.g. \"javascript&colon;...\" -> \"javascript:...\"); it never turns a
    legitimate http(s) URL into a dangerous one, so it adds no false positives.
-   Downstream HTML output-encoding remains the primary XSS control."
+   Downstream HTML output-encoding remains the primary XSS control.
+
+   Decoding is iterated to a fixed point (bounded) so a reference that only
+   becomes visible after an *outer* reference is decoded is still unmasked:
+   \"javascript&#38;colon;alert(1)\" -> \"javascript&colon;alert(1)\" ->
+   \"javascript:alert(1)\". Every pass either shortens the string (a decoded
+   entity collapses to a single character) or leaves it byte-identical (an
+   unparseable / oversized numeric entity is left untouched, which is the loop's
+   exit condition), so it always converges; the budget only guards against an
+   unforeseen non-shrinking case."
   [s]
   (letfn [(num-ref [m digits radix]
             (or (some-> (try (Integer/parseInt digits radix)
                              (catch NumberFormatException _ nil))
                         code-point->str)
                 ;; unparseable / oversized code point: leave the text untouched
-                m))]
-    (-> s
-        (str/replace #"(?i)&(colon|tab|newline);"
-                     (fn [[_ nm]] (scheme-relevant-named-entities (str/lower-case nm))))
-        (str/replace #"(?i)&#x([0-9a-f]+);?" (fn [[m d]] (num-ref m d 16)))
-        (str/replace #"&#([0-9]+);?"         (fn [[m d]] (num-ref m d 10))))))
+                m))
+          (decode-once [s]
+            (-> s
+                (str/replace #"(?i)&(colon|tab|newline);"
+                             (fn [[m nm]]
+                               ;; Locale/ROOT: str/lower-case uses the JVM default
+                               ;; locale, under which tr/az lowercase "NEWLINE" to
+                               ;; "newlıne" (dotless i), missing the map; the `or`
+                               ;; also nil-guards so a miss leaves the text untouched
+                               ;; rather than NPE-ing str/replace out to a 500.
+                               (or (scheme-relevant-named-entities
+                                    (.toLowerCase ^String nm java.util.Locale/ROOT))
+                                   m)))
+                (str/replace #"(?i)&#x([0-9a-f]+);?" (fn [[m d]] (num-ref m d 16)))
+                (str/replace #"&#([0-9]+);?"         (fn [[m d]] (num-ref m d 10)))))]
+    (loop [prev s, budget 8]
+      (let [decoded (decode-once prev)]
+        (if (or (= decoded prev) (zero? budget))
+          decoded
+          (recur decoded (dec budget)))))))
 
 (defn- unsafe-url-scheme
   "When `v` is a string carrying a URL scheme not in `safe-url-schemes`, returns
-   that (lower-cased) scheme; otherwise nil. HTML entities are decoded and ASCII
-   control/whitespace characters stripped before scheme extraction, because
-   browsers ignore such characters when resolving a URL (so \"java\\tscript:...\",
-   \"&#106;avascript:...\" and \"javascript&colon;...\" all resolve to
-   \"javascript:...\").
+   that (lower-cased) scheme; otherwise nil. HTML entities are decoded and
+   control/whitespace/format characters stripped before scheme extraction,
+   because browsers ignore such characters when resolving a URL (so
+   \"java\\tscript:...\", \"&#106;avascript:...\" and \"javascript&colon;...\" all
+   resolve to \"javascript:...\"). The strip class covers ASCII C0 controls and
+   space (\\x00-\\x20, \\x7f) plus the non-ASCII ignorables the decoder can emit --
+   Unicode format chars (\\p{Cf}: ZWSP U+200B, BOM U+FEFF, SOFT HYPHEN U+00AD, ...)
+   and separators (\\p{Z}: NBSP U+00A0, ...) -- so \"java&#8203;script:\" and
+   \"&#65279;javascript:\" are unmasked, not just their ASCII twins.
 
-   Transient references (`transient:<uuid>`) are CTIA-internal placeholders that
-   callers put in URI-typed fields (e.g. :source_uri) to cross-link entities in
-   a bulk submission; the flow rewrites them to real http(s) IDs during ingest,
-   and `transient:` is not a browser-executable scheme, so they are exempt. This
-   check runs before transient IDs are resolved (see `validate-entities` ->
-   `create-ids-from-transient`), so without this exemption every bulk relationship
-   carrying a transient :source_uri would be wrongly rejected."
+   Transient references (`transient:...`) are CTIA-internal placeholders callers
+   put in URI-typed fields (e.g. :source_uri) to cross-link entities in a bulk
+   submission. They are exempt because `transient:` is not a browser-executable
+   scheme -- so even an unresolved `transient:<arbitrary>` is inert at the render
+   sink. (CTIA transient IDs are arbitrary client-chosen strings, e.g.
+   \"transient:0\", not necessarily UUIDs, and a plain URI field like :source_uri
+   is not a reference field the flow rewrites, so the exemption cannot rest on
+   rewriting.) This check also runs before transient IDs are resolved (see
+   `validate-entities` -> `create-ids-from-transient`)."
   [v]
   (when (and (string? v)
              (not (schemas/transient-id? v)))
     (let [normalized (-> v
                          decode-html-entities
-                         (str/replace #"[\x00-\x20\x7f]" ""))]
+                         (str/replace #"[\x00-\x20\x7f\p{Cf}\p{Z}]" ""))]
       (when-let [scheme (some-> (re-find url-scheme-re normalized)
                                 second
                                 str/lower-case)]
@@ -266,10 +299,12 @@
 
 (defn- collect-unsafe-url-fields
   "Recursively walks `x` (maps/vectors/sets) and returns a seq of
-   {:field <key> :scheme <scheme>} for every URL-typed field whose value carries
-   a disallowed scheme. Only string values under `url-typed-keys` are checked;
-   non-string values (e.g. a nested Identity map under :identity) are recursed
-   into rather than flagged."
+   {:field <key> :scheme <scheme> :value <string>} for every URL-typed field
+   whose value carries a disallowed scheme. Only string values under
+   `url-typed-keys` are checked; non-string values (e.g. a nested Identity map
+   under :identity) are recursed into rather than flagged. `:value` carries the
+   exact offending string so `url-scheme-check` can diff against prev-entity and
+   flag only newly-introduced values."
   [x]
   (cond
     (map? x)
@@ -277,11 +312,18 @@
               (concat
                (when (contains? url-typed-keys k)
                  ;; unsafe-url-scheme nil-guards non-strings, so a uniform scan
-                 ;; over one-or-many values suffices (keep drops the nils). A map
-                 ;; value yields only non-string entries here and is flagged by
-                 ;; the recursion below, never by this branch.
-                 (for [s (keep unsafe-url-scheme (if (coll? v) v [v]))]
-                   {:field k :scheme s}))
+                 ;; over one-or-many values suffices. Only STRING values under a
+                 ;; URL-typed key are flagged here; a map value (e.g. a nested
+                 ;; Identity under :identity) yields no string here and is
+                 ;; recursed into below -- a dangerous scheme nested under a
+                 ;; NON-URL-typed key (e.g. {:url {:inner "js:.."}}) is
+                 ;; intentionally not flagged, as CTIM URI fields are string-
+                 ;; typed; the recursion only re-flags string values that again
+                 ;; sit directly under a url-typed key.
+                 (for [item (if (coll? v) v [v])
+                       :let [scheme (unsafe-url-scheme item)]
+                       :when scheme]
+                   {:field k :scheme scheme :value item}))
                (collect-unsafe-url-fields v)))
             x)
     (coll? x) (mapcat collect-unsafe-url-fields x)
@@ -291,16 +333,35 @@
   "Rejects entities carrying a disallowed URL scheme (javascript:, data:,
    vbscript:, ...) in any URL-typed field. Defense-in-depth against stored XSS
    via threat-intel URL fields (XFV-135). Passes through an entity that a prior
-   check already turned into an error map."
-  [entity]
+   check already turned into an error map.
+
+   Like `authorized-groups-check`/`authorized-users-check`, this gates only the
+   values the caller is *introducing* relative to the stored `prev-entity` (see
+   `introduced-foreign`): a disallowed value byte-identical to one already stored
+   is not re-flagged. This matters on update/patch -- e.g. POST /incident/:id/status
+   sends only {:status ...}, but `patch-entities` deep-merges the whole prev-entity
+   (including its :source_uri) before this runs, so re-validating the full document
+   would 400 a status update that never mentioned the URI on a value predating the
+   gate. On create `prev-entity` is nil, so every value is checked. A dangerous
+   scheme thus can never be *newly* written; a pre-gate value persisting until a
+   data migration cleans it up is the accepted tradeoff (identical to the two
+   authorized_* checks)."
+  [entity prev-entity]
   (if (:error entity)
     entity
-    (let [offending (seq (distinct (collect-unsafe-url-fields entity)))]
-      (if offending
+    (let [introduced (set/difference
+                      (set (collect-unsafe-url-fields entity))
+                      (set (collect-unsafe-url-fields prev-entity)))
+          ;; dedupe/sort on field+scheme for a stable message (multiple distinct
+          ;; offending values in one field collapse to a single "field (scheme:)")
+          labels (->> introduced
+                      (map (fn [{:keys [field scheme]}]
+                             (format "%s (%s:)" (name field) scheme)))
+                      distinct
+                      sort)]
+      (if (seq labels)
         {:msg (format "Disallowed URL scheme in field(s): %s. Allowed schemes: %s"
-                      (str/join ", " (map (fn [{:keys [field scheme]}]
-                                            (format "%s (%s:)" (name field) scheme))
-                                          offending))
+                      (str/join ", " labels)
                       (str/join ", " (sort safe-url-schemes)))
          :error "Entity validation Error"
          :type :unsafe-url-scheme-error
@@ -315,9 +376,10 @@
   (let [ident-map (auth/ident->map identity-obj)]
     (assoc fm :entities
            (map (fn [entity]
-                  ;; On update/patch, validate only the authorized_* values the
-                  ;; caller introduces relative to the stored entity (see CR1);
-                  ;; on create there is no prev-entity so everything is checked.
+                  ;; On update/patch, validate only the values the caller
+                  ;; introduces relative to the stored entity (authorized_* and
+                  ;; URL scheme alike, see CR1); on create there is no prev-entity
+                  ;; so everything is checked.
                   (let [prev-entity (when (and get-prev-entity (:id entity))
                                       (get-prev-entity (:id entity)))]
                     (-> entity
@@ -325,7 +387,7 @@
                         (tlp-check get-in-config)
                         (authorized-groups-check prev-entity ident-map)
                         (authorized-users-check prev-entity ident-map)
-                        url-scheme-check)))
+                        (url-scheme-check prev-entity))))
                 entities))))
 
 (s/defn ^:private create-ids-from-transient :- FlowMap
