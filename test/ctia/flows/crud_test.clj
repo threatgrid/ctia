@@ -600,8 +600,15 @@
     (testing "rejects a javascript: scheme in a URL-typed field"
       (let [result (url-scheme-check {:source_uri "javascript:alert(document.cookie)"})]
         (is (= :unsafe-url-scheme-error (:type result)))
-        (is (re-find #"javascript" (:msg result)))
-        (is (re-find #"source_uri" (:msg result)))))
+        ;; The `:error` key is load-bearing: throw-validation-error selects error
+        ;; maps with (filter :error entities) (crud.clj) and remove-errors drops
+        ;; them, so deleting `:error "Entity validation Error"` from url-scheme-check
+        ;; would silently disable the gate (the payload would be stored) while
+        ;; `:type` still passes. Pin the whole contract, not just `:type`.
+        (is (= "Entity validation Error" (:error result)))
+        ;; LOW2: pin the exact message shape once, not just substrings.
+        (is (= "Disallowed URL scheme in field(s): source_uri (javascript:). Allowed schemes: http, https"
+               (:msg result)))))
 
     (testing "rejects a dangerous scheme under every URL-typed key"
       ;; Loops all five keys in `url-typed-keys` so dropping any one (e.g.
@@ -685,6 +692,15 @@
       ;; set-valued field exercises the same coll? branch
       (let [result (url-scheme-check {:url #{"https://ok.example" "javascript:alert(1)"}})]
         (is (= :unsafe-url-scheme-error (:type result)))))
+
+    (testing "collapses multiple distinct offending values in one field to one label"
+      ;; Pins the `distinct` in url-scheme-check: two different javascript: values
+      ;; under the same :url share field+scheme, so the message lists
+      ;; "url (javascript:)" exactly once. Dropping `distinct` would duplicate it.
+      (let [result (url-scheme-check {:url ["javascript:a(1)" "javascript:b(2)"]})
+            n (count (re-seq #"url \(javascript:\)" (:msg result)))]
+        (is (= :unsafe-url-scheme-error (:type result)))
+        (is (= 1 n) "the field+scheme label must appear exactly once")))
 
     (testing "recurses into a nested map and flags a string :identity value"
       (let [result (url-scheme-check {:sighting {:identity "javascript:alert(1)"}})]
@@ -818,7 +834,12 @@
                             :source_uri "javascript:alert(1)"}]
                 :spec nil}
             validated (first (:entities (validate-entities fm)))]
-        (is (= :unsafe-url-scheme-error (:type validated)))))
+        (is (= :unsafe-url-scheme-error (:type validated)))
+        ;; End-to-end contract: the entity must carry the `:error` key that
+        ;; throw-validation-error/remove-errors act on to actually reject the
+        ;; write. Deleting that key from url-scheme-check leaves `:type` intact but
+        ;; lets the javascript: payload through — this assertion fails the mutation.
+        (is (= "Entity validation Error" (:error validated)))))
 
     (testing "validate-entities allows an https: source_uri on create"
       (let [fm {:services services
