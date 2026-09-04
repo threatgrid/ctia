@@ -1,6 +1,7 @@
 (ns ctia.entity.judgement.es-store
   (:require [ductile.document :refer [search-docs]]
             [clojure.string :as str]
+            [clojure.tools.logging :as log]
             [clj-momo.lib.time :as time]
             [ctia.entity.judgement.schemas
              :refer
@@ -52,48 +53,65 @@
   "XFV-20: a verdict is a tenant-local trust decision. Restrict verdict
    candidates to judgements owned by the caller's own org (`groups`), so a
    judgement that merely lists the caller's org in `authorized_groups` /
-   `authorized_users` cannot dominate (poison) the caller's verdict. This
-   neutralizes any pre-existing cross-tenant grant for verdict calculation
-   regardless of the `authorized_*` clauses in `find-restriction-query-part`."
+   `authorized_users` cannot contribute to (poison) the caller's verdict.
+
+   This neutralizes any pre-existing cross-tenant *read* grant for verdict
+   calculation, regardless of the `authorized_*` clauses in
+   `find-restriction-query-part`. It does NOT touch the *write* path: a
+   foreign org listed in a victim-owned document's `authorized_groups` can
+   still update that document (`allow-write?` in
+   `ctia.domain.access-control`), and the stored owner `groups` are preserved
+   on update (`default-realize`), so tightening write-side authority is a
+   separate XFV-20 follow-up out of scope here."
   [{:keys [groups]}]
   {:terms {"groups" (map str/lower-case groups)}})
 
 (defn list-active-by-observable
   [state observable ident get-in-config params]
-  (let [now-str (time/format-date-time (time/timestamp))
-        date-range (select-keys params [:from :to])
-        time-opts {:now-str now-str :date-range date-range}
-        composed-query
-        (-> (find-restriction-query-part ident get-in-config)
-            (assoc-in
-             [:bool :must]
-             (active-judgements-by-observable-query
-              observable
-              time-opts))
-            (assoc-in
-             [:bool :filter]
-             (verdict-owner-filter ident)))
-        es-params
-        {:sort
-         {:priority
-          "desc"
+  ;; XFV-20 (CR1): a verdict is scoped to the caller's own org. A caller with
+  ;; no org (static-auth with `ctia.auth.static.group` unset, or a JWT missing
+  ;; `org/id`) has no tenant to scope to, so there is no verdict to compute.
+  ;; Bail out explicitly and observably rather than issuing a query whose empty
+  ;; `{:terms {"groups" []}}` filter would silently match nothing.
+  (if (empty? (:groups ident))
+    (do (log/warnf "verdict skipped: caller %s has no org; a verdict is tenant-local"
+                   (pr-str (:login ident)))
+        nil)
+    (let [now-str (time/format-date-time (time/timestamp))
+          date-range (select-keys params [:from :to])
+          time-opts {:now-str now-str :date-range date-range}
+          composed-query
+          (-> (find-restriction-query-part ident get-in-config)
+              (assoc-in
+               [:bool :must]
+               (active-judgements-by-observable-query
+                observable
+                time-opts))
+              (update-in
+               [:bool :filter]
+               (fnil conj [])
+               (verdict-owner-filter ident)))
+          es-params
+          {:sort
+           {:priority
+            "desc"
 
-          :disposition
-          "asc"
+            :disposition
+            "asc"
 
-          "valid_time.start_time"
-          {:order "asc"
-           :mode "min"
-           :nested_filter
-           {"range" {"valid_time.start_time" {"lte" now-str}}}}}}]
-    (some->>
-     (search-docs (:conn state)
-                  (:index state)
-                  composed-query
-                  nil
-                  es-params)
-     :data
-     coerce-stored-judgement-list)))
+            "valid_time.start_time"
+            {:order "asc"
+             :mode "min"
+             :nested_filter
+             {"range" {"valid_time.start_time" {"lte" now-str}}}}}}]
+      (some->>
+       (search-docs (:conn state)
+                    (:index state)
+                    composed-query
+                    nil
+                    es-params)
+       :data
+       coerce-stored-judgement-list))))
 
 (s/defn make-verdict :- Verdict
   [judgement :- StoredJudgement]

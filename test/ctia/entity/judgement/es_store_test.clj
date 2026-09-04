@@ -22,10 +22,38 @@
                                        ident
                                        (constantly nil)
                                        {}))
-      (is (= {:terms {"groups" ["victim-org"]}}
+      ;; Load-bearing assertion: the owner filter is present and lower-cased.
+      ;; It is conjoined into a vector so a future :filter from
+      ;; find-restriction-query-part is preserved rather than overwritten.
+      (is (= [{:terms {"groups" ["victim-org"]}}]
              (get-in @captured [:bool :filter]))
           "the verdict is scoped to the caller's own org, regardless of authorized_* grants")
+      ;; Non-regression assertions: the pre-existing observable/time and
+      ;; access-control clauses must still be composed into the query. These do
+      ;; not, on their own, detect a revert of the owner filter -- the
+      ;; assertion above does.
       (is (some? (get-in @captured [:bool :must]))
           "the observable/time query is still applied")
       (is (some? (get-in @captured [:bool :should]))
           "the base access-control restriction is still applied"))))
+
+(deftest list-active-by-observable-empty-groups-test
+  ;; XFV-20 (CR1): a caller with no org (static-auth with the group unset, or a
+  ;; JWT missing org/id) has no tenant to scope the verdict to. The guard must
+  ;; bail out explicitly -- return nil WITHOUT querying -- rather than issue a
+  ;; match-nothing {:terms {"groups" []}} filter.
+  (testing "an identity with no groups yields no verdict and issues no query"
+    (let [called? (atom false)
+          state {:conn :fake-conn :index "judgement-index"}]
+      (with-redefs [ductile/search-docs
+                    (fn [& _] (reset! called? true) {:data []})]
+        (doseq [ident [{:login "no-org" :groups []}
+                       {:login "no-org" :groups nil}]]
+          (is (nil? (sut/list-active-by-observable state
+                                                   {:type "ip" :value "203.0.113.213"}
+                                                   ident
+                                                   (constantly nil)
+                                                   {}))
+              "no org means no tenant-local verdict")))
+      (is (false? @called?)
+          "the store must not be queried when the caller has no org"))))

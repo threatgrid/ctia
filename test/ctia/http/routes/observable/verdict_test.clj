@@ -938,12 +938,18 @@
                 attacker-judgement :parsed-body}
                (POST app
                      "ctia/judgement"
+                     ;; tlp "red" so the ONLY clause that could let this
+                     ;; foreign-owned judgement into the victim's verdict is the
+                     ;; injected authorized_groups grant (a green/white default
+                     ;; would already be visible via the public-TLP clause under
+                     ;; max-record-visibility=everyone, masking a partial revert).
                      :body {:observable {:value "203.0.113.213" :type "ip"}
                             :source "poc-cross-tenant"
                             :disposition 1
                             :priority 99
                             :severity "High"
                             :confidence "High"
+                            :tlp "red"
                             :valid_time {:start_time "2016-02-12T00:00:00.000-00:00"}}
                      :headers {"Authorization" "attacker-key"})
                attacker-short-id (some-> (:id attacker-judgement) id/long-id->id :short-id)]
@@ -1013,12 +1019,16 @@
                 poison :parsed-body}
                (POST app
                      "ctia/judgement"
+                     ;; tlp "red" (see above): the injected authorized_groups
+                     ;; grant is the only path by which this priority-99 Clean
+                     ;; could reach the victim's verdict pre-fix.
                      :body {:observable {:value "203.0.113.220" :type "ip"}
                             :source "poc-priority"
                             :disposition 1
                             :priority 99
                             :severity "High"
                             :confidence "High"
+                            :tlp "red"
                             :valid_time {:start_time "2016-02-12T00:00:00.000-00:00"}}
                      :headers {"Authorization" "attacker-key"})
                poison-short-id (some-> (:id poison) id/long-id->id :short-id)

@@ -267,6 +267,17 @@ value does not fail, only newly-introduced foreign values are rejected.
 
 Please note that the `authorized_groups` property may work only if max record visibility is set to `everyone`
 
+##### Verdict carve-out (XFV-20)
+
+The access rules above (TLP visibility and `authorized_users` / `authorized_groups`)
+govern reading and listing individual documents. A Verdict is different: it is a
+tenant-local trust decision, so it is derived **only from Judgements owned by the
+querying org** (their stored `groups`). A Judgement that another org merely shares
+with the caller -- whether via `authorized_users` / `authorized_groups` or via a
+public (Green/White) TLP under `everyone` visibility -- is still readable but does
+**not** contribute to the caller's Verdict. This prevents cross-tenant "verdict
+poisoning" while leaving ordinary cross-tenant reads and lists unchanged.
+
 Examples:
 
 The following actor Entity is marked as `Red`, thus allowing only its owner RW access.
