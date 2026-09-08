@@ -594,9 +594,10 @@
   ;; Ingest must reject dangerous URL schemes (javascript:, data:, vbscript:)
   ;; in URL-typed fields while allowing http/https and scheme-less values.
   ;; These cases exercise the create path (no prev-entity), so bind a 1-arg
-  ;; wrapper passing prev-entity = nil (everything is checked); the prev-entity
-  ;; diff behavior is covered by url-scheme-check-prev-entity-diff-test below.
-  (let [url-scheme-check #(#'flows.crud/url-scheme-check % nil)]
+  ;; wrapper passing prev-entity = nil (everything is checked) and ident-map = nil;
+  ;; the prev-entity diff behavior is covered by url-scheme-check-prev-entity-diff-test
+  ;; and caller attribution by url-scheme-check-caller-attribution-test below.
+  (let [url-scheme-check #(#'flows.crud/url-scheme-check % nil nil)]
     (testing "rejects a javascript: scheme in a URL-typed field"
       (let [result (url-scheme-check {:source_uri "javascript:alert(document.cookie)"})]
         (is (= :unsafe-url-scheme-error (:type result)))
@@ -793,8 +794,9 @@
   ;; XFV-135 / CR1: on update/patch the gate flags only values the caller
   ;; *introduces* relative to prev-entity (mirroring authorized-groups-check),
   ;; so patch-entities' deep-merge of a pre-gate stored URI does not 400 an
-  ;; unrelated update. Uses the 2-arg url-scheme-check directly.
-  (let [url-scheme-check #'flows.crud/url-scheme-check]
+  ;; unrelated update. Wrapper passes ident-map = nil (attribution is covered by
+  ;; url-scheme-check-caller-attribution-test), so call sites stay (entity prev).
+  (let [url-scheme-check #(#'flows.crud/url-scheme-check %1 %2 nil)]
     (testing "a newly-introduced dangerous scheme is rejected on update"
       (let [prev   {:source_uri "https://old.example"}
             entity {:source_uri "javascript:alert(1)"}]
@@ -820,6 +822,24 @@
       (is (= :unsafe-url-scheme-error
              (:type (url-scheme-check {:source_uri "javascript:alert(1)"} nil)))))))
 
+(deftest url-scheme-check-caller-attribution-test
+  ;; XFV-135: a rejected dangerous-scheme write is a security-relevant anomaly
+  ;; logged at :warn "to help operators correlate a poisoning campaign". Carry the
+  ;; caller's :login/:groups into the error map (threaded via ident-map, as
+  ;; authorized-groups-check/authorized-users-check do) so an operator seeing a
+  ;; burst of rejected javascript: writes can attribute them to a caller. Pins that
+  ;; the two keys are present with the ident-map values.
+  (let [url-scheme-check #'flows.crud/url-scheme-check
+        ident-map {:login "attacker" :groups ["evil-corp"]}]
+    (testing "the error map carries the caller's login and groups"
+      (let [result (url-scheme-check {:source_uri "javascript:alert(1)"} nil ident-map)]
+        (is (= :unsafe-url-scheme-error (:type result)))
+        (is (= "attacker" (:login result)))
+        (is (= ["evil-corp"] (:groups result)))))
+    (testing "a passing entity is returned unchanged (no attribution keys added)"
+      (let [entity {:source_uri "https://example.com/intel"}]
+        (is (= entity (url-scheme-check entity nil ident-map)))))))
+
 (deftest url-scheme-validation-through-validate-entities-test
   ;; End-to-end through the shared write chokepoint used by API writes and
   ;; bundle/bulk import (create-flow/update-flow/patch-flow all call this).
@@ -839,7 +859,13 @@
         ;; throw-validation-error/remove-errors act on to actually reject the
         ;; write. Deleting that key from url-scheme-check leaves `:type` intact but
         ;; lets the javascript: payload through — this assertion fails the mutation.
-        (is (= "Entity validation Error" (:error validated)))))
+        (is (= "Entity validation Error" (:error validated)))
+        ;; Pin the ident-map wiring through the real chokepoint: validate-entities
+        ;; must thread ident-map into url-scheme-check so :login/:groups reach the
+        ;; :warn log for caller attribution. A regression that drops that arg would
+        ;; leave :type/:error green here but silently break audit attribution.
+        (is (= "user" (:login validated)))
+        (is (= ["org-a"] (:groups validated)))))
 
     (testing "validate-entities allows an https: source_uri on create"
       (let [fm {:services services
