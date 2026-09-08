@@ -186,13 +186,25 @@
    would 400 a status update that never mentioned the URI on a value predating the
    gate. On create `prev-entity` is nil, so every value is checked.
 
-   The diff is value-level, not occurrence-level (`set/difference` over
-   {:field :scheme :value}): no dangerous *value* absent from the stored entity can
-   be introduced, but re-writing another copy of a value already stored on the same
-   document is not blocked -- there is no NEW payload, so the render-sink exposure is
-   unchanged. A pre-gate value persisting until a data migration cleans it up is the
-   accepted tradeoff (identical to the two authorized_* checks)."
-  [entity prev-entity]
+   The diff is value-level, not occurrence- or path-level (`set/difference` over
+   {:field :scheme :value}): no dangerous scheme+value pair absent from the stored
+   entity can be introduced, but re-writing another copy of a pair already stored on
+   the document is not blocked -- including a copy that lands under the same-named
+   url-typed key at a different path (e.g. a top-level :url value also placed in an
+   external_references[].url, which shares the {:field :url ...} diff element). This
+   is an accepted tradeoff, not an oversight: the pair is already stored and therefore
+   already renders at a url-typed sink, so the attacker's payload already fires -- an
+   additional byte-identical sink of an already-renderable value grants no new
+   scheme/value capability, and cannot escalate between url-typed keys, which are all
+   equally render sinks by definition. A path-aware / multiset diff would add
+   complexity for no change to the invariant that matters: no dangerous value renders
+   that was not already renderable. A pre-gate value persisting until a data migration
+   cleans it up is the accepted tradeoff (identical to the two authorized_* checks).
+
+   `ident-map` (threaded from `validate-entities`, as the two authorized_* checks are)
+   is carried into the error map as `:login`/`:groups` so the :warn log lets operators
+   attribute a burst of rejected `javascript:` writes to a caller."
+  [entity prev-entity ident-map]
   (if (:error entity)
     entity
     (let [introduced (set/difference
@@ -211,7 +223,9 @@
                       (str/join ", " (sort url-safety/safe-url-schemes)))
          :error "Entity validation Error"
          :type :unsafe-url-scheme-error
-         :entity entity}
+         :entity entity
+         :login (:login ident-map)
+         :groups (:groups ident-map)}
         entity))))
 
 (s/defn ^:private validate-entities :- FlowMap
@@ -233,7 +247,7 @@
                         (tlp-check get-in-config)
                         (authorized-groups-check prev-entity ident-map)
                         (authorized-users-check prev-entity ident-map)
-                        (url-scheme-check prev-entity))))
+                        (url-scheme-check prev-entity ident-map))))
                 entities))))
 
 (s/defn ^:private create-ids-from-transient :- FlowMap

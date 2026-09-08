@@ -191,7 +191,17 @@
                  ;; intentionally not flagged, as CTIM URI fields are string-
                  ;; typed; the recursion only re-flags string values that again
                  ;; sit directly under a url-typed key.
-                 (for [item (if (coll? v) v [v])
+                 ;; `tree-seq` over the sequential/set nesting scans a value under a
+                 ;; url-typed key at ANY list depth: the earlier `(if (coll? v) v [v])`
+                 ;; unwrapped exactly one level, so `{:url [["javascript:.."]]}` slipped
+                 ;; through (the inner vector is a non-string, nil-guarded away, and the
+                 ;; recursion below then descends into a value no longer under a
+                 ;; url-typed key). Maps are deliberately NOT a branch here (only
+                 ;; `sequential?`/`set?`), so a nested Identity map under a url-typed key
+                 ;; is still handled only by the recursion, not flagged as a string here;
+                 ;; sets stay in scope (a set-valued url field is flagged as before).
+                 (for [item (tree-seq (some-fn sequential? set?) seq v)
+                       :when (string? item)
                        :let [scheme (unsafe-url-scheme item)]
                        :when scheme]
                    {:field k :scheme scheme :value item}))

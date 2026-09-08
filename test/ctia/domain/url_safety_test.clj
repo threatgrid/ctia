@@ -115,4 +115,27 @@
   (testing "does not flag dangerous-looking values in non-URL-typed fields"
     (is (empty? (sut/collect-unsafe-url-fields
                  {:description "uses javascript:alert(1)"
-                  :value "javascript:alert(1)"})))))
+                  :value "javascript:alert(1)"}))))
+  (testing "flags a value nested more than one list level under a URL-typed key"
+    ;; The prior `(if (coll? v) v [v])` unwrapped exactly one level, so a value
+    ;; nested deeper (a vector-of-vectors under :url) was seen as a non-string,
+    ;; nil-guarded away, then recursed into as a value no longer under a URL-typed
+    ;; key -- and silently passed. Not reachable via the API today (schema coercion
+    ;; rejects a nested vector in a URI-typed field), but the helper must still scan
+    ;; the value at any list depth. Pins the tree-seq flattening.
+    (is (= [{:field :url :scheme "javascript" :value "javascript:a(1)"}]
+           (sut/collect-unsafe-url-fields {:url [["javascript:a(1)"]]})))
+    ;; a set nested below the top level exercises the set? half of the branch
+    ;; predicate at depth (symmetry with the vector-of-vector case above).
+    (is (= [{:field :url :scheme "javascript" :value "javascript:a(1)"}]
+           (sut/collect-unsafe-url-fields {:url [#{"javascript:a(1)"}]}))))
+  (testing "still flags a single-level collection- and set-valued URL field"
+    (is (= [{:field :url :scheme "javascript" :value "javascript:a(1)"}]
+           (sut/collect-unsafe-url-fields {:url ["javascript:a(1)"]})))
+    (is (= [{:field :url :scheme "javascript" :value "javascript:a(1)"}]
+           (sut/collect-unsafe-url-fields {:url #{"javascript:a(1)"}}))))
+  (testing "a nested map under a URL-typed key is recursed, not flagged as a string"
+    ;; tree-seq treats only sequential?/set? as branches, so a map value under a
+    ;; URL-typed key yields no string here; a dangerous scheme under a NON-URL-typed
+    ;; key inside it stays unflagged (CTIM URI fields are string-typed).
+    (is (empty? (sut/collect-unsafe-url-fields {:url {:inner "javascript:a(1)"}})))))
