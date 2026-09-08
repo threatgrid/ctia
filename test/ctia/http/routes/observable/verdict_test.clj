@@ -839,84 +839,81 @@
                   verdict))))))))
 
 (deftest test-observable-verdict-access-control-max-record-visibility
-  (helpers/with-properties (into es-helpers/basic-auth-properties
-                                 ["ctia.access-control.max-record-visibility" "group"])
-  (fixture-ctia-with-app
-   (fn [app]
-       (helpers/set-capabilities! app "foouser" ["foogroup"] "user" all-capabilities)
-       (helpers/set-capabilities! app "baruser" ["bargroup"] "user" all-capabilities)
-       (helpers/set-capabilities! app "foobaruser" ["bargroup"] "user" all-capabilities)
+  ;; XFV-20: the verdict path is now unconditionally org-scoped (see
+  ;; `ctia.entity.judgement.es-store/verdict-owner-filter`), so a caller in
+  ;; another org gets a 404 verdict for foogroup's green judgement regardless of
+  ;; `max-record-visibility`. That means the verdict route ALONE can no longer
+  ;; detect a revert of the public-TLP clause in
+  ;; `ctia.stores.es.query/find-restriction-query-part` (the `everyone` branch).
+  ;; To keep this test discriminating, we run it under BOTH settings and
+  ;; separate the two concerns:
+  ;;   * the *document* read still follows `max-record-visibility`
+  ;;     (404 under `group`, 200 under `everyone`); this remains the regression
+  ;;     detector for the public-TLP read clause on the document path (also
+  ;;     covered by the entity-level access-control tests), and
+  ;;   * the *verdict* stays tenant-local (404 for a foreign org under BOTH
+  ;;     settings). If the owner filter were reverted, the verdict for baruser
+  ;;     would flip to 200 under `everyone` and this test would fail.
+  (letfn [(run-visibility-test [visibility]
+            (helpers/with-properties (into es-helpers/basic-auth-properties
+                                           ["ctia.access-control.max-record-visibility" visibility])
+              (fixture-ctia-with-app
+               (fn [app]
+                 (helpers/set-capabilities! app "foouser" ["foogroup"] "user" all-capabilities)
+                 (helpers/set-capabilities! app "baruser" ["bargroup"] "user" all-capabilities)
+                 (whoami-helpers/set-whoami-response app "foouser" "foouser" "foogroup" "user")
+                 (whoami-helpers/set-whoami-response app "baruser" "baruser" "bargroup" "user")
+                 (testing (str "verdict route TLP behavior under max-record-visibility=" visibility)
+                   (let [green-observable {:type "domain" :value "green.com"}
+                         base-judgement {:valid_time {:start_time "2016-02-12T00:00:00.000-00:00"}
+                                         :observable green-observable
+                                         :reason_uri "https://example.com/"
+                                         :source "Example"
+                                         :disposition 2
+                                         :disposition_name "Malicious"
+                                         :reason "Example judgement"
+                                         :source_uri "https://example.com/"
+                                         :priority 0
+                                         :severity "None"
+                                         :tlp "green"
+                                         :confidence "None"}
+                         green-judgement-post
+                         (POST app
+                               "ctia/judgement?wait_for=true"
+                               :body (assoc base-judgement
+                                            :observable green-observable
+                                            :tlp "green")
+                               :headers {"Authorization" "foouser"})
+                         green-judgement-id (get-in green-judgement-post [:parsed-body :id])
+                         green-judgement-short-id (some-> green-judgement-id id/long-id->id :short-id)]
+                     (assert (= 201 (:status green-judgement-post))
+                             "the test was not properly initialized")
 
-       (whoami-helpers/set-whoami-response app
-                                           "foouser"
-                                           "foouser"
-                                           "foogroup"
-                                           "user")
+                     (testing "the owning org always gets its own green judgement's verdict"
+                       (let [{status :status verdict :parsed-body}
+                             (GET app
+                                  (str "ctia/" (:type green-observable) "/" (:value green-observable) "/verdict")
+                                  :headers {"Authorization" "foouser"})]
+                         (is (= 200 status))
+                         (is (= green-judgement-id (:judgement_id verdict)))))
 
-       (whoami-helpers/set-whoami-response app
-                                           "baruser"
-                                           "baruser"
-                                           "bargroup"
-                                           "user")
+                     (testing "the verdict is tenant-local: another org gets 404 regardless of max-record-visibility"
+                       (let [{status :status}
+                             (GET app
+                                  (str "ctia/" (:type green-observable) "/" (:value green-observable) "/verdict")
+                                  :headers {"Authorization" "baruser"})]
+                         (is (= 404 status)
+                             "a green judgement owned by another org must not contribute to the caller's verdict, even under max-record-visibility=everyone")))
 
-       (testing "verdict route TLP behavior"
-         (let [green-observable
-               {:type "domain"
-                :value "green.com"}
-               amber-observable
-               {:type "domain"
-                :value "amber.com"}
-               red-observable
-               {:type "domain"
-                :value "red.com"}
-               auth-observable
-               {:type "domain"
-                :value "auth.com"}
-               base-judgement
-               {:valid_time {:start_time "2016-02-12T00:00:00.000-00:00"}
-                :observable green-observable
-                :reason_uri "https://example.com/",
-                :source "Example",
-                :disposition 2,
-                :disposition_name "Malicious"
-                :reason "Example judgement",
-                :source_uri "https://example.com/",
-                :priority 0,
-                :severity "None",
-                :tlp "green",
-                :confidence "None"}
-               green-judgement-post
-               (POST app
-                     "ctia/judgement?wait_for=true"
-                     :body (assoc base-judgement
-                                  :observable green-observable
-                                  :tlp "green")
-                     :headers {"Authorization" "foouser"})]
-           (assert (= 201 (:status green-judgement-post))
-                   "the test was not properly initialized")
-
-           (testing "a green Judgement should only affect verdicts of the group when visibility is set to group."
-             (let [{status-1 :status
-                    verdict-1 :parsed-body}
-                   (GET app
-                        (str "ctia/"
-                             (:type green-observable)
-                             "/" (:value green-observable)
-                             "/verdict")
-                        :headers {"Authorization" "foouser"})
-                   {status-2 :status
-                    verdict-2 :parsed-body}
-                   (GET app
-                        (str "ctia/"
-                             (:type green-observable)
-                             "/"
-                             (:value green-observable)
-                             "/verdict")
-                        :headers {"Authorization" "baruser"})]
-               (is (= 200 status-1))
-               (is (= (get-in green-judgement-post [:parsed-body :id])
-                      (:judgement_id verdict-1)))
-               (is (= 404 status-2))))))))))
+                     (testing "the document read still follows max-record-visibility (the concern the verdict path no longer discriminates)"
+                       (let [{status :status}
+                             (GET app
+                                  (str "ctia/judgement/" green-judgement-short-id)
+                                  :headers {"Authorization" "baruser"})]
+                         (is (= (if (= "everyone" visibility) 200 404) status)
+                             "cross-tenant document read of a green judgement is allowed only under max-record-visibility=everyone")))))))))]
+    (run-visibility-test "group")
+    (run-visibility-test "everyone")))
 
 (deftest test-observable-verdict-cross-tenant-isolation
   ;; XFV-20: a verdict is a tenant-local trust decision. A judgement owned by
@@ -955,19 +952,27 @@
                attacker-short-id (some-> (:id attacker-judgement) id/long-id->id :short-id)]
            (is (= 201 status))
 
-           (testing "simulate pre-fix poisoning: grant the victim org via authorized_groups directly in the store"
+           (testing "simulate pre-fix poisoning: grant the victim org/user via authorized_groups AND authorized_users directly in the store"
+             ;; XFV-20: the owner filter is a pure `groups` filter, so it
+             ;; neutralizes BOTH a foreign `authorized_groups` grant and a
+             ;; foreign `authorized_users` grant identically -- inject both so
+             ;; the end-to-end assertion covers the `authorized_users` carve-out
+             ;; the guard's docstring claims, not only `authorized_groups`.
              (let [stored (store/read-record judgement-store attacker-short-id attacker-ident params)]
                (store/update-record judgement-store
                                     attacker-short-id
-                                    (assoc stored :authorized_groups ["victim-org"])
+                                    (assoc stored
+                                           :authorized_groups ["victim-org"]
+                                           :authorized_users ["victim"])
                                     attacker-ident
                                     params))
-             ;; sanity: confirm the foreign grant actually persisted, otherwise
+             ;; sanity: confirm the foreign grants actually persisted, otherwise
              ;; the isolation assertions below could pass vacuously.
-             (is (contains? (set (:authorized_groups
-                                  (store/read-record judgement-store attacker-short-id attacker-ident params)))
-                            "victim-org")
-                 "the injected foreign authorized_groups grant must be stored"))
+             (let [reread (store/read-record judgement-store attacker-short-id attacker-ident params)]
+               (is (contains? (set (:authorized_groups reread)) "victim-org")
+                   "the injected foreign authorized_groups grant must be stored")
+               (is (contains? (set (:authorized_users reread)) "victim")
+                   "the injected foreign authorized_users grant must be stored")))
 
            (testing "the victim's verdict must NOT be poisoned by the foreign-owned judgement"
              (let [{status :status}
@@ -1052,6 +1057,13 @@
                                   (assoc stored :authorized_groups ["victim-org"])
                                   attacker-ident
                                   params))
+           ;; sanity (mirrors the first sub-test): confirm the foreign grant
+           ;; actually persisted, otherwise this isolation assertion could pass
+           ;; vacuously if `update-record` ever stopped persisting the field.
+           (is (contains? (set (:authorized_groups
+                                (store/read-record judgement-store poison-short-id attacker-ident params)))
+                          "victim-org")
+               "the injected foreign authorized_groups grant must be stored")
            (let [{status :status
                   verdict :parsed-body}
                  (GET app

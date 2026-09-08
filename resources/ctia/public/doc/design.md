@@ -38,6 +38,13 @@ Practically, that means Judgements related to IPs, Domains, and
 Checksums.  For unshared data, the Pre-Customer Private Cloud model
 would be used.
 
+**Verdict scoping (XFV-20):** while shared documents (Judgements on IPs,
+Domains, and Checksums) remain readable across orgs, a **verdict** is a
+tenant-local trust decision.  A verdict is computed only from judgements
+owned by the querying org, so it is not shared cross-tenant -- independent
+of TLP, of `max-record-visibility`, or of any `authorized_groups` /
+`authorized_users` grant on a foreign-owned judgement.
+
 #### Requirements
 
 * Plug-in authentication and authorization
@@ -58,8 +65,9 @@ Incidents and other data that organizations are not willing to share.
 
 They can configure their devices to query their instance specifically.
 And effectively see an overlay of their data on the global data set
-for Judgements and Verdicts.  This allows the most performance
-critical queries to be made once.  The remainder of the API would
+for Judgements.  The overlay applies to document reads; verdicts are
+computed per-org (see the Verdict scoping note above).  This allows
+the most performance critical queries to be made once.  The remainder of the API would
 require explicit lookups to the global instance.
 
 #### Requiremnts

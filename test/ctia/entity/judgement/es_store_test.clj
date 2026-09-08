@@ -1,5 +1,6 @@
 (ns ctia.entity.judgement.es-store-test
   (:require [clojure.test :refer [deftest is testing]]
+            [ctia.auth :as auth]
             [ctia.entity.judgement.es-store :as sut]
             [ductile.document :as ductile]))
 
@@ -35,20 +36,44 @@
       (is (some? (get-in @captured [:bool :must]))
           "the observable/time query is still applied")
       (is (some? (get-in @captured [:bool :should]))
-          "the base access-control restriction is still applied"))))
+          "the base access-control restriction is still applied")))
+  (testing "a multi-org caller scopes the verdict to ALL of its groups (lower-cased)"
+    ;; A caller can legitimately belong to several orgs (e.g. via
+    ;; ctia.auth.threatgrid). The owner filter maps over every group, so the
+    ;; verdict is scoped to the union of the caller's own orgs -- exercise the
+    ;; `map` with more than one group.
+    (let [captured (atom nil)
+          state {:conn :fake-conn :index "judgement-index"}
+          ident {:login "multi" :groups ["ORG-A" "Org-B"]}]
+      (with-redefs [ductile/search-docs
+                    (fn [_conn _index query _sort _es-params]
+                      (reset! captured query)
+                      {:data []})]
+        (sut/list-active-by-observable state
+                                       {:type "ip" :value "203.0.113.213"}
+                                       ident
+                                       (constantly nil)
+                                       {}))
+      (is (= [{:terms {"groups" ["org-a" "org-b"]}}]
+             (get-in @captured [:bool :filter]))
+          "every one of the caller's groups is included, lower-cased"))))
 
 (deftest list-active-by-observable-empty-groups-test
   ;; XFV-20 (CR1): a caller with no org (static-auth with the group unset, or a
   ;; JWT missing org/id) has no tenant to scope the verdict to. The guard must
   ;; bail out explicitly -- return nil WITHOUT querying -- rather than issue a
-  ;; match-nothing {:terms {"groups" []}} filter.
-  (testing "an identity with no groups yields no verdict and issues no query"
+  ;; match-nothing {:terms {"groups" ...}} filter. The anonymous read-only
+  ;; identity (ctia.auth.type=static + readonly-for-anonymous=true) reports the
+  ;; sentinel auth/not-logged-in-groups rather than an empty list, so it must be
+  ;; treated as no-org too.
+  (testing "an identity with no real org yields no verdict and issues no query"
     (let [called? (atom false)
           state {:conn :fake-conn :index "judgement-index"}]
       (with-redefs [ductile/search-docs
                     (fn [& _] (reset! called? true) {:data []})]
         (doseq [ident [{:login "no-org" :groups []}
-                       {:login "no-org" :groups nil}]]
+                       {:login "no-org" :groups nil}
+                       {:login "anonymous" :groups auth/not-logged-in-groups}]]
           (is (nil? (sut/list-active-by-observable state
                                                    {:type "ip" :value "203.0.113.213"}
                                                    ident

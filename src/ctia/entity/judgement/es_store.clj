@@ -3,6 +3,7 @@
             [clojure.string :as str]
             [clojure.tools.logging :as log]
             [clj-momo.lib.time :as time]
+            [ctia.auth :as auth]
             [ctia.entity.judgement.schemas
              :refer
              [PartialStoredJudgement StoredJudgement]]
@@ -71,10 +72,16 @@
   ;; XFV-20 (CR1): a verdict is scoped to the caller's own org. A caller with
   ;; no org (static-auth with `ctia.auth.static.group` unset, or a JWT missing
   ;; `org/id`) has no tenant to scope to, so there is no verdict to compute.
-  ;; Bail out explicitly and observably rather than issuing a query whose empty
-  ;; `{:terms {"groups" []}}` filter would silently match nothing.
-  (if (empty? (:groups ident))
-    (do (log/warnf "verdict skipped: caller %s has no org; a verdict is tenant-local"
+  ;; The anonymous read-only identity (`ctia.auth.type=static` +
+  ;; `readonly-for-anonymous=true`) reports the sentinel
+  ;; `auth/not-logged-in-groups` (`["Unknown Group"]`) rather than an empty
+  ;; group list; it is likewise not a real tenant, so treat it as no-org too.
+  ;; Bail out explicitly and observably rather than issuing a query whose
+  ;; `{:terms {"groups" ...}}` filter can match no stored doc, silently
+  ;; flipping the response to a 404 with nothing logged.
+  (if (or (empty? (:groups ident))
+          (= (set auth/not-logged-in-groups) (set (:groups ident))))
+    (do (log/infof "verdict skipped: caller %s has no org; a verdict is tenant-local"
                    (pr-str (:login ident)))
         nil)
     (let [now-str (time/format-date-time (time/timestamp))

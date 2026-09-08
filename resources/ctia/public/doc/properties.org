@@ -52,6 +52,12 @@
  | ctia.access-control.default-tlp           | set the TLP for a newly posted entity if none is specified | =white= =green= =amber= =red=  |
  | ctia.access-control.max-record-visibility | set the record max visibility for TLP Green/White          | =everyone= =group=             |
 
+   Note: =max-record-visibility= governs *document* reads and searches only.
+   The verdict endpoint (=GET .../verdict=) is always org-scoped: a verdict is
+   computed solely from judgements owned by the caller's own org, regardless of
+   this setting or of any =authorized_groups= / =authorized_users= grant on a
+   foreign-owned judgement (XFV-20).
+
 
 ** HTTP
 
