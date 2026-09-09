@@ -1,8 +1,16 @@
 (ns ctia.entity.judgement.es-store-test
-  (:require [clojure.test :refer [deftest is testing]]
+  (:require [clojure.test :refer [deftest is testing use-fixtures]]
             [ctia.auth :as auth]
             [ctia.entity.judgement.es-store :as sut]
-            [ductile.document :as ductile]))
+            [ductile.document :as ductile]
+            [schema.test :refer [validate-schemas]]))
+
+;; XFV-20 (S1): turn on schema validation so every ident below is checked
+;; against `auth/IdentityMap` -- `list-active-by-observable` reaches
+;; `auth/orgless-ident?` (an `s/defn` taking `IdentityMap`), so this also proves
+;; the guard is exercised with the conformant shape its docstring warns about
+;; (complete `:client-id`/`:login`/`:groups`, groups a real `[s/Str]`).
+(use-fixtures :once validate-schemas)
 
 (deftest list-active-by-observable-verdict-owner-filter-test
   ;; XFV-20: a verdict is a tenant-local trust decision. The verdict query must
@@ -13,7 +21,7 @@
   (testing "list-active-by-observable adds a mandatory, lower-cased groups filter for the caller's org"
     (let [captured (atom nil)
           state {:conn :fake-conn :index "judgement-index"}
-          ident {:login "victim" :groups ["VICTIM-ORG"]}]
+          ident {:client-id "victim-client" :login "victim" :groups ["VICTIM-ORG"]}]
       (with-redefs [ductile/search-docs
                     (fn [_conn _index query _sort _es-params]
                       (reset! captured query)
@@ -57,7 +65,7 @@
     ;; `map` with more than one group.
     (let [captured (atom nil)
           state {:conn :fake-conn :index "judgement-index"}
-          ident {:login "multi" :groups ["ORG-A" "Org-B"]}]
+          ident {:client-id "multi-client" :login "multi" :groups ["ORG-A" "Org-B"]}]
       (with-redefs [ductile/search-docs
                     (fn [_conn _index query _sort _es-params]
                       (reset! captured query)
@@ -78,15 +86,17 @@
   ;; match-nothing {:terms {"groups" ...}} filter. The anonymous read-only
   ;; identity (ctia.auth.type=static + readonly-for-anonymous=true) reports the
   ;; sentinel auth/not-logged-in-groups rather than an empty list, so it must be
-  ;; treated as no-org too.
+  ;; treated as no-org too. Both idents are complete `auth/IdentityMap`s (shapes a
+  ;; real `IIdentity` produces); `:groups nil` is intentionally NOT exercised --
+  ;; no `IIdentity` impl yields nil groups (all `(remove nil? ...)`), and it is
+  ;; rejected by the `[s/Str]` schema now that validation is on.
   (testing "an identity with no real org yields no verdict and issues no query"
     (let [called? (atom false)
           state {:conn :fake-conn :index "judgement-index"}]
       (with-redefs [ductile/search-docs
                     (fn [& _] (reset! called? true) {:data []})]
-        (doseq [ident [{:login "no-org" :groups []}
-                       {:login "no-org" :groups nil}
-                       {:login "anonymous" :groups auth/not-logged-in-groups}]]
+        (doseq [ident [{:client-id "no-org-client" :login "no-org" :groups []}
+                       {:client-id "anon-client" :login "anonymous" :groups auth/not-logged-in-groups}]]
           (is (nil? (sut/list-active-by-observable state
                                                    {:type "ip" :value "203.0.113.213"}
                                                    ident

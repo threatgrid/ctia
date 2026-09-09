@@ -1,5 +1,6 @@
 (ns ctia.auth
-  (:require [schema.core :as s]))
+  (:require [clojure.string :as str]
+            [schema.core :as s]))
 
 (defprotocol IIdentity
   (authenticated? [this])
@@ -55,13 +56,24 @@
    `not-logged-in-groups`). Such a caller has no tenant to scope a tenant-local
    decision (e.g. a verdict) to.
 
-   Takes the map form (`IdentityMap`) rather than an `IIdentity` record: groups
-   live behind the `groups` protocol method on a record, not a `:groups` key, so
-   `(:groups record)` would be `nil` and the predicate would wrongly answer
-   `true`. Callers must pass the identity map (`ident->map` / the route
-   `identity-map`)."
+   Takes the map form (`IdentityMap`) rather than an `IIdentity` record on
+   purpose: a plain `:groups` key exists on only SOME implementations. On
+   `ctia.auth.threatgrid/Identity` there is a literal `groups` field, so
+   `(:groups record)` happens to return the real group list and the predicate
+   would answer correctly -- but on the static and JWT identities groups live
+   only behind the `groups` protocol method, so `(:groups record)` is `nil` and
+   the predicate would wrongly answer `true`. A record read is therefore
+   silently correct on threatgrid and silently wrong elsewhere; callers must
+   pass the identity map (`ident->map` / the route `identity-map`) so the answer
+   is uniform across implementations.
+
+   Blank group strings are treated as absent: a JWT with a blank `org/id` claim
+   (or static-auth with a blank `ctia.auth.static.group`) reports `[\"\"]`, which
+   is neither empty nor the sentinel. Dropping blanks here makes one predicate
+   decide the org-less question for every implementation, so no identity slips
+   through to issue a match-nothing `{:terms {\"groups\" [\"\"]}}` verdict filter."
   [ident :- IdentityMap]
-  (let [groups (:groups ident)]
+  (let [groups (remove str/blank? (:groups ident))]
     (boolean (or (empty? groups)
                  (= (set not-logged-in-groups) (set groups))))))
 

@@ -987,14 +987,12 @@
                (is (contains? (set (:authorized_users reread)) "victim")
                    "the injected foreign authorized_users grant must be stored")))
 
-           (testing "the victim's verdict must NOT be poisoned by the foreign-owned judgement"
-             (let [{status :status}
-                   (GET app
-                        "ctia/ip/203.0.113.213/verdict"
-                        :headers {"Authorization" "victim-key"})]
-               (is (= 404 status)
-                   "a judgement owned by another org must not contribute to the caller's verdict")))
-
+           ;; Assert the attacker's own 200 FIRST: it proves the injected
+           ;; judgement is actually searchable, so the victim's 404 below
+           ;; demonstrates isolation rather than passing vacuously on a
+           ;; not-yet-refreshed write (mirrors
+           ;; `test-observable-verdict-access-control`, which binds its 200
+           ;; ahead of its 404s).
            (testing "the owning (attacker) org still gets its own judgement's verdict"
              (let [{status :status
                     verdict :parsed-body}
@@ -1002,7 +1000,15 @@
                         "ctia/ip/203.0.113.213/verdict"
                         :headers {"Authorization" "attacker-key"})]
                (is (= 200 status))
-               (is (= (:id attacker-judgement) (:judgement_id verdict)))))))
+               (is (= (:id attacker-judgement) (:judgement_id verdict)))))
+
+           (testing "the victim's verdict must NOT be poisoned by the foreign-owned judgement"
+             (let [{status :status}
+                   (GET app
+                        "ctia/ip/203.0.113.213/verdict"
+                        :headers {"Authorization" "victim-key"})]
+               (is (= 404 status)
+                   "a judgement owned by another org must not contribute to the caller's verdict")))))
 
        (testing "the victim's own judgement still produces a verdict (guard is not over-broad)"
          (let [{status :status

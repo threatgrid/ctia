@@ -77,11 +77,13 @@
   ;; `readonly-for-anonymous` sentinel) has no org to scope to, so there is no
   ;; verdict to compute. Bail out explicitly and observably rather than issuing
   ;; a query whose `{:terms {"groups" ...}}` filter can match no stored doc,
-  ;; silently flipping the response to a 404 with nothing logged. The
-  ;; deployment-level cause (static-auth with `ctia.auth.static.group` unset) is
-  ;; warned once at startup by `static-auth-service`; this per-request line
-  ;; carries the observable so a 404 correlates with the client's request when
-  ;; debug logging is enabled.
+  ;; silently flipping the response to a 404 with nothing logged. Only the
+  ;; static-auth deployment cause (`ctia.auth.static.group` unset) is warned once
+  ;; at startup by `static-auth-service`; the JWT no-`org/id` case is registered
+  ;; via ring middleware regardless of auth type and gets NO boot warning, so for
+  ;; it this per-request `debugf` (off at the shipped `info` root level) is the
+  ;; only signal. It carries the observable so an operator who raises the log
+  ;; level can correlate a 404 with the client's request.
   (if (auth/orgless-ident? ident)
     (do (log/debugf "verdict skipped: caller %s has no org; a verdict is tenant-local (observable %s)"
                     (pr-str (:login ident))
