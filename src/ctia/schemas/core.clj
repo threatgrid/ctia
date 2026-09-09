@@ -12,7 +12,6 @@
    [ctim.schemas.vocabularies :as vocs]
    [flanders.schema :as f-schema]
    [flanders.spec :as f-spec]
-   [ring.swagger.json-schema :as rs]
    [schema-tools.core :as st]
    [schema.core :as s :refer [Bool Str]]))
 
@@ -268,25 +267,6 @@
 (def-acl-schema Verdict
   vs/Verdict
   "verdict")
-
-;; XFV-20: a verdict is a tenant-local trust decision. CTIM's entity type carries
-;; a description that says a verdict is chosen from *all* unexpired judgements on
-;; the observable, which flanders renders into swagger.json for the REST
-;; `Verdict` model. That is now false the same way the GraphQL surface was:
-;; override the REST/Swagger description here so both surfaces read consistently
-;; (see `ctia.verdict.graphql.schemas/verdict-description` for the GraphQL one).
-(def Verdict
-  (rs/describe
-   Verdict
-   (str "A Verdict is chosen from the Judgements owned by the caller's own org "
-        "on an Observable which have not yet expired. The highest priority "
-        "Judgement becomes the active verdict. If there is more than one "
-        "Judgement with that priority, then Clean disposition has priority over "
-        "all others, then Malicious disposition, and so on down to Unknown. "
-        "Verdict calculation is tenant-local: judgements owned by another org -- "
-        "even ones shared via authorized_users / authorized_groups or a public "
-        "TLP -- do not contribute, and a caller with no org of its own receives "
-        "no verdict.")))
 
 ;; Bundle
 
