@@ -37,9 +37,19 @@
       (is (some #{{:term {"observable.value" "203.0.113.213"}}}
                 (get-in @captured [:bool :must]))
           "the concrete observable/time query is still applied")
-      (is (some (fn [clause] (get-in clause [:bool :should]))
-                (get-in @captured [:bool :filter]))
-          "the base access-control restriction is still composed in as an opaque filter clause")))
+      ;; The base access-control restriction must still be composed in. Pin the
+      ;; CONCRETE authorized_groups should-clause and the minimum_should_match
+      ;; threshold rather than asserting merely that *some* :should is present: a
+      ;; refactor that returned a degenerate restriction (empty :should, or a
+      ;; dropped `:minimum_should_match 1`) would silently drop access control
+      ;; and must fail here.
+      (let [restriction (first (filter #(get-in % [:bool :minimum_should_match])
+                                       (get-in @captured [:bool :filter])))]
+        (is (some #{{:terms {"authorized_groups" ["victim-org"]}}}
+                  (get-in restriction [:bool :should]))
+            "the base access-control restriction is still composed in")
+        (is (= 1 (get-in restriction [:bool :minimum_should_match]))
+            "the restriction still requires at least one should-clause to match"))))
   (testing "a multi-org caller scopes the verdict to ALL of its groups (lower-cased)"
     ;; A caller can legitimately belong to several orgs (e.g. via
     ;; ctia.auth.threatgrid). The owner filter maps over every group, so the

@@ -18,9 +18,21 @@
                                                     (:ident context)
                                                     field-selection)))}})
 
+;; XFV-20: a verdict is a tenant-local trust decision. Override CTIM's entity
+;; description (which states a verdict is chosen from *all* unexpired judgements
+;; on the observable) so GraphQL introspection reflects the org-scoping: only
+;; judgements owned by the caller's own org contribute, and a caller with no org
+;; of its own gets no verdict (null).
+(def verdict-description
+  (str "A Verdict is chosen from the Judgements owned by the caller's own org on "
+       "an Observable which have not yet expired (XFV-20: verdict calculation is "
+       "tenant-local; judgements owned by another org -- even ones shared via "
+       "authorized_users / authorized_groups or a public TLP -- do not "
+       "contribute). A caller with no org of its own receives no verdict."))
+
 (def VerdictType
-  (let [{:keys [fields name description]}
+  (let [{:keys [fields name]}
         (f/->graphql (fu/optionalize-all ctim-verdict-schema/Verdict)
                      {refs/observable-type-name refs/ObservableTypeRef})]
-    (g/new-object name description [] (into fields
-                                            verdict-fields))))
+    (g/new-object name verdict-description [] (into fields
+                                                    verdict-fields))))

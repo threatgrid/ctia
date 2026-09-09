@@ -698,17 +698,63 @@
              (is (= (get-in red-judgement-post [:parsed-body :id])
                     (:judgement_id verdict-3)))))
 
-         ;; XFV-20: a subtest that created a Judgement with
-         ;; `authorized_groups ["bargroup"]` as baruser (the caller's OWN group)
-         ;; was removed here: with the owner filter now scoping the verdict to
-         ;; the caller's own org, its outcomes were fully explained by ownership
-         ;; and duplicated the amber subtest above. The property it appeared to
-         ;; test -- a FOREIGN `authorized_groups` grant must not contribute to
-         ;; another org's verdict -- is asserted, with a pre-existing foreign
-         ;; grant injected directly into the store (the write path now rejects
-         ;; introducing one), by
-         ;; `test-observable-verdict-cross-tenant-isolation`.
-         )))))
+         (testing "a same-org authorized_groups grant contributes to a group member's verdict"
+           ;; XFV-20 regression detector for the intra-org sharing path. baruser
+           ;; (bargroup) posts a TLP-red judgement carrying an explicit
+           ;; authorized_groups grant for its OWN org (bargroup). foobaruser is a
+           ;; member of bargroup but NOT the owner, so for foobaruser's verdict:
+           ;;   - the owner-org filter admits the doc (same org, stored groups
+           ;;     ["bargroup"]);
+           ;;   - within the access-control restriction the red clause requires
+           ;;     the owner and the amber/public clauses require a non-red TLP, so
+           ;;     the ONLY should-clause that can admit this red doc is
+           ;;     {:terms {"authorized_groups" groups}} (stores/es/query.clj).
+           ;; A cleanup dropping the authorized_users/authorized_groups should
+           ;; clauses would silently break intra-org verdict sharing of red/amber
+           ;; judgements with no other test failing -- this subtest fails instead.
+           ;; (This is a same-org grant; the FOREIGN-grant non-poisoning property
+           ;; is covered by `test-observable-verdict-cross-tenant-isolation`.)
+           (let [shared-observable {:type "domain" :value "shared-red.com"}
+                 shared-judgement-post
+                 (POST app
+                       "ctia/judgement"
+                       :body (assoc base-judgement
+                                    :observable shared-observable
+                                    :tlp "red"
+                                    :authorized_groups ["bargroup"])
+                       :headers {"Authorization" "baruser"})
+                 _ (is (= 201 (:status shared-judgement-post))
+                       "baruser may grant authorized_groups for its OWN org")
+                 {status-owner :status
+                  verdict-owner :parsed-body}
+                 (GET app
+                      (str "ctia/" (:type shared-observable) "/"
+                           (:value shared-observable) "/verdict")
+                      :headers {"Authorization" "baruser"})
+                 {status-member :status
+                  verdict-member :parsed-body}
+                 (GET app
+                      (str "ctia/" (:type shared-observable) "/"
+                           (:value shared-observable) "/verdict")
+                      :headers {"Authorization" "foobaruser"})
+                 {status-foreign :status}
+                 (GET app
+                      (str "ctia/" (:type shared-observable) "/"
+                           (:value shared-observable) "/verdict")
+                      :headers {"Authorization" "foouser"})]
+             ;; the owner sees its own judgement's verdict
+             (is (= 200 status-owner))
+             (is (= (get-in shared-judgement-post [:parsed-body :id])
+                    (:judgement_id verdict-owner)))
+             ;; a same-org non-owner member sees it only via the
+             ;; authorized_groups should-clause (red TLP blocks every other one)
+             (is (= 200 status-member)
+                 "a same-org group member gets the verdict via the authorized_groups grant")
+             (is (= (get-in shared-judgement-post [:parsed-body :id])
+                    (:judgement_id verdict-member)))
+             ;; a foreign org (foogroup) is still excluded by the owner-org filter
+             (is (= 404 status-foreign)
+                 "a foreign org gets no verdict: the owner-org filter excludes it"))))))))
 
 (deftest with-date-range
   (test-for-each-store-with-app

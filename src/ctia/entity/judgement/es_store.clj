@@ -73,14 +73,19 @@
 (defn list-active-by-observable
   [state observable ident get-in-config params]
   ;; XFV-20 (CR1): a verdict is scoped to the caller's own org. A caller with
-  ;; no real tenant (`auth/anonymous-ident?` -- no groups, or only the
+  ;; no real tenant (`auth/orgless-ident?` -- no groups, or only the
   ;; `readonly-for-anonymous` sentinel) has no org to scope to, so there is no
   ;; verdict to compute. Bail out explicitly and observably rather than issuing
   ;; a query whose `{:terms {"groups" ...}}` filter can match no stored doc,
-  ;; silently flipping the response to a 404 with nothing logged.
-  (if (auth/anonymous-ident? ident)
-    (do (log/debugf "verdict skipped: caller %s has no org; a verdict is tenant-local"
-                    (pr-str (:login ident)))
+  ;; silently flipping the response to a 404 with nothing logged. The
+  ;; deployment-level cause (static-auth with `ctia.auth.static.group` unset) is
+  ;; warned once at startup by `static-auth-service`; this per-request line
+  ;; carries the observable so a 404 correlates with the client's request when
+  ;; debug logging is enabled.
+  (if (auth/orgless-ident? ident)
+    (do (log/debugf "verdict skipped: caller %s has no org; a verdict is tenant-local (observable %s)"
+                    (pr-str (:login ident))
+                    (pr-str observable))
         nil)
     (let [now-str (time/format-date-time (time/timestamp))
           date-range (select-keys params [:from :to])

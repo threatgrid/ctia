@@ -21,18 +21,6 @@
 
 (def admingroup "Administrators")
 
-(s/defn anonymous-ident? :- s/Bool
-  "True when the identity represents no real org/tenant: either it carries no
-   groups at all (a JWT missing `org/id`, or static-auth with
-   `ctia.auth.static.group` unset), or it carries only the not-logged-in
-   sentinel group (the `readonly-for-anonymous` ReadOnlyIdentity, which reports
-   `not-logged-in-groups`). Such a caller has no tenant to scope a tenant-local
-   decision (e.g. a verdict) to."
-  [ident]
-  (let [groups (:groups ident)]
-    (boolean (or (empty? groups)
-                 (= (set not-logged-in-groups) (set groups))))))
-
 (defrecord DeniedIdentity []
   IIdentity
   (authenticated? [_]
@@ -58,6 +46,24 @@
   {:client-id (s/maybe s/Str)
    :login (s/maybe s/Str)
    :groups [s/Str]})
+
+(s/defn orgless-ident? :- s/Bool
+  "True when the identity carries no real org/tenant: either it has no groups at
+   all (a JWT missing `org/id`, or static-auth with `ctia.auth.static.group`
+   unset), or it carries only the not-logged-in sentinel group (the
+   `readonly-for-anonymous` ReadOnlyIdentity, which reports
+   `not-logged-in-groups`). Such a caller has no tenant to scope a tenant-local
+   decision (e.g. a verdict) to.
+
+   Takes the map form (`IdentityMap`) rather than an `IIdentity` record: groups
+   live behind the `groups` protocol method on a record, not a `:groups` key, so
+   `(:groups record)` would be `nil` and the predicate would wrongly answer
+   `true`. Callers must pass the identity map (`ident->map` / the route
+   `identity-map`)."
+  [ident :- IdentityMap]
+  (let [groups (:groups ident)]
+    (boolean (or (empty? groups)
+                 (= (set not-logged-in-groups) (set groups))))))
 
 (s/defn ident->map :- (s/maybe IdentityMap)
   [ident :- (s/maybe AuthIdentity)]

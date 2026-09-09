@@ -35,6 +35,10 @@
 
 (def observable-fields
   {:verdict {:type verdict/VerdictType
+             :description (str "The tenant-local Verdict for this Observable, "
+                               "computed only from judgements owned by the "
+                               "caller's own org (XFV-20). Null when the caller "
+                               "has no org or no owned judgement contributes.")
              :resolve (s/fn :- AnyRealizeFnResult
                         [context _ _ src]
                         (delayed/fn :- GraphQLValue

@@ -58,11 +58,15 @@
    judgements owned by the caller's own org, regardless of this setting or of
    any =authorized_groups= / =authorized_users= grant on a foreign-owned
    judgement (XFV-20). A consequence is that a caller with no org of its own
-   gets no verdict at all: a static-auth deployment with =ctia.auth.static.group=
-   unset, or =ctia.auth.static.readonly-for-anonymous= = =true= (whose anonymous
-   identity has no real tenant), returns 404 for every =.../verdict= request --
-   including public (Green/White) TLP observables that a document read would
-   still return under =max-record-visibility= = =everyone=.
+   gets no verdict at all. With =ctia.auth.static.group= unset, even the
+   authenticated static write identity is org-less, so every =.../verdict=
+   request returns 404. Under =ctia.auth.static.readonly-for-anonymous= = =true=,
+   a request that does not present =ctia.auth.static.secret= resolves to the
+   org-less read-only identity and returns 404 for =.../verdict= (a request that
+   presents the secret still receives a verdict when =ctia.auth.static.group= is
+   set) -- including public
+   (Green/White) TLP observables that a document read would still return under
+   =max-record-visibility= = =everyone=.
 
 
 ** HTTP

@@ -3,6 +3,7 @@
             [clojure
              [set :as set]
              [string :as str]]
+            [clojure.tools.logging :as log]
             [ctia.auth :as auth :refer [IAuth IIdentity]]
             [ctia.auth.capabilities :refer [all-capabilities]]
             [puppetlabs.trapperkeeper.core :as tk]
@@ -60,7 +61,19 @@
   IAuth
   [[:ConfigService get-in-config]]
   (init [this context]
-        (assoc context :auth-config (get-in-config [:ctia :auth])))
+        (let [auth-config (get-in-config [:ctia :auth])]
+          ;; XFV-20: a verdict is tenant-local. When `ctia.auth.static.group` is
+          ;; unset, even the authenticated static write identity is org-less, so
+          ;; EVERY `.../verdict` request 404s. `log/debugf` in the verdict path
+          ;; produces nothing at the shipped `info` root level, so surface the
+          ;; deployment-level cause once here, where it is knowable and a
+          ;; `log/warn` reaches an operator.
+          (when (str/blank? (get-in auth-config [:static :group]))
+            (log/warn (str "ctia.auth.static.group is unset: the static write "
+                           "identity has no org, so every verdict request will "
+                           "return 404. Set ctia.auth.static.group to enable "
+                           "verdict computation for static-auth callers.")))
+          (assoc context :auth-config auth-config)))
   (identity-for-token [this token]
     (let [{:keys [auth-config]} (service-context this)
           secret (get-in auth-config [:static :secret])
