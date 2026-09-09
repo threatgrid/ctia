@@ -53,10 +53,16 @@
  | ctia.access-control.max-record-visibility | set the record max visibility for TLP Green/White          | =everyone= =group=             |
 
    Note: =max-record-visibility= governs *document* reads and searches only.
-   The verdict endpoint (=GET .../verdict=) is always org-scoped: a verdict is
-   computed solely from judgements owned by the caller's own org, regardless of
-   this setting or of any =authorized_groups= / =authorized_users= grant on a
-   foreign-owned judgement (XFV-20).
+   Verdict computation (the REST =GET .../verdict= endpoint and the GraphQL
+   =verdict= field) is always org-scoped: a verdict is computed solely from
+   judgements owned by the caller's own org, regardless of this setting or of
+   any =authorized_groups= / =authorized_users= grant on a foreign-owned
+   judgement (XFV-20). A consequence is that a caller with no org of its own
+   gets no verdict at all: a static-auth deployment with =ctia.auth.static.group=
+   unset, or =ctia.auth.static.readonly-for-anonymous= = =true= (whose anonymous
+   identity has no real tenant), returns 404 for every =.../verdict= request --
+   including public (Green/White) TLP observables that a document read would
+   still return under =max-record-visibility= = =everyone=.
 
 
 ** HTTP

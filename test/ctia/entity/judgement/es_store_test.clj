@@ -24,19 +24,22 @@
                                        (constantly nil)
                                        {}))
       ;; Load-bearing assertion: the owner filter is present and lower-cased.
-      ;; It is conjoined into a vector so a future :filter from
-      ;; find-restriction-query-part is preserved rather than overwritten.
-      (is (= [{:terms {"groups" ["victim-org"]}}]
-             (get-in @captured [:bool :filter]))
+      ;; It is one element of the top-level :filter vector (alongside the opaque
+      ;; access-control restriction), so a revert of the owner filter is
+      ;; detected here.
+      (is (some #{{:terms {"groups" ["victim-org"]}}}
+                (get-in @captured [:bool :filter]))
           "the verdict is scoped to the caller's own org, regardless of authorized_* grants")
       ;; Non-regression assertions: the pre-existing observable/time and
-      ;; access-control clauses must still be composed into the query. These do
-      ;; not, on their own, detect a revert of the owner filter -- the
-      ;; assertion above does.
-      (is (some? (get-in @captured [:bool :must]))
-          "the observable/time query is still applied")
-      (is (some? (get-in @captured [:bool :should]))
-          "the base access-control restriction is still applied")))
+      ;; access-control clauses must still be composed into the query. These are
+      ;; discriminating -- they pin the concrete observable term and the base
+      ;; restriction's shape, not merely that *some* value is present.
+      (is (some #{{:term {"observable.value" "203.0.113.213"}}}
+                (get-in @captured [:bool :must]))
+          "the concrete observable/time query is still applied")
+      (is (some (fn [clause] (get-in clause [:bool :should]))
+                (get-in @captured [:bool :filter]))
+          "the base access-control restriction is still composed in as an opaque filter clause")))
   (testing "a multi-org caller scopes the verdict to ALL of its groups (lower-cased)"
     ;; A caller can legitimately belong to several orgs (e.g. via
     ;; ctia.auth.threatgrid). The owner filter maps over every group, so the
@@ -54,8 +57,8 @@
                                        ident
                                        (constantly nil)
                                        {}))
-      (is (= [{:terms {"groups" ["org-a" "org-b"]}}]
-             (get-in @captured [:bool :filter]))
+      (is (some #{{:terms {"groups" ["org-a" "org-b"]}}}
+                (get-in @captured [:bool :filter]))
           "every one of the caller's groups is included, lower-cased"))))
 
 (deftest list-active-by-observable-empty-groups-test

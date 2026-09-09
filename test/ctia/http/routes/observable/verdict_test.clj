@@ -520,9 +520,6 @@
              red-observable
              {:type "domain"
               :value "red.com"}
-             auth-observable
-             {:type "domain"
-              :value "auth.com"}
              base-judgement
              {:valid_time {:start_time "2016-02-12T00:00:00.000-00:00"}
               :observable green-observable
@@ -556,15 +553,7 @@
                    :body (assoc base-judgement
                                 :observable red-observable
                                 :tlp "red")
-                   :headers {"Authorization" "foobaruser"})
-             authorized-groups-judgement-post
-             (POST app
-                   "ctia/judgement"
-                   :body (assoc base-judgement
-                                :observable auth-observable
-                                :tlp "red"
-                                :authorized_groups ["bargroup"])
-                   :headers {"Authorization" "baruser"})]
+                   :headers {"Authorization" "foobaruser"})]
 
          (is (= 201 (:status green-judgement-post)))
 
@@ -709,39 +698,17 @@
              (is (= (get-in red-judgement-post [:parsed-body :id])
                     (:judgement_id verdict-3)))))
 
-         (testing "a Judgement with authorized_groups"
-           (let [{status-1 :status
-                  verdict-1 :parsed-body}
-                 (GET app
-                      (str "ctia/"
-                           (:type auth-observable)
-                           "/" (:value auth-observable)
-                           "/verdict")
-                      :headers {"Authorization" "foouser"})
-                 {status-2 :status
-                  verdict-2 :parsed-body}
-                 (GET app
-                      (str "ctia/"
-                           (:type auth-observable)
-                           "/"
-                           (:value auth-observable)
-                           "/verdict")
-                      :headers {"Authorization" "baruser"})
-                 {status-3 :status
-                  verdict-3 :parsed-body}
-                 (GET app
-                      (str "ctia/"
-                           (:type auth-observable)
-                           "/"
-                           (:value auth-observable)
-                           "/verdict")
-                      :headers {"Authorization" "foobaruser"})]
-
-             (is (= 404 status-1))
-             (is (= 200 status-2))
-             (is (= 200 status-3))
-             (is (= (get-in authorized-groups-judgement-post [:parsed-body :id])
-                    (:judgement_id verdict-3))))))))))
+         ;; XFV-20: a subtest that created a Judgement with
+         ;; `authorized_groups ["bargroup"]` as baruser (the caller's OWN group)
+         ;; was removed here: with the owner filter now scoping the verdict to
+         ;; the caller's own org, its outcomes were fully explained by ownership
+         ;; and duplicated the amber subtest above. The property it appeared to
+         ;; test -- a FOREIGN `authorized_groups` grant must not contribute to
+         ;; another org's verdict -- is asserted, with a pre-existing foreign
+         ;; grant injected directly into the store (the write path now rejects
+         ;; introducing one), by
+         ;; `test-observable-verdict-cross-tenant-isolation`.
+         )))))
 
 (deftest with-date-range
   (test-for-each-store-with-app
@@ -848,7 +815,7 @@
   ;; To keep this test discriminating, we run it under BOTH settings and
   ;; separate the two concerns:
   ;;   * the *document* read still follows `max-record-visibility`
-  ;;     (404 under `group`, 200 under `everyone`); this remains the regression
+  ;;     (403 under `group`, 200 under `everyone`); this remains the regression
   ;;     detector for the public-TLP read clause on the document path (also
   ;;     covered by the entity-level access-control tests), and
   ;;   * the *verdict* stays tenant-local (404 for a foreign org under BOTH
@@ -910,8 +877,8 @@
                              (GET app
                                   (str "ctia/judgement/" green-judgement-short-id)
                                   :headers {"Authorization" "baruser"})]
-                         (is (= (if (= "everyone" visibility) 200 404) status)
-                             "cross-tenant document read of a green judgement is allowed only under max-record-visibility=everyone")))))))))]
+                         (is (= (if (= "everyone" visibility) 200 403) status)
+                             "cross-tenant document read of a green judgement is allowed only under max-record-visibility=everyone; otherwise the access-control read denial is a 403")))))))))]
     (run-visibility-test "group")
     (run-visibility-test "everyone")))
 

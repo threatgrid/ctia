@@ -21,6 +21,18 @@
 
 (def admingroup "Administrators")
 
+(s/defn anonymous-ident? :- s/Bool
+  "True when the identity represents no real org/tenant: either it carries no
+   groups at all (a JWT missing `org/id`, or static-auth with
+   `ctia.auth.static.group` unset), or it carries only the not-logged-in
+   sentinel group (the `readonly-for-anonymous` ReadOnlyIdentity, which reports
+   `not-logged-in-groups`). Such a caller has no tenant to scope a tenant-local
+   decision (e.g. a verdict) to."
+  [ident]
+  (let [groups (:groups ident)]
+    (boolean (or (empty? groups)
+                 (= (set not-logged-in-groups) (set groups))))))
+
 (defrecord DeniedIdentity []
   IIdentity
   (authenticated? [_]

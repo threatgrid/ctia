@@ -59,45 +59,44 @@
    This neutralizes any pre-existing cross-tenant *read* grant for verdict
    calculation, regardless of the `authorized_*` clauses in
    `find-restriction-query-part`. It does NOT touch the *write* path: a
-   foreign org listed in a victim-owned document's `authorized_groups` can
-   still update that document (`allow-write?` in
-   `ctia.domain.access-control`), and the stored owner `groups` are preserved
-   on update (`default-realize`), so tightening write-side authority is a
-   separate XFV-20 follow-up out of scope here."
+   *pre-existing* foreign `authorized_groups` on a victim-owned document still
+   confers write access via `allow-write?` (`ctia.domain.access-control`), and
+   the stored owner `groups` are preserved on update (`default-realize`).
+   Note that a caller can no longer *introduce* a foreign `authorized_groups`
+   at write time -- `authorized-groups-check` (`ctia.flows.crud`) rejects newly
+   added cross-tenant grants -- so this caveat is limited to grants already
+   present in stored data. Tightening write-side authority over such
+   pre-existing grants is a separate XFV-20 follow-up out of scope here."
   [{:keys [groups]}]
   {:terms {"groups" (map str/lower-case groups)}})
 
 (defn list-active-by-observable
   [state observable ident get-in-config params]
   ;; XFV-20 (CR1): a verdict is scoped to the caller's own org. A caller with
-  ;; no org (static-auth with `ctia.auth.static.group` unset, or a JWT missing
-  ;; `org/id`) has no tenant to scope to, so there is no verdict to compute.
-  ;; The anonymous read-only identity (`ctia.auth.type=static` +
-  ;; `readonly-for-anonymous=true`) reports the sentinel
-  ;; `auth/not-logged-in-groups` (`["Unknown Group"]`) rather than an empty
-  ;; group list; it is likewise not a real tenant, so treat it as no-org too.
-  ;; Bail out explicitly and observably rather than issuing a query whose
-  ;; `{:terms {"groups" ...}}` filter can match no stored doc, silently
-  ;; flipping the response to a 404 with nothing logged.
-  (if (or (empty? (:groups ident))
-          (= (set auth/not-logged-in-groups) (set (:groups ident))))
-    (do (log/infof "verdict skipped: caller %s has no org; a verdict is tenant-local"
-                   (pr-str (:login ident)))
+  ;; no real tenant (`auth/anonymous-ident?` -- no groups, or only the
+  ;; `readonly-for-anonymous` sentinel) has no org to scope to, so there is no
+  ;; verdict to compute. Bail out explicitly and observably rather than issuing
+  ;; a query whose `{:terms {"groups" ...}}` filter can match no stored doc,
+  ;; silently flipping the response to a 404 with nothing logged.
+  (if (auth/anonymous-ident? ident)
+    (do (log/debugf "verdict skipped: caller %s has no org; a verdict is tenant-local"
+                    (pr-str (:login ident)))
         nil)
     (let [now-str (time/format-date-time (time/timestamp))
           date-range (select-keys params [:from :to])
           time-opts {:now-str now-str :date-range date-range}
+          ;; Compose the base access-control restriction as one opaque element
+          ;; of the top-level `:filter` (the convention every other caller of
+          ;; `find-restriction-query-part` follows, e.g. `make-search-query` in
+          ;; `ctia.stores.es.crud`), alongside the mandatory owner-org filter,
+          ;; and put the observable/time clauses in `:must`. This avoids reaching
+          ;; into the helper's `[:bool :must]`/`[:bool :filter]` internals, so a
+          ;; future clause added inside `find-restriction-query-part` cannot be
+          ;; silently clobbered.
           composed-query
-          (-> (find-restriction-query-part ident get-in-config)
-              (assoc-in
-               [:bool :must]
-               (active-judgements-by-observable-query
-                observable
-                time-opts))
-              (update-in
-               [:bool :filter]
-               (fnil conj [])
-               (verdict-owner-filter ident)))
+          {:bool {:filter [(find-restriction-query-part ident get-in-config)
+                           (verdict-owner-filter ident)]
+                  :must (active-judgements-by-observable-query observable time-opts)}}
           es-params
           {:sort
            {:priority
