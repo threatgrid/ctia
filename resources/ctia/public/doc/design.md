@@ -43,7 +43,8 @@ Domains, and Checksums) remain readable across orgs, a **verdict** is a
 tenant-local trust decision.  A verdict is computed only from judgements
 owned by the querying org, so it is not shared cross-tenant -- independent
 of TLP, of `max-record-visibility`, or of any `authorized_groups` /
-`authorized_users` grant on a foreign-owned judgement.
+`authorized_users` grant on a foreign-owned judgement.  A caller with no org of
+its own therefore receives no verdict at all.
 
 #### Requirements
 
