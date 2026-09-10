@@ -1,5 +1,6 @@
 (ns ctia.auth
-  (:require [schema.core :as s]))
+  (:require [clojure.string :as str]
+            [schema.core :as s]))
 
 (defprotocol IIdentity
   (authenticated? [this])
@@ -46,6 +47,22 @@
   {:client-id (s/maybe s/Str)
    :login (s/maybe s/Str)
    :groups [s/Str]})
+
+(s/defn orgless-ident? :- s/Bool
+  "True when the identity has no real org/tenant to scope a tenant-local
+   decision (a verdict) to: no groups at all (a JWT missing `org/id`, static-auth
+   with a blank `ctia.auth.static.group`), or only the not-logged-in sentinel
+   (the `readonly-for-anonymous` identity). Blank group strings count as absent.
+
+   Takes the identity *map* (`ident->map`), not an `IIdentity` record: `groups`
+   is a protocol method rather than a field on the static and JWT identities, so
+   `(:groups record)` would read `nil` and the predicate would wrongly answer
+   `true` (it happens to work on `ctia.auth.threatgrid/Identity`, which has a
+   real `groups` field -- silently correct there, silently wrong elsewhere)."
+  [ident :- IdentityMap]
+  (let [groups (remove str/blank? (:groups ident))]
+    (boolean (or (empty? groups)
+                 (= (set not-logged-in-groups) (set groups))))))
 
 (s/defn ident->map :- (s/maybe IdentityMap)
   [ident :- (s/maybe AuthIdentity)]

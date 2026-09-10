@@ -35,6 +35,13 @@
 
 (def observable-fields
   {:verdict {:type verdict/VerdictType
+             ;; Customer-visible via introspection: describe the behaviour, keep
+             ;; the internal ticket ref (XFV-20) out of the description string.
+             :description (str "The tenant-local Verdict for this Observable, "
+                               "computed only from the judgements the caller can "
+                               "read that are also owned by its own org. Null when "
+                               "the caller has no org or no such judgement "
+                               "contributes.")
              :resolve (s/fn :- AnyRealizeFnResult
                         [context _ _ src]
                         (delayed/fn :- GraphQLValue
