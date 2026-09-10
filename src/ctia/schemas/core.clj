@@ -263,6 +263,13 @@
                              :spec-kw-ns ~spec-kw-ns}))
 
 ;; verdict
+;;
+;; NOTE (XFV-20): `vs/Verdict`'s CTIM-sourced description renders into swagger's
+;; `definitions.Verdict.description` and still says a verdict is chosen from
+;; *all* unexpired judgements -- knowingly stale re org-scoping (fixing it needs
+;; a CTIM DDL change). The accurate text lives in the REST `api-description`
+;; (`ctia.http.handler`) and the GraphQL `verdict-description`
+;; (`ctia.verdict.graphql.schemas`).
 
 (def-acl-schema Verdict
   vs/Verdict

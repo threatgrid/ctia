@@ -54,8 +54,8 @@
 
    Note: =max-record-visibility= governs *document* reads and searches only.
    Verdict computation (the REST =GET .../verdict= endpoint and the GraphQL
-   =verdict= field) is always org-scoped: a verdict is computed solely from
-   judgements owned by the caller's own org, regardless of this setting or of
+   =verdict= field) is always org-scoped: a verdict is computed only from the
+   judgements the caller can read that are also owned by its own org, regardless of this setting or of
    any =authorized_groups= / =authorized_users= grant on a foreign-owned
    judgement. A consequence is that a caller with no org of its own gets no
    verdict at all: the usual production case is a JWT whose =org/id= claim is

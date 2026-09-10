@@ -271,8 +271,11 @@ Please note that the `authorized_groups` property may work only if max record vi
 
 The access rules above (TLP visibility and `authorized_users` / `authorized_groups`)
 govern reading and listing individual documents. A Verdict is different: it is a
-tenant-local trust decision, so it is derived **only from Judgements owned by the
-querying org** (their stored `groups`). A Judgement that another org merely shares
+tenant-local trust decision, so it is derived **only from Judgements the caller
+can read that are also owned by the querying org** (their stored `groups`). A
+Judgement owned by a different user in the caller's own org that the caller
+cannot read (e.g. a TLP-red judgement without a sharing grant) does not
+contribute either. A Judgement that another org merely shares
 with the caller -- whether via `authorized_users` / `authorized_groups` or via a
 public (Green/White) TLP under `everyone` visibility -- is still readable but does
 **not** contribute to the caller's Verdict. This prevents cross-tenant "verdict
