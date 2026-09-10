@@ -267,7 +267,7 @@ value does not fail, only newly-introduced foreign values are rejected.
 
 Please note that the `authorized_groups` property may work only if max record visibility is set to `everyone`
 
-##### Verdict carve-out (XFV-20)
+##### Verdict carve-out
 
 The access rules above (TLP visibility and `authorized_users` / `authorized_groups`)
 govern reading and listing individual documents. A Verdict is different: it is a
@@ -278,8 +278,9 @@ public (Green/White) TLP under `everyone` visibility -- is still readable but do
 **not** contribute to the caller's Verdict. This prevents cross-tenant "verdict
 poisoning" while leaving ordinary cross-tenant reads and lists unchanged.
 
-A corollary: a caller with no org of its own -- for example a static-auth
-deployment with `ctia.auth.static.group` unset, or the anonymous identity of
+A corollary: a caller with no org of its own -- a JWT whose `org/id` claim is
+missing (the usual production case), a static-auth deployment with a blank
+`ctia.auth.static.group`, or the anonymous identity of
 `ctia.auth.static.readonly-for-anonymous` -- has no owned Judgements to scope a
 Verdict to and therefore receives no Verdict (HTTP 404) for any Observable,
 including public (Green/White) TLP Observables that a plain document read would

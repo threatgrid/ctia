@@ -51,39 +51,23 @@
                       params))
 
 (defn- verdict-owner-filter
-  "XFV-20: a verdict is a tenant-local trust decision. Restrict verdict
-   candidates to judgements owned by the caller's own org (`groups`), so a
-   judgement that merely lists the caller's org in `authorized_groups` /
-   `authorized_users` cannot contribute to (poison) the caller's verdict.
-
-   This neutralizes any pre-existing cross-tenant *read* grant for verdict
-   calculation, regardless of the `authorized_*` clauses in
-   `find-restriction-query-part`. It does NOT touch the *write* path: a
-   *pre-existing* foreign `authorized_groups` on a victim-owned document still
-   confers write access via `allow-write?` (`ctia.domain.access-control`), and
-   the stored owner `groups` are preserved on update (`default-realize`).
-   Note that a caller can no longer *introduce* a foreign `authorized_groups`
-   at write time -- `authorized-groups-check` (`ctia.flows.crud`) rejects newly
-   added cross-tenant grants -- so this caveat is limited to grants already
-   present in stored data. Tightening write-side authority over such
-   pre-existing grants is a separate XFV-20 follow-up out of scope here."
+  "XFV-20: restrict verdict candidates to judgements owned by the caller's own
+   org, so a foreign judgement shared via `authorized_*` cannot contribute to
+   (poison) the verdict. Terms are lower-cased to match the `groups`
+   `lowercase_normalizer` mapping; the arg is the ident *map*."
   [{:keys [groups]}]
   {:terms {"groups" (map str/lower-case groups)}})
 
 (defn list-active-by-observable
   [state observable ident get-in-config params]
-  ;; XFV-20 (CR1): a verdict is scoped to the caller's own org. A caller with
-  ;; no real tenant (`auth/orgless-ident?` -- no groups, or only the
-  ;; `readonly-for-anonymous` sentinel) has no org to scope to, so there is no
-  ;; verdict to compute. Bail out explicitly and observably rather than issuing
-  ;; a query whose `{:terms {"groups" ...}}` filter can match no stored doc,
-  ;; silently flipping the response to a 404 with nothing logged. Only the
-  ;; static-auth deployment cause (`ctia.auth.static.group` unset) is warned once
-  ;; at startup by `static-auth-service`; the JWT no-`org/id` case is registered
-  ;; via ring middleware regardless of auth type and gets NO boot warning, so for
-  ;; it this per-request `debugf` (off at the shipped `info` root level) is the
-  ;; only signal. It carries the observable so an operator who raises the log
-  ;; level can correlate a 404 with the client's request.
+  {:pre [(contains? ident :groups)]}
+  ;; XFV-20: a verdict is scoped to the caller's own org. An org-less caller
+  ;; (`auth/orgless-ident?`) has no org to scope to, so bail out explicitly
+  ;; rather than issue a `{:terms {"groups" ...}}` filter that matches no stored
+  ;; doc and silently 404s. Static-auth org-less settings are warned at boot; a
+  ;; JWT missing `org/id` is not, so for it this per-request `debugf` (off at the
+  ;; shipped `info` level) is the only signal, carrying the observable so an
+  ;; operator who raises the level can correlate the 404 with the request.
   (if (auth/orgless-ident? ident)
     (do (log/debugf "verdict skipped: caller %s has no org; a verdict is tenant-local (observable %s)"
                     (pr-str (:login ident))

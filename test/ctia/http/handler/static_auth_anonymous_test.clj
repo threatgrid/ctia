@@ -1,6 +1,7 @@
 (ns ctia.http.handler.static-auth-anonymous-test
   (:require [ctia.test-helpers.core :as helpers :refer [GET POST with-properties]]
             [ctia.test-helpers.es :as es-helpers]
+            [ctim.domain.id :as id]
             [clojure.test :refer [deftest is testing use-fixtures]]
             [schema.test :refer [validate-schemas]]))
 
@@ -50,7 +51,7 @@
   (let [app (helpers/get-current-app)
         secret "tearbending"
         observable {:type "ip" :value "10.0.0.1"}
-        {create-status :status}
+        {create-status :status judgement :parsed-body}
         (POST app
               "ctia/judgement?wait_for=true"
               :body {:observable observable
@@ -62,9 +63,16 @@
                      :confidence "High"
                      :tlp "green"
                      :valid_time {:start_time "2016-02-12T00:00:00.000-00:00"}}
-              :headers {"Authorization" secret})]
+              :headers {"Authorization" secret})
+        judgement-short-id (some-> (:id judgement) id/long-id->id :short-id)]
     (is (= 201 create-status)
         "the secret holder (a static write identity with a group) may create a judgement")
+
+    (testing "the anonymous document read IS allowed (so the verdict 404 below is org-scoping, not an unreadable judgement)"
+      (let [{status :status}
+            (GET app (str "ctia/judgement/" judgement-short-id))]
+        (is (= 200 status)
+            "under max-record-visibility=everyone a Green judgement is anonymously readable as a document")))
 
     (testing "the secret holder, whose static identity has an org, gets the verdict"
       (let [{status :status}

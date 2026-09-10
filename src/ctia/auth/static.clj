@@ -61,19 +61,20 @@
   IAuth
   [[:ConfigService get-in-config]]
   (init [this context]
-        (let [auth-config (get-in-config [:ctia :auth])]
-          ;; XFV-20: a verdict is tenant-local. When `ctia.auth.static.group` is
-          ;; blank, even the authenticated static write identity is org-less, so
-          ;; its `.../verdict` requests 404 (a request that never authenticates
-          ;; is refused earlier by the capability gate, not here). `log/debugf` in
-          ;; the verdict path produces nothing at the shipped `info` root level,
-          ;; so surface the deployment-level cause once here, where it is knowable
-          ;; and a `log/warn` reaches an operator.
-          (when (str/blank? (get-in auth-config [:static :group]))
+        (let [auth-config (get-in-config [:ctia :auth])
+              static-cfg (:static auth-config)]
+          ;; XFV-20: a verdict is tenant-local, so an org-less caller receives
+          ;; none (HTTP 404). Warn once at boot for the two static-auth settings
+          ;; that leave callers org-less -- the per-request signal is only a
+          ;; `log/debugf`, off at the shipped `info` level.
+          (when (str/blank? (:group static-cfg))
             (log/warn (str "ctia.auth.static.group is blank: the authenticated "
                            "static (write) identity has no org, so its verdict "
-                           "requests return 404. Set ctia.auth.static.group to "
-                           "enable verdict computation for static-auth callers.")))
+                           "requests return 404.")))
+          (when (:readonly-for-anonymous static-cfg)
+            (log/warn (str "ctia.auth.static.readonly-for-anonymous is on: "
+                           "anonymous callers have no org, so their verdict "
+                           "requests return 404.")))
           (assoc context :auth-config auth-config)))
   (identity-for-token [this token]
     (let [{:keys [auth-config]} (service-context this)
@@ -81,17 +82,7 @@
           readonly? (get-in auth-config [:static :readonly-for-anonymous])]
       (cond
         (= token secret) (->WriteIdentity (get-in auth-config [:static :name])
-                                          ;; XFV-20: normalize a blank group to
-                                          ;; nil at the source so `orgless-ident?`
-                                          ;; and the boot warning agree. Without
-                                          ;; this, a blank (but non-nil) group
-                                          ;; would make `(groups)` return `[""]`
-                                          ;; -- neither empty nor the sentinel --
-                                          ;; so the verdict guard would be
-                                          ;; bypassed and the request would 404
-                                          ;; via a match-nothing filter instead.
-                                          (let [group (get-in auth-config [:static :group])]
-                                            (when-not (str/blank? group) group)))
+                                          (get-in auth-config [:static :group]))
         ;; Readonly access when the password does not match
         readonly? (->ReadOnlyIdentity)
         :else auth/denied-identity-singleton))))

@@ -9,7 +9,7 @@
 (use-fixtures :once validate-schemas)
 
 (deftest orgless-ident?-test
-  ;; XFV-20 (LOW): pin `orgless-ident?` directly. Until now it was exercised only
+  ;; XFV-20: pin `orgless-ident?` directly. Until now it was exercised only
   ;; transitively via `list-active-by-observable`; the mixed case in particular
   ;; (a real org alongside the not-logged-in sentinel) was unpinned.
   (let [ident #(hash-map :client-id "c" :login "l" :groups %)]

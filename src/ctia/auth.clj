@@ -49,29 +49,16 @@
    :groups [s/Str]})
 
 (s/defn orgless-ident? :- s/Bool
-  "True when the identity carries no real org/tenant: either it has no groups at
-   all (a JWT missing `org/id`, or static-auth with `ctia.auth.static.group`
-   unset), or it carries only the not-logged-in sentinel group (the
-   `readonly-for-anonymous` ReadOnlyIdentity, which reports
-   `not-logged-in-groups`). Such a caller has no tenant to scope a tenant-local
-   decision (e.g. a verdict) to.
+  "True when the identity has no real org/tenant to scope a tenant-local
+   decision (a verdict) to: no groups at all (a JWT missing `org/id`, static-auth
+   with a blank `ctia.auth.static.group`), or only the not-logged-in sentinel
+   (the `readonly-for-anonymous` identity). Blank group strings count as absent.
 
-   Takes the map form (`IdentityMap`) rather than an `IIdentity` record on
-   purpose: a plain `:groups` key exists on only SOME implementations. On
-   `ctia.auth.threatgrid/Identity` there is a literal `groups` field, so
-   `(:groups record)` happens to return the real group list and the predicate
-   would answer correctly -- but on the static and JWT identities groups live
-   only behind the `groups` protocol method, so `(:groups record)` is `nil` and
-   the predicate would wrongly answer `true`. A record read is therefore
-   silently correct on threatgrid and silently wrong elsewhere; callers must
-   pass the identity map (`ident->map` / the route `identity-map`) so the answer
-   is uniform across implementations.
-
-   Blank group strings are treated as absent: a JWT with a blank `org/id` claim
-   (or static-auth with a blank `ctia.auth.static.group`) reports `[\"\"]`, which
-   is neither empty nor the sentinel. Dropping blanks here makes one predicate
-   decide the org-less question for every implementation, so no identity slips
-   through to issue a match-nothing `{:terms {\"groups\" [\"\"]}}` verdict filter."
+   Takes the identity *map* (`ident->map`), not an `IIdentity` record: `groups`
+   is a protocol method rather than a field on the static and JWT identities, so
+   `(:groups record)` would read `nil` and the predicate would wrongly answer
+   `true` (it happens to work on `ctia.auth.threatgrid/Identity`, which has a
+   real `groups` field -- silently correct there, silently wrong elsewhere)."
   [ident :- IdentityMap]
   (let [groups (remove str/blank? (:groups ident))]
     (boolean (or (empty? groups)

@@ -5,19 +5,16 @@
             [ductile.document :as ductile]
             [schema.test :refer [validate-schemas]]))
 
-;; XFV-20 (S1): turn on schema validation so every ident below is checked
-;; against `auth/IdentityMap` -- `list-active-by-observable` reaches
-;; `auth/orgless-ident?` (an `s/defn` taking `IdentityMap`), so this also proves
-;; the guard is exercised with the conformant shape its docstring warns about
-;; (complete `:client-id`/`:login`/`:groups`, groups a real `[s/Str]`).
+;; XFV-20: turn on schema validation so every ident below is checked against
+;; `auth/IdentityMap` -- `list-active-by-observable` reaches `auth/orgless-ident?`
+;; (an `s/defn` taking `IdentityMap`), so this also proves the guard is exercised
+;; with the conformant shape its docstring warns about.
 (use-fixtures :once validate-schemas)
 
-(deftest list-active-by-observable-verdict-owner-filter-test
-  ;; XFV-20: a verdict is a tenant-local trust decision. The verdict query must
-  ;; be constrained to judgements owned by the caller's own org (`groups`), so a
-  ;; foreign judgement that merely lists the caller's org in `authorized_groups`
-  ;; (or `authorized_users`) cannot dominate/poison the verdict. This is an
-  ;; ES-free check that the guard clause is composed into the query.
+(deftest list-active-by-observable-test
+  ;; XFV-20: a verdict is a tenant-local trust decision, so the verdict query is
+  ;; constrained to judgements owned by the caller's own org (`groups`) and an
+  ;; org-less caller gets no verdict. ES-free checks on the composed query.
   (testing "list-active-by-observable adds a mandatory, lower-cased groups filter for the caller's org"
     (let [captured (atom nil)
           state {:conn :fake-conn :index "judgement-index"}
@@ -77,19 +74,10 @@
                                        {}))
       (is (some #{{:terms {"groups" ["org-a" "org-b"]}}}
                 (get-in @captured [:bool :filter]))
-          "every one of the caller's groups is included, lower-cased"))))
-
-(deftest list-active-by-observable-empty-groups-test
-  ;; XFV-20 (CR1): a caller with no org (static-auth with the group unset, or a
-  ;; JWT missing org/id) has no tenant to scope the verdict to. The guard must
-  ;; bail out explicitly -- return nil WITHOUT querying -- rather than issue a
-  ;; match-nothing {:terms {"groups" ...}} filter. The anonymous read-only
-  ;; identity (ctia.auth.type=static + readonly-for-anonymous=true) reports the
-  ;; sentinel auth/not-logged-in-groups rather than an empty list, so it must be
-  ;; treated as no-org too. Both idents are complete `auth/IdentityMap`s (shapes a
-  ;; real `IIdentity` produces); `:groups nil` is intentionally NOT exercised --
-  ;; no `IIdentity` impl yields nil groups (all `(remove nil? ...)`), and it is
-  ;; rejected by the `[s/Str]` schema now that validation is on.
+          "every one of the caller's groups is included, lower-cased")))
+  ;; A caller with no org (static-auth with a blank group, a JWT missing org/id)
+  ;; or one carrying only the `readonly-for-anonymous` sentinel must bail out --
+  ;; return nil WITHOUT querying -- rather than issue a match-nothing filter.
   (testing "an identity with no real org yields no verdict and issues no query"
     (let [called? (atom false)
           state {:conn :fake-conn :index "judgement-index"}]

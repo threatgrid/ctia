@@ -57,10 +57,11 @@
    =verdict= field) is always org-scoped: a verdict is computed solely from
    judgements owned by the caller's own org, regardless of this setting or of
    any =authorized_groups= / =authorized_users= grant on a foreign-owned
-   judgement (XFV-20). A consequence is that an authenticated caller with no org
-   of its own gets no verdict at all. With =ctia.auth.static.group= unset, even
-   the authenticated static write identity is org-less, so its =.../verdict=
-   requests return 404. Under =ctia.auth.static.readonly-for-anonymous= = =true=,
+   judgement. A consequence is that a caller with no org of its own gets no
+   verdict at all: the usual production case is a JWT whose =org/id= claim is
+   missing. With =ctia.auth.static.group= blank, even the authenticated static
+   write identity is org-less, so its =.../verdict= requests return 404. Under
+   =ctia.auth.static.readonly-for-anonymous= = =true=,
    a request that does not present =ctia.auth.static.secret= resolves to the
    org-less read-only identity and returns 404 for =.../verdict= (a request that
    presents the secret still receives a verdict when =ctia.auth.static.group= is
