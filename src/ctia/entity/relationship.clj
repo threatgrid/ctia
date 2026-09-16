@@ -3,6 +3,7 @@
    [clojure.string :as str]
    [ctia.domain.entities :refer [long-id->id short-id->long-id with-long-id]]
    [ctia.entity.relationship.schemas :as rs]
+   [ctia.entity.relationship.es-store :as es-store]
    [ctia.flows.crud :as flows]
    [ctia.http.middleware.auth :refer [require-capability!]]
    [ctia.http.routes.common :as routes.common]
@@ -11,30 +12,11 @@
    [ctia.schemas.core :refer [APIHandlerServices Reference TLP]]
    [ctia.schemas.sorting :as sorting]
    [ctia.store :refer [create-record read-record]]
-   [ctia.stores.es.mapping :as em]
-   [ctia.stores.es.store :refer [def-es-store]]
    [ring.swagger.json-schema :refer [describe]]
    [ring.util.http-response :refer [not-found bad-request bad-request!]]
    [schema-tools.core :as st]
-   [schema.core :as s]))
-
-(def relationship-mapping
-  {"relationship"
-   {:dynamic false
-    :properties
-    (merge
-     em/base-entity-mapping
-     em/describable-entity-mapping
-     em/sourcable-entity-mapping
-     em/stored-entity-mapping
-     {:relationship_type em/token
-      :source_ref        em/token
-      :target_ref        em/token})}})
-
-(def-es-store RelationshipStore
-  :relationship
-  rs/StoredRelationship
-  rs/PartialStoredRelationship)
+   [schema.core :as s]
+   [ctia.entity.event.schemas :as es]))
 
 (def relationship-fields
   (concat sorting/default-entity-sort-fields
@@ -254,8 +236,8 @@
    :stored-schema         rs/StoredRelationship
    :partial-stored-schema rs/PartialStoredRelationship
    :realize-fn            rs/realize-relationship
-   :es-store              ->RelationshipStore
-   :es-mapping            relationship-mapping
+   :es-store              es-store/->RelationshipStore
+   :es-mapping            es-store/relationship-mapping
    :services->routes      (routes.common/reloadable-function relationship-routes)
    :capabilities          capabilities
    :fields                relationship-fields
