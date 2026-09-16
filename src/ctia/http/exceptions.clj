@@ -7,7 +7,8 @@
             [compojure.api.impl.logging :as logging]
             [ring.util.http-response :refer [internal-server-error
                                              bad-request
-                                             forbidden]]
+                                             forbidden
+                                             request-entity-too-large]]
             [clojure.data.json :as json]))
 
 (defn ex-message-and-data [^Exception e]
@@ -80,6 +81,18 @@
    (let [entity (:entity (ex-data e))]
      {:error "Spec Validation Client Error"
       :type "Invalid Entity Error"
+      :message (.getMessage e)
+      :entity entity
+      :class (.getName (class e))})))
+
+(defn entity-too-large-error-handler
+  "Handle entity too large error (413)"
+  [^Exception e _data _request]
+  (logging/log! :info e (ex-message-and-data e))
+  (request-entity-too-large
+   (let [entity (:entity (ex-data e))]
+     {:error "Entity Too Large"
+      :type "Entity Size Limit Error"
       :message (.getMessage e)
       :entity entity
       :class (.getName (class e))})))
