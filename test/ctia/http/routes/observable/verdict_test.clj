@@ -557,24 +557,12 @@
 
          (is (= 201 (:status green-judgement-post)))
 
-         ;; XFV-20: a verdict is a tenant-local trust decision. Pre-fix, a green
-         ;; Judgement produced a verdict "readable by everyone" -- with the
-         ;; default `max-record-visibility=everyone`, the read filter's public-TLP
-         ;; clause let any green/white record contribute to any org's verdict.
-         ;; That path was itself a cross-tenant poisoning vector: an attacker
-         ;; could set `tlp=green` (visible to all by default) on a high-priority
-         ;; Clean judgement and dominate every tenant's verdict -- the same abuse
-         ;; XFV-20 closes for `authorized_groups`, and NOT closable by only
-         ;; dropping the authorized_* clauses. `list-active-by-observable` now
-         ;; ANDs a mandatory owner-org filter, so a verdict is computed only from
-         ;; the caller's own org's judgements, regardless of TLP. This matches the
-         ;; behavior `test-observable-verdict-access-control-max-record-visibility`
-         ;; already asserts under `max-record-visibility=group` -- the verdict path
-         ;; is now tenant-local unconditionally.
-         ;;
-         ;; Cross-tenant sharing on reads/lists is UNCHANGED: baruser/foobaruser
-         ;; can still read the green judgement directly (asserted below); only the
-         ;; aggregated verdict is scoped to the querying org.
+         ;; The verdict path is now org-scoped, so a green Judgement contributes
+         ;; only to its owning org's verdict, even under the default
+         ;; `max-record-visibility=everyone` (pre-fix a public-TLP green record
+         ;; contributed to every org's verdict). Cross-tenant READ of the green
+         ;; judgement is unchanged -- only the aggregated verdict is scoped.
+         ;; See verdict scoping in resources/ctia/public/doc/design.md.
          (testing "a green Judgement contributes to the owning org's verdict only"
            (let [green-judgement-id (get-in green-judgement-post [:parsed-body :id])
                  green-judgement-short-id (some-> green-judgement-id id/long-id->id :short-id)
@@ -615,7 +603,7 @@
                  "a green judgement owned by another org must not contribute to the caller's verdict")
 
              ;; but cross-tenant READ of the green judgement is unchanged: the
-             ;; guard is scoped to the verdict path, not to reads/lists.
+             ;; org-scoping applies to the verdict path, not to reads/lists.
              (is (= 200 (:status (GET app
                                       (str "ctia/judgement/" green-judgement-short-id)
                                       :headers {"Authorization" "baruser"})))
@@ -699,21 +687,14 @@
                     (:judgement_id verdict-3)))))
 
          (testing "a same-org authorized_groups grant contributes to a group member's verdict"
-           ;; XFV-20 regression detector for the intra-org sharing path. baruser
-           ;; (bargroup) posts a TLP-red judgement carrying an explicit
-           ;; authorized_groups grant for its OWN org (bargroup). foobaruser is a
-           ;; member of bargroup but NOT the owner, so for foobaruser's verdict:
-           ;;   - the owner-org filter admits the doc (same org, stored groups
-           ;;     ["bargroup"]);
-           ;;   - within the access-control restriction the red clause requires
-           ;;     the owner and the amber/public clauses require a non-red TLP, so
-           ;;     the ONLY should-clause that can admit this red doc is
-           ;;     {:terms {"authorized_groups" groups}} (stores/es/query.clj).
-           ;; A cleanup dropping the authorized_users/authorized_groups should
-           ;; clauses would silently break intra-org verdict sharing of red/amber
-           ;; judgements with no other test failing -- this subtest fails instead.
-           ;; (This is a same-org grant; the FOREIGN-grant non-poisoning property
-           ;; is covered by `test-observable-verdict-cross-tenant-isolation`.)
+           ;; Regression detector for intra-org sharing. baruser (bargroup) posts
+           ;; a TLP-red judgement with an authorized_groups grant for its OWN org.
+           ;; foobaruser is a bargroup member but not the owner: the owner-org
+           ;; filter admits the doc, and among the access-control clauses only the
+           ;; authorized_groups should-clause can admit a red doc, so dropping the
+           ;; authorized_* clauses would break intra-org sharing and fail here.
+           ;; (The foreign-grant case is covered by
+           ;; `test-observable-verdict-cross-tenant-isolation`.)
            (let [shared-observable {:type "domain" :value "shared-red.com"}
                  shared-judgement-post
                  (POST app
@@ -852,21 +833,13 @@
                   verdict))))))))
 
 (deftest test-observable-verdict-access-control-max-record-visibility
-  ;; XFV-20: the verdict path is now unconditionally org-scoped (see
-  ;; `ctia.entity.judgement.es-store/verdict-owner-filter`), so a caller in
-  ;; another org gets a 404 verdict for foogroup's green judgement regardless of
-  ;; `max-record-visibility`. That means the verdict route ALONE can no longer
-  ;; detect a revert of the public-TLP clause in
-  ;; `ctia.stores.es.query/find-restriction-query-part` (the `everyone` branch).
-  ;; To keep this test discriminating, we run it under BOTH settings and
-  ;; separate the two concerns:
-  ;;   * the *document* read still follows `max-record-visibility`
-  ;;     (403 under `group`, 200 under `everyone`); this remains the regression
-  ;;     detector for the public-TLP read clause on the document path (also
-  ;;     covered by the entity-level access-control tests), and
-  ;;   * the *verdict* stays tenant-local (404 for a foreign org under BOTH
-  ;;     settings). If the owner filter were reverted, the verdict for baruser
-  ;;     would flip to 200 under `everyone` and this test would fail.
+  ;; The verdict path is now org-scoped regardless of `max-record-visibility`,
+  ;; so the verdict route alone can no longer detect a revert of the public-TLP
+  ;; read clause in `ctia.stores.es.query/find-restriction-query-part`. Run under
+  ;; BOTH settings and check the two concerns separately: the *document* read
+  ;; still follows `max-record-visibility` (403 under `group`, 200 under
+  ;; `everyone`), while the *verdict* stays org-scoped (404 for a foreign org
+  ;; under both). See verdict scoping in resources/ctia/public/doc/design.md.
   (letfn [(run-visibility-test [visibility]
             (helpers/with-properties (into es-helpers/basic-auth-properties
                                            ["ctia.access-control.max-record-visibility" visibility])
@@ -929,11 +902,11 @@
     (run-visibility-test "everyone")))
 
 (deftest test-observable-verdict-cross-tenant-isolation
-  ;; XFV-20: a verdict is a tenant-local trust decision. A judgement owned by
-  ;; another org that merely lists the caller's org in authorized_groups must
-  ;; not appear in (poison) the caller's verdict. Such a record can only be
-  ;; pre-existing -- the write path now rejects a foreign authorized_groups --
-  ;; so we inject the grant directly in the store to simulate pre-fix data.
+  ;; A judgement owned by another org that merely lists the caller's org in
+  ;; authorized_groups must not contribute to the caller's verdict. Such a record
+  ;; can only be pre-existing -- the write path now rejects a foreign
+  ;; authorized_groups -- so inject the grant directly in the store to simulate
+  ;; pre-fix data.
   (test-for-each-store-with-app
    (fn [app]
      (helpers/set-capabilities! app "attacker" ["attacker-org"] "user" all-capabilities)
@@ -966,11 +939,10 @@
            (is (= 201 status))
 
            (testing "simulate pre-fix poisoning: grant the victim org/user via authorized_groups AND authorized_users directly in the store"
-             ;; XFV-20: the owner filter is a pure `groups` filter, so it
-             ;; neutralizes BOTH a foreign `authorized_groups` grant and a
-             ;; foreign `authorized_users` grant identically -- inject both so
-             ;; the end-to-end assertion covers the `authorized_users` carve-out
-             ;; the guard's docstring claims, not only `authorized_groups`.
+             ;; The owner filter is a pure `groups` filter, so it excludes a
+             ;; foreign `authorized_groups` grant and a foreign `authorized_users`
+             ;; grant identically -- inject both to cover the `authorized_users`
+             ;; case too, not only `authorized_groups`.
              (let [stored (store/read-record judgement-store attacker-short-id attacker-ident params)]
                (store/update-record judgement-store
                                     attacker-short-id
@@ -987,12 +959,9 @@
                (is (contains? (set (:authorized_users reread)) "victim")
                    "the injected foreign authorized_users grant must be stored")))
 
-           ;; Assert the attacker's own 200 FIRST: it proves the injected
-           ;; judgement is actually searchable, so the victim's 404 below
-           ;; demonstrates isolation rather than passing vacuously on a
-           ;; not-yet-refreshed write (mirrors
-           ;; `test-observable-verdict-access-control`, which binds its 200
-           ;; ahead of its 404s).
+           ;; Assert the attacker's own 200 first: it proves the injected
+           ;; judgement is searchable, so the victim's 404 below shows isolation
+           ;; rather than passing vacuously on a not-yet-refreshed write.
            (testing "the owning (attacker) org still gets its own judgement's verdict"
              (let [{status :status
                     verdict :parsed-body}

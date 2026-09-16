@@ -63,10 +63,9 @@
   (init [this context]
         (let [auth-config (get-in-config [:ctia :auth])
               static-cfg (:static auth-config)]
-          ;; XFV-20: a verdict is tenant-local, so an org-less caller receives
-          ;; none (HTTP 404). Warn once at boot for the two static-auth settings
-          ;; that leave callers org-less -- the per-request signal is only a
-          ;; `log/debugf`, off at the shipped `info` level.
+          ;; Warn at boot for the two static-auth settings that leave callers
+          ;; org-less, since an org-less caller gets no verdict (404). See
+          ;; verdict scoping in resources/ctia/public/doc/design.md.
           (when (str/blank? (:group static-cfg))
             (log/warn (str "ctia.auth.static.group is blank: the authenticated "
                            "static (write) identity has no org, so its verdict "

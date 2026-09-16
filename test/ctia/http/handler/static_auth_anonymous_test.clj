@@ -10,10 +10,8 @@
   (with-properties
     ["ctia.auth.static.readonly-for-anonymous" true
      ;; Pin the default so `anonymous-verdict-no-org-404-test` is non-vacuous:
-     ;; the anonymous 404 must be caused by verdict org-scoping, not by the Green
-     ;; judgement being invisible to an anonymous document read. Under `everyone`
-     ;; the document IS anonymously readable, so a 404 can only come from the
-     ;; org-less verdict guard.
+     ;; under `everyone` the Green judgement is anonymously readable as a
+     ;; document, so the anonymous 404 can only come from verdict org-scoping.
      "ctia.access-control.max-record-visibility" "everyone"]
     (t)))
 
@@ -40,14 +38,11 @@
     (is (= 200 status))))
 
 (deftest anonymous-verdict-no-org-404-test
-  ;; XFV-20 (route-level): the one path where the fix changes *unauthenticated*
-  ;; behaviour. `ReadOnlyIdentity` keeps `:read-verdict`, so pre-fix an anonymous
-  ;; caller received a verdict for any Green/White judgement under the default
-  ;; `max-record-visibility=everyone`; post-fix the anonymous identity is org-less
-  ;; (`auth/orgless-ident?`) and must get 404. The secret holder (whose static
-  ;; group is set by `fixture-properties:static-auth`) still gets the verdict.
-  ;; This is also the only end-to-end proof the sentinel branch is wired to a real
-  ;; `IIdentity`, not a hand-built map.
+  ;; The one route-level path where the fix changes *unauthenticated* behaviour.
+  ;; `ReadOnlyIdentity` keeps `:read-verdict`, so pre-fix an anonymous caller got
+  ;; a verdict for a Green/White judgement under `max-record-visibility=everyone`;
+  ;; post-fix the anonymous identity is org-less and must get 404, while the
+  ;; secret holder (which has a static group) still gets the verdict.
   (let [app (helpers/get-current-app)
         secret "tearbending"
         observable {:type "ip" :value "10.0.0.1"}

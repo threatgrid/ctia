@@ -264,12 +264,10 @@
 
 ;; verdict
 ;;
-;; NOTE (XFV-20): `vs/Verdict`'s CTIM-sourced description renders into swagger's
-;; `definitions.Verdict.description` and still says a verdict is chosen from
-;; *all* unexpired judgements -- knowingly stale re org-scoping (fixing it needs
-;; a CTIM DDL change). The accurate text lives in the REST `api-description`
-;; (`ctia.http.handler`) and the GraphQL `verdict-description`
-;; (`ctia.verdict.graphql.schemas`).
+;; NOTE: `vs/Verdict`'s CTIM-sourced description renders into swagger and still
+;; says a verdict is chosen from *all* unexpired judgements -- stale re
+;; org-scoping (fixing it needs a CTIM change). The accurate text lives in the
+;; REST `api-description` and the GraphQL `verdict-description`.
 
 (def-acl-schema Verdict
   vs/Verdict

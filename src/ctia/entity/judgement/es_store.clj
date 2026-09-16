@@ -51,23 +51,19 @@
                       params))
 
 (defn- verdict-owner-filter
-  "XFV-20: restrict verdict candidates to judgements owned by the caller's own
-   org, so a foreign judgement shared via `authorized_*` cannot contribute to
-   (poison) the verdict. Terms are lower-cased to match the `groups`
-   `lowercase_normalizer` mapping; the arg is the ident *map*."
+  "Restrict verdict candidates to judgements owned by the caller's own org.
+   Terms are lower-cased to match the `groups` `lowercase_normalizer` mapping;
+   the arg is the ident map. See verdict scoping in
+   resources/ctia/public/doc/design.md."
   [{:keys [groups]}]
   {:terms {"groups" (map str/lower-case groups)}})
 
 (defn list-active-by-observable
   [state observable ident get-in-config params]
   {:pre [(contains? ident :groups)]}
-  ;; XFV-20: a verdict is scoped to the caller's own org. An org-less caller
-  ;; (`auth/orgless-ident?`) has no org to scope to, so bail out explicitly
-  ;; rather than issue a `{:terms {"groups" ...}}` filter that matches no stored
-  ;; doc and silently 404s. Static-auth org-less settings are warned at boot; a
-  ;; JWT missing `org/id` is not, so for it this per-request `debugf` (off at the
-  ;; shipped `info` level) is the only signal, carrying the observable so an
-  ;; operator who raises the level can correlate the 404 with the request.
+  ;; An org-less caller has no org to scope to, so return no verdict rather than
+  ;; issue a filter that matches nothing. See verdict scoping in
+  ;; resources/ctia/public/doc/design.md.
   (if (auth/orgless-ident? ident)
     (do (log/debugf "verdict skipped: caller %s has no org; a verdict is tenant-local (observable %s)"
                     (pr-str (:login ident))
@@ -76,14 +72,10 @@
     (let [now-str (time/format-date-time (time/timestamp))
           date-range (select-keys params [:from :to])
           time-opts {:now-str now-str :date-range date-range}
-          ;; Compose the base access-control restriction as one opaque element
-          ;; of the top-level `:filter` (the convention every other caller of
-          ;; `find-restriction-query-part` follows, e.g. `make-search-query` in
-          ;; `ctia.stores.es.crud`), alongside the mandatory owner-org filter,
-          ;; and put the observable/time clauses in `:must`. This avoids reaching
-          ;; into the helper's `[:bool :must]`/`[:bool :filter]` internals, so a
-          ;; future clause added inside `find-restriction-query-part` cannot be
-          ;; silently clobbered.
+          ;; Put the base access-control restriction and the owner-org filter in
+          ;; the top-level `:filter` (the convention other callers of
+          ;; `find-restriction-query-part` follow) and the observable/time
+          ;; clauses in `:must`, rather than reaching into the helper's internals.
           composed-query
           {:bool {:filter [(find-restriction-query-part ident get-in-config)
                            (verdict-owner-filter ident)]

@@ -18,13 +18,10 @@
                                                     (:ident context)
                                                     field-selection)))}})
 
-;; XFV-20: a verdict is a tenant-local trust decision. Override CTIM's entity
-;; description (which states a verdict is chosen from *all* unexpired judgements
-;; on the observable) so GraphQL introspection reflects the org-scoping: only
-;; the judgements the caller can read that are also owned by its own org
-;; contribute, and a caller with no org of its own gets no verdict (null).
-;; Customer-visible via introspection, so it describes the behaviour without an
-;; internal ticket reference (XFV-20 stays in the source comment above).
+;; Override CTIM's entity description so GraphQL introspection reflects the
+;; org-scoping (CTIM still says a verdict uses *all* unexpired judgements). The
+;; description string is customer-visible, so it carries no ticket reference.
+;; See verdict scoping in resources/ctia/public/doc/design.md.
 (def verdict-description
   (str "A Verdict is chosen from the Judgements on an Observable which have not "
        "yet expired, that the caller can read and that are owned by the caller's "

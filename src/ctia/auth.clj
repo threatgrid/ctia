@@ -49,16 +49,12 @@
    :groups [s/Str]})
 
 (s/defn orgless-ident? :- s/Bool
-  "True when the identity has no real org/tenant to scope a tenant-local
-   decision (a verdict) to: no groups at all (a JWT missing `org/id`, static-auth
-   with a blank `ctia.auth.static.group`), or only the not-logged-in sentinel
-   (the `readonly-for-anonymous` identity). Blank group strings count as absent.
-
-   Takes the identity *map* (`ident->map`), not an `IIdentity` record: `groups`
-   is a protocol method rather than a field on the static and JWT identities, so
-   `(:groups record)` would read `nil` and the predicate would wrongly answer
-   `true` (it happens to work on `ctia.auth.threatgrid/Identity`, which has a
-   real `groups` field -- silently correct there, silently wrong elsewhere)."
+  "True when the identity has no org to scope a verdict to: no groups (a JWT
+   missing `org/id`, static-auth with a blank `ctia.auth.static.group`), only
+   blank group strings, or only the not-logged-in sentinel. Takes the ident
+   *map* (`ident->map`), not an `IIdentity` record, since `groups` is a protocol
+   method rather than a field on most identities.
+   See verdict scoping in resources/ctia/public/doc/design.md."
   [ident :- IdentityMap]
   (let [groups (remove str/blank? (:groups ident))]
     (boolean (or (empty? groups)
