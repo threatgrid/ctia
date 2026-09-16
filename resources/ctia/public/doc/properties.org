@@ -52,6 +52,25 @@
  | ctia.access-control.default-tlp           | set the TLP for a newly posted entity if none is specified | =white= =green= =amber= =red=  |
  | ctia.access-control.max-record-visibility | set the record max visibility for TLP Green/White          | =everyone= =group=             |
 
+   Note: =max-record-visibility= governs *document* reads and searches only.
+   Verdict computation (the REST =GET .../verdict= endpoint and the GraphQL
+   =verdict= field) is always org-scoped: a verdict is computed only from the
+   judgements the caller can read that are also owned by its own org, regardless of this setting or of
+   any =authorized_groups= / =authorized_users= grant on a foreign-owned
+   judgement. A consequence is that a caller with no org of its own gets no
+   verdict at all: the usual production case is a JWT whose =org/id= claim is
+   missing. With =ctia.auth.static.group= blank, even the authenticated static
+   write identity is org-less, so its =.../verdict= requests return 404. Under
+   =ctia.auth.static.readonly-for-anonymous= = =true=,
+   a request that does not present =ctia.auth.static.secret= resolves to the
+   org-less read-only identity and returns 404 for =.../verdict= (a request that
+   presents the secret still receives a verdict when =ctia.auth.static.group= is
+   set). A request that never authenticates -- =readonly-for-anonymous= off and
+   no valid secret -- is refused earlier by the =:read-verdict= capability gate
+   (401/403), not turned into a 404. The org-less 404 applies even to public
+   (Green/White) TLP observables that a document read would still return under
+   =max-record-visibility= = =everyone=.
+
 
 ** HTTP
 

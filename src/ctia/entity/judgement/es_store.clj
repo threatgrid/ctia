@@ -1,6 +1,9 @@
 (ns ctia.entity.judgement.es-store
   (:require [ductile.document :refer [search-docs]]
+            [clojure.string :as str]
+            [clojure.tools.logging :as log]
             [clj-momo.lib.time :as time]
+            [ctia.auth :as auth]
             [ctia.entity.judgement.schemas
              :refer
              [PartialStoredJudgement StoredJudgement]]
@@ -47,39 +50,57 @@
                       ident
                       params))
 
+(defn- verdict-owner-filter
+  "Restrict verdict candidates to judgements owned by the caller's own org.
+   Terms are lower-cased to match the `groups` `lowercase_normalizer` mapping;
+   the arg is the ident map. See verdict scoping in
+   resources/ctia/public/doc/design.md."
+  [{:keys [groups]}]
+  {:terms {"groups" (map str/lower-case groups)}})
+
 (defn list-active-by-observable
   [state observable ident get-in-config params]
-  (let [now-str (time/format-date-time (time/timestamp))
-        date-range (select-keys params [:from :to])
-        time-opts {:now-str now-str :date-range date-range}
-        composed-query
-        (assoc-in
-         (find-restriction-query-part ident get-in-config)
-         [:bool :must]
-         (active-judgements-by-observable-query
-          observable
-          time-opts))
-        es-params
-        {:sort
-         {:priority
-          "desc"
+  {:pre [(contains? ident :groups)]}
+  ;; An org-less caller has no org to scope to, so return no verdict rather than
+  ;; issue a filter that matches nothing. See verdict scoping in
+  ;; resources/ctia/public/doc/design.md.
+  (if (auth/orgless-ident? ident)
+    (do (log/debugf "verdict skipped: caller %s has no org; a verdict is tenant-local (observable %s)"
+                    (pr-str (:login ident))
+                    (pr-str observable))
+        nil)
+    (let [now-str (time/format-date-time (time/timestamp))
+          date-range (select-keys params [:from :to])
+          time-opts {:now-str now-str :date-range date-range}
+          ;; Put the base access-control restriction and the owner-org filter in
+          ;; the top-level `:filter` (the convention other callers of
+          ;; `find-restriction-query-part` follow) and the observable/time
+          ;; clauses in `:must`, rather than reaching into the helper's internals.
+          composed-query
+          {:bool {:filter [(find-restriction-query-part ident get-in-config)
+                           (verdict-owner-filter ident)]
+                  :must (active-judgements-by-observable-query observable time-opts)}}
+          es-params
+          {:sort
+           {:priority
+            "desc"
 
-          :disposition
-          "asc"
+            :disposition
+            "asc"
 
-          "valid_time.start_time"
-          {:order "asc"
-           :mode "min"
-           :nested_filter
-           {"range" {"valid_time.start_time" {"lte" now-str}}}}}}]
-    (some->>
-     (search-docs (:conn state)
-                  (:index state)
-                  composed-query
-                  nil
-                  es-params)
-     :data
-     coerce-stored-judgement-list)))
+            "valid_time.start_time"
+            {:order "asc"
+             :mode "min"
+             :nested_filter
+             {"range" {"valid_time.start_time" {"lte" now-str}}}}}}]
+      (some->>
+       (search-docs (:conn state)
+                    (:index state)
+                    composed-query
+                    nil
+                    es-params)
+       :data
+       coerce-stored-judgement-list))))
 
 (s/defn make-verdict :- Verdict
   [judgement :- StoredJudgement]

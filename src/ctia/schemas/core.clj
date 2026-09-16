@@ -263,6 +263,11 @@
                              :spec-kw-ns ~spec-kw-ns}))
 
 ;; verdict
+;;
+;; NOTE: `vs/Verdict`'s CTIM-sourced description renders into swagger and still
+;; says a verdict is chosen from *all* unexpired judgements -- stale re
+;; org-scoping (fixing it needs a CTIM change). The accurate text lives in the
+;; REST `api-description` and the GraphQL `verdict-description`.
 
 (def-acl-schema Verdict
   vs/Verdict

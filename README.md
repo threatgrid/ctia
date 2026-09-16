@@ -267,6 +267,28 @@ value does not fail, only newly-introduced foreign values are rejected.
 
 Please note that the `authorized_groups` property may work only if max record visibility is set to `everyone`
 
+##### Verdict carve-out
+
+The access rules above (TLP visibility and `authorized_users` / `authorized_groups`)
+govern reading and listing individual documents. A Verdict is different: it is a
+tenant-local trust decision, so it is derived **only from Judgements the caller
+can read that are also owned by the querying org** (their stored `groups`). A
+Judgement owned by a different user in the caller's own org that the caller
+cannot read (e.g. a TLP-red judgement without a sharing grant) does not
+contribute either. A Judgement that another org merely shares
+with the caller -- whether via `authorized_users` / `authorized_groups` or via a
+public (Green/White) TLP under `everyone` visibility -- is still readable but does
+**not** contribute to the caller's Verdict. This prevents cross-tenant "verdict
+poisoning" while leaving ordinary cross-tenant reads and lists unchanged.
+
+A corollary: a caller with no org of its own -- a JWT whose `org/id` claim is
+missing (the usual production case), a static-auth deployment with a blank
+`ctia.auth.static.group`, or the anonymous identity of
+`ctia.auth.static.readonly-for-anonymous` -- has no owned Judgements to scope a
+Verdict to and therefore receives no Verdict (HTTP 404) for any Observable,
+including public (Green/White) TLP Observables that a plain document read would
+still return.
+
 Examples:
 
 The following actor Entity is marked as `Red`, thus allowing only its owner RW access.

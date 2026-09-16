@@ -3,6 +3,7 @@
             [clojure
              [set :as set]
              [string :as str]]
+            [clojure.tools.logging :as log]
             [ctia.auth :as auth :refer [IAuth IIdentity]]
             [ctia.auth.capabilities :refer [all-capabilities]]
             [puppetlabs.trapperkeeper.core :as tk]
@@ -60,7 +61,20 @@
   IAuth
   [[:ConfigService get-in-config]]
   (init [this context]
-        (assoc context :auth-config (get-in-config [:ctia :auth])))
+        (let [auth-config (get-in-config [:ctia :auth])
+              static-cfg (:static auth-config)]
+          ;; Warn at boot for the two static-auth settings that leave callers
+          ;; org-less, since an org-less caller gets no verdict (404). See
+          ;; verdict scoping in resources/ctia/public/doc/design.md.
+          (when (str/blank? (:group static-cfg))
+            (log/warn (str "ctia.auth.static.group is blank: the authenticated "
+                           "static (write) identity has no org, so its verdict "
+                           "requests return 404.")))
+          (when (:readonly-for-anonymous static-cfg)
+            (log/warn (str "ctia.auth.static.readonly-for-anonymous is on: "
+                           "anonymous callers have no org, so their verdict "
+                           "requests return 404.")))
+          (assoc context :auth-config auth-config)))
   (identity-for-token [this token]
     (let [{:keys [auth-config]} (service-context this)
           secret (get-in auth-config [:static :secret])

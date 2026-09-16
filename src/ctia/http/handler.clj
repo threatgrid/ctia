@@ -62,11 +62,15 @@
   * SHA1 -- the sha1 checksum of a file, or other data blob
   * URL -- A minimal form of the URL
 
-  The Verdict is derived from all of the Judgements on that Observable which
-  have not yet expired.  The highest priority Judgement becomes the
-  active verdict.  If there is more than one Judgement with that
-  priority, than Clean disposition has priority over all others, then
-  Malicious disposition, and so on down to Unknown.
+  The Verdict is derived from the Judgements on that Observable which have not
+  yet expired, that the caller can read and that are owned by the caller's own
+  org; a verdict is a tenant-local trust decision, so Judgements shared from
+  another org (via `authorized_groups` / `authorized_users`, or visible only
+  through a public TLP) do not contribute to it.  The highest priority Judgement
+  becomes the active verdict.  If there
+  is more than one Judgement with that priority, than Clean disposition has
+  priority over all others, then Malicious disposition, and so on down to
+  Unknown.
 
   <a href='/doc/README.md'>CTIA Documentation</a>")
 

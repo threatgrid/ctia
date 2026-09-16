@@ -1,5 +1,6 @@
 (ns ctia.auth
-  (:require [schema.core :as s]))
+  (:require [clojure.string :as str]
+            [schema.core :as s]))
 
 (defprotocol IIdentity
   (authenticated? [this])
@@ -46,6 +47,18 @@
   {:client-id (s/maybe s/Str)
    :login (s/maybe s/Str)
    :groups [s/Str]})
+
+(s/defn orgless-ident? :- s/Bool
+  "True when the identity has no org to scope a verdict to: no groups (a JWT
+   missing `org/id`, static-auth with a blank `ctia.auth.static.group`), only
+   blank group strings, or only the not-logged-in sentinel. Takes the ident
+   *map* (`ident->map`), not an `IIdentity` record, since `groups` is a protocol
+   method rather than a field on most identities.
+   See verdict scoping in resources/ctia/public/doc/design.md."
+  [ident :- IdentityMap]
+  (let [groups (remove str/blank? (:groups ident))]
+    (boolean (or (empty? groups)
+                 (= (set not-logged-in-groups) (set groups))))))
 
 (s/defn ident->map :- (s/maybe IdentityMap)
   [ident :- (s/maybe AuthIdentity)]
