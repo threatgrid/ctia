@@ -11,6 +11,7 @@
    [ctia.domain.access-control :refer [allowed-tlp? allowed-tlps
                                          validate-authorized-groups
                                          validate-authorized-users]]
+   [ctia.domain.url-safety :as url-safety]
    [ctia.entity.event.obj-to-event :refer
     [to-create-event to-delete-event to-update-event]]
    [ctia.lib.collection :as coll]
@@ -167,6 +168,66 @@
        :foreign foreign}
       entity)))
 
+(defn url-scheme-check
+  "Rejects entities carrying a disallowed URL scheme (javascript:, data:,
+   vbscript:, ...) in any URL-typed field. Defense-in-depth against stored XSS
+   via threat-intel URL fields (XFV-135). Passes through an entity that a prior
+   check already turned into an error map. The pure predicates live in
+   `ctia.domain.url-safety` (mirroring how `tlp-check`/`authorized-*-check`
+   delegate to `ctia.domain.access-control`); this wrapper adds the prev-entity
+   diff, the error map, and the flow-level short-circuit.
+
+   Like `authorized-groups-check`/`authorized-users-check`, this gates only the
+   values the caller is *introducing* relative to the stored `prev-entity` (see
+   `introduced-foreign`): a disallowed value byte-identical to one already stored
+   is not re-flagged. This matters on update/patch -- e.g. POST /incident/:id/status
+   sends only {:status ...}, but `patch-entities` deep-merges the whole prev-entity
+   (including its :source_uri) before this runs, so re-validating the full document
+   would 400 a status update that never mentioned the URI on a value predating the
+   gate. On create `prev-entity` is nil, so every value is checked.
+
+   The diff is value-level, not occurrence- or path-level (`set/difference` over
+   {:field :scheme :value}): no dangerous scheme+value pair absent from the stored
+   entity can be introduced, but re-writing another copy of a pair already stored on
+   the document is not blocked -- including a copy that lands under the same-named
+   url-typed key at a different path (e.g. a top-level :url value also placed in an
+   external_references[].url, which shares the {:field :url ...} diff element). This
+   is an accepted tradeoff, not an oversight: the pair is already stored and therefore
+   already renders at a url-typed sink, so the attacker's payload already fires -- an
+   additional byte-identical sink of an already-renderable value grants no new
+   scheme/value capability, and cannot escalate between url-typed keys, which are all
+   equally render sinks by definition. A path-aware / multiset diff would add
+   complexity for no change to the invariant that matters: no dangerous value renders
+   that was not already renderable. A pre-gate value persisting until a data migration
+   cleans it up is the accepted tradeoff (identical to the two authorized_* checks).
+
+   `ident-map` (threaded from `validate-entities`, as the two authorized_* checks are)
+   is carried into the error map as `:login`/`:groups` so the :warn log lets operators
+   attribute a burst of rejected `javascript:` writes to a caller."
+  [entity prev-entity ident-map]
+  (if (:error entity)
+    entity
+    (let [introduced (set/difference
+                      (set (url-safety/collect-unsafe-url-fields entity))
+                      (set (url-safety/collect-unsafe-url-fields prev-entity)))
+          ;; dedupe/sort on field+scheme for a stable message (multiple distinct
+          ;; offending values in one field collapse to a single "field (scheme:)")
+          labels (->> introduced
+                      (map (fn [{:keys [field scheme]}]
+                             (format "%s (%s:)" (name field) scheme)))
+                      distinct
+                      sort)]
+      (if (seq labels)
+        {:msg (format "Disallowed URL scheme in field(s): %s. Allowed schemes: %s"
+                      (str/join ", " labels)
+                      (str/join ", " (sort url-safety/safe-url-schemes)))
+         :error "Entity validation Error"
+         :type :unsafe-url-scheme-error
+         :entity entity
+         :login (:login ident-map)
+         :groups (:groups ident-map)}
+        entity))))
+
 (s/defn ^:private validate-entities :- FlowMap
   [{{{:keys [get-in-config]} :ConfigService} :services
     identity-obj :identity
@@ -175,16 +236,18 @@
   (let [ident-map (auth/ident->map identity-obj)]
     (assoc fm :entities
            (map (fn [entity]
-                  ;; On update/patch, validate only the authorized_* values the
-                  ;; caller introduces relative to the stored entity (see CR1);
-                  ;; on create there is no prev-entity so everything is checked.
+                  ;; On update/patch, validate only the values the caller
+                  ;; introduces relative to the stored entity (authorized_* and
+                  ;; URL scheme alike, see CR1); on create there is no prev-entity
+                  ;; so everything is checked.
                   (let [prev-entity (when (and get-prev-entity (:id entity))
                                       (get-prev-entity (:id entity)))]
                     (-> entity
                         (check-spec spec)
                         (tlp-check get-in-config)
                         (authorized-groups-check prev-entity ident-map)
-                        (authorized-users-check prev-entity ident-map))))
+                        (authorized-users-check prev-entity ident-map)
+                        (url-scheme-check prev-entity ident-map))))
                 entities))))
 
 (s/defn ^:private create-ids-from-transient :- FlowMap
