@@ -127,6 +127,18 @@
       :entity entity
       :class (.getName (class e))})))
 
+(defn unsafe-url-scheme-error-handler
+  "Handle a disallowed-URL-scheme validation error (XFV-135): log at :warn (it is
+  security-relevant, see doc/url-scheme-validation.md) and return 400, not 500."
+  [^Exception e _data _request]
+  (logging/log! :warn e (ex-message-and-data e))
+  (bad-request
+   (let [entity (:entity (ex-data e))]
+     {:type "Invalid URL Scheme Error"
+      :message (.getMessage e)
+      :entity entity
+      :class (.getName (class e))})))
+
 (defn realize-entity-error-handler
   "Handle error at the realize step"
   [^Exception e _data _request]
