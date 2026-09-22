@@ -1,9 +1,6 @@
 (ns ctia.domain.url-safety-test
-  "Unit tests for the pure URL-scheme predicates (XFV-135). These live in
-   ctia.domain.url-safety so the security logic is testable directly, without
-   re-implementing private helpers or routing every case through the flow's
-   `url-scheme-check` wrapper (whose flow-level integration is covered in
-   ctia.flows.crud-test)."
+  "Unit tests for the pure URL-scheme predicates (XFV-135), tested directly here;
+   the flow wrapper's integration is covered in ctia.flows.crud-test."
   (:require [clojure.test :refer [deftest is testing]]
             [ctia.domain.url-safety :as sut]))
 
@@ -30,11 +27,10 @@
     (is (nil? (sut/unsafe-url-scheme (str "transient:" (random-uuid)))))))
 
 (deftest unsafe-url-scheme-amp-double-encoding-test
-  ;; SEC1: `&amp;` is the canonical encoding of `&`, so `javascript&amp;colon;`
-  ;; HTML-decodes to `javascript&colon;` then `javascript:` at the render sink.
-  ;; Before adding "amp" to scheme-relevant-named-entities the named `&amp;` form
-  ;; slipped through (nil => stored) while its numeric twin `&#38;` was caught --
-  ;; exactly the double-encoding case the fixed-point loop exists to close.
+  ;; `&amp;` is the canonical encoding of `&`, so `javascript&amp;colon;` decodes
+  ;; to `javascript&colon;` then `javascript:` in a browser. Before "amp" was added
+  ;; to scheme-relevant-named-entities the named form slipped through while its
+  ;; numeric twin `&#38;` was caught -- the double-encoding case the loop closes.
   (testing "named-ampersand double-encoding is unmasked and flagged"
     (is (= "javascript" (sut/unsafe-url-scheme "javascript&amp;colon;alert(1)")))
     (is (= "javascript" (sut/unsafe-url-scheme "javascript&amp;#58;alert(1)"))))
@@ -82,14 +78,11 @@
   (testing "leaves an unparseable / oversized numeric entity untouched (converges)"
     (is (= "&#999999999999999999999;oke"
            (sut/decode-html-entities "&#999999999999999999999;oke"))))
-  (testing "a stack deeper than the budget is left partially-encoded and fails safe"
-    ;; The budget is load-bearing: it caps the peel depth at 8 passes. A value with
-    ;; 10 stacked `&#38;` before the `colon;` cannot fully collapse to `javascript:`
-    ;; within the budget, so the residual `&` sit between the scheme letters and the
-    ;; `:` -- no http(s)-or-dangerous scheme is presented, `unsafe-url-scheme`
-    ;; returns nil (not flagged, no throw), and a browser HTML-decodes only one layer
-    ;; per render so it never reaches `javascript:` in a single hop. A budget-shrink
-    ;; mutation that let this decode fully would flip the nil to "javascript".
+  (testing "a stack deeper than the budget is left partially decoded (no false negative)"
+    ;; The budget caps the peel depth at 8 passes. 10 stacked `&#38;` cannot fully
+    ;; collapse to `javascript:`, so no dangerous scheme is presented and the result
+    ;; is nil (not a throw) -- and a browser decodes only one layer per render, so it
+    ;; never reaches the payload either. A budget-shrink mutation would flip this nil.
     (let [deep (str "javascript" (apply str (repeat 10 "&#38;")) "colon;alert(1)")]
       (is (nil? (sut/unsafe-url-scheme deep))))))
 

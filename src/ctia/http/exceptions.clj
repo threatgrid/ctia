@@ -128,12 +128,8 @@
       :class (.getName (class e))})))
 
 (defn unsafe-url-scheme-error-handler
-  "Handle disallowed-URL-scheme validation error (XFV-135).
-
-  A rejected dangerous URL scheme (javascript:, data:, vbscript:, ...) in a
-  URL-typed field is a security-relevant anomaly (an attempted stored-XSS
-  payload), so it is logged at :warn to help operators correlate a poisoning
-  campaign, and returns 400 rather than surfacing as a 500 server error."
+  "Handle a disallowed-URL-scheme validation error (XFV-135): log at :warn (it is
+  security-relevant, see doc/url-scheme-validation.md) and return 400, not 500."
   [^Exception e _data _request]
   (logging/log! :warn e (ex-message-and-data e))
   (bad-request

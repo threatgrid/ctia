@@ -169,41 +169,13 @@
       entity)))
 
 (defn url-scheme-check
-  "Rejects entities carrying a disallowed URL scheme (javascript:, data:,
-   vbscript:, ...) in any URL-typed field. Defense-in-depth against stored XSS
-   via threat-intel URL fields (XFV-135). Passes through an entity that a prior
-   check already turned into an error map. The pure predicates live in
-   `ctia.domain.url-safety` (mirroring how `tlp-check`/`authorized-*-check`
-   delegate to `ctia.domain.access-control`); this wrapper adds the prev-entity
-   diff, the error map, and the flow-level short-circuit.
-
-   Like `authorized-groups-check`/`authorized-users-check`, this gates only the
-   values the caller is *introducing* relative to the stored `prev-entity` (see
-   `introduced-foreign`): a disallowed value byte-identical to one already stored
-   is not re-flagged. This matters on update/patch -- e.g. POST /incident/:id/status
-   sends only {:status ...}, but `patch-entities` deep-merges the whole prev-entity
-   (including its :source_uri) before this runs, so re-validating the full document
-   would 400 a status update that never mentioned the URI on a value predating the
-   gate. On create `prev-entity` is nil, so every value is checked.
-
-   The diff is value-level, not occurrence- or path-level (`set/difference` over
-   {:field :scheme :value}): no dangerous scheme+value pair absent from the stored
-   entity can be introduced, but re-writing another copy of a pair already stored on
-   the document is not blocked -- including a copy that lands under the same-named
-   url-typed key at a different path (e.g. a top-level :url value also placed in an
-   external_references[].url, which shares the {:field :url ...} diff element). This
-   is an accepted tradeoff, not an oversight: the pair is already stored and therefore
-   already renders at a url-typed sink, so the attacker's payload already fires -- an
-   additional byte-identical sink of an already-renderable value grants no new
-   scheme/value capability, and cannot escalate between url-typed keys, which are all
-   equally render sinks by definition. A path-aware / multiset diff would add
-   complexity for no change to the invariant that matters: no dangerous value renders
-   that was not already renderable. A pre-gate value persisting until a data migration
-   cleans it up is the accepted tradeoff (identical to the two authorized_* checks).
-
-   `ident-map` (threaded from `validate-entities`, as the two authorized_* checks are)
-   is carried into the error map as `:login`/`:groups` so the :warn log lets operators
-   attribute a burst of rejected `javascript:` writes to a caller."
+  "Rejects an entity carrying a disallowed URL scheme (javascript:, data:, ...) in
+   a URL-typed field, as defense-in-depth against stored XSS (XFV-135). Thin
+   wrapper over `ctia.domain.url-safety` (as `authorized-*-check` wrap
+   `ctia.domain.access-control`) adding the error map and short-circuit. Like the
+   authorized_* checks it gates only values the caller introduces relative to
+   `prev-entity` (nil on create); `ident-map` is carried into the error map for the
+   :warn audit log. The value-level diff tradeoff: doc/url-scheme-validation.md."
   [entity prev-entity ident-map]
   (if (:error entity)
     entity

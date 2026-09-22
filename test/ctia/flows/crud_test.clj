@@ -590,24 +590,19 @@
         (is (re-find #"victim" (:msg validated)))))))
 
 (deftest url-scheme-check-test
-  ;; XFV-135: defense-in-depth against stored XSS via threat-intel URL fields.
-  ;; Ingest must reject dangerous URL schemes (javascript:, data:, vbscript:)
-  ;; in URL-typed fields while allowing http/https and scheme-less values.
-  ;; These cases exercise the create path (no prev-entity), so bind a 1-arg
-  ;; wrapper passing prev-entity = nil (everything is checked) and ident-map = nil;
-  ;; the prev-entity diff behavior is covered by url-scheme-check-prev-entity-diff-test
-  ;; and caller attribution by url-scheme-check-caller-attribution-test below.
+  ;; XFV-135: ingest must reject dangerous URL schemes (javascript:, data:,
+  ;; vbscript:) in URL-typed fields while allowing http/https and scheme-less
+  ;; values. These cases exercise the create path, so bind a 1-arg wrapper with
+  ;; prev-entity = nil (everything checked) and ident-map = nil; the diff and
+  ;; attribution paths are covered by the two deftests below.
   (let [url-scheme-check #(#'flows.crud/url-scheme-check % nil nil)]
     (testing "rejects a javascript: scheme in a URL-typed field"
       (let [result (url-scheme-check {:source_uri "javascript:alert(document.cookie)"})]
         (is (= :unsafe-url-scheme-error (:type result)))
-        ;; The `:error` key is load-bearing: throw-validation-error selects error
-        ;; maps with (filter :error entities) (crud.clj) and remove-errors drops
-        ;; them, so deleting `:error "Entity validation Error"` from url-scheme-check
-        ;; would silently disable the gate (the payload would be stored) while
-        ;; `:type` still passes. Pin the whole contract, not just `:type`.
+        ;; Pin the whole contract, not just :type: throw-validation-error/remove-errors
+        ;; act on :error, so dropping it would disable the gate while :type still passes.
         (is (= "Entity validation Error" (:error result)))
-        ;; LOW2: pin the exact message shape once, not just substrings.
+        ;; pin the exact message shape once, not just substrings
         (is (= "Disallowed URL scheme in field(s): source_uri (javascript:). Allowed schemes: http, https"
                (:msg result)))))
 
@@ -823,12 +818,9 @@
              (:type (url-scheme-check {:source_uri "javascript:alert(1)"} nil)))))))
 
 (deftest url-scheme-check-caller-attribution-test
-  ;; XFV-135: a rejected dangerous-scheme write is a security-relevant anomaly
-  ;; logged at :warn "to help operators correlate a poisoning campaign". Carry the
-  ;; caller's :login/:groups into the error map (threaded via ident-map, as
-  ;; authorized-groups-check/authorized-users-check do) so an operator seeing a
-  ;; burst of rejected javascript: writes can attribute them to a caller. Pins that
-  ;; the two keys are present with the ident-map values.
+  ;; XFV-135: the caller's :login/:groups are threaded via ident-map into the error
+  ;; map (as the authorized_* checks do) so the :warn audit log can attribute a
+  ;; rejected write. Pins that both keys are present with the ident-map values.
   (let [url-scheme-check #'flows.crud/url-scheme-check
         ident-map {:login "attacker" :groups ["evil-corp"]}]
     (testing "the error map carries the caller's login and groups"
