@@ -8,7 +8,8 @@
    [ctia.properties :as p]
    [ctia.store-service :as store-svc]
    [ctia.entity.entities :as entities]
-   [ctia.entity.sighting.schemas :refer [StoredSighting]]
+   [ctia.entity.sighting.es-store :refer [ESStoredSighting]]
+   [ctia.entity.relationship.es-store :refer [ESStoredRelationship]]
    [ctia.stores.es.crud :refer [coerce-to-fn]]
    [ctia.store-service.schemas :refer [AllStoresFn]]
    [puppetlabs.trapperkeeper.app :as app]
@@ -23,8 +24,8 @@
   (assoc (into {}
                (map (fn [[_ {:keys [entity stored-schema]}]]
                       {entity stored-schema}) (entities/all-entities)))
-         :sighting (st/merge StoredSighting
-                             {(s/optional-key :observables_hash) s/Any})))
+         :relationship ESStoredRelationship
+         :sighting ESStoredSighting))
 
 (defn type->schema [entity-type]
   (if-let [schema (get all-types entity-type)]
