@@ -120,3 +120,20 @@
          (let [conn-state (:state (helpers/get-store app :sighting))]
            (is (= ["source.text" "title"]
                   (sut/rename-search-fields conn-state [:source :title])))))))))
+
+(deftest find-restriction-query-part-test
+  (let [get-in-config (helpers/build-get-in-config-fn)
+        should (get-in (sut/find-restriction-query-part
+                        {:login "Foo" :groups ["Bar"]}
+                        get-in-config)
+                       [:bool :should])
+        authorized-users-clause {:term {"authorized_users" "foo"}}
+        authorized-groups-clause {:terms {"authorized_groups" ["bar"]}}]
+    (testing "authorized_users and authorized_groups are not standalone clauses"
+      (is (not-any? #{authorized-users-clause authorized-groups-clause} should)))
+    (testing "authorized_users and authorized_groups only match documents of the caller's groups"
+      (is (some #{{:bool {:filter [{:terms {"groups" ["bar"]}}
+                                   {:bool {:minimum_should_match 1
+                                           :should [authorized-users-clause
+                                                    authorized-groups-clause]}}]}}}
+                should)))))
