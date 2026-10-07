@@ -772,11 +772,19 @@
        (testing "a grant to another group does not allow reading the judgement"
          (is (= 403 (:status (GET app (str "ctia/judgement/" short-id-a)
                                   :headers {"Authorization" "userb-key"}))))
-         (is (empty? (:parsed-body (GET app "ctia/ip/203.0.113.10/judgements"
-                                        :headers {"Authorization" "userb-key"}))))
-         (is (empty? (:parsed-body (GET app "ctia/judgement/search"
-                                        :query-params {"query" "observable.value:\"203.0.113.10\""}
-                                        :headers {"Authorization" "userb-key"})))))
+         (doseq [[path query-params] [["ctia/ip/203.0.113.10/judgements" {}]
+                                      ["ctia/judgement/search"
+                                       {"query" "observable.value:\"203.0.113.10\""}]]]
+           (testing path
+             (let [list-ids (fn [api-key]
+                              (let [{status :status body :parsed-body}
+                                    (GET app path
+                                         :query-params query-params
+                                         :headers {"Authorization" api-key})]
+                                (is (= 200 status))
+                                (map :id body)))]
+               (is (= [(:id judgement-a)] (list-ids "usera-key")))
+               (is (empty? (list-ids "userb-key")))))))
 
        (testing "a grant to another group does not allow deleting the judgement"
          (is (= 403 (:status (DELETE app (str "ctia/judgement/" short-id-a)

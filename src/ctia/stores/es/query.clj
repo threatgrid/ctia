@@ -15,25 +15,16 @@
     {:bool
      {:minimum_should_match 1
       :should
-      (cond->> [;; Document Owner
-                {:bool {:filter [{:term {"owner" login}}
-                                 {:terms {"groups" groups}}]}}
-
-                ;; or if user is listed in authorized_users or authorized_groups field
-                ;; of a document owned by one of the user's groups
+      (cond->> [;; Documents owned by one of the user's groups
                 {:bool {:filter [{:terms {"groups" groups}}
                                  {:bool {:minimum_should_match 1
-                                         :should [{:term {"authorized_users" login}}
-                                                  {:terms {"authorized_groups" groups}}]}}]}}
-
-                ;; CTIM records with TLP equal or below amber that are owned by org BAR
-                {:bool {:must [{:terms {"tlp" (conj ac/public-tlps "amber")}}
-                               {:terms {"groups" groups}}]}}
-
-                ;; CTIM records with TLP red that is owned by user FOO
-                {:bool {:must [{:term {"tlp" "red"}}
-                               {:term {"owner" login}}
-                               {:terms {"groups" groups}}]}}]
+                                         :should [;; TLP equal or below amber: whole group
+                                                  {:terms {"tlp" (conj ac/public-tlps "amber")}}
+                                                  ;; Document owner, any TLP
+                                                  {:term {"owner" login}}
+                                                  ;; Grants, only meaningful on red
+                                                  {:term {"authorized_users" login}}
+                                                  {:terms {"authorized_groups" groups}}]}}]}}]
 
         ;; Any Green/White TLP if max-visibility is set to `everyone`
         (ac/max-record-visibility-everyone? get-in-config)

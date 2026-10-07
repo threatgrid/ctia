@@ -253,7 +253,10 @@ Document Access control is defined at the document level, rules are defined usin
 The `authorized_users` and `authorized_groups` document fields grant full R/W access to
 the identities they list, in addition to the access implied by the document's TLP.
 These grants only apply to identities that belong to one of the document's `groups`:
-they widen access within the owning group, never to other groups.
+they widen access within the owning group, never to other groups. Since members of the
+document's `groups` already have R/W access on `white`, `green` and `amber` documents,
+these grants only widen access on `red` documents, where `authorized_groups` gives the
+listed groups the same access as `amber` and `authorized_users` gives it to the listed users.
 
 A writer may only reference identities they already belong to when creating or updating a document:
 
@@ -263,8 +266,7 @@ A writer may only reference identities they already belong to when creating or u
 A create, update or patch that introduces a login or group the caller does not own is rejected
 with HTTP 400. Values that were already stored on a document are preserved: editing a record
 that already carries such a value does not fail, only newly-introduced values are rejected.
-
-Please note that the `authorized_groups` property may work only if max record visibility is set to `everyone`
+A stored value naming a login or group outside the document's `groups` grants no access.
 
 Examples:
 
