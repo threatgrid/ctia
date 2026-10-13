@@ -265,7 +265,7 @@ A writer may only reference identities they already belong to when creating or u
 
 A create, update or patch that introduces a login or group the caller does not own is rejected
 with HTTP 400. Values that were already stored on a document are preserved: editing a record
-that already carries such a value does not fail, only newly-introduced values are rejected.
+that already carries such a value does not fail, only newly-introduced foreign (not-owned) values are rejected.
 A stored value naming a login or group outside the document's `groups` grants no access.
 
 Examples:
